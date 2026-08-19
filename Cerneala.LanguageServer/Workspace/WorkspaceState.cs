@@ -1,6 +1,12 @@
+using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Xml.Linq;
 using Cerneala.Language;
+using Cerneala.Language.Semantics;
+using Cerneala.Language.Text;
 using Cerneala.LanguageServer.Logging;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.MSBuild;
 
 namespace Cerneala.LanguageServer.Workspace;
@@ -32,6 +38,71 @@ internal sealed class WorkspaceState : IDisposable
         null,
         [],
         new Dictionary<string, ProjectContext[]>(PathComparer.Instance));
+
+    public static async Task<WorkspaceState?> TryLoadBootstrapAsync(
+        WorkspaceConfiguration configuration,
+        long revision,
+        string preferredDocumentPath,
+        IServerLogger logger,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        string documentPath = PathComparer.Normalize(preferredDocumentPath);
+        if (!File.Exists(documentPath))
+        {
+            return null;
+        }
+
+        string? projectPath = FindNearestProject(configuration, documentPath);
+        if (projectPath is null)
+        {
+            return null;
+        }
+
+        string projectAssemblyName = ReadAssemblyName(projectPath);
+        string? outputAssemblyPath = FindOutputAssembly(
+            projectPath,
+            projectAssemblyName,
+            configuration.Configuration,
+            configuration.ActiveTargetFramework);
+        if (outputAssemblyPath is null)
+        {
+            return null;
+        }
+
+        long started = Stopwatch.GetTimestamp();
+        IReadOnlyList<MetadataReference> references = await LoadMetadataReferencesAsync(
+            Path.GetDirectoryName(outputAssemblyPath)!,
+            cancellationToken).ConfigureAwait(false);
+        if (references.Count == 0)
+        {
+            return null;
+        }
+
+        CSharpCompilation compilation = CSharpCompilation.Create(
+            "Cerneala.LanguageServer.Bootstrap",
+            references: references,
+            options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        string markup = await File.ReadAllTextAsync(documentPath, cancellationToken).ConfigureAwait(false);
+        CernealaDocument document = new(documentPath, SourceText.From(markup, revision));
+        ProjectContext context = ProjectContext.CreateBootstrap(
+            projectPath,
+            InferTargetFramework(outputAssemblyPath, configuration.ActiveTargetFramework),
+            projectAssemblyName,
+            compilation,
+            document,
+            revision);
+        Dictionary<string, ProjectContext[]> owners = new(PathComparer.Instance)
+        {
+            [documentPath] = [context]
+        };
+        logger.Info(
+            "workspace.bootstrapLoaded",
+            ("revision", revision),
+            ("elapsedMs", Stopwatch.GetElapsedTime(started).TotalMilliseconds),
+            ("referenceCount", references.Count));
+        return new WorkspaceState(revision, null, [context], owners);
+    }
 
     public static async Task<WorkspaceState> LoadAsync(
         WorkspaceConfiguration configuration,
@@ -173,5 +244,137 @@ internal sealed class WorkspaceState : IDisposable
         }
 
         return solution;
+    }
+
+    private static string? FindNearestProject(WorkspaceConfiguration configuration, string documentPath)
+    {
+        string? configuredWorkspace = configuration.ResolveWorkspacePath();
+        if (configuredWorkspace is not null &&
+            Path.GetExtension(configuredWorkspace).Equals(".csproj", StringComparison.OrdinalIgnoreCase))
+        {
+            return PathComparer.Normalize(configuredWorkspace);
+        }
+
+        string? root = configuration.RootPath is null
+            ? configuredWorkspace is null ? null : Path.GetDirectoryName(configuredWorkspace)
+            : Path.GetFullPath(configuration.RootPath);
+        DirectoryInfo? directory = new(Path.GetDirectoryName(documentPath)!);
+        while (directory is not null)
+        {
+            string[] candidates = Directory.GetFiles(directory.FullName, "*.csproj", SearchOption.TopDirectoryOnly);
+            if (candidates.Length == 1)
+            {
+                return PathComparer.Normalize(candidates[0]);
+            }
+
+            if (candidates.Length > 1)
+            {
+                string? named = candidates.SingleOrDefault(candidate => string.Equals(
+                    Path.GetFileNameWithoutExtension(candidate),
+                    directory.Name,
+                    StringComparison.OrdinalIgnoreCase));
+                return named is null ? null : PathComparer.Normalize(named);
+            }
+
+            if (root is not null && PathComparer.Instance.Equals(directory.FullName, root))
+            {
+                break;
+            }
+
+            directory = directory.Parent;
+        }
+
+        return null;
+    }
+
+    private static string ReadAssemblyName(string projectPath)
+    {
+        try
+        {
+            string? configured = XDocument.Load(projectPath)
+                .Descendants()
+                .FirstOrDefault(element => element.Name.LocalName == "AssemblyName" &&
+                    !string.IsNullOrWhiteSpace(element.Value))?
+                .Value.Trim();
+            return string.IsNullOrWhiteSpace(configured)
+                ? Path.GetFileNameWithoutExtension(projectPath)
+                : configured!;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or System.Xml.XmlException)
+        {
+            return Path.GetFileNameWithoutExtension(projectPath);
+        }
+    }
+
+    private static string? FindOutputAssembly(
+        string projectPath,
+        string assemblyName,
+        string configuration,
+        string? activeTargetFramework)
+    {
+        string outputRoot = Path.Combine(Path.GetDirectoryName(projectPath)!, "bin", configuration);
+        if (!Directory.Exists(outputRoot))
+        {
+            return null;
+        }
+
+        string separator = Path.DirectorySeparatorChar.ToString();
+        return Directory.EnumerateFiles(outputRoot, assemblyName + ".dll", SearchOption.AllDirectories)
+            .Where(path => !path.Contains(separator + "ref" + separator, StringComparison.OrdinalIgnoreCase) &&
+                !path.Contains(separator + "refint" + separator, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(path => !string.IsNullOrWhiteSpace(activeTargetFramework) &&
+                path.Contains(separator + activeTargetFramework + separator, StringComparison.OrdinalIgnoreCase))
+            .ThenByDescending(File.GetLastWriteTimeUtc)
+            .FirstOrDefault();
+    }
+
+    private static async Task<IReadOnlyList<MetadataReference>> LoadMetadataReferencesAsync(
+        string outputDirectory,
+        CancellationToken cancellationToken)
+    {
+        Dictionary<string, string> paths = new(StringComparer.OrdinalIgnoreCase);
+        foreach (string path in Directory.EnumerateFiles(outputDirectory, "*.dll", SearchOption.TopDirectoryOnly))
+        {
+            paths[Path.GetFileName(path)] = path;
+        }
+
+        if (AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") is string trustedPlatformAssemblies)
+        {
+            foreach (string path in trustedPlatformAssemblies.Split(
+                Path.PathSeparator,
+                StringSplitOptions.RemoveEmptyEntries))
+            {
+                paths.TryAdd(Path.GetFileName(path), path);
+            }
+        }
+
+        List<MetadataReference> references = new(paths.Count);
+        foreach (string path in paths.Values)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                byte[] image = await File.ReadAllBytesAsync(path, cancellationToken).ConfigureAwait(false);
+                references.Add(MetadataReference.CreateFromImage(
+                    ImmutableArray.Create(image),
+                    filePath: path));
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or BadImageFormatException)
+            {
+            }
+        }
+
+        return references;
+    }
+
+    private static string? InferTargetFramework(string outputAssemblyPath, string? configuredTargetFramework)
+    {
+        if (!string.IsNullOrWhiteSpace(configuredTargetFramework))
+        {
+            return configuredTargetFramework;
+        }
+
+        string? directory = Path.GetDirectoryName(outputAssemblyPath);
+        return directory is null ? null : Path.GetFileName(directory);
     }
 }

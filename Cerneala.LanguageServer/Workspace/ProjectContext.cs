@@ -16,7 +16,8 @@ internal sealed class ProjectContext : IDisposable
         string? targetFramework,
         Compilation roslynCompilation,
         Dictionary<string, CernealaDocument> documents,
-        CernealaCompilation languageCompilation)
+        CernealaCompilation languageCompilation,
+        string? projectAssemblyName = null)
     {
         ProjectFilePath = projectFilePath;
         TargetFramework = targetFramework;
@@ -26,7 +27,7 @@ internal sealed class ProjectContext : IDisposable
         Summary = new WorkspaceProjectSummary(
             projectFilePath,
             targetFramework,
-            roslynCompilation.AssemblyName ?? Path.GetFileNameWithoutExtension(projectFilePath));
+            projectAssemblyName ?? roslynCompilation.AssemblyName ?? Path.GetFileNameWithoutExtension(projectFilePath));
     }
 
     public string ProjectFilePath { get; }
@@ -84,6 +85,30 @@ internal sealed class ProjectContext : IDisposable
             compilation,
             documents,
             languageCompilation);
+    }
+
+    public static ProjectContext CreateBootstrap(
+        string projectFilePath,
+        string? targetFramework,
+        string projectAssemblyName,
+        Compilation compilation,
+        CernealaDocument document,
+        long revision)
+    {
+        string path = PathComparer.Normalize(document.Path);
+        Dictionary<string, CernealaDocument> documents = new(PathComparer.Instance)
+        {
+            [path] = document
+        };
+        RoslynCompilationSymbols symbols = new(compilation, revision);
+        CernealaCompilation languageCompilation = new(symbols, documents.Values);
+        return new ProjectContext(
+            PathComparer.Normalize(projectFilePath),
+            targetFramework,
+            compilation,
+            documents,
+            languageCompilation,
+            projectAssemblyName);
     }
 
     public bool TryGetDocument(string path, out CernealaDocument? document) =>

@@ -77,8 +77,7 @@
           "name": "meta.element.property.cerneala",
           "begin": "(</?)([A-Za-z_][A-Za-z0-9_:-]*\\.[A-Za-z_][A-Za-z0-9_.:-]*)",
           "beginCaptures": {
-            "1": { "name": "punctuation.definition.tag.begin.cerneala" },
-            "2": { "name": "keyword.other.type.cerneala" }
+            "1": { "name": "punctuation.definition.tag.begin.cerneala" }
           },
           "end": "(/?>)|(?=$)",
           "endCaptures": {
@@ -98,8 +97,7 @@
           "name": "meta.element.prism.cerneala",
           "begin": "(</?)((?:[A-Za-z_][A-Za-z0-9_-]*:)?PrismComposition)\\b",
           "beginCaptures": {
-            "1": { "name": "punctuation.definition.tag.begin.cerneala" },
-            "2": { "name": "keyword.other.type.cerneala" }
+            "1": { "name": "punctuation.definition.tag.begin.cerneala" }
           },
           "end": "(/?>)|(?=$)",
           "endCaptures": {
@@ -119,8 +117,7 @@
           "name": "meta.element.motion.cerneala",
           "begin": "(</?)((?:[A-Za-z_][A-Za-z0-9_-]*:)?MotionClip)\\b",
           "beginCaptures": {
-            "1": { "name": "punctuation.definition.tag.begin.cerneala" },
-            "2": { "name": "keyword.other.type.cerneala" }
+            "1": { "name": "punctuation.definition.tag.begin.cerneala" }
           },
           "end": "(/?>)|(?=$)",
           "endCaptures": {
@@ -140,8 +137,7 @@
           "name": "meta.element.cerneala",
           "begin": "(</?)([A-Za-z_][A-Za-z0-9_.:-]*)",
           "beginCaptures": {
-            "1": { "name": "punctuation.definition.tag.begin.cerneala" },
-            "2": { "name": "keyword.other.type.cerneala" }
+            "1": { "name": "punctuation.definition.tag.begin.cerneala" }
           },
           "end": "(/?>)|(?=$)",
           "endCaptures": {
@@ -186,36 +182,34 @@
     "strings": {
       "patterns": [
         {
-          "name": "string.quoted.double.cerneala",
+          "name": "keyword.other.string-value.cerneala",
           "begin": "\"",
           "beginCaptures": {
-            "0": { "name": "punctuation.definition.string.begin.cerneala" }
+            "0": { "name": "keyword.other.string-value.cerneala" }
           },
           "end": "\"|(?=$)",
           "endCaptures": {
-            "0": { "name": "punctuation.definition.string.end.cerneala" }
+            "0": { "name": "keyword.other.string-value.cerneala" }
           },
           "patterns": [
             { "include": "#brace-bindings" },
             { "include": "#bindings" },
-            { "include": "#qualified-types" },
             { "include": "#entities" }
           ]
         },
         {
-          "name": "string.quoted.single.cerneala",
+          "name": "keyword.other.string-value.cerneala",
           "begin": "'",
           "beginCaptures": {
-            "0": { "name": "punctuation.definition.string.begin.cerneala" }
+            "0": { "name": "keyword.other.string-value.cerneala" }
           },
           "end": "'|(?=$)",
           "endCaptures": {
-            "0": { "name": "punctuation.definition.string.end.cerneala" }
+            "0": { "name": "keyword.other.string-value.cerneala" }
           },
           "patterns": [
             { "include": "#brace-bindings" },
             { "include": "#bindings" },
-            { "include": "#qualified-types" },
             { "include": "#entities" }
           ]
         }
@@ -256,12 +250,14 @@
     "bindings": {
       "patterns": [
         {
-          "name": "variable.other.binding.cerneala",
-          "match": "\\$(?:self|owner|root|DataContext|[A-Za-z_][A-Za-z0-9_]*)(?:\\.(?:prism\\.)?[A-Za-z_][A-Za-z0-9_]*)+(?::(?:OneWay|TwoWay|OneTime|OneWayToSource))?"
-        },
-        {
-          "name": "variable.other.resource.cerneala",
-          "match": "\\$[A-Za-z_][A-Za-z0-9_]*"
+          "match": "(\\$)((?:self|owner|root|DataContext|[A-Za-z_][A-Za-z0-9_]*))((?:\\.(?:prism\\.)?[A-Za-z_][A-Za-z0-9_]*)*)(?:(:)(OneWay|TwoWay|OneTime|OneWayToSource))?",
+          "captures": {
+            "1": { "name": "string.other.reference-sigil.cerneala" },
+            "2": { "name": "support.function.reference-name.cerneala" },
+            "3": { "name": "entity.other.attribute-name.property.cerneala" },
+            "4": { "name": "punctuation.separator.binding-mode.cerneala" },
+            "5": { "name": "constant.other.binding-mode.cerneala" }
+          }
         }
       ]
     },

@@ -37,7 +37,7 @@ public sealed class ProtocolContractTests
         Assert.NotNull(result.Capabilities.SemanticTokensProvider);
         Assert.True(result.Capabilities.SemanticTokensProvider.Full.Delta);
         Assert.Equal(
-            ["type", "property", "event", "namespace", "variable", "keyword", "function", "parameter", "enumMember", "label", "property"],
+            ["type", "property", "event", "namespace", "variable", "keyword", "function", "parameter", "enumMember", "label", "property", "string", "function"],
             result.Capabilities.SemanticTokensProvider.Legend.TokenTypes);
         Assert.Equal(["declaration"], result.Capabilities.SemanticTokensProvider.Legend.TokenModifiers);
         Assert.True(result.Capabilities.DocumentSymbolProvider);
@@ -78,7 +78,7 @@ public sealed class ProtocolContractTests
         InitializeResult result = await client.InitializeAsync(timeout.Token, host: "visualStudio");
 
         Assert.Equal(
-            ["type", "property name", "event", "namespace", "type", "keyword", "function", "parameter", "enumMember", "keyword - control", "method name"],
+            ["type", "property name", "event", "namespace", "type", "keyword", "function", "parameter", "enumMember", "keyword - control", "method name", "string", "method name"],
             result.Capabilities.SemanticTokensProvider!.Legend.TokenTypes);
         Assert.Equal(0, await client.StopAsync(timeout.Token));
     }

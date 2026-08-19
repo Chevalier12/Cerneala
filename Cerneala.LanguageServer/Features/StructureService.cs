@@ -12,12 +12,12 @@ internal sealed class StructureService(CernealaWorkspace workspace) : IDisposabl
 
     public static readonly string[] TokenTypes =
     [
-        "type", "property", "event", "namespace", "variable", "keyword", "function", "parameter", "enumMember", "label", "property"
+        "type", "property", "event", "namespace", "variable", "keyword", "function", "parameter", "enumMember", "label", "property", "string", "function"
     ];
 
     private static readonly string[] VisualStudioTokenTypes =
     [
-        "type", "property name", "event", "namespace", "type", "keyword", "function", "parameter", "enumMember", "keyword - control", "method name"
+        "type", "property name", "event", "namespace", "type", "keyword", "function", "parameter", "enumMember", "keyword - control", "method name", "string", "method name"
     ];
 
     public static readonly string[] TokenModifiers = ["declaration"];

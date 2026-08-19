@@ -67,6 +67,21 @@ public sealed class NavigationProtocolTests
             timeout.Token));
         Assert.Equal(Normalize(fixture.ApplicationMarkupPath), Normalize(new Uri(accentDefinition.Uri).LocalPath));
 
+        int loadingReferenceStart = markup.IndexOf("$LoadingSequence", StringComparison.Ordinal);
+        foreach (int loadingOffset in new[]
+        {
+            loadingReferenceStart,
+            loadingReferenceStart + 1,
+            loadingReferenceStart + "$LoadingSequence".Length - 1
+        })
+        {
+            LspLocation loadingDefinition = Assert.Single(await client.Rpc.InvokeWithParameterObjectAsync<LspLocation[]>(
+                "textDocument/definition",
+                PositionRequest(fixture.ViewMarkupUri, markup, loadingOffset),
+                timeout.Token));
+            Assert.Equal(Normalize(fixture.ViewMarkupPath), Normalize(new Uri(loadingDefinition.Uri).LocalPath));
+        }
+
         int actionOffset = markup.LastIndexOf("$Action", StringComparison.Ordinal) + 1;
         TextDocumentPositionParams actionRequest = PositionRequest(fixture.ViewMarkupUri, markup, actionOffset);
         LspLocation[] actionReferences = await client.Rpc.InvokeWithParameterObjectAsync<LspLocation[]>(
@@ -298,6 +313,15 @@ public sealed class NavigationProtocolTests
                 """);
             File.WriteAllText(view, """
                 <Window DataType="Fixture.ViewModel">
+                  <Window.Resources>
+                    <MotionClip Name="LoadingSequence" TargetType="Window">
+                      @sequence { @set { Opacity = 1; } }
+                    </MotionClip>
+                    <Aspect Name="LoadingMotion" TargetType="Window">
+                      @handle Loading;
+                      @on Loaded { @run $LoadingSequence as Loading; }
+                    </Aspect>
+                  </Window.Resources>
                   <StackPanel>
                     <Button Name="Action" Background="$Accent" />
                     <TextBlock Text="$DataContext.Title" />

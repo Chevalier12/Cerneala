@@ -1,10 +1,65 @@
 using Cerneala.LanguageServer.Protocol;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using System.Diagnostics;
 using System.Xml.Linq;
 
 namespace Cerneala.Tests.LanguageServer;
 
 public sealed class CompletionProtocolTests
 {
+    [Fact]
+    public async Task DeferredWorkspaceUsesTheBuiltOwnerForTheFirstCompletionRequest()
+    {
+        using ImmediateSemanticWorkspace fixture = ImmediateSemanticWorkspace.Create();
+        using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(10));
+        await using ProtocolTestClient client = ProtocolTestClient.Start();
+        await client.InitializeAsync(
+            timeout.Token,
+            fixture.SolutionPath,
+            deferWorkspaceLoad: true);
+        await client.Rpc.NotifyWithParameterObjectAsync(
+            "textDocument/didOpen",
+            new DidOpenTextDocumentParams
+            {
+                TextDocument = new TextDocumentItem
+                {
+                    Uri = fixture.MarkupUri,
+                    LanguageId = "cerneala",
+                    Version = 1,
+                    Text = fixture.Markup
+                }
+            });
+
+        int completionOffset = fixture.Markup.IndexOf("$DataContext.", StringComparison.Ordinal) +
+            "$DataContext.".Length;
+        Stopwatch firstCompletion = Stopwatch.StartNew();
+        CompletionList completion = await client.Rpc.InvokeWithParameterObjectAsync<CompletionList>(
+            "textDocument/completion",
+            new TextDocumentPositionParams
+            {
+                TextDocument = new TextDocumentIdentifier { Uri = fixture.MarkupUri },
+                Position = PositionAt(fixture.Markup, completionOffset)
+            },
+            timeout.Token);
+        firstCompletion.Stop();
+
+        Assert.Contains(completion.Items, item => item.Label == "ImmediateProperty");
+        Assert.True(
+            firstCompletion.Elapsed < TimeSpan.FromSeconds(2),
+            "First semantic completion took " + firstCompletion.Elapsed.TotalMilliseconds + " ms.");
+        using (FileStream output = File.Open(
+            fixture.OutputAssemblyPath,
+            FileMode.Open,
+            FileAccess.ReadWrite,
+            FileShare.None))
+        {
+            Assert.True(output.CanWrite);
+        }
+
+        Assert.Equal(0, await client.StopAsync(timeout.Token));
+    }
+
     [Fact]
     public async Task CompletionResolveAndSignatureHelpRunThroughTheRealProtocol()
     {
@@ -319,5 +374,92 @@ public sealed class CompletionProtocolTests
         }
 
         throw new DirectoryNotFoundException("Could not locate the Cerneala repository root.");
+    }
+
+    private sealed class ImmediateSemanticWorkspace : IDisposable
+    {
+        private ImmediateSemanticWorkspace(
+            string rootPath,
+            string solutionPath,
+            string markupPath,
+            string outputAssemblyPath,
+            string markup)
+        {
+            RootPath = rootPath;
+            SolutionPath = solutionPath;
+            MarkupPath = markupPath;
+            OutputAssemblyPath = outputAssemblyPath;
+            Markup = markup;
+        }
+
+        public string RootPath { get; }
+
+        public string SolutionPath { get; }
+
+        public string MarkupPath { get; }
+
+        public string OutputAssemblyPath { get; }
+
+        public string MarkupUri => new Uri(MarkupPath).AbsoluteUri;
+
+        public string Markup { get; }
+
+        public static ImmediateSemanticWorkspace Create()
+        {
+            string root = Path.Combine(Path.GetTempPath(), $"cerneala-lsp-bootstrap-{Guid.NewGuid():N}");
+            Directory.CreateDirectory(root);
+            string projectPath = Path.Combine(root, "Fixture.csproj");
+            string solutionPath = Path.Combine(root, "Fixture.slnx");
+            string markupPath = Path.Combine(root, "View.crn");
+            string markup =
+                "<Window DataType=\"Fixture.ViewModel\"><TextBlock Text=\"$DataContext.\" /></Window>";
+            File.WriteAllText(projectPath, """
+                <Project Sdk="Microsoft.NET.Sdk">
+                  <PropertyGroup>
+                    <TargetFramework>net10.0</TargetFramework>
+                    <AssemblyName>Fixture</AssemblyName>
+                  </PropertyGroup>
+                  <ItemGroup>
+                    <AdditionalFiles Include="View.crn" />
+                  </ItemGroup>
+                </Project>
+                """);
+            File.WriteAllText(solutionPath, """
+                <Solution>
+                  <Project Path="Fixture.csproj" />
+                </Solution>
+                """);
+            File.WriteAllText(markupPath, markup);
+            string outputAssemblyPath = Path.Combine(root, "bin", "Debug", "net10.0", "Fixture.dll");
+            EmitBuiltProject(outputAssemblyPath);
+            return new ImmediateSemanticWorkspace(
+                root,
+                solutionPath,
+                markupPath,
+                outputAssemblyPath,
+                markup);
+        }
+
+        public void Dispose()
+        {
+            if (Directory.Exists(RootPath))
+            {
+                Directory.Delete(RootPath, recursive: true);
+            }
+        }
+
+        private static void EmitBuiltProject(string outputPath)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+            string[] trustedAssemblies = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES"))?
+                .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries) ?? [];
+            CSharpCompilation compilation = CSharpCompilation.Create(
+                "Fixture",
+                [CSharpSyntaxTree.ParseText("namespace Fixture; public sealed class ViewModel { public string ImmediateProperty { get; set; } = string.Empty; }")],
+                trustedAssemblies.Select(path => MetadataReference.CreateFromFile(path)),
+                new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            Microsoft.CodeAnalysis.Emit.EmitResult result = compilation.Emit(outputPath);
+            Assert.True(result.Success, string.Join(Environment.NewLine, result.Diagnostics));
+        }
     }
 }

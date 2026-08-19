@@ -126,17 +126,17 @@ public sealed class StructureTests
         int referenceStart = Markup.IndexOf("$Action.Opacity", StringComparison.Ordinal);
 
         CernealaSemanticToken reference = Assert.Single(tokens.Where(token =>
-            token.Span.Start == referenceStart && fixture.Document.Text.Substring(token.Span) == "$Action"));
+            token.Span.Start == referenceStart + 1 && fixture.Document.Text.Substring(token.Span) == "Action"));
         CernealaSemanticToken property = Assert.Single(tokens.Where(token =>
             token.Span.Start == referenceStart + "$Action.".Length &&
             fixture.Document.Text.Substring(token.Span) == "Opacity"));
 
-        Assert.Equal(CernealaSemanticTokenKind.Variable, reference.Kind);
+        Assert.Equal(CernealaSemanticTokenKind.ReferenceName, reference.Kind);
         Assert.Equal(CernealaSemanticTokenKind.Property, property.Kind);
     }
 
     [Fact]
-    public void ResourceAndNamedControlReferencesUseDistinctSemanticCategories()
+    public void ReferenceSigilsAndNamesUseSeparateSemanticCategories()
     {
         using Fixture fixture = Fixture.Create(Markup);
         CernealaStructureService service = new();
@@ -145,14 +145,12 @@ public sealed class StructureTests
             fixture.Model);
         int controlStart = Markup.IndexOf("$Action", StringComparison.Ordinal);
 
-        CernealaSemanticToken[] resources = tokens.Where(token =>
-            fixture.Document.Text.Substring(token.Span) == "$Accent").ToArray();
+        CernealaSemanticToken sigil = Assert.Single(tokens.Where(token =>
+            token.Span.Start == controlStart && fixture.Document.Text.Substring(token.Span) == "$"));
         CernealaSemanticToken control = Assert.Single(tokens.Where(token =>
-            token.Span.Start == controlStart && fixture.Document.Text.Substring(token.Span) == "$Action"));
+            token.Span.Start == controlStart + 1 && fixture.Document.Text.Substring(token.Span) == "Action"));
 
-        Assert.Equal(2, resources.Length);
-        Assert.All(resources, resource => Assert.Equal(CernealaSemanticTokenKind.Label, resource.Kind));
-        Assert.Equal(CernealaSemanticTokenKind.Variable, control.Kind);
+        Assert.NotEqual(sigil.Kind, control.Kind);
     }
 
     [Fact]
@@ -179,15 +177,18 @@ public sealed class StructureTests
             fixture.Document,
             model: null);
 
-        AssertToken(tokens, fixture.Document, "Window", CernealaSemanticTokenKind.Keyword);
+        Assert.DoesNotContain(tokens, token => fixture.Document.Text.Substring(token.Span) == "Window");
         AssertToken(tokens, fixture.Document, "Background", CernealaSemanticTokenKind.Property);
-        AssertToken(tokens, fixture.Document, "$Accent", CernealaSemanticTokenKind.Label);
-        AssertToken(tokens, fixture.Document, "$Action", CernealaSemanticTokenKind.Variable);
+        Assert.Contains(tokens, token => fixture.Document.Text.Substring(token.Span) == "$" &&
+            token.Span.Start + 1 < fixture.Document.Text.Length &&
+            fixture.Document.Text[token.Span.Start + 1] is 'A' or 'D');
+        Assert.Contains(tokens, token => fixture.Document.Text.Substring(token.Span) == "Accent");
+        Assert.Contains(tokens, token => fixture.Document.Text.Substring(token.Span) == "Action");
         AssertToken(tokens, fixture.Document, "Opacity", CernealaSemanticTokenKind.Property);
         AssertToken(tokens, fixture.Document, "TwoWay", CernealaSemanticTokenKind.EnumMember);
         AssertToken(tokens, fixture.Document, "IsEnabled", CernealaSemanticTokenKind.ConditionProperty);
         AssertToken(tokens, fixture.Document, "IsMouseOver", CernealaSemanticTokenKind.ConditionProperty);
-        AssertToken(tokens, fixture.Document, "$DataContext", CernealaSemanticTokenKind.Variable);
+        AssertToken(tokens, fixture.Document, "DataContext", CernealaSemanticTokenKind.ReferenceName);
         AssertToken(tokens, fixture.Document, "Enabled", CernealaSemanticTokenKind.Property);
     }
 
@@ -213,7 +214,7 @@ public sealed class StructureTests
     }
 
     [Fact]
-    public void EveryMarkupTypeUsesTheKeywordSemanticCategory()
+    public void MarkupTypeTagsRemainPlainTextWithoutSemanticOverrides()
     {
         const string markup = """
             <Window>
@@ -236,14 +237,18 @@ public sealed class StructureTests
         {
             ("Window", 2),
             ("StackPanel", 2),
-            ("TextBlock", 3)
+            ("TextBlock", 2)
         })
         {
-            CernealaSemanticToken[] typeTokens = tokens.Where(token =>
-                fixture.Document.Text.Substring(token.Span) == typeName).ToArray();
+            TextSpan[] tagSpans = fixture.Document.Syntax.DescendantElements()
+                .Where(element => element.Name == typeName)
+                .SelectMany(element => element.CloseNameToken.IsMissing
+                    ? [element.NameToken.Span]
+                    : new[] { element.NameToken.Span, element.CloseNameToken.Span })
+                .ToArray();
 
-            Assert.Equal(expectedOccurrences, typeTokens.Length);
-            Assert.All(typeTokens, token => Assert.Equal(CernealaSemanticTokenKind.Keyword, token.Kind));
+            Assert.Equal(expectedOccurrences, tagSpans.Length);
+            Assert.DoesNotContain(tokens, token => tagSpans.Contains(token.Span));
         }
     }
 

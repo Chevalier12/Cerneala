@@ -344,6 +344,26 @@ public sealed class CompletionTests
         Assert.Equal("IsMouseOver", property.InsertText);
     }
 
+    [Theory]
+    [InlineData("@on |caret| { }")]
+    [InlineData("@on MouseM|caret| { }")]
+    public void OnDirectiveCompletesEventsFromTheAspectTargetType(string body)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(
+            "<Window><Window.Resources><Aspect TargetType=\"Button\">" + body +
+            "</Aspect></Window.Resources></Window>");
+
+        IReadOnlyList<CernealaCompletionItem> items = fixture.Complete();
+
+        Assert.Contains(items, item =>
+            item.Label == "Click" && item.Kind == CernealaCompletionItemKind.Event);
+        Assert.Contains(items, item =>
+            item.Label == "Loaded" && item.Kind == CernealaCompletionItemKind.Event);
+        Assert.Contains(items, item =>
+            item.Label == "MouseMove" && item.Kind == CernealaCompletionItemKind.Event);
+        Assert.DoesNotContain(items, item => item.Kind == CernealaCompletionItemKind.Property);
+    }
+
     [Fact]
     public void IfExpressionAlsoCompletesTheWhenValueOperand()
     {

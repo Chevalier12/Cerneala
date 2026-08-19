@@ -376,6 +376,7 @@
             Name="LoadingMotion"
             TargetType="views:OpeningView">
             @handle Loading;
+            
             @on StartRequested
             {
                 @run $LoadingSequence as Loading;

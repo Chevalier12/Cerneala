@@ -47,14 +47,15 @@ public sealed class CernealaGrammarTests
         Assert.Contains(
             tokens,
             token => token.Line == 3 && token.Text == "TextBlock" &&
-                token.Scopes.Contains("keyword.other.type.cerneala", StringComparer.Ordinal));
+                token.Scopes.Contains("meta.element.cerneala", StringComparer.Ordinal) &&
+                !token.Scopes.Contains("keyword.other.type.cerneala", StringComparer.Ordinal));
         Assert.DoesNotContain(
             tokens.Where(token => token.Line >= 3),
             token => token.Scopes.Any(scope => scope.Contains("incomplete", StringComparison.Ordinal)));
     }
 
     [Fact]
-    public void ElementTypeNamesUseTheBlueKeywordFallbackClassification()
+    public void ElementTypeNamesUseThePlainTextFallbackClassification()
     {
         IReadOnlyList<TokenizedSpan> tokens = Tokenize(
             ["<Grid><TextBlock /></Grid>"],
@@ -62,19 +63,27 @@ public sealed class CernealaGrammarTests
 
         foreach (string typeName in new[] { "Grid", "TextBlock" })
         {
-            Assert.Contains(
-                tokens,
-                token => token.Text == typeName &&
-                    token.Scopes.Contains("keyword.other.type.cerneala", StringComparer.Ordinal));
             Assert.DoesNotContain(
                 tokens,
                 token => token.Text == typeName &&
-                    token.Scopes.Contains("entity.name.tag.cerneala", StringComparer.Ordinal));
-            Assert.DoesNotContain(
-                tokens,
-                token => token.Text == typeName &&
-                    token.Scopes.Any(scope => scope.StartsWith("meta.tag", StringComparison.Ordinal)));
+                    token.Scopes.Any(scope => scope is "keyword.other.type.cerneala" or
+                        "entity.name.tag.cerneala"));
         }
+    }
+
+    [Fact]
+    public void StringsAndReferencesUseTheRequestedFallbackClassifications()
+    {
+        IReadOnlyList<TokenizedSpan> tokens = Tokenize(
+            ["<Border Tag=\"plain\" Background=\"$LineBrush\" />"],
+            ThemeName.VisualStudioDark);
+
+        Assert.Contains(tokens, token => token.Text == "plain" &&
+            token.Scopes.Contains("keyword.other.string-value.cerneala", StringComparer.Ordinal));
+        Assert.Contains(tokens, token => token.Text == "$" &&
+            token.Scopes.Contains("string.other.reference-sigil.cerneala", StringComparer.Ordinal));
+        Assert.Contains(tokens, token => token.Text == "LineBrush" &&
+            token.Scopes.Contains("support.function.reference-name.cerneala", StringComparer.Ordinal));
     }
 
     [Fact]
@@ -104,10 +113,10 @@ public sealed class CernealaGrammarTests
             grammar);
         string[] representativeScopes =
         [
-            "keyword.other.type.cerneala",
             "entity.other.attribute-name.cerneala",
-            "string.quoted.double.cerneala",
-            "variable.other.binding.cerneala"
+            "keyword.other.string-value.cerneala",
+            "string.other.reference-sigil.cerneala",
+            "support.function.reference-name.cerneala"
         ];
 
         foreach (string scope in representativeScopes)

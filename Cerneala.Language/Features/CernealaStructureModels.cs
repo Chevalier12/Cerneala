@@ -14,7 +14,9 @@ internal enum CernealaSemanticTokenKind
     Parameter,
     EnumMember,
     Label,
-    ConditionProperty
+    ConditionProperty,
+    ReferenceSigil,
+    ReferenceName
 }
 
 [Flags]

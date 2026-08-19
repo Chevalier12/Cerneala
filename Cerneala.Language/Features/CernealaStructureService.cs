@@ -14,27 +14,9 @@ internal sealed class CernealaStructureService
         CancellationToken cancellationToken = default)
     {
         List<TokenCandidate> candidates = new();
-        NamedElementIndex namedElements = BuildNamedElementIndex(document.Syntax);
         foreach (ElementSyntax element in document.Syntax.DescendantElements())
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (element.Kind == SyntaxKind.PropertyElement)
-            {
-                AddCandidate(candidates, element.NameToken.Span, CernealaSemanticTokenKind.Property, 10);
-                if (!element.CloseNameToken.IsMissing)
-                {
-                    AddCandidate(candidates, element.CloseNameToken.Span, CernealaSemanticTokenKind.Property, 10);
-                }
-            }
-            else
-            {
-                AddCandidate(candidates, element.NameToken.Span, CernealaSemanticTokenKind.Keyword, 10);
-                if (!element.CloseNameToken.IsMissing)
-                {
-                    AddCandidate(candidates, element.CloseNameToken.Span, CernealaSemanticTokenKind.Keyword, 10);
-                }
-            }
-
             foreach (AttributeSyntax attribute in element.Attributes)
             {
                 bool isNamespace = attribute.NameToken.Text == "xmlns" ||
@@ -73,7 +55,7 @@ internal sealed class CernealaStructureService
                     : [binding.Syntax.Binding];
                 foreach (BindingPathSyntax path in paths)
                 {
-                    AddBindingCandidates(candidates, document, path, namedElements);
+                    AddBindingCandidates(candidates, document, path);
                 }
             }
         }
@@ -97,7 +79,7 @@ internal sealed class CernealaStructureService
             {
                 if (assignment.Name.StartsWith("$", StringComparison.Ordinal))
                 {
-                    AddBindings(candidates, document, assignment.Name, assignment.NameSpan.Start, namedElements);
+                    AddBindings(candidates, document, assignment.Name, assignment.NameSpan.Start);
                 }
                 else
                 {
@@ -108,11 +90,10 @@ internal sealed class CernealaStructureService
                     candidates,
                     document,
                     document.Text.Substring(assignment.ValueSpan),
-                    assignment.ValueSpan.Start,
-                    namedElements);
+                    assignment.ValueSpan.Start);
             }
 
-            AddBindings(candidates, document, text.Token.Text, text.Token.Span.Start, namedElements);
+            AddBindings(candidates, document, text.Token.Text, text.Token.Span.Start);
         }
 
         if (model is not null)
@@ -465,8 +446,7 @@ internal sealed class CernealaStructureService
         ICollection<TokenCandidate> candidates,
         CernealaDocument document,
         string text,
-        int absoluteOffset,
-        NamedElementIndex namedElements)
+        int absoluteOffset)
     {
         int position = 0;
         while (position < text.Length)
@@ -491,7 +471,7 @@ internal sealed class CernealaStructureService
                 absoluteOffset + start);
             if (parsed.Syntax.Binding is BindingPathSyntax binding)
             {
-                AddBindingCandidates(candidates, document, binding, namedElements);
+                AddBindingCandidates(candidates, document, binding);
             }
         }
     }
@@ -499,23 +479,35 @@ internal sealed class CernealaStructureService
     private static void AddBindingCandidates(
         ICollection<TokenCandidate> candidates,
         CernealaDocument document,
-        BindingPathSyntax path,
-        NamedElementIndex namedElements)
+        BindingPathSyntax path)
     {
         foreach ((BindingPathSegmentSyntax segment, int index) in path.Segments.Select(
             (segment, index) => (segment, index)))
         {
             TextSpan span = segment.Span;
-            if (index == 0 && span.Start > 0 && document.Text[span.Start - 1] == '$')
+            if (index == 0)
             {
-                span = new TextSpan(span.Start - 1, span.Length + 1);
+                if (span.Length > 0 && document.Text[span.Start] == '$')
+                {
+                    AddCandidate(
+                        candidates,
+                        new TextSpan(span.Start, 1),
+                        CernealaSemanticTokenKind.ReferenceSigil,
+                        90);
+                    span = new TextSpan(span.Start + 1, span.Length - 1);
+                }
+                else if (span.Start > 0 && document.Text[span.Start - 1] == '$')
+                {
+                    AddCandidate(
+                        candidates,
+                        new TextSpan(span.Start - 1, 1),
+                        CernealaSemanticTokenKind.ReferenceSigil,
+                        90);
+                }
             }
 
-            string name = segment.Name.TrimStart('$');
             CernealaSemanticTokenKind kind = index == 0
-                ? namedElements.Resources.Contains(name)
-                    ? CernealaSemanticTokenKind.Label
-                    : CernealaSemanticTokenKind.Variable
+                ? CernealaSemanticTokenKind.ReferenceName
                 : CernealaSemanticTokenKind.Property;
             AddCandidate(candidates, span, kind, 90);
         }
@@ -600,37 +592,6 @@ internal sealed class CernealaStructureService
         }
     }
 
-    private static NamedElementIndex BuildNamedElementIndex(DocumentSyntax document)
-    {
-        HashSet<string> resources = new(StringComparer.Ordinal);
-        HashSet<string> controls = new(StringComparer.Ordinal);
-        foreach (ElementSyntax element in document.Children.OfType<ElementSyntax>())
-        {
-            CollectNamedElements(element, parentIsResources: false, resources, controls);
-        }
-
-        return new NamedElementIndex(resources, controls);
-    }
-
-    private static void CollectNamedElements(
-        ElementSyntax element,
-        bool parentIsResources,
-        ISet<string> resources,
-        ISet<string> controls)
-    {
-        string? name = AttributeValue(element, "Name");
-        if (!string.IsNullOrWhiteSpace(name))
-        {
-            (parentIsResources ? resources : controls).Add(name!);
-        }
-
-        bool isResources = element.Kind == SyntaxKind.PropertyElement && LocalName(element.Name) == "Resources";
-        foreach (ElementSyntax child in element.Children.OfType<ElementSyntax>())
-        {
-            CollectNamedElements(child, isResources, resources, controls);
-        }
-    }
-
     private static bool IsIdentifierStart(char character) => char.IsLetter(character) || character == '_';
 
     private static bool IsIdentifierPart(char character) => char.IsLetterOrDigit(character) || character == '_';
@@ -645,12 +606,12 @@ internal sealed class CernealaStructureService
         {
             case CernealaSemanticSymbolKind.RootType:
             case CernealaSemanticSymbolKind.Element:
+            case CernealaSemanticSymbolKind.PropertyElement:
                 kind = default;
                 return false;
             case CernealaSemanticSymbolKind.TypeReference:
                 kind = CernealaSemanticTokenKind.Keyword;
                 return true;
-            case CernealaSemanticSymbolKind.PropertyElement:
             case CernealaSemanticSymbolKind.Property:
                 kind = CernealaSemanticTokenKind.Property;
                 return true;
@@ -661,7 +622,7 @@ internal sealed class CernealaStructureService
                 kind = CernealaSemanticTokenKind.Event;
                 return true;
             case CernealaSemanticSymbolKind.BindingSource:
-                kind = CernealaSemanticTokenKind.Variable;
+                kind = CernealaSemanticTokenKind.ReferenceName;
                 return true;
             case CernealaSemanticSymbolKind.BindingSegment:
                 kind = CernealaSemanticTokenKind.Property;
@@ -670,7 +631,7 @@ internal sealed class CernealaStructureService
                 kind = CernealaSemanticTokenKind.EnumMember;
                 return true;
             case CernealaSemanticSymbolKind.ResourceReference:
-                kind = CernealaSemanticTokenKind.Label;
+                kind = CernealaSemanticTokenKind.ReferenceName;
                 priority = 120;
                 return true;
             case CernealaSemanticSymbolKind.MotionDirective:
@@ -678,7 +639,7 @@ internal sealed class CernealaStructureService
                 priority = 130;
                 return true;
             case CernealaSemanticSymbolKind.MotionTarget:
-                kind = CernealaSemanticTokenKind.Variable;
+                kind = CernealaSemanticTokenKind.ReferenceName;
                 priority = 130;
                 return true;
             case CernealaSemanticSymbolKind.MotionEvent:
@@ -760,10 +721,12 @@ internal sealed class CernealaStructureService
     private static TextSpan SemanticTokenSpan(
         CernealaDocument document,
         CernealaSemanticSymbol symbol) =>
-        symbol.Kind is CernealaSemanticSymbolKind.ResourceReference or CernealaSemanticSymbolKind.BindingSource &&
-        symbol.Span.Start > 0 &&
-        document.Text[symbol.Span.Start - 1] == '$'
-            ? new TextSpan(symbol.Span.Start - 1, symbol.Span.Length + 1)
+        symbol.Kind is CernealaSemanticSymbolKind.ResourceReference or
+            CernealaSemanticSymbolKind.BindingSource or
+            CernealaSemanticSymbolKind.MotionTarget &&
+        symbol.Span.Length > 1 &&
+        document.Text[symbol.Span.Start] == '$'
+            ? new TextSpan(symbol.Span.Start + 1, symbol.Span.Length - 1)
             : symbol.Span;
 
     private static bool IsDeclaration(CernealaSemanticSymbolKind kind) => kind is
@@ -885,7 +848,4 @@ internal sealed class CernealaStructureService
         int Priority,
         CernealaSemanticTokenModifiers Modifiers);
 
-    private sealed record NamedElementIndex(
-        HashSet<string> Resources,
-        HashSet<string> Controls);
 }

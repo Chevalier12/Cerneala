@@ -674,6 +674,23 @@ internal sealed class CernealaCompletionService
             return;
         }
 
+        if (model is not null && IsOnEventNameCompletionSite(statement))
+        {
+            ILanguageTypeSymbol? targetType = model.GetCompletionElementType(element);
+            foreach (ILanguageMemberSymbol member in
+                targetType?.GetMembers() ?? Array.Empty<ILanguageMemberSymbol>())
+            {
+                if (member.Kind == LanguageMemberKind.Event && !member.IsStatic)
+                {
+                    Add(result, member.Name, member.Name, site.WordSpan,
+                        CernealaCompletionItemKind.Event, member.ValueTypeMetadataName, "00",
+                        targetType!.MetadataName, member.Name);
+                }
+            }
+
+            return;
+        }
+
         FunctionCall? call = FindFunctionCall(site.Source, site.Offset);
         if (call is not null)
         {
@@ -1382,6 +1399,18 @@ internal sealed class CernealaCompletionService
         return keyword is not null &&
             IsReactiveExpressionOperandSite(
                 statement.Substring(keywordStart + keyword.Length));
+    }
+
+    private static bool IsOnEventNameCompletionSite(string statement)
+    {
+        int onStart = FindLastDirectiveKeyword(statement, "@on");
+        if (onStart < 0)
+        {
+            return false;
+        }
+
+        string candidate = statement.Substring(onStart + "@on".Length).TrimStart();
+        return candidate.All(IsIdentifierCharacter);
     }
 
     private static bool IsReactiveExpressionOperandSite(string expression)

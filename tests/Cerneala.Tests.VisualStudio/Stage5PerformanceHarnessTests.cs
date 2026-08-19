@@ -77,7 +77,7 @@ public sealed class Stage5PerformanceHarnessTests
         Assert.Contains("StartDeferredInitialLoad", workspace, StringComparison.Ordinal);
         Assert.DoesNotContain("DeferredInitialLoadDelay", workspace, StringComparison.Ordinal);
         Assert.DoesNotContain("Task.Delay(DeferredInitialLoadDelay", workspace, StringComparison.Ordinal);
-        Assert.Contains("GetWorkspace().StartDeferredInitialLoad()", File.ReadAllText(Path.Combine(
+        Assert.Contains("GetWorkspace().StartDeferredInitialLoad(request.TextDocument.Uri)", File.ReadAllText(Path.Combine(
             VisualStudioPackageTests.RepositoryRoot(),
             "Cerneala.LanguageServer",
             "Protocol",

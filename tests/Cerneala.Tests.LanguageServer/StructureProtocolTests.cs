@@ -51,16 +51,15 @@ public sealed class StructureProtocolTests
             markup,
             full.Data,
             initialized.Capabilities.SemanticTokensProvider!.Legend.TokenTypes);
-        foreach (string elementName in new[] { "Window", "SolidColorBrush", "Grid", "Button", "TextBlock" })
+        foreach (string elementName in new[] { "Window", "SolidColorBrush", "Grid", "TextBlock" })
         {
-            Assert.Contains(semanticTokens, token =>
-                token.Text == elementName && token.Type == "keyword");
-            Assert.DoesNotContain(semanticTokens, token =>
-                token.Text == elementName && token.Type != "keyword");
+            Assert.DoesNotContain(semanticTokens, token => token.Text == elementName);
         }
 
-        Assert.Contains(semanticTokens, token => token.Text == "$Accent" && token.Type == "keyword - control");
-        Assert.Contains(semanticTokens, token => token.Text == "$UnsavedAction" && token.Type == "type");
+        Assert.Single(semanticTokens, token => token.Text == "Button" && token.Type == "keyword");
+        Assert.Equal(2, semanticTokens.Count(token => token.Text == "$" && token.Type == "string"));
+        Assert.Contains(semanticTokens, token => token.Text == "Accent" && token.Type == "method name");
+        Assert.Contains(semanticTokens, token => token.Text == "UnsavedAction" && token.Type == "method name");
         Assert.Contains(semanticTokens, token => token.Text == "OneWay" && token.Type == "enumMember");
         Assert.Contains(semanticTokens, token =>
             token.Text == "IsEnabled" && token.Type == "method name");

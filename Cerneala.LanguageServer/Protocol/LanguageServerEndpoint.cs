@@ -405,7 +405,6 @@ internal sealed class LanguageServerEndpoint(IServerLogger logger) : IAsyncDispo
     public void Initialized(object? request)
     {
         EnsureInitialized();
-        GetWorkspace().StartDeferredInitialLoad();
         logger.Info("lifecycle.ready");
     }
 
@@ -420,6 +419,7 @@ internal sealed class LanguageServerEndpoint(IServerLogger logger) : IAsyncDispo
             request.TextDocument.Version);
         if (accepted)
         {
+            GetWorkspace().StartDeferredInitialLoad(request.TextDocument.Uri);
             GetDiagnosticPublisher().Schedule(request.TextDocument.Uri);
         }
 

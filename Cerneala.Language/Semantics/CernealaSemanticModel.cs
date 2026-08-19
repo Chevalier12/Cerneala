@@ -86,12 +86,22 @@ internal sealed partial class CernealaSemanticModel : IDisposable
     public CernealaSemanticSymbol? GetSymbolAt(int offset)
     {
         ThrowIfDisposed();
-        return symbols
+        CernealaSemanticSymbol? symbol = symbols
             .Where(symbol => symbol.Span.Contains(offset) ||
                 symbol.Span.Length == 0 && symbol.Span.Start == offset)
             .OrderBy(symbol => symbol.Span.Length)
             .ThenByDescending(symbol => IsQuerySpecificKind(symbol.Kind))
             .ThenBy(symbol => symbol.Kind)
+            .FirstOrDefault();
+        if (symbol is not null || offset < 0 || offset >= document.Text.Length || document.Text[offset] != '$')
+        {
+            return symbol;
+        }
+
+        return symbols
+            .Where(candidate => candidate.Span.Start == offset + 1 && IsDollarReferenceKind(candidate.Kind))
+            .OrderBy(candidate => candidate.Span.Length)
+            .ThenBy(candidate => candidate.Kind)
             .FirstOrDefault();
     }
 
@@ -872,6 +882,9 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         CernealaSemanticSymbolKind.PrismNode or CernealaSemanticSymbolKind.PrismOperation or
         CernealaSemanticSymbolKind.PrismProperty or CernealaSemanticSymbolKind.PrismParameter or
         CernealaSemanticSymbolKind.PrismValue;
+
+    private static bool IsDollarReferenceKind(CernealaSemanticSymbolKind kind) => kind is
+        CernealaSemanticSymbolKind.ResourceReference or CernealaSemanticSymbolKind.BindingSource;
 
     private void ThrowIfDisposed()
     {

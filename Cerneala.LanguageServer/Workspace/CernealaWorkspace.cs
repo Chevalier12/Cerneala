@@ -13,6 +13,8 @@ internal sealed class CernealaWorkspace : IAsyncDisposable
     private readonly DocumentOverlayStore overlays = new();
     private readonly SemaphoreSlim reloadGate = new(1, 1);
     private readonly CancellationTokenSource lifetimeCancellation = new();
+    private readonly TaskCompletionSource initialContextReady = new(
+        TaskCreationOptions.RunContinuationsAsynchronously);
     private WorkspaceState state;
     private CancellationTokenSource stateVersionCancellation = new();
     private FileSystemWatcher? watcher;
@@ -60,20 +62,27 @@ internal sealed class CernealaWorkspace : IAsyncDisposable
         else
         {
             await workspace.ReloadAsync(cancellationToken).ConfigureAwait(false);
+            workspace.initialContextReady.TrySetResult();
         }
 
         workspace.StartWatcher();
         return workspace;
     }
 
-    internal void StartDeferredInitialLoad()
+    internal void StartDeferredInitialLoad(string? preferredDocumentUri = null)
     {
-        if (!initialLoadDeferred || initialReloadTask is not null)
+        lock (stateGate)
         {
-            return;
-        }
+            if (!initialLoadDeferred || initialReloadTask is not null)
+            {
+                return;
+            }
 
-        initialReloadTask = ReloadInitialWorkspaceAsync();
+            string? preferredDocumentPath = string.IsNullOrWhiteSpace(preferredDocumentUri)
+                ? null
+                : PathComparer.FromUri(preferredDocumentUri);
+            initialReloadTask = ReloadInitialWorkspaceAsync(preferredDocumentPath);
+        }
     }
 
     public bool OpenDocument(string uri, string text, long version) =>
@@ -107,21 +116,7 @@ internal sealed class CernealaWorkspace : IAsyncDisposable
                 revision,
                 logger,
                 linked.Token).ConfigureAwait(false);
-
-            WorkspaceState previous;
-            CancellationTokenSource previousCancellation;
-            lock (stateGate)
-            {
-                previous = state;
-                state = replacement;
-                previousCancellation = stateVersionCancellation;
-                stateVersionCancellation = new CancellationTokenSource();
-            }
-
-            previousCancellation.Cancel();
-            previousCancellation.Dispose();
-            previous.Release();
-            Reloaded?.Invoke();
+            ReplaceState(replacement);
         }
         finally
         {
@@ -199,6 +194,7 @@ internal sealed class CernealaWorkspace : IAsyncDisposable
         CancellationToken cancellationToken)
     {
         long queued = Stopwatch.GetTimestamp();
+        await WaitForInitialContextAsync(cancellationToken).ConfigureAwait(false);
         string path = PathComparer.FromUri(uri);
         WorkspaceState capturedState;
         CancellationToken stateToken;
@@ -388,10 +384,16 @@ internal sealed class CernealaWorkspace : IAsyncDisposable
         watcher.Renamed += OnWorkspaceFileChanged;
     }
 
-    private async Task ReloadInitialWorkspaceAsync()
+    private async Task ReloadInitialWorkspaceAsync(string? preferredDocumentPath)
     {
         try
         {
+            if (preferredDocumentPath is not null)
+            {
+                await TryLoadInitialBootstrapAsync(preferredDocumentPath).ConfigureAwait(false);
+            }
+
+            initialContextReady.TrySetResult();
             await ReloadAsync(lifetimeCancellation.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (lifetimeCancellation.IsCancellationRequested)
@@ -401,6 +403,74 @@ internal sealed class CernealaWorkspace : IAsyncDisposable
         {
             logger.Critical("workspace.initialLoadFailed", ("exceptionType", exception.GetType().FullName));
         }
+        finally
+        {
+            initialContextReady.TrySetResult();
+        }
+    }
+
+    private async Task TryLoadInitialBootstrapAsync(string preferredDocumentPath)
+    {
+        await reloadGate.WaitAsync(lifetimeCancellation.Token).ConfigureAwait(false);
+        try
+        {
+            long revision;
+            lock (stateGate)
+            {
+                revision = checked(state.Revision + 1);
+            }
+
+            WorkspaceState? bootstrap = await WorkspaceState.TryLoadBootstrapAsync(
+                configuration,
+                revision,
+                preferredDocumentPath,
+                logger,
+                lifetimeCancellation.Token).ConfigureAwait(false);
+            if (bootstrap is not null)
+            {
+                ReplaceState(bootstrap);
+            }
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.Info("workspace.bootstrapFailed", ("exceptionType", exception.GetType().FullName));
+        }
+        finally
+        {
+            reloadGate.Release();
+        }
+    }
+
+    private async Task WaitForInitialContextAsync(CancellationToken cancellationToken)
+    {
+        bool wait;
+        lock (stateGate)
+        {
+            wait = initialLoadDeferred && initialReloadTask is not null;
+        }
+
+        if (wait)
+        {
+            await initialContextReady.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private void ReplaceState(WorkspaceState replacement)
+    {
+        WorkspaceState previous;
+        CancellationTokenSource previousCancellation;
+        lock (stateGate)
+        {
+            previous = state;
+            state = replacement;
+            previousCancellation = stateVersionCancellation;
+            stateVersionCancellation = new CancellationTokenSource();
+        }
+
+        previousCancellation.Cancel();
+        previousCancellation.Dispose();
+        previous.Release();
+        Reloaded?.Invoke();
     }
 
     private void OnWorkspaceFileChanged(object sender, FileSystemEventArgs args)

@@ -57,7 +57,13 @@ Workspace reloads are debounced for 150 ms and ignore `bin` and `obj` changes.
 Requests capture a workspace revision and the active overlay versions; a result
 is returned only when both are still current. A deferred initial workspace load
 is available to hosts that need the process to become responsive before Roslyn
-project discovery completes.
+project discovery completes. On the first opened project document, deferred mode
+bootstraps its semantic context from in-memory copies of the latest built project
+output and dependencies. The first semantic request waits only for that bootstrap;
+the complete MSBuild workspace continues loading in the background and atomically
+replaces it. Reading assembly images into memory prevents the language server from
+locking build outputs. If no compatible output exists yet, the document remains
+syntax-only until the full workspace finishes loading or the project is built.
 
 Files not owned by a project receive syntax-only completion, diagnostics,
 formatting, symbols, folding, and selection support. They also receive the single

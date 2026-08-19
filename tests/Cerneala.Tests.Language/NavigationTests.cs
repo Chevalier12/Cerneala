@@ -179,6 +179,33 @@ public sealed class NavigationTests
     }
 
     [Fact]
+    public void MotionRunResourceReferenceNavigatesAcrossTheWholeDollarReference()
+    {
+        const string markup = """
+            <Window>
+              <Window.Resources>
+                <MotionClip Name="LoadingSequence" TargetType="Window">
+                  @sequence { @set { Opacity = 1; } }
+                </MotionClip>
+                <Aspect Name="LoadingMotion" TargetType="Window">
+                  @handle Loading;
+                  @on Loaded { @run $LoadingSequence as Loading; }
+                </Aspect>
+              </Window.Resources>
+            </Window>
+            """;
+        using NavigationFixture fixture = NavigationFixture.Create(markup);
+        CernealaNavigationService service = new();
+        int referenceStart = markup.IndexOf("$LoadingSequence", StringComparison.Ordinal);
+
+        for (int offset = referenceStart; offset < referenceStart + "$LoadingSequence".Length; offset++)
+        {
+            CernealaLocation definition = Assert.Single(service.GetDefinitions(fixture.Model, offset));
+            Assert.Equal("LoadingSequence", fixture.Document.Text.Substring(definition.Span));
+        }
+    }
+
+    [Fact]
     public void ReferencesHighlightsAndRenameRespectShadowingAndLeaveArbitraryTextAlone()
     {
         const string markup = """
