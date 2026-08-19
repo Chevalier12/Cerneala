@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -16,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Using Include="System.IO" />
     <Using Include="Xunit" />
   </ItemGroup>
 
@@ -24,6 +26,12 @@
              Link="Server\CernealaServerProcessManager.cs" />
     <Compile Include="..\..\Cerneala.VisualStudio\Server\SystemCernealaServerProcess.cs"
              Link="Server\SystemCernealaServerProcess.cs" />
+    <Compile Include="..\..\Cerneala.VisualStudio\Preview\CernealaPreviewChrome.cs"
+             Link="Preview\CernealaPreviewChrome.cs" />
+    <Compile Include="..\..\Cerneala.VisualStudio\Preview\CernealaPreviewInputQueue.cs"
+             Link="Preview\CernealaPreviewInputQueue.cs" />
+    <Compile Include="..\..\Shared\PreviewProtocol.cs"
+             Link="Preview\PreviewProtocol.cs" />
   </ItemGroup>
 
   <Target Name="BuildVisualStudioExtension"

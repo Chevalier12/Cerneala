@@ -7,7 +7,7 @@
     <NeutralLanguage>en-US</NeutralLanguage>
     <AssemblyName>Cerneala.VisualStudio</AssemblyName>
     <RootNamespace>Cerneala.VisualStudio</RootNamespace>
-    <Version>0.1.30</Version>
+    <Version>0.1.46</Version>
     <VSSDKBuildToolsAutoSetup>true</VSSDKBuildToolsAutoSetup>
     <GeneratePkgDefFile>true</GeneratePkgDefFile>
     <CreateVsixContainer>true</CreateVsixContainer>
@@ -17,11 +17,17 @@
     <VSSDKTargetPlatformRegRootSuffix>Exp</VSSDKTargetPlatformRegRootSuffix>
     <ServerPackageVersion>$(Version)</ServerPackageVersion>
     <BundledServerOutput>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\bundled-server\</BundledServerOutput>
+    <PreviewHostPackageVersion>$(Version)</PreviewHostPackageVersion>
+    <BundledPreviewHostOutput>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\bundled-preview-host\</BundledPreviewHostOutput>
   </PropertyGroup>
 
   <ItemGroup>
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Design" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
     <PackageReference Include="Microsoft.VisualStudio.LanguageServer.Client" Version="17.14.60" PrivateAssets="all" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.VisualStudio.Shell.15.0" Version="17.14.40264" PrivateAssets="all" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.VisualStudio.Text.UI.Wpf" Version="17.14.249" PrivateAssets="all" ExcludeAssets="runtime" />
@@ -29,6 +35,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\Shared\PreviewProtocol.cs" Link="Preview\PreviewProtocol.cs" />
     <Content Include="Cerneala.pkgdef">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
@@ -66,9 +73,23 @@
       BuildInParallel="false"
       Properties="Configuration=$(Configuration);RuntimeIdentifier=win-x64;SelfContained=true;PublishDir=$(BundledServerOutput)" />
     <ItemGroup>
-      <_BundledServer Include="$(BundledServerOutput)**\*" />
+      <_BundledServer Include="$(BundledServerOutput)**\*" Exclude="$(BundledServerOutput)**\*.pdb" />
       <VSIXSourceItem Include="@(_BundledServer)">
         <TargetPath>Server\$(ServerPackageVersion)\%(_BundledServer.RecursiveDir)%(_BundledServer.Filename)%(_BundledServer.Extension)</TargetPath>
+      </VSIXSourceItem>
+    </ItemGroup>
+  </Target>
+
+  <Target Name="PublishBundledPreviewHost" BeforeTargets="GetVsixSourceItems" Condition="'$(DesignTimeBuild)' != 'true'">
+    <MSBuild
+      Projects="..\Cerneala.PreviewHost\Cerneala.PreviewHost.csproj"
+      Targets="Restore;Publish"
+      BuildInParallel="false"
+      Properties="Configuration=$(Configuration);RuntimeIdentifier=win-x64;SelfContained=true;PublishDir=$(BundledPreviewHostOutput)" />
+    <ItemGroup>
+      <_BundledPreviewHost Include="$(BundledPreviewHostOutput)**\*" Exclude="$(BundledPreviewHostOutput)**\*.pdb" />
+      <VSIXSourceItem Include="@(_BundledPreviewHost)">
+        <TargetPath>PreviewHost\$(PreviewHostPackageVersion)\%(_BundledPreviewHost.RecursiveDir)%(_BundledPreviewHost.Filename)%(_BundledPreviewHost.Extension)</TargetPath>
       </VSIXSourceItem>
     </ItemGroup>
   </Target>

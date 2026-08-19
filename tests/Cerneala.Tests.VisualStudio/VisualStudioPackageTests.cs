@@ -50,6 +50,13 @@ public sealed class VisualStudioPackageTests
         Assert.Contains(entries, entry => entry.Equals(
             $"Server/{expectedVersion}/coreclr.dll",
             StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(entries, entry => entry.Equals(
+            $"PreviewHost/{expectedVersion}/Cerneala.PreviewHost.exe",
+            StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(entries, entry => entry.Equals(
+            $"PreviewHost/{expectedVersion}/coreclr.dll",
+            StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(entries, entry => entry.EndsWith(".pdb", StringComparison.OrdinalIgnoreCase));
 
         ZipArchiveEntry manifestEntry = Assert.Single(package.Entries.Where(entry => entry.FullName.Equals(
             "extension.vsixmanifest",
@@ -87,6 +94,198 @@ public sealed class VisualStudioPackageTests
         Assert.Contains("f7d79e1c-8074-46ec-80ca-79347f6d896a", content, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Cerneala.VisualStudio.dll", content, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("AutoLoadPackages", content, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void LivePreviewUsesWpfStyleDesignerSurfaceAroundTheStandardEditor()
+    {
+        string provider = File.ReadAllText(Path.Combine(
+            ProjectDirectory(),
+            "Preview",
+            "CernealaPreviewMarginProvider.cs"));
+        string margin = File.ReadAllText(Path.Combine(
+            ProjectDirectory(),
+            "Preview",
+            "CernealaPreviewMargin.cs"));
+        string modeBar = File.ReadAllText(Path.Combine(
+            ProjectDirectory(),
+            "Preview",
+            "CernealaPreviewModeBar.cs"));
+        string surface = File.ReadAllText(Path.Combine(
+            ProjectDirectory(),
+            "Preview",
+            "CernealaPreviewSurface.cs"));
+
+        Assert.Contains(": IWpfTextViewMarginProvider", provider, StringComparison.Ordinal);
+        Assert.Contains("[ContentType(CernealaContentType.Name)]", provider, StringComparison.Ordinal);
+        Assert.Contains("[TextViewRole(PredefinedTextViewRoles.Document)]", provider, StringComparison.Ordinal);
+        Assert.Contains("[MarginContainer(PredefinedMarginNames.Top)]", provider, StringComparison.Ordinal);
+        Assert.Contains("[MarginContainer(PredefinedMarginNames.Left)]", provider, StringComparison.Ordinal);
+        Assert.Contains("[MarginContainer(PredefinedMarginNames.Bottom)]", provider, StringComparison.Ordinal);
+        Assert.Contains("GetOrCreateSingletonProperty", provider, StringComparison.Ordinal);
+        Assert.Contains("BottomMarginName", margin, StringComparison.Ordinal);
+        Assert.Contains("new CernealaPreviewModeBar", margin, StringComparison.Ordinal);
+        Assert.Contains("new CernealaPreviewSurface", margin, StringComparison.Ordinal);
+        Assert.Contains("PreviewViewMode.Design", modeBar, StringComparison.Ordinal);
+        Assert.Contains("PreviewViewMode.Split", modeBar, StringComparison.Ordinal);
+        Assert.Contains("PreviewViewMode.Code", modeBar, StringComparison.Ordinal);
+        Assert.Contains("PreviewSplitOrientation.Horizontal", modeBar, StringComparison.Ordinal);
+        Assert.Contains("PreviewSplitOrientation.Vertical", modeBar, StringComparison.Ordinal);
+        Assert.Contains("GridSplitter", surface, StringComparison.Ordinal);
+        Assert.Contains("CreateViewportHandle", surface, StringComparison.Ordinal);
+        Assert.Contains("ViewportResizeAxis.Width", surface, StringComparison.Ordinal);
+        Assert.Contains("ViewportResizeAxis.Height", surface, StringComparison.Ordinal);
+        Assert.Contains("ViewportResizeAxis.Both", surface, StringComparison.Ordinal);
+        Assert.Contains("Key.Space", surface, StringComparison.Ordinal);
+        Assert.Contains("MouseButton.Middle", surface, StringComparison.Ordinal);
+        Assert.Contains("TranslatePoint", surface, StringComparison.Ordinal);
+        Assert.Contains("12.5%", surface, StringComparison.Ordinal);
+        Assert.Contains("800%", surface, StringComparison.Ordinal);
+        Assert.Contains("Show actual size", surface, StringComparison.Ordinal);
+        Assert.Contains("Fit all", surface, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void LivePreviewViewportResizeHandlesUseWpfDesignerChrome()
+    {
+        string surface = File.ReadAllText(Path.Combine(
+            ProjectDirectory(),
+            "Preview",
+            "CernealaPreviewSurface.cs"));
+
+        Assert.Contains("CreateWpfResizeHandleTemplate", surface, StringComparison.Ordinal);
+        Assert.Contains("Background = Brushes.Transparent", surface, StringComparison.Ordinal);
+        Assert.Contains("handle.Template = CreateWpfResizeHandleTemplate(axis)", surface, StringComparison.Ordinal);
+        Assert.Contains("CreateHandleLine", surface, StringComparison.Ordinal);
+        Assert.Contains("CreateHandleGrip", surface, StringComparison.Ordinal);
+        Assert.Contains("Panel.SetZIndex(handle, 10)", surface, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void LivePreviewDropdownsUseThePreviewToolbarChrome()
+    {
+        string surface = File.ReadAllText(Path.Combine(
+            ProjectDirectory(),
+            "Preview",
+            "CernealaPreviewSurface.cs"));
+        string chrome = File.ReadAllText(Path.Combine(
+            ProjectDirectory(),
+            "Preview",
+            "CernealaPreviewChrome.cs"));
+
+        Assert.Contains("CernealaPreviewChrome.ConfigureComboBox(zoomInput", surface, StringComparison.Ordinal);
+        Assert.Contains("CernealaPreviewChrome.ConfigureComboBox(refreshRateInput", surface, StringComparison.Ordinal);
+        Assert.Contains("PART_EditableTextBox", chrome, StringComparison.Ordinal);
+        Assert.Contains("PART_Popup", chrome, StringComparison.Ordinal);
+        Assert.Contains("ComboBoxItem.ForegroundProperty, TextBrush", chrome, StringComparison.Ordinal);
+        Assert.Contains("ComboBoxItem.BackgroundProperty, SurfaceBrush", chrome, StringComparison.Ordinal);
+        Assert.DoesNotContain("Brushes.Black", chrome, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void LivePreviewZoomSelectionCommitsTheSelectedValueImmediately()
+    {
+        string surface = File.ReadAllText(Path.Combine(
+            ProjectDirectory(),
+            "Preview",
+            "CernealaPreviewSurface.cs"));
+
+        Assert.Contains(
+            "CommitZoom(zoomInput.SelectedItem as string)",
+            surface,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "selectedValue ?? zoomInput.Text",
+            surface,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "CommitRefreshRate(refreshRateInput.SelectedItem as string)",
+            surface,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "selectedValue ?? refreshRateInput.Text",
+            surface,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void LivePreviewRefreshCapIsEditablePerSession()
+    {
+        string surface = File.ReadAllText(Path.Combine(
+            ProjectDirectory(),
+            "Preview",
+            "CernealaPreviewSurface.cs"));
+        string session = File.ReadAllText(Path.Combine(
+            ProjectDirectory(),
+            "Preview",
+            "CernealaPreviewSession.cs"));
+
+        Assert.Contains("refreshRateInput", surface, StringComparison.Ordinal);
+        Assert.Contains("15", surface, StringComparison.Ordinal);
+        Assert.Contains("30", surface, StringComparison.Ordinal);
+        Assert.Contains("60", surface, StringComparison.Ordinal);
+        Assert.Contains("120", surface, StringComparison.Ordinal);
+        Assert.Contains("SetRefreshRateLimit", surface, StringComparison.Ordinal);
+        Assert.Contains("RefreshRateLimit", session, StringComparison.Ordinal);
+        Assert.Contains("TimeSpan.FromMilliseconds(1000d / RefreshRateLimit)", session, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void LivePreviewPacesTheNextFrameFromCaptureCompletion()
+    {
+        string session = File.ReadAllText(Path.Combine(
+            ProjectDirectory(),
+            "Preview",
+            "CernealaPreviewSession.cs"));
+
+        Assert.Contains("DispatcherPriority.Render", session, StringComparison.Ordinal);
+        Assert.Contains("animationFrameStartedTimestamp", session, StringComparison.Ordinal);
+        Assert.Contains("ScheduleAnimationFrame", session, StringComparison.Ordinal);
+        Assert.Contains("remainingTicks <= 0", session, StringComparison.Ordinal);
+        Assert.Contains("Stopwatch.Frequency / RefreshRateLimit", session, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "private void OnAnimationTick(object? sender, EventArgs args) =>",
+            session,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void LivePreviewReusesItsWpfFrameSurface()
+    {
+        string session = File.ReadAllText(Path.Combine(
+            ProjectDirectory(),
+            "Preview",
+            "CernealaPreviewSession.cs"));
+
+        Assert.Contains("WriteableBitmap? frameBuffer", session, StringComparison.Ordinal);
+        Assert.Contains("frameBuffer.WritePixels", session, StringComparison.Ordinal);
+        Assert.DoesNotContain("BitmapSource.Create", session, StringComparison.Ordinal);
+        Assert.Contains(
+            "if (updateStatus)",
+            session,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void LivePreviewShowsACompilationLoadingOverlay()
+    {
+        string surface = File.ReadAllText(Path.Combine(
+            ProjectDirectory(),
+            "Preview",
+            "CernealaPreviewSurface.cs"));
+        string session = File.ReadAllText(Path.Combine(
+            ProjectDirectory(),
+            "Preview",
+            "CernealaPreviewSession.cs"));
+
+        Assert.Contains("Loading...", surface, StringComparison.Ordinal);
+        Assert.Contains("Might take a while (or not).", surface, StringComparison.Ordinal);
+        Assert.Contains("session.IsLoading", surface, StringComparison.Ordinal);
+        Assert.Contains("public bool IsLoading", session, StringComparison.Ordinal);
+        Assert.Contains("BuildLoadingOverlay", surface, StringComparison.Ordinal);
+        Assert.Contains("DoubleAnimation", surface, StringComparison.Ordinal);
+        Assert.Contains("RepeatBehavior.Forever", surface, StringComparison.Ordinal);
+        Assert.Contains("SetLoadingState(session.IsLoading)", surface, StringComparison.Ordinal);
     }
 
     private static string FindVsix()
