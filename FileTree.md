@@ -244,6 +244,15 @@ Generated from `.`.
 |   |   +-- WorkspaceState.cs
 |   |-- Cerneala.LanguageServer.csproj
 |   +-- Program.cs
+|-- Cerneala.PreviewHost/
+|   |-- Properties/
+|   |   +-- AssemblyInfo.cs
+|   |-- Cerneala.PreviewHost.csproj
+|   |-- PreviewCompiler.cs
+|   |-- PreviewHostServer.cs
+|   |-- PreviewMarkupHotReload.cs
+|   |-- PreviewRenderSession.cs
+|   +-- Program.cs
 |-- Cerneala.SourceGen/
 |   |-- Prism/
 |   |   |-- Binding/
@@ -287,6 +296,15 @@ Generated from `.`.
 |   |   +-- cerneala.png
 |   |-- Grammars/
 |   |   +-- cerneala.tmLanguage.json
+|   |-- Preview/
+|   |   |-- CernealaPreviewChrome.cs
+|   |   |-- CernealaPreviewHostClient.cs
+|   |   |-- CernealaPreviewInputQueue.cs
+|   |   |-- CernealaPreviewMargin.cs
+|   |   |-- CernealaPreviewMarginProvider.cs
+|   |   |-- CernealaPreviewModeBar.cs
+|   |   |-- CernealaPreviewSession.cs
+|   |   +-- CernealaPreviewSurface.cs
 |   |-- Server/
 |   |   |-- CernealaServerProcessManager.cs
 |   |   +-- SystemCernealaServerProcess.cs
@@ -1929,6 +1947,8 @@ Generated from `.`.
 |       +-- MainWindow.crn.cs
 |-- Properties/
 |   +-- AssemblyInfo.cs
+|-- Shared/
+|   +-- PreviewProtocol.cs
 |-- spikes/
 |-- tests/
 |   |-- Cerneala.Tests/
@@ -2480,6 +2500,9 @@ Generated from `.`.
 |   |   |-- ProtocolTestClient.cs
 |   |   |-- StructureProtocolTests.cs
 |   |   +-- WorkspaceTests.cs
+|   |-- Cerneala.Tests.PreviewHost/
+|   |   |-- Cerneala.Tests.PreviewHost.csproj
+|   |   +-- PreviewHostTests.cs
 |   |-- Cerneala.Tests.SourceGen/
 |   |   |-- Prism/
 |   |   |   |-- PrismCatalogCompilerTests.cs
@@ -2511,6 +2534,8 @@ Generated from `.`.
 |   |   |-- Cerneala.Tests.VisualStudio.csproj
 |   |   |-- CernealaGrammarTests.cs
 |   |   |-- CernealaServerProcessManagerTests.cs
+|   |   |-- PreviewChromeTests.cs
+|   |   |-- PreviewInputQueueTests.cs
 |   |   |-- Stage4IntegrationHarnessTests.cs
 |   |   |-- Stage5PerformanceHarnessTests.cs
 |   |   |-- Stage6ReleaseHarnessTests.cs
@@ -2889,6 +2914,7 @@ Generated from `.`.
 |   |   |   |-- MonoGameUiHostOptions.cs
 |   |   |   +-- PrismOperationalDiagnostics.cs
 |   |   |-- Windows/
+|   |   |   |-- DesignPreviewSession.cs
 |   |   |   |-- GeneratedWindowApplication.cs
 |   |   |   |-- IWindowPlatform.cs
 |   |   |   |-- Win32.cs

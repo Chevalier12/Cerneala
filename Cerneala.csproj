@@ -14,7 +14,9 @@
     <Compile Remove="Cerneala.SourceGen\**" />
     <Compile Remove="Cerneala.Language\**" />
     <Compile Remove="Cerneala.LanguageServer\**" />
+    <Compile Remove="Cerneala.PreviewHost\**" />
     <Compile Remove="Cerneala.VisualStudio\**" />
+    <Compile Remove="Shared\**" />
     <Compile Remove="Playground\**" />
     <Compile Remove="CernealaPresentation\**" />
     <Compile Remove="benchmarks\**" />
@@ -24,7 +26,9 @@
     <EmbeddedResource Remove="Cerneala.SourceGen\**" />
     <EmbeddedResource Remove="Cerneala.Language\**" />
     <EmbeddedResource Remove="Cerneala.LanguageServer\**" />
+    <EmbeddedResource Remove="Cerneala.PreviewHost\**" />
     <EmbeddedResource Remove="Cerneala.VisualStudio\**" />
+    <EmbeddedResource Remove="Shared\**" />
     <EmbeddedResource Remove="Playground\**" />
     <EmbeddedResource Remove="CernealaPresentation\**" />
     <EmbeddedResource Remove="benchmarks\**" />
@@ -34,7 +38,9 @@
     <None Remove="Cerneala.SourceGen\**" />
     <None Remove="Cerneala.Language\**" />
     <None Remove="Cerneala.LanguageServer\**" />
+    <None Remove="Cerneala.PreviewHost\**" />
     <None Remove="Cerneala.VisualStudio\**" />
+    <None Remove="Shared\**" />
     <None Remove="Playground\**" />
     <None Remove="CernealaPresentation\**" />
     <None Remove="benchmarks\**" />
@@ -53,7 +59,7 @@
 
   <ItemGroup>
     <ProjectReference Include="Cerneala.SourceGen\Cerneala.SourceGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    <AdditionalFiles Include="**\*.crn" Exclude="bin\**;obj\**;Cerneala.Language\**;Cerneala.LanguageServer\**;Cerneala.SourceGen\**;CernealaPresentation\**;docs\**;Playground\**;Tools\**;tests\**" />
+    <AdditionalFiles Include="**\*.crn" Exclude="bin\**;obj\**;Cerneala.Language\**;Cerneala.LanguageServer\**;Cerneala.PreviewHost\**;Cerneala.SourceGen\**;CernealaPresentation\**;docs\**;Playground\**;Shared\**;Tools\**;tests\**" />
     <AdditionalFiles Include="Cerneala.SourceGen\Prism\Catalog\prism-catalog.json" />
     <EmbeddedResource Include="Drawing\Prism\Filters\Assets\bluenoise.bin">
       <LogicalName>Cerneala.Drawing.Prism.Filters.Assets.bluenoise.bin</LogicalName>

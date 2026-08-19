@@ -13,6 +13,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Cerneala.Tests.Language/Cerneala.Tests.Language.csproj" />
     <Project Path="tests/Cerneala.Tests.LanguageServer/Cerneala.Tests.LanguageServer.csproj" />
+    <Project Path="tests/Cerneala.Tests.PreviewHost/Cerneala.Tests.PreviewHost.csproj" />
     <Project Path="tests/Cerneala.Tests.VisualStudio/Cerneala.Tests.VisualStudio.csproj" />
     <Project Path="tests/Cerneala.WindowsDxSmoke/Cerneala.WindowsDxSmoke.csproj" />
     <Project Path="tests/Cerneala.Tests.SourceGen/Cerneala.Tests.SourceGen.csproj" />
@@ -22,6 +23,7 @@
   <Project Path="Cerneala.csproj" />
   <Project Path="Cerneala.Language/Cerneala.Language.csproj" />
   <Project Path="Cerneala.LanguageServer/Cerneala.LanguageServer.csproj" />
+  <Project Path="Cerneala.PreviewHost/Cerneala.PreviewHost.csproj" />
   <Project Path="Cerneala.VisualStudio/Cerneala.VisualStudio.csproj" />
   <Project Path="Cerneala.SourceGen/Cerneala.SourceGen.csproj" />
   <Project Path="CernealaPresentation/CernealaPresentation.csproj" />
