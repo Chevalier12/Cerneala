@@ -10,6 +10,7 @@ namespace Cerneala.Drawing.MonoGame.Prism.Execution;
 
 internal sealed class PrismGraphPresentation
 {
+    private const int PresentationSamplingOutset = 1;
     private static readonly Vector2 FullUvScale = Vector2.One;
     private static readonly Vector2 ZeroUvOffset = Vector2.Zero;
 
@@ -19,6 +20,7 @@ internal sealed class PrismGraphPresentation
     private readonly PrismColorProfile hostColorProfile;
     private readonly PrismGraphExecutionCache executionCache;
     private readonly PrismGraphFallbackTracker fallbackTracker;
+    private PrismGraphExecutionPlan? executionPlan;
     private int[] captureSteps = [];
     private int[] captureCommandIndices = [];
     private bool[] initializedCaptures = [];
@@ -43,6 +45,7 @@ internal sealed class PrismGraphPresentation
         PrismGraphExecutionPlan plan,
         PrismGraph graph)
     {
+        executionPlan = plan;
         int requiredScopeSlots = 0;
         for (int index = 0; index < graph.Scopes.Length; index++)
         {
@@ -167,17 +170,20 @@ internal sealed class PrismGraphPresentation
                 renderer.EndBatch();
                 RenderTarget2D source =
                     executionCache.GetExecutionSurface(frame, step);
+                PrismPresentationRegion region =
+                    ResolvePresentationRegion(
+                        source,
+                        scope,
+                        node,
+                        destinationOffsetX: 0,
+                        destinationOffsetY: 0);
                 DrawPresentation(
                     renderer,
                     source,
                     parentTarget,
                     presentKernel,
                     scope.CompositionSettings.WorkingColorProfile,
-                    new Rectangle(
-                        0,
-                        0,
-                        parentTarget.Width,
-                        parentTarget.Height));
+                    region);
                 diagnostics.RecordPresentation(
                     PrismExecutionPassKind.NestedPresent,
                     node,
@@ -233,17 +239,20 @@ internal sealed class PrismGraphPresentation
                 renderer.EndBatch();
                 RenderTarget2D source =
                     executionCache.GetExecutionSurface(frame, step);
+                PrismPresentationRegion region =
+                    ResolvePresentationRegion(
+                        source,
+                        scope,
+                        node,
+                        hostViewport.X,
+                        hostViewport.Y);
                 DrawPresentation(
                     renderer,
                     source,
                     target: null,
                     presentKernel,
                     scope.CompositionSettings.WorkingColorProfile,
-                    new Rectangle(
-                        hostViewport.X,
-                        hostViewport.Y,
-                        hostViewport.Width,
-                        hostViewport.Height));
+                    region);
                 diagnostics.RecordPresentation(
                     PrismExecutionPassKind.RootPresent,
                     node,
@@ -271,13 +280,19 @@ internal sealed class PrismGraphPresentation
         RenderTarget2D? target,
         PrismKernel kernel,
         PrismColorProfile sourceProfile,
-        Rectangle destination)
+        PrismPresentationRegion region)
     {
+        if (region.Clip is Rectangle clip &&
+            (clip.Width == 0 || clip.Height == 0))
+        {
+            return;
+        }
         if (target is not null)
         {
             graphicsDevice.SetRenderTarget(target);
         }
 
+        Rectangle previousScissor = graphicsDevice.ScissorRectangle;
         PrismKernelParameters parameters = new(
             source,
             1f,
@@ -292,12 +307,113 @@ internal sealed class PrismGraphPresentation
                 0)
         };
         kernels.Bind(kernel, in parameters);
-        renderer.BeginKernelBatch(
-            kernels.Effect,
-            BlendState.AlphaBlend,
-            SamplerState.LinearClamp);
-        renderer.DrawFullscreen(source, destination);
-        renderer.EndBatch();
+        try
+        {
+            renderer.BeginKernelBatch(
+                kernels.Effect,
+                BlendState.AlphaBlend,
+                SamplerState.LinearClamp,
+                region.Clip);
+            renderer.DrawFullscreen(source, region.Destination);
+        }
+        finally
+        {
+            renderer.EndBatch();
+            graphicsDevice.ScissorRectangle = previousScissor;
+        }
+    }
+
+    private PrismPresentationRegion ResolvePresentationRegion(
+        RenderTarget2D source,
+        PrismGraphScope scope,
+        PrismGraphNode node,
+        int destinationOffsetX,
+        int destinationOffsetY)
+    {
+        PrismGraphExecutionPlan plan = executionPlan ??
+            throw new InvalidOperationException(
+                "Prism presentation requires a prepared execution plan.");
+        PrismGraphNodePlan nodePlan = plan.GetNodePlan(node.Id);
+        if (nodePlan.BoundsStatus == PrismGraphBoundsStatus.Unknown)
+        {
+            return new PrismPresentationRegion(
+                new Rectangle(
+                    destinationOffsetX,
+                    destinationOffsetY,
+                    source.Width,
+                    source.Height),
+                Clip: null);
+        }
+
+        Rectangle sourceRegion = ResolveSourceRegion(
+            UnionBounds(nodePlan.Bounds, scope.ControlBounds),
+            scope.PixelScale,
+            source);
+        return new PrismPresentationRegion(
+            new Rectangle(
+                destinationOffsetX,
+                destinationOffsetY,
+                source.Width,
+                source.Height),
+            new Rectangle(
+                destinationOffsetX + sourceRegion.X,
+                destinationOffsetY + sourceRegion.Y,
+                sourceRegion.Width,
+                sourceRegion.Height));
+    }
+
+    private static Rectangle ResolveSourceRegion(
+        DrawRect bounds,
+        float pixelScale,
+        RenderTarget2D source)
+    {
+        int left = (int)Math.Clamp(
+            MathF.Floor(bounds.X * pixelScale) -
+                PresentationSamplingOutset,
+            0,
+            source.Width);
+        int top = (int)Math.Clamp(
+            MathF.Floor(bounds.Y * pixelScale) -
+                PresentationSamplingOutset,
+            0,
+            source.Height);
+        int right = (int)Math.Clamp(
+            MathF.Ceiling(bounds.Right * pixelScale) +
+                PresentationSamplingOutset,
+            0,
+            source.Width);
+        int bottom = (int)Math.Clamp(
+            MathF.Ceiling(bounds.Bottom * pixelScale) +
+                PresentationSamplingOutset,
+            0,
+            source.Height);
+        return new Rectangle(
+            left,
+            top,
+            Math.Max(0, right - left),
+            Math.Max(0, bottom - top));
+    }
+
+    private static DrawRect UnionBounds(DrawRect first, DrawRect second)
+    {
+        if (first.Width <= 0 || first.Height <= 0)
+        {
+            return second;
+        }
+        if (second.Width <= 0 || second.Height <= 0)
+        {
+            return first;
+        }
+
+        float left = MathF.Min(first.X, second.X);
+        float top = MathF.Min(first.Y, second.Y);
+        float right = MathF.Max(first.Right, second.Right);
+        float bottom = MathF.Max(first.Bottom, second.Bottom);
+        return new DrawRect(
+            left,
+            top,
+            right - left,
+            bottom - top);
     }
 
     private PrismKernel GetPresentKernel(
@@ -377,4 +493,8 @@ internal sealed class PrismGraphPresentation
             renderer.RenderCommand(command);
         }
     }
+
+    private readonly record struct PrismPresentationRegion(
+        Rectangle Destination,
+        Rectangle? Clip);
 }

@@ -1140,6 +1140,21 @@
     "source": "UI/Controls/RadioButton.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.RenderSurface2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.RenderSurface2D.md",
+    "source": "UI/Controls/RenderSurface2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.RenderSurface2DDrawContext",
+    "file": "documentation/classes/Cerneala.UI.Controls.RenderSurface2DDrawContext.md",
+    "source": "UI/Controls/RenderSurface2DDrawContext.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.RenderSurface2DDrawEventHandler",
+    "file": "documentation/classes/Cerneala.UI.Controls.RenderSurface2DDrawEventHandler.md",
+    "source": "UI/Controls/RenderSurface2D.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.ResizeMode",
     "file": "documentation/classes/Cerneala.UI.Controls.ResizeMode.md",
     "source": "UI/Controls/ResizeMode.cs"

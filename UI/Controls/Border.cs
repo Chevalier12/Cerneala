@@ -13,12 +13,22 @@ public class Border : Decorator
 
     internal static void RenderBox(Control control, RenderContext context)
     {
+        RenderBackground(control, context);
+        RenderBorder(control, context);
+    }
+
+    internal static void RenderBackground(Control control, RenderContext context)
+    {
         DrawRect rect = ToDrawRect(context.Bounds);
         if (control.Background is { } background && rect.Width > 0 && rect.Height > 0)
         {
             context.DrawingContext.FillRectangle(rect, background);
         }
+    }
 
+    internal static void RenderBorder(Control control, RenderContext context)
+    {
+        DrawRect rect = ToDrawRect(context.Bounds);
         Thickness borderThickness = control.BorderThickness;
         float thickness = MathF.Max(MathF.Max(borderThickness.Left, borderThickness.Top), MathF.Max(borderThickness.Right, borderThickness.Bottom));
         if (control.BorderBrush is { } borderBrush && thickness > 0 && rect.Width > 0 && rect.Height > 0)

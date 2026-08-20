@@ -79,6 +79,14 @@ public sealed class DrawingContext
         _commands.Add(DrawCommand.DrawImage(image, destination, color));
     }
 
+    internal void DrawRenderSurface2D(
+        IRenderSurface2DSource surface,
+        DrawRect destination,
+        Color color)
+    {
+        _commands.Add(DrawCommand.RenderSurface2D(surface, destination, color));
+    }
+
     public void PushClip(DrawRect rect)
     {
         _commands.Add(DrawCommand.PushClip(rect));

@@ -376,7 +376,10 @@ internal sealed class PrismGraphExecutor : IDisposable
                 SurfaceFormat.HalfVector4,
                 0,
                 profile,
-                mipMap: true);
+                mipMap: true,
+                usage: node.Kind == PrismGraphNodeKind.ControlCapture
+                    ? RenderTargetUsage.PreserveContents
+                    : RenderTargetUsage.DiscardContents);
         }
     }
 

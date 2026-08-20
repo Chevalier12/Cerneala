@@ -1094,6 +1094,7 @@ internal static class PrismRetainedCacheBenchmarkRunner
         private readonly SpriteBatch spriteBatch;
         private readonly Texture2D whitePixel;
         private readonly RenderTarget2D hostTarget;
+        private readonly RasterizerState scissorRasterizerState;
         private readonly XnaColor[] readback;
         private bool batchActive;
 
@@ -1106,6 +1107,8 @@ internal static class PrismRetainedCacheBenchmarkRunner
             spriteBatch = new SpriteBatch(graphicsDevice);
             whitePixel = new Texture2D(graphicsDevice, 1, 1);
             whitePixel.SetData([XnaColor.White]);
+            scissorRasterizerState =
+                MonoGameDrawingBackend.ScissorRasterizerState;
             hostTarget = new RenderTarget2D(
                 graphicsDevice,
                 width,
@@ -1143,9 +1146,20 @@ internal static class PrismRetainedCacheBenchmarkRunner
         public void BeginKernelBatch(
             Effect effect,
             BlendState blendState,
-            SamplerState samplerState)
+            SamplerState samplerState,
+            Rectangle? scissorRectangle = null)
         {
-            BeginBatch(effect, blendState, samplerState);
+            if (scissorRectangle is Rectangle scissor)
+            {
+                GraphicsDevice.ScissorRectangle = scissor;
+            }
+            BeginBatch(
+                effect,
+                blendState,
+                samplerState,
+                scissorRectangle.HasValue
+                    ? scissorRasterizerState
+                    : RasterizerState.CullNone);
         }
 
         public void EndBatch()
@@ -1215,13 +1229,15 @@ internal static class PrismRetainedCacheBenchmarkRunner
             GraphicsDevice.SetRenderTarget(null);
             hostTarget.Dispose();
             whitePixel.Dispose();
+            scissorRasterizerState.Dispose();
             spriteBatch.Dispose();
         }
 
         private void BeginBatch(
             Effect? effect,
             BlendState blendState,
-            SamplerState samplerState = null!)
+            SamplerState samplerState = null!,
+            RasterizerState? rasterizerState = null)
         {
             if (batchActive)
             {
@@ -1234,7 +1250,7 @@ internal static class PrismRetainedCacheBenchmarkRunner
                 blendState,
                 samplerState ?? SamplerState.LinearClamp,
                 DepthStencilState.None,
-                RasterizerState.CullNone,
+                rasterizerState ?? RasterizerState.CullNone,
                 effect);
             batchActive = true;
         }

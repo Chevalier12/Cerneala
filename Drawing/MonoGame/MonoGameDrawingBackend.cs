@@ -218,12 +218,7 @@ public sealed class MonoGameDrawingBackend :
             preparationTime = Stopwatch.GetElapsedTime(preparationStarted);
 
             prismDiagnostics.BeginFrame();
-            BeginSpriteBatch(
-                SpriteSortMode.Immediate,
-                BlendState.AlphaBlend,
-                SamplerState.LinearClamp,
-                DepthStencilState.None,
-                scissorRasterizerState!);
+            BeginUiSpriteBatch();
             commandRenderingStarted = Stopwatch.GetTimestamp();
             commandRenderingStartedValid = true;
             if (frameContext.PrismAnalysis.Scopes.IsEmpty)
@@ -351,6 +346,16 @@ public sealed class MonoGameDrawingBackend :
         }
     }
 
+    private void BeginUiSpriteBatch()
+    {
+        BeginSpriteBatch(
+            SpriteSortMode.Immediate,
+            BlendState.AlphaBlend,
+            SamplerState.LinearClamp,
+            DepthStencilState.None,
+            scissorRasterizerState!);
+    }
+
     private void RenderCommand(DrawCommand command)
     {
         switch (command.Kind)
@@ -416,6 +421,10 @@ public sealed class MonoGameDrawingBackend :
 
             case DrawCommandKind.DrawImage:
                 DrawImage(command);
+                break;
+
+            case DrawCommandKind.RenderSurface2D:
+                DrawRenderSurface2D(command);
                 break;
 
             case DrawCommandKind.DrawText:
@@ -690,6 +699,55 @@ public sealed class MonoGameDrawingBackend :
         _spriteBatch.Draw(
             image.Texture,
             Mapper.MapRectangle(command.Rect),
+            Premultiply(ToColor(command.Color)));
+    }
+
+    private void DrawRenderSurface2D(DrawCommand command)
+    {
+        if (command.RenderSurface is not IMonoGameRenderSurface2DSource surface)
+        {
+            throw new InvalidOperationException(
+                "RenderSurface2D requires a MonoGame-compatible surface source.");
+        }
+
+        Rectangle destination = Mapper.MapRectangle(command.Rect);
+        if (destination.Width <= 0 || destination.Height <= 0)
+        {
+            return;
+        }
+
+        GraphicsDevice graphicsDevice = _spriteBatch.GraphicsDevice;
+        EndSpriteBatch();
+        MonoGameGraphicsDeviceStateSnapshot snapshot = new();
+        snapshot.Capture(graphicsDevice);
+        Texture2D? texture;
+        try
+        {
+            texture = surface.ResolveSurface(
+                graphicsDevice,
+                destination.Width,
+                destination.Height);
+        }
+        finally
+        {
+            snapshot.Restore(graphicsDevice);
+            BeginUiSpriteBatch();
+        }
+
+        if (texture is null)
+        {
+            return;
+        }
+
+        if (!ReferenceEquals(texture.GraphicsDevice, graphicsDevice))
+        {
+            throw new InvalidOperationException(
+                "A RenderSurface2D texture can only be drawn by the GraphicsDevice that created it.");
+        }
+
+        _spriteBatch.Draw(
+            texture,
+            destination,
             Premultiply(ToColor(command.Color)));
     }
 
@@ -1758,6 +1816,7 @@ public sealed class MonoGameDrawingBackend :
             DrawCommandKind.DrawLine => DrawCommand.DrawLine(MapPoint(command.Position), MapPoint(command.EndPoint), ApplyOpacity(command.Color, opacity), command.Thickness * thicknessScale),
             DrawCommandKind.FillPath => DrawCommand.FillPath(command.PathData!, command.SourceRect, MapRect(command.Rect), command.Brush!, command.BrushOpacity * opacity),
             DrawCommandKind.DrawImage => DrawCommand.DrawImage(command.Image!, MapRect(command.Rect), ApplyOpacity(command.Color, opacity)),
+            DrawCommandKind.RenderSurface2D => DrawCommand.RenderSurface2D(command.RenderSurface!, MapRect(command.Rect), ApplyOpacity(command.Color, opacity)),
             DrawCommandKind.DrawText when command.Brush is not null => DrawCommand.DrawText(command.TextRun!, MapPoint(command.Position), command.Brush, command.BrushOpacity * opacity),
             DrawCommandKind.DrawText => DrawCommand.DrawText(command.TextRun!, MapPoint(command.Position), ApplyOpacity(command.Color, opacity)),
             DrawCommandKind.PushClip => DrawCommand.PushClip(MapRect(command.Rect)),
@@ -2154,14 +2213,21 @@ public sealed class MonoGameDrawingBackend :
     void IPrismCommandRenderer.BeginKernelBatch(
         Effect effect,
         BlendState blendState,
-        SamplerState samplerState)
+        SamplerState samplerState,
+        Rectangle? scissorRectangle)
     {
+        if (scissorRectangle is Rectangle scissor)
+        {
+            _spriteBatch.GraphicsDevice.ScissorRectangle = scissor;
+        }
         BeginSpriteBatch(
             SpriteSortMode.Immediate,
             blendState,
             samplerState,
             DepthStencilState.None,
-            RasterizerState.CullNone,
+            scissorRectangle.HasValue
+                ? scissorRasterizerState!
+                : RasterizerState.CullNone,
             effect);
     }
 

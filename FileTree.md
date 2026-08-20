@@ -732,6 +732,9 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Primitives.TrackLayoutPanel.md
 |   |   |   |-- Cerneala.UI.Controls.ProgressBar.md
 |   |   |   |-- Cerneala.UI.Controls.RadioButton.md
+|   |   |   |-- Cerneala.UI.Controls.RenderSurface2D.md
+|   |   |   |-- Cerneala.UI.Controls.RenderSurface2DDrawContext.md
+|   |   |   |-- Cerneala.UI.Controls.RenderSurface2DDrawEventHandler.md
 |   |   |   |-- Cerneala.UI.Controls.ResizeMode.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollBarVisibility.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollChangedEventArgs.md
@@ -1622,12 +1625,16 @@ Generated from `.`.
 |   |   |   |   +-- PrismSurfacePool.cs
 |   |   |   |-- IMonoGameBackdropFrameLease.cs
 |   |   |   +-- MonoGameBackdropFrameValidation.cs
+|   |   |-- IMonoGameRenderSurface2DSource.cs
 |   |   |-- MonoGameClipStack.cs
 |   |   |-- MonoGameDrawingBackend.cs
 |   |   |-- MonoGameDrawMapper.cs
 |   |   |-- MonoGameGraphicsDeviceStateSnapshot.cs
 |   |   |-- MonoGameImage.cs
-|   |   +-- MonoGamePathMeshBuilder.cs
+|   |   |-- MonoGamePathMeshBuilder.cs
+|   |   |-- MonoGameRenderSurface2DSession.cs
+|   |   |-- RenderSurface2D.MonoGame.cs
+|   |   +-- RenderSurface2DDrawContext.cs
 |   |-- Paths/
 |   |   +-- SvgPathFlattener.cs
 |   |-- Prism/
@@ -1920,6 +1927,7 @@ Generated from `.`.
 |   |-- IDrawImage.cs
 |   |-- IDrawingBackend.cs
 |   |-- IFontSource.cs
+|   |-- IRenderSurface2DSource.cs
 |   +-- SvgRasterizer.cs
 |-- Playground/
 |   |-- Assets/
@@ -2003,6 +2011,7 @@ Generated from `.`.
 |   |   |   |-- PanelTests.cs
 |   |   |   |-- PasswordBoxTests.cs
 |   |   |   |-- ProgressBarTests.cs
+|   |   |   |-- RenderSurface2DTests.cs
 |   |   |   |-- ScrollBarTests.cs
 |   |   |   |-- ScrollViewerTests.cs
 |   |   |   |-- SelectionModelTests.cs
@@ -2075,7 +2084,8 @@ Generated from `.`.
 |   |   |   |   |-- PrismTraceContourGpuTests.cs
 |   |   |   |   |-- PrismWaterPaperGpuTests.cs
 |   |   |   |   |-- PrismWindGpuTests.cs
-|   |   |   |   +-- PrismWindowsDxConformanceTests.cs
+|   |   |   |   |-- PrismWindowsDxConformanceTests.cs
+|   |   |   |   +-- RenderSurface2DRenderingTests.cs
 |   |   |   |-- Paths/
 |   |   |   |   +-- SvgPathFlattenerTests.cs
 |   |   |   |-- Prism/
@@ -2525,6 +2535,7 @@ Generated from `.`.
 |   |   |-- UiMarkupGeneratorMotionPresenceTests.cs
 |   |   |-- UiMarkupGeneratorMotionTests.cs
 |   |   |-- UiMarkupGeneratorMotionTimelineTests.cs
+|   |   |-- UiMarkupGeneratorRenderSurface2DTests.cs
 |   |   |-- UiMarkupGeneratorResourceBindingModeTests.cs
 |   |   +-- UiMarkupGeneratorTests.cs
 |   |-- Cerneala.Tests.VisualStudio/
@@ -2812,6 +2823,7 @@ Generated from `.`.
 |   |   |-- PopupRoot.cs
 |   |   |-- ProgressBar.cs
 |   |   |-- RadioButton.cs
+|   |   |-- RenderSurface2D.cs
 |   |   |-- ResizeMode.cs
 |   |   |-- ScrollBarVisibility.cs
 |   |   |-- ScrollChangedEventArgs.cs

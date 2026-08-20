@@ -10,6 +10,7 @@ public enum DrawCommandKind
     FillPath,
     DrawText,
     DrawImage,
+    RenderSurface2D,
     PushClip,
     PopClip,
     BeginPrism,

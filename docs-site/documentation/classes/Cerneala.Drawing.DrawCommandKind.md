@@ -29,6 +29,7 @@ public enum DrawCommandKind
 | `FillPath` | Fills SVG path data within destination bounds. |
 | `DrawText` | Draws a text run. |
 | `DrawImage` | Draws an image. |
+| `RenderSurface2D` | Composes a backend-managed 2D game surface into the retained command stream. |
 | `PushClip` | Pushes a rectangular clip. |
 | `PopClip` | Removes the current clip. |
 | `BeginPrism` | Begins a typed retained Prism capture scope. |

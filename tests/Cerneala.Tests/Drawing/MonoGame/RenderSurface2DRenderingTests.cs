@@ -1,0 +1,230 @@
+using System.Numerics;
+using Cerneala.Drawing;
+using Cerneala.Drawing.Prism;
+using Cerneala.Drawing.Prism.Catalog;
+using Cerneala.Drawing.Prism.Graph;
+using Cerneala.UI.Controls;
+using Cerneala.UI.Prism.Definitions;
+using Cerneala.UI.Prism.Runtime;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using CernealaColor = Cerneala.Drawing.Color;
+using XnaColor = Microsoft.Xna.Framework.Color;
+
+namespace Cerneala.Tests.Drawing.MonoGame;
+
+public sealed class RenderSurface2DRenderingTests
+{
+    [Fact]
+    public void PresentDisplaysAnExternalTextureWithoutTakingOwnership()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
+        using Texture2D texture = CreateSolidTexture(
+            fixture.Session.GraphicsDevice,
+            XnaColor.CornflowerBlue);
+        RenderSurface2D surface = new();
+        surface.Present(texture);
+
+        XnaColor actual = RenderCenterPixel(fixture, surface);
+
+        Assert.InRange(actual.R, 98, 102);
+        Assert.InRange(actual.G, 147, 151);
+        Assert.InRange(actual.B, 235, 239);
+        Assert.False(texture.IsDisposed);
+    }
+
+    [Fact]
+    public void DrawSurfaceCanChooseEverySpriteBatchBeginSetting()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
+        using Texture2D texture = CreateSolidTexture(
+            fixture.Session.GraphicsDevice,
+            XnaColor.LimeGreen);
+        RenderSurface2D surface = new();
+        surface.DrawSurface += context =>
+        {
+            context.Begin(
+                SpriteSortMode.Immediate,
+                BlendState.Opaque,
+                SamplerState.PointClamp,
+                DepthStencilState.None,
+                RasterizerState.CullNone,
+                effect: null,
+                transformMatrix: Matrix.Identity);
+            context.SpriteBatch.Draw(texture, context.Bounds, XnaColor.White);
+            context.End();
+        };
+
+        XnaColor actual = RenderCenterPixel(fixture, surface);
+
+        Assert.InRange(actual.R, 48, 52);
+        Assert.InRange(actual.G, 203, 207);
+        Assert.InRange(actual.B, 48, 52);
+    }
+
+    [Fact]
+    public void FrameworkCompletesABatchLeftOpenByTheCallback()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
+        using Texture2D texture = CreateSolidTexture(
+            fixture.Session.GraphicsDevice,
+            XnaColor.HotPink);
+        RenderSurface2D surface = new();
+        surface.DrawSurface += context =>
+        {
+            context.Begin();
+            context.SpriteBatch.Draw(texture, context.Bounds, XnaColor.White);
+        };
+
+        _ = RenderCenterPixel(fixture, surface);
+        surface.RefreshSurface();
+        XnaColor secondFrame = RenderCenterPixel(fixture, surface);
+
+        Assert.InRange(secondFrame.R, 253, 255);
+        Assert.InRange(secondFrame.G, 103, 107);
+        Assert.InRange(secondFrame.B, 178, 182);
+    }
+
+    [Fact]
+    public void PrismManagedSurfacePreservesUiRenderedBeforeItAcrossFrames()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
+        using Texture2D texture = CreateSolidTexture(
+            fixture.Session.GraphicsDevice,
+            XnaColor.CornflowerBlue);
+        RenderSurface2D surface = new();
+        surface.DrawSurface += context =>
+        {
+            context.GraphicsDevice.Clear(XnaColor.Transparent);
+            context.Begin();
+            context.SpriteBatch.Draw(
+                texture,
+                new Rectangle(24, 16, 16, 16),
+                XnaColor.White);
+            context.End();
+        };
+
+        PrismLayerDefinition layer = new(
+            new PrismNodeId(1),
+            "Glow",
+            styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)]);
+        PrismInstance instance = new(
+            new PrismCompositionDefinition("SurfaceGlow", [layer]));
+
+        (XnaColor firstBackground, XnaColor firstTransparentInterior, XnaColor firstContent) = RenderPrismPixels(
+            fixture,
+            surface,
+            instance,
+            visualContentVersion: 1);
+        surface.RefreshSurface();
+        (XnaColor secondBackground, XnaColor secondTransparentInterior, XnaColor secondContent) = RenderPrismPixels(
+            fixture,
+            surface,
+            instance,
+            visualContentVersion: 2);
+
+        Assert.Equal(XnaColor.HotPink, firstBackground);
+        Assert.Equal(XnaColor.HotPink, secondBackground);
+        Assert.Equal(XnaColor.HotPink, firstTransparentInterior);
+        Assert.Equal(XnaColor.HotPink, secondTransparentInterior);
+        Assert.Equal(XnaColor.CornflowerBlue, firstContent);
+        Assert.Equal(XnaColor.CornflowerBlue, secondContent);
+    }
+
+    private static Texture2D CreateSolidTexture(
+        GraphicsDevice graphicsDevice,
+        XnaColor color)
+    {
+        Texture2D texture = new(graphicsDevice, 1, 1);
+        texture.SetData([color]);
+        return texture;
+    }
+
+    private static XnaColor RenderCenterPixel(
+        PrismGraphExecutorTests.WindowsDxFixture fixture,
+        RenderSurface2D surface)
+    {
+        DrawCommandList commands = new();
+        commands.Add(DrawCommand.RenderSurface2D(
+            surface,
+            new DrawRect(0, 0, 96, 64),
+            CernealaColor.White));
+        fixture.Session.BeginFrame(CernealaColor.Black);
+        PrismFrameAnalysis analysis = new PrismFrameAnalyzer().Analyze(commands);
+        DrawingFrameContext frameContext = new(analysis);
+        fixture.Session.DrawingBackend.Render(commands, in frameContext);
+        fixture.Session.Present();
+
+        PresentationParameters parameters =
+            fixture.Session.GraphicsDevice.PresentationParameters;
+        XnaColor[] pixels =
+            new XnaColor[parameters.BackBufferWidth * parameters.BackBufferHeight];
+        fixture.Session.GraphicsDevice.GetBackBufferData(pixels);
+        return pixels[
+            ((parameters.BackBufferHeight / 2) * parameters.BackBufferWidth) +
+            (parameters.BackBufferWidth / 2)];
+    }
+
+    private static (
+        XnaColor Background,
+        XnaColor TransparentInterior,
+        XnaColor Content) RenderPrismPixels(
+        PrismGraphExecutorTests.WindowsDxFixture fixture,
+        RenderSurface2D surface,
+        PrismInstance instance,
+        long visualContentVersion)
+    {
+        DrawCommandList commands = new();
+        commands.Add(DrawCommand.FillRectangle(
+            new DrawRect(0, 0, 96, 64),
+            CernealaColor.FromArgb(255, 255, 105, 180)));
+        commands.Add(DrawCommand.BeginPrism(new PrismDrawScope(
+            instance,
+            new PrismCacheOwnerToken(1),
+            new DrawRect(16, 0, 64, 64),
+            Matrix3x2.Identity,
+            pixelScale: 1,
+            visualContentVersion)));
+        commands.Add(DrawCommand.RenderSurface2D(
+            surface,
+            new DrawRect(16, 0, 64, 64),
+            CernealaColor.White));
+        commands.Add(DrawCommand.EndPrism());
+
+        fixture.Session.BeginFrame(CernealaColor.Black);
+        PrismFrameAnalysis analysis = new PrismFrameAnalyzer().Analyze(commands);
+        DrawingFrameContext frameContext = new(analysis);
+        fixture.Session.DrawingBackend.Render(commands, in frameContext);
+        fixture.Session.Present();
+
+        PresentationParameters parameters =
+            fixture.Session.GraphicsDevice.PresentationParameters;
+        XnaColor[] pixels =
+            new XnaColor[parameters.BackBufferWidth * parameters.BackBufferHeight];
+        fixture.Session.GraphicsDevice.GetBackBufferData(pixels);
+        return (
+            pixels[(8 * parameters.BackBufferWidth) + 8],
+            pixels[(8 * parameters.BackBufferWidth) + 20],
+            pixels[(24 * parameters.BackBufferWidth) + 48]);
+    }
+}

@@ -11,7 +11,8 @@ internal readonly record struct PrismSurfaceKey
         SurfaceFormat format,
         int multiSampleCount,
         PrismColorProfile colorProfile,
-        bool mipMap = false)
+        bool mipMap = false,
+        RenderTargetUsage usage = RenderTargetUsage.DiscardContents)
     {
         Validate(
             width,
@@ -19,7 +20,8 @@ internal readonly record struct PrismSurfaceKey
             format,
             multiSampleCount,
             colorProfile,
-            mipMap);
+            mipMap,
+            usage);
 
         Width = width;
         Height = height;
@@ -27,6 +29,7 @@ internal readonly record struct PrismSurfaceKey
         MultiSampleCount = multiSampleCount;
         ColorProfile = colorProfile;
         MipMap = mipMap;
+        Usage = usage;
     }
 
     public int Width { get; }
@@ -41,6 +44,8 @@ internal readonly record struct PrismSurfaceKey
 
     public bool MipMap { get; }
 
+    public RenderTargetUsage Usage { get; }
+
     internal void Validate()
     {
         Validate(
@@ -49,7 +54,8 @@ internal readonly record struct PrismSurfaceKey
             Format,
             MultiSampleCount,
             ColorProfile,
-            MipMap);
+            MipMap,
+            Usage);
     }
 
     internal long CalculateByteSize()
@@ -179,7 +185,8 @@ internal readonly record struct PrismSurfaceKey
         SurfaceFormat format,
         int multiSampleCount,
         PrismColorProfile colorProfile,
-        bool mipMap)
+        bool mipMap,
+        RenderTargetUsage usage)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
@@ -205,6 +212,14 @@ internal readonly record struct PrismSurfaceKey
                 nameof(colorProfile),
                 colorProfile,
                 "Unknown Prism color profile.");
+        }
+
+        if (!Enum.IsDefined(usage))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(usage),
+                usage,
+                "Unknown render-target usage.");
         }
     }
 }

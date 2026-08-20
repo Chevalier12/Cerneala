@@ -5844,6 +5844,7 @@ public sealed class PrismGraphExecutorTests
         private readonly SpriteBatch spriteBatch;
         private readonly Texture2D whitePixel;
         private readonly RenderTarget2D hostTarget;
+        private readonly RasterizerState scissorRasterizerState;
         private bool batchActive;
 
         public TestPrismRenderer(
@@ -5855,6 +5856,8 @@ public sealed class PrismGraphExecutorTests
             spriteBatch = new SpriteBatch(graphicsDevice);
             whitePixel = new Texture2D(graphicsDevice, 1, 1);
             whitePixel.SetData([XnaColor.White]);
+            scissorRasterizerState =
+                MonoGameDrawingBackend.ScissorRasterizerState;
             hostTarget = new RenderTarget2D(
                 graphicsDevice,
                 width,
@@ -5913,13 +5916,24 @@ public sealed class PrismGraphExecutorTests
         public void BeginKernelBatch(
             Effect effect,
             BlendState blendState,
-            SamplerState samplerState)
+            SamplerState samplerState,
+            Rectangle? scissorRectangle = null)
         {
             UsedAnisotropicKernelSampler |=
                 ReferenceEquals(
                     samplerState,
                     SamplerState.AnisotropicClamp);
-            BeginBatch(effect, blendState, samplerState);
+            if (scissorRectangle is Rectangle scissor)
+            {
+                GraphicsDevice.ScissorRectangle = scissor;
+            }
+            BeginBatch(
+                effect,
+                blendState,
+                samplerState,
+                scissorRectangle.HasValue
+                    ? scissorRasterizerState
+                    : RasterizerState.CullNone);
         }
 
         public void EndBatch()
@@ -5998,13 +6012,15 @@ public sealed class PrismGraphExecutorTests
             GraphicsDevice.SetRenderTarget(null);
             hostTarget.Dispose();
             whitePixel.Dispose();
+            scissorRasterizerState.Dispose();
             spriteBatch.Dispose();
         }
 
         private void BeginBatch(
             Effect? effect,
             BlendState blendState,
-            SamplerState? samplerState = null)
+            SamplerState? samplerState = null,
+            RasterizerState? rasterizerState = null)
         {
             if (batchActive)
             {
@@ -6017,7 +6033,7 @@ public sealed class PrismGraphExecutorTests
                 blendState,
                 samplerState ?? SamplerState.LinearClamp,
                 DepthStencilState.None,
-                RasterizerState.CullNone,
+                rasterizerState ?? RasterizerState.CullNone,
                 effect);
             batchActive = true;
         }

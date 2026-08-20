@@ -521,7 +521,7 @@ internal sealed class PrismSurfacePool : IDisposable
                 key.Format,
                 DepthFormat.None,
                 key.MultiSampleCount,
-                RenderTargetUsage.DiscardContents);
+                key.Usage);
             pendingEntry.Attach(surface);
         }
         catch (Exception exception)

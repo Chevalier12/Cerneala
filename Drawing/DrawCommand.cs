@@ -19,7 +19,8 @@ public readonly record struct DrawCommand
         float brushOpacity,
         string? pathData = null,
         DrawRect sourceRect = default,
-        PrismDrawScope? prismScope = null)
+        PrismDrawScope? prismScope = null,
+        IRenderSurface2DSource? renderSurface = null)
     {
         Kind = kind;
         Rect = rect;
@@ -36,6 +37,7 @@ public readonly record struct DrawCommand
         PathData = pathData;
         SourceRect = sourceRect;
         PrismScope = prismScope;
+        RenderSurface = renderSurface;
     }
 
     public DrawCommandKind Kind { get; }
@@ -67,6 +69,8 @@ public readonly record struct DrawCommand
     public DrawRect SourceRect { get; }
 
     public PrismDrawScope? PrismScope { get; }
+
+    internal IRenderSurface2DSource? RenderSurface { get; }
 
     public static DrawCommand FillRectangle(DrawRect rect, Color color)
     {
@@ -173,6 +177,29 @@ public readonly record struct DrawCommand
         ArgumentNullException.ThrowIfNull(image);
 
         return new DrawCommand(DrawCommandKind.DrawImage, destination, color, 0, null, null, default, default, image, null, null, 1);
+    }
+
+    internal static DrawCommand RenderSurface2D(
+        IRenderSurface2DSource surface,
+        DrawRect destination,
+        Color color)
+    {
+        ArgumentNullException.ThrowIfNull(surface);
+
+        return new DrawCommand(
+            DrawCommandKind.RenderSurface2D,
+            destination,
+            color,
+            0,
+            null,
+            null,
+            default,
+            default,
+            null,
+            null,
+            null,
+            1,
+            renderSurface: surface);
     }
 
     public static DrawCommand PushClip(DrawRect rect)
