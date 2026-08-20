@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Prism/Definitions/PrismNodeDefinition.cs`
 
-Defines the immutable base contract for a Prism layer, group, or backdrop node.
+Defines the immutable base contract for a Prism layer or group node.
 
 ```csharp
 public abstract class PrismNodeDefinition : IEquatable<PrismNodeDefinition>
@@ -17,7 +17,7 @@ Inheritance:
 `object` -> `PrismNodeDefinition`
 
 Derived types:
-`PrismLayerDefinition`, `PrismGroupDefinition`, `PrismBackdropDefinition`
+`PrismLayerDefinition`, `PrismGroupDefinition`
 
 ## Examples
 

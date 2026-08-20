@@ -4070,11 +4070,6 @@
     "source": "Drawing/Prism/Filters/PrismLensProfileFitter.cs"
   },
   {
-    "name": "Cerneala.UI.Prism.Definitions.PrismBackdropDefinition",
-    "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismBackdropDefinition.md",
-    "source": "UI/Prism/Definitions/PrismBackdropDefinition.cs"
-  },
-  {
     "name": "Cerneala.UI.Prism.Definitions.PrismCompositionDefinition",
     "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismCompositionDefinition.md",
     "source": "UI/Prism/Definitions/PrismCompositionDefinition.cs"
@@ -4203,11 +4198,6 @@
     "name": "Cerneala.UI.Prism.Definitions.PrismStyleDefinition",
     "file": "documentation/classes/Cerneala.UI.Prism.Definitions.PrismStyleDefinition.md",
     "source": "UI/Prism/Definitions/PrismStyleDefinition.cs"
-  },
-  {
-    "name": "Cerneala.UI.Prism.Runtime.PrismBackdropState",
-    "file": "documentation/classes/Cerneala.UI.Prism.Runtime.PrismBackdropState.md",
-    "source": "UI/Prism/Runtime/PrismStates.cs"
   },
   {
     "name": "Cerneala.UI.Prism.Runtime.PrismBlendChannels",

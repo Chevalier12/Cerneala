@@ -41,7 +41,7 @@ It exposes no public registration, assembly discovery, kernel factory, or SDK fo
 application-provided or third-party operations. Public operation extensibility
 requires a separate design decision backed by a real use case.
 
-These scope limits change no markup grammar. Prism still has exactly the eight
+These scope limits change no markup grammar. Prism has exactly the seven
 directives defined below, and filter/style types still use bare semantic identifiers.
 
 The implemented cache is configured only through `PrismRendererOptions`, either
@@ -61,17 +61,15 @@ every drawing backend:
   front and the last normal node is in back. Evaluation walks the normal stack
   bottom-up, from the last declared node toward the first, without reordering or
   duplicating nodes.
-- The only implicit source for the normal stack is one immutable capture of the
-  attached control's local visual: commands emitted by that control itself, never
-  commands emitted by visual descendants. The bottom node receives that image;
-  every higher node receives only the accumulated result directly below it. Visual
-  descendants render normally after the Prism result. A node name is an address
-  for Motion and diagnostics, never an image source.
+- Every layer uses one immutable capture of the attached control's local visual as
+  its source. The separately accumulated result directly below that layer is its
+  compositing backdrop. Visual descendants render normally after the Prism result.
+  A node name is an address for Motion and diagnostics, never an image source.
 - `@layer` is a leaf. It may own filters, styles and at most one mask, but never a
   layer or group child. `@group` is the only normal-stack container and must contain
   at least one layer or nested group.
-- A mask applies to the complete prepared contribution of its layer, group or
-  backdrop after filters and styles, but before scope opacity and blending.
+- A mask applies to the complete prepared contribution of its layer or group after
+  filters and styles, but before scope opacity and blending.
 - `ClipToBelow=true` clips a normal layer to the effective alpha of the nearest
   unclipped normal sibling beneath it in the same scope. It never creates an
   arbitrary dependency and is invalid when no such base sibling exists.
@@ -82,8 +80,8 @@ every drawing backend:
   `Opacity=0`, which preserves evaluation and multiplies the complete prepared
   contribution before blending.
 - `Fill` multiplies the prepared source content before styles are composed.
-  `Opacity` multiplies content and styles together. On groups and backdrops, which
-  do not expose layer fill semantics, `Fill` is invalid.
+  `Opacity` multiplies content and styles together. On groups, which do not expose
+  layer fill semantics, `Fill` is invalid.
 - `BlendIf` gates contribution by source and underlying luminance ranges after
   masks and fill are prepared and before the final opacity/blend operation. It does
   not change stack order or make the underlying image an addressable source.
@@ -95,24 +93,23 @@ every drawing backend:
 
 ## Goal
 
-Prism describes how the visual result of a UI element is built from an optional
-backdrop plane and a control-processing layer stack.
+Prism describes how the visual result of a UI element is built from a
+control-processing layer stack over an implicit accumulated backdrop.
 
 The authoring model is inspired by a Photoshop layer panel:
 
 - A Prism contains layers and groups.
 - Layers are stacked visually.
-- An optional backdrop plane processes the game world and UI physically behind the control.
 - Prism captures the normal visual result of the attached control as one base image.
-- The bottom layer receives that base image.
-- Every higher layer receives and processes the accumulated result below it.
+- Every layer receives that base image as source and the accumulated lower result
+  as its blend destination.
 - A layer has filters, styles, an optional mask, opacity, fill, and a blend mode.
 - A layer is always one concrete visual sheet; it cannot contain other layers or groups.
 - A group contains layers or nested groups and can process their combined result.
-- Named layers, groups, and backdrops are statically addressable Motion targets,
+- Named layers and groups are statically addressable Motion targets,
   never arbitrary image sources.
 
-The markup language exposes only eight directives:
+The markup language exposes only seven directives:
 
 ```text
 @prism
@@ -122,7 +119,6 @@ The markup language exposes only eight directives:
 @filter
 @style
 @mask
-@backdrop
 ```
 
 Reusable Prism markup is declared as a `PrismComposition` resource, not through a named
@@ -138,9 +134,8 @@ Reusable Prism markup is declared as a `PrismComposition` resource, not through 
 declare a named reusable resource.
 
 `PrismComposition` is intentionally not called `PrismClip`. `Clip` already means
-visual clipping in the rendering model, while a Prism resource may also contain a
-backdrop plane. `PrismStack` is also too narrow: the reusable object is the complete
-composition, not only its control layer stack.
+visual clipping in the rendering model. `PrismStack` is also too narrow: the
+reusable object includes composition-level settings and parameters.
 
 Pixel-processing operations such as blur, color adjustment, distortion, or
 chromatic aberration are filter types:
@@ -168,10 +163,9 @@ Photoshop-style decorations that generate pixels around or over a layer use
 
 `@filter` transforms the image flowing through a layer. `@style` decorates the
 prepared layer without pretending to be another step in the pixel-filter chain.
-`@mask` controls where the complete layer, group, or backdrop result is visible.
-`@backdrop` processes the pixels physically behind the attached control.
+`@mask` controls where the complete layer or group result is visible.
 
-`@style` is valid only inside Prism layer, group, and backdrop bodies. It means a
+`@style` is valid only inside Prism layer and group bodies. It means a
 Photoshop-like layer style and does not introduce a second general-purpose UI
 styling system beside Cerneala Aspect.
 
@@ -183,10 +177,10 @@ Prism first takes one picture containing only what the control itself draws. Its
 visual children are not in that picture; they render normally after the processed
 control image. That local picture sits beneath the entire Prism stack.
 
-Prism starts at the bottom of the layer panel. The lowest layer receives the control
-picture, processes it, and passes its result upward. The next layer receives that
-result, processes it again, and passes the new result upward. Every layer therefore
-adjusts the visual result accumulated beneath it.
+Prism starts at the bottom of the layer panel. Every layer receives the same
+captured control picture as source. Filters transform only that source. Styles and
+the final layer blend may also consume the separately accumulated result beneath
+the layer as their destination. The completed composite then passes upward.
 
 A filter transforms the incoming picture. A style adds decorations such as a shadow,
 glow, or stroke. A mask controls where that layer contributes. Prism continues
@@ -196,10 +190,9 @@ This makes every Prism layer adjustment-like by design. Prism does not need a
 separate adjustment-layer kind because arbitrary pixel layers are outside its scope:
 the attached control is the one implicit picture being processed.
 
-When present, `@backdrop` forms a separate plane beneath that control picture. It
-does not enter the normal layer accumulation and does not change what the bottom
-layer receives. Prism prepares the backdrop plane and the control layer stack
-independently, then composites the processed control above the processed backdrop.
+The physical game and lower UI backdrop is implicit. Prism captures it lazily only
+when a visible non-normal layer, group, or style blend needs destination pixels.
+Source-only stacks do not acquire a host backdrop.
 
 ## First Example
 
@@ -381,105 +374,43 @@ Filters may accept typed auxiliary inputs such as a displacement map. Masks may
 accept a mask image. Those auxiliary inputs never replace the ordered image flowing
 up through the Prism stack.
 
-## Backdrop Plane
+## Implicit Destination Backdrop
 
-`@backdrop` processes everything physically rendered behind the attached control,
-including the game world and lower UI composition. It is a dedicated Prism plane,
-not a special layer and not a `Source` value:
+Every layer and group can composite against everything physically rendered behind
+it, including the game world, lower UI, and lower Prism nodes. No author-facing
+backdrop node or `Source` assignment is required.
 
 ```xml
-<PrismComposition Name="GlassCard">
-    @layer Content
+<PrismComposition Name="ActivePiecePrism">
+    @layer Neon
     {
-        @style DropShadow
+        BlendMode = Screen;
+
+        @filter MotionBlur
         {
-            Size = 18;
-            Distance = 8;
             Angle = 90;
-            Color = #66000000;
-        }
-    }
-
-    @backdrop Glass
-    {
-        @parameter BlurRadius: float = 24;
-
-        Visible = true;
-        Opacity = 1;
-
-        @filter Color
-        {
-            Saturation = 1.18;
-            Contrast = 1.04;
+            Distance = 12;
         }
 
-        @filter Blur
+        @style OuterGlow
         {
-            Radius = BlurRadius;
-        }
-
-        @style ColorOverlay
-        {
-            Color = #18FFFFFF;
+            BlendMode = Normal;
+            Size = 10;
+            Color = #B08B7CFF;
         }
     }
 </PrismComposition>
 ```
 
-The declaration is written last because it is visually behind the entire control,
-matching the top-to-bottom layer-panel order. Backdrop filters still execute from
-the bottom of their list toward the top:
+The filter transforms the captured control source. The layer's `Screen` mode then
+composites the complete prepared result, including the glow, against its accumulated
+destination. A style may instead select its own non-normal blend mode and consume
+that same destination before the final layer blend.
 
-```text
-pixels physically behind the control
--> Blur
--> Color
--> styles
--> mask
--> backdrop opacity
--> processed backdrop plane
-
-captured control image
--> normal Prism layer and group stack
--> processed control plane
-
-processed backdrop plane
--> processed control plane
--> final visual result
-```
-
-The backdrop never becomes the input of the bottom `@layer`. The control layer stack
-continues to process only the captured control image. This separation prevents a
-background blur from accidentally blurring the control content placed above it.
-
-A Prism may declare at most one `@backdrop`. It must be the last direct child of an
-inline `@prism` body or `PrismComposition`; it cannot be nested inside `@layer`, `@group`,
-or another `@backdrop`. A Prism may contain only a backdrop and no explicit layers;
-in that case the control renders normally above the processed backdrop.
-
-A backdrop may declare:
-
-| Property | Default | Meaning |
-| --- | --- | --- |
-| `Visible` | `true` | Whether the backdrop plane is acquired and processed. |
-| `Opacity` | `1` | Opacity of the complete processed backdrop plane. |
-
-`Fill`, `BlendMode`, and `ClipToBelow` are invalid on a backdrop. It may contain
-typed parameters, filters, styles, and at most one mask. It must contain at least
-one filter or style.
-
-The backdrop covers the attached control's arranged rectangle and follows its
-effective visual clip. A backdrop mask may reduce that coverage further. Backdrop
-processing never changes layout or hit testing.
-
-A named backdrop is addressable through the same Motion target grammar as a named
-layer or group:
-
-```text
-$self.prism.Glass.BlurRadius
-$owner.prism.Glass.Opacity
-$PauseMenu.prism.Glass.BlurRadius
-```
+Physical host acquisition is lazy and frame-scoped. Normal source-only operations
+use the captured control as the base scene and do not request host pixels. Pass-through
+groups expose the inherited destination to children; isolated groups start a private
+transparent child stack and composite the completed group at the boundary.
 
 ### Backdrop Runtime Contract
 
@@ -543,8 +474,8 @@ public sealed class MonoGameUiHostOptions
 These members join the interfaces' existing properties. The
 `IDrawingBackend.Render` signature replaces the context-free submission contract so
 frame inputs are explicit rather than hidden in mutable backend state. The host
-calls `TryAcquire` at most once for one `UiHost.Draw`, even when the tree contains
-many backdrops, then passes the lease through `DrawingFrameContext`. A successful
+calls `TryAcquire` at most once for one `UiHost.Draw`, even when many scopes need
+destination pixels, then passes the lease through `DrawingFrameContext`. A successful
 lease remains immutable and valid until the draw submission completes; the host
 then disposes the lease. Prism never retains or disposes the underlying game render
 target.
@@ -557,7 +488,7 @@ conversion for each working profile.
 For a MonoGame game, the supplied surface is normally the resolved scene render
 target produced immediately before UI composition. The renderer imports it into a
 frame-local composition graph as an external read-only resource. Lower UI commands
-are added to that graph in paint order. A backdrop reads the graph node that exists
+are added to that graph in paint order. An implicit destination reads the graph node that exists
 immediately before its owning control, so it sees the game plus lower UI, but never
 itself or later UI.
 
@@ -1507,20 +1438,9 @@ mask :=
         mask-assignment*
     }
 
-backdrop :=
-    @backdrop Name?
-    {
-        @parameter*
-        backdrop-assignment*
-        @filter*
-        @style*
-        @mask?
-    }
 ```
 
-A Prism body must contain at least one layer, group, or backdrop. `backdrop?` is
-written after the normal layer stack because a backdrop declaration is always the
-last direct entry.
+A Prism body must contain at least one layer or group.
 
 Layer assignments use the existing Cerneala directive assignment form:
 
@@ -1544,20 +1464,15 @@ The source generator should report build-time diagnostics for:
 - properties unsupported by a filter type;
 - properties unsupported by a style type or mask;
 - invalid property value types;
-- a `Source` assignment declared on an `@layer`, `@group`, or `@backdrop`;
+- a `Source` assignment declared on an `@layer` or `@group`;
 - an `@layer` with no filters or styles;
-- an `@backdrop` with no filters or styles;
 - `@layer` or `@group` declared inside an `@layer`;
 - an `@group` with no child layers or groups;
-- more than one `@mask` on the same layer, group, or backdrop;
-- more than one `@backdrop` in one Prism body;
-- an `@backdrop` nested inside a layer, group, or backdrop;
-- an `@backdrop` that is not the last direct entry in its Prism body;
-- `Fill`, `BlendMode`, or `ClipToBelow` declared on an `@backdrop`;
+- more than one `@mask` on the same layer or group;
 - `ClipToBelow = true` without an unclipped base sibling beneath it in the same scope;
-- duplicate layer, group, or backdrop names in one address scope;
-- unknown layer, group, backdrop, property, or scoped parameter segments in a Prism target;
-- a Prism target that traverses an unnamed layer, group, or backdrop;
+- duplicate layer or group names in one address scope;
+- unknown layer, group, property, or scoped parameter segments in a Prism target;
+- a Prism target that traverses an unnamed layer or group;
 - incompatible filter parameters;
 - incompatible style or mask parameters;
 - a resource reference used where a filter or style type identifier is required.
@@ -1576,7 +1491,7 @@ are not silently cropped to the original control rectangle. Explicit clips and
 ancestor viewport clips still constrain the final rendered output.
 
 Pointer, keyboard, focus, automation, and accessibility continue to target the
-original control and its normal visual tree. Prism layers, groups, and backdrops are
+original control and its normal visual tree. Prism layers and groups are
 not UI elements and never become independent input targets.
 
 ## Lifecycle Expectations
@@ -1601,8 +1516,8 @@ The Prism authoring model is syntax, not resource ownership.
   and are evicted under a separate explicit byte budget.
 - Backdrop frames belong to the host or compositor; Prism holds only frame-scoped
   read access and never disposes the host's scene target.
-- Invisible, hidden, collapsed, clipped-out, or detached backdrops do not acquire
-  pixels or schedule filter work.
+- Invisible, hidden, collapsed, clipped-out, or detached destination-aware scopes
+  do not acquire host pixels.
 - Device loss clears backend resources without invalidating the authoring definition.
 - The captured control image, backdrop references, and all temporary layer images
   are released when the Prism instance detaches.
@@ -1639,8 +1554,8 @@ The Prism authoring model is syntax, not resource ownership.
 
 ### Implemented contract
 
-The eight directives, Photoshop ordering, implicit control source, layer/group/
-mask/clipping semantics, typed Motion paths, optional backdrop plane, generated
+The seven directives, Photoshop ordering, implicit control source and destination,
+layer/group/mask/clipping semantics, typed Motion paths, lazy backdrop acquisition, generated
 built-in catalog, lifecycle, deterministic fallback, diagnostics, and bounded
 retained GPU caching are implemented and covered by semantic, conformance,
 lifecycle, stress, and Presentation tests.

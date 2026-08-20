@@ -7,14 +7,14 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Prism/Runtime/PrismStates.cs`
 
-Provides the common identity surface for per-instance layer, group, and backdrop state.
+Provides the common identity surface for per-instance layer and group state.
 
 ```csharp
 public abstract class PrismNodeState
 ```
 
 Derived types:
-`PrismLayerState`, `PrismGroupState`, `PrismBackdropState`
+`PrismLayerState`, `PrismGroupState`
 
 ## Properties
 

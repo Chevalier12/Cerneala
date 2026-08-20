@@ -11,9 +11,14 @@ is the default normal stack source; children are drawn normally after the result
 Prism, and the layer and group names are addresses for Motion and
 diagnostics, not image sources.
 
-The declared order is like in the Photoshop panel: first node is in front, last
-is at the back, and the evaluation is done from the bottom up. A `@backdrop` is a surface
-separated under control, does not go on the normal stack.
+The declared order is like in the Photoshop panel: the first node is in front,
+the last is at the back, and evaluation runs bottom-up. Every layer and group has
+two distinct inputs: the captured control is its source, while the accumulated
+result behind it is its compositing backdrop.
+
+`@backdrop` is no longer part of the Prism language. A visible non-normal blend
+on a layer, group, or style requests the physical host backdrop automatically.
+The GPU capture stays lazy, so a source-only composition does not pay for it.
 
 ## Layer, group, mask and clipping
 
@@ -62,9 +67,10 @@ Generic example:
         }
     }
 
-    @backdrop SpaceGlass
+    @layer SpaceGlass
     {
         Opacity = 0.76;
+        BlendMode = Overlay;
         @filter Blur { Radius = 8; }
     }
 </PrismComposition>
@@ -73,7 +79,12 @@ Generic example:
     @prism $FrostedPanelPrism;
 </Border>
 ```
-A `@backdrop` is optional, unique, and the last direct child of the composition.
+`Blur` still processes the layer source. `BlendMode = Overlay` composites that
+prepared layer result against everything accumulated behind it, including the
+host image and lower UI. Style blend modes use the same destination without
+requiring a special node. A non-normal style blend and a non-normal layer blend
+are two distinct composite stages; set the style blend to `Normal` when only the
+final layer blend should apply.
 
 ## Motion paths
 
@@ -91,10 +102,15 @@ and the runtime does not do textual lookup per frame.
 
 ## Backdrop and backends
 
-The host parses the list only once and requests at most one readonly lease for
-frames. If the provider is absent or refuses to purchase, only the backdrop plan is
-omitted; the control stack and normal content continue. The lease is released in
-same draw, including exceptions.
+The frame analyzer requests at most one readonly host lease when any visible
+destination-aware operation needs physical pixels. Layers and groups reuse the
+cropped, color-normalized backdrop for that scope. If no such operation exists,
+Prism does not acquire or allocate a backdrop surface. The lease is released in
+the same draw, including exceptions.
+
+Pass-through groups expose their inherited backdrop to children. Isolated groups
+start a private transparent stack for their children and composite the completed
+group against the inherited backdrop only at the group boundary.
 
 A backend without Prism ignores `BeginPrism` and `EndPrism` but processes all
 the commands between them. It doesn't need to implement backdrop and none appears

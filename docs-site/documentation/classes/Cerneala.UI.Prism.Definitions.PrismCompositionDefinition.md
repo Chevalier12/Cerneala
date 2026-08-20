@@ -23,17 +23,18 @@ PrismCompositionDefinition composition = new(
             new PrismNodeId(1),
             "Content",
             styles: [new PrismStyleDefinition(PrismStyleId.DropShadow)]),
-        new PrismBackdropDefinition(
+        new PrismLayerDefinition(
             new PrismNodeId(2),
             "Glass",
-            filters: [new PrismFilterDefinition(PrismFilterId.Blur)])
+            filters: [new PrismFilterDefinition(PrismFilterId.Blur)],
+            blendMode: PrismBlendMode.Screen)
     ],
     sourceSpan: new PrismSourceSpan(0, 128, "Card.crn"));
 ```
 
 ## Remarks
 
-Nodes are declared front-to-back and evaluated bottom-up. The optional `Backdrop` remains a separate logical plane and is excluded from `EnumerateContentBottomUp()`. Node IDs are unique across the tree; optional names are unique in their address scope.
+Nodes are declared front-to-back and evaluated bottom-up. Every rendered layer or group receives the accumulated result behind it as its compositing backdrop. Prism acquires the physical host backdrop lazily only when a visible blend operation needs destination pixels. Node IDs are unique across the tree; optional names are unique in their address scope.
 
 `SourceSpan` is immutable diagnostic metadata used when a graph failure cannot be attributed to a more specific node. It is deliberately excluded from semantic equality and hashing.
 
@@ -53,13 +54,12 @@ Nodes are declared front-to-back and evaluated bottom-up. The optional `Backdrop
 | `GlobalLightAngle` | `float` | Gets the shared light angle in degrees. |
 | `GlobalLightAltitude` | `float` | Gets the shared light altitude in degrees. |
 | `SourceSpan` | `PrismSourceSpan?` | Gets the optional authoring source location. |
-| `Backdrop` | `PrismBackdropDefinition?` | Gets the last direct node when it is a backdrop. |
 
 ## Methods
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `EnumerateContentBottomUp()` | `IEnumerable<PrismNodeDefinition>` | Enumerates normal content from back to front, excluding the backdrop. |
+| `EnumerateContentBottomUp()` | `IEnumerable<PrismNodeDefinition>` | Enumerates composition nodes from back to front. |
 | `TryGetNamedNode(string path, out PrismNodeId nodeId)` | `bool` | Resolves a validated dot-separated node address. |
 | `ToDiagnosticString()` | `string` | Serializes a deterministic human-readable snapshot. |
 | `Equals(PrismCompositionDefinition? other)` | `bool` | Tests structural equality. |
@@ -70,7 +70,7 @@ Nodes are declared front-to-back and evaluated bottom-up. The optional `Backdrop
 
 | Member | Exception | Condition |
 | --- | --- | --- |
-| `PrismCompositionDefinition(...)` | `ArgumentException` | The name or node list is empty, IDs or scoped names are duplicated, or a backdrop is duplicated, nested, or not last. |
+| `PrismCompositionDefinition(...)` | `ArgumentException` | The name or node list is empty, IDs or scoped names are duplicated, or a node kind is invalid. |
 | `PrismCompositionDefinition(...)` | `ArgumentOutOfRangeException` | A light value is non-finite. |
 | `TryGetNamedNode(...)` | `ArgumentException` | `path` is null, empty, or whitespace. |
 

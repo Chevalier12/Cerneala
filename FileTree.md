@@ -404,7 +404,8 @@ Generated from `.`.
 |   |   |-- 2026-08-13-cerneala-language-server.md
 |   |   |-- 2026-08-13-visual-studio-community-extension.md
 |   |   |-- 2026-08-13-visual-studio-language-integration-plan-index.md
-|   |   +-- 2026-08-14-crn-markup-extension-migration.md
+|   |   |-- 2026-08-14-crn-markup-extension-migration.md
+|   |   +-- 2026-08-20-menu-menuitem-menubar.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
@@ -1241,7 +1242,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Platform.IPlatformServices.md
 |   |   |   |-- Cerneala.UI.Platform.ITextInputPlatform.md
 |   |   |   |-- Cerneala.UI.Platform.PlatformServices.md
-|   |   |   |-- Cerneala.UI.Prism.Definitions.PrismBackdropDefinition.md
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismColorMatrixResource.md
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismCompositionDefinition.md
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismCurvePoint.md
@@ -1268,7 +1268,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismSparsePolynomial.md
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismSparsePolynomialTerm.md
 |   |   |   |-- Cerneala.UI.Prism.Definitions.PrismStyleDefinition.md
-|   |   |   |-- Cerneala.UI.Prism.Runtime.PrismBackdropState.md
 |   |   |   |-- Cerneala.UI.Prism.Runtime.PrismBlendChannels.md
 |   |   |   |-- Cerneala.UI.Prism.Runtime.PrismBlendIfChannel.md
 |   |   |   |-- Cerneala.UI.Prism.Runtime.PrismBlendRange.md
@@ -3266,7 +3265,6 @@ Generated from `.`.
 |   |   +-- PlatformServices.cs
 |   |-- Prism/
 |   |   |-- Definitions/
-|   |   |   |-- PrismBackdropDefinition.cs
 |   |   |   |-- PrismColorMatrixResource.cs
 |   |   |   |-- PrismCompositionDefinition.cs
 |   |   |   |-- PrismCurvePoint.cs

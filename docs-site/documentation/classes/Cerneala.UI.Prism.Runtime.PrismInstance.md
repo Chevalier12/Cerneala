@@ -50,7 +50,6 @@ The instance owns dense CPU-side typed value arrays, not textures, render target
 | --- | --- | --- |
 | `Definition` | `PrismCompositionDefinition` | Gets the current shared immutable definition. |
 | `Composition` | `PrismCompositionState` | Gets mutable composition-level state. |
-| `Backdrop` | `PrismBackdropState?` | Gets the optional backdrop state. |
 | `StructuralVersion` | `PrismStructuralVersion` | Gets the topology version. |
 | `ValueVersion` | `PrismValueVersion` | Gets the typed-value version. |
 
@@ -61,7 +60,6 @@ The instance owns dense CPU-side typed value arrays, not textures, render target
 | `GetNodeState(PrismNodeId id)` | `PrismNodeState` | Resolves state by numeric node ID. |
 | `GetLayerState(PrismNodeId id)` | `PrismLayerState` | Resolves layer state and verifies its type. |
 | `GetGroupState(PrismNodeId id)` | `PrismGroupState` | Resolves group state and verifies its type. |
-| `GetBackdropState(PrismNodeId id)` | `PrismBackdropState` | Resolves backdrop state and verifies its type. |
 | `ReplaceDefinition(PrismCompositionDefinition definition)` | `void` | Replaces the definition, resets values, and versions topology and data independently. |
 | `ResetToDefaults()` | `void` | Restores current definition and catalog defaults when values differ. |
 

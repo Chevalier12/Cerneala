@@ -908,7 +908,6 @@
 - [x] docs-site/documentation/classes/Cerneala.UI.Platform.IPlatformServices.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Platform.ITextInputPlatform.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Platform.PlatformServices.md
-- [x] docs-site/documentation/classes/Cerneala.UI.Prism.Definitions.PrismBackdropDefinition.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Prism.Definitions.PrismColorMatrixResource.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Prism.Definitions.PrismCompositionDefinition.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Prism.Definitions.PrismCurvePoint.md
@@ -935,7 +934,6 @@
 - [x] docs-site/documentation/classes/Cerneala.UI.Prism.Definitions.PrismSparsePolynomial.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Prism.Definitions.PrismSparsePolynomialTerm.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Prism.Definitions.PrismStyleDefinition.md
-- [x] docs-site/documentation/classes/Cerneala.UI.Prism.Runtime.PrismBackdropState.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Prism.Runtime.PrismBlendChannels.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Prism.Runtime.PrismBlendIfChannel.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Prism.Runtime.PrismBlendRange.md

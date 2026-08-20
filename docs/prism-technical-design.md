@@ -110,7 +110,7 @@ The backend can thus capture the local visual of the control without
 
 ## Language surface
 
-TDD implements exactly the eight directives defined by the proposal:
+TDD implements exactly the seven directives defined by the proposal:
 
 | Directive | Technical role |
 | --- | --- |
@@ -121,7 +121,6 @@ TDD implements exactly the eight directives defined by the proposal:
 | `@filter` | adds a pixel processing operation |
 | `@style` | adds a Photoshop decoration derived from content |
 | `@mask` | limits the full contribution of a scope |
-| `@backdrop` | render the game and the composite UI underneath |
 
 `PrismComposition` is the reusable resource. No additional directive is
 required for the implementation described here.
@@ -340,7 +339,7 @@ The reusable definition contains:
 - working color profiles;
 - global light angle and altitude;
 - ordered list of layers and groups;
-- the optional backdrop;
+- implicit destination-backdrop requirements inferred from visible operations;
 - table of addressable names;
 - table of property slots;
 - structural hash for pipeline cache;
@@ -355,7 +354,6 @@ The definition tree uses distinct types:
 
 - `PrismLayerDefinition`;
 - `PrismGroupDefinition`;
-- `PrismBackdropDefinition`;
 - `PrismFilterDefinition`;
 - `PrismStyleDefinition`;
 - `PrismMaskDefinition`.
@@ -1052,9 +1050,11 @@ it doesn't disappear by accident.
 
 ## Backdrop
 
-The generator allows at most one `@backdrop`, only as the last direct child of
-composition. Its position in the markup expresses the fact that it is the most visual plane
-back; the executor prepares it before composing the control.
+Backdrop is an internal destination input, not an authoring node. The frame analyzer
+requests it lazily when a visible layer, group, or style uses a non-normal blend.
+The graph keeps each node's captured control source separate from its accumulated
+destination. Pass-through groups inherit that destination; isolated groups expose
+it only at their outer composition boundary.
 
 ### Hosting contract
 
