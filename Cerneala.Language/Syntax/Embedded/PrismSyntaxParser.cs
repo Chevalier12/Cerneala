@@ -495,6 +495,13 @@ internal static class PrismSyntaxParser
 
             if (value.StartsWith("$", StringComparison.Ordinal))
             {
+                if (value.IndexOf('.') >= 0)
+                {
+                    return value.IndexOf(':') >= 0
+                        ? PrismValueModelKind.Binding
+                        : PrismValueModelKind.DirectReference;
+                }
+
                 return PrismValueModelKind.ResourceReference;
             }
 

@@ -647,6 +647,60 @@ public sealed partial class UiMarkupGenerator
             string name,
             BindingSourceDescriptor descriptor)
         {
+            observationLines.Add(
+                "global::Cerneala.UI.Markup.MarkupObservation " + name + " = " +
+                BuildObservationExpression(descriptor) + ";");
+
+            switch (descriptor.Kind)
+            {
+                case BindingSourceKind.DataPath:
+                    {
+                        ITypeSymbol comparisonType = UnwrapNullable(descriptor.ValueType);
+                        string typeCode = comparisonType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                        observationNames?.Add(name);
+                        return new ObservationEmission(
+                            name,
+                            "(" + typeCode + ")" + name + ".Value!",
+                            null,
+                            comparisonType,
+                            name + ".Value is " + typeCode);
+                    }
+                case BindingSourceKind.UiProperty:
+                    {
+                        PropertySpec spec = descriptor.Property!;
+                        observationNames?.Add(name);
+                        return new ObservationEmission(
+                            name,
+                            "(" + spec.ValueTypeCode + ")" + name + ".Value!",
+                            spec.ValueKind,
+                            spec.ValueType);
+                    }
+                case BindingSourceKind.TemplatePartProperty:
+                    {
+                        PropertySpec spec = descriptor.Property!;
+                        observationNames?.Add(name);
+                        return new ObservationEmission(
+                            name,
+                            "(" + spec.ValueTypeCode + ")" + name + ".Value!",
+                            spec.ValueKind,
+                            spec.ValueType);
+                    }
+                case BindingSourceKind.Object:
+                    {
+                        observationNames?.Add(name);
+                        return new ObservationEmission(
+                            name,
+                            name + ".Value",
+                            null,
+                            compilation.GetSpecialType(SpecialType.System_Object));
+                    }
+                default:
+                    throw new InvalidOperationException("Unsupported binding source descriptor.");
+            }
+        }
+
+        private string BuildObservationExpression(BindingSourceDescriptor descriptor)
+        {
             switch (descriptor.Kind)
             {
                 case BindingSourceKind.DataPath:
@@ -666,61 +720,17 @@ public sealed partial class UiMarkupGenerator
                                 ", value => ((" + ownerType + ")value!)." + segment.Property.Name + setter + ")");
                         }
 
-                        observationLines.Add(
-                            "global::Cerneala.UI.Markup.MarkupObservation " + name +
-                            " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveDataPath(" + descriptor.OwnerCode +
-                            (segments.Count == 0 ? ")" : ", " + string.Join(", ", segments) + ")") + ";");
-
-                        ITypeSymbol comparisonType = UnwrapNullable(descriptor.ValueType);
-                        string typeCode = comparisonType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                        observationNames?.Add(name);
-                        return new ObservationEmission(
-                            name,
-                            "(" + typeCode + ")" + name + ".Value!",
-                            null,
-                            comparisonType,
-                            name + ".Value is " + typeCode);
+                        return "global::Cerneala.UI.Markup.GeneratedMarkup.ObserveDataPath(" + descriptor.OwnerCode +
+                            (segments.Count == 0 ? ")" : ", " + string.Join(", ", segments) + ")");
                     }
                 case BindingSourceKind.UiProperty:
-                    {
-                        PropertySpec spec = descriptor.Property!;
-                        observationLines.Add(
-                            "global::Cerneala.UI.Markup.MarkupObservation " + name +
-                            " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveProperty(" + descriptor.OwnerCode +
-                            ", " + spec.PropertyCode + ");");
-                        observationNames?.Add(name);
-                        return new ObservationEmission(
-                            name,
-                            "(" + spec.ValueTypeCode + ")" + name + ".Value!",
-                            spec.ValueKind,
-                            spec.ValueType);
-                    }
+                    return "global::Cerneala.UI.Markup.GeneratedMarkup.ObserveProperty(" + descriptor.OwnerCode +
+                        ", " + descriptor.Property!.PropertyCode + ")";
                 case BindingSourceKind.TemplatePartProperty:
-                    {
-                        PropertySpec spec = descriptor.Property!;
-                        observationLines.Add(
-                            "global::Cerneala.UI.Markup.MarkupObservation " + name +
-                            " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveTemplatePartProperty(" + descriptor.OwnerCode +
-                            ", " + Literal(descriptor.PartName!) + ", " + spec.PropertyCode + ");");
-                        observationNames?.Add(name);
-                        return new ObservationEmission(
-                            name,
-                            "(" + spec.ValueTypeCode + ")" + name + ".Value!",
-                            spec.ValueKind,
-                            spec.ValueType);
-                    }
+                    return "global::Cerneala.UI.Markup.GeneratedMarkup.ObserveTemplatePartProperty(" + descriptor.OwnerCode +
+                        ", " + Literal(descriptor.PartName!) + ", " + descriptor.Property!.PropertyCode + ")";
                 case BindingSourceKind.Object:
-                    {
-                        observationLines.Add(
-                            "global::Cerneala.UI.Markup.MarkupObservation " + name +
-                            " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveObject(() => (object?)" + descriptor.OwnerCode + ");");
-                        observationNames?.Add(name);
-                        return new ObservationEmission(
-                            name,
-                            name + ".Value",
-                            null,
-                            compilation.GetSpecialType(SpecialType.System_Object));
-                    }
+                    return "global::Cerneala.UI.Markup.GeneratedMarkup.ObserveObject(() => (object?)" + descriptor.OwnerCode + ")";
                 default:
                     throw new InvalidOperationException("Unsupported binding source descriptor.");
             }
@@ -739,11 +749,27 @@ public sealed partial class UiMarkupGenerator
             string propertyName,
             string rawValue,
             PropertySpec spec,
-            MarkupObject source)
+            MarkupObject source,
+            string? ownerVariable = null)
         {
             string value = rawValue.Trim();
             if (value.StartsWith("$", StringComparison.Ordinal))
             {
+                BindingTokenParseResult tokenResult = ParseBindingToken(value, 0);
+                if (tokenResult.Token is not null &&
+                    tokenResult.Length == value.Length &&
+                    tokenResult.Token.ModeOffset < 0 &&
+                    LooksLikeBindingPath(value))
+                {
+                    return ResolveDirectiveReferenceValue(
+                        planElementName ?? "value",
+                        propertyName,
+                        tokenResult.Token,
+                        spec,
+                        source,
+                        ownerVariable);
+                }
+
                 return ResolveReferenceValue(planElementName ?? "value", propertyName, value.Substring(1), spec.ValueKind, source);
             }
 
@@ -759,6 +785,39 @@ public sealed partial class UiMarkupGenerator
 
             MarkupAttribute synthetic = new(propertyName, value);
             return ParseLiteralValue(planElementName ?? "value", propertyName, synthetic, value, spec);
+        }
+
+        private GeneratedExpression? ResolveDirectiveReferenceValue(
+            string elementName,
+            string propertyName,
+            MarkupBindingToken token,
+            PropertySpec spec,
+            MarkupObject source,
+            string? ownerVariable)
+        {
+            BindingResolutionContext resolutionContext = new(
+                ownerVariable ?? (elementName == document.Root.Name.LocalName ? "this" : CreateIdentifier(elementName)),
+                elementName,
+                string.Equals(elementName, document.Root.Name.LocalName, StringComparison.Ordinal),
+                templateEmissionContexts.Count == 0 ? null : templateEmissionContexts.Peek(),
+                validateClrObservability: false);
+            ParsedMarkupValue parsed = ParsedMarkupValue.Direct(token);
+            ResolvedMarkupValue? resolved = ResolveMarkupValue(
+                resolutionContext,
+                spec,
+                parsed,
+                source,
+                source);
+            if (resolved is null)
+            {
+                return null;
+            }
+
+            BindingSourceDescriptor bindingSource = resolved.Sources[0];
+            string code =
+                "global::Cerneala.UI.Markup.GeneratedMarkup.ReadReference<" + spec.ValueTypeCode + ">(" +
+                BuildObservationExpression(bindingSource) + ", " + ProjectionCode(bindingSource, spec) + ")";
+            return new GeneratedExpression(code, spec.ValueKind);
         }
 
         private string? ParseSymbolLiteral(ITypeSymbol type, string rawValue, object source)
@@ -864,7 +923,8 @@ public sealed partial class UiMarkupGenerator
                         assignment.Value,
                         assignment: true,
                         stringTarget: spec.ValueType.SpecialType == SpecialType.System_String,
-                        assignment.ValueLocation);
+                        assignment.ValueLocation,
+                        requireExplicitMode: true);
                     if (parsedMarkup?.Kind == ParsedMarkupValueKind.Invalid)
                     {
                         continue;
@@ -897,7 +957,13 @@ public sealed partial class UiMarkupGenerator
                         continue;
                     }
 
-                    GeneratedExpression? expression = ParseDirectiveValue(plan.ElementName, assignment.PropertyName, assignment.Value, spec, assignment.Source);
+                    GeneratedExpression? expression = ParseDirectiveValue(
+                        plan.ElementName,
+                        assignment.PropertyName,
+                        assignment.Value,
+                        spec,
+                        assignment.Source,
+                        plan.OwnerVariable);
                     if (expression is null)
                     {
                         continue;

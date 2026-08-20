@@ -743,6 +743,11 @@ public sealed partial class UiMarkupGenerator
             PrismCatalogCompiler.CatalogProperty? schema,
             string family)
         {
+            if (syntax.Kind is PrismValueKind.Binding or PrismValueKind.DirectReference)
+            {
+                return new BoundPrismValue(expectedType, syntax);
+            }
+
             if (syntax.Kind == PrismValueKind.Identifier &&
                 scope is not null &&
                 scope.TryResolve(syntax.Text, out BoundPrismParameter parameter))

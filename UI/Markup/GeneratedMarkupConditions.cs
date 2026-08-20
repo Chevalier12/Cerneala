@@ -220,6 +220,21 @@ public static partial class GeneratedMarkup
         return new DataPathObservation(source, segments);
     }
 
+    public static T ReadReference<T>(MarkupObservation observation, Func<object?, T> projection)
+    {
+        ArgumentNullException.ThrowIfNull(observation);
+        ArgumentNullException.ThrowIfNull(projection);
+        observation.Start();
+        try
+        {
+            return projection(observation.Value);
+        }
+        finally
+        {
+            observation.Stop();
+        }
+    }
+
     public static IDisposable AttachConditions(
         UIElement owner,
         IReadOnlyList<MarkupObservation> observations,

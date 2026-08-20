@@ -54,6 +54,12 @@ internal sealed partial class CernealaSemanticModel
                 return dataType;
             }
 
+            AttributeSyntax? declaredDataType = FindAttribute(current, "DataType");
+            if (declaredDataType is not null && ResolveTypeReference(declaredDataType) is ILanguageTypeSymbol declaredType)
+            {
+                return declaredType;
+            }
+
             current = parents.TryGetValue(current, out ElementSyntax? parent) ? parent : null;
         }
 

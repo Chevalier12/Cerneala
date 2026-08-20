@@ -19,9 +19,10 @@ A `$DataContext` binding requires `DataType` on the root element. Paired
 `Window<TViewModel>` and `UserControl<TViewModel>` documents infer that type
 from `TViewModel`, so they do not need to repeat `DataType`.
 
-Every CLR object that owns a property along a reactive path must implement
-`INotifyPropertyChanged`. This includes intermediate objects, not only the root
-view model.
+Every CLR object that owns a property along an explicitly bound reactive path
+must implement `INotifyPropertyChanged`. This includes intermediate objects,
+not only the root view model. A direct reference without a mode is evaluated
+once and therefore does not require notification support.
 
 ```csharp
 using System.ComponentModel;
@@ -93,9 +94,9 @@ public sealed class ProfileViewModel : INotifyPropertyChanged
 }
 ```
 
-An auto-property without a notification event is not treated as magically
-observable. The generator reports an actionable diagnostic instead of emitting
-a binding that would update only once.
+An auto-property without a notification event is valid for a direct snapshot.
+If `:OneWay` or `:TwoWay` requests a live binding, the generator reports an
+actionable diagnostic instead of pretending that the source is observable.
 
 Named elements, `$self`, and template parts are `UiObject` sources. Their
 changes are observed through Cerneala's UI property system rather than
@@ -109,8 +110,8 @@ An entire binding value has this form:
 source-path[:mode]
 ```
 
-The supported modes are `OneWay` and `TwoWay`. Omitting the suffix selects
-`OneWay`.
+The supported modes are `OneWay` and `TwoWay`. Omitting the suffix creates no
+binding: the path is evaluated once and its current value is assigned.
 
 | Source | Meaning |
 | --- | --- |
@@ -128,25 +129,27 @@ attribute; they are not part of the binding expression.
   <TextBlock Text="$DataContext.Name" />
   <TextBlock Text="$DataContext.Name:OneWay" />
   <TextBlock Text="$DataContext.Count" />
-  <TextBlock Text="$DataContext.Profile.DisplayName" />
+  <TextBlock Text="$DataContext.Profile.DisplayName:OneWay" />
   <TextBox Text="$DataContext.Name:TwoWay" />
 </StackPanel>
 ```
 
-The implicit and explicit `OneWay` forms are equivalent. `TwoWay` requires an
-accessible source setter and a writable target UI property.
+The first `TextBlock` above is a snapshot; the second remains synchronized.
+`TwoWay` additionally requires an accessible source setter and a writable
+target UI property.
 
 ## DataContext Scopes
 
-Assigning a direct binding to an element's `DataContext` creates a typed scope
-for that element and its descendants:
+Assigning a reference to an element's `DataContext` creates a typed scope for
+that element and its descendants. Use an explicit mode when the scope must
+retarget after the source changes:
 
 ```xml
 <ContentTemplate DataType="sample:PersonRow">
   <StackPanel>
     <TextBlock Text="$DataContext.Label" />
-    <Border DataContext="$DataContext.Details">
-      <TextBlock Text="$DataContext.Name" />
+    <Border DataContext="$DataContext.Details:OneWay">
+      <TextBlock Text="$DataContext.Name:OneWay" />
     </Border>
     <TextBlock Text="$DataContext.Label" />
   </StackPanel>
@@ -158,7 +161,7 @@ the border, `$DataContext` is validated against the result type of `Details`.
 The following sibling is outside that scope and therefore uses `PersonRow`
 again. This works at any depth and does not require another `DataType`.
 
-The scope is reactive. If `PersonRow.Details` is replaced, the border receives
+This explicit scope is reactive. If `PersonRow.Details` is replaced, the border receives
 the new data context and descendant bindings reconnect to it. If the visual
 root of a `ContentTemplate` declares `DataContext`, the generated template
 factory preserves that binding instead of overwriting it with the original
@@ -167,7 +170,7 @@ default data context.
 
 ## String Projection
 
-A `OneWay` binding to a `string` target accepts any source type. Each value is
+A direct reference or `OneWay` binding to a `string` target accepts any source type. Each value is
 converted with `Convert.ToString(value, CultureInfo.CurrentCulture)`, and a
 terminal `null` becomes `string.Empty`.
 
@@ -214,7 +217,7 @@ scope. Attachment is emitted after the named elements have been constructed.
 
 ```xml
 <StackPanel>
-  <ProgressBar Maximum="100" Value="$Volume.Value" />
+  <ProgressBar Maximum="100" Value="$Volume.Value:OneWay" />
   <Slider Name="Volume" Maximum="100" Value="40" />
 </StackPanel>
 ```
@@ -223,7 +226,7 @@ scope. Attachment is emitted after the named elements have been constructed.
 same element:
 
 ```xml
-<TextBlock IsVisible="True" IsEnabled="$self.IsVisible" />
+<TextBlock IsVisible="True" IsEnabled="$self.IsVisible:OneWay" />
 ```
 
 Binding a property directly to itself is rejected, including the equivalent
@@ -240,15 +243,15 @@ binding cannot reach an ordinary named element outside the current scope.
 
 ## Template Owners And Parts
 
-Inside `@template`, `$owner.Property` and `$owner.Property:OneWay` use the
-existing one-way `TemplateBinding` path. `$owner.Property:TwoWay` is not
-supported.
+Inside `@template`, `$owner.Property` reads the owner's current value once.
+`$owner.Property:OneWay` uses the existing live `TemplateBinding` path.
+`$owner.Property:TwoWay` is not supported.
 
 ```xml
 <Button Content="Save">
   @template
   {
-    <ContentPresenter Content="$owner.Content" />
+    <ContentPresenter Content="$owner.Content:OneWay" />
   }
 </Button>
 ```
@@ -261,7 +264,7 @@ named control:
   <Button Name="Host">
     @template { <Border Name="Chrome" IsEnabled="True" /> }
   </Button>
-  <TextBlock IsEnabled="$Host.parts.$Chrome.IsEnabled" />
+  <TextBlock IsEnabled="$Host.parts.$Chrome.IsEnabled:OneWay" />
 </StackPanel>
 ```
 
@@ -272,15 +275,15 @@ reconnects when the named control receives a new `ComponentTemplate`.
 
 ## Conditional Binding Values
 
-The right-hand side of a directive assignment may be a binding. Unlike XML
-attributes, an entire binding assignment is written without language-level
+The right-hand side of a directive assignment may be a direct reference or a
+binding. Unlike XML attributes, either form is written without language-level
 quotes and must end with `;`.
 
 ```xml
 <TextBox DataType="EditorViewModel" Text="Base">
   @when $DataContext.UseShortName
   {
-    Text = $DataContext.ShortName;
+    Text = $DataContext.ShortName:OneWay;
   }
   @when $DataContext.UseLongName
   {
@@ -333,8 +336,9 @@ branch, so a later change can still trigger reevaluation.
 
 A terminal `null` is a resolved value. It is written to a nullable target, or
 projected to an empty string for a string target. If an intermediate path owner
-is `null`, the path is temporarily unresolved: the binding clears only its own
-markup value and reconnects when the missing segment becomes available.
+is `null`, a direct reference evaluates to the target's projected null value.
+An explicit binding is temporarily unresolved: it clears only its own markup
+value and reconnects when the missing segment becomes available.
 
 `OneWay` requires a readable source and a writable target UI property.
 `TwoWay` additionally requires an accessible source setter. A read-only target,

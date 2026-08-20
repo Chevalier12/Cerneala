@@ -34,19 +34,19 @@ public sealed partial class UiMarkupGeneratorTests
             """;
         const string markup = """
             <StackPanel DataType="TestInput.ViewModel">
-              <TextBlock Text="$DataContext.Child.Name" />
+              <TextBlock Text="$DataContext.Child.Name:OneWay" />
               <TextBlock Text="Salut $DataContext.Name / $DataContext.Name" />
-              <ProgressBar Value="$Later.Value" />
+              <ProgressBar Value="$Later.Value:OneWay" />
               <Slider Name="Later" Value="20" />
-              <TextBlock IsVisible="True" IsEnabled="$self.IsVisible" />
+              <TextBlock IsVisible="True" IsEnabled="$self.IsVisible:OneWay" />
               <TextBlock Text="Base">
-                @when $DataContext.Enabled { Text = $DataContext.Name; }
+                @when $DataContext.Enabled { Text = $DataContext.Name:OneWay; }
               </TextBlock>
               <Button Content="Owner">
                 @template {
                   <StackPanel>
                     <ContentPresenter Content="$owner.Content:OneWay" />
-                    <TextBlock Text="$DataContext.Name" />
+                    <TextBlock Text="$DataContext.Name:OneWay" />
                   </StackPanel>
                 }
               </Button>
@@ -162,7 +162,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
         const string markup = """
             <Button DataType="TestInput.TemplateViewModel">
-              @template { <TextBlock Text="$DataContext.Name" /> }
+              @template { <TextBlock Text="$DataContext.Name:OneWay" /> }
             </Button>
             """;
 
@@ -205,7 +205,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
         GeneratorRunResult userControlResult = RunPairedGenerator(
             "Views/BindingView.crn",
-            "<UserControl><TextBlock Text=\"$DataContext.Name\" /></UserControl>",
+            "<UserControl><TextBlock Text=\"$DataContext.Name:OneWay\" /></UserControl>",
             userControlSource,
             out Compilation userControlCompilation);
         Assert.DoesNotContain(userControlResult.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -236,7 +236,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
         GeneratorRunResult windowResult = RunPairedGenerator(
             "Views/BindingWindow.crn",
-            "<Window><TextBlock Text=\"$DataContext.Name\" /></Window>",
+            "<Window><TextBlock Text=\"$DataContext.Name:OneWay\" /></Window>",
             windowSource,
             out Compilation windowCompilation);
         Assert.DoesNotContain(windowResult.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);

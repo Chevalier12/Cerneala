@@ -199,7 +199,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
         GeneratorRunResult unobservable = RunGeneratorWithInput(
             "UnobservableSemanticBinding.crn",
-            "<TextBlock DataType=\"TestInput.PlainViewModel\" Text=\"$DataContext.Name\" />",
+            "<TextBlock DataType=\"TestInput.PlainViewModel\" Text=\"$DataContext.Name:OneWay\" />",
             unobservableSource,
             out _);
         Assert.Contains(
@@ -235,7 +235,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
         GeneratorRunResult mismatch = RunGeneratorWithInput(
             "MismatchSemanticBinding.crn",
-            "<TextBlock DataType=\"TestInput.MismatchViewModel\" IsEnabled=\"$DataContext.Name\" />",
+            "<TextBlock DataType=\"TestInput.MismatchViewModel\" IsEnabled=\"$DataContext.Name:OneWay\" />",
             mismatchSource,
             out _);
         Assert.Contains(

@@ -1023,7 +1023,7 @@ public sealed partial class UiMarkupGenerator
                         return false;
                     }
 
-                    if (!ValidateMotionValue(assignment.Value, property, assignment.Target, parameters))
+                    if (!ValidateMotionValue(assignment.Value, property, assignment.Target, parameters, target!, allowExplicitBinding: false))
                     {
                         return false;
                     }
@@ -1184,8 +1184,9 @@ public sealed partial class UiMarkupGenerator
                 }
 
                 MotionAssignmentSyntax? source = sources.TryGetValue(destination.Target, out MotionAssignmentSyntax? matched) ? matched : null;
-                if (!ValidateMotionValue(destination.Value, property, destination.Target, parameters) ||
-                    source is not null && !ValidateMotionValue(source.Value, property, source.Target, parameters))
+                ResolvedMotionTarget target = new(ResolvedMotionTargetKind.Self, collectionElement);
+                if (!ValidateMotionValue(destination.Value, property, destination.Target, parameters, target, allowExplicitBinding: true) ||
+                    source is not null && !ValidateMotionValue(source.Value, property, source.Target, parameters, target, allowExplicitBinding: false))
                 {
                     return false;
                 }
@@ -1196,7 +1197,6 @@ public sealed partial class UiMarkupGenerator
                     return false;
                 }
 
-                ResolvedMotionTarget target = new(ResolvedMotionTargetKind.Self, collectionElement);
                 properties.Add(new ResolvedMotionProperty(destination, source, target, property, specVariable));
             }
 
@@ -1302,8 +1302,8 @@ public sealed partial class UiMarkupGenerator
                 MotionValueSyntax? previousValue = null;
                 foreach (var item in ordered)
                 {
-                    if (!ValidateMotionValue(item.Source.Value, property, group.Key, parameters) ||
-                        !ValidateMotionValue(item.Destination.Value, property, group.Key, parameters) ||
+                    if (!ValidateMotionValue(item.Source.Value, property, group.Key, parameters, target!, allowExplicitBinding: false) ||
+                        !ValidateMotionValue(item.Destination.Value, property, group.Key, parameters, target!, allowExplicitBinding: false) ||
                         item.Source.Value is MotionCurrentValueSyntax || item.Destination.Value is MotionCurrentValueSyntax)
                     {
                         if (item.Source.Value is MotionCurrentValueSyntax || item.Destination.Value is MotionCurrentValueSyntax)
@@ -1623,8 +1623,8 @@ public sealed partial class UiMarkupGenerator
                     return false;
                 }
 
-                if (!ValidateMotionValue(destination.Value, property, destination.Target, parameters) ||
-                    (source is not null && !ValidateMotionValue(source.Value, property, source.Target, parameters)))
+                if (!ValidateMotionValue(destination.Value, property, destination.Target, parameters, target!, allowExplicitBinding: true) ||
+                    (source is not null && !ValidateMotionValue(source.Value, property, source.Target, parameters, target!, allowExplicitBinding: false)))
                 {
                     return false;
                 }
@@ -1688,7 +1688,15 @@ public sealed partial class UiMarkupGenerator
                         ? EmitMotionValue(property.Source!.Value, property.Property, targetCode, animation.Parameters)
                         : "default(" + typeCode + ")!";
                     bool toCurrent = property.Destination.Value is MotionCurrentValueSyntax;
-                    string toCode = toCurrent
+                    bool hasBinding = TryEmitMotionBinding(
+                        property.Destination.Value,
+                        property.Property,
+                        property.Target,
+                        targetCode,
+                        out string observationCode,
+                        out string bindingModeCode,
+                        out string projectionCode);
+                    string toCode = toCurrent || hasBinding
                         ? "default(" + typeCode + ")!"
                         : EmitMotionValue(property.Destination.Value, property.Property, targetCode, animation.Parameters);
                     string specCode = property.SpecVariable ?? "null";
@@ -1708,21 +1716,44 @@ public sealed partial class UiMarkupGenerator
                             BuildDurationExpression(property.Keyframes.Duration) + ");");
                     }
                     string optionsCode = EmitMotionOptions(animation.Syntax.Options, animation.Parameters);
-                    starts.Add(property.Target.Prism is null
-                        ? "global::Cerneala.UI.Markup.GeneratedMarkup.StartMotionProperty(" + sessionName + ", " +
-                            targetCode + ", " + property.Property.PropertyCode + ", " +
-                            (hasFrom ? "true" : "false") + ", " + fromCode + ", " +
-                            (toCurrent ? "true" : "false") + ", " + toCode + ", " + specCode + ", " + optionsCode + ")"
-                        : EmitPrismMotionStart(
-                            sessionName,
-                            property,
-                            targetCode,
-                            hasFrom,
-                            fromCode,
-                            toCurrent,
-                            toCode,
-                            specCode,
-                            optionsCode));
+                    if (hasBinding)
+                    {
+                        starts.Add(property.Target.Prism is null
+                            ? "global::Cerneala.UI.Markup.GeneratedMarkup.StartBoundMotionProperty(" + sessionName + ", " +
+                                targetCode + ", " + property.Property.PropertyCode + ", " +
+                                (hasFrom ? "true" : "false") + ", " + fromCode + ", " +
+                                observationCode + ", " + bindingModeCode + ", " + projectionCode + ", " +
+                                specCode + ", " + optionsCode + ")"
+                            : EmitBoundPrismMotionStart(
+                                sessionName,
+                                property,
+                                targetCode,
+                                hasFrom,
+                                fromCode,
+                                observationCode,
+                                bindingModeCode,
+                                projectionCode,
+                                specCode,
+                                optionsCode));
+                    }
+                    else
+                    {
+                        starts.Add(property.Target.Prism is null
+                            ? "global::Cerneala.UI.Markup.GeneratedMarkup.StartMotionProperty(" + sessionName + ", " +
+                                targetCode + ", " + property.Property.PropertyCode + ", " +
+                                (hasFrom ? "true" : "false") + ", " + fromCode + ", " +
+                                (toCurrent ? "true" : "false") + ", " + toCode + ", " + specCode + ", " + optionsCode + ")"
+                            : EmitPrismMotionStart(
+                                sessionName,
+                                property,
+                                targetCode,
+                                hasFrom,
+                                fromCode,
+                                toCurrent,
+                                toCode,
+                                specCode,
+                                optionsCode));
+                    }
                 }
 
                 currentPostLines.Add(
@@ -2069,17 +2100,30 @@ public sealed partial class UiMarkupGenerator
                     ? EmitMotionValue(property.Source!.Value, property.Property, itemName, animation.Parameters)
                     : "default(" + typeCode + ")!";
                 bool toCurrent = property.Destination.Value is MotionCurrentValueSyntax;
-                string toCode = toCurrent
+                bool hasBinding = TryEmitMotionBinding(
+                    property.Destination.Value,
+                    property.Property,
+                    property.Target,
+                    itemName,
+                    out string observationCode,
+                    out string bindingModeCode,
+                    out string projectionCode);
+                string toCode = toCurrent || hasBinding
                     ? "default(" + typeCode + ")!"
                     : EmitMotionValue(property.Destination.Value, property.Property, itemName, animation.Parameters);
                 string tweenCode = "((global::Cerneala.UI.Motion.Specs.TweenSpec<" + typeCode + ">)" + property.SpecVariable + ")";
                 string delayedSpecCode = tweenCode + ".WithDelay(" + tweenCode + ".Delay + " + delayName + ")";
                 string optionsCode = EmitMotionOptions(animation.Syntax.Options, animation.Parameters);
-                string start =
-                    "global::Cerneala.UI.Markup.GeneratedMarkup.StartMotionProperty(" + sessionName + ", " +
-                    itemName + ", " + property.Property.PropertyCode + ", " +
-                    (hasFrom ? "true" : "false") + ", " + fromCode + ", " +
-                    (toCurrent ? "true" : "false") + ", " + toCode + ", " + delayedSpecCode + ", " + optionsCode + ")";
+                string start = hasBinding
+                    ? "global::Cerneala.UI.Markup.GeneratedMarkup.StartBoundMotionProperty(" + sessionName + ", " +
+                        itemName + ", " + property.Property.PropertyCode + ", " +
+                        (hasFrom ? "true" : "false") + ", " + fromCode + ", " +
+                        observationCode + ", " + bindingModeCode + ", " + projectionCode + ", " +
+                        delayedSpecCode + ", " + optionsCode + ")"
+                    : "global::Cerneala.UI.Markup.GeneratedMarkup.StartMotionProperty(" + sessionName + ", " +
+                        itemName + ", " + property.Property.PropertyCode + ", " +
+                        (hasFrom ? "true" : "false") + ", " + fromCode + ", " +
+                        (toCurrent ? "true" : "false") + ", " + toCode + ", " + delayedSpecCode + ", " + optionsCode + ")";
                 starts.Add("() => global::Cerneala.UI.Markup.MarkupMotionExecution.From(" + start + ")");
             }
 
@@ -2133,8 +2177,56 @@ public sealed partial class UiMarkupGenerator
                 property.Name,
                 atom.Text,
                 property,
-                atom.Location.Source);
+                atom.Location.Source,
+                targetCode);
             return expression?.Code ?? "default(" + GetMotionTypeCode(property.ValueType) + ")!";
+        }
+
+        private bool TryEmitMotionBinding(
+            MotionValueSyntax value,
+            PropertySpec property,
+            ResolvedMotionTarget target,
+            string targetCode,
+            out string observationCode,
+            out string modeCode,
+            out string projectionCode)
+        {
+            observationCode = string.Empty;
+            modeCode = string.Empty;
+            projectionCode = string.Empty;
+            if (value is not MotionAtomValueSyntax atom)
+            {
+                return false;
+            }
+
+            string text = atom.Text.Trim();
+            BindingTokenParseResult tokenResult = ParseBindingToken(text, 0);
+            MarkupBindingToken? token = tokenResult.Token;
+            if (token is null || tokenResult.Length != text.Length || token.ModeOffset < 0)
+            {
+                return false;
+            }
+
+            BindingResolutionContext context = new(
+                targetCode,
+                target.Element.Name.LocalName,
+                ReferenceEquals(target.Element, document.Root),
+                templateEmissionContexts.Count == 0 ? null : templateEmissionContexts.Peek(),
+                validateClrObservability: true);
+            BindingSourceDescriptor? source = ResolveBindingSource(
+                context,
+                token.Path,
+                atom.Location.Source,
+                atom.Location.Source);
+            if (source is null || !ValidateBindingCompatibility(source, property, token.Mode, context, atom.Location.Source))
+            {
+                return false;
+            }
+
+            observationCode = BuildObservationExpression(source);
+            modeCode = BindingModeCode(token.Mode);
+            projectionCode = ProjectionCode(source, property);
+            return true;
         }
 
         private static string EmitMotionCondition(DirectiveExpression expression, string targetCode)
@@ -2406,7 +2498,9 @@ public sealed partial class UiMarkupGenerator
             MotionValueSyntax value,
             PropertySpec property,
             string target,
-            MotionClipInvocationContext? parameters)
+            MotionClipInvocationContext? parameters,
+            ResolvedMotionTarget resolvedTarget,
+            bool allowExplicitBinding)
         {
             if (value is MotionCurrentValueSyntax)
             {
@@ -2415,8 +2509,8 @@ public sealed partial class UiMarkupGenerator
 
             if (value is MotionConditionalValueSyntax conditional)
             {
-                return ValidateMotionValue(conditional.WhenTrue, property, target, parameters) &&
-                    ValidateMotionValue(conditional.WhenFalse, property, target, parameters);
+                return ValidateMotionValue(conditional.WhenTrue, property, target, parameters, resolvedTarget, allowExplicitBinding) &&
+                    ValidateMotionValue(conditional.WhenFalse, property, target, parameters, resolvedTarget, allowExplicitBinding);
             }
 
             string text = ((MotionAtomValueSyntax)value).Text.Trim();
@@ -2429,6 +2523,43 @@ public sealed partial class UiMarkupGenerator
                 }
 
                 return compatible;
+            }
+
+            if (text.StartsWith("$", StringComparison.Ordinal) && LooksLikeBindingPath(text))
+            {
+                ParsedMarkupValue? parsed = ParseMarkupBindingValue(
+                    text,
+                    assignment: true,
+                    stringTarget: false,
+                    value.Location);
+                if (parsed is null || parsed.Kind == ParsedMarkupValueKind.Invalid)
+                {
+                    return false;
+                }
+
+                MarkupBindingToken token = parsed.Binding!;
+                if (token.ModeOffset >= 0 && !allowExplicitBinding)
+                {
+                    Report(
+                        InvalidBindingSource,
+                        value.Location,
+                        text,
+                        "An explicit Motion binding is allowed only as an @animate destination. @from, @set and keyframe values are snapshots.");
+                    return false;
+                }
+
+                BindingResolutionContext context = new(
+                    "motionTarget",
+                    resolvedTarget.Element.Name.LocalName,
+                    ReferenceEquals(resolvedTarget.Element, document.Root),
+                    templateEmissionContexts.Count == 0 ? null : templateEmissionContexts.Peek(),
+                    validateClrObservability: token.ModeOffset >= 0);
+                return ResolveMarkupValue(
+                    context,
+                    property,
+                    parsed,
+                    value.Location.Source,
+                    value.Location) is not null;
             }
 
             bool valid = property.ValueKind switch

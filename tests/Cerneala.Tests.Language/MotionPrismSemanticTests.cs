@@ -11,6 +11,95 @@ namespace Cerneala.Tests.Language;
 
 public sealed class MotionPrismSemanticTests
 {
+    private const string BindingViewModelSource = """
+        using System.ComponentModel;
+
+        namespace Demo;
+
+        public sealed class BindingViewModel : INotifyPropertyChanged
+        {
+            public event PropertyChangedEventHandler? PropertyChanged;
+
+            public float SnapshotValue { get; set; }
+
+            public float LiveValue { get; set; }
+        }
+        """;
+
+    [Fact]
+    public void MotionDirectReferencesAreSnapshotsAndOnlyExplicitModesAreBindings()
+    {
+        const string markup = """
+            <Border DataType="Demo.BindingViewModel" Aspect="$Motion">
+              <Border.Resources>
+                <Aspect Name="Motion" TargetType="Border">
+                  @on Loaded
+                  {
+                    @parallel
+                    {
+                      @animate { @to { Opacity = $DataContext.SnapshotValue; } }
+                      @animate { @to { TranslateX = $DataContext.LiveValue:OneWay; } }
+                    }
+                  }
+                </Aspect>
+              </Border.Resources>
+            </Border>
+            """;
+
+        CernealaSemanticModel model = Model("MotionBindingModes.crn", markup, BindingViewModelSource);
+
+        Assert.Empty(model.Diagnostics.Where(IsMotionOrPrism));
+        Assert.Equal(2, model.Symbols.Count(symbol => symbol.Kind == CernealaSemanticSymbolKind.BindingSegment));
+        Assert.Single(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.BindingMode && symbol.Name == "OneWay");
+    }
+
+    [Fact]
+    public void AspectDirectReferencesAreSnapshotsAndOnlyExplicitModesAreBindings()
+    {
+        const string markup = """
+            <Border DataType="Demo.BindingViewModel" Aspect="$State">
+              <Border.Resources>
+                <Aspect Name="State" TargetType="Border">
+                  @default
+                  {
+                    Opacity = $DataContext.SnapshotValue;
+                    TranslateX = $DataContext.LiveValue:OneWay;
+                  }
+                </Aspect>
+              </Border.Resources>
+            </Border>
+            """;
+
+        CernealaSemanticModel model = Model("AspectBindingModes.crn", markup, BindingViewModelSource);
+
+        Assert.DoesNotContain(model.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI004" || diagnostic.Id == "CERNEALAUI007");
+        Assert.Equal(2, model.Symbols.Count(symbol => symbol.Kind == CernealaSemanticSymbolKind.BindingSegment));
+        Assert.Single(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.BindingMode && symbol.Name == "OneWay");
+    }
+
+    [Fact]
+    public void PrismDirectReferencesAreSnapshotsAndOnlyExplicitModesAreBindings()
+    {
+        const string markup = """
+            <Border DataType="Demo.BindingViewModel">
+              @prism
+              {
+                @layer Card
+                {
+                  Opacity = $DataContext.SnapshotValue;
+                  @filter Blur { Radius = $DataContext.LiveValue:OneWay; }
+                }
+              }
+            </Border>
+            """;
+
+        CernealaSemanticModel model = Model("PrismBindingModes.crn", markup, BindingViewModelSource);
+
+        Assert.Empty(model.Diagnostics.Where(IsMotionOrPrism));
+        Assert.Equal(2, model.Symbols.Count(symbol => symbol.Kind == CernealaSemanticSymbolKind.BindingSegment));
+        Assert.Single(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.BindingMode && symbol.Name == "OneWay");
+    }
+
     [Fact]
     public void MotionTargetsEventsSpecsCompositionsParametersAndLifecycleAreTyped()
     {
@@ -51,6 +140,7 @@ public sealed class MotionPrismSemanticTests
     [InlineData("@on Loaded { @animate { @to { DoesNotExist = 1; } } }", "CERNEALAUI021")]
     [InlineData("@on Missing { @animate { @to { Opacity = 1; } } }", "CERNEALAUI022")]
     [InlineData("@on Loaded { @animate with $Missing { @to { Opacity = 1; } } }", "CERNEALAUI023")]
+    [InlineData("@on Loaded { @animate { @from { Opacity = $self.Opacity:OneWay; } @to { Opacity = 1; } } }", "CERNEALAUI023")]
     public void MotionDiagnosticCategoriesMatchTheSourceGenerator(string body, string expectedId)
     {
         string markup = MotionAspectMarkup(body);
@@ -242,10 +332,11 @@ public sealed class MotionPrismSemanticTests
         </Border>
         """;
 
-    private static CernealaSemanticModel Model(string path, string markup)
+    private static CernealaSemanticModel Model(string path, string markup, string? source = null)
     {
         CSharpCompilation compilation = CSharpCompilation.Create(
             "MotionPrismSemanticTests",
+            source is null ? null : [CSharpSyntaxTree.ParseText(source)],
             references: PlatformReferences()
                 .Append(MetadataReference.CreateFromFile(typeof(UIElement).Assembly.Location)),
             options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));

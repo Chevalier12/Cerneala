@@ -98,7 +98,8 @@ Property attributes accept a typed source path with an optional final mode:
 source-path[:OneWay|TwoWay]
 ```
 
-`OneWay` is the default. Supported sources are `$DataContext.Path`,
+Omitting the mode reads the source once and assigns that initial value. A live
+binding exists only when `:OneWay` or `:TwoWay` is present. Supported sources are `$DataContext.Path`,
 `$element.Property`, `$self.Property`, `$root.Property`,
 `$control.parts.$part.Property`, and `$owner.Property` inside a component
 template. The generator resolves every segment and endpoint through Roslyn and
@@ -108,18 +109,20 @@ at runtime.
 ```xml
 <StackPanel DataType="EditorViewModel">
   <TextBlock Text="$DataContext.Name" />
+  <TextBlock Text="$DataContext.Name:OneWay" />
   <TextBlock Text="User: $DataContext.Name, count: $DataContext.Count" />
   <TextBox Text="$DataContext.Name:TwoWay" />
 </StackPanel>
 ```
 
-`$root.Property` binds to a UI property declared by the document root. It keeps
+`$root.Property` reads a UI property declared by the document root. It keeps
 view dataflow in markup without requiring a `Name` on a paired `UserControl` or
-`Window` wrapper, and it reacts to subsequent root-property changes:
+`Window` wrapper. Add `:OneWay` when subsequent root-property changes must flow
+to the target:
 
 ```xml
 <UserControl>
-  <ItemsControl ItemsSource="$root.Rows" />
+  <ItemsControl ItemsSource="$root.Rows:OneWay" />
 </UserControl>
 ```
 
@@ -127,7 +130,8 @@ view dataflow in markup without requiring a `Name` on a paired `UserControl` or
 `Window<TViewModel>` and `UserControl<TViewModel>` documents, which infer the
 type. Every CLR owner along a reactive path must implement
 `INotifyPropertyChanged`. UI-property sources use Cerneala property change
-notifications instead.
+notifications instead. Direct references do not require observability because
+they are evaluated only once.
 
 CLR `INotifyPropertyChanged` notifications may arrive from worker threads once
 the generated target is attached. The runtime coalesces them per generated
@@ -142,11 +146,12 @@ directive strings may interpolate multiple paths; interpolation is always
 `OneWay`, rejects fragment modes, deduplicates repeated paths, and uses `\$` as
 the literal-dollar escape.
 
-Directive assignment bindings are written unquoted and end with `;`:
+Directive references and bindings are written unquoted and end with `;`:
 
 ```text
-Text = $DataContext.Name;
-Text = $DataContext.Name:TwoWay;
+Text = $DataContext.Name;        // initial value only
+Text = $DataContext.Name:OneWay; // live source-to-target binding
+Text = $DataContext.Name:TwoWay; // live binding with write-back
 Text = "Hello, $DataContext.Name";
 ```
 

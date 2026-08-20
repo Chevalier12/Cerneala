@@ -1,5 +1,6 @@
 using Cerneala.UI.Elements;
 using Cerneala.UI.Core;
+using Cerneala.UI.Data;
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Interpolation;
 using Cerneala.UI.Motion.Properties;
@@ -89,6 +90,30 @@ public static partial class GeneratedMarkup
             options);
     }
 
+    public static MotionHandle StartBoundMotionProperty<T>(
+        IDisposable session,
+        UIElement target,
+        UiProperty<T> property,
+        bool hasFrom,
+        T from,
+        MarkupObservation observation,
+        BindingMode mode,
+        Func<object?, T> projection,
+        MotionSpec<T>? spec,
+        MotionPropertyStartOptions options)
+    {
+        return GetMotionSession(session).StartBoundProperty(
+            target,
+            property,
+            hasFrom,
+            from,
+            observation,
+            mode,
+            projection,
+            spec,
+            options);
+    }
+
     public static MotionHandle StartPrismMotionProperty<T>(
         IDisposable session,
         UIElement target,
@@ -113,6 +138,36 @@ public static partial class GeneratedMarkup
             from,
             toCurrent,
             to,
+            spec,
+            options);
+    }
+
+    public static MotionHandle StartBoundPrismMotionProperty<T>(
+        IDisposable session,
+        UIElement target,
+        int propertyId,
+        Func<PrismInstance, T> getValue,
+        Action<PrismInstance, T> setValue,
+        bool discrete,
+        bool hasFrom,
+        T from,
+        MarkupObservation observation,
+        BindingMode mode,
+        Func<object?, T> projection,
+        MotionSpec<T>? spec,
+        MotionPropertyStartOptions options)
+    {
+        return GetMotionSession(session).StartBoundPrismProperty(
+            target,
+            propertyId,
+            getValue,
+            setValue,
+            discrete,
+            hasFrom,
+            from,
+            observation,
+            mode,
+            projection,
             spec,
             options);
     }
@@ -279,6 +334,42 @@ public static partial class GeneratedMarkup
             return binding.AnimateTo(destination, effectiveSpec, options);
         }
 
+        public MotionHandle StartBoundProperty<T>(
+            UIElement target,
+            UiProperty<T> property,
+            bool hasFrom,
+            T from,
+            MarkupObservation observation,
+            BindingMode mode,
+            Func<object?, T> projection,
+            MotionSpec<T>? spec,
+            MotionPropertyStartOptions options)
+        {
+            ArgumentNullException.ThrowIfNull(target);
+            ArgumentNullException.ThrowIfNull(property);
+            ArgumentNullException.ThrowIfNull(observation);
+            ArgumentNullException.ThrowIfNull(projection);
+            ArgumentNullException.ThrowIfNull(options);
+            if (!CanStart || owner.Root is null || !ReferenceEquals(target.Root, owner.Root))
+            {
+                throw new InvalidOperationException("Motion targets must be attached to the session owner's UIRoot.");
+            }
+
+            MotionSystem motion = owner.Root.Motion;
+            MotionPropertyBinding<T> binding = motion.Properties.GetOrCreateBinding(motion, target, property);
+            bindings.Add(binding);
+            MotionSpec<T> effectiveSpec = spec ?? (MotionSpec<T>)motion.AnimatableProperties.Get(property).DefaultSpec;
+            return BoundMotionController<T>.Start(
+                observation,
+                mode,
+                projection,
+                hasFrom,
+                from,
+                binding.Value.JumpTo,
+                destination => binding.AnimateTo(destination, effectiveSpec, options),
+                listener => binding.Value.Subscribe(change => listener(change.NewValue)));
+        }
+
         public MotionHandle StartPrismProperty<T>(
             UIElement target,
             int propertyId,
@@ -292,13 +383,70 @@ public static partial class GeneratedMarkup
             MotionSpec<T>? spec,
             MotionPropertyStartOptions options)
         {
+            PrismMotionBinding<T> binding = GetOrCreatePrismBinding(
+                target,
+                propertyId,
+                getValue,
+                setValue,
+                discrete,
+                options);
+
+            if (hasFrom)
+            {
+                binding.JumpTo(from);
+            }
+
+            MotionSpec<T> effectiveSpec = spec ?? PrismDefaultMotionSpec<T>.Value;
+            T destination = toCurrent ? binding.Current : to;
+            return binding.AnimateTo(destination, effectiveSpec, options);
+        }
+
+        public MotionHandle StartBoundPrismProperty<T>(
+            UIElement target,
+            int propertyId,
+            Func<PrismInstance, T> getValue,
+            Action<PrismInstance, T> setValue,
+            bool discrete,
+            bool hasFrom,
+            T from,
+            MarkupObservation observation,
+            BindingMode mode,
+            Func<object?, T> projection,
+            MotionSpec<T>? spec,
+            MotionPropertyStartOptions options)
+        {
+            PrismMotionBinding<T> binding = GetOrCreatePrismBinding(
+                target,
+                propertyId,
+                getValue,
+                setValue,
+                discrete,
+                options);
+            MotionSpec<T> effectiveSpec = spec ?? PrismDefaultMotionSpec<T>.Value;
+            return BoundMotionController<T>.Start(
+                observation,
+                mode,
+                projection,
+                hasFrom,
+                from,
+                binding.JumpTo,
+                destination => binding.AnimateTo(destination, effectiveSpec, options),
+                binding.Subscribe);
+        }
+
+        private PrismMotionBinding<T> GetOrCreatePrismBinding<T>(
+            UIElement target,
+            int propertyId,
+            Func<PrismInstance, T> getValue,
+            Action<PrismInstance, T> setValue,
+            bool discrete,
+            MotionPropertyStartOptions options)
+        {
             ArgumentNullException.ThrowIfNull(target);
             ArgumentNullException.ThrowIfNull(getValue);
             ArgumentNullException.ThrowIfNull(setValue);
             ArgumentNullException.ThrowIfNull(options);
-            if (!CanStart ||
-                owner.Root is null ||
-                !ReferenceEquals(target.Root, owner.Root))
+            if (!CanStart || owner.Root is null || !ReferenceEquals(target.Root, owner.Root))
             {
                 throw new InvalidOperationException(
                     "Prism Motion targets must be attached to the renderable session owner's UIRoot.");
@@ -306,7 +454,6 @@ public static partial class GeneratedMarkup
 
             PrismInstance instance = GetPrismInstance(target);
             PrismMotionPropertyKey key = new(target, propertyId);
-            PrismMotionBinding<T> binding;
             if (prismBindings.TryGetValue(key, out PrismMotionBinding? existing))
             {
                 if (existing is not PrismMotionBinding<T> typed)
@@ -317,41 +464,30 @@ public static partial class GeneratedMarkup
 
                 if (ReferenceEquals(typed.Instance, instance))
                 {
-                    binding = typed;
+                    return typed;
                 }
-                else
-                {
-                    typed.Dispose(restoreBase: false);
-                    binding = CreatePrismBinding(
-                        owner.Root.Motion,
-                        target,
-                        instance,
-                        getValue,
-                        setValue,
-                        discrete);
-                    prismBindings[key] = binding;
-                }
-            }
-            else
-            {
-                binding = CreatePrismBinding(
+
+                typed.Dispose(restoreBase: false);
+                PrismMotionBinding<T> replacement = CreatePrismBinding(
                     owner.Root.Motion,
                     target,
                     instance,
                     getValue,
                     setValue,
                     discrete);
-                prismBindings.Add(key, binding);
+                prismBindings[key] = replacement;
+                return replacement;
             }
 
-            if (hasFrom)
-            {
-                binding.JumpTo(from);
-            }
-
-            MotionSpec<T> effectiveSpec = spec ?? PrismDefaultMotionSpec<T>.Value;
-            T destination = toCurrent ? binding.Current : to;
-            return binding.AnimateTo(destination, effectiveSpec, options);
+            PrismMotionBinding<T> binding = CreatePrismBinding(
+                owner.Root.Motion,
+                target,
+                instance,
+                getValue,
+                setValue,
+                discrete);
+            prismBindings.Add(key, binding);
+            return binding;
         }
 
         public MarkupMotionExecution StartExecution(Func<MarkupMotionExecution> start)
@@ -502,6 +638,256 @@ public static partial class GeneratedMarkup
         }
     }
 
+    private sealed class BoundMotionController<T> : IDisposable
+    {
+        private readonly MarkupObservation observation;
+        private readonly BindingMode mode;
+        private readonly Func<object?, T> projection;
+        private readonly Func<T, MotionHandle> animateTo;
+        private readonly Func<Action<T>, IDisposable> subscribe;
+        private readonly MotionHandle handle;
+        private IDisposable? valueSubscription;
+        private MotionHandle? activeMotion;
+        private bool writingSource;
+        private bool retargeting;
+        private bool finishing;
+        private bool disposed;
+
+        private BoundMotionController(
+            MarkupObservation observation,
+            BindingMode mode,
+            Func<object?, T> projection,
+            Func<T, MotionHandle> animateTo,
+            Func<Action<T>, IDisposable> subscribe)
+        {
+            this.observation = observation;
+            this.mode = mode;
+            this.projection = projection;
+            this.animateTo = animateTo;
+            this.subscribe = subscribe;
+            handle = new MotionHandle(Cancel, Complete, Dispose);
+        }
+
+        public static MotionHandle Start(
+            MarkupObservation observation,
+            BindingMode mode,
+            Func<object?, T> projection,
+            bool hasFrom,
+            T from,
+            Action<T> jumpTo,
+            Func<T, MotionHandle> animateTo,
+            Func<Action<T>, IDisposable> subscribe)
+        {
+            ArgumentNullException.ThrowIfNull(observation);
+            ArgumentNullException.ThrowIfNull(projection);
+            ArgumentNullException.ThrowIfNull(jumpTo);
+            ArgumentNullException.ThrowIfNull(animateTo);
+            ArgumentNullException.ThrowIfNull(subscribe);
+
+            BoundMotionController<T> controller = new(
+                observation,
+                mode,
+                projection,
+                animateTo,
+                subscribe);
+            controller.StartCore(hasFrom, from, jumpTo);
+            return controller.handle;
+        }
+
+        public void Dispose()
+        {
+            if (disposed)
+            {
+                return;
+            }
+
+            disposed = true;
+            finishing = true;
+            try
+            {
+                activeMotion?.Dispose();
+            }
+            finally
+            {
+                activeMotion = null;
+                Cleanup();
+            }
+        }
+
+        private void StartCore(bool hasFrom, T from, Action<T> jumpTo)
+        {
+            observation.CallbackGuard = () => !writingSource;
+            observation.Changed += OnObservationChanged;
+            observation.Start();
+            try
+            {
+                if (hasFrom)
+                {
+                    jumpTo(from);
+                }
+
+                if (mode == BindingMode.TwoWay)
+                {
+                    valueSubscription = subscribe(WriteSource);
+                }
+
+                if (observation.IsResolved)
+                {
+                    Retarget();
+                }
+            }
+            catch
+            {
+                Cleanup();
+                throw;
+            }
+        }
+
+        private void OnObservationChanged(object? sender, EventArgs args)
+        {
+            if (!disposed && !finishing && observation.IsResolved)
+            {
+                Retarget();
+            }
+        }
+
+        private void Retarget()
+        {
+            T destination = projection(observation.Value);
+            retargeting = true;
+            MotionHandle next;
+            try
+            {
+                next = animateTo(destination);
+            }
+            finally
+            {
+                retargeting = false;
+            }
+
+            activeMotion = next;
+            next.Completed += OnMotionCompleted;
+            if (next.IsCompleted)
+            {
+                FinishCompleted();
+            }
+            else if (next.IsCanceled)
+            {
+                FinishCanceled(MotionCancelBehavior.KeepCurrent);
+            }
+        }
+
+        private void OnMotionCompleted(object? sender, MotionCompletedEventArgs args)
+        {
+            if (retargeting || finishing || !ReferenceEquals(sender, activeMotion))
+            {
+                return;
+            }
+
+            if (args.IsCanceled)
+            {
+                FinishCanceled(args.CancelBehavior ?? MotionCancelBehavior.KeepCurrent);
+            }
+            else
+            {
+                FinishCompleted();
+            }
+        }
+
+        private void WriteSource(T value)
+        {
+            if (disposed || finishing || mode != BindingMode.TwoWay || !observation.CanWrite)
+            {
+                return;
+            }
+
+            writingSource = true;
+            try
+            {
+                _ = observation.TryWrite(value);
+            }
+            finally
+            {
+                writingSource = false;
+            }
+        }
+
+        private void Cancel(MotionCancelBehavior behavior)
+        {
+            if (finishing || disposed)
+            {
+                return;
+            }
+
+            finishing = true;
+            try
+            {
+                activeMotion?.Cancel(behavior);
+            }
+            finally
+            {
+                activeMotion = null;
+                Cleanup();
+                handle.FinishCanceled(behavior, fireEvent: true);
+            }
+        }
+
+        private void Complete()
+        {
+            if (finishing || disposed)
+            {
+                return;
+            }
+
+            finishing = true;
+            try
+            {
+                activeMotion?.Complete();
+            }
+            finally
+            {
+                activeMotion = null;
+                Cleanup();
+                handle.FinishCompleted(fireEvent: true);
+            }
+        }
+
+        private void FinishCompleted()
+        {
+            if (finishing || disposed)
+            {
+                return;
+            }
+
+            finishing = true;
+            activeMotion = null;
+            Cleanup();
+            handle.FinishCompleted(fireEvent: true);
+        }
+
+        private void FinishCanceled(MotionCancelBehavior behavior)
+        {
+            if (finishing || disposed)
+            {
+                return;
+            }
+
+            finishing = true;
+            activeMotion = null;
+            Cleanup();
+            handle.FinishCanceled(behavior, fireEvent: true);
+        }
+
+        private void Cleanup()
+        {
+            valueSubscription?.Dispose();
+            valueSubscription = null;
+            observation.Changed -= OnObservationChanged;
+            observation.CallbackGuard = null;
+            observation.Stop();
+        }
+    }
+
     private readonly record struct PrismMotionPropertyKey(
         UIElement Target,
         int PropertyId);
@@ -550,6 +936,13 @@ public static partial class GeneratedMarkup
         public PrismInstance Instance { get; }
 
         public T Current => value.Current;
+
+        public IDisposable Subscribe(Action<T> listener)
+        {
+            ArgumentNullException.ThrowIfNull(listener);
+            ThrowIfDisposed();
+            return value.Subscribe(change => listener(change.NewValue));
+        }
 
         public void JumpTo(T next)
         {

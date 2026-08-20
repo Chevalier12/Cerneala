@@ -45,8 +45,8 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <StackPanel DataType="TestInput.BindingRoot">
               <TextBlock Text="$DataContext.Name:OneWay" />
-              <TextBlock Text="$DataContext.Count" />
-              <TextBlock Text="$DataContext.OptionalCount" />
+              <TextBlock Text="$DataContext.Count:OneWay" />
+              <TextBlock Text="$DataContext.OptionalCount:OneWay" />
               <TextBlock Text="$DataContext.Type.Name:OneWay" />
             </StackPanel>
             """;
@@ -227,7 +227,7 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public void MarkupBindingStageZero_UnobservableClrOwnerReportsActionableDiagnostic()
+    public void MarkupBindingStageZero_DirectReferenceAllowsAnUnobservableOwnerButExplicitBindingRejectsIt()
     {
         const string inputSource = """
             namespace TestInput;
@@ -236,18 +236,31 @@ public sealed partial class UiMarkupGeneratorTests
                 public string Name { get; set; } = "Static";
             }
             """;
-        const string markup = """
+        const string directMarkup = """
             <TextBlock DataType="TestInput.PlainViewModel" Text="$DataContext.Name" />
             """;
 
-        GeneratorRunResult result = RunGeneratorWithInput(
+        GeneratorRunResult direct = RunGeneratorWithInput(
+            "UnobservableReference.crn",
+            directMarkup,
+            inputSource,
+            out _);
+        Assert.DoesNotContain(direct.Diagnostics, candidate => candidate.Severity == DiagnosticSeverity.Error);
+        string generated = SingleGeneratedSource(direct);
+        Assert.Contains("ReadReference<string>", generated, StringComparison.Ordinal);
+        Assert.DoesNotContain("AttachPropertyBinding<string>", generated, StringComparison.Ordinal);
+
+        const string bindingMarkup = """
+            <TextBlock DataType="TestInput.PlainViewModel" Text="$DataContext.Name:OneWay" />
+            """;
+        GeneratorRunResult binding = RunGeneratorWithInput(
             "UnobservableBinding.crn",
-            markup,
+            bindingMarkup,
             inputSource,
             out _);
 
         Diagnostic diagnostic = Assert.Single(
-            result.Diagnostics,
+            binding.Diagnostics,
             candidate => candidate.Severity == DiagnosticSeverity.Error &&
                 candidate.GetMessage().Contains("INotifyPropertyChanged", StringComparison.Ordinal));
         Assert.Equal("UnobservableBinding.crn", diagnostic.Location.GetLineSpan().Path);
@@ -299,7 +312,7 @@ public sealed partial class UiMarkupGeneratorTests
             }
             """;
         const string markup = """
-            <TextBlock DataType="TestInput.ThreadedViewModel" Text="$DataContext.Name" />
+            <TextBlock DataType="TestInput.ThreadedViewModel" Text="$DataContext.Name:OneWay" />
             """;
 
         GeneratorRunResult result = RunGeneratorWithInput(
@@ -345,7 +358,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
         const string markup = """
             <StackPanel DataType="TestInput.InheritedViewModel">
-              <TextBlock Text="$DataContext.Name" />
+              <TextBlock Text="$DataContext.Name:OneWay" />
             </StackPanel>
             """;
 
@@ -376,7 +389,7 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public void MarkupBindingStageZero_TwoWayAndNamedEndpointsSupportBackwardAndForwardReferences()
+    public void MarkupBindingStageZero_DirectSnapshotsAndExplicitNamedBindingsSupportForwardReferences()
     {
         const string inputSource = """
             using System.ComponentModel;
@@ -416,7 +429,7 @@ public sealed partial class UiMarkupGeneratorTests
             viewModel));
         TextBox editor = Assert.IsType<TextBox>(panel.VisualChildren[0]);
         Slider before = Assert.IsType<Slider>(panel.VisualChildren[1]);
-        ProgressBar implicitOneWay = Assert.IsType<ProgressBar>(panel.VisualChildren[2]);
+        ProgressBar directSnapshot = Assert.IsType<ProgressBar>(panel.VisualChildren[2]);
         ProgressBar explicitOneWay = Assert.IsType<ProgressBar>(panel.VisualChildren[3]);
         ProgressBar twoWay = Assert.IsType<ProgressBar>(panel.VisualChildren[4]);
         ProgressBar forward = Assert.IsType<ProgressBar>(panel.VisualChildren[5]);
@@ -428,19 +441,19 @@ public sealed partial class UiMarkupGeneratorTests
         viewModelType.GetProperty("Name")!.SetValue(viewModel, "Source");
         Assert.Equal("Source", editor.Text);
 
-        Assert.Equal(40, implicitOneWay.Value);
+        Assert.Equal(40, directSnapshot.Value);
         Assert.Equal(40, explicitOneWay.Value);
         Assert.Equal(40, twoWay.Value);
         Assert.Equal(25, forward.Value);
         before.Value = 55;
-        Assert.Equal(55, implicitOneWay.Value);
+        Assert.Equal(40, directSnapshot.Value);
         Assert.Equal(55, explicitOneWay.Value);
         Assert.Equal(55, twoWay.Value);
         twoWay.Value = 61;
         Assert.Equal(61, before.Value);
-        Assert.Equal(61, implicitOneWay.Value);
+        Assert.Equal(40, directSnapshot.Value);
         after.Value = 33;
-        Assert.Equal(33, forward.Value);
+        Assert.Equal(25, forward.Value);
     }
 
     [Fact]
@@ -568,22 +581,22 @@ public sealed partial class UiMarkupGeneratorTests
             assembly,
             "Cerneala.GeneratedUi.ConditionalBindingFactory",
             viewModel));
-        TextBlock implicitOneWay = Assert.IsType<TextBlock>(panel.VisualChildren[0]);
+        TextBlock directSnapshot = Assert.IsType<TextBlock>(panel.VisualChildren[0]);
         TextBlock explicitOneWay = Assert.IsType<TextBlock>(panel.VisualChildren[1]);
         TextBox editor = Assert.IsType<TextBox>(panel.VisualChildren[2]);
-        Assert.Equal("Scurt", implicitOneWay.Text);
+        Assert.Equal("Scurt", directSnapshot.Text);
         Assert.Equal("Scurt", explicitOneWay.Text);
         Assert.Equal("Scurt", editor.Text);
 
         viewModelType.GetProperty("ShortName")!.SetValue(viewModel, "Actualizat");
-        Assert.Equal("Actualizat", implicitOneWay.Text);
+        Assert.Equal("Scurt", directSnapshot.Text);
         Assert.Equal("Actualizat", explicitOneWay.Text);
         Assert.Equal("Actualizat", editor.Text);
         editor.Text = "Scris scurt";
         Assert.Equal("Scris scurt", viewModelType.GetProperty("ShortName")!.GetValue(viewModel));
 
         viewModelType.GetProperty("UseShort")!.SetValue(viewModel, false);
-        Assert.Equal("Base implicit", implicitOneWay.Text);
+        Assert.Equal("Base implicit", directSnapshot.Text);
         Assert.Equal("Base explicit", explicitOneWay.Text);
         Assert.Equal("Base editor", editor.Text);
         viewModelType.GetProperty("UseLong")!.SetValue(viewModel, true);
@@ -654,7 +667,7 @@ public sealed partial class UiMarkupGeneratorTests
                 <SolidColorBrush Name="Accent" Color="White" />
               </StackPanel.Resources>
               <Button Content="Owner">
-                @template { <ContentPresenter Content="$owner.Content" /> }
+                @template { <ContentPresenter Content="$owner.Content:OneWay" /> }
               </Button>
               <TextBlock Text="Base" Background="$Accent" IsEnabled="False" IsVisible="False">
                 @when (IsEnabled and IsVisible) or IsMouseOver { Text = "Active"; }
@@ -691,16 +704,16 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public void MarkupBindingStageZero_ExplicitOwnerOneWayMatchesImplicitTemplateBinding()
+    public void MarkupBindingStageZero_DirectOwnerReferenceIsASnapshotWhileExplicitOneWayTracksChanges()
     {
         const string implicitMarkup = """
-            <Button Content="Owner">
-              @template { <ContentPresenter Content="$owner.Content" /> }
+            <Button IsEnabled="True">
+              @template { <Border IsEnabled="$owner.IsEnabled" /> }
             </Button>
             """;
         const string explicitMarkup = """
-            <Button Content="Owner">
-              @template { <ContentPresenter Content="$owner.Content:OneWay" /> }
+            <Button IsEnabled="True">
+              @template { <Border IsEnabled="$owner.IsEnabled:OneWay" /> }
             </Button>
             """;
 
@@ -714,9 +727,8 @@ public sealed partial class UiMarkupGeneratorTests
             out Compilation explicitCompilation);
         Assert.DoesNotContain(implicitResult.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         Assert.DoesNotContain(explicitResult.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-        Assert.Equal(
-            Count(SingleGeneratedSource(implicitResult), ".Bind("),
-            Count(SingleGeneratedSource(explicitResult), ".Bind("));
+        Assert.Equal(0, Count(SingleGeneratedSource(implicitResult), ".Bind("));
+        Assert.Equal(1, Count(SingleGeneratedSource(explicitResult), ".Bind("));
 
         Assembly implicitAssembly = EmitBindingTestAssembly(implicitCompilation);
         Assembly explicitAssembly = EmitBindingTestAssembly(explicitCompilation);
@@ -726,12 +738,12 @@ public sealed partial class UiMarkupGeneratorTests
         Button explicitButton = Assert.IsType<Button>(InvokeBindingTestCreate(
             explicitAssembly,
             "Cerneala.GeneratedUi.ExplicitOwnerBindingFactory"));
-        ContentPresenter implicitPresenter = Assert.IsType<ContentPresenter>(implicitButton.ComponentTemplateInstance!.Root);
-        ContentPresenter explicitPresenter = Assert.IsType<ContentPresenter>(explicitButton.ComponentTemplateInstance!.Root);
-        implicitButton.Content = "Implicit changed";
-        explicitButton.Content = "Explicit changed";
-        Assert.Equal("Implicit changed", implicitPresenter.Content);
-        Assert.Equal("Explicit changed", explicitPresenter.Content);
+        Border directBorder = Assert.IsType<Border>(implicitButton.ComponentTemplateInstance!.Root);
+        Border boundBorder = Assert.IsType<Border>(explicitButton.ComponentTemplateInstance!.Root);
+        implicitButton.IsEnabled = false;
+        explicitButton.IsEnabled = false;
+        Assert.True(directBorder.IsEnabled);
+        Assert.False(boundBorder.IsEnabled);
     }
 
     private static Assembly EmitBindingTestAssembly(Compilation compilation)

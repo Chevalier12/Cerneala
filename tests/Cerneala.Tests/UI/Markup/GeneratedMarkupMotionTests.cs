@@ -1,4 +1,5 @@
 using Cerneala.UI.Elements;
+using Cerneala.UI.Data;
 using Cerneala.UI.Markup;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Motion.Core;
@@ -233,6 +234,82 @@ public sealed class GeneratedMarkupMotionTests
         }
     }
 
+    [Fact]
+    public void OneWayMotionBindingRetargetsWithoutCompletingTheStableExecutionHandle()
+    {
+        UIRoot root = new();
+        Grid owner = new();
+        UIElement target = new();
+        UIElement source = new() { Opacity = 0.25f };
+        owner.VisualChildren.Add(target);
+        owner.VisualChildren.Add(source);
+        using IDisposable session = GeneratedMarkup.AttachMotionSession(owner);
+        ElementLifecycle.AttachSubtree(root, owner);
+        MarkupObservation observation = GeneratedMarkup.ObserveProperty(source, UIElement.OpacityProperty);
+
+        MotionHandle handle = GeneratedMarkup.StartBoundMotionProperty(
+            session,
+            target,
+            UIElement.OpacityProperty,
+            false,
+            default,
+            observation,
+            BindingMode.OneWay,
+            value => (float)value!,
+            MotionFactory.Tween<float>(TimeSpan.FromSeconds(10)),
+            new MotionPropertyStartOptions());
+        MotionPropertyBinding<float> binding = root.Motion.Properties.GetOrCreateBinding(
+            root.Motion,
+            target,
+            UIElement.OpacityProperty);
+
+        Assert.Equal(0.25f, binding.Value.Target);
+        source.Opacity = 0.8f;
+
+        Assert.Equal(0.8f, binding.Value.Target);
+        Assert.True(handle.IsActive);
+    }
+
+    [Fact]
+    public void TwoWayMotionBindingWritesAnimatedSamplesBackWithoutRetargetFeedback()
+    {
+        TestMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        Grid owner = new();
+        UIElement target = new();
+        UIElement source = new() { Opacity = 0.8f };
+        owner.VisualChildren.Add(target);
+        owner.VisualChildren.Add(source);
+        using IDisposable session = GeneratedMarkup.AttachMotionSession(owner);
+        ElementLifecycle.AttachSubtree(root, owner);
+        MarkupObservation observation = GeneratedMarkup.ObserveProperty(source, UIElement.OpacityProperty);
+
+        MotionHandle handle = GeneratedMarkup.StartBoundMotionProperty(
+            session,
+            target,
+            UIElement.OpacityProperty,
+            true,
+            0f,
+            observation,
+            BindingMode.TwoWay,
+            value => (float)value!,
+            MotionFactory.Tween<float>(TimeSpan.FromSeconds(1)),
+            new MotionPropertyStartOptions());
+        MotionPropertyBinding<float> binding = root.Motion.Properties.GetOrCreateBinding(
+            root.Motion,
+            target,
+            UIElement.OpacityProperty);
+
+        root.ProcessFrame();
+        clock.Advance(TimeSpan.FromMilliseconds(500));
+        root.ProcessFrame();
+
+        Assert.InRange(source.Opacity, 0.01f, 0.79f);
+        Assert.Equal(binding.Value.Current, source.Opacity);
+        Assert.Equal(0.8f, binding.Value.Target);
+        Assert.True(handle.IsActive);
+    }
+
     private static MotionGroupHandle StartOpacity(IDisposable session, UIElement element, float destination)
     {
         return GeneratedMarkup.StartMotion(
@@ -259,6 +336,16 @@ public sealed class GeneratedMarkupMotionTests
         public void RaiseFired()
         {
             Fired?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private sealed class TestMotionClock : IMotionClock
+    {
+        public TimeSpan Now { get; private set; }
+
+        public void Advance(TimeSpan delta)
+        {
+            Now += delta;
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Cerneala.SourceGen.Prism;
+using Microsoft.CodeAnalysis;
 
 namespace Cerneala.SourceGen;
 
@@ -28,10 +29,389 @@ public sealed partial class UiMarkupGenerator
                 nextPrismFactoryId.ToString(CultureInfo.InvariantCulture);
             nextPrismFactoryId++;
             EmitPrismFactory(factoryName, definitionName, application);
+            IReadOnlyList<string> bindingFactories = EmitPrismBindingFactories(
+                element,
+                elementVariable,
+                application);
+            string bindings = bindingFactories.Count == 0
+                ? string.Empty
+                : ", new global::System.Func<global::Cerneala.UI.Prism.Runtime.PrismInstance, global::System.IDisposable>[] { " +
+                    string.Join(", ", bindingFactories) + " }";
             currentLines.Add(
                 "_ = global::Cerneala.UI.Markup.GeneratedMarkup.AttachPrism(" +
-                elementVariable + ", " + factoryName + ");");
+                elementVariable + ", " + factoryName + bindings + ");");
         }
+
+        private IReadOnlyList<string> EmitPrismBindingFactories(
+            MarkupElement element,
+            string elementVariable,
+            BoundPrismApplication application)
+        {
+            List<string> factories = [];
+            BindingResolutionContext context = CreateBindingResolutionContext(
+                elementVariable,
+                element.Name.LocalName,
+                ReferenceEquals(element, document.Root));
+
+            foreach (BoundPrismProperty property in application.Composition.Properties)
+            {
+                AddPrismPropertyBindingFactory(
+                    factories,
+                    context,
+                    element,
+                    elementVariable,
+                    property,
+                    "prismInstance.Composition." + property.Schema.Name,
+                    isCatalogParameter: false);
+            }
+
+            foreach (BoundPrismNode node in application.Composition.Nodes)
+            {
+                AddPrismNodeBindingFactories(
+                    factories,
+                    context,
+                    element,
+                    elementVariable,
+                    node);
+            }
+
+            return factories;
+        }
+
+        private void AddPrismNodeBindingFactories(
+            ICollection<string> factories,
+            BindingResolutionContext context,
+            MarkupElement element,
+            string elementVariable,
+            BoundPrismNode node)
+        {
+            string state = PrismNodeStateExpression(node, "prismInstance");
+            foreach (BoundPrismProperty property in node.Properties)
+            {
+                AddPrismPropertyBindingFactory(
+                    factories,
+                    context,
+                    element,
+                    elementVariable,
+                    property,
+                    state + "." + property.Schema.Name,
+                    isCatalogParameter: false);
+            }
+
+            for (int index = 0; index < node.Filters.Count; index++)
+            {
+                AddPrismOperationBindingFactories(
+                    factories,
+                    context,
+                    element,
+                    elementVariable,
+                    node.Filters[index],
+                    state + ".Filters[" + index.ToString(CultureInfo.InvariantCulture) + "]",
+                    "Filter");
+            }
+
+            for (int index = 0; index < node.Styles.Count; index++)
+            {
+                AddPrismOperationBindingFactories(
+                    factories,
+                    context,
+                    element,
+                    elementVariable,
+                    node.Styles[index],
+                    state + ".Styles[" + index.ToString(CultureInfo.InvariantCulture) + "]",
+                    "Style");
+            }
+
+            if (node.Mask is not null)
+            {
+                foreach (BoundPrismProperty property in node.Mask.Properties)
+                {
+                    AddPrismPropertyBindingFactory(
+                        factories,
+                        context,
+                        element,
+                        elementVariable,
+                        property,
+                        state + ".Mask!." + property.Schema.Name,
+                        isCatalogParameter: false);
+                }
+            }
+
+            foreach (BoundPrismNode child in node.Children)
+            {
+                AddPrismNodeBindingFactories(
+                    factories,
+                    context,
+                    element,
+                    elementVariable,
+                    child);
+            }
+        }
+
+        private void AddPrismOperationBindingFactories(
+            ICollection<string> factories,
+            BindingResolutionContext context,
+            MarkupElement element,
+            string elementVariable,
+            BoundPrismOperation operation,
+            string state,
+            string operationKind)
+        {
+            PrismCatalogCompiler.CatalogEntry entry = operation.CatalogEntry
+                ?? throw new InvalidOperationException("A Prism catalog operation has no entry.");
+            foreach (BoundPrismProperty property in operation.Properties)
+            {
+                bool isCatalogParameter = entry.Properties.Any(candidate =>
+                    ReferenceEquals(candidate, property.Schema));
+                if (!isCatalogParameter)
+                {
+                    AddPrismPropertyBindingFactory(
+                        factories,
+                        context,
+                        element,
+                        elementVariable,
+                        property,
+                        state + "." + property.Schema.Name,
+                        isCatalogParameter: false);
+                    continue;
+                }
+
+                int slot = GetPrismParameterSlot(entry, property.Schema);
+                string valueKind = PrismRuntimeValueKind(property.Value.Type);
+                string getter =
+                    "global::Cerneala.UI.Markup.GeneratedMarkup.GetPrism" + operationKind +
+                    valueKind + "(" + state + ", " +
+                    entry.StableId.ToString(CultureInfo.InvariantCulture) + ", " +
+                    slot.ToString(CultureInfo.InvariantCulture) + ")";
+                string setter =
+                    "global::Cerneala.UI.Markup.GeneratedMarkup.SetPrism" + operationKind +
+                    valueKind + "(" + state + ", " +
+                    entry.StableId.ToString(CultureInfo.InvariantCulture) + ", " +
+                    slot.ToString(CultureInfo.InvariantCulture) + ", value)";
+                AddPrismBindingFactory(
+                    factories,
+                    context,
+                    element,
+                    elementVariable,
+                    property,
+                    getter,
+                    setter,
+                    isCatalogParameter: true);
+            }
+        }
+
+        private void AddPrismPropertyBindingFactory(
+            ICollection<string> factories,
+            BindingResolutionContext context,
+            MarkupElement element,
+            string elementVariable,
+            BoundPrismProperty property,
+            string targetExpression,
+            bool isCatalogParameter)
+        {
+            AddPrismBindingFactory(
+                factories,
+                context,
+                element,
+                elementVariable,
+                property,
+                targetExpression,
+                targetExpression + " = value",
+                isCatalogParameter);
+        }
+
+        private void AddPrismBindingFactory(
+            ICollection<string> factories,
+            BindingResolutionContext context,
+            MarkupElement element,
+            string elementVariable,
+            BoundPrismProperty property,
+            string getterExpression,
+            string setterExpression,
+            bool isCatalogParameter)
+        {
+            if (!property.Value.IsBinding && !property.Value.IsDirectReference)
+            {
+                return;
+            }
+
+            PrismValueSyntax syntax = property.Value.Syntax;
+            BindingTokenParseResult parsed = ParseBindingToken(syntax.Text, 0);
+            if (parsed.Error is not null)
+            {
+                Report(
+                    InvalidBindingSource,
+                    OffsetDiagnosticSource(syntax.Location, parsed.ErrorOffset),
+                    syntax.Text,
+                    parsed.Error);
+                return;
+            }
+
+            MarkupBindingToken? token = parsed.Token;
+            if (token is null || parsed.Length != syntax.Text.Length)
+            {
+                Report(
+                    InvalidBindingSource,
+                    syntax.Location,
+                    syntax.Text,
+                    "Invalid Prism binding path. Expected $source.Property with an optional :OneWay or :TwoWay suffix.");
+                return;
+            }
+
+            BindingSourceDescriptor? source = ResolveBindingSource(
+                context,
+                token.Path,
+                element,
+                syntax.Location);
+            if (source is null)
+            {
+                return;
+            }
+
+            if (property.Value.IsBinding &&
+                token.Mode == MarkupBindingMode.TwoWay &&
+                !source.CanWrite)
+            {
+                Report(
+                    InvalidBindingSource,
+                    syntax.Location,
+                    token.Path,
+                    "TwoWay requires a writable source endpoint.");
+                return;
+            }
+
+            if (!IsPrismBindingTypeCompatible(
+                    source.ValueType,
+                    property.Value.Type,
+                    property.Schema.Name,
+                    isCatalogParameter))
+            {
+                Report(
+                    InvalidBindingSource,
+                    syntax.Location,
+                    token.Path,
+                    "Source type '" + source.ValueType.ToDisplayString() +
+                    "' is not compatible with Prism target type '" +
+                    PrismBindingTypeCode(
+                        property.Value.Type,
+                        property.Schema.Name,
+                        isCatalogParameter) + "'.");
+                return;
+            }
+
+            string observationName = "prismObservation" +
+                nextReactiveId.ToString(CultureInfo.InvariantCulture);
+            nextReactiveId++;
+            List<string> observationLines = [];
+            _ = EmitObservationDescriptor(
+                observationLines,
+                observationNames: null,
+                observationName,
+                source);
+            string typeCode = PrismBindingTypeCode(
+                property.Value.Type,
+                property.Schema.Name,
+                isCatalogParameter);
+            if (property.Value.IsDirectReference)
+            {
+                factories.Add(
+                    "prismInstance => { " + string.Join(" ", observationLines) +
+                    " return global::Cerneala.UI.Markup.GeneratedMarkup.ApplyPrismValueReference(" +
+                    "prismInstance, " + observationName +
+                    ", (prismInstance, value) => " + setterExpression +
+                    ", value => (" + typeCode + ")value!); }");
+                return;
+            }
+
+            string mode = token.Mode == MarkupBindingMode.TwoWay ? "TwoWay" : "OneWay";
+            factories.Add(
+                "prismInstance => { " + string.Join(" ", observationLines) +
+                " return global::Cerneala.UI.Markup.GeneratedMarkup.AttachPrismValueBinding(" +
+                elementVariable + ", prismInstance, " + observationName +
+                ", prismInstance => " + getterExpression +
+                ", (prismInstance, value) => " + setterExpression +
+                ", global::Cerneala.UI.Data.BindingMode." + mode +
+                ", value => (" + typeCode + ")value!, " +
+                Literal("Prism " + property.Schema.Name + " <- " + token.Path) + "); }" );
+        }
+
+        private bool IsPrismBindingTypeCompatible(
+            ITypeSymbol sourceType,
+            BoundPrismValueType targetType,
+            string propertyName,
+            bool isCatalogParameter)
+        {
+            ITypeSymbol? expected = targetType switch
+            {
+                BoundPrismValueType.Boolean => compilation.GetSpecialType(SpecialType.System_Boolean),
+                BoundPrismValueType.Integer => compilation.GetSpecialType(SpecialType.System_Int32),
+                BoundPrismValueType.Number => compilation.GetSpecialType(SpecialType.System_Single),
+                BoundPrismValueType.Color => compilation.GetTypeByMetadataName("Cerneala.Drawing.Color"),
+                BoundPrismValueType.Vector when propertyName is "ThisLayerRange" or "UnderlyingRange" =>
+                    compilation.GetTypeByMetadataName("Cerneala.UI.Prism.Runtime.PrismBlendRange"),
+                BoundPrismValueType.Vector => compilation.GetTypeByMetadataName("System.Numerics.Vector4"),
+                BoundPrismValueType.Resource =>
+                    compilation.GetTypeByMetadataName("Cerneala.UI.Prism.Definitions.PrismResourceId"),
+                BoundPrismValueType.Symbol when isCatalogParameter =>
+                    compilation.GetSpecialType(SpecialType.System_Int32),
+                BoundPrismValueType.Symbol => compilation.GetTypeByMetadataName(
+                    PrismBindingTypeMetadataName(propertyName)),
+                _ => null
+            };
+            return expected is not null && SymbolEqualityComparer.Default.Equals(sourceType, expected);
+        }
+
+        private static string PrismBindingTypeCode(
+            BoundPrismValueType type,
+            string propertyName,
+            bool isCatalogParameter) => type switch
+        {
+            BoundPrismValueType.Boolean => "bool",
+            BoundPrismValueType.Integer => "int",
+            BoundPrismValueType.Number => "float",
+            BoundPrismValueType.Color => "global::Cerneala.Drawing.Color",
+            BoundPrismValueType.Vector when propertyName is "ThisLayerRange" or "UnderlyingRange" =>
+                "global::Cerneala.UI.Prism.Runtime.PrismBlendRange",
+            BoundPrismValueType.Vector => "global::System.Numerics.Vector4",
+            BoundPrismValueType.Resource =>
+                "global::Cerneala.UI.Prism.Definitions.PrismResourceId",
+            BoundPrismValueType.Symbol when isCatalogParameter => "int",
+            BoundPrismValueType.Symbol => "global::" + PrismBindingTypeMetadataName(propertyName),
+            _ => throw new InvalidOperationException("Unknown Prism binding type.")
+        };
+
+        private static string PrismBindingTypeMetadataName(string propertyName) => propertyName switch
+        {
+            "WorkingColorProfile" => "Cerneala.Drawing.Prism.Catalog.PrismColorProfile",
+            "BlendMode" => "Cerneala.Drawing.Prism.Catalog.PrismBlendMode",
+            "Channel" => "Cerneala.UI.Prism.Definitions.PrismMaskChannel",
+            "BlendChannels" => "Cerneala.UI.Prism.Runtime.PrismBlendChannels",
+            "Knockout" => "Cerneala.UI.Prism.Runtime.PrismKnockout",
+            "BlendIfChannel" => "Cerneala.UI.Prism.Runtime.PrismBlendIfChannel",
+            _ => "System.Int32"
+        };
+
+        private static string PrismRuntimeValueKind(BoundPrismValueType type) => type switch
+        {
+            BoundPrismValueType.Boolean => "Boolean",
+            BoundPrismValueType.Integer => "Integer",
+            BoundPrismValueType.Number => "Number",
+            BoundPrismValueType.Color => "Color",
+            BoundPrismValueType.Vector => "Vector",
+            BoundPrismValueType.Symbol => "Integer",
+            BoundPrismValueType.Resource => "Resource",
+            _ => throw new InvalidOperationException("Unknown Prism parameter type.")
+        };
+
+        private static string PrismNodeStateExpression(BoundPrismNode node, string instance) =>
+            node.Kind switch
+            {
+                PrismContainerKind.Layer => instance + ".GetLayerState(",
+                PrismContainerKind.Group => instance + ".GetGroupState(",
+                PrismContainerKind.Backdrop => instance + ".GetBackdropState(",
+                _ => throw new InvalidOperationException("A Prism composition cannot be bound as a node.")
+            } + "new global::Cerneala.UI.Prism.Definitions.PrismNodeId(" +
+            node.Id.ToString(CultureInfo.InvariantCulture) + "))";
 
         private string GetOrEmitPrismDefinition(BoundPrismComposition composition)
         {
@@ -222,6 +602,11 @@ public sealed partial class UiMarkupGenerator
             BoundPrismValue value,
             HashSet<BoundPrismParameter> visited)
         {
+            if (value.IsBinding || value.IsDirectReference)
+            {
+                return null;
+            }
+
             if (value.Parameter is null)
             {
                 return value;
@@ -247,6 +632,11 @@ public sealed partial class UiMarkupGenerator
 
             foreach (BoundPrismProperty property in application.Composition.Properties)
             {
+                if (property.Value.IsBinding || property.Value.IsDirectReference)
+                {
+                    continue;
+                }
+
                 PrismDeclarationLines.Add(
                     "    instance.Composition." + property.Schema.Name + " = " +
                     EmitPrismApplicationValue(property.Value, property.Schema.Name, application) + ";");
@@ -294,6 +684,11 @@ public sealed partial class UiMarkupGenerator
                 getter + "(" + nodeId + ");");
             foreach (BoundPrismProperty property in node.Properties)
             {
+                if (property.Value.IsBinding || property.Value.IsDirectReference)
+                {
+                    continue;
+                }
+
                 PrismDeclarationLines.Add(
                     "    " + nodeVariable + "." + property.Schema.Name + " = " +
                     EmitPrismApplicationValue(property.Value, property.Schema.Name, application) + ";");
@@ -330,6 +725,11 @@ public sealed partial class UiMarkupGenerator
                     maskVariable + " = " + nodeVariable + ".Mask!;");
                 foreach (BoundPrismProperty property in node.Mask.Properties)
                 {
+                    if (property.Value.IsBinding || property.Value.IsDirectReference)
+                    {
+                        continue;
+                    }
+
                     PrismDeclarationLines.Add(
                         "    " + maskVariable + "." + property.Schema.Name + " = " +
                         EmitPrismApplicationValue(
@@ -364,6 +764,11 @@ public sealed partial class UiMarkupGenerator
 
             foreach (BoundPrismProperty property in operation.Properties)
             {
+                if (property.Value.IsBinding || property.Value.IsDirectReference)
+                {
+                    continue;
+                }
+
                 if (!entry.Properties.Any(candidate => ReferenceEquals(candidate, property.Schema)))
                 {
                     PrismDeclarationLines.Add(

@@ -20,6 +20,8 @@ internal enum PrismOperationModelKind
 internal enum PrismValueModelKind
 {
     Identifier,
+    Binding,
+    DirectReference,
     ResourceReference,
     StringLiteral,
     NumberLiteral,

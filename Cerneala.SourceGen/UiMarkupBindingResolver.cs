@@ -198,7 +198,8 @@ public sealed partial class UiMarkupGenerator
             string rawValue,
             bool assignment,
             bool stringTarget,
-            object diagnosticSource)
+            object diagnosticSource,
+            bool requireExplicitMode = false)
         {
             string value = rawValue.Trim();
             bool quoted = assignment && value.Length >= 2 && value[0] == '"' && value[value.Length - 1] == '"';
@@ -215,6 +216,11 @@ public sealed partial class UiMarkupGenerator
                 BindingTokenParseResult tokenResult = ParseBindingToken(value, 0);
                 if (tokenResult.Token is not null && tokenResult.Length == value.Length)
                 {
+                    if (requireExplicitMode && tokenResult.Token.ModeOffset < 0)
+                    {
+                        return null;
+                    }
+
                     return ParsedMarkupValue.Direct(tokenResult.Token);
                 }
 

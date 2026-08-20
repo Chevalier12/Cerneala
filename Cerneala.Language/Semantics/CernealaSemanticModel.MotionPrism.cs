@@ -786,7 +786,13 @@ internal sealed partial class CernealaSemanticModel
                 continue;
             }
 
-            BindMotionAssignment(source, targetType, assignment, clip, prismOnly: false);
+            BindMotionAssignment(
+                source,
+                targetType,
+                assignment,
+                clip,
+                prismOnly: false,
+                allowExplicitBinding: owner.Keyword == "@to");
         }
     }
 
@@ -814,13 +820,19 @@ internal sealed partial class CernealaSemanticModel
         ILanguageTypeSymbol? defaultTargetType,
         AssignmentSyntax assignment,
         MotionClipDefinition? clip,
-        bool prismOnly)
+        bool prismOnly,
+        bool allowExplicitBinding)
     {
         string targetPath = assignment.Name;
         string[] segments = targetPath.Split('.');
         if (segments.Length >= 4 && segments[1] == "prism")
         {
-            BindPrismMotionTarget(source, assignment, segments, reportMissingApplication: prismOnly);
+            BindPrismMotionTarget(
+                source,
+                assignment,
+                segments,
+                reportMissingApplication: prismOnly,
+                allowExplicitBinding: allowExplicitBinding);
             return;
         }
 
@@ -927,9 +939,20 @@ internal sealed partial class CernealaSemanticModel
             value = value.Substring(0, with).Trim();
         }
 
-        if (value == "current" || value.StartsWith("$", StringComparison.Ordinal) ||
-            clip?.Parameters.ContainsKey(value) == true)
+        if (value == "current" || clip?.Parameters.ContainsKey(value) == true)
         {
+            return;
+        }
+
+        if (value.StartsWith("$", StringComparison.Ordinal))
+        {
+            BindMotionReferenceValue(
+                source,
+                value,
+                TrimmedSpan(assignment.ValueSpan),
+                member.ValueType,
+                targetPath,
+                allowExplicitBinding);
             return;
         }
 
@@ -1021,7 +1044,13 @@ internal sealed partial class CernealaSemanticModel
             DirectiveRegion? owner = InnermostRegion(program.Regions, assignment.NameSpan.Start);
             if (owner?.Keyword is "@from" or "@to" or "@set" or "@scroll")
             {
-                BindMotionAssignment(application, aspect.TargetType, assignment, clip: null, prismOnly: true);
+                BindMotionAssignment(
+                    application,
+                    aspect.TargetType,
+                    assignment,
+                    clip: null,
+                    prismOnly: true,
+                    allowExplicitBinding: owner.Keyword == "@to");
             }
         }
     }
@@ -1446,6 +1475,11 @@ internal sealed partial class CernealaSemanticModel
         PrismCatalogProperty schema,
         PrismParameterScope? scope)
     {
+        if (value.Kind is PrismValueModelKind.Binding or PrismValueModelKind.DirectReference)
+        {
+            return BindPrismValueBinding(source, value, schema);
+        }
+
         if (value.Kind == PrismValueModelKind.Identifier && scope?.Resolve(value.Text) is PrismParameterDefinition parameter)
         {
             if (!CanConvertPrismType(parameter.TypeName, schema.ValueType))
@@ -1536,6 +1570,82 @@ internal sealed partial class CernealaSemanticModel
         return true;
     }
 
+    private bool BindPrismValueBinding(
+        ElementSyntax source,
+        PrismValueModelSyntax value,
+        PrismCatalogProperty schema)
+    {
+        EmbeddedParseResult<BindingValueSyntax> parsed = BindingSyntaxParser.Parse(value.Text, value.Span.Start);
+        if (parsed.Diagnostics.Count > 0 ||
+            parsed.Syntax.Kind != BindingValueKind.Direct ||
+            parsed.Syntax.Binding is not BindingPathSyntax path)
+        {
+            EmbeddedDiagnostic diagnostic = parsed.Diagnostics.FirstOrDefault() ?? new EmbeddedDiagnostic(
+                "CERNEALAUI007",
+                "The Prism binding expression is incomplete.",
+                value.Span);
+            AddBindingDiagnostic(value.Text, diagnostic.Span, diagnostic.Message);
+            return false;
+        }
+
+        BindingResolution? resolution = ResolveBindingPath(
+            source,
+            path,
+            GetCompletionDataType(source),
+            validateClrObservability: value.Kind == PrismValueModelKind.Binding);
+        if (resolution is null)
+        {
+            return false;
+        }
+
+        ILanguageTypeSymbol? targetType = ResolvePrismType(schema.ValueType);
+        if (!IsPrismBindingTypeCompatible(resolution.Type, targetType))
+        {
+            AddPrismDiagnostic("PRISM2009", value.Span,
+                "Prism binding '" + value.Text + "' has type " +
+                (resolution.Type?.MetadataName ?? "unknown") + ", not " + schema.ValueType + ".");
+            return false;
+        }
+
+        if (value.Kind == PrismValueModelKind.Binding &&
+            path.Mode == BindingModeSyntax.TwoWay &&
+            !resolution.CanWrite)
+        {
+            AddBindingSemanticDiagnostic(source, value.Text, path.Span,
+                "A TwoWay Prism binding requires a writable source property.");
+            return false;
+        }
+
+        if (value.Kind == PrismValueModelKind.Binding)
+        {
+            AddBindingModeSymbol(path, resolution.Type);
+        }
+        symbols.Add(new CernealaSemanticSymbol(
+            CernealaSemanticSymbolKind.PrismValue,
+            value.Text,
+            targetType?.MetadataName ?? schema.ValueType,
+            value.Span,
+            targetType,
+            value: value.Text));
+        return true;
+    }
+
+    private static bool IsPrismBindingTypeCompatible(
+        ILanguageTypeSymbol? source,
+        ILanguageTypeSymbol? target)
+    {
+        if (source is null || target is null)
+        {
+            return false;
+        }
+
+        string sourceName = source.MetadataName.TrimEnd('?');
+        string targetName = target.MetadataName.TrimEnd('?');
+        return string.Equals(sourceName, targetName, StringComparison.Ordinal) ||
+            sourceName == "System.Int32" && targetName == "System.Single" ||
+            source.IsOrImplements(targetName);
+    }
+
     private void ValidatePrismBackdropShape(IReadOnlyList<PrismContainerModelSyntax> nodes)
     {
         PrismContainerModelSyntax[] backdrops = nodes.Where(node => node.Kind == PrismContainerModelKind.Backdrop).ToArray();
@@ -1589,7 +1699,8 @@ internal sealed partial class CernealaSemanticModel
         ElementSyntax source,
         AssignmentSyntax assignment,
         string[] segments,
-        bool reportMissingApplication)
+        bool reportMissingApplication,
+        bool allowExplicitBinding)
     {
         ElementSyntax? targetElement;
         string ownerName = segments[0].TrimStart('$');
@@ -1682,6 +1793,97 @@ internal sealed partial class CernealaSemanticModel
             type,
             definitionLocation: parameter is null ? null : new LanguageSourceLocation(document.Path, parameter.Span),
             isWritable: true));
+
+        string value = document.Text.Substring(assignment.ValueSpan).Trim();
+        int with = value.IndexOf(" with ", StringComparison.Ordinal);
+        if (with >= 0)
+        {
+            value = value.Substring(0, with).Trim();
+        }
+
+        if (value.StartsWith("$", StringComparison.Ordinal))
+        {
+            BindMotionReferenceValue(
+                source,
+                value,
+                TrimmedSpan(assignment.ValueSpan),
+                type,
+                assignment.Name,
+                allowExplicitBinding);
+        }
+    }
+
+    private void BindMotionReferenceValue(
+        ElementSyntax source,
+        string expression,
+        TextSpan span,
+        ILanguageTypeSymbol? targetType,
+        string targetPath,
+        bool allowExplicitBinding)
+    {
+        BindingResolution? resolution = ResolveDirectiveReference(
+            source,
+            expression,
+            span,
+            GetCompletionDataType(source),
+            out BindingPathSyntax? path);
+        if (resolution is null || path is null)
+        {
+            return;
+        }
+
+        bool explicitBinding = path.ModeSpan.Length > 0;
+        if (explicitBinding && !allowExplicitBinding)
+        {
+            AddMotionDiagnostic(
+                "CERNEALAUI023",
+                path.ModeSpan,
+                "An explicit Motion binding is allowed only as an @animate destination. @from, @set and keyframe values are snapshots.");
+            return;
+        }
+
+        if (!IsMotionReferenceTypeCompatible(resolution.Type, targetType))
+        {
+            AddMotionDiagnostic(
+                "CERNEALAUI023",
+                span,
+                "Motion reference '" + expression + "' for property '" + targetPath + "' has incompatible type '" +
+                (resolution.Type?.MetadataName ?? "<unknown>") + "'.");
+            return;
+        }
+
+        if (!explicitBinding)
+        {
+            return;
+        }
+
+        if (path.Mode == BindingModeSyntax.TwoWay && !resolution.CanWrite)
+        {
+            AddBindingSemanticDiagnostic(
+                source,
+                expression,
+                path.ModeSpan,
+                "A TwoWay Motion binding requires a writable source property.");
+            return;
+        }
+
+        AddBindingModeSymbol(path, resolution.Type);
+    }
+
+    private static bool IsMotionReferenceTypeCompatible(
+        ILanguageTypeSymbol? source,
+        ILanguageTypeSymbol? target)
+    {
+        if (source is null || target is null)
+        {
+            return false;
+        }
+
+        string sourceName = source.MetadataName.TrimEnd('?');
+        string targetName = target.MetadataName.TrimEnd('?');
+        return string.Equals(sourceName, targetName, StringComparison.Ordinal) ||
+            sourceName == "System.Int32" && targetName == "System.Single" ||
+            source.IsOrImplements(targetName);
     }
 
     private void AddMotionDiagnostic(string id, TextSpan span, string message) =>
@@ -2043,6 +2245,13 @@ internal sealed partial class CernealaSemanticModel
 
         if (value.StartsWith("$", StringComparison.Ordinal))
         {
+            if (value.IndexOf('.') >= 0)
+            {
+                return value.IndexOf(':') >= 0
+                    ? PrismValueModelKind.Binding
+                    : PrismValueModelKind.DirectReference;
+            }
+
             return PrismValueModelKind.ResourceReference;
         }
 

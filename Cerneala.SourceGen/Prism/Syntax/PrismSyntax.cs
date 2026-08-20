@@ -9,6 +9,8 @@ public sealed partial class UiMarkupGenerator
     private enum PrismValueKind
     {
         Identifier,
+        Binding,
+        DirectReference,
         ResourceReference,
         StringLiteral,
         NumberLiteral,

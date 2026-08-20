@@ -37,6 +37,38 @@ public sealed partial class UiMarkupGenerator
                 optionsCode + ")";
         }
 
+        private string EmitBoundPrismMotionStart(
+            string sessionName,
+            ResolvedMotionProperty property,
+            string targetCode,
+            bool hasFrom,
+            string fromCode,
+            string observationCode,
+            string bindingModeCode,
+            string projectionCode,
+            string specCode,
+            string optionsCode)
+        {
+            ResolvedPrismMotionTarget prism = property.Target.Prism
+                ?? throw new InvalidOperationException(
+                    "A bound Prism Motion start requires a resolved Prism target.");
+            return
+                "global::Cerneala.UI.Markup.GeneratedMarkup.StartBoundPrismMotionProperty(" +
+                sessionName + ", " +
+                targetCode + ", " +
+                prism.PropertyId.ToString(CultureInfo.InvariantCulture) + ", " +
+                EmitPrismMotionGetter(prism) + ", " +
+                EmitPrismMotionSetter(prism) + ", " +
+                (prism.IsDiscrete ? "true" : "false") + ", " +
+                (hasFrom ? "true" : "false") + ", " +
+                fromCode + ", " +
+                observationCode + ", " +
+                bindingModeCode + ", " +
+                projectionCode + ", " +
+                specCode + ", " +
+                optionsCode + ")";
+        }
+
         private string EmitPrismMotionSet(
             ResolvedMotionSetProperty property,
             string targetCode,

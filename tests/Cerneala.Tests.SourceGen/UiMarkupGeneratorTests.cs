@@ -334,8 +334,8 @@ public sealed partial class UiMarkupGeneratorTests
             <ItemsControl>
               <ItemsControl.ItemTemplate>
                 <ContentTemplate DataType="TestInput.PropertyRow">
-                  <StackPanel DataContext="$DataContext.Details">
-                    <TextBlock Text="$DataContext.Name" />
+                  <StackPanel DataContext="$DataContext.Details:OneWay">
+                    <TextBlock Text="$DataContext.Name:OneWay" />
                   </StackPanel>
                 </ContentTemplate>
               </ItemsControl.ItemTemplate>
@@ -1108,7 +1108,7 @@ public sealed partial class UiMarkupGeneratorTests
                   @default { Background = "#FF10282D"; }
                   @template
                   {
-                    <Border Name="Chrome" Background="$owner.Background" />
+                    <Border Name="Chrome" Background="$owner.Background:OneWay" />
                   }
                 </Aspect>
               </Border.Resources>
@@ -1365,8 +1365,8 @@ public sealed partial class UiMarkupGeneratorTests
             <Button Content="Close" Background="Black">
               @template
               {
-                <Border Name="Bd" Background="$owner.Background">
-                  <ContentPresenter Content="$owner.Content" />
+                <Border Name="Bd" Background="$owner.Background:OneWay">
+                  <ContentPresenter Content="$owner.Content:OneWay" />
                 </Border>
               }
             </Button>
@@ -1407,7 +1407,7 @@ public sealed partial class UiMarkupGeneratorTests
             <Button Background="Black" IsEnabled="False">
               @template
               {
-                <Border Background="$owner.Background">
+                <Border Background="$owner.Background:OneWay">
                   @when $owner.IsEnabled
                   {
                     Background = "White";
@@ -1592,7 +1592,7 @@ public sealed partial class UiMarkupGeneratorTests
               @template
               {
                 <Border>
-                  <ContentPresenter Content="$owner.Content" />
+                  <ContentPresenter Content="$owner.Content:OneWay" />
                 </Border>
               }
               <Button Content="Nested">
@@ -1603,7 +1603,6 @@ public sealed partial class UiMarkupGeneratorTests
 
         GeneratorRunResult result = RunGenerator("NestedTemplates.crn", markup, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
@@ -3322,7 +3321,7 @@ public sealed partial class UiMarkupGeneratorTests
               <views:FancyButton Content="Fancy">
                 @template
                 {
-                  <ContentPresenter Content="$owner.Content" />
+                  <ContentPresenter Content="$owner.Content:OneWay" />
                 }
               </views:FancyButton>
             </UserControl>
@@ -3761,7 +3760,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
         const string markup = """
             <UserControl>
-              <ItemsControl Name="Items" ItemsSource="$root.Rows" />
+              <ItemsControl Name="Items" ItemsSource="$root.Rows:OneWay" />
             </UserControl>
             """;
 
@@ -3874,7 +3873,7 @@ public sealed partial class UiMarkupGeneratorTests
             <Window Background="Black">
               @template
               {
-                <Border Name="Chrome" Background="$owner.Background" />
+                <Border Name="Chrome" Background="$owner.Background:OneWay" />
               }
               <StackPanel>
                 <TextBlock Text="Window content" />
@@ -3915,7 +3914,7 @@ public sealed partial class UiMarkupGeneratorTests
             <Window Background="Black">
               <Window.Resources>
                 <Aspect TargetType="Window">
-                  @template { <Border Name="AspectChrome" Background="$owner.Background" /> }
+                  @template { <Border Name="AspectChrome" Background="$owner.Background:OneWay" /> }
                 </Aspect>
               </Window.Resources>
             </Window>

@@ -38,7 +38,11 @@ public sealed partial class UiMarkupGenerator
 
         public string? ResourceName { get; }
 
-        public bool IsConstant => Parameter is null;
+        public bool IsBinding => Syntax.Kind == PrismValueKind.Binding;
+
+        public bool IsDirectReference => Syntax.Kind == PrismValueKind.DirectReference;
+
+        public bool IsConstant => Parameter is null && !IsBinding && !IsDirectReference;
     }
 
     private sealed class BoundPrismProperty

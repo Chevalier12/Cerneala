@@ -7,6 +7,157 @@ namespace Cerneala.Tests.SourceGen;
 
 public sealed partial class UiMarkupGeneratorTests
 {
+    private const string MotionBindingInputSource = """
+        using System.ComponentModel;
+        namespace TestInput;
+
+        public sealed class MotionViewModel : INotifyPropertyChanged
+        {
+            private float targetOpacity = 0.4f;
+            public event PropertyChangedEventHandler? PropertyChanged;
+            public float TargetOpacity
+            {
+                get => targetOpacity;
+                set
+                {
+                    targetOpacity = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TargetOpacity)));
+                }
+            }
+        }
+
+        public sealed class SnapshotMotionViewModel
+        {
+            public float TargetOpacity { get; set; } = 0.4f;
+        }
+        """;
+
+    [Fact]
+    public void MotionDirectReferenceIsAStartTimeSnapshot()
+    {
+        const string markup = """
+            <Border DataType="TestInput.SnapshotMotionViewModel">
+              <Border.Aspect>
+                <Aspect>
+                  @on Loaded
+                  {
+                    @animate with Tween(180ms, EaseOut)
+                    {
+                      @to { Opacity = $DataContext.TargetOpacity; }
+                    }
+                  }
+                </Aspect>
+              </Border.Aspect>
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput(
+            "MotionDirectReference.crn",
+            markup,
+            MotionBindingInputSource,
+            out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        string generated = SingleGeneratedSource(result);
+        Assert.Contains("ReadReference<float>", generated, StringComparison.Ordinal);
+        Assert.Contains("StartMotionProperty", generated, StringComparison.Ordinal);
+        Assert.DoesNotContain("StartBoundMotionProperty", generated, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("OneWay")]
+    [InlineData("TwoWay")]
+    public void MotionExplicitBindingTracksTheDestinationDuringTheAnimation(string mode)
+    {
+        string markup = $$"""
+            <Border DataType="TestInput.MotionViewModel">
+              <Border.Aspect>
+                <Aspect>
+                  @on Loaded
+                  {
+                    @animate with Tween(180ms, EaseOut)
+                    {
+                      @to { Opacity = $DataContext.TargetOpacity:{{mode}}; }
+                    }
+                  }
+                </Aspect>
+              </Border.Aspect>
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput(
+            "Motion" + mode + "Binding.crn",
+            markup,
+            MotionBindingInputSource,
+            out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        string generated = SingleGeneratedSource(result);
+        Assert.Contains("StartBoundMotionProperty", generated, StringComparison.Ordinal);
+        Assert.Contains("BindingMode." + mode, generated, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MotionExplicitBindingIsRejectedOutsideTheAnimationDestination()
+    {
+        const string markup = """
+            <Border DataType="TestInput.MotionViewModel">
+              <Border.Aspect>
+                <Aspect>
+                  @on Loaded
+                  {
+                    @animate
+                    {
+                      @from { Opacity = $DataContext.TargetOpacity:OneWay; }
+                      @to { Opacity = 1; }
+                    }
+                  }
+                </Aspect>
+              </Border.Aspect>
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput(
+            "MotionInvalidSourceBinding.crn",
+            markup,
+            MotionBindingInputSource,
+            out _);
+
+        AssertMotionDiagnostic(result, "allowed only as an @animate destination");
+    }
+
+    [Fact]
+    public void PrismMotionExplicitBindingTracksTheDestinationDuringTheAnimation()
+    {
+        const string markup = """
+            <Border DataType="TestInput.MotionViewModel">
+              <Border.Aspect>
+                <Aspect>
+                  @on Loaded
+                  {
+                    @animate with Tween(180ms)
+                    {
+                      @to { $self.prism.Card.Opacity = $DataContext.TargetOpacity:OneWay; }
+                    }
+                  }
+                </Aspect>
+              </Border.Aspect>
+              @prism { @layer Card { Opacity = 1; @filter Blur { Radius = 1; } } }
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput(
+            "PrismMotionBinding.crn",
+            markup,
+            MotionBindingInputSource,
+            out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        string generated = SingleGeneratedSource(result);
+        Assert.Contains("StartBoundPrismMotionProperty", generated, StringComparison.Ordinal);
+        Assert.Contains("BindingMode.OneWay", generated, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void MotionMarkupNamedAspectGeneratesTypedTweenAndSpringResources()
     {

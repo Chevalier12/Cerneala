@@ -27,6 +27,15 @@ using Binding binding = GeneratedMarkup.AttachPropertyBinding(
     "$self.IsVisible");
 ```
 
+Generated markup distinguishes a direct reference from an explicit binding:
+
+```crn
+$DataContext.Name             // read once; no binding is attached
+$DataContext.Name:OneWay      // keep the target synchronized with the source
+$DataContext.Name:TwoWay      // synchronize and write target changes back
+"$DataContext.Name:OneWay"    // an ordinary string literal
+```
+
 ## Methods
 | Signature | Return Type | Description |
 | --- | --- | --- |
@@ -35,6 +44,7 @@ using Binding binding = GeneratedMarkup.AttachPropertyBinding(
 | `ObserveObject(Func<object?> getter)` | `MarkupObservation` | Observes a getter-backed object value. |
 | `ObserveDataPath(UIElement owner, params MarkupDataPathSegment[] segments)` | `MarkupObservation` | Observes a typed `DataContext` property path and its intermediate owners. |
 | `ObserveDataPath(object? source, params MarkupDataPathSegment[] segments)` | `MarkupObservation` | Observes a typed property path from a fixed source object without resolving `DataContext` through an element tree. Source-generated content templates use this overload for their item. |
+| `ReadReference<T>(MarkupObservation observation, Func<object?, T> projection)` | `T` | Starts an observation long enough to read and project its current value, then stops it without attaching a binding. |
 | `AttachConditions(UIElement owner, IReadOnlyList<MarkupObservation> observations, IReadOnlyList<MarkupConditionRule> rules)` | `IDisposable` | Attaches observations and rules to an element lifecycle and gates rule activation callbacks on effective renderability. |
 | `AttachMotionSession(UIElement owner)` | `IDisposable` | Creates a lifecycle-scoped session for generated motion triggers and executions. |
 | `AttachMotionTriggers(UIElement owner, Action attach, Action detach)` | `IDisposable` | Runs direct event-subscription callbacks on attach and their matching unsubscription callbacks on detach. |
@@ -44,12 +54,16 @@ using Binding binding = GeneratedMarkup.AttachPropertyBinding(
 | `StartMotionExecution(IDisposable session, string handleName, Func<MarkupMotionExecution> start)` | `MarkupMotionExecution` | Starts an execution in a named session slot, canceling and replacing the previous active execution in that slot. |
 | `CancelMotionExecution(IDisposable session, string handleName)` | `void` | Cancels and clears the active execution in a named session slot; does nothing when the slot is empty. |
 | `StartMotionProperty<T>(IDisposable session, UIElement target, UiProperty<T> property, bool hasFrom, T from, bool toCurrent, T to, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts one typed property animation through the target root's motion system. |
+| `StartBoundMotionProperty<T>(IDisposable session, UIElement target, UiProperty<T> property, bool hasFrom, T from, MarkupObservation observation, BindingMode mode, Func<object?, T> projection, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts one typed property animation whose destination follows an explicit one-way or two-way markup binding for the lifetime of the execution. |
 | `StartPrismMotionProperty<T>(IDisposable session, UIElement target, int propertyId, Func<PrismInstance, T> getValue, Action<PrismInstance, T> setValue, bool discrete, bool hasFrom, T from, bool toCurrent, T to, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts a statically resolved Prism property animation through the existing motion session and scheduler. |
+| `StartBoundPrismMotionProperty<T>(IDisposable session, UIElement target, int propertyId, Func<PrismInstance, T> getValue, Action<PrismInstance, T> setValue, bool discrete, bool hasFrom, T from, MarkupObservation observation, BindingMode mode, Func<object?, T> projection, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts a Prism property animation whose destination follows an explicit one-way or two-way markup binding for the lifetime of the execution. |
 | `AttachPrism(UIElement owner, Func<PrismInstance> instanceFactory)` | `IDisposable` | Attaches one generated Prism instance factory and replaces any previous Prism attachment on the element. |
 | `AttachPrism(UIElement owner, Func<PrismInstance> instanceFactory, IReadOnlyList<Func<PrismInstance, IDisposable>> bindingFactories)` | `IDisposable` | Attaches a Prism factory plus generated dynamic-binding factories managed by element renderability. |
 | `TryGetPrismInstance(UIElement owner, out PrismInstance? instance)` | `bool` | Gets the current attached instance when one has been created. |
 | `GetPrismInstance(UIElement owner)` | `PrismInstance` | Gets the current attached instance or throws when the element has none. |
 | `SetPrismMotionProperty<T>(UIElement target, Func<PrismInstance, T> getValue, Action<PrismInstance, T> setValue, T value)` | `void` | Applies a generated direct Motion `@set` through statically emitted typed accessors. |
+| `AttachPrismValueBinding<T>(UIElement owner, PrismInstance instance, MarkupObservation observation, Func<PrismInstance, T> getValue, Action<PrismInstance, T> setValue, BindingMode mode, Func<object?, T> projection, string description)` | `IDisposable` | Attaches an explicit one-way or two-way binding to a generated Prism filter or style value. |
+| `ApplyPrismValueReference<T>(PrismInstance instance, MarkupObservation observation, Action<PrismInstance, T> setValue, Func<object?, T> projection)` | `IDisposable` | Reads and applies a direct Prism reference once without retaining a source subscription. |
 | `GetPrismFilterBoolean(PrismFilterState state, int entryStableId, int slot)` | `bool` | Reads a Boolean catalog slot from generated filter state. |
 | `GetPrismFilterInteger(PrismFilterState state, int entryStableId, int slot)` | `int` | Reads an integer or enum catalog slot from generated filter state. |
 | `GetPrismFilterNumber(PrismFilterState state, int entryStableId, int slot)` | `float` | Reads a numeric catalog slot from generated filter state. |
@@ -87,6 +101,13 @@ generated path and template observers reconnect when their source changes.
 Content-template paths start from the item carried by `ContentTemplateContext`,
 while ordinary `$DataContext` paths continue to follow the element's effective
 data context.
+
+A path such as `$DataContext.Name` is a direct reference, not an implicit
+one-way binding. Generated code reads its current value once when an ordinary
+property assignment, Aspect, Prism definition, or Motion execution applies it.
+A binding exists only when the expression explicitly ends in `:OneWay` or
+`:TwoWay`. Quoted directive expressions remain string literals regardless of
+their text; quotes around XML attribute values are only XML delimiters.
 
 Property bindings write to `MarkupBase`; conditional providers write to
 `MarkupConditional` only while active. Two-way bindings accept write-back only
@@ -140,6 +161,14 @@ cancels all remaining slots and releases their references.
 `StartMotionProperty<T>` resolves omitted specs from the registered animatable
 property metadata. An explicit `from` value is staged before the animation is
 started, while `toCurrent` captures the binding's current sampled value.
+
+An explicit Motion binding is valid only for an `@animate` destination. Its
+source is observed for the entire execution and every source change retargets
+the active animation without replacing the returned handle. `TwoWay` also
+writes animated samples back through the observation endpoint. Direct
+references used by Motion are start-time snapshots; `@from`, `@set`, and
+keyframe values reject explicit binding modes because those values define
+snapshots rather than live destinations.
 
 `AttachPrism` permits one attachment per element. Replacement disposes the old
 attachment before registering the new one. Dynamic Prism bindings exist only

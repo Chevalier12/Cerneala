@@ -23,7 +23,14 @@ public sealed partial class UiMarkupGenerator
     private static PrismValueSyntax ParsePrismValue(string text, DirectiveExpressionLocation location)
     {
         PrismValueKind kind;
-        if (text.StartsWith("$", StringComparison.Ordinal))
+        if (text.StartsWith("$", StringComparison.Ordinal) &&
+            text.IndexOf('.') >= 0)
+        {
+            kind = text.IndexOf(':') >= 0
+                ? PrismValueKind.Binding
+                : PrismValueKind.DirectReference;
+        }
+        else if (text.StartsWith("$", StringComparison.Ordinal))
         {
             kind = PrismValueKind.ResourceReference;
         }

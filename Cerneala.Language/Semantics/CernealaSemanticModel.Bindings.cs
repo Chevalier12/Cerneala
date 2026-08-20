@@ -41,7 +41,11 @@ internal sealed partial class CernealaSemanticModel
 
         if (parsed.Syntax.Kind == BindingValueKind.Direct && parsed.Syntax.Binding is BindingPathSyntax direct)
         {
-            BindingResolution? resolution = ResolveBindingPath(element, direct, dataType);
+            BindingResolution? resolution = ResolveBindingPath(
+                element,
+                direct,
+                dataType,
+                validateClrObservability: direct.ModeSpan.Length > 0);
             if (resolution is null)
             {
                 return true;
@@ -125,7 +129,8 @@ internal sealed partial class CernealaSemanticModel
     private BindingResolution? ResolveBindingPath(
         ElementSyntax source,
         BindingPathSyntax path,
-        ILanguageTypeSymbol? dataType)
+        ILanguageTypeSymbol? dataType,
+        bool validateClrObservability = true)
     {
         if (path.Segments.Count == 0)
         {
@@ -157,7 +162,7 @@ internal sealed partial class CernealaSemanticModel
         if (sourceName == "DataContext")
         {
             currentType = dataType;
-            validateObservability = true;
+            validateObservability = validateClrObservability;
             allowPropertyChain = true;
             if (currentType is null)
             {
@@ -595,7 +600,8 @@ internal sealed partial class CernealaSemanticModel
 
             string rawValue = document.Text.Substring(assignment.ValueSpan).Trim();
             TextSpan valueSpan = TrimmedSpan(assignment.ValueSpan);
-            if (rawValue.StartsWith("$", StringComparison.Ordinal) && rawValue.IndexOf('.') < 0)
+            if (rawValue.StartsWith("$", StringComparison.Ordinal) &&
+                rawValue.IndexOf('.') < 0 && rawValue.IndexOf(':') < 0)
             {
                 string resourceName = rawValue.Substring(1);
                 ResourceDefinition? referenced = FindResource(aspect.Element, resourceName);
@@ -614,6 +620,36 @@ internal sealed partial class CernealaSemanticModel
                         definitionLocation: referenced.Location));
                 }
             }
+            else if (rawValue.StartsWith("$", StringComparison.Ordinal))
+            {
+                BindingResolution? resolution = ResolveDirectiveReference(
+                    aspect.Element,
+                    rawValue,
+                    valueSpan,
+                    dataType,
+                    out BindingPathSyntax? path);
+                if (resolution is not null && path is not null)
+                {
+                    if (!IsTypeCompatible(resolution.Type, member))
+                    {
+                        AddDiagnostic("CERNEALAUI004", valueSpan, aspect.TargetType.Name, propertyName, rawValue);
+                    }
+
+                    if (path.ModeSpan.Length > 0)
+                    {
+                        if (path.Mode == BindingModeSyntax.TwoWay && !resolution.CanWrite)
+                        {
+                            AddBindingSemanticDiagnostic(
+                                aspect.Element,
+                                rawValue,
+                                path.ModeSpan,
+                                "TwoWay requires a writable source endpoint.");
+                        }
+
+                        AddBindingModeSymbol(path, resolution.Type);
+                    }
+                }
+            }
             else if (!TryConvertLiteral(Unquote(rawValue), member, out _))
             {
                 AddDiagnostic("CERNEALAUI004", valueSpan, aspect.TargetType.Name, propertyName, rawValue);
@@ -629,6 +665,32 @@ internal sealed partial class CernealaSemanticModel
                 rawValue,
                 isWritable: member.CanWrite));
         }
+    }
+
+    private BindingResolution? ResolveDirectiveReference(
+        ElementSyntax source,
+        string expression,
+        TextSpan span,
+        ILanguageTypeSymbol? dataType,
+        out BindingPathSyntax? path)
+    {
+        EmbeddedParseResult<BindingValueSyntax> parsed = BindingSyntaxParser.Parse(expression, span.Start);
+        path = parsed.Syntax.Kind == BindingValueKind.Direct ? parsed.Syntax.Binding : null;
+        if (parsed.Diagnostics.Count > 0 || path is null)
+        {
+            EmbeddedDiagnostic diagnostic = parsed.Diagnostics.FirstOrDefault() ?? new EmbeddedDiagnostic(
+                "CERNEALAUI007",
+                "The reference expression is incomplete.",
+                span);
+            AddBindingDiagnostic(expression, diagnostic.Span, diagnostic.Message);
+            return null;
+        }
+
+        return ResolveBindingPath(
+            source,
+            path,
+            dataType,
+            validateClrObservability: path.ModeSpan.Length > 0);
     }
 
     private void BindConditionPaths(

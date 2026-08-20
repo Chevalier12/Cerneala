@@ -83,23 +83,23 @@ public sealed partial class UiMarkupGeneratorTests
         [
             (
                 "MissingDataType.crn",
-                "<TextBlock Text=\"$DataContext.Name\" />",
+                "<TextBlock Text=\"$DataContext.Name:OneWay\" />",
                 "DataType is required"),
             (
                 "MissingMember.crn",
-                "<TextBlock DataType=\"TestInput.BindingViewModel\" Text=\"$DataContext.Missing\" />",
+                "<TextBlock DataType=\"TestInput.BindingViewModel\" Text=\"$DataContext.Missing:OneWay\" />",
                 "Readable property 'Missing' was not found"),
             (
                 "InaccessibleGetter.crn",
-                "<TextBlock DataType=\"TestInput.BindingViewModel\" Text=\"$DataContext.Secret\" />",
+                "<TextBlock DataType=\"TestInput.BindingViewModel\" Text=\"$DataContext.Secret:OneWay\" />",
                 "Readable property 'Secret' was not found"),
             (
                 "MismatchedType.crn",
-                "<TextBlock DataType=\"TestInput.BindingViewModel\" IsEnabled=\"$DataContext.Name\" />",
+                "<TextBlock DataType=\"TestInput.BindingViewModel\" IsEnabled=\"$DataContext.Name:OneWay\" />",
                 "not compatible"),
             (
                 "ReadOnlyTarget.crn",
-                "<ScrollContentPresenter DataType=\"TestInput.BindingViewModel\" HorizontalOffset=\"$DataContext.Offset\" />",
+                "<ScrollContentPresenter DataType=\"TestInput.BindingViewModel\" HorizontalOffset=\"$DataContext.Offset:OneWay\" />",
                 "read-only"),
             (
                 "ReadOnlySource.crn",
@@ -111,7 +111,7 @@ public sealed partial class UiMarkupGeneratorTests
                 "OneWay only"),
             (
                 "UnobservableNestedOwner.crn",
-                "<TextBlock DataType=\"TestInput.BindingViewModel\" Text=\"$DataContext.Plain.Name\" />",
+                "<TextBlock DataType=\"TestInput.BindingViewModel\" Text=\"$DataContext.Plain.Name:OneWay\" />",
                 "INotifyPropertyChanged")
         ];
 
@@ -327,22 +327,24 @@ public sealed partial class UiMarkupGeneratorTests
 
         viewModelType.GetProperty("Name")!.SetValue(viewModel, "Mara");
         viewModelType.GetProperty("Count")!.SetValue(viewModel, 7);
-        Assert.Equal("7", texts[0].Text);
+        Assert.Equal("3", texts[0].Text);
         Assert.Equal("Salut: Mara, count=[7]; repeat=Mara/Mara; pret $ 10", texts[1].Text);
         Assert.Equal("$DataContext.Name:TwoWay", texts[3].Text);
         Assert.Equal("Escaped $DataContext.Name:OneWay", texts[4].Text);
     }
 
     [Fact]
-    public void BindingStageFive_OwnerAndImplicitOneWayFormsRemainEquivalent()
+    public void BindingStageFive_DirectAspectReferencesAreSnapshotsButExplicitModesStayReactive()
     {
         const string markup = """
             <StackPanel DataType="TestInput.BindingViewModel">
               <Slider Name="Volume" Value="40" />
               <ProgressBar Value="$Volume.Value" />
               <ProgressBar Value="$Volume.Value:OneWay" />
-              <TextBlock IsEnabled="True" Text="Base">
+              <TextBlock Name="Snapshot" IsEnabled="True" Text="Base">
                 @when IsEnabled { Text = $DataContext.Name; }
+              </TextBlock>
+              <TextBlock Name="Live" IsEnabled="True" Text="Base">
                 @when IsVisible { Text = $DataContext.Name:OneWay; }
               </TextBlock>
               <Button Content="Owner">
@@ -358,10 +360,26 @@ public sealed partial class UiMarkupGeneratorTests
             out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         string generated = SingleGeneratedSource(result);
-        Assert.Equal(2, Count(generated, "AttachPropertyBinding<"));
-        Assert.Equal(2, Count(generated, "CreateConditionalPropertyBinding<"));
-        Assert.Equal(2, Count(generated, ".Bind(global::Cerneala.UI.Controls.ContentControl.ContentProperty"));
+        Assert.Equal(1, Count(generated, "AttachPropertyBinding<"));
+        Assert.Equal(1, Count(generated, "CreateConditionalPropertyBinding<"));
+        Assert.Equal(1, Count(generated, ".Bind(global::Cerneala.UI.Controls.ContentControl.ContentProperty"));
         Assert.True(compilation.GetDiagnostics().All(diagnostic => diagnostic.Severity != DiagnosticSeverity.Error));
+
+        Assembly assembly = EmitBindingTestAssembly(compilation);
+        Type viewModelType = assembly.GetType("TestInput.BindingViewModel", throwOnError: true)!;
+        object viewModel = Activator.CreateInstance(viewModelType)!;
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeBindingTestCreate(
+            assembly,
+            "Cerneala.GeneratedUi.BindingImplicitExplicitCompatibilityFactory",
+            viewModel));
+        TextBlock snapshot = Assert.IsType<TextBlock>(panel.VisualChildren[3]);
+        TextBlock live = Assert.IsType<TextBlock>(panel.VisualChildren[4]);
+        Assert.Equal("Ana", snapshot.Text);
+        Assert.Equal("Ana", live.Text);
+
+        viewModelType.GetProperty("Name")!.SetValue(viewModel, "Mara");
+        Assert.Equal("Ana", snapshot.Text);
+        Assert.Equal("Mara", live.Text);
 
         Diagnostic ownerTwoWay = BindingStageFiveSingleError(
             "OwnerTwoWay.crn",
@@ -387,7 +405,7 @@ public sealed partial class UiMarkupGeneratorTests
             <Button Content="Base" IsEnabled="True">
               @template
               {
-                <ContentPresenter Content="$owner.Content">
+                <ContentPresenter Content="$owner.Content:OneWay">
                   @when $owner.IsEnabled { Content = "Conditional"; }
                 </ContentPresenter>
               }

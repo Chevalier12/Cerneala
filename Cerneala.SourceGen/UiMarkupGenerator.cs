@@ -3982,6 +3982,30 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
+            MarkupBindingToken? directReference = parsedMarkup?.Binding;
+            if (directReference is not null &&
+                directReference.ModeOffset < 0 &&
+                LooksLikeBindingPath(trimmedValue))
+            {
+                GeneratedExpression? referenceExpression = ResolveDirectiveReferenceValue(
+                    elementName,
+                    propertyName,
+                    directReference,
+                    spec,
+                    attribute,
+                    variable);
+                if (referenceExpression is null)
+                {
+                    return;
+                }
+
+                currentPostLines.Add((reactiveDocument || forceUiPropertyAssignment) && spec.IsUiProperty
+                    ? variable + ".SetValue(" + spec.PropertyCode + ", " + referenceExpression.Code +
+                        ", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);"
+                    : variable + "." + spec.Name + " = " + referenceExpression.Code + ";");
+                return;
+            }
+
             if (parsedMarkup is not null)
             {
                 if (!spec.IsUiProperty)

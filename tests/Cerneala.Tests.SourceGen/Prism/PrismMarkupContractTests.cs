@@ -48,6 +48,21 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void PrismValueClassifierDistinguishesBindingsFromResources()
+    {
+        Type generator = typeof(Cerneala.SourceGen.UiMarkupGenerator);
+        MethodInfo parser = generator.GetMethod(
+            "ParsePrismValue",
+            BindingFlags.NonPublic | BindingFlags.Static)!;
+        object binding = parser.Invoke(null, ["$DataContext.Offset:TwoWay", null])!;
+        object resource = parser.Invoke(null, ["$NoiseTexture", null])!;
+        PropertyInfo kind = binding.GetType().GetProperty("Kind")!;
+
+        Assert.Equal("Binding", kind.GetValue(binding)!.ToString());
+        Assert.Equal("ResourceReference", kind.GetValue(resource)!.ToString());
+    }
+
+    [Fact]
     public void PrismFixtureShellIsOtherwiseValidCui()
     {
         const string markup = """
@@ -249,6 +264,99 @@ public sealed partial class UiMarkupGeneratorTests
         string generated = SingleGeneratedSource(result);
         Assert.Contains("GeneratedMarkup.AttachPrism(", generated, StringComparison.Ordinal);
         Assert.Contains("SetPrismMotionProperty(", generated, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("$DataContext.Offset:OneWay")]
+    [InlineData("$DataContext.Offset:TwoWay")]
+    public void PrismValuesAcceptDirectDeclarativeBindings(string binding)
+    {
+        string markup = $$"""
+            <Border DataType="TestInput.BindingViewModel">
+              @prism
+              {
+                @layer Surface
+                {
+                  @filter MotionBlur
+                  {
+                    Distance = {{binding}};
+                    Angle = 90;
+                  }
+                }
+              }
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput(
+            "PrismDeclarativeBinding.crn",
+            markup,
+            BindingStageFiveInputSource,
+            out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        Assert.Contains(
+            "AttachPrismValueBinding",
+            SingleGeneratedSource(result),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PrismDirectReferencesAreEvaluatedOnceWithoutAttachingABinding()
+    {
+        const string markup = """
+            <Border DataType="TestInput.BindingViewModel">
+              @prism
+              {
+                @layer Surface
+                {
+                  @filter MotionBlur
+                  {
+                    Distance = $DataContext.Offset;
+                    Angle = 90;
+                  }
+                }
+              }
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput(
+            "PrismDirectReference.crn",
+            markup,
+            BindingStageFiveInputSource,
+            out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        string generated = SingleGeneratedSource(result);
+        Assert.DoesNotContain("AttachPrismValueBinding", generated, StringComparison.Ordinal);
+        Assert.Contains("prismObservation", generated, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PrismQuotedDollarValueRemainsALiteralInsteadOfBinding()
+    {
+        const string markup = """
+            <Border DataType="TestInput.BindingViewModel">
+              @prism
+              {
+                @layer Surface
+                {
+                  @filter MotionBlur
+                  {
+                    Distance = "$DataContext.Offset";
+                    Angle = 90;
+                  }
+                }
+              }
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput(
+            "PrismQuotedLiteral.crn",
+            markup,
+            BindingStageFiveInputSource,
+            out _);
+
+        AssertPrismDiagnostic(result, "PRISM2009", markup, "\"$DataContext.Offset\"");
     }
 
     [Fact]

@@ -26,6 +26,8 @@ public sealed class PrismInstance
 
     public PrismValueVersion ValueVersion { get; private set; }
 
+    internal event EventHandler? ValueChanged;
+
     public PrismNodeState GetNodeState(PrismNodeId id)
     {
         return graph.Nodes.TryGetValue(id, out PrismNodeState? state)
@@ -90,6 +92,7 @@ public sealed class PrismInstance
     {
         EnsureCurrent(stateGeneration);
         ValueVersion = ValueVersion.Next();
+        ValueChanged?.Invoke(this, EventArgs.Empty);
     }
 
     internal void EnsureCurrent(int stateGeneration)
