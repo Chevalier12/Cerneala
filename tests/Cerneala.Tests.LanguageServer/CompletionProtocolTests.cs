@@ -311,12 +311,36 @@ public sealed class CompletionProtocolTests
         Assert.Equal(10, mouseOver.Kind);
         Assert.Contains("@when IsMouseOver {", Apply(reactiveExpressionMarkup, mouseOver.TextEdit), StringComparison.Ordinal);
 
-        string thicknessMarkup = "<UserControl><Button Margin=\"0,-12,18,\" /></UserControl>";
+        string prismMarkup = "<UserControl><UserControl.Resources>" +
+            "<PrismComposition Name=\"Fx\">@layer Neon { @style OuterGlow { Si } }</PrismComposition>" +
+            "</UserControl.Resources></UserControl>";
         await client.Rpc.NotifyWithParameterObjectAsync(
             "textDocument/didChange",
             new DidChangeTextDocumentParams
             {
                 TextDocument = new VersionedTextDocumentIdentifier { Uri = uri, Version = 10 },
+                ContentChanges = [new TextDocumentContentChangeEvent { Text = prismMarkup }]
+            });
+        int prismOffset = prismMarkup.IndexOf("Si }", StringComparison.Ordinal) + 2;
+        CompletionList prismCompletion = await client.Rpc.InvokeWithParameterObjectAsync<CompletionList>(
+            "textDocument/completion",
+            new TextDocumentPositionParams
+            {
+                TextDocument = new TextDocumentIdentifier { Uri = uri },
+                Position = PositionAt(prismMarkup, prismOffset)
+            },
+            timeout.Token);
+        LspCompletionItem size = Assert.Single(prismCompletion.Items.Where(item => item.Label == "Size"));
+
+        Assert.Equal(10, size.Kind);
+        Assert.Contains("@style OuterGlow { Size =  }", Apply(prismMarkup, size.TextEdit), StringComparison.Ordinal);
+
+        string thicknessMarkup = "<UserControl><Button Margin=\"0,-12,18,\" /></UserControl>";
+        await client.Rpc.NotifyWithParameterObjectAsync(
+            "textDocument/didChange",
+            new DidChangeTextDocumentParams
+            {
+                TextDocument = new VersionedTextDocumentIdentifier { Uri = uri, Version = 11 },
                 ContentChanges = [new TextDocumentContentChangeEvent { Text = thicknessMarkup }]
             });
         int thicknessOffset = thicknessMarkup.IndexOf("\" />", StringComparison.Ordinal);

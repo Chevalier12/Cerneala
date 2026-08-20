@@ -138,14 +138,14 @@ public sealed class CompletionTests
         using CompletionFixture motion = CompletionFixture.Create(
             "<Window><Window.Resources><Tween Name=\"Quick\" Duration=\"100ms\" /></Window.Resources><Button Tag=\"$|caret|\" /></Window>");
         using CompletionFixture prism = CompletionFixture.Create(
-            "<Window><Window.Resources><PrismComposition Name=\"Fx\">@filter |caret|</PrismComposition></Window.Resources></Window>");
+            "<Window><Window.Resources><PrismComposition Name=\"Fx\">@layer Main { @filter |caret| }</PrismComposition></Window.Resources></Window>");
 
         IReadOnlyList<CernealaCompletionItem> sourceItems = sources.Complete();
         Assert.Contains(sourceItems, item => item.Label == "$Accent");
         Assert.Contains(sourceItems, item => item.Label == "$Action");
         Assert.Contains(aspect.Complete(), item => item.Label == "$Primary");
         Assert.Contains(motion.Complete(), item => item.Label == "$Quick");
-        Assert.Contains(prism.Complete(), item => item.Kind == CernealaCompletionItemKind.Function);
+        Assert.Contains(prism.Complete(), item => item.Kind == CernealaCompletionItemKind.Value);
     }
 
     [Fact]
@@ -278,6 +278,70 @@ public sealed class CompletionTests
             service.GetSignatureHelp(signatureDocument, signatureOffset));
         Assert.Equal(1, help.ActiveParameter);
         Assert.Contains("duration", Assert.Single(help.Signatures).Label, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PrismCompositionCompletionOffersOnlyRootMembersOnExplicitInvocation()
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(
+            "<Window><Window.Resources><PrismComposition Name=\"Fx\">|caret|</PrismComposition></Window.Resources></Window>");
+
+        IReadOnlyList<CernealaCompletionItem> items = fixture.Complete();
+
+        Assert.Contains(items, item => item.Label == "@parameter");
+        Assert.Contains(items, item => item.Label == "@layer");
+        Assert.Contains(items, item => item.Label == "@group");
+        Assert.Contains(items, item => item.Label == "WorkingColorProfile");
+        Assert.DoesNotContain(items, item => item.Label is "@filter" or "@style" or "@mask" or "@prism");
+    }
+
+    [Theory]
+    [InlineData("@layer Neon { |caret| }", "Opacity", "@filter", false)]
+    [InlineData("@group Bloom { |caret| }", "BlendMode", "@layer", true)]
+    [InlineData("@filter MotionBlur { |caret| }", "Distance", null, false)]
+    [InlineData("@style OuterGlow { |caret| }", "Size", null, false)]
+    [InlineData("@mask { |caret| }", "Feather", null, false)]
+    public void PrismBlockCompletionUsesTheOwningDirectiveCatalog(
+        string body,
+        string expectedProperty,
+        string? expectedDirective,
+        bool allowsNestedNodes)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(
+            "<Window><Window.Resources><PrismComposition Name=\"Fx\">" + body +
+            "</PrismComposition></Window.Resources></Window>");
+
+        IReadOnlyList<CernealaCompletionItem> items = fixture.Complete();
+        CernealaCompletionItem property = Assert.Single(items.Where(item => item.Label == expectedProperty));
+
+        Assert.Equal(CernealaCompletionItemKind.Property, property.Kind);
+        Assert.Equal(expectedProperty + " = ", property.InsertText);
+        if (expectedDirective is not null)
+        {
+            Assert.Contains(items, item => item.Label == expectedDirective);
+        }
+
+        Assert.Equal(allowsNestedNodes, items.Any(item => item.Label is "@layer" or "@group"));
+        Assert.DoesNotContain(items, item => item.Label == "@backdrop");
+    }
+
+    [Theory]
+    [InlineData("filter", "MotionBlur")]
+    [InlineData("style", "OuterGlow")]
+    public void PrismOperationSymbolCompletionInsertsBlockSyntaxWithoutFunctionCall(
+        string directive,
+        string expectedSymbol)
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(
+            "<Window><Window.Resources><PrismComposition Name=\"Fx\">" +
+            "@layer Neon { @" + directive + " |caret| }" +
+            "</PrismComposition></Window.Resources></Window>");
+
+        CernealaCompletionItem symbol = Assert.Single(
+            fixture.Complete().Where(item => item.Label == expectedSymbol));
+
+        Assert.Equal(expectedSymbol, symbol.InsertText);
+        Assert.Equal(CernealaCompletionItemKind.Value, symbol.Kind);
     }
 
     [Fact]
@@ -478,7 +542,7 @@ public sealed class CompletionTests
     [Fact]
     public void PrismAndScopedMotionCallsCompleteArgumentsAndTrackActiveParameters()
     {
-        (string prismSymbol, LanguageArgumentFact prismArgument) = new[] { "filter", "style", "mask", "backdrop" }
+        (string prismSymbol, LanguageArgumentFact prismArgument) = new[] { "filter", "style", "mask" }
             .SelectMany(kind => CernealaLanguageFacts.GetPrismSymbols(kind))
             .Select(symbol => (Symbol: symbol, Arguments: CernealaLanguageFacts.FindPrismProperties(symbol)))
             .Where(candidate => candidate.Arguments.Count > 1)

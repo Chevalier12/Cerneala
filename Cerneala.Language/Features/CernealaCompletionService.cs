@@ -732,6 +732,11 @@ internal sealed class CernealaCompletionService
             return;
         }
 
+        if (TryAddPrismCompletions(result, site, element, statement))
+        {
+            return;
+        }
+
         if (IsInsideDirective(site.Source, site.Offset, "@animate") &&
             !IsInsideDirective(site.Source, site.Offset, "@from") &&
             !IsInsideDirective(site.Source, site.Offset, "@to"))
@@ -800,19 +805,6 @@ internal sealed class CernealaCompletionService
             return;
         }
 
-        string? prismDirective = new[] { "filter", "style", "mask", "backdrop", "layer", "group" }
-            .FirstOrDefault(kind => statement.IndexOf("@" + kind, StringComparison.Ordinal) >= 0);
-        if (prismDirective is not null)
-        {
-            foreach (string symbol in CernealaLanguageFacts.GetPrismSymbols(prismDirective))
-            {
-                Add(result, symbol, symbol + "()", site.WordSpan,
-                    CernealaCompletionItemKind.Function, prismDirective, "00");
-            }
-
-            return;
-        }
-
         if (statement.IndexOf("with ", StringComparison.Ordinal) >= 0 ||
             statement.IndexOf("spec ", StringComparison.Ordinal) >= 0)
         {
@@ -869,6 +861,228 @@ internal sealed class CernealaCompletionService
             Add(result, keyword, insertion, site.WordSpan,
                 CernealaCompletionItemKind.Keyword, "Cerneala directive", "00");
         }
+    }
+
+    private static bool TryAddPrismCompletions(
+        ICollection<CernealaCompletionItem> result,
+        CompletionSite site,
+        ElementSyntax? element,
+        string statement)
+    {
+        PrismCompletionContext? context = FindPrismCompletionContext(site.Source, site.Offset);
+        string elementName = element?.Name.Split(':').Last() ?? string.Empty;
+        string lexicalElementName = FindUnclosedElementName(site.Source, site.Offset)?.Split(':').Last() ?? string.Empty;
+        if (lexicalElementName.Length > 0)
+        {
+            elementName = lexicalElementName;
+        }
+
+        if (context is null && elementName != "PrismComposition")
+        {
+            return false;
+        }
+
+        if (context is null)
+        {
+            int markupEnd = statement.LastIndexOf('>');
+            if (markupEnd >= 0)
+            {
+                statement = statement.Substring(markupEnd + 1);
+            }
+        }
+
+        string ownerKind = context?.Kind ?? "composition";
+        string? operationKind = FindPrismOperationSymbolCompletionKind(statement);
+        if (operationKind is not null)
+        {
+            if (ownerKind is "layer" or "group")
+            {
+                foreach (string symbol in CernealaLanguageFacts.GetPrismSymbols(operationKind))
+                {
+                    Add(result, symbol, symbol, site.WordSpan,
+                        CernealaCompletionItemKind.Value, "Prism " + operationKind, "00");
+                }
+            }
+
+            return true;
+        }
+
+        IReadOnlyList<LanguageArgumentFact> properties = GetPrismCompletionProperties(context, ownerKind);
+        int equals = statement.LastIndexOf('=');
+        if (equals >= 0)
+        {
+            string propertyName = statement.Substring(0, equals).Trim()
+                .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
+                .LastOrDefault() ?? string.Empty;
+            LanguageArgumentFact? property = properties.FirstOrDefault(candidate => candidate.Name == propertyName);
+            foreach (string value in GetPrismPropertyValues(property))
+            {
+                Add(result, value, value, site.WordSpan,
+                    CernealaCompletionItemKind.Value, property!.ValueType, "00");
+            }
+
+            return true;
+        }
+
+        bool directivePrefix = site.WordPrefix.StartsWith("@", StringComparison.Ordinal);
+        if (!directivePrefix)
+        {
+            foreach (LanguageArgumentFact property in properties)
+            {
+                Add(result, property.Name, property.Name + " = ", site.WordSpan,
+                    CernealaCompletionItemKind.Property, property.ValueType, property.Required ? "00" : "10");
+            }
+        }
+
+        foreach (string keyword in GetPrismChildDirectives(ownerKind))
+        {
+            Add(result, keyword, PrismDirectiveInsertion(keyword), site.WordSpan,
+                CernealaCompletionItemKind.Keyword, "Prism directive", "00");
+        }
+
+        return true;
+    }
+
+    private static IReadOnlyList<LanguageArgumentFact> GetPrismCompletionProperties(
+        PrismCompletionContext? context,
+        string ownerKind) =>
+        CernealaLanguageFacts.GetPrismProperties(ownerKind)
+            .Concat(context?.Symbol is null
+                ? Array.Empty<LanguageArgumentFact>()
+                : CernealaLanguageFacts.GetPrismProperties(ownerKind, context.Symbol))
+            .GroupBy(property => property.Name, StringComparer.Ordinal)
+            .Select(group => group.Last())
+            .ToArray();
+
+    private static IEnumerable<string> GetPrismPropertyValues(LanguageArgumentFact? property)
+    {
+        if (property is null)
+        {
+            return Array.Empty<string>();
+        }
+
+        if (property.AllowedValues.Count > 0)
+        {
+            return property.AllowedValues.Distinct(StringComparer.Ordinal);
+        }
+
+        return property.ValueType is "bool" or "System.Boolean"
+            ? ["true", "false"]
+            : Array.Empty<string>();
+    }
+
+    private static IReadOnlyList<string> GetPrismChildDirectives(string ownerKind) => ownerKind switch
+    {
+        "composition" => ["@parameter", "@layer", "@group"],
+        "layer" => ["@parameter", "@filter", "@style", "@mask"],
+        "group" => ["@parameter", "@layer", "@group", "@filter", "@style", "@mask"],
+        _ => Array.Empty<string>()
+    };
+
+    private static string PrismDirectiveInsertion(string keyword) => keyword switch
+    {
+        "@layer" => "@layer Name { }",
+        "@group" => "@group Name { }",
+        "@filter" or "@style" => keyword + " ",
+        "@mask" => "@mask { }",
+        _ => DirectiveInsertion(keyword)
+    };
+
+    private static string? FindPrismOperationSymbolCompletionKind(string statement)
+    {
+        string trimmed = statement.TrimStart();
+        foreach (string kind in new[] { "filter", "style" })
+        {
+            string keyword = "@" + kind;
+            if (trimmed.StartsWith(keyword, StringComparison.Ordinal) &&
+                trimmed.Length > keyword.Length &&
+                char.IsWhiteSpace(trimmed[keyword.Length]) &&
+                trimmed.IndexOfAny(['{', '}', '=', ';', '(', ')']) < 0)
+            {
+                return kind;
+            }
+        }
+
+        return null;
+    }
+
+    private static PrismCompletionContext? FindPrismCompletionContext(string source, int offset)
+    {
+        Stack<PrismCompletionContext?> blocks = new();
+        bool quoted = false;
+        char quote = '\0';
+        for (int index = 0; index < offset; index++)
+        {
+            char character = source[index];
+            if (quoted)
+            {
+                if (character == quote && (index == 0 || source[index - 1] != '\\'))
+                {
+                    quoted = false;
+                }
+
+                continue;
+            }
+
+            if (character is '\'' or '"')
+            {
+                quoted = true;
+                quote = character;
+            }
+            else if (character == '{')
+            {
+                blocks.Push(CreatePrismCompletionContext(source, index));
+            }
+            else if (character == '}' && blocks.Count > 0)
+            {
+                blocks.Pop();
+            }
+        }
+
+        return blocks.Count == 0 ? null : blocks.Peek();
+    }
+
+    private static PrismCompletionContext? CreatePrismCompletionContext(string source, int openingBrace)
+    {
+        string? keyword = FindDirectiveKeywordBeforeBody(source, openingBrace);
+        string? kind = keyword switch
+        {
+            "@prism" => "composition",
+            "@layer" => "layer",
+            "@group" => "group",
+            "@filter" => "filter",
+            "@style" => "style",
+            "@mask" => "mask",
+            _ => null
+        };
+        if (kind is null)
+        {
+            return null;
+        }
+
+        string? symbol = null;
+        if (kind is "filter" or "style")
+        {
+            int at = source.LastIndexOf('@', Math.Max(0, openingBrace - 1));
+            int symbolStart = at + keyword!.Length;
+            while (symbolStart < openingBrace && char.IsWhiteSpace(source[symbolStart]))
+            {
+                symbolStart++;
+            }
+
+            int symbolEnd = symbolStart;
+            while (symbolEnd < openingBrace && IsIdentifierCharacter(source[symbolEnd]))
+            {
+                symbolEnd++;
+            }
+
+            if (symbolEnd > symbolStart)
+            {
+                symbol = source.Substring(symbolStart, symbolEnd - symbolStart);
+            }
+        }
+
+        return new PrismCompletionContext(kind, symbol);
     }
 
     private static void AddDirectiveReferenceCompletions(
@@ -1778,6 +1992,19 @@ internal sealed class CernealaCompletionService
 
             return new BindingSite(segments, span, false, isDirect);
         }
+    }
+
+    private sealed class PrismCompletionContext
+    {
+        public PrismCompletionContext(string kind, string? symbol)
+        {
+            Kind = kind;
+            Symbol = symbol;
+        }
+
+        public string Kind { get; }
+
+        public string? Symbol { get; }
     }
 
     private static int Clamp(int value, int minimum, int maximum) =>
