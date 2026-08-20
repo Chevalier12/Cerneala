@@ -408,7 +408,6 @@ public sealed partial class UiMarkupGenerator
             {
                 PrismContainerKind.Layer => instance + ".GetLayerState(",
                 PrismContainerKind.Group => instance + ".GetGroupState(",
-                PrismContainerKind.Backdrop => instance + ".GetBackdropState(",
                 _ => throw new InvalidOperationException("A Prism composition cannot be bound as a node.")
             } + "new global::Cerneala.UI.Prism.Definitions.PrismNodeId(" +
             node.Id.ToString(CultureInfo.InvariantCulture) + "))";
@@ -505,20 +504,6 @@ public sealed partial class UiMarkupGenerator
                     AddPrismDefinitionArgument(arguments, node.Properties, "Visible", "visible");
                     AddPrismDefinitionArgument(arguments, node.Properties, "Opacity", "opacity");
                     AddPrismDefinitionArgument(arguments, node.Properties, "BlendMode", "blendMode");
-                    break;
-                case PrismContainerKind.Backdrop:
-                    typeName = "global::Cerneala.UI.Prism.Definitions.PrismBackdropDefinition";
-                    arguments.Add(
-                        "filters: " + EmitPrismArray(
-                            "global::Cerneala.UI.Prism.Definitions.PrismFilterDefinition",
-                            node.Filters.Select(EmitPrismFilterDefinition)));
-                    arguments.Add(
-                        "styles: " + EmitPrismArray(
-                            "global::Cerneala.UI.Prism.Definitions.PrismStyleDefinition",
-                            node.Styles.Select(EmitPrismStyleDefinition)));
-                    arguments.Add("mask: " + EmitPrismMaskDefinition(node.Mask));
-                    AddPrismDefinitionArgument(arguments, node.Properties, "Visible", "visible");
-                    AddPrismDefinitionArgument(arguments, node.Properties, "Opacity", "opacity");
                     break;
                 default:
                     throw new InvalidOperationException("A Prism composition cannot be emitted as a node.");
@@ -670,10 +655,6 @@ public sealed partial class UiMarkupGenerator
                 case PrismContainerKind.Group:
                     stateType = "global::Cerneala.UI.Prism.Runtime.PrismGroupState";
                     getter = "GetGroupState";
-                    break;
-                case PrismContainerKind.Backdrop:
-                    stateType = "global::Cerneala.UI.Prism.Runtime.PrismBackdropState";
-                    getter = "GetBackdropState";
                     break;
                 default:
                     throw new InvalidOperationException("A Prism composition cannot be assigned as a node.");

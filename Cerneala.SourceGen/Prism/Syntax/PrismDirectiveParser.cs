@@ -72,7 +72,6 @@ public sealed partial class UiMarkupGenerator
         ResourceComposition,
         Layer,
         Group,
-        Backdrop,
         Filter,
         Style,
         Mask
@@ -429,7 +428,6 @@ public sealed partial class UiMarkupGenerator
                 "@parameter" => ParsePrismParameter(directiveLocation),
                 "@layer" => ParsePrismContainer(PrismContainerKind.Layer, PrismBodyContext.Layer, directiveLocation),
                 "@group" => ParsePrismContainer(PrismContainerKind.Group, PrismBodyContext.Group, directiveLocation),
-                "@backdrop" => ParsePrismContainer(PrismContainerKind.Backdrop, PrismBodyContext.Backdrop, directiveLocation),
                 "@filter" => ParsePrismOperation(PrismOperationKind.Filter, PrismBodyContext.Filter, directiveLocation),
                 "@style" => ParsePrismOperation(PrismOperationKind.Style, PrismBodyContext.Style, directiveLocation),
                 "@mask" => ParsePrismOperation(PrismOperationKind.Mask, PrismBodyContext.Mask, directiveLocation),
@@ -747,8 +745,7 @@ public sealed partial class UiMarkupGenerator
                 "@parameter" => context is
                     PrismBodyContext.ResourceComposition or
                     PrismBodyContext.Layer or
-                    PrismBodyContext.Group or
-                    PrismBodyContext.Backdrop,
+                    PrismBodyContext.Group,
                 "@layer" => context is
                     PrismBodyContext.InlineComposition or
                     PrismBodyContext.ResourceComposition or
@@ -757,13 +754,9 @@ public sealed partial class UiMarkupGenerator
                     PrismBodyContext.InlineComposition or
                     PrismBodyContext.ResourceComposition or
                     PrismBodyContext.Group,
-                "@backdrop" => context is
-                    PrismBodyContext.InlineComposition or
-                    PrismBodyContext.ResourceComposition,
                 "@filter" or "@style" or "@mask" => context is
                     PrismBodyContext.Layer or
-                    PrismBodyContext.Group or
-                    PrismBodyContext.Backdrop,
+                    PrismBodyContext.Group,
                 _ => false
             };
         }
@@ -772,8 +765,8 @@ public sealed partial class UiMarkupGenerator
             PrismBodyContext context,
             string directive)
         {
-            return (context is PrismBodyContext.Layer or PrismBodyContext.Group or PrismBodyContext.Backdrop) &&
-                (directive is "@layer" or "@group" or "@backdrop");
+            return (context is PrismBodyContext.Layer or PrismBodyContext.Group) &&
+                (directive is "@layer" or "@group");
         }
 
         private static string ContextDisplay(PrismBodyContext context)
@@ -784,7 +777,6 @@ public sealed partial class UiMarkupGenerator
                 PrismBodyContext.ResourceComposition => "PrismComposition",
                 PrismBodyContext.Layer => "@layer",
                 PrismBodyContext.Group => "@group",
-                PrismBodyContext.Backdrop => "@backdrop",
                 PrismBodyContext.Filter => "@filter",
                 PrismBodyContext.Style => "@style",
                 PrismBodyContext.Mask => "@mask",

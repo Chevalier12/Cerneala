@@ -9,6 +9,7 @@ using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Markup;
+using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
 using Cerneala.UI.Rendering;
 
@@ -110,14 +111,16 @@ public sealed class PrismBackdropHostingContractTests
 
         Assert.Equal(1, source.AcquireCalls);
         BackdropFrameRequest request = Assert.Single(source.Requests);
-        Assert.Equal(3, request.BackdropRequirement.ScopeCount);
+        PrismBackdropRequirement requirement = Assert.IsType<PrismBackdropRequirement>(
+            request.BackdropRequirement);
+        Assert.Equal(3, requirement.ScopeCount);
         Assert.Equal(200, request.PixelWidth);
         Assert.Equal(140, request.PixelHeight);
         Assert.Equal(2, request.PixelScale);
         RecordingBackdropFrameLease lease = Assert.Single(source.Leases);
         Assert.Same(lease, drawing.LastFrameContext?.BackdropLease);
         Assert.Same(
-            request.BackdropRequirement,
+            requirement,
             drawing.LastFrameContext?.PrismAnalysis.BackdropRequirement);
         Assert.Equal(1, lease.DisposeCalls);
         Assert.Equal(1, host.BackdropFrameCounters.RequestedFrames);
@@ -271,7 +274,7 @@ public sealed class PrismBackdropHostingContractTests
     }
 
     [Fact]
-    public void ZeroOpacityBackdropEliminatedByAnalysisDoesNotAcquireAFrame()
+    public void ZeroOpacityBackdropLayerEliminatedByAnalysisDoesNotAcquireAFrame()
     {
         OrderedElement control = new(Color.White, "control");
         UIRoot root = RootWith(control);
@@ -279,11 +282,11 @@ public sealed class PrismBackdropHostingContractTests
             PrismTestData.Composition(
                 "OptimizedOut",
                 PrismTestData.Layer(1, "Content"),
-                PrismTestData.Backdrop(2, "Backdrop")));
+                PrismTestData.BackdropLayer(2, "Backdrop")));
         using IDisposable prism = GeneratedMarkup.AttachPrism(
             control,
             () => instance);
-        instance.Backdrop!.Opacity = 0;
+        instance.GetLayerState(new PrismNodeId(2)).Opacity = 0;
         RecordingBackdropFrameSource source = new();
         UiHost host = CreateHost(
             root,
@@ -412,7 +415,7 @@ public sealed class PrismBackdropHostingContractTests
                 PrismTestData.Composition(
                     name,
                     PrismTestData.Layer(nodeId, "Content"),
-                    PrismTestData.Backdrop(nodeId + 1, "Backdrop"))));
+                    PrismTestData.BackdropLayer(nodeId + 1, "Backdrop"))));
     }
 
     private static BackdropFrameMetadata Metadata(

@@ -175,8 +175,6 @@ public sealed partial class UiMarkupGenerator
                     "GetLayerState(" + PrismMotionNodeId(accessor.Node.Id) + ")",
                 PrismContainerKind.Group =>
                     "GetGroupState(" + PrismMotionNodeId(accessor.Node.Id) + ")",
-                PrismContainerKind.Backdrop =>
-                    "GetBackdropState(" + PrismMotionNodeId(accessor.Node.Id) + ")",
                 _ => throw new InvalidOperationException(
                     "Unsupported Prism Motion node kind.")
             });

@@ -413,14 +413,15 @@ internal static class PrismRetainedCacheBenchmarkRunner
                             PrismFilterId.Invert)
                     ],
                     opacity: 0.72f),
-                new PrismBackdropDefinition(
+                new PrismLayerDefinition(
                     new PrismNodeId(2),
                     "Host backdrop",
                     filters:
                     [
                         new PrismFilterDefinition(
                             PrismFilterId.GaussianBlur)
-                    ])
+                    ],
+                    blendMode: PrismBlendMode.Multiply)
             ]);
         PrismInstance instance = new(definition);
         PrismDrawScope scope = CreateScope(
@@ -832,10 +833,11 @@ internal static class PrismRetainedCacheBenchmarkRunner
                     new PrismNodeId(1),
                     "Foreground",
                     filters: [new PrismFilterDefinition(PrismFilterId.Invert)]),
-                new PrismBackdropDefinition(
+                new PrismLayerDefinition(
                     new PrismNodeId(2),
                     "Shared host backdrop",
-                    filters: [new PrismFilterDefinition(PrismFilterId.GaussianBlur)])
+                    filters: [new PrismFilterDefinition(PrismFilterId.GaussianBlur)],
+                    blendMode: PrismBlendMode.Multiply)
             ]);
         DrawCommandList commands = new();
         for (int index = 0; index < 2; index++)

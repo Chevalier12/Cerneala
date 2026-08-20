@@ -31,7 +31,6 @@ internal static class Program
                 "blend-if-channel", "this-layer-range", "underlying-range", "dissolve-seed"
             ],
             ["group"] = ["visible", "opacity", "blend-mode"],
-            ["backdrop"] = ["visible", "opacity"],
             ["mask"] = ["image", "channel", "feather", "density", "invert"],
             ["filter"] = ["visible", "opacity", "blend-mode"],
             ["style"] = ["visible"]
@@ -62,8 +61,6 @@ internal static class Program
             ["group/visible"] = "true",
             ["group/opacity"] = "1",
             ["group/blend-mode"] = "PassThrough",
-            ["backdrop/visible"] = "true",
-            ["backdrop/opacity"] = "1",
             ["mask/image"] = "<required>",
             ["mask/channel"] = "Alpha",
             ["mask/feather"] = "0",
@@ -77,7 +74,7 @@ internal static class Program
 
     private static readonly string[] ExpectedDirectives =
     [
-        "@prism", "@parameter", "@layer", "@group", "@filter", "@style", "@mask", "@backdrop"
+        "@prism", "@parameter", "@layer", "@group", "@filter", "@style", "@mask"
     ];
 
     private static readonly string[] ExpectedConformanceFeatures =
@@ -112,8 +109,8 @@ internal static class Program
         "Cerneala.Drawing.Prism.PrismDrawScope",
         "Cerneala.Drawing.Prism.PrismRendererDiagnostics",
         "Cerneala.Drawing.Prism.PrismRendererOptions",
-        "Cerneala.UI.Prism.Definitions.PrismBackdropDefinition",
         "Cerneala.UI.Prism.Definitions.PrismCompositionDefinition",
+        "Cerneala.UI.Prism.Definitions.PrismColorMatrixResource",
         "Cerneala.UI.Prism.Definitions.PrismCurvePoint",
         "Cerneala.UI.Prism.Definitions.PrismCurvesResource",
         "Cerneala.UI.Prism.Definitions.PrismFilterDefinition",
@@ -138,7 +135,6 @@ internal static class Program
         "Cerneala.UI.Prism.Definitions.PrismSparsePolynomial",
         "Cerneala.UI.Prism.Definitions.PrismSparsePolynomialTerm",
         "Cerneala.UI.Prism.Definitions.PrismStyleDefinition",
-        "Cerneala.UI.Prism.Runtime.PrismBackdropState",
         "Cerneala.UI.Prism.Runtime.PrismBlendChannels",
         "Cerneala.UI.Prism.Runtime.PrismBlendIfChannel",
         "Cerneala.UI.Prism.Runtime.PrismBlendRange",
@@ -552,7 +548,7 @@ internal static class Program
         report.AppendLine($"| directives | {ExpectedDirectives.Length} | {ExpectedDirectives.Length} | PASS |");
         report.AppendLine($"| common properties | {ExpectedCommonDefaults.Count} | {audit.Catalog.CommonProperties.Sum(pair => pair.Value.Count)} | PASS |");
         report.AppendLine($"| masks | 5 properties + feature | {audit.Catalog.CommonProperties["mask"].Count} properties + feature | PASS |");
-        report.AppendLine($"| backdrop | 2 properties + host contract | {audit.Catalog.CommonProperties["backdrop"].Count} properties + host contract | PASS |");
+        report.AppendLine("| implicit backdrop | lazy destination input + host contract | analyzer + host contract | PASS |");
         report.AppendLine($"| conformance features | {ExpectedConformanceFeatures.Length} | {audit.Catalog.Features.Count} | PASS |");
         report.AppendLine($"| public Prism types | {ExpectedPublicPrismTypes.Count} | {audit.PublicPrismTypes.Count} | PASS |");
         report.AppendLine($"| existing public types extended for Prism | {ExpectedCrossSurfaceTypes.Count} | {audit.CrossSurfaceTypes.Count} | PASS |");

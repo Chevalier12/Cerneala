@@ -29,12 +29,13 @@ internal static class PrismTestData
             clipToBelow: clipToBelow);
     }
 
-    public static PrismBackdropDefinition Backdrop(int id, string name)
+    public static PrismLayerDefinition BackdropLayer(int id, string name)
     {
-        return new PrismBackdropDefinition(
+        return new PrismLayerDefinition(
             new PrismNodeId(id),
             name,
-            filters: [new PrismFilterDefinition(PrismFilterId.GaussianBlur)]);
+            filters: [new PrismFilterDefinition(PrismFilterId.GaussianBlur)],
+            blendMode: PrismBlendMode.Multiply);
     }
 
     public static PrismDrawScope Scope(

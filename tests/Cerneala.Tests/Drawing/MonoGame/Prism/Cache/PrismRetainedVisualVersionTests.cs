@@ -229,7 +229,7 @@ public sealed class PrismRetainedVisualVersionTests
                 PrismTestData.Composition(
                     "Backdrop",
                     PrismTestData.Layer(1, "Content"),
-                    PrismTestData.Backdrop(2, "Backdrop"))));
+                    PrismTestData.BackdropLayer(2, "Backdrop"))));
         RetainedRenderCache cache = new();
         RenderCounters counters = new();
         PrepareSubtree(root, cache, counters);

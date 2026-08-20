@@ -227,20 +227,30 @@ float4 SampleStylePaint(
 float4 CompositeStyleOver(
     float4 style,
     float4 content,
-    int blendMode)
+    int blendMode,
+    float4 backdrop,
+    float backdropAvailable)
 {
     float3 styleStraight = style.a > 0.0
         ? style.rgb / style.a
         : 0.0;
-    float3 contentStraight = content.a > 0.0
-        ? content.rgb / content.a
+    float4 scene = content + (backdrop * (1.0 - content.a));
+    float3 contentStraight = scene.a > 0.0
+        ? scene.rgb / scene.a
         : 0.0;
-    return CompositeAssociated(
-        style,
-        content,
-        EvaluateBlendMode(
-            blendMode,
-            contentStraight,
-            styleStraight));
+    float3 blended = EvaluateBlendMode(
+        blendMode,
+        contentStraight,
+        styleStraight);
+    if (backdropAvailable > 0.5)
+    {
+        float4 encodedStyle = float4(
+            blended * style.a,
+            style.a);
+        return encodedStyle +
+            (content * (1.0 - encodedStyle.a));
+    }
+
+    return CompositeAssociated(style, content, blended);
 }
 

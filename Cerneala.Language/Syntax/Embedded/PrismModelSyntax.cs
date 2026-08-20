@@ -6,8 +6,7 @@ internal enum PrismContainerModelKind
 {
     Composition,
     Layer,
-    Group,
-    Backdrop
+    Group
 }
 
 internal enum PrismOperationModelKind

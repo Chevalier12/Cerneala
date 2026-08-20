@@ -224,6 +224,27 @@ internal static class PrismStylePlanner
         };
     }
 
+    internal static PrismBlendMode ResolveBlendMode(
+        int value,
+        string propertyName)
+    {
+        if (Enum.IsDefined((PrismBlendMode)value))
+        {
+            return (PrismBlendMode)value;
+        }
+
+        foreach ((int symbol, PrismBlendMode mode) in HashedBlendModes)
+        {
+            if (symbol == value)
+            {
+                return mode;
+            }
+        }
+
+        throw new InvalidOperationException(
+            $"Style property '{propertyName}' has unknown blend mode '{value}'.");
+    }
+
     public static PrismStyleSamplingGeometry ResolveSamplingGeometry(
         in PrismStylePlan plan,
         PrismGraphScope scope)
@@ -530,23 +551,7 @@ internal static class PrismStylePlanner
 
         public PrismBlendMode BlendMode(string name)
         {
-            int value = Symbol(name);
-            if (Enum.IsDefined((PrismBlendMode)value))
-            {
-                return (PrismBlendMode)value;
-            }
-
-            foreach ((int symbol, PrismBlendMode mode) in
-                HashedBlendModes)
-            {
-                if (symbol == value)
-                {
-                    return mode;
-                }
-            }
-
-            throw new InvalidOperationException(
-                $"Style property '{name}' has unknown blend mode '{value}'.");
+            return ResolveBlendMode(Symbol(name), name);
         }
 
         public Vector4 Color(

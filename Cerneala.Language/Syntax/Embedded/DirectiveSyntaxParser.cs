@@ -23,7 +23,7 @@ internal static class DirectiveSyntaxParser
 
     private static readonly string[] prismKeywords =
     [
-        "@prism", "@parameter", "@layer", "@group", "@filter", "@style", "@mask", "@backdrop"
+        "@prism", "@parameter", "@layer", "@group", "@filter", "@style", "@mask"
     ];
 
     public static EmbeddedParseResult<DirectiveDocumentSyntax> Parse(

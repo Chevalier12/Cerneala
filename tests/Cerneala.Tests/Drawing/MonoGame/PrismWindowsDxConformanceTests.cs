@@ -181,6 +181,99 @@ public sealed class PrismWindowsDxConformanceTests
     }
 
     [Fact]
+    public void OverlayOuterGlowUsesBackdropAcrossExpandedEffectBounds()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        PrismLayerDefinition layer = new(
+            new PrismNodeId(1),
+            "Overlay outer glow",
+            styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)],
+            blendMode: PrismBlendMode.Overlay);
+        DrawRect elementBounds = new(30, 24, 30, 30);
+        PrismCompositionDefinition composition = new(
+            "Overlay outer glow",
+            [layer],
+            workingColorProfile: PrismColorProfile.LinearSrgb);
+        PrismDrawScope scope = PrismTestData.Scope(
+            composition,
+            ownerToken: 1_374,
+            bounds: elementBounds);
+        PrismStyleState glow = Assert.Single(
+            scope.Instance.GetLayerState(layer.Id).Styles);
+        PrismCatalogEntryDescriptor entry =
+            PrismCatalogRuntime.GetEntry((int)PrismStyleId.OuterGlow);
+        SetNumber("Size", 10);
+        SetNumber("Spread", 0);
+        SetNumber("Range", 1);
+        SetNumber("Opacity", 1);
+        SetColor("Color", new CernealaColor(176, 139, 124));
+        using PrismScene scene = BuildScene(
+            "overlay-outer-glow-expanded-backdrop",
+            Commands(
+                DrawCommand.BeginPrism(scope),
+                DrawCommand.FillRectangle(
+                    new DrawRect(30, 24, 10, 10),
+                    new CernealaColor(255, 32, 64)),
+                DrawCommand.FillRectangle(
+                    new DrawRect(50, 44, 10, 10),
+                    new CernealaColor(255, 32, 64)),
+                DrawCommand.EndPrism()),
+            expectedFallbackCount: 0,
+            foregroundX: 34,
+            foregroundY: 28);
+        using WindowsDxFixture fixture = new();
+
+        RenderedScene rendered = RenderPng(fixture.Session, scene);
+        using SKBitmap bitmap = Decode(rendered.Png, scene.Name);
+        SKColor outsideControl = bitmap.GetPixel(27, 29);
+        SKColor insideControl = bitmap.GetPixel(42, 29);
+
+        Assert.True(DifferenceFromClear(outsideControl) > 0);
+        Assert.True(DifferenceFromClear(insideControl) > 0);
+        Assert.InRange(
+            Difference(outsideControl, insideControl),
+            0,
+            12);
+
+        int DifferenceFromClear(SKColor pixel) =>
+            Math.Abs(pixel.Red - ClearColor.R) +
+            Math.Abs(pixel.Green - ClearColor.G) +
+            Math.Abs(pixel.Blue - ClearColor.B);
+
+        int Difference(SKColor left, SKColor right) =>
+            Math.Abs(left.Red - right.Red) +
+            Math.Abs(left.Green - right.Green) +
+            Math.Abs(left.Blue - right.Blue) +
+            Math.Abs(left.Alpha - right.Alpha);
+
+        void SetNumber(string name, float value)
+        {
+            PrismCatalogPropertyDescriptor property =
+                entry.Properties.Single(candidate => candidate.Name == name);
+            GeneratedMarkup.SetPrismStyleNumber(
+                glow,
+                entry.StableId,
+                property.TypeSlot,
+                value);
+        }
+
+        void SetColor(string name, CernealaColor value)
+        {
+            PrismCatalogPropertyDescriptor property =
+                entry.Properties.Single(candidate => candidate.Name == name);
+            GeneratedMarkup.SetPrismStyleColor(
+                glow,
+                entry.StableId,
+                property.TypeSlot,
+                value);
+        }
+    }
+
+    [Fact]
     public void OuterGlowGaussianFalloffDoesNotFavorCardinalDirections()
     {
         if (!OperatingSystem.IsWindows())
@@ -1313,8 +1406,11 @@ public sealed class PrismWindowsDxConformanceTests
                 MonoGameDrawingBackend backend =
                     Assert.IsType<MonoGameDrawingBackend>(
                         drawingBackend);
-                DrawingFrameContext frameContext =
-                    new(scene.Analysis);
+                using IBackdropFrameLease? backdropLease =
+                    AcquireBackdropLease(session, scene.Analysis);
+                DrawingFrameContext frameContext = backdropLease is null
+                    ? new(scene.Analysis)
+                    : new(scene.Analysis, backdropLease);
                 backend.Render(scene.Commands, in frameContext);
                 counters = backend.PrismDiagnostics.Counters;
                 rendererDiagnostics =
@@ -1341,9 +1437,33 @@ public sealed class PrismWindowsDxConformanceTests
             new(scene.Analysis);
 
         session.BeginFrame(ClearColor);
+        using IBackdropFrameLease? backdropLease =
+            AcquireBackdropLease(session, scene.Analysis);
+        if (backdropLease is not null)
+        {
+            frameContext = new(scene.Analysis, backdropLease);
+        }
+
         backend.Render(scene.Commands, in frameContext);
         session.Present();
         return backend.PrismDiagnostics.Counters;
+    }
+
+    private static IBackdropFrameLease? AcquireBackdropLease(
+        WindowsDxWindowGraphicsSession session,
+        PrismFrameAnalysis analysis)
+    {
+        if (analysis.BackdropRequirement is not { } requirement)
+        {
+            return null;
+        }
+
+        BackdropFrameRequest request = new(
+            Width,
+            Height,
+            1f,
+            requirement);
+        return ((IBackdropFrameSource)session).AcquireFrame(in request);
     }
 
     private static void AssertMinimalExecution(
@@ -1394,9 +1514,11 @@ public sealed class PrismWindowsDxConformanceTests
             scene.Plan.ExecutionOrder.Length,
             scene.Plan.ExecutionOrder.Length +
                 styleScratchCount);
-        Assert.Equal(
-            scene.ExpectedFallbackCount,
-            counters.FallbackCount);
+        Assert.True(
+            counters.FallbackCount == scene.ExpectedFallbackCount,
+            $"{scene.Name} reported {counters.FallbackCount} fallbacks; " +
+            $"expected {scene.ExpectedFallbackCount}.{Environment.NewLine}" +
+            rendered.GraphDump);
         Assert.True(
             counters.CpuSubmitTime > TimeSpan.Zero,
             $"{scene.Name} did not report CPU submit time.");

@@ -132,14 +132,14 @@ public sealed class EmbeddedSyntaxTests
     }
 
     [Fact]
-    public void PrismGrammarOwnsExactlyEightDirectivesAndRecoversDelimiters()
+    public void PrismGrammarOwnsExactlySevenDirectivesAndRecoversDelimiters()
     {
-        const string valid = "@prism { @parameter Radius: Float = 4; @layer L { @group G { @filter Blur { } @style Fill { } @mask { } } } @backdrop B { } }";
+        const string valid = "@prism { @parameter Radius: Float = 4; @group G { @layer L { @filter Blur { } @style Fill { } @mask { } } } }";
         EmbeddedParseResult<DirectiveDocumentSyntax> parsed = PrismSyntaxParser.Parse(valid, absoluteOffset: 5);
         EmbeddedParseResult<DirectiveDocumentSyntax> incomplete = PrismSyntaxParser.Parse("@prism $Glow(Radius = \"4\"", absoluteOffset: 40);
 
         Assert.Empty(parsed.Diagnostics);
-        Assert.Equal(8, parsed.Syntax.Directives.Select(item => item.Keyword).Distinct(StringComparer.Ordinal).Count());
+        Assert.Equal(7, parsed.Syntax.Directives.Select(item => item.Keyword).Distinct(StringComparer.Ordinal).Count());
         EmbeddedDiagnostic diagnostic = Assert.Single(incomplete.Diagnostics);
         Assert.Equal("PRISM1002", diagnostic.Id);
         Assert.True(diagnostic.IsTransient);

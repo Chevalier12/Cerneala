@@ -350,32 +350,6 @@
         "symbols": ["Normal", "Dissolve", "Darken", "Multiply", "ColorBurn", "LinearBurn", "DarkerColor", "Lighten", "Screen", "ColorDodge", "LinearDodge", "LighterColor", "Overlay", "SoftLight", "HardLight", "VividLight", "LinearLight", "PinLight", "HardMix", "Difference", "Exclusion", "Subtract", "Divide", "Hue", "Saturation", "Color", "Luminosity", "PassThrough"]
       }
     ],
-    "backdrop": [
-      {
-        "id": "visible",
-        "name": "Visible",
-        "valueType": "boolean",
-        "required": false,
-        "domain": {
-          "kind": "boolean"
-        },
-        "unit": "none",
-        "default": true
-      },
-      {
-        "id": "opacity",
-        "name": "Opacity",
-        "valueType": "number",
-        "required": false,
-        "domain": {
-          "kind": "range",
-          "minimum": 0,
-          "maximum": 1
-        },
-        "unit": "unitless",
-        "default": 1.0
-      }
-    ],
     "mask": [
       {
         "id": "image",

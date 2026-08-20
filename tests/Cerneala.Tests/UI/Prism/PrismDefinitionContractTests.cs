@@ -15,7 +15,6 @@ public sealed class PrismDefinitionContractTests
             typeof(PrismCompositionDefinition),
             typeof(PrismLayerDefinition),
             typeof(PrismGroupDefinition),
-            typeof(PrismBackdropDefinition),
             typeof(PrismFilterDefinition),
             typeof(PrismStyleDefinition),
             typeof(PrismMaskDefinition)
@@ -71,30 +70,6 @@ public sealed class PrismDefinitionContractTests
     }
 
     [Fact]
-    public void BackdropMustBeUniqueAndLastDirectChild()
-    {
-        PrismBackdropDefinition firstBackdrop = Backdrop(1, "First");
-        PrismBackdropDefinition secondBackdrop = Backdrop(2, "Second");
-        PrismLayerDefinition layer = Layer(3, "Content");
-        PrismCompositionDefinition withoutBackdrop = new("NoBackdrop", [layer]);
-        PrismCompositionDefinition withBackdrop = new(
-            "OneBackdrop",
-            [layer, firstBackdrop]);
-
-        Assert.Null(withoutBackdrop.Backdrop);
-        Assert.Same(firstBackdrop, withBackdrop.Backdrop);
-        Assert.Throws<ArgumentException>(
-            () => new PrismCompositionDefinition("BackdropNotLast", [firstBackdrop, layer]));
-        Assert.Throws<ArgumentException>(
-            () => new PrismCompositionDefinition("TwoBackdrops", [firstBackdrop, secondBackdrop]));
-        Assert.Throws<ArgumentException>(
-            () => new PrismGroupDefinition(
-                new PrismNodeId(4),
-                "NestedBackdrop",
-                [firstBackdrop]));
-    }
-
-    [Fact]
     public void IndependentDefinitionsHaveStructuralEquality()
     {
         PrismCompositionDefinition first = CompositionSnapshot();
@@ -120,8 +95,6 @@ public sealed class PrismDefinitionContractTests
                   Filter Blur visible=True opacity=1 blend=Normal
                 Layer #2 name=Back visible=True opacity=1 fill=1 blend=Normal clipToBelow=False
                   Filter Blur visible=True opacity=1 blend=Normal
-              Backdrop #4 name=Glass visible=True opacity=1
-                Filter GaussianBlur visible=True opacity=1 blend=Normal
             """.ReplaceLineEndings("\n"),
             first);
     }
@@ -133,8 +106,8 @@ public sealed class PrismDefinitionContractTests
 
         Assert.True(composition.TryGetNamedNode("Effects.Front", out PrismNodeId front));
         Assert.Equal(new PrismNodeId(1), front);
-        Assert.True(composition.TryGetNamedNode("Glass", out PrismNodeId backdrop));
-        Assert.Equal(new PrismNodeId(4), backdrop);
+        Assert.True(composition.TryGetNamedNode("Effects.Back", out PrismNodeId back));
+        Assert.Equal(new PrismNodeId(2), back);
         Assert.DoesNotContain(
             typeof(PrismNodeDefinition).Assembly
                 .GetTypes()
@@ -201,24 +174,12 @@ public sealed class PrismDefinitionContractTests
             [new PrismFilterDefinition(PrismFilterId.Blur)]);
     }
 
-    private static PrismBackdropDefinition Backdrop(int id, string name)
-    {
-        return new PrismBackdropDefinition(
-            new PrismNodeId(id),
-            name,
-            [new PrismFilterDefinition(PrismFilterId.Blur)]);
-    }
-
     private static PrismCompositionDefinition CompositionSnapshot()
     {
         PrismGroupDefinition group = new(
             new PrismNodeId(3),
             "Effects",
             [Layer(1, "Front"), Layer(2, "Back")]);
-        PrismBackdropDefinition backdrop = new(
-            new PrismNodeId(4),
-            "Glass",
-            [new PrismFilterDefinition(PrismFilterId.GaussianBlur)]);
-        return new PrismCompositionDefinition("Snapshot", [group, backdrop]);
+        return new PrismCompositionDefinition("Snapshot", [group]);
     }
 }

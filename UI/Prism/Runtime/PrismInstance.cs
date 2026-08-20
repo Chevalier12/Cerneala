@@ -20,8 +20,6 @@ public sealed class PrismInstance
 
     public PrismCompositionState Composition => graph.Composition;
 
-    public PrismBackdropState? Backdrop => graph.Backdrop;
-
     public PrismStructuralVersion StructuralVersion { get; private set; }
 
     public PrismValueVersion ValueVersion { get; private set; }
@@ -45,12 +43,6 @@ public sealed class PrismInstance
     {
         return GetNodeState(id) as PrismGroupState
             ?? throw new InvalidOperationException($"Prism node '{id.Value}' is not a group.");
-    }
-
-    public PrismBackdropState GetBackdropState(PrismNodeId id)
-    {
-        return GetNodeState(id) as PrismBackdropState
-            ?? throw new InvalidOperationException($"Prism node '{id.Value}' is not a backdrop.");
     }
 
     public void ReplaceDefinition(PrismCompositionDefinition definition)
@@ -110,14 +102,12 @@ internal sealed class PrismRuntimeGraph
         PrismParameterStore defaults,
         PrismParameterStore values,
         PrismCompositionState composition,
-        Dictionary<PrismNodeId, PrismNodeState> nodes,
-        PrismBackdropState? backdrop)
+        Dictionary<PrismNodeId, PrismNodeState> nodes)
     {
         Defaults = defaults;
         Values = values;
         Composition = composition;
         Nodes = nodes;
-        Backdrop = backdrop;
     }
 
     public PrismParameterStore Defaults { get; }
@@ -127,8 +117,6 @@ internal sealed class PrismRuntimeGraph
     public PrismCompositionState Composition { get; }
 
     public Dictionary<PrismNodeId, PrismNodeState> Nodes { get; }
-
-    public PrismBackdropState? Backdrop { get; }
 
     public static PrismRuntimeGraph Create(
         PrismInstance owner,
@@ -172,8 +160,7 @@ internal sealed class PrismRuntimeGraph
         values.CopyFromIfDifferent(defaults);
         PrismCompositionState composition = new(
             new PrismStateAccess(owner, values, compositionSlice, generation, entryStableId: 0));
-        PrismBackdropState? backdrop = roots[^1] as PrismBackdropState;
-        return new PrismRuntimeGraph(defaults, values, composition, nodes, backdrop);
+        return new PrismRuntimeGraph(defaults, values, composition, nodes);
     }
 
     private static PrismNodeState BuildNode(
@@ -231,20 +218,6 @@ internal sealed class PrismRuntimeGraph
                     BuildFilters(owner, group.Filters, defaults, values, allocator, generation),
                     BuildStyles(owner, group.Styles, defaults, values, allocator, generation),
                     BuildMask(owner, group.Mask, defaults, values, allocator, generation));
-                break;
-            }
-            case PrismBackdropDefinition backdrop:
-            {
-                PrismValueSlice slice = allocator.Allocate(PrismCatalogGenerated.CommonBackdropProperties);
-                defaults.Set(slice, PrismCatalogGenerated.PrismBackdropPropertyKeys.VisibleKey, backdrop.Visible);
-                defaults.Set(slice, PrismCatalogGenerated.PrismBackdropPropertyKeys.OpacityKey, backdrop.Opacity);
-                state = new PrismBackdropState(
-                    Access(owner, values, slice, generation),
-                    backdrop.Id,
-                    backdrop.Name,
-                    BuildFilters(owner, backdrop.Filters, defaults, values, allocator, generation),
-                    BuildStyles(owner, backdrop.Styles, defaults, values, allocator, generation),
-                    BuildMask(owner, backdrop.Mask, defaults, values, allocator, generation));
                 break;
             }
             default:
@@ -375,10 +348,6 @@ internal sealed class PrismRuntimeGraph
                     MeasureNode(child, ref counts);
                 }
                 break;
-            case PrismBackdropDefinition backdrop:
-                counts.Add(PrismCatalogGenerated.CommonBackdropProperties);
-                MeasureOperations(backdrop.Filters, backdrop.Styles, backdrop.Mask, ref counts);
-                break;
             default:
                 throw new InvalidOperationException($"Unknown Prism node definition '{node.GetType().Name}'.");
         }
@@ -440,8 +409,6 @@ internal static class PrismTopologyComparer
         return (left, right) switch
         {
             (PrismLayerDefinition a, PrismLayerDefinition b) =>
-                EqualsOperations(a.Filters, b.Filters, a.Styles, b.Styles, a.Mask, b.Mask),
-            (PrismBackdropDefinition a, PrismBackdropDefinition b) =>
                 EqualsOperations(a.Filters, b.Filters, a.Styles, b.Styles, a.Mask, b.Mask),
             (PrismGroupDefinition a, PrismGroupDefinition b) =>
                 EqualsOperations(a.Filters, b.Filters, a.Styles, b.Styles, a.Mask, b.Mask) &&

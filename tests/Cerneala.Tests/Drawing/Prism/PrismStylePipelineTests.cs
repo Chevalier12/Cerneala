@@ -14,6 +14,165 @@ namespace Cerneala.Tests.Drawing.Prism;
 public sealed class PrismStylePipelineTests
 {
     [Fact]
+    public void StyleBlendModesConsumeTheImplicitLayerBackdrop()
+    {
+        PrismLayerDefinition layer = new(
+            new PrismNodeId(1),
+            "Implicit backdrop glow",
+            styles:
+            [
+                new PrismStyleDefinition(PrismStyleId.OuterGlow)
+            ]);
+        PrismDrawScope scope = PrismTestData.Scope(
+            PrismTestData.Composition("Implicit backdrop", layer));
+        DrawCommandList commands = PrismTestData.Commands(
+            DrawCommand.BeginPrism(scope),
+            DrawCommand.FillRectangle(
+                new DrawRect(0, 0, 20, 10),
+                new Color(255, 255, 255)),
+            DrawCommand.EndPrism());
+
+        PrismFrameAnalysis analysis =
+            new PrismFrameAnalyzer().Analyze(commands);
+        PrismGraph graph = new PrismGraphBuilder().Build(analysis);
+        PrismGraphNode backdropInput = Assert.Single(
+            graph.Nodes.Where(node =>
+                node.Kind == PrismGraphNodeKind.BackdropInput));
+        PrismGraphNode style = Assert.Single(
+            graph.Nodes.Where(node =>
+                node.Kind == PrismGraphNodeKind.Style));
+
+        Assert.True(analysis.RequiresBackdrop);
+        Assert.Contains(
+            graph.Edges,
+            edge =>
+                edge.Source != backdropInput.Id &&
+                edge.Target == style.Id &&
+                edge.Kind == PrismGraphEdgeKind.CompositeBackground);
+    }
+
+    [Fact]
+    public void SourceOnlyFiltersDoNotAcquireTheImplicitBackdrop()
+    {
+        PrismLayerDefinition layer = new(
+            new PrismNodeId(1),
+            "Source blur",
+            filters:
+            [
+                new PrismFilterDefinition(PrismFilterId.Blur)
+            ]);
+        PrismDrawScope scope = PrismTestData.Scope(
+            PrismTestData.Composition("Source filter", layer));
+        DrawCommandList commands = PrismTestData.Commands(
+            DrawCommand.BeginPrism(scope),
+            DrawCommand.FillRectangle(
+                new DrawRect(0, 0, 20, 10),
+                new Color(255, 255, 255)),
+            DrawCommand.EndPrism());
+
+        PrismFrameAnalysis analysis =
+            new PrismFrameAnalyzer().Analyze(commands);
+        PrismGraph graph = new PrismGraphBuilder().Build(analysis);
+
+        Assert.False(analysis.RequiresBackdrop);
+        Assert.DoesNotContain(
+            graph.Nodes,
+            node => node.Kind == PrismGraphNodeKind.BackdropInput);
+    }
+
+    [Fact]
+    public void EveryStyleBlendParameterCanAcquireTheImplicitBackdrop()
+    {
+        List<string> exercised = [];
+
+        foreach (PrismStyleId styleId in Enum.GetValues<PrismStyleId>())
+        {
+            PrismCatalogEntryDescriptor entry =
+                PrismCatalogRuntime.GetEntry((int)styleId);
+            PrismCatalogPropertyDescriptor[] blendProperties = entry.Properties
+                .Where(property => property.Name.EndsWith(
+                    "BlendMode",
+                    StringComparison.Ordinal))
+                .ToArray();
+            if (blendProperties.Length == 0)
+            {
+                continue;
+            }
+
+            PrismLayerDefinition layer = new(
+                new PrismNodeId(1),
+                styleId.ToString(),
+                styles: [new PrismStyleDefinition(styleId)]);
+            PrismDrawScope scope = PrismTestData.Scope(
+                PrismTestData.Composition(styleId.ToString(), layer));
+            PrismStyleState state = Assert.Single(
+                scope.Instance.GetLayerState(layer.Id).Styles);
+            foreach (PrismCatalogPropertyDescriptor property in blendProperties)
+            {
+                GeneratedMarkup.SetPrismStyleInteger(
+                    state,
+                    entry.StableId,
+                    property.TypeSlot,
+                    (int)PrismBlendMode.Multiply);
+                exercised.Add(styleId + "." + property.Name);
+            }
+
+            PrismFrameAnalysis analysis = new PrismFrameAnalyzer().Analyze(
+                PrismTestData.Commands(
+                    DrawCommand.BeginPrism(scope),
+                    DrawCommand.EndPrism()));
+            PrismGraph graph = new PrismGraphBuilder().Build(analysis);
+            PrismGraphNode style = Assert.Single(
+                graph.Nodes.Where(node => node.Kind == PrismGraphNodeKind.Style));
+
+            Assert.True(analysis.RequiresBackdrop, styleId.ToString());
+            Assert.Contains(
+                graph.Edges,
+                edge =>
+                    edge.Target == style.Id &&
+                    edge.Kind == PrismGraphEdgeKind.CompositeBackground);
+        }
+
+        Assert.NotEmpty(exercised);
+    }
+
+    [Fact]
+    public void PassThroughGroupsExposeHostBackdropButIsolatedGroupsDoNot()
+    {
+        PrismLayerDefinition child = new(
+            new PrismNodeId(2),
+            "Glow",
+            styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)]);
+        PrismGroupDefinition passThrough = new(
+            new PrismNodeId(1),
+            "Pass through",
+            [child],
+            blendMode: PrismBlendMode.PassThrough);
+        PrismGroupDefinition isolated = new(
+            new PrismNodeId(3),
+            "Isolated",
+            [new PrismLayerDefinition(
+                new PrismNodeId(4),
+                "Glow",
+                styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)])],
+            blendMode: PrismBlendMode.Normal);
+
+        PrismFrameAnalysis passThroughAnalysis = new PrismFrameAnalyzer().Analyze(
+            PrismTestData.Commands(
+                DrawCommand.BeginPrism(PrismTestData.Scope(
+                    PrismTestData.Composition("Pass through", passThrough))),
+                DrawCommand.EndPrism()));
+        PrismFrameAnalysis isolatedAnalysis = new PrismFrameAnalyzer().Analyze(
+            PrismTestData.Commands(
+                DrawCommand.BeginPrism(PrismTestData.Scope(
+                    PrismTestData.Composition("Isolated", isolated))),
+                DrawCommand.EndPrism()));
+
+        Assert.True(passThroughAnalysis.RequiresBackdrop);
+        Assert.False(isolatedAnalysis.RequiresBackdrop);
+    }
+
+    [Fact]
     public void EveryCatalogStyleBuildsAPlanFromGeneratedTypedDefaults()
     {
         PrismStyleId[] styles =
@@ -34,6 +193,13 @@ public sealed class PrismStylePipelineTests
             .ToArray();
 
         Assert.Equal(styles.Length, styleNodes.Length);
+        Assert.All(
+            styleNodes,
+            styleNode => Assert.Contains(
+                graph.Edges,
+                edge =>
+                    edge.Target == styleNode.Id &&
+                    edge.Kind == PrismGraphEdgeKind.CompositeBackground));
         Assert.Equal(
             Enumerable.Range(0, styles.Length),
             styleNodes

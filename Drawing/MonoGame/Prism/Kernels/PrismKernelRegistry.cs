@@ -91,6 +91,8 @@ internal readonly record struct PrismKernelParameters(
 
     public Texture2D? StyleMaskTexture { get; init; }
 
+    public Texture2D? StyleBackdropTexture { get; init; }
+
     public Vector4 StyleColor { get; init; } =
         Vector4.One;
 
@@ -120,6 +122,8 @@ internal readonly record struct PrismKernelParameters(
         new(0, 1, 0);
 
     public float StyleResourceAvailable { get; init; }
+
+    public float StyleBackdropAvailable { get; init; }
 
     public Vector4 FilterHeader { get; init; }
 
@@ -155,7 +159,7 @@ internal readonly record struct PrismKernelParameters(
 
 internal sealed class PrismKernelRegistry : IDisposable
 {
-    public const long ShaderPackageVersion = 55;
+    public const long ShaderPackageVersion = 56;
 
     private const string CatalogOwnerPrefix =
         "PrismKernelRegistry/";
@@ -203,6 +207,7 @@ internal sealed class PrismKernelRegistry : IDisposable
     private readonly EffectParameter styleMaskFeatherStepParameter;
     private readonly EffectParameter styleTextureParameter;
     private readonly EffectParameter styleMaskTextureParameter;
+    private readonly EffectParameter styleBackdropTextureParameter;
     private readonly EffectParameter styleColorParameter;
     private readonly EffectParameter styleSecondaryColorParameter;
     private readonly EffectParameter styleGeometry0Parameter;
@@ -214,6 +219,7 @@ internal sealed class PrismKernelRegistry : IDisposable
     private readonly EffectParameter styleModes2Parameter;
     private readonly EffectParameter styleModes3Parameter;
     private readonly EffectParameter styleResourceAvailableParameter;
+    private readonly EffectParameter styleBackdropAvailableParameter;
     private readonly EffectParameter filterHeaderParameter;
     private readonly EffectParameter filterOptions0Parameter;
     private readonly EffectParameter filterOptions1Parameter;
@@ -516,6 +522,8 @@ internal sealed class PrismKernelRegistry : IDisposable
         styleTextureParameter = GetStyleParameter("StyleTexture");
         styleMaskTextureParameter =
             GetStyleParameter("StyleMaskTexture");
+        styleBackdropTextureParameter =
+            GetStyleParameter("StyleBackdropTexture");
         styleColorParameter = GetStyleParameter("StyleColor");
         styleSecondaryColorParameter =
             GetStyleParameter("StyleSecondaryColor");
@@ -533,6 +541,8 @@ internal sealed class PrismKernelRegistry : IDisposable
         styleModes3Parameter = GetStyleParameter("StyleModes3");
         styleResourceAvailableParameter =
             GetStyleParameter("StyleResourceAvailable");
+        styleBackdropAvailableParameter =
+            GetStyleParameter("StyleBackdropAvailable");
         filterHeaderParameter =
             GetParameter("FilterHeader");
         filterOptions0Parameter =
@@ -1302,6 +1312,8 @@ internal sealed class PrismKernelRegistry : IDisposable
             parameters.StyleTexture ?? parameters.SecondaryTexture);
         styleMaskTextureParameter.SetValue(
             parameters.StyleMaskTexture ?? parameters.SecondaryTexture);
+        styleBackdropTextureParameter.SetValue(
+            parameters.StyleBackdropTexture ?? parameters.SecondaryTexture);
         styleColorParameter.SetValue(parameters.StyleColor);
         styleSecondaryColorParameter.SetValue(
             parameters.StyleSecondaryColor);
@@ -1315,6 +1327,8 @@ internal sealed class PrismKernelRegistry : IDisposable
         styleModes3Parameter.SetValue(parameters.StyleModes3);
         styleResourceAvailableParameter.SetValue(
             parameters.StyleResourceAvailable);
+        styleBackdropAvailableParameter.SetValue(
+            parameters.StyleBackdropAvailable);
     }
 
     private void BindDeinterlace(

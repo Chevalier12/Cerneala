@@ -654,8 +654,7 @@ internal sealed class PrismGraphOptimizer
         HashSet<PrismGraphEdge> rewritten = [];
         foreach (PrismGraphEdge edge in edges)
         {
-            if (edge.Kind == PrismGraphEdgeKind.StyleSource &&
-                aliases.ContainsKey(edge.Target))
+            if (aliases.ContainsKey(edge.Target))
             {
                 continue;
             }

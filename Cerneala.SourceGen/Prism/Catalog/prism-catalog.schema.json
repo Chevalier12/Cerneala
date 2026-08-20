@@ -43,7 +43,6 @@
         "composition",
         "layer",
         "group",
-        "backdrop",
         "mask",
         "filter",
         "style"
@@ -62,12 +61,6 @@
           }
         },
         "group": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/property"
-          }
-        },
-        "backdrop": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/property"

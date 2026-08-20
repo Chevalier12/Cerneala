@@ -25,7 +25,7 @@ public sealed class PrismCompositionDefinition : IEquatable<PrismCompositionDefi
         Nodes = PrismDefinitionValidation.ToImmutableArray(nodes, nameof(nodes));
         if (Nodes.IsEmpty)
         {
-            throw new ArgumentException("A Prism composition must contain at least one layer, group, or backdrop.", nameof(nodes));
+            throw new ArgumentException("A Prism composition must contain at least one layer or group.", nameof(nodes));
         }
 
         WorkingColorProfile = workingColorProfile;
@@ -47,13 +47,9 @@ public sealed class PrismCompositionDefinition : IEquatable<PrismCompositionDefi
 
     public PrismSourceSpan? SourceSpan { get; }
 
-    public PrismBackdropDefinition? Backdrop =>
-        Nodes[^1] as PrismBackdropDefinition;
-
     public IEnumerable<PrismNodeDefinition> EnumerateContentBottomUp()
     {
-        int start = Backdrop is null ? Nodes.Length - 1 : Nodes.Length - 2;
-        for (int index = start; index >= 0; index--)
+        for (int index = Nodes.Length - 1; index >= 0; index--)
         {
             yield return Nodes[index];
         }
@@ -115,25 +111,10 @@ public sealed class PrismCompositionDefinition : IEquatable<PrismCompositionDefi
         HashSet<PrismNodeId> ids = new();
         ImmutableDictionary<string, PrismNodeId>.Builder names =
             ImmutableDictionary.CreateBuilder<string, PrismNodeId>(StringComparer.Ordinal);
-        int backdropCount = 0;
         for (int index = 0; index < nodes.Length; index++)
         {
             PrismNodeDefinition node = nodes[index];
-            if (node is PrismBackdropDefinition)
-            {
-                backdropCount++;
-                if (index != nodes.Length - 1)
-                {
-                    throw new ArgumentException("A Prism backdrop must be the last direct composition child.", nameof(nodes));
-                }
-            }
-
             ValidateScope(node, prefix: null, ids, names);
-        }
-
-        if (backdropCount > 1)
-        {
-            throw new ArgumentException("A Prism composition can contain at most one backdrop.", nameof(nodes));
         }
 
         return names.ToImmutable();

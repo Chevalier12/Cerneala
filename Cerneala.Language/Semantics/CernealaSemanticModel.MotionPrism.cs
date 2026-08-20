@@ -1240,7 +1240,6 @@ internal sealed partial class CernealaSemanticModel
             "composition");
 
         PrismContainerModelSyntax[] nodes = syntax.Members.OfType<PrismContainerModelSyntax>().ToArray();
-        ValidatePrismBackdropShape(nodes);
         foreach (PrismContainerModelSyntax node in nodes)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -1256,7 +1255,7 @@ internal sealed partial class CernealaSemanticModel
             AddPrismDiagnostic(
                 "PRISM2013",
                 new TextSpan(source.NameToken.Span.Start, Math.Min(1, source.NameToken.Span.Length)),
-                "A Prism composition must contain at least one layer, group, or backdrop.");
+                "A Prism composition must contain at least one layer or group.");
         }
 
         ValidatePrismClipToBelow(definition.RootNodes);
@@ -1279,13 +1278,7 @@ internal sealed partial class CernealaSemanticModel
             return null;
         }
 
-        if (parentKind == PrismContainerModelKind.Group && syntax.Kind == PrismContainerModelKind.Backdrop)
-        {
-            AddPrismDiagnostic("PRISM2005", syntax.NameSpan.Length == 0 ? syntax.Span : syntax.NameSpan, "@backdrop cannot be nested inside @group.");
-            return null;
-        }
-
-        string nodeName = syntax.Name ?? "Backdrop";
+        string nodeName = syntax.Name!;
         string path = parentPath.Length == 0 ? nodeName : parentPath + "." + nodeName;
         PrismNodeDefinition node = new(nodeName, path, syntax.Kind, syntax.NameSpan.Length == 0 ? syntax.Span : syntax.NameSpan);
         if (composition.Nodes.ContainsKey(path))
@@ -1644,28 +1637,6 @@ internal sealed partial class CernealaSemanticModel
         return string.Equals(sourceName, targetName, StringComparison.Ordinal) ||
             sourceName == "System.Int32" && targetName == "System.Single" ||
             source.IsOrImplements(targetName);
-    }
-
-    private void ValidatePrismBackdropShape(IReadOnlyList<PrismContainerModelSyntax> nodes)
-    {
-        PrismContainerModelSyntax[] backdrops = nodes.Where(node => node.Kind == PrismContainerModelKind.Backdrop).ToArray();
-        if (backdrops.Length > 1)
-        {
-            AddPrismDiagnostic("PRISM2006", backdrops[1].NameSpan.Length == 0 ? backdrops[1].Span : backdrops[1].NameSpan,
-                "A Prism composition may declare at most one backdrop.");
-            return;
-        }
-
-        if (backdrops.Length == 1)
-        {
-            int index = Array.IndexOf(nodes.ToArray(), backdrops[0]);
-            PrismContainerModelSyntax? following = nodes.Skip(index + 1).FirstOrDefault(node => node.Kind != PrismContainerModelKind.Backdrop);
-            if (following is not null)
-            {
-                AddPrismDiagnostic("PRISM2007", following.NameSpan.Length == 0 ? following.Span : following.NameSpan,
-                    "The Prism backdrop must be the last direct composition child.");
-            }
-        }
     }
 
     private void ValidatePrismClipToBelow(IReadOnlyList<PrismNodeDefinition> nodes)

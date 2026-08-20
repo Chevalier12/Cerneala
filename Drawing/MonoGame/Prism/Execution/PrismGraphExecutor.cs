@@ -687,8 +687,11 @@ internal sealed class PrismGraphExecutor : IDisposable
                     (pixelScale * backdropMetadata.PixelHeight),
                 transform.M32 /
                     backdropMetadata.PixelHeight));
+        DrawRect backdropBounds = scope.Output is PrismGraphNodeId output
+            ? plan.GetNodePlan(output).Bounds
+            : scope.Bounds;
         Rectangle destination = ResolveBackdropDestination(
-            scope.Bounds,
+            backdropBounds,
             pixelScale,
             target);
         if (destination.Width <= 0 || destination.Height <= 0)
@@ -929,6 +932,11 @@ internal sealed class PrismGraphExecutor : IDisposable
             graph,
             node.Id,
             PrismGraphEdgeKind.StyleSource);
+        int backdropIndex = FindInputIndex(
+            executionPlan,
+            graph,
+            node.Id,
+            PrismGraphEdgeKind.CompositeBackground);
         if (contentIndex < 0 || sourceIndex < 0)
         {
             RecordFallback(
@@ -1125,7 +1133,11 @@ internal sealed class PrismGraphExecutor : IDisposable
                 0),
             boundsUvRowX,
             boundsUvRowY,
-            resourceAvailable);
+            resourceAvailable,
+            backdropIndex >= 0
+                ? GetExecutionSurface(frame, backdropIndex)
+                : GetExecutionSurface(frame, sourceIndex),
+            backdropIndex >= 0);
         PrismScratchSurfaceLease? scratchA = null;
         PrismScratchSurfaceLease? scratchB = null;
         try
@@ -2535,7 +2547,10 @@ internal sealed class PrismGraphExecutor : IDisposable
                 StyleBoundsUvRowX = style.BoundsUvRowX,
                 StyleBoundsUvRowY = style.BoundsUvRowY,
                 StyleResourceAvailable =
-                    style.ResourceAvailable ? 1 : 0
+                    style.ResourceAvailable ? 1 : 0,
+                StyleBackdropTexture = style.BackdropTexture,
+                StyleBackdropAvailable =
+                    style.BackdropAvailable ? 1 : 0
             };
         }
         if (filterSettings is PrismFilterKernelSettings filter)
@@ -2932,7 +2947,9 @@ internal sealed class PrismGraphExecutor : IDisposable
         Vector4 Modes3,
         Vector3 BoundsUvRowX,
         Vector3 BoundsUvRowY,
-        bool ResourceAvailable);
+        bool ResourceAvailable,
+        Texture2D BackdropTexture,
+        bool BackdropAvailable);
 
     private readonly record struct PrismFilterKernelSettings(
         Texture2D Texture,

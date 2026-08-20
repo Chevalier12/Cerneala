@@ -4953,7 +4953,8 @@ public sealed class PrismGraphExecutorTests
                 new PrismFilterDefinition(
                     PrismFilterId.Threshold)
             ],
-            opacity: 0.88f);
+            opacity: 0.88f,
+            blendMode: PrismBlendMode.Normal);
         PrismDrawScope scope = PrismTestData.Scope(
             PrismTestData.Composition(
                 "Complex retained matrix",
@@ -5092,7 +5093,7 @@ public sealed class PrismGraphExecutorTests
                     1,
                     "Foreground",
                     opacity: 0.65f),
-                PrismTestData.Backdrop(
+                PrismTestData.BackdropLayer(
                     2,
                     "Versioned host backdrop")),
             ownerToken: 8_301,

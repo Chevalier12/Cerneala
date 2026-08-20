@@ -219,7 +219,9 @@ float4 CompositeBevelEmbossStyle(
     float4 content,
     float2 uv,
     int blendMode,
-    int secondaryBlendMode)
+    int secondaryBlendMode,
+    float4 backdrop,
+    float backdropAvailable)
 {
     float4 bevelLighting = tex2D(
         StyleDistanceTextureSampler,
@@ -241,11 +243,15 @@ float4 CompositeBevelEmbossStyle(
     float4 beveled = CompositeStyleOver(
         shadow,
         content,
-        secondaryBlendMode);
+        secondaryBlendMode,
+        backdrop,
+        backdropAvailable);
     return CompositeStyleOver(
         highlight,
         beveled,
-        blendMode) *
+        blendMode,
+        backdrop,
+        backdropAvailable) *
         input.Color *
         Opacity;
 }

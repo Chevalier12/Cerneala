@@ -184,8 +184,6 @@ internal static class PrismSyntaxParser
                     return ParseContainer(start, PrismContainerModelKind.Layer, requireName: true);
                 case "@group":
                     return ParseContainer(start, PrismContainerModelKind.Group, requireName: true);
-                case "@backdrop":
-                    return ParseContainer(start, PrismContainerModelKind.Backdrop, requireName: false);
                 case "@filter":
                     return ParseOperation(start, PrismOperationModelKind.Filter, requireType: true);
                 case "@style":
@@ -193,7 +191,7 @@ internal static class PrismSyntaxParser
                 case "@mask":
                     return ParseOperation(start, PrismOperationModelKind.Mask, requireType: false);
                 default:
-                    Add("PRISM1001", "Unknown Prism directive '" + keyword + "'. Exactly eight Prism directives are supported.", keywordSpan.Start - absoluteOffset - 1, keyword.Length);
+                    Add("PRISM1001", "Unknown Prism directive '" + keyword + "'. Exactly seven Prism directives are supported.", keywordSpan.Start - absoluteOffset - 1, keyword.Length);
                     SkipStatementOrBlock();
                     return null;
             }

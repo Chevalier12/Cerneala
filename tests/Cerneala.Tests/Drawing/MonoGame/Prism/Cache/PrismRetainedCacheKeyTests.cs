@@ -333,7 +333,7 @@ public sealed class PrismRetainedCacheKeyTests
             PrismTestData.Composition(
                 "BackdropIdentity",
                 PrismTestData.Layer(1, "Content"),
-                PrismTestData.Backdrop(2, "Backdrop"));
+                PrismTestData.BackdropLayer(2, "Backdrop"));
         BackdropFrameMetadata metadata = BackdropMetadata(
             contentVersion: 11);
         PrismFrameAnalysis unknownAnalysis = Analyze(

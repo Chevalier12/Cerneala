@@ -396,11 +396,12 @@ public sealed class PrismAttachmentTests
                             styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)],
                             mask: mask)
                     ]),
-                new PrismBackdropDefinition(
+                new PrismLayerDefinition(
                     new PrismNodeId(12),
                     "Backdrop",
                     filters: [new PrismFilterDefinition(PrismFilterId.Blur)],
-                    mask: mask)
+                    mask: mask,
+                    blendMode: PrismBlendMode.Multiply)
             ]);
     }
 

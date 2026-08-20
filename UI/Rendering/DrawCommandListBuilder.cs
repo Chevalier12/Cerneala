@@ -243,12 +243,6 @@ public sealed class DrawCommandListBuilder
                         ResolveNodeState(child);
                     }
                     break;
-                case PrismBackdropState backdrop
-                    when backdrop.Visible && backdrop.Opacity > 0:
-                    ResolveMask(backdrop.Mask);
-                    ResolveFilters(backdrop.Filters);
-                    ResolveStyles(backdrop.Styles);
-                    break;
             }
         }
 

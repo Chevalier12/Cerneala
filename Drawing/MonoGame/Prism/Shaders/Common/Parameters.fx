@@ -4,6 +4,7 @@ Texture2D KnockoutBackdropTexture;
 Texture2D KnockoutShapeTexture;
 Texture2D StyleTexture;
 Texture2D StyleMaskTexture;
+Texture2D StyleBackdropTexture;
 Texture2D FilterAuxiliaryTexture;
 Texture2D DissolveThresholdTexture;
 float Opacity;
@@ -37,6 +38,7 @@ float4 StyleModes3;
 float3 StyleBoundsUvRowX;
 float3 StyleBoundsUvRowY;
 float StyleResourceAvailable;
+float StyleBackdropAvailable;
 float4 FilterHeader;
 float4 FilterOptions0;
 float4 FilterOptions1;
@@ -134,6 +136,16 @@ sampler2D StyleMaskSourceSampler = sampler_state
 sampler2D FilterAuxiliaryTextureSampler = sampler_state
 {
     Texture = <FilterAuxiliaryTexture>;
+};
+
+sampler2D StyleBackdropTextureSampler = sampler_state
+{
+    Texture = <StyleBackdropTexture>;
+    MinFilter = Linear;
+    MagFilter = Linear;
+    MipFilter = Point;
+    AddressU = Clamp;
+    AddressV = Clamp;
 };
 
 sampler2D GradientDitherSampler = sampler_state

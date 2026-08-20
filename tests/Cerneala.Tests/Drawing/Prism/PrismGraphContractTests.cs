@@ -37,7 +37,7 @@ public sealed class PrismGraphContractTests
     }
 
     [Fact]
-    public void SingleLayerOpacityCompositesMotionBlurOverTheControlMaster()
+    public void SingleLayerUsesTheControlAsBothImmutableSourceAndBaseBackdrop()
     {
         PrismLayerDefinition layer = new(
             new PrismNodeId(1),
@@ -56,6 +56,15 @@ public sealed class PrismGraphContractTests
             graph.Nodes.Where(
                 node => node.Kind == PrismGraphNodeKind.Composite &&
                     node.DefinitionNodeId == layer.Id));
+        PrismGraphNode layerNode = Assert.Single(
+            graph.Nodes.Where(
+                node => node.Kind == PrismGraphNodeKind.Layer &&
+                    node.DefinitionNodeId == layer.Id));
+        Assert.Contains(
+            graph.Edges,
+            edge => edge.Source == controlMaster.Id &&
+                edge.Target == layerNode.Id &&
+                edge.Kind == PrismGraphEdgeKind.Control);
         Assert.Contains(
             graph.Edges,
             edge => edge.Source == controlMaster.Id &&
@@ -64,7 +73,7 @@ public sealed class PrismGraphContractTests
     }
 
     [Fact]
-    public void HigherNeonGlowLayerReceivesAccumulatedMotionBlurResult()
+    public void HigherNeonGlowLayerUsesControlSourceAndAccumulatedBackdropSeparately()
     {
         PrismLayerDefinition neonGlow = new(
             new PrismNodeId(1),
@@ -89,9 +98,22 @@ public sealed class PrismGraphContractTests
             graph.Nodes.Where(
                 node => node.Kind == PrismGraphNodeKind.Layer &&
                     node.DefinitionNodeId == neonGlow.Id));
+        PrismGraphNode neonGlowComposite = Assert.Single(
+            graph.Nodes.Where(
+                node => node.Kind == PrismGraphNodeKind.Composite &&
+                    node.DefinitionNodeId == neonGlow.Id));
+        PrismGraphNode controlMaster = Assert.Single(
+            graph.Nodes.Where(
+                node => node.Kind == PrismGraphNodeKind.ColorConversion &&
+                    node.DefinitionNodeId is null));
         Assert.Contains(
             graph.Edges,
             edge => edge.Source == motionBlurComposite.Id &&
+                edge.Target == neonGlowComposite.Id &&
+                edge.Kind == PrismGraphEdgeKind.CompositeBackground);
+        Assert.Contains(
+            graph.Edges,
+            edge => edge.Source == controlMaster.Id &&
                 edge.Target == neonGlowLayer.Id &&
                 edge.Kind == PrismGraphEdgeKind.Control);
     }
@@ -112,9 +134,7 @@ public sealed class PrismGraphContractTests
             graph.Nodes.Where(
                 node => node.Kind == PrismGraphNodeKind.ColorConversion &&
                     node.DefinitionNodeId is null));
-        Assert.Equal(
-            controlMaster.Id,
-            Assert.Single(graph.Scopes).Output);
+        Assert.Equal(controlMaster.Id, Assert.Single(graph.Scopes).Output);
     }
 
     [Fact]
@@ -336,7 +356,7 @@ public sealed class PrismGraphContractTests
         PrismCompositionDefinition definition = PrismTestData.Composition(
             "Backdrop",
             PrismTestData.Layer(1, "Content"),
-            PrismTestData.Backdrop(2, "Glass"));
+            PrismTestData.BackdropLayer(2, "Glass"));
 
         PrismGraph graph = BuildGraph(definition);
 
@@ -368,15 +388,16 @@ public sealed class PrismGraphContractTests
     }
 
     [Fact]
-    public void BackdropGraphCropsNormalizesProcessesAndComposesBeforeControlLayers()
+    public void ImplicitBackdropCropsNormalizesAndFeedsLayerOperations()
     {
-        PrismBackdropDefinition backdropDefinition = new(
+        PrismLayerDefinition backdropDefinition = new(
             new PrismNodeId(20),
             "Glass",
             filters: [new PrismFilterDefinition(PrismFilterId.GaussianBlur)],
             styles: [new PrismStyleDefinition(PrismStyleId.ColorOverlay)],
             mask: new PrismMaskDefinition(new PrismResourceId(71)),
-            opacity: 0.65f);
+            opacity: 0.65f,
+            blendMode: PrismBlendMode.Multiply);
         PrismCompositionDefinition definition = PrismTestData.Composition(
             "BackdropPipeline",
             PrismTestData.Layer(1, "Control"),
@@ -410,7 +431,7 @@ public sealed class PrismGraphContractTests
         PrismGraphNode conversion = Assert.Single(
             graph.Nodes.Where(
                 node => node.Kind == PrismGraphNodeKind.ColorConversion &&
-                    node.DefinitionNodeId == backdropDefinition.Id));
+                    node.BackdropMetadata is not null));
         PrismGraphNode[] filters = graph.Nodes
             .Where(
                 node => node.Kind == PrismGraphNodeKind.Filter &&
@@ -440,7 +461,12 @@ public sealed class PrismGraphContractTests
         Assert.True(HasPath(graph, input.Id, crop.Id));
         Assert.True(HasPath(graph, crop.Id, conversion.Id));
         Assert.Equal(2, filters.Length);
-        Assert.True(HasPath(graph, conversion.Id, filters[0].Id));
+        PrismGraphNode controlConversion = Assert.Single(
+            graph.Nodes.Where(
+                node => node.Kind == PrismGraphNodeKind.ColorConversion &&
+                    node.BackdropMetadata is null));
+        Assert.False(HasPath(graph, conversion.Id, filters[0].Id));
+        Assert.True(HasPath(graph, controlConversion.Id, filters[0].Id));
         Assert.True(HasPath(graph, filters[0].Id, filters[1].Id));
         Assert.True(HasPath(graph, filters[1].Id, style.Id));
         PrismGraphEdge maskEdge = Assert.Single(
@@ -453,22 +479,40 @@ public sealed class PrismGraphContractTests
 
         PrismGraphNode controlCapture = Assert.Single(
             graph.Nodes.Where(node => node.Kind == PrismGraphNodeKind.ControlCapture));
-        PrismGraphNode controlLayer = Assert.Single(
-            graph.Nodes.Where(node => node.Kind == PrismGraphNodeKind.Layer));
+        PrismGraphNode destinationAwareLayer = Assert.Single(
+            graph.Nodes.Where(node =>
+                node.Kind == PrismGraphNodeKind.Layer &&
+                node.DefinitionNodeId == backdropDefinition.Id));
         Assert.False(HasPath(graph, controlCapture.Id, input.Id));
-        Assert.False(HasPath(graph, controlLayer.Id, input.Id));
-        PrismGraphEdge finalBackdropEdge = Assert.Single(
-            graph.Edges.Where(
-                edge => edge.Source == opacity.Id &&
-                    edge.Kind == PrismGraphEdgeKind.CompositeBackground));
-        Assert.Equal(
-            PrismGraphNodeKind.Composite,
-            graph.GetNode(finalBackdropEdge.Target).Kind);
+        Assert.False(HasPath(graph, destinationAwareLayer.Id, input.Id));
+        PrismGraphNode baseScene = Assert.Single(
+            graph.Nodes.Where(node =>
+                node.Kind == PrismGraphNodeKind.Composite &&
+                node.DefinitionNodeId is null));
         Assert.Contains(
             graph.Edges,
-            edge => edge.Target == finalBackdropEdge.Target &&
-                edge.Kind == PrismGraphEdgeKind.CompositeForeground &&
-                HasPath(graph, controlLayer.Id, edge.Source));
+            edge => edge.Source == conversion.Id &&
+                edge.Target == baseScene.Id &&
+                edge.Kind == PrismGraphEdgeKind.CompositeBackground);
+        Assert.Contains(
+            graph.Edges,
+            edge => edge.Source == controlConversion.Id &&
+                edge.Target == baseScene.Id &&
+                edge.Kind == PrismGraphEdgeKind.CompositeForeground);
+        PrismGraphEdge styleBackdropEdge = Assert.Single(
+            graph.Edges.Where(
+                edge => edge.Source == baseScene.Id &&
+                    edge.Target == style.Id &&
+                    edge.Kind == PrismGraphEdgeKind.CompositeBackground));
+        PrismGraphEdge finalForegroundEdge = Assert.Single(
+            graph.Edges.Where(
+                edge => edge.Source == opacity.Id &&
+                    edge.Kind == PrismGraphEdgeKind.CompositeForeground));
+        Assert.Contains(
+            graph.Edges,
+            edge => edge.Target == finalForegroundEdge.Target &&
+                edge.Source == baseScene.Id &&
+                edge.Kind == PrismGraphEdgeKind.CompositeBackground);
     }
 
     [Fact]
@@ -485,14 +529,14 @@ public sealed class PrismGraphContractTests
             PrismTestData.Composition(
                 "First",
                 nested,
-                PrismTestData.Backdrop(20, "FirstGlass")),
+                PrismTestData.BackdropLayer(20, "FirstGlass")),
             ownerToken: 101,
             bounds: new DrawRect(0, 0, 20, 10));
         PrismDrawScope second = PrismTestData.Scope(
             PrismTestData.Composition(
                 "Second",
                 PrismTestData.Layer(21, "Control"),
-                PrismTestData.Backdrop(22, "SecondGlass")),
+                PrismTestData.BackdropLayer(22, "SecondGlass")),
             ownerToken: 102,
             bounds: new DrawRect(20, 0, 20, 10));
         DrawCommandList commands = PrismTestData.Commands(
@@ -564,12 +608,17 @@ public sealed class PrismGraphContractTests
                 node => HasPath(graph, node.Id, input.Id));
         }
 
-        Assert.Equal(
-            """
-            scope=0;nodes=ControlCapture,ColorConversion,Layer,Filter,Filter,Fill,Opacity,Composite,Group,Opacity,PassThroughComposite,BackdropInput,BackdropCrop,ColorConversion,Filter,Filter,Opacity,Composite;crop=0,0,20,10;frame=88
-            scope=1;nodes=ControlCapture,ColorConversion,Layer,Filter,Filter,Fill,Opacity,Composite,BackdropInput,BackdropCrop,ColorConversion,Filter,Filter,Opacity,Composite;crop=20,0,20,10;frame=88
-            """.ReplaceLineEndings("\n"),
-            BackdropScopeSnapshot(graph));
+        string snapshot = BackdropScopeSnapshot(graph);
+        Assert.Contains(
+            "scope=0;nodes=ControlCapture,ColorConversion,BackdropInput,BackdropCrop,ColorConversion",
+            snapshot,
+            StringComparison.Ordinal);
+        Assert.Contains("crop=0,0,20,10;frame=88", snapshot, StringComparison.Ordinal);
+        Assert.Contains(
+            "scope=1;nodes=ControlCapture,ColorConversion,BackdropInput,BackdropCrop,ColorConversion",
+            snapshot,
+            StringComparison.Ordinal);
+        Assert.Contains("crop=20,0,20,10;frame=88", snapshot, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -578,7 +627,7 @@ public sealed class PrismGraphContractTests
         PrismCompositionDefinition definition = PrismTestData.Composition(
             "Cycle",
             PrismTestData.Layer(1, "Control"),
-            PrismTestData.Backdrop(2, "Glass"));
+            PrismTestData.BackdropLayer(2, "Glass"));
         PrismGraph graph = BuildGraph(definition);
         PrismGraphEdge firstEdge = graph.Edges[0];
 
@@ -715,7 +764,9 @@ public sealed class PrismGraphContractTests
         PrismGraphNode opacity = Assert.Single(
             graph.Nodes.Where(node => node.Kind == PrismGraphNodeKind.Opacity));
         PrismGraphNode composite = Assert.Single(
-            graph.Nodes.Where(node => node.Kind == PrismGraphNodeKind.Composite));
+            graph.Nodes.Where(node =>
+                node.Kind == PrismGraphNodeKind.Composite &&
+                node.DefinitionNodeId == layer.Id));
         Assert.Equal(PrismFilterId.Blur, filter.Filter);
         Assert.Equal(PrismStyleId.DropShadow, style.Style);
         Assert.True(
@@ -824,20 +875,22 @@ public sealed class PrismGraphContractTests
     }
 
     [Fact]
-    public void BackdropBuildFailureCarriesBackdropDiagnosticContext()
+    public void DestinationAwareLayerBuildFailureCarriesLayerDiagnosticContext()
     {
-        PrismBackdropDefinition backdrop = new(
+        PrismLayerDefinition backdrop = new(
             new PrismNodeId(2),
             "BrokenBackdrop",
             filters: [new PrismFilterDefinition(PrismFilterId.GaussianBlur)],
             mask: new PrismMaskDefinition(new PrismResourceId(71)),
+            blendMode: PrismBlendMode.Multiply,
             sourceSpan: new PrismSourceSpan(33, 8, "Window.crn"));
         PrismDrawScope scope = PrismTestData.Scope(
             PrismTestData.Composition(
                 "BackdropDiagnostic",
                 PrismTestData.Layer(1, "Content"),
                 backdrop));
-        scope.Instance.Backdrop!.Mask!.Channel = (PrismMaskChannel)int.MaxValue;
+        scope.Instance.GetLayerState(backdrop.Id).Mask!.Channel =
+            (PrismMaskChannel)int.MaxValue;
         DrawCommandList commands = PrismTestData.Commands(
             DrawCommand.BeginPrism(scope),
             DrawCommand.EndPrism());
@@ -935,7 +988,7 @@ public sealed class PrismGraphContractTests
             E:Fill/3->Opacity/3:Content
             E:ColorConversion/0->Composite/3:CompositeBackground
             E:Opacity/3->Composite/3:CompositeForeground
-            E:Composite/3->Layer/1:Control
+            E:ColorConversion/0->Layer/1:Control
             E:Layer/1->Filter/1:Content
             E:Filter/1->Filter/1:Content
             E:Filter/1->Fill/1:Content
@@ -971,7 +1024,7 @@ public sealed class PrismGraphContractTests
             E:Filter/12->Fill/12:Content
             E:Fill/12->Opacity/12:Content
             E:Opacity/12->Composite/12:CompositeForeground
-            E:Composite/12->Layer/11:Control
+            E:ColorConversion/0->Layer/11:Control
             E:Layer/11->Filter/11:Content
             E:Filter/11->Filter/11:Content
             E:Filter/11->Fill/11:Content
@@ -1042,7 +1095,7 @@ public sealed class PrismGraphContractTests
             E:Fill/3->Opacity/3:Content
             E:ColorConversion/0->Composite/3:CompositeBackground
             E:Opacity/3->Composite/3:CompositeForeground
-            E:Composite/3->Layer/2:Control
+            E:ColorConversion/0->Layer/2:Control
             E:Layer/2->Filter/2:Content
             E:Filter/2->Filter/2:Content
             E:Filter/2->Fill/2:Content
@@ -1051,7 +1104,7 @@ public sealed class PrismGraphContractTests
             E:Opacity/3->ClipToBelow/2:ClipBaseAlpha
             E:Composite/3->Composite/2:CompositeBackground
             E:ClipToBelow/2->Composite/2:CompositeForeground
-            E:Composite/2->Layer/1:Control
+            E:ColorConversion/0->Layer/1:Control
             E:Layer/1->Filter/1:Content
             E:Filter/1->Filter/1:Content
             E:Filter/1->Fill/1:Content

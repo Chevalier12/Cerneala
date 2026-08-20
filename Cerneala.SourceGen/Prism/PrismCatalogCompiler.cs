@@ -25,7 +25,6 @@ internal static class PrismCatalogCompiler
         "composition",
         "layer",
         "group",
-        "backdrop",
         "mask",
         "filter",
         "style");
@@ -133,7 +132,6 @@ internal static class PrismCatalogCompiler
             List<CatalogProperty> commonCompositionProperties = new();
             List<CatalogProperty> commonLayerProperties = new();
             List<CatalogProperty> commonGroupProperties = new();
-            List<CatalogProperty> commonBackdropProperties = new();
             List<CatalogProperty> commonMaskProperties = new();
             List<CatalogProperty> commonFilterProperties = new();
             List<CatalogProperty> commonStyleProperties = new();
@@ -142,7 +140,6 @@ internal static class PrismCatalogCompiler
                 commonCompositionProperties,
                 commonLayerProperties,
                 commonGroupProperties,
-                commonBackdropProperties,
                 commonMaskProperties,
                 commonFilterProperties,
                 commonStyleProperties,
@@ -156,7 +153,6 @@ internal static class PrismCatalogCompiler
                 commonCompositionProperties,
                 commonLayerProperties,
                 commonGroupProperties,
-                commonBackdropProperties,
                 commonMaskProperties,
                 commonFilterProperties,
                 commonStyleProperties,
@@ -172,7 +168,6 @@ internal static class PrismCatalogCompiler
                 commonCompositionProperties,
                 commonLayerProperties,
                 commonGroupProperties,
-                commonBackdropProperties,
                 commonMaskProperties,
                 commonFilterProperties,
                 commonStyleProperties,
@@ -184,7 +179,6 @@ internal static class PrismCatalogCompiler
                 commonCompositionProperties.ToImmutableArray(),
                 commonLayerProperties.ToImmutableArray(),
                 commonGroupProperties.ToImmutableArray(),
-                commonBackdropProperties.ToImmutableArray(),
                 commonMaskProperties.ToImmutableArray(),
                 commonFilterProperties.ToImmutableArray(),
                 commonStyleProperties.ToImmutableArray(),
@@ -201,7 +195,6 @@ internal static class PrismCatalogCompiler
         List<CatalogProperty> compositionProperties,
         List<CatalogProperty> layerProperties,
         List<CatalogProperty> groupProperties,
-        List<CatalogProperty> backdropProperties,
         List<CatalogProperty> maskProperties,
         List<CatalogProperty> filterProperties,
         List<CatalogProperty> styleProperties,
@@ -218,7 +211,6 @@ internal static class PrismCatalogCompiler
         ParsePropertyArray(common, "composition", "commonProperties.composition", compositionProperties, issues);
         ParsePropertyArray(common, "layer", "commonProperties.layer", layerProperties, issues);
         ParsePropertyArray(common, "group", "commonProperties.group", groupProperties, issues);
-        ParsePropertyArray(common, "backdrop", "commonProperties.backdrop", backdropProperties, issues);
         ParsePropertyArray(common, "mask", "commonProperties.mask", maskProperties, issues);
         ParsePropertyArray(common, "filter", "commonProperties.filter", filterProperties, issues);
         ParsePropertyArray(common, "style", "commonProperties.style", styleProperties, issues);
@@ -518,7 +510,6 @@ internal static class PrismCatalogCompiler
         List<CatalogProperty> commonCompositionProperties,
         List<CatalogProperty> commonLayerProperties,
         List<CatalogProperty> commonGroupProperties,
-        List<CatalogProperty> commonBackdropProperties,
         List<CatalogProperty> commonMaskProperties,
         List<CatalogProperty> commonFilterProperties,
         List<CatalogProperty> commonStyleProperties,
@@ -527,7 +518,6 @@ internal static class PrismCatalogCompiler
         ValidatePropertySet(commonCompositionProperties, "commonProperties.composition", issues);
         ValidatePropertySet(commonLayerProperties, "commonProperties.layer", issues);
         ValidatePropertySet(commonGroupProperties, "commonProperties.group", issues);
-        ValidatePropertySet(commonBackdropProperties, "commonProperties.backdrop", issues);
         ValidatePropertySet(commonMaskProperties, "commonProperties.mask", issues);
         ValidatePropertySet(commonFilterProperties, "commonProperties.filter", issues);
         ValidatePropertySet(commonStyleProperties, "commonProperties.style", issues);
@@ -787,7 +777,6 @@ internal static class PrismCatalogCompiler
         List<CatalogProperty> commonCompositionProperties,
         List<CatalogProperty> commonLayerProperties,
         List<CatalogProperty> commonGroupProperties,
-        List<CatalogProperty> commonBackdropProperties,
         List<CatalogProperty> commonMaskProperties,
         List<CatalogProperty> commonFilterProperties,
         List<CatalogProperty> commonStyleProperties,
@@ -885,21 +874,18 @@ internal static class PrismCatalogCompiler
             commonCompositionProperties,
             commonLayerProperties,
             commonGroupProperties,
-            commonBackdropProperties,
             commonMaskProperties,
             commonFilterProperties,
             commonStyleProperties);
         AppendPropertyArray(source, "CommonCompositionProperties", commonCompositionProperties, 1);
         AppendPropertyArray(source, "CommonLayerProperties", commonLayerProperties, 1);
         AppendPropertyArray(source, "CommonGroupProperties", commonGroupProperties, 1);
-        AppendPropertyArray(source, "CommonBackdropProperties", commonBackdropProperties, 1);
         AppendPropertyArray(source, "CommonMaskProperties", commonMaskProperties, 1);
         AppendPropertyArray(source, "CommonFilterProperties", commonFilterProperties, 1);
         AppendPropertyArray(source, "CommonStyleProperties", commonStyleProperties, 1);
         AppendParameterKeys(source, "PrismCompositionPropertyKeys", 0, commonCompositionProperties, 1);
         AppendParameterKeys(source, "PrismLayerPropertyKeys", 0, commonLayerProperties, 1);
         AppendParameterKeys(source, "PrismGroupPropertyKeys", 0, commonGroupProperties, 1);
-        AppendParameterKeys(source, "PrismBackdropPropertyKeys", 0, commonBackdropProperties, 1);
         AppendParameterKeys(source, "PrismMaskPropertyKeys", 0, commonMaskProperties, 1);
         AppendParameterKeys(source, "PrismFilterCommonParameterKeys", 0, commonFilterProperties, 1);
         AppendParameterKeys(source, "PrismStyleCommonParameterKeys", 0, commonStyleProperties, 1);
@@ -1128,7 +1114,6 @@ internal static class PrismCatalogCompiler
         List<CatalogProperty> composition,
         List<CatalogProperty> layer,
         List<CatalogProperty> group,
-        List<CatalogProperty> backdrop,
         List<CatalogProperty> mask,
         List<CatalogProperty> filter,
         List<CatalogProperty> style)
@@ -1144,8 +1129,6 @@ internal static class PrismCatalogCompiler
         AppendConstant(source, "GroupVisible", "bool", group, "Visible");
         AppendConstant(source, "GroupOpacity", "float", group, "Opacity");
         AppendConstant(source, "GroupBlendMode", "PrismBlendMode", group, "BlendMode");
-        AppendConstant(source, "BackdropVisible", "bool", backdrop, "Visible");
-        AppendConstant(source, "BackdropOpacity", "float", backdrop, "Opacity");
         AppendConstant(
             source,
             "MaskChannel",
@@ -1742,7 +1725,6 @@ internal sealed class PrismCatalogModel
         ImmutableArray<PrismCatalogCompiler.CatalogProperty> compositionProperties,
         ImmutableArray<PrismCatalogCompiler.CatalogProperty> layerProperties,
         ImmutableArray<PrismCatalogCompiler.CatalogProperty> groupProperties,
-        ImmutableArray<PrismCatalogCompiler.CatalogProperty> backdropProperties,
         ImmutableArray<PrismCatalogCompiler.CatalogProperty> maskProperties,
         ImmutableArray<PrismCatalogCompiler.CatalogProperty> filterProperties,
         ImmutableArray<PrismCatalogCompiler.CatalogProperty> styleProperties,
@@ -1754,7 +1736,6 @@ internal sealed class PrismCatalogModel
         CompositionProperties = compositionProperties;
         LayerProperties = layerProperties;
         GroupProperties = groupProperties;
-        BackdropProperties = backdropProperties;
         MaskProperties = maskProperties;
         FilterProperties = filterProperties;
         StyleProperties = styleProperties;
@@ -1772,8 +1753,6 @@ internal sealed class PrismCatalogModel
     public ImmutableArray<PrismCatalogCompiler.CatalogProperty> LayerProperties { get; }
 
     public ImmutableArray<PrismCatalogCompiler.CatalogProperty> GroupProperties { get; }
-
-    public ImmutableArray<PrismCatalogCompiler.CatalogProperty> BackdropProperties { get; }
 
     public ImmutableArray<PrismCatalogCompiler.CatalogProperty> MaskProperties { get; }
 

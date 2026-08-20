@@ -13,8 +13,7 @@ internal static class PrismMarkupLanguage
         "@group",
         "@filter",
         "@style",
-        "@mask",
-        "@backdrop"
+        "@mask"
     ];
 
     internal static IReadOnlyList<string> DirectiveNames => directives;

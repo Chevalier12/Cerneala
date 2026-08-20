@@ -102,8 +102,7 @@ public sealed partial class UiMarkupGenerator
     {
         Composition,
         Layer,
-        Group,
-        Backdrop
+        Group
     }
 
     private sealed class PrismContainerSyntax : PrismMemberSyntax

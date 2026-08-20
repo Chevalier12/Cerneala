@@ -189,8 +189,6 @@ public sealed class MotionPrismSemanticTests
     [InlineData("@layer Card { } @layer Card { }", "PRISM2003")]
     [InlineData("@parameter Value: object; @layer Card { }", "PRISM2004")]
     [InlineData("@layer Card { @layer Child { } }", "PRISM2005")]
-    [InlineData("@backdrop A { } @backdrop B { }", "PRISM2006")]
-    [InlineData("@backdrop Glass { } @layer Card { }", "PRISM2007")]
     [InlineData("@layer Card { ClipToBelow = true; @filter Blur { Radius = 2; } }", "PRISM2008")]
     [InlineData("@layer Card { Opacity = 2; }", "PRISM2009")]
     [InlineData("", "PRISM2013")]
@@ -231,6 +229,7 @@ public sealed class MotionPrismSemanticTests
     {
         Assert.Contains("@animate", CernealaLanguageFacts.MotionDirectiveKeywords);
         Assert.Contains("@prism", CernealaLanguageFacts.PrismDirectiveKeywords);
+        Assert.DoesNotContain("@backdrop", CernealaLanguageFacts.PrismDirectiveKeywords);
         Assert.Contains(CernealaLanguageFacts.MotionOptions, option => option.Name == "retarget" && option.AllowedValues.Contains("PreserveProgress"));
         Assert.Contains(CernealaLanguageFacts.GetPrismSymbols("filter"), symbol => symbol == "Blur");
         Assert.Contains(CernealaLanguageFacts.GetPrismProperties("layer"), property =>

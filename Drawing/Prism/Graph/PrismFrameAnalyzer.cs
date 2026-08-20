@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Numerics;
 using Cerneala.Drawing.Prism.Catalog;
+using Cerneala.Drawing.Prism.Styles;
 using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
 
@@ -172,9 +173,124 @@ internal sealed class PrismFrameAnalyzer
 
     private static bool RequiresBackdrop(PrismDrawScope scope, DrawRect bounds)
     {
-        PrismBackdropState? backdrop = scope.Instance.Backdrop;
-        return !IsEmpty(bounds) &&
-            backdrop is { Visible: true, Opacity: > 0 };
+        return !IsEmpty(bounds) && RequiresBackdrop(
+            scope.Definition.Nodes,
+            scope.Instance,
+            canSeeHostBackdrop: true);
+    }
+
+    private static bool RequiresBackdrop(
+        IReadOnlyList<PrismNodeDefinition> definitions,
+        PrismInstance instance,
+        bool canSeeHostBackdrop)
+    {
+        foreach (PrismNodeDefinition definition in definitions)
+        {
+            switch (definition)
+            {
+                case PrismLayerDefinition layer:
+                {
+                    PrismLayerState state = instance.GetLayerState(layer.Id);
+                    if (!state.Visible || state.Opacity <= 0)
+                    {
+                        continue;
+                    }
+                    if (canSeeHostBackdrop &&
+                        (state.BlendMode != PrismBlendMode.Normal ||
+                            StylesRequireBackdrop(state.Styles)))
+                    {
+                        return true;
+                    }
+                    break;
+                }
+
+                case PrismGroupDefinition group:
+                {
+                    PrismGroupState state = instance.GetGroupState(group.Id);
+                    if (!state.Visible || state.Opacity <= 0)
+                    {
+                        continue;
+                    }
+
+                    bool passThrough =
+                        state.BlendMode == PrismBlendMode.PassThrough;
+                    if (canSeeHostBackdrop &&
+                        ((!passThrough &&
+                            state.BlendMode != PrismBlendMode.Normal) ||
+                            StylesRequireBackdrop(state.Styles)))
+                    {
+                        return true;
+                    }
+                    if (RequiresBackdrop(
+                        group.Children,
+                        instance,
+                        canSeeHostBackdrop && passThrough))
+                    {
+                        return true;
+                    }
+                    break;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static bool StylesRequireBackdrop(
+        IReadOnlyList<PrismStyleState> styles)
+    {
+        foreach (PrismStyleState state in styles)
+        {
+            if (!state.Visible)
+            {
+                continue;
+            }
+
+            PrismCatalogEntryDescriptor entry =
+                PrismCatalogRuntime.GetEntry((int)state.Style);
+            foreach (PrismCatalogPropertyDescriptor property in
+                entry.Properties)
+            {
+                if (property.ValueType != PrismCatalogValueType.Symbol ||
+                    !property.Name.EndsWith(
+                        "BlendMode",
+                        StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                string opacityName = property.Name[
+                    ..^"BlendMode".Length] + "Opacity";
+                PrismCatalogPropertyDescriptor? opacityProperty =
+                    entry.Properties.FirstOrDefault(candidate =>
+                        candidate.ValueType == PrismCatalogValueType.Number &&
+                        string.Equals(
+                            candidate.Name,
+                            opacityName,
+                            StringComparison.Ordinal));
+                if (opacityProperty is PrismCatalogPropertyDescriptor visibleOpacity &&
+                    state.GetValue(
+                        new PrismParameterKey<float>(
+                            entry.StableId,
+                            visibleOpacity.TypeSlot)) <= 0)
+                {
+                    continue;
+                }
+
+                int value = state.GetValue(
+                    new PrismParameterKey<int>(
+                        entry.StableId,
+                        property.TypeSlot));
+                if (PrismStylePlanner.ResolveBlendMode(
+                        value,
+                        property.Name) != PrismBlendMode.Normal)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private static CapabilityEstimate EstimateCapabilities(
@@ -185,6 +301,11 @@ internal sealed class PrismFrameAnalyzer
             PrismGraphCapabilities.ControlCapture |
             PrismGraphCapabilities.ColorConversion;
         int surfaceCount = 1;
+        if (includeBackdrop)
+        {
+            capabilities |= PrismGraphCapabilities.BackdropInput;
+            surfaceCount = checked(surfaceCount + 4);
+        }
         foreach (PrismNodeDefinition node in definition.Nodes)
         {
             EstimateNode(
@@ -252,20 +373,6 @@ internal sealed class PrismFrameAnalyzer
                     ref surfaceCount);
                 break;
 
-            case PrismBackdropDefinition backdrop:
-                if (!includeBackdrop)
-                {
-                    break;
-                }
-                capabilities |= PrismGraphCapabilities.BackdropInput;
-                surfaceCount = checked(surfaceCount + 1);
-                EstimateOperations(
-                    backdrop.Filters.Length,
-                    backdrop.Styles.Length,
-                    backdrop.Mask is not null,
-                    ref capabilities,
-                    ref surfaceCount);
-                break;
         }
     }
 

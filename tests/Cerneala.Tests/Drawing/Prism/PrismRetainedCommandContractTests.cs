@@ -485,13 +485,13 @@ public sealed class PrismRetainedCommandContractTests
             PrismTestData.Composition(
                 "First",
                 PrismTestData.Layer(1, "Content"),
-                PrismTestData.Backdrop(2, "Backdrop")),
+                PrismTestData.BackdropLayer(2, "Backdrop")),
             ownerToken: 21);
         PrismDrawScope second = PrismTestData.Scope(
             PrismTestData.Composition(
                 "Second",
                 PrismTestData.Layer(3, "Content"),
-                PrismTestData.Backdrop(4, "Backdrop")),
+                PrismTestData.BackdropLayer(4, "Backdrop")),
             ownerToken: 22);
         DrawCommandList commands = PrismTestData.Commands(
             DrawCommand.BeginPrism(first),
@@ -570,7 +570,7 @@ public sealed class PrismRetainedCommandContractTests
             PrismTestData.Composition(
                 "ClippedBackdrop",
                 PrismTestData.Layer(1, "Content"),
-                PrismTestData.Backdrop(2, "Backdrop")),
+                PrismTestData.BackdropLayer(2, "Backdrop")),
             bounds: new DrawRect(20, 20, 5, 5));
         DrawCommandList commands = PrismTestData.Commands(
             DrawCommand.PushClip(new DrawRect(0, 0, 10, 10)),

@@ -877,7 +877,7 @@ internal sealed class PrismRetainedCacheContractHarness : IDisposable
             PrismTestData.Composition(
                 "Backdrop mutation",
                 PrismTestData.Layer(1, "Foreground"),
-                PrismTestData.Backdrop(2, "Backdrop"));
+                PrismTestData.BackdropLayer(2, "Backdrop"));
         PrismBackdropSourceToken sourceToken =
             PrismBackdropSourceToken.CreateUnique();
         long firstLowerUi = 10;

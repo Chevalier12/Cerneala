@@ -22,8 +22,6 @@ public sealed partial class UiMarkupGenerator
     private static readonly DiagnosticDescriptor PrismDuplicateNameDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM2003");
     private static readonly DiagnosticDescriptor PrismParameterDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM2004");
     private static readonly DiagnosticDescriptor PrismNestingDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM2005");
-    private static readonly DiagnosticDescriptor PrismBackdropCountDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM2006");
-    private static readonly DiagnosticDescriptor PrismBackdropOrderDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM2007");
     private static readonly DiagnosticDescriptor PrismClipToBelowDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM2008");
     private static readonly DiagnosticDescriptor PrismValueDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM2009");
     private static readonly DiagnosticDescriptor PrismStructureDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("PRISM2013");
@@ -329,7 +327,6 @@ public sealed partial class UiMarkupGenerator
             PrismContainerSyntax[] nodeSyntax =
                 syntax.Members.OfType<PrismContainerSyntax>().ToArray();
             ValidateSiblingNames(nodeSyntax);
-            ValidateBackdropShape(nodeSyntax);
 
             List<BoundPrismNode> nodes = [];
             foreach (PrismContainerSyntax node in nodeSyntax)
@@ -407,11 +404,6 @@ public sealed partial class UiMarkupGenerator
                     keys = "PrismGroupPropertyKeys";
                     family = "group";
                     break;
-                case PrismContainerKind.Backdrop:
-                    schemas = PrismCatalog.Value.BackdropProperties;
-                    keys = "PrismBackdropPropertyKeys";
-                    family = "backdrop";
-                    break;
                 default:
                     schemas = Array.Empty<PrismCatalogCompiler.CatalogProperty>();
                     keys = string.Empty;
@@ -433,8 +425,7 @@ public sealed partial class UiMarkupGenerator
 
             foreach (PrismContainerSyntax child in childSyntax)
             {
-                if (syntax.Kind != PrismContainerKind.Group ||
-                    child.Kind == PrismContainerKind.Backdrop)
+                if (syntax.Kind != PrismContainerKind.Group)
                 {
                     ReportPrismBinding(
                         PrismNestingDiagnostic,
@@ -496,7 +487,7 @@ public sealed partial class UiMarkupGenerator
                         syntax.NameLocation ?? syntax.Location,
                         "A Prism group must contain at least one layer or nested group.");
                 }
-                else if (syntax.Kind is PrismContainerKind.Layer or PrismContainerKind.Backdrop &&
+                else if (syntax.Kind == PrismContainerKind.Layer &&
                     filters.Count == 0 &&
                     styles.Count == 0)
                 {
@@ -925,42 +916,9 @@ public sealed partial class UiMarkupGenerator
             }
         }
 
-        private void ValidateBackdropShape(IReadOnlyList<PrismContainerSyntax> nodes)
-        {
-            PrismContainerSyntax[] backdrops =
-                nodes.Where(node => node.Kind == PrismContainerKind.Backdrop).ToArray();
-            if (backdrops.Length > 1)
-            {
-                PrismContainerSyntax second = backdrops[1];
-                ReportPrismBinding(
-                    PrismBackdropCountDiagnostic,
-                    second.NameLocation ?? second.Location,
-                    "A Prism composition may declare at most one backdrop.");
-                return;
-            }
-
-            if (backdrops.Length == 0)
-            {
-                return;
-            }
-
-            int backdropIndex = IndexOfReference(nodes, backdrops[0]);
-            PrismContainerSyntax? followingNormal = nodes
-                .Skip(backdropIndex + 1)
-                .FirstOrDefault(node => node.Kind != PrismContainerKind.Backdrop);
-            if (followingNormal is not null)
-            {
-                ReportPrismBinding(
-                    PrismBackdropOrderDiagnostic,
-                    followingNormal.NameLocation ?? followingNormal.Location,
-                    "The Prism backdrop must be the last direct composition child.");
-            }
-        }
-
         private void ValidateClipToBelow(IReadOnlyList<BoundPrismNode> nodes)
         {
-            ValidateClipToBelowScope(
-                nodes.Where(node => node.Kind != PrismContainerKind.Backdrop).ToArray());
+            ValidateClipToBelowScope(nodes);
             foreach (BoundPrismNode group in EnumeratePrismNodes(nodes)
                 .Where(node => node.Kind == PrismContainerKind.Group))
             {
@@ -1169,7 +1127,6 @@ public sealed partial class UiMarkupGenerator
             {
                 PrismContainerKind.Layer => "@layer",
                 PrismContainerKind.Group => "@group",
-                PrismContainerKind.Backdrop => "@backdrop",
                 _ => "@prism"
             };
 

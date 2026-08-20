@@ -72,7 +72,7 @@ internal static class CernealaLanguageFacts
 
     public static IReadOnlyList<string> PrismDirectiveKeywords { get; } =
     [
-        "@prism", "@parameter", "@layer", "@group", "@filter", "@style", "@mask", "@backdrop"
+        "@prism", "@parameter", "@layer", "@group", "@filter", "@style", "@mask"
     ];
 
     public static IReadOnlyList<string> MotionSpecKinds { get; } =

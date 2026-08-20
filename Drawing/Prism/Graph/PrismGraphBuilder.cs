@@ -100,7 +100,6 @@ internal sealed class PrismGraphBuilder
     {
         private const int MaskCompositeOrdinal = 0;
         private const int StackCompositeOrdinal = 1;
-        private const int BackdropCompositeOrdinal = 2;
 
         private readonly PrismAnalyzedScope analyzedScope;
         private readonly PrismCompositionDefinition definition;
@@ -197,15 +196,36 @@ internal sealed class PrismGraphBuilder
             AddEdge(capture.Id, conversion.Id, PrismGraphEdgeKind.Content);
             controlSource = conversion.Id;
 
+            PrismGraphNodeId? hostBackdrop = BuildImplicitBackdrop();
+            PrismGraphNodeId baseScene = controlSource;
+            if (hostBackdrop is PrismGraphNodeId physicalBackdrop)
+            {
+                PrismGraphNode baseComposite = AddNode(
+                    PrismGraphNodeKind.Composite,
+                    definitionNodeId: null,
+                    ordinal: 0,
+                    definitionOrder: -1,
+                    diagnosticName: $"{definition.Name}/base-scene",
+                    Dependencies(),
+                    blendMode: PrismBlendMode.Normal);
+                AddEdge(
+                    physicalBackdrop,
+                    baseComposite.Id,
+                    PrismGraphEdgeKind.CompositeBackground);
+                AddEdge(
+                    controlSource,
+                    baseComposite.Id,
+                    PrismGraphEdgeKind.CompositeForeground);
+                baseScene = baseComposite.Id;
+            }
             PrismGraphNodeId? content = BuildStack(
                 definition.Nodes,
-                excludeBackdrop: true,
-                initialBackground:
-                    definition.Backdrop is null ? controlSource : null,
-                deferShallowKnockoutBackdrop: true,
+                initialBackground: baseScene,
+                shallowKnockoutBackdrop: baseScene,
+                deepKnockoutBackdrop: hostBackdrop,
+                deferShallowKnockoutBackdrop: false,
                 deferDeepKnockoutBackdrop: true).Output;
-            PrismGraphNodeId? backdrop = BuildBackdrop();
-            if (backdrop is PrismGraphNodeId originalBackdrop)
+            if (hostBackdrop is PrismGraphNodeId originalBackdrop)
             {
                 foreach (PrismGraphNodeId target in deferredKnockoutBackdrops)
                 {
@@ -215,7 +235,6 @@ internal sealed class PrismGraphBuilder
                         PrismGraphEdgeKind.KnockoutBackdrop);
                 }
             }
-            PrismGraphNodeId? output = CombineBackdrop(backdrop, content);
             return new PrismGraphScope(
                 analyzedScope.ScopeIndex,
                 analyzedScope.BeginCommandIndex,
@@ -231,12 +250,11 @@ internal sealed class PrismGraphBuilder
                 analyzedScope.DependencyStamp,
                 analyzedScope.Scope.LowerUiVersion,
                 analyzedScope.Scope.Resources,
-                output);
+                content);
         }
 
         private StackBuildResult BuildStack(
             IReadOnlyList<PrismNodeDefinition> definitions,
-            bool excludeBackdrop = false,
             PrismGraphNodeId? initialBackground = null,
             PrismGraphNodeId? shallowKnockoutBackdrop = null,
             PrismGraphNodeId? deepKnockoutBackdrop = null,
@@ -248,12 +266,6 @@ internal sealed class PrismGraphBuilder
             bool hasClipBase = false;
             bool hasContent = false;
             int start = definitions.Count - 1;
-            if (excludeBackdrop &&
-                start >= 0 &&
-                definitions[start] is PrismBackdropDefinition)
-            {
-                start--;
-            }
 
             for (int index = start; index >= 0; index--)
             {
@@ -402,8 +414,6 @@ internal sealed class PrismGraphBuilder
                         deepKnockoutBackdrop,
                         deferShallowKnockoutBackdrop,
                         deferDeepKnockoutBackdrop),
-                    PrismBackdropDefinition => throw new InvalidOperationException(
-                        "A backdrop cannot appear inside a content stack."),
                     _ => throw new InvalidOperationException(
                         $"Unsupported definition type '{nodeDefinition.GetType().Name}'.")
                 };
@@ -444,7 +454,7 @@ internal sealed class PrismGraphBuilder
                 blendMode: state.BlendMode,
                 layerSettings: layerSettings);
             AddEdge(
-                background ?? controlSource,
+                controlSource,
                 layerNode.Id,
                 PrismGraphEdgeKind.Control);
 
@@ -468,7 +478,8 @@ internal sealed class PrismGraphBuilder
                 layer.Id,
                 state.Styles,
                 fill.Id,
-                preparedContent);
+                preparedContent,
+                background);
             current = ApplyMask(layer, state.Mask, current);
             PrismGraphNode opacity = AddNode(
                 PrismGraphNodeKind.Opacity,
@@ -548,7 +559,8 @@ internal sealed class PrismGraphBuilder
                 group.Id,
                 state.Styles,
                 preparedContent,
-                preparedContent);
+                preparedContent,
+                background);
             current = ApplyMask(group, state.Mask, current);
             PrismGraphNode opacity = AddNode(
                 PrismGraphNodeKind.Opacity,
@@ -599,47 +611,20 @@ internal sealed class PrismGraphBuilder
                 LayerSettings: null);
         }
 
-        private PrismGraphNodeId? BuildBackdrop()
+        private PrismGraphNodeId? BuildImplicitBackdrop()
         {
-            PrismBackdropDefinition? backdropDefinition = definition.Backdrop;
-            PrismBackdropState? state = instance.Backdrop;
-            if (backdropDefinition is null || state is null)
-            {
-                return null;
-            }
-
-            try
-            {
-                return BuildBackdrop(backdropDefinition, state);
-            }
-            catch (PrismGraphBuildException)
-            {
-                throw;
-            }
-            catch (Exception exception) when (
-                exception is InvalidOperationException or
-                ArgumentException or
-                KeyNotFoundException)
-            {
-                throw Failure(backdropDefinition, exception.Message, exception);
-            }
-        }
-
-        private PrismGraphNodeId? BuildBackdrop(
-            PrismBackdropDefinition backdropDefinition,
-            PrismBackdropState state)
-        {
-            if (!state.Visible || state.Opacity <= 0)
+            if ((analyzedScope.RequiredCapabilities &
+                    PrismGraphCapabilities.BackdropInput) == 0)
             {
                 return null;
             }
 
             PrismGraphNode input = AddNode(
                 PrismGraphNodeKind.BackdropInput,
-                backdropDefinition.Id,
+                definitionNodeId: null,
                 ordinal: 0,
-                definitionOrders[backdropDefinition.Id],
-                diagnosticNames[backdropDefinition.Id],
+                definitionOrder: -1,
+                diagnosticName: $"{definition.Name}/backdrop",
                 backdropFrame is PrismBackdropFrameDescriptor frame
                     ? Dependencies(
                         frame.CreateDependency(
@@ -653,10 +638,10 @@ internal sealed class PrismGraphBuilder
                     : null;
             PrismGraphNode crop = AddNode(
                 PrismGraphNodeKind.BackdropCrop,
-                backdropDefinition.Id,
+                definitionNodeId: null,
                 ordinal: 0,
-                definitionOrders[backdropDefinition.Id],
-                $"{diagnosticNames[backdropDefinition.Id]}/crop",
+                definitionOrder: -1,
+                diagnosticName: $"{definition.Name}/backdrop-crop",
                 Dependencies(
                     new PrismGraphDependency(
                         PrismGraphDependencyKind.Bounds,
@@ -664,7 +649,9 @@ internal sealed class PrismGraphBuilder
                         StableBoundsHash(analyzedScope.Bounds))),
                 backdropSourceBounds: sourceBounds);
             AddEdge(input.Id, crop.Id, PrismGraphEdgeKind.Backdrop);
-            PrismColorProfile colorProfile = instance.Composition.WorkingColorProfile;
+
+            PrismColorProfile colorProfile =
+                instance.Composition.WorkingColorProfile;
             PrismGraphDependency targetProfileDependency = new(
                 PrismGraphDependencyKind.ColorProfile,
                 analyzedScope.DependencyStamp.CacheOwnerToken.Value,
@@ -680,68 +667,15 @@ internal sealed class PrismGraphBuilder
                     : Dependencies(targetProfileDependency);
             PrismGraphNode conversion = AddNode(
                 PrismGraphNodeKind.ColorConversion,
-                backdropDefinition.Id,
+                definitionNodeId: null,
                 ordinal: 1,
-                definitionOrders[backdropDefinition.Id],
-                $"{diagnosticNames[backdropDefinition.Id]}/color",
+                definitionOrder: -1,
+                diagnosticName: $"{definition.Name}/backdrop-color",
                 conversionDependencies,
                 colorProfile: colorProfile,
                 backdropMetadata: backdropFrame?.Metadata);
             AddEdge(crop.Id, conversion.Id, PrismGraphEdgeKind.Backdrop);
-
-            PrismGraphNodeId preparedContent = ApplyFilters(
-                backdropDefinition.Id,
-                state.Filters,
-                conversion.Id);
-            PrismGraphNodeId current = ApplyStyles(
-                backdropDefinition.Id,
-                state.Styles,
-                preparedContent,
-                preparedContent);
-            current = ApplyMask(backdropDefinition, state.Mask, current);
-            PrismGraphNode opacity = AddNode(
-                PrismGraphNodeKind.Opacity,
-                backdropDefinition.Id,
-                ordinal: 0,
-                definitionOrders[backdropDefinition.Id],
-                $"{diagnosticNames[backdropDefinition.Id]}/opacity",
-                Dependencies(),
-                amount: state.Opacity);
-            AddEdge(current, opacity.Id, PrismGraphEdgeKind.Content);
-            return opacity.Id;
-        }
-
-        private PrismGraphNodeId? CombineBackdrop(
-            PrismGraphNodeId? backdrop,
-            PrismGraphNodeId? content)
-        {
-            if (backdrop is null)
-            {
-                return content;
-            }
-            if (content is null)
-            {
-                return backdrop;
-            }
-
-            PrismBackdropDefinition backdropDefinition = definition.Backdrop!;
-            PrismGraphNode composite = AddNode(
-                PrismGraphNodeKind.Composite,
-                backdropDefinition.Id,
-                BackdropCompositeOrdinal,
-                definitionOrders[backdropDefinition.Id],
-                $"{diagnosticNames[backdropDefinition.Id]}/content-composite",
-                Dependencies(),
-                blendMode: PrismBlendMode.Normal);
-            AddEdge(
-                backdrop.Value,
-                composite.Id,
-                PrismGraphEdgeKind.CompositeBackground);
-            AddEdge(
-                content.Value,
-                composite.Id,
-                PrismGraphEdgeKind.CompositeForeground);
-            return composite.Id;
+            return conversion.Id;
         }
 
         private PrismGraphNodeId ApplyFilters(
@@ -754,7 +688,6 @@ internal sealed class PrismGraphBuilder
             {
                 PrismLayerDefinition layer => layer.Filters,
                 PrismGroupDefinition group => group.Filters,
-                PrismBackdropDefinition backdrop => backdrop.Filters,
                 _ => throw new InvalidOperationException("Unsupported filter owner.")
             };
             if (definitions.Count != states.Count)
@@ -954,14 +887,14 @@ internal sealed class PrismGraphBuilder
             PrismNodeId definitionNodeId,
             IReadOnlyList<PrismStyleState> states,
             PrismGraphNodeId input,
-            PrismGraphNodeId styleSource)
+            PrismGraphNodeId styleSource,
+            PrismGraphNodeId? styleBackdrop)
         {
             PrismNodeDefinition nodeDefinition = DefinitionNode(definitionNodeId);
             IReadOnlyList<PrismStyleDefinition> definitions = nodeDefinition switch
             {
                 PrismLayerDefinition layer => layer.Styles,
                 PrismGroupDefinition group => group.Styles,
-                PrismBackdropDefinition backdrop => backdrop.Styles,
                 _ => throw new InvalidOperationException("Unsupported style owner.")
             };
             if (definitions.Count != states.Count)
@@ -994,6 +927,13 @@ internal sealed class PrismGraphBuilder
                     styleSource,
                     style.Id,
                     PrismGraphEdgeKind.StyleSource);
+                if (styleBackdrop is PrismGraphNodeId backdropSource)
+                {
+                    AddEdge(
+                        backdropSource,
+                        style.Id,
+                        PrismGraphEdgeKind.CompositeBackground);
+                }
                 current = style.Id;
             }
 
@@ -1009,7 +949,6 @@ internal sealed class PrismGraphBuilder
             {
                 PrismLayerDefinition layer => layer.Mask,
                 PrismGroupDefinition group => group.Mask,
-                PrismBackdropDefinition backdrop => backdrop.Mask,
                 _ => null
             };
             if (maskDefinition is null)
@@ -1185,8 +1124,6 @@ internal sealed class PrismGraphBuilder
                 {
                     PrismLayerDefinition layer => LayerDisposition(layer),
                     PrismGroupDefinition group => GroupDisposition(group),
-                    PrismBackdropDefinition => throw new InvalidOperationException(
-                        "A backdrop cannot appear inside a content stack."),
                     _ => throw new InvalidOperationException(
                         $"Unsupported definition type '{nodeDefinition.GetType().Name}'.")
                 };

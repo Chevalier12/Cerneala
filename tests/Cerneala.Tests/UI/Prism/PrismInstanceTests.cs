@@ -205,7 +205,6 @@ public sealed class PrismInstanceTests
             typeof(PrismCompositionState),
             typeof(PrismLayerState),
             typeof(PrismGroupState),
-            typeof(PrismBackdropState),
             typeof(PrismFilterState),
             typeof(PrismStyleState),
             typeof(PrismMaskState)

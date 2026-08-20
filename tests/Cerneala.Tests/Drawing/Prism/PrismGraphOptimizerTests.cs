@@ -138,10 +138,11 @@ public sealed class PrismGraphOptimizerTests
         PrismCompositionDefinition backdropDefinition = PrismTestData.Composition(
             "Backdrop",
             Layer(3, "Content"),
-            new PrismBackdropDefinition(
+            new PrismLayerDefinition(
                 new PrismNodeId(4),
                 "Backdrop",
-                filters: [new PrismFilterDefinition(PrismFilterId.GaussianBlur)]));
+                filters: [new PrismFilterDefinition(PrismFilterId.GaussianBlur)],
+                blendMode: PrismBlendMode.Multiply));
         PrismGraphExecutionPlan backdrop = new PrismGraphOptimizer().Optimize(
             BuildGraph(backdropDefinition).Graph);
         PrismGraphNode backdropInput = Assert.Single(
@@ -1467,6 +1468,8 @@ public sealed class PrismGraphOptimizerTests
             {
                 PrismGraphNodeKind.ControlCapture => ControlSource(node),
                 PrismGraphNodeKind.BackdropInput => BackdropSource(node),
+                PrismGraphNodeKind.BackdropCrop =>
+                    Input(node, PrismGraphEdgeKind.Backdrop, overrides, memo, visiting),
                 PrismGraphNodeKind.ColorConversion =>
                     EvaluateColorConversion(node, overrides, memo, visiting),
                 PrismGraphNodeKind.Layer =>

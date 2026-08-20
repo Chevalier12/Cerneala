@@ -15,6 +15,9 @@ float4 LayerStylePixelShader(
 {
     float4 content = SampleSource(input);
     float2 uv = ResolveUv(input);
+    float4 backdrop = tex2D(
+        StyleBackdropTextureSampler,
+        uv);
     int kind = (int)(StyleModes0.x + 0.5);
     int blendMode = (int)(StyleModes0.y + 0.5);
     int secondaryBlendMode =
@@ -148,7 +151,9 @@ float4 LayerStylePixelShader(
             content,
             uv,
             blendMode,
-            secondaryBlendMode);
+            secondaryBlendMode,
+            backdrop,
+            StyleBackdropAvailable);
     }
 
     float4 paint = SampleStylePaint(input, mask);
@@ -164,14 +169,19 @@ float4 LayerStylePixelShader(
     {
         result = CompositeDropShadowStyle(
             content,
-            style);
+            style,
+            blendMode,
+            backdrop,
+            StyleBackdropAvailable);
     }
     else
     {
         result = CompositeStyleOver(
             style,
             content,
-            blendMode);
+            blendMode,
+            backdrop,
+            StyleBackdropAvailable);
     }
 
     return result * input.Color * Opacity;

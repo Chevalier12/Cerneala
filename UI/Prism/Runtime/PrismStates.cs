@@ -415,46 +415,6 @@ public sealed class PrismGroupState : PrismNodeState
     }
 }
 
-public sealed class PrismBackdropState : PrismNodeState
-{
-    private readonly PrismStateAccess values;
-
-    internal PrismBackdropState(
-        PrismStateAccess values,
-        PrismNodeId id,
-        string? name,
-        PrismFilterState[] filters,
-        PrismStyleState[] styles,
-        PrismMaskState? mask)
-        : base(id, name)
-    {
-        this.values = values;
-        Filters = filters;
-        Styles = styles;
-        Mask = mask;
-    }
-
-    public IReadOnlyList<PrismFilterState> Filters { get; }
-
-    public IReadOnlyList<PrismStyleState> Styles { get; }
-
-    public PrismMaskState? Mask { get; }
-
-    public bool Visible
-    {
-        get => values.Get(PrismCatalogGenerated.PrismBackdropPropertyKeys.VisibleKey);
-        set => values.Set(PrismCatalogGenerated.PrismBackdropPropertyKeys.VisibleKey, value);
-    }
-
-    public float Opacity
-    {
-        get => values.Get(PrismCatalogGenerated.PrismBackdropPropertyKeys.OpacityKey);
-        set => values.Set(
-            PrismCatalogGenerated.PrismBackdropPropertyKeys.OpacityKey,
-            PrismRuntimeValidation.UnitInterval(value, nameof(value)));
-    }
-}
-
 public sealed class PrismMaskState
 {
     private readonly PrismStateAccess values;

@@ -75,7 +75,7 @@ public sealed class PrismAdvancedBlendingKnockoutTests
         PrismCompositionDefinition definition = PrismTestData.Composition(
             "KnockoutScopes",
             group,
-            PrismTestData.Backdrop(20, "Backdrop"));
+            PrismTestData.BackdropLayer(20, "Backdrop"));
         PrismDrawScope scope = PrismTestData.Scope(definition);
         scope.Instance.GetLayerState(new PrismNodeId(11)).Knockout =
             PrismKnockout.Shallow;
@@ -103,9 +103,11 @@ public sealed class PrismAdvancedBlendingKnockoutTests
             graph.Edges.Where(
                 edge => edge.Target == deep.Id &&
                     edge.Kind == PrismGraphEdgeKind.KnockoutBackdrop));
+        PrismGraphNode deepBackdropSource = graph.GetNode(deepBackdrop.Source);
+        Assert.Null(deepBackdropSource.DefinitionNodeId);
         Assert.Equal(
-            new PrismNodeId(20),
-            graph.GetNode(deepBackdrop.Source).DefinitionNodeId);
+            PrismGraphNodeKind.ColorConversion,
+            deepBackdropSource.Kind);
         Assert.All(
             new[] { shallow, deep },
             composite =>

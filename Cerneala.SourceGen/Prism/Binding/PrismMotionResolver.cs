@@ -563,7 +563,6 @@ public sealed partial class UiMarkupGenerator
             {
                 PrismContainerKind.Layer => catalog.LayerProperties,
                 PrismContainerKind.Group => catalog.GroupProperties,
-                PrismContainerKind.Backdrop => catalog.BackdropProperties,
                 _ => Array.Empty<PrismCatalogCompiler.CatalogProperty>()
             };
         }

@@ -26,12 +26,11 @@ public sealed partial class UiMarkupGeneratorTests
         "@group",
         "@filter",
         "@style",
-        "@mask",
-        "@backdrop"
+        "@mask"
     ];
 
     [Fact]
-    public void PrismLanguageExposesExactlyTheEightApprovedDirectives()
+    public void PrismLanguageExposesExactlyTheSevenApprovedDirectives()
     {
         Type language = typeof(Cerneala.SourceGen.UiMarkupGenerator).Assembly
             .GetType("Cerneala.SourceGen.Prism.Syntax.PrismMarkupLanguage")!;
@@ -153,10 +152,11 @@ public sealed partial class UiMarkupGeneratorTests
                     }
                   }
 
-                  @backdrop Glass
+                  @layer Glass
                   {
                     Visible = true;
                     Opacity = 0.95;
+                    BlendMode = Multiply;
 
                     @filter Blur
                     {
@@ -205,7 +205,6 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Contains("PrismCompositionDefinition", generated, StringComparison.Ordinal);
         Assert.Contains("PrismLayerDefinition", generated, StringComparison.Ordinal);
         Assert.Contains("PrismGroupDefinition", generated, StringComparison.Ordinal);
-        Assert.Contains("PrismBackdropDefinition", generated, StringComparison.Ordinal);
         Assert.Contains("PrismFilterDefinition", generated, StringComparison.Ordinal);
         Assert.Contains("PrismStyleDefinition", generated, StringComparison.Ordinal);
         Assert.Contains("PrismMaskDefinition", generated, StringComparison.Ordinal);
@@ -386,7 +385,7 @@ public sealed partial class UiMarkupGeneratorTests
             markup,
             "@sparkle",
             "Prism markup in 'PrismUnknownDirective.crn' is invalid: " +
-            "Unknown Prism directive '@sparkle'. Exactly eight Prism directives are supported.");
+            "Unknown Prism directive '@sparkle'. Exactly seven Prism directives are supported.");
     }
 
     [Fact]
@@ -566,45 +565,23 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public void PrismBinderRejectsMultipleBackdropsAtTheSecondName()
-    {
-        const string markup = """
-            <Border>
-              @prism
-              {
-                @backdrop First { @filter Blur { Radius = 2; } }
-                @backdrop Second { @filter Blur { Radius = 4; } }
-              }
-            </Border>
-            """;
-
-        GeneratorRunResult result = RunGenerator(
-            "PrismMultipleBackdrop.crn",
-            markup,
-            out _);
-
-        AssertPrismDiagnostic(result, "PRISM2006", markup, "Second");
-    }
-
-    [Fact]
-    public void PrismBinderRejectsBackdropThatIsNotLast()
+    public void PrismParserRejectsRemovedBackdropDirective()
     {
         const string markup = """
             <Border>
               @prism
               {
                 @backdrop Glass { @filter Blur { Radius = 4; } }
-                @layer AfterBackdrop { @filter Blur { Radius = 2; } }
               }
             </Border>
             """;
 
         GeneratorRunResult result = RunGenerator(
-            "PrismBackdropOrder.crn",
+            "PrismRemovedBackdrop.crn",
             markup,
             out _);
 
-        AssertPrismDiagnostic(result, "PRISM2007", markup, "AfterBackdrop");
+        AssertPrismDiagnostic(result, "PRISM1001", markup, "@backdrop");
     }
 
     [Fact]

@@ -505,14 +505,15 @@ public sealed class PrismBackdropMonoGameAdapterTests
         PrismCompositionDefinition composition = new(
             "GPU backdrop order",
             [
-                new PrismBackdropDefinition(
+                new PrismLayerDefinition(
                     new PrismNodeId(1),
                     "Invert lower UI",
                     filters:
                     [
                         new PrismFilterDefinition(
                             PrismFilterId.Invert)
-                    ])
+                    ],
+                    blendMode: PrismBlendMode.Multiply)
             ],
             workingColorProfile:
                 PrismColorProfile.LinearSrgb);
@@ -526,6 +527,9 @@ public sealed class PrismBackdropMonoGameAdapterTests
                 new DrawRect(0, 0, Width, Height),
                 new CernealaColor(200, 40, 20)),
             DrawCommand.BeginPrism(scope),
+            DrawCommand.FillRectangle(
+                new DrawRect(18, 10, 50, 36),
+                new CernealaColor(96, 176, 232, 220)),
             DrawCommand.EndPrism(),
             DrawCommand.FillRectangle(
                 new DrawRect(28, 20, 8, 8),
@@ -676,7 +680,7 @@ public sealed class PrismBackdropMonoGameAdapterTests
                                     PrismFilterId
                                         .BrightnessContrast)
                             ]),
-                        new PrismBackdropDefinition(
+                        new PrismLayerDefinition(
                             new PrismNodeId(nodeId + 1),
                             "Blurred color backdrop",
                             filters:
@@ -686,7 +690,8 @@ public sealed class PrismBackdropMonoGameAdapterTests
                                 new PrismFilterDefinition(
                                     PrismFilterId.Invert)
                             ],
-                            opacity: 0.76f)
+                            opacity: 0.76f,
+                            blendMode: PrismBlendMode.Multiply)
                     ],
                     workingColorProfile:
                         PrismColorProfile.LinearSrgb)));
