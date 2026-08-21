@@ -380,7 +380,7 @@ internal sealed class OverlayManager
             bool hasExplicitHeight = !float.IsNaN(overlay.Height);
             float naturalWidthLimit = overlay.MatchTargetWidth
                 ? MathF.Min(targetBounds.Width, viewport.Width)
-                : float.PositiveInfinity;
+                : viewport.Width;
             float naturalHeightLimit = hasExplicitHeight
                 ? MathF.Min(overlay.Height, viewport.Height)
                 : float.PositiveInfinity;
@@ -395,19 +395,7 @@ internal sealed class OverlayManager
             bool fitsRight = requestedWidth <= right;
             bool fitsLeft = requestedWidth <= left;
             bool placeRight = fitsRight;
-            float selectedWidth = placeRight ? right : left;
-
-            if ((fitsRight || fitsLeft) && !overlay.MatchTargetWidth)
-            {
-                presenter.Measure(new MeasureContext(
-                    new LayoutSize(selectedWidth, naturalHeightLimit),
-                    rounding));
-            }
-
             float width = requestedWidth;
-            desired = presenter.Measure(new MeasureContext(
-                new LayoutSize(width, naturalHeightLimit),
-                rounding));
             float requestedHeight = hasExplicitHeight
                 ? overlay.Height
                 : MathF.Min(desired.Height, overlay.MaxHeight);

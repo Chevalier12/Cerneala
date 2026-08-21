@@ -167,7 +167,7 @@ public sealed class OverlayTests
     }
 
     [Fact]
-    public void AutoHorizontalTracksTargetMovementAndRemeasuresForTheSelectedSide()
+    public void AutoHorizontalTracksTargetMovementWithoutRedundantContentMeasurement()
     {
         UIRoot root = new(120, 80);
         FixedElement target = new(new LayoutSize(20, 10));
@@ -188,13 +188,14 @@ public sealed class OverlayTests
         root.ProcessFrame();
 
         Assert.Equal(30, content.VisualParent!.ArrangedBounds.X);
+        Assert.Equal(2, content.MeasureConstraints.Count);
 
         LayoutCanvas.SetLeft(target, 90);
         root.ProcessFrame();
         root.ProcessFrame();
 
         Assert.Equal(60, content.VisualParent.ArrangedBounds.X);
-        Assert.Contains(content.MeasureConstraints, constraint => constraint.Width == 90);
+        Assert.Equal(2, content.MeasureConstraints.Count);
     }
 
     [Fact]
