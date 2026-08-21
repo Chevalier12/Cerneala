@@ -89,6 +89,48 @@ public sealed class ButtonBaseCommandStateIntegrationTests
         Assert.Equal(0, executions);
     }
 
+    [Fact]
+    public void CanExecuteChangedAndParameterChangesRefreshButtonState()
+    {
+        UIRoot root = RootWithButton(out ButtonBase button);
+        TrackingCommand command = new(parameter => Equals(parameter, "allowed"));
+        button.Command = command;
+        root.ProcessFrame();
+        Assert.False(button.IsEnabled);
+
+        button.CommandParameter = "allowed";
+        root.ProcessFrame();
+        Assert.True(button.IsEnabled);
+
+        command.CanExecuteEvaluator = _ => false;
+        command.RaiseCanExecuteChanged();
+        root.ProcessFrame();
+        Assert.False(button.IsEnabled);
+    }
+
+    [Fact]
+    public void CommandChangesAndDetachReattachMaintainOneObservableSubscription()
+    {
+        UIRoot root = RootWithButton(out ButtonBase button);
+        TrackingCommand first = new(_ => true);
+        TrackingCommand second = new(_ => true);
+
+        button.Command = first;
+        Assert.Equal(1, first.AddCount);
+        Assert.Equal(0, first.RemoveCount);
+
+        button.Command = second;
+        Assert.Equal(1, first.RemoveCount);
+        Assert.Equal(1, second.AddCount);
+
+        root.VisualChildren.Remove(button);
+        Assert.Equal(1, second.RemoveCount);
+
+        root.VisualChildren.Add(button);
+        Assert.Equal(2, second.AddCount);
+        Assert.Equal(1, second.RemoveCount);
+    }
+
     private static ElementInputBridge FocusedBridge(UIRoot root, ButtonBase button)
     {
         ElementInputBridge bridge = new();
@@ -131,5 +173,41 @@ public sealed class ButtonBaseCommandStateIntegrationTests
         }
 
         return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
+    }
+
+    private sealed class TrackingCommand(Func<object?, bool> canExecute) : IObservableCommand
+    {
+        private EventHandler? canExecuteChanged;
+
+        public Func<object?, bool> CanExecuteEvaluator { get; set; } = canExecute;
+
+        public int AddCount { get; private set; }
+
+        public int RemoveCount { get; private set; }
+
+        public event EventHandler? CanExecuteChanged
+        {
+            add
+            {
+                AddCount++;
+                canExecuteChanged += value;
+            }
+            remove
+            {
+                RemoveCount++;
+                canExecuteChanged -= value;
+            }
+        }
+
+        public bool CanExecute(object? parameter) => CanExecuteEvaluator(parameter);
+
+        public void Execute(object? parameter)
+        {
+        }
+
+        public void RaiseCanExecuteChanged()
+        {
+            canExecuteChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
 }

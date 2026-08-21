@@ -73,16 +73,19 @@ internal sealed class KeyboardActivationController
             return;
         }
 
-        if (FindValidAncestor<IInputPressable>(result.Target, routeMap) is not UIElement pressableElement ||
-            pressableElement is not IInputPressable pressable)
+        if (FindValidAncestor<IInputCommandSource>(result.Target, routeMap) is not UIElement commandElement)
         {
             ClearPressed();
             return;
         }
 
         ClearPressed();
-        pressable.IsPressed = true;
-        spacePressedElement = pressableElement;
+        if (commandElement is IInputPressable pressable)
+        {
+            pressable.IsPressed = true;
+        }
+
+        spacePressedElement = commandElement;
     }
 
     private void ReleaseSpace(KeyboardDispatchResult result, CommandRouter commandRouter, ElementInputRouteMap routeMap)

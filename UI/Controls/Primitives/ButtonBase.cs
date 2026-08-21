@@ -1,15 +1,12 @@
 using Cerneala.UI.Core;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Input;
-using Cerneala.UI.Relay;
 
 namespace Cerneala.UI.Controls.Primitives;
 
 public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, ICommandStateSource, IInputActivatable
 {
-    private IObservableCommand? observableCommand;
-    private readonly UiRelayRefreshDispatcher commandStateRefreshDispatcher;
-    private Func<bool>? commandStateCallbackGuard;
+    private readonly CommandSourceState commandState;
 
     public static readonly UiProperty<bool> IsPressedProperty = UiProperty<bool>.Register(
         nameof(IsPressed),
@@ -28,10 +25,7 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
 
     public ButtonBase()
     {
-        commandStateRefreshDispatcher = new UiRelayRefreshDispatcher(
-            () => Root?.Relay,
-            QueueCommandStateRefresh,
-            "command state");
+        commandState = new CommandSourceState(this, () => Command, () => CommandParameter);
         Focusable = true;
         IsTabStop = true;
         Cursor = Cerneala.UI.Input.Cursor.Hand;
@@ -76,76 +70,28 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
 
     public bool CanExecuteCommand(CommandRouter router, ElementInputRouteMap routeMap)
     {
-        ArgumentNullException.ThrowIfNull(router);
-        ArgumentNullException.ThrowIfNull(routeMap);
-
-        return Command switch
-        {
-            null => false,
-            RoutedCommand => router.CanExecute(new RoutedCommandContext(Command, this, routeMap, CommandParameter)),
-            _ => Command.CanExecute(CommandParameter)
-        };
+        return commandState.CanExecute(router, routeMap);
     }
 
     public bool ExecuteCommand(CommandRouter router, ElementInputRouteMap routeMap)
     {
-        ArgumentNullException.ThrowIfNull(router);
-        ArgumentNullException.ThrowIfNull(routeMap);
-
-        if (!IsEnabled)
-        {
-            return false;
-        }
-
-        if (Command is null)
-        {
-            return false;
-        }
-
-        if (Command is RoutedCommand)
-        {
-            return router.Execute(new RoutedCommandContext(Command, this, routeMap, CommandParameter));
-        }
-
-        if (!Command.CanExecute(CommandParameter))
-        {
-            return false;
-        }
-
-        Command.Execute(CommandParameter);
-        return true;
+        return commandState.Execute(router, routeMap);
     }
 
     public bool RefreshCommandState(CommandRouter router, ElementInputRouteMap routeMap)
     {
-        if (Command is null)
-        {
-            return false;
-        }
-
-        bool canExecute = CanExecuteCommand(router, routeMap);
-        if (IsEnabled == canExecute)
-        {
-            return false;
-        }
-
-        IsEnabled = canExecute;
-        return true;
+        return commandState.Refresh(router, routeMap);
     }
 
     protected override void OnAttached()
     {
         base.OnAttached();
-        commandStateCallbackGuard = commandStateRefreshDispatcher.Activate();
-        SubscribeObservableCommand(Command);
-        QueueCommandStateRefresh();
+        commandState.Attach();
     }
 
     protected override void OnDetached()
     {
-        UnsubscribeObservableCommand();
-        commandStateRefreshDispatcher.Deactivate();
-        commandStateCallbackGuard = null;
+        commandState.Detach();
         base.OnDetached();
     }
 
@@ -154,57 +100,11 @@ public class ButtonBase : ContentControl, IInputPressable, IInputCommandSource, 
         base.OnPropertyChanged(args);
         if (ReferenceEquals(args.Property, CommandProperty))
         {
-            if (IsAttached)
-            {
-                SubscribeObservableCommand(Command);
-            }
-            else
-            {
-                UnsubscribeObservableCommand();
-            }
-
-            QueueCommandStateRefresh();
+            commandState.OnCommandChanged();
         }
         else if (ReferenceEquals(args.Property, CommandParameterProperty))
         {
-            QueueCommandStateRefresh();
-        }
-    }
-
-    private void SubscribeObservableCommand(ICommand? command)
-    {
-        if (!IsAttached)
-        {
-            return;
-        }
-
-        if (ReferenceEquals(observableCommand, command))
-        {
-            return;
-        }
-
-        UnsubscribeObservableCommand();
-        observableCommand = command as IObservableCommand;
-        if (observableCommand is not null)
-        {
-            observableCommand.CanExecuteChanged += OnCanExecuteChanged;
-        }
-    }
-
-    private void UnsubscribeObservableCommand()
-    {
-        if (observableCommand is not null)
-        {
-            observableCommand.CanExecuteChanged -= OnCanExecuteChanged;
-            observableCommand = null;
-        }
-    }
-
-    private void OnCanExecuteChanged(object? sender, EventArgs args)
-    {
-        if (ReferenceEquals(sender, observableCommand) && commandStateCallbackGuard?.Invoke() == true)
-        {
-            QueueCommandStateRefresh();
+            commandState.OnParameterChanged();
         }
     }
 

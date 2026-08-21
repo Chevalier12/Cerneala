@@ -23,6 +23,21 @@ public sealed class ButtonBaseCommandTests
     }
 
     [Fact]
+    public void ButtonClickRaisesClickBeforeExecutingCommandExactlyOnce()
+    {
+        UIRoot root = RootWithButton(out ButtonBase button);
+        List<string> calls = [];
+        button.Click += (_, _) => calls.Add("click");
+        button.Command = new ActionCommand(_ => calls.Add("command"));
+        ElementInputBridge bridge = new();
+
+        bridge.Dispatch(root, PointerFrame(10, 10, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(10, 10, previousDown: true));
+
+        Assert.Equal(["click", "command"], calls);
+    }
+
+    [Fact]
     public void ButtonClickExecutesRoutedCommandThroughRouter()
     {
         UIRoot root = RootWithButton(out ButtonBase button);
