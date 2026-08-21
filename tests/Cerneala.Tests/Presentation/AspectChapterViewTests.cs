@@ -67,7 +67,7 @@ public sealed class AspectChapterViewTests : IDisposable
         string codeBehind = File.ReadAllText(
             RepositoryFile("CernealaPresentation", "AspectChapterView.crn.cs"));
 
-        Assert.Equal("$root.PropertyRows", (string?)propertyItems.Attribute("ItemsSource"));
+        Assert.Equal("$root.PropertyRows:OneWay", (string?)propertyItems.Attribute("ItemsSource"));
         Assert.DoesNotContain("PropertyItems.ItemsSource", codeBehind, StringComparison.Ordinal);
     }
 

@@ -446,7 +446,7 @@
                     HorizontalScrollBarVisibility="Disabled">
                         <ItemsControl
                             Name="LayerItems"
-                            ItemsSource="$root.LayerRows"
+                            ItemsSource="$root.LayerRows:OneWay"
                             Margin="8">
                             <ItemsControl.ItemsPanel>
                                 <StackPanel />
@@ -612,7 +612,7 @@
                         HorizontalScrollBarVisibility="Disabled">
                         <ItemsControl
                             Name="CatalogItems"
-                            ItemsSource="$root.CatalogRows"
+                            ItemsSource="$root.CatalogRows:OneWay"
                             Margin="8">
                             <ItemsControl.ItemsPanel>
                                 <VirtualizingStackPanel />
@@ -655,7 +655,7 @@
                     HorizontalScrollBarVisibility="Disabled">
                     <ItemsControl
                         Name="InspectorItems"
-                        ItemsSource="$root.InspectorRows"
+                        ItemsSource="$root.InspectorRows:OneWay"
                         Margin="8">
                         <ItemsControl.ItemsPanel>
                             <StackPanel />

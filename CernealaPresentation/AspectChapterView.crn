@@ -262,7 +262,7 @@
                     HorizontalScrollBarVisibility="Disabled">
                     <ItemsControl
                         Name="PropertyItems"
-                        ItemsSource="$root.PropertyRows"
+                        ItemsSource="$root.PropertyRows:OneWay"
                         Margin="9">
                         <ItemsControl.ItemsPanel>
                             <VirtualizingStackPanel />
