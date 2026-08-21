@@ -38,7 +38,7 @@ public sealed class RenderSurface2DTests
             BorderThickness = new Thickness(1),
             Content = new RenderingElement(new Color(7, 8, 9))
         };
-        surface.DrawSurface += _ => { };
+        surface.Draw += (_, _) => { };
         surface.Measure(new MeasureContext(new LayoutSize(40, 30)));
         surface.Arrange(new ArrangeContext(new LayoutRect(0, 0, 40, 30)));
         RetainedRenderCache cache = PreparedCache(surface);
@@ -61,29 +61,30 @@ public sealed class RenderSurface2DTests
     }
 
     [Fact]
-    public void EventAndOverrideActivateManagedRenderingModes()
+    public void EventAndOverrideActivateDrawing()
     {
         RenderSurface2D eventSurface = new();
-        RenderSurface2DDrawEventHandler handler = _ => { };
+        RenderSurface2DDrawEventHandler handler = (_, _) => { };
 
-        Assert.False(eventSurface.IsManagedModeActiveForTests);
-        eventSurface.DrawSurface += handler;
-        Assert.True(eventSurface.IsManagedModeActiveForTests);
-        eventSurface.DrawSurface -= handler;
-        Assert.False(eventSurface.IsManagedModeActiveForTests);
-        Assert.True(new OverriddenSurface().IsManagedModeActiveForTests);
+        Assert.False(eventSurface.IsDrawingActiveForTests);
+        eventSurface.Draw += handler;
+        Assert.True(eventSurface.IsDrawingActiveForTests);
+        eventSurface.Draw -= handler;
+        Assert.False(eventSurface.IsDrawingActiveForTests);
+        Assert.True(new OverriddenSurface().IsDrawingActiveForTests);
     }
 
     [Fact]
     public void ManagedSurfaceParticipatesInTheCernealaFrameLoop()
     {
         RenderSurface2D surface = new();
-        surface.DrawSurface += _ => { };
+        surface.Draw += (_, _) => { };
         int renderVersion = surface.RenderVersion;
 
-        bool firstFrameChanged = surface.UpdateRenderTime(TimeSpan.FromMilliseconds(16));
+        ITimeSensitiveRenderElement timeSensitive = surface;
+        bool firstFrameChanged = timeSensitive.UpdateRenderTime(TimeSpan.FromMilliseconds(16));
         int firstFrameVersion = surface.RenderVersion;
-        bool secondFrameChanged = surface.UpdateRenderTime(TimeSpan.FromMilliseconds(16));
+        bool secondFrameChanged = timeSensitive.UpdateRenderTime(TimeSpan.FromMilliseconds(32));
 
         Assert.True(firstFrameChanged);
         Assert.True(firstFrameVersion > renderVersion);
@@ -92,15 +93,41 @@ public sealed class RenderSurface2DTests
     }
 
     [Fact]
-    public void SurfaceWithoutManagedDrawingDoesNotRequestFrames()
+    public void OnDemandSurfaceOnlyRedrawsWhenInvalidated()
     {
-        RenderSurface2D surface = new();
+        RenderSurface2D surface = new()
+        {
+            RedrawMode = RenderSurface2DRedrawMode.OnDemand
+        };
+        surface.Draw += (_, _) => { };
         int renderVersion = surface.RenderVersion;
 
-        bool changed = surface.UpdateRenderTime(TimeSpan.FromMilliseconds(16));
+        bool changed = ((ITimeSensitiveRenderElement)surface)
+            .UpdateRenderTime(TimeSpan.FromMilliseconds(16));
 
         Assert.False(changed);
         Assert.Equal(renderVersion, surface.RenderVersion);
+
+        surface.InvalidateFrame();
+
+        Assert.True(surface.RenderVersion > renderVersion);
+    }
+
+    [Fact]
+    public void PublicApiDoesNotExposeRawOrExternalSurfaceEscapeHatches()
+    {
+        Type surfaceType = typeof(RenderSurface2D);
+        Type frameType = typeof(RenderSurface2DFrame);
+
+        Assert.Null(surfaceType.GetProperty("Surface"));
+        Assert.Null(surfaceType.GetMethod("Present"));
+        Assert.Null(surfaceType.GetMethod("ClearSurface"));
+        Assert.Null(surfaceType.GetMethod("RefreshSurface"));
+        Assert.Null(surfaceType.GetMethod("UpdateRenderTime"));
+        Assert.Null(frameType.GetProperty("SpriteBatch"));
+        Assert.Null(frameType.GetProperty("GraphicsDevice"));
+        Assert.Null(frameType.GetMethod("Begin"));
+        Assert.Null(frameType.GetMethod("End"));
     }
 
     private static RetainedRenderCache PreparedCache(UIElement root)
@@ -143,8 +170,7 @@ public sealed class RenderSurface2DTests
 
     private sealed class OverriddenSurface : RenderSurface2D
     {
-        protected override void OnDrawSurface(
-            RenderSurface2DDrawContext context)
+        protected override void OnDraw(RenderSurface2DFrame frame)
         {
         }
     }

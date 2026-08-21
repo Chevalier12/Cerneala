@@ -1,5 +1,6 @@
 using System.Numerics;
 using Cerneala.Drawing;
+using Cerneala.Drawing.MonoGame;
 using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Drawing.Prism.Graph;
@@ -16,7 +17,7 @@ namespace Cerneala.Tests.Drawing.MonoGame;
 public sealed class RenderSurface2DRenderingTests
 {
     [Fact]
-    public void PresentDisplaysAnExternalTextureWithoutTakingOwnership()
+    public void ClearColorFillsTheManagedSurface()
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -24,22 +25,21 @@ public sealed class RenderSurface2DRenderingTests
         }
 
         using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
-        using Texture2D texture = CreateSolidTexture(
-            fixture.Session.GraphicsDevice,
-            XnaColor.CornflowerBlue);
-        RenderSurface2D surface = new();
-        surface.Present(texture);
+        RenderSurface2D surface = new()
+        {
+            ClearColor = CernealaColor.CornflowerBlue
+        };
+        surface.Draw += (_, _) => { };
 
         XnaColor actual = RenderCenterPixel(fixture, surface);
 
         Assert.InRange(actual.R, 98, 102);
         Assert.InRange(actual.G, 147, 151);
         Assert.InRange(actual.B, 235, 239);
-        Assert.False(texture.IsDisposed);
     }
 
     [Fact]
-    public void DrawSurfaceCanChooseEverySpriteBatchBeginSetting()
+    public void DrawEventRendersASpriteThroughTheStrict2DFrame()
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -47,22 +47,13 @@ public sealed class RenderSurface2DRenderingTests
         }
 
         using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
-        using Texture2D texture = CreateSolidTexture(
+        using MonoGameImage image = new(CreateSolidTexture(
             fixture.Session.GraphicsDevice,
-            XnaColor.LimeGreen);
+            XnaColor.LimeGreen));
         RenderSurface2D surface = new();
-        surface.DrawSurface += context =>
+        surface.Draw += (_, frame) =>
         {
-            context.Begin(
-                SpriteSortMode.Immediate,
-                BlendState.Opaque,
-                SamplerState.PointClamp,
-                DepthStencilState.None,
-                RasterizerState.CullNone,
-                effect: null,
-                transformMatrix: Matrix.Identity);
-            context.SpriteBatch.Draw(texture, context.Bounds, XnaColor.White);
-            context.End();
+            frame.DrawSprite(image, frame.Bounds, CernealaColor.White);
         };
 
         XnaColor actual = RenderCenterPixel(fixture, surface);
@@ -73,7 +64,7 @@ public sealed class RenderSurface2DRenderingTests
     }
 
     [Fact]
-    public void FrameworkCompletesABatchLeftOpenByTheCallback()
+    public void MultipleDrawSubscribersComposeInRegistrationOrder()
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -81,23 +72,21 @@ public sealed class RenderSurface2DRenderingTests
         }
 
         using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
-        using Texture2D texture = CreateSolidTexture(
-            fixture.Session.GraphicsDevice,
-            XnaColor.HotPink);
         RenderSurface2D surface = new();
-        surface.DrawSurface += context =>
+        surface.Draw += (_, frame) =>
         {
-            context.Begin();
-            context.SpriteBatch.Draw(texture, context.Bounds, XnaColor.White);
+            frame.FillRectangle(frame.Bounds, CernealaColor.CornflowerBlue);
         };
+        surface.Draw += (_, frame) =>
+            frame.FillRectangle(
+                frame.Bounds,
+                CernealaColor.HotPink);
 
-        _ = RenderCenterPixel(fixture, surface);
-        surface.RefreshSurface();
-        XnaColor secondFrame = RenderCenterPixel(fixture, surface);
+        XnaColor center = RenderCenterPixel(fixture, surface);
 
-        Assert.InRange(secondFrame.R, 253, 255);
-        Assert.InRange(secondFrame.G, 103, 107);
-        Assert.InRange(secondFrame.B, 178, 182);
+        Assert.InRange(center.R, 253, 255);
+        Assert.InRange(center.G, 103, 107);
+        Assert.InRange(center.B, 178, 182);
     }
 
     [Fact]
@@ -109,19 +98,16 @@ public sealed class RenderSurface2DRenderingTests
         }
 
         using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
-        using Texture2D texture = CreateSolidTexture(
+        using MonoGameImage image = new(CreateSolidTexture(
             fixture.Session.GraphicsDevice,
-            XnaColor.CornflowerBlue);
+            XnaColor.CornflowerBlue));
         RenderSurface2D surface = new();
-        surface.DrawSurface += context =>
+        surface.Draw += (_, frame) =>
         {
-            context.GraphicsDevice.Clear(XnaColor.Transparent);
-            context.Begin();
-            context.SpriteBatch.Draw(
-                texture,
-                new Rectangle(24, 16, 16, 16),
-                XnaColor.White);
-            context.End();
+            frame.DrawSprite(
+                image,
+                new DrawRect(24, 16, 16, 16),
+                CernealaColor.White);
         };
 
         PrismLayerDefinition layer = new(
@@ -136,7 +122,7 @@ public sealed class RenderSurface2DRenderingTests
             surface,
             instance,
             visualContentVersion: 1);
-        surface.RefreshSurface();
+        surface.InvalidateFrame();
         (XnaColor secondBackground, XnaColor secondTransparentInterior, XnaColor secondContent) = RenderPrismPixels(
             fixture,
             surface,
@@ -227,4 +213,5 @@ public sealed class RenderSurface2DRenderingTests
             pixels[(8 * parameters.BackBufferWidth) + 20],
             pixels[(24 * parameters.BackBufferWidth) + 48]);
     }
+
 }

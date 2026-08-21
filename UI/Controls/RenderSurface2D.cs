@@ -1,77 +1,103 @@
 using System.Reflection;
 using Cerneala.Drawing;
+using Cerneala.UI.Core;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Rendering;
 
 namespace Cerneala.UI.Controls;
 
 public delegate void RenderSurface2DDrawEventHandler(
-    RenderSurface2DDrawContext context);
+    RenderSurface2D sender,
+    RenderSurface2DFrame frame);
 
 public partial class RenderSurface2D : ContentControl,
     ITimeSensitiveRenderElement,
     IRenderSurface2DSource
 {
-    private static readonly object DrawOverrideCacheLock = new();
-    private static readonly Dictionary<Type, bool> DrawOverrideCache = [];
+    public static readonly UiProperty<Color> ClearColorProperty =
+        UiProperty<Color>.Register(
+            nameof(ClearColor),
+            typeof(RenderSurface2D),
+            new UiPropertyMetadata<Color>(
+                Color.Transparent,
+                UiPropertyOptions.AffectsRender));
 
-    private readonly bool hasDrawSurfaceOverride;
-    private RenderSurface2DDrawEventHandler? drawSurface;
+    public static readonly UiProperty<RenderSurface2DRedrawMode> RedrawModeProperty =
+        UiProperty<RenderSurface2DRedrawMode>.Register(
+            nameof(RedrawMode),
+            typeof(RenderSurface2D),
+            new UiPropertyMetadata<RenderSurface2DRedrawMode>(
+                RenderSurface2DRedrawMode.Continuous,
+                UiPropertyOptions.AffectsRender));
+
+    private static readonly object OnDrawOverrideCacheLock = new();
+    private static readonly Dictionary<Type, bool> OnDrawOverrideCache = [];
+
+    private readonly bool hasOnDrawOverride;
+    private RenderSurface2DDrawEventHandler? draw;
     private bool managedSurfaceDirty = true;
+    private TimeSpan currentFrameTime;
 
     public RenderSurface2D()
     {
-        hasDrawSurfaceOverride = DetectDrawSurfaceOverride(GetType());
+        hasOnDrawOverride = DetectOnDrawOverride(GetType());
     }
 
-    public event RenderSurface2DDrawEventHandler? DrawSurface
+    public Color ClearColor
+    {
+        get => GetValue(ClearColorProperty);
+        set => SetValue(ClearColorProperty, value);
+    }
+
+    public RenderSurface2DRedrawMode RedrawMode
+    {
+        get => GetValue(RedrawModeProperty);
+        set => SetValue(RedrawModeProperty, value);
+    }
+
+    public event RenderSurface2DDrawEventHandler? Draw
     {
         add
         {
-            bool wasManagedModeActive = IsManagedModeActive;
-            drawSurface += value;
-            HandleManagedModeMutation(wasManagedModeActive);
+            bool wasDrawingActive = IsDrawingActive;
+            draw += value;
+            HandleDrawingMutation(wasDrawingActive);
         }
         remove
         {
-            bool wasManagedModeActive = IsManagedModeActive;
-            drawSurface -= value;
-            HandleManagedModeMutation(wasManagedModeActive);
+            bool wasDrawingActive = IsDrawingActive;
+            draw -= value;
+            HandleDrawingMutation(wasDrawingActive);
         }
     }
 
-    public void RefreshSurface()
+    public void InvalidateFrame()
     {
-        if (IsManagedModeActive)
-        {
-            managedSurfaceDirty = true;
-        }
-
+        managedSurfaceDirty = true;
         IncrementRenderVersion();
-        Invalidate(InvalidationFlags.Render, "RenderSurface2D content changed");
+        Invalidate(InvalidationFlags.Render, "RenderSurface2D frame changed");
     }
 
-    public bool UpdateRenderTime(TimeSpan frameTime)
+    bool ITimeSensitiveRenderElement.UpdateRenderTime(TimeSpan frameTime)
     {
-        _ = frameTime;
-        if (!IsManagedModeActive)
+        currentFrameTime = frameTime;
+        if (!IsDrawingActive || RedrawMode != RenderSurface2DRedrawMode.Continuous)
         {
             return false;
         }
 
-        RefreshSurface();
+        InvalidateFrame();
         return true;
     }
 
-    protected virtual void OnDrawSurface(
-        RenderSurface2DDrawContext context)
+    protected virtual void OnDraw(RenderSurface2DFrame frame)
     {
     }
 
     protected override void OnAttached()
     {
         base.OnAttached();
-        if (IsManagedModeActive)
+        if (IsDrawingActive)
         {
             managedSurfaceDirty = true;
         }
@@ -89,60 +115,67 @@ public partial class RenderSurface2D : ContentControl,
         DrawRect bounds = Border.ToDrawRect(context.Bounds);
         if (bounds.Width > 0 &&
             bounds.Height > 0 &&
-            (IsManagedModeActive || HasPresentedSurface()))
+            IsDrawingActive)
         {
             context.DrawingContext.DrawRenderSurface2D(
                 this,
                 bounds,
-                Cerneala.Drawing.Color.White);
+                Color.White);
         }
 
         Border.RenderBorder(this, context);
     }
 
-    internal bool IsManagedModeActiveForTests => IsManagedModeActive;
-
-    private bool IsManagedModeActive =>
-        drawSurface is not null || hasDrawSurfaceOverride;
-
-    private void HandleManagedModeMutation(bool wasManagedModeActive)
+    protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
-        bool isManagedModeActive = IsManagedModeActive;
-        if (!isManagedModeActive)
+        base.OnPropertyChanged(args);
+        if (ReferenceEquals(args.Property, ClearColorProperty) ||
+            ReferenceEquals(args.Property, RedrawModeProperty))
+        {
+            managedSurfaceDirty = true;
+        }
+    }
+
+    internal bool IsDrawingActiveForTests => IsDrawingActive;
+
+    private bool IsDrawingActive => draw is not null || hasOnDrawOverride;
+
+    private void HandleDrawingMutation(bool wasDrawingActive)
+    {
+        bool isDrawingActive = IsDrawingActive;
+        if (!isDrawingActive)
         {
             DisposeManagedSession();
         }
-        else if (!wasManagedModeActive)
+        else if (!wasDrawingActive)
         {
             managedSurfaceDirty = true;
         }
 
-        RefreshSurface();
+        InvalidateFrame();
     }
 
-    private static bool DetectDrawSurfaceOverride(Type type)
+    private static bool DetectOnDrawOverride(Type type)
     {
-        lock (DrawOverrideCacheLock)
+        lock (OnDrawOverrideCacheLock)
         {
-            if (DrawOverrideCache.TryGetValue(type, out bool cached))
+            if (OnDrawOverrideCache.TryGetValue(type, out bool cached))
             {
                 return cached;
             }
 
             MethodInfo? method = type.GetMethod(
-                nameof(OnDrawSurface),
+                nameof(OnDraw),
                 BindingFlags.Instance | BindingFlags.NonPublic,
                 binder: null,
-                [typeof(RenderSurface2DDrawContext)],
+                [typeof(RenderSurface2DFrame)],
                 modifiers: null);
             bool hasOverride = method?.GetBaseDefinition().DeclaringType !=
                 method?.DeclaringType;
-            DrawOverrideCache[type] = hasOverride;
+            OnDrawOverrideCache[type] = hasOverride;
             return hasOverride;
         }
     }
-
-    private partial bool HasPresentedSurface();
 
     private partial void DisposeManagedSession();
 }
