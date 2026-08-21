@@ -572,6 +572,8 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Accessibility.AutomationPeer.md
 |   |   |   |-- Cerneala.UI.Accessibility.ButtonAutomationPeer.md
 |   |   |   |-- Cerneala.UI.Accessibility.ItemsControlAutomationPeer.md
+|   |   |   |-- Cerneala.UI.Accessibility.MenuAutomationPeer.md
+|   |   |   |-- Cerneala.UI.Accessibility.MenuItemAutomationPeer.md
 |   |   |   |-- Cerneala.UI.Accessibility.PasswordBoxAutomationPeer.md
 |   |   |   |-- Cerneala.UI.Accessibility.SemanticsNode.md
 |   |   |   |-- Cerneala.UI.Accessibility.SemanticsProperty.md
@@ -711,6 +713,9 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Label.md
 |   |   |   |-- Cerneala.UI.Controls.ListBox.md
 |   |   |   |-- Cerneala.UI.Controls.ListBoxItem.md
+|   |   |   |-- Cerneala.UI.Controls.Menu.md
+|   |   |   |-- Cerneala.UI.Controls.MenuBar.md
+|   |   |   |-- Cerneala.UI.Controls.MenuItem.md
 |   |   |   |-- Cerneala.UI.Controls.Overlay.md
 |   |   |   |-- Cerneala.UI.Controls.OverlayPlacement.md
 |   |   |   |-- Cerneala.UI.Controls.Panel.md
@@ -1943,6 +1948,15 @@ Generated from `.`.
 |   |   |-- Cerneala.ComboBoxLab.csproj
 |   |   |-- MainWindow.crn
 |   |   +-- MainWindow.crn.cs
+|   |-- Cerneala.MenuLab/
+|   |   |-- automation/
+|   |   |   +-- capture-open-menu.json
+|   |   |-- .gitignore
+|   |   |-- Cerneala.MenuLab.csproj
+|   |   |-- MainWindow.crn
+|   |   |-- MainWindow.crn.cs
+|   |   |-- MenuLabViewModel.cs
+|   |   +-- README.md
 |   |-- Cerneala.Playground/
 |   |   |-- Cerneala.Playground.csproj
 |   |   |-- MainWindow.crn
@@ -2006,6 +2020,8 @@ Generated from `.`.
 |   |   |   |-- ItemsPresenterTests.cs
 |   |   |   |-- ItemsSourceObservableTests.cs
 |   |   |   |-- ListBoxTests.cs
+|   |   |   |-- MenuItemTests.cs
+|   |   |   |-- MenuTests.cs
 |   |   |   |-- OverlayTests.cs
 |   |   |   |-- PanelTests.cs
 |   |   |   |-- PasswordBoxTests.cs
@@ -2238,6 +2254,7 @@ Generated from `.`.
 |   |   |   |   |-- AccessibilityPlatformTests.cs
 |   |   |   |   |-- AuthoringSemanticsContractTests.cs
 |   |   |   |   |-- ButtonSemanticsTests.cs
+|   |   |   |   |-- MenuSemanticsTests.cs
 |   |   |   |   |-- RetainedSemanticsCacheTests.cs
 |   |   |   |   |-- SemanticsProviderTests.cs
 |   |   |   |   |-- SemanticsStressBudgetTests.cs
@@ -2340,6 +2357,7 @@ Generated from `.`.
 |   |   |   |   |-- HitTestQueueTests.cs
 |   |   |   |   |-- InvalidationFlagsTests.cs
 |   |   |   |   |-- LayoutQueueTests.cs
+|   |   |   |   |-- MenuInvalidationTests.cs
 |   |   |   |   |-- QueueSchedulerContractTests.cs
 |   |   |   |   |-- RenderQueueTests.cs
 |   |   |   |   |-- RetainedNoWorkFrameTests.cs
@@ -2525,6 +2543,7 @@ Generated from `.`.
 |   |   |-- UiMarkupGeneratorBindingStageThreeTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageZeroTests.cs
 |   |   |-- UiMarkupGeneratorFileExtensionTests.cs
+|   |   |-- UiMarkupGeneratorMenuTests.cs
 |   |   |-- UiMarkupGeneratorMotionClipTests.cs
 |   |   |-- UiMarkupGeneratorMotionCompositionTests.cs
 |   |   |-- UiMarkupGeneratorMotionDiagnosticsTests.cs
@@ -2654,6 +2673,8 @@ Generated from `.`.
 |   |   |-- AutomationPeer.cs
 |   |   |-- ButtonAutomationPeer.cs
 |   |   |-- ItemsControlAutomationPeer.cs
+|   |   |-- MenuAutomationPeer.cs
+|   |   |-- MenuItemAutomationPeer.cs
 |   |   |-- PasswordBoxAutomationPeer.cs
 |   |   |-- SemanticsNode.cs
 |   |   |-- SemanticsProperty.cs
@@ -2814,7 +2835,14 @@ Generated from `.`.
 |   |   |-- Label.cs
 |   |   |-- ListBox.cs
 |   |   |-- ListBoxItem.cs
+|   |   |-- Menu.cs
+|   |   |-- MenuBar.cs
+|   |   |-- MenuItem.cs
+|   |   |-- MenuItemContainerPolicy.cs
+|   |   |-- MenuSession.cs
+|   |   |-- MenuTemplates.cs
 |   |   |-- Overlay.cs
+|   |   |-- OverlayDismissScope.cs
 |   |   |-- OverlayManager.cs
 |   |   |-- OverlayPlacement.cs
 |   |   |-- Panel.cs
@@ -2959,6 +2987,7 @@ Generated from `.`.
 |   |   |-- CommandBindingCollection.cs
 |   |   |-- CommandEvents.cs
 |   |   |-- CommandRouter.cs
+|   |   |-- CommandSourceState.cs
 |   |   |-- Cursor.cs
 |   |   |-- CursorService.cs
 |   |   |-- DataTransfer.cs

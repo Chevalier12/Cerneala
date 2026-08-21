@@ -1,0 +1,434 @@
+<Window
+    Title="Cerneala Menu Lab"
+    Width="1100"
+    Height="720"
+    MinWidth="900"
+    MinHeight="620"
+    WindowStartupLocation="CenterScreen"
+    ContentRendered="OnContentRendered"
+    FrameRendered="OnFrameRendered"
+    DataType="Cerneala.MenuLab.MenuLabViewModel"
+    Background="#FF101417"
+    BorderBrush="#FF354149"
+    BorderThickness="1"
+    Padding="0">
+    <Window.Resources>
+        <SolidColorBrush Name="CanvasBrush" Color="#FF101417" />
+        <SolidColorBrush Name="SurfaceBrush" Color="#FF171D21" />
+        <SolidColorBrush Name="RaisedBrush" Color="#FF20272C" />
+        <SolidColorBrush Name="BarBrush" Color="#FF0B0F12" />
+        <SolidColorBrush Name="DividerBrush" Color="#FF354149" />
+        <SolidColorBrush Name="TextBrush" Color="#FFF3F5F4" />
+        <SolidColorBrush Name="MutedBrush" Color="#FF9BA8AE" />
+        <SolidColorBrush Name="AccentBrush" Color="#FF57D3B1" />
+        <SolidColorBrush Name="BlueBrush" Color="#FF71B7FF" />
+        <SolidColorBrush Name="WarmBrush" Color="#FFFFB15A" />
+
+        <Aspect TargetType="TextBlock">
+            @default
+            {
+                FontFamily = "Segoe UI";
+                FontSize = 13;
+                Foreground = $TextBrush;
+            }
+        </Aspect>
+
+        <Aspect Name="TopMenuItem" TargetType="MenuItem">
+            @default
+            {
+                Background = $BarBrush;
+                Foreground = $TextBrush;
+                BorderBrush = $DividerBrush;
+                BorderThickness = "0";
+                Padding = "16,16,16,15";
+                FontFamily = "Segoe UI Semibold";
+                FontSize = 13;
+            }
+            @when IsMouseOver
+            {
+                Background = $RaisedBrush;
+                Foreground = $AccentBrush;
+            }
+            @when IsSubmenuOpen
+            {
+                Background = $RaisedBrush;
+                Foreground = $AccentBrush;
+            }
+        </Aspect>
+
+        <Aspect Name="PopupMenuItem" TargetType="MenuItem">
+            @default
+            {
+                Width = 220;
+                Background = $RaisedBrush;
+                Foreground = $TextBrush;
+                BorderBrush = $DividerBrush;
+                BorderThickness = "0,0,0,1";
+                Padding = "13,10,13,10";
+                FontFamily = "Segoe UI";
+                FontSize = 13;
+            }
+            @when IsMouseOver
+            {
+                Background = "#FF2A343A";
+                Foreground = $AccentBrush;
+            }
+            @when IsSubmenuOpen
+            {
+                Background = "#FF2A343A";
+                Foreground = $AccentBrush;
+            }
+        </Aspect>
+
+        <Aspect Name="SideMenuItem" TargetType="MenuItem">
+            @default
+            {
+                Width = 224;
+                Background = $SurfaceBrush;
+                Foreground = $TextBrush;
+                BorderBrush = $DividerBrush;
+                BorderThickness = "1";
+                Padding = "13,11,13,11";
+                Margin = "0,0,0,6";
+                FontFamily = "Segoe UI Semibold";
+                FontSize = 13;
+            }
+            @when IsMouseOver
+            {
+                Background = $RaisedBrush;
+                BorderBrush = $AccentBrush;
+            }
+            @when IsSubmenuOpen
+            {
+                Background = $RaisedBrush;
+                Foreground = $AccentBrush;
+                BorderBrush = $AccentBrush;
+            }
+        </Aspect>
+
+        <Aspect Name="EdgeMenuItem" TargetType="MenuItem">
+            @default
+            {
+                Width = 164;
+                Background = $RaisedBrush;
+                Foreground = $WarmBrush;
+                BorderBrush = $WarmBrush;
+                BorderThickness = "1";
+                Padding = "12,9,12,9";
+                FontFamily = "Segoe UI Semibold";
+                FontSize = 12;
+            }
+            @when IsMouseOver
+            {
+                Background = "#FF342C23";
+            }
+            @when IsSubmenuOpen
+            {
+                Background = "#FF342C23";
+            }
+        </Aspect>
+
+        <Aspect Name="ActionButton" TargetType="Button">
+            @default
+            {
+                Background = $RaisedBrush;
+                Foreground = $TextBrush;
+                BorderBrush = $DividerBrush;
+                BorderThickness = "1";
+                Padding = "13,9,13,9";
+                FontFamily = "Segoe UI Semibold";
+                FontSize = 12;
+            }
+            @when IsMouseOver
+            {
+                Background = "#FF2A343A";
+                BorderBrush = $AccentBrush;
+                Foreground = $AccentBrush;
+            }
+        </Aspect>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="52" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="36" />
+        </Grid.RowDefinitions>
+
+        <Border
+            Grid.Row="0"
+            Background="$BarBrush"
+            BorderBrush="$DividerBrush"
+            BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <MenuBar Name="MainMenu" Grid.Column="0">
+                    <MenuItem
+                        Name="FileMenuItem"
+                        Header="File"
+                        Aspect="$TopMenuItem"
+                        SubmenuOpened="OnSubmenuOpened"
+                        SubmenuClosed="OnSubmenuClosed">
+                    <MenuItem Header="New workspace" Aspect="$PopupMenuItem" Command="$DataContext.NewWorkspaceCommand:OneWay" />
+                        <MenuItem
+                            Name="RecentMenuItem"
+                            Header="Recent"
+                            Aspect="$PopupMenuItem"
+                            SubmenuOpened="OnSubmenuOpened"
+                            SubmenuClosed="OnSubmenuClosed">
+                            <MenuItem Header="Dashboard.crn" Aspect="$PopupMenuItem" Command="$DataContext.OpenRecentCommand:OneWay" CommandParameter="Dashboard.crn" />
+                            <MenuItem Header="Settings.crn" Aspect="$PopupMenuItem" Command="$DataContext.OpenRecentCommand:OneWay" CommandParameter="Settings.crn" />
+                            <MenuItem Header="Quarterly-report.crn" Aspect="$PopupMenuItem" Command="$DataContext.OpenRecentCommand:OneWay" CommandParameter="Quarterly-report.crn" />
+                        </MenuItem>
+                    <MenuItem Header="Save" Aspect="$PopupMenuItem" Command="$DataContext.SaveCommand:OneWay" />
+                        <MenuItem
+                            Header="Export"
+                            Aspect="$PopupMenuItem"
+                            SubmenuOpened="OnSubmenuOpened"
+                            SubmenuClosed="OnSubmenuClosed">
+                            <MenuItem Header="JSON" Aspect="$PopupMenuItem" Command="$DataContext.ExportCommand:OneWay" CommandParameter="JSON" />
+                            <MenuItem Header="CSV" Aspect="$PopupMenuItem" Command="$DataContext.ExportCommand:OneWay" CommandParameter="CSV" />
+                            <MenuItem Header="Plain text" Aspect="$PopupMenuItem" Command="$DataContext.ExportCommand:OneWay" CommandParameter="Plain text" />
+                        </MenuItem>
+                    <MenuItem Name="ExitMenuItem" Header="Exit" Aspect="$PopupMenuItem" Command="$DataContext.ExitCommand:OneWay" />
+                    </MenuItem>
+
+                    <MenuItem
+                        Name="EditMenuItem"
+                        Header="Edit"
+                        Aspect="$TopMenuItem"
+                        SubmenuOpened="OnSubmenuOpened"
+                        SubmenuClosed="OnSubmenuClosed">
+                    <MenuItem Header="Mark as changed" Aspect="$PopupMenuItem" Command="$DataContext.MarkDirtyCommand:OneWay" />
+                    <MenuItem Header="Clear activity" Aspect="$PopupMenuItem" Command="$DataContext.ClearActivityCommand:OneWay" />
+                        <MenuItem Header="Unavailable action" Aspect="$PopupMenuItem" IsEnabled="false" />
+                    </MenuItem>
+
+                    <MenuItem
+                        Name="ViewMenuItem"
+                        Header="View"
+                        Aspect="$TopMenuItem"
+                        SubmenuOpened="OnSubmenuOpened"
+                        SubmenuClosed="OnSubmenuClosed">
+                    <MenuItem Header="Dashboard" Aspect="$PopupMenuItem" Command="$DataContext.SelectViewCommand:OneWay" CommandParameter="Dashboard" />
+                    <MenuItem Header="Activity" Aspect="$PopupMenuItem" Command="$DataContext.SelectViewCommand:OneWay" CommandParameter="Activity" />
+                    <MenuItem Header="Command state" Aspect="$PopupMenuItem" Command="$DataContext.SelectViewCommand:OneWay" CommandParameter="Command state" />
+                    </MenuItem>
+
+                    <MenuItem
+                        Name="HelpMenuItem"
+                        Header="Help"
+                        Aspect="$TopMenuItem"
+                        SubmenuOpened="OnSubmenuOpened"
+                        SubmenuClosed="OnSubmenuClosed">
+                    <MenuItem Header="About Menu Lab" Aspect="$PopupMenuItem" Command="$DataContext.AboutCommand:OneWay" />
+                    </MenuItem>
+                </MenuBar>
+
+                <TextBlock
+                    Name="SessionStateText"
+                    Grid.Column="2"
+            Text="$DataContext.SessionState:OneWay"
+                    Foreground="$MutedBrush"
+                    FontFamily="Cascadia Mono SemiBold"
+                    FontSize="11"
+                    VerticalAlignment="Center"
+                    Margin="18,0,20,0" />
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="270" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border
+                Grid.Column="0"
+                Background="$SurfaceBrush"
+                BorderBrush="$DividerBrush"
+                BorderThickness="0,0,1,0"
+                Padding="22,24,22,22">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                        <TextBlock Text="PROJECT" Foreground="$AccentBrush" FontFamily="Cascadia Mono SemiBold" FontSize="11" />
+                        <TextBlock Text="Navigation" FontFamily="Segoe UI Semibold" FontSize="19" Margin="0,5,0,0" />
+                    </StackPanel>
+
+                    <Menu Name="WorkspaceMenu" Grid.Row="1">
+                        <MenuItem
+                            Header="Workspace"
+                            Aspect="$SideMenuItem"
+                            SubmenuOpened="OnSubmenuOpened"
+                            SubmenuClosed="OnSubmenuClosed">
+                    <MenuItem Header="Overview" Aspect="$PopupMenuItem" Command="$DataContext.NavigateCommand:OneWay" CommandParameter="Overview" />
+                            <MenuItem
+                                Header="Documents"
+                                Aspect="$PopupMenuItem"
+                                SubmenuOpened="OnSubmenuOpened"
+                                SubmenuClosed="OnSubmenuClosed">
+                            <MenuItem Header="Drafts" Aspect="$PopupMenuItem" Command="$DataContext.NavigateCommand:OneWay" CommandParameter="Drafts" />
+                            <MenuItem Header="Published" Aspect="$PopupMenuItem" Command="$DataContext.NavigateCommand:OneWay" CommandParameter="Published" />
+                            </MenuItem>
+                        </MenuItem>
+                        <MenuItem
+                            Header="Build"
+                            Aspect="$SideMenuItem"
+                            SubmenuOpened="OnSubmenuOpened"
+                            SubmenuClosed="OnSubmenuClosed">
+                            <MenuItem Header="Run" Aspect="$PopupMenuItem" Command="$DataContext.NavigateCommand:OneWay" CommandParameter="Run" />
+                            <MenuItem Header="Validate" Aspect="$PopupMenuItem" Command="$DataContext.NavigateCommand:OneWay" CommandParameter="Validate" />
+                        </MenuItem>
+                    <MenuItem Header="Settings" Aspect="$SideMenuItem" Command="$DataContext.NavigateCommand:OneWay" CommandParameter="Settings" />
+                    </Menu>
+
+                    <StackPanel Grid.Row="2">
+                        <TextBlock Text="COMMAND" Foreground="$WarmBrush" FontFamily="Cascadia Mono SemiBold" FontSize="10" />
+                    <TextBlock Text="$DataContext.SaveState:OneWay" Foreground="$MutedBrush" FontFamily="Cascadia Mono" FontSize="11" Margin="0,5,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="92" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="176" />
+                </Grid.RowDefinitions>
+
+                <Border
+                    Grid.Row="0"
+                    Background="$SurfaceBrush"
+                    BorderBrush="$DividerBrush"
+                    BorderThickness="0,0,0,1"
+                    Padding="28,20,22,18">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Menu Lab" FontFamily="Segoe UI Semibold" FontSize="23" />
+                            <TextBlock Text="$DataContext.ActionDetail:OneWay" Foreground="$MutedBrush" Margin="0,5,0,0" />
+                        </StackPanel>
+                        <Menu Name="EdgeMenu" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <MenuItem
+                                Name="EdgeMenuItem"
+                                Header="Edge menu"
+                                Aspect="$EdgeMenuItem"
+                                SubmenuOpened="OnSubmenuOpened"
+                                SubmenuClosed="OnSubmenuClosed">
+                                <MenuItem
+                                    Header="Level two"
+                                    Aspect="$PopupMenuItem"
+                                    SubmenuOpened="OnSubmenuOpened"
+                                    SubmenuClosed="OnSubmenuClosed">
+                            <MenuItem Header="Level three A" Aspect="$PopupMenuItem" Command="$DataContext.NavigateCommand:OneWay" CommandParameter="Level three A" />
+                            <MenuItem Header="Level three B" Aspect="$PopupMenuItem" Command="$DataContext.NavigateCommand:OneWay" CommandParameter="Level three B" />
+                                </MenuItem>
+                    <MenuItem Header="Right-edge action" Aspect="$PopupMenuItem" Command="$DataContext.NavigateCommand:OneWay" CommandParameter="Right-edge action" />
+                            </MenuItem>
+                        </Menu>
+                    </Grid>
+                </Border>
+
+                <Grid Grid.Row="1" Margin="28,28,28,24">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="RUNTIME STATE" Foreground="$AccentBrush" FontFamily="Cascadia Mono SemiBold" FontSize="11" />
+
+                    <Grid Grid.Row="1" Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border
+                            Grid.Column="0"
+                            Background="$SurfaceBrush"
+                            BorderBrush="$DividerBrush"
+                            BorderThickness="1"
+                            Padding="20"
+                            Margin="0,0,8,0">
+                            <StackPanel>
+                                <TextBlock Text="LAST ACTION" Foreground="$MutedBrush" FontFamily="Cascadia Mono SemiBold" FontSize="10" />
+                            <TextBlock Text="$DataContext.ActionTitle:OneWay" FontFamily="Segoe UI Semibold" FontSize="18" Margin="0,10,0,0" />
+                            <TextBlock Text="$DataContext.ActionBody:OneWay" Foreground="$MutedBrush" Margin="0,6,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border
+                            Grid.Column="1"
+                            Background="$SurfaceBrush"
+                            BorderBrush="$DividerBrush"
+                            BorderThickness="1"
+                            Padding="20"
+                            Margin="8,0,0,0">
+                            <StackPanel>
+                                <TextBlock Text="SHARED COMMAND" Foreground="$WarmBrush" FontFamily="Cascadia Mono SemiBold" FontSize="10" />
+                            <TextBlock Text="$DataContext.CommandState:OneWay" FontFamily="Segoe UI Semibold" FontSize="16" Margin="0,10,0,0" />
+                                <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                                <Button Content="Mark change" Aspect="$ActionButton" Command="$DataContext.MarkDirtyCommand:OneWay" Margin="0,0,8,0" />
+                                <Button Content="Save now" Aspect="$ActionButton" Command="$DataContext.SaveCommand:OneWay" />
+                                <Button Content="Reset" Aspect="$ActionButton" Command="$DataContext.ResetCommand:OneWay" Margin="8,0,0,0" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Grid>
+
+                <Border
+                    Grid.Row="2"
+                    Background="$SurfaceBrush"
+                    BorderBrush="$DividerBrush"
+                    BorderThickness="0,1,0,0"
+                    Padding="28,18,28,20">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="170" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="LIFECYCLE" Foreground="$BlueBrush" FontFamily="Cascadia Mono SemiBold" FontSize="10" />
+                    <TextBlock Text="$DataContext.Lifecycle:OneWay" Foreground="$MutedBrush" FontFamily="Cascadia Mono" FontSize="11" Margin="0,7,18,0" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="ACTIVITY" Foreground="$AccentBrush" FontFamily="Cascadia Mono SemiBold" FontSize="10" />
+                    <TextBlock Text="$DataContext.ActivityText:OneWay" Foreground="$MutedBrush" FontFamily="Cascadia Mono" FontSize="11" Margin="0,7,0,0" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <Border
+            Grid.Row="2"
+            Background="$BarBrush"
+            BorderBrush="$DividerBrush"
+            BorderThickness="0,1,0,0"
+            Padding="18,0,18,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="CERNEALA.MENULAB" Foreground="$MutedBrush" FontFamily="Cascadia Mono SemiBold" FontSize="10" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="LOCAL RUNTIME" Foreground="$AccentBrush" FontFamily="Cascadia Mono SemiBold" FontSize="10" VerticalAlignment="Center" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

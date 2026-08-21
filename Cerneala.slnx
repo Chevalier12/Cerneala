@@ -3,6 +3,7 @@
     <Project Path="Playground/AvaloniaOracle/AvaloniaOracle.csproj" />
     <Project Path="Playground/CernealaOracle/CernealaOracle.csproj" />
     <Project Path="Playground/Cerneala.ComboBoxLab/Cerneala.ComboBoxLab.csproj" />
+    <Project Path="Playground/Cerneala.MenuLab/Cerneala.MenuLab.csproj" />
     <Project Path="Playground/Cerneala.Playground/Cerneala.Playground.csproj" />
   </Folder>
   <Folder Name="/benchmarks/">

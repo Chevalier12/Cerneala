@@ -1,0 +1,4 @@
+bin/
+obj/
+artifacts/
+automation/*.error.txt

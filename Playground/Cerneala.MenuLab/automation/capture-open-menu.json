@@ -1,0 +1,28 @@
+{
+  "steps": [
+    {
+      "action": "click",
+      "automationId": "file-menu"
+    },
+    {
+      "action": "pressKey",
+      "key": "Down"
+    },
+    {
+      "action": "pressKey",
+      "key": "Down"
+    },
+    {
+      "action": "pressKey",
+      "key": "Right"
+    },
+    {
+      "action": "screenshot",
+      "path": "../artifacts/menu-lab.png"
+    },
+    {
+      "action": "click",
+      "automationId": "exit-item"
+    }
+  ]
+}
