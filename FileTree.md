@@ -739,8 +739,10 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.ProgressBar.md
 |   |   |   |-- Cerneala.UI.Controls.RadioButton.md
 |   |   |   |-- Cerneala.UI.Controls.RenderSurface2D.md
-|   |   |   |-- Cerneala.UI.Controls.RenderSurface2DDrawContext.md
 |   |   |   |-- Cerneala.UI.Controls.RenderSurface2DDrawEventHandler.md
+|   |   |   |-- Cerneala.UI.Controls.RenderSurface2DFrame.md
+|   |   |   |-- Cerneala.UI.Controls.RenderSurface2DRedrawMode.md
+|   |   |   |-- Cerneala.UI.Controls.RenderSurface2DSpriteFlip.md
 |   |   |   |-- Cerneala.UI.Controls.ResizeMode.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollBarVisibility.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollChangedEventArgs.md
@@ -1638,7 +1640,7 @@ Generated from `.`.
 |   |   |-- MonoGamePathMeshBuilder.cs
 |   |   |-- MonoGameRenderSurface2DSession.cs
 |   |   |-- RenderSurface2D.MonoGame.cs
-|   |   +-- RenderSurface2DDrawContext.cs
+|   |   +-- RenderSurface2DFrame.cs
 |   |-- Paths/
 |   |   +-- SvgPathFlattener.cs
 |   |-- Prism/
@@ -2851,6 +2853,7 @@ Generated from `.`.
 |   |   |-- ProgressBar.cs
 |   |   |-- RadioButton.cs
 |   |   |-- RenderSurface2D.cs
+|   |   |-- RenderSurface2DRedrawMode.cs
 |   |   |-- ResizeMode.cs
 |   |   |-- ScrollBarVisibility.cs
 |   |   |-- ScrollChangedEventArgs.cs

@@ -1170,14 +1170,24 @@
     "source": "UI/Controls/RenderSurface2D.cs"
   },
   {
-    "name": "Cerneala.UI.Controls.RenderSurface2DDrawContext",
-    "file": "documentation/classes/Cerneala.UI.Controls.RenderSurface2DDrawContext.md",
-    "source": "UI/Controls/RenderSurface2DDrawContext.cs"
-  },
-  {
     "name": "Cerneala.UI.Controls.RenderSurface2DDrawEventHandler",
     "file": "documentation/classes/Cerneala.UI.Controls.RenderSurface2DDrawEventHandler.md",
     "source": "UI/Controls/RenderSurface2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.RenderSurface2DFrame",
+    "file": "documentation/classes/Cerneala.UI.Controls.RenderSurface2DFrame.md",
+    "source": "Drawing/MonoGame/RenderSurface2DFrame.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.RenderSurface2DRedrawMode",
+    "file": "documentation/classes/Cerneala.UI.Controls.RenderSurface2DRedrawMode.md",
+    "source": "UI/Controls/RenderSurface2DRedrawMode.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.RenderSurface2DSpriteFlip",
+    "file": "documentation/classes/Cerneala.UI.Controls.RenderSurface2DSpriteFlip.md",
+    "source": "Drawing/MonoGame/RenderSurface2DFrame.cs"
   },
   {
     "name": "Cerneala.UI.Controls.ResizeMode",
