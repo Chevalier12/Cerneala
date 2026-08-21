@@ -31,6 +31,9 @@ public class AutomationPeer
         ArgumentNullException.ThrowIfNull(element);
         return element switch
         {
+            MenuItem menuItem => new MenuItemAutomationPeer(menuItem),
+            MenuBar menuBar => new MenuAutomationPeer(menuBar),
+            Menu menu => new MenuAutomationPeer(menu),
             Button button => new ButtonAutomationPeer(button),
             TextBox textBox => new TextBoxAutomationPeer(textBox),
             PasswordBox passwordBox => new PasswordBoxAutomationPeer(passwordBox),

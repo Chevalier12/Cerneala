@@ -822,6 +822,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         private sealed class PropertySpec
         {
+            private static readonly SymbolDisplayFormat NullableTypeDisplayFormat =
+                SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(
+                    SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions |
+                    SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
+
             public PropertySpec(
                 string name,
                 MarkupValueKind valueKind,
@@ -846,7 +851,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             public ITypeSymbol ValueType { get; }
 
-            public string ValueTypeCode => ValueType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            public string ValueTypeCode => ValueType.ToDisplayString(NullableTypeDisplayFormat);
 
             public ITypeSymbol LiteralType => UnwrapNullable(ValueType);
 
@@ -4379,6 +4384,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         {
             INamedTypeSymbol? parentType = ResolveElementTypeSymbol(parent.Name.LocalName);
             INamedTypeSymbol? panelType = compilation.GetTypeByMetadataName("Cerneala.UI.Layout.Panels.Panel");
+            INamedTypeSymbol? itemsControlType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.ItemsControl");
             INamedTypeSymbol? decoratorType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Decorator");
             INamedTypeSymbol? contentControlType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.ContentControl");
             INamedTypeSymbol? scrollViewerType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.ScrollViewer");
@@ -4387,6 +4393,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             {
                 currentLines.Add(parentVariable + ".LogicalChildren.Add(" + childVariable + ");");
                 currentLines.Add(parentVariable + ".VisualChildren.Add(" + childVariable + ");");
+                return;
+            }
+
+            if (parentType is not null && itemsControlType is not null && IsOrDerivesFrom(parentType, itemsControlType))
+            {
+                currentLines.Add(parentVariable + ".Items.Add(" + childVariable + ");");
                 return;
             }
 

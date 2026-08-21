@@ -61,6 +61,36 @@ public sealed class CompletionTests
         AssertValidAfterInsertion(fixture.Text, Assert.Single(items.Where(item => item.Label == "Height")));
     }
 
+    [Fact]
+    public void MenuControlsAndMenuItemPropertiesAreCompletedFromThePublicApi()
+    {
+        using CompletionFixture elements = CompletionFixture.Create("<Window><Me|caret| /></Window>");
+        using CompletionFixture properties = CompletionFixture.Create("<MenuItem |caret| />");
+
+        IReadOnlyList<CernealaCompletionItem> elementItems = elements.Complete();
+        IReadOnlyList<CernealaCompletionItem> propertyItems = properties.Complete();
+
+        Assert.Contains(elementItems, item => item.Label == "Menu");
+        Assert.Contains(elementItems, item => item.Label == "MenuBar");
+        Assert.Contains(elementItems, item => item.Label == "MenuItem");
+        Assert.Contains(propertyItems, item => item.Label == "Header");
+        Assert.Contains(propertyItems, item => item.Label == "Command");
+        Assert.Contains(propertyItems, item => item.Label == "CommandParameter");
+        Assert.Contains(propertyItems, item => item.Label == "IsSubmenuOpen");
+    }
+
+    [Fact]
+    public void OverlayPlacementCompletionIncludesAutoHorizontal()
+    {
+        using CompletionFixture fixture = CompletionFixture.Create(
+            "<Overlay Placement=\"|caret|\" />");
+
+        CernealaCompletionItem item = Assert.Single(
+            fixture.Complete().Where(candidate => candidate.Label == "AutoHorizontal"));
+
+        AssertValidAfterInsertion(fixture.Text, item);
+    }
+
     [Theory]
     [InlineData("<Window><Button IsEnabled=\"|caret|\" /></Window>", "true")]
     [InlineData("<Window><Button HorizontalAlignment=\"|caret|\" /></Window>", "Center")]

@@ -61,6 +61,49 @@ public sealed class CompletionProtocolTests
     }
 
     [Fact]
+    public async Task MenuItemPropertyCompletionRunsThroughTheRealProtocol()
+    {
+        using CancellationTokenSource timeout = new(TimeSpan.FromMinutes(2));
+        await using ProtocolTestClient client = ProtocolTestClient.Start();
+        string repositoryRoot = FindRepositoryRoot();
+        string solutionPath = Path.Combine(repositoryRoot, "Cerneala.slnx");
+        await client.InitializeAsync(timeout.Token, solutionPath);
+        await client.Rpc.NotifyWithParameterObjectAsync("initialized", new { });
+
+        string path = Path.Combine(repositoryRoot, "CernealaPresentation", "OpeningView.crn");
+        string uri = new Uri(path).AbsoluteUri;
+        string markup = "<UserControl><MenuItem  /></UserControl>";
+        await client.Rpc.NotifyWithParameterObjectAsync(
+            "textDocument/didOpen",
+            new DidOpenTextDocumentParams
+            {
+                TextDocument = new TextDocumentItem
+                {
+                    Uri = uri,
+                    LanguageId = "cerneala",
+                    Version = 1,
+                    Text = markup
+                }
+            });
+
+        int completionOffset = markup.IndexOf("  />", StringComparison.Ordinal) + 1;
+        CompletionList completion = await client.Rpc.InvokeWithParameterObjectAsync<CompletionList>(
+            "textDocument/completion",
+            new TextDocumentPositionParams
+            {
+                TextDocument = new TextDocumentIdentifier { Uri = uri },
+                Position = PositionAt(markup, completionOffset)
+            },
+            timeout.Token);
+
+        Assert.Contains(completion.Items, item => item.Label == "Header");
+        Assert.Contains(completion.Items, item => item.Label == "Command");
+        Assert.Contains(completion.Items, item => item.Label == "CommandParameter");
+        Assert.Contains(completion.Items, item => item.Label == "IsSubmenuOpen");
+        Assert.Equal(0, await client.StopAsync(timeout.Token));
+    }
+
+    [Fact]
     public async Task CompletionResolveAndSignatureHelpRunThroughTheRealProtocol()
     {
         using CancellationTokenSource timeout = new(TimeSpan.FromMinutes(2));

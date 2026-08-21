@@ -10,5 +10,8 @@ public enum SemanticsRole
     List,
     ListItem,
     Text,
-    Image
+    Image,
+    Menu,
+    MenuBar,
+    MenuItem
 }

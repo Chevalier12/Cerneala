@@ -6,5 +6,6 @@ public enum SemanticsProperty
     IsFocused,
     IsSelected,
     Value,
-    ItemCount
+    ItemCount,
+    IsExpanded
 }

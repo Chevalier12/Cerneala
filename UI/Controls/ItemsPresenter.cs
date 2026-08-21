@@ -133,16 +133,18 @@ public class ItemsPresenter : Control
     protected override LayoutSize MeasureCore(MeasureContext context)
     {
         RefreshItems();
+        ProcessInheritedAndAspectForSubtree(panelRoot);
 
         RealizationWindow? windowBeforeMeasure = GetRealizationWindow();
         LayoutSize desired = panelRoot?.Measure(context) ?? LayoutSize.Zero;
+        ProcessInheritedAndAspectForSubtree(panelRoot);
+        desired = panelRoot?.Measure(context) ?? LayoutSize.Zero;
 
         if (windowBeforeMeasure != GetRealizationWindow())
         {
             MarkItemsDirty();
         }
 
-        ProcessInheritedAndAspectForSubtree(panelRoot);
         RemoveMeasureWorkForSubtree(panelRoot);
         RemoveMeasureWorkForLayoutScope();
         RemoveInheritedAndAspectWorkForLayoutScope();
@@ -519,9 +521,15 @@ public class ItemsPresenter : Control
         foreach (UIElement current in ElementTreeWalker.PreOrder(element, ElementChildRole.Visual))
         {
             root.AspectProcessor.Process(current);
-            root.InheritedPropertyQueue.Remove(current);
             root.AspectQueue.Remove(current);
-            current.DirtyState.Clear(InvalidationFlags.Inherited | InvalidationFlags.Aspect);
+            current.DirtyState.Clear(InvalidationFlags.Aspect);
+        }
+
+        root.InheritedPropertyPropagator.PropagateFrom(element);
+        foreach (UIElement current in ElementTreeWalker.PreOrder(element, ElementChildRole.Visual))
+        {
+            root.InheritedPropertyQueue.Remove(current);
+            current.DirtyState.Clear(InvalidationFlags.Inherited);
         }
     }
 
