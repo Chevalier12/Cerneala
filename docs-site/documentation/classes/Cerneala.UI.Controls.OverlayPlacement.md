@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Controls/OverlayPlacement.cs`
 
-Specifies how an `Overlay` is positioned vertically relative to its target.
+Specifies how an `Overlay` is positioned relative to its target.
 
 ```csharp
 public enum OverlayPlacement
@@ -19,7 +19,7 @@ public enum OverlayPlacement
 using Cerneala.UI.Controls;
 
 Overlay overlay = new();
-overlay.Placement = OverlayPlacement.Bottom;
+overlay.Placement = OverlayPlacement.AutoHorizontal;
 ```
 
 ## Fields
@@ -29,10 +29,11 @@ overlay.Placement = OverlayPlacement.Bottom;
 | `Auto` | Prefer below, flip above when needed, or use the side with more space. |
 | `Bottom` | Place below and clamp to available viewport space. |
 | `Top` | Place above and clamp to available viewport space. |
+| `AutoHorizontal` | Prefer the target's right side, fall back to its left side, and clamp to the viewport when neither side can contain the overlay. |
 
 ## Remarks
 
-All modes clamp projected geometry to the current `UIRoot` viewport and respect `Overlay.MaxHeight`.
+All modes clamp projected geometry to the current `UIRoot` viewport and respect `Overlay.MaxHeight`. `AutoHorizontal` remeasures content against the selected lateral space when it fits on one side; oversized content is constrained to the viewport.
 
 ## Applies to
 

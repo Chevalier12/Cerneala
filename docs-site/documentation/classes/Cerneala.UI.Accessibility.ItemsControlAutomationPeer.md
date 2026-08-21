@@ -41,7 +41,7 @@ int itemCount = (int)properties[SemanticsProperty.ItemCount]!;
 
 `GetProperties` starts with the base automation properties and adds `SemanticsProperty.ItemCount` from `ItemsControl.ItemCount`. The inherited base properties include `SemanticsProperty.IsEnabled` and `SemanticsProperty.IsFocused`.
 
-`AutomationPeer.Create(UIElement)` constructs this peer automatically when the supplied element is an `ItemsControl`.
+`AutomationPeer.Create(UIElement)` constructs this peer automatically for an `ItemsControl` that has no more specialized peer. `Menu`, `MenuBar`, and `MenuItem` are checked first and use their dedicated menu peers.
 
 Passing `null` to the constructor throws `ArgumentNullException` through the base `AutomationPeer` constructor.
 
@@ -76,3 +76,5 @@ Cerneala UI accessibility semantics for `Cerneala.UI.Controls.ItemsControl`.
 - [`ItemsControl`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Controls/ItemsControl.cs)
 - [`SemanticsProperty`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Accessibility/SemanticsProperty.cs)
 - [`SemanticsRole`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Accessibility/SemanticsRole.cs)
+- `Cerneala.UI.Accessibility.MenuAutomationPeer`
+- `Cerneala.UI.Accessibility.MenuItemAutomationPeer`

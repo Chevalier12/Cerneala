@@ -89,7 +89,8 @@ const comparisonRows = [
   ['Controls', '`TabControl`', 'TabControl + TabItem', 'close', 'Selection and item-container instincts transfer with narrower overall control-suite context.'],
   ['Controls', '`ToolTip`', 'ToolTip with Opened/Closed', 'partial', 'A current control exists; WPF popup placement and service parity are not blanket claims.'],
   ['Controls', '`InkCanvas`', 'InkCanvas + stroke collection/events', 'partial', 'No WPF erasing, gesture recognition, or stroke-selection parity.'],
-  ['Controls', '`DataGrid`, `TreeView`, menus, calendar', 'No documented equivalents', 'absent', 'These major WPF families require application-specific alternatives or future framework work.'],
+  ['Controls', '`Menu`, `MenuItem`, `MenuBar`, `ContextMenu`', 'Menu, MenuItem and MenuBar with nested in-root overlays', 'partial', 'Pointer, keyboard, commands, lateral placement and grouped light-dismiss are supported. ContextMenu remains a separate follow-up over the same menu-session foundation.'],
+  ['Controls', '`DataGrid`, `TreeView`, calendar', 'No documented equivalents', 'absent', 'These major WPF families require application-specific alternatives or future framework work.'],
   ['Controls', '`RichTextBox`, documents, navigation', 'No supported equivalents', 'absent', 'Flow documents, navigation journals, document viewers, and rich editing are outside preview scope.'],
   ['Controls', '`MediaElement`, 3D viewport, printing', 'No supported equivalents', 'absent', 'The current scope is retained 2D application/game UI.'],
 
