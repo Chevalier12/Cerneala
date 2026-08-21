@@ -171,6 +171,8 @@ public class Overlay : Control
 
     internal UIElement EffectivePlacementTarget => PlacementTarget ?? this;
 
+    internal OverlayDismissScope? DismissScope { get; set; }
+
     internal bool IsProjected => isProjected;
 
     internal void SetProjected(bool value)

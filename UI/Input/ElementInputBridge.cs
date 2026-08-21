@@ -70,6 +70,7 @@ public sealed class ElementInputBridge
             throw new ArgumentOutOfRangeException(nameof(frameTime));
         }
 
+        root.ActiveFocusManager = focusManager;
         ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
         HitTestResult? hitTarget = hitTestService.HitTest(root, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
         HitTestResult? pointerTarget = pointerCaptureManager.OverrideTarget(hitTarget, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);

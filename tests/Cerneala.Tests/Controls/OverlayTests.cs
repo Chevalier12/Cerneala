@@ -68,6 +68,136 @@ public sealed class OverlayTests
     }
 
     [Fact]
+    public void AutoHorizontalPlacesContentToTheRightWhenItFits()
+    {
+        UIRoot root = new(120, 80);
+        FixedElement target = new(new LayoutSize(20, 10));
+        FixedElement content = new(new LayoutSize(30, 15));
+        Overlay overlay = new()
+        {
+            Placement = OverlayPlacement.AutoHorizontal,
+            PlacementTarget = target,
+            Content = content,
+            IsOpen = true
+        };
+        LayoutCanvas canvas = new();
+        LayoutCanvas.SetLeft(target, 15);
+        LayoutCanvas.SetTop(target, 20);
+        canvas.VisualChildren.Add(target);
+        canvas.VisualChildren.Add(overlay);
+        root.VisualChildren.Add(canvas);
+
+        root.ProcessFrame();
+
+        Assert.Equal(new LayoutRect(35, 20, 30, 15), content.VisualParent!.ArrangedBounds);
+    }
+
+    [Fact]
+    public void AutoHorizontalFallsBackToTheLeftWhenTheRightSideIsTooSmall()
+    {
+        UIRoot root = new(120, 80);
+        FixedElement target = new(new LayoutSize(10, 10));
+        FixedElement content = new(new LayoutSize(40, 15));
+        Overlay overlay = new()
+        {
+            Placement = OverlayPlacement.AutoHorizontal,
+            PlacementTarget = target,
+            Content = content,
+            IsOpen = true
+        };
+        LayoutCanvas canvas = new();
+        LayoutCanvas.SetLeft(target, 95);
+        LayoutCanvas.SetTop(target, 20);
+        canvas.VisualChildren.Add(target);
+        canvas.VisualChildren.Add(overlay);
+        root.VisualChildren.Add(canvas);
+
+        root.ProcessFrame();
+
+        Assert.Equal(new LayoutRect(55, 20, 40, 15), content.VisualParent!.ArrangedBounds);
+    }
+
+    [Fact]
+    public void AutoHorizontalClampsToViewportWhenNeitherSideCanContainContent()
+    {
+        UIRoot root = new(70, 40);
+        FixedElement target = new(new LayoutSize(20, 10));
+        FixedElement content = new(new LayoutSize(90, 60));
+        Overlay overlay = new()
+        {
+            Placement = OverlayPlacement.AutoHorizontal,
+            PlacementTarget = target,
+            Content = content,
+            IsOpen = true
+        };
+        LayoutCanvas canvas = new();
+        LayoutCanvas.SetLeft(target, 25);
+        LayoutCanvas.SetTop(target, 10);
+        canvas.VisualChildren.Add(target);
+        canvas.VisualChildren.Add(overlay);
+        root.VisualChildren.Add(canvas);
+
+        root.ProcessFrame();
+
+        Assert.Equal(new LayoutRect(0, 0, 70, 40), content.VisualParent!.ArrangedBounds);
+    }
+
+    [Fact]
+    public void AutoHorizontalHandlesViewportSmallerThanTargetAndContent()
+    {
+        UIRoot root = new(12, 8);
+        FixedElement target = new(new LayoutSize(20, 10));
+        FixedElement content = new(new LayoutSize(30, 20));
+        Overlay overlay = new()
+        {
+            Placement = OverlayPlacement.AutoHorizontal,
+            PlacementTarget = target,
+            Content = content,
+            IsOpen = true
+        };
+        LayoutCanvas canvas = new();
+        LayoutCanvas.SetLeft(target, 5);
+        canvas.VisualChildren.Add(target);
+        canvas.VisualChildren.Add(overlay);
+        root.VisualChildren.Add(canvas);
+
+        root.ProcessFrame();
+
+        Assert.Equal(new LayoutRect(0, 0, 12, 8), content.VisualParent!.ArrangedBounds);
+    }
+
+    [Fact]
+    public void AutoHorizontalTracksTargetMovementAndRemeasuresForTheSelectedSide()
+    {
+        UIRoot root = new(120, 80);
+        FixedElement target = new(new LayoutSize(20, 10));
+        RecordingElement content = new(new LayoutSize(30, 15));
+        Overlay overlay = new()
+        {
+            Placement = OverlayPlacement.AutoHorizontal,
+            PlacementTarget = target,
+            Content = content,
+            IsOpen = true
+        };
+        LayoutCanvas canvas = new();
+        LayoutCanvas.SetLeft(target, 10);
+        LayoutCanvas.SetTop(target, 20);
+        canvas.VisualChildren.Add(target);
+        canvas.VisualChildren.Add(overlay);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+
+        Assert.Equal(30, content.VisualParent!.ArrangedBounds.X);
+
+        LayoutCanvas.SetLeft(target, 90);
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Equal(60, content.VisualParent.ArrangedBounds.X);
+        Assert.Contains(content.MeasureConstraints, constraint => constraint.Width == 90);
+    }
+
+    [Fact]
     public void MultipleOverlaysKeepLastOpenedContentTopmost()
     {
         UIRoot root = new(100, 100);
@@ -189,6 +319,122 @@ public sealed class OverlayTests
     }
 
     [Fact]
+    public void DismissScopeKeepsNestedOverlayGroupOpenForPointerTransitionsAndClosesItTogether()
+    {
+        UIRoot root = new(180, 120);
+        Button target = new() { Content = "target" };
+        Button firstContent = new() { Content = "first" };
+        Button secondContent = new() { Content = "second" };
+        Button outside = new() { Content = "outside" };
+        Overlay? first = null;
+        Overlay? second = null;
+        int dismissals = 0;
+        OverlayDismissScope scope = new(() =>
+        {
+            dismissals++;
+            first!.IsOpen = false;
+            second!.IsOpen = false;
+        });
+        first = new Overlay
+        {
+            PlacementTarget = target,
+            Content = firstContent,
+            IsLightDismissEnabled = true,
+            DismissScope = scope,
+            IsOpen = true
+        };
+        second = new Overlay
+        {
+            PlacementTarget = firstContent,
+            Content = secondContent,
+            IsLightDismissEnabled = true,
+            DismissScope = scope,
+            IsOpen = true
+        };
+        LayoutCanvas canvas = new();
+        LayoutCanvas.SetLeft(outside, 100);
+        LayoutCanvas.SetTop(outside, 80);
+        canvas.VisualChildren.Add(target);
+        canvas.VisualChildren.Add(outside);
+        canvas.VisualChildren.Add(first);
+        canvas.VisualChildren.Add(second);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        ElementInputBridge bridge = new();
+
+        Click(bridge, root, firstContent.VisualParent!.ArrangedBounds.X + 2, firstContent.VisualParent.ArrangedBounds.Y + 2);
+        Click(bridge, root, secondContent.VisualParent!.ArrangedBounds.X + 2, secondContent.VisualParent.ArrangedBounds.Y + 2);
+
+        Assert.True(first.IsOpen);
+        Assert.True(second.IsOpen);
+        Assert.Equal(0, dismissals);
+
+        float outsideX = outside.ArrangedBounds.X + 2;
+        float outsideY = outside.ArrangedBounds.Y + outside.ArrangedBounds.Height - 2;
+        Assert.Same(outside, new HitTestService().HitTest(root, outsideX, outsideY)?.Element);
+        Click(bridge, root, outsideX, outsideY);
+
+        Assert.False(first.IsOpen);
+        Assert.False(second.IsOpen);
+        Assert.Equal(1, dismissals);
+    }
+
+    [Fact]
+    public void DismissScopeKeepsNestedOverlayGroupOpenForFocusTransitionsAndClosesItTogether()
+    {
+        UIRoot root = new(180, 120);
+        Button target = new() { Content = "target" };
+        Button firstContent = new() { Content = "first" };
+        Button secondContent = new() { Content = "second" };
+        Button outside = new() { Content = "outside" };
+        Overlay? first = null;
+        Overlay? second = null;
+        OverlayDismissScope scope = new(() =>
+        {
+            first!.IsOpen = false;
+            second!.IsOpen = false;
+        });
+        first = new Overlay
+        {
+            PlacementTarget = target,
+            Content = firstContent,
+            IsLightDismissEnabled = true,
+            DismissScope = scope,
+            IsOpen = true
+        };
+        second = new Overlay
+        {
+            PlacementTarget = firstContent,
+            Content = secondContent,
+            IsLightDismissEnabled = true,
+            DismissScope = scope,
+            IsOpen = true
+        };
+        LayoutCanvas canvas = new();
+        LayoutCanvas.SetTop(outside, 80);
+        canvas.VisualChildren.Add(target);
+        canvas.VisualChildren.Add(outside);
+        canvas.VisualChildren.Add(first);
+        canvas.VisualChildren.Add(second);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        ElementInputBridge bridge = new();
+        ElementInputRouteMap routes = root.InputCache.EnsureCurrent(root);
+
+        bridge.FocusManager.Focus(target, routes);
+        bridge.FocusManager.Focus(firstContent, routes);
+        bridge.FocusManager.Focus(secondContent, routes);
+
+        Assert.True(first.IsOpen);
+        Assert.True(second.IsOpen);
+
+        bridge.FocusManager.Focus(outside, routes);
+
+        Assert.False(first.IsOpen);
+        Assert.False(second.IsOpen);
+    }
+
+    [Fact]
     public void OpeningBeforeAttachIsDeferredAndDetachClosesOnce()
     {
         UIRoot root = new(100, 100);
@@ -230,10 +476,27 @@ public sealed class OverlayTests
         return new InputFrame(previous, current, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []);
     }
 
+    private static void Click(ElementInputBridge bridge, UIRoot root, float x, float y)
+    {
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, previousDown: true));
+    }
+
     private sealed class FixedElement(LayoutSize size) : UIElement
     {
         protected override LayoutSize MeasureCore(MeasureContext context)
         {
+            return size;
+        }
+    }
+
+    private sealed class RecordingElement(LayoutSize size) : UIElement
+    {
+        public List<LayoutSize> MeasureConstraints { get; } = [];
+
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            MeasureConstraints.Add(context.AvailableSize);
             return size;
         }
     }

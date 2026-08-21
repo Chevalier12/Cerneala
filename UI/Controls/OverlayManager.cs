@@ -127,12 +127,12 @@ internal sealed class OverlayManager
     {
         Overlay? overlay = TopmostLightDismissOverlay();
         UIElement? source = ResolveElement(args.OriginalSource);
-        if (overlay is null || IsWithin(source, overlay.ProjectedPresenter) || IsWithin(source, overlay.EffectivePlacementTarget))
+        if (overlay is null || IsWithinDismissDomain(source, overlay))
         {
             return;
         }
 
-        overlay.IsOpen = false;
+        Dismiss(overlay);
     }
 
     private void OnPreviewLostKeyboardFocus(UiElementId _, RoutedEventArgs args)
@@ -144,7 +144,45 @@ internal sealed class OverlayManager
         }
 
         UIElement? next = ResolveElement(focusArgs.NewFocus);
-        if (!IsWithin(next, overlay.ProjectedPresenter) && !IsWithin(next, overlay.EffectivePlacementTarget))
+        if (!IsWithinDismissDomain(next, overlay))
+        {
+            Dismiss(overlay);
+        }
+    }
+
+    private bool IsWithinDismissDomain(UIElement? candidate, Overlay overlay)
+    {
+        OverlayDismissScope? scope = overlay.DismissScope;
+        if (scope?.Contains(candidate) == true)
+        {
+            return true;
+        }
+
+        foreach (Overlay member in openOverlays)
+        {
+            if ((scope is null && !ReferenceEquals(member, overlay)) ||
+                (scope is not null && !ReferenceEquals(member.DismissScope, scope)))
+            {
+                continue;
+            }
+
+            if (IsWithin(candidate, member.ProjectedPresenter) ||
+                IsWithin(candidate, member.EffectivePlacementTarget))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void Dismiss(Overlay overlay)
+    {
+        if (overlay.DismissScope is OverlayDismissScope scope)
+        {
+            scope.Dismiss();
+        }
+        else
         {
             overlay.IsOpen = false;
         }
@@ -259,6 +297,16 @@ internal sealed class OverlayManager
 
         private LayoutRect MeasureOverlay(Overlay overlay, LayoutSize viewport, LayoutRounding rounding)
         {
+            return overlay.Placement == OverlayPlacement.AutoHorizontal
+                ? MeasureHorizontalOverlay(overlay, viewport, rounding)
+                : MeasureVerticalOverlay(overlay, viewport, rounding);
+        }
+
+        private static LayoutRect MeasureVerticalOverlay(
+            Overlay overlay,
+            LayoutSize viewport,
+            LayoutRounding rounding)
+        {
             UIElement target = overlay.EffectivePlacementTarget;
             LayoutRect targetBounds = target.ArrangedBounds;
             float targetBottom = targetBounds.Y + targetBounds.Height;
@@ -271,16 +319,28 @@ internal sealed class OverlayManager
                 _ => MathF.Max(below, above)
             };
             bool hasExplicitHeight = !float.IsNaN(overlay.Height);
-            float measureWidth = overlay.MatchTargetWidth
+            float naturalWidthLimit = overlay.MatchTargetWidth
                 ? MathF.Min(targetBounds.Width, viewport.Width)
-                : viewport.Width;
+                : float.PositiveInfinity;
+            float initialHeightLimit = hasExplicitHeight
+                ? MathF.Min(initialLimit, overlay.Height)
+                : float.PositiveInfinity;
 
             ContentPresenter presenter = overlay.ProjectedPresenter;
             LayoutSize desired = presenter.Measure(new MeasureContext(
-                new LayoutSize(
-                    measureWidth,
-                    hasExplicitHeight ? MathF.Min(initialLimit, overlay.Height) : float.PositiveInfinity),
+                new LayoutSize(naturalWidthLimit, initialHeightLimit),
                 rounding));
+            float width = overlay.MatchTargetWidth
+                ? MathF.Min(targetBounds.Width, viewport.Width)
+                : MathF.Min(desired.Width, viewport.Width);
+
+            if (width != naturalWidthLimit)
+            {
+                desired = presenter.Measure(new MeasureContext(
+                    new LayoutSize(width, initialHeightLimit),
+                    rounding));
+            }
+
             float requestedHeight = hasExplicitHeight
                 ? overlay.Height
                 : MathF.Min(desired.Height, overlay.MaxHeight);
@@ -296,21 +356,70 @@ internal sealed class OverlayManager
 
             float sideLimit = placeBelow ? below : above;
             float height = MathF.Min(requestedHeight, sideLimit);
-            if (hasExplicitHeight || desired.Height > height)
+            if (hasExplicitHeight || desired.Height > height || width != naturalWidthLimit)
             {
-                desired = presenter.Measure(new MeasureContext(
-                    new LayoutSize(measureWidth, height),
-                    rounding));
+                presenter.Measure(new MeasureContext(new LayoutSize(width, height), rounding));
             }
 
-            float width = overlay.MatchTargetWidth
-                ? targetBounds.Width
-                : desired.Width;
-            width = MathF.Min(width, viewport.Width);
             float x = Math.Clamp(targetBounds.X, 0, MathF.Max(0, viewport.Width - width));
             float y = placeBelow
                 ? Math.Clamp(targetBottom, 0, MathF.Max(0, viewport.Height - height))
                 : Math.Clamp(targetBounds.Y - height, 0, MathF.Max(0, viewport.Height - height));
+            return new LayoutRect(x, y, width, height);
+        }
+
+        private static LayoutRect MeasureHorizontalOverlay(
+            Overlay overlay,
+            LayoutSize viewport,
+            LayoutRounding rounding)
+        {
+            LayoutRect targetBounds = overlay.EffectivePlacementTarget.ArrangedBounds;
+            float targetRight = targetBounds.X + targetBounds.Width;
+            float right = MathF.Max(0, viewport.Width - targetRight);
+            float left = MathF.Max(0, targetBounds.X);
+            bool hasExplicitHeight = !float.IsNaN(overlay.Height);
+            float naturalWidthLimit = overlay.MatchTargetWidth
+                ? MathF.Min(targetBounds.Width, viewport.Width)
+                : float.PositiveInfinity;
+            float naturalHeightLimit = hasExplicitHeight
+                ? MathF.Min(overlay.Height, viewport.Height)
+                : float.PositiveInfinity;
+
+            ContentPresenter presenter = overlay.ProjectedPresenter;
+            LayoutSize desired = presenter.Measure(new MeasureContext(
+                new LayoutSize(naturalWidthLimit, naturalHeightLimit),
+                rounding));
+            float requestedWidth = overlay.MatchTargetWidth
+                ? MathF.Min(targetBounds.Width, viewport.Width)
+                : MathF.Min(desired.Width, viewport.Width);
+            bool fitsRight = requestedWidth <= right;
+            bool fitsLeft = requestedWidth <= left;
+            bool placeRight = fitsRight;
+            float selectedWidth = placeRight ? right : left;
+
+            if ((fitsRight || fitsLeft) && !overlay.MatchTargetWidth)
+            {
+                presenter.Measure(new MeasureContext(
+                    new LayoutSize(selectedWidth, naturalHeightLimit),
+                    rounding));
+            }
+
+            float width = requestedWidth;
+            desired = presenter.Measure(new MeasureContext(
+                new LayoutSize(width, naturalHeightLimit),
+                rounding));
+            float requestedHeight = hasExplicitHeight
+                ? overlay.Height
+                : MathF.Min(desired.Height, overlay.MaxHeight);
+            float height = MathF.Min(requestedHeight, viewport.Height);
+            if (hasExplicitHeight || desired.Height > height)
+            {
+                presenter.Measure(new MeasureContext(new LayoutSize(width, height), rounding));
+            }
+
+            float x = placeRight ? targetRight : targetBounds.X - width;
+            x = Math.Clamp(x, 0, MathF.Max(0, viewport.Width - width));
+            float y = Math.Clamp(targetBounds.Y, 0, MathF.Max(0, viewport.Height - height));
             return new LayoutRect(x, y, width, height);
         }
 

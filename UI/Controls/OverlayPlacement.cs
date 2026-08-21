@@ -4,5 +4,6 @@ public enum OverlayPlacement
 {
     Auto,
     Bottom,
-    Top
+    Top,
+    AutoHorizontal
 }

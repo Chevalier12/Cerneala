@@ -10,6 +10,11 @@ public sealed class FocusManager
     {
         ArgumentNullException.ThrowIfNull(routeMap);
 
+        if ((element?.Root ?? FocusedElement?.Root) is UIRoot root)
+        {
+            root.ActiveFocusManager = this;
+        }
+
         if (ReferenceEquals(FocusedElement, element))
         {
             return false;

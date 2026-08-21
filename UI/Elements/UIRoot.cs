@@ -141,6 +141,8 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     internal OverlayManager OverlayManager { get; }
 
+    internal FocusManager? ActiveFocusManager { get; set; }
+
     public RenderCounters RenderCounters { get; }
 
     public RetainedRenderCache RetainedRenderCache { get; }
