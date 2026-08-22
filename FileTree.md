@@ -1640,6 +1640,7 @@ Generated from `.`.
 |   |   |-- MonoGamePathMeshBuilder.cs
 |   |   |-- MonoGameRenderSurface2DSession.cs
 |   |   |-- RenderSurface2D.MonoGame.cs
+|   |   |-- RenderSurface2DCommand.cs
 |   |   +-- RenderSurface2DFrame.cs
 |   |-- Paths/
 |   |   +-- SvgPathFlattener.cs
@@ -2488,7 +2489,8 @@ Generated from `.`.
 |   |   |       +-- ThemeTests.cs
 |   |   |-- Cerneala.Tests.csproj
 |   |   |-- GameBootstrapTests.cs
-|   |   +-- GlobalUsings.cs
+|   |   |-- GlobalUsings.cs
+|   |   +-- xunit.runner.json
 |   |-- Cerneala.Tests.Language/
 |   |   |-- Corpus/
 |   |   |   |-- constructs.json
