@@ -180,6 +180,20 @@ public sealed class ProcessLifecycleTests
                 },
                 timeout.Token);
             await rpc.NotifyWithParameterObjectAsync("initialized", new { });
+
+            string markupPath = Path.Combine(repositoryRoot, "CernealaPresentation", "OpeningView.crn");
+            await rpc.NotifyWithParameterObjectAsync(
+                "textDocument/didOpen",
+                new DidOpenTextDocumentParams
+                {
+                    TextDocument = new TextDocumentItem
+                    {
+                        Uri = new Uri(markupPath).AbsoluteUri,
+                        LanguageId = "cerneala",
+                        Version = 1,
+                        Text = await File.ReadAllTextAsync(markupPath, timeout.Token)
+                    }
+                });
             await notifications.Refreshed.Task.WaitAsync(timeout.Token);
 
             string analyzerOutput = Path.Combine(
