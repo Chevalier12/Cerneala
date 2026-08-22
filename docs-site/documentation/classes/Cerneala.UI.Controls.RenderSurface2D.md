@@ -55,9 +55,11 @@ surface.InvalidateFrame();
 
 Drawing runs inside the Cerneala frame loop. Cerneala owns the render target, presentation, batch lifetime, and graphics-device state. Application code receives only `RenderSurface2DFrame`, whose operations are limited to 2D primitives and sprites.
 
-`Continuous` redraw mode requests a fresh surface every Cerneala frame. `OnDemand` redraw mode reuses the last rendered surface until layout, a relevant property, or `InvalidateFrame()` marks it dirty.
+`Continuous` redraw mode evaluates the drawing callbacks every Cerneala frame. The backend records the resulting mapped 2D command stream and retains both that stream and the rendered surface. When the stream is visually identical to the previous frame, GPU rasterization is skipped. When commands change, only the affected surface region is cleared and recomposed from the current commands that intersect it, in drawing order. Complex transformed sprites can conservatively invalidate the whole surface.
 
-`ClearColor` is applied before `OnDraw` and `Draw` subscribers execute. The override runs first, followed by event subscribers in subscription order. The frame object is valid only while those callbacks execute.
+`OnDemand` redraw mode reuses the last rendered surface without evaluating the callbacks until layout, a relevant property, or `InvalidateFrame()` marks it dirty.
+
+`ClearColor` initializes the surface and erases damaged regions before their commands are replayed. `OnDraw` records first, followed by `Draw` subscribers in subscription order. The frame object is valid only while those callbacks execute.
 
 Internally allocated rendering resources are released when the control detaches from its root.
 
@@ -69,13 +71,13 @@ Internally allocated rendering resources are released when the control detaches 
 ## Fields
 | Name | Type | Description |
 | --- | --- | --- |
-| `ClearColorProperty` | `UiProperty<Color>` | Identifies the color used to clear each freshly rendered frame. |
+| `ClearColorProperty` | `UiProperty<Color>` | Identifies the color used to initialize the surface and clear damaged regions. |
 | `RedrawModeProperty` | `UiProperty<RenderSurface2DRedrawMode>` | Identifies the frame scheduling mode. |
 
 ## Properties
 | Name | Type | Description |
 | --- | --- | --- |
-| `ClearColor` | `Color` | Gets or sets the color applied before frame drawing begins. |
+| `ClearColor` | `Color` | Gets or sets the color used to initialize the surface and erase damaged regions. |
 | `RedrawMode` | `RenderSurface2DRedrawMode` | Gets or sets whether the surface redraws continuously or only when dirty. |
 | `Content` | `object?` | Gets or sets the retained content rendered above the game surface. Inherited from `ContentControl`. |
 

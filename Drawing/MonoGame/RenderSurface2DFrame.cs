@@ -17,20 +17,21 @@ public enum RenderSurface2DSpriteFlip
 
 public sealed class RenderSurface2DFrame
 {
-    private readonly SpriteBatch spriteBatch;
-    private readonly Texture2D whitePixel;
+    private readonly GraphicsDevice graphicsDevice;
+    private readonly List<RenderSurface2DCommand> commands;
+    private readonly MonoGameDrawMapper mapper = new(1);
     private bool active = true;
 
     internal RenderSurface2DFrame(
-        SpriteBatch spriteBatch,
-        Texture2D whitePixel,
+        GraphicsDevice graphicsDevice,
+        List<RenderSurface2DCommand> commands,
         Rectangle bounds,
         TimeSpan frameTime)
     {
-        this.spriteBatch = spriteBatch ??
-            throw new ArgumentNullException(nameof(spriteBatch));
-        this.whitePixel = whitePixel ??
-            throw new ArgumentNullException(nameof(whitePixel));
+        this.graphicsDevice = graphicsDevice ??
+            throw new ArgumentNullException(nameof(graphicsDevice));
+        this.commands = commands ??
+            throw new ArgumentNullException(nameof(commands));
         Bounds = new DrawRect(bounds.X, bounds.Y, bounds.Width, bounds.Height);
         FrameTime = frameTime;
     }
@@ -42,13 +43,15 @@ public sealed class RenderSurface2DFrame
     public void FillRectangle(DrawRect rectangle, CernealaColor color)
     {
         EnsureActive();
-        Rectangle destination = new MonoGameDrawMapper(1).MapRectangle(rectangle);
+        Rectangle destination = mapper.MapRectangle(rectangle);
         if (destination.Width <= 0 || destination.Height <= 0)
         {
             return;
         }
 
-        spriteBatch.Draw(whitePixel, destination, ToPremultipliedColor(color));
+        commands.Add(RenderSurface2DCommand.FillRectangle(
+            destination,
+            ToPremultipliedColor(color)));
     }
 
     public void DrawSprite(
@@ -98,13 +101,12 @@ public sealed class RenderSurface2DFrame
         }
         if (!ReferenceEquals(
             monoGameImage.Texture.GraphicsDevice,
-            spriteBatch.GraphicsDevice))
+            graphicsDevice))
         {
             throw new InvalidOperationException(
                 "A sprite image can only be drawn by the GraphicsDevice that created it.");
         }
 
-        MonoGameDrawMapper mapper = new(1);
         Rectangle destinationRectangle = mapper.MapRectangle(destination);
         if (destinationRectangle.Width <= 0 || destinationRectangle.Height <= 0)
         {
@@ -124,7 +126,7 @@ public sealed class RenderSurface2DFrame
             effects |= SpriteEffects.FlipVertically;
         }
 
-        spriteBatch.Draw(
+        commands.Add(RenderSurface2DCommand.DrawSprite(
             monoGameImage.Texture,
             destinationRectangle,
             sourceRectangle,
@@ -132,7 +134,7 @@ public sealed class RenderSurface2DFrame
             rotation,
             mapper.MapVector(origin),
             effects,
-            layerDepth);
+            layerDepth));
     }
 
     internal void Complete()

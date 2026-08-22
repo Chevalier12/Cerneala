@@ -137,6 +137,128 @@ public sealed class RenderSurface2DRenderingTests
         Assert.Equal(XnaColor.CornflowerBlue, secondContent);
     }
 
+    [Fact]
+    public void RetainedSessionSkipsRasterizationForAnIdenticalCommandStream()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
+        using MonoGameRenderSurface2DSession session = new(
+            fixture.Session.GraphicsDevice,
+            32,
+            16);
+        int drawCount = 0;
+
+        void Draw(RenderSurface2DFrame frame)
+        {
+            drawCount++;
+            frame.FillRectangle(
+                new DrawRect(2, 2, 8, 6),
+                CernealaColor.CornflowerBlue);
+        }
+
+        session.Render(Draw, CernealaColor.Black, TimeSpan.Zero);
+        fixture.Session.GraphicsDevice.SetRenderTarget(null);
+        session.Render(
+            Draw,
+            CernealaColor.Black,
+            TimeSpan.FromMilliseconds(16));
+
+        Assert.Equal(2, drawCount);
+        Assert.Equal(1, session.RasterizedFrameCount);
+        Assert.Null(session.LastDamageBounds);
+        Assert.Equal(1, session.RetainedCommandCount);
+    }
+
+    [Fact]
+    public void RetainedSessionRedrawsOnlyCommandsIntersectingChangedDamage()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
+        using MonoGameRenderSurface2DSession session = new(
+            fixture.Session.GraphicsDevice,
+            32,
+            16);
+        int movingX = 2;
+
+        void Draw(RenderSurface2DFrame frame)
+        {
+            frame.FillRectangle(
+                new DrawRect(24, 2, 4, 4),
+                CernealaColor.CornflowerBlue);
+            frame.FillRectangle(
+                new DrawRect(movingX, 2, 4, 4),
+                CernealaColor.LimeGreen);
+        }
+
+        session.Render(Draw, CernealaColor.Black, TimeSpan.Zero);
+        fixture.Session.GraphicsDevice.SetRenderTarget(null);
+        movingX = 10;
+        session.Render(
+            Draw,
+            CernealaColor.Black,
+            TimeSpan.FromMilliseconds(16));
+        fixture.Session.GraphicsDevice.SetRenderTarget(null);
+
+        XnaColor[] pixels = new XnaColor[32 * 16];
+        session.Surface.GetData(pixels);
+
+        Assert.Equal(2, session.RasterizedFrameCount);
+        Assert.Equal(new Rectangle(2, 2, 12, 4), session.LastDamageBounds);
+        Assert.Equal(1, session.LastReplayedCommandCount);
+        Assert.Equal(XnaColor.Black, pixels[(3 * 32) + 3]);
+        Assert.Equal(XnaColor.LimeGreen, pixels[(3 * 32) + 11]);
+        Assert.Equal(XnaColor.CornflowerBlue, pixels[(3 * 32) + 25]);
+    }
+
+    [Fact]
+    public void RetainedSessionRecomposesOverlappingCommandsWithinDamage()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
+        using MonoGameRenderSurface2DSession session = new(
+            fixture.Session.GraphicsDevice,
+            32,
+            16);
+        int movingX = 2;
+
+        void Draw(RenderSurface2DFrame frame)
+        {
+            frame.FillRectangle(frame.Bounds, CernealaColor.CornflowerBlue);
+            frame.FillRectangle(
+                new DrawRect(movingX, 2, 4, 4),
+                CernealaColor.HotPink);
+        }
+
+        session.Render(Draw, CernealaColor.Black, TimeSpan.Zero);
+        fixture.Session.GraphicsDevice.SetRenderTarget(null);
+        movingX = 10;
+        session.Render(
+            Draw,
+            CernealaColor.Black,
+            TimeSpan.FromMilliseconds(16));
+        fixture.Session.GraphicsDevice.SetRenderTarget(null);
+
+        XnaColor[] pixels = new XnaColor[32 * 16];
+        session.Surface.GetData(pixels);
+
+        Assert.Equal(new Rectangle(2, 2, 12, 4), session.LastDamageBounds);
+        Assert.Equal(2, session.LastReplayedCommandCount);
+        Assert.Equal(XnaColor.CornflowerBlue, pixels[(3 * 32) + 3]);
+        Assert.Equal(XnaColor.HotPink, pixels[(3 * 32) + 11]);
+    }
+
     private static Texture2D CreateSolidTexture(
         GraphicsDevice graphicsDevice,
         XnaColor color)
