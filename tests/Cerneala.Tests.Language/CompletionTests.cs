@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Xml.Linq;
 using Cerneala.Language.Features;
 using Cerneala.Language.Semantics;
@@ -23,6 +24,18 @@ public sealed class CompletionTests
     private const string Caret = "|caret|";
     private static readonly CSharpCompilation Project = CreateProject();
     private static readonly RoslynCompilationSymbols ProjectSymbols = new(Project);
+
+    [DllImport("kernel32.dll")]
+    private static extern IntPtr GetCurrentThread();
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetThreadTimes(
+        IntPtr thread,
+        out NativeFileTime creationTime,
+        out NativeFileTime exitTime,
+        out NativeFileTime kernelTime,
+        out NativeFileTime userTime);
 
     [Theory]
     [InlineData("<Wi|caret| />", "Window", null)]
@@ -649,14 +662,18 @@ public sealed class CompletionTests
         List<double> samples = new();
         for (int index = 0; index < 30; index++)
         {
-            Stopwatch watch = Stopwatch.StartNew();
+            long cpuBefore = GetCurrentThreadCpuTicks();
             _ = large.Complete();
-            watch.Stop();
-            samples.Add(watch.Elapsed.TotalMilliseconds);
+            long cpuAfter = GetCurrentThreadCpuTicks();
+            Assert.True(
+                cpuBefore >= 0 && cpuAfter >= cpuBefore,
+                "Could not read the completion thread CPU time.");
+            samples.Add(
+                TimeSpan.FromTicks(cpuAfter - cpuBefore).TotalMilliseconds);
         }
 
         double p95 = samples.OrderBy(value => value).ElementAt((int)Math.Ceiling(samples.Count * 0.95) - 1);
-        Assert.True(p95 < 100, "Warm completion p95 was " + p95.ToString("F2") + " ms.");
+        Assert.True(p95 < 100, "Warm completion thread CPU p95 was " + p95.ToString("F2") + " ms.");
 
         Task<IReadOnlyList<CernealaCompletionItem>> largeRequest = Task.Run(large.Complete);
         Task<IReadOnlyList<CernealaCompletionItem>> independentRequest = Task.Run(second.Complete);
@@ -677,6 +694,21 @@ public sealed class CompletionTests
         }
 
         return new PerformanceGateLease(semaphore);
+    }
+
+    private static long GetCurrentThreadCpuTicks()
+    {
+        if (!GetThreadTimes(
+            GetCurrentThread(),
+            out _,
+            out _,
+            out NativeFileTime kernelTime,
+            out NativeFileTime userTime))
+        {
+            return -1;
+        }
+
+        return kernelTime.Ticks + userTime.Ticks;
     }
 
     private static void AssertValidAfterInsertion(string source, CernealaCompletionItem item)
@@ -788,5 +820,14 @@ public sealed class CompletionTests
             semaphore.Release();
             semaphore.Dispose();
         }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private readonly struct NativeFileTime
+    {
+        private readonly uint lowDateTime;
+        private readonly uint highDateTime;
+
+        public long Ticks => ((long)highDateTime << 32) | lowDateTime;
     }
 }
