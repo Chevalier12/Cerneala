@@ -22,6 +22,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\Cerneala.csproj" />
     <ProjectReference Include="..\..\CernealaPresentation\CernealaPresentation.csproj" />
     <ProjectReference Include="..\..\Playground\Cerneala.Playground\Cerneala.Playground.csproj" />
