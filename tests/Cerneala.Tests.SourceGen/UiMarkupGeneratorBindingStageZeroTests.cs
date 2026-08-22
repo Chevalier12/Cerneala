@@ -746,6 +746,40 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.False(boundBorder.IsEnabled);
     }
 
+    [Fact]
+    public void MarkupBindingStageZero_AspectTemplateOwnerReferenceSeesMarkupValue()
+    {
+        const string markup = """
+            <StackPanel>
+              <StackPanel.Resources>
+                <Aspect Name="NavButton" TargetType="Button">
+                  @default { Opacity = 0.5; }
+                  @template { <ContentPresenter Content="$owner.Content" Opacity="$owner.Opacity" /> }
+                </Aspect>
+              </StackPanel.Resources>
+              <Button Aspect="$NavButton" Content="Owner" />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator(
+            "AspectTemplateOwnerReference.crn",
+            markup,
+            out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assembly assembly = EmitBindingTestAssembly(compilation);
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeBindingTestCreate(
+            assembly,
+            "Cerneala.GeneratedUi.AspectTemplateOwnerReferenceFactory"));
+        Button button = Assert.IsType<Button>(Assert.Single(panel.VisualChildren));
+        ContentPresenter presenter = Assert.IsType<ContentPresenter>(button.ComponentTemplateInstance!.Root);
+
+        Assert.Equal("Owner", presenter.Content);
+        Assert.Equal(0.5f, presenter.Opacity);
+        button.Content = "Changed";
+        Assert.Equal("Owner", presenter.Content);
+    }
+
     private static Assembly EmitBindingTestAssembly(Compilation compilation)
     {
         using MemoryStream stream = new();

@@ -2532,7 +2532,6 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             IReadOnlyList<AspectResource> aspects = ResolveAspects(element);
-            ApplyAspects(element, variable, aspects);
             DirectiveTemplateNode[] templates = parsedContent.Nodes.OfType<DirectiveTemplateNode>().ToArray();
             if (templates.Length > 1)
             {
@@ -2541,10 +2540,6 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     templates[1].Source,
                     Path.GetFileName(file.Path),
                     "An element may declare only one @template block.");
-            }
-            else if (templates.Length == 1)
-            {
-                EmitDirectTemplate(element, variable, templates[0], ReferenceEquals(element, document.Root));
             }
 
             MarkupAttribute[] propertyAttributes = element.Attributes()
@@ -2596,6 +2591,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     }
 
                     EmitProperty(element, variable, attribute);
+                }
+
+                ApplyAspects(element, variable, aspects);
+                if (templates.Length == 1)
+                {
+                    EmitDirectTemplate(element, variable, templates[0], ReferenceEquals(element, document.Root));
                 }
 
                 EmitBrushPropertyElement(element, variable);
@@ -3661,13 +3662,6 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         {
             string elementName = element.Name.LocalName;
             List<string> values = [];
-            if (aspect.TemplateVariable is not null)
-            {
-                values.Add(
-                    "new global::Cerneala.UI.Aspect.ElementAspectValue(" +
-                    "global::Cerneala.UI.Controls.Control.ComponentTemplateProperty, " + aspect.TemplateVariable + ")");
-            }
-
             foreach (AspectPropertyAssignment assignment in aspect.Assignments)
             {
                 PropertySpec? spec = FindPropertySpec(elementName, assignment.PropertyName, ReferenceEquals(element, document.Root));
@@ -3687,6 +3681,13 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
                 values.Add(
                     "new global::Cerneala.UI.Aspect.ElementAspectValue(" + spec.PropertyCode + ", " + expression.Code + ")");
+            }
+
+            if (aspect.TemplateVariable is not null)
+            {
+                values.Add(
+                    "new global::Cerneala.UI.Aspect.ElementAspectValue(" +
+                    "global::Cerneala.UI.Controls.Control.ComponentTemplateProperty, " + aspect.TemplateVariable + ")");
             }
 
             string valuesCode = values.Count == 0
@@ -3720,13 +3721,6 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             string valueSource = "global::Cerneala.UI.Core.UiPropertyValueSource.AspectBase")
         {
             string elementName = element.Name.LocalName;
-            if (aspect.TemplateVariable is not null)
-            {
-                currentLines.Add(
-                    variable + ".SetValue(global::Cerneala.UI.Controls.Control.ComponentTemplateProperty, " +
-                    aspect.TemplateVariable + ", " + valueSource + ");");
-            }
-
             foreach (AspectPropertyAssignment assignment in aspect.Assignments)
             {
                 PropertySpec? spec = FindPropertySpec(elementName, assignment.PropertyName, ReferenceEquals(element, document.Root));
@@ -3759,6 +3753,13 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     ? variable + ".SetValue(" + spec.PropertyCode + ", " + expression.Code +
                         ", " + valueSource + ");"
                     : variable + "." + spec.Name + " = " + expression.Code + ";");
+            }
+
+            if (aspect.TemplateVariable is not null)
+            {
+                currentLines.Add(
+                    variable + ".SetValue(global::Cerneala.UI.Controls.Control.ComponentTemplateProperty, " +
+                    aspect.TemplateVariable + ", " + valueSource + ");");
             }
         }
 
