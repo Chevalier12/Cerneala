@@ -2343,7 +2343,8 @@ Generated from `.`.
 |   |   |   |   |-- Win32WindowPlatformTests.cs
 |   |   |   |   |-- WindowRuntimeTestCollection.cs
 |   |   |   |   |-- WindowRuntimeTests.cs
-|   |   |   |   +-- WindowsDxProcessSmokeTests.cs
+|   |   |   |   |-- WindowsDxProcessSmokeTests.cs
+|   |   |   |   +-- WindowsGpuPreferenceTests.cs
 |   |   |   |-- Input/
 |   |   |   |   |-- ElementInputCacheInvalidationTests.cs
 |   |   |   |   |-- HitTestCacheInvalidationTests.cs
@@ -2967,7 +2968,8 @@ Generated from `.`.
 |   |   |   |-- Win32WindowPlatform.cs
 |   |   |   |-- WindowApplicationRuntime.cs
 |   |   |   |-- WindowsDpiAwareness.cs
-|   |   |   +-- WindowsDxWindowGraphicsSession.cs
+|   |   |   |-- WindowsDxWindowGraphicsSession.cs
+|   |   |   +-- WindowsGpuPreference.cs
 |   |   |-- BackdropFrameCounters.cs
 |   |   |-- IUiBackend.cs
 |   |   |-- IUiClock.cs
