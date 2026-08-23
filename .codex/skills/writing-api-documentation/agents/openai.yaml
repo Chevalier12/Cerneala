@@ -1,0 +1,4 @@
+interface:
+  display_name: "Writing API Documentation"
+  short_description: "Create WPF-style Markdown API docs"
+  default_prompt: "Use $writing-api-documentation to document this class into docs/documentation."
