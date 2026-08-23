@@ -1,0 +1,4 @@
+interface:
+  display_name: "Algorithm Market"
+  short_description: "Exhaustive research for any algorithmic problem"
+  default_prompt: "Use $algorithm-market to exhaustively research the credible algorithm families for this problem, compare academic and production evidence, and recommend the best absolute method and the best fit for my constraints."
