@@ -50,6 +50,11 @@
     "source": "Drawing/DrawCommandList.cs"
   },
   {
+    "name": "Cerneala.Drawing.DrawImageFlip",
+    "file": "documentation/classes/Cerneala.Drawing.DrawImageFlip.md",
+    "source": "Drawing/DrawImageFlip.cs"
+  },
+  {
     "name": "Cerneala.Drawing.DrawGradientStop",
     "file": "documentation/classes/Cerneala.Drawing.DrawGradientStop.md",
     "source": "Drawing/IDrawBrush.cs"
@@ -1177,7 +1182,7 @@
   {
     "name": "Cerneala.UI.Controls.RenderSurface2DFrame",
     "file": "documentation/classes/Cerneala.UI.Controls.RenderSurface2DFrame.md",
-    "source": "Drawing/MonoGame/RenderSurface2DFrame.cs"
+    "source": "UI/Controls/RenderSurface2DFrame.cs"
   },
   {
     "name": "Cerneala.UI.Controls.RenderSurface2DRedrawMode",
@@ -1187,7 +1192,7 @@
   {
     "name": "Cerneala.UI.Controls.RenderSurface2DSpriteFlip",
     "file": "documentation/classes/Cerneala.UI.Controls.RenderSurface2DSpriteFlip.md",
-    "source": "Drawing/MonoGame/RenderSurface2DFrame.cs"
+    "source": "UI/Controls/RenderSurface2DFrame.cs"
   },
   {
     "name": "Cerneala.UI.Controls.ResizeMode",
@@ -4308,5 +4313,755 @@
     "name": "Cerneala.VisualStudio.CernealaPackage",
     "file": "documentation/classes/Cerneala.VisualStudio.CernealaPackage.md",
     "source": "Cerneala.VisualStudio/CernealaPackage.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.Prism",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.Prism.md",
+    "source": "Drawing/Prism/Prism.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PrismFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PrismFilter.md",
+    "source": "Drawing/Prism/PrismOperation.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PrismImage",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PrismImage.md",
+    "source": "Drawing/Prism/PrismImage.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PrismOperation",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PrismOperation.md",
+    "source": "Drawing/Prism/PrismOperation.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PrismPipeline",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PrismPipeline.md",
+    "source": "Drawing/Prism/PrismPipeline.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PrismStyle",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PrismStyle.md",
+    "source": "Drawing/Prism/PrismOperation.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.BrightnessContrastFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.BrightnessContrastFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.LevelsFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.LevelsFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.CurvesFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.CurvesFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.ExposureFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.ExposureFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.VibranceFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.VibranceFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.HueSaturationFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.HueSaturationFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.ColorBalanceFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.ColorBalanceFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.BlackWhiteFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.BlackWhiteFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PhotoFilterFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PhotoFilterFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.ChannelMixerFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.ChannelMixerFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.ColorLookupFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.ColorLookupFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.InvertFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.InvertFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PosterizeFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PosterizeFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.ThresholdFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.ThresholdFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.GradientMapFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.GradientMapFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.SelectiveColorFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.SelectiveColorFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.AverageFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.AverageFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.BlurFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.BlurFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.BlurMoreFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.BlurMoreFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.BoxBlurFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.BoxBlurFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.GaussianBlurFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.GaussianBlurFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.LensBlurFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.LensBlurFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.MotionBlurFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.MotionBlurFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.RadialBlurFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.RadialBlurFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.ShapeBlurFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.ShapeBlurFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.SmartBlurFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.SmartBlurFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.SurfaceBlurFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.SurfaceBlurFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.FieldBlurFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.FieldBlurFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.IrisBlurFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.IrisBlurFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.TiltShiftFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.TiltShiftFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PathBlurFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PathBlurFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.SpinBlurFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.SpinBlurFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.SharpenFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.SharpenFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.SharpenMoreFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.SharpenMoreFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.SharpenEdgesFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.SharpenEdgesFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.UnsharpMaskFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.UnsharpMaskFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.SmartSharpenFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.SmartSharpenFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.HighPassFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.HighPassFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.TransformFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.TransformFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.AdaptiveWideAngleFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.AdaptiveWideAngleFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.LensCorrectionFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.LensCorrectionFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.DiffuseGlowFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.DiffuseGlowFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.DisplaceFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.DisplaceFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.GlassFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.GlassFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.OceanRippleFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.OceanRippleFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PinchFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PinchFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PolarCoordinatesFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PolarCoordinatesFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.RippleFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.RippleFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.ShearFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.ShearFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.SpherizeFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.SpherizeFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.TwirlFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.TwirlFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.WaveFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.WaveFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.ZigZagFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.ZigZagFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.LiquifyFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.LiquifyFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.MaximumFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.MaximumFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.MinimumFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.MinimumFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.OffsetFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.OffsetFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.AddNoiseFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.AddNoiseFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.DespeckleFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.DespeckleFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.DustScratchesFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.DustScratchesFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.MedianFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.MedianFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.ReduceNoiseFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.ReduceNoiseFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.ColorHalftoneFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.ColorHalftoneFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.CrystallizeFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.CrystallizeFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.FacetFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.FacetFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.FragmentFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.FragmentFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.MezzotintFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.MezzotintFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.MosaicFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.MosaicFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PointillizeFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PointillizeFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.CloudsFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.CloudsFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.DifferenceCloudsFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.DifferenceCloudsFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.FibersFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.FibersFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.LensFlareFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.LensFlareFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.LightingEffectsFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.LightingEffectsFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.DeinterlaceFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.DeinterlaceFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.NtscColorsFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.NtscColorsFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.ColoredPencilFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.ColoredPencilFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.CutoutFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.CutoutFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.DryBrushFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.DryBrushFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.FilmGrainFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.FilmGrainFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.FrescoFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.FrescoFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.NeonGlowFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.NeonGlowFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PaintDaubsFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PaintDaubsFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PaletteKnifeFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PaletteKnifeFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PlasticWrapFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PlasticWrapFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PosterEdgesFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PosterEdgesFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.RoughPastelsFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.RoughPastelsFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.SmudgeStickFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.SmudgeStickFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.SpongeFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.SpongeFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.UnderpaintingFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.UnderpaintingFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.WatercolorFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.WatercolorFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.AccentedEdgesFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.AccentedEdgesFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.AngledStrokesFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.AngledStrokesFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.CrosshatchFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.CrosshatchFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.DarkStrokesFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.DarkStrokesFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.InkOutlinesFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.InkOutlinesFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.SpatterFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.SpatterFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.SprayedStrokesFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.SprayedStrokesFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.SumiEFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.SumiEFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.BasReliefFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.BasReliefFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.ChalkCharcoalFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.ChalkCharcoalFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.CharcoalFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.CharcoalFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.ChromeFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.ChromeFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.ConteCrayonFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.ConteCrayonFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.GraphicPenFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.GraphicPenFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.HalftonePatternFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.HalftonePatternFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.NotePaperFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.NotePaperFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PhotocopyFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PhotocopyFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PlasterFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PlasterFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.ReticulationFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.ReticulationFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.StampFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.StampFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.TornEdgesFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.TornEdgesFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.WaterPaperFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.WaterPaperFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.DiffuseFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.DiffuseFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.EmbossFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.EmbossFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.ExtrudeFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.ExtrudeFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.FindEdgesFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.FindEdgesFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.GlowingEdgesFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.GlowingEdgesFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.SolarizeFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.SolarizeFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.TilesFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.TilesFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.TraceContourFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.TraceContourFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.WindFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.WindFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.CraquelureFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.CraquelureFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.GrainFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.GrainFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.MosaicTilesFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.MosaicTilesFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PatchworkFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PatchworkFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.StainedGlassFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.StainedGlassFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.TexturizerFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.TexturizerFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.OilPaintFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.OilPaintFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.CustomConvolutionFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.CustomConvolutionFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.ColorMatrixFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.ColorMatrixFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.ColorFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.ColorFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.ChromaticAberrationFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.ChromaticAberrationFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.ScanlinesFilter",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.ScanlinesFilter.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.DropShadowStyle",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.DropShadowStyle.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.InnerShadowStyle",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.InnerShadowStyle.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.OuterGlowStyle",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.OuterGlowStyle.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.InnerGlowStyle",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.InnerGlowStyle.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.BevelEmbossStyle",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.BevelEmbossStyle.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.SatinStyle",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.SatinStyle.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.ColorOverlayStyle",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.ColorOverlayStyle.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.GradientOverlayStyle",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.GradientOverlayStyle.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.PatternOverlayStyle",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.PatternOverlayStyle.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.Drawing.Prism.StrokeStyle",
+    "file": "documentation/classes/Cerneala.Drawing.Prism.StrokeStyle.md",
+    "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
   }
 ]

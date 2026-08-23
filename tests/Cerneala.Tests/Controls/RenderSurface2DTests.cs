@@ -130,6 +130,66 @@ public sealed class RenderSurface2DTests
         Assert.Null(frameType.GetMethod("End"));
     }
 
+    [Fact]
+    public void FrameRecordsTheGeneralCernealaDrawingCommands()
+    {
+        DrawCommandList commands = new();
+        RenderSurface2DFrame frame = new(
+            commands,
+            new DrawRect(0, 0, 64, 48),
+            TimeSpan.FromMilliseconds(16));
+        SolidColorBrush brush = new(new Color(20, 40, 60));
+        DrawTextRun text = new(new TestFont(), "Snake", 12);
+        TestImage image = new();
+
+        frame.FillRectangle(new DrawRect(1, 1, 8, 6), brush);
+        frame.DrawRectangle(new DrawRect(2, 2, 9, 7), Color.White, 1);
+        frame.FillEllipse(new DrawRect(3, 3, 10, 8), Color.HotPink);
+        frame.DrawEllipse(new DrawRect(4, 4, 11, 9), brush, 2);
+        frame.DrawLine(new DrawPoint(0, 0), new DrawPoint(12, 8), Color.Black, 1);
+        frame.FillPath(
+            "M0 0L8 0L8 8Z",
+            new DrawRect(0, 0, 8, 8),
+            new DrawRect(5, 5, 8, 8),
+            brush);
+        frame.DrawText(text, new DrawPoint(6, 16), Color.White);
+        frame.DrawImage(image, new DrawRect(7, 7, 12, 10), Color.White);
+        frame.DrawSprite(
+            image,
+            new DrawRect(8, 8, 12, 10),
+            source: null,
+            Color.White,
+            rotation: 0.2f,
+            origin: new DrawPoint(1, 1),
+            RenderSurface2DSpriteFlip.Horizontal,
+            layerDepth: 0.5f);
+        frame.PushClip(new DrawRect(0, 0, 32, 24));
+        frame.PopClip();
+        frame.Complete();
+
+        Assert.Equal(
+            [
+                DrawCommandKind.FillRectangle,
+                DrawCommandKind.DrawRectangle,
+                DrawCommandKind.FillEllipse,
+                DrawCommandKind.DrawEllipse,
+                DrawCommandKind.DrawLine,
+                DrawCommandKind.FillPath,
+                DrawCommandKind.DrawText,
+                DrawCommandKind.DrawImage,
+                DrawCommandKind.DrawImage,
+                DrawCommandKind.PushClip,
+                DrawCommandKind.PopClip
+            ],
+            commands.Select(command => command.Kind));
+
+        DrawCommand spriteCommand = commands[8];
+        Assert.Equal(0.2f, spriteCommand.ImageRotation);
+        Assert.Equal(new DrawPoint(1, 1), spriteCommand.ImageOrigin);
+        Assert.Equal(DrawImageFlip.Horizontal, spriteCommand.ImageFlip);
+        Assert.Equal(0.5f, spriteCommand.LayerDepth);
+    }
+
     private static RetainedRenderCache PreparedCache(UIElement root)
     {
         RetainedRenderCache cache = new();
@@ -173,5 +233,19 @@ public sealed class RenderSurface2DTests
         protected override void OnDraw(RenderSurface2DFrame frame)
         {
         }
+    }
+
+    private sealed class TestFont : IDrawFont
+    {
+        public string FamilyName => "Test";
+
+        public float Size => 12;
+    }
+
+    private sealed class TestImage : IDrawImage
+    {
+        public int Width => 16;
+
+        public int Height => 16;
     }
 }

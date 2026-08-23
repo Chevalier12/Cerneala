@@ -1,0 +1,38 @@
+# DespeckleFilter Class
+
+## Definition
+
+Namespace: `Cerneala.Drawing.Prism`
+
+Assembly/Project: `Cerneala`
+
+Source: `Cerneala.SourceGen/Prism/Catalog/prism-catalog.json`
+
+Provides the typed code API for the Prism `Despeckle` filter.
+
+```csharp
+public sealed class DespeckleFilter : PrismFilter
+```
+
+## Constructors
+
+| Signature | Description |
+| --- | --- |
+| `DespeckleFilter()` | Creates the operation with Prism catalog defaults. |
+
+## Properties
+
+| Name | Type | Default | Description |
+| --- | --- | --- | --- |
+| `Threshold` | `float` | `0.1` | Optional catalog parameter; unit: `unitless`. |
+| `Radius` | `float` | `1` | Optional catalog parameter; unit: `dip`. |
+
+## Remarks
+
+Parameter assignments are validated against the `Despeckle` catalog entry. Add the operation to a `PrismPipeline` or pass it directly to `Prism.Apply`.
+
+## See Also
+
+- `PrismFilter`
+- `PrismPipeline`
+- `Prism.Apply`

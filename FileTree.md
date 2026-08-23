@@ -504,6 +504,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.Drawing.DrawCommandKind.md
 |   |   |   |-- Cerneala.Drawing.DrawCommandList.md
 |   |   |   |-- Cerneala.Drawing.DrawGradientStop.md
+|   |   |   |-- Cerneala.Drawing.DrawImageFlip.md
 |   |   |   |-- Cerneala.Drawing.DrawingContext.md
 |   |   |   |-- Cerneala.Drawing.DrawingDrawBrushDescriptor.md
 |   |   |   |-- Cerneala.Drawing.DrawingFrameContext.md
@@ -1639,9 +1640,7 @@ Generated from `.`.
 |   |   |-- MonoGameImage.cs
 |   |   |-- MonoGamePathMeshBuilder.cs
 |   |   |-- MonoGameRenderSurface2DSession.cs
-|   |   |-- RenderSurface2D.MonoGame.cs
-|   |   |-- RenderSurface2DCommand.cs
-|   |   +-- RenderSurface2DFrame.cs
+|   |   +-- RenderSurface2D.MonoGame.cs
 |   |-- Paths/
 |   |   +-- SvgPathFlattener.cs
 |   |-- Prism/
@@ -1922,6 +1921,7 @@ Generated from `.`.
 |   |-- DrawCommand.cs
 |   |-- DrawCommandKind.cs
 |   |-- DrawCommandList.cs
+|   |-- DrawImageFlip.cs
 |   |-- DrawingBackendFrameTiming.cs
 |   |-- DrawingContext.cs
 |   |-- DrawingFrameContext.cs
@@ -2856,6 +2856,7 @@ Generated from `.`.
 |   |   |-- ProgressBar.cs
 |   |   |-- RadioButton.cs
 |   |   |-- RenderSurface2D.cs
+|   |   |-- RenderSurface2DFrame.cs
 |   |   |-- RenderSurface2DRedrawMode.cs
 |   |   |-- ResizeMode.cs
 |   |   |-- ScrollBarVisibility.cs

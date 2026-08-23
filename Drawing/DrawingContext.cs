@@ -1,3 +1,5 @@
+using Cerneala.Drawing.Prism;
+
 namespace Cerneala.Drawing;
 
 public sealed class DrawingContext
@@ -76,7 +78,53 @@ public sealed class DrawingContext
 
     public void DrawImage(IDrawImage image, DrawRect destination, Color color)
     {
-        _commands.Add(DrawCommand.DrawImage(image, destination, color));
+        DrawImage(
+            image,
+            destination,
+            source: null,
+            color,
+            rotation: 0,
+            origin: default,
+            DrawImageFlip.None,
+            layerDepth: 0);
+    }
+
+    public void DrawImage(
+        IDrawImage image,
+        DrawRect destination,
+        DrawRect? source,
+        Color color,
+        float rotation = 0,
+        DrawPoint origin = default,
+        DrawImageFlip flip = DrawImageFlip.None,
+        float layerDepth = 0)
+    {
+        if (image is PrismImage prismImage)
+        {
+            _commands.Add(DrawCommand.BeginPrism(
+                prismImage.CreateDrawScope(destination)));
+            DrawImage(
+                prismImage.Source,
+                destination,
+                source,
+                color,
+                rotation,
+                origin,
+                flip,
+                layerDepth);
+            _commands.Add(DrawCommand.EndPrism());
+            return;
+        }
+
+        _commands.Add(DrawCommand.DrawImage(
+            image,
+            destination,
+            source,
+            color,
+            rotation,
+            origin,
+            flip,
+            layerDepth));
     }
 
     internal void DrawRenderSurface2D(

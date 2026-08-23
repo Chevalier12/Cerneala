@@ -64,6 +64,34 @@ public sealed class RenderSurface2DRenderingTests
     }
 
     [Fact]
+    public void DrawEventRendersPrismImageThroughTheNativePrismPipeline()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
+        using MonoGameImage source = new(CreateSolidTexture(
+            fixture.Session.GraphicsDevice,
+            XnaColor.LimeGreen));
+        PrismImage image = global::Cerneala.Drawing.Prism.Prism.Apply(
+            source,
+            new InvertFilter());
+        RenderSurface2D surface = new();
+        surface.Draw += (_, frame) =>
+        {
+            frame.DrawSprite(image, frame.Bounds, CernealaColor.White);
+        };
+
+        XnaColor actual = RenderCenterPixel(fixture, surface);
+
+        Assert.InRange(actual.R, 249, 253);
+        Assert.InRange(actual.G, 166, 170);
+        Assert.InRange(actual.B, 249, 253);
+    }
+
+    [Fact]
     public void MultipleDrawSubscribersComposeInRegistrationOrder()
     {
         if (!OperatingSystem.IsWindows())
@@ -87,6 +115,28 @@ public sealed class RenderSurface2DRenderingTests
         Assert.InRange(center.R, 253, 255);
         Assert.InRange(center.G, 103, 107);
         Assert.InRange(center.B, 178, 182);
+    }
+
+    [Fact]
+    public void DrawEventRendersGeneralDrawingPrimitives()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
+        RenderSurface2D surface = new();
+        surface.Draw += (_, frame) =>
+        {
+            frame.FillEllipse(frame.Bounds, CernealaColor.LimeGreen);
+        };
+
+        XnaColor center = RenderCenterPixel(fixture, surface);
+
+        Assert.InRange(center.R, 48, 52);
+        Assert.InRange(center.G, 203, 207);
+        Assert.InRange(center.B, 48, 52);
     }
 
     [Fact]

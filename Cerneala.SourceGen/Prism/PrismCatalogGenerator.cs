@@ -67,6 +67,14 @@ internal sealed class PrismCatalogGenerator : IIncrementalGenerator
                     "PrismCatalog.Generated.g.cs",
                     SourceText.From(compilation.GeneratedSource, Encoding.UTF8));
             }
+            if (compilation.Model is not null)
+            {
+                productionContext.AddSource(
+                    "PrismOperations.Generated.g.cs",
+                    SourceText.From(
+                        PrismOperationSourceEmitter.Emit(compilation.Model),
+                        Encoding.UTF8));
+            }
         });
     }
 

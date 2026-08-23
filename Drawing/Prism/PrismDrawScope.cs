@@ -50,7 +50,8 @@ public readonly record struct PrismDrawScope
         float pixelScale,
         long visualContentVersion,
         PrismDrawResources resources,
-        long lowerUiVersion = 0)
+        long lowerUiVersion = 0,
+        bool isLocalDrawingScope = false)
     {
         Instance = instance ?? throw new ArgumentNullException(nameof(instance));
         ArgumentNullException.ThrowIfNull(resources);
@@ -83,6 +84,7 @@ public readonly record struct PrismDrawScope
         VisualContentVersion = visualContentVersion;
         LowerUiVersion = lowerUiVersion;
         Resources = resources;
+        IsLocalDrawingScope = isLocalDrawingScope;
     }
 
     public PrismInstance Instance { get; }
@@ -106,4 +108,47 @@ public readonly record struct PrismDrawScope
     internal long LowerUiVersion { get; }
 
     internal PrismDrawResources Resources { get; }
+
+    internal bool IsLocalDrawingScope { get; }
+
+    internal PrismDrawScope TranslateLocal(float offsetX, float offsetY)
+    {
+        if (!IsLocalDrawingScope || offsetX == 0 && offsetY == 0)
+        {
+            return this;
+        }
+
+        return new PrismDrawScope(
+            Instance,
+            CacheOwnerToken,
+            new DrawRect(
+                ControlBounds.X + offsetX,
+                ControlBounds.Y + offsetY,
+                ControlBounds.Width,
+                ControlBounds.Height),
+            EffectiveTransform,
+            PixelScale,
+            VisualContentVersion,
+            Resources,
+            LowerUiVersion,
+            isLocalDrawingScope: true);
+    }
+
+    internal PrismDrawScope ApplyLocalTransform(Matrix3x2 transform)
+    {
+        if (!IsLocalDrawingScope)
+        {
+            return this;
+        }
+
+        return new PrismDrawScope(
+            Instance,
+            CacheOwnerToken,
+            ControlBounds,
+            Matrix3x2.Multiply(EffectiveTransform, transform),
+            PixelScale,
+            VisualContentVersion,
+            Resources,
+            LowerUiVersion);
+    }
 }

@@ -643,10 +643,22 @@ public sealed class DrawCommandListBuilder
                 command.Brush,
                 command.BrushOpacity),
             DrawCommandKind.DrawText => DrawCommand.DrawText(command.TextRun!, Translate(command.Position, offsetX, offsetY), command.Color),
-            DrawCommandKind.DrawImage => DrawCommand.DrawImage(command.Image!, Translate(command.Rect, offsetX, offsetY), command.Color),
+            DrawCommandKind.DrawImage => DrawCommand.DrawImage(
+                command.Image!,
+                Translate(command.Rect, offsetX, offsetY),
+                command.ImageSource,
+                command.Color,
+                command.ImageRotation,
+                command.ImageOrigin,
+                command.ImageFlip,
+                command.LayerDepth),
             DrawCommandKind.RenderSurface2D => DrawCommand.RenderSurface2D(command.RenderSurface!, Translate(command.Rect, offsetX, offsetY), command.Color),
             DrawCommandKind.PushClip => DrawCommand.PushClip(Translate(command.Rect, offsetX, offsetY)),
             DrawCommandKind.PopClip => command,
+            DrawCommandKind.BeginPrism
+                when command.PrismScope is PrismDrawScope scope &&
+                    scope.IsLocalDrawingScope =>
+                DrawCommand.BeginPrism(scope.TranslateLocal(offsetX, offsetY)),
             DrawCommandKind.BeginPrism => command,
             DrawCommandKind.EndPrism => command,
             _ => command
@@ -698,10 +710,23 @@ public sealed class DrawCommandListBuilder
                 command.Brush,
                 command.BrushOpacity * opacity),
             DrawCommandKind.DrawText => DrawCommand.DrawText(command.TextRun!, transform.Transform(command.Position), ApplyOpacity(command.Color, opacity)),
-            DrawCommandKind.DrawImage => DrawCommand.DrawImage(command.Image!, Transform(command.Rect, transform), ApplyOpacity(command.Color, opacity)),
+            DrawCommandKind.DrawImage => DrawCommand.DrawImage(
+                command.Image!,
+                Transform(command.Rect, transform),
+                command.ImageSource,
+                ApplyOpacity(command.Color, opacity),
+                command.ImageRotation,
+                command.ImageOrigin,
+                command.ImageFlip,
+                command.LayerDepth),
             DrawCommandKind.RenderSurface2D => DrawCommand.RenderSurface2D(command.RenderSurface!, Transform(command.Rect, transform), ApplyOpacity(command.Color, opacity)),
             DrawCommandKind.PushClip => DrawCommand.PushClip(Transform(command.Rect, transform)),
             DrawCommandKind.PopClip => command,
+            DrawCommandKind.BeginPrism
+                when command.PrismScope is PrismDrawScope scope &&
+                    scope.IsLocalDrawingScope =>
+                DrawCommand.BeginPrism(
+                    scope.ApplyLocalTransform(ToNumerics(transform))),
             DrawCommandKind.BeginPrism => command,
             DrawCommandKind.EndPrism => command,
             _ => command

@@ -20,7 +20,12 @@ public readonly record struct DrawCommand
         string? pathData = null,
         DrawRect sourceRect = default,
         PrismDrawScope? prismScope = null,
-        IRenderSurface2DSource? renderSurface = null)
+        IRenderSurface2DSource? renderSurface = null,
+        DrawRect? imageSource = null,
+        float imageRotation = 0,
+        DrawPoint imageOrigin = default,
+        DrawImageFlip imageFlip = DrawImageFlip.None,
+        float layerDepth = 0)
     {
         Kind = kind;
         Rect = rect;
@@ -38,6 +43,11 @@ public readonly record struct DrawCommand
         SourceRect = sourceRect;
         PrismScope = prismScope;
         RenderSurface = renderSurface;
+        ImageSource = imageSource;
+        ImageRotation = imageRotation;
+        ImageOrigin = imageOrigin;
+        ImageFlip = imageFlip;
+        LayerDepth = layerDepth;
     }
 
     public DrawCommandKind Kind { get; }
@@ -57,6 +67,16 @@ public readonly record struct DrawCommand
     public DrawPoint EndPoint { get; }
 
     public IDrawImage? Image { get; }
+
+    public DrawRect? ImageSource { get; }
+
+    public float ImageRotation { get; }
+
+    public DrawPoint ImageOrigin { get; }
+
+    public DrawImageFlip ImageFlip { get; }
+
+    public float LayerDepth { get; }
 
     public IDrawFont? Font { get; }
 
@@ -174,9 +194,59 @@ public readonly record struct DrawCommand
 
     public static DrawCommand DrawImage(IDrawImage image, DrawRect destination, Color color)
     {
-        ArgumentNullException.ThrowIfNull(image);
+        return DrawImage(
+            image,
+            destination,
+            source: null,
+            color,
+            rotation: 0,
+            origin: default,
+            DrawImageFlip.None,
+            layerDepth: 0);
+    }
 
-        return new DrawCommand(DrawCommandKind.DrawImage, destination, color, 0, null, null, default, default, image, null, null, 1);
+    public static DrawCommand DrawImage(
+        IDrawImage image,
+        DrawRect destination,
+        DrawRect? source,
+        Color color,
+        float rotation = 0,
+        DrawPoint origin = default,
+        DrawImageFlip flip = DrawImageFlip.None,
+        float layerDepth = 0)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+        if (!float.IsFinite(rotation))
+        {
+            throw new ArgumentOutOfRangeException(nameof(rotation));
+        }
+        if (!float.IsFinite(layerDepth) || layerDepth < 0 || layerDepth > 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(layerDepth));
+        }
+        if ((flip & ~(DrawImageFlip.Horizontal | DrawImageFlip.Vertical)) != 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(flip));
+        }
+
+        return new DrawCommand(
+            DrawCommandKind.DrawImage,
+            destination,
+            color,
+            0,
+            null,
+            null,
+            default,
+            default,
+            image,
+            null,
+            null,
+            1,
+            imageSource: source,
+            imageRotation: rotation,
+            imageOrigin: origin,
+            imageFlip: flip,
+            layerDepth: layerDepth);
     }
 
     internal static DrawCommand RenderSurface2D(

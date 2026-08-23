@@ -53,7 +53,7 @@ DrawCommand brushedFill = DrawCommand.FillRectangle(
 
 ## Remarks
 
-`DrawCommand` is a value object for retained drawing work. Each static factory method sets `Kind` and populates only the payload fields needed by that command kind. For example, color-based `DrawLine` uses `Position`, `EndPoint`, `Color`, and `Thickness`, brush-based primitives use `Brush` and `BrushOpacity`, and `DrawImage` uses `Rect`, `Color`, and `Image`.
+`DrawCommand` is a value object for retained drawing work. Each static factory method sets `Kind` and populates only the payload fields needed by that command kind. For example, color-based `DrawLine` uses `Position`, `EndPoint`, `Color`, and `Thickness`, brush-based primitives use `Brush` and `BrushOpacity`, and transformed image drawing additionally uses `ImageSource`, `ImageRotation`, `ImageOrigin`, `ImageFlip`, and `LayerDepth`.
 
 `BeginPrism` and `EndPrism` delimit a retained Prism capture scope. Only the begin command carries a typed `PrismDrawScope`; backends that do not implement Prism may ignore both delimiters while continuing to process the commands between them.
 
@@ -76,6 +76,11 @@ Stroke factories validate `thickness` as a positive, finite pixel size. `DrawLin
 | `Position` | `DrawPoint` | Start point for line commands or baseline/origin position for text commands. |
 | `EndPoint` | `DrawPoint` | End point for line commands. |
 | `Image` | `IDrawImage?` | Image payload for image commands. |
+| `ImageSource` | `DrawRect?` | Optional source region for an image command; `null` selects the entire image. |
+| `ImageRotation` | `float` | Clockwise image rotation in radians. |
+| `ImageOrigin` | `DrawPoint` | Image rotation and placement origin in source-image pixels. |
+| `ImageFlip` | `DrawImageFlip` | Image-axis mirroring flags. |
+| `LayerDepth` | `float` | Image layer depth from `0` through `1`. |
 | `Font` | `IDrawFont?` | Font copied from the `DrawTextRun` for text commands. |
 | `PathData` | `string?` | SVG path-data payload for `FillPath` commands. |
 | `SourceRect` | `DrawRect` | Source view box used to map SVG coordinates into `Rect`. |
@@ -99,6 +104,7 @@ Stroke factories validate `thickness` as a positive, finite pixel size. `DrawLin
 | `DrawText(DrawTextRun textRun, DrawPoint position, Color color)` | `DrawCommand` | Creates a `DrawText` command with `Text`, `TextRun`, `Font`, `Position`, and `Color` populated. |
 | `DrawText(DrawTextRun textRun, DrawPoint position, IDrawBrush brush, float opacity = 1)` | `DrawCommand` | Creates a brush-based text command. The backend applies the brush through the glyph mask. |
 | `DrawImage(IDrawImage image, DrawRect destination, Color color)` | `DrawCommand` | Creates a `DrawImage` command with `Image`, destination `Rect`, and `Color` populated. |
+| `DrawImage(IDrawImage image, DrawRect destination, DrawRect? source, Color color, float rotation = 0, DrawPoint origin = default, DrawImageFlip flip = DrawImageFlip.None, float layerDepth = 0)` | `DrawCommand` | Creates a transformed `DrawImage` command with an optional source region, tint, rotation, origin, mirroring, and layer depth. |
 | `PushClip(DrawRect rect)` | `DrawCommand` | Creates a `PushClip` command for the supplied clipping rectangle. |
 | `PopClip()` | `DrawCommand` | Creates a `PopClip` command. |
 | `BeginPrism(PrismDrawScope scope)` | `DrawCommand` | Begins a retained Prism capture scope and stores its typed frame state. |
@@ -121,6 +127,7 @@ Stroke factories validate `thickness` as a positive, finite pixel size. `DrawLin
 | `DrawText` | `ArgumentOutOfRangeException` | `position` has a coordinate outside the valid pixel range. |
 | `DrawText` | `ArgumentOutOfRangeException` | `opacity` is non-finite or outside `0` through `1`. |
 | `DrawImage` | `ArgumentNullException` | `image` is null. |
+| Transformed `DrawImage` | `ArgumentOutOfRangeException` | Rotation is non-finite, layer depth is outside `0` through `1`, or `flip` contains unsupported flags. |
 
 ## Applies To
 
@@ -132,3 +139,4 @@ Cerneala drawing command recording and rendering paths.
 - [`DrawCommandList`](https://github.com/Chevalier12/Cerneala/blob/master/Drawing/DrawCommandList.cs)
 - [`PrismDrawScope`](https://github.com/Chevalier12/Cerneala/blob/master/Drawing/Prism/PrismDrawScope.cs)
 - [`DrawingContext`](https://github.com/Chevalier12/Cerneala/blob/master/Drawing/DrawingContext.cs)
+- `DrawImageFlip`

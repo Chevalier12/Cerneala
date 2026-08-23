@@ -1,4 +1,7 @@
 using Cerneala.UI.Controls;
+using Cerneala.Drawing.Prism;
+using Cerneala.Drawing.Prism.Graph;
+using Cerneala.Drawing.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using CernealaColor = Cerneala.Drawing.Color;
@@ -12,8 +15,10 @@ internal sealed class MonoGameRenderSurface2DSession : IDisposable
     private readonly SpriteBatch spriteBatch;
     private readonly Texture2D whitePixel;
     private readonly RasterizerState scissorRasterizerState;
-    private List<RenderSurface2DCommand> retainedCommands = [];
-    private List<RenderSurface2DCommand> recordingCommands = [];
+    private readonly MonoGameDrawingBackend drawingBackend;
+    private readonly DrawCommandList replayCommands = new();
+    private DrawCommandList retainedCommands = new();
+    private DrawCommandList recordingCommands = new();
     private XnaColor retainedClearColor;
     private bool hasRetainedFrame;
     private bool disposed;
@@ -48,6 +53,13 @@ internal sealed class MonoGameRenderSurface2DSession : IDisposable
             CullMode = CullMode.None,
             ScissorTestEnable = true
         };
+        drawingBackend = new MonoGameDrawingBackend(
+            spriteBatch,
+            whitePixel,
+            new SkiaTextRasterizer(),
+            new PrismRendererOptions(),
+            retainedCacheEnabled: false,
+            prismEnabled: false);
     }
 
     public GraphicsDevice GraphicsDevice { get; }
@@ -78,9 +90,8 @@ internal sealed class MonoGameRenderSurface2DSession : IDisposable
 
         recordingCommands.Clear();
         RenderSurface2DFrame frame = new(
-            GraphicsDevice,
             recordingCommands,
-            new Rectangle(0, 0, PixelWidth, PixelHeight),
+            new DrawRect(0, 0, PixelWidth, PixelHeight),
             frameTime);
         try
         {
@@ -131,7 +142,7 @@ internal sealed class MonoGameRenderSurface2DSession : IDisposable
             retainedCommands.Count,
             recordingCommands.Count);
         while (prefixLength < sharedLength &&
-            retainedCommands[prefixLength].VisuallyEquals(
+            retainedCommands[prefixLength].Equals(
                 recordingCommands[prefixLength]))
         {
             prefixLength++;
@@ -147,11 +158,17 @@ internal sealed class MonoGameRenderSurface2DSession : IDisposable
         int recordingSuffix = recordingCommands.Count - 1;
         while (retainedSuffix >= prefixLength &&
             recordingSuffix >= prefixLength &&
-            retainedCommands[retainedSuffix].VisuallyEquals(
+            retainedCommands[retainedSuffix].Equals(
                 recordingCommands[recordingSuffix]))
         {
             retainedSuffix--;
             recordingSuffix--;
+        }
+
+        if (ContainsContextSensitiveCommand(retainedCommands) ||
+            ContainsContextSensitiveCommand(recordingCommands))
+        {
+            return surfaceBounds;
         }
 
         Rectangle? damage = null;
@@ -159,14 +176,14 @@ internal sealed class MonoGameRenderSurface2DSession : IDisposable
         {
             damage = UnionDamage(
                 damage,
-                retainedCommands[index].ResolveDamageBounds(surfaceBounds),
+                ResolveDamageBounds(retainedCommands[index], surfaceBounds),
                 surfaceBounds);
         }
         for (int index = prefixLength; index <= recordingSuffix; index++)
         {
             damage = UnionDamage(
                 damage,
-                recordingCommands[index].ResolveDamageBounds(surfaceBounds),
+                ResolveDamageBounds(recordingCommands[index], surfaceBounds),
                 surfaceBounds);
         }
 
@@ -201,31 +218,87 @@ internal sealed class MonoGameRenderSurface2DSession : IDisposable
             spriteBatch.End();
         }
 
-        spriteBatch.Begin(
-            SpriteSortMode.Deferred,
-            BlendState.AlphaBlend,
-            SamplerState.LinearClamp,
-            DepthStencilState.None,
-            scissorRasterizerState);
-        try
+        replayCommands.Clear();
+        replayCommands.Add(DrawCommand.PushClip(ToDrawRect(damageBounds)));
+        foreach (DrawCommand command in recordingCommands)
         {
-            foreach (RenderSurface2DCommand command in recordingCommands)
+            if (!ResolveDamageBounds(command, surfaceBounds)
+                .Intersects(damageBounds))
             {
-                if (!command.ResolveDamageBounds(surfaceBounds)
-                    .Intersects(damageBounds))
-                {
-                    continue;
-                }
+                continue;
+            }
 
-                command.Replay(spriteBatch, whitePixel);
-                LastReplayedCommandCount++;
+            replayCommands.Add(command);
+            LastReplayedCommandCount++;
+        }
+        replayCommands.Add(DrawCommand.PopClip());
+
+        PrismFrameAnalysis analysis = new PrismFrameAnalyzer().Analyze(replayCommands);
+        if (!analysis.Scopes.IsEmpty)
+        {
+            drawingBackend.EnablePrism();
+        }
+        DrawingFrameContext frameContext = new(analysis);
+        drawingBackend.Render(replayCommands, in frameContext);
+    }
+
+    private static bool ContainsContextSensitiveCommand(DrawCommandList commands)
+    {
+        foreach (DrawCommand command in commands)
+        {
+            if (command.Kind is DrawCommandKind.PushClip or
+                DrawCommandKind.PopClip or
+                DrawCommandKind.BeginPrism or
+                DrawCommandKind.EndPrism)
+            {
+                return true;
             }
         }
-        finally
-        {
-            spriteBatch.End();
-        }
+
+        return false;
     }
+
+    private static Rectangle ResolveDamageBounds(
+        DrawCommand command,
+        Rectangle surfaceBounds)
+    {
+        MonoGameDrawMapper mapper = new(1);
+        return command.Kind switch
+        {
+            DrawCommandKind.FillRectangle or
+            DrawCommandKind.DrawRectangle or
+            DrawCommandKind.FillEllipse or
+            DrawCommandKind.DrawEllipse or
+            DrawCommandKind.FillPath => mapper.MapRectangle(command.Rect),
+            DrawCommandKind.DrawImage
+                when command.ImageRotation == 0 &&
+                    command.ImageOrigin == default =>
+                mapper.MapRectangle(command.Rect),
+            DrawCommandKind.DrawLine => ResolveLineBounds(command),
+            _ => surfaceBounds
+        };
+    }
+
+    private static Rectangle ResolveLineBounds(DrawCommand command)
+    {
+        float radius = command.Thickness / 2;
+        int left = (int)MathF.Floor(
+            MathF.Min(command.Position.X, command.EndPoint.X) - radius);
+        int top = (int)MathF.Floor(
+            MathF.Min(command.Position.Y, command.EndPoint.Y) - radius);
+        int right = (int)MathF.Ceiling(
+            MathF.Max(command.Position.X, command.EndPoint.X) + radius);
+        int bottom = (int)MathF.Ceiling(
+            MathF.Max(command.Position.Y, command.EndPoint.Y) + radius);
+        return new Rectangle(
+            left,
+            top,
+            Math.Max(1, right - left),
+            Math.Max(1, bottom - top));
+    }
+
+    private static DrawRect ToDrawRect(Rectangle rectangle) =>
+        new(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height);
 
     private static Rectangle? UnionDamage(
         Rectangle? current,
@@ -252,6 +325,7 @@ internal sealed class MonoGameRenderSurface2DSession : IDisposable
             return;
         }
 
+        drawingBackend.Dispose();
         scissorRasterizerState.Dispose();
         spriteBatch.Dispose();
         whitePixel.Dispose();

@@ -67,6 +67,7 @@ Clip commands are recorded in order. `PushClip` adds a rectangular clip command,
 | `DrawText(DrawTextRun, DrawPoint, Color)` | `void` | Appends a compatibility `DrawText` command for the text run at the specified position and color. |
 | `DrawText(DrawTextRun, DrawPoint, IDrawBrush)` | `void` | Appends a `DrawText` command that applies the complete brush through the glyph coverage mask. |
 | `DrawImage(IDrawImage, DrawRect, Color)` | `void` | Appends a `DrawImage` command for the image, destination rectangle, and tint color. |
+| `DrawImage(IDrawImage, DrawRect, DrawRect?, Color, float, DrawPoint, DrawImageFlip, float)` | `void` | Appends a `DrawImage` command with an optional source region, tint, rotation, origin, mirroring, and layer depth. |
 | `PushClip(DrawRect)` | `void` | Appends a `PushClip` command for the specified clip rectangle. |
 | `PopClip()` | `void` | Appends a `PopClip` command. |
 
@@ -79,4 +80,5 @@ Cerneala drawing command recording and retained rendering infrastructure.
 - `Cerneala.Drawing.DrawCommand`
 - `Cerneala.Drawing.DrawCommandList`
 - `Cerneala.Drawing.DrawRect`
+- `Cerneala.Drawing.DrawImageFlip`
 - `Cerneala.Drawing.Color`

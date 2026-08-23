@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Controls`
 
 Assembly/Project: `Cerneala`
 
-Source: `Drawing/MonoGame/RenderSurface2DFrame.cs`
+Source: `UI/Controls/RenderSurface2DFrame.cs`
 
 Specifies sprite-axis mirroring for `RenderSurface2DFrame.DrawSprite`.
 
@@ -22,13 +22,14 @@ public enum RenderSurface2DSpriteFlip
 | `Vertical` | `2` | Mirrors the sprite vertically. |
 
 ## Remarks
-Combine `Horizontal` and `Vertical` with the bitwise OR operator to mirror both axes.
+Combine `Horizontal` and `Vertical` with the bitwise OR operator to mirror both axes. This type is retained for `DrawSprite` compatibility; new code can call `DrawImage` with the backend-neutral `DrawImageFlip` enum.
 
 ## Applies To
 Project: `Cerneala`
 
-Backend: MonoGame/WindowsDX retained rendering.
+Cerneala managed 2D surface drawing and retained rendering.
 
 ## See Also
 - `RenderSurface2DFrame`
 - `RenderSurface2DFrame.DrawSprite`
+- `DrawImageFlip`

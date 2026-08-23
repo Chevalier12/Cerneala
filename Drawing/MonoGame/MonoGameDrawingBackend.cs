@@ -50,6 +50,7 @@ public sealed class MonoGameDrawingBackend :
     private readonly PrismExecutionDiagnostics prismDiagnostics;
     private readonly PrismRendererOptions prismRendererOptions;
     private readonly bool prismRetainedCacheEnabled;
+    private bool prismEnabled;
     private BasicEffect? pathEffect;
     private PrismGraphExecutor? prismExecutor;
     private RasterizerState? pathRasterizerState;
@@ -103,6 +104,23 @@ public sealed class MonoGameDrawingBackend :
         SkiaTextRasterizer? textRasterizer,
         PrismRendererOptions prismRendererOptions,
         bool retainedCacheEnabled)
+        : this(
+            spriteBatch,
+            whitePixel,
+            textRasterizer,
+            prismRendererOptions,
+            retainedCacheEnabled,
+            prismEnabled: true)
+    {
+    }
+
+    internal MonoGameDrawingBackend(
+        SpriteBatch spriteBatch,
+        Texture2D whitePixel,
+        SkiaTextRasterizer? textRasterizer,
+        PrismRendererOptions prismRendererOptions,
+        bool retainedCacheEnabled,
+        bool prismEnabled)
     {
         _spriteBatch = spriteBatch ?? throw new ArgumentNullException(nameof(spriteBatch));
         _whitePixel = whitePixel ?? throw new ArgumentNullException(nameof(whitePixel));
@@ -110,6 +128,7 @@ public sealed class MonoGameDrawingBackend :
             throw new ArgumentNullException(
                 nameof(prismRendererOptions));
         prismRetainedCacheEnabled = retainedCacheEnabled;
+        this.prismEnabled = prismEnabled;
         this.prismRendererOptions.Validate();
         prismDiagnostics = new PrismExecutionDiagnostics(
             this.prismRendererOptions.EnableDevelopmentDiagnostics);
@@ -121,13 +140,16 @@ public sealed class MonoGameDrawingBackend :
         greenTextBlendState = CreateTextBlendState(ColorWriteChannels.Green);
         blueTextBlendState = CreateTextBlendState(ColorWriteChannels.Blue);
         textMaskBlendState = CreateTextMaskBlendState();
-        PrismColdStartWarmup.Begin();
-        PrismExecutionColdStartWarmup.Begin();
         if (_spriteBatch.GraphicsDevice is GraphicsDevice graphicsDevice)
         {
             CreatePathResources(graphicsDevice);
-            TryEnsurePrismExecutor(graphicsDevice);
-            TryWarmUpPrism(graphicsDevice);
+            if (prismEnabled)
+            {
+                PrismColdStartWarmup.Begin();
+                PrismExecutionColdStartWarmup.Begin();
+                TryEnsurePrismExecutor(graphicsDevice);
+                TryWarmUpPrism(graphicsDevice);
+            }
             graphicsDevice.DeviceReset += OnDeviceReset;
         }
     }
@@ -699,7 +721,14 @@ public sealed class MonoGameDrawingBackend :
         _spriteBatch.Draw(
             image.Texture,
             Mapper.MapRectangle(command.Rect),
-            Premultiply(ToColor(command.Color)));
+            command.ImageSource is DrawRect source
+                ? Mapper.MapRectangle(source)
+                : null,
+            Premultiply(ToColor(command.Color)),
+            command.ImageRotation,
+            Mapper.MapVector(command.ImageOrigin),
+            ToSpriteEffects(command.ImageFlip),
+            command.LayerDepth);
     }
 
     private void DrawRenderSurface2D(DrawCommand command)
@@ -1815,7 +1844,15 @@ public sealed class MonoGameDrawingBackend :
             DrawCommandKind.DrawLine when command.Brush is not null => DrawCommand.DrawLine(MapPoint(command.Position), MapPoint(command.EndPoint), command.Brush, command.Thickness * thicknessScale, command.BrushOpacity * opacity),
             DrawCommandKind.DrawLine => DrawCommand.DrawLine(MapPoint(command.Position), MapPoint(command.EndPoint), ApplyOpacity(command.Color, opacity), command.Thickness * thicknessScale),
             DrawCommandKind.FillPath => DrawCommand.FillPath(command.PathData!, command.SourceRect, MapRect(command.Rect), command.Brush!, command.BrushOpacity * opacity),
-            DrawCommandKind.DrawImage => DrawCommand.DrawImage(command.Image!, MapRect(command.Rect), ApplyOpacity(command.Color, opacity)),
+            DrawCommandKind.DrawImage => DrawCommand.DrawImage(
+                command.Image!,
+                MapRect(command.Rect),
+                command.ImageSource,
+                ApplyOpacity(command.Color, opacity),
+                command.ImageRotation,
+                command.ImageOrigin,
+                CombineFlip(command.ImageFlip, flipX, flipY),
+                command.LayerDepth),
             DrawCommandKind.RenderSurface2D => DrawCommand.RenderSurface2D(command.RenderSurface!, MapRect(command.Rect), ApplyOpacity(command.Color, opacity)),
             DrawCommandKind.DrawText when command.Brush is not null => DrawCommand.DrawText(command.TextRun!, MapPoint(command.Position), command.Brush, command.BrushOpacity * opacity),
             DrawCommandKind.DrawText => DrawCommand.DrawText(command.TextRun!, MapPoint(command.Position), ApplyOpacity(command.Color, opacity)),
@@ -1926,6 +1963,38 @@ public sealed class MonoGameDrawingBackend :
         }
 
         return effects;
+    }
+
+    private static SpriteEffects ToSpriteEffects(DrawImageFlip flip)
+    {
+        SpriteEffects effects = SpriteEffects.None;
+        if ((flip & DrawImageFlip.Horizontal) != 0)
+        {
+            effects |= SpriteEffects.FlipHorizontally;
+        }
+        if ((flip & DrawImageFlip.Vertical) != 0)
+        {
+            effects |= SpriteEffects.FlipVertically;
+        }
+
+        return effects;
+    }
+
+    private static DrawImageFlip CombineFlip(
+        DrawImageFlip flip,
+        bool flipX,
+        bool flipY)
+    {
+        if (flipX)
+        {
+            flip ^= DrawImageFlip.Horizontal;
+        }
+        if (flipY)
+        {
+            flip ^= DrawImageFlip.Vertical;
+        }
+
+        return flip;
     }
 
     private static Rectangle ClampSourceRectangle(Rectangle source, int width, int height)
@@ -2141,6 +2210,12 @@ public sealed class MonoGameDrawingBackend :
     internal PrismRetainedSurfaceCache? PrismRetainedCacheForDiagnostics =>
         prismExecutor?.RetainedSurfaceCache;
 
+    internal void EnablePrism()
+    {
+        ObjectDisposedException.ThrowIf(disposed, this);
+        prismEnabled = true;
+    }
+
     private void ConsumePrismCacheInvalidations(
         PrismCacheInvalidationQueue? invalidations)
     {
@@ -2167,6 +2242,10 @@ public sealed class MonoGameDrawingBackend :
 
     private bool TryEnsurePrismExecutor(GraphicsDevice graphicsDevice)
     {
+        if (!prismEnabled)
+        {
+            return false;
+        }
         if (prismExecutor is not null)
         {
             return true;
