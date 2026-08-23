@@ -278,7 +278,4 @@ internal static class Win32
 
     [DllImport("kernel32.dll", EntryPoint = "GetModuleHandleW", CharSet = CharSet.Unicode)]
     public static extern nint GetModuleHandle(string? moduleName);
-
-    [DllImport("dwmapi.dll")]
-    public static extern int DwmFlush();
 }

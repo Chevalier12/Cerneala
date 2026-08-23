@@ -654,10 +654,6 @@ public sealed class ApplicationRuntimeTests : IDisposable
         {
         }
 
-        public void WaitForPresentedFrames()
-        {
-        }
-
         public void Dispose()
         {
         }

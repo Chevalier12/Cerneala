@@ -62,6 +62,11 @@ public static class GeneratedWindowApplication
     {
         ArgumentNullException.ThrowIfNull(descriptor);
         ArgumentNullException.ThrowIfNull(args);
+        if (WindowApplicationRuntime.Current is null)
+        {
+            WindowsGpuPreference.TryRequestHighPerformance();
+        }
+
         if (descriptor.CreateApplication is null)
         {
             RunLegacy(descriptor);

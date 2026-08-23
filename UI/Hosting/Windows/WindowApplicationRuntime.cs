@@ -495,7 +495,6 @@ internal sealed class WindowApplicationRuntime : IDisposable
         VerifyAccess();
         platform.PumpEvents();
         bool frameRendered = false;
-        bool compositorWaitRequired = false;
         foreach (WindowContext context in contexts.Values.ToArray())
         {
             if (!context.Window.IsShown ||
@@ -519,13 +518,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
             {
                 bool rendered = Render(context, elapsedTime, renderTimeAlreadyAdvanced: true);
                 frameRendered |= rendered;
-                compositorWaitRequired |= rendered && !context.IsPreview;
             }
-        }
-
-        if (compositorWaitRequired)
-        {
-            platform.WaitForPresentedFrames();
         }
 
         return frameRendered;
@@ -857,6 +850,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
             throw new PlatformNotSupportedException("Native Window hosting is currently available only on Windows.");
         }
 
+        WindowsGpuPreference.TryRequestHighPerformance();
         return new WindowApplicationRuntime(new Win32WindowPlatform());
     }
 

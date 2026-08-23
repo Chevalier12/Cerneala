@@ -116,7 +116,7 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
-    public void PumpOnceWaitsForTheCompositorOnlyAfterPresentingAFrame()
+    public void PumpOnceDoesNotAddASecondCompositorWaitAfterPresentation()
     {
         FakeWindowPlatform platform = new();
         WindowApplicationRuntime runtime = Install(platform);
@@ -128,10 +128,10 @@ public sealed class WindowRuntimeTests : IDisposable
 
         window.Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Render, "pacing test");
         runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
-        Assert.Equal(1, platform.PresentedFrameWaitCount);
+        Assert.Equal(0, platform.PresentedFrameWaitCount);
 
         runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
-        Assert.Equal(1, platform.PresentedFrameWaitCount);
+        Assert.Equal(0, platform.PresentedFrameWaitCount);
     }
 
     [Fact]
