@@ -92,6 +92,89 @@ public sealed class RenderSurface2DRenderingTests
     }
 
     [Fact]
+    public void OnDemandSurfaceRedrawsWhenItsPrismImagePipelineChanges()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
+        using MonoGameImage source = new(CreateSolidTexture(
+            fixture.Session.GraphicsDevice,
+            XnaColor.LimeGreen));
+        BlurFilter blur = new() { Radius = 1 };
+        PrismImage image = global::Cerneala.Drawing.Prism.Prism.Apply(
+            source,
+            blur);
+        RenderSurface2D surface = new()
+        {
+            RedrawMode = RenderSurface2DRedrawMode.OnDemand
+        };
+        int drawCount = 0;
+        surface.Draw += (_, frame) =>
+        {
+            drawCount++;
+            frame.DrawSprite(image, frame.Bounds, CernealaColor.White);
+        };
+
+        _ = RenderCenterPixel(fixture, surface);
+        blur.Radius = 4;
+        _ = RenderCenterPixel(fixture, surface);
+        _ = RenderCenterPixel(fixture, surface);
+
+        Assert.Equal(2, drawCount);
+    }
+
+    [Fact]
+    public void OnDemandSurfaceStopsObservingPrismImagesRemovedFromItsFrame()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
+        using MonoGameImage source = new(CreateSolidTexture(
+            fixture.Session.GraphicsDevice,
+            XnaColor.LimeGreen));
+        BlurFilter firstBlur = new() { Radius = 1 };
+        BlurFilter secondBlur = new() { Radius = 1 };
+        PrismImage first = global::Cerneala.Drawing.Prism.Prism.Apply(
+            source,
+            firstBlur);
+        PrismImage second = global::Cerneala.Drawing.Prism.Prism.Apply(
+            source,
+            secondBlur);
+        RenderSurface2D surface = new()
+        {
+            RedrawMode = RenderSurface2DRedrawMode.OnDemand
+        };
+        bool drawSecond = false;
+        int drawCount = 0;
+        surface.Draw += (_, frame) =>
+        {
+            drawCount++;
+            frame.DrawSprite(
+                drawSecond ? second : first,
+                frame.Bounds,
+                CernealaColor.White);
+        };
+
+        _ = RenderCenterPixel(fixture, surface);
+        drawSecond = true;
+        surface.InvalidateFrame();
+        _ = RenderCenterPixel(fixture, surface);
+
+        firstBlur.Radius = 4;
+        _ = RenderCenterPixel(fixture, surface);
+        secondBlur.Radius = 4;
+        _ = RenderCenterPixel(fixture, surface);
+
+        Assert.Equal(3, drawCount);
+    }
+
+    [Fact]
     public void MultipleDrawSubscribersComposeInRegistrationOrder()
     {
         if (!OperatingSystem.IsWindows())
@@ -307,6 +390,101 @@ public sealed class RenderSurface2DRenderingTests
         Assert.Equal(2, session.LastReplayedCommandCount);
         Assert.Equal(XnaColor.CornflowerBlue, pixels[(3 * 32) + 3]);
         Assert.Equal(XnaColor.HotPink, pixels[(3 * 32) + 11]);
+    }
+
+    [Fact]
+    public void RetainedSessionReusesUnchangedPrismImageResultsAcrossFrames()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
+        using MonoGameImage source = new(CreateSolidTexture(
+            fixture.Session.GraphicsDevice,
+            XnaColor.LimeGreen));
+        using PrismImage image = global::Cerneala.Drawing.Prism.Prism.Apply(
+            source,
+            new InvertFilter());
+        using MonoGameRenderSurface2DSession session = new(
+            fixture.Session.GraphicsDevice,
+            32,
+            16);
+        int markerX = 20;
+
+        void Draw(RenderSurface2DFrame frame)
+        {
+            frame.DrawSprite(
+                image,
+                new DrawRect(0, 0, 16, 16),
+                CernealaColor.White);
+            frame.FillRectangle(
+                new DrawRect(markerX, 2, 2, 2),
+                CernealaColor.CornflowerBlue);
+        }
+
+        session.Render(Draw, CernealaColor.Black, TimeSpan.Zero);
+        fixture.Session.GraphicsDevice.SetRenderTarget(null);
+        markerX = 24;
+        session.Render(
+            Draw,
+            CernealaColor.Black,
+            TimeSpan.FromMilliseconds(16));
+
+        PrismRendererDiagnostics diagnostics = session.PrismDiagnostics;
+
+        Assert.True(diagnostics.RetainedCacheEnabled);
+        Assert.True(
+            diagnostics.FinalHitCount > 0 ||
+            diagnostics.IntermediateHitCount > 0);
+        Assert.True(diagnostics.SavedPassCount > 0);
+    }
+
+    [Fact]
+    public void RetainedSessionEvictsDisposedPrismImageResults()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
+        using MonoGameImage source = new(CreateSolidTexture(
+            fixture.Session.GraphicsDevice,
+            XnaColor.LimeGreen));
+        using PrismImage image = global::Cerneala.Drawing.Prism.Prism.Apply(
+            source,
+            new InvertFilter());
+        using MonoGameRenderSurface2DSession session = new(
+            fixture.Session.GraphicsDevice,
+            32,
+            16);
+        bool drawImage = true;
+
+        void Draw(RenderSurface2DFrame frame)
+        {
+            if (drawImage)
+            {
+                frame.DrawSprite(
+                    image,
+                    new DrawRect(0, 0, 16, 16),
+                    CernealaColor.White);
+            }
+        }
+
+        session.Render(Draw, CernealaColor.Black, TimeSpan.Zero);
+        fixture.Session.GraphicsDevice.SetRenderTarget(null);
+        Assert.True(session.PrismDiagnostics.RetainedEntryCount > 0);
+
+        drawImage = false;
+        image.Dispose();
+        session.Render(
+            Draw,
+            CernealaColor.Black,
+            TimeSpan.FromMilliseconds(16));
+
+        Assert.Equal(0, session.PrismDiagnostics.RetainedEntryCount);
     }
 
     private static Texture2D CreateSolidTexture(

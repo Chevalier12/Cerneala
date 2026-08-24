@@ -62,7 +62,7 @@ Registration is type-based. `Register<T>` stores the supplied `ValueMixer<T>` un
 
 `TryResolve` methods return `false` when the registry has no mixer for the requested type. `Resolve` methods throw an `InvalidOperationException` instead. The overloads that accept `propertyName` include that property name in the exception message when it is not null or whitespace, which helps diagnose missing mixers for motion-driven UI properties.
 
-`RegisterBuiltIns` registers mixers for `float`, `double`, `Color`, `Brush?`, `Thickness`, `DrawPoint`, `DrawSize`, `DrawRect`, and `Transform`.
+`RegisterBuiltIns` registers mixers for `float`, `double`, `Vector4`, `Color`, `Brush?`, `Thickness`, `DrawPoint`, `DrawSize`, `DrawRect`, and `Transform`.
 
 ## Constructors
 
@@ -100,6 +100,7 @@ Target framework: `net8.0`
 ## See also
 
 - `Cerneala.UI.Motion.Interpolation.ValueMixer<T>`
+- `Cerneala.UI.Motion.Interpolation.Vector4Mixer`
 - `Cerneala.UI.Motion.Interpolation.IValueMixer`
 - `Cerneala.UI.Motion.Core.MotionSystem`
 - `Cerneala.UI.Motion.Core.MotionGraph`

@@ -69,6 +69,7 @@ public sealed class ValueMixerRegistry
         Register(new DrawSizeMixer());
         Register(new DrawRectMixer());
         Register(new TransformMixer());
+        Register(new Vector4Mixer());
     }
 
     private static InvalidOperationException CreateMissingMixerException(Type valueType, string? propertyName)

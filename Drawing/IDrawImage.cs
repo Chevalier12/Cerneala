@@ -6,3 +6,8 @@ public interface IDrawImage
 
     int Height { get; }
 }
+
+internal interface IDrawImageInvalidationSource
+{
+    event EventHandler? ContentChanged;
+}

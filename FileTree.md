@@ -270,7 +270,8 @@ Generated from `.`.
 |   |   |   |-- PrismMarkupLanguage.cs
 |   |   |   +-- PrismSyntax.cs
 |   |   |-- PrismCatalogCompiler.cs
-|   |   +-- PrismCatalogGenerator.cs
+|   |   |-- PrismCatalogGenerator.cs
+|   |   +-- PrismOperationSourceEmitter.cs
 |   |-- Properties/
 |   |   +-- AssemblyInfo.cs
 |   |-- tests/
@@ -527,10 +528,22 @@ Generated from `.`.
 |   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameDrawMapper.md
 |   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameImage.md
 |   |   |   |-- Cerneala.Drawing.MonoGame.Prism.IMonoGameBackdropFrameLease.md
+|   |   |   |-- Cerneala.Drawing.Prism.AccentedEdgesFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.AdaptiveWideAngleFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.AddNoiseFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.AngledStrokesFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.AverageFilter.md
 |   |   |   |-- Cerneala.Drawing.Prism.BackdropAlphaMode.md
 |   |   |   |-- Cerneala.Drawing.Prism.BackdropFrameMetadata.md
 |   |   |   |-- Cerneala.Drawing.Prism.BackdropFrameRequest.md
 |   |   |   |-- Cerneala.Drawing.Prism.BackdropPixelFormat.md
+|   |   |   |-- Cerneala.Drawing.Prism.BasReliefFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.BevelEmbossStyle.md
+|   |   |   |-- Cerneala.Drawing.Prism.BlackWhiteFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.BlurFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.BlurMoreFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.BoxBlurFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.BrightnessContrastFilter.md
 |   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismBlendMode.md
 |   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismCatalog.md
 |   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismCatalogOperationInfo.md
@@ -541,18 +554,156 @@ Generated from `.`.
 |   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismFilterId.md
 |   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismSampling.md
 |   |   |   |-- Cerneala.Drawing.Prism.Catalog.PrismStyleId.md
+|   |   |   |-- Cerneala.Drawing.Prism.ChalkCharcoalFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.ChannelMixerFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.CharcoalFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.ChromaticAberrationFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.ChromeFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.CloudsFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.ColorBalanceFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.ColoredPencilFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.ColorFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.ColorHalftoneFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.ColorLookupFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.ColorMatrixFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.ColorOverlayStyle.md
+|   |   |   |-- Cerneala.Drawing.Prism.ConteCrayonFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.CraquelureFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.CrosshatchFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.CrystallizeFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.CurvesFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.CustomConvolutionFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.CutoutFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.DarkStrokesFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.DeinterlaceFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.DespeckleFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.DifferenceCloudsFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.DiffuseFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.DiffuseGlowFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.DisplaceFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.DropShadowStyle.md
+|   |   |   |-- Cerneala.Drawing.Prism.DryBrushFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.DustScratchesFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.EmbossFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.ExposureFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.ExtrudeFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.FacetFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.FibersFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.FieldBlurFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.FilmGrainFilter.md
 |   |   |   |-- Cerneala.Drawing.Prism.Filters.PrismLensFlareRaySample.md
 |   |   |   |-- Cerneala.Drawing.Prism.Filters.PrismLensProfileFitOptions.md
 |   |   |   |-- Cerneala.Drawing.Prism.Filters.PrismLensProfileFitter.md
+|   |   |   |-- Cerneala.Drawing.Prism.FindEdgesFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.FragmentFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.FrescoFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.GaussianBlurFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.GlassFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.GlowingEdgesFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.GradientMapFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.GradientOverlayStyle.md
+|   |   |   |-- Cerneala.Drawing.Prism.GrainFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.GraphicPenFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.HalftonePatternFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.HighPassFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.HueSaturationFilter.md
 |   |   |   |-- Cerneala.Drawing.Prism.IBackdropFrameLease.md
 |   |   |   |-- Cerneala.Drawing.Prism.IBackdropFrameSource.md
+|   |   |   |-- Cerneala.Drawing.Prism.InkOutlinesFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.InnerGlowStyle.md
+|   |   |   |-- Cerneala.Drawing.Prism.InnerShadowStyle.md
+|   |   |   |-- Cerneala.Drawing.Prism.InvertFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.IrisBlurFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.LensBlurFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.LensCorrectionFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.LensFlareFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.LevelsFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.LightingEffectsFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.LiquifyFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.MaximumFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.MedianFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.MezzotintFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.MinimumFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.MosaicFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.MosaicTilesFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.MotionBlurFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.NeonGlowFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.NotePaperFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.NtscColorsFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.OceanRippleFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.OffsetFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.OilPaintFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.OuterGlowStyle.md
+|   |   |   |-- Cerneala.Drawing.Prism.PaintDaubsFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.PaletteKnifeFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.PatchworkFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.PathBlurFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.PatternOverlayStyle.md
+|   |   |   |-- Cerneala.Drawing.Prism.PhotocopyFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.PhotoFilterFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.PinchFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.PlasterFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.PlasticWrapFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.PointillizeFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.PolarCoordinatesFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.PosterEdgesFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.PosterizeFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.Prism.md
 |   |   |   |-- Cerneala.Drawing.Prism.PrismCacheEvictionReason.md
 |   |   |   |-- Cerneala.Drawing.Prism.PrismCacheMissReason.md
 |   |   |   |-- Cerneala.Drawing.Prism.PrismCacheOwnerToken.md
 |   |   |   |-- Cerneala.Drawing.Prism.PrismDependencyChange.md
 |   |   |   |-- Cerneala.Drawing.Prism.PrismDrawScope.md
+|   |   |   |-- Cerneala.Drawing.Prism.PrismFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.PrismImage.md
+|   |   |   |-- Cerneala.Drawing.Prism.PrismOperation.md
+|   |   |   |-- Cerneala.Drawing.Prism.PrismPipeline.md
 |   |   |   |-- Cerneala.Drawing.Prism.PrismRendererDiagnostics.md
 |   |   |   |-- Cerneala.Drawing.Prism.PrismRendererOptions.md
+|   |   |   |-- Cerneala.Drawing.Prism.PrismStyle.md
+|   |   |   |-- Cerneala.Drawing.Prism.RadialBlurFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.ReduceNoiseFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.ReticulationFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.RippleFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.RoughPastelsFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.SatinStyle.md
+|   |   |   |-- Cerneala.Drawing.Prism.ScanlinesFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.SelectiveColorFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.ShapeBlurFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.SharpenEdgesFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.SharpenFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.SharpenMoreFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.ShearFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.SmartBlurFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.SmartSharpenFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.SmudgeStickFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.SolarizeFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.SpatterFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.SpherizeFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.SpinBlurFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.SpongeFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.SprayedStrokesFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.StainedGlassFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.StampFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.StrokeStyle.md
+|   |   |   |-- Cerneala.Drawing.Prism.SumiEFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.SurfaceBlurFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.TexturizerFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.ThresholdFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.TilesFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.TiltShiftFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.TornEdgesFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.TraceContourFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.TransformFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.TwirlFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.UnderpaintingFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.UnsharpMaskFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.VibranceFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.WatercolorFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.WaterPaperFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.WaveFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.WindFilter.md
+|   |   |   |-- Cerneala.Drawing.Prism.ZigZagFilter.md
 |   |   |   |-- Cerneala.Drawing.RadialGradientDrawBrushDescriptor.md
 |   |   |   |-- Cerneala.Drawing.SolidDrawBrushDescriptor.md
 |   |   |   |-- Cerneala.Drawing.Text.RasterizedText.md
@@ -1167,6 +1318,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Motion.Interpolation.TransformMixer.md
 |   |   |   |-- Cerneala.UI.Motion.Interpolation.ValueMixer_T_.md
 |   |   |   |-- Cerneala.UI.Motion.Interpolation.ValueMixerRegistry.md
+|   |   |   |-- Cerneala.UI.Motion.Interpolation.Vector4Mixer.md
 |   |   |   |-- Cerneala.UI.Motion.Layout.LayoutMotionBinding.md
 |   |   |   |-- Cerneala.UI.Motion.Layout.LayoutMotionCoordinator.md
 |   |   |   |-- Cerneala.UI.Motion.Layout.LayoutMotionId.md
@@ -1176,8 +1328,12 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Motion.MotionDefaults.md
 |   |   |   |-- Cerneala.UI.Motion.MotionElementFacade.md
 |   |   |   |-- Cerneala.UI.Motion.MotionExtensions.md
+|   |   |   |-- Cerneala.UI.Motion.MotionProperty_TTarget_TValue_.md
+|   |   |   |-- Cerneala.UI.Motion.MotionProperty.md
 |   |   |   |-- Cerneala.UI.Motion.MotionPropertyShortcut_T_.md
 |   |   |   |-- Cerneala.UI.Motion.MotionStateBuilder.md
+|   |   |   |-- Cerneala.UI.Motion.ObjectMotionAnimationBuilder_TTarget_TValue_.md
+|   |   |   |-- Cerneala.UI.Motion.ObjectMotionFacade.md
 |   |   |   |-- Cerneala.UI.Motion.Presence.PresenceCoordinator.md
 |   |   |   |-- Cerneala.UI.Motion.Presence.PresenceHandle.md
 |   |   |   |-- Cerneala.UI.Motion.Presence.PresenceOptions.md
@@ -1899,10 +2055,15 @@ Generated from `.`.
 |   |   |-- BackdropPixelFormat.cs
 |   |   |-- IBackdropFrameLease.cs
 |   |   |-- IBackdropFrameSource.cs
+|   |   |-- Prism.cs
 |   |   |-- PrismBackdropSourceToken.cs
 |   |   |-- PrismCacheInvalidationQueue.cs
+|   |   |-- PrismCacheOwnerTokenAllocator.cs
 |   |   |-- PrismDrawResources.cs
 |   |   |-- PrismDrawScope.cs
+|   |   |-- PrismImage.cs
+|   |   |-- PrismOperation.cs
+|   |   |-- PrismPipeline.cs
 |   |   +-- PrismRendererOptions.cs
 |   |-- Text/
 |   |   |-- OpenTypeFontData.cs
@@ -2137,6 +2298,7 @@ Generated from `.`.
 |   |   |   |   |-- PrismGraphContractTests.cs
 |   |   |   |   |-- PrismGraphicPenFilterTests.cs
 |   |   |   |   |-- PrismGraphOptimizerTests.cs
+|   |   |   |   |-- PrismImageApiTests.cs
 |   |   |   |   |-- PrismInkOutlinesFilterTests.cs
 |   |   |   |   |-- PrismLensProfileTests.cs
 |   |   |   |   |-- PrismLightingResourceTests.cs
@@ -2414,6 +2576,7 @@ Generated from `.`.
 |   |   |   |   |   +-- LayoutMotionCoordinatorTests.cs
 |   |   |   |   |-- Presence/
 |   |   |   |   |   +-- PresenceCoordinatorTests.cs
+|   |   |   |   |-- Prism/
 |   |   |   |   |-- Properties/
 |   |   |   |   |   +-- MotionPropertyBindingTests.cs
 |   |   |   |   |-- Specs/
@@ -2424,7 +2587,8 @@ Generated from `.`.
 |   |   |   |   |-- MotionAllocationTests.cs
 |   |   |   |   |-- MotionFacadeTests.cs
 |   |   |   |   |-- MotionReflectionTests.cs
-|   |   |   |   +-- MotionStressTests.cs
+|   |   |   |   |-- MotionStressTests.cs
+|   |   |   |   +-- ObjectMotionTests.cs
 |   |   |   |-- Platform/
 |   |   |   |   |-- PlatformBoundaryTests.cs
 |   |   |   |   |-- ServiceRegistrationTests.cs
@@ -3227,7 +3391,8 @@ Generated from `.`.
 |   |   |   |-- TransformInterpolationMode.cs
 |   |   |   |-- TransformMixer.cs
 |   |   |   |-- ValueMixer.cs
-|   |   |   +-- ValueMixerRegistry.cs
+|   |   |   |-- ValueMixerRegistry.cs
+|   |   |   +-- Vector4Mixer.cs
 |   |   |-- Layout/
 |   |   |   |-- LayoutMotionBinding.cs
 |   |   |   |-- LayoutMotionCoordinator.cs
@@ -3239,6 +3404,7 @@ Generated from `.`.
 |   |   |   |-- PresenceHandle.cs
 |   |   |   |-- PresenceOptions.cs
 |   |   |   +-- PresenceState.cs
+|   |   |-- Prism/
 |   |   |-- Properties/
 |   |   |   |-- AnimatablePropertyRegistry.cs
 |   |   |   |-- MotionClearBehavior.cs
@@ -3286,8 +3452,12 @@ Generated from `.`.
 |   |   |-- MotionDefaults.cs
 |   |   |-- MotionElementFacade.cs
 |   |   |-- MotionExtensions.cs
+|   |   |-- MotionProperty.cs
 |   |   |-- MotionPropertyShortcut.cs
-|   |   +-- MotionStateBuilder.cs
+|   |   |-- MotionStateBuilder.cs
+|   |   |-- ObjectMotionAnimationBuilder.cs
+|   |   |-- ObjectMotionFacade.cs
+|   |   +-- ObjectMotionRuntime.cs
 |   |-- Platform/
 |   |   |-- CursorShape.cs
 |   |   |-- FileDialogFilter.cs

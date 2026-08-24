@@ -14,6 +14,28 @@ Provides the typed code API for the Prism `OuterGlow` style.
 public sealed class OuterGlowStyle : PrismStyle
 ```
 
+## Examples
+
+Animate the glow operation itself. Every frame that uses the same instance observes its current values:
+
+```csharp
+using System;
+using Cerneala.Drawing.Prism;
+using Cerneala.UI.Motion;
+using Cerneala.UI.Motion.Specs;
+
+OuterGlowStyle glow = new() { Size = 3f, Opacity = 0.62f };
+PingPongSpec<float> pulse = new(
+    Motion.Tween<float>(TimeSpan.FromSeconds(1.35), Easings.EaseInOut),
+    cycles: null);
+
+glow.Motion()
+    .Animate(OuterGlowStyle.SizeProperty)
+    .From(3f)
+    .To(18f)
+    .Start(pulse);
+```
+
 ## Constructors
 
 | Signature | Description |
@@ -46,3 +68,5 @@ Parameter assignments are validated against the `OuterGlow` catalog entry. Add t
 - `PrismStyle`
 - `PrismPipeline`
 - `Prism.Apply`
+- `MotionProperty<TTarget, TValue>`
+- `ObjectMotionFacade`

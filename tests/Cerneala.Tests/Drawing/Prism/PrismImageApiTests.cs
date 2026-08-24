@@ -183,11 +183,121 @@ public sealed class PrismImageApiTests
                 Color.White));
     }
 
+    [Fact]
+    public void DisposeInvalidatesEveryRegisteredCacheQueueOnce()
+    {
+        PrismImage image = global::Cerneala.Drawing.Prism.Prism.Apply(
+            new TestImage(8, 8),
+            new BlurFilter());
+        DrawCommandList commands = new();
+        new DrawingContext(commands).DrawImage(
+            image,
+            new DrawRect(0, 0, 8, 8),
+            Color.White);
+        PrismCacheOwnerToken ownerToken =
+            commands[0].PrismScope!.Value.CacheOwnerToken;
+        PrismCacheInvalidationQueue first = new();
+        PrismCacheInvalidationQueue second = new();
+
+        image.Dispose();
+        image.Dispose();
+
+        AssertSingleOwnerInvalidation(first, ownerToken);
+        AssertSingleOwnerInvalidation(second, ownerToken);
+    }
+
+    [Fact]
+    public void DisposeStopsObservationAndRejectsFutureDraws()
+    {
+        ObservableTestImage source = new(8, 8);
+        BlurFilter blur = new();
+        PrismImage image = global::Cerneala.Drawing.Prism.Prism.Apply(
+            source,
+            blur);
+        IDrawImageInvalidationSource invalidationSource = image;
+        int changeCount = 0;
+        EventHandler handler = (_, _) => changeCount++;
+        invalidationSource.ContentChanged += handler;
+
+        source.RaiseContentChanged();
+        image.Dispose();
+        source.RaiseContentChanged();
+        blur.Radius = 4;
+
+        Assert.Equal(2, changeCount);
+        Assert.Throws<ObjectDisposedException>(() =>
+            new DrawingContext(new DrawCommandList()).DrawImage(
+                image,
+                new DrawRect(0, 0, 8, 8),
+                Color.White));
+        Assert.Throws<ObjectDisposedException>(() =>
+            invalidationSource.ContentChanged += (_, _) => { });
+
+        invalidationSource.ContentChanged -= handler;
+    }
+
+    [Fact]
+    public void DisposeDoesNotTakeOwnershipOfTheSourceImage()
+    {
+        DisposableTestImage source = new(8, 8);
+        PrismImage image = global::Cerneala.Drawing.Prism.Prism.Apply(
+            source,
+            new BlurFilter());
+
+        image.Dispose();
+
+        Assert.False(source.IsDisposed);
+    }
+
     private sealed class TestImage(int width, int height) : IDrawImage
     {
         public int Width { get; } = width;
 
         public int Height { get; } = height;
+    }
+
+    private sealed class ObservableTestImage(int width, int height) :
+        IDrawImage,
+        IDrawImageInvalidationSource
+    {
+        public int Width { get; } = width;
+
+        public int Height { get; } = height;
+
+        public event EventHandler? ContentChanged;
+
+        public void RaiseContentChanged() =>
+            ContentChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private sealed class DisposableTestImage(int width, int height) :
+        IDrawImage,
+        IDisposable
+    {
+        public int Width { get; } = width;
+
+        public int Height { get; } = height;
+
+        public bool IsDisposed { get; private set; }
+
+        public void Dispose() => IsDisposed = true;
+    }
+
+    private static void AssertSingleOwnerInvalidation(
+        PrismCacheInvalidationQueue queue,
+        PrismCacheOwnerToken expected)
+    {
+        int matchingInvalidations = 0;
+        while (queue.TryDequeue(out PrismCacheInvalidation invalidation))
+        {
+            if (invalidation.Kind == PrismCacheInvalidationKind.Owner &&
+                invalidation.OwnerToken == expected)
+            {
+                matchingInvalidations++;
+            }
+        }
+
+        Assert.Equal(1, matchingInvalidations);
     }
 
     private static Color ParseColor(string value)

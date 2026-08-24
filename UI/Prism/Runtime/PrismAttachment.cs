@@ -7,7 +7,6 @@ namespace Cerneala.UI.Prism.Runtime;
 internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
 {
     private static readonly ConditionalWeakTable<UIElement, PrismAttachment> Attachments = new();
-    private static long nextCacheOwnerToken;
 
     private UIElement? owner;
     private Func<PrismInstance>? instanceFactory;
@@ -110,7 +109,7 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
         PrismInstance created = instanceFactory!()
             ?? throw new InvalidOperationException("A generated Prism factory returned null.");
         instance = created;
-        cacheOwnerToken = NextCacheOwnerToken();
+        cacheOwnerToken = PrismCacheOwnerTokenAllocator.Next();
         attached = true;
         renderable = UIElementVisibility.IsEffectivelyVisible(owner!);
 
@@ -168,7 +167,7 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
         PrismInstance created = instanceFactory!()
             ?? throw new InvalidOperationException("A generated Prism factory returned null.");
         instance = created;
-        cacheOwnerToken = NextCacheOwnerToken();
+        cacheOwnerToken = PrismCacheOwnerTokenAllocator.Next();
         renderable = true;
         try
         {
@@ -313,16 +312,5 @@ internal sealed class PrismAttachment : IElementLifecycleBehavior, IDisposable
             owner?.Root?.PrismCacheInvalidations.EnqueueOwner(
                 cacheOwnerToken);
         }
-    }
-
-    private static PrismCacheOwnerToken NextCacheOwnerToken()
-    {
-        long value = Interlocked.Increment(ref nextCacheOwnerToken);
-        if (value <= 0)
-        {
-            throw new InvalidOperationException("Prism cache owner token space was exhausted.");
-        }
-
-        return new PrismCacheOwnerToken(value);
     }
 }

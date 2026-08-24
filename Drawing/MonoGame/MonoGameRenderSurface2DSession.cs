@@ -16,6 +16,7 @@ internal sealed class MonoGameRenderSurface2DSession : IDisposable
     private readonly Texture2D whitePixel;
     private readonly RasterizerState scissorRasterizerState;
     private readonly MonoGameDrawingBackend drawingBackend;
+    private readonly PrismCacheInvalidationQueue prismCacheInvalidations = new();
     private readonly DrawCommandList replayCommands = new();
     private DrawCommandList retainedCommands = new();
     private DrawCommandList recordingCommands = new();
@@ -58,7 +59,7 @@ internal sealed class MonoGameRenderSurface2DSession : IDisposable
             whitePixel,
             new SkiaTextRasterizer(),
             new PrismRendererOptions(),
-            retainedCacheEnabled: false,
+            retainedCacheEnabled: true,
             prismEnabled: false);
     }
 
@@ -80,10 +81,14 @@ internal sealed class MonoGameRenderSurface2DSession : IDisposable
 
     internal int RetainedCommandCount => retainedCommands.Count;
 
+    internal PrismRendererDiagnostics PrismDiagnostics =>
+        drawingBackend.RendererDiagnostics;
+
     public void Render(
         Action<RenderSurface2DFrame> draw,
         CernealaColor clearColor,
-        TimeSpan frameTime)
+        TimeSpan frameTime,
+        Action<IDrawImage>? trackImageDependency = null)
     {
         ArgumentNullException.ThrowIfNull(draw);
         ObjectDisposedException.ThrowIf(disposed, this);
@@ -92,7 +97,8 @@ internal sealed class MonoGameRenderSurface2DSession : IDisposable
         RenderSurface2DFrame frame = new(
             recordingCommands,
             new DrawRect(0, 0, PixelWidth, PixelHeight),
-            frameTime);
+            frameTime,
+            trackImageDependency);
         try
         {
             draw(frame);
@@ -238,7 +244,11 @@ internal sealed class MonoGameRenderSurface2DSession : IDisposable
         {
             drawingBackend.EnablePrism();
         }
-        DrawingFrameContext frameContext = new(analysis);
+        DrawingFrameContext frameContext = new(
+            analysis,
+            backdropLease: null,
+            backdropSourceToken: default,
+            prismCacheInvalidations);
         drawingBackend.Render(replayCommands, in frameContext);
     }
 

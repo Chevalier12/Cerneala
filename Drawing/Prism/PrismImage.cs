@@ -1,21 +1,22 @@
 using System.Numerics;
-using System.Threading;
 using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
 
 namespace Cerneala.Drawing.Prism;
 
-public sealed class PrismImage : IDrawImage
+public sealed class PrismImage : IDrawImage, IDrawImageInvalidationSource, IDisposable
 {
     private const int LayerNodeId = 1;
-    private static long nextCacheOwnerToken;
 
     private readonly PrismCacheOwnerToken cacheOwnerToken =
-        new(Interlocked.Increment(ref nextCacheOwnerToken));
+        PrismCacheOwnerTokenAllocator.Next();
+    private readonly object invalidationGate = new();
     private PrismInstance? instance;
     private long appliedTopologyVersion = -1;
     private long appliedContentSignature = -1;
     private long visualContentVersion = 1;
+    private int disposed;
+    private bool invalidationSourcesAttached;
 
     internal PrismImage(IDrawImage source, PrismPipeline pipeline)
     {
@@ -37,10 +38,51 @@ public sealed class PrismImage : IDrawImage
 
     public int Height => Source.Height;
 
+    event EventHandler? IDrawImageInvalidationSource.ContentChanged
+    {
+        add
+        {
+            if (value is null)
+            {
+                return;
+            }
+
+            lock (invalidationGate)
+            {
+                ObjectDisposedException.ThrowIf(IsDisposed, this);
+                bool attachSources = contentChanged is null;
+                contentChanged += value;
+                if (attachSources)
+                {
+                    AttachInvalidationSources();
+                }
+            }
+        }
+        remove
+        {
+            if (value is null)
+            {
+                return;
+            }
+
+            lock (invalidationGate)
+            {
+                contentChanged -= value;
+                if (contentChanged is null)
+                {
+                    DetachInvalidationSources();
+                }
+            }
+        }
+    }
+
+    private event EventHandler? contentChanged;
+
     internal PrismDrawScope CreateDrawScope(
         DrawRect bounds,
         float pixelScale = 1)
     {
+        ObjectDisposedException.ThrowIf(IsDisposed, this);
         EnsureRuntimeState();
         return new PrismDrawScope(
             instance!,
@@ -52,6 +94,25 @@ public sealed class PrismImage : IDrawImage
             PrismDrawResources.Empty,
             lowerUiVersion: 0,
             isLocalDrawingScope: true);
+    }
+
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref disposed, 1) != 0)
+        {
+            return;
+        }
+
+        EventHandler? invalidated;
+        lock (invalidationGate)
+        {
+            DetachInvalidationSources();
+            invalidated = contentChanged;
+        }
+
+        instance = null;
+        PrismCacheInvalidationHub.EnqueueOwner(cacheOwnerToken);
+        invalidated?.Invoke(this, EventArgs.Empty);
     }
 
     private void EnsureRuntimeState()
@@ -115,5 +176,57 @@ public sealed class PrismImage : IDrawImage
                 visualContentVersion = 1;
             }
         }
+    }
+
+    private bool IsDisposed => Volatile.Read(ref disposed) != 0;
+
+    private void OnPipelineChanged(object? sender, EventArgs args) =>
+        RaiseContentChanged();
+
+    private void OnSourceContentChanged(object? sender, EventArgs args) =>
+        RaiseContentChanged();
+
+    private void RaiseContentChanged()
+    {
+        EventHandler? handlers;
+        lock (invalidationGate)
+        {
+            if (IsDisposed)
+            {
+                return;
+            }
+            handlers = contentChanged;
+        }
+        handlers?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void AttachInvalidationSources()
+    {
+        if (invalidationSourcesAttached)
+        {
+            return;
+        }
+
+        Pipeline.Changed += OnPipelineChanged;
+        if (Source is IDrawImageInvalidationSource sourceInvalidation)
+        {
+            sourceInvalidation.ContentChanged += OnSourceContentChanged;
+        }
+        invalidationSourcesAttached = true;
+    }
+
+    private void DetachInvalidationSources()
+    {
+        if (!invalidationSourcesAttached)
+        {
+            return;
+        }
+
+        Pipeline.Changed -= OnPipelineChanged;
+        if (Source is IDrawImageInvalidationSource sourceInvalidation)
+        {
+            sourceInvalidation.ContentChanged -= OnSourceContentChanged;
+        }
+        invalidationSourcesAttached = false;
     }
 }

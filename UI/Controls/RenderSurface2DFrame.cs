@@ -13,17 +13,20 @@ public enum RenderSurface2DSpriteFlip
 public sealed class RenderSurface2DFrame
 {
     private readonly DrawingContext drawingContext;
+    private readonly Action<IDrawImage>? trackImageDependency;
     private bool active = true;
 
     internal RenderSurface2DFrame(
         DrawCommandList commands,
         DrawRect bounds,
-        TimeSpan frameTime)
+        TimeSpan frameTime,
+        Action<IDrawImage>? trackImageDependency = null)
     {
         drawingContext = new DrawingContext(commands ??
             throw new ArgumentNullException(nameof(commands)));
         Bounds = bounds;
         FrameTime = frameTime;
+        this.trackImageDependency = trackImageDependency;
     }
 
     public DrawRect Bounds { get; }
@@ -123,6 +126,7 @@ public sealed class RenderSurface2DFrame
     public void DrawImage(IDrawImage image, DrawRect destination, Color color)
     {
         EnsureActive();
+        trackImageDependency?.Invoke(image);
         drawingContext.DrawImage(image, destination, color);
     }
 
@@ -137,6 +141,7 @@ public sealed class RenderSurface2DFrame
         float layerDepth = 0)
     {
         EnsureActive();
+        trackImageDependency?.Invoke(image);
         drawingContext.DrawImage(
             image,
             destination,
@@ -175,6 +180,7 @@ public sealed class RenderSurface2DFrame
         float layerDepth = 0)
     {
         EnsureActive();
+        trackImageDependency?.Invoke(image);
         drawingContext.DrawImage(
             image,
             destination,

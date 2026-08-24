@@ -41,47 +41,125 @@ internal readonly record struct PrismCacheInvalidation
 
 internal sealed class PrismCacheInvalidationQueue
 {
+    private readonly object gate = new();
     private readonly List<PrismCacheInvalidation> items = [];
     private int readIndex;
 
-    public int Count => items.Count - readIndex;
+    public PrismCacheInvalidationQueue()
+    {
+        PrismCacheInvalidationHub.Register(this);
+    }
+
+    public int Count
+    {
+        get
+        {
+            lock (gate)
+            {
+                return items.Count - readIndex;
+            }
+        }
+    }
 
     public void EnqueueOwner(
         PrismCacheOwnerToken ownerToken)
     {
-        if (Count > 0 &&
-            (items[^1].Kind == PrismCacheInvalidationKind.All ||
-             items[^1].OwnerToken == ownerToken))
+        PrismCacheInvalidation invalidation =
+            PrismCacheInvalidation.ForOwner(ownerToken);
+        lock (gate)
         {
-            return;
-        }
+            if (items.Count > readIndex &&
+                (items[^1].Kind == PrismCacheInvalidationKind.All ||
+                 items[^1].OwnerToken == ownerToken))
+            {
+                return;
+            }
 
-        items.Add(
-            PrismCacheInvalidation.ForOwner(ownerToken));
+            items.Add(invalidation);
+        }
     }
 
     public void EnqueueAll()
     {
-        items.Clear();
-        readIndex = 0;
-        items.Add(PrismCacheInvalidation.All);
+        lock (gate)
+        {
+            items.Clear();
+            readIndex = 0;
+            items.Add(PrismCacheInvalidation.All);
+        }
     }
 
     public bool TryDequeue(
         out PrismCacheInvalidation invalidation)
     {
-        if (readIndex >= items.Count)
+        lock (gate)
         {
-            invalidation = default;
-            return false;
+            if (readIndex >= items.Count)
+            {
+                invalidation = default;
+                return false;
+            }
+
+            invalidation = items[readIndex++];
+            if (readIndex == items.Count)
+            {
+                items.Clear();
+                readIndex = 0;
+            }
+            return true;
+        }
+    }
+}
+
+internal static class PrismCacheInvalidationHub
+{
+    private static readonly object Gate = new();
+    private static readonly List<WeakReference<PrismCacheInvalidationQueue>> Queues = [];
+
+    public static void Register(PrismCacheInvalidationQueue queue)
+    {
+        ArgumentNullException.ThrowIfNull(queue);
+        lock (Gate)
+        {
+            RemoveCollectedQueues();
+            Queues.Add(new WeakReference<PrismCacheInvalidationQueue>(queue));
+        }
+    }
+
+    public static void EnqueueOwner(PrismCacheOwnerToken ownerToken)
+    {
+        PrismCacheInvalidationQueue[] targets;
+        lock (Gate)
+        {
+            List<PrismCacheInvalidationQueue> alive = new(Queues.Count);
+            for (int index = Queues.Count - 1; index >= 0; index--)
+            {
+                if (Queues[index].TryGetTarget(out PrismCacheInvalidationQueue? queue))
+                {
+                    alive.Add(queue);
+                }
+                else
+                {
+                    Queues.RemoveAt(index);
+                }
+            }
+            targets = alive.ToArray();
         }
 
-        invalidation = items[readIndex++];
-        if (readIndex == items.Count)
+        foreach (PrismCacheInvalidationQueue queue in targets)
         {
-            items.Clear();
-            readIndex = 0;
+            queue.EnqueueOwner(ownerToken);
         }
-        return true;
+    }
+
+    private static void RemoveCollectedQueues()
+    {
+        for (int index = Queues.Count - 1; index >= 0; index--)
+        {
+            if (!Queues[index].TryGetTarget(out _))
+            {
+                Queues.RemoveAt(index);
+            }
+        }
     }
 }

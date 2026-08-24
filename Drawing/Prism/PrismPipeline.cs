@@ -6,6 +6,8 @@ public sealed class PrismPipeline : Collection<PrismOperation>
 {
     private long topologyVersion;
 
+    internal event EventHandler? Changed;
+
     public PrismPipeline()
     {
     }
@@ -39,18 +41,24 @@ public sealed class PrismPipeline : Collection<PrismOperation>
     {
         ArgumentNullException.ThrowIfNull(item);
         base.InsertItem(index, item);
+        item.Changed += OnOperationChanged;
         MarkTopologyChanged();
     }
 
     protected override void SetItem(int index, PrismOperation item)
     {
         ArgumentNullException.ThrowIfNull(item);
+        PrismOperation previous = this[index];
+        previous.Changed -= OnOperationChanged;
         base.SetItem(index, item);
+        item.Changed += OnOperationChanged;
         MarkTopologyChanged();
     }
 
     protected override void RemoveItem(int index)
     {
+        PrismOperation removed = this[index];
+        removed.Changed -= OnOperationChanged;
         base.RemoveItem(index);
         MarkTopologyChanged();
     }
@@ -60,6 +68,11 @@ public sealed class PrismPipeline : Collection<PrismOperation>
         if (Count == 0)
         {
             return;
+        }
+
+        foreach (PrismOperation operation in Items)
+        {
+            operation.Changed -= OnOperationChanged;
         }
 
         base.ClearItems();
@@ -72,7 +85,12 @@ public sealed class PrismPipeline : Collection<PrismOperation>
         {
             topologyVersion++;
         }
+
+        Changed?.Invoke(this, EventArgs.Empty);
     }
+
+    private void OnOperationChanged(object? sender, EventArgs args) =>
+        Changed?.Invoke(this, EventArgs.Empty);
 
     private static long Mix(long current, long value)
     {

@@ -6,6 +6,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Motion.Core;
+using Cerneala.UI.Motion;
 using Cerneala.UI.Platform;
 using Cerneala.UI.Relay;
 using Cerneala.UI.Rendering;
@@ -103,6 +104,7 @@ public sealed class UiHost
     {
         UIRoot currentRoot = RequireRoot();
         currentRoot.Relay.VerifyAccess();
+        ObjectMotionRuntime.TickCurrent();
         TimeSensitiveRenderInvalidator.Invalidate(currentRoot, elapsedTime);
     }
 
@@ -131,6 +133,7 @@ public sealed class UiHost
             PrimeInitialFrame(currentRoot);
             if (advanceRenderTime)
             {
+                ObjectMotionRuntime.TickCurrent();
                 TimeSensitiveRenderInvalidator.Invalidate(currentRoot, frameTime);
             }
             TimeSpan updatePreparationTime = Stopwatch.GetElapsedTime(updatePhaseStarted);

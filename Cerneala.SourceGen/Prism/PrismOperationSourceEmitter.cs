@@ -48,9 +48,38 @@ internal static class PrismOperationSourceEmitter
                 .AppendLine("    {")
                 .AppendLine("    }");
 
+            string concreteType = entry.Symbol + suffix;
+            AppendMotionProperty(
+                source,
+                concreteType,
+                "Visible",
+                "bool",
+                isDiscrete: true);
+            if (filter)
+            {
+                AppendMotionProperty(
+                    source,
+                    concreteType,
+                    "Opacity",
+                    "float",
+                    isDiscrete: false);
+                AppendMotionProperty(
+                    source,
+                    concreteType,
+                    "BlendMode",
+                    "global::Cerneala.Drawing.Prism.Catalog.PrismBlendMode",
+                    isDiscrete: true);
+            }
+
             foreach (PrismCatalogCompiler.CatalogProperty property in entry.Properties)
             {
                 string type = PropertyType(property.ValueType);
+                AppendMotionProperty(
+                    source,
+                    concreteType,
+                    property.Name,
+                    type,
+                    IsDiscrete(property.ValueType));
                 source.AppendLine()
                     .Append("    public ")
                     .Append(type)
@@ -74,6 +103,47 @@ internal static class PrismOperationSourceEmitter
         }
 
         return source.ToString();
+    }
+
+    private static void AppendMotionProperty(
+        StringBuilder source,
+        string targetType,
+        string propertyName,
+        string valueType,
+        bool isDiscrete)
+    {
+        source.AppendLine()
+            .Append("    public static readonly global::Cerneala.UI.Motion.MotionProperty<")
+            .Append(targetType)
+            .Append(", ")
+            .Append(valueType)
+            .Append("> ")
+            .Append(propertyName)
+            .AppendLine("Property =")
+            .Append("        global::Cerneala.UI.Motion.MotionProperty.")
+            .Append(isDiscrete ? "CreateDiscrete" : "Create")
+            .Append('<')
+            .Append(targetType)
+            .Append(", ")
+            .Append(valueType)
+            .AppendLine(">(")
+            .Append("            nameof(")
+            .Append(propertyName)
+            .AppendLine("),")
+            .Append("            static target => target.")
+            .Append(propertyName)
+            .AppendLine(",")
+            .Append("            static (target, value) => target.")
+            .Append(propertyName)
+            .AppendLine(" = value);");
+    }
+
+    private static bool IsDiscrete(string valueType)
+    {
+        return valueType == "boolean" ||
+            valueType == "integer" ||
+            valueType == "symbol" ||
+            valueType == "resource";
     }
 
     private static string PropertyType(string valueType)

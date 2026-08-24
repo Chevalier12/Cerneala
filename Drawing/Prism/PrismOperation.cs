@@ -21,6 +21,8 @@ public abstract class PrismOperation
 
     public long Version => version;
 
+    internal event EventHandler? Changed;
+
     protected T GetParameter<T>(string name)
     {
         PrismCatalogParameterInfo parameter = GetParameter(name);
@@ -63,6 +65,8 @@ public abstract class PrismOperation
         {
             version++;
         }
+
+        Changed?.Invoke(this, EventArgs.Empty);
     }
 
     protected static float ValidateOpacity(float value, string parameterName)

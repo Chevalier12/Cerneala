@@ -9,4 +9,18 @@ public static class MotionExtensions
         ArgumentNullException.ThrowIfNull(element);
         return new MotionElementFacade(element);
     }
+
+    public static ObjectMotionFacade Motion(this object target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        if (target.GetType().IsValueType)
+        {
+            throw new InvalidOperationException(
+                "Object Motion requires a reference-type receiver so property writes affect the original object.");
+        }
+
+        return new ObjectMotionFacade(
+            ObjectMotionRuntime.Current,
+            target);
+    }
 }

@@ -5063,5 +5063,30 @@
     "name": "Cerneala.Drawing.Prism.StrokeStyle",
     "file": "documentation/classes/Cerneala.Drawing.Prism.StrokeStyle.md",
     "source": "Cerneala.SourceGen/Prism/Catalog/prism-catalog.json"
+  },
+  {
+    "name": "Cerneala.UI.Motion.MotionProperty",
+    "file": "documentation/classes/Cerneala.UI.Motion.MotionProperty.md",
+    "source": "UI/Motion/MotionProperty.cs"
+  },
+  {
+    "name": "Cerneala.UI.Motion.MotionProperty<TTarget, TValue>",
+    "file": "documentation/classes/Cerneala.UI.Motion.MotionProperty_TTarget_TValue_.md",
+    "source": "UI/Motion/MotionProperty.cs"
+  },
+  {
+    "name": "Cerneala.UI.Motion.ObjectMotionFacade",
+    "file": "documentation/classes/Cerneala.UI.Motion.ObjectMotionFacade.md",
+    "source": "UI/Motion/ObjectMotionFacade.cs"
+  },
+  {
+    "name": "Cerneala.UI.Motion.ObjectMotionAnimationBuilder<TTarget, TValue>",
+    "file": "documentation/classes/Cerneala.UI.Motion.ObjectMotionAnimationBuilder_TTarget_TValue_.md",
+    "source": "UI/Motion/ObjectMotionAnimationBuilder.cs"
+  },
+  {
+    "name": "Cerneala.UI.Motion.Interpolation.Vector4Mixer",
+    "file": "documentation/classes/Cerneala.UI.Motion.Interpolation.Vector4Mixer.md",
+    "source": "UI/Motion/Interpolation/Vector4Mixer.cs"
   }
 ]

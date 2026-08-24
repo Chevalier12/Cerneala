@@ -17,10 +17,10 @@ public enum RenderSurface2DRedrawMode
 | Name | Value | Description |
 | --- | --- | --- |
 | `Continuous` | `0` | Redraws during every Cerneala frame. |
-| `OnDemand` | `1` | Redraws only after the surface becomes dirty. |
+| `OnDemand` | `1` | Redraws after the surface becomes dirty, including when a drawn `PrismImage` changes. |
 
 ## Remarks
-Use `Continuous` for animated gameplay. Use `OnDemand` for static scenes or previews, and call `RenderSurface2D.InvalidateFrame()` whenever their game content changes.
+Use `Continuous` when arbitrary frame state changes continuously. Use `OnDemand` for static or dependency-driven scenes. A `PrismImage` drawn in the current frame invalidates an on-demand surface automatically when its operation or pipeline state changes. Call `RenderSurface2D.InvalidateFrame()` for other changes that affect manually generated drawing commands.
 
 ## Applies To
 Project: `Cerneala`
