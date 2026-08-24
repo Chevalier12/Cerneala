@@ -10,6 +10,24 @@ public static class MotionExtensions
         return new MotionElementFacade(element);
     }
 
+    public static MotionElementFacade Motion<TElement>(this TElement element)
+        where TElement : UIElement
+    {
+        ArgumentNullException.ThrowIfNull(element);
+        return new MotionElementFacade(element);
+    }
+
+    public static ObjectMotionFacade<TTarget> Motion<TTarget>(
+        this TTarget target,
+        params object[] _)
+        where TTarget : class
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        return new ObjectMotionFacade<TTarget>(
+            ObjectMotionRuntime.Current,
+            target);
+    }
+
     public static ObjectMotionFacade Motion(this object target)
     {
         ArgumentNullException.ThrowIfNull(target);

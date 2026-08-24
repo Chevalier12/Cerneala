@@ -8,7 +8,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Motion/ObjectMotionFacade.cs`
 
-Creates typed property animations for an arbitrary reference object.
+Creates descriptor-based property animations when the receiver is statically typed as `object`.
 
 ```csharp
 public sealed class ObjectMotionFacade
@@ -28,7 +28,9 @@ MotionHandle handle = glow.Motion()
 
 ## Remarks
 
-The facade is obtained from the `Motion(object)` extension method. It is deliberately independent of `RenderSurface2D` and `PrismImage`: the target may be any reference object with a compatible `MotionProperty<TTarget, TValue>` descriptor. The Cerneala host frame loop advances the animation even when the object is not currently drawn.
+The facade is obtained from the non-generic `Motion(object)` extension method, primarily when the receiver is statically typed as `object`. For a concrete receiver type, `Motion<TTarget>` returns `ObjectMotionFacade<TTarget>` and permits direct property expressions without a declared descriptor.
+
+Both object facades are independent of `RenderSurface2D` and `PrismImage`. The Cerneala host frame loop advances the animation even when the target is not currently drawn.
 
 ## Methods
 
@@ -46,5 +48,6 @@ The facade is obtained from the `Motion(object)` extension method. It is deliber
 ## See also
 
 - `Cerneala.UI.Motion.MotionExtensions`
+- `Cerneala.UI.Motion.ObjectMotionFacade<TTarget>`
 - `Cerneala.UI.Motion.MotionProperty<TTarget, TValue>`
 - `Cerneala.UI.Motion.ObjectMotionAnimationBuilder<TTarget, TValue>`

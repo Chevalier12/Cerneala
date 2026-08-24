@@ -270,6 +270,7 @@ internal sealed class ObjectMotionBinding<TTarget, TValue> :
 
         handle.Completed += OnMotionCompleted;
         StageCurrent();
+        runtime.Graph.Unregister(node);
         runtime.Graph.Register(node);
         return handle;
     }

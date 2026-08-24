@@ -5080,6 +5080,11 @@
     "source": "UI/Motion/ObjectMotionFacade.cs"
   },
   {
+    "name": "Cerneala.UI.Motion.ObjectMotionFacade<TTarget>",
+    "file": "documentation/classes/Cerneala.UI.Motion.ObjectMotionFacade_TTarget_.md",
+    "source": "UI/Motion/ObjectMotionFacade.cs"
+  },
+  {
     "name": "Cerneala.UI.Motion.ObjectMotionAnimationBuilder<TTarget, TValue>",
     "file": "documentation/classes/Cerneala.UI.Motion.ObjectMotionAnimationBuilder_TTarget_TValue_.md",
     "source": "UI/Motion/ObjectMotionAnimationBuilder.cs"

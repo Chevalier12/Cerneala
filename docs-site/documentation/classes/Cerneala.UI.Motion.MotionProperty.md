@@ -30,7 +30,7 @@ marker.Motion().Animate(ScaleProperty).To(1.5f).Start(spec);
 
 ## Remarks
 
-Use `Create` for values that have a registered or explicitly supplied `ValueMixer<T>`. Use `CreateDiscrete` for values that should retain their starting value until the animation reaches its destination. A descriptor contains accessors only; it neither owns a target nor starts an animation.
+Ordinary writable properties do not need a declared descriptor; pass a direct expression such as `marker => marker.Scale` to `ObjectMotionFacade<TTarget>.Animate`. Use `Create` when a property needs custom accessors or an explicitly supplied `ValueMixer<T>`. Use `CreateDiscrete` when a value should retain its starting value until the animation reaches its destination. A descriptor contains accessors only; it neither owns a target nor starts an animation.
 
 Prism filter and style classes expose generated descriptors such as `OuterGlowStyle.SizeProperty`, so those properties do not require hand-written descriptors.
 
@@ -52,4 +52,5 @@ Prism filter and style classes expose generated descriptors such as `OuterGlowSt
 
 - `Cerneala.UI.Motion.MotionProperty<TTarget, TValue>`
 - `Cerneala.UI.Motion.ObjectMotionFacade`
+- `Cerneala.UI.Motion.ObjectMotionFacade<TTarget>`
 - `Cerneala.UI.Motion.Interpolation.ValueMixer<T>`
