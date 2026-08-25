@@ -1,9 +1,9 @@
 # GeneratedWindowApplication Class
 
 ## Definition
-Namespace: `Cerneala.UI.Hosting.Windows`  
+Namespace: `Cerneala.UI.Hosting.Windowing`
 Assembly/Project: `Cerneala`  
-Source: `UI/Hosting/Windows/GeneratedWindowApplication.cs`
+Source: `UI/Hosting/Windowing/GeneratedWindowApplication.cs`
 
 Runs or hosts the application and startup window described by generated startup metadata.
 
@@ -40,7 +40,7 @@ Startup failures retain their original exception instance. The exception `Data` 
 | `Run` | `ArgumentNullException` | The descriptor or explicit argument list is `null`. |
 
 ## Applies to
-Windows desktop application hosting.
+Backend-agnostic desktop application hosting. A registered windowing backend supplies the native window and graphics implementation.
 
 ## See also
 - `Application`

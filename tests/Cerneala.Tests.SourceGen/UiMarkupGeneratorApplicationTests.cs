@@ -36,7 +36,7 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Contains("partial class App", source);
         Assert.Contains("[global::System.STAThreadAttribute]", source);
         Assert.Contains("private static int Main(string[] args)", source);
-        Assert.Contains("return global::Cerneala.UI.Hosting.Windows.GeneratedWindowApplication.Run(CreateDescriptor(), args);", source);
+        Assert.Contains("return global::Cerneala.UI.Hosting.Windowing.GeneratedWindowApplication.Run(CreateDescriptor(), args);", source);
         Assert.Contains("static () => new global::TestInput.App()", source);
         Assert.Contains("global::TestInput.ShellWindow", source);
         Assert.Contains("\"global::TestInput.ShellWindow\"", source);

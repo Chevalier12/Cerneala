@@ -4,7 +4,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Cerneala.UI.Hosting.Windows;
+namespace Cerneala.UI.Hosting.Windowing;
 
 internal sealed class DesignPreviewSession : IDisposable
 {
@@ -31,10 +31,8 @@ internal sealed class DesignPreviewSession : IDisposable
         ArgumentOutOfRangeException.ThrowIfLessThan(height, 1);
         UiCoordinateMapper.ValidateScale(renderScale);
 
-        IWindowGraphicsSessionFactory graphicsSessionFactory =
-            WindowGraphicsBackendRegistry.CreateSessionFactory(useMultisampling: false);
-        IWindowPlatform platform = WindowPlatformBackendRegistry.CreatePlatform(
-            graphicsSessionFactory,
+        IWindowPlatform platform = WindowingBackendRegistry.CreatePlatform(
+            useMultisampling: false,
             coordinateScaleOverride: renderScale);
         WindowApplicationRuntime runtime = new(platform);
         application.Install(runtime);

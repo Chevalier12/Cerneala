@@ -6,7 +6,7 @@ using Cerneala.UI.Input;
 using Cerneala.UI.Platform;
 using Cerneala.UI.Resources;
 
-namespace Cerneala.UI.Hosting.Windows;
+namespace Cerneala.UI.Hosting.Windowing;
 
 internal interface IWindowPlatform : IDisposable
 {
@@ -19,7 +19,7 @@ internal interface IWindowPlatform : IDisposable
 
 internal interface IPlatformWindow : IDisposable
 {
-    nint Handle { get; }
+    IWindowSurface Surface { get; }
 
     UiViewport Viewport { get; }
 
@@ -40,6 +40,10 @@ internal interface IPlatformWindow : IDisposable
     void Activate();
 
     void Destroy();
+}
+
+internal interface IWindowSurface
+{
 }
 
 internal interface IWindowGraphicsSession : IDisposable
@@ -87,7 +91,11 @@ internal interface IWindowPresentedFrameSource
 
 internal interface IWindowGraphicsSessionFactory
 {
-    IWindowGraphicsSession Create(nint windowHandle, int pixelWidth, int pixelHeight, float coordinateScale);
+    IWindowGraphicsSession Create(
+        IWindowSurface windowSurface,
+        int pixelWidth,
+        int pixelHeight,
+        float coordinateScale);
 }
 
 internal interface IWindowPlatformCallbacks

@@ -113,6 +113,7 @@ public sealed class MonoGameDependencyBoundaryTests
         string root = FindRepositoryRoot();
         string[] windowHostingRoots =
         [
+            Path.Combine(root, "UI", "Hosting", "Windowing"),
             Path.Combine(root, "UI", "Hosting", "Windows"),
             Path.Combine(root, "Cerneala.Platforms.Win32", "Hosting")
         ];
@@ -145,7 +146,6 @@ public sealed class MonoGameDependencyBoundaryTests
         string[] ownedSources =
         [
             "Win32.cs",
-            "Win32ApplicationPlatform.cs",
             "Win32CursorService.cs",
             "Win32InputSource.cs",
             "Win32WindowPlatform.cs",
@@ -161,6 +161,21 @@ public sealed class MonoGameDependencyBoundaryTests
             Assert.False(
                 File.Exists(Path.Combine(root, "UI", "Hosting", "Windows", source)),
                 $"Core must not own {source}.");
+        }
+    }
+
+    [Fact]
+    public void CoreWindowingContractsDoNotUseTheWindowsNamespaceOrRawNativeHandles()
+    {
+        string root = FindRepositoryRoot();
+        string windowingRoot = Path.Combine(root, "UI", "Hosting", "Windowing");
+
+        foreach (string file in Directory.EnumerateFiles(windowingRoot, "*.cs", SearchOption.AllDirectories))
+        {
+            string text = File.ReadAllText(file);
+            Assert.DoesNotContain("Cerneala.UI.Hosting.Windows", text, StringComparison.Ordinal);
+            Assert.DoesNotContain("nint windowHandle", text, StringComparison.Ordinal);
+            Assert.DoesNotContain("nint Handle", text, StringComparison.Ordinal);
         }
     }
 

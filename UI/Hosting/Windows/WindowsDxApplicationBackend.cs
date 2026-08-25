@@ -1,3 +1,5 @@
+using Cerneala.UI.Hosting.Windowing;
+
 namespace Cerneala.UI.Hosting.Windows;
 
 /// <summary>
@@ -10,17 +12,21 @@ public static class WindowsDxApplicationBackend
     /// </summary>
     public static void EnsureRegistered()
     {
-        Win32ApplicationPlatform.EnsureRegistered();
-        WindowGraphicsBackendRegistry.Register(WindowsDxGraphicsBackend.Instance);
+        WindowsGpuPreference.TryRequestHighPerformance();
+        WindowingBackendRegistry.Register(WindowsDxWindowingBackend.Instance);
     }
 
-    private sealed class WindowsDxGraphicsBackend : IWindowGraphicsBackend
+    private sealed class WindowsDxWindowingBackend : IWindowingBackend
     {
-        public static WindowsDxGraphicsBackend Instance { get; } = new();
+        public static WindowsDxWindowingBackend Instance { get; } = new();
 
-        public IWindowGraphicsSessionFactory CreateSessionFactory(bool useMultisampling)
+        public IWindowPlatform CreatePlatform(
+            bool useMultisampling,
+            float? coordinateScaleOverride)
         {
-            return new WindowsDxWindowGraphicsSessionFactory(useMultisampling);
+            return new Win32WindowPlatform(
+                new WindowsDxWindowGraphicsSessionFactory(useMultisampling),
+                coordinateScaleOverride);
         }
     }
 }

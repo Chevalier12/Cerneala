@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Hosting;
+using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Hosting.Windows;
 using Cerneala.Drawing;
 using Cerneala.Drawing.MonoGame;
@@ -126,7 +127,7 @@ public sealed class Win32WindowPlatformTests
             return;
         }
 
-        using WindowApplicationRuntime runtime = new(new Win32WindowPlatform());
+        using WindowApplicationRuntime runtime = new(CreateWindowsDxPlatform());
         string title = $"Cerneala maximize {Guid.NewGuid():N}";
         Window source = new()
         {
@@ -164,7 +165,7 @@ public sealed class Win32WindowPlatformTests
             return;
         }
 
-        using WindowApplicationRuntime runtime = new(new Win32WindowPlatform());
+        using WindowApplicationRuntime runtime = new(CreateWindowsDxPlatform());
         string title = $"Cerneala programmatic maximize {Guid.NewGuid():N}";
         Window source = new()
         {
@@ -222,7 +223,7 @@ public sealed class Win32WindowPlatformTests
         using IPlatformWindow window = platform.CreateWindow(source, new CallbackSink());
         RecordingGraphicsSession session = Assert.Single(factory.Sessions);
 
-        Assert.Equal(window.Handle, factory.WindowHandle);
+        Assert.Equal(NativeHandle(window), factory.WindowHandle);
         Assert.True(factory.PixelWidth > 0);
         Assert.True(factory.PixelHeight > 0);
         Assert.Equal(window.Viewport.Scale, factory.CoordinateScale);
@@ -241,6 +242,18 @@ public sealed class Win32WindowPlatformTests
     }
 
     [Fact]
+    public void WindowsDxFactoryRejectsANonWin32WindowSurface()
+    {
+        WindowsDxWindowGraphicsSessionFactory factory = new();
+
+        ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+            factory.Create(new ForeignWindowSurface(), 32, 24, 1));
+
+        Assert.Equal("windowSurface", exception.ParamName);
+        Assert.Contains(nameof(Win32WindowSurface), exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void NativeWindowsBelongToCurrentProcessAndUseNativeOwnership()
     {
         if (!OperatingSystem.IsWindows())
@@ -248,20 +261,22 @@ public sealed class Win32WindowPlatformTests
             return;
         }
 
-        using Win32WindowPlatform platform = new();
+        using Win32WindowPlatform platform = CreateWindowsDxPlatform();
         CallbackSink callbacks = new();
         using IPlatformWindow owner = platform.CreateWindow(new Window { Title = "Owner" }, callbacks);
         using IPlatformWindow child = platform.CreateWindow(new Window { Title = "Child" }, callbacks);
 
         child.SetOwner(owner);
-        GetWindowThreadProcessId(owner.Handle, out uint ownerProcessId);
-        GetWindowThreadProcessId(child.Handle, out uint childProcessId);
+        nint ownerHandle = NativeHandle(owner);
+        nint childHandle = NativeHandle(child);
+        GetWindowThreadProcessId(ownerHandle, out uint ownerProcessId);
+        GetWindowThreadProcessId(childHandle, out uint childProcessId);
 
         Assert.Equal((uint)Process.GetCurrentProcess().Id, ownerProcessId);
         Assert.Equal(ownerProcessId, childProcessId);
-        Assert.Equal(owner.Handle, GetWindow(child.Handle, 4));
-        Assert.True(IsWindow(owner.Handle));
-        Assert.True(IsWindow(child.Handle));
+        Assert.Equal(ownerHandle, GetWindow(childHandle, 4));
+        Assert.True(IsWindow(ownerHandle));
+        Assert.True(IsWindow(childHandle));
 
         DrawCommandList commands = new();
         commands.Add(DrawCommand.FillRectangle(new DrawRect(0, 0, 32, 32), new Color(20, 40, 60)));
@@ -277,8 +292,8 @@ public sealed class Win32WindowPlatformTests
             Assert.IsType<WindowsDxWindowGraphicsSession>(owner.GraphicsSession).GraphicsDevice,
             Assert.IsType<WindowsDxWindowGraphicsSession>(child.GraphicsSession).GraphicsDevice);
 
-        SendMessage(owner.Handle, Win32.WM_MOUSEMOVE, 0, PackCoordinates(45, 35));
-        SendMessage(owner.Handle, Win32.WM_KEYDOWN, 0x41, 0);
+        SendMessage(ownerHandle, Win32.WM_MOUSEMOVE, 0, PackCoordinates(45, 35));
+        SendMessage(ownerHandle, Win32.WM_KEYDOWN, 0x41, 0);
         InputFrame ownerInput = owner.InputSource.GetFrame();
         InputFrame childInput = child.InputSource.GetFrame();
         Assert.True(ownerInput.Pointer.X > 0);
@@ -290,8 +305,8 @@ public sealed class Win32WindowPlatformTests
 
         child.Destroy();
         owner.Destroy();
-        Assert.False(IsWindow(child.Handle));
-        Assert.False(IsWindow(owner.Handle));
+        Assert.False(IsWindow(childHandle));
+        Assert.False(IsWindow(ownerHandle));
     }
 
     [Fact]
@@ -307,8 +322,8 @@ public sealed class Win32WindowPlatformTests
             new Window { Title = "Application icon" },
             new CallbackSink());
 
-        Assert.NotEqual(0, GetClassLongPtr(window.Handle, GclpIcon));
-        Assert.NotEqual(0, GetClassLongPtr(window.Handle, GclpIconSmall));
+        Assert.NotEqual(0, GetClassLongPtr(NativeHandle(window), GclpIcon));
+        Assert.NotEqual(0, GetClassLongPtr(NativeHandle(window), GclpIconSmall));
     }
 
     [Fact]
@@ -323,8 +338,9 @@ public sealed class Win32WindowPlatformTests
         CallbackSink callbacks = new();
         using IPlatformWindow window = platform.CreateWindow(new Window { Title = "Mouse move coalescing" }, callbacks);
 
-        SendMessage(window.Handle, Win32.WM_MOUSEMOVE, 0, PackCoordinates(0, 0));
-        SendMessage(window.Handle, Win32.WM_MOUSEMOVE, 0, PackCoordinates(0, 0));
+        nint handle = NativeHandle(window);
+        SendMessage(handle, Win32.WM_MOUSEMOVE, 0, PackCoordinates(0, 0));
+        SendMessage(handle, Win32.WM_MOUSEMOVE, 0, PackCoordinates(0, 0));
 
         Assert.Equal(1, callbacks.RenderRequestCount);
     }
@@ -340,16 +356,17 @@ public sealed class Win32WindowPlatformTests
         using Win32WindowPlatform platform = new(new RecordingGraphicsFactory());
         Window source = new() { Title = "Resize grip", ResizeMode = ResizeMode.CanResizeWithGrip };
         using IPlatformWindow window = platform.CreateWindow(source, new CallbackSink());
-        Assert.True(GetClientRect(window.Handle, out NativeRect client));
+        nint handle = NativeHandle(window);
+        Assert.True(GetClientRect(handle, out NativeRect client));
         NativePoint point = new(client.Right - 1, client.Bottom - 1);
-        Assert.True(ClientToScreen(window.Handle, ref point));
+        Assert.True(ClientToScreen(handle, ref point));
 
-        nint gripResult = SendMessage(window.Handle, WmNcHitTest, 0, PackCoordinates(point.X, point.Y));
+        nint gripResult = SendMessage(handle, WmNcHitTest, 0, PackCoordinates(point.X, point.Y));
         Assert.Equal((nint)HtBottomRight, gripResult);
 
         source.ResizeMode = ResizeMode.CanResize;
         window.ApplyProperties(source);
-        nint normalResult = SendMessage(window.Handle, WmNcHitTest, 0, PackCoordinates(point.X, point.Y));
+        nint normalResult = SendMessage(handle, WmNcHitTest, 0, PackCoordinates(point.X, point.Y));
         Assert.NotEqual((nint)HtBottomRight, normalResult);
     }
 
@@ -435,9 +452,13 @@ public sealed class Win32WindowPlatformTests
 
         public float CoordinateScale { get; private set; }
 
-        public IWindowGraphicsSession Create(nint windowHandle, int pixelWidth, int pixelHeight, float coordinateScale)
+        public IWindowGraphicsSession Create(
+            IWindowSurface windowSurface,
+            int pixelWidth,
+            int pixelHeight,
+            float coordinateScale)
         {
-            WindowHandle = windowHandle;
+            WindowHandle = Assert.IsType<Win32WindowSurface>(windowSurface).Handle;
             PixelWidth = pixelWidth;
             PixelHeight = pixelHeight;
             CoordinateScale = coordinateScale;
@@ -497,6 +518,16 @@ public sealed class Win32WindowPlatformTests
     {
         public void Render(DrawCommandList commands, in DrawingFrameContext frameContext) { }
     }
+
+    private sealed class ForeignWindowSurface : IWindowSurface
+    {
+    }
+
+    private static Win32WindowPlatform CreateWindowsDxPlatform() =>
+        new(new WindowsDxWindowGraphicsSessionFactory());
+
+    private static nint NativeHandle(IPlatformWindow window) =>
+        Assert.IsType<Win32WindowSurface>(window.Surface).Handle;
 
     private static void Render(IDrawingBackend backend, DrawCommandList commands)
     {

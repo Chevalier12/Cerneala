@@ -21,6 +21,7 @@
     <Using Include="Cerneala.Drawing.Prism.Execution" />
     <Using Include="Cerneala.Drawing.Prism.Kernels" />
     <Using Include="Cerneala.Drawing.Prism.Surfaces" />
+    <Using Include="Cerneala.UI.Hosting.Windowing" />
   </ItemGroup>
 
   <ItemGroup>

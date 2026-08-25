@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Hosting;
+using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Input;
 using Cerneala.UI.Platform;
 
@@ -20,11 +21,6 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
     private readonly Win32CursorService cursorService = new();
     private readonly IPlatformServices platformServices;
     private bool disposed;
-
-    public Win32WindowPlatform()
-        : this(WindowGraphicsBackendRegistry.CreateSessionFactory(useMultisampling: true), coordinateScaleOverride: null)
-    {
-    }
 
     internal Win32WindowPlatform(IWindowGraphicsSessionFactory graphicsSessionFactory)
         : this(graphicsSessionFactory, coordinateScaleOverride: null)
@@ -208,8 +204,9 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
             viewport = UiViewport.FromPhysicalPixels(clientRect.Width, clientRect.Height, scale);
             try
             {
+                Surface = new Win32WindowSurface(Handle);
                 graphicsSession = graphicsSessionFactory.Create(
-                    Handle,
+                    Surface,
                     Math.Max(1, clientRect.Width),
                     Math.Max(1, clientRect.Height),
                     scale);
@@ -225,6 +222,10 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
         }
 
         public nint Handle { get; }
+
+        public Win32WindowSurface Surface { get; }
+
+        IWindowSurface IPlatformWindow.Surface => Surface;
 
         public UiViewport Viewport => viewport;
 
@@ -280,7 +281,13 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
 
         public void SetOwner(IPlatformWindow? owner)
         {
-            Win32.SetWindowLongPtr(Handle, Win32.GWLP_HWNDPARENT, owner?.Handle ?? 0);
+            nint ownerHandle = owner is null
+                ? 0
+                : owner.Surface is Win32WindowSurface win32Surface
+                    ? win32Surface.Handle
+                    : throw new InvalidOperationException(
+                        $"A Win32 window cannot be owned by a '{owner.Surface.GetType().FullName}' surface.");
+            Win32.SetWindowLongPtr(Handle, Win32.GWLP_HWNDPARENT, ownerHandle);
         }
 
         public void SetEnabled(bool enabled)
@@ -646,4 +653,19 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
 
         private uint NativeDpi() => Math.Max(1, Win32.GetDpiForWindow(Handle));
     }
+}
+
+internal sealed class Win32WindowSurface : IWindowSurface
+{
+    public Win32WindowSurface(nint handle)
+    {
+        if (handle == 0)
+        {
+            throw new ArgumentException("A Win32 window handle is required.", nameof(handle));
+        }
+
+        Handle = handle;
+    }
+
+    public nint Handle { get; }
 }

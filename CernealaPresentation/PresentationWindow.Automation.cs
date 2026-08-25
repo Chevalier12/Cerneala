@@ -3,7 +3,7 @@ using System.Text.Json;
 using Cerneala.Drawing;
 using Cerneala.UI.Accessibility;
 using Cerneala.UI.Hosting;
-using Cerneala.UI.Hosting.Windows;
+using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Text;
 

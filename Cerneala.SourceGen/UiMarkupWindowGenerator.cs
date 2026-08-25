@@ -336,7 +336,7 @@ public sealed partial class UiMarkupGenerator
             source.AppendLine("    private static void Main()");
             source.AppendLine("    {");
             source.AppendLine("        global::Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend.EnsureRegistered();");
-            source.AppendLine("        global::Cerneala.UI.Hosting.Windows.GeneratedWindowApplication.Run(CreateDescriptor());");
+            source.AppendLine("        global::Cerneala.UI.Hosting.Windowing.GeneratedWindowApplication.Run(CreateDescriptor());");
             source.AppendLine("    }");
         }
         else
@@ -345,14 +345,14 @@ public sealed partial class UiMarkupGenerator
             source.AppendLine("    internal static void Register()");
             source.AppendLine("    {");
             source.AppendLine("        global::Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend.EnsureRegistered();");
-            source.AppendLine("        global::Cerneala.UI.Hosting.Windows.GeneratedWindowApplication.RegisterStartup(CreateDescriptor());");
+            source.AppendLine("        global::Cerneala.UI.Hosting.Windowing.GeneratedWindowApplication.RegisterStartup(CreateDescriptor());");
             source.AppendLine("    }");
         }
 
         source.AppendLine();
-        source.AppendLine("    private static global::Cerneala.UI.Hosting.Windows.GeneratedWindowStartupDescriptor CreateDescriptor()");
+        source.AppendLine("    private static global::Cerneala.UI.Hosting.Windowing.GeneratedWindowStartupDescriptor CreateDescriptor()");
         source.AppendLine("    {");
-        source.AppendLine("        return new global::Cerneala.UI.Hosting.Windows.GeneratedWindowStartupDescriptor(");
+        source.AppendLine("        return new global::Cerneala.UI.Hosting.Windowing.GeneratedWindowStartupDescriptor(");
         source.AppendLine("            ConfigureServices,");
         source.Append("            static provider => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<")
             .Append(windowCode).AppendLine(">(provider));");

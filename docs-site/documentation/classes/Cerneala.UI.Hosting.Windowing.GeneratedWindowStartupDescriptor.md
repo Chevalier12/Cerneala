@@ -1,9 +1,9 @@
 # GeneratedWindowStartupDescriptor Class
 
 ## Definition
-Namespace: `Cerneala.UI.Hosting.Windows`  
+Namespace: `Cerneala.UI.Hosting.Windowing`
 Assembly/Project: `Cerneala`  
-Source: `UI/Hosting/Windows/GeneratedWindowApplication.cs`
+Source: `UI/Hosting/Windowing/GeneratedWindowApplication.cs`
 
 Connects generated application startup with service registration and main-window creation.
 
@@ -36,7 +36,7 @@ Callbacks are retained by generated startup infrastructure. `null` callbacks are
 | Constructors | `ArgumentNullException` | A required callback is `null`. |
 
 ## Applies to
-Windows generated-window hosting.
+Backend-agnostic generated-window hosting.
 
 ## See also
 - `Application`

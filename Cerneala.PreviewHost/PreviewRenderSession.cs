@@ -4,6 +4,7 @@ using System.Runtime.Loader;
 using Cerneala.UI;
 using Cerneala.UI.Automation;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Hosting.Windows;
 using Cerneala.UI.Input;
 

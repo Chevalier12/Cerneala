@@ -14,6 +14,9 @@ public static class WindowsDxApplicationBackend
 ## Examples
 
 ```csharp
+using Cerneala.UI.Hosting.Windowing;
+using Cerneala.UI.Hosting.Windows;
+
 WindowsDxApplicationBackend.EnsureRegistered();
 int exitCode = GeneratedWindowApplication.Run(descriptor, args);
 ```
@@ -22,13 +25,15 @@ int exitCode = GeneratedWindowApplication.Run(descriptor, args);
 
 Generated Cerneala application startup code calls `EnsureRegistered` before creating a native window. Call it explicitly when using `GeneratedWindowApplication` without generated startup code.
 
-The method composes two independent adapters: `Cerneala.Platforms.Win32` supplies native windows, input, cursors, DPI handling, and Windows GPU preference setup, while `Cerneala.Backends.MonoGame` supplies the WindowsDX graphics session. Registration is idempotent for this pair. Registering a different window platform or graphics backend in the same process is rejected by the host registries.
+The method registers one atomic windowing backend: `Cerneala.Platforms.Win32` supplies native windows, input, cursors, DPI handling, and Windows GPU preference setup, while `Cerneala.Backends.MonoGame` supplies the WindowsDX graphics session. Registration is idempotent for this backend. Registering a different windowing backend in the same process is rejected.
+
+The generic host exchanges an opaque window surface. The WindowsDX factory accepts only the Win32 surface owned by `Cerneala.Platforms.Win32`, so an incompatible platform and graphics implementation fail before graphics-device creation.
 
 ## Methods
 
 | Name | Description |
 | --- | --- |
-| `EnsureRegistered` | Ensures that both the Win32 window platform and WindowsDX graphics backend are available to the window host. |
+| `EnsureRegistered` | Ensures that the composed Win32 and WindowsDX windowing backend is available to the window host. |
 
 ## Applies to
 

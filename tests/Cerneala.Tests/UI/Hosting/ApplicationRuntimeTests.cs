@@ -3,7 +3,7 @@ using Cerneala.Drawing;
 using Cerneala.UI;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Hosting;
-using Cerneala.UI.Hosting.Windows;
+using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Input;
 using Cerneala.UI.Resources;
 using Microsoft.Extensions.DependencyInjection;
@@ -668,7 +668,7 @@ public sealed class ApplicationRuntimeTests : IDisposable
             this.callbacks = callbacks;
         }
 
-        public nint Handle => 1;
+        public IWindowSurface Surface { get; } = new FakeWindowSurface();
 
         public UiViewport Viewport { get; } = new(800, 600);
 
@@ -709,6 +709,10 @@ public sealed class ApplicationRuntimeTests : IDisposable
         {
             GraphicsSession.Dispose();
         }
+    }
+
+    private sealed class FakeWindowSurface : IWindowSurface
+    {
     }
 
     private sealed class EmptyInputSource : IInputSource

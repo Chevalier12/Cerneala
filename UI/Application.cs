@@ -1,5 +1,5 @@
 using Cerneala.UI.Controls;
-using Cerneala.UI.Hosting.Windows;
+using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Resources;
 using Microsoft.Extensions.DependencyInjection;
 

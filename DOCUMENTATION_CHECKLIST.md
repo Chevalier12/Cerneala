@@ -553,8 +553,8 @@
 - [x] docs-site/documentation/classes/Cerneala.UI.Hosting.UiHost.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Hosting.UiHostOptions.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Hosting.UiViewport.md
-- [x] docs-site/documentation/classes/Cerneala.UI.Hosting.Windows.GeneratedWindowApplication.md
-- [x] docs-site/documentation/classes/Cerneala.UI.Hosting.Windows.GeneratedWindowStartupDescriptor.md
+- [x] docs-site/documentation/classes/Cerneala.UI.Hosting.Windowing.GeneratedWindowApplication.md
+- [x] docs-site/documentation/classes/Cerneala.UI.Hosting.Windowing.GeneratedWindowStartupDescriptor.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Ink.Stroke.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Ink.StrokeCollection.md
 - [x] docs-site/documentation/classes/Cerneala.UI.Ink.StrokeCollectionChangedEventArgs.md

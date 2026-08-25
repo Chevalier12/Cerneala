@@ -7,6 +7,7 @@ using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Drawing.Text;
 using Cerneala.UI.Hosting;
+using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Resources;
 using Cerneala.UI.Resources.MonoGame;
 using Microsoft.Xna.Framework;
@@ -25,10 +26,23 @@ internal sealed class WindowsDxWindowGraphicsSessionFactory : IWindowGraphicsSes
         this.useMultisampling = useMultisampling;
     }
 
-    public IWindowGraphicsSession Create(nint windowHandle, int pixelWidth, int pixelHeight, float coordinateScale)
+    public IWindowGraphicsSession Create(
+        IWindowSurface windowSurface,
+        int pixelWidth,
+        int pixelHeight,
+        float coordinateScale)
     {
+        ArgumentNullException.ThrowIfNull(windowSurface);
+        if (windowSurface is not Win32WindowSurface win32Surface)
+        {
+            throw new ArgumentException(
+                $"WindowsDX requires a '{typeof(Win32WindowSurface).FullName}' window surface, " +
+                $"but received '{windowSurface.GetType().FullName}'.",
+                nameof(windowSurface));
+        }
+
         return new WindowsDxWindowGraphicsSession(
-            windowHandle,
+            win32Surface.Handle,
             pixelWidth,
             pixelHeight,
             coordinateScale,

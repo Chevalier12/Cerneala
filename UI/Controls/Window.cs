@@ -1,7 +1,7 @@
 using Cerneala.UI.Automation;
 using Cerneala.UI.Core;
 using Cerneala.UI.Hosting;
-using Cerneala.UI.Hosting.Windows;
+using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Markup;
 using Cerneala.UI.Rendering;
 

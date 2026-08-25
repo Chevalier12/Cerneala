@@ -1,7 +1,7 @@
 using Cerneala.UI.Controls;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Cerneala.UI.Hosting.Windows;
+namespace Cerneala.UI.Hosting.Windowing;
 
 public sealed class GeneratedWindowStartupDescriptor
 {

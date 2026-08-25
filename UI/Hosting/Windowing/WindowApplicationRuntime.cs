@@ -9,7 +9,7 @@ using Cerneala.UI.Platform;
 using Cerneala.UI.Resources;
 using Cerneala.UI.Theming;
 
-namespace Cerneala.UI.Hosting.Windows;
+namespace Cerneala.UI.Hosting.Windowing;
 
 internal sealed class WindowApplicationRuntime : IDisposable
 {
@@ -837,10 +837,8 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
     private static WindowApplicationRuntime CreateDefault()
     {
-        IWindowGraphicsSessionFactory graphicsSessionFactory =
-            WindowGraphicsBackendRegistry.CreateSessionFactory(useMultisampling: true);
-        IWindowPlatform platform = WindowPlatformBackendRegistry.CreatePlatform(
-            graphicsSessionFactory,
+        IWindowPlatform platform = WindowingBackendRegistry.CreatePlatform(
+            useMultisampling: true,
             coordinateScaleOverride: null);
         return new WindowApplicationRuntime(platform);
     }

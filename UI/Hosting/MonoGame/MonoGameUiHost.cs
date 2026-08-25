@@ -7,7 +7,7 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Input.MonoGame;
 using Cerneala.UI.Resources.MonoGame;
-using Cerneala.UI.Hosting.Windows;
+using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Relay;
 using Microsoft.Xna.Framework.Graphics;
 

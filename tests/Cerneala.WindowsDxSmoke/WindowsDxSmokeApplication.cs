@@ -5,6 +5,7 @@ using Cerneala.Drawing.Prism.Graph;
 using Cerneala.Drawing.Text;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Hosting;
+using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Hosting.Windows;
 using Cerneala.UI.Media;
 using Microsoft.Xna.Framework.Graphics;
@@ -26,7 +27,7 @@ internal static class WindowsDxSmokeApplication
         try
         {
             WindowsDxApplicationBackend.EnsureRegistered();
-            using Win32WindowPlatform platform = new();
+            using Win32WindowPlatform platform = new(new WindowsDxWindowGraphicsSessionFactory());
             CallbackSink callbacks = new();
             using IPlatformWindow first = platform.CreateWindow(
                 new Window { Title = "WindowsDX Smoke A", Width = 240, Height = 160 },

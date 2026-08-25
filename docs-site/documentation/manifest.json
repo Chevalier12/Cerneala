@@ -2185,14 +2185,14 @@
     "source": "UI/Hosting/UiViewport.cs"
   },
   {
-    "name": "Cerneala.UI.Hosting.Windows.GeneratedWindowApplication",
-    "file": "documentation/classes/Cerneala.UI.Hosting.Windows.GeneratedWindowApplication.md",
-    "source": "UI/Hosting/Windows/GeneratedWindowApplication.cs"
+    "name": "Cerneala.UI.Hosting.Windowing.GeneratedWindowApplication",
+    "file": "documentation/classes/Cerneala.UI.Hosting.Windowing.GeneratedWindowApplication.md",
+    "source": "UI/Hosting/Windowing/GeneratedWindowApplication.cs"
   },
     {
-      "name": "Cerneala.UI.Hosting.Windows.GeneratedWindowStartupDescriptor",
-      "file": "documentation/classes/Cerneala.UI.Hosting.Windows.GeneratedWindowStartupDescriptor.md",
-      "source": "UI/Hosting/Windows/GeneratedWindowApplication.cs"
+      "name": "Cerneala.UI.Hosting.Windowing.GeneratedWindowStartupDescriptor",
+      "file": "documentation/classes/Cerneala.UI.Hosting.Windowing.GeneratedWindowStartupDescriptor.md",
+      "source": "UI/Hosting/Windowing/GeneratedWindowApplication.cs"
     },
     {
       "name": "Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend",

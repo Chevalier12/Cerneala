@@ -1429,7 +1429,8 @@ public sealed class PrismBackdropMonoGameAdapterTests
 
     private sealed class WindowsDxFixture : IDisposable
     {
-        private readonly Win32WindowPlatform platform = new();
+        private readonly Win32WindowPlatform platform =
+            new(new WindowsDxWindowGraphicsSessionFactory());
         private readonly IPlatformWindow window;
 
         public WindowsDxFixture()
