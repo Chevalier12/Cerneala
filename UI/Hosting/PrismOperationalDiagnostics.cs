@@ -1,6 +1,6 @@
-using Cerneala.Drawing.MonoGame.Prism.Execution;
+using Cerneala.Drawing.Prism;
 
-namespace Cerneala.UI.Hosting.MonoGame;
+namespace Cerneala.UI.Hosting;
 
 internal readonly record struct PrismOperationalDiagnostics(
     bool DevelopmentDetailsEnabled,

@@ -2,7 +2,7 @@ using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Drawing.Prism.Graph;
 
-namespace Cerneala.Drawing.MonoGame.Prism.Execution;
+namespace Cerneala.Drawing.Prism.Execution;
 
 internal sealed class PrismGraphFallbackTracker
 {

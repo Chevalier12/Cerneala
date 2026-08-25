@@ -19,7 +19,7 @@ internal enum RenderSurface2DRetainedMissReason
     ContextSensitiveCommand
 }
 
-internal sealed class MonoGameRenderSurface2DSession : IDisposable
+internal sealed class MonoGameRenderSurface2DSession : IRenderSurface2DBackendState
 {
     private readonly RenderTarget2D renderTarget;
     private readonly SpriteBatch spriteBatch;
@@ -91,29 +91,49 @@ internal sealed class MonoGameRenderSurface2DSession : IDisposable
     internal PrismRendererDiagnostics PrismDiagnostics =>
         drawingBackend.RendererDiagnostics;
 
-    public void Render(
+    internal long? RenderedFrameVersion { get; private set; }
+
+    internal void Render(
         Action<RenderSurface2DFrame> draw,
         CernealaColor clearColor,
         TimeSpan frameTime,
         Action<IDrawImage>? trackImageDependency = null)
     {
         ArgumentNullException.ThrowIfNull(draw);
+        long frameVersion = (RenderedFrameVersion ?? 0) + 1;
+        Render(
+            (commands, bounds) =>
+            {
+                RenderSurface2DFrame frame = new(
+                    commands,
+                    bounds,
+                    frameTime,
+                    trackImageDependency);
+                try
+                {
+                    draw(frame);
+                }
+                finally
+                {
+                    frame.Complete();
+                }
+            },
+            clearColor,
+            frameVersion);
+    }
+
+    public void Render(
+        Action<DrawCommandList, DrawRect> recordFrame,
+        CernealaColor clearColor,
+        long frameVersion)
+    {
+        ArgumentNullException.ThrowIfNull(recordFrame);
         ObjectDisposedException.ThrowIf(disposed, this);
 
         recordingCommands.Clear();
-        RenderSurface2DFrame frame = new(
+        recordFrame(
             recordingCommands,
-            new DrawRect(0, 0, PixelWidth, PixelHeight),
-            frameTime,
-            trackImageDependency);
-        try
-        {
-            draw(frame);
-        }
-        finally
-        {
-            frame.Complete();
-        }
+            new DrawRect(0, 0, PixelWidth, PixelHeight));
 
         XnaColor nextClearColor = new(
             clearColor.R,
@@ -146,6 +166,7 @@ internal sealed class MonoGameRenderSurface2DSession : IDisposable
             (recordingCommands, retainedCommands);
         retainedClearColor = nextClearColor;
         hasRetainedFrame = true;
+        RenderedFrameVersion = frameVersion;
     }
 
     private Rectangle? ResolveDamage(

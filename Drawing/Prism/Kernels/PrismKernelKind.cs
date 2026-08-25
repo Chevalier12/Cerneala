@@ -1,0 +1,35 @@
+namespace Cerneala.Drawing.Prism.Kernels;
+
+internal enum PrismKernelKind
+{
+    Copy,
+    Blend,
+    MaskExtract,
+    MaskFeather,
+    MaskAlpha,
+    ClipAlpha,
+    StyleDilate,
+    StyleGaussian,
+    StrokeDistanceSeed,
+    StrokeDistanceFlood,
+    BevelHeight,
+    BevelLighting,
+    LayerStyle,
+    AdjustmentFilter,
+    LevelsCdf,
+    LevelsRange,
+    ThresholdRange,
+    NeighborhoodFilter,
+    ResamplingFilter,
+    CatalogFilter,
+    ColoredPencilFilter,
+    FrescoFilter,
+    CutoutFilter,
+    ColorHalftoneFilter,
+    FacetFilter,
+    LightingEffectsFilter,
+    BackdropCrop,
+    BackdropColorConversion,
+    InputColorConversion,
+    OutputColorConversion
+}

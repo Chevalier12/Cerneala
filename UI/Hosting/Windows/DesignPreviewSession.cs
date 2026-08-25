@@ -31,9 +31,12 @@ internal sealed class DesignPreviewSession : IDisposable
         ArgumentOutOfRangeException.ThrowIfLessThan(height, 1);
         UiCoordinateMapper.ValidateScale(renderScale);
 
-        WindowApplicationRuntime runtime = new(new Win32WindowPlatform(
-            new WindowsDxWindowGraphicsSessionFactory(useMultisampling: false),
-            coordinateScaleOverride: renderScale));
+        IWindowGraphicsSessionFactory graphicsSessionFactory =
+            WindowGraphicsBackendRegistry.CreateSessionFactory(useMultisampling: false);
+        IWindowPlatform platform = WindowPlatformBackendRegistry.CreatePlatform(
+            graphicsSessionFactory,
+            coordinateScaleOverride: renderScale);
+        WindowApplicationRuntime runtime = new(platform);
         application.Install(runtime);
         ServiceCollection services = new();
         application.ConfigureAndPublishServices(services);

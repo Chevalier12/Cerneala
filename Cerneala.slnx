@@ -22,6 +22,8 @@
     <Project Path="tests/Fixtures/VisualStudioConsumer/VisualStudioConsumer.csproj" />
   </Folder>
   <Project Path="Cerneala.csproj" />
+  <Project Path="Cerneala.Backends.MonoGame/Cerneala.Backends.MonoGame.csproj" />
+  <Project Path="Cerneala.Platforms.Win32/Cerneala.Platforms.Win32.csproj" />
   <Project Path="Cerneala.Language/Cerneala.Language.csproj" />
   <Project Path="Cerneala.LanguageServer/Cerneala.LanguageServer.csproj" />
   <Project Path="Cerneala.PreviewHost/Cerneala.PreviewHost.csproj" />

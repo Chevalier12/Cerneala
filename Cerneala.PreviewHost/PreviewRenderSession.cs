@@ -33,6 +33,7 @@ internal sealed class PreviewRenderSession : IDisposable
 
     public static PreviewRenderSession Create(PreviewCompilation compilation, int width, int height)
     {
+        WindowsDxApplicationBackend.EnsureRegistered();
         Environment.CurrentDirectory = compilation.ProjectDirectory;
         PreviewLoadContext loadContext = new(compilation.ReferencePaths);
         try

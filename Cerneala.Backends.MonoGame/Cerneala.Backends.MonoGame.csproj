@@ -1,0 +1,117 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <PrismShaderToolManifest>$(MSBuildProjectDirectory)\..\.config\dotnet-tools.json</PrismShaderToolManifest>
+    <PrismShaderOutputDirectory>$(MSBuildProjectExtensionsPath)$(Configuration)\$(TargetFramework)\prism-shaders\</PrismShaderOutputDirectory>
+    <RepositoryRoot>$(MSBuildProjectDirectory)\..</RepositoryRoot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.4.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Cerneala.csproj" />
+    <ProjectReference Include="..\Cerneala.Platforms.Win32\Cerneala.Platforms.Win32.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Cerneala.Tests" />
+    <InternalsVisibleTo Include="Cerneala.Benchmarks" />
+    <InternalsVisibleTo Include="Cerneala.WindowsDxSmoke" />
+    <InternalsVisibleTo Include="CernealaPresentation" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Cerneala.Drawing.Prism.Execution" />
+    <Using Include="Cerneala.Drawing.Prism.Kernels" />
+    <Using Include="Cerneala.Drawing.Prism.Surfaces" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Drawing\MonoGame\**\*.cs" LinkBase="Drawing\MonoGame" />
+    <Compile Include="..\UI\Hosting\MonoGame\**\*.cs" LinkBase="UI\Hosting\MonoGame" />
+    <Compile Include="..\UI\Input\MonoGame\**\*.cs" LinkBase="UI\Input\MonoGame" />
+    <Compile Include="..\UI\Resources\MonoGame\**\*.cs" LinkBase="UI\Resources\MonoGame" />
+    <Compile Include="..\UI\Hosting\Windows\WindowsDxApplicationBackend.cs" Link="UI\Hosting\Windows\WindowsDxApplicationBackend.cs" />
+    <Compile Include="..\UI\Hosting\Windows\WindowsDxWindowGraphicsSession.cs" Link="UI\Hosting\Windows\WindowsDxWindowGraphicsSession.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PrismCopyCompositeInclude
+      Include="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Common\Parameters.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Composition\*.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Blends\*.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Color\*.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\*.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\*.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Pipeline\Techniques.fx"
+      Exclude="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Blends\All.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Color\All.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\Charcoal.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\ConteCrayon.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\GraphicPen.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\Plaster.fx" />
+    <PrismStyleInclude
+      Include="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Common\Parameters.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Blends\*.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Styles\*.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Pipeline\StyleTechniques.fx" />
+    <PrismSpecializedCommonInclude
+      Include="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Common\Parameters.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Blends\*.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Color\*.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\Common.fx" />
+    <PrismCharcoalInclude Include="@(PrismSpecializedCommonInclude);$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\Charcoal.fx" />
+    <PrismConteCrayonInclude Include="@(PrismSpecializedCommonInclude);$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\ConteCrayon.fx" />
+    <PrismGraphicPenInclude Include="@(PrismSpecializedCommonInclude);$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\Charcoal.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\GraphicPen.fx" />
+    <PrismPlasterInclude Include="@(PrismSpecializedCommonInclude);$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\Plaster.fx" />
+    <PrismDeinterlaceInclude Include="@(PrismSpecializedCommonInclude);$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\Video.fx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PrismShaderSource Include="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\CopyComposite.fx">
+      <Dependencies>@(PrismCopyCompositeInclude)</Dependencies>
+    </PrismShaderSource>
+    <PrismShaderSource Include="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Styles.fx">
+      <Dependencies>@(PrismStyleInclude)</Dependencies>
+    </PrismShaderSource>
+    <PrismShaderSource Include="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Charcoal.fx">
+      <Dependencies>@(PrismCharcoalInclude)</Dependencies>
+    </PrismShaderSource>
+    <PrismShaderSource Include="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\ConteCrayon.fx">
+      <Dependencies>@(PrismConteCrayonInclude)</Dependencies>
+    </PrismShaderSource>
+    <PrismShaderSource Include="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\GraphicPen.fx">
+      <Dependencies>@(PrismGraphicPenInclude)</Dependencies>
+    </PrismShaderSource>
+    <PrismShaderSource Include="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Plaster.fx">
+      <Dependencies>@(PrismPlasterInclude)</Dependencies>
+    </PrismShaderSource>
+    <PrismShaderSource Include="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Deinterlace.fx">
+      <Dependencies>@(PrismDeinterlaceInclude)</Dependencies>
+    </PrismShaderSource>
+    <PrismShaderInclude
+      Include="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\**\*.fx"
+      Exclude="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\*.fx" />
+    <PrismShaderOutput Include="@(PrismShaderSource->'$(PrismShaderOutputDirectory)%(Filename).mgfxo')" />
+    <EmbeddedResource Include="@(PrismShaderOutput)">
+      <LogicalName>Cerneala.Drawing.MonoGame.Prism.Shaders.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+    <FileWrites Include="@(PrismShaderOutput)" />
+  </ItemGroup>
+
+  <Target Name="RestorePrismShaderCompiler" Condition="'$(DesignTimeBuild)' != 'true'">
+    <Exec Command="dotnet tool restore --tool-manifest &quot;$(PrismShaderToolManifest)&quot;"
+          WorkingDirectory="$(RepositoryRoot)" />
+  </Target>
+
+  <Target Name="CompilePrismShaders"
+          BeforeTargets="PrepareForBuild"
+          DependsOnTargets="RestorePrismShaderCompiler"
+          Inputs="%(PrismShaderSource.FullPath);%(PrismShaderSource.Dependencies);$(PrismShaderToolManifest)"
+          Outputs="$(PrismShaderOutputDirectory)%(PrismShaderSource.Filename).mgfxo"
+          Condition="'$(DesignTimeBuild)' != 'true'">
+    <Error Condition="'@(PrismShaderSource)' == ''" Text="No versioned Prism shader sources were found." />
+    <MakeDir Directories="$(PrismShaderOutputDirectory)" />
+    <Exec Command="dotnet tool run mgfxc &quot;%(PrismShaderSource.FullPath)&quot; &quot;$(PrismShaderOutputDirectory)%(PrismShaderSource.Filename).mgfxo&quot; /Profile:DirectX_11"
+          WorkingDirectory="$(RepositoryRoot)" />
+  </Target>
+
+  <Target Name="VerifyPrismShaderArtifacts"
+          BeforeTargets="PrepareResources"
+          DependsOnTargets="CompilePrismShaders"
+          Condition="'$(DesignTimeBuild)' != 'true'">
+    <Error Condition="!Exists('%(PrismShaderOutput.FullPath)')"
+           Text="Prism shader artifact '%(PrismShaderOutput.FullPath)' is missing or stale." />
+  </Target>
+
+</Project>

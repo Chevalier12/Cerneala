@@ -3,7 +3,7 @@
 ## Definition
 Namespace: `Cerneala.UI.Hosting.MonoGame`
 
-Assembly/Project: `Cerneala`
+Assembly/Project: `Cerneala.Backends.MonoGame`
 
 Source: `UI/Hosting/MonoGame/MonoGameUiHost.cs`
 

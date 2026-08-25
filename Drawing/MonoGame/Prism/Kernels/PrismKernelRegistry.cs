@@ -7,40 +7,6 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Cerneala.Drawing.MonoGame.Prism.Kernels;
 
-internal enum PrismKernelKind
-{
-    Copy,
-    Blend,
-    MaskExtract,
-    MaskFeather,
-    MaskAlpha,
-    ClipAlpha,
-    StyleDilate,
-    StyleGaussian,
-    StrokeDistanceSeed,
-    StrokeDistanceFlood,
-    BevelHeight,
-    BevelLighting,
-    LayerStyle,
-    AdjustmentFilter,
-    LevelsCdf,
-    LevelsRange,
-    ThresholdRange,
-    NeighborhoodFilter,
-    ResamplingFilter,
-    CatalogFilter,
-    ColoredPencilFilter,
-    FrescoFilter,
-    CutoutFilter,
-    ColorHalftoneFilter,
-    FacetFilter,
-    LightingEffectsFilter,
-    BackdropCrop,
-    BackdropColorConversion,
-    InputColorConversion,
-    OutputColorConversion
-}
-
 internal readonly record struct PrismKernelParameters(
     Texture2D SecondaryTexture,
     float Opacity,

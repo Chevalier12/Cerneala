@@ -3,7 +3,6 @@ using System.Text.Json;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
-using Cerneala.UI.Hosting.MonoGame;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Markup;

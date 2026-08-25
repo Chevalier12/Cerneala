@@ -40,7 +40,6 @@ internal sealed class WindowsDxWindowGraphicsSession :
     IWindowGraphicsSession,
     IWindowScreenshotSource,
     IWindowPresentedFrameSource,
-    IWindowPrismScreenshotDiagnosticsSource,
     IBackdropFrameSource
 {
     private readonly nint windowHandle;
@@ -145,10 +144,10 @@ internal sealed class WindowsDxWindowGraphicsSession :
     internal bool IsFrameActive =>
         activeFrameKind != FrameKind.None;
 
-    PrismExecutionDiagnostics? IWindowPrismScreenshotDiagnosticsSource.LastPrismScreenshotDiagnostics =>
-        lastPrismScreenshotDiagnostics;
+    PrismExecutionDiagnostics? IWindowGraphicsSession.PrismExecutionDiagnostics =>
+        lastPrismScreenshotDiagnostics ?? drawingBackend.PrismDiagnostics;
 
-    int IWindowPrismScreenshotDiagnosticsSource.ActiveBackdropLeaseCount =>
+    int IWindowGraphicsSession.ActiveBackdropLeaseCount =>
         activeBackdropLeaseCount;
 
     public bool IsCompatibleWith(IDrawingBackend drawingBackend)

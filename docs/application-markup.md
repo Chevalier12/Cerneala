@@ -75,6 +75,7 @@ files:
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cerneala.csproj" />
+    <ProjectReference Include="..\Cerneala.Backends.MonoGame\Cerneala.Backends.MonoGame.csproj" />
     <ProjectReference Include="..\Cerneala.SourceGen\Cerneala.SourceGen.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
@@ -82,6 +83,10 @@ files:
   </ItemGroup>
 </Project>
 ```
+
+`Cerneala.csproj` supplies the backend-neutral UI and drawing contracts. The
+separate `Cerneala.Backends.MonoGame` reference selects the WindowsDX/MonoGame
+runtime used by the generated desktop entry point.
 
 ## Startup Window
 

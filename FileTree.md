@@ -155,6 +155,8 @@ Generated from `.`.
 |       |-- 2026-07-17-presentation-frame-budget/
 |       |   +-- README.md
 |       +-- 2026-08-11-aspect-mutation/
+|-- Cerneala.Backends.MonoGame/
+|   +-- Cerneala.Backends.MonoGame.csproj
 |-- Cerneala.Language/
 |   |-- Compatibility/
 |   |   +-- IsExternalInit.cs
@@ -250,6 +252,16 @@ Generated from `.`.
 |   |   +-- WorkspaceState.cs
 |   |-- Cerneala.LanguageServer.csproj
 |   +-- Program.cs
+|-- Cerneala.Platforms.Win32/
+|   |-- Hosting/
+|   |   |-- Win32.cs
+|   |   |-- Win32ApplicationPlatform.cs
+|   |   |-- Win32CursorService.cs
+|   |   |-- Win32InputSource.cs
+|   |   |-- Win32WindowPlatform.cs
+|   |   |-- WindowsDpiAwareness.cs
+|   |   +-- WindowsGpuPreference.cs
+|   +-- Cerneala.Platforms.Win32.csproj
 |-- Cerneala.PreviewHost/
 |   |-- Properties/
 |   |   +-- AssemblyInfo.cs
@@ -366,6 +378,7 @@ Generated from `.`.
 |   +-- WelcomeChapterView.crn.cs
 |-- docs/
 |   |-- audits/
+|   |   |-- 2026-08-25-monogame-coupling-inventory.md
 |   |   |-- prism-visual-algorithm-checklist-2026-07-25.md
 |   |   +-- prism-visual-style-algorithm-checklist-2026-08-02.md
 |   |-- diagrams/
@@ -1090,6 +1103,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Elements.UIElementVisibility.md
 |   |   |   |-- Cerneala.UI.Elements.UIRoot.md
 |   |   |   |-- Cerneala.UI.Elements.UIRoot.ThemeChangedSubscription.md
+|   |   |   |-- Cerneala.UI.Hosting.DrawingContentServices.md
 |   |   |   |-- Cerneala.UI.Hosting.IUiBackend.md
 |   |   |   |-- Cerneala.UI.Hosting.IUiClock.md
 |   |   |   |-- Cerneala.UI.Hosting.MonoGame.MonoGameContentServices.md
@@ -1103,6 +1117,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Hosting.UiViewport.md
 |   |   |   |-- Cerneala.UI.Hosting.Windows.GeneratedWindowApplication.md
 |   |   |   |-- Cerneala.UI.Hosting.Windows.GeneratedWindowStartupDescriptor.md
+|   |   |   |-- Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend.md
 |   |   |   |-- Cerneala.UI.Ink.Stroke.md
 |   |   |   |-- Cerneala.UI.Ink.StrokeCollection.md
 |   |   |   |-- Cerneala.UI.Ink.StrokeCollectionChangedEventArgs.md
@@ -1595,13 +1610,11 @@ Generated from `.`.
 |   |   |   |   |-- IPrismCommandRenderer.cs
 |   |   |   |   |-- PrismCurveTextureCache.cs
 |   |   |   |   |-- PrismExecutionColdStartWarmup.cs
-|   |   |   |   |-- PrismExecutionDiagnostics.cs
 |   |   |   |   |-- PrismGradientDitherTexture.cs
 |   |   |   |   |-- PrismGradientMapTextureCache.cs
 |   |   |   |   |-- PrismGradientOverlayTextureCache.cs
 |   |   |   |   |-- PrismGraphExecutionCache.cs
 |   |   |   |   |-- PrismGraphExecutor.cs
-|   |   |   |   |-- PrismGraphFallbackTracker.cs
 |   |   |   |   |-- PrismGraphFilterResources.cs
 |   |   |   |   |-- PrismGraphPresentation.cs
 |   |   |   |   |-- PrismLensProfileTextureCache.cs
@@ -1837,14 +1850,11 @@ Generated from `.`.
 |   |   |   |   |-- PrismRetainedSurface.cs
 |   |   |   |   |-- PrismRetainedSurfaceCache.cs
 |   |   |   |   |-- PrismScratchSurfaceLease.cs
-|   |   |   |   |-- PrismSurfaceAllocationException.cs
 |   |   |   |   |-- PrismSurfaceFrame.cs
 |   |   |   |   |-- PrismSurfaceKey.cs
-|   |   |   |   |-- PrismSurfaceMemoryAccountant.cs
 |   |   |   |   +-- PrismSurfacePool.cs
 |   |   |   |-- IMonoGameBackdropFrameLease.cs
 |   |   |   +-- MonoGameBackdropFrameValidation.cs
-|   |   |-- IMonoGameRenderSurface2DSource.cs
 |   |   |-- MonoGameClipStack.cs
 |   |   |-- MonoGameDrawingBackend.cs
 |   |   |-- MonoGameDrawMapper.cs
@@ -1852,11 +1862,13 @@ Generated from `.`.
 |   |   |-- MonoGameImage.cs
 |   |   |-- MonoGamePathMeshBuilder.cs
 |   |   |-- MonoGameRenderSurface2DSession.cs
-|   |   |-- MonoGameStrokeMeshBuilder.cs
-|   |   +-- RenderSurface2D.MonoGame.cs
+|   |   +-- MonoGameStrokeMeshBuilder.cs
 |   |-- Paths/
 |   |   |-- DrawPathFlattener.cs
+|   |   |-- DrawPathMeshBuilder.cs
+|   |   |-- DrawStrokeMeshBuilder.cs
 |   |   |-- DrawStrokeTessellator.cs
+|   |   |-- DrawTriangleMesh.cs
 |   |   +-- SvgPathFlattener.cs
 |   |-- Prism/
 |   |   |-- Blend/
@@ -1905,6 +1917,9 @@ Generated from `.`.
 |   |   |   |-- PrismOklab.cs
 |   |   |   |-- PrismScRgbStyle.cs
 |   |   |   +-- PrismSrgbStyle.cs
+|   |   |-- Execution/
+|   |   |   |-- PrismExecutionDiagnostics.cs
+|   |   |   +-- PrismGraphFallbackTracker.cs
 |   |   |-- Filters/
 |   |   |   |-- Assets/
 |   |   |   |   +-- bluenoise.bin
@@ -2091,6 +2106,8 @@ Generated from `.`.
 |   |   |   |-- PrismGraphDiagnostic.cs
 |   |   |   |-- PrismGraphOptimizer.cs
 |   |   |   +-- PrismRetainedCacheKey.cs
+|   |   |-- Kernels/
+|   |   |   +-- PrismKernelKind.cs
 |   |   |-- Masking/
 |   |   |   |-- PrismClippingStyle.cs
 |   |   |   |-- PrismMaskMath.cs
@@ -2108,6 +2125,9 @@ Generated from `.`.
 |   |   |   |-- PrismSatinStyle.cs
 |   |   |   |-- PrismStrokeStyle.cs
 |   |   |   +-- PrismStylePlanner.cs
+|   |   |-- Surfaces/
+|   |   |   |-- PrismSurfaceAllocationException.cs
+|   |   |   +-- PrismSurfaceMemoryAccountant.cs
 |   |   |-- BackdropAlphaMode.cs
 |   |   |-- BackdropFrameMetadata.cs
 |   |   |-- BackdropFrameRequest.cs
@@ -2749,6 +2769,7 @@ Generated from `.`.
 |   |   |-- Cerneala.Tests.csproj
 |   |   |-- GameBootstrapTests.cs
 |   |   |-- GlobalUsings.cs
+|   |   |-- MonoGameBackendTestBootstrap.cs
 |   |   +-- xunit.runner.json
 |   |-- Cerneala.Tests.Language/
 |   |   |-- Corpus/
@@ -3195,6 +3216,8 @@ Generated from `.`.
 |   |   |-- RenderDiagnostics.cs
 |   |   |-- RoutedEventTrace.cs
 |   |   +-- RuntimeDiagnostics.cs
+|   |-- Drawing/
+|   |   +-- DrawingContentServices.cs
 |   |-- Elements/
 |   |   |-- ElementChildRole.cs
 |   |   |-- ElementHandlerStore.cs
@@ -3218,23 +3241,20 @@ Generated from `.`.
 |   |   |-- MonoGame/
 |   |   |   |-- MonoGameContentServices.cs
 |   |   |   |-- MonoGameUiHost.cs
-|   |   |   |-- MonoGameUiHostOptions.cs
-|   |   |   +-- PrismOperationalDiagnostics.cs
+|   |   |   +-- MonoGameUiHostOptions.cs
 |   |   |-- Windows/
 |   |   |   |-- DesignPreviewSession.cs
 |   |   |   |-- GeneratedWindowApplication.cs
 |   |   |   |-- IWindowPlatform.cs
-|   |   |   |-- Win32.cs
-|   |   |   |-- Win32CursorService.cs
-|   |   |   |-- Win32InputSource.cs
-|   |   |   |-- Win32WindowPlatform.cs
 |   |   |   |-- WindowApplicationRuntime.cs
-|   |   |   |-- WindowsDpiAwareness.cs
-|   |   |   |-- WindowsDxWindowGraphicsSession.cs
-|   |   |   +-- WindowsGpuPreference.cs
+|   |   |   |-- WindowGraphicsBackendRegistry.cs
+|   |   |   |-- WindowPlatformBackendRegistry.cs
+|   |   |   |-- WindowsDxApplicationBackend.cs
+|   |   |   +-- WindowsDxWindowGraphicsSession.cs
 |   |   |-- BackdropFrameCounters.cs
 |   |   |-- IUiBackend.cs
 |   |   |-- IUiClock.cs
+|   |   |-- PrismOperationalDiagnostics.cs
 |   |   |-- UiCoordinateMapper.cs
 |   |   |-- UiFrame.cs
 |   |   |-- UiHost.cs

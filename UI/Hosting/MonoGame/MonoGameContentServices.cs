@@ -4,42 +4,16 @@ using Cerneala.UI.Resources;
 
 namespace Cerneala.UI.Hosting.MonoGame;
 
-public sealed class MonoGameContentServices : IDisposable
+/// <summary>
+/// Provides a compatibility name for backend-agnostic drawing content services used by MonoGame hosts.
+/// </summary>
+public sealed class MonoGameContentServices : DrawingContentServices
 {
-    private bool disposed;
-
     public MonoGameContentServices(
         IFontSource? fontSource = null,
         SkiaTextRasterizer? textRasterizer = null,
         IImageLoader? imageLoader = null)
+        : base(fontSource, textRasterizer, imageLoader)
     {
-        FontSource = fontSource ?? new SystemFontSource();
-        TextRasterizer = textRasterizer ?? new SkiaTextRasterizer();
-        ImageLoader = imageLoader;
-        ImageResourceCache = new ImageResourceCache(imageLoader);
-    }
-
-    public IFontSource FontSource { get; }
-
-    public SkiaTextRasterizer TextRasterizer { get; }
-
-    public IImageLoader? ImageLoader { get; }
-
-    public ImageResourceCache ImageResourceCache { get; }
-
-    public IDrawFont LoadFont(string familyName, float size)
-    {
-        return FontSource.LoadFont(familyName, size);
-    }
-
-    public void Dispose()
-    {
-        if (disposed)
-        {
-            return;
-        }
-
-        ImageResourceCache.Dispose();
-        disposed = true;
     }
 }

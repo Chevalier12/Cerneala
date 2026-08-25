@@ -3,7 +3,7 @@
 ## Definition
 Namespace: `Cerneala.UI.Hosting.MonoGame`
 
-Assembly/Project: `Cerneala`
+Assembly/Project: `Cerneala.Backends.MonoGame`
 
 Source: `UI/Hosting/MonoGame/MonoGameUiHostOptions.cs`
 
@@ -41,7 +41,7 @@ to construct the drawing backend. Both resources must be alive and use the same
 `GraphicsDevice`. The host and backend borrow the sprite batch, texture, and
 device; the caller keeps ownership and disposes them after the host.
 
-When `MonoGameUiHost` is constructed, missing optional services are filled with defaults where supported. For example, a missing input source creates a `MonoGameInputSource`, and a missing content service creates `MonoGameContentServices`.
+When `MonoGameUiHost` is constructed, missing optional services are filled with defaults where supported. For example, a missing input source creates a `MonoGameInputSource`, and a missing content service creates backend-agnostic `DrawingContentServices`.
 
 When `ContentServices` is supplied, the host takes ownership of that service
 object and disposes it with the host. `ImageLoader` and `TextRasterizer` are used
@@ -70,7 +70,7 @@ backend and validated during host construction.
 | `Root` | Gets the optional initial UI root. |
 | `Viewport` | Gets the initial viewport. Defaults to `new UiViewport(0, 0)`. |
 | `InputSource` | Gets the optional MonoGame input source. |
-| `ContentServices` | Gets optional content services whose lifetime is transferred to the host. |
+| `ContentServices` | Gets optional backend-agnostic `DrawingContentServices` whose lifetime is transferred to the host. |
 | `ImageLoader` | Gets an optional image loader used when content services are not supplied. |
 | `Clock` | Gets the optional UI clock. |
 | `TextRasterizer` | Gets an optional text rasterizer used when content services are not supplied. |
@@ -98,6 +98,7 @@ Cerneala MonoGame UI hosting.
 
 - `Cerneala.UI.Hosting.MonoGame.MonoGameUiHost`
 - `Cerneala.UI.Hosting.MonoGame.MonoGameContentServices`
+- `Cerneala.UI.Hosting.DrawingContentServices`
 - `Cerneala.UI.Hosting.UiViewport`
 - `Cerneala.Drawing.Prism.IBackdropFrameSource`
 - `Cerneala.Drawing.Prism.PrismRendererOptions`

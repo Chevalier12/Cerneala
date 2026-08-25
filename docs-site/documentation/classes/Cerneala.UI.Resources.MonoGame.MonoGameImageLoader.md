@@ -3,7 +3,7 @@
 ## Definition
 Namespace: `Cerneala.UI.Resources.MonoGame`
 
-Assembly/Project: `Cerneala`
+Assembly/Project: `Cerneala.Backends.MonoGame`
 
 Source: `UI/Resources/MonoGame/MonoGameImageLoader.cs`
 

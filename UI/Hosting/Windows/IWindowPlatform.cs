@@ -1,5 +1,5 @@
 using Cerneala.Drawing;
-using Cerneala.Drawing.MonoGame.Prism.Execution;
+using Cerneala.Drawing.Prism;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
@@ -46,6 +46,10 @@ internal interface IWindowGraphicsSession : IDisposable
 {
     IDrawingBackend DrawingBackend { get; }
 
+    PrismExecutionDiagnostics? PrismExecutionDiagnostics => null;
+
+    int ActiveBackdropLeaseCount => 0;
+
     IImageLoader? ImageLoader { get; }
 
     ImageResourceCache? ImageResourceCache { get; }
@@ -79,13 +83,6 @@ internal readonly record struct WindowPreviewFrame(
 internal interface IWindowPresentedFrameSource
 {
     WindowPreviewFrame CapturePresentedFrame(byte[]? reusablePixels = null);
-}
-
-internal interface IWindowPrismScreenshotDiagnosticsSource
-{
-    PrismExecutionDiagnostics? LastPrismScreenshotDiagnostics { get; }
-
-    int ActiveBackdropLeaseCount { get; }
 }
 
 internal interface IWindowGraphicsSessionFactory

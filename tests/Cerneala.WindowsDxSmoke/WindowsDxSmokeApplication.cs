@@ -25,6 +25,7 @@ internal static class WindowsDxSmokeApplication
 
         try
         {
+            WindowsDxApplicationBackend.EnsureRegistered();
             using Win32WindowPlatform platform = new();
             CallbackSink callbacks = new();
             using IPlatformWindow first = platform.CreateWindow(

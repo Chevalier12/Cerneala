@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Cerneala.csproj" />
+    <ProjectReference Include="..\..\Cerneala.Backends.MonoGame\Cerneala.Backends.MonoGame.csproj" />
     <ProjectReference Include="..\..\Cerneala.SourceGen\Cerneala.SourceGen.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />

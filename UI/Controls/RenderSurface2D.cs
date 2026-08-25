@@ -10,9 +10,9 @@ public delegate void RenderSurface2DDrawEventHandler(
     RenderSurface2D sender,
     RenderSurface2DFrame frame);
 
-public partial class RenderSurface2D : ContentControl,
+public class RenderSurface2D : ContentControl,
     ITimeSensitiveRenderElement,
-    IRenderSurface2DSource
+    IRenderSurface2DFrameSource
 {
     public static readonly UiProperty<Color> ClearColorProperty =
         UiProperty<Color>.Register(
@@ -34,8 +34,14 @@ public partial class RenderSurface2D : ContentControl,
     private static readonly Dictionary<Type, bool> OnDrawOverrideCache = [];
 
     private readonly bool hasOnDrawOverride;
+    private readonly Dictionary<object, IRenderSurface2DBackendState> backendStates =
+        new(ReferenceEqualityComparer.Instance);
+    private HashSet<IDrawImageInvalidationSource> imageDependencies =
+        new(ReferenceEqualityComparer.Instance);
+    private HashSet<IDrawImageInvalidationSource> pendingImageDependencies =
+        new(ReferenceEqualityComparer.Instance);
     private RenderSurface2DDrawEventHandler? draw;
-    private bool managedSurfaceDirty = true;
+    private long frameVersion = 1;
     private TimeSpan currentFrameTime;
 
     public RenderSurface2D()
@@ -73,7 +79,7 @@ public partial class RenderSurface2D : ContentControl,
 
     public void InvalidateFrame()
     {
-        managedSurfaceDirty = true;
+        AdvanceFrameVersion();
         IncrementRenderVersion();
         Invalidate(InvalidationFlags.Render, "RenderSurface2D frame changed");
     }
@@ -99,7 +105,7 @@ public partial class RenderSurface2D : ContentControl,
         base.OnAttached();
         if (IsDrawingActive)
         {
-            managedSurfaceDirty = true;
+            AdvanceFrameVersion();
         }
     }
 
@@ -132,13 +138,64 @@ public partial class RenderSurface2D : ContentControl,
         if (ReferenceEquals(args.Property, ClearColorProperty) ||
             ReferenceEquals(args.Property, RedrawModeProperty))
         {
-            managedSurfaceDirty = true;
+            AdvanceFrameVersion();
         }
     }
 
     internal bool IsDrawingActiveForTests => IsDrawingActive;
 
     private bool IsDrawingActive => draw is not null || hasOnDrawOverride;
+
+    Color IRenderSurface2DFrameSource.ClearColor => ClearColor;
+
+    long IRenderSurface2DFrameSource.FrameVersion => frameVersion;
+
+    void IRenderSurface2DFrameSource.RecordFrame(
+        DrawCommandList commands,
+        DrawRect bounds)
+    {
+        pendingImageDependencies.Clear();
+        RenderSurface2DFrame frame = new(
+            commands,
+            bounds,
+            currentFrameTime,
+            TrackImageDependency);
+        try
+        {
+            InvokeDraw(frame);
+            frame.Complete();
+            CommitImageDependencies();
+        }
+        catch
+        {
+            pendingImageDependencies.Clear();
+            throw;
+        }
+    }
+
+    IRenderSurface2DBackendState? IRenderSurface2DFrameSource.GetBackendState(
+        object owner)
+    {
+        ArgumentNullException.ThrowIfNull(owner);
+        return backendStates.GetValueOrDefault(owner);
+    }
+
+    void IRenderSurface2DFrameSource.SetBackendState(
+        object owner,
+        IRenderSurface2DBackendState? state)
+    {
+        ArgumentNullException.ThrowIfNull(owner);
+        if (backendStates.Remove(owner, out IRenderSurface2DBackendState? previous) &&
+            !ReferenceEquals(previous, state))
+        {
+            previous.Dispose();
+        }
+
+        if (state is not null)
+        {
+            backendStates[owner] = state;
+        }
+    }
 
     private void HandleDrawingMutation(bool wasDrawingActive)
     {
@@ -147,12 +204,69 @@ public partial class RenderSurface2D : ContentControl,
         {
             DisposeManagedSession();
         }
-        else if (!wasDrawingActive)
-        {
-            managedSurfaceDirty = true;
-        }
 
         InvalidateFrame();
+    }
+
+    private void InvokeDraw(RenderSurface2DFrame frame)
+    {
+        OnDraw(frame);
+
+        if (draw is null)
+        {
+            return;
+        }
+
+        foreach (RenderSurface2DDrawEventHandler handler in draw.GetInvocationList())
+        {
+            handler(this, frame);
+        }
+    }
+
+    private void TrackImageDependency(IDrawImage image)
+    {
+        if (image is IDrawImageInvalidationSource dependency)
+        {
+            pendingImageDependencies.Add(dependency);
+        }
+    }
+
+    private void CommitImageDependencies()
+    {
+        foreach (IDrawImageInvalidationSource dependency in imageDependencies)
+        {
+            if (!pendingImageDependencies.Contains(dependency))
+            {
+                dependency.ContentChanged -= OnImageContentChanged;
+            }
+        }
+
+        foreach (IDrawImageInvalidationSource dependency in pendingImageDependencies)
+        {
+            if (!imageDependencies.Contains(dependency))
+            {
+                dependency.ContentChanged += OnImageContentChanged;
+            }
+        }
+
+        (imageDependencies, pendingImageDependencies) =
+            (pendingImageDependencies, imageDependencies);
+        pendingImageDependencies.Clear();
+    }
+
+    private void OnImageContentChanged(object? sender, EventArgs args)
+    {
+        if (RedrawMode == RenderSurface2DRedrawMode.OnDemand)
+        {
+            InvalidateFrame();
+        }
+    }
+
+    private void AdvanceFrameVersion()
+    {
+        frameVersion = frameVersion == long.MaxValue
+            ? 1
+            : frameVersion + 1;
     }
 
     private static bool DetectOnDrawOverride(Type type)
@@ -177,5 +291,20 @@ public partial class RenderSurface2D : ContentControl,
         }
     }
 
-    private partial void DisposeManagedSession();
+    private void DisposeManagedSession()
+    {
+        foreach (IDrawImageInvalidationSource dependency in imageDependencies)
+        {
+            dependency.ContentChanged -= OnImageContentChanged;
+        }
+
+        imageDependencies.Clear();
+        pendingImageDependencies.Clear();
+        foreach (IRenderSurface2DBackendState state in backendStates.Values)
+        {
+            state.Dispose();
+        }
+
+        backendStates.Clear();
+    }
 }

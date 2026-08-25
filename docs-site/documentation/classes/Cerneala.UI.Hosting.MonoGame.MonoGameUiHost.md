@@ -3,7 +3,7 @@
 ## Definition
 Namespace: `Cerneala.UI.Hosting.MonoGame`
 
-Assembly/Project: `Cerneala`
+Assembly/Project: `Cerneala.Backends.MonoGame`
 
 Source: `UI/Hosting/MonoGame/MonoGameUiHost.cs`
 
@@ -38,7 +38,7 @@ host.BackdropFrameSource = nextBackdropSource;
 
 ## Remarks
 
-`MonoGameUiHost` composes `MonoGameInputSource`, `MonoGameContentServices`, `MonoGameDrawingBackend`, and the core `UiHost`. It wires image resource caching into the root and keeps the drawing backend coordinate scale aligned with the current viewport scale before drawing.
+`MonoGameUiHost` composes `MonoGameInputSource`, backend-agnostic `DrawingContentServices`, `MonoGameDrawingBackend`, and the core `UiHost`. It wires image resource caching into the root and keeps the drawing backend coordinate scale aligned with the current viewport scale before drawing.
 
 `Update(UiViewport, TimeSpan)` reads input through the configured input source after applying the viewport scale. `Update(InputFrame, UiViewport, TimeSpan)` lets callers supply an already constructed input frame. Both verify the root's Relay before pumping hosted windows and delegate the single root Relay drain to the core host update.
 
@@ -125,4 +125,5 @@ Cerneala MonoGame UI hosting.
 - `Cerneala.Drawing.Prism.PrismRendererDiagnostics`
 - `Cerneala.Drawing.Prism.PrismRendererOptions`
 - `Cerneala.UI.Hosting.MonoGame.MonoGameContentServices`
+- `Cerneala.UI.Hosting.DrawingContentServices`
 - `Cerneala.UI.Relay.UiRelay`

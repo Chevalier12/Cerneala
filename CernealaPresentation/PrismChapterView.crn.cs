@@ -6,7 +6,7 @@ using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
-using Cerneala.UI.Hosting.MonoGame;
+using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;

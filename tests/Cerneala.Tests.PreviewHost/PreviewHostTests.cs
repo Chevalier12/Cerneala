@@ -174,7 +174,9 @@ public sealed class PreviewHostTests
                 ?? throw new EndOfStreamException("The preview host closed without a response.");
 
             Assert.Equal(17, response.RequestId);
-            Assert.Equal(PreviewResponseKind.Frame, response.Kind);
+            Assert.True(
+                response.Kind == PreviewResponseKind.Frame,
+                response.Error);
             Assert.True(response.Image.Length > 4_096);
 
             PreviewProtocol.WriteRequest(process.StandardInput.BaseStream, new PreviewRequest
@@ -246,7 +248,9 @@ public sealed class PreviewHostTests
                     PreviewProtocol.ReadResponse(process.StandardOutput.BaseStream))
                 .WaitAsync(TimeSpan.FromSeconds(60))
                 ?? throw new EndOfStreamException("The preview host closed without the initial frame.");
-            Assert.Equal(PreviewResponseKind.Frame, initial.Kind);
+            Assert.True(
+                initial.Kind == PreviewResponseKind.Frame,
+                initial.Error);
 
             string edited = source.Replace(
                 "Background=\"#FF080A0D\"",
@@ -347,7 +351,9 @@ public sealed class PreviewHostTests
                     PreviewProtocol.ReadResponse(process.StandardOutput.BaseStream))
                 .WaitAsync(TimeSpan.FromSeconds(60))
                 ?? throw new EndOfStreamException("The preview host closed without the initial BrandMark frame.");
-            Assert.Equal(PreviewResponseKind.Frame, initial.Kind);
+            Assert.True(
+                initial.Kind == PreviewResponseKind.Frame,
+                initial.Error);
 
             string edited = source.Replace(
                 "Text=\"CERNEALA\"",

@@ -1,12 +1,9 @@
 using System.Diagnostics;
 using Cerneala.Drawing;
-using Cerneala.Drawing.MonoGame;
-using Cerneala.Drawing.MonoGame.Prism.Execution;
 using Cerneala.Drawing.Prism;
 using Cerneala.UI.Automation;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
-using Cerneala.UI.Hosting.MonoGame;
 using Cerneala.UI.Input;
 using Cerneala.UI.Platform;
 using Cerneala.UI.Resources;
@@ -474,19 +471,14 @@ internal sealed class WindowApplicationRuntime : IDisposable
         WindowContext context = RequireContext(window);
         IWindowGraphicsSession graphicsSession =
             context.PlatformWindow.GraphicsSession;
-        IWindowPrismScreenshotDiagnosticsSource? prismSource =
-            graphicsSession as IWindowPrismScreenshotDiagnosticsSource;
         PrismExecutionDiagnostics? diagnostics =
-            prismSource?.LastPrismScreenshotDiagnostics;
-        diagnostics ??=
-            (graphicsSession.DrawingBackend as MonoGameDrawingBackend)?
-                .PrismDiagnostics;
+            graphicsSession.PrismExecutionDiagnostics;
         return diagnostics is null
             ? null
             : PrismOperationalDiagnostics.Capture(
                 diagnostics,
                 context.Host.BackdropFrameCounters.Snapshot,
-                prismSource?.ActiveBackdropLeaseCount ?? 0,
+                graphicsSession.ActiveBackdropLeaseCount,
                 context.Root.Motion.HasActiveMotion);
     }
 
@@ -845,13 +837,12 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
     private static WindowApplicationRuntime CreateDefault()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            throw new PlatformNotSupportedException("Native Window hosting is currently available only on Windows.");
-        }
-
-        WindowsGpuPreference.TryRequestHighPerformance();
-        return new WindowApplicationRuntime(new Win32WindowPlatform());
+        IWindowGraphicsSessionFactory graphicsSessionFactory =
+            WindowGraphicsBackendRegistry.CreateSessionFactory(useMultisampling: true);
+        IWindowPlatform platform = WindowPlatformBackendRegistry.CreatePlatform(
+            graphicsSessionFactory,
+            coordinateScaleOverride: null);
+        return new WindowApplicationRuntime(platform);
     }
 
     private sealed class WindowCallbacks : IWindowPlatformCallbacks

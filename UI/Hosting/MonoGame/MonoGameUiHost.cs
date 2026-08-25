@@ -26,7 +26,7 @@ public sealed class MonoGameUiHost : IDisposable
         options.Validate();
         SpriteBatch spriteBatch = options.SpriteBatch;
         InputSource = options.InputSource ?? new MonoGameInputSource();
-        ContentServices = options.ContentServices ?? new MonoGameContentServices(
+        ContentServices = options.ContentServices ?? new DrawingContentServices(
             textRasterizer: options.TextRasterizer,
             imageLoader: options.ImageLoader ?? new MonoGameImageLoader(spriteBatch.GraphicsDevice));
         drawingBackend = new MonoGameDrawingBackend(
@@ -52,7 +52,7 @@ public sealed class MonoGameUiHost : IDisposable
 
     public MonoGameInputSource InputSource { get; }
 
-    public MonoGameContentServices ContentServices { get; }
+    public DrawingContentServices ContentServices { get; }
 
     public UIRoot? Root => host.Root;
 

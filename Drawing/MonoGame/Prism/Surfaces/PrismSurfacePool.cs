@@ -484,7 +484,7 @@ internal sealed class PrismSurfacePool : IDisposable
         if (!accountant.TryReserveTransient(byteCount))
         {
             throw new PrismSurfaceAllocationException(
-                key,
+                key.ToString(),
                 byteCount,
                 accountant.TotalByteCount,
                 accountant.Budget.HardByteLimit,
@@ -503,7 +503,7 @@ internal sealed class PrismSurfacePool : IDisposable
         {
             accountant.ReleaseTransient(byteCount);
             throw new PrismSurfaceAllocationException(
-                key,
+                key.ToString(),
                 byteCount,
                 accountant.TotalByteCount,
                 accountant.Budget.HardByteLimit,
@@ -529,7 +529,7 @@ internal sealed class PrismSurfacePool : IDisposable
             accountant.ReleaseTransient(byteCount);
             surface?.Dispose();
             throw new PrismSurfaceAllocationException(
-                key,
+                key.ToString(),
                 byteCount,
                 accountant.TotalByteCount,
                 accountant.Budget.HardByteLimit,

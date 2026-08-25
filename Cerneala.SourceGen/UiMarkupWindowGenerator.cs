@@ -335,6 +335,7 @@ public sealed partial class UiMarkupGenerator
             source.AppendLine("    [global::System.STAThreadAttribute]");
             source.AppendLine("    private static void Main()");
             source.AppendLine("    {");
+            source.AppendLine("        global::Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend.EnsureRegistered();");
             source.AppendLine("        global::Cerneala.UI.Hosting.Windows.GeneratedWindowApplication.Run(CreateDescriptor());");
             source.AppendLine("    }");
         }
@@ -343,6 +344,7 @@ public sealed partial class UiMarkupGenerator
             source.AppendLine("    [global::System.Runtime.CompilerServices.ModuleInitializerAttribute]");
             source.AppendLine("    internal static void Register()");
             source.AppendLine("    {");
+            source.AppendLine("        global::Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend.EnsureRegistered();");
             source.AppendLine("        global::Cerneala.UI.Hosting.Windows.GeneratedWindowApplication.RegisterStartup(CreateDescriptor());");
             source.AppendLine("    }");
         }

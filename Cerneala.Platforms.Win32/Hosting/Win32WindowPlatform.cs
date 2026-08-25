@@ -22,7 +22,7 @@ internal sealed class Win32WindowPlatform : IWindowPlatform
     private bool disposed;
 
     public Win32WindowPlatform()
-        : this(new WindowsDxWindowGraphicsSessionFactory(), coordinateScaleOverride: null)
+        : this(WindowGraphicsBackendRegistry.CreateSessionFactory(useMultisampling: true), coordinateScaleOverride: null)
     {
     }
 

@@ -292,11 +292,11 @@ public sealed class DrawingIntegrationLifecycleTests
             frame.FillRectangle(frame.Bounds, Color.White);
         };
         root.VisualChildren.Add(surface);
-        IMonoGameRenderSurface2DSource source = surface;
+        IRenderSurface2DFrameSource source = surface;
 
-        Texture2D first = source.ResolveSurface(fixture.Session.GraphicsDevice, 8, 8)!;
-        Texture2D unchanged = source.ResolveSurface(fixture.Session.GraphicsDevice, 8, 8)!;
-        Texture2D resized = source.ResolveSurface(fixture.Session.GraphicsDevice, 16, 12)!;
+        Texture2D first = ResolveSurface(source, 8, 8);
+        Texture2D unchanged = ResolveSurface(source, 8, 8);
+        Texture2D resized = ResolveSurface(source, 16, 12);
 
         Assert.Same(first, unchanged);
         Assert.Equal(2, drawCount);
@@ -305,6 +305,37 @@ public sealed class DrawingIntegrationLifecycleTests
 
         Assert.True(root.VisualChildren.Remove(surface));
         Assert.True(resized.IsDisposed);
+
+        Texture2D ResolveSurface(
+            IRenderSurface2DFrameSource frameSource,
+            int width,
+            int height)
+        {
+            GraphicsDevice graphicsDevice = fixture.Session.GraphicsDevice;
+            MonoGameRenderSurface2DSession? session =
+                frameSource.GetBackendState(graphicsDevice) as
+                    MonoGameRenderSurface2DSession;
+            if (session is null ||
+                session.PixelWidth != width ||
+                session.PixelHeight != height)
+            {
+                session = new MonoGameRenderSurface2DSession(
+                    graphicsDevice,
+                    width,
+                    height);
+                frameSource.SetBackendState(graphicsDevice, session);
+            }
+
+            if (session.RenderedFrameVersion != frameSource.FrameVersion)
+            {
+                session.Render(
+                    frameSource.RecordFrame,
+                    frameSource.ClearColor,
+                    frameSource.FrameVersion);
+            }
+
+            return session.Surface;
+        }
     }
 
     private static DrawMesh2D Triangle(int x, int y, IDrawImage? image = null) =>

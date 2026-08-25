@@ -2134,8 +2134,13 @@
     "file": "documentation/classes/Cerneala.UI.Hosting.IUiClock.md",
     "source": "UI/Hosting/IUiClock.cs"
   },
-  {
-    "name": "Cerneala.UI.Hosting.MonoGame.MonoGameContentServices",
+    {
+      "name": "Cerneala.UI.Hosting.DrawingContentServices",
+      "file": "documentation/classes/Cerneala.UI.Hosting.DrawingContentServices.md",
+    "source": "UI/Drawing/DrawingContentServices.cs"
+    },
+    {
+      "name": "Cerneala.UI.Hosting.MonoGame.MonoGameContentServices",
     "file": "documentation/classes/Cerneala.UI.Hosting.MonoGame.MonoGameContentServices.md",
     "source": "UI/Hosting/MonoGame/MonoGameContentServices.cs"
   },
@@ -2184,13 +2189,18 @@
     "file": "documentation/classes/Cerneala.UI.Hosting.Windows.GeneratedWindowApplication.md",
     "source": "UI/Hosting/Windows/GeneratedWindowApplication.cs"
   },
-  {
-    "name": "Cerneala.UI.Hosting.Windows.GeneratedWindowStartupDescriptor",
-    "file": "documentation/classes/Cerneala.UI.Hosting.Windows.GeneratedWindowStartupDescriptor.md",
-    "source": "UI/Hosting/Windows/GeneratedWindowApplication.cs"
-  },
-  {
-    "name": "Cerneala.UI.Ink.Stroke",
+    {
+      "name": "Cerneala.UI.Hosting.Windows.GeneratedWindowStartupDescriptor",
+      "file": "documentation/classes/Cerneala.UI.Hosting.Windows.GeneratedWindowStartupDescriptor.md",
+      "source": "UI/Hosting/Windows/GeneratedWindowApplication.cs"
+    },
+    {
+      "name": "Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend",
+      "file": "documentation/classes/Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend.md",
+      "source": "UI/Hosting/Windows/WindowsDxApplicationBackend.cs"
+    },
+    {
+      "name": "Cerneala.UI.Ink.Stroke",
     "file": "documentation/classes/Cerneala.UI.Ink.Stroke.md",
     "source": "UI/Ink/Stroke.cs"
   },

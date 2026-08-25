@@ -261,8 +261,8 @@ public sealed partial class UiMarkupGenerator
         source.AppendLine("internal static class __CernealaGeneratedApplicationStartup");
         source.AppendLine("{");
         source.AppendLine(compilation.GetEntryPoint(default) is null
-            ? "    [global::System.STAThreadAttribute]\n    private static int Main(string[] args)\n    {\n        return global::Cerneala.UI.Hosting.Windows.GeneratedWindowApplication.Run(CreateDescriptor(), args);\n    }"
-            : "    [global::System.Runtime.CompilerServices.ModuleInitializerAttribute]\n    internal static void Register()\n    {\n        global::Cerneala.UI.Hosting.Windows.GeneratedWindowApplication.RegisterStartup(CreateDescriptor());\n    }");
+            ? "    [global::System.STAThreadAttribute]\n    private static int Main(string[] args)\n    {\n        global::Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend.EnsureRegistered();\n        return global::Cerneala.UI.Hosting.Windows.GeneratedWindowApplication.Run(CreateDescriptor(), args);\n    }"
+            : "    [global::System.Runtime.CompilerServices.ModuleInitializerAttribute]\n    internal static void Register()\n    {\n        global::Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend.EnsureRegistered();\n        global::Cerneala.UI.Hosting.Windows.GeneratedWindowApplication.RegisterStartup(CreateDescriptor());\n    }");
         source.AppendLine();
         source.AppendLine("    private static global::Cerneala.UI.Hosting.Windows.GeneratedWindowStartupDescriptor CreateDescriptor()");
         source.AppendLine("    {");

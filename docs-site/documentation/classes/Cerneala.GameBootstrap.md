@@ -5,7 +5,7 @@ Namespace: `Cerneala`
 Assembly/Project: `Cerneala`
 Source: `GameBootstrap.cs`
 
-Provides startup helper APIs for the game host.
+Provides backend-agnostic startup defaults.
 
 ```csharp
 public static class GameBootstrap
@@ -15,20 +15,20 @@ public static class GameBootstrap
 
 ```csharp
 using Cerneala;
-using Microsoft.Xna.Framework;
+using Cerneala.Drawing;
 
 Color clearColor = GameBootstrap.CreateDefaultClearColor();
 ```
 
 ## Remarks
 
-`GameBootstrap` currently centralizes the default MonoGame clear color used by the host bootstrap path. The returned value is `Color.CornflowerBlue`.
+`GameBootstrap` centralizes the default Cerneala clear color used by host bootstrap paths. The returned value is the backend-agnostic `Cerneala.Drawing.Color.CornflowerBlue`; each drawing backend is responsible for mapping it to its native color representation.
 
 ## Methods
 
 | Name | Description |
 | --- | --- |
-| `CreateDefaultClearColor()` | Returns the default clear color for the game host. |
+| `CreateDefaultClearColor()` | Returns the backend-agnostic default clear color. |
 
 ## Applies to
 

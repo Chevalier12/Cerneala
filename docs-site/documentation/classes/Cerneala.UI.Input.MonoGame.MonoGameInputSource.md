@@ -3,7 +3,7 @@
 ## Definition
 Namespace: `Cerneala.UI.Input.MonoGame`
 
-Assembly/Project: `Cerneala`
+Assembly/Project: `Cerneala.Backends.MonoGame`
 
 Source: `UI/Input/MonoGame/MonoGameInputSource.cs`
 

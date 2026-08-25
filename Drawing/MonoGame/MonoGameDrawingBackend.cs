@@ -1171,10 +1171,10 @@ public sealed class MonoGameDrawingBackend :
 
     private void DrawRenderSurface2D(DrawCommand command)
     {
-        if (command.RenderSurface is not IMonoGameRenderSurface2DSource surface)
+        if (command.RenderSurface is not IRenderSurface2DFrameSource surface)
         {
             throw new InvalidOperationException(
-                "RenderSurface2D requires a MonoGame-compatible surface source.");
+                "RenderSurface2D requires a frame-recording surface source.");
         }
 
         Rectangle destination = Mapper.MapRectangle(command.Rect);
@@ -1187,23 +1187,39 @@ public sealed class MonoGameDrawingBackend :
         EndSpriteBatch();
         MonoGameGraphicsDeviceStateSnapshot snapshot = new();
         snapshot.Capture(graphicsDevice);
-        Texture2D? texture;
+        Texture2D texture;
         try
         {
-            texture = surface.ResolveSurface(
-                graphicsDevice,
-                destination.Width,
-                destination.Height);
+            MonoGameRenderSurface2DSession? session =
+                surface.GetBackendState(graphicsDevice) as
+                    MonoGameRenderSurface2DSession;
+            if (session is null ||
+                session.IsDisposed ||
+                !ReferenceEquals(session.GraphicsDevice, graphicsDevice) ||
+                session.PixelWidth != destination.Width ||
+                session.PixelHeight != destination.Height)
+            {
+                session = new MonoGameRenderSurface2DSession(
+                    graphicsDevice,
+                    destination.Width,
+                    destination.Height);
+                surface.SetBackendState(graphicsDevice, session);
+            }
+
+            if (session.RenderedFrameVersion != surface.FrameVersion)
+            {
+                session.Render(
+                    surface.RecordFrame,
+                    surface.ClearColor,
+                    surface.FrameVersion);
+            }
+
+            texture = session.Surface;
         }
         finally
         {
             snapshot.Restore(graphicsDevice);
             BeginUiSpriteBatch();
-        }
-
-        if (texture is null)
-        {
-            return;
         }
 
         if (!ReferenceEquals(texture.GraphicsDevice, graphicsDevice))

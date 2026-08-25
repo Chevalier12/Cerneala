@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Cerneala.SourceGen\Cerneala.SourceGen.csproj" />
     <ProjectReference Include="..\..\Cerneala.csproj" />
+    <ProjectReference Include="..\..\Cerneala.Backends.MonoGame\Cerneala.Backends.MonoGame.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-namespace Cerneala.Drawing.MonoGame.Prism.Surfaces;
+namespace Cerneala.Drawing.Prism.Surfaces;
 
 internal readonly record struct PrismSurfaceBudget
 {
@@ -132,7 +132,7 @@ internal sealed class PrismSurfaceMemoryAccountant
         if (Environment.CurrentManagedThreadId != ownerThreadId)
         {
             throw new InvalidOperationException(
-                "Prism GPU surfaces must remain on their owning render thread.");
+                "Prism surfaces must remain on their owning render thread.");
         }
     }
 

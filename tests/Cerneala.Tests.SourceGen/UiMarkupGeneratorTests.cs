@@ -4166,6 +4166,8 @@ public sealed partial class UiMarkupGeneratorTests
             .Split(Path.PathSeparator)
             .Select(path => MetadataReference.CreateFromFile(path))
             .Append(MetadataReference.CreateFromFile(typeof(UIElement).Assembly.Location))
+            .Append(MetadataReference.CreateFromFile(
+                typeof(Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend).Assembly.Location))
             .ToArray();
     }
 

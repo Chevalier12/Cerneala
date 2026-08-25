@@ -36,7 +36,10 @@ public sealed class PrismShaderBuildIncrementalityTests
         }
 
         XDocument project = XDocument.Load(
-            Path.Combine(repositoryRoot, "Cerneala.csproj"));
+            Path.Combine(
+                repositoryRoot,
+                "Cerneala.Backends.MonoGame",
+                "Cerneala.Backends.MonoGame.csproj"));
         XElement compileTarget = Assert.Single(
             project.Descendants("Target").Where(target =>
                 (string?)target.Attribute("Name") == "CompilePrismShaders"));

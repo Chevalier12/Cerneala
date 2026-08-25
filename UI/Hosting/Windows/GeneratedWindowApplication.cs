@@ -62,11 +62,6 @@ public static class GeneratedWindowApplication
     {
         ArgumentNullException.ThrowIfNull(descriptor);
         ArgumentNullException.ThrowIfNull(args);
-        if (WindowApplicationRuntime.Current is null)
-        {
-            WindowsGpuPreference.TryRequestHighPerformance();
-        }
-
         if (descriptor.CreateApplication is null)
         {
             RunLegacy(descriptor);
@@ -104,11 +99,6 @@ public static class GeneratedWindowApplication
     {
         if (pendingStartup is not null && hostedRuntime is null)
         {
-            if (WindowApplicationRuntime.Current is null && !OperatingSystem.IsWindows())
-            {
-                throw new PlatformNotSupportedException("Generated Window startup is currently available only on Windows.");
-            }
-
             GeneratedWindowStartupDescriptor descriptor = pendingStartup;
             pendingStartup = null;
             hostedRuntime = WindowApplicationRuntime.CurrentOrDefault;

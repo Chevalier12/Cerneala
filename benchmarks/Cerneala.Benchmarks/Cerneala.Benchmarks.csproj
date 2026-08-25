@@ -14,6 +14,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Cerneala.csproj" />
+    <ProjectReference Include="..\..\Cerneala.Backends.MonoGame\Cerneala.Backends.MonoGame.csproj" />
+    <ProjectReference Include="..\..\Cerneala.Platforms.Win32\Cerneala.Platforms.Win32.csproj" />
     <ProjectReference Include="..\..\Cerneala.Language\Cerneala.Language.csproj" />
   </ItemGroup>
 

@@ -4,7 +4,7 @@ using System.Text;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Drawing.Prism.Graph;
 
-namespace Cerneala.Drawing.MonoGame.Prism.Execution;
+namespace Cerneala.Drawing.Prism;
 
 internal enum PrismExecutionDiagnosticStage
 {

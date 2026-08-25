@@ -3,7 +3,7 @@
 ## Definition
 Namespace: `Cerneala.Drawing.MonoGame`
 
-Assembly/Project: `Cerneala`
+Assembly/Project: `Cerneala.Backends.MonoGame`
 
 Source: `Drawing/MonoGame/MonoGameDrawMapper.cs`
 

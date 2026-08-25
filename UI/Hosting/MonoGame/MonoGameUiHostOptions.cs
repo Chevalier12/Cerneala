@@ -21,7 +21,7 @@ public sealed class MonoGameUiHostOptions
 
     public MonoGameInputSource? InputSource { get; init; }
 
-    public MonoGameContentServices? ContentServices { get; init; }
+    public DrawingContentServices? ContentServices { get; init; }
 
     public IImageLoader? ImageLoader { get; init; }
 
