@@ -1,4 +1,3 @@
-using System.Globalization;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Text;
 
@@ -6,8 +5,6 @@ namespace Cerneala.UI.Text;
 
 public sealed class LineBreakService
 {
-    private const string Ellipsis = "…";
-
     public static LineBreakService Default { get; } = new();
 
     public IReadOnlyList<TextLine> BreakLines(
@@ -18,31 +15,21 @@ public sealed class LineBreakService
     {
         ArgumentNullException.ThrowIfNull(text);
         ArgumentNullException.ThrowIfNull(font);
-        float Measure(string value) => MeasureTextWidth(value, aspect, font);
-        if (text.Length == 0)
-        {
-            return [new TextLine(string.Empty, 0)];
-        }
-
-        List<TextLine> lines = [];
-        foreach (string paragraph in EnumerateParagraphs(text))
-        {
-            if (aspect.Wrapping == TextWrapping.NoWrap || float.IsPositiveInfinity(availableWidth) || availableWidth <= 0)
-            {
-                AddLine(paragraph, 0, paragraph.Length, Measure, lines);
-                continue;
-            }
-
-            WrapParagraph(paragraph, availableWidth, Measure, lines);
-        }
+        IReadOnlyList<UnicodeLineSegment> segments = UnicodeLineBreakEngine.BreakLines(
+            text,
+            availableWidth,
+            aspect.Wrapping == TextWrapping.NoWrap
+                ? UnicodeLineWrapMode.NoWrap
+                : UnicodeLineWrapMode.Word,
+            (start, length) => MeasureTextWidth(text.Substring(start, length), aspect, font));
 
         if (aspect.Trimming == TextTrimming.None || float.IsPositiveInfinity(availableWidth))
         {
-            return lines;
+            return segments.Select(static segment => new TextLine(segment.Text, segment.Width)).ToArray();
         }
 
-        return lines
-            .Select(line => CollapseLine(line, aspect, font, availableWidth, forceEllipsis: false))
+        return segments
+            .Select(segment => CollapseSegment(text, segment, aspect, font, availableWidth, forceEllipsis: false))
             .ToArray();
     }
 
@@ -59,239 +46,14 @@ public sealed class LineBreakService
             return line;
         }
 
-        if (!forceEllipsis && line.Width <= availableWidth)
-        {
-            return line;
-        }
-
-        if (line.Text.EndsWith(Ellipsis, StringComparison.Ordinal) && line.Width <= availableWidth)
-        {
-            return line;
-        }
-
-        if (!float.IsFinite(availableWidth) || availableWidth <= 0)
-        {
-            return new TextLine(string.Empty, 0);
-        }
-
-        float Measure(string value) => MeasureTextWidth(value, aspect, font);
-        float ellipsisWidth = Measure(Ellipsis);
-        if (ellipsisWidth > availableWidth)
-        {
-            return new TextLine(string.Empty, 0);
-        }
-
-        string source = line.Text.TrimEnd();
-        if (source.Length == 0)
-        {
-            return new TextLine(Ellipsis, ellipsisWidth);
-        }
-
-        string complete = source + Ellipsis;
-        float completeWidth = Measure(complete);
-        if (completeWidth <= availableWidth)
-        {
-            return new TextLine(complete, completeWidth);
-        }
-
-        TextElement[] elements = CreateTextElements(source);
-        int fittingCount = FindFittingPrefixCount(source, elements, availableWidth, Measure);
-        if (fittingCount == 0)
-        {
-            return new TextLine(Ellipsis, ellipsisWidth);
-        }
-
-        int prefixEnd = elements[fittingCount - 1].End;
-        if (aspect.Trimming == TextTrimming.WordEllipsis)
-        {
-            int wordBoundary = FindLastWordBoundary(source, elements, fittingCount);
-            if (wordBoundary > 0)
-            {
-                prefixEnd = wordBoundary;
-            }
-        }
-
-        string collapsed = source[..prefixEnd].TrimEnd() + Ellipsis;
-        return new TextLine(collapsed, Measure(collapsed));
-    }
-
-    private static void WrapParagraph(
-        string paragraph,
-        float availableWidth,
-        Func<string, float> measure,
-        List<TextLine> lines)
-    {
-        if (paragraph.Length == 0)
-        {
-            AddLine(paragraph, 0, 0, measure, lines);
-            return;
-        }
-
-        TextElement[] elements = CreateTextElements(paragraph);
-        int currentIndex = 0;
-        while (currentIndex < elements.Length)
-        {
-            int lineStart = elements[currentIndex].Start;
-            int lastFittingIndex = FindLastFittingElementIndex(
-                paragraph,
-                elements,
-                currentIndex,
-                availableWidth,
-                measure);
-
-            if (lastFittingIndex == elements.Length - 1)
-            {
-                int trimmedEnd = TrimTrailingBreakWhitespace(paragraph, lineStart, paragraph.Length);
-                AddLine(paragraph, lineStart, trimmedEnd - lineStart, measure, lines);
-                break;
-            }
-
-            int breakIndex = -1;
-            int breakMeasureEnd = lineStart;
-            for (int i = lastFittingIndex; i >= currentIndex; i--)
-            {
-                if (!IsBreakOpportunityAfter(elements[i].Text))
-                {
-                    continue;
-                }
-
-                int measureEnd = IsBreakWhitespace(elements[i].Text)
-                    ? TrimTrailingBreakWhitespace(paragraph, lineStart, elements[i].End)
-                    : elements[i].End;
-                if (measureEnd > lineStart)
-                {
-                    breakIndex = i;
-                    breakMeasureEnd = measureEnd;
-                    break;
-                }
-            }
-
-            if (breakIndex >= currentIndex)
-            {
-                AddLine(paragraph, lineStart, breakMeasureEnd - lineStart, measure, lines);
-                currentIndex = SkipLeadingBreakWhitespace(elements, breakIndex + 1);
-            }
-            else if (lastFittingIndex >= currentIndex)
-            {
-                int fallbackEnd = elements[lastFittingIndex].End;
-                AddLine(paragraph, lineStart, fallbackEnd - lineStart, measure, lines);
-                currentIndex = lastFittingIndex + 1;
-            }
-            else
-            {
-                TextElement first = elements[currentIndex];
-                AddLine(paragraph, first.Start, first.End - first.Start, measure, lines);
-                currentIndex++;
-            }
-        }
-    }
-
-    private static int FindLastFittingElementIndex(
-        string paragraph,
-        TextElement[] elements,
-        int startIndex,
-        float availableWidth,
-        Func<string, float> measure)
-    {
-        int lineStart = elements[startIndex].Start;
-        int low = startIndex;
-        int high = elements.Length - 1;
-        int lastFittingIndex = startIndex - 1;
-        while (low <= high)
-        {
-            int middle = low + ((high - low) / 2);
-            int end = elements[middle].End;
-            float width = measure(paragraph.Substring(lineStart, end - lineStart));
-            if (width <= availableWidth)
-            {
-                lastFittingIndex = middle;
-                low = middle + 1;
-            }
-            else
-            {
-                high = middle - 1;
-            }
-        }
-
-        return lastFittingIndex;
-    }
-
-    private static int FindFittingPrefixCount(
-        string text,
-        TextElement[] elements,
-        float availableWidth,
-        Func<string, float> measure)
-    {
-        int low = 0;
-        int high = elements.Length - 1;
-        int fittingCount = 0;
-        while (low <= high)
-        {
-            int middle = low + ((high - low) / 2);
-            string candidate = text[..elements[middle].End] + Ellipsis;
-            if (measure(candidate) <= availableWidth)
-            {
-                fittingCount = middle + 1;
-                low = middle + 1;
-            }
-            else
-            {
-                high = middle - 1;
-            }
-        }
-
-        return fittingCount;
-    }
-
-    private static int FindLastWordBoundary(string text, TextElement[] elements, int fittingCount)
-    {
-        for (int index = fittingCount - 1; index >= 0; index--)
-        {
-            bool boundaryAfter = IsBreakOpportunityAfter(elements[index].Text);
-            bool nextIsWhitespace = index + 1 < elements.Length && IsBreakWhitespace(elements[index + 1].Text);
-            if (!boundaryAfter && !nextIsWhitespace)
-            {
-                continue;
-            }
-
-            int end = IsBreakWhitespace(elements[index].Text)
-                ? TrimTrailingBreakWhitespace(text, 0, elements[index].End)
-                : elements[index].End;
-            if (end > 0)
-            {
-                return end;
-            }
-        }
-
-        return 0;
-    }
-
-    private static IEnumerable<string> EnumerateParagraphs(string text)
-    {
-        int start = 0;
-        for (int i = 0; i < text.Length; i++)
-        {
-            if (text[i] != '\r' && text[i] != '\n')
-            {
-                continue;
-            }
-
-            yield return text[start..i];
-            if (text[i] == '\r' && i + 1 < text.Length && text[i + 1] == '\n')
-            {
-                i++;
-            }
-
-            start = i + 1;
-        }
-
-        yield return text[start..];
+        UnicodeLineSegment segment = new(0, line.Text.Length, line.Text, line.Width);
+        return CollapseSegment(line.Text, segment, aspect, font, availableWidth, forceEllipsis);
     }
 
     public float MeasureTextWidth(string text, TextAspect aspect)
     {
         ArgumentNullException.ThrowIfNull(text);
-        return MeasureTextWidth(text, GetCharacterWidth(aspect));
+        return text.Length * aspect.FontSize * aspect.Scale * 0.5f;
     }
 
     public float MeasureTextWidth(string text, TextAspect aspect, ResolvedTextFont font)
@@ -301,68 +63,27 @@ public sealed class LineBreakService
         DrawTextRun run = aspect.ToDrawTextRun(font, text);
         return TextShaper.Default.TryShape(run, out TextShapeResult shape)
             ? shape.AdvanceWidth
-            : MeasureTextWidth(text, GetCharacterWidth(aspect));
+            : MeasureTextWidth(text, aspect);
     }
 
-    private static float GetCharacterWidth(TextAspect aspect)
+    private TextLine CollapseSegment(
+        string source,
+        UnicodeLineSegment segment,
+        TextAspect aspect,
+        ResolvedTextFont font,
+        float availableWidth,
+        bool forceEllipsis)
     {
-        return aspect.FontSize * aspect.Scale * 0.5f;
+        UnicodeLineSegment collapsed = UnicodeLineBreakEngine.CollapseLine(
+            source,
+            segment,
+            availableWidth,
+            aspect.Trimming == TextTrimming.WordEllipsis
+                ? UnicodeLineTrimMode.WordEllipsis
+                : UnicodeLineTrimMode.CharacterEllipsis,
+            (start, length) => MeasureTextWidth(source.Substring(start, length), aspect, font),
+            value => MeasureTextWidth(value, aspect, font),
+            forceEllipsis);
+        return new TextLine(collapsed.Text, collapsed.Width);
     }
-
-    private static float MeasureTextWidth(string text, float charWidth)
-    {
-        return text.Length * charWidth;
-    }
-
-    private static void AddLine(string text, int start, int length, Func<string, float> measure, List<TextLine> lines)
-    {
-        string line = text.Substring(start, length);
-        lines.Add(new TextLine(line, measure(line)));
-    }
-
-    private static TextElement[] CreateTextElements(string text)
-    {
-        int[] starts = StringInfo.ParseCombiningCharacters(text);
-        TextElement[] elements = new TextElement[starts.Length];
-        for (int i = 0; i < starts.Length; i++)
-        {
-            int start = starts[i];
-            int end = i + 1 < starts.Length ? starts[i + 1] : text.Length;
-            elements[i] = new TextElement(start, end, text[start..end]);
-        }
-
-        return elements;
-    }
-
-    private static bool IsBreakOpportunityAfter(string textElement)
-    {
-        return IsBreakWhitespace(textElement) || textElement is "-" or "/" or "\\" or "," or ";" or ":";
-    }
-
-    private static bool IsBreakWhitespace(string textElement)
-    {
-        return textElement.Length > 0 && textElement.All(char.IsWhiteSpace);
-    }
-
-    private static int TrimTrailingBreakWhitespace(string text, int start, int end)
-    {
-        while (end > start && char.IsWhiteSpace(text[end - 1]))
-        {
-            end--;
-        }
-
-        return end;
-    }
-
-    private static int SkipLeadingBreakWhitespace(TextElement[] elements, int index)
-    {
-        while (index < elements.Length && IsBreakWhitespace(elements[index].Text))
-        {
-            index++;
-        }
-
-        return index;
-    }
-
-    private readonly record struct TextElement(int Start, int End, string Text);
 }

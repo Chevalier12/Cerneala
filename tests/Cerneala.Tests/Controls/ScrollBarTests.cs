@@ -166,7 +166,11 @@ public sealed class ScrollBarTests
             .Where(command => command.Kind == DrawCommandKind.FillPath)
             .ToArray();
         Assert.Equal(2, glyphCommands.Length);
-        Assert.NotEqual(glyphCommands[0].PathData, glyphCommands[1].PathData);
+        DrawPath upPath = Assert.IsType<DrawPath>(glyphCommands[0].Path);
+        DrawPath downPath = Assert.IsType<DrawPath>(glyphCommands[1].Path);
+        Assert.False(
+            upPath.Contours.SelectMany(contour => contour.Segments)
+                .SequenceEqual(downPath.Contours.SelectMany(contour => contour.Segments)));
     }
 
     [Fact]

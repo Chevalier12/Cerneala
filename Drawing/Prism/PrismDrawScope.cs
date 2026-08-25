@@ -51,7 +51,8 @@ public readonly record struct PrismDrawScope
         long visualContentVersion,
         PrismDrawResources resources,
         long lowerUiVersion = 0,
-        bool isLocalDrawingScope = false)
+        bool isLocalDrawingScope = false,
+        IDrawImage? imageDependency = null)
     {
         Instance = instance ?? throw new ArgumentNullException(nameof(instance));
         ArgumentNullException.ThrowIfNull(resources);
@@ -85,6 +86,7 @@ public readonly record struct PrismDrawScope
         LowerUiVersion = lowerUiVersion;
         Resources = resources;
         IsLocalDrawingScope = isLocalDrawingScope;
+        ImageDependency = imageDependency;
     }
 
     public PrismInstance Instance { get; }
@@ -111,6 +113,8 @@ public readonly record struct PrismDrawScope
 
     internal bool IsLocalDrawingScope { get; }
 
+    internal IDrawImage? ImageDependency { get; }
+
     internal PrismDrawScope TranslateLocal(float offsetX, float offsetY)
     {
         if (!IsLocalDrawingScope || offsetX == 0 && offsetY == 0)
@@ -131,7 +135,8 @@ public readonly record struct PrismDrawScope
             VisualContentVersion,
             Resources,
             LowerUiVersion,
-            isLocalDrawingScope: true);
+            isLocalDrawingScope: true,
+            ImageDependency);
     }
 
     internal PrismDrawScope ApplyLocalTransform(Matrix3x2 transform)
@@ -149,6 +154,7 @@ public readonly record struct PrismDrawScope
             PixelScale,
             VisualContentVersion,
             Resources,
-            LowerUiVersion);
+            LowerUiVersion,
+            imageDependency: ImageDependency);
     }
 }

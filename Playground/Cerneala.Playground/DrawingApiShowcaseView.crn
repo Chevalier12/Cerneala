@@ -1,0 +1,18 @@
+<UserControl xmlns:local="clr-namespace:Cerneala.Playground">
+    <UserControl.Resources>
+        <PrismComposition Name="DrawingApiPrism">
+            @layer ManualDrawing
+            {
+                @style OuterGlow
+                {
+                    Size = 5;
+                    Opacity = 0.34;
+                    Color = #804DF0FF;
+                }
+            }
+        </PrismComposition>
+    </UserControl.Resources>
+    <local:DrawingApiShowcase>
+        @prism $DrawingApiPrism;
+    </local:DrawingApiShowcase>
+</UserControl>

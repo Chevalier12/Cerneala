@@ -63,3 +63,17 @@ For a full BenchmarkDotNet profile with allocation statistics:
 ```powershell
 dotnet run -c Release --project .\benchmarks\Cerneala.Benchmarks\Cerneala.Benchmarks.csproj -- --filter "*CernealaLanguageBenchmarks*"
 ```
+
+## RenderSurface2D Drawing API
+
+Run the focused Drawing matrix with a short repeatable job:
+
+```powershell
+dotnet run -c Release --project .\benchmarks\Cerneala.Benchmarks\Cerneala.Benchmarks.csproj -- --filter "*Drawing*Benchmarks*" --job short --artifacts .\tmp\drawing-api-benchmarks
+```
+
+The matrix covers individual commands versus immutable batches, rounded and
+reusable paths, nested state analysis, solid/dashed/round-join stroke
+tessellation, and rebuilt versus reused text layouts. The accepted machine
+baseline and comparison thresholds are recorded in
+[results/2026-08-24-rendersurface2d-drawing-api.md](results/2026-08-24-rendersurface2d-drawing-api.md).

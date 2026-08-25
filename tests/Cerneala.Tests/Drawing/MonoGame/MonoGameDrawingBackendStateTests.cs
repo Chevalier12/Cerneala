@@ -115,16 +115,22 @@ public sealed class MonoGameDrawingBackendStateTests
         commands.Add(DrawCommand.FillRectangle(
             new DrawRect(0, 0, 16, 16),
             new Cerneala.Drawing.Color(20, 40, 80)));
+        commands.Add(DrawCommand.PushLayer(new DrawLayerOptions(opacity: 0.5f)));
         commands.Add(DrawCommand.DrawImage(
             new UnsupportedImage(),
             new DrawRect(0, 0, 8, 8),
             Cerneala.Drawing.Color.White));
+        commands.Add(DrawCommand.PopLayer());
 
         InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
             () => RenderBackend(fixture.Session.DrawingBackend, commands));
 
         state.AssertRestored();
         Assert.Contains("DrawImage requires a MonoGameImage", exception.Message, StringComparison.Ordinal);
+        MonoGameDrawingBackend backend = Assert.IsType<MonoGameDrawingBackend>(
+            fixture.Session.DrawingBackend);
+        Assert.Equal(0, backend.ActiveDrawingLayerCount);
+        Assert.InRange(backend.DrawingLayerPoolCount, 1, 8);
     }
 
     [Fact]
@@ -396,6 +402,38 @@ public sealed class MonoGameDrawingBackendStateTests
         Assert.True(text.Mask.IsDisposed);
         Assert.True(brush.IsDisposed);
         backend.Dispose();
+    }
+
+    [Fact]
+    public void DeviceResetDisposesPooledDrawingLayers()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using WindowsDxFixture fixture = new();
+        MonoGameDrawingBackend backend = Assert.IsType<MonoGameDrawingBackend>(
+            fixture.Session.DrawingBackend);
+        DrawCommandList commands = new();
+        for (int index = 0; index < 10; index++)
+        {
+            commands.Add(DrawCommand.PushLayer(new DrawLayerOptions()));
+        }
+        commands.Add(DrawCommand.FillRectangle(
+            new DrawRect(0, 0, 16, 16),
+            Cerneala.Drawing.Color.White));
+        for (int index = 0; index < 10; index++)
+        {
+            commands.Add(DrawCommand.PopLayer());
+        }
+        RenderBackend(backend, commands);
+        Assert.Equal(8, backend.DrawingLayerPoolCount);
+
+        InvokeDeviceReset(backend);
+
+        Assert.Equal(0, backend.DrawingLayerPoolCount);
+        Assert.Equal(0, backend.ActiveDrawingLayerCount);
     }
 
     [Fact]

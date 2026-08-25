@@ -67,7 +67,7 @@ At least one point is required. Passing `null` throws `ArgumentNullException`; p
 
 `Bounds` is calculated from the minimum and maximum X and Y coordinates in `Points`. A geometry with one point has a zero-width, zero-height bounds rectangle at that point.
 
-When rendered through `Shape`, `PathGeometry` is drawn as connected line segments between consecutive points. The renderer uses `Stroke`, `StrokeThickness`, `Opacity`, and `RenderTransform`; `Fill` is not used for `PathGeometry` rendering. A path with one point has no segment to draw, although it still has valid bounds.
+When rendered through `Shape`, `PathGeometry` is converted once to a reusable open `DrawPath` and emitted as one native stroke command. This preserves joins and endpoint caps across consecutive segments instead of treating every segment as an independent line. The renderer uses `Stroke`, `StrokeThickness`, `Opacity`, and `RenderTransform`; `Fill` is not used for `PathGeometry` rendering. A path with one point has no segment to draw, although it still has valid bounds.
 
 Because `PathGeometry` is a sealed record, instances use record equality. The `Points` property is a read-only wrapper around the copied array, so equality compares that wrapper reference rather than performing point-by-point sequence equality.
 
@@ -105,10 +105,10 @@ Because `PathGeometry` is a sealed record, instances use record equality. The `P
 
 | Condition | Result |
 | --- | --- |
-| `Stroke` resolves to a visible solid color and `StrokeThickness > 0` | `Shape` emits line drawing commands between consecutive points. |
+| `Stroke` resolves to a visible brush and `StrokeThickness > 0` | `Shape` emits one native typed-path stroke command. |
 | `Stroke` is transparent, missing, or `StrokeThickness` is `0` | No path line commands are emitted. |
 | The path contains exactly one point | Bounds are valid, but no line commands are emitted because there are no consecutive point pairs. |
-| `RenderTransform` is set on the shape | Each rendered segment endpoint is transformed before drawing. |
+| `RenderTransform` is set on the shape | Each path point is transformed before the native stroke command is recorded. |
 
 ## Applies To
 

@@ -51,6 +51,8 @@ The constructor and factory methods reject non-finite input values by throwing `
 
 Because this type is a `readonly record struct`, instances are immutable and use value-based equality.
 
+`ToNumerics` and `FromNumerics` are explicit, lossless adapters for the `System.Numerics.Matrix3x2` used by the drawing state API.
+
 ## Constructors
 | Name | Description |
 | --- | --- |
@@ -76,6 +78,8 @@ Because this type is a `readonly record struct`, instances are immutable and use
 | `CreateSkew(float radiansX, float radiansY)` | `Matrix3x2` | Creates a skew matrix using `MathF.Tan(radiansX)` for `M21` and `MathF.Tan(radiansY)` for `M12`. |
 | `Transform(DrawPoint point)` | `DrawPoint` | Applies the matrix to a point and returns the transformed point. |
 | `Multiply(Matrix3x2 left, Matrix3x2 right)` | `Matrix3x2` | Multiplies two matrices and returns the composed transform. |
+| `ToNumerics()` | `System.Numerics.Matrix3x2` | Converts this UI matrix to the drawing-state matrix type. |
+| `FromNumerics(System.Numerics.Matrix3x2)` | `Matrix3x2` | Converts a drawing-state matrix to the UI matrix type. |
 
 ## Applies to
 Project: `Cerneala`

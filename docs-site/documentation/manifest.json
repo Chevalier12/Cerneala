@@ -35,6 +35,16 @@
     "source": "Drawing/IDrawBrush.cs"
   },
   {
+    "name": "Cerneala.Drawing.DrawArcDirection",
+    "file": "documentation/classes/Cerneala.Drawing.DrawArcDirection.md",
+    "source": "Drawing/DrawPathFactory.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawCornerRadius",
+    "file": "documentation/classes/Cerneala.Drawing.DrawCornerRadius.md",
+    "source": "Drawing/DrawCornerRadius.cs"
+  },
+  {
     "name": "Cerneala.Drawing.DrawCommand",
     "file": "documentation/classes/Cerneala.Drawing.DrawCommand.md",
     "source": "Drawing/DrawCommand.cs"
@@ -50,9 +60,234 @@
     "source": "Drawing/DrawCommandList.cs"
   },
   {
+    "name": "Cerneala.Drawing.DrawBlendMode",
+    "file": "documentation/classes/Cerneala.Drawing.DrawBlendMode.md",
+    "source": "Drawing/DrawState.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawBlendScope",
+    "file": "documentation/classes/Cerneala.Drawing.DrawBlendScope.md",
+    "source": "Drawing/DrawState.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawClipScope",
+    "file": "documentation/classes/Cerneala.Drawing.DrawClipScope.md",
+    "source": "Drawing/DrawState.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawCommandStateAnalysis",
+    "file": "documentation/classes/Cerneala.Drawing.DrawCommandStateAnalysis.md",
+    "source": "Drawing/DrawState.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawCommandStateAnalyzer",
+    "file": "documentation/classes/Cerneala.Drawing.DrawCommandStateAnalyzer.md",
+    "source": "Drawing/DrawState.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawCommandStateEntry",
+    "file": "documentation/classes/Cerneala.Drawing.DrawCommandStateEntry.md",
+    "source": "Drawing/DrawState.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawLayerOptions",
+    "file": "documentation/classes/Cerneala.Drawing.DrawLayerOptions.md",
+    "source": "Drawing/DrawState.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawLayerScope",
+    "file": "documentation/classes/Cerneala.Drawing.DrawLayerScope.md",
+    "source": "Drawing/DrawState.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawOpacityScope",
+    "file": "documentation/classes/Cerneala.Drawing.DrawOpacityScope.md",
+    "source": "Drawing/DrawState.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawTransformScope",
+    "file": "documentation/classes/Cerneala.Drawing.DrawTransformScope.md",
+    "source": "Drawing/DrawState.cs"
+  },
+  {
     "name": "Cerneala.Drawing.DrawImageFlip",
     "file": "documentation/classes/Cerneala.Drawing.DrawImageFlip.md",
     "source": "Drawing/DrawImageFlip.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawSamplingMode",
+    "file": "documentation/classes/Cerneala.Drawing.DrawSamplingMode.md",
+    "source": "Drawing/DrawImageOptions.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawAddressMode",
+    "file": "documentation/classes/Cerneala.Drawing.DrawAddressMode.md",
+    "source": "Drawing/DrawImageOptions.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawImageOptions",
+    "file": "documentation/classes/Cerneala.Drawing.DrawImageOptions.md",
+    "source": "Drawing/DrawImageOptions.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawInsets",
+    "file": "documentation/classes/Cerneala.Drawing.DrawInsets.md",
+    "source": "Drawing/DrawImageOptions.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawPrimitiveTopology",
+    "file": "documentation/classes/Cerneala.Drawing.DrawPrimitiveTopology.md",
+    "source": "Drawing/DrawMesh2D.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawVertex2D",
+    "file": "documentation/classes/Cerneala.Drawing.DrawVertex2D.md",
+    "source": "Drawing/DrawMesh2D.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawMesh2D",
+    "file": "documentation/classes/Cerneala.Drawing.DrawMesh2D.md",
+    "source": "Drawing/DrawMesh2D.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawLineSegment2D",
+    "file": "documentation/classes/Cerneala.Drawing.DrawLineSegment2D.md",
+    "source": "Drawing/DrawBatches.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawSprite2D",
+    "file": "documentation/classes/Cerneala.Drawing.DrawSprite2D.md",
+    "source": "Drawing/DrawBatches.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawPointBatch",
+    "file": "documentation/classes/Cerneala.Drawing.DrawPointBatch.md",
+    "source": "Drawing/DrawBatches.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawLineBatch",
+    "file": "documentation/classes/Cerneala.Drawing.DrawLineBatch.md",
+    "source": "Drawing/DrawBatches.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawSpriteBatch",
+    "file": "documentation/classes/Cerneala.Drawing.DrawSpriteBatch.md",
+    "source": "Drawing/DrawBatches.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawTextWrapping",
+    "file": "documentation/classes/Cerneala.Drawing.DrawTextWrapping.md",
+    "source": "Drawing/DrawTextLayout.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawTextAlignment",
+    "file": "documentation/classes/Cerneala.Drawing.DrawTextAlignment.md",
+    "source": "Drawing/DrawTextLayout.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawTextTrimming",
+    "file": "documentation/classes/Cerneala.Drawing.DrawTextTrimming.md",
+    "source": "Drawing/DrawTextLayout.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawTextDirection",
+    "file": "documentation/classes/Cerneala.Drawing.DrawTextDirection.md",
+    "source": "Drawing/DrawTextLayout.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawTextSpan",
+    "file": "documentation/classes/Cerneala.Drawing.DrawTextSpan.md",
+    "source": "Drawing/DrawTextLayout.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawTextLayoutOptions",
+    "file": "documentation/classes/Cerneala.Drawing.DrawTextLayoutOptions.md",
+    "source": "Drawing/DrawTextLayout.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawTextLayoutBuilder",
+    "file": "documentation/classes/Cerneala.Drawing.DrawTextLayoutBuilder.md",
+    "source": "Drawing/DrawTextLayout.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawTextLayout",
+    "file": "documentation/classes/Cerneala.Drawing.DrawTextLayout.md",
+    "source": "Drawing/DrawTextLayout.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawTextLayoutLine",
+    "file": "documentation/classes/Cerneala.Drawing.DrawTextLayoutLine.md",
+    "source": "Drawing/DrawTextLayout.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawTextLayoutRun",
+    "file": "documentation/classes/Cerneala.Drawing.DrawTextLayoutRun.md",
+    "source": "Drawing/DrawTextLayout.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawFillRule",
+    "file": "documentation/classes/Cerneala.Drawing.DrawFillRule.md",
+    "source": "Drawing/DrawFillRule.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawLineCap",
+    "file": "documentation/classes/Cerneala.Drawing.DrawLineCap.md",
+    "source": "Drawing/DrawStrokeStyle.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawLineJoin",
+    "file": "documentation/classes/Cerneala.Drawing.DrawLineJoin.md",
+    "source": "Drawing/DrawStrokeStyle.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawPen",
+    "file": "documentation/classes/Cerneala.Drawing.DrawPen.md",
+    "source": "Drawing/DrawStrokeStyle.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawPathFactory",
+    "file": "documentation/classes/Cerneala.Drawing.DrawPathFactory.md",
+    "source": "Drawing/DrawPathFactory.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawStrokeAlignment",
+    "file": "documentation/classes/Cerneala.Drawing.DrawStrokeAlignment.md",
+    "source": "Drawing/DrawStrokeStyle.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawStrokeStyle",
+    "file": "documentation/classes/Cerneala.Drawing.DrawStrokeStyle.md",
+    "source": "Drawing/DrawStrokeStyle.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawPath",
+    "file": "documentation/classes/Cerneala.Drawing.DrawPath.md",
+    "source": "Drawing/DrawPath.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawPathBuilder",
+    "file": "documentation/classes/Cerneala.Drawing.DrawPathBuilder.md",
+    "source": "Drawing/DrawPathBuilder.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawPathContour",
+    "file": "documentation/classes/Cerneala.Drawing.DrawPathContour.md",
+    "source": "Drawing/DrawPath.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawPathParser",
+    "file": "documentation/classes/Cerneala.Drawing.DrawPathParser.md",
+    "source": "Drawing/DrawPathParser.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawPathSegment",
+    "file": "documentation/classes/Cerneala.Drawing.DrawPathSegment.md",
+    "source": "Drawing/DrawPath.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawPathSegmentKind",
+    "file": "documentation/classes/Cerneala.Drawing.DrawPathSegmentKind.md",
+    "source": "Drawing/DrawPath.cs"
   },
   {
     "name": "Cerneala.Drawing.DrawGradientStop",

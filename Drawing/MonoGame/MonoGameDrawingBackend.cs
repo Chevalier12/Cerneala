@@ -12,6 +12,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using CernealaColor = Cerneala.Drawing.Color;
 using XnaColor = Microsoft.Xna.Framework.Color;
+using NumericsMatrix3x2 = System.Numerics.Matrix3x2;
 
 namespace Cerneala.Drawing.MonoGame;
 
@@ -22,6 +23,7 @@ public sealed class MonoGameDrawingBackend :
     IDisposable
 {
     private const int TextSubpixelPhaseCount = 8;
+    private const float EllipseCoverageCompensationPixels = 0.055f;
     private const int DefaultMaximumTextTextureEntries = 2_048;
     private const long DefaultMaximumTextTextureBytes = 256L * 1024 * 1024;
 
@@ -40,6 +42,7 @@ public sealed class MonoGameDrawingBackend :
     private readonly HashSet<BrushTextureKey> activeBrushTextureKeys = [];
     private readonly List<BrushTextureKey> brushTextureEvictionCandidates = [];
     private readonly Dictionary<PathMeshKey, MonoGamePathMesh> pathMeshCache = new();
+    private readonly Dictionary<StrokeMeshKey, MonoGameStrokeMesh> strokeMeshCache = new();
     private readonly HashSet<IDrawBrush> activeBrushes = new(ReferenceEqualityComparer.Instance);
     private readonly Texture2D _whitePixel;
     private readonly SkiaTextRasterizer? _textRasterizer;
@@ -58,6 +61,18 @@ public sealed class MonoGameDrawingBackend :
     private readonly BlendState greenTextBlendState;
     private readonly BlendState blueTextBlendState;
     private readonly BlendState textMaskBlendState;
+    private readonly BlendState multiplyBlendState;
+    private readonly BlendState screenBlendState;
+    private readonly BlendState stencilWriteBlendState;
+    private readonly DepthStencilState stencilWriteState;
+    private readonly DepthStencilState stencilTestState;
+    private readonly List<NumericsMatrix3x2> drawingTransforms =
+        [NumericsMatrix3x2.Identity];
+    private readonly List<DrawBlendMode> drawingBlends =
+        [DrawBlendMode.Normal];
+    private readonly Stack<bool> geometricClipScopes = new();
+    private readonly List<DrawingLayerScope> drawingLayers = [];
+    private readonly Stack<RenderTarget2D> drawingLayerPool = new();
     private long textTextureCacheHits;
     private long textTextureCacheMisses;
     private long textTextureCacheEvictions;
@@ -72,7 +87,9 @@ public sealed class MonoGameDrawingBackend :
     private TimeSpan lastTextAtlasUploadTime;
     private int lastTextRequestCount;
     private long lastRasterizedPixelCount;
+    private int lastAdvancedPrimitiveDrawCalls;
     private bool spriteBatchBegun;
+    private SamplerState? activeSamplerState;
     private bool prismExecutorUnavailable;
 
     public MonoGameDrawingBackend(SpriteBatch spriteBatch, Texture2D whitePixel, SkiaTextRasterizer? textRasterizer = null)
@@ -140,6 +157,28 @@ public sealed class MonoGameDrawingBackend :
         greenTextBlendState = CreateTextBlendState(ColorWriteChannels.Green);
         blueTextBlendState = CreateTextBlendState(ColorWriteChannels.Blue);
         textMaskBlendState = CreateTextMaskBlendState();
+        multiplyBlendState = CreateMultiplyBlendState();
+        screenBlendState = CreateScreenBlendState();
+        stencilWriteBlendState = new BlendState
+        {
+            ColorWriteChannels = ColorWriteChannels.None
+        };
+        stencilWriteState = new DepthStencilState
+        {
+            DepthBufferEnable = false,
+            StencilEnable = true,
+            StencilFunction = CompareFunction.Always,
+            StencilPass = StencilOperation.Replace,
+            ReferenceStencil = 1
+        };
+        stencilTestState = new DepthStencilState
+        {
+            DepthBufferEnable = false,
+            StencilEnable = true,
+            StencilFunction = CompareFunction.Equal,
+            StencilPass = StencilOperation.Keep,
+            ReferenceStencil = 1
+        };
         if (_spriteBatch.GraphicsDevice is GraphicsDevice graphicsDevice)
         {
             CreatePathResources(graphicsDevice);
@@ -208,6 +247,7 @@ public sealed class MonoGameDrawingBackend :
         ArgumentNullException.ThrowIfNull(commands);
         ObjectDisposedException.ThrowIf(disposed, this);
         frameContext.EnsureCurrent(commands);
+        frameContext.StateAnalysis.EnsureCurrent(commands);
 
         GraphicsDevice graphicsDevice = _spriteBatch.GraphicsDevice ??
             throw new InvalidOperationException("The SpriteBatch does not have a GraphicsDevice.");
@@ -227,6 +267,7 @@ public sealed class MonoGameDrawingBackend :
             Rectangle viewportClip = new(viewport.X, viewport.Y, viewport.Width, viewport.Height);
             graphicsDevice.ScissorRectangle = viewportClip;
             clipStack = new MonoGameClipStack(viewportClip);
+            ResetDrawingState();
             activeTextTextureKeys.Clear();
             activeBrushTextureKeys.Clear();
             lastTextRequestCollectionTime = TimeSpan.Zero;
@@ -234,6 +275,7 @@ public sealed class MonoGameDrawingBackend :
             lastTextAtlasUploadTime = TimeSpan.Zero;
             lastTextRequestCount = 0;
             lastRasterizedPixelCount = 0;
+            lastAdvancedPrimitiveDrawCalls = 0;
 
             long preparationStarted = Stopwatch.GetTimestamp();
             PrepareTextRasterizations(commands);
@@ -299,6 +341,7 @@ public sealed class MonoGameDrawingBackend :
                 finally
                 {
                     long cleanupStarted = Stopwatch.GetTimestamp();
+                    AbortDrawingLayers(graphicsDevice);
                     clipStack?.Reset();
                     foreach (RasterizedText[] layers in preparedTextRasterizations.Values)
                     {
@@ -328,13 +371,17 @@ public sealed class MonoGameDrawingBackend :
         }
     }
 
+    internal int LastAdvancedPrimitiveDrawCalls =>
+        lastAdvancedPrimitiveDrawCalls;
+
     private void BeginSpriteBatch(
         SpriteSortMode sortMode,
         BlendState blendState,
         SamplerState samplerState,
         DepthStencilState depthStencilState,
         RasterizerState rasterizerState,
-        Effect? effect = null)
+        Effect? effect = null,
+        Matrix? transformMatrix = null)
     {
         if (spriteBatchBegun)
         {
@@ -347,7 +394,9 @@ public sealed class MonoGameDrawingBackend :
             samplerState,
             depthStencilState,
             rasterizerState,
-            effect);
+            effect,
+            transformMatrix ?? CurrentSpriteTransform);
+        activeSamplerState = samplerState;
         spriteBatchBegun = true;
     }
 
@@ -365,6 +414,7 @@ public sealed class MonoGameDrawingBackend :
         finally
         {
             spriteBatchBegun = false;
+            activeSamplerState = null;
         }
     }
 
@@ -372,14 +422,21 @@ public sealed class MonoGameDrawingBackend :
     {
         BeginSpriteBatch(
             SpriteSortMode.Immediate,
-            BlendState.AlphaBlend,
+            ResolveBlendState(drawingBlends[^1]),
             SamplerState.LinearClamp,
-            DepthStencilState.None,
+            CurrentDepthStencilState,
             scissorRasterizerState!);
+    }
+
+    private void RestartUiSpriteBatch()
+    {
+        EndSpriteBatch();
+        BeginUiSpriteBatch();
     }
 
     private void RenderCommand(DrawCommand command)
     {
+        EnsureCommandSampler(command);
         switch (command.Kind)
         {
             case DrawCommandKind.FillRectangle:
@@ -394,7 +451,11 @@ public sealed class MonoGameDrawingBackend :
                 break;
 
             case DrawCommandKind.DrawRectangle:
-                if (command.Brush is null)
+                if (command.Pen is not null)
+                {
+                    DrawStroke(command);
+                }
+                else if (command.Brush is null)
                 {
                     DrawRectangle(command.Rect, command.Color, command.Thickness);
                 }
@@ -404,8 +465,27 @@ public sealed class MonoGameDrawingBackend :
                 }
                 break;
 
+            case DrawCommandKind.FillRoundedRectangle:
+                if (CanFillAsPath(command))
+                {
+                    FillPath(command);
+                }
+                else
+                {
+                    FillRoundedRectangle(command);
+                }
+                break;
+
+            case DrawCommandKind.DrawRoundedRectangle:
+                DrawStroke(command);
+                break;
+
             case DrawCommandKind.FillEllipse:
-                if (command.Brush is null)
+                if (CanFillAsPath(command))
+                {
+                    FillEllipsePath(command);
+                }
+                else if (command.Brush is null)
                 {
                     FillEllipse(command.Rect, command.Color);
                 }
@@ -416,7 +496,11 @@ public sealed class MonoGameDrawingBackend :
                 break;
 
             case DrawCommandKind.DrawEllipse:
-                if (command.Brush is null)
+                if (command.Pen is not null)
+                {
+                    DrawStroke(command);
+                }
+                else if (command.Brush is null)
                 {
                     DrawEllipse(command.Rect, command.Color, command.Thickness);
                 }
@@ -427,7 +511,11 @@ public sealed class MonoGameDrawingBackend :
                 break;
 
             case DrawCommandKind.DrawLine:
-                if (command.Brush is null)
+                if (command.Pen is not null)
+                {
+                    DrawStroke(command);
+                }
+                else if (command.Brush is null)
                 {
                     DrawLine(command.Position, command.EndPoint, command.Color, command.Thickness);
                 }
@@ -441,8 +529,21 @@ public sealed class MonoGameDrawingBackend :
                 FillPath(command);
                 break;
 
+            case DrawCommandKind.DrawPath:
+                DrawStroke(command);
+                break;
+
             case DrawCommandKind.DrawImage:
                 DrawImage(command);
+                break;
+
+            case DrawCommandKind.DrawImageQuad:
+            case DrawCommandKind.DrawNineSlice:
+            case DrawCommandKind.DrawMesh:
+            case DrawCommandKind.DrawPointBatch:
+            case DrawCommandKind.DrawLineBatch:
+            case DrawCommandKind.DrawSpriteBatch:
+                DrawAdvancedMesh(command);
                 break;
 
             case DrawCommandKind.RenderSurface2D:
@@ -453,12 +554,61 @@ public sealed class MonoGameDrawingBackend :
                 DrawText(command);
                 break;
 
+            case DrawCommandKind.DrawTextLayout:
+                DrawTextLayout(command);
+                break;
+
             case DrawCommandKind.PushClip:
-                PushClip(command.Rect);
+                PushTransformedClip(command.Rect);
+                break;
+
+            case DrawCommandKind.PushPathClip:
+                PushGeometricClip(command);
                 break;
 
             case DrawCommandKind.PopClip:
-                PopClip();
+                PopDrawingClip();
+                break;
+
+            case DrawCommandKind.PushTransform:
+                drawingTransforms.Add(NumericsMatrix3x2.Multiply(
+                    command.Transform,
+                    drawingTransforms[^1]));
+                RestartUiSpriteBatch();
+                break;
+
+            case DrawCommandKind.PopTransform:
+                drawingTransforms.RemoveAt(drawingTransforms.Count - 1);
+                RestartUiSpriteBatch();
+                break;
+
+            case DrawCommandKind.PushOpacity:
+                BeginDrawingLayer(command.Opacity, DrawBlendMode.Normal, isGeometricClip: false);
+                break;
+
+            case DrawCommandKind.PopOpacity:
+                EndDrawingLayer();
+                break;
+
+            case DrawCommandKind.PushBlend:
+                drawingBlends.Add(command.BlendMode);
+                RestartUiSpriteBatch();
+                break;
+
+            case DrawCommandKind.PopBlend:
+                drawingBlends.RemoveAt(drawingBlends.Count - 1);
+                RestartUiSpriteBatch();
+                break;
+
+            case DrawCommandKind.PushLayer:
+                BeginDrawingLayer(
+                    command.LayerOptions!.Opacity,
+                    command.LayerOptions.BlendMode,
+                    isGeometricClip: false);
+                break;
+
+            case DrawCommandKind.PopLayer:
+                EndDrawingLayer();
                 break;
 
             case DrawCommandKind.BeginPrism:
@@ -532,6 +682,126 @@ public sealed class MonoGameDrawingBackend :
         FillRectangle(new DrawRect(rect.X, rect.Bottom - safeThickness, rect.Width, safeThickness), brush, commandOpacity);
         FillRectangle(new DrawRect(rect.X, rect.Y + safeThickness, safeThickness, MathF.Max(0, rect.Height - (safeThickness * 2))), brush, commandOpacity);
         FillRectangle(new DrawRect(rect.Right - safeThickness, rect.Y + safeThickness, safeThickness, MathF.Max(0, rect.Height - (safeThickness * 2))), brush, commandOpacity);
+    }
+
+    private static bool CanFillAsPath(DrawCommand command) =>
+        command.Path is not null &&
+        (command.Brush is null ||
+            command.Brush.CreateDescriptor() is SolidDrawBrushDescriptor);
+
+    private void FillEllipsePath(DrawCommand command)
+    {
+        float compensation = EllipseCoverageCompensationPixels / coordinateScale;
+        FillPath(
+            command,
+            new DrawRect(
+                command.Rect.X - compensation,
+                command.Rect.Y - compensation,
+                command.Rect.Width + (compensation * 2),
+                command.Rect.Height + (compensation * 2)));
+    }
+
+    private void FillRoundedRectangle(DrawCommand command)
+    {
+        Rectangle bounds = Mapper.MapRectangle(command.Rect);
+        if (bounds.Width <= 0 || bounds.Height <= 0)
+        {
+            return;
+        }
+
+        DrawCornerRadius radii = command.CornerRadius.Normalize(command.Rect);
+        if (command.Brush is null)
+        {
+            XnaColor color = Premultiply(ToColor(command.Color));
+            DrawRoundedRows(
+                bounds,
+                radii,
+                (row, source) => _spriteBatch.Draw(_whitePixel, row, color));
+            return;
+        }
+
+        DrawBrushDescriptor descriptor = command.Brush.CreateDescriptor();
+        if (TryGetSolidColor(descriptor, command.BrushOpacity, out XnaColor solid))
+        {
+            XnaColor color = Premultiply(solid);
+            DrawRoundedRows(
+                bounds,
+                radii,
+                (row, source) => _spriteBatch.Draw(_whitePixel, row, color));
+            return;
+        }
+
+        Texture2D texture = GetOrCreateBrushTexture(command.Brush, descriptor, command.Rect);
+        XnaColor tint = OpacityTint(command.BrushOpacity);
+        DrawRoundedRows(
+            bounds,
+            radii,
+            (row, source) => _spriteBatch.Draw(texture, row, source, tint));
+    }
+
+    private void DrawRoundedRows(
+        Rectangle bounds,
+        DrawCornerRadius radii,
+        Action<Rectangle, Rectangle> drawRow)
+    {
+        float scale = coordinateScale;
+        float topLeft = radii.TopLeft * scale;
+        float topRight = radii.TopRight * scale;
+        float bottomRight = radii.BottomRight * scale;
+        float bottomLeft = radii.BottomLeft * scale;
+        for (int y = 0; y < bounds.Height; y++)
+        {
+            float sampleY = y + 0.5f;
+            int leftInset = RoundedCornerInset(
+                sampleY,
+                bounds.Height,
+                topLeft,
+                bottomLeft);
+            int rightInset = RoundedCornerInset(
+                sampleY,
+                bounds.Height,
+                topRight,
+                bottomRight);
+            int width = bounds.Width - leftInset - rightInset;
+            if (width <= 0)
+            {
+                continue;
+            }
+
+            Rectangle source = new(leftInset, y, width, 1);
+            drawRow(
+                new Rectangle(bounds.Left + leftInset, bounds.Top + y, width, 1),
+                source);
+        }
+    }
+
+    private static int RoundedCornerInset(
+        float sampleY,
+        float height,
+        float topRadius,
+        float bottomRadius)
+    {
+        float radius;
+        float distanceFromCenter;
+        if (topRadius > 0 && sampleY < topRadius)
+        {
+            radius = topRadius;
+            distanceFromCenter = sampleY - radius;
+        }
+        else if (bottomRadius > 0 && sampleY > height - bottomRadius)
+        {
+            radius = bottomRadius;
+            distanceFromCenter = sampleY - (height - radius);
+        }
+        else
+        {
+            return 0;
+        }
+
+        float horizontalSpan = MathF.Sqrt(MathF.Max(
+            0,
+            (radius * radius) - (distanceFromCenter * distanceFromCenter)));
+        return Math.Max(0, (int)MathF.Ceiling(radius - horizontalSpan));
     }
 
     private void FillEllipse(DrawRect rect, CernealaColor color)
@@ -713,22 +983,190 @@ public sealed class MonoGameDrawingBackend :
             throw new InvalidOperationException("DrawImage requires a MonoGameImage when using MonoGameDrawingBackend.");
         }
 
+        ObjectDisposedException.ThrowIf(image.Texture.IsDisposed, image);
         if (!ReferenceEquals(image.Texture.GraphicsDevice, _spriteBatch.GraphicsDevice))
         {
             throw new InvalidOperationException("A MonoGameImage can only be drawn by the GraphicsDevice that created it.");
         }
 
+        DrawImageOptions options = command.ImageOptions ??
+            new DrawImageOptions(
+                command.ImageSource,
+                command.Color,
+                rotation: command.ImageRotation,
+                origin: command.ImageOrigin,
+                flip: command.ImageFlip,
+                layerDepth: command.LayerDepth);
+        DrawRect source = DrawImageGeometry.ResolveSource(image, options);
+
         _spriteBatch.Draw(
             image.Texture,
             Mapper.MapRectangle(command.Rect),
-            command.ImageSource is DrawRect source
-                ? Mapper.MapRectangle(source)
-                : null,
-            Premultiply(ToColor(command.Color)),
-            command.ImageRotation,
-            Mapper.MapVector(command.ImageOrigin),
-            ToSpriteEffects(command.ImageFlip),
-            command.LayerDepth);
+            MapImageSource(source),
+            Premultiply(ToColor(DrawImageGeometry.EffectiveTint(options))),
+            options.Rotation,
+            new Vector2(options.Origin.X, options.Origin.Y),
+            ToSpriteEffects(options.Flip),
+            options.LayerDepth);
+    }
+
+    private void DrawAdvancedMesh(DrawCommand command)
+    {
+        DrawMesh2D mesh = command.Mesh ??
+            throw new InvalidOperationException(
+                $"{command.Kind} has no mesh payload.");
+        Texture2D? texture = null;
+        if (mesh.Image is not null)
+        {
+            if (mesh.Image is not MonoGameImage image)
+            {
+                throw new InvalidOperationException(
+                    $"{command.Kind} requires a MonoGameImage when its mesh is textured.");
+            }
+            ObjectDisposedException.ThrowIf(image.Texture.IsDisposed, image);
+            if (!ReferenceEquals(
+                    image.Texture.GraphicsDevice,
+                    _spriteBatch.GraphicsDevice))
+            {
+                throw new InvalidOperationException(
+                    "A textured mesh can only be drawn by the GraphicsDevice that created its image.");
+            }
+
+            texture = image.Texture;
+        }
+
+        GraphicsDevice device = _spriteBatch.GraphicsDevice;
+        CreatePathResources(device);
+        BlendState previousBlend = device.BlendState;
+        SamplerState previousSampler = device.SamplerStates[0];
+        DepthStencilState previousDepth = device.DepthStencilState;
+        RasterizerState previousRasterizer = device.RasterizerState;
+        VertexPositionColorTexture[] vertices =
+            ArrayPool<VertexPositionColorTexture>.Shared.Rent(
+                mesh.VertexArray.Length);
+
+        EndSpriteBatch();
+        try
+        {
+            for (int index = 0; index < mesh.VertexArray.Length; index++)
+            {
+                DrawVertex2D vertex = mesh.VertexArray[index];
+                Vector2 position = Mapper.MapVector(vertex.Position);
+                vertices[index] = new VertexPositionColorTexture(
+                    new Vector3(position.X, position.Y, command.LayerDepth),
+                    Premultiply(ToColor(vertex.Color)),
+                    new Vector2(
+                        vertex.TextureCoordinate.X,
+                        vertex.TextureCoordinate.Y));
+            }
+
+            device.BlendState = previousBlend;
+            device.SamplerStates[0] = ResolveSamplerState(
+                command.ImageOptions?.Sampling ?? DrawSamplingMode.Linear,
+                command.ImageOptions?.AddressMode ?? DrawAddressMode.Clamp);
+            device.DepthStencilState = previousDepth;
+            device.RasterizerState = pathRasterizerState!;
+            pathEffect!.VertexColorEnabled = true;
+            pathEffect.TextureEnabled = texture is not null;
+            pathEffect.Texture = texture;
+            pathEffect.World = CurrentSpriteTransform;
+            pathEffect.View = Matrix.Identity;
+            pathEffect.Projection = Matrix.CreateOrthographicOffCenter(
+                0,
+                device.Viewport.Width,
+                device.Viewport.Height,
+                0,
+                0,
+                1);
+
+            PrimitiveType primitiveType = mesh.Topology switch
+            {
+                DrawPrimitiveTopology.TriangleList => PrimitiveType.TriangleList,
+                DrawPrimitiveTopology.TriangleStrip => PrimitiveType.TriangleStrip,
+                _ => throw new ArgumentOutOfRangeException(nameof(mesh.Topology))
+            };
+            int primitiveCount = mesh.Topology == DrawPrimitiveTopology.TriangleList
+                ? mesh.IndexArray.Length / 3
+                : mesh.IndexArray.Length - 2;
+            foreach (EffectPass pass in pathEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                device.DrawUserIndexedPrimitives(
+                    primitiveType,
+                    vertices,
+                    0,
+                    mesh.VertexArray.Length,
+                    mesh.IndexArray,
+                    0,
+                    primitiveCount);
+                lastAdvancedPrimitiveDrawCalls++;
+            }
+        }
+        finally
+        {
+            pathEffect!.TextureEnabled = false;
+            pathEffect.Texture = null;
+            ArrayPool<VertexPositionColorTexture>.Shared.Return(vertices);
+            BeginSpriteBatch(
+                SpriteSortMode.Immediate,
+                previousBlend,
+                previousSampler,
+                previousDepth,
+                previousRasterizer);
+        }
+    }
+
+    private void EnsureCommandSampler(DrawCommand command)
+    {
+        SamplerState desired = command.ImageOptions is DrawImageOptions options &&
+            command.Kind is DrawCommandKind.DrawImage or
+                DrawCommandKind.DrawImageQuad or
+                DrawCommandKind.DrawNineSlice or
+                DrawCommandKind.DrawMesh or
+                DrawCommandKind.DrawSpriteBatch
+            ? ResolveSamplerState(options.Sampling, options.AddressMode)
+            : SamplerState.LinearClamp;
+        if (!spriteBatchBegun || ReferenceEquals(activeSamplerState, desired))
+        {
+            return;
+        }
+
+        EndSpriteBatch();
+        BeginSpriteBatch(
+            SpriteSortMode.Immediate,
+            ResolveBlendState(drawingBlends[^1]),
+            desired,
+            CurrentDepthStencilState,
+            scissorRasterizerState!);
+    }
+
+    private static SamplerState ResolveSamplerState(
+        DrawSamplingMode sampling,
+        DrawAddressMode addressMode) =>
+        (sampling, addressMode) switch
+        {
+            (DrawSamplingMode.Point, DrawAddressMode.Clamp) =>
+                SamplerState.PointClamp,
+            (DrawSamplingMode.Point, DrawAddressMode.Wrap) =>
+                SamplerState.PointWrap,
+            (DrawSamplingMode.Linear, DrawAddressMode.Clamp) =>
+                SamplerState.LinearClamp,
+            (DrawSamplingMode.Linear, DrawAddressMode.Wrap) =>
+                SamplerState.LinearWrap,
+            _ => throw new ArgumentOutOfRangeException(nameof(sampling))
+        };
+
+    private static Rectangle MapImageSource(DrawRect source)
+    {
+        int left = (int)MathF.Floor(source.X);
+        int top = (int)MathF.Floor(source.Y);
+        int right = (int)MathF.Ceiling(source.Right);
+        int bottom = (int)MathF.Ceiling(source.Bottom);
+        return new Rectangle(
+            left,
+            top,
+            Math.Max(1, right - left),
+            Math.Max(1, bottom - top));
     }
 
     private void DrawRenderSurface2D(DrawCommand command)
@@ -780,23 +1218,31 @@ public sealed class MonoGameDrawingBackend :
             Premultiply(ToColor(command.Color)));
     }
 
-    private void FillPath(DrawCommand command)
+    private void FillPath(
+        DrawCommand command,
+        DrawRect? destinationOverride = null)
     {
-        float physicalLeft = command.Rect.X * coordinateScale;
-        float physicalTop = command.Rect.Y * coordinateScale;
-        float physicalRight = command.Rect.Right * coordinateScale;
-        float physicalBottom = command.Rect.Bottom * coordinateScale;
+        DrawRect destinationRect = destinationOverride ?? command.Rect;
+        float physicalLeft = destinationRect.X * coordinateScale;
+        float physicalTop = destinationRect.Y * coordinateScale;
+        float physicalRight = destinationRect.Right * coordinateScale;
+        float physicalBottom = destinationRect.Bottom * coordinateScale;
         int left = (int)MathF.Floor(physicalLeft);
         int top = (int)MathF.Floor(physicalTop);
         int right = (int)MathF.Ceiling(physicalRight);
         int bottom = (int)MathF.Ceiling(physicalBottom);
         Rectangle destination = new(left, top, Math.Max(0, right - left), Math.Max(0, bottom - top));
-        if (destination.Width <= 0 || destination.Height <= 0 || command.PathData is null || command.Brush is null)
+        if (destination.Width <= 0 || destination.Height <= 0 || command.Path is null)
         {
             return;
         }
 
-        if (!TryGetSolidColor(command.Brush.CreateDescriptor(), command.BrushOpacity, out XnaColor color))
+        XnaColor color;
+        if (command.Brush is null)
+        {
+            color = ToColor(command.Color);
+        }
+        else if (!TryGetSolidColor(command.Brush.CreateDescriptor(), command.BrushOpacity, out color))
         {
             throw new NotSupportedException("Filled paths currently require a solid brush.");
         }
@@ -806,7 +1252,8 @@ public sealed class MonoGameDrawingBackend :
         float physicalWidth = physicalRight - physicalLeft;
         float physicalHeight = physicalBottom - physicalTop;
         PathMeshKey key = new(
-            command.PathData,
+            command.Path.StableId,
+            command.FillRule,
             command.SourceRect,
             destination.Width,
             destination.Height,
@@ -818,13 +1265,14 @@ public sealed class MonoGameDrawingBackend :
         if (!pathMeshCache.TryGetValue(key, out MonoGamePathMesh? mesh))
         {
             mesh = MonoGamePathMeshBuilder.Build(
-                command.PathData,
+                command.Path,
                 command.SourceRect,
                 physicalWidth,
                 physicalHeight,
                 phaseX,
                 phaseY,
-                Premultiply(color));
+                Premultiply(color),
+                command.FillRule);
             pathMeshCache.Add(key, mesh);
         }
 
@@ -834,7 +1282,109 @@ public sealed class MonoGameDrawingBackend :
         }
     }
 
-    private void DrawPathMesh(MonoGamePathMesh mesh, int left, int top)
+    private void DrawStroke(DrawCommand command)
+    {
+        DrawPen? pen = command.Pen;
+        DrawStrokeStyle style = pen?.Style ?? DrawStrokeStyle.Default;
+        float thickness = pen?.Thickness ?? command.Thickness;
+        Func<DrawPoint, XnaColor> colorSelector;
+        if (pen is null)
+        {
+            XnaColor color = Premultiply(ToColor(command.Color));
+            colorSelector = _ => color;
+        }
+        else
+        {
+            DrawBrushDescriptor descriptor = pen.Brush.CreateDescriptor();
+            if (descriptor is not SolidDrawBrushDescriptor and
+                not LinearGradientDrawBrushDescriptor and
+                not RadialGradientDrawBrushDescriptor)
+            {
+                throw new NotSupportedException(
+                    "Native strokes currently support solid and gradient brushes.");
+            }
+            colorSelector = point => Premultiply(ToColor(ApplyOpacity(
+                SampleInBounds(descriptor, command.Rect, point),
+                command.BrushOpacity)));
+        }
+
+        StrokeMeshKey key = StrokeMeshKey.From(command, coordinateScale);
+        if (!strokeMeshCache.TryGetValue(key, out MonoGameStrokeMesh stroke))
+        {
+            stroke = MonoGameStrokeMeshBuilder.Build(
+                command,
+                thickness,
+                style,
+                coordinateScale,
+                colorSelector);
+            strokeMeshCache.Add(key, stroke);
+        }
+
+        if (!stroke.Mesh.IsEmpty)
+        {
+            DrawPathMesh(stroke.Mesh, stroke.Left, stroke.Top);
+        }
+    }
+
+    private void DrawPathMask(DrawCommand command)
+    {
+        if (command.Path is null)
+        {
+            throw new InvalidOperationException(
+                "A geometric clip requires a path payload.");
+        }
+
+        float physicalLeft = command.Rect.X * coordinateScale;
+        float physicalTop = command.Rect.Y * coordinateScale;
+        int left = (int)MathF.Floor(physicalLeft);
+        int top = (int)MathF.Floor(physicalTop);
+        float physicalWidth = command.Rect.Width * coordinateScale;
+        float physicalHeight = command.Rect.Height * coordinateScale;
+        int width = Math.Max(1, (int)MathF.Ceiling(command.Rect.Right * coordinateScale) - left);
+        int height = Math.Max(1, (int)MathF.Ceiling(command.Rect.Bottom * coordinateScale) - top);
+        XnaColor color = XnaColor.White;
+        PathMeshKey key = new(
+            command.Path.StableId,
+            command.FillRule,
+            command.SourceRect,
+            width,
+            height,
+            physicalWidth,
+            physicalHeight,
+            physicalLeft - left,
+            physicalTop - top,
+            color);
+        if (!pathMeshCache.TryGetValue(key, out MonoGamePathMesh? mesh))
+        {
+            mesh = MonoGamePathMeshBuilder.Build(
+                command.Path,
+                command.SourceRect,
+                physicalWidth,
+                physicalHeight,
+                physicalLeft - left,
+                physicalTop - top,
+                color,
+                command.FillRule);
+            pathMeshCache.Add(key, mesh);
+        }
+
+        if (!mesh.IsEmpty)
+        {
+            DrawPathMesh(
+                mesh,
+                left,
+                top,
+                stencilWriteBlendState,
+                stencilWriteState);
+        }
+    }
+
+    private void DrawPathMesh(
+        MonoGamePathMesh mesh,
+        int left,
+        int top,
+        BlendState? blendState = null,
+        DepthStencilState? depthStencilState = null)
     {
         GraphicsDevice device = _spriteBatch.GraphicsDevice;
         CreatePathResources(device);
@@ -846,10 +1396,12 @@ public sealed class MonoGameDrawingBackend :
         EndSpriteBatch();
         try
         {
-            device.BlendState = BlendState.AlphaBlend;
-            device.DepthStencilState = DepthStencilState.None;
+            device.BlendState = blendState ?? BlendState.AlphaBlend;
+            device.DepthStencilState = depthStencilState ?? DepthStencilState.None;
             device.RasterizerState = pathRasterizerState!;
-            pathEffect!.World = Matrix.CreateTranslation(left, top, 0);
+            pathEffect!.World =
+                Matrix.CreateTranslation(left, top, 0) *
+                CurrentSpriteTransform;
             pathEffect.View = Matrix.Identity;
             pathEffect.Projection = Matrix.CreateOrthographicOffCenter(
                 0,
@@ -991,6 +1543,28 @@ public sealed class MonoGameDrawingBackend :
         DrawSolidText(cachedText, origin, ToColor(command.Color));
     }
 
+    private void DrawTextLayout(DrawCommand command)
+    {
+        if (command.TextLayout is null)
+        {
+            return;
+        }
+
+        foreach (DrawTextLayoutLine line in command.TextLayout.Lines)
+        {
+            foreach (DrawTextLayoutRun run in line.Runs)
+            {
+                DrawText(DrawCommand.DrawText(
+                    run.TextRun,
+                    new DrawPoint(
+                        command.Position.X + run.Position.X,
+                        command.Position.Y + run.Position.Y),
+                    run.Brush,
+                    run.Opacity * command.BrushOpacity));
+            }
+        }
+    }
+
     private void PrepareTextRasterizations(DrawCommandList commands)
     {
         long requestCollectionStarted = Stopwatch.GetTimestamp();
@@ -1005,21 +1579,48 @@ public sealed class MonoGameDrawingBackend :
         for (int index = 0; index < commands.Count; index++)
         {
             DrawCommand command = commands[index];
-            if (command.Kind != DrawCommandKind.DrawText || command.TextRun is null)
+            if (command.Kind == DrawCommandKind.DrawText && command.TextRun is not null)
             {
-                continue;
+                CollectRequest(
+                    command.TextRun,
+                    command.Position,
+                    command.Brush,
+                    command.BrushOpacity);
             }
+            else if (command.Kind == DrawCommandKind.DrawTextLayout && command.TextLayout is not null)
+            {
+                foreach (DrawTextLayoutLine line in command.TextLayout.Lines)
+                {
+                    foreach (DrawTextLayoutRun run in line.Runs)
+                    {
+                        CollectRequest(
+                            run.TextRun,
+                            new DrawPoint(
+                                command.Position.X + run.Position.X,
+                                command.Position.Y + run.Position.Y),
+                            run.Brush,
+                            run.Opacity * command.BrushOpacity);
+                    }
+                }
+            }
+        }
 
-            DrawPoint pixelPhase = GetCanonicalPixelPhase(command.Position, coordinateScale);
-            TextTextureKey key = TextTextureKey.From(command.TextRun, coordinateScale, pixelPhase);
+        void CollectRequest(
+            DrawTextRun textRun,
+            DrawPoint position,
+            IDrawBrush? brush,
+            float opacity)
+        {
+            DrawPoint pixelPhase = GetCanonicalPixelPhase(position, coordinateScale);
+            TextTextureKey key = TextTextureKey.From(textRun, coordinateScale, pixelPhase);
             if (!_textTextureCache.ContainsKey(key))
             {
-                bool needsMask = command.Brush is not null &&
-                    !TryGetSolidColor(command.Brush.CreateDescriptor(), command.BrushOpacity, out _);
+                bool needsMask = brush is not null &&
+                    !TryGetSolidColor(brush.CreateDescriptor(), opacity, out _);
                 textRasterizationRequests.TryAdd(
                     key,
                     new TextRasterizationRequest(
-                        command.TextRun,
+                        textRun,
                         pixelPhase,
                         needsMask));
             }
@@ -1495,6 +2096,46 @@ public sealed class MonoGameDrawingBackend :
             first.OriginOffset);
     }
 
+    private void PushTransformedClip(DrawRect rect)
+    {
+        NumericsMatrix3x2 transform = drawingTransforms[^1];
+        if (MathF.Abs(transform.M12) <= 0.00001f &&
+            MathF.Abs(transform.M21) <= 0.00001f)
+        {
+            geometricClipScopes.Push(false);
+            PushClip(DrawCommandStateAnalyzer.TransformBounds(rect, transform));
+            return;
+        }
+
+        DrawPath path = new DrawPathBuilder()
+            .MoveTo(new DrawPoint(rect.X, rect.Y))
+            .LineTo(new DrawPoint(rect.Right, rect.Y))
+            .LineTo(new DrawPoint(rect.Right, rect.Bottom))
+            .LineTo(new DrawPoint(rect.X, rect.Bottom))
+            .Close()
+            .Build();
+        PushGeometricClip(DrawCommand.PushClip(path));
+    }
+
+    private void PushGeometricClip(DrawCommand command)
+    {
+        geometricClipScopes.Push(true);
+        BeginDrawingLayer(1, DrawBlendMode.Normal, isGeometricClip: true);
+        DrawPathMask(command);
+    }
+
+    private void PopDrawingClip()
+    {
+        if (geometricClipScopes.Pop())
+        {
+            EndDrawingLayer();
+        }
+        else
+        {
+            PopClip();
+        }
+    }
+
     private void PushClip(DrawRect rect)
     {
         GraphicsDevice graphicsDevice = _spriteBatch.GraphicsDevice;
@@ -1509,6 +2150,186 @@ public sealed class MonoGameDrawingBackend :
         GraphicsDevice graphicsDevice = _spriteBatch.GraphicsDevice;
         MonoGameClipStack stack = clipStack ??= new MonoGameClipStack(new Rectangle(0, 0, graphicsDevice.Viewport.Width, graphicsDevice.Viewport.Height));
         graphicsDevice.ScissorRectangle = stack.Pop();
+    }
+
+    private void BeginDrawingLayer(
+        float opacity,
+        DrawBlendMode blendMode,
+        bool isGeometricClip)
+    {
+        GraphicsDevice graphicsDevice = _spriteBatch.GraphicsDevice;
+        EndSpriteBatch();
+        Viewport hostViewport = graphicsDevice.Viewport;
+        Rectangle hostScissor = graphicsDevice.ScissorRectangle;
+        RenderTargetBinding[] hostTargets = graphicsDevice.GetRenderTargets();
+        RenderTarget2D target = AcquireDrawingLayerTarget(
+            graphicsDevice,
+            hostViewport.Width,
+            hostViewport.Height);
+        drawingLayers.Add(new DrawingLayerScope(
+            target,
+            hostTargets,
+            hostViewport,
+            hostScissor,
+            opacity,
+            blendMode,
+            isGeometricClip));
+        graphicsDevice.SetRenderTarget(target);
+        graphicsDevice.Viewport = new Viewport(
+            0,
+            0,
+            target.Width,
+            target.Height);
+        graphicsDevice.ScissorRectangle = new Rectangle(
+            0,
+            0,
+            target.Width,
+            target.Height);
+        graphicsDevice.Clear(
+            ClearOptions.Target | ClearOptions.Stencil,
+            XnaColor.Transparent,
+            depth: 1,
+            stencil: 0);
+        BeginUiSpriteBatch();
+    }
+
+    private void EndDrawingLayer()
+    {
+        GraphicsDevice graphicsDevice = _spriteBatch.GraphicsDevice;
+        EndSpriteBatch();
+        DrawingLayerScope scope = drawingLayers[^1];
+        drawingLayers.RemoveAt(drawingLayers.Count - 1);
+        RestoreDrawingLayerHost(graphicsDevice, scope);
+
+        BeginSpriteBatch(
+            SpriteSortMode.Immediate,
+            ResolveBlendState(scope.BlendMode),
+            SamplerState.LinearClamp,
+            CurrentDepthStencilState,
+            scissorRasterizerState!,
+            transformMatrix: Matrix.Identity);
+        _spriteBatch.Draw(
+            scope.Target,
+            new Rectangle(0, 0, scope.Target.Width, scope.Target.Height),
+            OpacityTint(scope.Opacity));
+        EndSpriteBatch();
+        ReturnDrawingLayerTarget(scope.Target);
+        BeginUiSpriteBatch();
+    }
+
+    private static void RestoreDrawingLayerHost(
+        GraphicsDevice graphicsDevice,
+        DrawingLayerScope scope)
+    {
+        if (scope.HostTargets.Length == 0)
+        {
+            graphicsDevice.SetRenderTarget(null);
+        }
+        else
+        {
+            graphicsDevice.SetRenderTargets(scope.HostTargets);
+        }
+        graphicsDevice.Viewport = scope.HostViewport;
+        graphicsDevice.ScissorRectangle = scope.HostScissor;
+    }
+
+    private RenderTarget2D AcquireDrawingLayerTarget(
+        GraphicsDevice graphicsDevice,
+        int width,
+        int height)
+    {
+        while (drawingLayerPool.TryPop(out RenderTarget2D? target))
+        {
+            if (!target.IsDisposed &&
+                target.Width == width &&
+                target.Height == height &&
+                ReferenceEquals(target.GraphicsDevice, graphicsDevice))
+            {
+                return target;
+            }
+            target.Dispose();
+        }
+
+        return new RenderTarget2D(
+            graphicsDevice,
+            width,
+            height,
+            mipMap: false,
+            preferredFormat: SurfaceFormat.Color,
+            preferredDepthFormat: DepthFormat.Depth24Stencil8,
+            preferredMultiSampleCount: 0,
+            usage: RenderTargetUsage.PreserveContents);
+    }
+
+    private void ReturnDrawingLayerTarget(RenderTarget2D target)
+    {
+        const int MaximumPooledTargets = 8;
+        if (drawingLayerPool.Count < MaximumPooledTargets && !target.IsDisposed)
+        {
+            drawingLayerPool.Push(target);
+        }
+        else
+        {
+            target.Dispose();
+        }
+    }
+
+    private void ResetDrawingState()
+    {
+        drawingTransforms.Clear();
+        drawingTransforms.Add(NumericsMatrix3x2.Identity);
+        drawingBlends.Clear();
+        drawingBlends.Add(DrawBlendMode.Normal);
+        geometricClipScopes.Clear();
+        drawingLayers.Clear();
+    }
+
+    private void AbortDrawingLayers(GraphicsDevice graphicsDevice)
+    {
+        while (drawingLayers.Count > 0)
+        {
+            DrawingLayerScope scope = drawingLayers[^1];
+            drawingLayers.RemoveAt(drawingLayers.Count - 1);
+            RestoreDrawingLayerHost(graphicsDevice, scope);
+            ReturnDrawingLayerTarget(scope.Target);
+        }
+        drawingTransforms.Clear();
+        drawingTransforms.Add(NumericsMatrix3x2.Identity);
+        drawingBlends.Clear();
+        drawingBlends.Add(DrawBlendMode.Normal);
+        geometricClipScopes.Clear();
+    }
+
+    private BlendState ResolveBlendState(DrawBlendMode mode) =>
+        mode switch
+        {
+            DrawBlendMode.Normal => BlendState.AlphaBlend,
+            DrawBlendMode.Opaque => BlendState.Opaque,
+            DrawBlendMode.Additive => BlendState.Additive,
+            DrawBlendMode.Multiply => multiplyBlendState,
+            DrawBlendMode.Screen => screenBlendState,
+            _ => throw new ArgumentOutOfRangeException(nameof(mode))
+        };
+
+    private DepthStencilState CurrentDepthStencilState =>
+        drawingLayers.Count > 0 && drawingLayers[^1].IsGeometricClip
+            ? stencilTestState
+            : DepthStencilState.None;
+
+    private Matrix CurrentSpriteTransform
+    {
+        get
+        {
+            NumericsMatrix3x2 transform = drawingTransforms[^1];
+            Matrix logical = new(
+                transform.M11, transform.M12, 0, 0,
+                transform.M21, transform.M22, 0, 0,
+                0, 0, 1, 0,
+                transform.M31, transform.M32, 0, 1);
+            Matrix toPhysical = Matrix.CreateScale(coordinateScale, coordinateScale, 1);
+            Matrix toLogical = Matrix.CreateScale(1 / coordinateScale, 1 / coordinateScale, 1);
+            return toLogical * logical * toPhysical;
+        }
     }
 
     private Texture2D GetOrCreateBrushTexture(IDrawBrush brush, DrawBrushDescriptor descriptor, DrawRect rect)
@@ -1583,6 +2404,7 @@ public sealed class MonoGameDrawingBackend :
             throw new InvalidOperationException("ImageBrush requires a MonoGameImage when using MonoGameDrawingBackend.");
         }
 
+        ObjectDisposedException.ThrowIf(image.Texture.IsDisposed, image);
         if (!ReferenceEquals(image.Texture.GraphicsDevice, _spriteBatch.GraphicsDevice))
         {
             throw new InvalidOperationException("An ImageBrush image can only be used by the GraphicsDevice that created it.");
@@ -1749,7 +2571,8 @@ public sealed class MonoGameDrawingBackend :
                 BlendState.AlphaBlend,
                 SamplerState.LinearClamp,
                 DepthStencilState.None,
-                previousRasterizer);
+                previousRasterizer,
+                transformMatrix: Matrix.Identity);
             try
             {
                 foreach (DrawCommand command in commands)
@@ -1837,13 +2660,18 @@ public sealed class MonoGameDrawingBackend :
             DrawCommandKind.FillRectangle => DrawCommand.FillRectangle(MapRect(command.Rect), ApplyOpacity(command.Color, opacity)),
             DrawCommandKind.DrawRectangle when command.Brush is not null => DrawCommand.DrawRectangle(MapRect(command.Rect), command.Brush, command.Thickness * thicknessScale, command.BrushOpacity * opacity),
             DrawCommandKind.DrawRectangle => DrawCommand.DrawRectangle(MapRect(command.Rect), ApplyOpacity(command.Color, opacity), command.Thickness * thicknessScale),
+            DrawCommandKind.FillRoundedRectangle when command.Brush is not null => DrawCommand.FillRoundedRectangle(MapRect(command.Rect), Scale(command.CornerRadius, thicknessScale), command.Brush, command.BrushOpacity * opacity),
+            DrawCommandKind.FillRoundedRectangle => DrawCommand.FillRoundedRectangle(MapRect(command.Rect), Scale(command.CornerRadius, thicknessScale), ApplyOpacity(command.Color, opacity)),
+            DrawCommandKind.DrawRoundedRectangle when command.Pen is not null => DrawCommand.DrawRoundedRectangle(MapRect(command.Rect), Scale(command.CornerRadius, thicknessScale), new DrawPen(command.Pen.Brush, command.Pen.Thickness * thicknessScale, command.Pen.Style), command.BrushOpacity * opacity),
+            DrawCommandKind.DrawRoundedRectangle => DrawCommand.DrawRoundedRectangle(MapRect(command.Rect), Scale(command.CornerRadius, thicknessScale), ApplyOpacity(command.Color, opacity), command.Thickness * thicknessScale),
             DrawCommandKind.FillEllipse when command.Brush is not null => DrawCommand.FillEllipse(MapRect(command.Rect), command.Brush, command.BrushOpacity * opacity),
             DrawCommandKind.FillEllipse => DrawCommand.FillEllipse(MapRect(command.Rect), ApplyOpacity(command.Color, opacity)),
             DrawCommandKind.DrawEllipse when command.Brush is not null => DrawCommand.DrawEllipse(MapRect(command.Rect), command.Brush, command.Thickness * thicknessScale, command.BrushOpacity * opacity),
             DrawCommandKind.DrawEllipse => DrawCommand.DrawEllipse(MapRect(command.Rect), ApplyOpacity(command.Color, opacity), command.Thickness * thicknessScale),
             DrawCommandKind.DrawLine when command.Brush is not null => DrawCommand.DrawLine(MapPoint(command.Position), MapPoint(command.EndPoint), command.Brush, command.Thickness * thicknessScale, command.BrushOpacity * opacity),
             DrawCommandKind.DrawLine => DrawCommand.DrawLine(MapPoint(command.Position), MapPoint(command.EndPoint), ApplyOpacity(command.Color, opacity), command.Thickness * thicknessScale),
-            DrawCommandKind.FillPath => DrawCommand.FillPath(command.PathData!, command.SourceRect, MapRect(command.Rect), command.Brush!, command.BrushOpacity * opacity),
+            DrawCommandKind.FillPath when command.Brush is not null => DrawCommand.FillPath(command.Path!, command.SourceRect, MapRect(command.Rect), command.Brush, command.FillRule, command.BrushOpacity * opacity),
+            DrawCommandKind.FillPath => DrawCommand.FillPath(command.Path!, command.SourceRect, MapRect(command.Rect), ApplyOpacity(command.Color, opacity), command.FillRule),
             DrawCommandKind.DrawImage => DrawCommand.DrawImage(
                 command.Image!,
                 MapRect(command.Rect),
@@ -1856,12 +2684,20 @@ public sealed class MonoGameDrawingBackend :
             DrawCommandKind.RenderSurface2D => DrawCommand.RenderSurface2D(command.RenderSurface!, MapRect(command.Rect), ApplyOpacity(command.Color, opacity)),
             DrawCommandKind.DrawText when command.Brush is not null => DrawCommand.DrawText(command.TextRun!, MapPoint(command.Position), command.Brush, command.BrushOpacity * opacity),
             DrawCommandKind.DrawText => DrawCommand.DrawText(command.TextRun!, MapPoint(command.Position), ApplyOpacity(command.Color, opacity)),
+            DrawCommandKind.DrawTextLayout => DrawCommand.DrawTextLayout(command.TextLayout!, MapPoint(command.Position), command.BrushOpacity * opacity),
             DrawCommandKind.PushClip => DrawCommand.PushClip(MapRect(command.Rect)),
             DrawCommandKind.PopClip => command,
             DrawCommandKind.BeginPrism => command,
             DrawCommandKind.EndPrism => command,
             _ => command
         };
+
+        static DrawCornerRadius Scale(DrawCornerRadius radius, float scale) =>
+            new(
+                radius.TopLeft * scale,
+                radius.TopRight * scale,
+                radius.BottomRight * scale,
+                radius.BottomLeft * scale);
     }
 
     private static DrawRect FitTile(
@@ -2140,6 +2976,12 @@ public sealed class MonoGameDrawingBackend :
         greenTextBlendState?.Dispose();
         blueTextBlendState?.Dispose();
         textMaskBlendState?.Dispose();
+        multiplyBlendState?.Dispose();
+        screenBlendState?.Dispose();
+        stencilWriteBlendState?.Dispose();
+        stencilWriteState?.Dispose();
+        stencilTestState?.Dispose();
+        DisposeDrawingLayerPool();
         pathEffect?.Dispose();
         pathRasterizerState?.Dispose();
         scissorRasterizerState?.Dispose();
@@ -2173,6 +3015,10 @@ public sealed class MonoGameDrawingBackend :
 
     internal int ClipStackDepth => clipStack?.Depth ?? 0;
 
+    internal int DrawingLayerPoolCount => drawingLayerPool?.Count ?? 0;
+
+    internal int ActiveDrawingLayerCount => drawingLayers?.Count ?? 0;
+
     internal int TextTextureCacheCount => _textTextureCache.Count;
 
     internal TextTextureCacheDiagnosticSnapshot TextTextureCacheDiagnostics =>
@@ -2187,6 +3033,13 @@ public sealed class MonoGameDrawingBackend :
     internal DrawingBackendFrameTiming LastFrameTiming { get; private set; }
 
     internal int BrushTextureCacheCount => brushTextureCache?.Count ?? 0;
+
+    internal int StrokeMeshCacheCount => strokeMeshCache.Count;
+
+    internal static object CreateStrokeMeshKeyForDiagnostics(
+        DrawCommand command,
+        float coordinateScale) =>
+        StrokeMeshKey.From(command, coordinateScale);
 
     internal bool UsesGraphicsDevice(
         GraphicsDevice graphicsDevice)
@@ -2238,6 +3091,20 @@ public sealed class MonoGameDrawingBackend :
         ClearPathMeshCache();
         prismExecutorUnavailable = false;
         prismExecutor?.Reset();
+        DisposeDrawingLayerPool();
+    }
+
+    private void DisposeDrawingLayerPool()
+    {
+        if (drawingLayerPool is null)
+        {
+            return;
+        }
+
+        while (drawingLayerPool.TryPop(out RenderTarget2D? target))
+        {
+            target.Dispose();
+        }
     }
 
     private bool TryEnsurePrismExecutor(GraphicsDevice graphicsDevice)
@@ -2307,7 +3174,8 @@ public sealed class MonoGameDrawingBackend :
             scissorRectangle.HasValue
                 ? scissorRasterizerState!
                 : RasterizerState.CullNone,
-            effect);
+            effect,
+            Matrix.Identity);
     }
 
     void IPrismCommandRenderer.EndBatch()
@@ -2529,6 +3397,7 @@ public sealed class MonoGameDrawingBackend :
             return;
         }
         pathMeshCache.Clear();
+        strokeMeshCache.Clear();
     }
 
     private MonoGameDrawMapper Mapper => new(coordinateScale);
@@ -2578,6 +3447,24 @@ public sealed class MonoGameDrawingBackend :
             AlphaDestinationBlend = Blend.SourceAlpha
         };
     }
+
+    private static BlendState CreateMultiplyBlendState() =>
+        new()
+        {
+            ColorSourceBlend = Blend.DestinationColor,
+            ColorDestinationBlend = Blend.InverseSourceAlpha,
+            AlphaSourceBlend = Blend.One,
+            AlphaDestinationBlend = Blend.InverseSourceAlpha
+        };
+
+    private static BlendState CreateScreenBlendState() =>
+        new()
+        {
+            ColorSourceBlend = Blend.One,
+            ColorDestinationBlend = Blend.InverseSourceColor,
+            AlphaSourceBlend = Blend.One,
+            AlphaDestinationBlend = Blend.InverseSourceAlpha
+        };
 
     private static Vector2 MapTextTexturePositionForDiagnostics(DrawPoint position, DrawPoint originOffset, float coordinateScale)
     {
@@ -2795,7 +3682,8 @@ public sealed class MonoGameDrawingBackend :
         int ContentVersion);
 
     private readonly record struct PathMeshKey(
-        string Data,
+        long PathStableId,
+        DrawFillRule FillRule,
         DrawRect SourceBounds,
         int Width,
         int Height,
@@ -2804,4 +3692,45 @@ public sealed class MonoGameDrawingBackend :
         float PhaseX,
         float PhaseY,
         XnaColor Color);
+
+    private readonly record struct StrokeMeshKey(
+        DrawCommandKind Kind,
+        long PathStableId,
+        DrawRect Bounds,
+        DrawRect SourceBounds,
+        DrawPoint Start,
+        DrawPoint End,
+        DrawPen? Pen,
+        CernealaColor Color,
+        float Thickness,
+        float BrushOpacity,
+        float CoordinateScale)
+    {
+        public static StrokeMeshKey From(
+            DrawCommand command,
+            float coordinateScale)
+        {
+            return new StrokeMeshKey(
+                command.Kind,
+                command.Path?.StableId ?? 0,
+                command.Rect,
+                command.SourceRect,
+                command.Position,
+                command.EndPoint,
+                command.Pen,
+                command.Color,
+                command.Thickness,
+                command.BrushOpacity,
+                coordinateScale);
+        }
+    }
+
+    private readonly record struct DrawingLayerScope(
+        RenderTarget2D Target,
+        RenderTargetBinding[] HostTargets,
+        Viewport HostViewport,
+        Rectangle HostScissor,
+        float Opacity,
+        DrawBlendMode BlendMode,
+        bool IsGeometricClip);
 }

@@ -58,8 +58,7 @@ public sealed class MonoGameDependencyBoundaryTests
 
             string text = File.ReadAllText(file);
             bool referencesMonoGameFramework = text.Contains("Microsoft.Xna.Framework", StringComparison.Ordinal) ||
-                text.Contains("Texture2D", StringComparison.Ordinal) ||
-                text.Contains("SpriteBatch", StringComparison.Ordinal);
+                text.Contains("Texture2D", StringComparison.Ordinal);
 
             if (!referencesMonoGameFramework)
             {

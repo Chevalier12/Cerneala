@@ -1,4 +1,5 @@
 using Cerneala.Drawing;
+using System.Numerics;
 
 namespace Cerneala.UI.Controls;
 
@@ -10,9 +11,10 @@ public enum RenderSurface2DSpriteFlip
     Vertical = 2
 }
 
-public sealed class RenderSurface2DFrame
+public sealed partial class RenderSurface2DFrame
 {
     private readonly DrawingContext drawingContext;
+    private readonly DrawCommandList commands;
     private readonly Action<IDrawImage>? trackImageDependency;
     private bool active = true;
 
@@ -22,8 +24,10 @@ public sealed class RenderSurface2DFrame
         TimeSpan frameTime,
         Action<IDrawImage>? trackImageDependency = null)
     {
-        drawingContext = new DrawingContext(commands ??
-            throw new ArgumentNullException(nameof(commands)));
+        drawingContext = new DrawingContext(
+            commands ?? throw new ArgumentNullException(nameof(commands)),
+            EnsureActive);
+        this.commands = commands;
         Bounds = bounds;
         FrameTime = frameTime;
         this.trackImageDependency = trackImageDependency;
@@ -57,6 +61,12 @@ public sealed class RenderSurface2DFrame
         drawingContext.DrawRectangle(rectangle, brush, thickness);
     }
 
+    public void DrawRectangle(DrawRect rectangle, DrawPen pen)
+    {
+        EnsureActive();
+        drawingContext.DrawRectangle(rectangle, pen);
+    }
+
     public void FillEllipse(DrawRect bounds, Color color)
     {
         EnsureActive();
@@ -81,6 +91,12 @@ public sealed class RenderSurface2DFrame
         drawingContext.DrawEllipse(bounds, brush, thickness);
     }
 
+    public void DrawEllipse(DrawRect bounds, DrawPen pen)
+    {
+        EnsureActive();
+        drawingContext.DrawEllipse(bounds, pen);
+    }
+
     public void DrawLine(
         DrawPoint start,
         DrawPoint end,
@@ -101,6 +117,12 @@ public sealed class RenderSurface2DFrame
         drawingContext.DrawLine(start, end, brush, thickness);
     }
 
+    public void DrawLine(DrawPoint start, DrawPoint end, DrawPen pen)
+    {
+        EnsureActive();
+        drawingContext.DrawLine(start, end, pen);
+    }
+
     public void FillPath(
         string pathData,
         DrawRect sourceBounds,
@@ -109,6 +131,62 @@ public sealed class RenderSurface2DFrame
     {
         EnsureActive();
         drawingContext.FillPath(pathData, sourceBounds, destination, brush);
+    }
+
+    public void FillPath(
+        DrawPath path,
+        IDrawBrush brush,
+        DrawFillRule fillRule = DrawFillRule.NonZero)
+    {
+        EnsureActive();
+        drawingContext.FillPath(path, brush, fillRule);
+    }
+
+    public void FillPath(
+        DrawPath path,
+        Color color,
+        DrawFillRule fillRule = DrawFillRule.NonZero)
+    {
+        EnsureActive();
+        drawingContext.FillPath(path, color, fillRule);
+    }
+
+    public void FillPath(
+        DrawPath path,
+        DrawRect sourceBounds,
+        DrawRect destination,
+        IDrawBrush brush,
+        DrawFillRule fillRule = DrawFillRule.NonZero)
+    {
+        EnsureActive();
+        drawingContext.FillPath(path, sourceBounds, destination, brush, fillRule);
+    }
+
+    public void FillPath(
+        DrawPath path,
+        DrawRect sourceBounds,
+        DrawRect destination,
+        Color color,
+        DrawFillRule fillRule = DrawFillRule.NonZero)
+    {
+        EnsureActive();
+        drawingContext.FillPath(path, sourceBounds, destination, color, fillRule);
+    }
+
+    public void DrawPath(DrawPath path, DrawPen pen)
+    {
+        EnsureActive();
+        drawingContext.DrawPath(path, pen);
+    }
+
+    public void DrawPath(
+        DrawPath path,
+        DrawRect sourceBounds,
+        DrawRect destination,
+        DrawPen pen)
+    {
+        EnsureActive();
+        drawingContext.DrawPath(path, sourceBounds, destination, pen);
     }
 
     public void DrawText(DrawTextRun textRun, DrawPoint position, Color color)
@@ -126,7 +204,6 @@ public sealed class RenderSurface2DFrame
     public void DrawImage(IDrawImage image, DrawRect destination, Color color)
     {
         EnsureActive();
-        trackImageDependency?.Invoke(image);
         drawingContext.DrawImage(image, destination, color);
     }
 
@@ -141,7 +218,6 @@ public sealed class RenderSurface2DFrame
         float layerDepth = 0)
     {
         EnsureActive();
-        trackImageDependency?.Invoke(image);
         drawingContext.DrawImage(
             image,
             destination,
@@ -180,7 +256,6 @@ public sealed class RenderSurface2DFrame
         float layerDepth = 0)
     {
         EnsureActive();
-        trackImageDependency?.Invoke(image);
         drawingContext.DrawImage(
             image,
             destination,
@@ -198,15 +273,119 @@ public sealed class RenderSurface2DFrame
         drawingContext.PushClip(rectangle);
     }
 
+    public void PushClip(
+        DrawPath path,
+        DrawFillRule fillRule = DrawFillRule.NonZero)
+    {
+        EnsureActive();
+        drawingContext.PushClip(path, fillRule);
+    }
+
     public void PopClip()
     {
         EnsureActive();
         drawingContext.PopClip();
     }
 
+    public void PushTransform(Matrix3x2 transform)
+    {
+        EnsureActive();
+        drawingContext.PushTransform(transform);
+    }
+
+    public void PopTransform()
+    {
+        EnsureActive();
+        drawingContext.PopTransform();
+    }
+
+    public void PushOpacity(float opacity)
+    {
+        EnsureActive();
+        drawingContext.PushOpacity(opacity);
+    }
+
+    public void PopOpacity()
+    {
+        EnsureActive();
+        drawingContext.PopOpacity();
+    }
+
+    public void PushBlend(DrawBlendMode blendMode)
+    {
+        EnsureActive();
+        drawingContext.PushBlend(blendMode);
+    }
+
+    public void PopBlend()
+    {
+        EnsureActive();
+        drawingContext.PopBlend();
+    }
+
+    public void PushLayer(DrawLayerOptions options)
+    {
+        EnsureActive();
+        drawingContext.PushLayer(options);
+    }
+
+    public void PopLayer()
+    {
+        EnsureActive();
+        drawingContext.PopLayer();
+    }
+
+    public DrawTransformScope Transform(Matrix3x2 transform)
+    {
+        EnsureActive();
+        return drawingContext.Transform(transform);
+    }
+
+    public DrawClipScope Clip(DrawRect rectangle)
+    {
+        EnsureActive();
+        return drawingContext.Clip(rectangle);
+    }
+
+    public DrawClipScope Clip(
+        DrawPath path,
+        DrawFillRule fillRule = DrawFillRule.NonZero)
+    {
+        EnsureActive();
+        return drawingContext.Clip(path, fillRule);
+    }
+
+    public DrawOpacityScope Opacity(float opacity)
+    {
+        EnsureActive();
+        return drawingContext.Opacity(opacity);
+    }
+
+    public DrawBlendScope Blend(DrawBlendMode blendMode)
+    {
+        EnsureActive();
+        return drawingContext.Blend(blendMode);
+    }
+
+    public DrawLayerScope Layer(DrawLayerOptions options)
+    {
+        EnsureActive();
+        return drawingContext.Layer(options);
+    }
+
     internal void Complete()
     {
         active = false;
+        if (trackImageDependency is null)
+        {
+            return;
+        }
+
+        foreach (DrawCommand command in commands)
+        {
+            DrawCommandMetadata.Create(command).TrackImageDependencies(
+                trackImageDependency);
+        }
     }
 
     private void EnsureActive()

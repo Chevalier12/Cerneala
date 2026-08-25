@@ -14,5 +14,8 @@
                       ReferenceOutputAssembly="false" />
     <AdditionalFiles Include="**\*.crn" Exclude="bin\**;obj\**" />
     <Content Include="..\Assets\fxemoji.svg" Link="fxemoji.svg" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\docs-site\assets\cerneala-mascot-void-suction-well.png"
+             Link="drawing-api-mascot.png"
+             CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

@@ -16,11 +16,28 @@ public sealed record PathGeometry : Geometry
 
         Points = Array.AsReadOnly(pointArray);
         Bounds = CalculateBounds(pointArray);
+        StrokePath = pointArray.Length >= 2
+            ? CreateStrokePath(pointArray)
+            : null;
     }
 
     public IReadOnlyList<DrawPoint> Points { get; }
 
     public override DrawRect Bounds { get; }
+
+    internal DrawPath? StrokePath { get; }
+
+    private static DrawPath CreateStrokePath(
+        IReadOnlyList<DrawPoint> points)
+    {
+        DrawPathBuilder builder = new DrawPathBuilder()
+            .MoveTo(points[0]);
+        for (int index = 1; index < points.Count; index++)
+        {
+            builder.LineTo(points[index]);
+        }
+        return builder.Build();
+    }
 
     private static DrawRect CalculateBounds(IReadOnlyList<DrawPoint> points)
     {

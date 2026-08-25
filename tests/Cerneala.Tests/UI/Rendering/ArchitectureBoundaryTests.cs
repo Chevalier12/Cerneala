@@ -12,7 +12,7 @@ public sealed class ArchitectureBoundaryTests
             "Skia",
             "HarfBuzz",
             "Texture2D",
-            "SpriteBatch",
+            "Microsoft.Xna",
             "MonoGameDrawingBackend"
         ];
 
@@ -37,7 +37,7 @@ public sealed class ArchitectureBoundaryTests
             "Skia",
             "HarfBuzz",
             "Texture2D",
-            "SpriteBatch"
+            "Microsoft.Xna"
         ];
 
         foreach (string file in Directory.EnumerateFiles(controlsRoot, "*.cs", SearchOption.AllDirectories))
@@ -61,7 +61,7 @@ public sealed class ArchitectureBoundaryTests
             "Skia",
             "HarfBuzz",
             "Texture2D",
-            "SpriteBatch",
+            "Microsoft.Xna",
             "MonoGameDrawingBackend"
         ];
 
@@ -111,7 +111,7 @@ public sealed class ArchitectureBoundaryTests
             "Skia",
             "HarfBuzz",
             "Texture2D",
-            "SpriteBatch"
+            "Microsoft.Xna"
         ];
 
         foreach (string file in section16Files)
@@ -146,7 +146,7 @@ public sealed class ArchitectureBoundaryTests
             "Skia",
             "HarfBuzz",
             "Texture2D",
-            "SpriteBatch"
+            "Microsoft.Xna"
         ];
 
         foreach (string templateFile in templateFiles)
@@ -169,7 +169,7 @@ public sealed class ArchitectureBoundaryTests
             "Skia",
             "HarfBuzz",
             "Texture2D",
-            "SpriteBatch"
+            "Microsoft.Xna"
         ];
 
         foreach (string file in Directory.EnumerateFiles(textRoot, "*.cs", SearchOption.AllDirectories))
@@ -194,7 +194,7 @@ public sealed class ArchitectureBoundaryTests
             "Skia",
             "HarfBuzz",
             "Texture2D",
-            "SpriteBatch"
+            "Microsoft.Xna"
         ];
 
         foreach (string file in Directory.EnumerateFiles(resourcesRoot, "*.cs", SearchOption.AllDirectories))
@@ -223,7 +223,7 @@ public sealed class ArchitectureBoundaryTests
             "Skia",
             "HarfBuzz",
             "Texture2D",
-            "SpriteBatch"
+            "Microsoft.Xna"
         ];
 
         foreach (string file in Directory.EnumerateFiles(themingRoot, "*.cs", SearchOption.AllDirectories))
@@ -247,7 +247,7 @@ public sealed class ArchitectureBoundaryTests
             "Skia",
             "HarfBuzz",
             "Texture2D",
-            "SpriteBatch",
+            "Microsoft.Xna",
             "System.Windows.Forms.Clipboard",
             "System.Windows.Automation",
             "Windows.UI",
@@ -289,7 +289,7 @@ public sealed class ArchitectureBoundaryTests
             "Skia",
             "HarfBuzz",
             "Texture2D",
-            "SpriteBatch",
+            "Microsoft.Xna",
             "System.Windows.Automation",
             "Windows.UI",
             "Microsoft.UI",
@@ -340,7 +340,7 @@ public sealed class ArchitectureBoundaryTests
         {
             string text = File.ReadAllText(file);
             if (text.Contains("Texture2D", StringComparison.Ordinal) ||
-                text.Contains("SpriteBatch", StringComparison.Ordinal))
+                text.Contains("Microsoft.Xna", StringComparison.Ordinal))
             {
                 Assert.StartsWith(monoGameResourcesRoot, file, StringComparison.OrdinalIgnoreCase);
             }
@@ -394,7 +394,7 @@ public sealed class ArchitectureBoundaryTests
             "Skia",
             "HarfBuzz",
             "Texture2D",
-            "SpriteBatch"
+            "Microsoft.Xna"
         ];
 
         foreach (string file in files)
@@ -417,7 +417,7 @@ public sealed class ArchitectureBoundaryTests
             "Skia",
             "HarfBuzz",
             "Texture2D",
-            "SpriteBatch"
+            "Microsoft.Xna"
         ];
 
         foreach (string file in Directory.EnumerateFiles(dataRoot, "*.cs", SearchOption.AllDirectories))
@@ -509,7 +509,7 @@ public sealed class ArchitectureBoundaryTests
             "Skia",
             "HarfBuzz",
             "Texture2D",
-            "SpriteBatch",
+            "Microsoft.Xna",
             "System.Windows.Forms.Clipboard",
             "System.Windows.Clipboard",
             "System.Windows.Input.InputMethod",

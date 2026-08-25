@@ -93,7 +93,8 @@ public sealed class PrismImage : IDrawImage, IDrawImageInvalidationSource, IDisp
             visualContentVersion,
             PrismDrawResources.Empty,
             lowerUiVersion: 0,
-            isLocalDrawingScope: true);
+            isLocalDrawingScope: true,
+            imageDependency: this);
     }
 
     public void Dispose()

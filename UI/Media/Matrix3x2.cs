@@ -71,6 +71,19 @@ public readonly record struct Matrix3x2
             (point.X * M12) + (point.Y * M22) + M32);
     }
 
+    public System.Numerics.Matrix3x2 ToNumerics() =>
+        new(M11, M12, M21, M22, M31, M32);
+
+    public static Matrix3x2 FromNumerics(
+        System.Numerics.Matrix3x2 matrix) =>
+        new(
+            matrix.M11,
+            matrix.M12,
+            matrix.M21,
+            matrix.M22,
+            matrix.M31,
+            matrix.M32);
+
     public static Matrix3x2 Multiply(Matrix3x2 left, Matrix3x2 right)
     {
         return new Matrix3x2(

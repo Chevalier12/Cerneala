@@ -1,4 +1,5 @@
 using Cerneala.Drawing;
+using Cerneala.UI.Automation;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Diagnostics;
 using Cerneala.UI.Elements;
@@ -36,6 +37,12 @@ public partial class MainWindow : Window
         if (args.ShowcaseName == "ScrollViewer")
         {
             MountShowcase(CreateScrollViewerShowcase());
+            return;
+        }
+
+        if (args.ShowcaseName == "Drawing API")
+        {
+            MountShowcase(new DrawingApiShowcaseView());
             return;
         }
 
@@ -111,7 +118,7 @@ public sealed class ShowcaseNavigation : ScrollViewer
     [
         ("CONTROALE",
         [
-            "Border", "Button", "CheckBox", "ComboBox", "ContentControl", "Image", "InkCanvas",
+            "Drawing API", "Border", "Button", "CheckBox", "ComboBox", "ContentControl", "Image", "InkCanvas",
             "ItemsControl", "Label", "ListBox", "PasswordBox", "ProgressBar", "RadioButton",
             "ScrollViewer", "Slider", "TabControl", "TextBlock", "TextBox", "ToolTip"
         ]),
@@ -184,6 +191,9 @@ public sealed class ShowcaseNavigation : ScrollViewer
             Padding = new Thickness(12, 8, 12, 8),
             Margin = new Thickness(0, 0, 0, 3)
         };
+        AutomationProperties.SetAutomationId(
+            button,
+            $"showcase-{text.ToLowerInvariant().Replace(' ', '-')}");
         button.Click += OnNavigationButtonClick;
         return button;
     }

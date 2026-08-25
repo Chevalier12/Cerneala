@@ -68,6 +68,27 @@ public sealed class MainWindowContractTests
     }
 
     [Fact]
+    public void DrawingApiNavigationMountsTheOnDemandPrismShowcase()
+    {
+        MainWindow window = new();
+        Grid root = Assert.IsType<Grid>(window.Content);
+        Grid body = Assert.IsType<Grid>(root.VisualChildren[1]);
+        Border navigationBorder = Assert.IsType<Border>(body.VisualChildren[0]);
+        ShowcaseNavigation navigation = Assert.IsType<ShowcaseNavigation>(navigationBorder.Child);
+        Button drawingApi = navigation.NavigationPanel.VisualChildren.OfType<Button>()
+            .Single(button => Equals(button.Content, "Drawing API"));
+
+        drawingApi.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent, drawingApi));
+
+        Grid showcaseHost = Assert.IsType<Grid>(body.VisualChildren[1]);
+        DrawingApiShowcaseView view = Assert.IsType<DrawingApiShowcaseView>(
+            Assert.Single(showcaseHost.VisualChildren));
+        DrawingApiShowcase surface = Assert.IsType<DrawingApiShowcase>(
+            Assert.Single(view.VisualChildren));
+        Assert.Equal(RenderSurface2DRedrawMode.OnDemand, surface.RedrawMode);
+    }
+
+    [Fact]
     public void DiagnosticsHeaderStartsReadyForTheFirstRenderedFrame()
     {
         MainWindow window = new();

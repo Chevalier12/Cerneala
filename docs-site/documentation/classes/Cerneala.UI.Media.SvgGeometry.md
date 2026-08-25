@@ -33,7 +33,7 @@ PathShape check = new()
 
 ## Remarks
 
-When assigned to `Shape.Geometry`, the SVG coordinates in `Data` are stretched from `Bounds` into the shape's arranged bounds. The MonoGame backend parses move, line, cubic and quadratic Bezier, elliptical arc, and close commands, tessellates the resulting contours, and submits triangles directly to `GraphicsDevice`. It supports solid fill brushes for SVG geometry.
+The constructor parses `Data` once into `Path`. When assigned to `Shape.Geometry`, the cached typed path is stretched from `Bounds` into the shape's arranged bounds, avoiding per-frame SVG parsing. The shared parser supports move, line, cubic and quadratic Bezier, elliptical arc, and close commands. The MonoGame backend tessellates the typed contours and submits triangles directly to `GraphicsDevice`.
 
 ## Constructors
 
@@ -46,6 +46,7 @@ When assigned to `Shape.Geometry`, the SVG coordinates in `Data` are stretched f
 | Name | Type | Description |
 | --- | --- | --- |
 | `Data` | `string` | Gets the SVG path-data string. |
+| `Path` | `DrawPath` | Gets the immutable parsed path reused by rendering. |
 | `Bounds` | `DrawRect` | Gets the source view box used during scaling. |
 
 ## Exceptions
@@ -64,3 +65,4 @@ Cerneala path shapes rendered by the MonoGame drawing backend.
 - `Cerneala.UI.Controls.Shapes.Path`
 - `Cerneala.UI.Media.Geometry`
 - `Cerneala.Drawing.DrawCommand.FillPath`
+- `Cerneala.Drawing.DrawPath`

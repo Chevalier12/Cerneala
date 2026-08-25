@@ -14,9 +14,22 @@ public sealed record SvgGeometry : Geometry
 
         Data = data;
         Bounds = viewBox;
+        Path = DrawPathParser.ParseSvg(data);
     }
 
     public string Data { get; }
 
+    public DrawPath Path { get; }
+
     public override DrawRect Bounds { get; }
+
+    public bool Equals(SvgGeometry? other)
+    {
+        return ReferenceEquals(this, other) ||
+            (other is not null &&
+             string.Equals(Data, other.Data, StringComparison.Ordinal) &&
+             Bounds == other.Bounds);
+    }
+
+    public override int GetHashCode() => HashCode.Combine(Data, Bounds);
 }

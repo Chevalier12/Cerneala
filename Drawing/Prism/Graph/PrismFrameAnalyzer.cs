@@ -18,9 +18,10 @@ internal sealed class PrismFrameAnalyzer
 
         long commandListVersion = commands.Version;
         int commandCount = commands.Count;
+        DrawCommandStateAnalysis stateAnalysis =
+            new DrawCommandStateAnalyzer().Analyze(commands);
         List<ScopeBuilder> scopes = [];
         List<OpenScope> openScopes = [];
-        List<ClipState> clips = [];
         ImmutableArray<int>.Builder backdropScopeIndices = ImmutableArray.CreateBuilder<int>();
         PrismGraphCapabilities frameCapabilities = PrismGraphCapabilities.None;
         int frameSurfaceCount = 0;
@@ -30,41 +31,24 @@ internal sealed class PrismFrameAnalyzer
             DrawCommand command = commands[commandIndex];
             switch (command.Kind)
             {
-                case DrawCommandKind.PushClip:
-                {
-                    DrawRect clip = clips.Count == 0
-                        ? command.Rect
-                        : Intersect(clips[^1].Bounds, command.Rect);
-                    clips.Add(new ClipState(commandIndex, clip));
-                    break;
-                }
-
-                case DrawCommandKind.PopClip:
-                    if (clips.Count == 0)
-                    {
-                        throw new InvalidOperationException(
-                            $"PopClip at command index {commandIndex} has no matching PushClip.");
-                    }
-                    if (openScopes.Count > 0 &&
-                        clips.Count <= openScopes[^1].ClipDepth)
-                    {
-                        int beginCommandIndex =
-                            scopes[openScopes[^1].ScopeIndex].BeginCommandIndex;
-                        throw new InvalidOperationException(
-                            $"PopClip at command index {commandIndex} crosses BeginPrism at command index {beginCommandIndex}.");
-                    }
-                    clips.RemoveAt(clips.Count - 1);
-                    break;
-
                 case DrawCommandKind.BeginPrism:
                 {
                     PrismDrawScope scope = command.PrismScope ??
                         throw new InvalidOperationException(
                             $"BeginPrism at command index {commandIndex} has no scope payload.");
-                    DrawRect bounds = TransformBounds(scope.ControlBounds, scope.EffectiveTransform);
-                    if (clips.Count > 0)
+                    DrawCommandStateEntry state =
+                        stateAnalysis.Entries[commandIndex];
+                    Matrix3x2 effectiveTransform = Matrix3x2.Multiply(
+                        scope.EffectiveTransform,
+                        state.Transform);
+                    DrawRect bounds = DrawCommandStateAnalyzer.TransformBounds(
+                        scope.ControlBounds,
+                        effectiveTransform);
+                    if (state.ClipBounds is DrawRect clipBounds)
                     {
-                        bounds = Intersect(bounds, clips[^1].Bounds);
+                        bounds = DrawCommandStateAnalyzer.Intersect(
+                            bounds,
+                            clipBounds);
                     }
 
                     bool requiresBackdrop = RequiresBackdrop(scope, bounds);
@@ -90,7 +74,7 @@ internal sealed class PrismFrameAnalyzer
                             bounds,
                             estimate.Capabilities,
                             estimate.RequiredSurfaceCount));
-                    openScopes.Add(new OpenScope(scopeIndex, clips.Count));
+                    openScopes.Add(new OpenScope(scopeIndex));
                     frameCapabilities |= estimate.Capabilities;
                     frameSurfaceCount = checked(frameSurfaceCount + estimate.RequiredSurfaceCount);
 
@@ -109,13 +93,6 @@ internal sealed class PrismFrameAnalyzer
                     }
 
                     OpenScope completed = openScopes[^1];
-                    if (clips.Count != completed.ClipDepth)
-                    {
-                        int beginCommandIndex =
-                            scopes[completed.ScopeIndex].BeginCommandIndex;
-                        throw new InvalidOperationException(
-                            $"EndPrism at command index {commandIndex} crosses a clip opened after BeginPrism at command index {beginCommandIndex}.");
-                    }
                     openScopes.RemoveAt(openScopes.Count - 1);
                     ScopeBuilder completedScope = scopes[completed.ScopeIndex];
                     completedScope.EndCommandIndex = commandIndex;
@@ -136,12 +113,6 @@ internal sealed class PrismFrameAnalyzer
             int beginCommandIndex = scopes[openScopes[^1].ScopeIndex].BeginCommandIndex;
             throw new InvalidOperationException(
                 $"BeginPrism at command index {beginCommandIndex} has no matching EndPrism.");
-        }
-
-        if (clips.Count > 0)
-        {
-            throw new InvalidOperationException(
-                $"PushClip at command index {clips[^1].CommandIndex} has no matching PopClip.");
         }
 
         if (commands.Version != commandListVersion || commands.Count != commandCount)
@@ -166,7 +137,8 @@ internal sealed class PrismFrameAnalyzer
             analyzedScopes.MoveToImmutable(),
             frameCapabilities,
             frameSurfaceCount,
-            backdropRequirement);
+            backdropRequirement,
+            stateAnalysis);
         analysis.EnsureCurrent(commands);
         return analysis;
     }
@@ -400,32 +372,6 @@ internal sealed class PrismFrameAnalyzer
         }
     }
 
-    private static DrawRect TransformBounds(DrawRect bounds, Matrix3x2 transform)
-    {
-        Vector2 topLeft = Vector2.Transform(new Vector2(bounds.X, bounds.Y), transform);
-        Vector2 topRight = Vector2.Transform(new Vector2(bounds.Right, bounds.Y), transform);
-        Vector2 bottomLeft = Vector2.Transform(new Vector2(bounds.X, bounds.Bottom), transform);
-        Vector2 bottomRight = Vector2.Transform(new Vector2(bounds.Right, bounds.Bottom), transform);
-        float left = MathF.Min(MathF.Min(topLeft.X, topRight.X), MathF.Min(bottomLeft.X, bottomRight.X));
-        float top = MathF.Min(MathF.Min(topLeft.Y, topRight.Y), MathF.Min(bottomLeft.Y, bottomRight.Y));
-        float right = MathF.Max(MathF.Max(topLeft.X, topRight.X), MathF.Max(bottomLeft.X, bottomRight.X));
-        float bottom = MathF.Max(MathF.Max(topLeft.Y, topRight.Y), MathF.Max(bottomLeft.Y, bottomRight.Y));
-        return new DrawRect(left, top, MathF.Max(0, right - left), MathF.Max(0, bottom - top));
-    }
-
-    private static DrawRect Intersect(DrawRect left, DrawRect right)
-    {
-        float x = MathF.Max(left.X, right.X);
-        float y = MathF.Max(left.Y, right.Y);
-        float intersectionRight = MathF.Min(left.Right, right.Right);
-        float intersectionBottom = MathF.Min(left.Bottom, right.Bottom);
-        return new DrawRect(
-            x,
-            y,
-            MathF.Max(0, intersectionRight - x),
-            MathF.Max(0, intersectionBottom - y));
-    }
-
     private static bool IsEmpty(DrawRect bounds) =>
         bounds.Width <= 0 || bounds.Height <= 0;
 
@@ -447,19 +393,14 @@ internal sealed class PrismFrameAnalyzer
         PrismGraphCapabilities Capabilities,
         int RequiredSurfaceCount);
 
-    private readonly record struct ClipState(int CommandIndex, DrawRect Bounds);
-
     private sealed class OpenScope
     {
-        public OpenScope(int scopeIndex, int clipDepth)
+        public OpenScope(int scopeIndex)
         {
             ScopeIndex = scopeIndex;
-            ClipDepth = clipDepth;
         }
 
         public int ScopeIndex { get; }
-
-        public int ClipDepth { get; }
 
         public long DescendantVersion { get; set; }
     }

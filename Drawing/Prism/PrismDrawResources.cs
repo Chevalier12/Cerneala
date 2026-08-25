@@ -73,6 +73,9 @@ internal sealed class PrismDrawResources
 
     public bool HasStableVersions { get; }
 
+    internal IEnumerable<IDrawImage> Images =>
+        images.Values.Select(static resource => resource.Image);
+
     public static PrismDrawResources Create(
         IEnumerable<PrismDrawImageResource> resources) =>
         Create(resources, []);

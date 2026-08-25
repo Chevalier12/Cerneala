@@ -12,7 +12,8 @@ internal sealed class PrismFrameAnalysis
         ImmutableArray<PrismAnalyzedScope> scopes,
         PrismGraphCapabilities requiredCapabilities,
         int requiredSurfaceCount,
-        PrismBackdropRequirement? backdropRequirement)
+        PrismBackdropRequirement? backdropRequirement,
+        DrawCommandStateAnalysis stateAnalysis)
     {
         this.sourceCommands = sourceCommands;
         CommandListVersion = commandListVersion;
@@ -20,6 +21,8 @@ internal sealed class PrismFrameAnalysis
         RequiredCapabilities = requiredCapabilities;
         RequiredSurfaceCount = requiredSurfaceCount;
         BackdropRequirement = backdropRequirement;
+        StateAnalysis = stateAnalysis ??
+            throw new ArgumentNullException(nameof(stateAnalysis));
     }
 
     public long CommandListVersion { get; }
@@ -34,6 +37,8 @@ internal sealed class PrismFrameAnalysis
 
     public bool RequiresBackdrop => BackdropRequirement is not null;
 
+    internal DrawCommandStateAnalysis StateAnalysis { get; }
+
     public void EnsureCurrent(DrawCommandList commands)
     {
         ArgumentNullException.ThrowIfNull(commands);
@@ -43,6 +48,7 @@ internal sealed class PrismFrameAnalysis
             throw new InvalidOperationException(
                 "The Prism frame analysis does not match the current draw command list.");
         }
+        StateAnalysis.EnsureCurrent(commands);
 
         int? staleScopeIndex = GetStaleScopeIndex();
         if (staleScopeIndex is int scopeIndex)

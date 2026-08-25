@@ -1,3 +1,4 @@
+using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
 using Cerneala.Benchmarks;
 
@@ -13,4 +14,7 @@ if (args is ["--language-core-gate"])
     return;
 }
 
-BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
+ManualConfig config = ManualConfig
+    .Create(DefaultConfig.Instance)
+    .WithBuildTimeout(TimeSpan.FromMinutes(10));
+BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args, config);

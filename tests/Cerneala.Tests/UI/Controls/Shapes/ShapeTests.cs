@@ -82,7 +82,7 @@ public sealed class ShapeTests
     }
 
     [Fact]
-    public void PathShapeRendersLineSegments()
+    public void PathShapeRendersOneNativeStrokePath()
     {
         UIRoot root = new();
         PathShape path = new()
@@ -99,10 +99,45 @@ public sealed class ShapeTests
 
         DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
-        Assert.Equal(2, commands.Count);
-        Assert.All(commands, command => Assert.Equal(DrawCommandKind.DrawLine, command.Kind));
-        Assert.Equal(new DrawPoint(0, 0), commands[0].Position);
-        Assert.Equal(new DrawPoint(10, 0), commands[0].EndPoint);
+        DrawCommand command = Assert.Single(commands);
+        Assert.Equal(DrawCommandKind.DrawPath, command.Kind);
+        Assert.NotNull(command.Path);
+        Assert.NotNull(command.Pen);
+        Assert.Equal(2, command.Pen.Thickness);
+    }
+
+    [Fact]
+    public void PathShapeTransformsTheCompleteNativeStrokeGeometry()
+    {
+        UIRoot root = new();
+        PathShape path = new()
+        {
+            Data = new PathGeometry(
+            [
+                new DrawPoint(0, 0),
+                new DrawPoint(10, 0),
+                new DrawPoint(10, 10)
+            ]),
+            Stroke = new SolidColorBrush(Color.Black),
+            StrokeThickness = 2,
+            RenderTransform = new Transform(
+                Matrix3x2.CreateTranslation(10, 20))
+        };
+        root.VisualChildren.Add(path);
+        root.ProcessFrame();
+        path.Arrange(new ArrangeContext(new LayoutRect(0, 0, 20, 20)));
+        root.Invalidate(
+            InvalidationFlags.Render | InvalidationFlags.Subtree,
+            "test");
+        root.ProcessFrame();
+
+        DrawCommand command = Assert.Single(
+            root.RetainedRenderer.Commit(root));
+        DrawPathContour contour = Assert.Single(command.Path!.Contours);
+
+        Assert.Equal(new DrawPoint(10, 20), contour.StartPoint);
+        Assert.Equal(new DrawPoint(20, 20), contour.Segments[1].EndPoint);
+        Assert.Equal(new DrawPoint(20, 30), contour.Segments[2].EndPoint);
     }
 
     [Fact]
@@ -126,7 +161,8 @@ public sealed class ShapeTests
         Assert.Equal(DrawCommandKind.FillPath, command.Kind);
         Assert.Equal(new DrawRect(3, 4, 144, 96), command.Rect);
         Assert.Equal(new DrawRect(0, 0, 72, 72), command.SourceRect);
-        Assert.Equal("M0 0L72 72Z", command.PathData);
+        Assert.NotNull(command.Path);
+        Assert.Null(command.PathData);
         Assert.Same(fill, command.Brush);
     }
 
@@ -150,7 +186,8 @@ public sealed class ShapeTests
         DrawCommand command = Assert.Single(root.RetainedRenderer.Commit(root));
 
         Assert.Equal(DrawCommandKind.FillPath, command.Kind);
-        Assert.Equal("M1 2L23 22Z", command.PathData);
+        Assert.NotNull(command.Path);
+        Assert.Null(command.PathData);
         Assert.Equal(new DrawRect(0, 0, 24, 24), command.SourceRect);
         Assert.Equal(new DrawRect(3, 4, 48, 48), command.Rect);
         Assert.Same(fill, command.Brush);

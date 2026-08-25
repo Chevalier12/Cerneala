@@ -119,7 +119,20 @@ public abstract class Shape : Control
                 DrawRect destination = ToDrawRect(context.Bounds);
                 if (HasVisibleBrush(fill) && destination.Width > 0 && destination.Height > 0)
                 {
-                    context.DrawingContext.FillPath(svgPath.Data, svgPath.Bounds, destination, fill!);
+                    context.DrawingContext.FillPath(
+                        svgPath.Path,
+                        svgPath.Bounds,
+                        destination,
+                        fill!,
+                        DrawFillRule.NonZero);
+                }
+                if (HasVisibleBrush(stroke) && thickness > 0 && destination.Width > 0 && destination.Height > 0)
+                {
+                    context.DrawingContext.DrawPath(
+                        svgPath.Path,
+                        svgPath.Bounds,
+                        destination,
+                        new DrawPen(stroke!, thickness));
                 }
                 break;
 
@@ -132,7 +145,9 @@ public abstract class Shape : Control
 
                 if (HasVisibleBrush(stroke) && thickness > 0 && rectangleBounds.Width > 0 && rectangleBounds.Height > 0)
                 {
-                    context.DrawingContext.DrawRectangle(rectangleBounds, stroke!, thickness);
+                    context.DrawingContext.DrawRectangle(
+                        rectangleBounds,
+                        new DrawPen(stroke!, thickness));
                 }
 
                 break;
@@ -146,15 +161,23 @@ public abstract class Shape : Control
 
                 if (HasVisibleBrush(stroke) && thickness > 0 && ellipseBounds.Width > 0 && ellipseBounds.Height > 0)
                 {
-                    context.DrawingContext.DrawEllipse(ellipseBounds, stroke!, thickness);
+                    context.DrawingContext.DrawEllipse(
+                        ellipseBounds,
+                        new DrawPen(stroke!, thickness));
                 }
 
                 break;
 
             case PathGeometry path:
-                if (HasVisibleBrush(stroke) && thickness > 0)
+                if (HasVisibleBrush(stroke) &&
+                    thickness > 0 &&
+                    path.StrokePath is not null)
                 {
-                    DrawPathStroke(context, path, stroke!, thickness);
+                    context.DrawingContext.DrawPath(
+                        RenderTransform == Transform.Identity
+                            ? path.StrokePath
+                            : CreateTransformedPath(path.Points),
+                        new DrawPen(stroke!, thickness));
                 }
 
                 break;
@@ -181,14 +204,15 @@ public abstract class Shape : Control
         return new DrawRect(rect.X, rect.Y, MathF.Max(0, rect.Width), MathF.Max(0, rect.Height));
     }
 
-    private void DrawPathStroke(RenderContext context, PathGeometry path, Brush brush, float thickness)
+    private DrawPath CreateTransformedPath(IReadOnlyList<DrawPoint> points)
     {
-        for (int i = 1; i < path.Points.Count; i++)
+        DrawPathBuilder builder = new DrawPathBuilder()
+            .MoveTo(RenderTransform.Apply(points[0]));
+        for (int index = 1; index < points.Count; index++)
         {
-            DrawPoint start = RenderTransform.Apply(path.Points[i - 1]);
-            DrawPoint end = RenderTransform.Apply(path.Points[i]);
-            context.DrawingContext.DrawLine(start, end, brush, thickness);
+            builder.LineTo(RenderTransform.Apply(points[index]));
         }
+        return builder.Build();
     }
 
     private static bool HasVisibleBrush(Brush? brush)

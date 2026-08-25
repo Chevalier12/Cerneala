@@ -40,7 +40,7 @@ Rectangle rectangle = new()
 
 `Fill`, `Stroke`, `RenderTransform`, and `Opacity` affect rendering. `StrokeThickness` and `Geometry` affect both measure and rendering. `StrokeThickness` must be finite and greater than or equal to zero. `Opacity` must be finite and between `0` and `1`. `RenderTransform` cannot be `null`.
 
-Rendering exits early when `Opacity` is `0` or less, or when the resolved geometry is `null`. Rectangle and ellipse geometry can render both fill and stroke; path geometry renders connected line segments when a visible stroke is present.
+Rendering exits early when `Opacity` is `0` or less, or when the resolved geometry is `null`. Rectangle and ellipse geometry can render both fill and native `DrawPen` strokes. Path geometry emits one typed-path stroke when a visible stroke is present, preserving caps and joins across the complete path.
 
 ## Fields
 

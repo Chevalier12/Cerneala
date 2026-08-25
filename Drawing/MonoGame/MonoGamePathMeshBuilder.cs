@@ -17,10 +17,32 @@ internal static class MonoGamePathMeshBuilder
         float phaseY,
         XnaColor color)
     {
+        return Build(
+            DrawPathParser.ParseSvg(pathData),
+            sourceBounds,
+            physicalWidth,
+            physicalHeight,
+            phaseX,
+            phaseY,
+            color,
+            DrawFillRule.NonZero);
+    }
+
+    public static MonoGamePathMesh Build(
+        DrawPath path,
+        DrawRect sourceBounds,
+        float physicalWidth,
+        float physicalHeight,
+        float phaseX,
+        float phaseY,
+        XnaColor color,
+        DrawFillRule fillRule)
+    {
+        ArgumentNullException.ThrowIfNull(path);
         float scaleX = physicalWidth / sourceBounds.Width;
         float scaleY = physicalHeight / sourceBounds.Height;
-        float tolerance = 0.2f / MathF.Max(scaleX, scaleY);
-        IReadOnlyList<DrawPoint[]> contours = SvgPathFlattener.Flatten(pathData, tolerance);
+        float tolerance = 0.05f / MathF.Max(scaleX, scaleY);
+        IReadOnlyList<DrawPoint[]> contours = DrawPathFlattener.Flatten(path, tolerance);
         Tess tessellator = new();
         foreach (DrawPoint[] contour in contours)
         {
@@ -36,7 +58,12 @@ internal static class MonoGamePathMeshBuilder
             tessellator.AddContour(vertices, ContourOrientation.Original);
         }
 
-        tessellator.Tessellate(WindingRule.NonZero, ElementType.Polygons, 3);
+        tessellator.Tessellate(
+            fillRule == DrawFillRule.EvenOdd
+                ? WindingRule.EvenOdd
+                : WindingRule.NonZero,
+            ElementType.Polygons,
+            3);
         VertexPositionColor[] meshVertices = new VertexPositionColor[tessellator.Vertices.Length];
         for (int index = 0; index < tessellator.Vertices.Length; index++)
         {

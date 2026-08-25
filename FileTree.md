@@ -35,9 +35,15 @@ Generated from `.`.
 |   |   |   |-- 2026-07-21-prism-retained-cache.md
 |   |   |   |-- 2026-08-13-language-core.md
 |   |   |   |-- 2026-08-15-visual-studio-community-extension.json
-|   |   |   +-- 2026-08-15-visual-studio-community-extension.md
+|   |   |   |-- 2026-08-15-visual-studio-community-extension.md
+|   |   |   +-- 2026-08-24-rendersurface2d-drawing-api.md
 |   |   |-- Cerneala.Benchmarks.csproj
 |   |   |-- CernealaLanguageBenchmarks.cs
+|   |   |-- DrawingBatchBenchmarks.cs
+|   |   |-- DrawingShapeBenchmarks.cs
+|   |   |-- DrawingStateBenchmarks.cs
+|   |   |-- DrawingStrokeBenchmarks.cs
+|   |   |-- DrawingTextLayoutBenchmarks.cs
 |   |   |-- PrismInstanceBenchmarks.cs
 |   |   |-- PrismRetainedCacheBenchmarkRunner.cs
 |   |   |-- Program.cs
@@ -406,7 +412,9 @@ Generated from `.`.
 |   |   |-- 2026-08-13-visual-studio-community-extension.md
 |   |   |-- 2026-08-13-visual-studio-language-integration-plan-index.md
 |   |   |-- 2026-08-14-crn-markup-extension-migration.md
-|   |   +-- 2026-08-20-menu-menuitem-menubar.md
+|   |   |-- 2026-08-20-menu-menuitem-menubar.md
+|   |   |-- 2026-08-24-rendersurface2d-complete-drawing-api.md
+|   |   +-- 2026-08-24-rendersurface2d-stage-0-baseline.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
@@ -495,25 +503,72 @@ Generated from `.`.
 |   |-- documentation/
 |   |   |-- classes/
 |   |   |   |-- Cerneala.Drawing.Color.md
+|   |   |   |-- Cerneala.Drawing.DrawAddressMode.md
+|   |   |   |-- Cerneala.Drawing.DrawArcDirection.md
 |   |   |   |-- Cerneala.Drawing.DrawArgument.md
+|   |   |   |-- Cerneala.Drawing.DrawBlendMode.md
+|   |   |   |-- Cerneala.Drawing.DrawBlendScope.md
 |   |   |   |-- Cerneala.Drawing.DrawBrushAlignmentX.md
 |   |   |   |-- Cerneala.Drawing.DrawBrushAlignmentY.md
 |   |   |   |-- Cerneala.Drawing.DrawBrushDescriptor.md
 |   |   |   |-- Cerneala.Drawing.DrawBrushKind.md
 |   |   |   |-- Cerneala.Drawing.DrawBrushStretch.md
+|   |   |   |-- Cerneala.Drawing.DrawClipScope.md
 |   |   |   |-- Cerneala.Drawing.DrawCommand.md
 |   |   |   |-- Cerneala.Drawing.DrawCommandKind.md
 |   |   |   |-- Cerneala.Drawing.DrawCommandList.md
+|   |   |   |-- Cerneala.Drawing.DrawCommandStateAnalysis.md
+|   |   |   |-- Cerneala.Drawing.DrawCommandStateAnalyzer.md
+|   |   |   |-- Cerneala.Drawing.DrawCommandStateEntry.md
+|   |   |   |-- Cerneala.Drawing.DrawCornerRadius.md
+|   |   |   |-- Cerneala.Drawing.DrawFillRule.md
 |   |   |   |-- Cerneala.Drawing.DrawGradientStop.md
 |   |   |   |-- Cerneala.Drawing.DrawImageFlip.md
+|   |   |   |-- Cerneala.Drawing.DrawImageOptions.md
 |   |   |   |-- Cerneala.Drawing.DrawingContext.md
 |   |   |   |-- Cerneala.Drawing.DrawingDrawBrushDescriptor.md
 |   |   |   |-- Cerneala.Drawing.DrawingFrameContext.md
+|   |   |   |-- Cerneala.Drawing.DrawInsets.md
+|   |   |   |-- Cerneala.Drawing.DrawLayerOptions.md
+|   |   |   |-- Cerneala.Drawing.DrawLayerScope.md
+|   |   |   |-- Cerneala.Drawing.DrawLineBatch.md
+|   |   |   |-- Cerneala.Drawing.DrawLineCap.md
+|   |   |   |-- Cerneala.Drawing.DrawLineJoin.md
+|   |   |   |-- Cerneala.Drawing.DrawLineSegment2D.md
+|   |   |   |-- Cerneala.Drawing.DrawMesh2D.md
+|   |   |   |-- Cerneala.Drawing.DrawOpacityScope.md
+|   |   |   |-- Cerneala.Drawing.DrawPath.md
+|   |   |   |-- Cerneala.Drawing.DrawPathBuilder.md
+|   |   |   |-- Cerneala.Drawing.DrawPathContour.md
+|   |   |   |-- Cerneala.Drawing.DrawPathFactory.md
+|   |   |   |-- Cerneala.Drawing.DrawPathParser.md
+|   |   |   |-- Cerneala.Drawing.DrawPathSegment.md
+|   |   |   |-- Cerneala.Drawing.DrawPathSegmentKind.md
+|   |   |   |-- Cerneala.Drawing.DrawPen.md
 |   |   |   |-- Cerneala.Drawing.DrawPoint.md
+|   |   |   |-- Cerneala.Drawing.DrawPointBatch.md
+|   |   |   |-- Cerneala.Drawing.DrawPrimitiveTopology.md
 |   |   |   |-- Cerneala.Drawing.DrawRect.md
+|   |   |   |-- Cerneala.Drawing.DrawSamplingMode.md
 |   |   |   |-- Cerneala.Drawing.DrawSize.md
+|   |   |   |-- Cerneala.Drawing.DrawSprite2D.md
+|   |   |   |-- Cerneala.Drawing.DrawSpriteBatch.md
+|   |   |   |-- Cerneala.Drawing.DrawStrokeAlignment.md
+|   |   |   |-- Cerneala.Drawing.DrawStrokeStyle.md
+|   |   |   |-- Cerneala.Drawing.DrawTextAlignment.md
+|   |   |   |-- Cerneala.Drawing.DrawTextDirection.md
+|   |   |   |-- Cerneala.Drawing.DrawTextLayout.md
+|   |   |   |-- Cerneala.Drawing.DrawTextLayoutBuilder.md
+|   |   |   |-- Cerneala.Drawing.DrawTextLayoutLine.md
+|   |   |   |-- Cerneala.Drawing.DrawTextLayoutOptions.md
+|   |   |   |-- Cerneala.Drawing.DrawTextLayoutRun.md
 |   |   |   |-- Cerneala.Drawing.DrawTextRun.md
+|   |   |   |-- Cerneala.Drawing.DrawTextSpan.md
+|   |   |   |-- Cerneala.Drawing.DrawTextTrimming.md
+|   |   |   |-- Cerneala.Drawing.DrawTextWrapping.md
 |   |   |   |-- Cerneala.Drawing.DrawTileMode.md
+|   |   |   |-- Cerneala.Drawing.DrawTransformScope.md
+|   |   |   |-- Cerneala.Drawing.DrawVertex2D.md
 |   |   |   |-- Cerneala.Drawing.IDrawBrush.md
 |   |   |   |-- Cerneala.Drawing.IDrawFont.md
 |   |   |   |-- Cerneala.Drawing.IDrawImage.md
@@ -1333,6 +1388,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Motion.MotionPropertyShortcut_T_.md
 |   |   |   |-- Cerneala.UI.Motion.MotionStateBuilder.md
 |   |   |   |-- Cerneala.UI.Motion.ObjectMotionAnimationBuilder_TTarget_TValue_.md
+|   |   |   |-- Cerneala.UI.Motion.ObjectMotionFacade_TTarget_.md
 |   |   |   |-- Cerneala.UI.Motion.ObjectMotionFacade.md
 |   |   |   |-- Cerneala.UI.Motion.Presence.PresenceCoordinator.md
 |   |   |   |-- Cerneala.UI.Motion.Presence.PresenceHandle.md
@@ -1796,8 +1852,11 @@ Generated from `.`.
 |   |   |-- MonoGameImage.cs
 |   |   |-- MonoGamePathMeshBuilder.cs
 |   |   |-- MonoGameRenderSurface2DSession.cs
+|   |   |-- MonoGameStrokeMeshBuilder.cs
 |   |   +-- RenderSurface2D.MonoGame.cs
 |   |-- Paths/
+|   |   |-- DrawPathFlattener.cs
+|   |   |-- DrawStrokeTessellator.cs
 |   |   +-- SvgPathFlattener.cs
 |   |-- Prism/
 |   |   |-- Blend/
@@ -2076,19 +2135,40 @@ Generated from `.`.
 |   |   |-- SystemFontSource.cs
 |   |   |-- TextCaretVerticalMetrics.cs
 |   |   |-- TextShaper.cs
-|   |   +-- TextShapeResult.cs
+|   |   |-- TextShapeResult.cs
+|   |   |-- UnicodeBidiEngine.cs
+|   |   +-- UnicodeLineBreakEngine.cs
 |   |-- Color.cs
 |   |-- DrawArgument.cs
+|   |-- DrawBatches.cs
 |   |-- DrawCommand.cs
+|   |-- DrawCommand.Images.cs
+|   |-- DrawCommand.Shapes.cs
+|   |-- DrawCommand.Text.cs
 |   |-- DrawCommandKind.cs
 |   |-- DrawCommandList.cs
+|   |-- DrawCommandMetadata.cs
+|   |-- DrawCornerRadius.cs
+|   |-- DrawFillRule.cs
 |   |-- DrawImageFlip.cs
+|   |-- DrawImageOptions.cs
 |   |-- DrawingBackendFrameTiming.cs
 |   |-- DrawingContext.cs
+|   |-- DrawingContext.Images.cs
+|   |-- DrawingContext.Shapes.cs
+|   |-- DrawingContext.Text.cs
 |   |-- DrawingFrameContext.cs
+|   |-- DrawMesh2D.cs
+|   |-- DrawPath.cs
+|   |-- DrawPathBuilder.cs
+|   |-- DrawPathFactory.cs
+|   |-- DrawPathParser.cs
 |   |-- DrawPoint.cs
 |   |-- DrawRect.cs
 |   |-- DrawSize.cs
+|   |-- DrawState.cs
+|   |-- DrawStrokeStyle.cs
+|   |-- DrawTextLayout.cs
 |   |-- DrawTextRun.cs
 |   |-- IDrawBrush.cs
 |   |-- IDrawFont.cs
@@ -2122,7 +2202,12 @@ Generated from `.`.
 |   |   |-- MenuLabViewModel.cs
 |   |   +-- README.md
 |   |-- Cerneala.Playground/
+|   |   |-- automation/
+|   |   |   +-- capture-drawing-api.json
 |   |   |-- Cerneala.Playground.csproj
+|   |   |-- DrawingApiShowcase.cs
+|   |   |-- DrawingApiShowcaseView.crn
+|   |   |-- DrawingApiShowcaseView.crn.cs
 |   |   |-- MainWindow.crn
 |   |   |-- MainWindow.crn.cs
 |   |   +-- SvgWindow.cs
@@ -2266,6 +2351,8 @@ Generated from `.`.
 |   |   |   |   |-- PrismWindowsDxConformanceTests.cs
 |   |   |   |   +-- RenderSurface2DRenderingTests.cs
 |   |   |   |-- Paths/
+|   |   |   |   |-- DrawPathTests.cs
+|   |   |   |   |-- DrawStrokeTests.cs
 |   |   |   |   +-- SvgPathFlattenerTests.cs
 |   |   |   |-- Prism/
 |   |   |   |   |-- PrismAccentedEdgesFilterTests.cs
@@ -2337,9 +2424,15 @@ Generated from `.`.
 |   |   |   |   +-- PrismWindFilterTests.cs
 |   |   |   |-- AdvancedDrawCommandTests.cs
 |   |   |   |-- ColorTests.cs
+|   |   |   |-- CompleteDrawingApiBaselineTests.cs
 |   |   |   |-- DrawCommandListTests.cs
 |   |   |   |-- DrawingContextTests.cs
+|   |   |   |-- DrawingImageMeshBatchTests.cs
+|   |   |   |-- DrawingIntegrationLifecycleTests.cs
 |   |   |   |-- DrawingResourceTests.cs
+|   |   |   |-- DrawingShapeTests.cs
+|   |   |   |-- DrawingStateTests.cs
+|   |   |   |-- DrawingTextLayoutTests.cs
 |   |   |   +-- TextPipelineTests.cs
 |   |   |-- Golden/
 |   |   |   +-- Prism/
@@ -2406,6 +2499,7 @@ Generated from `.`.
 |   |   |   |-- TextInputBridgeTests.cs
 |   |   |   +-- TouchInputBridgeTests.cs
 |   |   |-- Playground/
+|   |   |   |-- DrawingApiShowcaseVisualTests.cs
 |   |   |   +-- MainWindowContractTests.cs
 |   |   |-- Presentation/
 |   |   |   |-- AspectChapterViewTests.cs
@@ -3021,6 +3115,9 @@ Generated from `.`.
 |   |   |-- RadioButton.cs
 |   |   |-- RenderSurface2D.cs
 |   |   |-- RenderSurface2DFrame.cs
+|   |   |-- RenderSurface2DFrame.Images.cs
+|   |   |-- RenderSurface2DFrame.Shapes.cs
+|   |   |-- RenderSurface2DFrame.Text.cs
 |   |   |-- RenderSurface2DRedrawMode.cs
 |   |   |-- ResizeMode.cs
 |   |   |-- ScrollBarVisibility.cs
@@ -3456,6 +3553,7 @@ Generated from `.`.
 |   |   |-- MotionPropertyShortcut.cs
 |   |   |-- MotionStateBuilder.cs
 |   |   |-- ObjectMotionAnimationBuilder.cs
+|   |   |-- ObjectMotionExpressionPropertyCache.cs
 |   |   |-- ObjectMotionFacade.cs
 |   |   +-- ObjectMotionRuntime.cs
 |   |-- Platform/

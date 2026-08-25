@@ -31,6 +31,11 @@ public readonly struct DrawingFrameContext
 
     internal PrismFrameAnalysis PrismAnalysis { get; }
 
+    public DrawCommandStateAnalysis StateAnalysis =>
+        PrismAnalysis?.StateAnalysis ??
+        throw new InvalidOperationException(
+            "The drawing frame context has not been initialized.");
+
     public IBackdropFrameLease? BackdropLease { get; }
 
     internal PrismBackdropSourceToken BackdropSourceToken { get; }
