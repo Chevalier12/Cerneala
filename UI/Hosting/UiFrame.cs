@@ -35,6 +35,7 @@ internal readonly record struct UiFrameTiming(
     TimeSpan RetainedUpdate,
     TimeSpan BeginFrame,
     TimeSpan Drawing,
+    TimeSpan CompleteFrame,
     DrawingBackendFrameTiming DrawingBackend,
     TimeSpan UpdatePreparation,
     TimeSpan ScheduledProcessing,

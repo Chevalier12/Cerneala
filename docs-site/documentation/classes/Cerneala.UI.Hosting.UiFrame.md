@@ -49,7 +49,7 @@ bool frameDidWork = frame.Stats.HasWork;
 
 The constructor stores the supplied values. `Input` and `Stats` are required and throw `ArgumentNullException` when `null`; `ElapsedTime` is stored without validation, and `Viewport` is a value type.
 
-`ElapsedTime` is the simulation delta supplied to the update. It does not measure how long the update took. `ProcessingTime` measures input collection, retained UI update, and draw-command submission for a natively hosted window. It excludes the graphics presentation wait, including vertical synchronization. A directly constructed frame has a zero processing time until a host records it.
+`ElapsedTime` is the simulation delta supplied to the update. It does not measure how long the update took. `ProcessingTime` measures the native window host work from input collection through graphics-frame completion, including presentation and any backend or vertical-synchronization wait performed by that completion. It does not include `FrameRendered` or `ContentRendered` event handlers, which run after the measurement is recorded. A directly constructed frame has a zero processing time until a host records it.
 
 `Stats` references the `FrameStats` instance for the update. It records work counted during retained UI processing, input dispatch, motion, rendering cache updates, hit testing, and no-work frames.
 
@@ -64,7 +64,7 @@ The constructor stores the supplied values. `Input` and `Stats` are required and
 | Name | Type | Description |
 | --- | --- | --- |
 | `ElapsedTime` | `TimeSpan` | Gets the elapsed time associated with the update that produced the frame. |
-| `ProcessingTime` | `TimeSpan` | Gets the measured host processing duration, excluding graphics presentation wait. |
+| `ProcessingTime` | `TimeSpan` | Gets the measured host processing duration from input collection through graphics-frame completion and presentation. |
 | `Viewport` | `UiViewport` | Gets the logical viewport and scale used by the update. |
 | `Input` | `InputFrame` | Gets the input frame processed during the update. |
 | `Stats` | `FrameStats` | Gets the frame statistics collected for the update. |

@@ -240,7 +240,9 @@ internal readonly record struct SdlGpuColorTargetInfo(
     SdlGpuColor ClearColor,
     SdlGpuLoadOp LoadOp,
     SdlGpuStoreOp StoreOp,
-    nint ResolveTexture = 0);
+    nint ResolveTexture = 0,
+    bool Cycle = false,
+    bool CycleResolveTexture = false);
 
 internal readonly record struct SdlGpuDepthStencilTargetInfo(
     nint Texture,
@@ -248,7 +250,8 @@ internal readonly record struct SdlGpuDepthStencilTargetInfo(
     SdlGpuStoreOp DepthStoreOp,
     SdlGpuLoadOp StencilLoadOp,
     SdlGpuStoreOp StencilStoreOp,
-    byte ClearStencil = 0);
+    byte ClearStencil = 0,
+    bool Cycle = false);
 
 internal readonly record struct SdlGpuShaderCreateInfo(
     SdlGpuShaderFormats Format,

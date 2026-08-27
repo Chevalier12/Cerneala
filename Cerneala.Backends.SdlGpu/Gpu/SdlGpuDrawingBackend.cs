@@ -1,6 +1,6 @@
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Paths;
 using Cerneala.Drawing.Prism;
@@ -9,9 +9,13 @@ using Cerneala.Platforms.Sdl3;
 
 namespace Cerneala.Backends.SdlGpu;
 
-internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
+internal sealed partial class SdlGpuDrawingBackend :
+    IDrawingBackend,
+    IDrawingBackendFrameTimingSource,
+    IDisposable
 {
     private const int TextSubpixelPhaseCount = 8;
+    private static readonly int[] QuadIndices = [0, 1, 2, 0, 2, 3];
     private static readonly object WhiteTextureKey = new();
     private static readonly IReadOnlySet<DrawCommandKind> CommandKinds =
         new HashSet<DrawCommandKind>
@@ -54,9 +58,16 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
     private readonly SdlGpuDrawingResources resources;
     private readonly SkiaTextRasterizer textRasterizer = new();
     private readonly SdlGpuPrismExecutor prismExecutor;
+    private readonly Cerberus batches;
     private readonly HashSet<SdlGpuImage> subscribedImages =
         new(ReferenceEqualityComparer.Instance);
     private long textAtlasFrameToken;
+    private TimeSpan textRequestCollectionTime;
+    private TimeSpan textRasterizationTime;
+    private TimeSpan textAtlasUploadTime;
+    private TimeSpan cleanupTime;
+    private int textRequestCount;
+    private long rasterizedPixelCount;
     private bool frameActive;
     private bool disposed;
 
@@ -66,6 +77,7 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
         resources = session.DrawingResources;
         CoordinateScale = session.CoordinateScale;
         prismExecutor = new SdlGpuPrismExecutor(session, this);
+        batches = new Cerberus(this);
     }
 
     internal static IReadOnlySet<DrawCommandKind> HandledCommandKinds => CommandKinds;
@@ -73,6 +85,11 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
     internal float CoordinateScale { get; set; }
 
     internal PrismExecutionDiagnostics PrismDiagnostics => prismExecutor.Diagnostics;
+
+    DrawingBackendFrameTiming IDrawingBackendFrameTimingSource.LastFrameTiming =>
+        LastFrameTiming;
+
+    internal DrawingBackendFrameTiming LastFrameTiming { get; private set; }
 
     public void Render(DrawCommandList commands, in DrawingFrameContext frameContext)
     {
@@ -88,25 +105,61 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
             return;
         }
 
+        long preparationStarted = Stopwatch.GetTimestamp();
         frameContext.EnsureCurrent(commands);
-        if (!frameContext.PrismAnalysis.Scopes.IsDefaultOrEmpty)
-        {
-            prismExecutor.Execute(commands, frameContext);
-            return;
-        }
-
         DrawCommandStateAnalysis analysis = frameContext.StateAnalysis;
         SdlGpuRenderTarget target = session.WindowRenderTarget;
         RenderState state = RenderState.Create(target, CoordinateScale);
-        BatchCollector batches = new(this, target);
-        RenderRange(commands, 0, commands.Count, analysis, state, target, batches, 0);
-        batches.Flush();
+        batches.Begin(target);
+        TimeSpan preparationTime = Stopwatch.GetElapsedTime(preparationStarted);
+        long commandRenderingStarted = Stopwatch.GetTimestamp();
+        try
+        {
+            if (!frameContext.PrismAnalysis.Scopes.IsDefaultOrEmpty)
+            {
+                prismExecutor.Execute(commands, frameContext);
+                return;
+            }
+
+            RenderRange(commands, 0, commands.Count, analysis, state, target, batches, 0);
+            batches.Flush();
+        }
+        catch
+        {
+            batches.Discard();
+            throw;
+        }
+        finally
+        {
+            TimeSpan totalCommandTime = Stopwatch.GetElapsedTime(commandRenderingStarted);
+            TimeSpan separatelyMeasured =
+                textRequestCollectionTime + textRasterizationTime + textAtlasUploadTime + cleanupTime;
+            TimeSpan commandRenderingTime = totalCommandTime > separatelyMeasured
+                ? totalCommandTime - separatelyMeasured
+                : TimeSpan.Zero;
+            LastFrameTiming = new DrawingBackendFrameTiming(
+                preparationTime,
+                textRequestCollectionTime,
+                textRasterizationTime,
+                textAtlasUploadTime,
+                commandRenderingTime,
+                cleanupTime,
+                textRequestCount,
+                rasterizedPixelCount);
+        }
     }
 
     internal void BeginFrame()
     {
         ObjectDisposedException.ThrowIf(disposed, this);
         textAtlasFrameToken = resources.BeginTextAtlasFrame();
+        textRequestCollectionTime = TimeSpan.Zero;
+        textRasterizationTime = TimeSpan.Zero;
+        textAtlasUploadTime = TimeSpan.Zero;
+        cleanupTime = TimeSpan.Zero;
+        textRequestCount = 0;
+        rasterizedPixelCount = 0;
+        LastFrameTiming = default;
         frameActive = true;
     }
 
@@ -141,7 +194,7 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
         DrawCommandStateAnalysis analysis,
         RenderState state,
         SdlGpuRenderTarget target,
-        BatchCollector batches,
+        Cerberus batches,
         int layerDepth,
         IReadOnlyDictionary<int, SdlGpuPrismPresentationSurface>? childSurfaces = null)
     {
@@ -273,27 +326,37 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
     private void AddFillRectangle(
         DrawCommand command,
         RenderState state,
-        BatchCollector batches)
+        Cerberus batches)
     {
-        DrawPoint[] points = RectanglePoints(command.Rect);
-        int[] indices = [0, 1, 2, 0, 2, 3];
-        AddPaintedGeometry(
-            points,
-            points,
-            indices,
-            DrawPrimitiveTopology.TriangleList,
-            command.Rect,
+        SdlGpuPaint paint = ResolvePaint(
             command.Brush,
-            command.BrushOpacity,
+            command.Rect,
             command.Color,
-            state,
-            batches);
+            command.BrushOpacity);
+        Span<SdlGpuVertex> vertices = batches.Allocate(
+            4,
+            QuadIndices,
+            CreateBatchKey(
+                DrawPrimitiveTopology.TriangleList,
+                paint.Texture.Handle,
+                paint.Sampling,
+                paint.AddressMode,
+                state));
+        DrawRect rect = command.Rect;
+        DrawPoint topLeft = new(rect.X, rect.Y);
+        DrawPoint topRight = new(rect.Right, rect.Y);
+        DrawPoint bottomRight = new(rect.Right, rect.Bottom);
+        DrawPoint bottomLeft = new(rect.X, rect.Bottom);
+        vertices[0] = CreatePaintedVertex(topLeft, topLeft, paint, state);
+        vertices[1] = CreatePaintedVertex(topRight, topRight, paint, state);
+        vertices[2] = CreatePaintedVertex(bottomRight, bottomRight, paint, state);
+        vertices[3] = CreatePaintedVertex(bottomLeft, bottomLeft, paint, state);
     }
 
     private void AddPathFill(
         DrawCommand command,
         RenderState state,
-        BatchCollector batches,
+        Cerberus batches,
         DrawRect? destinationOverride = null)
     {
         DrawPath path = command.Path ??
@@ -335,7 +398,7 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
     private void AddEllipseFill(
         DrawCommand command,
         RenderState state,
-        BatchCollector batches)
+        Cerberus batches)
     {
         AddPathFill(
             command,
@@ -349,7 +412,7 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
     private void AddStroke(
         DrawCommand command,
         RenderState state,
-        BatchCollector batches)
+        Cerberus batches)
     {
         DrawStrokeRenderMesh stroke = DrawStrokeMeshBuilder.Build(
             command,
@@ -387,39 +450,81 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
     private void AddImage(
         DrawCommand command,
         RenderState state,
-        BatchCollector batches)
+        Cerberus batches)
     {
         IDrawImage image = command.Image ??
             throw new InvalidOperationException("DrawImage requires an image.");
         DrawImageOptions options = command.ImageOptions ?? new DrawImageOptions();
-        DrawPoint[] points = DrawImageGeometry.GetDestinationCorners(
-            image,
-            command.Rect,
-            options);
-        DrawPoint[] textureCoordinates = DrawImageGeometry.GetTextureCoordinates(
-            image,
-            options);
-        Color tint = DrawImageGeometry.EffectiveTint(options);
-        DrawVertex2D[] vertices = new DrawVertex2D[4];
-        for (int i = 0; i < vertices.Length; i++)
+        DrawRect source = DrawImageGeometry.ResolveSource(image, options);
+        float left = source.X / image.Width;
+        float top = source.Y / image.Height;
+        float right = source.Right / image.Width;
+        float bottom = source.Bottom / image.Height;
+        if ((options.Flip & DrawImageFlip.Horizontal) != 0)
         {
-            vertices[i] = new DrawVertex2D(points[i], tint, textureCoordinates[i]);
+            (left, right) = (right, left);
         }
-        AddImageGeometry(
-            vertices,
-            [0, 1, 2, 0, 2, 3],
-            DrawPrimitiveTopology.TriangleList,
-            image,
-            options.Sampling,
-            options.AddressMode,
-            state,
-            batches);
+        if ((options.Flip & DrawImageFlip.Vertical) != 0)
+        {
+            (top, bottom) = (bottom, top);
+        }
+        Color tint = DrawImageGeometry.EffectiveTint(options);
+        SdlGpuTextureResource texture = GetImageTexture(image);
+        Span<SdlGpuVertex> vertices = batches.Allocate(
+            4,
+            QuadIndices,
+            CreateBatchKey(
+                DrawPrimitiveTopology.TriangleList,
+                texture.Handle,
+                options.Sampling,
+                options.AddressMode,
+                state));
+        DrawRect destination = command.Rect;
+        vertices[0] = CreateVertex(
+            DrawImageGeometry.TransformDestinationPoint(image, destination, options, 0, 0),
+            new DrawPoint(left, top),
+            tint,
+            state.Transform,
+            state.Opacity);
+        vertices[1] = CreateVertex(
+            DrawImageGeometry.TransformDestinationPoint(
+                image,
+                destination,
+                options,
+                destination.Width,
+                0),
+            new DrawPoint(right, top),
+            tint,
+            state.Transform,
+            state.Opacity);
+        vertices[2] = CreateVertex(
+            DrawImageGeometry.TransformDestinationPoint(
+                image,
+                destination,
+                options,
+                destination.Width,
+                destination.Height),
+            new DrawPoint(right, bottom),
+            tint,
+            state.Transform,
+            state.Opacity);
+        vertices[3] = CreateVertex(
+            DrawImageGeometry.TransformDestinationPoint(
+                image,
+                destination,
+                options,
+                0,
+                destination.Height),
+            new DrawPoint(left, bottom),
+            tint,
+            state.Transform,
+            state.Opacity);
     }
 
     private void AddCommandMesh(
         DrawCommand command,
         RenderState state,
-        BatchCollector batches)
+        Cerberus batches)
     {
         DrawMesh2D mesh = command.Mesh ??
             throw new InvalidOperationException($"{command.Kind} requires a mesh.");
@@ -439,7 +544,15 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
         }
 
         SdlGpuTextureResource white = GetWhiteTexture();
-        SdlGpuVertex[] vertices = new SdlGpuVertex[mesh.VertexArray.Length];
+        Span<SdlGpuVertex> vertices = batches.Allocate(
+            mesh.VertexArray.Length,
+            mesh.IndexArray,
+            CreateBatchKey(
+                mesh.Topology,
+                white.Handle,
+                DrawSamplingMode.Point,
+                DrawAddressMode.Clamp,
+                state));
         for (int i = 0; i < vertices.Length; i++)
         {
             DrawVertex2D source = mesh.VertexArray[i];
@@ -450,31 +563,28 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
                 state.Transform,
                 state.Opacity);
         }
-        batches.Add(new CpuDrawBatch(
-            vertices,
-            mesh.IndexArray,
-            mesh.Topology,
-            white.Handle,
-            DrawSamplingMode.Point,
-            DrawAddressMode.Clamp,
-            state.Blend,
-            state.StencilMode,
-            state.StencilDepth,
-            state.Scissor));
     }
 
     private void AddImageGeometry(
-        IReadOnlyList<DrawVertex2D> sourceVertices,
-        IReadOnlyList<int> sourceIndices,
+        DrawVertex2D[] sourceVertices,
+        int[] sourceIndices,
         DrawPrimitiveTopology topology,
         IDrawImage image,
         DrawSamplingMode sampling,
         DrawAddressMode addressMode,
         RenderState state,
-        BatchCollector batches)
+        Cerberus batches)
     {
         SdlGpuTextureResource texture = GetImageTexture(image);
-        SdlGpuVertex[] vertices = new SdlGpuVertex[sourceVertices.Count];
+        Span<SdlGpuVertex> vertices = batches.Allocate(
+            sourceVertices.Length,
+            sourceIndices,
+            CreateBatchKey(
+                topology,
+                texture.Handle,
+                sampling,
+                addressMode,
+                state));
         for (int i = 0; i < vertices.Length; i++)
         {
             DrawVertex2D source = sourceVertices[i];
@@ -485,65 +595,114 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
                 state.Transform,
                 state.Opacity);
         }
-        batches.Add(new CpuDrawBatch(
-            vertices,
-            sourceIndices.ToArray(),
-            topology,
-            texture.Handle,
-            sampling,
-            addressMode,
-            state.Blend,
-            state.StencilMode,
-            state.StencilDepth,
-            state.Scissor));
     }
 
     private void AddPaintedGeometry(
-        IReadOnlyList<DrawPoint> positions,
-        IReadOnlyList<DrawPoint> brushPoints,
-        IReadOnlyList<int> indices,
+        DrawPoint[] positions,
+        DrawPoint[] brushPoints,
+        int[] indices,
         DrawPrimitiveTopology topology,
         DrawRect bounds,
         IDrawBrush? brush,
         float commandOpacity,
         Color fallbackColor,
         RenderState state,
-        BatchCollector batches)
+        Cerberus batches)
     {
         SdlGpuPaint paint = ResolvePaint(
             brush,
             bounds,
             fallbackColor,
             commandOpacity);
-        SdlGpuVertex[] vertices = new SdlGpuVertex[positions.Count];
+        Span<SdlGpuVertex> vertices = batches.Allocate(
+            positions.Length,
+            indices,
+            CreateBatchKey(
+                topology,
+                paint.Texture.Handle,
+                paint.Sampling,
+                paint.AddressMode,
+                state));
         for (int i = 0; i < vertices.Length; i++)
         {
-            DrawPoint textureCoordinate = paint.MapTextureCoordinate(
-                brushPoints[Math.Min(i, brushPoints.Count - 1)]);
-            vertices[i] = CreateVertex(
+            vertices[i] = CreatePaintedVertex(
                 positions[i],
-                textureCoordinate,
-                paint.Tint,
-                state.Transform,
-                state.Opacity);
+                brushPoints[Math.Min(i, brushPoints.Length - 1)],
+                paint,
+                state);
         }
-        batches.Add(new CpuDrawBatch(
-            vertices,
-            indices.ToArray(),
+    }
+
+    private static SdlGpuVertex CreatePaintedVertex(
+        DrawPoint position,
+        DrawPoint brushPoint,
+        SdlGpuPaint paint,
+        RenderState state) =>
+        CreateVertex(
+            position,
+            paint.MapTextureCoordinate(brushPoint),
+            paint.Tint,
+            state.Transform,
+            state.Opacity);
+
+    private static void AddQuad(
+        Cerberus batches,
+        DrawRect destination,
+        DrawRect textureCoordinates,
+        Color tint,
+        Matrix3x2 transform,
+        float opacity,
+        BatchKey key)
+    {
+        Span<SdlGpuVertex> vertices = batches.Allocate(4, QuadIndices, key);
+        vertices[0] = CreateVertex(
+            new DrawPoint(destination.X, destination.Y),
+            new DrawPoint(textureCoordinates.X, textureCoordinates.Y),
+            tint,
+            transform,
+            opacity);
+        vertices[1] = CreateVertex(
+            new DrawPoint(destination.Right, destination.Y),
+            new DrawPoint(textureCoordinates.Right, textureCoordinates.Y),
+            tint,
+            transform,
+            opacity);
+        vertices[2] = CreateVertex(
+            new DrawPoint(destination.Right, destination.Bottom),
+            new DrawPoint(textureCoordinates.Right, textureCoordinates.Bottom),
+            tint,
+            transform,
+            opacity);
+        vertices[3] = CreateVertex(
+            new DrawPoint(destination.X, destination.Bottom),
+            new DrawPoint(textureCoordinates.X, textureCoordinates.Bottom),
+            tint,
+            transform,
+            opacity);
+    }
+
+    private static BatchKey CreateBatchKey(
+        DrawPrimitiveTopology topology,
+        nint texture,
+        DrawSamplingMode sampling,
+        DrawAddressMode addressMode,
+        RenderState state,
+        SdlGpuColorWriteMask colorWriteMask = SdlGpuColorWriteMask.All) =>
+        new(
             topology,
-            paint.Texture.Handle,
-            paint.Sampling,
-            paint.AddressMode,
+            texture,
+            sampling,
+            addressMode,
             state.Blend,
             state.StencilMode,
             state.StencilDepth,
-            state.Scissor));
-    }
+            state.Scissor,
+            colorWriteMask);
 
     private void AddText(
         DrawCommand command,
         RenderState state,
-        BatchCollector batches)
+        Cerberus batches)
     {
         if (command.TextRun is null)
         {
@@ -565,7 +724,7 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
     private void AddTextLayout(
         DrawCommand command,
         RenderState state,
-        BatchCollector batches)
+        Cerberus batches)
     {
         if (command.TextLayout is null)
         {
@@ -597,8 +756,9 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
         Color fallbackColor,
         float commandOpacity,
         RenderState state,
-        BatchCollector batches)
+        Cerberus batches)
     {
+        long requestCollectionStarted = Stopwatch.GetTimestamp();
         DrawPoint phase = CanonicalPhase(baseline, CoordinateScale);
         DrawBrushDescriptor descriptor = brush?.CreateDescriptor() ??
             new SolidDrawBrushDescriptor(fallbackColor, 1);
@@ -608,17 +768,27 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
             textRun.Size,
             CoordinateScale,
             phase);
-        object[] layerKeys =
-        [
-            new SdlGpuTextLayerTextureKey(rasterKey, SdlGpuColorWriteMask.Red),
-            new SdlGpuTextLayerTextureKey(rasterKey, SdlGpuColorWriteMask.Green),
-            new SdlGpuTextLayerTextureKey(rasterKey, SdlGpuColorWriteMask.Blue)
-        ];
-        if (descriptor is SolidDrawBrushDescriptor cachedSolid &&
+        SdlGpuTextLayerTextureKey redKey = new(
+            rasterKey,
+            SdlGpuColorWriteMask.Red);
+        SdlGpuTextLayerTextureKey greenKey = new(
+            rasterKey,
+            SdlGpuColorWriteMask.Green);
+        SdlGpuTextLayerTextureKey blueKey = new(
+            rasterKey,
+            SdlGpuColorWriteMask.Blue);
+        SolidDrawBrushDescriptor? cachedSolid =
+            descriptor as SolidDrawBrushDescriptor;
+        SdlGpuTextAtlasEntries cachedEntries = default;
+        bool atlasHit = cachedSolid is not null &&
             resources.TryGetTextAtlasEntries(
-                layerKeys,
+                redKey,
+                greenKey,
+                blueKey,
                 textAtlasFrameToken,
-                out SdlGpuTextAtlasEntry[] cachedEntries))
+                out cachedEntries);
+        textRequestCollectionTime += Stopwatch.GetElapsedTime(requestCollectionStarted);
+        if (atlasHit)
         {
             AddTextAtlasLayers(
                 cachedEntries,
@@ -628,18 +798,33 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
                     cachedEntries[0].Width,
                     cachedEntries[0].Height),
                 ApplyOpacity(
-                    cachedSolid.Color,
+                    cachedSolid!.Color,
                     cachedSolid.Opacity * commandOpacity),
                 state,
                 batches);
             return;
         }
 
-        RasterizedText[] layers = textRasterizer.RasterizeSubpixelAtPhase(
-            textRun,
-            Color.White,
-            CoordinateScale,
-            phase);
+        textRequestCount++;
+        long rasterizationStarted = Stopwatch.GetTimestamp();
+        RasterizedText[] layers;
+        try
+        {
+            layers = textRasterizer.RasterizeSubpixelAtPhase(
+                textRun,
+                Color.White,
+                CoordinateScale,
+                phase);
+        }
+        finally
+        {
+            textRasterizationTime += Stopwatch.GetElapsedTime(rasterizationStarted);
+        }
+        foreach (RasterizedText layer in layers)
+        {
+            rasterizedPixelCount = checked(
+                rasterizedPixelCount + ((long)layer.Width * layer.Height));
+        }
         try
         {
             RasterizedText first = layers[0];
@@ -648,29 +833,23 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
                 first.OriginOffset,
                 first.Width,
                 first.Height);
-            DrawPoint[] positions = RectanglePoints(destination);
-            DrawPoint[] uv =
-            [
-                new DrawPoint(0, 0),
-                new DrawPoint(1, 0),
-                new DrawPoint(1, 1),
-                new DrawPoint(0, 1)
-            ];
             if (descriptor is SolidDrawBrushDescriptor solid)
             {
                 Color tint = ApplyOpacity(
                     solid.Color,
                     solid.Opacity * commandOpacity);
-                SdlGpuTextAtlasEntry[]? atlasEntries =
+                SdlGpuTextAtlasEntries? atlasEntries =
                     resources.GetOrCreateTextAtlasEntries(
                         session,
-                        layerKeys,
+                        redKey,
+                        greenKey,
+                        blueKey,
                         layers,
                         textAtlasFrameToken);
                 if (atlasEntries is not null)
                 {
                     AddTextAtlasLayers(
-                        atlasEntries,
+                        atlasEntries.Value,
                         destination,
                         tint,
                         state,
@@ -680,27 +859,24 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
 
                 AddTextLayer(
                     layers[0],
-                    layerKeys[0],
-                    positions,
-                    uv,
+                    redKey,
+                    destination,
                     tint,
                     SdlGpuColorWriteMask.Red,
                     state,
                     batches);
                 AddTextLayer(
                     layers[1],
-                    layerKeys[1],
-                    positions,
-                    uv,
+                    greenKey,
+                    destination,
                     tint,
                     SdlGpuColorWriteMask.Green,
                     state,
                     batches);
                 AddTextLayer(
                     layers[2],
-                    layerKeys[2],
-                    positions,
-                    uv,
+                    blueKey,
+                    destination,
                     tint,
                     SdlGpuColorWriteMask.Blue,
                     state,
@@ -724,22 +900,19 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
                 first.Width,
                 first.Height,
                 pixels);
-            SdlGpuVertex[] vertices = CreateTextVertices(
-                positions,
-                uv,
+            AddQuad(
+                batches,
+                destination,
+                new DrawRect(0, 0, 1, 1),
                 ApplyOpacity(Color.White, commandOpacity),
-                state);
-            batches.Add(new CpuDrawBatch(
-                vertices,
-                [0, 1, 2, 0, 2, 3],
-                DrawPrimitiveTopology.TriangleList,
-                texture.Handle,
-                DrawSamplingMode.Linear,
-                DrawAddressMode.Clamp,
-                state.Blend,
-                state.StencilMode,
-                state.StencilDepth,
-                state.Scissor));
+                state.Transform,
+                state.Opacity,
+                CreateBatchKey(
+                    DrawPrimitiveTopology.TriangleList,
+                    texture.Handle,
+                    DrawSamplingMode.Linear,
+                    DrawAddressMode.Clamp,
+                    state));
         }
         finally
         {
@@ -747,6 +920,24 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
             {
                 layer.ReturnPixelBuffer();
             }
+        }
+    }
+
+    private void FlushPendingTextAtlasUploads()
+    {
+        if (!resources.HasPendingTextAtlasUploads)
+        {
+            return;
+        }
+
+        long uploadStarted = Stopwatch.GetTimestamp();
+        try
+        {
+            resources.FlushTextAtlasUploads(session);
+        }
+        finally
+        {
+            textAtlasUploadTime += Stopwatch.GetElapsedTime(uploadStarted);
         }
     }
 
@@ -770,50 +961,46 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
     }
 
     private void AddTextAtlasLayers(
-        IReadOnlyList<SdlGpuTextAtlasEntry> entries,
+        SdlGpuTextAtlasEntries entries,
         DrawRect destination,
         Color tint,
         RenderState state,
-        BatchCollector batches)
+        Cerberus batches)
     {
-        DrawPoint[] positions = RectanglePoints(destination);
-        SdlGpuColorWriteMask[] channels =
-        [
-            SdlGpuColorWriteMask.Red,
-            SdlGpuColorWriteMask.Green,
-            SdlGpuColorWriteMask.Blue
-        ];
-        for (int i = 0; i < entries.Count; i++)
+        for (int i = 0; i < 3; i++)
         {
             SdlGpuTextAtlasEntry entry = entries[i];
-            batches.Add(new CpuDrawBatch(
-                CreateTextVertices(
-                    positions,
-                    RectanglePoints(entry.TextureCoordinates),
-                    tint,
-                    state),
-                [0, 1, 2, 0, 2, 3],
-                DrawPrimitiveTopology.TriangleList,
-                entry.Texture.Handle,
-                DrawSamplingMode.Linear,
-                DrawAddressMode.Clamp,
-                state.Blend,
-                state.StencilMode,
-                state.StencilDepth,
-                state.Scissor,
-                channels[i]));
+            SdlGpuColorWriteMask channel = i switch
+            {
+                0 => SdlGpuColorWriteMask.Red,
+                1 => SdlGpuColorWriteMask.Green,
+                _ => SdlGpuColorWriteMask.Blue
+            };
+            AddQuad(
+                batches,
+                destination,
+                entry.TextureCoordinates,
+                tint,
+                state.Transform,
+                state.Opacity,
+                CreateBatchKey(
+                    DrawPrimitiveTopology.TriangleList,
+                    entry.Texture.Handle,
+                    DrawSamplingMode.Linear,
+                    DrawAddressMode.Clamp,
+                    state,
+                    channel));
         }
     }
 
     private void AddTextLayer(
         RasterizedText layer,
         object textureKey,
-        IReadOnlyList<DrawPoint> positions,
-        IReadOnlyList<DrawPoint> textureCoordinates,
+        DrawRect destination,
         Color tint,
         SdlGpuColorWriteMask colorWriteMask,
         RenderState state,
-        BatchCollector batches)
+        Cerberus batches)
     {
         SdlGpuTextureResource texture = resources.GetOrCreateTexture(
             session,
@@ -821,43 +1008,26 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
             layer.Width,
             layer.Height,
             layer.PixelSpan);
-        batches.Add(new CpuDrawBatch(
-            CreateTextVertices(positions, textureCoordinates, tint, state),
-            [0, 1, 2, 0, 2, 3],
-            DrawPrimitiveTopology.TriangleList,
-            texture.Handle,
-            DrawSamplingMode.Linear,
-            DrawAddressMode.Clamp,
-            state.Blend,
-            state.StencilMode,
-            state.StencilDepth,
-            state.Scissor,
-            colorWriteMask));
-    }
-
-    private static SdlGpuVertex[] CreateTextVertices(
-        IReadOnlyList<DrawPoint> positions,
-        IReadOnlyList<DrawPoint> textureCoordinates,
-        Color tint,
-        RenderState state)
-    {
-        SdlGpuVertex[] vertices = new SdlGpuVertex[positions.Count];
-        for (int i = 0; i < vertices.Length; i++)
-        {
-            vertices[i] = CreateVertex(
-                positions[i],
-                textureCoordinates[i],
-                tint,
-                state.Transform,
-                state.Opacity);
-        }
-        return vertices;
+        AddQuad(
+            batches,
+            destination,
+            new DrawRect(0, 0, 1, 1),
+            tint,
+            state.Transform,
+            state.Opacity,
+            CreateBatchKey(
+                DrawPrimitiveTopology.TriangleList,
+                texture.Handle,
+                DrawSamplingMode.Linear,
+                DrawAddressMode.Clamp,
+                state,
+                colorWriteMask));
     }
 
     private void PushRectangleClip(
         DrawCommand command,
         RenderState state,
-        BatchCollector batches)
+        Cerberus batches)
     {
         Matrix3x2 transform = state.Transform;
         if (MathF.Abs(transform.M12) <= 0.00001f &&
@@ -881,7 +1051,7 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
     private void PushPathClip(
         DrawCommand command,
         RenderState state,
-        BatchCollector batches)
+        Cerberus batches)
     {
         DrawPath path = command.Path ??
             throw new InvalidOperationException("PushPathClip requires a path.");
@@ -907,7 +1077,7 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
         DrawPoint[] points,
         int[] indices,
         RenderState state,
-        BatchCollector batches)
+        Cerberus batches)
     {
         SdlGpuTextureResource white = GetWhiteTexture();
         SdlGpuVertex[] vertices = CreateSolidVertices(
@@ -931,9 +1101,9 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
         state.StencilDepth++;
     }
 
-    private static void PopClip(RenderState state, BatchCollector batches)
+    private static void PopClip(RenderState state, Cerberus batches)
     {
-        +
+        ClipEntry clip = state.Clips[^1];
         state.Clips.RemoveAt(state.Clips.Count - 1);
         if (clip.PreviousScissor is SdlRect)
         {
@@ -961,7 +1131,7 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
         SdlGpuRenderTarget parentTarget,
         DrawLayerOptions options,
         int layerDepth,
-        BatchCollector parentBatches,
+        Cerberus parentBatches,
         IReadOnlyDictionary<int, SdlGpuPrismPresentationSurface>? childSurfaces = null)
     {
         SdlGpuRenderTarget layer = resources.GetLayerTarget(
@@ -973,7 +1143,7 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
         session.BeginRenderTarget(layer, Color.Transparent, SdlGpuLoadOp.Clear);
         RenderState childState = RenderState.Create(layer, CoordinateScale);
         childState.Transforms[0] = parentState.Transform;
-        BatchCollector childBatches = new(this, layer);
+        parentBatches.Begin(layer);
         RenderRange(
             commands,
             start,
@@ -981,11 +1151,12 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
             analysis,
             childState,
             layer,
-            childBatches,
+            parentBatches,
             layerDepth,
             childSurfaces);
-        childBatches.Flush();
+        parentBatches.Flush();
         session.BeginRenderTarget(parentTarget, Color.Transparent, SdlGpuLoadOp.Load);
+        parentBatches.Begin(parentTarget);
 
         AddTargetComposite(
             layer,
@@ -1000,7 +1171,7 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
         DrawCommand command,
         RenderState state,
         SdlGpuRenderTarget parentTarget,
-        BatchCollector parentBatches)
+        Cerberus parentBatches)
     {
         IRenderSurface2DFrameSource source = command.RenderSurface as IRenderSurface2DFrameSource ??
             throw new InvalidOperationException(
@@ -1043,7 +1214,7 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
             RenderState surfaceState = RenderState.Create(
                 surface.Target,
                 CoordinateScale);
-            BatchCollector surfaceBatches = new(this, surface.Target);
+            parentBatches.Begin(surface.Target);
             RenderRange(
                 surface.Commands,
                 0,
@@ -1051,45 +1222,30 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
                 surfaceAnalysis,
                 surfaceState,
                 surface.Target,
-                surfaceBatches,
+                parentBatches,
                 layerDepth: 0);
-            surfaceBatches.Flush();
+            parentBatches.Flush();
             surface.FrameVersion = source.FrameVersion;
             session.BeginRenderTarget(
                 parentTarget,
                 Color.Transparent,
                 SdlGpuLoadOp.Load);
+            parentBatches.Begin(parentTarget);
         }
 
-        DrawPoint[] points = RectanglePoints(command.Rect);
-        DrawPoint[] uv =
-        [
-            new DrawPoint(0, 0),
-            new DrawPoint(1, 0),
-            new DrawPoint(1, 1),
-            new DrawPoint(0, 1)
-        ];
-        SdlGpuVertex[] vertices = new SdlGpuVertex[4];
-        for (int i = 0; i < vertices.Length; i++)
-        {
-            vertices[i] = CreateVertex(
-                points[i],
-                uv[i],
-                command.Color,
-                state.Transform,
-                state.Opacity);
-        }
-        parentBatches.Add(new CpuDrawBatch(
-            vertices,
-            [0, 1, 2, 0, 2, 3],
-            DrawPrimitiveTopology.TriangleList,
-            surface.Target.SampleTexture,
-            DrawSamplingMode.Linear,
-            DrawAddressMode.Clamp,
-            state.Blend,
-            state.StencilMode,
-            state.StencilDepth,
-            state.Scissor));
+        AddQuad(
+            parentBatches,
+            command.Rect,
+            new DrawRect(0, 0, 1, 1),
+            command.Color,
+            state.Transform,
+            state.Opacity,
+            CreateBatchKey(
+                DrawPrimitiveTopology.TriangleList,
+                surface.Target.SampleTexture,
+                DrawSamplingMode.Linear,
+                DrawAddressMode.Clamp,
+                state));
     }
 
     private void AddTargetComposite(
@@ -1098,41 +1254,28 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
         RenderState state,
         float opacity,
         DrawBlendMode blend,
-        BatchCollector batches)
+        Cerberus batches)
     {
         float logicalWidth = destination.PixelWidth / CoordinateScale;
         float logicalHeight = destination.PixelHeight / CoordinateScale;
-        DrawPoint[] positions = RectanglePoints(
-            new DrawRect(0, 0, logicalWidth, logicalHeight));
-        DrawPoint[] uv =
-        [
-            new DrawPoint(0, 0),
-            new DrawPoint(1, 0),
-            new DrawPoint(1, 1),
-            new DrawPoint(0, 1)
-        ];
-        SdlGpuVertex[] vertices = new SdlGpuVertex[4];
         Color tint = ApplyOpacity(Color.White, opacity);
-        for (int i = 0; i < vertices.Length; i++)
-        {
-            vertices[i] = CreateVertex(
-                positions[i],
-                uv[i],
-                tint,
-                Matrix3x2.Identity,
-                opacity: 1);
-        }
-        batches.Add(new CpuDrawBatch(
-            vertices,
-            [0, 1, 2, 0, 2, 3],
-            DrawPrimitiveTopology.TriangleList,
-            source.SampleTexture,
-            DrawSamplingMode.Linear,
-            DrawAddressMode.Clamp,
-            blend,
-            state.StencilMode,
-            state.StencilDepth,
-            state.Scissor));
+        AddQuad(
+            batches,
+            new DrawRect(0, 0, logicalWidth, logicalHeight),
+            new DrawRect(0, 0, 1, 1),
+            tint,
+            Matrix3x2.Identity,
+            opacity: 1,
+            new BatchKey(
+                DrawPrimitiveTopology.TriangleList,
+                source.SampleTexture,
+                DrawSamplingMode.Linear,
+                DrawAddressMode.Clamp,
+                blend,
+                state.StencilMode,
+                state.StencilDepth,
+                state.Scissor,
+                SdlGpuColorWriteMask.All));
     }
 
     internal void RenderCommandRange(
@@ -1165,7 +1308,7 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
                 state.Scissors[0],
                 ToScissor(clip, CoordinateScale));
         }
-        BatchCollector batches = new(this, target);
+        batches.Begin(target);
         RenderRange(
             commands,
             start,
@@ -1197,33 +1340,24 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
         RenderState state = RenderState.Create(target, CoordinateScale);
         float logicalWidth = target.PixelWidth / CoordinateScale;
         float logicalHeight = target.PixelHeight / CoordinateScale;
-        DrawPoint[] positions = RectanglePoints(
-            new DrawRect(0, 0, logicalWidth, logicalHeight));
-        DrawPoint[] uv =
-        [
-            new DrawPoint(0, 0),
-            new DrawPoint(1, 0),
-            new DrawPoint(1, 1),
-            new DrawPoint(0, 1)
-        ];
-        SdlGpuVertex[] vertices = new SdlGpuVertex[4];
-        for (int index = 0; index < vertices.Length; index++)
-        {
-            vertices[index] = CreateVertex(
-                positions[index], uv[index], Color.White, Matrix3x2.Identity, 1);
-        }
-        BatchCollector batches = new(this, target);
-        batches.Add(new CpuDrawBatch(
-            vertices,
-            [0, 1, 2, 0, 2, 3],
-            DrawPrimitiveTopology.TriangleList,
-            texture,
-            DrawSamplingMode.Linear,
-            DrawAddressMode.Clamp,
-            DrawBlendMode.Normal,
-            SdlGpuStencilMode.Disabled,
-            0,
-            clip ?? state.Scissor));
+        batches.Begin(target);
+        AddQuad(
+            batches,
+            new DrawRect(0, 0, logicalWidth, logicalHeight),
+            new DrawRect(0, 0, 1, 1),
+            Color.White,
+            Matrix3x2.Identity,
+            opacity: 1,
+            new BatchKey(
+                DrawPrimitiveTopology.TriangleList,
+                texture,
+                DrawSamplingMode.Linear,
+                DrawAddressMode.Clamp,
+                DrawBlendMode.Normal,
+                SdlGpuStencilMode.Disabled,
+                0,
+                clip ?? state.Scissor,
+                SdlGpuColorWriteMask.All));
         batches.Flush();
     }
 
@@ -1610,94 +1744,39 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
         pixels[offset + 3] = color.A;
     }
 
-    private sealed class BatchCollector(
-        SdlGpuDrawingBackend owner,
-        SdlGpuRenderTarget target)
+    private readonly record struct BatchKey(
+        DrawPrimitiveTopology Topology,
+        nint Texture,
+        DrawSamplingMode Sampling,
+        DrawAddressMode AddressMode,
+        DrawBlendMode BlendMode,
+        SdlGpuStencilMode StencilMode,
+        byte StencilReference,
+        SdlRect Scissor,
+        SdlGpuColorWriteMask ColorWriteMask)
     {
-        private readonly List<CpuDrawBatch> batches = [];
+        public static BatchKey From(CpuDrawBatch batch) => new(
+            batch.Topology,
+            batch.Texture,
+            batch.Sampling,
+            batch.AddressMode,
+            batch.BlendMode,
+            batch.StencilMode,
+            batch.StencilReference,
+            batch.Scissor,
+            batch.ColorWriteMask);
 
-        public void Add(CpuDrawBatch batch)
-        {
-            if (batch.Indices.Length == 0 || batch.Vertices.Length == 0)
-            {
-                return;
-            }
-            if (batches.Count > 0 && batches[^1].CanMerge(batch))
-            {
-                batches[^1] = batches[^1].Merge(batch);
-                return;
-            }
-            batches.Add(batch);
-        }
-
-        public void Flush()
-        {
-            if (batches.Count == 0)
-            {
-                return;
-            }
-            int vertexCount = batches.Sum(static batch => batch.Vertices.Length);
-            int indexCount = batches.Sum(static batch => batch.Indices.Length);
-            SdlGpuVertex[] vertices = new SdlGpuVertex[vertexCount];
-            int[] indices = new int[indexCount];
-            int vertexOffset = 0;
-            int indexOffset = 0;
-            List<(CpuDrawBatch Batch, int VertexOffset, int IndexOffset)> draws = [];
-            foreach (CpuDrawBatch batch in batches)
-            {
-                batch.Vertices.CopyTo(vertices, vertexOffset);
-                batch.Indices.CopyTo(indices, indexOffset);
-                draws.Add((batch, vertexOffset, indexOffset));
-                vertexOffset += batch.Vertices.Length;
-                indexOffset += batch.Indices.Length;
-            }
-
-            threadScale = owner.CoordinateScale;
-            SdlGpuGeometryBinding geometry = owner.resources.UploadGeometry(
-                owner.session,
-                vertices,
-                indices);
-            ISdlApi api = owner.session.Api;
-            nint renderPass = owner.session.ActiveRenderPass;
-            api.BindGpuVertexBuffer(
-                renderPass,
-                0,
-                new SdlGpuBufferBinding(geometry.VertexBuffer));
-            api.BindGpuIndexBuffer(
-                renderPass,
-                new SdlGpuBufferBinding(geometry.IndexBuffer));
-            float[] viewport = [target.PixelWidth, target.PixelHeight, 0, 0];
-            api.PushGpuVertexUniformData(
-                owner.session.ActiveCommandBuffer,
-                0,
-                MemoryMarshal.AsBytes(viewport.AsSpan()));
-            foreach ((CpuDrawBatch batch, int batchVertexOffset, int batchIndexOffset) in draws)
-            {
-                nint pipeline = owner.resources.GetPipeline(
-                    target.ColorFormat,
-                    target.SampleCount,
-                    batch.Topology,
-                    batch.BlendMode,
-                    batch.StencilMode,
-                    batch.ColorWriteMask);
-                nint sampler = owner.resources.GetSampler(
-                    batch.Sampling,
-                    batch.AddressMode);
-                api.BindGpuGraphicsPipeline(renderPass, pipeline);
-                api.BindGpuFragmentSampler(
-                    renderPass,
-                    0,
-                    new SdlGpuTextureSamplerBinding(batch.Texture, sampler));
-                api.SetGpuScissor(renderPass, batch.Scissor);
-                api.SetGpuStencilReference(renderPass, batch.StencilReference);
-                api.DrawGpuIndexedPrimitives(
-                    renderPass,
-                    checked((uint)batch.Indices.Length),
-                    checked((uint)batchIndexOffset),
-                    batchVertexOffset);
-            }
-            batches.Clear();
-        }
+        public bool CanMerge(BatchKey other) =>
+            Topology == DrawPrimitiveTopology.TriangleList &&
+            other.Topology == Topology &&
+            Texture == other.Texture &&
+            Sampling == other.Sampling &&
+            AddressMode == other.AddressMode &&
+            BlendMode == other.BlendMode &&
+            StencilMode == other.StencilMode &&
+            StencilReference == other.StencilReference &&
+            Scissor == other.Scissor &&
+            ColorWriteMask == other.ColorWriteMask;
     }
 
     private sealed class RenderState
@@ -1756,36 +1835,9 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
         byte StencilReference,
         SdlRect Scissor,
         SdlGpuColorWriteMask ColorWriteMask = SdlGpuColorWriteMask.All)
-    {
-        public bool CanMerge(CpuDrawBatch other) =>
-            Topology == DrawPrimitiveTopology.TriangleList &&
-            other.Topology == Topology &&
-            Texture == other.Texture &&
-            Sampling == other.Sampling &&
-            AddressMode == other.AddressMode &&
-            BlendMode == other.BlendMode &&
-            StencilMode == other.StencilMode &&
-            StencilReference == other.StencilReference &&
-            Scissor == other.Scissor &&
-            ColorWriteMask == other.ColorWriteMask;
+    ;
 
-        public CpuDrawBatch Merge(CpuDrawBatch other)
-        {
-            SdlGpuVertex[] vertices = new SdlGpuVertex[
-                Vertices.Length + other.Vertices.Length];
-            Vertices.CopyTo(vertices, 0);
-            other.Vertices.CopyTo(vertices, Vertices.Length);
-            int[] indices = new int[Indices.Length + other.Indices.Length];
-            Indices.CopyTo(indices, 0);
-            for (int i = 0; i < other.Indices.Length; i++)
-            {
-                indices[Indices.Length + i] = other.Indices[i] + Vertices.Length;
-            }
-            return this with { Vertices = vertices, Indices = indices };
-        }
-    }
-
-    private sealed record SdlGpuPaint(
+    private readonly record struct SdlGpuPaint(
         SdlGpuTextureResource Texture,
         Color Tint,
         DrawSamplingMode Sampling,
@@ -1877,17 +1929,6 @@ internal sealed class SdlGpuDrawingBackend : IDrawingBackend, IDisposable
         DrawRect Bounds,
         int Width,
         int Height);
-
-    private readonly record struct SdlGpuTextRasterKey(
-        int FontIdentity,
-        string Text,
-        float Size,
-        float CoordinateScale,
-        DrawPoint PixelPhase);
-
-    private readonly record struct SdlGpuTextLayerTextureKey(
-        SdlGpuTextRasterKey Raster,
-        SdlGpuColorWriteMask Channel);
 
     private readonly record struct SdlGpuTextBrushTextureKey(
         SdlGpuTextRasterKey Raster,

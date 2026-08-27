@@ -693,37 +693,50 @@ internal sealed class WindowApplicationRuntime : IDisposable
             long beginFrameStarted = Stopwatch.GetTimestamp();
             graphicsSession.BeginFrame(Color.White);
             TimeSpan beginFrameTime = Stopwatch.GetElapsedTime(beginFrameStarted);
+            TimeSpan drawingTime = default;
+            DrawingBackendFrameTiming backendTiming = default;
+            TimeSpan completeFrameTime;
             try
             {
                 long drawingStarted = Stopwatch.GetTimestamp();
                 context.Host.Draw(
                     graphicsSession.DrawingBackend,
                     graphicsSession as IBackdropFrameSource);
-                TimeSpan drawingTime = Stopwatch.GetElapsedTime(drawingStarted);
-                DrawingBackendFrameTiming backendTiming =
+                drawingTime = Stopwatch.GetElapsedTime(drawingStarted);
+                backendTiming =
                     graphicsSession.DrawingBackend is IDrawingBackendFrameTimingSource timingSource
                         ? timingSource.LastFrameTiming
                         : default;
-                frame.DiagnosticsTiming = new UiFrameTiming(
-                    inputCollectionTime,
-                    retainedUpdateTime,
-                    beginFrameTime,
-                    drawingTime,
-                    backendTiming,
-                    frame.DiagnosticsTiming.UpdatePreparation,
-                    frame.DiagnosticsTiming.ScheduledProcessing,
-                    frame.DiagnosticsTiming.InputDispatch,
-                    frame.DiagnosticsTiming.InputProcessing,
-                    frame.DiagnosticsTiming.RetainedCommit,
-                    frame.DiagnosticsTiming.CursorPublication,
-                    frame.DiagnosticsTiming.ScheduledPhases,
-                    frame.DiagnosticsTiming.InputPhases);
-                frame.ProcessingTime = Stopwatch.GetElapsedTime(processingStarted);
             }
             finally
             {
-                graphicsSession.CompleteFrame(present: !context.IsPreview);
+                long completeFrameStarted = Stopwatch.GetTimestamp();
+                try
+                {
+                    graphicsSession.CompleteFrame(present: !context.IsPreview);
+                }
+                finally
+                {
+                    completeFrameTime = Stopwatch.GetElapsedTime(completeFrameStarted);
+                }
             }
+
+            frame.DiagnosticsTiming = new UiFrameTiming(
+                inputCollectionTime,
+                retainedUpdateTime,
+                beginFrameTime,
+                drawingTime,
+                completeFrameTime,
+                backendTiming,
+                frame.DiagnosticsTiming.UpdatePreparation,
+                frame.DiagnosticsTiming.ScheduledProcessing,
+                frame.DiagnosticsTiming.InputDispatch,
+                frame.DiagnosticsTiming.InputProcessing,
+                frame.DiagnosticsTiming.RetainedCommit,
+                frame.DiagnosticsTiming.CursorPublication,
+                frame.DiagnosticsTiming.ScheduledPhases,
+                frame.DiagnosticsTiming.InputPhases);
+            frame.ProcessingTime = Stopwatch.GetElapsedTime(processingStarted);
 
             using (context.Root.Relay.EnterSynchronizationContext())
             {

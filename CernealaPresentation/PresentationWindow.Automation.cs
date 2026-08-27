@@ -95,7 +95,7 @@ public partial class PresentationWindow
         }
 
         FrameBudgetReport report = new(
-            SchemaVersion: 1,
+            SchemaVersion: 2,
             StartedUtc: DateTimeOffset.UtcNow - runTime.Elapsed,
             Cycles: cycles,
             FramesPerLoad: framesPerLoad,
@@ -339,6 +339,7 @@ public partial class PresentationWindow
         double ScheduledMotionMs,
         double BeginFrameMs,
         double DrawingMs,
+        double CompleteFrameMs,
         double DrawingPreparationMs,
         double TextRequestCollectionMs,
         double TextRasterizationMs,
@@ -371,6 +372,7 @@ public partial class PresentationWindow
                 scheduled.Motion.TotalMilliseconds,
                 timing.BeginFrame.TotalMilliseconds,
                 timing.Drawing.TotalMilliseconds,
+                timing.CompleteFrame.TotalMilliseconds,
                 drawing.Preparation.TotalMilliseconds,
                 drawing.TextRequestCollection.TotalMilliseconds,
                 drawing.TextRasterization.TotalMilliseconds,

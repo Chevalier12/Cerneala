@@ -187,7 +187,7 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
-    public void FrameProcessingTimeExcludesThePresentationWait()
+    public void FrameProcessingTimeIncludesThePresentationWait()
     {
         FakeWindowPlatform platform = new();
         Install(platform);
@@ -203,10 +203,11 @@ public sealed class WindowRuntimeTests : IDisposable
         WindowApplicationRuntime.Current!.PumpOnce(TimeSpan.FromMilliseconds(16));
         pumpTime.Stop();
 
-        Assert.True(window.LastFrame!.ProcessingTime >= TimeSpan.Zero);
+        Assert.True(window.LastFrame!.ProcessingTime >= presentationWait);
+        Assert.True(window.LastFrame.DiagnosticsTiming.CompleteFrame >= presentationWait);
         Assert.True(
-            pumpTime.Elapsed - window.LastFrame.ProcessingTime >= presentationWait,
-            $"Processing time {window.LastFrame.ProcessingTime} included the {presentationWait} presentation wait from a {pumpTime.Elapsed} pump.");
+            pumpTime.Elapsed - window.LastFrame.ProcessingTime < TimeSpan.FromMilliseconds(40),
+            $"Processing time {window.LastFrame.ProcessingTime} omitted the {presentationWait} presentation wait from a {pumpTime.Elapsed} pump.");
     }
 
     [Fact]

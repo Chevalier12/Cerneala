@@ -11,6 +11,27 @@ namespace Cerneala.Tests.SdlGpu;
 public sealed class SdlGpuWindowGraphicsSessionTests
 {
     [Fact]
+    public void PresentedFramesSubmitWithoutForcingACpuFenceWait()
+    {
+        FakeSdlApi api = new();
+        nint window = api.CreateWindow("asynchronous", 8, 6, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window, 8, 6);
+
+        session.BeginFrame(Color.Black);
+        session.CompleteFrame(present: true);
+
+        Assert.Equal(1, api.SubmitCount);
+        Assert.DoesNotContain(api.GpuActions, action =>
+            action.StartsWith("submit-fence:", StringComparison.Ordinal) ||
+            action.StartsWith("wait-fence:", StringComparison.Ordinal));
+        Assert.Contains(api.GpuActions, action =>
+            action.StartsWith("submit:", StringComparison.Ordinal));
+        Assert.Contains(api.RenderTargets, target => target.Cycle);
+        Assert.Contains(api.DepthStencilTargets, target => target.Cycle);
+    }
+
+    [Fact]
     public void TwoWindowsShareOneDeviceButOwnIndependentSwapchainsAndTextures()
     {
         FakeSdlApi api = new();

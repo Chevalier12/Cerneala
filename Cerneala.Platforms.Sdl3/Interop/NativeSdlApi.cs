@@ -276,7 +276,9 @@ internal sealed class NativeSdlApi : ISdlApi
                 target.ClearColor.A),
             LoadOp = (SDL.GPULoadOp)target.LoadOp,
             StoreOp = (SDL.GPUStoreOp)target.StoreOp,
-            ResolveTexture = target.ResolveTexture
+            ResolveTexture = target.ResolveTexture,
+            Cycle = target.Cycle,
+            CycleResolveTexture = target.CycleResolveTexture
         };
         ReadOnlySpan<SDL.GPUColorTargetInfo> targets = [native];
         return SDL.BeginGPURenderPass(commandBuffer, targets, 1, 0);
@@ -296,7 +298,8 @@ internal sealed class NativeSdlApi : ISdlApi
             StoreOp = (SDL.GPUStoreOp)depthStencilTarget.DepthStoreOp,
             StencilLoadOp = (SDL.GPULoadOp)depthStencilTarget.StencilLoadOp,
             StencilStoreOp = (SDL.GPUStoreOp)depthStencilTarget.StencilStoreOp,
-            ClearStencil = depthStencilTarget.ClearStencil
+            ClearStencil = depthStencilTarget.ClearStencil,
+            Cycle = depthStencilTarget.Cycle ? (byte)1 : (byte)0
         };
         ReadOnlySpan<SDL.GPUColorTargetInfo> targets = [nativeColor];
         return SDL.BeginGPURenderPass(
@@ -710,7 +713,9 @@ internal sealed class NativeSdlApi : ISdlApi
                 target.ClearColor.A),
             LoadOp = (SDL.GPULoadOp)target.LoadOp,
             StoreOp = (SDL.GPUStoreOp)target.StoreOp,
-            ResolveTexture = target.ResolveTexture
+            ResolveTexture = target.ResolveTexture,
+            Cycle = target.Cycle,
+            CycleResolveTexture = target.CycleResolveTexture
         };
 
     private static SDL.GPUDepthStencilState CreateDepthStencilState(

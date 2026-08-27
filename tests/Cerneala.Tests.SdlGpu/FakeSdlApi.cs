@@ -106,6 +106,10 @@ internal sealed class FakeSdlApi : ISdlApi
 
     public List<SdlGpuBlitInfo> Blits { get; } = [];
 
+    public List<SdlGpuColorTargetInfo> RenderTargets { get; } = [];
+
+    public List<SdlGpuDepthStencilTargetInfo> DepthStencilTargets { get; } = [];
+
     public List<nint> GeneratedMipmaps { get; } = [];
 
     public List<byte[]> FragmentUniformWrites { get; } = [];
@@ -408,6 +412,7 @@ internal sealed class FakeSdlApi : ISdlApi
     public nint BeginGpuRenderPass(nint commandBuffer, in SdlGpuColorTargetInfo target)
     {
         Assert.Contains(target.Texture, GpuTextures.Keys);
+        RenderTargets.Add(target);
         nint renderPass = (nint)nextRenderPass++;
         colorTargetsByRenderPass.Add(renderPass, target);
         GpuActions.Add($"begin-render:{commandBuffer}:{renderPass}:{target.Texture}");
@@ -420,6 +425,7 @@ internal sealed class FakeSdlApi : ISdlApi
         in SdlGpuDepthStencilTargetInfo depthStencilTarget)
     {
         Assert.Contains(depthStencilTarget.Texture, GpuTextures.Keys);
+        DepthStencilTargets.Add(depthStencilTarget);
         nint renderPass = BeginGpuRenderPass(commandBuffer, target);
         GpuActions.Add($"depth-stencil:{renderPass}:{depthStencilTarget.Texture}:{depthStencilTarget.StencilLoadOp}");
         return renderPass;

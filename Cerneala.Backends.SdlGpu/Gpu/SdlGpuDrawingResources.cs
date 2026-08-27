@@ -16,8 +16,9 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     private readonly Dictionary<SdlGpuPipelineKey, nint> pipelines = [];
     private readonly Dictionary<SdlGpuSamplerKey, nint> samplers = [];
     private readonly Dictionary<object, SdlGpuTextureResource> textures = [];
-    private readonly Dictionary<object, SdlGpuTextAtlasEntry> textAtlasEntries = [];
+    private readonly Dictionary<SdlGpuTextLayerTextureKey, SdlGpuTextAtlasEntry> textAtlasEntries = [];
     private readonly List<SdlGpuTextAtlasPage> textAtlasPages = [];
+    private readonly HashSet<SdlGpuTextAtlasPage> dirtyTextAtlasPages = [];
     private readonly Dictionary<SdlGpuLayerTargetKey, SdlGpuRenderTarget> layerTargets = [];
     private readonly HashSet<nint> ownedTextures = [];
     private readonly List<nint> retiredTextures = [];
@@ -57,6 +58,8 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     internal int TextAtlasPageCount => textAtlasPages.Count;
 
     internal int TextAtlasEntryCount => textAtlasEntries.Count;
+
+    internal bool HasPendingTextAtlasUploads => dirtyTextAtlasPages.Count != 0;
 
     internal int LayerTargetCount => layerTargets.Count;
 
@@ -271,81 +274,107 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     }
 
     public bool TryGetTextAtlasEntries(
-        IReadOnlyList<object> keys,
+        SdlGpuTextLayerTextureKey redKey,
+        SdlGpuTextLayerTextureKey greenKey,
+        SdlGpuTextLayerTextureKey blueKey,
         long frameToken,
-        out SdlGpuTextAtlasEntry[] entries)
+        out SdlGpuTextAtlasEntries entries)
     {
         ThrowIfDisposed();
-        ArgumentNullException.ThrowIfNull(keys);
-        entries = new SdlGpuTextAtlasEntry[keys.Count];
-        for (int i = 0; i < keys.Count; i++)
+        if (!textAtlasEntries.TryGetValue(redKey, out SdlGpuTextAtlasEntry? red) ||
+            !textAtlasEntries.TryGetValue(greenKey, out SdlGpuTextAtlasEntry? green) ||
+            !textAtlasEntries.TryGetValue(blueKey, out SdlGpuTextAtlasEntry? blue))
         {
-            if (!textAtlasEntries.TryGetValue(keys[i], out SdlGpuTextAtlasEntry? entry))
-            {
-                entries = [];
-                return false;
-            }
-            entries[i] = entry;
+            entries = default;
+            return false;
         }
 
         long usage = checked(++textAtlasUsageSequence);
-        foreach (SdlGpuTextAtlasEntry entry in entries)
-        {
-            entry.Page.MarkUsed(frameToken, usage);
-        }
+        red.Page.MarkUsed(frameToken, usage);
+        green.Page.MarkUsed(frameToken, usage);
+        blue.Page.MarkUsed(frameToken, usage);
+        entries = new SdlGpuTextAtlasEntries(red, green, blue);
         return true;
     }
 
-    public SdlGpuTextAtlasEntry[]? GetOrCreateTextAtlasEntries(
+    public SdlGpuTextAtlasEntries? GetOrCreateTextAtlasEntries(
         SdlGpuWindowGraphicsSession session,
-        IReadOnlyList<object> keys,
-        IReadOnlyList<RasterizedText> layers,
+        SdlGpuTextLayerTextureKey redKey,
+        SdlGpuTextLayerTextureKey greenKey,
+        SdlGpuTextLayerTextureKey blueKey,
+        RasterizedText[] layers,
         long frameToken)
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(session);
-        ArgumentNullException.ThrowIfNull(keys);
         ArgumentNullException.ThrowIfNull(layers);
-        if (keys.Count == 0 || keys.Count != layers.Count)
+        if (layers.Length != 3)
         {
             throw new ArgumentException(
-                "Text atlas keys and raster layers must have the same non-zero count.");
+                "Subpixel text atlases require exactly three raster layers.",
+                nameof(layers));
         }
-        if (TryGetTextAtlasEntries(keys, frameToken, out SdlGpuTextAtlasEntry[] cached))
+        if (TryGetTextAtlasEntries(
+                redKey,
+                greenKey,
+                blueKey,
+                frameToken,
+                out SdlGpuTextAtlasEntries cached))
         {
             return cached;
         }
 
-        SdlGpuTextAtlasEntry[] entries = new SdlGpuTextAtlasEntry[keys.Count];
-        HashSet<SdlGpuTextAtlasPage> dirtyPages = [];
-        for (int i = 0; i < keys.Count; i++)
+        if (!TryGetOrCreateTextAtlasEntry(redKey, layers[0], frameToken, out SdlGpuTextAtlasEntry red) ||
+            !TryGetOrCreateTextAtlasEntry(greenKey, layers[1], frameToken, out SdlGpuTextAtlasEntry green) ||
+            !TryGetOrCreateTextAtlasEntry(blueKey, layers[2], frameToken, out SdlGpuTextAtlasEntry blue))
         {
-            object key = keys[i];
-            if (textAtlasEntries.TryGetValue(key, out SdlGpuTextAtlasEntry? existing))
-            {
-                existing.Page.MarkUsed(
-                    frameToken,
-                    checked(++textAtlasUsageSequence));
-                entries[i] = existing;
-                continue;
-            }
-
-            RasterizedText layer = layers[i];
-            if (!TryAddTextAtlasEntry(
-                    key,
-                    layer,
-                    frameToken,
-                    out SdlGpuTextAtlasEntry created))
-            {
-                UploadDirtyTextAtlasPages(session, dirtyPages);
-                return null;
-            }
-            entries[i] = created;
-            dirtyPages.Add(created.Page);
+            return null;
         }
 
-        UploadDirtyTextAtlasPages(session, dirtyPages);
-        return entries;
+        return new SdlGpuTextAtlasEntries(red, green, blue);
+    }
+
+    private bool TryGetOrCreateTextAtlasEntry(
+        SdlGpuTextLayerTextureKey key,
+        RasterizedText layer,
+        long frameToken,
+        out SdlGpuTextAtlasEntry entry)
+    {
+        if (textAtlasEntries.TryGetValue(key, out SdlGpuTextAtlasEntry? existing))
+        {
+            existing.Page.MarkUsed(
+                frameToken,
+                checked(++textAtlasUsageSequence));
+            entry = existing;
+            return true;
+        }
+        if (!TryAddTextAtlasEntry(key, layer, frameToken, out entry))
+        {
+            return false;
+        }
+        dirtyTextAtlasPages.Add(entry.Page);
+        return true;
+    }
+
+    public void FlushTextAtlasUploads(SdlGpuWindowGraphicsSession session)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(session);
+        if (dirtyTextAtlasPages.Count == 0)
+        {
+            return;
+        }
+
+        foreach (SdlGpuTextAtlasPage page in dirtyTextAtlasPages)
+        {
+            UploadTexture(
+                session,
+                page.Texture.Handle,
+                TextAtlasDimension,
+                TextAtlasDimension,
+                page.Pixels);
+        }
+        dirtyTextAtlasPages.Clear();
     }
 
     public void InvalidateTexture(object key)
@@ -521,12 +550,8 @@ internal sealed class SdlGpuDrawingResources : IDisposable
             "SDL GPU drawing upload-buffer mapping");
         try
         {
-            Marshal.Copy(vertexBytes.ToArray(), 0, mapped, vertexBytes.Length);
-            Marshal.Copy(
-                indexBytes.ToArray(),
-                0,
-                mapped + vertexBytes.Length,
-                indexBytes.Length);
+            CopyToUnmanaged(vertexBytes, mapped);
+            CopyToUnmanaged(indexBytes, mapped + vertexBytes.Length);
         }
         finally
         {
@@ -608,6 +633,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         textures.Clear();
         textAtlasEntries.Clear();
         textAtlasPages.Clear();
+        dirtyTextAtlasPages.Clear();
         layerTargets.Clear();
         if (vertexBuffer != 0)
         {
@@ -650,7 +676,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
             "SDL GPU texture upload-buffer mapping");
         try
         {
-            Marshal.Copy(pixels.ToArray(), 0, mapped, pixels.Length);
+            CopyToUnmanaged(pixels, mapped);
         }
         finally
         {
@@ -673,7 +699,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     }
 
     private bool TryAddTextAtlasEntry(
-        object key,
+        SdlGpuTextLayerTextureKey key,
         RasterizedText layer,
         long frameToken,
         out SdlGpuTextAtlasEntry entry)
@@ -715,7 +741,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
                     return false;
                 }
 
-                foreach (object staleKey in page.Keys)
+                foreach (SdlGpuTextLayerTextureKey staleKey in page.Keys)
                 {
                     textAtlasEntries.Remove(staleKey);
                 }
@@ -765,21 +791,6 @@ internal sealed class SdlGpuDrawingResources : IDisposable
                 TextAtlasDimension,
                 TextAtlasDimension),
             TextAtlasDimension);
-    }
-
-    private void UploadDirtyTextAtlasPages(
-        SdlGpuWindowGraphicsSession session,
-        IEnumerable<SdlGpuTextAtlasPage> pages)
-    {
-        foreach (SdlGpuTextAtlasPage page in pages)
-        {
-            UploadTexture(
-                session,
-                page.Texture.Handle,
-                TextAtlasDimension,
-                TextAtlasDimension,
-                page.Pixels);
-        }
     }
 
     private void EnsureShaders()
@@ -887,6 +898,13 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         return next;
     }
 
+    private static unsafe void CopyToUnmanaged(
+        ReadOnlySpan<byte> source,
+        nint destination)
+    {
+        source.CopyTo(new Span<byte>(destination.ToPointer(), source.Length));
+    }
+
     private static SdlGpuBlendState ToBlendState(DrawBlendMode mode) => mode switch
     {
         DrawBlendMode.Opaque => SdlGpuBlendState.Opaque,
@@ -943,6 +961,31 @@ internal sealed record SdlGpuTextAtlasEntry(
     DrawPoint OriginOffset,
     SdlGpuTextAtlasPage Page);
 
+internal readonly record struct SdlGpuTextAtlasEntries(
+    SdlGpuTextAtlasEntry Red,
+    SdlGpuTextAtlasEntry Green,
+    SdlGpuTextAtlasEntry Blue)
+{
+    public SdlGpuTextAtlasEntry this[int index] => index switch
+    {
+        0 => Red,
+        1 => Green,
+        2 => Blue,
+        _ => throw new ArgumentOutOfRangeException(nameof(index))
+    };
+}
+
+internal readonly record struct SdlGpuTextRasterKey(
+    int FontIdentity,
+    string Text,
+    float Size,
+    float CoordinateScale,
+    DrawPoint PixelPhase);
+
+internal readonly record struct SdlGpuTextLayerTextureKey(
+    SdlGpuTextRasterKey Raster,
+    SdlGpuColorWriteMask Channel);
+
 internal sealed class SdlGpuTextAtlasPage(
     SdlGpuTextureResource texture,
     int dimension)
@@ -957,7 +1000,7 @@ internal sealed class SdlGpuTextAtlasPage(
 
     public byte[] Pixels { get; } = new byte[checked(dimension * dimension * 4)];
 
-    public HashSet<object> Keys { get; } = [];
+    public HashSet<SdlGpuTextLayerTextureKey> Keys { get; } = [];
 
     public int ActiveFrameCount => activeFrames.Count;
 

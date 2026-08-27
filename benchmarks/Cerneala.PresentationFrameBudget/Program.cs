@@ -12,11 +12,10 @@ internal static class PresentationFrameBudgetRunner
     [
         "RETAINED MODEL",
         "BUILD-TIME MARKUP",
-        "ASPECT DESIGN SYSTEM",
+        "ASPECT STUDIO",
         "MOTION",
         "PRISM",
-        "FRAME PIPELINE",
-        "DIAGNOSTICS"
+        "FRAME PIPELINE"
     ];
 
     public static async Task<int> RunAsync(string[] args)
@@ -163,9 +162,9 @@ internal static class PresentationFrameBudgetRunner
             return errors;
         }
 
-        if (report.SchemaVersion != 1)
+        if (report.SchemaVersion != 2)
         {
-            errors.Add($"Expected schema version 1, found {report.SchemaVersion}.");
+            errors.Add($"Expected schema version 2, found {report.SchemaVersion}.");
         }
 
         if (report.Cycles != options.Cycles || report.FramesPerLoad != options.FramesPerLoad)
@@ -297,7 +296,8 @@ internal static class PresentationFrameBudgetRunner
                 $"render {timing.ScheduledRenderMs:0.000}, " +
                 $"hit-test {timing.ScheduledHitTestMs:0.000}, " +
                 $"motion {timing.ScheduledMotionMs:0.000}], " +
-                $"draw {timing.DrawingMs:0.000} ms " +
+                $"draw {timing.DrawingMs:0.000} ms, " +
+                $"complete/present {timing.CompleteFrameMs:0.000} ms " +
                 $"[prepare {timing.DrawingPreparationMs:0.000}, " +
                 $"requests {timing.TextRequestCollectionMs:0.000}, " +
                 $"raster {timing.TextRasterizationMs:0.000}, " +
@@ -512,6 +512,7 @@ internal sealed record FrameBudgetTiming(
     double ScheduledMotionMs,
     double BeginFrameMs,
     double DrawingMs,
+    double CompleteFrameMs,
     double DrawingPreparationMs,
     double TextRequestCollectionMs,
     double TextRasterizationMs,

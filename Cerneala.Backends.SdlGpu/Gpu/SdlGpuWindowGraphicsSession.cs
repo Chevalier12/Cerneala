@@ -359,7 +359,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
                 PresentFrame(ref commandSubmitted, ref swapchainAcquired);
             }
 
-            SubmitAndWait(ref commandSubmitted);
+            SubmitActiveCommandBuffer(ref commandSubmitted);
             deviceLease.DrawingResources.FlushRetired();
         }
         finally
@@ -836,7 +836,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
             out uint swapchainWidth,
             out uint swapchainHeight))
         {
-            SubmitAndWait(ref commandSubmitted);
+            SubmitActiveCommandBuffer(ref commandSubmitted);
             Diagnostics = ConfigurePresentation();
             activeCommandBuffer = RequireHandle(
                 api.AcquireGpuCommandBuffer(deviceLease.Device),
@@ -971,7 +971,10 @@ internal sealed class SdlGpuWindowGraphicsSession :
             target.ResolveTexture != 0
                 ? SdlGpuStoreOp.ResolveAndStore
                 : SdlGpuStoreOp.Store,
-            target.ResolveTexture);
+            target.ResolveTexture,
+            Cycle: loadOp != SdlGpuLoadOp.Load,
+            CycleResolveTexture:
+                target.ResolveTexture != 0 && loadOp != SdlGpuLoadOp.Load);
         activeRenderPass = RequireHandle(
             target.DepthStencilTexture == 0
                 ? api.BeginGpuRenderPass(activeCommandBuffer, colorTarget)
@@ -983,7 +986,8 @@ internal sealed class SdlGpuWindowGraphicsSession :
                         loadOp,
                         SdlGpuStoreOp.Store,
                         loadOp,
-                        SdlGpuStoreOp.Store)),
+                        SdlGpuStoreOp.Store,
+                        Cycle: loadOp != SdlGpuLoadOp.Load)),
             "SDL GPU render-pass creation");
         SdlGpuViewport viewport = new(0, 0, target.PixelWidth, target.PixelHeight);
         api.SetGpuViewport(activeRenderPass, viewport);
@@ -1018,24 +1022,15 @@ internal sealed class SdlGpuWindowGraphicsSession :
         api.GenerateGpuMipmaps(activeCommandBuffer, target.SampleTexture);
     }
 
-    private void SubmitAndWait(ref bool commandSubmitted)
+    private void SubmitActiveCommandBuffer(ref bool commandSubmitted)
     {
-        nint fence = RequireHandle(
-            api.SubmitGpuCommandBufferAndAcquireFence(activeCommandBuffer),
-            "SDL GPU command-buffer submission");
+        if (!api.SubmitGpuCommandBuffer(activeCommandBuffer))
+        {
+            throw SdlApiError.Create(api, "SDL GPU command-buffer submission");
+        }
+
         commandSubmitted = true;
         activeCommandBuffer = 0;
-        try
-        {
-            if (!api.WaitForGpuFence(deviceLease.Device, fence))
-            {
-                throw SdlApiError.Create(api, "SDL GPU frame fence wait");
-            }
-        }
-        finally
-        {
-            api.ReleaseGpuFence(deviceLease.Device, fence);
-        }
     }
 
     private nint RequireHandle(nint handle, string operation) =>

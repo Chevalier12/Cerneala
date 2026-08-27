@@ -12,6 +12,123 @@ namespace Cerneala.Tests.SdlGpu;
 public sealed class SdlGpuDrawingBackendTests
 {
     [Fact]
+    public void TextMissesBatchAtlasUploadAndPublishBackendTiming()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1 };
+        nint window = api.CreateWindow("text-timing", 160, 80, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window, 160, 80);
+        IDrawFont font = new SystemFontSource().LoadFont("Arial", 16);
+        DrawCommandList commands = new();
+        DrawingContext drawing = new(commands);
+        drawing.DrawText(new DrawTextRun(font, "first", 16), new DrawPoint(4, 28), Color.White);
+        drawing.DrawText(new DrawTextRun(font, "second", 16), new DrawPoint(4, 56), Color.White);
+
+        Render(session, commands);
+
+        Assert.Equal(
+            1,
+            api.GpuActions.Count(action =>
+                action.StartsWith("upload-texture:", StringComparison.Ordinal)));
+        IDrawingBackendFrameTimingSource timingSource =
+            Assert.IsAssignableFrom<IDrawingBackendFrameTimingSource>(session.DrawingBackend);
+        DrawingBackendFrameTiming timing = timingSource.LastFrameTiming;
+        Assert.Equal(2, timing.TextRequestCount);
+        Assert.True(timing.RasterizedPixelCount > 0);
+        Assert.True(timing.TextRasterization > TimeSpan.Zero);
+        Assert.True(timing.TextAtlasUpload > TimeSpan.Zero);
+        Assert.True(timing.CommandRendering > TimeSpan.Zero);
+    }
+
+    [Fact]
+    public void AdjacentGeometryBatchingHasLinearManagedAllocation()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1 };
+        nint window = api.CreateWindow("allocation", 256, 256, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window, 256, 256);
+        DrawCommandList commands = new();
+        DrawingContext drawing = new(commands);
+        for (int index = 0; index < 1_000; index++)
+        {
+            drawing.FillRectangle(
+                new DrawRect(index % 250, index / 250, 1, 1),
+                Color.White);
+        }
+
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        Render(session, commands);
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        Assert.True(
+            allocated < 5_000_000,
+            $"Rendering 1,000 adjacent rectangles allocated {allocated:N0} bytes.");
+    }
+
+    [Fact]
+    public void WarmAdjacentGeometryBatchingReusesManagedStorage()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1 };
+        nint window = api.CreateWindow("allocation-reuse", 256, 256, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window, 256, 256);
+        DrawCommandList commands = new();
+        DrawingContext drawing = new(commands);
+        for (int index = 0; index < 1_000; index++)
+        {
+            drawing.FillRectangle(
+                new DrawRect(index % 250, index / 250, 1, 1),
+                Color.White);
+        }
+        DrawingFrameContext frame = new(new PrismFrameAnalyzer().Analyze(commands));
+        Render(session, commands, frame);
+
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        Render(session, commands, frame);
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        Assert.True(
+            allocated < 50_000,
+            $"A warm frame with 1,000 adjacent rectangles allocated {allocated:N0} bytes.");
+    }
+
+    [Fact]
+    public void FailedFrameDoesNotPoisonPersistentCerberus()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1 };
+        nint window = api.CreateWindow("batch-recovery", 64, 48, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window);
+        DrawCommandList failingCommands = new();
+        DrawingContext failingDrawing = new(failingCommands);
+        failingDrawing.FillRectangle(new DrawRect(1, 1, 8, 8), Color.White);
+        failingDrawing.FillRectangle(
+            new DrawRect(12, 1, 8, 8),
+            new LinearGradientBrush(
+                new DrawPoint(12, 1),
+                new DrawPoint(20, 1),
+                [new GradientStop(0, Color.Red), new GradientStop(1, Color.Blue)]));
+        DrawingFrameContext failingFrame = new(
+            new PrismFrameAnalyzer().Analyze(failingCommands));
+        api.FailTextureCreationAt = api.TextureCreationCount + 2;
+
+        session.BeginFrame(Color.Transparent);
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(() =>
+            session.DrawingBackend.Render(failingCommands, in failingFrame));
+        Assert.Contains("texture", failure.Message, StringComparison.OrdinalIgnoreCase);
+        session.CompleteFrame(present: false);
+
+        DrawCommandList recoveryCommands = new();
+        new DrawingContext(recoveryCommands).FillRectangle(
+            new DrawRect(2, 2, 6, 6),
+            Color.Coral);
+
+        Exception? recoveryFailure = Record.Exception(() => Render(session, recoveryCommands));
+
+        Assert.Null(recoveryFailure);
+    }
+
+    [Fact]
     public void DrawingCommandCoverageTracksTheCompleteCoreEnum()
     {
         HashSet<DrawCommandKind> expected = Enum.GetValues<DrawCommandKind>().ToHashSet();
@@ -269,6 +386,14 @@ public sealed class SdlGpuDrawingBackendTests
     {
         PrismFrameAnalysis analysis = new PrismFrameAnalyzer().Analyze(commands);
         DrawingFrameContext frame = new(analysis);
+        Render(session, commands, frame);
+    }
+
+    private static void Render(
+        SdlGpuWindowGraphicsSession session,
+        DrawCommandList commands,
+        DrawingFrameContext frame)
+    {
         session.BeginFrame(Color.Transparent);
         session.DrawingBackend.Render(commands, in frame);
         session.CompleteFrame(present: false);

@@ -177,6 +177,7 @@ public sealed class UiHost
                 default,
                 default,
                 default,
+                default,
                 updatePreparationTime,
                 scheduledProcessingTime,
                 inputDispatchTime,
