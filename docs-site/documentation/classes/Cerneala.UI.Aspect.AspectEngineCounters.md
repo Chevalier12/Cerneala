@@ -35,6 +35,7 @@ engine.Apply(new Button(), catalog, environment);
 
 int considered = engine.Counters.RulesConsidered;
 int matched = engine.Counters.RulesMatched;
+int conditions = engine.Counters.ConditionEvaluations;
 int declarations = engine.Counters.DeclarationsResolved;
 ```
 
@@ -60,7 +61,7 @@ int tokenLookups = counters.TokenLookups;
 
 `AspectEngineCounters` is a mutable counter holder owned by `AspectEngine`. The public constructor creates a zero-valued counter set. The properties have public getters and internal setters, so callers can inspect values but only code inside the assembly updates them.
 
-`AspectEngine.Resolve` increments `RulesConsidered` for every rule in the catalog, `RulesMatched` for rules whose target matches the current element context, `DeclarationsResolved` for declarations on matched rules, and `TokenLookups` by the number of token dependencies on each resolved declaration. These counters are cumulative for the owning engine instance; applying or resolving another element keeps increasing the same `Counters` object.
+`AspectEngine.Resolve` increments `RulesConsidered` for every rule in the catalog, `ConditionEvaluations` once for every condition node actually evaluated after structural filtering, `RulesMatched` for rules whose target and conditions match, `DeclarationsResolved` for declarations on matched rules, and `TokenLookups` by the number of token dependencies on each resolved declaration. These counters are cumulative for the owning engine instance; applying or resolving another element keeps increasing the same `Counters` object.
 
 `AspectEngine.Apply` stores diagnostics with a copied counter snapshot. The copied `AspectEngineCounters` in `AspectDiagnostics.Snapshot.Counters` preserves the engine counter values at the time diagnostics were built for that element.
 
@@ -78,6 +79,7 @@ int tokenLookups = counters.TokenLookups;
 | --- | --- | --- |
 | `RulesConsidered` | `int` | Number of catalog rules evaluated by the engine. |
 | `RulesMatched` | `int` | Number of evaluated rules whose target matched the current aspect match context. |
+| `ConditionEvaluations` | `int` | Number of condition nodes evaluated after target type and slot filtering. |
 | `DeclarationsResolved` | `int` | Number of declarations resolved from matched rules. |
 | `TokenLookups` | `int` | Number of token dependencies counted while resolving declarations. |
 | `CacheHits` | `int` | Cache hit counter slot; currently not incremented by `AspectEngine`. |

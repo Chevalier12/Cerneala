@@ -7,82 +7,63 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Aspect/AspectResolutionStep.cs`
 
-Represents one diagnostic step recorded while aspect resolution explains matched rules or rejected declarations.
+Captures one considered rule with its immutable origin, scope, cascade coordinates, condition results, dependencies, and outcome.
 
 ```csharp
-public sealed record AspectResolutionStep(
-    string PackageName,
-    string RuleName,
-    string Target,
-    AspectLayer Layer,
-    AspectSpecificity Specificity,
-    int DeclarationOrder,
-    string Outcome);
+public sealed record AspectResolutionStep
 ```
-
-Inheritance:
-`object` -> `AspectResolutionStep`
 
 ## Examples
 
-Print the recorded aspect resolution steps for an element:
-
 ```csharp
-using Cerneala.UI.Aspect;
-using Cerneala.UI.Controls;
-
-AspectEngine engine = new();
-Button button = new();
-
-engine.Apply(
-    button,
-    new AspectRegistry().Register(DefaultAspectPackage.Create()).BuildCatalog(),
-    DefaultAspectPackage.CreateEnvironment());
-
 AspectDiagnostics.Snapshot diagnostics = engine.GetDiagnostics(button);
 
 foreach (AspectResolutionStep step in diagnostics.ResolutionSteps)
 {
     Console.WriteLine(
-        $"{step.PackageName} {step.RuleName} {step.Target} " +
-        $"{step.Layer} {step.Specificity} order={step.DeclarationOrder} {step.Outcome}");
+        $"{step.Origin.Document} {step.Origin.Kind} {step.Scope} " +
+        $"{step.PackageName}/{step.RuleName}: {step.Outcome}");
 }
 ```
 
 ## Remarks
 
-`AspectResolutionStep` is a diagnostics record, not the resolved aspect value itself. `AspectEngine.Apply` stores these steps in `AspectDiagnostics.Snapshot.ResolutionSteps` after applying a `ResolvedAspect` to an element.
+`AspectEngine.Apply` captures one step for every catalog rule. Type and slot mismatches are recorded without evaluating conditions. Structurally matching rules retain the exact `AspectConditionResult` data used for matching; diagnostics never invoke a predicate a second time.
 
-For matched rules, `AspectEngine` records the package name, rule name, target text, layer, target specificity, declaration order, and the outcome string `matched`. For rejected declarations, it records the rejected declaration name or property name, the target property's diagnostic name, `AspectLayer.Reset`, default `AspectSpecificity`, declaration order `0`, and an outcome string prefixed with `rejected:`.
+`Layer`, `SourceOrder`, `Specificity`, and `DeclarationOrder` are the canonical cascade coordinates in comparison order. `Origin` explains the code/markup document and named/inline form but does not affect the winner. `Scope` is a deterministic label (`root`, `application`, `scope[n]`, or `element`).
 
-`AspectTrace.Capture` consumes these records to produce human-readable trace lines. The record is immutable after construction and uses normal C# record value equality.
+Public steps are materialized lazily on the first `AspectEngine.GetDiagnostics` call after an apply.
 
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `AspectResolutionStep(string PackageName, string RuleName, string Target, AspectLayer Layer, AspectSpecificity Specificity, int DeclarationOrder, string Outcome)` | Initializes a diagnostic resolution step with package, rule, target, cascade metadata, declaration order, and outcome text. |
+| `AspectResolutionStep(string packageName, string ruleName, string target, AspectLayer layer, AspectSpecificity specificity, int declarationOrder, int sourceOrder, AspectOrigin origin, string scope, IReadOnlyList<AspectConditionTrace> conditions, IReadOnlyList<AspectConditionDependency> dependencies, string outcome)` | Creates a complete immutable resolution step. |
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `PackageName` | `string` | Gets the package name associated with the matched rule, or an empty string for rejected declaration steps. |
-| `RuleName` | `string` | Gets the matched rule name or rejected declaration diagnostic name. |
-| `Target` | `string` | Gets the target description recorded for the matched rule or rejected property. |
-| `Layer` | `AspectLayer` | Gets the aspect layer used by the matched rule; rejected declaration steps use `AspectLayer.Reset`. |
-| `Specificity` | `AspectSpecificity` | Gets the target specificity for the matched rule; rejected declaration steps use the default specificity value. |
-| `DeclarationOrder` | `int` | Gets the declaration order recorded for cascade diagnostics. |
-| `Outcome` | `string` | Gets the outcome text, such as `matched` or a rejection reason. |
+| `PackageName` | `string` | Gets the contributing package name. |
+| `RuleName` | `string` | Gets the considered rule name. |
+| `Target` | `string` | Gets the target type/slot description. |
+| `Layer` | `AspectLayer` | Gets the first cascade coordinate. |
+| `Specificity` | `AspectSpecificity` | Gets the third cascade coordinate. |
+| `DeclarationOrder` | `int` | Gets the final cascade coordinate. |
+| `SourceOrder` | `int` | Gets the root/application/scope/element source rank. |
+| `Origin` | `AspectOrigin` | Gets immutable authoring metadata. |
+| `Scope` | `string` | Gets the deterministic runtime scope label. |
+| `Conditions` | `IReadOnlyList<AspectConditionTrace>` | Gets captured top-level condition traces. |
+| `Dependencies` | `IReadOnlyList<AspectConditionDependency>` | Gets the condition dependencies captured for this rule. |
+| `Outcome` | `string` | Gets `matched` or a deterministic structural/condition rejection reason. |
 
 ## Applies to
 
-Cerneala UI aspect diagnostics produced by `AspectEngine.Apply` and rendered by `AspectTrace`.
+Canonical Aspect diagnostics for code-first and generated markup rules.
 
 ## See also
 
+- `AspectOrigin`
+- `AspectConditionTrace`
 - `AspectDiagnostics`
-- `AspectEngine`
 - `AspectTrace`
-- `AspectLayer`
-- `AspectSpecificity`

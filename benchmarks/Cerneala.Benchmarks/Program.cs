@@ -20,6 +20,18 @@ if (args is ["--language-core-gate"])
     return;
 }
 
+if (args is ["--aspect-metrics", string aspectMetricsPath])
+{
+    AspectResolutionBenchmarkMetricsRunner.Run(aspectMetricsPath);
+    return;
+}
+
+if (args is ["--aspect-visual-diff", string baselinePath, string actualPath, string visualReportPath])
+{
+    AspectVisualConformanceRunner.Run(baselinePath, actualPath, visualReportPath);
+    return;
+}
+
 ManualConfig config = ManualConfig
     .Create(DefaultConfig.Instance)
     .WithBuildTimeout(TimeSpan.FromMinutes(10));

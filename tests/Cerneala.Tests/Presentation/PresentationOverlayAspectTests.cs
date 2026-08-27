@@ -41,6 +41,7 @@ public sealed class PresentationOverlayAspectTests : IDisposable
         ComboBox comboBox = Assert.Single(Descendants(view).OfType<ComboBox>());
         comboBox.IsDropDownOpen = true;
         root.ProcessFrame();
+        root.ProcessFrame();
 
         ScrollViewer scrollViewer = GetDropDownScrollViewer(comboBox);
         Assert.True(scrollViewer.IsVerticalScrollBarVisible);
@@ -59,6 +60,7 @@ public sealed class PresentationOverlayAspectTests : IDisposable
 
         ComboBox comboBox = Descendants(view).OfType<ComboBox>().First();
         comboBox.IsDropDownOpen = true;
+        root.ProcessFrame();
         root.ProcessFrame();
 
         AssertUsesPresentationScrollAspect(GetDropDownScrollViewer(comboBox));

@@ -166,10 +166,10 @@ public sealed class PrismChapterViewTests : IDisposable
                 new Color(77, 240, 255),
                 Assert.IsType<SolidColorBrush>(slider.Track.Thumb.Background).Color);
             Assert.Equal(
-                UiPropertyValueSource.LocalAspectBase,
+                UiPropertyValueSource.AspectBase,
                 slider.Track.GetValueSource(Control.BackgroundProperty));
             Assert.Equal(
-                UiPropertyValueSource.LocalAspectBase,
+                UiPropertyValueSource.AspectBase,
                 slider.Track.Thumb.GetValueSource(Control.BackgroundProperty));
             Assert.Equal(10, slider.Track.Thumb.ArrangedBounds.Width);
         });
@@ -267,10 +267,10 @@ public sealed class PrismChapterViewTests : IDisposable
         Color line = new(52, 60, 70);
         Color panel = new(20, 24, 30);
         Assert.Equal(
-            UiPropertyValueSource.LocalAspectBase,
+            UiPropertyValueSource.AspectBase,
             comboBox.GetValueSource(Control.BackgroundProperty));
         Assert.Equal(
-            UiPropertyValueSource.LocalAspectBase,
+            UiPropertyValueSource.AspectBase,
             comboBox.GetValueSource(Control.ForegroundProperty));
         Assert.Equal(
             panel,

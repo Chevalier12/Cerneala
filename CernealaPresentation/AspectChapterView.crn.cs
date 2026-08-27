@@ -120,6 +120,11 @@ public partial class AspectChapterView : UserControl
         SelectTarget(kind);
     }
 
+    internal void FilterPropertyForTests(string propertyName)
+    {
+        PropertySearch.Text = propertyName ?? string.Empty;
+    }
+
     internal bool TrySetPropertyForTests(UiProperty property, string text)
     {
         if (!TryParseValue(property, text, out object? value, out _))

@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Cerneala.UI.Relay;
 
 namespace Cerneala.UI.Aspect;
@@ -5,6 +6,7 @@ namespace Cerneala.UI.Aspect;
 public sealed class AspectRegistry
 {
     private readonly List<AspectPackage> packages = [];
+    private readonly ReadOnlyCollection<AspectPackage> packagesView;
     private readonly Action? changed;
     private readonly IUiThreadAccess threadAccess;
     private AspectCatalog? cachedCatalog;
@@ -18,11 +20,12 @@ public sealed class AspectRegistry
     {
         this.threadAccess = threadAccess ?? throw new ArgumentNullException(nameof(threadAccess));
         this.changed = changed;
+        packagesView = packages.AsReadOnly();
     }
 
     public int Version { get; private set; }
 
-    public IReadOnlyList<AspectPackage> Packages => packages;
+    public IReadOnlyList<AspectPackage> Packages => packagesView;
 
     public AspectRegistry Register(AspectPackage package, bool notify = true)
     {

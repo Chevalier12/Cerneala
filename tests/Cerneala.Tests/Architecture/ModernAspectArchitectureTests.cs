@@ -63,14 +63,54 @@ public sealed class ModernAspectArchitectureTests
     public void AspectValueSourcesHaveDocumentedPrecedence()
     {
         Assert.True(UiPropertyValueSource.Local > UiPropertyValueSource.Animation);
-        Assert.True(UiPropertyValueSource.Animation > UiPropertyValueSource.LocalAspectConditional);
-        Assert.True(UiPropertyValueSource.LocalAspectConditional > UiPropertyValueSource.LocalAspectBase);
-        Assert.True(UiPropertyValueSource.LocalAspectBase > UiPropertyValueSource.AspectVisualState);
+        Assert.True(UiPropertyValueSource.Animation > UiPropertyValueSource.MarkupConditional);
+        Assert.True(UiPropertyValueSource.MarkupConditional > UiPropertyValueSource.MarkupBase);
+        Assert.True(UiPropertyValueSource.MarkupBase > UiPropertyValueSource.TemplateOwnerBinding);
+        Assert.True(UiPropertyValueSource.TemplateOwnerBinding > UiPropertyValueSource.AspectVisualState);
         Assert.True(UiPropertyValueSource.Animation > UiPropertyValueSource.AspectVisualState);
         Assert.True(UiPropertyValueSource.AspectVisualState > UiPropertyValueSource.AspectBase);
         Assert.True(UiPropertyValueSource.AspectBase > UiPropertyValueSource.TemplateBinding);
         Assert.True(UiPropertyValueSource.TemplateBinding > UiPropertyValueSource.Inherited);
         Assert.True(UiPropertyValueSource.Inherited > UiPropertyValueSource.Default);
+    }
+
+    [Fact]
+    public void ParallelMarkupAspectRuntimeAndAuthoringSpecificSourcesStayRemoved()
+    {
+        Assert.Null(typeof(UIElement).Assembly.GetType(
+            "Cerneala.UI.Markup.MarkupAspectResource",
+            throwOnError: false));
+
+        string[] removedMembers =
+        [
+            "ApplyApplicationAspects",
+            "ApplyLocalAspects",
+            "applicationAspects",
+            "InheritanceDistance"
+        ];
+        MemberInfo[] rootMembers = typeof(UIRoot)
+            .GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
+            .Where(member => member.DeclaringType == typeof(UIRoot))
+            .ToArray();
+        foreach (string removedMember in removedMembers)
+        {
+            Assert.DoesNotContain(rootMembers, member => string.Equals(member.Name, removedMember, StringComparison.Ordinal));
+        }
+
+        string[] removedSources =
+        [
+            "ApplicationAspectBase",
+            "ApplicationAspectVisualState",
+            "LocalAspectBase",
+            "LocalAspectConditional"
+        ];
+        string[] sourceNames = Enum.GetNames<UiPropertyValueSource>();
+        foreach (string removedSource in removedSources)
+        {
+            Assert.DoesNotContain(removedSource, sourceNames);
+        }
+
+        AssertNoProductionReferences("Markup" + "AspectResource");
     }
 
     [Fact]

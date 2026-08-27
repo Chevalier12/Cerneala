@@ -1,5 +1,7 @@
 # Plan: component templates declared directly in the markup
 
+> Historical note (2026-08-27): the direct `MarkupAspectResource`/`LocalAspectBase` runtime described here is superseded by `docs/plans/2026-08-27-unify-aspect-runtime.md`. Template syntax remains supported, but active implementation guidance is the unified `AspectPackage`/`ElementAspect` -> `AspectProcessor` -> `AspectEngine` path.
+
 **Date:** 2026-07-10
 **Status:** Implemented and verified
 **Purpose:** Extend the Cerneala markup so that any element derived from `Control` can declare a local `@template`, and a `Aspect` can provide the same modern type of `ComponentTemplate`.

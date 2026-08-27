@@ -1,0 +1,42 @@
+{
+  "SchemaVersion": 1,
+  "Iterations": 1000,
+  "Metrics": [
+    {
+      "Scenario": "CodeFirstCatalogResolve",
+      "Iterations": 1000,
+      "RuleEvaluations": 2000,
+      "RulesMatched": 1500,
+      "ConditionEvaluations": 1000,
+      "DeclarationsResolved": 1500,
+      "InvalidationCount": 0
+    },
+    {
+      "Scenario": "RootRegisteredPackageFrame",
+      "Iterations": 1000,
+      "RuleEvaluations": 4000,
+      "RulesMatched": 2500,
+      "ConditionEvaluations": 1000,
+      "DeclarationsResolved": 6500,
+      "InvalidationCount": 1000
+    },
+    {
+      "Scenario": "NestedScopeAttachAndFrame",
+      "Iterations": 1000,
+      "RuleEvaluations": 3000,
+      "RulesMatched": 2000,
+      "ConditionEvaluations": 0,
+      "DeclarationsResolved": 6000,
+      "InvalidationCount": 1000
+    },
+    {
+      "Scenario": "ElementLocalMutationAndFrame",
+      "Iterations": 1000,
+      "RuleEvaluations": 3000,
+      "RulesMatched": 2000,
+      "ConditionEvaluations": 0,
+      "DeclarationsResolved": 6000,
+      "InvalidationCount": 1000
+    }
+  ]
+}

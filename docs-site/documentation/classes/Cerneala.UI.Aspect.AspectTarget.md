@@ -52,11 +52,13 @@ AspectTarget target = new(
 
 ## Remarks
 
-`AspectTarget` is used by `AspectRuleSet` to decide whether a rule applies to an `AspectMatchContext`. A target matches only when the context element is an instance of `ElementType`, the optional `Slot` equals the current slot path's slot, and every condition in `Conditions` evaluates with `Matches == true`.
+`AspectTarget` is used by `AspectRuleSet` to decide whether a rule applies to an `AspectMatchContext`. A target matches only when the context element is an instance of `ElementType`, the optional `Slot` equals the current slot path's slot, the slot owner and target satisfy the slot's declared types, and every condition in `Conditions` evaluates with `Matches == true`.
+
+`AspectEngine` performs type and slot filtering before evaluating conditions. A structurally unrelated rule therefore does not execute predicates or contribute condition dependencies. Conditions on a structurally matching rule are evaluated exactly once, and that result is reused for matching, dependency capture, motion-source classification, and diagnostics.
 
 The constructor accepts only types assignable to `UIElement`. Passing `typeof(UIElement)` creates the least component-specific target; passing a concrete element type contributes component specificity. A non-null slot contributes slot specificity, and condition specificity is added from each condition in `Conditions`.
 
-`Conditions` is stored as the supplied read-only list, or as an empty list when `conditions` is `null`. The class does not copy or normalize the list.
+`Conditions` is copied into an immutable snapshot, or becomes an empty snapshot when `conditions` is `null`. Null entries are rejected.
 
 `ToString()` returns the element type name for unslotted targets, or `ElementTypeName@SlotName` when a slot is present.
 
@@ -72,7 +74,7 @@ The constructor accepts only types assignable to `UIElement`. Passing `typeof(UI
 | --- | --- | --- |
 | `ElementType` | `Type` | Gets the UI element type the target matches. |
 | `Slot` | `AspectSlot?` | Gets the optional slot that must match `AspectMatchContext.SlotPath?.Slot`. |
-| `Conditions` | `IReadOnlyList<AspectCondition>` | Gets the conditions that must all match the context. |
+| `Conditions` | `IReadOnlyList<AspectCondition>` | Gets the immutable condition snapshot that must all match the context. |
 | `Specificity` | `AspectSpecificity` | Gets the cascade specificity contributed by the element type, slot, and conditions. |
 
 ## Methods
@@ -88,6 +90,7 @@ The constructor accepts only types assignable to `UIElement`. Passing `typeof(UI
 | --- | --- | --- |
 | `AspectTarget(...)` | `ArgumentNullException` | `elementType` is `null`. |
 | `AspectTarget(...)` | `ArgumentException` | `elementType` does not derive from `UIElement`. |
+| `AspectTarget(...)` | `ArgumentException` | `conditions` contains a `null` entry. |
 | `Matches(AspectMatchContext context)` | `ArgumentNullException` | `context` is `null`. |
 
 ## Applies to

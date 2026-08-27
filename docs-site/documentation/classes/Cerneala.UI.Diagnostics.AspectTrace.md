@@ -50,14 +50,16 @@ When diagnostics are available, the trace can include:
 
 | Line kind | Source data |
 | --- | --- |
-| `winner` | The resolved value for the requested `UiProperty`, including the winning declaration diagnostic name or property name and the resolved value. |
-| Resolution step | Each `AspectResolutionStep`, including package, rule, target, layer, specificity, declaration order, and outcome. |
-| `rejected` | Each rejected declaration from `ResolvedAspect.RejectedDeclarations`, including its reason. |
+| `winner` | The resolved value plus package, document, authoring kind/name, scope, rule, layer, source order, specificity, and declaration order. |
+| Resolution step | Every considered rule, including structural/condition rejection, exact captured condition results, dependencies, and all cascade coordinates. |
+| `rejected` | Each losing declaration with losing/winning package and rule plus its cascade reason. |
 | `token` | Each `AspectTokenTrace`, including token name, provider name, raw value, and resolved value. |
 | `slot` | The resolved aspect dependency slot when one is present. |
 | `variant` | Each variant dependency name recorded by the resolved aspect. |
 
 `Capture` throws `ArgumentNullException` when `element` or `property` is `null`. The current implementation validates `element` but otherwise uses the supplied diagnostics snapshot; the element is not printed in the resulting lines.
+
+`AspectEngine.Apply` retains a compact evaluation snapshot and materializes the public diagnostic objects lazily on the first `GetDiagnostics` call. Conditions are never reevaluated for tracing.
 
 ## Methods
 

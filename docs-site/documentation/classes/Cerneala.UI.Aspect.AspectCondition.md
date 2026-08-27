@@ -61,6 +61,8 @@ Conditions report an `AspectConditionResult`, which includes the match result, d
 
 `All`, `Any`, and `Not` compose other conditions. `All` requires every child to match, `Any` requires at least one child to match, and `Not` inverts its single child result. Compound conditions evaluate their children and carry the child dependencies forward.
 
+`Signal` reads per-element state from an `AspectConditionKey`. Generated markup observations use this condition to invalidate the engine without applying property values themselves.
+
 Factory methods validate their required inputs through the underlying condition nodes. Empty diagnostic names are rejected for data, property predicate, and predicate conditions. Data conditions must declare at least one `AspectDataDependency`. `All` and `Any` require at least one non-null child condition.
 
 ## Properties
@@ -81,6 +83,7 @@ Factory methods validate their required inputs through the underlying condition 
 | `Not(AspectCondition condition)` | `AspectCondition` | Creates a compound condition that inverts a child condition. |
 | `Predicate(string diagnosticName, Func<AspectMatchContext, bool> predicate)` | `AspectCondition` | Creates a custom condition that evaluates the full match context and records a predicate dependency by diagnostic name. |
 | `Property<TValue>(UiProperty<TValue> property)` | `AspectPropertyConditionBuilder<TValue>` | Starts a property condition for the supplied UI property. |
+| `Signal(AspectConditionKey key)` | `AspectCondition` | Creates a condition backed by per-element generated condition state. |
 | `State(AspectState state)` | `AspectCondition` | Creates a condition that matches when the context contains the supplied aspect state. |
 | `Variant<TControl, TValue>(AspectVariantKey<TControl, TValue> key, TValue value)` | `AspectCondition` | Creates a condition that matches when the context contains the supplied variant key with an equal value. |
 
@@ -94,3 +97,4 @@ Cerneala UI aspect resolution and component-template styling.
 - `Cerneala.UI.Aspect.AspectConditionResult`
 - `Cerneala.UI.Aspect.AspectMatchContext`
 - `Cerneala.UI.Aspect.AspectPropertyConditionBuilder<TValue>`
+- `Cerneala.UI.Aspect.AspectConditionKey`

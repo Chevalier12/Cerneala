@@ -47,7 +47,7 @@ internal static class ColorPickerTemplates
         Add(stack, preview);
 
         Border root = new() { Child = stack };
-        const UiPropertyValueSource OwnerBindingSource = UiPropertyValueSource.LocalAspectBase;
+        const UiPropertyValueSource OwnerBindingSource = UiPropertyValueSource.TemplateOwnerBinding;
         context.Bind(Control.BackgroundProperty, root, Control.BackgroundProperty, OwnerBindingSource);
         context.Bind(Control.BorderBrushProperty, root, Control.BorderBrushProperty, OwnerBindingSource);
         context.Bind(Control.BorderThicknessProperty, root, Control.BorderThicknessProperty, OwnerBindingSource);

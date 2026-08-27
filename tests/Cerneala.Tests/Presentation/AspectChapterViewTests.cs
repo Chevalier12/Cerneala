@@ -94,7 +94,7 @@ public sealed class AspectChapterViewTests : IDisposable
         Assert.Same(preview, Assert.Single(Descendants(view).Where(element => ReferenceEquals(element, preview))));
         Assert.Equal("Segoe UI Variable Text", label.FontFamily);
         Assert.Equal(
-            UiPropertyValueSource.ApplicationAspectBase,
+            UiPropertyValueSource.AspectBase,
             label.GetValueSource(Control.FontFamilyProperty));
         Assert.Contains(Control.BackgroundProperty, view.SelectedProperties);
         Assert.Contains(Control.BorderThicknessProperty, view.SelectedProperties);
@@ -211,7 +211,7 @@ public sealed class AspectChapterViewTests : IDisposable
         TextBlock preview = Assert.IsType<TextBlock>(view.SelectedPreview);
         Assert.Equal("Editat live", preview.Text);
         Assert.Equal(42, preview.FontSize);
-        Assert.Equal(UiPropertyValueSource.LocalAspectBase, preview.GetValueSource(Control.ForegroundProperty));
+        Assert.Equal(UiPropertyValueSource.AspectBase, preview.GetValueSource(Control.ForegroundProperty));
         Assert.Equal(new Color(255, 62, 165), Assert.IsType<SolidColorBrush>(preview.Foreground).Color);
         Assert.Same(initialAspect, preview.Aspect);
     }
@@ -402,8 +402,8 @@ public sealed class AspectChapterViewTests : IDisposable
         Color line = new(52, 60, 70);
         Color panel = new(20, 24, 30);
         Color slate = new(148, 163, 184);
-        Assert.Equal(UiPropertyValueSource.LocalAspectBase, comboBox.GetValueSource(Control.BackgroundProperty));
-        Assert.Equal(UiPropertyValueSource.LocalAspectBase, comboBox.GetValueSource(Control.ForegroundProperty));
+        Assert.Equal(UiPropertyValueSource.AspectBase, comboBox.GetValueSource(Control.BackgroundProperty));
+        Assert.Equal(UiPropertyValueSource.AspectBase, comboBox.GetValueSource(Control.ForegroundProperty));
         Assert.Equal(panel, Assert.IsType<SolidColorBrush>(comboBox.Background).Color);
         Assert.Equal(paper, Assert.IsType<SolidColorBrush>(comboBox.Foreground).Color);
         Assert.Equal(line, Assert.IsType<SolidColorBrush>(comboBox.BorderBrush).Color);
@@ -628,7 +628,18 @@ public sealed class AspectChapterViewTests : IDisposable
     {
         AspectStudioPropertyRowModel model = Assert.Single(
             PropertyModels(view).Where(candidate => candidate.Label == property.Name));
-        Border chrome = FindChrome(view, model);
+        Border? chrome = FindChrome(view, model);
+        if (chrome is null)
+        {
+            view.FilterPropertyForTests(property.Name);
+            view.Root?.ProcessFrame();
+            view.Root?.ProcessFrame();
+            model = Assert.Single(
+                PropertyModels(view).Where(candidate => candidate.Label == property.Name));
+            chrome = FindChrome(view, model);
+        }
+
+        Assert.NotNull(chrome);
         Cerneala.UI.Layout.Panels.Grid grid = Assert.IsType<Cerneala.UI.Layout.Panels.Grid>(chrome.Child);
         return new RenderedPropertyRow(model, chrome, grid.VisualChildren[1]);
     }
@@ -660,18 +671,19 @@ public sealed class AspectChapterViewTests : IDisposable
         return propertyItems.ItemsSource!.Cast<AspectStudioPropertyRowModel>().ToArray();
     }
 
-    private static Border FindChrome(
+    private static Border? FindChrome(
         AspectChapterView view,
         AspectStudioPropertyRowModel model)
     {
-        return Assert.Single(Descendants(view)
+        return Descendants(view)
             .OfType<Border>()
             .Where(candidate =>
                 candidate.Child is Cerneala.UI.Layout.Panels.Grid grid &&
                 grid.VisualChildren.Count == 2 &&
                 grid.VisualChildren[0] is TextBlock label &&
                 ReferenceEquals(candidate.DataContext, model) &&
-                label.Text == model.Label));
+                label.Text == model.Label)
+            .SingleOrDefault();
     }
 
     private static void TypeInto(UIRoot root, TextBox input, string text)

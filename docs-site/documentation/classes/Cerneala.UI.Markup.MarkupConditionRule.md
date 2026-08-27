@@ -21,7 +21,7 @@ var rule = new MarkupConditionRule(0, () => viewModel.IsReady);
 Rules are evaluated in ascending `Order`. Values default to an empty list;
 content and transition callbacks are optional. The activation callback runs only
 when an attached owner enters the rule, not on unchanged reevaluation. The
-deactivation callback runs when that active rule exits or its owner detaches. A
+deactivation callback runs when that active rule exits or its owner detaches. The optional condition-state callback receives `true` and `false` transitions independently of render-gated Motion activation, allowing generated Aspect rules to update `AspectConditionKey` state without writing styled properties. A
 `null` predicate is invalid.
 
 ## Constructors
@@ -29,6 +29,7 @@ deactivation callback runs when that active rule exits or its owner detaches. A
 | --- | --- |
 | `MarkupConditionRule(int, Func<bool>, IReadOnlyList<MarkupConditionalValue>?, MarkupConditionalContent?)` | Creates one generated condition rule. |
 | `MarkupConditionRule(int, Func<bool>, IReadOnlyList<MarkupConditionalValue>?, MarkupConditionalContent?, Action?, Action?)` | Creates a rule with optional activation and deactivation callbacks. |
+| `MarkupConditionRule(int, Func<bool>, IReadOnlyList<MarkupConditionalValue>?, MarkupConditionalContent?, Action?, Action?, Action<bool>?)` | Creates a rule with transition callbacks and an optional condition-state notifier. |
 
 ## Properties
 | Name | Description |

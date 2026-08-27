@@ -11,6 +11,8 @@ public sealed class ResourceDictionary : IObservableResourceProvider, IEnumerabl
 
     public int Count => entries.Count;
 
+    internal long Version => version;
+
     public ICollection<object> Keys => entries.Keys;
 
     public ICollection<object?> Values => entries.Values;

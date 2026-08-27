@@ -59,9 +59,9 @@ bool matches = condition.Evaluate(context).Matches;
 
 `AspectVariantKey` identifies a variant by three values: `Name`, `OwnerType`, and `ValueType`. `For<TOwner, TValue>(string)` creates the public typed key form, `AspectVariantKey<TOwner, TValue>`, which records `typeof(TOwner)` and `typeof(TValue)`.
 
-The key is immutable after construction. Equality and hash codes compare the name with ordinal string comparison and require the owner and value types to be the same `Type` instances. Two keys with the same name but different owner or value types are distinct.
+The key is immutable after construction. `OwnerType` must derive from `Control`. Equality and hash codes compare the name with ordinal string comparison and require the owner and value types to be the same `Type` instances. Two keys with the same name but different owner or value types are distinct.
 
-Variant keys are used by `AspectVariantSet` to store values and by `AspectCondition.Variant<TControl, TValue>(AspectVariantKey<TControl, TValue>, TValue)` to match rules against an `AspectMatchContext`. The untyped `AspectVariantSet.Set(AspectVariantKey, object?)` overload checks non-null values against `ValueType`; the typed overload relies on the generic `TValue` argument.
+Variant keys are used by `AspectVariantSet` to store values and by `AspectCondition.Variant<TControl, TValue>(AspectVariantKey<TControl, TValue>, TValue)` to match rules against an `AspectMatchContext`. `Control.SetAspectVariant` rejects keys owned by an unrelated control type, and a variant condition does not match an incompatible owner context. The untyped `AspectVariantSet.Set(AspectVariantKey, object?)` overload checks non-null values against `ValueType`; the typed overload relies on the generic `TValue` argument.
 
 `ToString()` returns the owner type name followed by the key name, for example `Button.kind`.
 
@@ -94,6 +94,7 @@ Variant keys are used by `AspectVariantSet` to store values and by `AspectCondit
 | Member | Exception | Condition |
 | --- | --- | --- |
 | `For<TOwner, TValue>(string name)` | `ArgumentException` | `name` is null, empty, or whitespace. |
+| `For<TOwner, TValue>(string name)` | `ArgumentException` | `TOwner` does not derive from `Control`. |
 
 ## Applies to
 

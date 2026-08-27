@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using Cerneala.Drawing;
 using Cerneala.SourceGen;
+using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
@@ -611,7 +612,6 @@ public sealed partial class UiMarkupGeneratorTests
         Button dynamicButton = new() { Content = "DYNAMIC" };
 
         panel.VisualChildren.Add(dynamicButton);
-        AssertSolidBackground(new Color(18, 52, 86), dynamicButton);
         root.ProcessFrame();
 
         Assert.True(dynamicButton.IsAttached);
@@ -1099,13 +1099,14 @@ public sealed partial class UiMarkupGeneratorTests
 
         Assert.Equal(new Cerneala.Drawing.Color(0, 255, 0), inner.FindResource<SolidColorBrush>("Accent").Color);
         Assert.Equal(new Cerneala.Drawing.Color(255, 0, 0), outer.FindResource<SolidColorBrush>("Accent").Color);
-        MarkupAspectResource aspect = border.FindResource<MarkupAspectResource>("Card");
+        ElementAspect aspect = border.FindResource<ElementAspect>("Card");
         Assert.Equal(typeof(Border), aspect.TargetType);
-        Assert.Equal(new[] { "Background" }, aspect.DefaultPropertyNames);
         Border dynamicBorder = new();
-        aspect.ApplyTo(dynamicBorder);
+        dynamicBorder.Aspect = aspect;
+        UIRoot dynamicRoot = AttachAndProcess(dynamicBorder);
         Assert.Equal(new Cerneala.Drawing.Color(0, 255, 0), Assert.IsType<SolidColorBrush>(dynamicBorder.Background).Color);
         dynamicBorder.SetValue(Cerneala.UI.Elements.UIElement.IsMouseOverProperty, true);
+        dynamicRoot.ProcessFrame();
         Assert.Equal(new Cerneala.Drawing.Color(0, 255, 0), Assert.IsType<SolidColorBrush>(dynamicBorder.BorderBrush).Color);
         Assert.Single(panel.Resources);
         Assert.Equal(2, border.Resources.Count);
@@ -1143,10 +1144,11 @@ public sealed partial class UiMarkupGeneratorTests
         Border owner = Assert.IsType<Border>(InvokeCreate(
             stream,
             "Cerneala.GeneratedUi.DynamicTemplatedAspectFactory"));
-        MarkupAspectResource aspect = owner.FindResource<MarkupAspectResource>("DynamicButton");
+        ElementAspect aspect = owner.FindResource<ElementAspect>("DynamicButton");
         Button dynamicButton = new();
 
-        aspect.ApplyTo(dynamicButton);
+        dynamicButton.Aspect = aspect;
+        AttachAndProcess(dynamicButton);
         dynamicButton.ApplyTemplate();
 
         Assert.DoesNotContain("Button.Default", dynamicButton.ComponentTemplate?.Name, StringComparison.Ordinal);
@@ -1195,13 +1197,14 @@ public sealed partial class UiMarkupGeneratorTests
         root.ProcessFrame();
 
         Assert.NotNull(button.Aspect);
-        Assert.Equal(Cerneala.UI.Core.UiPropertyValueSource.LocalAspectBase, button.GetValueSource(Control.BackgroundProperty));
+        Assert.Equal(Cerneala.UI.Core.UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
         AssertSolidBackground(new Color(198, 255, 61), button);
         Assert.Equal(new Color(10, 11, 14), Assert.IsType<SolidColorBrush>(button.Foreground).Color);
 
         button.IsPointerOver = true;
+        root.ProcessFrame();
 
-        Assert.Equal(Cerneala.UI.Core.UiPropertyValueSource.LocalAspectConditional, button.GetValueSource(Control.BackgroundProperty));
+        Assert.Equal(Cerneala.UI.Core.UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
         AssertSolidBackground(new Color(0, 232, 255), button);
     }
 
@@ -1286,6 +1289,7 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
 
         StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.ScopedResourcesFactory"));
+        AttachAndProcess(panel);
         TextBlock outer = Assert.IsType<TextBlock>(panel.VisualChildren[0]);
         Border border = Assert.IsType<Border>(panel.VisualChildren[1]);
         TextBlock inner = Assert.IsType<TextBlock>(border.Child);
@@ -1541,8 +1545,11 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
 
         Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.AspectTemplateFactory"));
+        AttachAndProcess(button);
         AssertSolidBackground(Cerneala.Drawing.Color.Black, button);
-        Assert.Contains("ComponentTemplate", button.FindResource<MarkupAspectResource>("GhostButton").DefaultPropertyNames);
+        Assert.Contains(
+            Control.ComponentTemplateProperty,
+            button.FindResource<ElementAspect>("GhostButton").DefaultValues.Select(value => value.Property));
         button.ApplyTemplate();
         Border border = Assert.IsType<Border>(button.ComponentTemplateInstance!.Root);
         Assert.IsType<ContentPresenter>(border.Child);
@@ -1575,6 +1582,7 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
 
         Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.TemplatePrecedenceFactory"));
+        AttachAndProcess(button);
         Assert.Equal(Cerneala.Drawing.Color.Black, Assert.IsType<SolidColorBrush>(button.Foreground).Color);
         button.ApplyTemplate();
         TextBlock root = Assert.IsType<TextBlock>(button.ComponentTemplateInstance!.Root);
@@ -1688,6 +1696,7 @@ public sealed partial class UiMarkupGeneratorTests
         using MemoryStream inlineStream = new();
         Assert.True(inlineCompilation.Emit(inlineStream).Success);
         Button inlineButton = Assert.IsType<Button>(InvokeCreate(inlineStream, "Cerneala.GeneratedUi.InlineAspectTemplateFactory"));
+        AttachAndProcess(inlineButton);
         inlineButton.ApplyTemplate();
         Assert.Equal("Inline", Assert.IsType<TextBlock>(inlineButton.ComponentTemplateInstance!.Root).Text);
 
@@ -1704,6 +1713,7 @@ public sealed partial class UiMarkupGeneratorTests
         using MemoryStream namedStream = new();
         Assert.True(namedCompilation.Emit(namedStream).Success);
         Button namedButton = Assert.IsType<Button>(InvokeCreate(namedStream, "Cerneala.GeneratedUi.NamedAspectTemplateFactory"));
+        AttachAndProcess(namedButton);
         namedButton.ApplyTemplate();
         Assert.Equal("Named", Assert.IsType<TextBlock>(namedButton.ComponentTemplateInstance!.Root).Text);
     }
@@ -1730,6 +1740,7 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
 
         StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.TemplatePartIsolationFactory"));
+        AttachAndProcess(panel);
         Button first = Assert.IsType<Button>(panel.VisualChildren[0]);
         Button second = Assert.IsType<Button>(panel.VisualChildren[1]);
         Assert.Same(first.ComponentTemplate, second.ComponentTemplate);
@@ -1760,6 +1771,7 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.True(compilation.Emit(stream).Success);
 
         Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.InlineAspectPrecedenceFactory"));
+        AttachAndProcess(button);
         Assert.Equal(Cerneala.Drawing.Color.White, Assert.IsType<SolidColorBrush>(button.Foreground).Color);
         button.ApplyTemplate();
         Assert.Equal("Direct", Assert.IsType<TextBlock>(button.ComponentTemplateInstance!.Root).Text);
@@ -1922,6 +1934,7 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
 
         StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.DefaultTextAspectFactory"));
+        AttachAndProcess(panel);
         Assert.All(panel.VisualChildren.Cast<TextBlock>(), text =>
         {
             Assert.Equal("Consolas", text.FontFamily);
@@ -1961,6 +1974,7 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
 
         TextBlock text = Assert.IsType<TextBlock>(InvokeCreate(stream, "Cerneala.GeneratedUi.NamedAspectFactory"));
+        AttachAndProcess(text);
         Assert.Equal(12, text.FontSize);
         Assert.Equal(new Thickness(0, 0, 0, 12), text.Margin);
         Assert.Equal(Color.Black, Assert.IsType<SolidColorBrush>(text.Foreground).Color);
@@ -2009,6 +2023,7 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
 
         TextBlock root = Assert.IsType<TextBlock>(InvokeCreate(stream, "Cerneala.GeneratedUi.AspectBrushReferenceFactory"));
+        AttachAndProcess(root);
         Assert.Equal(new Cerneala.Drawing.Color(255, 93, 115), Assert.IsType<SolidColorBrush>(root.Foreground).Color);
     }
 
@@ -3148,10 +3163,13 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
 
         Border border = Assert.IsType<Border>(InvokeCreate(stream, "Cerneala.GeneratedUi.ReactiveAspectFactory"));
+        UIRoot root = AttachAndProcess(border);
         AssertSolidBackground(Cerneala.Drawing.Color.Black, border);
         border.IsPointerOver = true;
+        root.ProcessFrame();
         AssertSolidBackground(Cerneala.Drawing.Color.White, border);
         border.IsPointerOver = false;
+        root.ProcessFrame();
         AssertSolidBackground(Cerneala.Drawing.Color.Black, border);
     }
 
@@ -3659,6 +3677,7 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
 
         StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.InlineAspectFactory"));
+        UIRoot root = AttachAndProcess(panel);
         Assert.NotNull(panel.Aspect);
         Assert.True(panel.Aspect.IsConditional);
         Assert.Equal(new[] { "Margin" }, panel.Aspect.DefaultValues.Select(value => value.Property.Name));
@@ -3670,11 +3689,14 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal(Cerneala.Drawing.Color.White, Assert.IsType<SolidColorBrush>(button.Foreground).Color);
 
         panel.IsPointerOver = true;
+        root.ProcessFrame();
         Assert.Equal(new Cerneala.UI.Layout.Thickness(12), panel.Margin);
         panel.IsPointerOver = false;
+        root.ProcessFrame();
         Assert.Equal(new Cerneala.UI.Layout.Thickness(8), panel.Margin);
 
         panel.Aspect = null;
+        root.ProcessFrame();
         panel.IsPointerOver = true;
         Assert.Equal(Cerneala.UI.Layout.Thickness.Zero, panel.Margin);
     }
@@ -3947,6 +3969,7 @@ public sealed partial class UiMarkupGeneratorTests
         Assembly assembly = Assembly.Load(stream.ToArray());
         Type type = assembly.GetType("TestInput.Views.AspectWindow", throwOnError: true)!;
         Window window = Assert.IsAssignableFrom<Window>(Activator.CreateInstance(type));
+        AttachAndProcess(window);
         Border chrome = Assert.IsType<Border>(window.ComponentTemplateInstance!.Root);
         AssertSolidBackground(Cerneala.Drawing.Color.Black, chrome);
         Assert.Same(chrome, window.ComponentTemplateInstance.Parts["AspectChrome"]);

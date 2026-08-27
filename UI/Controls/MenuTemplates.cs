@@ -26,7 +26,7 @@ internal static class MenuTemplates
 
     public static readonly ComponentTemplate<MenuItem> MenuItem = new("MenuItem.Default", context =>
     {
-        const UiPropertyValueSource ownerBindingSource = UiPropertyValueSource.LocalAspectBase;
+        const UiPropertyValueSource ownerBindingSource = UiPropertyValueSource.TemplateOwnerBinding;
         ContentPresenter headerPresenter = new()
         {
             HorizontalAlignment = HorizontalAlignment.Left,

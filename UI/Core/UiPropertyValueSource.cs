@@ -7,12 +7,9 @@ public enum UiPropertyValueSource
     TemplateBinding = 2,
     AspectBase = 3,
     AspectVisualState = 4,
-    LocalAspectBase = 5,
-    LocalAspectConditional = 6,
-    Animation = 7,
-    MarkupBase = 8,
-    MarkupConditional = 9,
-    Local = 10,
-    ApplicationAspectBase = 11,
-    ApplicationAspectVisualState = 12
+    TemplateOwnerBinding = 5,
+    MarkupBase = 6,
+    MarkupConditional = 7,
+    Animation = 8,
+    Local = 9
 }

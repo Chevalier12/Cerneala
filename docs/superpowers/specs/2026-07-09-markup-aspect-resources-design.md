@@ -1,5 +1,9 @@
 # Markup Aspect Resources Design
 
+> **Superseded historical design (2026-08-27).** The syntax remains supported, but the direct cascade/application model in this document is not active architecture. `docs/plans/2026-08-27-unify-aspect-runtime.md` and `docs/aspect-system.md` define the current single path: markup lowers to `AspectPackage`/`ElementAspect`, `AspectProcessor` composes scopes, and `AspectEngine` is the only declaration resolver. This file is retained only as design history and must not be used to justify a generated applicator or authoring-specific property source.
+
+**Status:** Superseded.
+
 ## Context
 
 Cerneala currently has a small XML-based UI markup source generator that consumes `.crn` additional files and emits code-first factories. The supported element/property surface is intentionally narrow and does not include aspect resources or aspect references.

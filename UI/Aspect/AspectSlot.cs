@@ -1,3 +1,5 @@
+using Cerneala.UI.Elements;
+
 namespace Cerneala.UI.Aspect;
 
 public abstract class AspectSlot : IEquatable<AspectSlot>
@@ -12,6 +14,15 @@ public abstract class AspectSlot : IEquatable<AspectSlot>
         Name = name;
         OwnerType = ownerType ?? throw new ArgumentNullException(nameof(ownerType));
         TargetType = targetType ?? throw new ArgumentNullException(nameof(targetType));
+        if (!typeof(UIElement).IsAssignableFrom(OwnerType))
+        {
+            throw new ArgumentException("Aspect slot owner type must derive from UIElement.", nameof(ownerType));
+        }
+
+        if (!typeof(UIElement).IsAssignableFrom(TargetType))
+        {
+            throw new ArgumentException("Aspect slot target type must derive from UIElement.", nameof(targetType));
+        }
     }
 
     public string Name { get; }

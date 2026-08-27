@@ -180,15 +180,25 @@ public partial class UIElement
         {
             if (args.OldValue is ElementAspect oldAspect)
             {
+                elementAspectBehavior?.Dispose();
+                elementAspectBehavior = null;
                 oldAspect.Detach(aspectConsumer);
             }
 
             if (args.NewValue is ElementAspect newAspect)
             {
+                ValidateLocalAspect(newAspect);
                 newAspect.Attach(aspectConsumer);
+                try
+                {
+                    elementAspectBehavior = newAspect.AttachBehavior(this);
+                }
+                catch
+                {
+                    newAspect.Detach(aspectConsumer);
+                    throw;
+                }
             }
-
-            ApplyLocalAspect(Aspect);
         }
         else if (ReferenceEquals(args.Property, DataContextProperty)) DataContextChanged?.Invoke(this, args);
         else if (ReferenceEquals(args.Property, IsEnabledProperty)) IsEnabledChanged?.Invoke(this, args);

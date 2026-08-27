@@ -1,4 +1,5 @@
 using Cerneala.UI.Core;
+using Cerneala.UI.Elements;
 
 namespace Cerneala.UI.Aspect;
 
@@ -45,6 +46,15 @@ internal sealed class VariantAspectCondition : AspectConditionNode
 
     public override AspectConditionResult Evaluate(AspectMatchContext context)
     {
+        UIElement owner = context.OwnerComponent ?? context.Element;
+        if (!key.OwnerType.IsInstanceOfType(owner))
+        {
+            return new AspectConditionResult(
+                false,
+                [new AspectConditionDependency(AspectConditionDependencyKind.Variant, Variant: key)],
+                $"variant {key.Name} does not belong to {owner.GetType().Name}");
+        }
+
         bool hasValue = context.Variants.TryGetUntyped(key, out object? actual);
         bool matches = hasValue && Equals(actual, expectedValue);
         return new AspectConditionResult(
@@ -248,5 +258,28 @@ internal sealed class PredicateAspectCondition : AspectConditionNode
             matches,
             [new AspectConditionDependency(AspectConditionDependencyKind.Predicate, DiagnosticName: diagnosticName)],
             matches ? $"{diagnosticName} matched" : $"{diagnosticName} did not match");
+    }
+}
+
+internal sealed class SignalAspectCondition : AspectConditionNode
+{
+    private readonly AspectConditionKey key;
+
+    public SignalAspectCondition(AspectConditionKey key)
+    {
+        this.key = key ?? throw new ArgumentNullException(nameof(key));
+    }
+
+    public override AspectSpecificity Specificity => new(Predicate: 1);
+
+    public override AspectConditionResult Evaluate(AspectMatchContext context)
+    {
+        bool matches = key.IsActive(context.Element);
+        return new AspectConditionResult(
+            matches,
+            [new AspectConditionDependency(
+                AspectConditionDependencyKind.Predicate,
+                DiagnosticName: key.Name)],
+            matches ? $"condition {key.Name} active" : $"condition {key.Name} inactive");
     }
 }

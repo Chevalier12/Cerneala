@@ -122,7 +122,8 @@ public sealed class MarkupConditionRule
         IReadOnlyList<MarkupConditionalValue>? values,
         MarkupConditionalContent? content,
         Action? activated,
-        Action? deactivated = null)
+        Action? deactivated = null,
+        Action<bool>? conditionStateChanged = null)
     {
         Order = order;
         Predicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
@@ -130,6 +131,7 @@ public sealed class MarkupConditionRule
         Content = content;
         Activated = activated;
         Deactivated = deactivated;
+        ConditionStateChanged = conditionStateChanged;
     }
 
     public int Order { get; }
@@ -143,6 +145,8 @@ public sealed class MarkupConditionRule
     internal Action? Activated { get; }
 
     internal Action? Deactivated { get; }
+
+    internal Action<bool>? ConditionStateChanged { get; }
 }
 
 public abstract class MarkupObservation
@@ -195,6 +199,18 @@ public abstract class MarkupObservation
 
 public static partial class GeneratedMarkup
 {
+    public static IDisposable? CombineLifetimes(params IDisposable?[] lifetimes)
+    {
+        ArgumentNullException.ThrowIfNull(lifetimes);
+        IDisposable[] active = lifetimes.Where(lifetime => lifetime is not null).Cast<IDisposable>().Distinct().ToArray();
+        return active.Length switch
+        {
+            0 => null,
+            1 => active[0],
+            _ => new CompositeLifetime(active)
+        };
+    }
+
     public static MarkupObservation ObserveProperty(UiObject source, UiProperty property)
     {
         return new UiPropertyObservation(source, property);
@@ -243,6 +259,24 @@ public static partial class GeneratedMarkup
         MarkupConditionController controller = new(owner, observations, rules);
         owner.AddLifecycleBehavior(controller);
         return controller;
+    }
+
+    private sealed class CompositeLifetime(IReadOnlyList<IDisposable> lifetimes) : IDisposable
+    {
+        private int disposed;
+
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref disposed, 1) != 0)
+            {
+                return;
+            }
+
+            for (int index = lifetimes.Count - 1; index >= 0; index--)
+            {
+                lifetimes[index].Dispose();
+            }
+        }
     }
 
     private sealed class UiPropertyObservation : MarkupObservation
@@ -694,6 +728,7 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
     private readonly List<MarkupConditionalValue> appliedValues = [];
     private readonly List<MarkupConditionalContent> activeContent = [];
     private readonly List<MarkupConditionRule> activeRules = [];
+    private readonly List<MarkupConditionRule> signaledRules = [];
     private bool started;
     private bool disposed;
     private bool evaluating;
@@ -833,6 +868,7 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
         }
 
         activeContent.Clear();
+        ClearConditionStates();
         DeactivateRules();
     }
 
@@ -876,6 +912,7 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
             {
                 reevaluate = false;
                 IReadOnlyList<MarkupConditionRule> active = rules.Where(rule => rule.Predicate()).ToArray();
+                ApplyConditionStates(active);
                 ApplyValues(active);
                 ApplyContent(active);
                 ApplyActivations(active);
@@ -913,6 +950,32 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
 
         activeRules.Clear();
         activeRules.AddRange(active);
+    }
+
+    private void ApplyConditionStates(IReadOnlyList<MarkupConditionRule> active)
+    {
+        foreach (MarkupConditionRule previous in signaledRules.Where(rule => !active.Contains(rule)).ToArray())
+        {
+            previous.ConditionStateChanged?.Invoke(false);
+        }
+
+        foreach (MarkupConditionRule current in active.Where(rule => !signaledRules.Contains(rule)))
+        {
+            current.ConditionStateChanged?.Invoke(true);
+        }
+
+        signaledRules.Clear();
+        signaledRules.AddRange(active.Where(rule => rule.ConditionStateChanged is not null));
+    }
+
+    private void ClearConditionStates()
+    {
+        foreach (MarkupConditionRule rule in signaledRules)
+        {
+            rule.ConditionStateChanged?.Invoke(false);
+        }
+
+        signaledRules.Clear();
     }
 
     private void DeactivateRules()

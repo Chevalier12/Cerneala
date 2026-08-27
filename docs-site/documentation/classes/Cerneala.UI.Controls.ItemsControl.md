@@ -56,7 +56,7 @@ When no `ItemsPanel` is assigned, the presenter uses one retained vertical `Stac
 
 Virtualization is automatic when `ItemsControl` is the content of a `ScrollViewer` and its `ItemsPanel` implements `IItemsVirtualizingPanel`. `VirtualizingStackPanel` estimates unknown rows, records measured variable heights, corrects the realization window, and receives viewport and offset updates from the viewer. Ordinary panels continue to realize every item.
 
-`ItemContainerAspect` is applied to every prepared container at the `AspectBase` value source and removed when the container is cleared or recycled. An aspect assigned directly to an item container has higher precedence. Changing the property refreshes realized containers.
+`ItemContainerAspect` is assigned to every prepared container through `UIElement.AspectProperty` at the `AspectBase` policy source and removed when the container is cleared or recycled. The assigned `ElementAspect` is then resolved by the root `AspectProcessor`; it does not write container properties directly. An aspect assigned directly on the item at a higher UI-property source wins. Changing the policy refreshes realized containers, and containers created during measure are resolved in the following Aspect phase.
 
 `ItemsControl` does not discover `ContentTemplate` values from resource collections. Assign one template explicitly through `ItemTemplate`, or add several owned templates to `Templates` for heterogeneous item sources. `ItemTemplate` has priority when both paths are configured.
 

@@ -51,6 +51,8 @@ Standalone registries capture their constructing thread. The registry exposed by
 
 `BuildCatalog()` creates an `AspectCatalog` from the current package order and current `Version`. The registry caches that catalog and returns the same snapshot until a successful `Register` or `Unregister` invalidates it. Callers that process aspects can compare catalog versions to decide whether token defaults need to be synchronized.
 
+`Packages` is a read-only live view of the registered sequence. It reflects successful registry operations but cannot be cast back to a mutable list to bypass versioning, catalog invalidation, thread access, or the change callback.
+
 `UIRoot` creates an `AspectRegistry` with a callback that invalidates aspect processing for the subtree. Its default aspect package is registered with `notify: false` during root construction so initial setup does not trigger the registry-change invalidation path.
 
 ## Constructors
@@ -64,7 +66,7 @@ Standalone registries capture their constructing thread. The registry exposed by
 | Name | Type | Description |
 | --- | --- | --- |
 | `Version` | `int` | Gets the registry version. It starts at `0` and increments after each successful `Register` or `Unregister`. |
-| `Packages` | `IReadOnlyList<AspectPackage>` | Gets the registered packages in registration order. |
+| `Packages` | `IReadOnlyList<AspectPackage>` | Gets a non-mutable view of the registered packages in registration order. |
 
 ## Methods
 

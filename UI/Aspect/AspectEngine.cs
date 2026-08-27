@@ -88,12 +88,17 @@ public sealed class AspectEngine
             themeProvider,
             variants,
             dataContext,
-            slotPath);
+            slotPath,
+            captureDiagnostics: true,
+            out AspectRuleEvaluationSnapshot[] ruleEvaluations);
         AspectEngineElementState state = states.GetOrCreateValue(element);
         bool changed = ApplyResolved(element, state.LastResolved, resolved, themeProvider);
         state.LastResolved = resolved;
         state.LastThemeProvider = themeProvider;
-        state.Diagnostics = BuildDiagnostics(resolved, environment, counters.Snapshot());
+        state.RuleEvaluations = ruleEvaluations;
+        state.DiagnosticsEnvironment = environment;
+        state.DiagnosticsCounters = counters.Snapshot();
+        state.Diagnostics = null;
         invalidationGraph.Track(element, resolved.Dependencies);
         return new AspectApplicationResult(changed, resolved);
     }
@@ -115,7 +120,9 @@ public sealed class AspectEngine
             themeProvider,
             variants,
             dataContext,
-            slotPath);
+            slotPath,
+            captureDiagnostics: false,
+            out _);
     }
 
     private ResolvedAspect ResolveCore(
@@ -126,7 +133,9 @@ public sealed class AspectEngine
         ThemeProvider? themeProvider,
         AspectVariantSet? variants,
         AspectDataContext? dataContext,
-        AspectSlotPath? slotPath)
+        AspectSlotPath? slotPath,
+        bool captureDiagnostics,
+        out AspectRuleEvaluationSnapshot[] ruleEvaluations)
     {
         threadAccess.VerifyAccess();
         ArgumentNullException.ThrowIfNull(element);
@@ -150,20 +159,43 @@ public sealed class AspectEngine
         List<AspectRuleSet> matchedRules = [];
         List<AspectConditionDependency> conditionDependencies = [];
         List<AspectToken> tokenDependencies = [];
+        AspectRuleEvaluationSnapshot[] evaluations = captureDiagnostics
+            ? new AspectRuleEvaluationSnapshot[catalog.Rules.Count]
+            : [];
 
-        foreach (AspectRuleSet rule in catalog.Rules)
+        for (int ruleIndex = 0; ruleIndex < catalog.Rules.Count; ruleIndex++)
         {
+            AspectRuleSet rule = catalog.Rules[ruleIndex];
             counters.RulesConsidered++;
-            IReadOnlyList<AspectConditionResult> conditionResults = rule.Target.Conditions.Select(condition => condition.Evaluate(matchContext)).ToArray();
-            conditionDependencies.AddRange(conditionResults.SelectMany(result => result.Dependencies));
-            if (!rule.Target.Matches(matchContext))
+            string? structureMismatch = rule.Target.GetStructureMismatch(matchContext);
+            if (structureMismatch is not null)
             {
+                if (captureDiagnostics)
+                {
+                    evaluations[ruleIndex] = new AspectRuleEvaluationSnapshot(rule, [], $"rejected: {structureMismatch}");
+                }
+                continue;
+            }
+
+            IReadOnlyList<AspectConditionResult> conditionResults = rule.Target.Conditions.Select(condition => condition.Evaluate(matchContext)).ToArray();
+            counters.ConditionEvaluations += conditionResults.Sum(CountConditionEvaluations);
+            conditionDependencies.AddRange(conditionResults.SelectMany(result => result.Dependencies));
+            if (!conditionResults.All(result => result.Matches))
+            {
+                if (captureDiagnostics)
+                {
+                    evaluations[ruleIndex] = new AspectRuleEvaluationSnapshot(rule, conditionResults, "rejected: condition mismatch");
+                }
                 continue;
             }
 
             counters.RulesMatched++;
             matchedRules.Add(rule);
-            AspectCascadeKey cascadeKey = new(rule.Layer.Order, rule.Target.Specificity, rule.DeclarationOrder);
+            if (captureDiagnostics)
+            {
+                evaluations[ruleIndex] = new AspectRuleEvaluationSnapshot(rule, conditionResults, "matched");
+            }
+            AspectCascadeKey cascadeKey = new(rule.Layer.Order, rule.SourceOrder, rule.Target.Specificity, rule.DeclarationOrder);
             AspectMotionSource motionSource = GetMotionSource(conditionResults);
             foreach (AspectDeclaration declaration in rule.Declarations)
             {
@@ -174,6 +206,7 @@ public sealed class AspectEngine
                 ResolvedAspectValue resolvedValue = new(
                     declaration.Property,
                     value,
+                    rule,
                     declaration,
                     cascadeKey,
                     declaration.Motion,
@@ -186,18 +219,31 @@ public sealed class AspectEngine
 
                 if (cascadeKey.CompareTo(current.CascadeKey) > 0)
                 {
-                    rejected.Add(new RejectedAspectDeclaration(current.SourceDeclaration, declaration, "Higher cascade key won."));
+                    rejected.Add(new RejectedAspectDeclaration(
+                        current.SourceRule,
+                        current.SourceDeclaration,
+                        rule,
+                        declaration,
+                        "Higher cascade key won."));
                     winners[declaration.Property] = resolvedValue;
                 }
                 else
                 {
-                    rejected.Add(new RejectedAspectDeclaration(declaration, current.SourceDeclaration, "Existing cascade key won."));
+                    rejected.Add(new RejectedAspectDeclaration(
+                        rule,
+                        declaration,
+                        current.SourceRule,
+                        current.SourceDeclaration,
+                        "Existing cascade key won."));
                 }
             }
         }
 
         AspectDependencySet dependencies = new(
-            tokenDependencies.Distinct().ToArray(),
+            tokenDependencies
+                .Concat(conditionDependencies.Where(dependency => dependency.Token is not null).Select(dependency => dependency.Token!))
+                .Distinct()
+                .ToArray(),
             conditionDependencies.Where(dependency => dependency.State is not null).Select(dependency => dependency.State!).Distinct().ToArray(),
             conditionDependencies.Where(dependency => dependency.Variant is not null).Select(dependency => dependency.Variant!).Distinct().ToArray(),
             conditionDependencies.Where(dependency => dependency.Property is not null).Select(dependency => dependency.Property!).Distinct().ToArray(),
@@ -206,17 +252,23 @@ public sealed class AspectEngine
             catalog.Version,
             environment.Version);
 
+        ruleEvaluations = evaluations;
         return new ResolvedAspect(winners, matchedRules, rejected, dependencies);
     }
 
     private static AspectDiagnostics.Snapshot BuildDiagnostics(
         ResolvedAspect resolved,
+        IReadOnlyList<AspectRuleEvaluationSnapshot> ruleEvaluations,
         AspectEnvironment environment,
         AspectEngineCounters counters)
     {
         List<AspectResolutionStep> steps = [];
-        foreach (AspectRuleSet rule in resolved.MatchedRules)
+        foreach (AspectRuleEvaluationSnapshot evaluation in ruleEvaluations)
         {
+            AspectRuleSet rule = evaluation.Rule;
+            AspectConditionTrace[] conditions = evaluation.Conditions
+                .Select(AspectConditionTrace.FromResult)
+                .ToArray();
             steps.Add(new AspectResolutionStep(
                 rule.PackageName ?? string.Empty,
                 rule.Name,
@@ -224,19 +276,12 @@ public sealed class AspectEngine
                 rule.Layer,
                 rule.Target.Specificity,
                 rule.DeclarationOrder,
-                "matched"));
-        }
-
-        foreach (RejectedAspectDeclaration rejected in resolved.RejectedDeclarations)
-        {
-            steps.Add(new AspectResolutionStep(
-                string.Empty,
-                rejected.Rejected.DiagnosticName ?? rejected.Rejected.Property.Name,
-                rejected.Rejected.Property.DiagnosticName,
-                AspectLayer.Reset,
-                new AspectSpecificity(),
-                0,
-                $"rejected: {rejected.Reason}"));
+                rule.SourceOrder,
+                rule.Origin,
+                rule.Scope,
+                conditions,
+                evaluation.Conditions.SelectMany(result => result.Dependencies).Distinct().ToArray(),
+                evaluation.Outcome));
         }
 
         List<AspectTokenTrace> tokenTraces = [];
@@ -251,13 +296,27 @@ public sealed class AspectEngine
         return new AspectDiagnostics.Snapshot(resolved, steps, tokenTraces, counters);
     }
 
+    private static int CountConditionEvaluations(AspectConditionResult result)
+    {
+        return 1 + result.Children.Sum(CountConditionEvaluations);
+    }
+
     public AspectDiagnostics.Snapshot GetDiagnostics(UIElement element)
     {
         threadAccess.VerifyAccess();
         ArgumentNullException.ThrowIfNull(element);
-        return states.TryGetValue(element, out AspectEngineElementState? state)
-            ? state.Diagnostics
-            : new AspectDiagnostics.Snapshot();
+        if (!states.TryGetValue(element, out AspectEngineElementState? state) ||
+            state.LastResolved is null ||
+            state.DiagnosticsEnvironment is null)
+        {
+            return new AspectDiagnostics.Snapshot();
+        }
+
+        return state.Diagnostics ??= BuildDiagnostics(
+            state.LastResolved,
+            state.RuleEvaluations,
+            state.DiagnosticsEnvironment,
+            state.DiagnosticsCounters);
     }
 
     public AspectDependencySet GetDependencies(UIElement element)
@@ -289,7 +348,10 @@ public sealed class AspectEngine
 
         state.LastResolved = null;
         state.LastThemeProvider = null;
-        state.Diagnostics = new AspectDiagnostics.Snapshot();
+        state.RuleEvaluations = [];
+        state.DiagnosticsEnvironment = null;
+        state.DiagnosticsCounters = new AspectEngineCounters();
+        state.Diagnostics = null;
         invalidationGraph.Untrack(element);
     }
 
@@ -395,6 +457,7 @@ public sealed class AspectEngine
             mutation();
         }
     }
+
 }
 
 public sealed record AspectApplicationResult(bool Applied, ResolvedAspect ResolvedAspect);

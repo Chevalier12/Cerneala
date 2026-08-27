@@ -650,6 +650,16 @@
     "source": "UI/Aspect/AspectEngine.cs"
   },
   {
+    "name": "Cerneala.UI.Aspect.AspectAuthoringKind",
+    "file": "documentation/classes/Cerneala.UI.Aspect.AspectAuthoringKind.md",
+    "source": "UI/Aspect/AspectOrigin.cs"
+  },
+  {
+    "name": "Cerneala.UI.Aspect.AspectBehavior",
+    "file": "documentation/classes/Cerneala.UI.Aspect.AspectBehavior.md",
+    "source": "UI/Aspect/AspectBehavior.cs"
+  },
+  {
     "name": "Cerneala.UI.Aspect.AspectCascadeKey",
     "file": "documentation/classes/Cerneala.UI.Aspect.AspectCascadeKey.md",
     "source": "UI/Aspect/AspectRuleSet.cs"
@@ -663,6 +673,11 @@
     "name": "Cerneala.UI.Aspect.AspectCondition",
     "file": "documentation/classes/Cerneala.UI.Aspect.AspectCondition.md",
     "source": "UI/Aspect/AspectCondition.cs"
+  },
+  {
+    "name": "Cerneala.UI.Aspect.AspectConditionKey",
+    "file": "documentation/classes/Cerneala.UI.Aspect.AspectConditionKey.md",
+    "source": "UI/Aspect/AspectConditionKey.cs"
   },
   {
     "name": "Cerneala.UI.Aspect.AspectConditionDependency",
@@ -683,6 +698,11 @@
     "name": "Cerneala.UI.Aspect.AspectConditionResult",
     "file": "documentation/classes/Cerneala.UI.Aspect.AspectConditionResult.md",
     "source": "UI/Aspect/AspectConditionResult.cs"
+  },
+  {
+    "name": "Cerneala.UI.Aspect.AspectConditionTrace",
+    "file": "documentation/classes/Cerneala.UI.Aspect.AspectConditionTrace.md",
+    "source": "UI/Aspect/AspectConditionTrace.cs"
   },
   {
     "name": "Cerneala.UI.Aspect.AspectDataContext",
@@ -768,6 +788,11 @@
     "name": "Cerneala.UI.Aspect.AspectMotionSource",
     "file": "documentation/classes/Cerneala.UI.Aspect.AspectMotionSource.md",
     "source": "UI/Aspect/AspectMotion.cs"
+  },
+  {
+    "name": "Cerneala.UI.Aspect.AspectOrigin",
+    "file": "documentation/classes/Cerneala.UI.Aspect.AspectOrigin.md",
+    "source": "UI/Aspect/AspectOrigin.cs"
   },
   {
     "name": "Cerneala.UI.Aspect.AspectPackage",
@@ -972,6 +997,11 @@
   {
     "name": "Cerneala.UI.Aspect.ElementAspect",
     "file": "documentation/classes/Cerneala.UI.Aspect.ElementAspect.md",
+    "source": "UI/Aspect/ElementAspect.cs"
+  },
+  {
+    "name": "Cerneala.UI.Aspect.ElementAspectCondition",
+    "file": "documentation/classes/Cerneala.UI.Aspect.ElementAspectCondition.md",
     "source": "UI/Aspect/ElementAspect.cs"
   },
   {
@@ -3003,11 +3033,6 @@
     "name": "Cerneala.UI.Markup.GeneratedUiFactory",
     "file": "documentation/classes/Cerneala.UI.Markup.GeneratedUiFactory.md",
     "source": "UI/Markup/GeneratedUiFactory.cs"
-  },
-  {
-    "name": "Cerneala.UI.Markup.MarkupAspectResource",
-    "file": "documentation/classes/Cerneala.UI.Markup.MarkupAspectResource.md",
-    "source": "UI/Markup/MarkupAspectResource.cs"
   },
   {
     "name": "Cerneala.UI.Markup.MarkupConditionalContent",

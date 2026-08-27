@@ -44,6 +44,14 @@ public class ComponentTemplateContext
 
     public void RegisterSlot(AspectSlot slot, UIElement element)
     {
+        ArgumentNullException.ThrowIfNull(slot);
+        if (!slot.OwnerType.IsInstanceOfType(Owner))
+        {
+            throw new ArgumentException(
+                $"Aspect slot '{slot}' cannot be registered by owner '{Owner.GetType().FullName}'.",
+                nameof(slot));
+        }
+
         slots.Register(slot, element);
     }
 

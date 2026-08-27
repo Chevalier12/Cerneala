@@ -69,6 +69,23 @@ public sealed class UiPropertyStoreTests
     }
 
     [Fact]
+    public void ExplicitTemplateOwnerBindingOverridesChildAspectButNotMarkup()
+    {
+        UiProperty<string> property = UiProperty<string>.Register(
+            UniqueName(),
+            typeof(UiPropertyStoreTests),
+            new UiPropertyMetadata<string>("default"));
+        UiObject owner = new();
+
+        owner.SetValue(property, "aspect", UiPropertyValueSource.AspectVisualState);
+        owner.SetValue(property, "owner", UiPropertyValueSource.TemplateOwnerBinding);
+        Assert.Equal("owner", owner.GetValue(property));
+
+        owner.SetValue(property, "markup", UiPropertyValueSource.MarkupBase);
+        Assert.Equal("markup", owner.GetValue(property));
+    }
+
+    [Fact]
     public void StoreRejectsDefaultAsStoredSource()
     {
         UiPropertyStore store = new();

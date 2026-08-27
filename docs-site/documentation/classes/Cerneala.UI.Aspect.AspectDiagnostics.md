@@ -54,7 +54,7 @@ int stepCount = diagnostics.ResolutionSteps.Count;
 
 `AspectDiagnostics` is a static holder for the nested `Snapshot` type. The class itself has no static methods or state.
 
-`AspectEngine.Apply` stores an `AspectDiagnostics.Snapshot` for the processed element. That snapshot includes the winning `ResolvedAspect`, ordered resolution steps for matched and rejected declarations, token traces for resolved token-backed values, and a copied `AspectEngineCounters` instance.
+`AspectEngine.Apply` stores a compact evaluation snapshot for the processed element. The first `GetDiagnostics` call materializes an `AspectDiagnostics.Snapshot` containing the winning `ResolvedAspect`, one ordered resolution step for every considered rule (matched or structurally/conditionally rejected), token traces, and a copied `AspectEngineCounters` instance. Captured conditions are not reevaluated.
 
 `AspectEngine.GetDiagnostics` returns the stored snapshot for an element, or a new empty snapshot when the element has not been processed by the engine. `AspectEngine.Clear` also resets the element diagnostics to an empty snapshot.
 

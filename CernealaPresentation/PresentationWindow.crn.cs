@@ -437,20 +437,38 @@ public partial class PresentationWindow : Window
                 (captureIndex - 1 + ChapterOrder.Length) % ChapterOrder.Length];
             ShowChapter(previousChapter);
             ButtonAutomationPeer next = new(NextButton);
-            suppressLiveDiagnostics = captureChapter != PresentationChapter.Aspect;
+            bool settledCapture = string.Equals(
+                Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_SETTLED_CAPTURE"),
+                "1",
+                StringComparison.OrdinalIgnoreCase);
+            suppressLiveDiagnostics = settledCapture || captureChapter != PresentationChapter.Aspect;
             if (suppressLiveDiagnostics)
             {
                 SetConformanceHeaderDiagnostics();
             }
             try
             {
-                await CaptureScreenshotFrameAsync(fullPath, () =>
+                if (settledCapture)
                 {
                     if (!next.Invoke())
                     {
                         throw new InvalidOperationException("Presentation capture could not navigate to its target chapter.");
                     }
-                });
+
+                    await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+                    await Task.Delay(100);
+                    SaveScreenshot(fullPath);
+                }
+                else
+                {
+                    await CaptureScreenshotFrameAsync(fullPath, () =>
+                    {
+                        if (!next.Invoke())
+                        {
+                            throw new InvalidOperationException("Presentation capture could not navigate to its target chapter.");
+                        }
+                    });
+                }
             }
             finally
             {

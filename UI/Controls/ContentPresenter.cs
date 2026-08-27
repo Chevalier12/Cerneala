@@ -219,7 +219,7 @@ public class ContentPresenter : Control
             return template.Create(CreateTemplateContext(content));
         }
 
-        ContentTemplateRegistry? registry = LocalTemplateRegistry ?? Root?.AspectProcessor.ContentTemplates;
+        ContentTemplateRegistry? registry = LocalTemplateRegistry ?? Root?.AspectProcessor.GetContentTemplates(this);
         if (registry is not null &&
             registry.TryResolve(new ContentTemplateMatchContext(content, ContentTemplateKey, this), out ContentTemplate? resolved))
         {
@@ -265,7 +265,7 @@ public class ContentPresenter : Control
         return new ContentTemplateContext(
             content,
             this,
-            Root?.AspectProcessor.Environment,
+            Root?.AspectProcessor.GetEnvironment(this),
             variants,
             ContentIndex,
             owner);

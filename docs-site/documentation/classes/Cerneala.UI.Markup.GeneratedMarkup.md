@@ -39,6 +39,7 @@ $DataContext.Name:TwoWay      // synchronize and write target changes back
 ## Methods
 | Signature | Return Type | Description |
 | --- | --- | --- |
+| `CombineLifetimes(params IDisposable?[] lifetimes)` | `IDisposable?` | Returns `null`, the single lifetime, or one idempotent reverse-order composite lifetime. |
 | `ObserveProperty(UiObject source, UiProperty property)` | `MarkupObservation` | Observes a Cerneala UI property and provides a writable endpoint when the property is writable. |
 | `ObserveTemplatePartProperty(Control owner, string partName, UiProperty property)` | `MarkupObservation` | Observes a property on a named component-template part and reconnects after template replacement. |
 | `ObserveObject(Func<object?> getter)` | `MarkupObservation` | Observes a getter-backed object value. |
@@ -121,6 +122,8 @@ deactivated while the owner or an ancestor is hidden, collapsed, or invisible.
 When the owner becomes renderable, the controller reevaluates the latest rule
 state and activates matching callbacks. This allows generated Motion conditions
 to be prepared in a hidden subtree without starting an execution prematurely.
+
+Generated Aspect conditions use rule condition-state callbacks instead of `MarkupConditionalValue`. Observations update `AspectConditionKey` state, which queues the canonical Aspect engine. Ordinary non-Aspect conditional markup continues to use `MarkupConditional` values and content reconciliation.
 
 `AttachResource<T>` follows element and ancestor resources before the attached
 root provider. A local resource therefore shadows an application resource with

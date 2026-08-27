@@ -61,7 +61,7 @@ Border sameRoot = (Border)slots[rootSlot];
 
 Slots are keyed by `AspectSlot`. Slot equality uses the slot name, owner type, and target type, so two slot instances with the same values address the same map entry. Registering the same slot again replaces the previous element for that slot.
 
-`Register` requires a non-null slot and a non-null `UIElement`. The indexer returns the element for an existing slot and uses the underlying dictionary lookup, so a missing slot throws `KeyNotFoundException`.
+`Register` requires a non-null slot and element and validates that the element is assignable to `slot.TargetType`. `ComponentTemplateContext.RegisterSlot` additionally validates the template owner against `slot.OwnerType`. The indexer returns the element for an existing slot and uses the underlying dictionary lookup, so a missing slot throws `KeyNotFoundException`.
 
 ## Constructors
 | Name | Description |
@@ -76,12 +76,13 @@ Slots are keyed by `AspectSlot`. Slot equality uses the slot name, owner type, a
 ## Methods
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `Register(AspectSlot slot, UIElement element)` | `void` | Registers or replaces the element associated with the specified aspect slot. |
+| `Register(AspectSlot slot, UIElement element)` | `void` | Registers or replaces a target-type-compatible element for the specified aspect slot. |
 
 ## Exceptions
 | Member | Exception | Condition |
 | --- | --- | --- |
 | `Register(AspectSlot slot, UIElement element)` | `ArgumentNullException` | `slot` or `element` is `null`. |
+| `Register(AspectSlot slot, UIElement element)` | `ArgumentException` | `element` is not assignable to the slot's declared `TargetType`. |
 | `this[AspectSlot slot]` | `KeyNotFoundException` | No element is registered for `slot`. |
 
 ## Applies To

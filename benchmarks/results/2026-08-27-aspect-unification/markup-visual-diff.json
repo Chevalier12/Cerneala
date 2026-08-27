@@ -1,0 +1,18 @@
+{
+  "SchemaVersion": 1,
+  "Baseline": "C:\\Users\\lauri\\Desktop\\Cerneala\\benchmarks\\results\\2026-08-27-aspect-unification\\baseline-markup.png",
+  "Actual": "C:\\Users\\lauri\\Desktop\\Cerneala\\benchmarks\\results\\2026-08-27-aspect-unification\\final-markup.png",
+  "Width": 1600,
+  "Height": 900,
+  "ChangedPixels": 0,
+  "ChangedPixelRatio": 0,
+  "ChangedBounds": null,
+  "MostFrequentColorChanges": [],
+  "MeanAbsoluteError": 0,
+  "Percentile99": 0,
+  "MaximumAbsoluteDelta": 0,
+  "MaximumMeanAbsoluteError": 1,
+  "MaximumPercentile99": 10,
+  "MaximumAbsoluteDeltaThreshold": 49,
+  "Passes": true
+}

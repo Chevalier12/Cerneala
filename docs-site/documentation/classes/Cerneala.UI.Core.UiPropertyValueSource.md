@@ -14,12 +14,12 @@ public enum UiPropertyValueSource
 button.SetValue(
     Control.BackgroundProperty,
     brush,
-    UiPropertyValueSource.ApplicationAspectBase);
+    UiPropertyValueSource.AspectBase);
 ```
 
 ## Remarks
 
-The property store resolves sources by framework precedence rather than by the enum's numeric value. Application aspect sources override framework aspect sources and remain below local aspects, animation, markup, and local values.
+The property store resolves concrete sources in increasing semantic precedence: inherited values, ordinary template bindings, canonical Aspect values, explicit template-owner bindings, markup values, animation, and local values. Reusable, application, scoped, named, and inline Aspect declarations all publish through the same canonical Aspect sources; authoring origin does not create another property-store band.
 
 ## Fields
 
@@ -30,14 +30,11 @@ The property store resolves sources by framework precedence rather than by the e
 | `TemplateBinding` | `2` | Value supplied through a template binding. |
 | `AspectBase` | `3` | Base value supplied by an element aspect. |
 | `AspectVisualState` | `4` | Conditional value supplied by an element aspect visual state. |
-| `LocalAspectBase` | `5` | Base value supplied by a local aspect. |
-| `LocalAspectConditional` | `6` | Conditional value supplied by a local aspect. |
-| `Animation` | `7` | Value supplied by animation. |
-| `MarkupBase` | `8` | Base value supplied by markup. |
-| `MarkupConditional` | `9` | Conditional value supplied by markup. |
-| `Local` | `10` | Value set directly on the object. |
-| `ApplicationAspectBase` | `11` | Base value supplied by an application aspect. |
-| `ApplicationAspectVisualState` | `12` | Conditional value supplied by an application aspect visual state. |
+| `TemplateOwnerBinding` | `5` | Explicit owner-to-template-part value that must remain above the part's own Aspect values. |
+| `MarkupBase` | `6` | Base value supplied by markup outside Aspect declarations. |
+| `MarkupConditional` | `7` | Conditional value supplied by markup outside Aspect declarations. |
+| `Animation` | `8` | Value supplied by animation. |
+| `Local` | `9` | Value set directly on the object. |
 
 `Default` is returned by `UiObject.GetValueSource` when no concrete source is stored, but attempts to set or clear it throw `ArgumentOutOfRangeException`.
 

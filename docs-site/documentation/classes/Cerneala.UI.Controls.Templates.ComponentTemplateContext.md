@@ -76,9 +76,9 @@ The context does not attach bindings, token bindings, slots, parts, or registere
 
 `Owner` and `Environment` are required constructor arguments. When `states` or `variants` are omitted, they default to `AspectStateSet.Empty` and `AspectVariantSet.Empty`.
 
-Use `RegisterSlot` to expose generated child elements through aspect slots, and use `RequirePart` for named template parts that must be present. `RequirePart` registers the supplied element and returns it, but throws an `InvalidOperationException` with the part name when the supplied element is `null`.
+Use `RegisterSlot` to expose generated child elements through aspect slots. Registration requires `Owner` to satisfy the slot's declared owner type and the element to satisfy its target type. Use `RequirePart` for named template parts that must be present. `RequirePart` registers the supplied element and returns it, but throws an `InvalidOperationException` with the part name when the supplied element is `null`.
 
-`Bind` records a `TemplateBinding` from an owner property to a generated target element property. The typed overload defaults the target value source to `UiPropertyValueSource.TemplateBinding`; the non-generic overload requires the caller to choose the target source. `BindToken` records a `TemplateTokenBinding<T>` that reads from `Environment` and writes the value to the target property when the component template instance is attached. `RegisterLifetime` transfers an `IDisposable` subscription or controller to the resulting template instance so template replacement cleans it up deterministically.
+`Bind` records a `TemplateBinding` from an owner property to a generated target element property. The typed overload defaults the target value source to `UiPropertyValueSource.TemplateBinding`; the non-generic overload requires the caller to choose the target source. Framework templates use `UiPropertyValueSource.TemplateOwnerBinding` only for explicit owner palette/chrome projections that must override the generated part's own Aspect value. This source belongs to the template subsystem and is not an Aspect authoring-origin band. `BindToken` records a `TemplateTokenBinding<T>` that reads from `Environment` and writes the value to the target property when the component template instance is attached. `RegisterLifetime` transfers an `IDisposable` subscription or controller to the resulting template instance so template replacement cleans it up deterministically.
 
 Use `ComponentTemplateContext<TControl>` when a component template factory needs a strongly typed `Owner`. The non-generic context is the shared base used by the component template creation pipeline.
 
@@ -102,7 +102,7 @@ Use `ComponentTemplateContext<TControl>` when a component template factory needs
 ## Methods
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `RegisterSlot(AspectSlot slot, UIElement element)` | `void` | Registers a generated element for an aspect slot in `Slots`. |
+| `RegisterSlot(AspectSlot slot, UIElement element)` | `void` | Registers a generated element after validating the slot owner and target types. |
 | `RequirePart<TElement>(string name, TElement? element)` | `TElement` | Registers a required named part in `Parts` and returns the element. |
 | `Bind(UiProperty sourceProperty, UIElement target, UiProperty targetProperty, UiPropertyValueSource targetSource)` | `void` | Records a non-generic owner-to-target template binding with the specified target value source. |
 | `Bind<T>(UiProperty<T> sourceProperty, UIElement target, UiProperty<T> targetProperty, UiPropertyValueSource targetSource = UiPropertyValueSource.TemplateBinding)` | `void` | Records a typed owner-to-target template binding. |
@@ -114,6 +114,7 @@ Use `ComponentTemplateContext<TControl>` when a component template factory needs
 | --- | --- | --- |
 | `ComponentTemplateContext(Control, AspectEnvironment, AspectStateSet?, AspectVariantSet?)` | `ArgumentNullException` | `owner` or `environment` is `null`. |
 | `RegisterSlot(AspectSlot, UIElement)` | `ArgumentNullException` | `slot` or `element` is `null`. |
+| `RegisterSlot(AspectSlot, UIElement)` | `ArgumentException` | `Owner` is incompatible with `slot.OwnerType`, or `element` is incompatible with `slot.TargetType`. |
 | `RequirePart<TElement>(string, TElement?)` | `InvalidOperationException` | `element` is `null`. |
 | `RequirePart<TElement>(string, TElement?)` | `ArgumentException` | `name` is `null`, empty, or whitespace. |
 | `Bind(UiProperty, UIElement, UiProperty, UiPropertyValueSource)` | `ArgumentNullException` | `sourceProperty`, `target`, or `targetProperty` is `null`. |

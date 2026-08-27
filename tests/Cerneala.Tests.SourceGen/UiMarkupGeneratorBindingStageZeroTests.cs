@@ -771,6 +771,7 @@ public sealed partial class UiMarkupGeneratorTests
         StackPanel panel = Assert.IsType<StackPanel>(InvokeBindingTestCreate(
             assembly,
             "Cerneala.GeneratedUi.AspectTemplateOwnerReferenceFactory"));
+        AttachAndProcess(panel);
         Button button = Assert.IsType<Button>(Assert.Single(panel.VisualChildren));
         ContentPresenter presenter = Assert.IsType<ContentPresenter>(button.ComponentTemplateInstance!.Root);
 

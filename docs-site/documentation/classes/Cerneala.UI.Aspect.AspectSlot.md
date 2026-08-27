@@ -70,6 +70,8 @@ Slots are value-like identifiers. Two slots are equal when their `Name`, `OwnerT
 
 Use `For<TOwner, TTarget>(string)` to create a named slot for a part inside an owner component. Use `Root<TOwner>()` for the conventional `"Root"` slot whose owner and target type are both `TOwner`.
 
+Both generic types must derive from `UIElement`. Slot registration and matching enforce the recorded owner and target types; the generic parameters are runtime invariants, not diagnostic-only metadata.
+
 The constructor is not public. Custom code creates slots through the static factory methods, while the sealed generic derived type is constructed internally.
 
 `ToString()` returns the owner type name and slot name in the form `OwnerType.Name.Name`, for example `Button.Content`.
@@ -98,6 +100,8 @@ The constructor is not public. Custom code creates slots through the static fact
 | Member | Exception | Condition |
 | --- | --- | --- |
 | `For<TOwner, TTarget>(string)` | `ArgumentException` | `name` is `null`, empty, or whitespace. |
+| `For<TOwner, TTarget>(string)` | `ArgumentException` | `TOwner` or `TTarget` does not derive from `UIElement`. |
+| `Root<TOwner>()` | `ArgumentException` | `TOwner` does not derive from `UIElement`. |
 
 ## Applies to
 

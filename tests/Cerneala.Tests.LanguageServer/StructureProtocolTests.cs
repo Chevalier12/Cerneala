@@ -266,6 +266,8 @@ public sealed class StructureProtocolTests
             start.ArgumentList.Add(ProjectPath);
             start.ArgumentList.Add("--configuration");
             start.ArgumentList.Add("Release");
+            start.ArgumentList.Add("--artifacts-path");
+            start.ArgumentList.Add(Path.Combine(RootPath, "artifacts"));
             start.ArgumentList.Add("--nologo");
             start.ArgumentList.Add("--verbosity");
             start.ArgumentList.Add("quiet");

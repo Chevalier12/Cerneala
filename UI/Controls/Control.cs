@@ -142,6 +142,14 @@ public class Control : UIElement
 
     public void SetAspectVariant<TControl, TValue>(AspectVariantKey<TControl, TValue> key, TValue value)
     {
+        ArgumentNullException.ThrowIfNull(key);
+        if (!key.OwnerType.IsInstanceOfType(this))
+        {
+            throw new ArgumentException(
+                $"Aspect variant '{key}' cannot be set on control '{GetType().FullName}'.",
+                nameof(key));
+        }
+
         AspectVariantSet next = AspectVariants.Set(key, value);
         if (AspectVariants.Equals(next))
         {
@@ -192,7 +200,7 @@ public class Control : UIElement
             return;
         }
 
-        AspectEnvironment environment = Root?.AspectProcessor.Environment ?? new AspectEnvironment("template");
+        AspectEnvironment environment = Root?.AspectProcessor.GetEnvironment(this) ?? new AspectEnvironment("template");
         ComponentTemplateContext context = new(this, environment, AspectStateSet.FromElement(this), AspectVariants);
         ComponentTemplateInstance instance = template.CreateInstance(this, context);
         try

@@ -9,6 +9,7 @@ public sealed class AspectEngineCounters
     private AspectEngineCounters(
         int rulesConsidered,
         int rulesMatched,
+        int conditionEvaluations,
         int declarationsResolved,
         int tokenLookups,
         int cacheHits,
@@ -16,6 +17,7 @@ public sealed class AspectEngineCounters
     {
         RulesConsidered = rulesConsidered;
         RulesMatched = rulesMatched;
+        ConditionEvaluations = conditionEvaluations;
         DeclarationsResolved = declarationsResolved;
         TokenLookups = tokenLookups;
         CacheHits = cacheHits;
@@ -25,6 +27,8 @@ public sealed class AspectEngineCounters
     public int RulesConsidered { get; internal set; }
 
     public int RulesMatched { get; internal set; }
+
+    public int ConditionEvaluations { get; internal set; }
 
     public int DeclarationsResolved { get; internal set; }
 
@@ -36,6 +40,13 @@ public sealed class AspectEngineCounters
 
     internal AspectEngineCounters Snapshot()
     {
-        return new AspectEngineCounters(RulesConsidered, RulesMatched, DeclarationsResolved, TokenLookups, CacheHits, CacheMisses);
+        return new AspectEngineCounters(
+            RulesConsidered,
+            RulesMatched,
+            ConditionEvaluations,
+            DeclarationsResolved,
+            TokenLookups,
+            CacheHits,
+            CacheMisses);
     }
 }

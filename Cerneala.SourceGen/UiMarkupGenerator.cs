@@ -1005,6 +1005,20 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             public string? RuntimeResourceVariable { get; set; }
 
+            public bool BehaviorOwnedByPackage { get; set; }
+
+            public ReactivePlan? ReactivePlan { get; set; }
+
+            public List<string> ConditionKeyVariables { get; } = [];
+
+            public bool ConditionKeysEmitted { get; set; }
+
+            public IReadOnlyList<string>? BehaviorLines { get; set; }
+
+            public IReadOnlyList<string>? BehaviorPostLines { get; set; }
+
+            public IReadOnlyList<string> BehaviorLifetimeVariables { get; set; } = [];
+
             public string? TemplateVariable { get; set; }
         }
 
@@ -1646,7 +1660,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 string? color = ParseBrushColor(stop.Attribute("Color"));
                 if (offset is null || color is null)
                 {
-                        Report(InvalidPropertyValue, stop, resource.Name.LocalName, "GradientStop", stop.ToString(MarkupSaveOptions.DisableFormatting));
+                    Report(InvalidPropertyValue, stop, resource.Name.LocalName, "GradientStop", stop.ToString(MarkupSaveOptions.DisableFormatting));
                     return null;
                 }
 
@@ -1677,7 +1691,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 !new[] { "None", "Tile", "FlipX", "FlipY", "FlipXY" }.Contains(tileMode) ||
                 viewport is null || viewbox is null || opacity is null)
             {
-                    Report(InvalidPropertyValue, resource, resource.Name.LocalName, "Tile", resource.ToString(MarkupSaveOptions.DisableFormatting));
+                Report(InvalidPropertyValue, resource, resource.Name.LocalName, "Tile", resource.ToString(MarkupSaveOptions.DisableFormatting));
                 return null;
             }
 
@@ -2636,9 +2650,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 EmitItemsControlTemplatesElement(element, variable);
                 EmitItemsControlItemsPanelElement(element, variable);
 
-                if (parsedContent.HasDirectives || aspects.Any(aspect => aspect.Conditions.Count > 0))
+                if (parsedContent.HasDirectives)
                 {
-                    EmitReactiveContent(element, variable, parsedContent, aspects);
+                    EmitReactiveContent(element, variable, parsedContent);
                 }
                 else
                 {
@@ -3245,28 +3259,13 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     case AspectResource aspect:
                         string targetType = ResolveAspectTargetType(aspect.TargetName, aspect.Source)!;
                         string key = aspect.Name is null ? "typeof(" + targetType + ")" : Literal(aspect.Name);
-                        IEnumerable<string> propertyNames = aspect.Assignments.Select(assignment => assignment.PropertyName);
-                        if (aspect.Template is not null)
+                        if (aspect.Name is null)
                         {
-                            propertyNames = propertyNames.Concat(new[] { "ComponentTemplate" });
-                        }
-
-                        string properties = string.Join(", ", propertyNames.Select(Literal));
-                        if (aspect.Name is null && ReferenceEquals(owner, document.Root) &&
-                            string.Equals(document.Root.Name.LocalName, "Application", StringComparison.Ordinal))
-                        {
-                            EmitApplicationAspectResource(ownerVariable, key, properties, targetType, aspect);
-                        }
-                        else if (SupportsRuntimeLocalApplicator(aspect))
-                        {
-                            EmitLocalAspectResource(ownerVariable, key, properties, targetType, aspect);
+                            EmitAspectPackageResource(ownerVariable, key, targetType, aspect);
                         }
                         else
                         {
-                            currentLines.Add(
-                                ownerVariable + ".Resources[" + key + "] = new global::Cerneala.UI.Markup.MarkupAspectResource(" +
-                                (aspect.Name is null ? "null" : Literal(aspect.Name)) + ", typeof(" + targetType + "), new string[] { " +
-                                properties + " }, " + (aspect.Conditions.Count > 0 ? "true" : "false") + ");");
+                            EmitNamedElementAspectResource(ownerVariable, key, targetType, aspect);
                         }
                         break;
                 }
@@ -3320,8 +3319,16 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             currentLines.Add("    });");
         }
 
-        private static bool SupportsRuntimeLocalApplicator(AspectResource aspect) =>
-            (aspect.Template is null || aspect.Name is not null) &&
+        private static bool HasRuntimeBehavior(AspectResource aspect) =>
+            aspect.Conditions.Count > 0 ||
+            aspect.EventTriggers.Count > 0 ||
+            aspect.Presence is not null ||
+            aspect.Layout is not null ||
+            aspect.Scrolls.Count > 0 ||
+            aspect.Drag is not null ||
+            aspect.GesturePress is not null;
+
+        private static bool SupportsPackageBehavior(AspectResource aspect) =>
             aspect.Presence is null &&
             aspect.Layout is null &&
             aspect.Scrolls.Count == 0 &&
@@ -3329,6 +3336,115 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             aspect.GesturePress is null &&
             aspect.EventTriggers.Count == 0 &&
             !aspect.Conditions.Any(ContainsMotionExecution);
+
+        private static bool HasMotionBehavior(AspectResource aspect) =>
+            aspect.EventTriggers.Count > 0 ||
+            aspect.Presence is not null ||
+            aspect.Layout is not null ||
+            aspect.Scrolls.Count > 0 ||
+            aspect.Drag is not null ||
+            aspect.GesturePress is not null ||
+            aspect.Conditions.Any(ContainsMotionExecution);
+
+        private bool PrepareAspectBehavior(string targetType, AspectResource aspect, bool includeMotion)
+        {
+            if (aspect.BehaviorLines is not null)
+            {
+                return true;
+            }
+
+            List<string> behaviorLines = [];
+            List<string> behaviorPostLines = [];
+            List<string> lifetimeVariables = [];
+            bool resolved = true;
+            MarkupElement targetElement = new(ResolveAspectTargetTypeSymbol(aspect.TargetName, aspect.Source)!.Name);
+            WithEmissionBuffers(behaviorLines, behaviorPostLines, () =>
+            {
+                if (includeMotion && !ResolveMotionAspect(targetElement, "target", aspect))
+                {
+                    resolved = false;
+                    return;
+                }
+
+                if (includeMotion)
+                {
+                    EmitMotionPresence(targetElement, "target", aspect);
+                    EmitMotionLayout(targetElement, "target", aspect);
+                    EmitMotionActivations(targetElement, "target", aspect);
+                }
+                ReactivePlan plan = BuildAspectReactivePlan(aspect, "target", targetElement.Name.LocalName);
+                if (!includeMotion)
+                {
+                    foreach (ReactiveRule rule in plan.Rules)
+                    {
+                        rule.Activations = [];
+                    }
+                }
+
+                aspect.ReactivePlan = plan;
+                while (aspect.ConditionKeyVariables.Count < plan.Rules.Count)
+                {
+                    string keyVariable = "aspectConditionKey" + nextResourceId.ToString(CultureInfo.InvariantCulture);
+                    nextResourceId++;
+                    aspect.ConditionKeyVariables.Add(keyVariable);
+                }
+
+                if (plan.Rules.Count > 0)
+                {
+                    string conditionBehavior = "aspectConditionBehavior" + nextResourceId.ToString(CultureInfo.InvariantCulture);
+                    nextResourceId++;
+                    currentLines.Add("global::System.IDisposable? " + conditionBehavior + " = null;");
+                    lifetimeVariables.Add(conditionBehavior);
+                    EmitReactivePlan(
+                        plan,
+                        controlsContent: plan.HasConditionalContent,
+                        aspect.ConditionKeyVariables,
+                        assignmentTarget: conditionBehavior);
+                }
+            });
+
+            if (!resolved)
+            {
+                return false;
+            }
+
+            foreach (string line in behaviorLines.Concat(behaviorPostLines))
+            {
+                const string prefix = "global::System.IDisposable ";
+                if (!line.StartsWith(prefix, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                int end = line.IndexOf(' ', prefix.Length);
+                if (end > prefix.Length)
+                {
+                    lifetimeVariables.Add(line.Substring(prefix.Length, end - prefix.Length));
+                }
+            }
+
+            aspect.BehaviorLines = behaviorLines;
+            aspect.BehaviorPostLines = behaviorPostLines;
+            aspect.BehaviorLifetimeVariables = lifetimeVariables.Distinct(StringComparer.Ordinal).ToArray();
+            return true;
+        }
+
+        private void EmitAspectConditionKeys(AspectResource aspect, string diagnosticPrefix)
+        {
+            if (aspect.ConditionKeysEmitted)
+            {
+                return;
+            }
+
+            for (int index = 0; index < aspect.ConditionKeyVariables.Count; index++)
+            {
+                currentLines.Add(
+                    "global::Cerneala.UI.Aspect.AspectConditionKey " + aspect.ConditionKeyVariables[index] +
+                    " = new(" + Literal(diagnosticPrefix + ".condition." + index.ToString(CultureInfo.InvariantCulture)) + ");");
+            }
+
+            aspect.ConditionKeysEmitted = true;
+        }
 
         private static bool ContainsMotionExecution(DirectiveWhenNode when) =>
             (when.BooleanBody is not null && ContainsMotionExecution(when.BooleanBody)) ||
@@ -3340,116 +3456,213 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 (node is DirectiveWhenNode when && ContainsMotionExecution(when)) ||
                 (node is DirectiveIfNode branch && ContainsMotionExecution(branch.Body)));
 
-        private void EmitLocalAspectResource(
+        private void EmitAspectPackageResource(
             string ownerVariable,
             string key,
-            string properties,
             string targetType,
             AspectResource aspect)
         {
-            List<string> applicatorLines = [];
-            List<string> applicatorPostLines = [];
-            MarkupElement targetElement = new(ResolveAspectTargetTypeSymbol(aspect.TargetName, aspect.Source)!.Name);
-            WithEmissionBuffers(applicatorLines, applicatorPostLines, () =>
+            INamedTypeSymbol targetSymbol = ResolveAspectTargetTypeSymbol(aspect.TargetName, aspect.Source)!;
+            bool packageOwnsBehavior = HasRuntimeBehavior(aspect) && SupportsPackageBehavior(aspect);
+            if (HasRuntimeBehavior(aspect) && !PrepareAspectBehavior(
+                targetType,
+                aspect,
+                includeMotion: packageOwnsBehavior))
             {
-                if (!ResolveMotionAspect(targetElement, "target", aspect))
-                {
-                    return;
-                }
-
-                EmitMotionPresence(targetElement, "target", aspect);
-                EmitMotionLayout(targetElement, "target", aspect);
-                EmitAspectAssignments(
-                    targetElement,
-                    "target",
-                    aspect,
-                    "global::Cerneala.UI.Core.UiPropertyValueSource.AspectVisualState");
-                EmitMotionActivations(targetElement, "target", aspect);
-                if (aspect.Conditions.Count > 0)
-                {
-                    EmitReactiveContent(
-                        targetElement,
-                        "target",
-                        new DirectiveParseResult([], null, null),
-                        [aspect],
-                        "global::Cerneala.UI.Core.UiPropertyValueSource.AspectVisualState",
-                        requireLocalAspectIdentity: false);
-                }
-            });
-
-            string resourceVariable = "markupAspectResource" + nextResourceId.ToString(CultureInfo.InvariantCulture);
-            nextResourceId++;
-            aspect.RuntimeResourceVariable = resourceVariable;
-            currentLines.Add(
-                "global::Cerneala.UI.Markup.MarkupAspectResource " + resourceVariable +
-                " = new(" + (aspect.Name is null ? "null" : Literal(aspect.Name)) + ", typeof(" + targetType + "), new string[] { " + properties + " }, " +
-                (aspect.Conditions.Count > 0 ? "true" : "false") + ",");
-            currentLines.Add("    element =>");
-            currentLines.Add("    {");
-            currentLines.Add("        if (element is not " + targetType + " target)");
-            currentLines.Add("        {");
-            currentLines.Add("            return;");
-            currentLines.Add("        }");
-            foreach (string line in applicatorLines.Concat(applicatorPostLines))
-            {
-                currentLines.Add("        " + line);
+                return;
             }
 
-            currentLines.Add("    });");
+            string resourceVariable = "aspectPackage" + nextResourceId.ToString(CultureInfo.InvariantCulture);
+            nextResourceId++;
+            string packageName = "Markup." + Path.GetFileNameWithoutExtension(file.Path) + "." +
+                targetSymbol.Name + "." + resourceVariable;
+            EmitAspectConditionKeys(aspect, packageName);
+            List<string>? declarations = BuildAspectDeclarations(targetSymbol.Name, aspect);
+            if (declarations is null)
+            {
+                return;
+            }
+
+            string declarationsCode = declarations.Count == 0
+                ? "global::System.Array.Empty<global::Cerneala.UI.Aspect.AspectDeclaration>()"
+                : "new global::Cerneala.UI.Aspect.AspectDeclaration[] { " + string.Join(", ", declarations) + " }";
+            aspect.RuntimeResourceVariable = resourceVariable;
+            currentLines.Add("global::Cerneala.UI.Aspect.AspectPackage " + resourceVariable + " =");
+            currentLines.Add("    global::Cerneala.UI.Aspect.AspectPackage.Create(" + Literal(packageName) + ")");
+            currentLines.Add(
+                "    .Origin(new global::Cerneala.UI.Aspect.AspectOrigin(" +
+                "global::Cerneala.UI.Aspect.AspectAuthoringKind.MarkupDefault, " +
+                Literal(Path.GetFileName(file.Path)) + ", " + Literal(targetSymbol.Name) + "))");
+            currentLines.Add("    .Components(components =>");
+            currentLines.Add("    {");
+            if (declarations.Count > 0)
+            {
+                currentLines.Add(
+                    "        components.AddRule(new global::Cerneala.UI.Aspect.AspectRuleSet(" +
+                    Literal(packageName + ".default") + ", global::Cerneala.UI.Aspect.AspectLayer.App, " +
+                    "new global::Cerneala.UI.Aspect.AspectTarget(typeof(" + targetType + ")), " +
+                    declarationsCode + ", 0));");
+            }
+
+            if (aspect.ReactivePlan is not null)
+            {
+                ReactiveRule[] rules = aspect.ReactivePlan.Rules.OrderBy(rule => rule.Order).ToArray();
+                for (int index = 0; index < rules.Length; index++)
+                {
+                    List<string>? conditionalDeclarations = BuildConditionalAspectDeclarations(
+                        targetSymbol.Name,
+                        rules[index].Assignments);
+                    if (conditionalDeclarations is null)
+                    {
+                        return;
+                    }
+
+                    string conditionalCode = conditionalDeclarations.Count == 0
+                        ? "global::System.Array.Empty<global::Cerneala.UI.Aspect.AspectDeclaration>()"
+                        : "new global::Cerneala.UI.Aspect.AspectDeclaration[] { " +
+                            string.Join(", ", conditionalDeclarations) + " }";
+                    currentLines.Add(
+                        "        components.AddRule(new global::Cerneala.UI.Aspect.AspectRuleSet(" +
+                        Literal(packageName + ".condition." + rules[index].Order.ToString(CultureInfo.InvariantCulture)) +
+                        ", global::Cerneala.UI.Aspect.AspectLayer.App, new global::Cerneala.UI.Aspect.AspectTarget(" +
+                        "typeof(" + targetType + "), conditions: new global::Cerneala.UI.Aspect.AspectCondition[] { " +
+                        "global::Cerneala.UI.Aspect.AspectCondition.Signal(" + aspect.ConditionKeyVariables[index] + ") }), " +
+                        conditionalCode + ", " + (rules[index].Order + 1).ToString(CultureInfo.InvariantCulture) + "));");
+                }
+            }
+
+            if (packageOwnsBehavior && aspect.BehaviorLines is not null)
+            {
+                currentLines.Add("        components.AddBehavior(new global::Cerneala.UI.Aspect.AspectBehavior(");
+                currentLines.Add("            typeof(" + targetType + "), element =>");
+                currentLines.Add("            {");
+                currentLines.Add("                if (element is not " + targetType + " target)");
+                currentLines.Add("                {");
+                currentLines.Add("                    return null;");
+                currentLines.Add("                }");
+                foreach (string line in aspect.BehaviorLines.Concat(aspect.BehaviorPostLines!))
+                {
+                    currentLines.Add("                " + line);
+                }
+
+                string lifetimes = aspect.BehaviorLifetimeVariables.Count == 0
+                    ? "global::System.Array.Empty<global::System.IDisposable?>()"
+                    : "new global::System.IDisposable?[] { " + string.Join(", ", aspect.BehaviorLifetimeVariables) + " }";
+                currentLines.Add("                return global::Cerneala.UI.Markup.GeneratedMarkup.CombineLifetimes(" + lifetimes + ");");
+                currentLines.Add("            }));");
+                aspect.BehaviorOwnedByPackage = true;
+            }
+
+            currentLines.Add("    })");
+            currentLines.Add("    .Build();");
             currentLines.Add(ownerVariable + ".Resources[" + key + "] = " + resourceVariable + ";");
         }
 
-        private void EmitApplicationAspectResource(
+        private void EmitNamedElementAspectResource(
             string ownerVariable,
             string key,
-            string properties,
             string targetType,
             AspectResource aspect)
         {
-            List<string> applicatorLines = [];
-            List<string> applicatorPostLines = [];
-            MarkupElement targetElement = new(ResolveAspectTargetTypeSymbol(aspect.TargetName, aspect.Source)!.Name);
-            WithEmissionBuffers(applicatorLines, applicatorPostLines, () =>
+            INamedTypeSymbol targetSymbol = ResolveAspectTargetTypeSymbol(aspect.TargetName, aspect.Source)!;
+            if (HasRuntimeBehavior(aspect) && !PrepareAspectBehavior(targetType, aspect, includeMotion: false))
             {
-                if (!ResolveMotionAspect(targetElement, "target", aspect))
-                {
-                    return;
-                }
-
-                EmitMotionPresence(targetElement, "target", aspect);
-                EmitMotionLayout(targetElement, "target", aspect);
-                EmitAspectAssignments(
-                    targetElement,
-                    "target",
-                    aspect,
-                    "global::Cerneala.UI.Core.UiPropertyValueSource.ApplicationAspectBase");
-                EmitMotionActivations(targetElement, "target", aspect);
-                if (aspect.Conditions.Count > 0)
-                {
-                    EmitReactiveContent(
-                        targetElement,
-                        "target",
-                        new DirectiveParseResult([], null, null),
-                        [aspect],
-                        "global::Cerneala.UI.Core.UiPropertyValueSource.ApplicationAspectVisualState");
-                }
-            });
-
-            currentLines.Add(ownerVariable + ".Resources[" + key + "] = new global::Cerneala.UI.Markup.MarkupAspectResource(");
-            currentLines.Add("    null, typeof(" + targetType + "), new string[] { " + properties + " }, " +
-                (aspect.Conditions.Count > 0 ? "true" : "false") + ",");
-            currentLines.Add("    element =>");
-            currentLines.Add("    {");
-            currentLines.Add("        if (element is not " + targetType + " target)");
-            currentLines.Add("        {");
-            currentLines.Add("            return;");
-            currentLines.Add("        }");
-            foreach (string line in applicatorLines.Concat(applicatorPostLines))
-            {
-                currentLines.Add("        " + line);
+                return;
             }
 
-            currentLines.Add("    });");
+            string diagnosticName = aspect.Name!;
+            EmitAspectConditionKeys(aspect, diagnosticName);
+            string? valuesCode = BuildElementAspectValues(targetSymbol.Name, aspect);
+            if (valuesCode is null)
+            {
+                return;
+            }
+
+            string resourceVariable = "elementAspectResource" + nextResourceId.ToString(CultureInfo.InvariantCulture);
+            nextResourceId++;
+            aspect.RuntimeResourceVariable = resourceVariable;
+            aspect.RuntimeVariable = resourceVariable;
+            EmitElementAspectConstruction(resourceVariable, aspect.Name, targetType, targetSymbol.Name, valuesCode, aspect);
+            currentLines.Add(ownerVariable + ".Resources[" + key + "] = " + resourceVariable + ";");
+        }
+
+        private void EmitElementAspectConstruction(
+            string variable,
+            string? name,
+            string targetType,
+            string elementName,
+            string valuesCode,
+            AspectResource aspect)
+        {
+            string? conditionsCode = BuildElementAspectConditionsCode(elementName, aspect);
+            if (conditionsCode is null)
+            {
+                return;
+            }
+
+            currentLines.Add("global::Cerneala.UI.Aspect.ElementAspect " + variable + " = new(");
+            currentLines.Add("    " + (name is null ? "null" : Literal(name)) + ", typeof(" + targetType + "), " + valuesCode + ",");
+            currentLines.Add("    " + conditionsCode + ",");
+            if (aspect.BehaviorLines is null)
+            {
+                currentLines.Add("    behaviorFactory: null,");
+            }
+            else
+            {
+                currentLines.Add("    element =>");
+                currentLines.Add("    {");
+                currentLines.Add("        if (element is not " + targetType + " target)");
+                currentLines.Add("        {");
+                currentLines.Add("            return null;");
+                currentLines.Add("        }");
+                foreach (string line in aspect.BehaviorLines.Concat(aspect.BehaviorPostLines!))
+                {
+                    currentLines.Add("        " + line);
+                }
+
+                string lifetimes = aspect.BehaviorLifetimeVariables.Count == 0
+                    ? "global::System.Array.Empty<global::System.IDisposable?>()"
+                    : "new global::System.IDisposable?[] { " + string.Join(", ", aspect.BehaviorLifetimeVariables) + " }";
+                currentLines.Add("        return global::Cerneala.UI.Markup.GeneratedMarkup.CombineLifetimes(" + lifetimes + ");");
+                currentLines.Add("    },");
+            }
+
+            currentLines.Add("    isConditional: " + (aspect.Conditions.Count > 0 ? "true" : "false") + ",");
+            string authoringKind = aspect.Name is null ? "MarkupInline" : "MarkupNamed";
+            currentLines.Add(
+                "    origin: new global::Cerneala.UI.Aspect.AspectOrigin(" +
+                "global::Cerneala.UI.Aspect.AspectAuthoringKind." + authoringKind + ", " +
+                Literal(Path.GetFileName(file.Path)) + ", " +
+                (aspect.Name is null ? "null" : Literal(aspect.Name)) + "));");
+        }
+
+        private string? BuildElementAspectConditionsCode(string elementName, AspectResource aspect)
+        {
+            if (aspect.ReactivePlan is null || aspect.ReactivePlan.Rules.Count == 0)
+            {
+                return "global::System.Array.Empty<global::Cerneala.UI.Aspect.ElementAspectCondition>()";
+            }
+
+            List<string> conditions = [];
+            ReactiveRule[] rules = aspect.ReactivePlan.Rules.OrderBy(rule => rule.Order).ToArray();
+            for (int index = 0; index < rules.Length; index++)
+            {
+                List<string>? values = BuildConditionalElementAspectValues(elementName, rules[index].Assignments);
+                if (values is null)
+                {
+                    return null;
+                }
+
+                string valuesCode = values.Count == 0
+                    ? "global::System.Array.Empty<global::Cerneala.UI.Aspect.ElementAspectValue>()"
+                    : "new global::Cerneala.UI.Aspect.ElementAspectValue[] { " + string.Join(", ", values) + " }";
+                conditions.Add(
+                    "new global::Cerneala.UI.Aspect.ElementAspectCondition(" +
+                    aspect.ConditionKeyVariables[index] + ", " + valuesCode + ", " +
+                    rules[index].Order.ToString(CultureInfo.InvariantCulture) + ")");
+            }
+
+            return "new global::Cerneala.UI.Aspect.ElementAspectCondition[] { " + string.Join(", ", conditions) + " }";
         }
 
         private string? ResolveElementType(MarkupElement element)
@@ -3622,29 +3835,108 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return resolved;
             }
 
-            resolved.Add(namedAspect);
+            resolved.Add(namedAspect.RuntimeResourceVariable is null
+                ? CloneAspectForApplication(namedAspect)
+                : namedAspect);
             return resolved;
+        }
+
+        private static AspectResource CloneAspectForApplication(AspectResource aspect)
+        {
+            return new AspectResource(
+                aspect.Name,
+                aspect.TargetName,
+                aspect.Assignments,
+                aspect.Conditions,
+                aspect.EventTriggers,
+                aspect.Presence,
+                aspect.Layout,
+                aspect.Scrolls,
+                aspect.Drag,
+                aspect.GesturePress,
+                aspect.Template,
+                aspect.Source,
+                isInline: true)
+            {
+                TemplateVariable = aspect.TemplateVariable
+            };
         }
 
         private void ApplyAspects(MarkupElement element, string variable, IReadOnlyList<AspectResource> aspects)
         {
             foreach (AspectResource aspect in aspects)
             {
-                if (aspect.Name is null && aspect.RuntimeResourceVariable is not null)
+                if (aspect.Name is null && !aspect.IsInline)
                 {
-                    currentLines.Add(aspect.RuntimeResourceVariable + ".ApplyTo(" + variable + ");");
+                    if (!aspect.BehaviorOwnedByPackage && HasRuntimeBehavior(aspect))
+                    {
+                        if (!ResolveMotionAspect(element, variable, aspect))
+                        {
+                            continue;
+                        }
+
+                        EmitMotionPresence(element, variable, aspect);
+                        EmitMotionLayout(element, variable, aspect);
+                        EmitMotionActivations(element, variable, aspect);
+                        if (aspect.Conditions.Count > 0)
+                        {
+                            if (aspect.ConditionKeyVariables.Count > 0)
+                            {
+                                ReactivePlan signalPlan = BuildAspectReactivePlan(aspect, variable, element.Name.LocalName);
+                                foreach (ReactiveRule rule in signalPlan.Rules)
+                                {
+                                    rule.Activations = [];
+                                }
+
+                                signalPlan.Rules.RemoveAll(rule => rule.Assignments.Count == 0 && rule.Elements.Count == 0);
+                                EmitReactivePlan(
+                                    signalPlan,
+                                    controlsContent: signalPlan.HasConditionalContent,
+                                    aspectConditionKeys: aspect.ConditionKeyVariables,
+                                    suppressValues: true);
+                            }
+
+                            ReactivePlan motionPlan = BuildAspectReactivePlan(aspect, variable, element.Name.LocalName);
+                            motionPlan.Rules.RemoveAll(rule => rule.Activations.Count == 0 && rule.Elements.Count == 0);
+                            EmitReactivePlan(
+                                motionPlan,
+                                controlsContent: motionPlan.HasConditionalContent,
+                                suppressValues: true);
+                        }
+                    }
+
                     continue;
                 }
 
-                if (!ResolveMotionAspect(element, variable, aspect))
+                bool hasMotionBehavior = HasMotionBehavior(aspect);
+                if (hasMotionBehavior)
                 {
-                    continue;
+                    if (!ResolveMotionAspect(element, variable, aspect))
+                    {
+                        continue;
+                    }
+
+                    EmitMotionPresence(element, variable, aspect);
+                    EmitMotionLayout(element, variable, aspect);
+                    EmitMotionActivations(element, variable, aspect);
                 }
 
-                EmitMotionPresence(element, variable, aspect);
-                EmitMotionLayout(element, variable, aspect);
-
-                if (IsLocalAspect(aspect))
+                if (aspect.RuntimeResourceVariable is not null)
+                {
+                    if (IsApplicationNamedAspect(aspect))
+                    {
+                        currentLines.Add(
+                            "global::Cerneala.UI.Markup.GeneratedMarkup.AttachResource(" +
+                            variable + ", " + variable + ", global::Cerneala.UI.Elements.UIElement.AspectProperty, " +
+                            Literal(aspect.Name!) + ", global::Cerneala.UI.Core.UiPropertyValueSource.Local);");
+                    }
+                    else
+                    {
+                        aspect.RuntimeVariable = aspect.RuntimeResourceVariable;
+                        currentLines.Add(variable + ".Aspect = " + aspect.RuntimeResourceVariable + ";");
+                    }
+                }
+                else if (IsLocalAspect(aspect))
                 {
                     EmitLocalAspect(element, variable, aspect);
                 }
@@ -3653,7 +3945,16 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     EmitAspectAssignments(element, variable, aspect);
                 }
 
-                EmitMotionActivations(element, variable, aspect);
+                if (hasMotionBehavior && aspect.Conditions.Count > 0)
+                {
+                    ReactivePlan motionPlan = BuildAspectReactivePlan(aspect, variable, element.Name.LocalName);
+                    motionPlan.Rules.RemoveAll(rule => rule.Activations.Count == 0 && rule.Elements.Count == 0);
+                    EmitReactivePlan(
+                        motionPlan,
+                        controlsContent: motionPlan.HasConditionalContent,
+                        suppressValues: true);
+                }
+
             }
         }
 
@@ -3689,17 +3990,45 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         private static bool IsLocalAspect(AspectResource aspect) => aspect.IsInline || aspect.Name is not null;
 
+        private bool IsApplicationNamedAspect(AspectResource aspect) =>
+            applicationResources is not null &&
+            applicationResources.NamedResources.Values
+                .OfType<NamedSymbol>()
+                .Any(symbol => ReferenceEquals(symbol.Source, aspect));
+
         private void EmitLocalAspect(MarkupElement element, string variable, AspectResource aspect)
         {
             string elementName = element.Name.LocalName;
+            string targetType = ResolveAspectTargetType(aspect.TargetName, aspect.Source)!;
+            if (HasRuntimeBehavior(aspect) && !PrepareAspectBehavior(targetType, aspect, includeMotion: false))
+            {
+                return;
+            }
+
+            EmitAspectConditionKeys(aspect, (aspect.Name ?? "Inline") + "." + elementName);
+            string? valuesCode = BuildElementAspectValues(elementName, aspect);
+            if (valuesCode is null)
+            {
+                return;
+            }
+
+            string aspectVariable = "localAspect" + nextResourceId.ToString(CultureInfo.InvariantCulture);
+            nextResourceId++;
+            aspect.RuntimeVariable = aspectVariable;
+            EmitElementAspectConstruction(aspectVariable, aspect.Name, targetType, elementName, valuesCode, aspect);
+            currentLines.Add(variable + ".Aspect = " + aspectVariable + ";");
+        }
+
+        private string? BuildElementAspectValues(string elementName, AspectResource aspect)
+        {
             List<string> values = [];
             foreach (AspectPropertyAssignment assignment in aspect.Assignments)
             {
-                PropertySpec? spec = FindPropertySpec(elementName, assignment.PropertyName, ReferenceEquals(element, document.Root));
+                PropertySpec? spec = FindPropertySpec(elementName, assignment.PropertyName, isRoot: false);
                 if (spec is null || !spec.Assignable)
                 {
                     Report(UnsupportedProperty, assignment.Source, elementName, assignment.PropertyName);
-                    return;
+                    return null;
                 }
 
                 GeneratedExpression? expression = assignment.IsReference
@@ -3707,11 +4036,13 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     : ParseAspectLiteralValue(elementName, assignment.PropertyName, assignment.RawValue, spec, assignment.Source);
                 if (expression is null)
                 {
-                    return;
+                    return null;
                 }
 
-                values.Add(
-                    "new global::Cerneala.UI.Aspect.ElementAspectValue(" + spec.PropertyCode + ", " + expression.Code + ")");
+                values.Add(BuildElementAspectValueCode(
+                    spec,
+                    expression,
+                    resourceName: null));
             }
 
             if (aspect.TemplateVariable is not null)
@@ -3721,16 +4052,191 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     "global::Cerneala.UI.Controls.Control.ComponentTemplateProperty, " + aspect.TemplateVariable + ")");
             }
 
-            string valuesCode = values.Count == 0
+            return values.Count == 0
                 ? "global::System.Array.Empty<global::Cerneala.UI.Aspect.ElementAspectValue>()"
                 : "new global::Cerneala.UI.Aspect.ElementAspectValue[] { " + string.Join(", ", values) + " }";
-            string aspectVariable = "localAspect" + nextResourceId.ToString(CultureInfo.InvariantCulture);
-            nextResourceId++;
-            aspect.RuntimeVariable = aspectVariable;
-            currentLines.Add(
-                "global::Cerneala.UI.Aspect.ElementAspect " + aspectVariable +
-                " = new(" + valuesCode + ", " + (aspect.Conditions.Count > 0 ? "true" : "false") + ");");
-            currentLines.Add(variable + ".Aspect = " + aspectVariable + ";");
+        }
+
+        private List<string>? BuildAspectDeclarations(string elementName, AspectResource aspect)
+        {
+            List<string> declarations = [];
+            foreach (AspectPropertyAssignment assignment in aspect.Assignments)
+            {
+                PropertySpec? spec = FindPropertySpec(elementName, assignment.PropertyName, isRoot: false);
+                if (spec is null || !spec.Assignable || !spec.IsUiProperty)
+                {
+                    Report(UnsupportedProperty, assignment.Source, elementName, assignment.PropertyName);
+                    return null;
+                }
+
+                GeneratedExpression? expression = assignment.IsReference
+                    ? ResolveReferenceValue(elementName, assignment.PropertyName, assignment.RawValue, spec.ValueKind, assignment.Source)
+                    : ParseAspectLiteralValue(elementName, assignment.PropertyName, assignment.RawValue, spec, assignment.Source);
+                if (expression is null)
+                {
+                    return null;
+                }
+
+                string valueCode = BuildAspectValueCode(
+                    spec,
+                    expression,
+                    assignment.IsReference && spec.ValueKind == MarkupValueKind.Brush
+                        ? assignment.RawValue
+                        : expression.ApplicationResourceName);
+                declarations.Add(
+                    "new global::Cerneala.UI.Aspect.AspectDeclaration(" + spec.PropertyCode + ", " + valueCode +
+                    ", diagnosticName: " + Literal(assignment.PropertyName) + ")");
+            }
+
+            if (aspect.TemplateVariable is not null)
+            {
+                declarations.Add(
+                    "new global::Cerneala.UI.Aspect.AspectDeclaration(" +
+                    "global::Cerneala.UI.Controls.Control.ComponentTemplateProperty, " +
+                    "global::Cerneala.UI.Aspect.AspectValue<global::Cerneala.UI.Controls.Templates.ComponentTemplate?>.Literal(" +
+                    aspect.TemplateVariable + "), diagnosticName: \"ComponentTemplate\")");
+            }
+
+            return declarations;
+        }
+
+        private List<string>? BuildConditionalAspectDeclarations(
+            string elementName,
+            IReadOnlyList<DirectiveAssignmentNode> assignments)
+        {
+            List<string> declarations = [];
+            foreach (DirectiveAssignmentNode assignment in assignments)
+            {
+                PropertySpec? spec = FindPropertySpec(elementName, assignment.PropertyName, isRoot: false);
+                if (spec is null || !spec.Assignable || !spec.IsUiProperty)
+                {
+                    Report(UnsupportedProperty, assignment.Source, elementName, assignment.PropertyName);
+                    return null;
+                }
+
+                ParsedMarkupValue? binding = ParseMarkupBindingValue(
+                    assignment.Value,
+                    assignment: true,
+                    stringTarget: spec.ValueType.SpecialType == SpecialType.System_String,
+                    assignment.ValueLocation,
+                    requireExplicitMode: true);
+                if (binding is not null)
+                {
+                    Report(
+                        InvalidBindingSource,
+                        assignment.ValueLocation,
+                        assignment.Value,
+                        "Conditional Aspect assignment bindings must be lowered as computed Aspect values.");
+                    return null;
+                }
+
+                GeneratedExpression? expression = ParseDirectiveValue(
+                    elementName,
+                    assignment.PropertyName,
+                    assignment.Value,
+                    spec,
+                    assignment.Source,
+                    "target");
+                if (expression is null)
+                {
+                    return null;
+                }
+
+                declarations.Add(
+                    "new global::Cerneala.UI.Aspect.AspectDeclaration(" + spec.PropertyCode + ", " +
+                    BuildAspectValueCode(spec, expression, ConditionalResourceName(assignment, spec)) + ", diagnosticName: " +
+                    Literal(assignment.PropertyName) + ")");
+            }
+
+            return declarations;
+        }
+
+        private List<string>? BuildConditionalElementAspectValues(
+            string elementName,
+            IReadOnlyList<DirectiveAssignmentNode> assignments)
+        {
+            List<string> values = [];
+            foreach (DirectiveAssignmentNode assignment in assignments)
+            {
+                PropertySpec? spec = FindPropertySpec(elementName, assignment.PropertyName, isRoot: false);
+                if (spec is null || !spec.Assignable || !spec.IsUiProperty)
+                {
+                    Report(UnsupportedProperty, assignment.Source, elementName, assignment.PropertyName);
+                    return null;
+                }
+
+                ParsedMarkupValue? binding = ParseMarkupBindingValue(
+                    assignment.Value,
+                    assignment: true,
+                    stringTarget: spec.ValueType.SpecialType == SpecialType.System_String,
+                    assignment.ValueLocation,
+                    requireExplicitMode: true);
+                if (binding is not null)
+                {
+                    Report(
+                        InvalidBindingSource,
+                        assignment.ValueLocation,
+                        assignment.Value,
+                        "Conditional ElementAspect assignment bindings must be lowered as computed Aspect values.");
+                    return null;
+                }
+
+                GeneratedExpression? expression = ParseDirectiveValue(
+                    elementName,
+                    assignment.PropertyName,
+                    assignment.Value,
+                    spec,
+                    assignment.Source,
+                    "target");
+                if (expression is null)
+                {
+                    return null;
+                }
+
+                values.Add(BuildElementAspectValueCode(
+                    spec,
+                    expression,
+                    resourceName: null));
+            }
+
+            return values;
+        }
+
+        private static string BuildAspectValueCode(
+            PropertySpec spec,
+            GeneratedExpression expression,
+            string? resourceName)
+        {
+            string valueType = spec.ValueType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            return resourceName is null
+                ? "global::Cerneala.UI.Aspect.AspectValue<" + valueType + ">.Literal(" + expression.Code + ")"
+                : "global::Cerneala.UI.Aspect.AspectValue<" + valueType + ">.Computed(" +
+                    "context => context.Element.FindResource<" + valueType + ">(" +
+                    Literal(resourceName) + "), " +
+                    "global::System.Array.Empty<global::Cerneala.UI.Aspect.AspectToken>())";
+        }
+
+        private static string BuildElementAspectValueCode(
+            PropertySpec spec,
+            GeneratedExpression expression,
+            string? resourceName)
+        {
+            string valueCode = resourceName is null
+                ? expression.Code
+                : BuildAspectValueCode(spec, expression, resourceName);
+            return "new global::Cerneala.UI.Aspect.ElementAspectValue(" + spec.PropertyCode + ", " + valueCode + ")";
+        }
+
+        private static string? ConditionalResourceName(
+            DirectiveAssignmentNode assignment,
+            PropertySpec spec)
+        {
+            string value = assignment.Value.Trim();
+            return spec.ValueKind == MarkupValueKind.Brush &&
+                value.StartsWith("$", StringComparison.Ordinal) &&
+                !LooksLikeBindingPath(value)
+                ? value.Substring(1)
+                : null;
         }
 
         private string ReadReferenceName(string elementName, string propertyName, MarkupAttribute attribute)
@@ -3810,8 +4316,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             if (targetKind == MarkupValueKind.Brush && symbol.Source is BrushResource brushResource)
             {
-                if (applicationResources?.Contains(symbol) == true ||
-                    string.Equals(document.Root.Name.LocalName, "Application", StringComparison.Ordinal))
+                if (applicationResources?.Contains(symbol) == true)
                 {
                     string code =
                         "((global::Cerneala.UI.Resources.IResourceProvider)global::Cerneala.UI.Application.Current!.Resources).GetResource(" +

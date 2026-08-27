@@ -6,8 +6,10 @@ public sealed class AspectPackageBuilder
 {
     private readonly List<AspectTokenDefinition> tokens = [];
     private readonly List<AspectRuleSet> rules = [];
+    private readonly List<AspectBehavior> behaviors = [];
     private readonly List<ComponentTemplateDefinition> componentTemplates = [];
     private readonly List<ContentTemplateDefinition> contentTemplates = [];
+    private AspectOrigin? origin;
 
     internal AspectPackageBuilder(string name)
     {
@@ -21,6 +23,12 @@ public sealed class AspectPackageBuilder
 
     public string Name { get; }
 
+    public AspectPackageBuilder Origin(AspectOrigin value)
+    {
+        origin = value ?? throw new ArgumentNullException(nameof(value));
+        return this;
+    }
+
     public AspectPackageBuilder Tokens(Action<AspectTokenBuilder> build)
     {
         ArgumentNullException.ThrowIfNull(build);
@@ -32,7 +40,7 @@ public sealed class AspectPackageBuilder
     public AspectPackageBuilder Components(Action<ComponentAspectBuilder> build)
     {
         ArgumentNullException.ThrowIfNull(build);
-        ComponentAspectBuilder builder = new(rules, componentTemplates);
+        ComponentAspectBuilder builder = new(rules, behaviors, componentTemplates);
         build(builder);
         return this;
     }
@@ -47,7 +55,14 @@ public sealed class AspectPackageBuilder
 
     public AspectPackage Build()
     {
-        return new AspectPackage(Name, tokens.ToArray(), rules.ToArray(), componentTemplates.ToArray(), contentTemplates.ToArray());
+        return new AspectPackage(
+            Name,
+            origin ?? AspectOrigin.Code(Name),
+            tokens.ToArray(),
+            rules.ToArray(),
+            behaviors.ToArray(),
+            componentTemplates.ToArray(),
+            contentTemplates.ToArray());
     }
 
     public static implicit operator AspectPackage(AspectPackageBuilder builder)

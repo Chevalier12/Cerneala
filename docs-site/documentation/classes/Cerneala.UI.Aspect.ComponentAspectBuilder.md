@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Aspect/ComponentAspectBuilder.cs`
 
-Collects component aspect rule sets and component template definitions while configuring an `AspectPackageBuilder`.
+Collects component aspect rule sets, non-style behaviors, and component template definitions while configuring an `AspectPackageBuilder`.
 
 ```csharp
 public sealed class ComponentAspectBuilder
@@ -55,7 +55,7 @@ AspectPackage package = AspectPackage.Create("App")
 
 `ComponentAspectBuilder` is created by `AspectPackageBuilder.Components(Action<ComponentAspectBuilder>)`. Its constructor is internal, so callers normally receive it only inside the `Components` callback.
 
-The builder appends the supplied `AspectRuleSet` and `ComponentTemplateDefinition` instances to the package currently being configured. It does not clone or validate the rule or template beyond rejecting `null`; construction-time validation belongs to the supplied objects themselves.
+The builder appends the supplied `AspectRuleSet`, `AspectBehavior`, and `ComponentTemplateDefinition` instances to the package currently being configured. It does not clone or validate those objects beyond rejecting `null`; construction-time validation belongs to the supplied objects themselves.
 
 Both public methods return the same builder instance, which allows chained calls inside the callback. When `AspectPackageBuilder.Build()` runs, the accumulated rules and component templates are copied into the resulting `AspectPackage`.
 
@@ -64,6 +64,7 @@ Both public methods return the same builder instance, which allows chained calls
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `AddRule(AspectRuleSet rule)` | `ComponentAspectBuilder` | Adds a non-null aspect rule set to the package's component rules and returns this builder. |
+| `AddBehavior(AspectBehavior behavior)` | `ComponentAspectBuilder` | Adds a non-null target-typed non-style behavior to the package and returns this builder. |
 | `AddTemplate(ComponentTemplateDefinition template)` | `ComponentAspectBuilder` | Adds a non-null component template definition to the package's component templates and returns this builder. |
 
 ## Exceptions
@@ -71,6 +72,7 @@ Both public methods return the same builder instance, which allows chained calls
 | Member | Exception | Condition |
 | --- | --- | --- |
 | `AddRule(AspectRuleSet rule)` | `ArgumentNullException` | `rule` is `null`. |
+| `AddBehavior(AspectBehavior behavior)` | `ArgumentNullException` | `behavior` is `null`. |
 | `AddTemplate(ComponentTemplateDefinition template)` | `ArgumentNullException` | `template` is `null`. |
 
 ## Applies to
@@ -82,4 +84,5 @@ Cerneala UI aspect package construction, component aspect rule registration, and
 - `Cerneala.UI.Aspect.AspectPackageBuilder`
 - `Cerneala.UI.Aspect.AspectPackage`
 - `Cerneala.UI.Aspect.AspectRuleSet`
+- `Cerneala.UI.Aspect.AspectBehavior`
 - `Cerneala.UI.Controls.Templates.ComponentTemplateDefinition`

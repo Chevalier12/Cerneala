@@ -5,6 +5,9 @@ Generated from `.`.
 ```text
 ./
 |-- .agents/
+|   +-- generated-aspect/
+|       +-- Cerneala.SourceGen/
+|           +-- Cerneala.SourceGen.UiMarkupGenerator/
 |-- .config/
 |   +-- dotnet-tools.json
 |-- .github/
@@ -39,6 +42,8 @@ Generated from `.`.
 |   |   |   |-- 2026-08-15-visual-studio-community-extension.md
 |   |   |   |-- 2026-08-24-rendersurface2d-drawing-api.md
 |   |   |   +-- 2026-08-27-sdlgpu-prism-comparison.md
+|   |   |-- AspectResolutionBenchmarks.cs
+|   |   |-- AspectVisualConformanceRunner.cs
 |   |   |-- Cerneala.Benchmarks.csproj
 |   |   |-- CernealaLanguageBenchmarks.cs
 |   |   |-- DrawingBatchBenchmarks.cs
@@ -157,7 +162,50 @@ Generated from `.`.
 |       |   +-- README.md
 |       |-- 2026-07-17-presentation-frame-budget/
 |       |   +-- README.md
-|       +-- 2026-08-11-aspect-mutation/
+|       |-- 2026-08-11-aspect-mutation/
+|       +-- 2026-08-27-aspect-unification/
+|           |-- baseline-bdn/
+|           |   |-- results/
+|           |   |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report-github.md
+|           |   |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report.csv
+|           |   |   +-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report.html
+|           |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-20260827-134839.log
+|           |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-20260827-135516.log
+|           |   +-- Cerneala.Benchmarks.AspectResolutionBenchmarks-20260827-135725.log
+|           |-- final-bdn/
+|           |   |-- results/
+|           |   |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report-github.md
+|           |   |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report.csv
+|           |   |   +-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report.html
+|           |   +-- Cerneala.Benchmarks.AspectResolutionBenchmarks-20260827-180317.log
+|           |-- final-bdn-optimized/
+|           |   |-- results/
+|           |   |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report-github.md
+|           |   |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report.csv
+|           |   |   +-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report.html
+|           |   +-- Cerneala.Benchmarks.AspectResolutionBenchmarks-20260827-180758.log
+|           |-- aspect-visual-diff.diff.png
+|           |-- aspect-visual-diff.json
+|           |-- baseline-aspect.metrics.txt
+|           |-- baseline-aspect.png
+|           |-- baseline-markup.metrics.txt
+|           |-- baseline-markup.png
+|           |-- baseline-presentation-frame-budget.json
+|           |-- final-api-diff.md
+|           |-- final-api-diff.txt
+|           |-- final-aspect-metrics.json
+|           |-- final-aspect.metrics.txt
+|           |-- final-aspect.png
+|           |-- final-markup.metrics.txt
+|           |-- final-markup.png
+|           |-- final-presentation-frame-budget.json
+|           |-- final-verification.md
+|           |-- markup-visual-diff.diff.png
+|           |-- markup-visual-diff.json
+|           |-- README.md
+|           |-- stage5-api-diff.md
+|           |-- stage5-api-diff.txt
+|           +-- stage6-results.md
 |-- Cerneala.Backends.MonoGame/
 |   +-- Cerneala.Backends.MonoGame.csproj
 |-- Cerneala.Backends.SdlGpu/
@@ -171,6 +219,7 @@ Generated from `.`.
 |   |   |   |-- Drawing.vert.hlsl
 |   |   |   |-- Drawing.vert.msl
 |   |   |   +-- Drawing.vert.spv
+|   |   |-- Cerberus.cs
 |   |   |-- SdlGpuDebugLabels.cs
 |   |   |-- SdlGpuDeviceOwner.cs
 |   |   |-- SdlGpuDrawingBackend.cs
@@ -437,6 +486,8 @@ Generated from `.`.
 |   |-- WelcomeChapterView.crn
 |   +-- WelcomeChapterView.crn.cs
 |-- docs/
+|   |-- assets/
+|   |   +-- cerneala-architecture.png
 |   |-- audits/
 |   |   |-- 2026-08-25-monogame-coupling-inventory.md
 |   |   |-- 2026-08-25-sdl3-sdlgpu-stage-0-baseline.md
@@ -491,7 +542,13 @@ Generated from `.`.
 |   |   |-- 2026-08-20-menu-menuitem-menubar.md
 |   |   |-- 2026-08-24-rendersurface2d-complete-drawing-api.md
 |   |   |-- 2026-08-24-rendersurface2d-stage-0-baseline.md
-|   |   +-- 2026-08-25-sdl3-sdlgpu-backend-and-explicit-generator-selection.md
+|   |   |-- 2026-08-25-sdl3-sdlgpu-backend-and-explicit-generator-selection.md
+|   |   |-- 2026-08-27-cerberus-v2-core.md
+|   |   |-- 2026-08-27-cerberus-v2-frame-pipeline.md
+|   |   |-- 2026-08-27-cerberus-v2-multitexture.md
+|   |   |-- 2026-08-27-cerberus-v2-retained-geometry.md
+|   |   |-- 2026-08-27-cerberus-v2.md
+|   |   +-- 2026-08-27-unify-aspect-runtime.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
@@ -873,13 +930,17 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Aspect.AllAspectCondition.md
 |   |   |   |-- Cerneala.UI.Aspect.AnyAspectCondition.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectApplicationResult.md
+|   |   |   |-- Cerneala.UI.Aspect.AspectAuthoringKind.md
+|   |   |   |-- Cerneala.UI.Aspect.AspectBehavior.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectCascadeKey.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectCatalog.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectCondition.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectConditionDependency.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectConditionDependencyKind.md
+|   |   |   |-- Cerneala.UI.Aspect.AspectConditionKey.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectConditionNode.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectConditionResult.md
+|   |   |   |-- Cerneala.UI.Aspect.AspectConditionTrace.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectDataContext.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectDataDependency.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectDeclaration.md
@@ -897,6 +958,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Aspect.AspectMatchContext.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectMotion.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectMotionSource.md
+|   |   |   |-- Cerneala.UI.Aspect.AspectOrigin.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectPackage.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectPackageBuilder.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectPackageDiagnostic.md
@@ -938,6 +1000,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Aspect.DefaultAspectTokens.Stroke.md
 |   |   |   |-- Cerneala.UI.Aspect.DefaultAspectTokens.Typography.md
 |   |   |   |-- Cerneala.UI.Aspect.ElementAspect.md
+|   |   |   |-- Cerneala.UI.Aspect.ElementAspectCondition.md
 |   |   |   |-- Cerneala.UI.Aspect.ElementAspectValue.md
 |   |   |   |-- Cerneala.UI.Aspect.NotAspectCondition.md
 |   |   |   |-- Cerneala.UI.Aspect.PredicateAspectCondition.md
@@ -1344,7 +1407,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Markup.DesignTimeOnlyAttribute.md
 |   |   |   |-- Cerneala.UI.Markup.GeneratedMarkup.md
 |   |   |   |-- Cerneala.UI.Markup.GeneratedUiFactory.md
-|   |   |   |-- Cerneala.UI.Markup.MarkupAspectResource.md
 |   |   |   |-- Cerneala.UI.Markup.MarkupConditionalContent.md
 |   |   |   |-- Cerneala.UI.Markup.MarkupConditionalValue.md
 |   |   |   |-- Cerneala.UI.Markup.MarkupConditionRule.md
@@ -2656,6 +2718,7 @@ Generated from `.`.
 |   |   |   |   |-- AspectStateSetTests.cs
 |   |   |   |   |-- AspectTemplateCatalogIntegrationTests.cs
 |   |   |   |   |-- AspectTokenTests.cs
+|   |   |   |   |-- AspectUnificationContractTests.cs
 |   |   |   |   |-- AspectVariantTests.cs
 |   |   |   |   |-- DefaultAspectPackageTests.cs
 |   |   |   |   +-- ThemeTokenBridgeTests.cs
@@ -2946,6 +3009,7 @@ Generated from `.`.
 |   |   |-- Cerneala.Tests.SourceGen.csproj
 |   |   |-- PresentationMarkupRegressionTests.cs
 |   |   |-- UiMarkupGeneratorApplicationTests.cs
+|   |   |-- UiMarkupGeneratorAspectUnificationTests.cs
 |   |   |-- UiMarkupGeneratorBackendSelectionTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageFiveTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageFourTests.cs
@@ -3098,11 +3162,14 @@ Generated from `.`.
 |   |   |-- SemanticsTree.cs
 |   |   +-- TextBoxAutomationPeer.cs
 |   |-- Aspect/
+|   |   |-- AspectBehavior.cs
 |   |   |-- AspectCatalog.cs
 |   |   |-- AspectCondition.cs
 |   |   |-- AspectConditionDependency.cs
+|   |   |-- AspectConditionKey.cs
 |   |   |-- AspectConditionNode.cs
 |   |   |-- AspectConditionResult.cs
+|   |   |-- AspectConditionTrace.cs
 |   |   |-- AspectDataContext.cs
 |   |   |-- AspectDataDependency.cs
 |   |   |-- AspectDeclaration.cs
@@ -3117,6 +3184,7 @@ Generated from `.`.
 |   |   |-- AspectLayer.cs
 |   |   |-- AspectMatchContext.cs
 |   |   |-- AspectMotion.cs
+|   |   |-- AspectOrigin.cs
 |   |   |-- AspectPackage.cs
 |   |   |-- AspectPackageBuilder.cs
 |   |   |-- AspectProcessor.cs
@@ -3540,7 +3608,6 @@ Generated from `.`.
 |   |   |-- GeneratedMarkupPrism.cs
 |   |   |-- GeneratedMarkupResources.cs
 |   |   |-- GeneratedUiFactory.cs
-|   |   |-- MarkupAspectResource.cs
 |   |   |-- MarkupDiagnostic.cs
 |   |   |-- MarkupLoadOptions.cs
 |   |   |-- MarkupMotionExecution.cs

@@ -1,5 +1,6 @@
 using Cerneala.Drawing;
 using Cerneala.UI;
+using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
@@ -85,15 +86,16 @@ public sealed class ApplicationResourceIntegrationTests
     {
         Application application = new();
         SolidColorBrush applicationBrush = new(new Color(12, 34, 56));
-        application.Resources[typeof(Button)] = new MarkupAspectResource(
-            null,
-            typeof(Button),
-            [nameof(Control.Background)],
-            isConditional: false,
-            element => element.SetValue(
-                Control.BackgroundProperty,
-                applicationBrush,
-                UiPropertyValueSource.ApplicationAspectBase));
+        application.Resources[typeof(Button)] = AspectPackage.Create("Application.Button")
+            .Components(components => components.AddRule(new AspectRuleSet(
+                "application.button",
+                AspectLayer.App,
+                new AspectTarget(typeof(Button)),
+                [new AspectDeclaration(
+                    Control.BackgroundProperty,
+                    AspectValue<Brush?>.Literal(applicationBrush))],
+                declarationOrder: 0)))
+            .Build();
         UIRoot root = CreateRoot(application);
         DerivedButton button = new();
 
@@ -101,7 +103,7 @@ public sealed class ApplicationResourceIntegrationTests
         root.ProcessFrame();
 
         Assert.Same(applicationBrush, button.Background);
-        Assert.Equal(UiPropertyValueSource.ApplicationAspectBase, button.GetValueSource(Control.BackgroundProperty));
+        Assert.Equal(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
 
         SolidColorBrush localBrush = new(new Color(65, 43, 21));
         button.Background = localBrush;

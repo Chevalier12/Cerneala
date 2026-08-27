@@ -66,6 +66,11 @@ public sealed class AspectCondition
         return new AspectCondition(new PredicateAspectCondition(diagnosticName, predicate));
     }
 
+    public static AspectCondition Signal(AspectConditionKey key)
+    {
+        return new AspectCondition(new SignalAspectCondition(key));
+    }
+
     public AspectConditionResult Evaluate(AspectMatchContext context)
     {
         ArgumentNullException.ThrowIfNull(context);

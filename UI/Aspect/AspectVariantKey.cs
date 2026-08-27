@@ -1,3 +1,5 @@
+using Cerneala.UI.Controls;
+
 namespace Cerneala.UI.Aspect;
 
 public abstract class AspectVariantKey : IEquatable<AspectVariantKey>
@@ -12,6 +14,10 @@ public abstract class AspectVariantKey : IEquatable<AspectVariantKey>
         Name = name;
         OwnerType = ownerType ?? throw new ArgumentNullException(nameof(ownerType));
         ValueType = valueType ?? throw new ArgumentNullException(nameof(valueType));
+        if (!typeof(Control).IsAssignableFrom(OwnerType))
+        {
+            throw new ArgumentException("Aspect variant owner type must derive from Control.", nameof(ownerType));
+        }
     }
 
     public string Name { get; }

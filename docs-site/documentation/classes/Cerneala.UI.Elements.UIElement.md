@@ -79,6 +79,7 @@ Value validation is enforced by property metadata. `Width` and `Height` accept `
 ## Fields
 | Name | Description |
 | --- | --- |
+| `AspectProperty` | Property identifier for `Aspect`; defaults to `null` and affects Aspect processing. |
 | `IsEnabledProperty` | Property identifier for `IsEnabled`; defaults to `true` and affects hit testing, input visual state, aspect matching, and semantics. |
 | `IsVisibleProperty` | Property identifier for `IsVisible`; defaults to `true`, affects render, hit testing, and semantics, and cancels property motion for the visual subtree when set to `false`. |
 | `IsHitTestVisibleProperty` | Property identifier for `IsHitTestVisible`; defaults to `true` and affects hit testing. |
@@ -135,6 +136,7 @@ Value validation is enforced by property metadata. `Width` and `Height` accept `
 | `IsLayoutBoundary` | `bool` | Stops detached measure invalidation propagation through visual ancestors when set. |
 | `PresenceOpacity` | `float` | Current presence-animation opacity value. |
 | `PresenceScale` | `float` | Current presence-animation scale value. |
+| `Aspect` | `ElementAspect?` | Per-element Aspect definition composed and resolved by the attached root's `AspectProcessor`. |
 | `IsEnabled` | `bool` | Enables or disables element participation in input-related state; defaults to `true`. |
 | `IsVisible` | `bool` | Boolean visibility flag; defaults to `true`. Setting it to `false` cancels property motion for this element and its visual descendants. |
 | `IsHitTestVisible` | `bool` | Includes the element and its visual subtree in pointer hit testing when `true`; defaults to `true`. |

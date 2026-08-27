@@ -148,40 +148,13 @@ public sealed partial class UiMarkupGenerator
         private void EmitReactiveContent(
             MarkupElement element,
             string variable,
-            DirectiveParseResult parsed,
-            IReadOnlyList<AspectResource> aspects,
-            string? applicationAspectValueSource = null,
-            bool requireLocalAspectIdentity = true)
+            DirectiveParseResult parsed)
         {
             ReactivePlan plan = new(
                 variable,
                 element.Name.LocalName,
                 ReferenceEquals(element, document.Root),
                 templateEmissionContexts.Count == 0 ? null : templateEmissionContexts.Peek());
-            foreach (AspectResource aspect in aspects)
-            {
-                string valueSource = IsLocalAspect(aspect)
-                    ? "global::Cerneala.UI.Core.UiPropertyValueSource.LocalAspectConditional"
-                    : applicationAspectValueSource ?? "global::Cerneala.UI.Core.UiPropertyValueSource.AspectVisualState";
-                string inheritedPredicate = "true";
-                if (requireLocalAspectIdentity && IsLocalAspect(aspect) && aspect.Conditions.Count > 0)
-                {
-                    string observationName = "observation" + nextReactiveId.ToString(CultureInfo.InvariantCulture);
-                    nextReactiveId++;
-                    plan.ObservationLines.Add(
-                        "global::Cerneala.UI.Markup.MarkupObservation " + observationName +
-                        " = global::Cerneala.UI.Markup.GeneratedMarkup.ObserveProperty(" + plan.OwnerVariable +
-                        ", global::Cerneala.UI.Elements.UIElement.AspectProperty);");
-                    plan.ObservationNames.Add(observationName);
-                    inheritedPredicate =
-                        "global::System.Object.ReferenceEquals(" + plan.OwnerVariable + ".Aspect, " + aspect.RuntimeVariable + ")";
-                }
-
-                foreach (DirectiveWhenNode when in aspect.Conditions)
-                {
-                    CollectWhen(plan, when, inheritedPredicate, valueSource);
-                }
-            }
 
             foreach (DirectiveNode node in parsed.Nodes)
             {
@@ -699,6 +672,24 @@ public sealed partial class UiMarkupGenerator
             }
         }
 
+        private ReactivePlan BuildAspectReactivePlan(
+            AspectResource aspect,
+            string ownerVariable,
+            string elementName)
+        {
+            ReactivePlan plan = new(
+                ownerVariable,
+                elementName,
+                isRoot: false,
+                templateEmissionContexts.Count == 0 ? null : templateEmissionContexts.Peek());
+            foreach (DirectiveWhenNode when in aspect.Conditions)
+            {
+                CollectWhen(plan, when, "true", string.Empty);
+            }
+
+            return plan;
+        }
+
         private string BuildObservationExpression(BindingSourceDescriptor descriptor)
         {
             switch (descriptor.Kind)
@@ -894,7 +885,12 @@ public sealed partial class UiMarkupGenerator
                 SpecialType.System_Decimal;
         }
 
-        private void EmitReactivePlan(ReactivePlan plan, bool controlsContent)
+        private void EmitReactivePlan(
+            ReactivePlan plan,
+            bool controlsContent,
+            IReadOnlyList<string>? aspectConditionKeys = null,
+            string? assignmentTarget = null,
+            bool suppressValues = false)
         {
             if (plan.Rules.Count == 0)
             {
@@ -907,71 +903,76 @@ public sealed partial class UiMarkupGenerator
             }
 
             List<string> ruleExpressions = [];
-            foreach (ReactiveRule rule in plan.Rules.OrderBy(rule => rule.Order))
+            ReactiveRule[] orderedRules = plan.Rules.OrderBy(rule => rule.Order).ToArray();
+            for (int ruleIndex = 0; ruleIndex < orderedRules.Length; ruleIndex++)
             {
+                ReactiveRule rule = orderedRules[ruleIndex];
                 List<string> values = [];
-                foreach (DirectiveAssignmentNode assignment in rule.Assignments)
+                if (aspectConditionKeys is null && !suppressValues)
                 {
-                    PropertySpec? spec = FindPropertySpec(plan.ElementName, assignment.PropertyName, plan.IsRoot);
-                    if (spec is null || !spec.Assignable)
+                    foreach (DirectiveAssignmentNode assignment in rule.Assignments)
                     {
-                        Report(UnsupportedProperty, assignment.Source, plan.ElementName, assignment.PropertyName);
-                        continue;
-                    }
+                        PropertySpec? spec = FindPropertySpec(plan.ElementName, assignment.PropertyName, plan.IsRoot);
+                        if (spec is null || !spec.Assignable)
+                        {
+                            Report(UnsupportedProperty, assignment.Source, plan.ElementName, assignment.PropertyName);
+                            continue;
+                        }
 
-                    ParsedMarkupValue? parsedMarkup = ParseMarkupBindingValue(
-                        assignment.Value,
-                        assignment: true,
-                        stringTarget: spec.ValueType.SpecialType == SpecialType.System_String,
-                        assignment.ValueLocation,
-                        requireExplicitMode: true);
-                    if (parsedMarkup?.Kind == ParsedMarkupValueKind.Invalid)
-                    {
-                        continue;
-                    }
-
-                    if (parsedMarkup is not null)
-                    {
-                        BindingResolutionContext bindingContext = new(
-                            plan.OwnerVariable,
-                            plan.ElementName,
-                            plan.IsRoot,
-                            plan.TemplateContext,
-                            validateClrObservability: true);
-                        ResolvedMarkupValue? resolvedMarkup = ResolveMarkupValue(
-                            bindingContext,
-                            spec,
-                            parsedMarkup,
-                            assignment.Source,
-                            assignment.ValueLocation);
-                        if (resolvedMarkup is null)
+                        ParsedMarkupValue? parsedMarkup = ParseMarkupBindingValue(
+                            assignment.Value,
+                            assignment: true,
+                            stringTarget: spec.ValueType.SpecialType == SpecialType.System_String,
+                            assignment.ValueLocation,
+                            requireExplicitMode: true);
+                        if (parsedMarkup?.Kind == ParsedMarkupValueKind.Invalid)
                         {
                             continue;
                         }
 
-                        values.Add(EmitConditionalMarkupBinding(
-                            bindingContext,
+                        if (parsedMarkup is not null)
+                        {
+                            BindingResolutionContext bindingContext = new(
+                                plan.OwnerVariable,
+                                plan.ElementName,
+                                plan.IsRoot,
+                                plan.TemplateContext,
+                                validateClrObservability: true);
+                            ResolvedMarkupValue? resolvedMarkup = ResolveMarkupValue(
+                                bindingContext,
+                                spec,
+                                parsedMarkup,
+                                assignment.Source,
+                                assignment.ValueLocation);
+                            if (resolvedMarkup is null)
+                            {
+                                continue;
+                            }
+
+                            values.Add(EmitConditionalMarkupBinding(
+                                bindingContext,
+                                spec,
+                                resolvedMarkup,
+                                plan.ElementName + "." + assignment.PropertyName + " <- " + assignment.Value));
+                            continue;
+                        }
+
+                        GeneratedExpression? expression = ParseDirectiveValue(
+                            plan.ElementName,
+                            assignment.PropertyName,
+                            assignment.Value,
                             spec,
-                            resolvedMarkup,
-                            plan.ElementName + "." + assignment.PropertyName + " <- " + assignment.Value));
-                        continue;
-                    }
+                            assignment.Source,
+                            plan.OwnerVariable);
+                        if (expression is null)
+                        {
+                            continue;
+                        }
 
-                    GeneratedExpression? expression = ParseDirectiveValue(
-                        plan.ElementName,
-                        assignment.PropertyName,
-                        assignment.Value,
-                        spec,
-                        assignment.Source,
-                        plan.OwnerVariable);
-                    if (expression is null)
-                    {
-                        continue;
+                        values.Add(
+                            "new global::Cerneala.UI.Markup.MarkupConditionalValue(" + plan.OwnerVariable + ", " +
+                            spec.PropertyCode + ", " + expression.Code + ", " + rule.ValueSource + ")");
                     }
-
-                    values.Add(
-                        "new global::Cerneala.UI.Markup.MarkupConditionalValue(" + plan.OwnerVariable + ", " +
-                        spec.PropertyCode + ", " + expression.Code + ", " + rule.ValueSource + ")");
                 }
 
                 string valuesCode = values.Count == 0
@@ -988,12 +989,15 @@ public sealed partial class UiMarkupGenerator
                     contentCode = EmitConditionalContentExpression(rule.Order, factoryName);
                 }
 
+                string activationCode = rule.Activations.Count == 0
+                    ? "null"
+                    : "() => { " + string.Join(" ", rule.Activations.Select(name => name + "();")) + " }";
+                string conditionStateCode = aspectConditionKeys is null
+                    ? "null"
+                    : "active => { " + aspectConditionKeys[ruleIndex] + ".SetActive(" + plan.OwnerVariable + ", active); }";
                 ruleExpressions.Add(
                     "new global::Cerneala.UI.Markup.MarkupConditionRule(" + rule.Order + ", () => " + rule.Predicate +
-                    ", " + valuesCode + ", " + contentCode +
-                    (rule.Activations.Count == 0
-                        ? ")"
-                        : ", () => { " + string.Join(" ", rule.Activations.Select(name => name + "();")) + " })"));
+                    ", " + valuesCode + ", " + contentCode + ", " + activationCode + ", null, " + conditionStateCode + ")");
             }
 
             string observations = plan.ObservationLines.Count == 0
@@ -1003,9 +1007,16 @@ public sealed partial class UiMarkupGenerator
             string attachExpression =
                 "global::Cerneala.UI.Markup.GeneratedMarkup.AttachConditions(" + plan.OwnerVariable + ", " + observations +
                 ", new global::Cerneala.UI.Markup.MarkupConditionRule[] { " + string.Join(", ", ruleExpressions) + " })";
-            currentPostLines.Add(plan.TemplateContext is null
-                ? attachExpression + ";"
-                : plan.TemplateContext.ContextVariable + ".RegisterLifetime(" + attachExpression + ");");
+            if (assignmentTarget is not null)
+            {
+                currentPostLines.Add(assignmentTarget + " = " + attachExpression + ";");
+            }
+            else
+            {
+                currentPostLines.Add(plan.TemplateContext is null
+                    ? attachExpression + ";"
+                    : plan.TemplateContext.ContextVariable + ".RegisterLifetime(" + attachExpression + ");");
+            }
         }
 
         private string EmitConditionalFactory(IReadOnlyList<DirectiveElementNode> elements)

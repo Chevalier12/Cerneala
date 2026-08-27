@@ -16,8 +16,8 @@ namespace Cerneala.UI.Elements;
 public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRenderableElement
 {
     private static long nextPrismVisualNodeId;
-    private readonly HashSet<UiProperty> appliedLocalAspectProperties = new(ReferenceEqualityComparer.Instance);
     private readonly ElementAspectConsumer aspectConsumer;
+    private IDisposable? elementAspectBehavior;
     private readonly long prismVisualNodeId;
 
     public static readonly UiProperty<object?> DataContextProperty = UiProperty<object?>.Register(
@@ -581,18 +581,20 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     private void OnElementResourceChanged(object? sender, ResourceChangedEventArgs args)
     {
+        InvalidationFlags flags = InvalidationFlags.Resource | InvalidationFlags.Aspect | InvalidationFlags.Subtree;
+
         UIRoot? root = Root;
         if (root is null)
         {
             IncrementPrismVisualVersion();
-            Invalidate(InvalidationFlags.Resource | InvalidationFlags.Subtree, "Element resources changed");
+            Invalidate(flags, "Element resources changed");
             return;
         }
 
         if (root.Relay.CheckAccess())
         {
             IncrementPrismVisualVersion();
-            Invalidate(InvalidationFlags.Resource | InvalidationFlags.Subtree, "Element resources changed");
+            Invalidate(flags, "Element resources changed");
             return;
         }
 
@@ -605,7 +607,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
                 Volatile.Read(ref target.attachmentGeneration) == generation)
             {
                 target.IncrementPrismVisualVersion();
-                target.Invalidate(InvalidationFlags.Resource | InvalidationFlags.Subtree, "Element resources changed");
+                target.Invalidate(flags, "Element resources changed");
             }
         });
     }
@@ -1231,41 +1233,18 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         }
     }
 
-    private void ApplyLocalAspect(ElementAspect? aspect)
+    private void ValidateLocalAspect(ElementAspect aspect)
     {
-        HashSet<UiProperty> nextProperties = new(ReferenceEqualityComparer.Instance);
-        if (aspect is not null)
+        if (!aspect.TargetType.IsInstanceOfType(this))
         {
-            foreach (ElementAspectValue value in aspect.DefaultValues)
-            {
-                ValidateLocalAspectProperty(value.Property);
-                nextProperties.Add(value.Property);
-            }
+            throw new InvalidOperationException(
+                $"Element aspect '{aspect.Name ?? "<local>"}' targets '{aspect.TargetType.FullName}' and cannot be applied to '{GetType().FullName}'.");
         }
 
-        foreach (UiProperty property in appliedLocalAspectProperties)
+        foreach (ElementAspectValue value in aspect.DefaultValues)
         {
-            if (!nextProperties.Contains(property))
-            {
-                ClearValueUntyped(property, UiPropertyValueSource.LocalAspectBase);
-            }
+            ValidateLocalAspectProperty(value.Property);
         }
-
-        if (aspect is not null)
-        {
-            foreach (ElementAspectValue value in aspect.DefaultValues)
-            {
-                object? previousValue = GetSourceValue(value.Property, UiPropertyValueSource.LocalAspectBase);
-                if (!appliedLocalAspectProperties.Contains(value.Property) ||
-                    !value.Property.AreEqualUntyped(previousValue, value.Value))
-                {
-                    SetValueUntyped(value.Property, value.Value, UiPropertyValueSource.LocalAspectBase);
-                }
-            }
-        }
-
-        appliedLocalAspectProperties.Clear();
-        appliedLocalAspectProperties.UnionWith(nextProperties);
     }
 
     private void ValidateIncrementalAspectValue(UiProperty property)
@@ -1274,16 +1253,10 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         ValidateLocalAspectProperty(property);
     }
 
-    private void ApplyIncrementalAspectValue(UiProperty property, object? value)
+    private void InvalidateIncrementalAspect()
     {
-        bool wasApplied = appliedLocalAspectProperties.Contains(property);
-        object? previousValue = GetSourceValue(property, UiPropertyValueSource.LocalAspectBase);
-        if (!wasApplied || !property.AreEqualUntyped(previousValue, value))
-        {
-            SetValueUntyped(property, value, UiPropertyValueSource.LocalAspectBase);
-        }
-
-        appliedLocalAspectProperties.Add(property);
+        VerifyMutationAccess();
+        Invalidate(InvalidationFlags.Aspect, "Element aspect changed");
     }
 
     private void ValidateLocalAspectProperty(UiProperty property)
@@ -1304,8 +1277,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     {
         public void ValidateAspectValue(UiProperty property) => owner.ValidateIncrementalAspectValue(property);
 
-        public void ApplyAspectValue(UiProperty property, object? value) =>
-            owner.ApplyIncrementalAspectValue(property, value);
+        public void InvalidateAspect() => owner.InvalidateIncrementalAspect();
     }
 
     private static InvalidationFlags MapInvalidationOptions(UiPropertyOptions options)

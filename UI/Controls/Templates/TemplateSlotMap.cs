@@ -13,6 +13,15 @@ public sealed class TemplateSlotMap
 
     public void Register(AspectSlot slot, UIElement element)
     {
-        slots[slot ?? throw new ArgumentNullException(nameof(slot))] = element ?? throw new ArgumentNullException(nameof(element));
+        ArgumentNullException.ThrowIfNull(slot);
+        ArgumentNullException.ThrowIfNull(element);
+        if (!slot.TargetType.IsInstanceOfType(element))
+        {
+            throw new ArgumentException(
+                $"Aspect slot '{slot}' expects an element assignable to '{slot.TargetType.FullName}', but received '{element.GetType().FullName}'.",
+                nameof(element));
+        }
+
+        slots[slot] = element;
     }
 }

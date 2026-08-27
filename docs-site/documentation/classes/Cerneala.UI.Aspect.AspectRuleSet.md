@@ -71,11 +71,13 @@ IReadOnlyDictionary<UiProperty, AspectDeclaration> resolved =
 
 `AspectRuleSet` groups the declarations that should be considered together for one aspect target. The target decides whether the rule matches an `AspectMatchContext`; the declarations provide the `UiProperty` values that may win during resolution.
 
-Cascade resolution compares matching rules by layer order first, target specificity second, and declaration order last. A rule in a higher `AspectLayer.Order` wins before declaration order is considered. Within the same layer, a more specific target wins. If both layer and specificity are equal, the rule with the higher `DeclarationOrder` wins.
+Cascade resolution compares matching rules by layer order first, internal source/scope order second, target specificity third, and declaration order last. A rule in a higher `AspectLayer.Order` wins before source scope is considered. Within the same layer, inner/runtime-composed sources win over outer sources, then a more specific target wins. If those coordinates are equal, the rule with the higher `DeclarationOrder` wins. Ordinary standalone rules have source order `0`.
 
 `ResolveDeclarations(IEnumerable<AspectRuleSet>, AspectMatchContext)` returns the winning raw `AspectDeclaration` for each `UiProperty`. Runtime value resolution, token lookup, rejected declaration diagnostics, and dependency tracking are handled by `AspectEngine.Resolve`.
 
-`PackageName` is set internally when packages are merged into an `AspectCatalog`; it is used by diagnostics and is not set through the public constructor.
+The declaration input is copied into an immutable snapshot. Later changes to the caller-owned list do not change the rule.
+
+`PackageName`, `SourceOrder`, `Origin`, and `Scope` are assigned to the catalog-owned projection created while packages are merged into an `AspectCatalog`. The reusable source rule remains unchanged, and building another catalog from that rule cannot rewrite metadata reported by an existing catalog. Origin metadata is diagnostic only; source order remains the only scope coordinate in the cascade key.
 
 ## Constructors
 
@@ -90,9 +92,12 @@ Cascade resolution compares matching rules by layer order first, target specific
 | `Name` | `string` | Gets the rule set name used for identification and diagnostics. |
 | `Layer` | `AspectLayer` | Gets the cascade layer for the rule set. Higher layer order wins before specificity and declaration order. |
 | `Target` | `AspectTarget` | Gets the target type, optional slot, and conditions used to match an `AspectMatchContext`. |
-| `Declarations` | `IReadOnlyList<AspectDeclaration>` | Gets the declarations contributed by this rule set. |
+| `Declarations` | `IReadOnlyList<AspectDeclaration>` | Gets the immutable declaration snapshot contributed by this rule set. |
 | `DeclarationOrder` | `int` | Gets the declaration order used as the final cascade tie-breaker. |
-| `PackageName` | `string?` | Gets the package name assigned internally during catalog building, or `null` before assignment. |
+| `PackageName` | `string?` | Gets the package name on a catalog-owned rule projection, or `null` on a reusable rule that has not been projected into a catalog. |
+| `SourceOrder` | `int` | Gets the composed root/application/scope/element source rank used after layer order. |
+| `Origin` | `AspectOrigin` | Gets immutable authoring-origin metadata. |
+| `Scope` | `string` | Gets the deterministic diagnostic scope label: `root`, `application`, `scope[n]`, or `element`. |
 
 ## Methods
 

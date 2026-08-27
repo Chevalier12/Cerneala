@@ -37,7 +37,7 @@ foreach (RejectedAspectDeclaration rejected in resolved.RejectedDeclarations)
 
 ## Remarks
 
-`RejectedAspectDeclaration` is diagnostic data produced by `AspectEngine.Resolve` when multiple matching aspect declarations target the same `UiProperty`. The instance stores the declaration that was rejected, the declaration that won for that property, and a short reason string.
+`RejectedAspectDeclaration` is diagnostic data produced by `AspectEngine.Resolve` when multiple matching aspect declarations target the same `UiProperty`. The instance stores both catalog rule projections, both declarations, and a short reason string.
 
 The engine creates rejected entries when cascade keys are compared. A new declaration can reject the current winner with the reason `Higher cascade key won.`, or the current winner can reject the new declaration with the reason `Existing cascade key won.`.
 
@@ -49,13 +49,15 @@ The constructor requires non-null `rejected` and `winningDeclaration` values. A 
 
 | Name | Description |
 | --- | --- |
-| `RejectedAspectDeclaration(AspectDeclaration rejected, AspectDeclaration winningDeclaration, string reason)` | Initializes a rejected declaration record with the losing declaration, the winning declaration, and the rejection reason. |
+| `RejectedAspectDeclaration(AspectRuleSet rejectedRule, AspectDeclaration rejected, AspectRuleSet winningRule, AspectDeclaration winningDeclaration, string reason)` | Initializes a rejected declaration record with losing/winning rules and declarations plus the reason. |
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
+| `RejectedRule` | `AspectRuleSet` | Gets the rule projection that supplied the losing declaration. |
 | `Rejected` | `AspectDeclaration` | Gets the declaration that lost cascade resolution. |
+| `WinningRule` | `AspectRuleSet` | Gets the rule projection that supplied the winner. |
 | `WinningDeclaration` | `AspectDeclaration` | Gets the declaration that won for the same property. |
 | `Reason` | `string` | Gets the reason recorded for the rejection. |
 
@@ -63,7 +65,7 @@ The constructor requires non-null `rejected` and `winningDeclaration` values. A 
 
 | Member | Exception | Condition |
 | --- | --- | --- |
-| `RejectedAspectDeclaration(AspectDeclaration, AspectDeclaration, string)` | `ArgumentNullException` | `rejected` or `winningDeclaration` is `null`. |
+| Constructor | `ArgumentNullException` | Any rule or declaration argument is `null`. |
 
 ## Applies to
 

@@ -10,6 +10,29 @@ public sealed class AspectRuleSet
         AspectTarget target,
         IReadOnlyList<AspectDeclaration> declarations,
         int declarationOrder)
+        : this(
+            name,
+            layer,
+            target,
+            declarations,
+            declarationOrder,
+            packageName: null,
+            sourceOrder: 0,
+            AspectOrigin.Code(),
+            scope: string.Empty)
+    {
+    }
+
+    private AspectRuleSet(
+        string name,
+        AspectLayer layer,
+        AspectTarget target,
+        IReadOnlyList<AspectDeclaration> declarations,
+        int declarationOrder,
+        string? packageName,
+        int sourceOrder,
+        AspectOrigin origin,
+        string scope)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -19,8 +42,14 @@ public sealed class AspectRuleSet
         Name = name;
         Layer = layer ?? throw new ArgumentNullException(nameof(layer));
         Target = target ?? throw new ArgumentNullException(nameof(target));
-        Declarations = declarations ?? throw new ArgumentNullException(nameof(declarations));
+        ArgumentNullException.ThrowIfNull(declarations);
+        Declarations = Array.AsReadOnly(declarations.Select(
+            declaration => declaration ?? throw new ArgumentException("Aspect declarations cannot contain null.", nameof(declarations))).ToArray());
         DeclarationOrder = declarationOrder;
+        PackageName = packageName;
+        SourceOrder = sourceOrder;
+        Origin = origin ?? throw new ArgumentNullException(nameof(origin));
+        Scope = scope ?? string.Empty;
     }
 
     public string Name { get; }
@@ -33,7 +62,36 @@ public sealed class AspectRuleSet
 
     public int DeclarationOrder { get; }
 
-    public string? PackageName { get; internal set; }
+    public string? PackageName { get; }
+
+    public int SourceOrder { get; }
+
+    public AspectOrigin Origin { get; }
+
+    public string Scope { get; }
+
+    internal AspectRuleSet WithOrigin(
+        string packageName,
+        int sourceOrder,
+        AspectOrigin origin,
+        string scope)
+    {
+        if (string.IsNullOrWhiteSpace(packageName))
+        {
+            throw new ArgumentException("Aspect package name cannot be empty.", nameof(packageName));
+        }
+
+        return new AspectRuleSet(
+            Name,
+            Layer,
+            Target,
+            Declarations,
+            DeclarationOrder,
+            packageName,
+            sourceOrder,
+            origin,
+            scope);
+    }
 
     public bool Matches(AspectMatchContext context)
     {
@@ -55,7 +113,7 @@ public sealed class AspectRuleSet
                 continue;
             }
 
-            AspectCascadeKey key = new(rule.Layer.Order, rule.Target.Specificity, rule.DeclarationOrder);
+            AspectCascadeKey key = new(rule.Layer.Order, rule.SourceOrder, rule.Target.Specificity, rule.DeclarationOrder);
             foreach (AspectDeclaration declaration in rule.Declarations)
             {
                 if (!winners.TryGetValue(declaration.Property, out (AspectCascadeKey Key, AspectDeclaration Declaration) current) ||
@@ -78,12 +136,19 @@ public sealed class AspectRuleSet
 
 internal readonly record struct AspectCascadeKey(
     int LayerOrder,
+    int SourceOrder,
     AspectSpecificity Specificity,
     int DeclarationOrder) : IComparable<AspectCascadeKey>
 {
     public int CompareTo(AspectCascadeKey other)
     {
         int result = LayerOrder.CompareTo(other.LayerOrder);
+        if (result != 0)
+        {
+            return result;
+        }
+
+        result = SourceOrder.CompareTo(other.SourceOrder);
         if (result != 0)
         {
             return result;

@@ -14,27 +14,34 @@ public sealed class ElementAspectTests
     public void AspectAppliesReplacesAndClearsLocalAspectValues()
     {
         Button button = new();
+        UIRoot root = new();
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+        Brush? defaultForeground = button.Foreground;
         ElementAspect first = new(
             [new ElementAspectValue(Control.BackgroundProperty, new Cerneala.UI.Media.SolidColorBrush(Color.White))]);
         ElementAspect second = new(
             [new ElementAspectValue(Control.ForegroundProperty, new SolidColorBrush(Color.Transparent))]);
 
         button.Aspect = first;
+        root.ProcessFrame();
 
         Assert.Same(first, button.Aspect);
         Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(Color.White), button.Background);
-        Assert.Equal(UiPropertyValueSource.LocalAspectBase, button.GetValueSource(Control.BackgroundProperty));
+        Assert.Equal(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
 
         button.Aspect = second;
+        root.ProcessFrame();
 
-        Assert.Null(button.Background);
+        Assert.Equal(new SolidColorBrush(Color.White), button.Background);
         Assert.Equal(new SolidColorBrush(Color.Transparent), button.Foreground);
-        Assert.Equal(UiPropertyValueSource.LocalAspectBase, button.GetValueSource(Control.ForegroundProperty));
+        Assert.Equal(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.ForegroundProperty));
 
         button.Aspect = null;
+        root.ProcessFrame();
 
         Assert.Null(button.Aspect);
-        Assert.Equal(new SolidColorBrush(Color.Black), button.Foreground);
+        Assert.Equal(defaultForeground, button.Foreground);
     }
 
     [Fact]
@@ -48,9 +55,22 @@ public sealed class ElementAspectTests
     }
 
     [Fact]
+    public void AspectRejectsAnElementOutsideItsDeclaredTargetType()
+    {
+        ElementAspect aspect = new(
+            "text-only",
+            typeof(TextBlock),
+            [new ElementAspectValue(TextBlock.TextProperty, "text")]);
+
+        Assert.Throws<InvalidOperationException>(() => new Button().Aspect = aspect);
+    }
+
+    [Fact]
     public void ReplacingAspectOnlyInvalidatesPropertiesWhoseValuesChanged()
     {
         Button button = new();
+        UIRoot root = new();
+        root.VisualChildren.Add(button);
         ElementAspect first = new(
         [
             new ElementAspectValue(UIElement.WidthProperty, 120f),
@@ -63,13 +83,14 @@ public sealed class ElementAspectTests
         ]);
 
         button.Aspect = first;
-        button.DirtyState.ClearAll();
+        root.ProcessFrame();
 
         button.Aspect = second;
+        FrameStats update = root.ProcessFrame();
 
-        Assert.False(button.DirtyState.Has(InvalidationFlags.Measure));
-        Assert.False(button.DirtyState.Has(InvalidationFlags.Arrange));
-        Assert.True(button.DirtyState.Has(InvalidationFlags.Render));
+        Assert.Equal(0, update.MeasureCalls);
+        Assert.Equal(0, update.ArrangeCalls);
+        Assert.True(update.RenderedElements > 0);
         Assert.Equal(120f, button.Width);
         Assert.Equal(new SolidColorBrush(Color.Black), button.BorderBrush);
     }
@@ -78,25 +99,27 @@ public sealed class ElementAspectTests
     public void UpdatingAnAspectValuePreservesTheAspectAndInvalidatesOnlyThatProperty()
     {
         Button button = new();
+        UIRoot root = new();
+        root.VisualChildren.Add(button);
         ElementAspect aspect = new(
         [
             new ElementAspectValue(UIElement.WidthProperty, 120f)
         ]);
         button.Aspect = aspect;
-        button.DirtyState.ClearAll();
+        root.ProcessFrame();
 
         Assert.True(aspect.SetValue(Control.BorderBrushProperty, new SolidColorBrush(Color.White)));
 
         Assert.Same(aspect, button.Aspect);
-        Assert.Equal(new SolidColorBrush(Color.White), button.BorderBrush);
         Assert.Equal(new SolidColorBrush(Color.White), aspect.DefaultValues[1].Value);
-        Assert.False(button.DirtyState.Has(InvalidationFlags.Aspect));
+        Assert.True(button.DirtyState.Has(InvalidationFlags.Aspect));
         Assert.False(button.DirtyState.Has(InvalidationFlags.Measure));
         Assert.False(button.DirtyState.Has(InvalidationFlags.Arrange));
-        Assert.True(button.DirtyState.Has(InvalidationFlags.Render));
+        FrameStats update = root.ProcessFrame();
+        Assert.Equal(new SolidColorBrush(Color.White), button.BorderBrush);
+        Assert.True(update.RenderedElements > 0);
 
-        button.DirtyState.ClearAll();
         Assert.False(aspect.SetValue(Control.BorderBrushProperty, new SolidColorBrush(Color.White)));
-        Assert.Equal(InvalidationFlags.None, button.DirtyState.Flags);
+        Assert.False(root.ProcessFrame().HasWork);
     }
 }

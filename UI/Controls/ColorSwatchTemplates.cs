@@ -27,7 +27,7 @@ internal static class ColorSwatchTemplates
         Add(root, button);
         Add(root, overlay);
 
-        const UiPropertyValueSource OwnerBindingSource = UiPropertyValueSource.LocalAspectBase;
+        const UiPropertyValueSource OwnerBindingSource = UiPropertyValueSource.TemplateOwnerBinding;
         context.Bind(Control.BorderBrushProperty, button, Control.BorderBrushProperty, OwnerBindingSource);
         context.Bind(Control.BorderThicknessProperty, button, Control.BorderThicknessProperty, OwnerBindingSource);
         context.RequirePart("PART_SwatchButton", button);

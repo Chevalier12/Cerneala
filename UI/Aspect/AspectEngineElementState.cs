@@ -8,5 +8,16 @@ internal sealed class AspectEngineElementState
 
     public ThemeProvider? LastThemeProvider { get; set; }
 
-    public AspectDiagnostics.Snapshot Diagnostics { get; set; } = new();
+    public AspectRuleEvaluationSnapshot[] RuleEvaluations { get; set; } = [];
+
+    public AspectEnvironment? DiagnosticsEnvironment { get; set; }
+
+    public AspectEngineCounters DiagnosticsCounters { get; set; } = new();
+
+    public AspectDiagnostics.Snapshot? Diagnostics { get; set; }
 }
+
+internal readonly record struct AspectRuleEvaluationSnapshot(
+    AspectRuleSet Rule,
+    IReadOnlyList<AspectConditionResult> Conditions,
+    string Outcome);

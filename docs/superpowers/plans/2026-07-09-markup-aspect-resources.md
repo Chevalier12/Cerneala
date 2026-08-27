@@ -1,10 +1,12 @@
 # Markup Aspect Resources Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Superseded historical plan (2026-08-27). Do not execute the tasks below.** The direct generated-property/applicator architecture described here was replaced by `docs/plans/2026-08-27-unify-aspect-runtime.md`. Active markup Aspect guidance is: compile declarations into `AspectPackage`/`ElementAspect`, resolve them through `AspectProcessor` -> `AspectEngine`, and keep Motion/event/binding work in explicit non-style sidecars. This file is retained only as implementation history.
+
+**Status:** Superseded.
 
 **Goal:** Add `.crn` source-generator support for `Resources`, named resources via `Name`, reusable `Aspect` declarations, `$Name` references, and deterministic cascade application.
 
-**Architecture:** Keep the implementation inside `Cerneala.SourceGen/UiMarkupGenerator.cs` and split the existing nested `GenerationScope` into small nested records/helpers for document parsing, symbol collection, value parsing, and element emission. Preserve the current generated-code style: direct public property assignments, no runtime markup parser, no `SetValue`, and source-generator diagnostics for invalid authoring input.
+**Historical architecture (inactive):** The direct public-property/applicator guidance below is not a current recommendation. The source generator still performs compile-time validation and no runtime markup parsing, but Aspect values now lower to common rules/declarations and are applied only by `AspectEngine`.
 
 **Tech Stack:** C# incremental source generator, `System.Xml` / `System.Xml.Linq`, xUnit source-generator tests, RoslynIndexer for navigation and re-indexing.
 

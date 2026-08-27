@@ -13,7 +13,7 @@ internal static class ComboBoxTemplates
 {
     public static readonly ComponentTemplate<ComboBox> Default = new("ComboBox.Default", context =>
     {
-        const UiPropertyValueSource OwnerBindingSource = UiPropertyValueSource.LocalAspectBase;
+        const UiPropertyValueSource OwnerBindingSource = UiPropertyValueSource.TemplateOwnerBinding;
         ContentPresenter selectionPresenter = new()
         {
             HorizontalAlignment = HorizontalAlignment.Left,

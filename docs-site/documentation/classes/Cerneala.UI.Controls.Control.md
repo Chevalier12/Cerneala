@@ -84,7 +84,7 @@ Component-template and component-template-key changes affect measure, arrange, r
 
 `Padding` and `BorderThickness` reject negative, `NaN`, and infinite side values. `FontFamily` rejects `null`, empty, and whitespace-only values. `FontSize` must be finite and greater than zero.
 
-`SetAspectVariant<TControl, TValue>` updates `AspectVariants`. When the value actually changes, the control invalidates aspect and render state.
+`SetAspectVariant<TControl, TValue>` first verifies that the receiver is assignable to the key's declared owner type, then updates `AspectVariants`. When the value actually changes, the control invalidates aspect and render state. Applying a key owned by an unrelated control type throws instead of storing nominally typed metadata on the wrong component.
 
 ## Constructors
 
@@ -127,7 +127,14 @@ Component-template and component-template-key changes affect measure, arrange, r
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `ApplyTemplate()` | `void` | Creates, reuses, or detaches the component template instance so it matches the direct template or named Aspect catalog template. |
-| `SetAspectVariant<TControl, TValue>(AspectVariantKey<TControl, TValue> key, TValue value)` | `void` | Sets an aspect variant value and invalidates aspect/render state when the variant set changes. |
+| `SetAspectVariant<TControl, TValue>(AspectVariantKey<TControl, TValue> key, TValue value)` | `void` | Sets an owner-compatible aspect variant value and invalidates aspect/render state when the variant set changes. |
+
+## Exceptions
+
+| Member | Exception | Condition |
+| --- | --- | --- |
+| `SetAspectVariant<TControl, TValue>` | `ArgumentNullException` | `key` is `null`. |
+| `SetAspectVariant<TControl, TValue>` | `ArgumentException` | The control is not assignable to `key.OwnerType`. |
 
 ## Protected Properties
 

@@ -20,17 +20,34 @@ public static class AspectTrace
 
         if (diagnostics.ResolvedAspect.Values.TryGetValue(property, out ResolvedAspectValue? value))
         {
-            lines.Add($"winner: {value.SourceDeclaration.DiagnosticName ?? value.Property.Name} value={value.Value}");
+            AspectRuleSet rule = value.SourceRule;
+            lines.Add(
+                $"winner: package={rule.PackageName} document={rule.Origin.Document ?? "-"} " +
+                $"origin={rule.Origin.Kind} origin-name={rule.Origin.Name ?? "-"} scope={rule.Scope} " +
+                $"rule={rule.Name} layer={rule.Layer} source-order={rule.SourceOrder} " +
+                $"specificity={rule.Target.Specificity} declaration-order={rule.DeclarationOrder} " +
+                $"declaration={value.SourceDeclaration.DiagnosticName ?? value.Property.Name} value={value.Value}");
         }
 
         foreach (AspectResolutionStep step in diagnostics.ResolutionSteps)
         {
-            lines.Add($"{step.PackageName} {step.RuleName} {step.Target} {step.Layer} {step.Specificity} order={step.DeclarationOrder} {step.Outcome}");
+            string conditions = string.Join(",", step.Conditions.Select(FormatCondition));
+            string dependencies = string.Join(",", step.Dependencies.Select(FormatDependency));
+            lines.Add(
+                $"rule: package={step.PackageName} document={step.Origin.Document ?? "-"} " +
+                $"origin={step.Origin.Kind} origin-name={step.Origin.Name ?? "-"} scope={step.Scope} " +
+                $"rule={step.RuleName} target={step.Target} layer={step.Layer} source-order={step.SourceOrder} " +
+                $"specificity={step.Specificity} declaration-order={step.DeclarationOrder} " +
+                $"conditions=[{conditions}] dependencies=[{dependencies}] outcome={step.Outcome}");
         }
 
         foreach (RejectedAspectDeclaration rejected in diagnostics.ResolvedAspect.RejectedDeclarations)
         {
-            lines.Add($"rejected: {rejected.Rejected.DiagnosticName ?? rejected.Rejected.Property.Name} because {rejected.Reason}");
+            lines.Add(
+                $"rejected: package={rejected.RejectedRule.PackageName} rule={rejected.RejectedRule.Name} " +
+                $"declaration={rejected.Rejected.DiagnosticName ?? rejected.Rejected.Property.Name} " +
+                $"winner-package={rejected.WinningRule.PackageName} winner-rule={rejected.WinningRule.Name} " +
+                $"because {rejected.Reason}");
         }
 
         foreach (AspectTokenTrace token in diagnostics.TokenTraces)
@@ -49,6 +66,26 @@ public static class AspectTrace
         }
 
         return new AspectTraceSnapshot(lines);
+    }
+
+    private static string FormatCondition(AspectConditionTrace condition)
+    {
+        string children = condition.Children.Count == 0
+            ? string.Empty
+            : $" children=({string.Join(";", condition.Children.Select(FormatCondition))})";
+        return $"{condition.DiagnosticText}:{condition.Matches}{children}";
+    }
+
+    private static string FormatDependency(AspectConditionDependency dependency)
+    {
+        string name = dependency.DiagnosticName ??
+            dependency.State?.Name ??
+            dependency.Variant?.Name ??
+            dependency.Property?.DiagnosticName ??
+            dependency.Data?.ToString() ??
+            dependency.Token?.Name ??
+            "-";
+        return $"{dependency.Kind}:{name}";
     }
 }
 

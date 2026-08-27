@@ -248,8 +248,10 @@ public sealed class ItemsControlTests
             ItemContainerAspect = containerAspect
         };
         control.SetItems(new[] { "generated" });
-
-        control.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        UIRoot root = new(100, 100);
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+        root.ProcessFrame();
 
         UIElement generated = control.ItemsPresenter.LayoutPanelRoot!.VisualChildren[0];
         Assert.Same(containerAspect, generated.Aspect);
@@ -263,7 +265,8 @@ public sealed class ItemsControlTests
             Aspect = localAspect
         };
         control.SetItems(new[] { explicitItem });
-        control.Measure(new MeasureContext(new LayoutSize(100, 100)));
+        root.ProcessFrame();
+        root.ProcessFrame();
 
         Assert.Same(localAspect, explicitItem.Aspect);
         Assert.Equal(new Thickness(9), explicitItem.Margin);

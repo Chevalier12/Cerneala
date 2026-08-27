@@ -7,6 +7,7 @@ public sealed class ResolvedAspectValue
     internal ResolvedAspectValue(
         UiProperty property,
         object? value,
+        AspectRuleSet sourceRule,
         AspectDeclaration sourceDeclaration,
         AspectCascadeKey cascadeKey,
         AspectMotion? motion,
@@ -14,6 +15,7 @@ public sealed class ResolvedAspectValue
     {
         Property = property ?? throw new ArgumentNullException(nameof(property));
         Value = value;
+        SourceRule = sourceRule ?? throw new ArgumentNullException(nameof(sourceRule));
         SourceDeclaration = sourceDeclaration ?? throw new ArgumentNullException(nameof(sourceDeclaration));
         CascadeKey = cascadeKey;
         Motion = motion;
@@ -23,6 +25,8 @@ public sealed class ResolvedAspectValue
     public UiProperty Property { get; }
 
     public object? Value { get; }
+
+    public AspectRuleSet SourceRule { get; }
 
     public AspectDeclaration SourceDeclaration { get; }
 

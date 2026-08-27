@@ -63,7 +63,7 @@ When attached, a binding immediately copies the current source property value fr
 
 The source and target properties must have the same `ValueType`. The target property must not be read-only. These checks happen before the binding is used, so invalid template bindings fail before a broken template root remains attached.
 
-The default value source written to the target is `UiPropertyValueSource.TemplateBinding`. A custom `UiPropertyValueSource` can be supplied when constructing or creating the binding. `Detach` always removes the owner subscription; when the target source is not `TemplateBinding`, it also clears that value source from the target.
+The default value source written to the target is `UiPropertyValueSource.TemplateBinding`, which remains below Aspect values on the generated child. A custom `UiPropertyValueSource` can be supplied when constructing or creating the binding. `UiPropertyValueSource.TemplateOwnerBinding` is the template-owned stronger source for explicit owner palette/chrome projections that must remain above the child's Aspect value. `Detach` always removes the owner subscription; when the target source is not `TemplateBinding`, it also clears that value source from the target.
 
 `Attach` is single-use while the binding is attached. Calling it again before `Detach` throws `InvalidOperationException`. `Detach` is idempotent when the binding is not attached.
 

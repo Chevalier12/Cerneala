@@ -1,0 +1,426 @@
+// Validating benchmarks:
+// ***** BenchmarkRunner: Start   *****
+// ***** Found 4 benchmark(s) in total *****
+// ***** Building 1 exe(s) in Parallel: Start   *****
+// ***** Done, took 00:00:00 (0.07 sec)   *****
+// Found 4 benchmarks:
+//   AspectResolutionBenchmarks.CodeFirstCatalogResolve: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)
+//   AspectResolutionBenchmarks.RootRegisteredPackageFrame: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)
+//   AspectResolutionBenchmarks.ElementLocalMutationAndFrame: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)
+//   AspectResolutionBenchmarks.NestedScopeAttachAndFrame: ShortRun(Toolchain=InProcessEmitToolchain, InvocationCount=1, IterationCount=3, LaunchCount=1, UnrollFactor=1, WarmupCount=3)
+
+Setup power plan (GUID: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c FriendlyName: High performance)
+// **************************
+// Benchmark: AspectResolutionBenchmarks.CodeFirstCatalogResolve: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)
+// *** Execute ***
+// Launch: 1 / 1
+
+// Benchmark Process Environment Information:
+// BenchmarkDotNet v0.15.8
+// Runtime=.NET 8.0.30 (8.0.30, 8.0.3026.36720), X64 RyuJIT x86-64-v3
+// GC=Concurrent Workstation
+// HardwareIntrinsics=AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256
+// Job: Job-ZYJCSJ(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)
+
+OverheadJitting  1: 1 op, 226800.00 ns, 226.8000 us/op
+WorkloadJitting  1: 1 op, 1678700.00 ns, 1.6787 ms/op
+
+OverheadJitting  2: 16 op, 1874900.00 ns, 117.1813 us/op
+WorkloadJitting  2: 16 op, 1168400.00 ns, 73.0250 us/op
+
+WorkloadPilot    1: 16 op, 605500.00 ns, 37.8438 us/op
+WorkloadPilot    2: 32 op, 583900.00 ns, 18.2469 us/op
+WorkloadPilot    3: 64 op, 2365800.00 ns, 36.9656 us/op
+WorkloadPilot    4: 128 op, 3645500.00 ns, 28.4805 us/op
+WorkloadPilot    5: 256 op, 7297200.00 ns, 28.5047 us/op
+WorkloadPilot    6: 512 op, 10206000.00 ns, 19.9336 us/op
+WorkloadPilot    7: 1024 op, 18751900.00 ns, 18.3124 us/op
+WorkloadPilot    8: 2048 op, 27620700.00 ns, 13.4867 us/op
+WorkloadPilot    9: 4096 op, 54024700.00 ns, 13.1896 us/op
+WorkloadPilot   10: 8192 op, 151803700.00 ns, 18.5307 us/op
+WorkloadPilot   11: 16384 op, 209764800.00 ns, 12.8030 us/op
+WorkloadPilot   12: 32768 op, 329394700.00 ns, 10.0523 us/op
+WorkloadPilot   13: 65536 op, 224608100.00 ns, 3.4272 us/op
+WorkloadPilot   14: 131072 op, 319616300.00 ns, 2.4385 us/op
+WorkloadPilot   15: 262144 op, 848581300.00 ns, 3.2371 us/op
+
+OverheadWarmup   1: 262144 op, 1008200.00 ns, 3.8460 ns/op
+OverheadWarmup   2: 262144 op, 1317400.00 ns, 5.0255 ns/op
+OverheadWarmup   3: 262144 op, 996600.00 ns, 3.8017 ns/op
+OverheadWarmup   4: 262144 op, 977100.00 ns, 3.7273 ns/op
+OverheadWarmup   5: 262144 op, 1017000.00 ns, 3.8795 ns/op
+OverheadWarmup   6: 262144 op, 1252000.00 ns, 4.7760 ns/op
+OverheadWarmup   7: 262144 op, 1097800.00 ns, 4.1878 ns/op
+
+OverheadActual   1: 262144 op, 928200.00 ns, 3.5408 ns/op
+OverheadActual   2: 262144 op, 1122900.00 ns, 4.2835 ns/op
+OverheadActual   3: 262144 op, 1439700.00 ns, 5.4920 ns/op
+OverheadActual   4: 262144 op, 1428900.00 ns, 5.4508 ns/op
+OverheadActual   5: 262144 op, 1437300.00 ns, 5.4829 ns/op
+OverheadActual   6: 262144 op, 1444700.00 ns, 5.5111 ns/op
+OverheadActual   7: 262144 op, 1449300.00 ns, 5.5286 ns/op
+OverheadActual   8: 262144 op, 1563500.00 ns, 5.9643 ns/op
+OverheadActual   9: 262144 op, 1246700.00 ns, 4.7558 ns/op
+OverheadActual  10: 262144 op, 1195200.00 ns, 4.5593 ns/op
+OverheadActual  11: 262144 op, 1000000.00 ns, 3.8147 ns/op
+OverheadActual  12: 262144 op, 1063900.00 ns, 4.0585 ns/op
+OverheadActual  13: 262144 op, 1048500.00 ns, 3.9997 ns/op
+OverheadActual  14: 262144 op, 1257800.00 ns, 4.7981 ns/op
+OverheadActual  15: 262144 op, 1345000.00 ns, 5.1308 ns/op
+OverheadActual  16: 262144 op, 1439100.00 ns, 5.4897 ns/op
+OverheadActual  17: 262144 op, 1149100.00 ns, 4.3835 ns/op
+OverheadActual  18: 262144 op, 1349000.00 ns, 5.1460 ns/op
+OverheadActual  19: 262144 op, 1263400.00 ns, 4.8195 ns/op
+OverheadActual  20: 262144 op, 1242200.00 ns, 4.7386 ns/op
+
+WorkloadWarmup   1: 262144 op, 640019500.00 ns, 2.4415 us/op
+WorkloadWarmup   2: 262144 op, 577538600.00 ns, 2.2031 us/op
+WorkloadWarmup   3: 262144 op, 580791400.00 ns, 2.2155 us/op
+
+WorkloadActual   1: 262144 op, 575697100.00 ns, 2.1961 us/op
+WorkloadActual   2: 262144 op, 580654100.00 ns, 2.2150 us/op
+WorkloadActual   3: 262144 op, 580921700.00 ns, 2.2160 us/op
+
+WorkloadResult   1: 262144 op, 574436500.00 ns, 2.1913 us/op
+WorkloadResult   2: 262144 op, 579393500.00 ns, 2.2102 us/op
+WorkloadResult   3: 262144 op, 579661100.00 ns, 2.2112 us/op
+// GC:  271 0 0 1134635392 262144
+// Threading:  0 0 262144
+
+
+Mean = 2.204 μs, StdErr = 0.006 μs (0.29%), N = 3, StdDev = 0.011 μs
+Min = 2.191 μs, Q1 = 2.201 μs, Median = 2.210 μs, Q3 = 2.211 μs, Max = 2.211 μs
+IQR = 0.010 μs, LowerFence = 2.186 μs, UpperFence = 2.226 μs
+ConfidenceInterval = [1.999 μs; 2.409 μs] (CI 99.9%), Margin = 0.205 μs (9.29% of Mean)
+Skewness = -0.38, Kurtosis = 0.67, MValue = 2
+
+// ** Remained 3 (75.0%) benchmark(s) to run. Estimated finish 2026-08-27 13:57 (0h 0m from now) **
+Setup power plan (GUID: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c FriendlyName: High performance)
+// **************************
+// Benchmark: AspectResolutionBenchmarks.RootRegisteredPackageFrame: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)
+// *** Execute ***
+// Launch: 1 / 1
+
+// Benchmark Process Environment Information:
+// BenchmarkDotNet v0.15.8
+// Runtime=.NET 8.0.30 (8.0.30, 8.0.3026.36720), X64 RyuJIT x86-64-v3
+// GC=Concurrent Workstation
+// HardwareIntrinsics=AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256
+// Job: Job-ZYJCSJ(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)
+
+OverheadJitting  1: 1 op, 178900.00 ns, 178.9000 us/op
+WorkloadJitting  1: 1 op, 725300.00 ns, 725.3000 us/op
+
+OverheadJitting  2: 16 op, 424400.00 ns, 26.5250 us/op
+WorkloadJitting  2: 16 op, 1527700.00 ns, 95.4813 us/op
+
+WorkloadPilot    1: 16 op, 895500.00 ns, 55.9688 us/op
+WorkloadPilot    2: 32 op, 1570100.00 ns, 49.0656 us/op
+WorkloadPilot    3: 64 op, 3309200.00 ns, 51.7063 us/op
+WorkloadPilot    4: 128 op, 5364900.00 ns, 41.9133 us/op
+WorkloadPilot    5: 256 op, 11124100.00 ns, 43.4535 us/op
+WorkloadPilot    6: 512 op, 23064400.00 ns, 45.0477 us/op
+WorkloadPilot    7: 1024 op, 41064100.00 ns, 40.1017 us/op
+WorkloadPilot    8: 2048 op, 73386900.00 ns, 35.8334 us/op
+WorkloadPilot    9: 4096 op, 134165800.00 ns, 32.7553 us/op
+WorkloadPilot   10: 8192 op, 146429000.00 ns, 17.8746 us/op
+WorkloadPilot   11: 16384 op, 178365100.00 ns, 10.8865 us/op
+WorkloadPilot   12: 32768 op, 343322400.00 ns, 10.4774 us/op
+WorkloadPilot   13: 65536 op, 711677900.00 ns, 10.8593 us/op
+
+OverheadWarmup   1: 65536 op, 108200.00 ns, 1.6510 ns/op
+OverheadWarmup   2: 65536 op, 145900.00 ns, 2.2263 ns/op
+OverheadWarmup   3: 65536 op, 109300.00 ns, 1.6678 ns/op
+OverheadWarmup   4: 65536 op, 149100.00 ns, 2.2751 ns/op
+OverheadWarmup   5: 65536 op, 115600.00 ns, 1.7639 ns/op
+
+OverheadActual   1: 65536 op, 118600.00 ns, 1.8097 ns/op
+OverheadActual   2: 65536 op, 130500.00 ns, 1.9913 ns/op
+OverheadActual   3: 65536 op, 121000.00 ns, 1.8463 ns/op
+OverheadActual   4: 65536 op, 107400.00 ns, 1.6388 ns/op
+OverheadActual   5: 65536 op, 107500.00 ns, 1.6403 ns/op
+OverheadActual   6: 65536 op, 133400.00 ns, 2.0355 ns/op
+OverheadActual   7: 65536 op, 107500.00 ns, 1.6403 ns/op
+OverheadActual   8: 65536 op, 157200.00 ns, 2.3987 ns/op
+OverheadActual   9: 65536 op, 107600.00 ns, 1.6418 ns/op
+OverheadActual  10: 65536 op, 107500.00 ns, 1.6403 ns/op
+OverheadActual  11: 65536 op, 126500.00 ns, 1.9302 ns/op
+OverheadActual  12: 65536 op, 107400.00 ns, 1.6388 ns/op
+OverheadActual  13: 65536 op, 126500.00 ns, 1.9302 ns/op
+OverheadActual  14: 65536 op, 149600.00 ns, 2.2827 ns/op
+OverheadActual  15: 65536 op, 133200.00 ns, 2.0325 ns/op
+OverheadActual  16: 65536 op, 124900.00 ns, 1.9058 ns/op
+OverheadActual  17: 65536 op, 119800.00 ns, 1.8280 ns/op
+OverheadActual  18: 65536 op, 132100.00 ns, 2.0157 ns/op
+OverheadActual  19: 65536 op, 133400.00 ns, 2.0355 ns/op
+OverheadActual  20: 65536 op, 107500.00 ns, 1.6403 ns/op
+
+WorkloadWarmup   1: 65536 op, 706279800.00 ns, 10.7770 us/op
+WorkloadWarmup   2: 65536 op, 773330800.00 ns, 11.8001 us/op
+WorkloadWarmup   3: 65536 op, 816972800.00 ns, 12.4660 us/op
+
+WorkloadActual   1: 65536 op, 952107500.00 ns, 14.5280 us/op
+WorkloadActual   2: 65536 op, 1258875200.00 ns, 19.2089 us/op
+WorkloadActual   3: 65536 op, 872302500.00 ns, 13.3103 us/op
+
+WorkloadResult   1: 65536 op, 951984550.00 ns, 14.5261 us/op
+WorkloadResult   2: 65536 op, 1258752250.00 ns, 19.2070 us/op
+WorkloadResult   3: 65536 op, 872179550.00 ns, 13.3084 us/op
+// GC:  149 1 0 625247168 65536
+// Threading:  0 0 65536
+
+
+Mean = 15.681 μs, StdErr = 1.798 μs (11.47%), N = 3, StdDev = 3.114 μs
+Min = 13.308 μs, Q1 = 13.917 μs, Median = 14.526 μs, Q3 = 16.867 μs, Max = 19.207 μs
+IQR = 2.949 μs, LowerFence = 9.493 μs, UpperFence = 21.291 μs
+ConfidenceInterval = [-41.133 μs; 72.494 μs] (CI 99.9%), Margin = 56.814 μs (362.32% of Mean)
+Skewness = 0.32, Kurtosis = 0.67, MValue = 2
+
+// ** Remained 2 (50.0%) benchmark(s) to run. Estimated finish 2026-08-27 13:57 (0h 0m from now) **
+Setup power plan (GUID: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c FriendlyName: High performance)
+// **************************
+// Benchmark: AspectResolutionBenchmarks.ElementLocalMutationAndFrame: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)
+// *** Execute ***
+// Launch: 1 / 1
+
+// Benchmark Process Environment Information:
+// BenchmarkDotNet v0.15.8
+// Runtime=.NET 8.0.30 (8.0.30, 8.0.3026.36720), X64 RyuJIT x86-64-v3
+// GC=Concurrent Workstation
+// HardwareIntrinsics=AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256
+// Job: Job-ZYJCSJ(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)
+
+OverheadJitting  1: 1 op, 359400.00 ns, 359.4000 us/op
+WorkloadJitting  1: 1 op, 922600.00 ns, 922.6000 us/op
+
+OverheadJitting  2: 16 op, 704700.00 ns, 44.0438 us/op
+WorkloadJitting  2: 16 op, 860200.00 ns, 53.7625 us/op
+
+WorkloadPilot    1: 16 op, 217500.00 ns, 13.5938 us/op
+WorkloadPilot    2: 32 op, 282600.00 ns, 8.8313 us/op
+WorkloadPilot    3: 64 op, 615400.00 ns, 9.6156 us/op
+WorkloadPilot    4: 128 op, 531300.00 ns, 4.1508 us/op
+WorkloadPilot    5: 256 op, 1127900.00 ns, 4.4059 us/op
+WorkloadPilot    6: 512 op, 3424400.00 ns, 6.6883 us/op
+WorkloadPilot    7: 1024 op, 6149300.00 ns, 6.0052 us/op
+WorkloadPilot    8: 2048 op, 10769500.00 ns, 5.2585 us/op
+WorkloadPilot    9: 4096 op, 20585500.00 ns, 5.0258 us/op
+WorkloadPilot   10: 8192 op, 29924600.00 ns, 3.6529 us/op
+WorkloadPilot   11: 16384 op, 58530900.00 ns, 3.5724 us/op
+WorkloadPilot   12: 32768 op, 112025300.00 ns, 3.4187 us/op
+WorkloadPilot   13: 65536 op, 182805500.00 ns, 2.7894 us/op
+WorkloadPilot   14: 131072 op, 348662200.00 ns, 2.6601 us/op
+WorkloadPilot   15: 262144 op, 802929900.00 ns, 3.0629 us/op
+
+OverheadWarmup   1: 262144 op, 847200.00 ns, 3.2318 ns/op
+OverheadWarmup   2: 262144 op, 808400.00 ns, 3.0838 ns/op
+OverheadWarmup   3: 262144 op, 483100.00 ns, 1.8429 ns/op
+OverheadWarmup   4: 262144 op, 599000.00 ns, 2.2850 ns/op
+OverheadWarmup   5: 262144 op, 507600.00 ns, 1.9363 ns/op
+OverheadWarmup   6: 262144 op, 483700.00 ns, 1.8452 ns/op
+OverheadWarmup   7: 262144 op, 755800.00 ns, 2.8831 ns/op
+OverheadWarmup   8: 262144 op, 581000.00 ns, 2.2163 ns/op
+
+OverheadActual   1: 262144 op, 516500.00 ns, 1.9703 ns/op
+OverheadActual   2: 262144 op, 642000.00 ns, 2.4490 ns/op
+OverheadActual   3: 262144 op, 523400.00 ns, 1.9966 ns/op
+OverheadActual   4: 262144 op, 494200.00 ns, 1.8852 ns/op
+OverheadActual   5: 262144 op, 643700.00 ns, 2.4555 ns/op
+OverheadActual   6: 262144 op, 510900.00 ns, 1.9489 ns/op
+OverheadActual   7: 262144 op, 617300.00 ns, 2.3548 ns/op
+OverheadActual   8: 262144 op, 651400.00 ns, 2.4849 ns/op
+OverheadActual   9: 262144 op, 482200.00 ns, 1.8394 ns/op
+OverheadActual  10: 262144 op, 715500.00 ns, 2.7294 ns/op
+OverheadActual  11: 262144 op, 751000.00 ns, 2.8648 ns/op
+OverheadActual  12: 262144 op, 477600.00 ns, 1.8219 ns/op
+OverheadActual  13: 262144 op, 496400.00 ns, 1.8936 ns/op
+OverheadActual  14: 262144 op, 667500.00 ns, 2.5463 ns/op
+OverheadActual  15: 262144 op, 658400.00 ns, 2.5116 ns/op
+OverheadActual  16: 262144 op, 663300.00 ns, 2.5303 ns/op
+OverheadActual  17: 262144 op, 647000.00 ns, 2.4681 ns/op
+OverheadActual  18: 262144 op, 494500.00 ns, 1.8864 ns/op
+OverheadActual  19: 262144 op, 486900.00 ns, 1.8574 ns/op
+OverheadActual  20: 262144 op, 706300.00 ns, 2.6943 ns/op
+
+WorkloadWarmup   1: 262144 op, 868232000.00 ns, 3.3120 us/op
+WorkloadWarmup   2: 262144 op, 772605200.00 ns, 2.9473 us/op
+WorkloadWarmup   3: 262144 op, 795629800.00 ns, 3.0351 us/op
+
+WorkloadActual   1: 262144 op, 818003300.00 ns, 3.1204 us/op
+WorkloadActual   2: 262144 op, 724589500.00 ns, 2.7641 us/op
+WorkloadActual   3: 262144 op, 715869300.00 ns, 2.7308 us/op
+
+WorkloadResult   1: 262144 op, 817373650.00 ns, 3.1180 us/op
+WorkloadResult   2: 262144 op, 723959850.00 ns, 2.7617 us/op
+WorkloadResult   3: 262144 op, 715239650.00 ns, 2.7284 us/op
+// GC:  88 0 0 371287040 262144
+// Threading:  0 0 262144
+
+
+Mean = 2.869 μs, StdErr = 0.125 μs (4.35%), N = 3, StdDev = 0.216 μs
+Min = 2.728 μs, Q1 = 2.745 μs, Median = 2.762 μs, Q3 = 2.940 μs, Max = 3.118 μs
+IQR = 0.195 μs, LowerFence = 2.453 μs, UpperFence = 3.232 μs
+ConfidenceInterval = [-1.071 μs; 6.810 μs] (CI 99.9%), Margin = 3.940 μs (137.32% of Mean)
+Skewness = 0.37, Kurtosis = 0.67, MValue = 2
+
+// ** Remained 1 (25.0%) benchmark(s) to run. Estimated finish 2026-08-27 13:57 (0h 0m from now) **
+Setup power plan (GUID: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c FriendlyName: High performance)
+// **************************
+// Benchmark: AspectResolutionBenchmarks.NestedScopeAttachAndFrame: ShortRun(Toolchain=InProcessEmitToolchain, InvocationCount=1, IterationCount=3, LaunchCount=1, UnrollFactor=1, WarmupCount=3)
+// *** Execute ***
+// Launch: 1 / 1
+
+// Benchmark Process Environment Information:
+// BenchmarkDotNet v0.15.8
+// Runtime=.NET 8.0.30 (8.0.30, 8.0.3026.36720), X64 RyuJIT x86-64-v3
+// GC=Concurrent Workstation
+// HardwareIntrinsics=AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256
+// Job: Job-DHDDJV(Toolchain=InProcessEmitToolchain, InvocationCount=1, IterationCount=3, LaunchCount=1, UnrollFactor=1, WarmupCount=3)
+
+OverheadJitting  1: 1 op, 334400.00 ns, 334.4000 us/op
+WorkloadJitting  1: 1 op, 1395100.00 ns, 1.3951 ms/op
+
+OverheadWarmup   1: 1 op, 1600.00 ns, 1.6000 us/op
+OverheadWarmup   2: 1 op, 700.00 ns, 700.0000 ns/op
+OverheadWarmup   3: 1 op, 500.00 ns, 500.0000 ns/op
+OverheadWarmup   4: 1 op, 500.00 ns, 500.0000 ns/op
+OverheadWarmup   5: 1 op, 600.00 ns, 600.0000 ns/op
+OverheadWarmup   6: 1 op, 600.00 ns, 600.0000 ns/op
+OverheadWarmup   7: 1 op, 700.00 ns, 700.0000 ns/op
+
+OverheadActual   1: 1 op, 500.00 ns, 500.0000 ns/op
+OverheadActual   2: 1 op, 600.00 ns, 600.0000 ns/op
+OverheadActual   3: 1 op, 600.00 ns, 600.0000 ns/op
+OverheadActual   4: 1 op, 400.00 ns, 400.0000 ns/op
+OverheadActual   5: 1 op, 500.00 ns, 500.0000 ns/op
+OverheadActual   6: 1 op, 500.00 ns, 500.0000 ns/op
+OverheadActual   7: 1 op, 500.00 ns, 500.0000 ns/op
+OverheadActual   8: 1 op, 400.00 ns, 400.0000 ns/op
+OverheadActual   9: 1 op, 600.00 ns, 600.0000 ns/op
+OverheadActual  10: 1 op, 500.00 ns, 500.0000 ns/op
+OverheadActual  11: 1 op, 600.00 ns, 600.0000 ns/op
+OverheadActual  12: 1 op, 700.00 ns, 700.0000 ns/op
+OverheadActual  13: 1 op, 500.00 ns, 500.0000 ns/op
+OverheadActual  14: 1 op, 600.00 ns, 600.0000 ns/op
+OverheadActual  15: 1 op, 600.00 ns, 600.0000 ns/op
+OverheadActual  16: 1 op, 600.00 ns, 600.0000 ns/op
+OverheadActual  17: 1 op, 600.00 ns, 600.0000 ns/op
+OverheadActual  18: 1 op, 500.00 ns, 500.0000 ns/op
+OverheadActual  19: 1 op, 700.00 ns, 700.0000 ns/op
+OverheadActual  20: 1 op, 500.00 ns, 500.0000 ns/op
+
+WorkloadWarmup   1: 1 op, 355400.00 ns, 355.4000 us/op
+WorkloadWarmup   2: 1 op, 259100.00 ns, 259.1000 us/op
+WorkloadWarmup   3: 1 op, 329700.00 ns, 329.7000 us/op
+
+WorkloadActual   1: 1 op, 258400.00 ns, 258.4000 us/op
+WorkloadActual   2: 1 op, 220000.00 ns, 220.0000 us/op
+WorkloadActual   3: 1 op, 259300.00 ns, 259.3000 us/op
+
+WorkloadResult   1: 1 op, 257850.00 ns, 257.8500 us/op
+WorkloadResult   2: 1 op, 219450.00 ns, 219.4500 us/op
+WorkloadResult   3: 1 op, 258750.00 ns, 258.7500 us/op
+// GC:  0 0 0 23024 1
+// Threading:  0 0 1
+
+
+Mean = 245.350 μs, StdErr = 12.953 μs (5.28%), N = 3, StdDev = 22.435 μs
+Min = 219.450 μs, Q1 = 238.650 μs, Median = 257.850 μs, Q3 = 258.300 μs, Max = 258.750 μs
+IQR = 19.650 μs, LowerFence = 209.175 μs, UpperFence = 287.775 μs
+ConfidenceInterval = [-163.940 μs; 654.640 μs] (CI 99.9%), Margin = 409.290 μs (166.82% of Mean)
+Skewness = -0.38, Kurtosis = 0.67, MValue = 2
+
+// ** Remained 0 (0.0%) benchmark(s) to run. Estimated finish 2026-08-27 13:57 (0h 0m from now) **
+Successfully reverted power plan (GUID: 381b4222-f694-41f0-9685-ff5bb260df2e FriendlyName: Balanced)
+// ***** BenchmarkRunner: Finish  *****
+
+// * Export *
+  benchmarks\results\2026-08-27-aspect-unification\baseline-bdn\results\Cerneala.Benchmarks.AspectResolutionBenchmarks-report.csv
+  benchmarks\results\2026-08-27-aspect-unification\baseline-bdn\results\Cerneala.Benchmarks.AspectResolutionBenchmarks-report-github.md
+  benchmarks\results\2026-08-27-aspect-unification\baseline-bdn\results\Cerneala.Benchmarks.AspectResolutionBenchmarks-report.html
+
+// * Detailed results *
+AspectResolutionBenchmarks.CodeFirstCatalogResolve: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)
+Runtime = ; GC = 
+Mean = 2.204 μs, StdErr = 0.006 μs (0.29%), N = 3, StdDev = 0.011 μs
+Min = 2.191 μs, Q1 = 2.201 μs, Median = 2.210 μs, Q3 = 2.211 μs, Max = 2.211 μs
+IQR = 0.010 μs, LowerFence = 2.186 μs, UpperFence = 2.226 μs
+ConfidenceInterval = [1.999 μs; 2.409 μs] (CI 99.9%), Margin = 0.205 μs (9.29% of Mean)
+Skewness = -0.38, Kurtosis = 0.67, MValue = 2
+-------------------- Histogram --------------------
+[2.191 μs ; 2.211 μs) | @@@
+---------------------------------------------------
+
+AspectResolutionBenchmarks.RootRegisteredPackageFrame: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)
+Runtime = ; GC = 
+Mean = 15.681 μs, StdErr = 1.798 μs (11.47%), N = 3, StdDev = 3.114 μs
+Min = 13.308 μs, Q1 = 13.917 μs, Median = 14.526 μs, Q3 = 16.867 μs, Max = 19.207 μs
+IQR = 2.949 μs, LowerFence = 9.493 μs, UpperFence = 21.291 μs
+ConfidenceInterval = [-41.133 μs; 72.494 μs] (CI 99.9%), Margin = 56.814 μs (362.32% of Mean)
+Skewness = 0.32, Kurtosis = 0.67, MValue = 2
+-------------------- Histogram --------------------
+[11.083 μs ; 16.751 μs) | @@
+[16.751 μs ; 22.041 μs) | @
+---------------------------------------------------
+
+AspectResolutionBenchmarks.ElementLocalMutationAndFrame: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)
+Runtime = ; GC = 
+Mean = 2.869 μs, StdErr = 0.125 μs (4.35%), N = 3, StdDev = 0.216 μs
+Min = 2.728 μs, Q1 = 2.745 μs, Median = 2.762 μs, Q3 = 2.940 μs, Max = 3.118 μs
+IQR = 0.195 μs, LowerFence = 2.453 μs, UpperFence = 3.232 μs
+ConfidenceInterval = [-1.071 μs; 6.810 μs] (CI 99.9%), Margin = 3.940 μs (137.32% of Mean)
+Skewness = 0.37, Kurtosis = 0.67, MValue = 2
+-------------------- Histogram --------------------
+[2.727 μs ; 3.120 μs) | @@@
+---------------------------------------------------
+
+AspectResolutionBenchmarks.NestedScopeAttachAndFrame: ShortRun(Toolchain=InProcessEmitToolchain, InvocationCount=1, IterationCount=3, LaunchCount=1, UnrollFactor=1, WarmupCount=3)
+Runtime = ; GC = 
+Mean = 245.350 μs, StdErr = 12.953 μs (5.28%), N = 3, StdDev = 22.435 μs
+Min = 219.450 μs, Q1 = 238.650 μs, Median = 257.850 μs, Q3 = 258.300 μs, Max = 258.750 μs
+IQR = 19.650 μs, LowerFence = 209.175 μs, UpperFence = 287.775 μs
+ConfidenceInterval = [-163.940 μs; 654.640 μs] (CI 99.9%), Margin = 409.290 μs (166.82% of Mean)
+Skewness = -0.38, Kurtosis = 0.67, MValue = 2
+-------------------- Histogram --------------------
+[218.684 μs ; 259.516 μs) | @@@
+---------------------------------------------------
+
+// * Summary *
+
+BenchmarkDotNet v0.15.8, Windows 11 (10.0.26200.9168/25H2/2025Update/HudsonValley2)
+Intel Core i5-9300H CPU 2.40GHz, 1 CPU, 8 logical and 4 physical cores
+.NET SDK 10.0.303
+  [Host] : .NET 8.0.30 (8.0.30, 8.0.3026.36720), X64 RyuJIT x86-64-v3
+
+Job=ShortRun  Toolchain=InProcessEmitToolchain  IterationCount=3  
+LaunchCount=1  WarmupCount=3  
+
+| Method                       | InvocationCount | UnrollFactor | Mean       | Error       | StdDev     | Gen0   | Gen1   | Allocated |
+|----------------------------- |---------------- |------------- |-----------:|------------:|-----------:|-------:|-------:|----------:|
+| CodeFirstCatalogResolve      | Default         | 16           |   2.204 μs |   0.2048 μs |  0.0112 μs | 1.0338 |      - |   4.23 KB |
+| RootRegisteredPackageFrame   | Default         | 16           |  15.681 μs |  56.8137 μs |  3.1141 μs | 2.2736 | 0.0153 |   9.32 KB |
+| ElementLocalMutationAndFrame | Default         | 16           |   2.869 μs |   3.9403 μs |  0.2160 μs | 0.3357 |      - |   1.38 KB |
+| NestedScopeAttachAndFrame    | 1               | 1            | 245.350 μs | 409.2901 μs | 22.4346 μs |      - |      - |  22.48 KB |
+
+// * Warnings *
+MinIterationTime
+  AspectResolutionBenchmarks.NestedScopeAttachAndFrame: ShortRun -> The minimum observed iteration time is 220μs which is very small. It's recommended to increase it to at least 100ms using more operations.
+
+// * Legends *
+  Mean      : Arithmetic mean of all measurements
+  Error     : Half of 99.9% confidence interval
+  StdDev    : Standard deviation of all measurements
+  Gen0      : GC Generation 0 collects per 1000 operations
+  Gen1      : GC Generation 1 collects per 1000 operations
+  Allocated : Allocated memory per single operation (managed only, inclusive, 1KB = 1024B)
+  1 μs      : 1 Microsecond (0.000001 sec)
+
+// * Diagnostic Output - MemoryDiagnoser *
+
+
+// ***** BenchmarkRunner: End *****
+Run time: 00:00:24 (24.21 sec), executed benchmarks: 4
+
+Global total time: 00:00:26 (26.14 sec), executed benchmarks: 4
+// * Artifacts cleanup *
+Artifacts cleanup is finished

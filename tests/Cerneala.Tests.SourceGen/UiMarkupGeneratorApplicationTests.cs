@@ -441,7 +441,8 @@ public sealed partial class UiMarkupGeneratorTests
             Environment.NewLine,
             result.GeneratedSources.Select(source => source.SourceText.ToString()));
         Assert.Contains("ResourceId<global::Cerneala.UI.Media.Brush>(\"Accent\")", generated);
-        Assert.Contains("GeneratedMarkup.AttachResource", generated);
+        Assert.Contains("global::Cerneala.UI.Aspect.AspectValue<", generated);
+        Assert.Contains(".Computed(", generated);
         Assert.Contains("\"Accent\"", generated);
 
         using MemoryStream stream = new();
@@ -509,13 +510,68 @@ public sealed partial class UiMarkupGeneratorTests
             result.GeneratedSources,
             source => source.HintName.Contains("Window", StringComparison.Ordinal)).SourceText.ToString();
         Assert.Contains("0.42", applicationSource, StringComparison.Ordinal);
-        Assert.Contains("UiPropertyValueSource.ApplicationAspectBase", applicationSource, StringComparison.Ordinal);
-        Assert.Contains("UiPropertyValueSource.ApplicationAspectVisualState", applicationSource, StringComparison.Ordinal);
+        Assert.Contains("global::Cerneala.UI.Aspect.AspectPackage", applicationSource, StringComparison.Ordinal);
+        Assert.Contains("global::Cerneala.UI.Aspect.AspectRuleSet", applicationSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("UiPropertyValueSource.ApplicationAspectBase", applicationSource, StringComparison.Ordinal);
         Assert.DoesNotContain("0.42", windowSource, StringComparison.Ordinal);
 
         using MemoryStream stream = new();
         EmitResult emit = compilation.Emit(stream);
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+    }
+
+    [Fact]
+    public void ApplicationNamedAspectBindsThroughElementLifecycleWithoutRequiringCurrentApplicationAtConstruction()
+    {
+        MarkupFile[] files =
+        [
+            new(
+                "App.crn",
+                """
+                <Application StartupWindow="ShellWindow">
+                  <Application.Resources>
+                    <Aspect Name="PageReveal" TargetType="UserControl">
+                      @default { Opacity = 0.75; }
+                    </Aspect>
+                  </Application.Resources>
+                </Application>
+                """),
+            new("SharedView.crn", "<UserControl Aspect=\"$PageReveal\" />")
+        ];
+        (string Path, string Source)[] sources =
+        [
+            (
+                "App.crn.cs",
+                """
+                using Cerneala.UI;
+                namespace TestInput;
+                public partial class App : Application { }
+                public partial class ShellWindow : Cerneala.UI.Controls.Window { }
+                """),
+            (
+                "SharedView.crn.cs",
+                """
+                namespace TestInput;
+                public partial class SharedView : Cerneala.UI.Controls.UserControl { }
+                """)
+        ];
+
+        GeneratorRunResult result = RunApplicationViewsGenerator(files, sources, out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        string viewSource = Assert.Single(
+            result.GeneratedSources,
+            source => source.HintName.Contains("SharedViewUserControl", StringComparison.Ordinal)).SourceText.ToString();
+        Assert.Contains("GeneratedMarkup.AttachResource", viewSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("Application.Current!", viewSource, StringComparison.Ordinal);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+        System.Reflection.Assembly assembly = System.Reflection.Assembly.Load(stream.ToArray());
+
+        object view = Activator.CreateInstance(assembly.GetType("TestInput.SharedView", throwOnError: true)!)!;
+
+        Assert.NotNull(view);
     }
 
     [Fact]

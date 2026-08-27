@@ -80,6 +80,63 @@ public sealed class ModernAspectTraceTests
         Assert.Contains(trace.Lines, line => line.Contains("kind", StringComparison.Ordinal));
     }
 
+    [Fact]
+    public void TraceReportsOriginScopeRejectedRulesConditionsAndDependencies()
+    {
+        AspectOrigin origin = new(
+            AspectAuthoringKind.MarkupDefault,
+            "TraceDocument.crn",
+            "Button");
+        AspectPackage package = AspectPackage.Create("Markup.TraceDocument.Button")
+            .Origin(origin)
+            .Components(components =>
+            {
+                components.AddRule(Rule("base", AspectLayer.App, Declaration(Color.White)));
+                components.AddRule(new AspectRuleSet(
+                    "hover",
+                    AspectLayer.App,
+                    new AspectTarget(
+                        typeof(Button),
+                        conditions: [AspectCondition.Property(Cerneala.UI.Elements.UIElement.IsMouseOverProperty).Is(true)]),
+                    [Declaration(Color.Black)],
+                    1));
+                components.AddRule(new AspectRuleSet(
+                    "wrong-target",
+                    AspectLayer.App,
+                    new AspectTarget(typeof(TextBlock)),
+                    [Declaration(Color.Black)],
+                    2));
+            });
+        AspectCatalog catalog = new AspectRegistry().Register(package).BuildCatalog();
+        Button button = new();
+        AspectEngine engine = new();
+
+        engine.Apply(button, catalog, new AspectEnvironment("test"));
+
+        AspectDiagnostics.Snapshot diagnostics = engine.GetDiagnostics(button);
+        AspectResolutionStep matched = Assert.Single(diagnostics.ResolutionSteps, step => step.RuleName == "base");
+        AspectResolutionStep conditional = Assert.Single(diagnostics.ResolutionSteps, step => step.RuleName == "hover");
+        AspectResolutionStep wrongTarget = Assert.Single(diagnostics.ResolutionSteps, step => step.RuleName == "wrong-target");
+        Assert.Equal(origin, matched.Origin);
+        Assert.Equal("root", matched.Scope);
+        Assert.Equal(0, matched.SourceOrder);
+        Assert.Equal("matched", matched.Outcome);
+        Assert.Equal("rejected: condition mismatch", conditional.Outcome);
+        Assert.False(Assert.Single(conditional.Conditions).Matches);
+        Assert.Contains(conditional.Dependencies, dependency =>
+            dependency.Kind == AspectConditionDependencyKind.UiProperty &&
+            ReferenceEquals(dependency.Property, Cerneala.UI.Elements.UIElement.IsMouseOverProperty));
+        Assert.StartsWith("rejected: target type mismatch", wrongTarget.Outcome, StringComparison.Ordinal);
+        Assert.Equal(1, diagnostics.Counters.ConditionEvaluations);
+
+        AspectTraceSnapshot trace = AspectTrace.Capture(button, Control.BackgroundProperty, diagnostics);
+        Assert.Contains(trace.Lines, line => line.Contains("document=TraceDocument.crn", StringComparison.Ordinal));
+        Assert.Contains(trace.Lines, line => line.Contains("origin=MarkupDefault", StringComparison.Ordinal));
+        Assert.Contains(trace.Lines, line => line.Contains("scope=root", StringComparison.Ordinal));
+        Assert.Contains(trace.Lines, line => line.Contains("dependencies=[UiProperty:", StringComparison.Ordinal));
+        Assert.Contains(trace.Lines, line => line.Contains("outcome=rejected: condition mismatch", StringComparison.Ordinal));
+    }
+
     private static AspectCatalog CatalogWith(string packageName, params AspectRuleSet[] rules)
     {
         AspectPackage package = AspectPackage.Create(packageName).Components(components =>

@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Aspect/AspectPackageBuilder.cs`
 
-Builds an `AspectPackage` by collecting token defaults, component rules, component templates, and content templates through a fluent API.
+Builds an `AspectPackage` by collecting token defaults, component rules, non-style behaviors, component templates, and content templates through a fluent API.
 
 ```csharp
 public sealed class AspectPackageBuilder
@@ -68,7 +68,7 @@ AspectCatalog catalog = new AspectRegistry()
 
 The builder keeps the package name supplied at creation time and appends contributions into internal collections. `Tokens`, `Components`, and `Content` each create a specialized builder over the same pending package data, invoke the supplied callback, and return the original `AspectPackageBuilder` so calls can be chained.
 
-`Build()` materializes the current builder state into a new `AspectPackage` by copying the collected tokens, rules, component templates, and content templates to arrays. The implicit conversion operator calls `Build()`, which allows a fluent builder expression to be assigned to an `AspectPackage`.
+`Build()` materializes the current builder state into a new `AspectPackage` by copying the collected tokens, rules, behaviors, component templates, and content templates to arrays. The implicit conversion operator calls `Build()`, which allows a fluent builder expression to be assigned to an `AspectPackage`.
 
 The builder validates only the callback arguments it receives. Package name validation is handled when `AspectPackage.Create` creates the builder, and package-level conflicts such as duplicate registered package names or incompatible token defaults are handled later by `AspectRegistry` and `AspectCatalog`.
 
@@ -83,7 +83,8 @@ The builder validates only the callback arguments it receives. Package name vali
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Tokens(Action<AspectTokenBuilder> build)` | `AspectPackageBuilder` | Invokes `build` with an `AspectTokenBuilder` that appends token default definitions to the package, then returns this builder. |
-| `Components(Action<ComponentAspectBuilder> build)` | `AspectPackageBuilder` | Invokes `build` with a `ComponentAspectBuilder` that appends component rules and component templates, then returns this builder. |
+| `Origin(AspectOrigin value)` | `AspectPackageBuilder` | Sets immutable diagnostics origin metadata and returns this builder. When omitted, `Build()` creates a code-first origin from the package name. |
+| `Components(Action<ComponentAspectBuilder> build)` | `AspectPackageBuilder` | Invokes `build` with a `ComponentAspectBuilder` that appends component rules, non-style behaviors, and component templates, then returns this builder. |
 | `Content(Action<ContentTemplateBuilder> build)` | `AspectPackageBuilder` | Invokes `build` with a `ContentTemplateBuilder` that appends content template definitions, then returns this builder. |
 | `Build()` | `AspectPackage` | Creates an `AspectPackage` from the currently collected package data. |
 
@@ -98,6 +99,7 @@ The builder validates only the callback arguments it receives. Package name vali
 | Member | Exception | Condition |
 | --- | --- | --- |
 | `Tokens(Action<AspectTokenBuilder>)` | `ArgumentNullException` | `build` is `null`. |
+| `Origin(AspectOrigin)` | `ArgumentNullException` | `value` is `null`. |
 | `Components(Action<ComponentAspectBuilder>)` | `ArgumentNullException` | `build` is `null`. |
 | `Content(Action<ContentTemplateBuilder>)` | `ArgumentNullException` | `build` is `null`. |
 | `implicit operator AspectPackage(AspectPackageBuilder)` | `ArgumentNullException` | `builder` is `null`. |

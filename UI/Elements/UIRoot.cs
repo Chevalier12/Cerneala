@@ -12,7 +12,6 @@ using Cerneala.UI.Rendering;
 using Cerneala.UI.Resources;
 using Cerneala.UI.Theming;
 using Cerneala.UI.Controls;
-using Cerneala.UI.Markup;
 
 namespace Cerneala.UI.Elements;
 
@@ -26,7 +25,6 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     private SemanticsTree? cachedSemanticsTree;
     private int cachedSemanticsTreeVersion = -1;
     private bool semanticsDirty = true;
-    private IReadOnlyList<MarkupAspectResource> applicationAspects = [];
 
     public UIRoot(
         float viewportWidth = 0,
@@ -190,15 +188,12 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         resourceChangedSubscription = null;
 
         ResourceProvider = provider;
-        applicationAspects = provider is ResourceDictionary resources
-            ? resources.Values.OfType<MarkupAspectResource>().Where(aspect => aspect.Name is null).ToArray()
-            : [];
         if (provider is IObservableResourceProvider observableProvider)
         {
             resourceChangedSubscription = new ResourceChangedSubscription(this, observableProvider);
         }
 
-        Invalidate(InvalidationFlags.Resource | InvalidationFlags.Subtree, "Root resource provider changed");
+        Invalidate(InvalidationFlags.Resource | InvalidationFlags.Aspect | InvalidationFlags.Subtree, "Root resource provider changed");
     }
 
     public void SetPlatformServices(IPlatformServices? services)
@@ -281,6 +276,11 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     private void ApplyResourceChange(ResourceChangedEventArgs args)
     {
+        if (args.OldValue is AspectPackage || args.NewValue is AspectPackage)
+        {
+            Invalidate(InvalidationFlags.Aspect | InvalidationFlags.Subtree, "Application Aspect package changed");
+        }
+
         foreach (ResourceDependencyChange change in ResourceDependencyTracker.NotifyResourceChanged(args))
         {
             if ((change.Effects & (InvalidationFlags.Measure | InvalidationFlags.Arrange)) != InvalidationFlags.None)
@@ -437,64 +437,6 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     internal void CountArrangeCall()
     {
         activeFrameStats?.CountArrangeCall();
-    }
-
-    internal void ApplyApplicationAspects(UIElement element)
-    {
-        foreach (MarkupAspectResource aspect in applicationAspects)
-        {
-            aspect.ApplyTo(element);
-        }
-    }
-
-    internal void ApplyLocalAspects(UIElement element)
-    {
-        Type elementType = element.GetType();
-        for (UIElement? owner = element;
-             owner is not null && !ReferenceEquals(owner, this);
-             owner = owner.LogicalParent ?? owner.VisualParent)
-        {
-            MarkupAspectResource? nearest = null;
-            int nearestDistance = int.MaxValue;
-            foreach (MarkupAspectResource candidate in owner.Resources.Values.OfType<MarkupAspectResource>())
-            {
-                if (candidate.Name is not null || !candidate.TargetType.IsAssignableFrom(elementType))
-                {
-                    continue;
-                }
-
-                int distance = InheritanceDistance(elementType, candidate.TargetType);
-                if (distance >= nearestDistance)
-                {
-                    continue;
-                }
-
-                nearest = candidate;
-                nearestDistance = distance;
-            }
-
-            if (nearest is not null)
-            {
-                nearest.ApplyTo(element);
-                return;
-            }
-        }
-    }
-
-    private static int InheritanceDistance(Type type, Type candidateBaseType)
-    {
-        int distance = 0;
-        for (Type? current = type; current is not null; current = current.BaseType)
-        {
-            if (current == candidateBaseType)
-            {
-                return distance;
-            }
-
-            distance++;
-        }
-
-        return int.MaxValue;
     }
 
     private FramePhaseProcessors CreatePhaseProcessors()

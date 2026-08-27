@@ -50,6 +50,7 @@ ResolvedAspect resolved = new AspectEngine()
 ResolvedAspectValue value = resolved.Values[Control.BackgroundProperty];
 Brush? background = (Brush?)value.Value;
 AspectDeclaration source = value.SourceDeclaration;
+AspectRuleSet sourceRule = value.SourceRule;
 ```
 
 ## Remarks
@@ -58,7 +59,7 @@ AspectDeclaration source = value.SourceDeclaration;
 
 `Property` identifies the UI property that won, and `Value` is the already-resolved runtime value that `AspectEngine.Apply` writes through `SetValueUntyped` with the `AspectBase` value source. `Value` is typed as `object?` because aspect resolution handles properties with different value types in one dictionary.
 
-`SourceDeclaration` keeps the declaration that supplied the winning value. Diagnostics and traces use it to report the declaration name, token dependencies, and rejected competing declarations.
+`SourceRule` and `SourceDeclaration` keep the exact catalog rule projection and declaration that supplied the winning value. Diagnostics and traces use them to report package, document, authoring origin, scope, cascade coordinates, token dependencies, and rejected competitors.
 
 `Motion` carries optional motion metadata copied from the source declaration. The constructor and cascade key are internal, so consumers normally obtain instances from `ResolvedAspect.Values` rather than creating them directly.
 
@@ -68,6 +69,7 @@ AspectDeclaration source = value.SourceDeclaration;
 | --- | --- | --- |
 | `Property` | `UiProperty` | Gets the UI property associated with the resolved value. |
 | `Value` | `object?` | Gets the resolved runtime value for `Property`. |
+| `SourceRule` | `AspectRuleSet` | Gets the catalog-owned rule projection that supplied the winning declaration. |
 | `SourceDeclaration` | `AspectDeclaration` | Gets the winning declaration that produced this value. |
 | `Motion` | `AspectMotion?` | Gets optional motion metadata carried from the winning declaration. |
 
