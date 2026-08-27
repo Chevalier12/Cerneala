@@ -5,11 +5,17 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <ApplicationIcon>..\Playground\Assets\cerneala-playground.ico</ApplicationIcon>
+    <CernealaDesktopBackend Condition="'$(CernealaDesktopBackend)' == ''">MonoGame</CernealaDesktopBackend>
+    <DefineConstants Condition="'$(CernealaDesktopBackend)' == 'MonoGame'">$(DefineConstants);CERNEALA_MONOGAME</DefineConstants>
+    <DefineConstants Condition="'$(CernealaDesktopBackend)' == 'SDL3'">$(DefineConstants);CERNEALA_SDL3</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Cerneala.csproj" />
-    <ProjectReference Include="..\Cerneala.Backends.MonoGame\Cerneala.Backends.MonoGame.csproj" />
+    <ProjectReference Include="..\Cerneala.Backends.MonoGame\Cerneala.Backends.MonoGame.csproj"
+                      Condition="'$(CernealaDesktopBackend)' == 'MonoGame'" />
+    <ProjectReference Include="..\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj"
+                      Condition="'$(CernealaDesktopBackend)' == 'SDL3'" />
     <ProjectReference Include="..\Cerneala.SourceGen\Cerneala.SourceGen.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
@@ -18,4 +24,9 @@
              Link="Assets\cerneala-mascot-void-suction-well.svg"
              CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+
+  <Target Name="ValidateCernealaDesktopBackend" BeforeTargets="PrepareForBuild"
+          Condition="'$(CernealaDesktopBackend)' != 'MonoGame' and '$(CernealaDesktopBackend)' != 'SDL3'">
+    <Error Text="CernealaDesktopBackend must be either 'MonoGame' or 'SDL3'." />
+  </Target>
 </Project>

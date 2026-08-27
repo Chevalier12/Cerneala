@@ -27,6 +27,16 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (string.Equals(
+                Environment.GetEnvironmentVariable("CERNEALA_CONFORMANCE_CAPTURE"),
+                "1",
+                StringComparison.Ordinal))
+        {
+            FrameDiagnosticsText.Text =
+                "CONFORMANCE | 800x600 logical | 1000x750 RGBA | DPI 1.25 | sRGB | frame 8";
+            return;
+        }
+
         FrameDiagnosticsText.Text =
             $"{LastFrame.ElapsedTime.TotalMilliseconds:0.00} ms | {FrameDiagnostics.Format(LastFrame.Stats)}";
     }

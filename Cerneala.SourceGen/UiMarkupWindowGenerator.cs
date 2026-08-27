@@ -150,6 +150,7 @@ public sealed partial class UiMarkupGenerator
         Compilation compilation,
         UserControlPair pair,
         bool generateStartup,
+        ApplicationBackendSelection? backendSelection,
         GenerationScope.ApplicationResourceCatalog? applicationResources,
         SourceGeneratorSemanticModel semanticModel)
     {
@@ -284,9 +285,9 @@ public sealed partial class UiMarkupGenerator
         AppendNamedElementMembers(source, scope.NamedElementMembers);
         source.AppendLine("}");
 
-        if (generateStartup && compilation.Options.OutputKind != OutputKind.DynamicallyLinkedLibrary)
+        if (generateStartup && backendSelection is ApplicationBackendSelection backend)
         {
-            AppendWindowStartup(context, source, compilation, pair, namespaceName);
+            AppendWindowStartup(context, source, compilation, pair, namespaceName, backend);
         }
 
         string hintName = CreateHintName(file.Path, className).Replace("Factory.", "Window.");
@@ -318,7 +319,8 @@ public sealed partial class UiMarkupGenerator
         StringBuilder source,
         Compilation compilation,
         UserControlPair pair,
-        string namespaceName)
+        string namespaceName,
+        ApplicationBackendSelection backendSelection)
     {
         IMethodSymbol? appHook = ResolveAppHook(context, compilation, pair, namespaceName);
         if (appHook is null && HasInvalidAppHook(compilation, namespaceName))
@@ -335,7 +337,7 @@ public sealed partial class UiMarkupGenerator
             source.AppendLine("    [global::System.STAThreadAttribute]");
             source.AppendLine("    private static void Main()");
             source.AppendLine("    {");
-            source.AppendLine("        global::Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend.EnsureRegistered();");
+            AppendApplicationBackendRegistration(source, backendSelection, "        ");
             source.AppendLine("        global::Cerneala.UI.Hosting.Windowing.GeneratedWindowApplication.Run(CreateDescriptor());");
             source.AppendLine("    }");
         }
@@ -344,7 +346,7 @@ public sealed partial class UiMarkupGenerator
             source.AppendLine("    [global::System.Runtime.CompilerServices.ModuleInitializerAttribute]");
             source.AppendLine("    internal static void Register()");
             source.AppendLine("    {");
-            source.AppendLine("        global::Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend.EnsureRegistered();");
+            AppendApplicationBackendRegistration(source, backendSelection, "        ");
             source.AppendLine("        global::Cerneala.UI.Hosting.Windowing.GeneratedWindowApplication.RegisterStartup(CreateDescriptor());");
             source.AppendLine("    }");
         }

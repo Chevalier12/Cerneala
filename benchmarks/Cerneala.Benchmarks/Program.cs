@@ -8,6 +8,12 @@ if (args is ["--prism-retained-cache"])
     return;
 }
 
+if (args is ["--prism-sdlgpu-comparison"])
+{
+    PrismSdlGpuComparisonBenchmarkRunner.Run();
+    return;
+}
+
 if (args is ["--language-core-gate"])
 {
     CernealaLanguageBenchmarkGate.Run();

@@ -2069,7 +2069,7 @@ public sealed class PrismGraphExecutorTests
             StyleModes0 = new Vector4(
                 9,
                 (int)PrismBlendMode.Normal,
-                0,
+                (int)PrismBlendMode.Normal,
                 0),
             StyleModes1 = Vector4.Zero
         };

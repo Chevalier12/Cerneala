@@ -1,0 +1,3 @@
+<Application
+    StartupWindow="MainWindow"
+    ShutdownMode="OnMainWindowClose" />

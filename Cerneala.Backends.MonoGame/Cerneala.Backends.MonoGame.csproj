@@ -44,17 +44,17 @@
 
   <ItemGroup>
     <PrismCopyCompositeInclude
-      Include="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Common\Parameters.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Composition\*.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Blends\*.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Color\*.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\*.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\*.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Pipeline\Techniques.fx"
-      Exclude="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Blends\All.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Color\All.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\Charcoal.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\ConteCrayon.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\GraphicPen.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\Plaster.fx" />
+      Include="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Common\Parameters.fx;$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Composition\*.hlsl;$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Blends\*.hlsl;$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Color\*.hlsl;$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Filters\*.hlsl;$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Filters\Catalog\*.hlsl;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Pipeline\Techniques.fx"
+      Exclude="$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Blends\All.hlsl;$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Color\All.hlsl;$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Filters\Catalog\Charcoal.hlsl;$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Filters\Catalog\ConteCrayon.hlsl;$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Filters\Catalog\GraphicPen.hlsl;$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Filters\Catalog\Plaster.hlsl" />
     <PrismStyleInclude
-      Include="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Common\Parameters.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Blends\*.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Styles\*.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Pipeline\StyleTechniques.fx" />
+      Include="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Common\Parameters.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Common\AllBlends.fx;$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Blends\*.hlsl;$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Styles\*.hlsl;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Pipeline\StyleTechniques.fx" />
     <PrismSpecializedCommonInclude
-      Include="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Common\Parameters.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Blends\*.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Color\*.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\Common.fx" />
-    <PrismCharcoalInclude Include="@(PrismSpecializedCommonInclude);$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\Charcoal.fx" />
-    <PrismConteCrayonInclude Include="@(PrismSpecializedCommonInclude);$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\ConteCrayon.fx" />
-    <PrismGraphicPenInclude Include="@(PrismSpecializedCommonInclude);$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\Charcoal.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\GraphicPen.fx" />
-    <PrismPlasterInclude Include="@(PrismSpecializedCommonInclude);$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\Plaster.fx" />
-    <PrismDeinterlaceInclude Include="@(PrismSpecializedCommonInclude);$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Filters\Catalog\Video.fx" />
+      Include="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Common\Parameters.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Common\AllBlends.fx;$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\Common\AllColor.fx;$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Blends\*.hlsl;$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Color\*.hlsl;$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Filters\Catalog\Common.hlsl" />
+    <PrismCharcoalInclude Include="@(PrismSpecializedCommonInclude);$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Filters\Catalog\Charcoal.hlsl" />
+    <PrismConteCrayonInclude Include="@(PrismSpecializedCommonInclude);$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Filters\Catalog\ConteCrayon.hlsl" />
+    <PrismGraphicPenInclude Include="@(PrismSpecializedCommonInclude);$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Filters\Catalog\Charcoal.hlsl;$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Filters\Catalog\GraphicPen.hlsl" />
+    <PrismPlasterInclude Include="@(PrismSpecializedCommonInclude);$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Filters\Catalog\Plaster.hlsl" />
+    <PrismDeinterlaceInclude Include="@(PrismSpecializedCommonInclude);$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\Filters\Catalog\Video.hlsl" />
   </ItemGroup>
 
   <ItemGroup>
@@ -82,6 +82,7 @@
     <PrismShaderInclude
       Include="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\**\*.fx"
       Exclude="$(RepositoryRoot)\Drawing\MonoGame\Prism\Shaders\*.fx" />
+    <PrismShaderInclude Include="$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\**\*.hlsl" />
     <PrismShaderOutput Include="@(PrismShaderSource->'$(PrismShaderOutputDirectory)%(Filename).mgfxo')" />
     <EmbeddedResource Include="@(PrismShaderOutput)">
       <LogicalName>Cerneala.Drawing.MonoGame.Prism.Shaders.%(Filename)%(Extension)</LogicalName>

@@ -1,8 +1,8 @@
 #include "Common/Parameters.fx"
-#include "Blends/All.fx"
-#include "Color/All.fx"
-#include "Filters/Catalog/Common.fx"
-#include "Filters/Catalog/ConteCrayon.fx"
+#include "Common/AllBlends.fx"
+#include "Common/AllColor.fx"
+#include "../../../Prism/Shaders/Hlsl/Filters/Catalog/Common.hlsl"
+#include "../../../Prism/Shaders/Hlsl/Filters/Catalog/ConteCrayon.hlsl"
 
 float4 ConteCrayonFilterPixelShader(
     VertexShaderOutput input) : COLOR0

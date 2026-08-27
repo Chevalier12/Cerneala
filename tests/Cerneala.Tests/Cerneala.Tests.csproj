@@ -31,6 +31,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Cerneala.csproj" />
     <ProjectReference Include="..\..\Cerneala.Backends.MonoGame\Cerneala.Backends.MonoGame.csproj" />
+    <ProjectReference Include="..\..\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj" />
+    <ProjectReference Include="..\..\Cerneala.Platforms.Sdl3\Cerneala.Platforms.Sdl3.csproj" />
     <ProjectReference Include="..\..\Cerneala.Platforms.Win32\Cerneala.Platforms.Win32.csproj" />
     <ProjectReference Include="..\..\CernealaPresentation\CernealaPresentation.csproj" />
     <ProjectReference Include="..\..\Playground\Cerneala.Playground\Cerneala.Playground.csproj" />

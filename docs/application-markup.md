@@ -2,7 +2,7 @@
 
 ## Standard Pair
 
-A Windows executable can declare its application without `Program.cs` by pairing
+A desktop executable can declare its application without `Program.cs` by pairing
 these files:
 
 ```text
@@ -64,6 +64,13 @@ public partial class ShellWindow : Window
 }
 ```
 
+`BackendRegistration.cs`:
+
+```csharp
+[assembly: Cerneala.UI.Hosting.Windowing.ApplicationBackend(
+    typeof(Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend))]
+```
+
 The project includes the generator as an analyzer and the markup as additional
 files:
 
@@ -85,8 +92,52 @@ files:
 ```
 
 `Cerneala.csproj` supplies the backend-neutral UI and drawing contracts. The
-separate `Cerneala.Backends.MonoGame` reference selects the WindowsDX/MonoGame
-runtime used by the generated desktop entry point.
+separate `Cerneala.Backends.MonoGame` reference makes WindowsDX/MonoGame
+available; the assembly attribute selects it explicitly for the generated
+desktop entry point.
+
+## Backend Selection
+
+Every executable for which the generator emits `Main` or a module initializer
+must contain exactly one `ApplicationBackendAttribute`. The selected type must
+be a public, non-generic static or concrete class with this exact method:
+
+```csharp
+public static void EnsureRegistered();
+```
+
+The generator resolves the symbol at compile time, emits its fully qualified
+`EnsureRegistered` call before application startup, and contains no default
+backend. Missing, duplicate, inaccessible, generic, abstract, non-class, or
+signature-incompatible selections report `CERNEALAUI015` and produce no partial
+startup source. A class library or a project with no generated startup does not
+need a selection.
+
+To target SDL3 + SDL_GPU on Windows, Linux, and macOS, use `net8.0`, reference
+`Cerneala.Backends.SdlGpu`, and select its public composition root:
+
+```csharp
+[assembly: Cerneala.UI.Hosting.Windowing.ApplicationBackend(
+    typeof(Cerneala.UI.Hosting.Sdl.SdlGpuApplicationBackend))]
+```
+
+```xml
+<PropertyGroup>
+  <OutputType>Exe</OutputType>
+  <TargetFramework>net8.0</TargetFramework>
+</PropertyGroup>
+<ItemGroup>
+  <ProjectReference Include="..\Cerneala.csproj" />
+  <ProjectReference Include="..\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj" />
+  <ProjectReference Include="..\Cerneala.SourceGen\Cerneala.SourceGen.csproj"
+                    OutputItemType="Analyzer"
+                    ReferenceOutputAssembly="false" />
+</ItemGroup>
+```
+
+The renderer is SDL_GPU, not SDL_Renderer. See
+[SDL3 + SDL_GPU Desktop Backend](sdl-desktop-backend.md) for the six supported
+RIDs, native assets, offline shader packaging, and published-output smoke scripts.
 
 ## Startup Window
 
@@ -176,7 +227,8 @@ An executable may contain at most one paired Application definition.
 When no paired `Application` document exists, a single paired class named
 `MainWindow` continues to generate the previous startup path. The legacy static
 `App.ConfigureServices(IServiceCollection)` hook is available only on that
-fallback path. New applications should use the App pair and the protected
+fallback path. The legacy executable still requires the same explicit assembly
+backend selection. New applications should use the App pair and the protected
 instance override.
 
 ## Deliberate Limits

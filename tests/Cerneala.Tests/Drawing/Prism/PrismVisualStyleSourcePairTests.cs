@@ -17,9 +17,9 @@ public sealed class PrismVisualStyleSourcePairTests
         string shaderRoot = Path.Combine(
             repositoryRoot,
             "Drawing",
-            "MonoGame",
             "Prism",
-            "Shaders");
+            "Shaders",
+            "Hlsl");
         string sourceRoot = Path.Combine(
             repositoryRoot,
             "Drawing",
@@ -64,7 +64,7 @@ public sealed class PrismVisualStyleSourcePairTests
             string sourceType = $"Prism{styleName}{sourceKind}";
             string[] shaderPaths = Directory.EnumerateFiles(
                 shaderRoot,
-                $"{styleName}.fx",
+                $"{styleName}.hlsl",
                 SearchOption.AllDirectories).ToArray();
             string sourcePath = Assert.Single(Directory.EnumerateFiles(
                 sourceRoot,
@@ -75,7 +75,7 @@ public sealed class PrismVisualStyleSourcePairTests
             Assert.NotEmpty(shaderPaths);
             Assert.All(
                 shaderPaths,
-                shaderPath => Assert.EndsWith($"{styleName}.fx", shaderPath));
+                shaderPath => Assert.EndsWith($"{styleName}.hlsl", shaderPath));
             Assert.Contains(
                 $"internal static class {sourceType}",
                 source,

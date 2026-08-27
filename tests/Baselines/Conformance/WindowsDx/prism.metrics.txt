@@ -1,0 +1,10 @@
+Chapter=6
+RootCommands=705
+RenderCacheVersion=71
+PrismSample=Filter:artistic-brush-sketch-stylize-and-texture:AccentedEdges
+PrismSample=Filter:blur-and-sharpen:Average
+PrismSample=Filter:color-and-adjustment:BlackWhite
+PrismSample=Filter:distort-geometry-and-morphology:AdaptiveWideAngle
+PrismSample=Filter:general-and-cerneala-native:ChromaticAberration
+PrismSample=Filter:noise-pixelate-render-and-video:AddNoise
+PrismSample=Style:layer-style:BevelEmboss

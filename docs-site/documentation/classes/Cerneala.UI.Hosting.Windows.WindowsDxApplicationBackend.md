@@ -14,18 +14,15 @@ public static class WindowsDxApplicationBackend
 ## Examples
 
 ```csharp
-using Cerneala.UI.Hosting.Windowing;
-using Cerneala.UI.Hosting.Windows;
-
-WindowsDxApplicationBackend.EnsureRegistered();
-int exitCode = GeneratedWindowApplication.Run(descriptor, args);
+[assembly: Cerneala.UI.Hosting.Windowing.ApplicationBackend(
+    typeof(Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend))]
 ```
 
 ## Remarks
 
-Generated Cerneala application startup code calls `EnsureRegistered` before creating a native window. Call it explicitly when using `GeneratedWindowApplication` without generated startup code.
+Generated Cerneala application startup calls `EnsureRegistered` when this type is selected through `ApplicationBackendAttribute`. The selection is explicit and assembly-scoped; merely referencing the WindowsDX backend does not make the generator choose it. Call `EnsureRegistered` directly when using `GeneratedWindowApplication` without generated startup code.
 
-The method registers one atomic windowing backend: `Cerneala.Platforms.Win32` supplies native windows, input, cursors, DPI handling, and Windows GPU preference setup, while `Cerneala.Backends.MonoGame` supplies the WindowsDX graphics session. Registration is idempotent for this backend. Registering a different windowing backend in the same process is rejected.
+The method registers one atomic windowing backend: `Cerneala.Platforms.Win32` supplies native windows, input, cursors, DPI handling, and Windows GPU preference setup, while `Cerneala.Backends.MonoGame` supplies the WindowsDX graphics session. Registration is idempotent for this backend. Registering SDL_GPU after WindowsDX, or WindowsDX after SDL_GPU, is rejected deterministically because a process may own only one windowing backend.
 
 The generic host exchanges an opaque window surface. The WindowsDX factory accepts only the Win32 surface owned by `Cerneala.Platforms.Win32`, so an incompatible platform and graphics implementation fail before graphics-device creation.
 
@@ -43,3 +40,5 @@ Windows desktop applications that reference the `Cerneala.Backends.MonoGame` pro
 
 - `GeneratedWindowApplication`
 - `GeneratedWindowStartupDescriptor`
+- `ApplicationBackendAttribute`
+- `Cerneala.UI.Hosting.Sdl.SdlGpuApplicationBackend`

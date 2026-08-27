@@ -7,13 +7,14 @@ Status: **remediat** în aceeași schimbare. Inventarul de mai jos păstrează f
 ## Rezultat după remediere
 
 - `Cerneala.csproj` nu mai referă `MonoGame.Framework.WindowsDX`, nu mai compilează sursele MonoGame/WindowsDX și nu mai construiește sau încorporează shader-ele MGFX.
+- `Cerneala.csproj` țintește `net8.0`; TFM-ul Windows rămâne numai în proiectele adaptoare și în consumatorii Windows.
 - `Cerneala.Backends.MonoGame/Cerneala.Backends.MonoGame.csproj` deține pachetul WindowsDX, implementările din `Drawing/MonoGame`, hosting/input/resources MonoGame, sesiunea WindowsDX și artefactele Prism MGFX.
 - `Cerneala.Platforms.Win32/Cerneala.Platforms.Win32.csproj` deține separat P/Invoke-ul Win32, fereastra nativă, input-ul, cursorul, DPI awareness și preferința GPU Windows.
 - Soluția construiește separat `Cerneala.dll` și `Cerneala.Backends.MonoGame.dll`; core-ul poate fi referit fără o dependență tranzitivă MonoGame.
 - `RenderSurface2D` folosește numai `IRenderSurface2DFrameSource` și stare opacă `IRenderSurface2DBackendState`; sesiunea/target-ul MonoGame sunt create și deținute exclusiv de backend.
 - `WindowApplicationRuntime` primește diagnostice Prism și numărul de lease-uri prin `IWindowGraphicsSession`; nu mai importă și nu mai face cast la `MonoGameDrawingBackend`.
 - `GameBootstrap.CreateDefaultClearColor()` returnează `Cerneala.Drawing.Color`.
-- Core-ul rezolvă separat `IWindowPlatformBackend` și `IWindowGraphicsBackend`. `WindowsDxApplicationBackend.EnsureRegistered()` compune adaptorul `Cerneala.Platforms.Win32` cu rendererul `Cerneala.Backends.MonoGame` pentru startup-ul generat și preview host.
+- Core-ul rezolvă atomic un `IWindowingBackend` prin `WindowingBackendRegistry`, iar `IWindowSurface` păstrează handle-urile native în adaptor. `WindowsDxApplicationBackend.EnsureRegistered()` compune adaptorul `Cerneala.Platforms.Win32` cu rendererul `Cerneala.Backends.MonoGame` pentru startup-ul generat și preview host.
 - Tessellarea path/stroke produce `DrawTriangleMesh`/`DrawStrokeRenderMesh` cu puncte și indici Cerneala. Wrapper-ele MonoGame fac numai împachetarea finală în vertex-uri XNA.
 - `PrismExecutionDiagnostics`, `PrismGraphFallbackTracker`, `PrismSurfaceBudget`, `PrismSurfaceMemoryAccountant`, `PrismSurfaceAllocationException`, `PrismKernelKind` și `PrismOperationalDiagnostics` au ownership și namespace-uri agnostice.
 - Serviciile reale de font/text/imagine sunt `DrawingContentServices` în fundația de drawing din core. `MonoGameContentServices` este doar un nume de compatibilitate peste serviciul independent de MonoGame, iar `MonoGameUiHostOptions.ContentServices` acceptă tipul core.
@@ -30,12 +31,28 @@ Build-ul complet al soluției și suitele focalizate pentru path/stroke, surface
 
 ### Limita acestei remedieri
 
-Această schimbare izolează **MonoGame/WindowsDX**, nu transformă încă întregul
-`Cerneala` într-un core complet lipsit de orice tehnologie concretă. Proiectul
-principal continuă să țintească `net8.0-windows` și să dețină integrarea
-Skia/HarfBuzz pentru text și SVG. Hosting-ul Win32 este acum separat, dar un
-core complet multi-platformă va necesita și eliminarea TFM-ului Windows și
-separarea celorlalte implementări native fără a reintroduce MonoGame în core.
+Această schimbare izolează **MonoGame/WindowsDX** și permite proiectului
+principal să țintească `net8.0`, dar nu transformă încă întregul stack de
+aplicație într-o distribuție complet multi-platformă. Core-ul continuă să
+dețină integrarea Skia/HarfBuzz pentru text și SVG, iar fiecare platformă are
+nevoie de assets native și de un adaptor de windowing/rendering compatibil.
+Startup-ul generat și preview host-ul aleg încă explicit WindowsDX; alegerea
+backend-ului trebuie generalizată înainte ca o aplicație generată să poată
+folosi un adaptor non-Windows.
+
+## Actualizare finală: limita SDL3 + SDL_GPU
+
+Paragraful anterior păstrează fotografia istorică de la închiderea remedierii MonoGame. Livrarea SDL ulterioară a generalizat selecția fără a schimba sau a șterge acel istoric:
+
+- `Cerneala.Platforms.Sdl3` este singurul owner pentru bindingul SDL3, ferestre, event pump, input, DPI și cursor.
+- `Cerneala.Backends.SdlGpu` este singurul owner pentru device, swapchain-uri, drawing, resurse, `RenderSurface2D`, Prism și composition root-ul public `SdlGpuApplicationBackend`.
+- `Tools/Cerneala.SdlShaderCompiler` este singura zonă suplimentară SDL și folosește ShaderCross exclusiv la build/verificare offline; aplicațiile publicate nu îl cer la runtime.
+- Core-ul, `Cerneala.SourceGen`, Win32 și backendul MonoGame nu au primit package references SDL, handle-uri SDL sau ramuri de platformă pentru SDL.
+- API-ul public nou este limitat la `Cerneala.UI.Hosting.Sdl.SdlGpuApplicationBackend`; bindingul și toate tipurile native rămân interne.
+- Startup-ul generat nu mai alege WindowsDX. Executabilul selectează explicit fie `WindowsDxApplicationBackend`, fie `SdlGpuApplicationBackend` prin `ApplicationBackendAttribute`, iar registry-ul respinge amestecarea lor în același proces.
+- Matematica HLSL Prism este comună sub `Drawing/Prism/Shaders/Hlsl`; adaptoarele păstrează numai wrapper-ele, artefactele și execuția specifice backendului.
+
+`SdlDependencyBoundaryTests` și scanarea public API verifică această limită, iar publish matrix verifică separat asseturile native pentru cele șase RIDs desktop.
 
 ## Scop
 

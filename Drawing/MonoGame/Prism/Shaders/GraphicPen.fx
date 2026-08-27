@@ -1,9 +1,9 @@
 #include "Common/Parameters.fx"
-#include "Blends/All.fx"
-#include "Color/All.fx"
-#include "Filters/Catalog/Common.fx"
-#include "Filters/Catalog/Charcoal.fx"
-#include "Filters/Catalog/GraphicPen.fx"
+#include "Common/AllBlends.fx"
+#include "Common/AllColor.fx"
+#include "../../../Prism/Shaders/Hlsl/Filters/Catalog/Common.hlsl"
+#include "../../../Prism/Shaders/Hlsl/Filters/Catalog/Charcoal.hlsl"
+#include "../../../Prism/Shaders/Hlsl/Filters/Catalog/GraphicPen.hlsl"
 
 float4 GraphicPenFinalize(
     VertexShaderOutput input,

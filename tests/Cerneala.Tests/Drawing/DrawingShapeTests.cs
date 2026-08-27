@@ -1,5 +1,6 @@
 using Cerneala.Drawing;
 using Cerneala.Drawing.MonoGame;
+using Cerneala.Drawing.Paths;
 using Cerneala.Drawing.Prism.Graph;
 using Cerneala.Tests.Drawing.MonoGame;
 using Cerneala.UI.Controls;
@@ -11,6 +12,23 @@ namespace Cerneala.Tests.Drawing;
 
 public sealed class DrawingShapeTests
 {
+    [Fact]
+    public void EllipseRowsUseDeterministicPhysicalPixelCoverage()
+    {
+        DrawPixelSpan[] rows = DrawEllipseRowTessellator.Build(
+            new DrawRect(0, 0, 4, 4),
+            coordinateScale: 1);
+
+        Assert.Equal(
+            [
+                new DrawPixelSpan(1, 0, 2),
+                new DrawPixelSpan(0, 1, 4),
+                new DrawPixelSpan(0, 2, 4),
+                new DrawPixelSpan(1, 3, 2)
+            ],
+            rows);
+    }
+
     [Fact]
     public void CornerRadiiNormalizeProportionallyAcrossEveryEdge()
     {

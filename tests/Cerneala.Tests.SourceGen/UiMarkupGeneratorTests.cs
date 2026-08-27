@@ -22,6 +22,19 @@ namespace Cerneala.Tests.SourceGen;
 
 public sealed partial class UiMarkupGeneratorTests
 {
+    private const string DefaultBackendSelectionSource = """
+        [assembly: Cerneala.UI.Hosting.Windowing.ApplicationBackend(
+            typeof(TestInput.TestApplicationBackend))]
+
+        namespace TestInput
+        {
+            public static class TestApplicationBackend
+            {
+                public static void EnsureRegistered() { }
+            }
+        }
+        """;
+
     [Fact]
     public void ContentTemplateResourceIsRejected()
     {
@@ -4110,14 +4123,16 @@ public sealed partial class UiMarkupGeneratorTests
         string markup,
         string inputSource,
         out Compilation outputCompilation,
-        OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary)
+        OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary,
+        bool addDefaultBackendSelection = true)
     {
         return RunGenerator(
             new[] { new MarkupFile(fileName, markup) },
             out outputCompilation,
             inputSource,
             fileName + ".cs",
-            outputKind);
+            outputKind,
+            addDefaultBackendSelection);
     }
 
     private static GeneratorRunResult RunGenerator(params MarkupFile[] files)
@@ -4135,16 +4150,27 @@ public sealed partial class UiMarkupGeneratorTests
         out Compilation outputCompilation,
         string inputSource,
         string inputPath = "",
-        OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary)
+        OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary,
+        bool addDefaultBackendSelection = true)
     {
         SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(
             inputSource,
             CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest),
             path: inputPath);
+        SyntaxTree[] syntaxTrees = outputKind != OutputKind.DynamicallyLinkedLibrary && addDefaultBackendSelection
+            ?
+            [
+                syntaxTree,
+                CSharpSyntaxTree.ParseText(
+                    DefaultBackendSelectionSource,
+                    CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest),
+                    path: "TestApplicationBackend.cs")
+            ]
+            : [syntaxTree];
 
         CSharpCompilation compilation = CSharpCompilation.Create(
             "GeneratorTests",
-            new[] { syntaxTree },
+            syntaxTrees,
             References(),
             new CSharpCompilationOptions(outputKind));
 
@@ -4166,8 +4192,6 @@ public sealed partial class UiMarkupGeneratorTests
             .Split(Path.PathSeparator)
             .Select(path => MetadataReference.CreateFromFile(path))
             .Append(MetadataReference.CreateFromFile(typeof(UIElement).Assembly.Location))
-            .Append(MetadataReference.CreateFromFile(
-                typeof(Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend).Assembly.Location))
             .ToArray();
     }
 

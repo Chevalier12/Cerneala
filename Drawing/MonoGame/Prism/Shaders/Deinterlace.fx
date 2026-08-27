@@ -1,10 +1,10 @@
 #define PRISM_DEINTERLACE_EFFECT
 
 #include "Common/Parameters.fx"
-#include "Blends/All.fx"
-#include "Color/All.fx"
-#include "Filters/Catalog/Common.fx"
-#include "Filters/Catalog/Video.fx"
+#include "Common/AllBlends.fx"
+#include "Common/AllColor.fx"
+#include "../../../Prism/Shaders/Hlsl/Filters/Catalog/Common.hlsl"
+#include "../../../Prism/Shaders/Hlsl/Filters/Catalog/Video.hlsl"
 
 float4 DeinterlaceFilterPixelShader(
     VertexShaderOutput input) : COLOR0

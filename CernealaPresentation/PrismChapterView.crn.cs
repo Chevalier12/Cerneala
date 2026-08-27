@@ -108,6 +108,35 @@ public partial class PrismChapterView : UserControl
         CommitStructure();
     }
 
+    internal string[] ConfigureConformanceScene()
+    {
+        EnsureEditorBuilt();
+        model.Reset();
+        PrismCatalogOperationInfo[] representatives = PrismCatalog.Filters
+            .Concat(PrismCatalog.Styles)
+            .Where(operation => !operation.RequiresResource)
+            .GroupBy(
+                operation => $"{operation.Kind}:{operation.Category}",
+                StringComparer.Ordinal)
+            .OrderBy(group => group.Key, StringComparer.Ordinal)
+            .Select(group => group.OrderBy(operation => operation.Symbol, StringComparer.Ordinal).First())
+            .ToArray();
+        foreach (PrismCatalogOperationInfo operation in representatives)
+        {
+            PrismStudioLayer layer = model.AddLayer($"{operation.Kind} / {operation.Category}");
+            if (!model.AddOperation(layer.Id, operation))
+            {
+                throw new InvalidOperationException(
+                    $"The deterministic Prism representative '{operation.Symbol}' could not be added.");
+            }
+        }
+
+        CommitStructure();
+        return representatives
+            .Select(operation => $"{operation.Kind}:{operation.Category}:{operation.Symbol}")
+            .ToArray();
+    }
+
     internal void UpdateDiagnostics(PrismOperationalDiagnostics? diagnostics)
     {
         UpdateModelStatus();

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -11,7 +11,9 @@
     <Compile Remove="docs\**" />
     <Compile Remove="Cerneala.SourceGen\**" />
     <Compile Remove="Cerneala.Backends.MonoGame\**" />
+    <Compile Remove="Cerneala.Backends.SdlGpu\**" />
     <Compile Remove="Cerneala.Platforms.Win32\**" />
+    <Compile Remove="Cerneala.Platforms.Sdl3\**" />
     <Compile Remove="Cerneala.Language\**" />
     <Compile Remove="Cerneala.LanguageServer\**" />
     <Compile Remove="Cerneala.PreviewHost\**" />
@@ -31,7 +33,9 @@
     <EmbeddedResource Remove="docs\**" />
     <EmbeddedResource Remove="Cerneala.SourceGen\**" />
     <EmbeddedResource Remove="Cerneala.Backends.MonoGame\**" />
+    <EmbeddedResource Remove="Cerneala.Backends.SdlGpu\**" />
     <EmbeddedResource Remove="Cerneala.Platforms.Win32\**" />
+    <EmbeddedResource Remove="Cerneala.Platforms.Sdl3\**" />
     <EmbeddedResource Remove="Cerneala.Language\**" />
     <EmbeddedResource Remove="Cerneala.LanguageServer\**" />
     <EmbeddedResource Remove="Cerneala.PreviewHost\**" />
@@ -45,7 +49,9 @@
     <None Remove="docs\**" />
     <None Remove="Cerneala.SourceGen\**" />
     <None Remove="Cerneala.Backends.MonoGame\**" />
+    <None Remove="Cerneala.Backends.SdlGpu\**" />
     <None Remove="Cerneala.Platforms.Win32\**" />
+    <None Remove="Cerneala.Platforms.Sdl3\**" />
     <None Remove="Cerneala.Language\**" />
     <None Remove="Cerneala.LanguageServer\**" />
     <None Remove="Cerneala.PreviewHost\**" />

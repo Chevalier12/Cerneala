@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SDL3-CS" Version="3.4.14.1" PrivateAssets="all" />
+    <PackageReference Include="SDL3-CS.Windows" Version="3.4.14.1" PrivateAssets="all" />
+    <PackageReference Include="SDL3-CS.Linux" Version="3.4.14.1" PrivateAssets="all" />
+    <PackageReference Include="SDL3-CS.MacOS" Version="3.4.14.1" PrivateAssets="all" />
+    <PackageReference Include="SDL3-CS.Windows.Shadercross" Version="3.0.0.9" PrivateAssets="all" />
+    <PackageReference Include="SDL3-CS.Linux.Shadercross" Version="3.0.0.9" PrivateAssets="all" />
+    <PackageReference Include="SDL3-CS.MacOS.Shadercross" Version="3.0.0.9" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

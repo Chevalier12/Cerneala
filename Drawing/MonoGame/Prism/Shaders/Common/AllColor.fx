@@ -1,0 +1,7 @@
+#include "../../../Prism/Shaders/Hlsl/Color/Common.hlsl"
+#include "../../../Prism/Shaders/Hlsl/Color/LinearSrgb.hlsl"
+#include "../../../Prism/Shaders/Hlsl/Color/Srgb.hlsl"
+#include "../../../Prism/Shaders/Hlsl/Color/LinearDisplayP3.hlsl"
+#include "../../../Prism/Shaders/Hlsl/Color/DisplayP3.hlsl"
+#include "../../../Prism/Shaders/Hlsl/Color/ScRgb.hlsl"
+#include "../../../Prism/Shaders/Hlsl/Color/WorkingColorConversion.hlsl"

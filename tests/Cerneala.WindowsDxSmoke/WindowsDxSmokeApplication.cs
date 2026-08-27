@@ -17,7 +17,7 @@ namespace Cerneala.WindowsDxSmoke;
 
 internal static class WindowsDxSmokeApplication
 {
-    public static int Main()
+    public static int Main(string[] args)
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -27,6 +27,12 @@ internal static class WindowsDxSmokeApplication
         try
         {
             WindowsDxApplicationBackend.EnsureRegistered();
+            if (args is ["--capture-baseline", string captureDirectory])
+            {
+                CaptureMultiWindowBaseline(captureDirectory);
+                return 0;
+            }
+
             using Win32WindowPlatform platform = new(new WindowsDxWindowGraphicsSessionFactory());
             CallbackSink callbacks = new();
             using IPlatformWindow first = platform.CreateWindow(
@@ -83,6 +89,50 @@ internal static class WindowsDxSmokeApplication
             Console.Error.WriteLine(exception);
             return 1;
         }
+    }
+
+    private static void CaptureMultiWindowBaseline(string captureDirectory)
+    {
+        string fullDirectory = Path.GetFullPath(captureDirectory);
+        Directory.CreateDirectory(fullDirectory);
+        using WindowApplicationRuntime runtime = new(
+            new Win32WindowPlatform(
+                new WindowsDxWindowGraphicsSessionFactory(),
+                coordinateScaleOverride: 1f));
+        Window first = CreateBaselineWindow(
+            "Cerneala conformance A",
+            new Color(22, 50, 79));
+        Window second = CreateBaselineWindow(
+            "Cerneala conformance B",
+            new Color(79, 25, 56));
+
+        runtime.StartMainWindow(first);
+        runtime.Show(second, modal: false);
+        for (int frame = 0; frame < 8; frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+
+        first.SaveScreenshot(Path.Combine(fullDirectory, "multi-window-a.png"));
+        second.SaveScreenshot(Path.Combine(fullDirectory, "multi-window-b.png"));
+        second.Close();
+        first.Close();
+        runtime.PumpOnce(TimeSpan.Zero);
+    }
+
+    private static Window CreateBaselineWindow(
+        string title,
+        Color background)
+    {
+        return new Window
+        {
+            Title = title,
+            Width = 320,
+            Height = 200,
+            Left = 80,
+            Top = 80,
+            Background = new SolidColorBrush(background)
+        };
     }
 
     private static WindowsDxWindowGraphicsSession RequireWindowsDx(IPlatformWindow window)

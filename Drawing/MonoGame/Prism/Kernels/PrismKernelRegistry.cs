@@ -184,8 +184,11 @@ internal sealed class PrismKernelRegistry : IDisposable
     private readonly EffectParameter styleModes1Parameter;
     private readonly EffectParameter styleModes2Parameter;
     private readonly EffectParameter styleModes3Parameter;
+    private readonly EffectParameter styleBoundsUvRowXParameter;
+    private readonly EffectParameter styleBoundsUvRowYParameter;
     private readonly EffectParameter styleResourceAvailableParameter;
     private readonly EffectParameter styleBackdropAvailableParameter;
+    private readonly EffectParameter styleFilterAuxiliaryTextureParameter;
     private readonly EffectParameter filterHeaderParameter;
     private readonly EffectParameter filterOptions0Parameter;
     private readonly EffectParameter filterOptions1Parameter;
@@ -201,6 +204,7 @@ internal sealed class PrismKernelRegistry : IDisposable
     private readonly EffectParameter filterAuxiliaryTextureParameter;
     private readonly EffectParameter filterLightCountParameter;
     private readonly EffectParameter filterLightsParameter;
+    private readonly EffectParameter charcoalSourceTextureParameter;
     private readonly EffectParameter charcoalOpacityParameter;
     private readonly EffectParameter charcoalPixelSizeParameter;
     private readonly EffectParameter charcoalUvScaleParameter;
@@ -216,6 +220,7 @@ internal sealed class PrismKernelRegistry : IDisposable
     private readonly EffectParameter charcoalFilterOptions8Parameter;
     private readonly EffectParameter charcoalFilterOptions9Parameter;
     private readonly EffectParameter charcoalFilterAuxiliaryTextureParameter;
+    private readonly EffectParameter conteCrayonSourceTextureParameter;
     private readonly EffectParameter conteCrayonOpacityParameter;
     private readonly EffectParameter conteCrayonPixelSizeParameter;
     private readonly EffectParameter conteCrayonUvScaleParameter;
@@ -244,6 +249,7 @@ internal sealed class PrismKernelRegistry : IDisposable
     private readonly EffectParameter graphicPenFilterOptions4Parameter;
     private readonly EffectParameter graphicPenFilterOptions9Parameter;
     private readonly EffectParameter graphicPenFilterAuxiliaryTextureParameter;
+    private readonly EffectParameter plasterSourceTextureParameter;
     private readonly EffectParameter plasterOpacityParameter;
     private readonly EffectParameter plasterPixelSizeParameter;
     private readonly EffectParameter plasterUvScaleParameter;
@@ -257,6 +263,7 @@ internal sealed class PrismKernelRegistry : IDisposable
     private readonly EffectParameter plasterFilterOptions6Parameter;
     private readonly EffectParameter plasterFilterOptions9Parameter;
     private readonly EffectParameter plasterFilterAuxiliaryTextureParameter;
+    private readonly EffectParameter deinterlaceSourceTextureParameter;
     private readonly EffectParameter deinterlaceOpacityParameter;
     private readonly EffectParameter deinterlacePixelSizeParameter;
     private readonly EffectParameter deinterlaceUvScaleParameter;
@@ -505,10 +512,16 @@ internal sealed class PrismKernelRegistry : IDisposable
         styleModes1Parameter = GetStyleParameter("StyleModes1");
         styleModes2Parameter = GetStyleParameter("StyleModes2");
         styleModes3Parameter = GetStyleParameter("StyleModes3");
+        styleBoundsUvRowXParameter =
+            GetStyleParameter("StyleBoundsUvRowX");
+        styleBoundsUvRowYParameter =
+            GetStyleParameter("StyleBoundsUvRowY");
         styleResourceAvailableParameter =
             GetStyleParameter("StyleResourceAvailable");
         styleBackdropAvailableParameter =
             GetStyleParameter("StyleBackdropAvailable");
+        styleFilterAuxiliaryTextureParameter =
+            GetStyleParameter("FilterAuxiliaryTexture");
         filterHeaderParameter =
             GetParameter("FilterHeader");
         filterOptions0Parameter =
@@ -539,6 +552,8 @@ internal sealed class PrismKernelRegistry : IDisposable
             GetParameter("FilterLightCount");
         filterLightsParameter =
             GetParameter("FilterLights");
+        charcoalSourceTextureParameter =
+            GetCharcoalParameter("SpriteTexture");
         charcoalOpacityParameter =
             GetCharcoalParameter("Opacity");
         charcoalPixelSizeParameter =
@@ -569,6 +584,8 @@ internal sealed class PrismKernelRegistry : IDisposable
             GetCharcoalParameter("FilterOptions9");
         charcoalFilterAuxiliaryTextureParameter =
             GetCharcoalParameter("FilterAuxiliaryTexture");
+        conteCrayonSourceTextureParameter =
+            GetConteCrayonParameter("SpriteTexture");
         conteCrayonOpacityParameter =
             GetConteCrayonParameter("Opacity");
         conteCrayonPixelSizeParameter =
@@ -625,6 +642,8 @@ internal sealed class PrismKernelRegistry : IDisposable
             GetGraphicPenParameter("FilterOptions9");
         graphicPenFilterAuxiliaryTextureParameter =
             GetGraphicPenParameter("FilterAuxiliaryTexture");
+        plasterSourceTextureParameter =
+            GetPlasterParameter("SpriteTexture");
         plasterOpacityParameter =
             GetPlasterParameter("Opacity");
         plasterPixelSizeParameter =
@@ -651,6 +670,8 @@ internal sealed class PrismKernelRegistry : IDisposable
             GetPlasterParameter("FilterOptions9");
         plasterFilterAuxiliaryTextureParameter =
             GetPlasterParameter("FilterAuxiliaryTexture");
+        deinterlaceSourceTextureParameter =
+            GetDeinterlaceParameter("SpriteTexture");
         deinterlaceOpacityParameter =
             GetDeinterlaceParameter("Opacity");
         deinterlacePixelSizeParameter =
@@ -1287,14 +1308,29 @@ internal sealed class PrismKernelRegistry : IDisposable
         styleGeometry1Parameter.SetValue(parameters.StyleGeometry1);
         styleOptions0Parameter.SetValue(parameters.StyleOptions0);
         styleOptions1Parameter.SetValue(parameters.StyleOptions1);
-        styleModes0Parameter.SetValue(parameters.StyleModes0);
+        Vector4 styleModes0 = parameters.StyleModes0;
+        if (kernel == layerStyle)
+        {
+            styleModes0.Y = PrismBlendMath.ToShaderMode(
+                (PrismBlendMode)(int)styleModes0.Y);
+            styleModes0.Z = PrismBlendMath.ToShaderMode(
+                (PrismBlendMode)(int)styleModes0.Z);
+        }
+        styleModes0Parameter.SetValue(styleModes0);
         styleModes1Parameter.SetValue(parameters.StyleModes1);
         styleModes2Parameter.SetValue(parameters.StyleModes2);
         styleModes3Parameter.SetValue(parameters.StyleModes3);
+        styleBoundsUvRowXParameter.SetValue(
+            parameters.StyleBoundsUvRowX);
+        styleBoundsUvRowYParameter.SetValue(
+            parameters.StyleBoundsUvRowY);
         styleResourceAvailableParameter.SetValue(
             parameters.StyleResourceAvailable);
         styleBackdropAvailableParameter.SetValue(
             parameters.StyleBackdropAvailable);
+        styleFilterAuxiliaryTextureParameter.SetValue(
+            parameters.FilterAuxiliaryTexture ??
+                parameters.SecondaryTexture);
     }
 
     private void BindDeinterlace(
@@ -1303,6 +1339,8 @@ internal sealed class PrismKernelRegistry : IDisposable
         activeEffect = deinterlaceEffect;
         deinterlaceEffect.CurrentTechnique =
             deinterlaceFilter.Technique;
+        deinterlaceSourceTextureParameter.SetValue(
+            parameters.SourceTexture ?? parameters.SecondaryTexture);
         deinterlaceOpacityParameter.SetValue(
             parameters.Opacity);
         deinterlacePixelSizeParameter.SetValue(
@@ -1329,6 +1367,8 @@ internal sealed class PrismKernelRegistry : IDisposable
     {
         activeEffect = charcoalEffect;
         charcoalEffect.CurrentTechnique = kernel.Technique;
+        charcoalSourceTextureParameter.SetValue(
+            parameters.SourceTexture ?? parameters.SecondaryTexture);
         charcoalOpacityParameter.SetValue(parameters.Opacity);
         charcoalPixelSizeParameter.SetValue(parameters.PixelSize);
         charcoalUvScaleParameter.SetValue(parameters.UvScale);
@@ -1352,6 +1392,8 @@ internal sealed class PrismKernelRegistry : IDisposable
     {
         activeEffect = conteCrayonEffect;
         conteCrayonEffect.CurrentTechnique = conteCrayonFilter.Technique;
+        conteCrayonSourceTextureParameter.SetValue(
+            parameters.SourceTexture ?? parameters.SecondaryTexture);
         conteCrayonOpacityParameter.SetValue(parameters.Opacity);
         conteCrayonPixelSizeParameter.SetValue(parameters.PixelSize);
         conteCrayonUvScaleParameter.SetValue(parameters.UvScale);
@@ -1397,6 +1439,8 @@ internal sealed class PrismKernelRegistry : IDisposable
     {
         activeEffect = plasterEffect;
         plasterEffect.CurrentTechnique = plasterFilter.Technique;
+        plasterSourceTextureParameter.SetValue(
+            parameters.SourceTexture ?? parameters.SecondaryTexture);
         plasterOpacityParameter.SetValue(parameters.Opacity);
         plasterPixelSizeParameter.SetValue(parameters.PixelSize);
         plasterUvScaleParameter.SetValue(parameters.UvScale);

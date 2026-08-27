@@ -107,6 +107,7 @@ public sealed partial class UiMarkupGenerator
         string className,
         Compilation compilation,
         INamedTypeSymbol application,
+        ApplicationBackendSelection? backendSelection,
         SourceGeneratorSemanticModel semanticModel)
     {
         if (!TryGetEmissionDocument(context, file, semanticModel, out EmissionMarkupDocument document))
@@ -257,36 +258,55 @@ public sealed partial class UiMarkupGenerator
         }
         source.AppendLine("    }");
         source.AppendLine("}");
-        source.AppendLine();
-        source.AppendLine("internal static class __CernealaGeneratedApplicationStartup");
-        source.AppendLine("{");
-        source.AppendLine(compilation.GetEntryPoint(default) is null
-            ? "    [global::System.STAThreadAttribute]\n    private static int Main(string[] args)\n    {\n        global::Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend.EnsureRegistered();\n        return global::Cerneala.UI.Hosting.Windowing.GeneratedWindowApplication.Run(CreateDescriptor(), args);\n    }"
-            : "    [global::System.Runtime.CompilerServices.ModuleInitializerAttribute]\n    internal static void Register()\n    {\n        global::Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend.EnsureRegistered();\n        global::Cerneala.UI.Hosting.Windowing.GeneratedWindowApplication.RegisterStartup(CreateDescriptor());\n    }");
-        source.AppendLine();
-        source.AppendLine("    private static global::Cerneala.UI.Hosting.Windowing.GeneratedWindowStartupDescriptor CreateDescriptor()");
-        source.AppendLine("    {");
-        source.AppendLine("        return new global::Cerneala.UI.Hosting.Windowing.GeneratedWindowStartupDescriptor(");
-        source.Append("            static () => new ").Append(appCode).AppendLine("(),");
-        source.AppendLine("            ConfigureServices,");
-        source.Append("            static provider => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<")
-            .Append(windowCode).AppendLine(">(provider),");
-        source.Append("            \"").Append(windowCode).AppendLine("\");");
-        source.AppendLine("    }");
-        source.AppendLine();
-        source.AppendLine("    private static void ConfigureServices(global::Microsoft.Extensions.DependencyInjection.IServiceCollection services)");
-        source.AppendLine("    {");
-        INamedTypeSymbol? viewModel = ResolveWindowViewModel(compilation, startupType);
-        if (viewModel is { TypeKind: TypeKind.Class, IsAbstract: false })
+        if (backendSelection is ApplicationBackendSelection backend)
         {
-            source.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddTransient<")
-                .Append(viewModel.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)).AppendLine(">(services);");
-        }
+            source.AppendLine();
+            source.AppendLine("internal static class __CernealaGeneratedApplicationStartup");
+            source.AppendLine("{");
+            if (compilation.GetEntryPoint(default) is null)
+            {
+                source.AppendLine("    [global::System.STAThreadAttribute]");
+                source.AppendLine("    private static int Main(string[] args)");
+                source.AppendLine("    {");
+                AppendApplicationBackendRegistration(source, backend, "        ");
+                source.AppendLine("        return global::Cerneala.UI.Hosting.Windowing.GeneratedWindowApplication.Run(CreateDescriptor(), args);");
+                source.AppendLine("    }");
+            }
+            else
+            {
+                source.AppendLine("    [global::System.Runtime.CompilerServices.ModuleInitializerAttribute]");
+                source.AppendLine("    internal static void Register()");
+                source.AppendLine("    {");
+                AppendApplicationBackendRegistration(source, backend, "        ");
+                source.AppendLine("        global::Cerneala.UI.Hosting.Windowing.GeneratedWindowApplication.RegisterStartup(CreateDescriptor());");
+                source.AppendLine("    }");
+            }
 
-        source.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddTransient<")
-            .Append(windowCode).AppendLine(">(services);");
-        source.AppendLine("    }");
-        source.AppendLine("}");
+            source.AppendLine();
+            source.AppendLine("    private static global::Cerneala.UI.Hosting.Windowing.GeneratedWindowStartupDescriptor CreateDescriptor()");
+            source.AppendLine("    {");
+            source.AppendLine("        return new global::Cerneala.UI.Hosting.Windowing.GeneratedWindowStartupDescriptor(");
+            source.Append("            static () => new ").Append(appCode).AppendLine("(),");
+            source.AppendLine("            ConfigureServices,");
+            source.Append("            static provider => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<")
+                .Append(windowCode).AppendLine(">(provider),");
+            source.Append("            \"").Append(windowCode).AppendLine("\");");
+            source.AppendLine("    }");
+            source.AppendLine();
+            source.AppendLine("    private static void ConfigureServices(global::Microsoft.Extensions.DependencyInjection.IServiceCollection services)");
+            source.AppendLine("    {");
+            INamedTypeSymbol? viewModel = ResolveWindowViewModel(compilation, startupType);
+            if (viewModel is { TypeKind: TypeKind.Class, IsAbstract: false })
+            {
+                source.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddTransient<")
+                    .Append(viewModel.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)).AppendLine(">(services);");
+            }
+
+            source.Append("        global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddTransient<")
+                .Append(windowCode).AppendLine(">(services);");
+            source.AppendLine("    }");
+            source.AppendLine("}");
+        }
         context.AddSource(
             CreateHintName(file.Path, className).Replace("Factory.", "Application."),
             SourceText.From(source.ToString(), Encoding.UTF8));

@@ -1,0 +1,240 @@
+{
+  "toolVersion": "2",
+  "shaderCrossVersion": "3.0.0",
+  "shaderCrossPackageVersion": "3.0.0.9",
+  "metadata": "artifacts.json",
+  "outputFormats": [
+    "spirv",
+    "dxil",
+    "msl"
+  ],
+  "commonSourceRoots": [
+    "../../Drawing/Prism/Shaders/Hlsl"
+  ],
+  "shaders": [
+    {
+      "logicalName": "drawing-vertex",
+      "source": "../Gpu/Shaders/Drawing.vert.hlsl",
+      "stage": "Vertex",
+      "entryPoint": "main",
+      "variants": [
+        "default"
+      ],
+      "bindings": {
+        "samplers": 0,
+        "storageTextures": 0,
+        "storageBuffers": 0,
+        "uniformBuffers": 1,
+        "inputs": 3,
+        "outputs": 2
+      },
+      "layout": {
+        "uniformBuffers": [
+          {
+            "name": "FrameUniforms",
+            "slot": 0
+          }
+        ],
+        "samplers": [],
+        "storageTextures": [],
+        "storageBuffers": [],
+        "vertexInputs": [
+          {
+            "semantic": "TEXCOORD0",
+            "location": 0,
+            "format": "Float2"
+          },
+          {
+            "semantic": "TEXCOORD1",
+            "location": 1,
+            "format": "Float2"
+          },
+          {
+            "semantic": "TEXCOORD2",
+            "location": 2,
+            "format": "Float4"
+          }
+        ]
+      },
+      "outputs": {
+        "spirv": "../Gpu/Shaders/Drawing.vert.spv",
+        "dxil": "../Gpu/Shaders/Drawing.vert.dxil",
+        "msl": "../Gpu/Shaders/Drawing.vert.msl"
+      }
+    },
+    {
+      "logicalName": "drawing-fragment",
+      "source": "../Gpu/Shaders/Drawing.frag.hlsl",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [
+        "textured",
+        "untextured"
+      ],
+      "bindings": {
+        "samplers": 1,
+        "storageTextures": 0,
+        "storageBuffers": 0,
+        "uniformBuffers": 0,
+        "inputs": 2,
+        "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [],
+        "samplers": [
+          {
+            "name": "DrawingTexture/DrawingSampler",
+            "slot": 0
+          }
+        ],
+        "storageTextures": [],
+        "storageBuffers": [],
+        "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "../Gpu/Shaders/Drawing.frag.spv",
+        "dxil": "../Gpu/Shaders/Drawing.frag.dxil",
+        "msl": "../Gpu/Shaders/Drawing.frag.msl"
+      }
+    },
+    {
+      "logicalName": "prism-fullscreen-vertex",
+      "source": "../Prism/Shaders/Prism.vert.hlsl",
+      "stage": "Vertex",
+      "entryPoint": "main",
+      "variants": [
+        "fullscreen"
+      ],
+      "bindings": {
+        "samplers": 0,
+        "storageTextures": 0,
+        "storageBuffers": 0,
+        "uniformBuffers": 1,
+        "inputs": 3,
+        "outputs": 2
+      },
+      "layout": {
+        "uniformBuffers": [
+          {
+            "name": "PrismVertexUniforms",
+            "slot": 0
+          }
+        ],
+        "samplers": [],
+        "storageTextures": [],
+        "storageBuffers": [],
+        "vertexInputs": [
+          {
+            "semantic": "TEXCOORD0",
+            "location": 0,
+            "format": "Float2"
+          },
+          {
+            "semantic": "TEXCOORD1",
+            "location": 1,
+            "format": "Float2"
+          },
+          {
+            "semantic": "TEXCOORD2",
+            "location": 2,
+            "format": "Float4"
+          }
+        ]
+      },
+      "outputs": {
+        "spirv": "../Prism/Shaders/Prism.vert.spv",
+        "dxil": "../Prism/Shaders/Prism.vert.dxil",
+        "msl": "../Prism/Shaders/Prism.vert.msl"
+      }
+    },
+    {
+      "logicalName": "prism-copy-fragment",
+      "source": "../Prism/Shaders/PrismCopy.frag.hlsl",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [
+        "premultiplied-alpha"
+      ],
+      "bindings": {
+        "samplers": 1,
+        "storageTextures": 0,
+        "storageBuffers": 0,
+        "uniformBuffers": 1,
+        "inputs": 2,
+        "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [
+          {
+            "name": "PrismFragmentUniforms",
+            "slot": 0
+          }
+        ],
+        "samplers": [
+          {
+            "name": "SpriteTexture/SpriteTextureSampler",
+            "slot": 0
+          }
+        ],
+        "storageTextures": [],
+        "storageBuffers": [],
+        "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "../Prism/Shaders/PrismCopy.frag.spv",
+        "dxil": "../Prism/Shaders/PrismCopy.frag.dxil",
+        "msl": "../Prism/Shaders/PrismCopy.frag.msl"
+      }
+    },
+    {
+      "logicalName": "prism-catalog-fragment",
+      "source": "../Prism/Shaders/PrismCatalog.frag.hlsl",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [
+        "catalog-dispatch"
+      ],
+      "bindings": {
+        "samplers": 15,
+        "storageTextures": 0,
+        "storageBuffers": 0,
+        "uniformBuffers": 1,
+        "inputs": 2,
+        "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [
+          {
+            "name": "PrismFragmentUniforms",
+            "slot": 0
+          }
+        ],
+        "samplers": [
+          { "name": "SpriteTexture/SpriteTextureState", "slot": 0 },
+          { "name": "SecondaryTexture/SecondaryTextureState", "slot": 1 },
+          { "name": "KnockoutBackdropTexture/KnockoutBackdropState", "slot": 2 },
+          { "name": "KnockoutShapeTexture/KnockoutShapeState", "slot": 3 },
+          { "name": "StyleTexture/StyleTextureState", "slot": 4 },
+          { "name": "StyleMaskTexture/StyleMaskState", "slot": 5 },
+          { "name": "FilterAuxiliaryTexture/FilterAuxiliaryState", "slot": 6 },
+          { "name": "DissolveThresholdTexture/DissolveThresholdState", "slot": 7 },
+          { "name": "StyleBackdropTexture/StyleBackdropState", "slot": 8 },
+          { "name": "GradientDitherTexture/GradientDitherState", "slot": 9 },
+          { "name": "DisplacementMapTexture/DisplacementMapState", "slot": 10 },
+          { "name": "StyleDistanceTexture/StyleDistanceState", "slot": 11 },
+          { "name": "StyleMaskSourceTexture/StyleMaskSourceState", "slot": 12 },
+          { "name": "WaveNoiseTableTexture/WaveNoiseTableState", "slot": 13 },
+          { "name": "SpatterPointTexture/SpatterPointState", "slot": 14 }
+        ],
+        "storageTextures": [],
+        "storageBuffers": [],
+        "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "../Prism/Shaders/PrismCatalog.frag.spv",
+        "dxil": "../Prism/Shaders/PrismCatalog.frag.dxil",
+        "msl": "../Prism/Shaders/PrismCatalog.frag.msl"
+      }
+    }
+  ]
+}

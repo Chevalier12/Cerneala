@@ -140,6 +140,16 @@
     "EndCharacter": 5
   },
   {
+    "Id": "CERNEALAUI015",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Application backend selection is invalid: arg0",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
     "Id": "CERNEALAUI020",
     "EditorSeverity": 1,
     "BuildSeverity": 1,

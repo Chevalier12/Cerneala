@@ -617,7 +617,11 @@ public sealed partial class UiMarkupGeneratorTests
                 CSharpSyntaxTree.ParseText(
                     "namespace TestInput { public partial class SharedView : Cerneala.UI.Controls.UserControl { } }",
                     parseOptions,
-                    path: "SharedView.crn.cs")
+                    path: "SharedView.crn.cs"),
+                CSharpSyntaxTree.ParseText(
+                    DefaultBackendSelectionSource,
+                    parseOptions,
+                    path: "TestApplicationBackend.cs")
             ],
             References(),
             new CSharpCompilationOptions(OutputKind.WindowsApplication));
@@ -717,14 +721,16 @@ public sealed partial class UiMarkupGeneratorTests
         string markup,
         string inputSource,
         OutputKind outputKind,
-        out Compilation compilation)
+        out Compilation compilation,
+        bool addDefaultBackendSelection = true)
     {
         return RunGenerator(
             [new MarkupFile("App.crn", markup)],
             out compilation,
             inputSource,
             "App.crn.cs",
-            outputKind);
+            outputKind,
+            addDefaultBackendSelection);
     }
 
     private static GeneratorRunResult RunApplicationViewsGenerator(
@@ -735,6 +741,10 @@ public sealed partial class UiMarkupGeneratorTests
         CSharpParseOptions parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest);
         SyntaxTree[] syntaxTrees = sources
             .Select(source => CSharpSyntaxTree.ParseText(source.Source, parseOptions, path: source.Path))
+            .Append(CSharpSyntaxTree.ParseText(
+                DefaultBackendSelectionSource,
+                parseOptions,
+                path: "TestApplicationBackend.cs"))
             .ToArray();
         CSharpCompilation compilation = CSharpCompilation.Create(
             "GeneratorTests",

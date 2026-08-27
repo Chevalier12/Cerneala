@@ -180,6 +180,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
     private static readonly DiagnosticDescriptor InvalidComponentTemplate = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI012");
     private static readonly DiagnosticDescriptor InvalidApplication = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI013");
     private static readonly DiagnosticDescriptor InvalidApplicationStartup = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI014");
+    private static readonly DiagnosticDescriptor InvalidApplicationBackendSelection = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI015");
     private static readonly DiagnosticDescriptor MotionSyntaxDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI020");
     private static readonly DiagnosticDescriptor MotionTargetDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI021");
     private static readonly DiagnosticDescriptor MotionEventDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI022");
@@ -300,19 +301,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return;
         }
 
-        GenerationScope.ApplicationResourceCatalog? applicationResources = null;
         int applicationIndex = Array.FindIndex(applicationPairs, resolution => resolution.Pair is not null);
-        if (applicationIndex >= 0 && applicationCount == 1)
-        {
-            applicationResources = GenerateApplicationFile(
-                context,
-                files[applicationIndex],
-                classNames[applicationIndex],
-                compilation,
-                applicationPairs[applicationIndex].Pair!,
-                semanticModels[files[applicationIndex].Path]);
-        }
-
         WindowPairResolution[] windowPairs = files
             .Select((file, index) => applicationPairs[index].HasCompanion
                 ? default
@@ -325,6 +314,46 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 InvalidWindowStartup,
                 Location.None,
                 "An executable project may contain only one paired Window class named 'MainWindow'."));
+        }
+
+        bool executable = compilation.Options.OutputKind != OutputKind.DynamicallyLinkedLibrary;
+        int legacyStartupIndex = Array.FindIndex(
+            windowPairs,
+            resolution => resolution.Pair?.TypeSymbol.Name == "MainWindow");
+        int startupIndex = executable && applicationIndex >= 0 && applicationCount == 1
+            ? applicationIndex
+            : executable && !hasApplicationDocument && mainWindowCount == 1
+                ? legacyStartupIndex
+                : -1;
+        ApplicationBackendSelection? startupBackend = null;
+        if (startupIndex >= 0)
+        {
+            Location fallbackLocation = CreateLocation(
+                files[startupIndex],
+                files[startupIndex].Document?.Root ?? new object());
+            if (!TryResolveApplicationBackend(
+                    context,
+                    compilation,
+                    fallbackLocation,
+                    out ApplicationBackendSelection resolvedBackend))
+            {
+                return;
+            }
+
+            startupBackend = resolvedBackend;
+        }
+
+        GenerationScope.ApplicationResourceCatalog? applicationResources = null;
+        if (applicationIndex >= 0 && applicationCount == 1)
+        {
+            applicationResources = GenerateApplicationFile(
+                context,
+                files[applicationIndex],
+                classNames[applicationIndex],
+                compilation,
+                applicationPairs[applicationIndex].Pair!,
+                startupBackend,
+                semanticModels[files[applicationIndex].Path]);
         }
 
         for (int i = 0; i < files.Length; i++)
@@ -341,6 +370,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 if (windowPair.Pair is not null)
                 {
                     bool generateStartup =
+                        executable &&
                         !hasApplicationDocument &&
                         mainWindowCount == 1 &&
                         windowPair.Pair.TypeSymbol.Name == "MainWindow";
@@ -351,6 +381,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         compilation,
                         windowPair.Pair,
                         generateStartup,
+                        startupBackend,
                         applicationResources,
                         semanticModels[files[i].Path]);
                 }

@@ -43,4 +43,12 @@ internal static class WindowingBackendRegistry
                 .CreatePlatform(useMultisampling, coordinateScaleOverride);
         }
     }
+
+    internal static void ResetForTesting()
+    {
+        lock (Sync)
+        {
+            backend = null;
+        }
+    }
 }

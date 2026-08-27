@@ -6,6 +6,42 @@ namespace Cerneala.Drawing.Prism.Blending;
 
 internal static class PrismBlendMath
 {
+    internal static int ToShaderMode(PrismBlendMode mode) => mode switch
+    {
+        PrismBlendMode.Normal => 0,
+        PrismBlendMode.Dissolve => 1,
+        PrismBlendMode.Darken => 2,
+        PrismBlendMode.Multiply => 3,
+        PrismBlendMode.ColorBurn => 4,
+        PrismBlendMode.LinearBurn => 5,
+        PrismBlendMode.DarkerColor => 6,
+        PrismBlendMode.Lighten => 7,
+        PrismBlendMode.Screen => 8,
+        PrismBlendMode.ColorDodge => 9,
+        PrismBlendMode.LinearDodge => 10,
+        PrismBlendMode.LighterColor => 11,
+        PrismBlendMode.Overlay => 12,
+        PrismBlendMode.SoftLight => 13,
+        PrismBlendMode.HardLight => 14,
+        PrismBlendMode.VividLight => 15,
+        PrismBlendMode.LinearLight => 16,
+        PrismBlendMode.PinLight => 17,
+        PrismBlendMode.HardMix => 18,
+        PrismBlendMode.Difference => 19,
+        PrismBlendMode.Exclusion => 20,
+        PrismBlendMode.Subtract => 21,
+        PrismBlendMode.Divide => 22,
+        PrismBlendMode.Hue => 23,
+        PrismBlendMode.Saturation => 24,
+        PrismBlendMode.Color => 25,
+        PrismBlendMode.Luminosity => 26,
+        PrismBlendMode.PassThrough => 27,
+        _ => throw new ArgumentOutOfRangeException(
+            nameof(mode),
+            mode,
+            "Unknown Prism blend mode.")
+    };
+
     public static PrismPremultipliedColor Composite(
         PrismBlendMode mode,
         PrismPremultipliedColor source,

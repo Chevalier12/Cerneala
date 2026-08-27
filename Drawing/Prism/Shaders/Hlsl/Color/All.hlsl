@@ -1,0 +1,7 @@
+#include "Color/Common.hlsl"
+#include "Color/LinearSrgb.hlsl"
+#include "Color/Srgb.hlsl"
+#include "Color/LinearDisplayP3.hlsl"
+#include "Color/DisplayP3.hlsl"
+#include "Color/ScRgb.hlsl"
+#include "Color/WorkingColorConversion.hlsl"

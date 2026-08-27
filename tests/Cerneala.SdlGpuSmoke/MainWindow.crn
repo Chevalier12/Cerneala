@@ -1,0 +1,49 @@
+<Window
+    xmlns:local="clr-namespace:Cerneala.SdlGpuSmoke"
+    Title="Cerneala SDL_GPU smoke"
+    Width="640"
+    Height="420"
+    MinWidth="320"
+    MinHeight="240"
+    WindowStartupLocation="CenterScreen"
+    ContentRendered="OnContentRendered"
+    FrameRendered="OnFrameRendered"
+    PreviewKeyDown="OnPreviewKeyDown"
+    Background="#FF101722">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="72" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Border
+            Grid.Row="0"
+            Background="#FF172536"
+            BorderBrush="#FF4DF0FF"
+            BorderThickness="0,0,0,2"
+            Padding="20,14,20,12">
+            <StackPanel>
+                <TextBlock Text="SDL3 + SDL_GPU" FontSize="21" Foreground="#FFF1F5F8" />
+                <TextBlock Name="StatusText" Text="initializing" FontSize="12" Foreground="#FF4DF0FF" Margin="0,5,0,0" />
+            </StackPanel>
+        </Border>
+        <Grid Grid.Row="1">
+            <local:SmokeDrawingSurface Name="DrawingSurface" Margin="18" />
+            <Border
+                Name="PrismTarget"
+                Width="220"
+                Height="120"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="#CCFF3EA5"
+                BorderBrush="#FFC6FF3D"
+                BorderThickness="3">
+                <TextBlock
+                    Text="PRISM / SDL_GPU"
+                    FontSize="18"
+                    Foreground="#FFFFFFFF"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

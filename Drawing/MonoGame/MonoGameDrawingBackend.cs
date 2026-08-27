@@ -7,6 +7,7 @@ using Cerneala.Drawing.Text;
 using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Drawing.Prism.Graph;
+using Cerneala.Drawing.Paths;
 using Cerneala.UI.Hosting;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -23,7 +24,6 @@ public sealed class MonoGameDrawingBackend :
     IDisposable
 {
     private const int TextSubpixelPhaseCount = 8;
-    private const float EllipseCoverageCompensationPixels = 0.055f;
     private const int DefaultMaximumTextTextureEntries = 2_048;
     private const long DefaultMaximumTextTextureBytes = 256L * 1024 * 1024;
 
@@ -691,14 +691,11 @@ public sealed class MonoGameDrawingBackend :
 
     private void FillEllipsePath(DrawCommand command)
     {
-        float compensation = EllipseCoverageCompensationPixels / coordinateScale;
         FillPath(
             command,
-            new DrawRect(
-                command.Rect.X - compensation,
-                command.Rect.Y - compensation,
-                command.Rect.Width + (compensation * 2),
-                command.Rect.Height + (compensation * 2)));
+            DrawEllipseCoverage.AdjustBounds(
+                command.Rect,
+                coordinateScale));
     }
 
     private void FillRoundedRectangle(DrawCommand command)
@@ -813,18 +810,14 @@ public sealed class MonoGameDrawingBackend :
         }
 
         XnaColor monoGameColor = Premultiply(ToColor(color));
-        float radiusX = bounds.Width / 2f;
-        float radiusY = bounds.Height / 2f;
-        float centerY = bounds.Top + radiusY;
-
-        for (int y = 0; y < bounds.Height; y++)
+        foreach (DrawPixelSpan row in DrawEllipseRowTessellator.Build(
+            rect,
+            coordinateScale))
         {
-            float normalizedY = ((bounds.Top + y + 0.5f) - centerY) / radiusY;
-            float span = MathF.Sqrt(MathF.Max(0, 1 - (normalizedY * normalizedY))) * radiusX;
-            int left = (int)MathF.Round(bounds.Left + radiusX - span);
-            int right = (int)MathF.Round(bounds.Left + radiusX + span);
-            int width = Math.Max(1, right - left);
-            _spriteBatch.Draw(_whitePixel, new Rectangle(left, bounds.Top + y, width, 1), monoGameColor);
+            _spriteBatch.Draw(
+                _whitePixel,
+                new Rectangle(row.X, row.Y, row.Width, 1),
+                monoGameColor);
         }
     }
 
@@ -844,21 +837,17 @@ public sealed class MonoGameDrawingBackend :
         }
 
         Texture2D texture = GetOrCreateBrushTexture(brush, descriptor, rect);
-        float radiusX = bounds.Width / 2f;
-        float radiusY = bounds.Height / 2f;
-        float centerY = bounds.Top + radiusY;
         XnaColor tint = OpacityTint(commandOpacity);
-        for (int y = 0; y < bounds.Height; y++)
+        foreach (DrawPixelSpan row in DrawEllipseRowTessellator.Build(
+            rect,
+            coordinateScale))
         {
-            float normalizedY = ((bounds.Top + y + 0.5f) - centerY) / radiusY;
-            float span = MathF.Sqrt(MathF.Max(0, 1 - (normalizedY * normalizedY))) * radiusX;
-            int left = Math.Clamp((int)MathF.Round(radiusX - span), 0, bounds.Width - 1);
-            int right = Math.Clamp((int)MathF.Round(radiusX + span), left + 1, bounds.Width);
-            int width = right - left;
+            int sourceX = Math.Clamp(row.X - bounds.Left, 0, bounds.Width - 1);
+            int sourceWidth = Math.Clamp(row.Width, 1, bounds.Width - sourceX);
             _spriteBatch.Draw(
                 texture,
-                new Rectangle(bounds.Left + left, bounds.Top + y, width, 1),
-                new Rectangle(left, y, width, 1),
+                new Rectangle(row.X, row.Y, sourceWidth, 1),
+                new Rectangle(sourceX, row.Y - bounds.Top, sourceWidth, 1),
                 tint);
         }
     }

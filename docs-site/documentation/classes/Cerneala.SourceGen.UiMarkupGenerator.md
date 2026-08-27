@@ -65,6 +65,19 @@ An ordinary markup file produces a static partial factory under the `Cerneala.Ge
 
 The generated factory class name is based on the markup file name without the `.crn` suffix, converted to a valid identifier and suffixed with `Factory`. Duplicate base names are disambiguated with the parent directory name, then with a stable FNV-1a hash if needed. Files paired with compatible `Application`, `Window`, or `UserControl` partial declarations follow their corresponding generated startup or control path instead of the ordinary standalone factory path.
 
+### Explicit Backend Selection
+
+An executable that receives generated `<Application>` or legacy `MainWindow` startup must select exactly one backend at assembly scope:
+
+```csharp
+[assembly: Cerneala.UI.Hosting.Windowing.ApplicationBackend(
+    typeof(Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend))]
+```
+
+The selected symbol must be a public, non-generic static or concrete class with exactly one compatible `public static void EnsureRegistered()` method without parameters. The generator emits the fully qualified call before `GeneratedWindowApplication.Run` in a generated `Main`, or before `GeneratedWindowApplication.RegisterStartup` in a hosted module initializer.
+
+Selection is fail-closed. A missing, duplicate, inaccessible, generic, abstract, non-class, or signature-incompatible backend reports one `CERNEALAUI015` diagnostic at the attribute or startup markup and emits no startup source. The generator contains no concrete backend fallback. Libraries and projects without generated startup do not need a selection.
+
 Reactive directive expressions support the lowercase `and` and `or` operators plus parentheses. Their precedence is `comparison` before `and` before `or`; parentheses override the default order.
 
 ```xml
@@ -218,6 +231,7 @@ The generator reports diagnostics instead of emitting source when markup cannot 
 | `CERNEALAUI012` | A component template declaration is invalid. |
 | `CERNEALAUI013` | An `Application` declaration is invalid. |
 | `CERNEALAUI014` | Application startup is invalid. |
+| `CERNEALAUI015` | The executable backend selection is missing, duplicate, inaccessible, generic, non-concrete, or lacks the exact `public static void EnsureRegistered()` contract. |
 | `CERNEALAUI020`-`CERNEALAUI026` | Motion syntax, target, event, type, composition, lifecycle, or runtime capability is invalid. |
 
 Diagnostics use exact source spans from the shared syntax and semantic model and
@@ -245,4 +259,5 @@ Cerneala source generation project targeting `netstandard2.0`.
 - `Cerneala.SourceGen.UiMarkupGenerator.MarkupSource`
 - `Cerneala.UI.Markup.GeneratedUiFactory`
 - `Cerneala.UI.Markup.GeneratedMarkup`
+- `Cerneala.UI.Hosting.Windowing.ApplicationBackendAttribute`
 - `docs/markup-data-bindings.md`

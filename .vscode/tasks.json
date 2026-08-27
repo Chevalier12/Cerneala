@@ -2,12 +2,13 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "build playground",
+      "label": "build playground - monogame",
       "type": "process",
       "command": "dotnet",
       "args": [
         "build",
-        "${workspaceFolder}/Playground/Cerneala.Playground/Cerneala.Playground.csproj"
+        "${workspaceFolder}/Playground/Cerneala.Playground/Cerneala.Playground.csproj",
+        "-p:CernealaDesktopBackend=MonoGame"
       ],
       "options": {
         "env": {
@@ -21,12 +22,48 @@
       }
     },
     {
-      "label": "build cerneala presentation",
+      "label": "build playground - sdl3",
       "type": "process",
       "command": "dotnet",
       "args": [
         "build",
-        "${workspaceFolder}/CernealaPresentation/CernealaPresentation.csproj"
+        "${workspaceFolder}/Playground/Cerneala.Playground/Cerneala.Playground.csproj",
+        "-p:CernealaDesktopBackend=SDL3"
+      ],
+      "options": {
+        "env": {
+          "MSBuildEnableWorkloadResolver": "false"
+        }
+      },
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    },
+    {
+      "label": "build cerneala presentation - monogame",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/CernealaPresentation/CernealaPresentation.csproj",
+        "-p:CernealaDesktopBackend=MonoGame"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "MSBuildEnableWorkloadResolver": "false"
+        }
+      },
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    },
+    {
+      "label": "build cerneala presentation - sdl3",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/CernealaPresentation/CernealaPresentation.csproj",
+        "-p:CernealaDesktopBackend=SDL3"
       ],
       "options": {
         "cwd": "${workspaceFolder}",

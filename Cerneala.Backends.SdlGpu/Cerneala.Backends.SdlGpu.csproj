@@ -1,0 +1,90 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryRoot>$(MSBuildProjectDirectory)\..</RepositoryRoot>
+    <SdlShaderCompilerProject>$(RepositoryRoot)\Tools\Cerneala.SdlShaderCompiler\Cerneala.SdlShaderCompiler.csproj</SdlShaderCompilerProject>
+    <SdlShaderCompilerAssets>$(RepositoryRoot)\Tools\Cerneala.SdlShaderCompiler\obj\project.assets.json</SdlShaderCompilerAssets>
+    <SdlShaderManifest>$(MSBuildProjectDirectory)\Shaders\manifest.json</SdlShaderManifest>
+    <SdlShaderMetadata>$(MSBuildProjectDirectory)\Shaders\artifacts.json</SdlShaderMetadata>
+    <SdlShaderVerifyStamp>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\sdl-shaders.verify.stamp</SdlShaderVerifyStamp>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Cerneala.csproj" />
+    <ProjectReference Include="..\Cerneala.Platforms.Sdl3\Cerneala.Platforms.Sdl3.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <SdlShaderInput Include="$(SdlShaderManifest)" />
+    <SdlShaderInput Include="$(MSBuildProjectDirectory)\Gpu\Shaders\*.hlsl" />
+    <SdlShaderInput Include="$(MSBuildProjectDirectory)\Prism\Shaders\*.hlsl" />
+    <SdlShaderInput Include="$(RepositoryRoot)\Drawing\Prism\Shaders\Hlsl\**\*.hlsl" />
+    <SdlShaderInput Include="$(SdlShaderCompilerProject)" />
+    <SdlShaderInput Include="$(RepositoryRoot)\Tools\Cerneala.SdlShaderCompiler\Program.cs" />
+    <SdlShaderArtifact Include="$(MSBuildProjectDirectory)\Gpu\Shaders\*.dxil" />
+    <SdlShaderArtifact Include="$(MSBuildProjectDirectory)\Gpu\Shaders\*.spv" />
+    <SdlShaderArtifact Include="$(MSBuildProjectDirectory)\Gpu\Shaders\*.msl" />
+    <SdlShaderArtifact Include="$(MSBuildProjectDirectory)\Prism\Shaders\*.dxil" />
+    <SdlShaderArtifact Include="$(MSBuildProjectDirectory)\Prism\Shaders\*.spv" />
+    <SdlShaderArtifact Include="$(MSBuildProjectDirectory)\Prism\Shaders\*.msl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Cerneala.Benchmarks" />
+    <InternalsVisibleTo Include="Cerneala.Tests" />
+    <InternalsVisibleTo Include="Cerneala.Tests.SdlGpu" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Gpu\Shaders\Drawing.vert.dxil" />
+    <EmbeddedResource Include="Gpu\Shaders\Drawing.vert.spv" />
+    <EmbeddedResource Include="Gpu\Shaders\Drawing.vert.msl" />
+    <EmbeddedResource Include="Gpu\Shaders\Drawing.frag.dxil" />
+    <EmbeddedResource Include="Gpu\Shaders\Drawing.frag.spv" />
+    <EmbeddedResource Include="Gpu\Shaders\Drawing.frag.msl" />
+    <EmbeddedResource Include="Prism\Shaders\Prism.vert.dxil" />
+    <EmbeddedResource Include="Prism\Shaders\Prism.vert.spv" />
+    <EmbeddedResource Include="Prism\Shaders\Prism.vert.msl" />
+    <EmbeddedResource Include="Prism\Shaders\PrismCopy.frag.dxil" />
+    <EmbeddedResource Include="Prism\Shaders\PrismCopy.frag.spv" />
+    <EmbeddedResource Include="Prism\Shaders\PrismCopy.frag.msl" />
+    <EmbeddedResource Include="Prism\Shaders\PrismCatalog.frag.dxil" />
+    <EmbeddedResource Include="Prism\Shaders\PrismCatalog.frag.spv" />
+    <EmbeddedResource Include="Prism\Shaders\PrismCatalog.frag.msl" />
+  </ItemGroup>
+
+  <Target Name="RestoreSdlShaderCompiler"
+          Inputs="$(SdlShaderCompilerProject)"
+          Outputs="$(SdlShaderCompilerAssets)"
+          Condition="'$(DesignTimeBuild)' != 'true'">
+    <Exec Command="dotnet restore &quot;$(SdlShaderCompilerProject)&quot; --nologo"
+          WorkingDirectory="$(RepositoryRoot)" />
+  </Target>
+
+  <Target Name="VerifySdlShaderArtifacts"
+          BeforeTargets="PrepareResources"
+          DependsOnTargets="RestoreSdlShaderCompiler"
+          Inputs="@(SdlShaderInput)"
+          Outputs="$(SdlShaderVerifyStamp)"
+          Condition="'$(DesignTimeBuild)' != 'true'">
+    <Error Condition="'@(SdlShaderArtifact)' == ''"
+           Text="No versioned SDL_GPU shader artifacts were found." />
+    <Exec Command="dotnet run --project &quot;$(SdlShaderCompilerProject)&quot; --no-restore -- --verify --manifest &quot;$(SdlShaderManifest)&quot;"
+          WorkingDirectory="$(RepositoryRoot)" />
+    <Touch Files="$(SdlShaderVerifyStamp)" AlwaysCreate="true" />
+  </Target>
+
+  <Target Name="RequireSdlShaderArtifacts"
+          BeforeTargets="PrepareResources"
+          Condition="'$(DesignTimeBuild)' != 'true'">
+    <Error Condition="!Exists('%(SdlShaderArtifact.FullPath)')"
+           Text="SDL_GPU shader artifact '%(SdlShaderArtifact.FullPath)' is missing or stale." />
+    <Error Condition="!Exists('$(SdlShaderMetadata)')"
+           Text="SDL_GPU shader metadata '$(SdlShaderMetadata)' is missing or stale." />
+  </Target>
+
+</Project>

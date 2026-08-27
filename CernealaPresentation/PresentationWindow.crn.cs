@@ -48,6 +48,7 @@ public partial class PresentationWindow : Window
     private bool skipNextHeaderDiagnosticsRefresh;
     private bool suppressLiveDiagnostics;
     private bool outerGlowLabActive;
+    private string[] conformancePrismSamples = [];
     private IReadOnlyDictionary<PresentationChapter, ToggleButton> tourNavigation =
         new Dictionary<PresentationChapter, ToggleButton>();
     private IReadOnlyDictionary<PresentationChapter, UIElement> tourPages =
@@ -255,7 +256,10 @@ public partial class PresentationWindow : Window
             return;
         }
 
-        UpdateHeaderDiagnostics(LastFrame);
+        if (!suppressLiveDiagnostics)
+        {
+            UpdateHeaderDiagnostics(LastFrame);
+        }
         if (currentChapter == PresentationChapter.Prism && !suppressLiveDiagnostics)
         {
             PagePrism.UpdateDiagnostics(CapturePrismDiagnosticsSnapshot());
@@ -398,6 +402,13 @@ public partial class PresentationWindow : Window
         try
         {
             PresentationChapter captureChapter = currentChapter;
+            if (captureChapter == PresentationChapter.Prism && string.Equals(
+                    Environment.GetEnvironmentVariable("CERNEALA_PRISM_CONFORMANCE_PRESET"),
+                    "1",
+                    StringComparison.Ordinal))
+            {
+                conformancePrismSamples = PagePrism.ConfigureConformanceScene();
+            }
             if (int.TryParse(
                     Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_HOVER_CHAPTER"),
                     out int hoverChapter) &&
@@ -427,6 +438,10 @@ public partial class PresentationWindow : Window
             ShowChapter(previousChapter);
             ButtonAutomationPeer next = new(NextButton);
             suppressLiveDiagnostics = captureChapter != PresentationChapter.Aspect;
+            if (suppressLiveDiagnostics)
+            {
+                SetConformanceHeaderDiagnostics();
+            }
             try
             {
                 await CaptureScreenshotFrameAsync(fullPath, () =>
@@ -445,7 +460,8 @@ public partial class PresentationWindow : Window
             [
                 $"Chapter={ChapterIndex(currentChapter) + 1}",
                 $"RootCommands={Root?.RetainedRenderCache.RootCommands.Count ?? 0}",
-                $"RenderCacheVersion={Root?.RetainedRenderCache.Version ?? 0}"
+                $"RenderCacheVersion={Root?.RetainedRenderCache.Version ?? 0}",
+                .. conformancePrismSamples.Select(sample => $"PrismSample={sample}")
             ]);
             if (closeAfterCapture)
             {
@@ -457,6 +473,16 @@ public partial class PresentationWindow : Window
             Directory.CreateDirectory(Path.GetDirectoryName(errorPath)!);
             await File.WriteAllTextAsync(errorPath, exception.ToString());
         }
+    }
+
+    private void SetConformanceHeaderDiagnostics()
+    {
+        HeaderDiagFrame.Text = "FIXED FRAME\nWORK COMMITTED";
+        HeaderDiagPhases.Text = "INHERITED 0  COMMAND 0\nASPECT 0";
+        HeaderDiagLayout.Text = "QUEUED 0 / 0\nCALLS 0 / 0";
+        HeaderDiagRender.Text = "RENDER 1  HIT 0\nREUSED 0  NO-WORK 0";
+        HeaderDiagMotion.Text = "FRAME 0  SAMPLE 0  VALUE 0  WRITE 0\nDONE 0  R-INV 0  L-INV 0  REDUCED 0";
+        HeaderDiagRelay.Text = "SNAP 1  DEQ 1  EXEC 1  BACK 0\nCANCEL 0  FAULT 0  DEFER 0";
     }
 
     private async Task CaptureScreenshotFrameAsync(string fullPath, Action frameTrigger)

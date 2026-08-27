@@ -9,6 +9,7 @@ Generated from `.`.
 |   +-- dotnet-tools.json
 |-- .github/
 |   +-- workflows/
+|       |-- desktop-backends.yml
 |       |-- pages.yml
 |       +-- prism-shaders.yml
 |-- .kilo/
@@ -36,7 +37,8 @@ Generated from `.`.
 |   |   |   |-- 2026-08-13-language-core.md
 |   |   |   |-- 2026-08-15-visual-studio-community-extension.json
 |   |   |   |-- 2026-08-15-visual-studio-community-extension.md
-|   |   |   +-- 2026-08-24-rendersurface2d-drawing-api.md
+|   |   |   |-- 2026-08-24-rendersurface2d-drawing-api.md
+|   |   |   +-- 2026-08-27-sdlgpu-prism-comparison.md
 |   |   |-- Cerneala.Benchmarks.csproj
 |   |   |-- CernealaLanguageBenchmarks.cs
 |   |   |-- DrawingBatchBenchmarks.cs
@@ -46,6 +48,7 @@ Generated from `.`.
 |   |   |-- DrawingTextLayoutBenchmarks.cs
 |   |   |-- PrismInstanceBenchmarks.cs
 |   |   |-- PrismRetainedCacheBenchmarkRunner.cs
+|   |   |-- PrismSdlGpuComparisonBenchmarkRunner.cs
 |   |   |-- Program.cs
 |   |   |-- QueueEngineBenchmarks.cs
 |   |   |-- README.md
@@ -157,6 +160,50 @@ Generated from `.`.
 |       +-- 2026-08-11-aspect-mutation/
 |-- Cerneala.Backends.MonoGame/
 |   +-- Cerneala.Backends.MonoGame.csproj
+|-- Cerneala.Backends.SdlGpu/
+|   |-- Gpu/
+|   |   |-- Shaders/
+|   |   |   |-- Drawing.frag.dxil
+|   |   |   |-- Drawing.frag.hlsl
+|   |   |   |-- Drawing.frag.msl
+|   |   |   |-- Drawing.frag.spv
+|   |   |   |-- Drawing.vert.dxil
+|   |   |   |-- Drawing.vert.hlsl
+|   |   |   |-- Drawing.vert.msl
+|   |   |   +-- Drawing.vert.spv
+|   |   |-- SdlGpuDebugLabels.cs
+|   |   |-- SdlGpuDeviceOwner.cs
+|   |   |-- SdlGpuDrawingBackend.cs
+|   |   |-- SdlGpuDrawingResources.cs
+|   |   |-- SdlGpuImageLoader.cs
+|   |   |-- SdlGpuPresentationOptions.cs
+|   |   |-- SdlGpuShaderArtifacts.cs
+|   |   +-- SdlGpuWindowGraphicsSession.cs
+|   |-- Hosting/
+|   |   +-- SdlGpuApplicationBackend.cs
+|   |-- Prism/
+|   |   |-- Shaders/
+|   |   |   |-- Prism.vert.dxil
+|   |   |   |-- Prism.vert.hlsl
+|   |   |   |-- Prism.vert.msl
+|   |   |   |-- Prism.vert.spv
+|   |   |   |-- PrismCatalog.frag.dxil
+|   |   |   |-- PrismCatalog.frag.hlsl
+|   |   |   |-- PrismCatalog.frag.msl
+|   |   |   |-- PrismCatalog.frag.spv
+|   |   |   |-- PrismCopy.frag.dxil
+|   |   |   |-- PrismCopy.frag.hlsl
+|   |   |   |-- PrismCopy.frag.msl
+|   |   |   +-- PrismCopy.frag.spv
+|   |   |-- ISdlGpuBackdropFrameLease.cs
+|   |   |-- SdlGpuPrismDeviceResources.cs
+|   |   |-- SdlGpuPrismExecutor.cs
+|   |   |-- SdlGpuPrismKernelSelector.cs
+|   |   +-- SdlGpuPrismUniforms.cs
+|   |-- Shaders/
+|   |   |-- artifacts.json
+|   |   +-- manifest.json
+|   +-- Cerneala.Backends.SdlGpu.csproj
 |-- Cerneala.Language/
 |   |-- Compatibility/
 |   |   +-- IsExternalInit.cs
@@ -252,10 +299,21 @@ Generated from `.`.
 |   |   +-- WorkspaceState.cs
 |   |-- Cerneala.LanguageServer.csproj
 |   +-- Program.cs
+|-- Cerneala.Platforms.Sdl3/
+|   |-- Hosting/
+|   |   |-- SdlCursorService.cs
+|   |   |-- SdlPlatformLifetime.cs
+|   |   |-- SdlWindowPlatform.cs
+|   |   +-- SdlWindowSurface.cs
+|   |-- Input/
+|   |   +-- SdlInputSource.cs
+|   |-- Interop/
+|   |   |-- ISdlApi.cs
+|   |   +-- NativeSdlApi.cs
+|   +-- Cerneala.Platforms.Sdl3.csproj
 |-- Cerneala.Platforms.Win32/
 |   |-- Hosting/
 |   |   |-- Win32.cs
-|   |   |-- Win32ApplicationPlatform.cs
 |   |   |-- Win32CursorService.cs
 |   |   |-- Win32InputSource.cs
 |   |   |-- Win32WindowPlatform.cs
@@ -302,6 +360,7 @@ Generated from `.`.
 |   |-- SourceGeneratorDiagnosticAdapter.cs
 |   |-- SourceGeneratorSemanticModel.cs
 |   |-- UiMarkupApplicationGenerator.cs
+|   |-- UiMarkupBackendSelection.cs
 |   |-- UiMarkupBindingResolver.cs
 |   |-- UiMarkupDirectiveParser.cs
 |   |-- UiMarkupGenerator.cs
@@ -351,6 +410,7 @@ Generated from `.`.
 |   |-- AspectChapterView.crn
 |   |-- AspectChapterView.crn.cs
 |   |-- AspectStudioPropertyRows.cs
+|   |-- BackendRegistration.cs
 |   |-- BrandMark.crn
 |   |-- BrandMark.crn.cs
 |   |-- CernealaPresentation.csproj
@@ -379,6 +439,9 @@ Generated from `.`.
 |-- docs/
 |   |-- audits/
 |   |   |-- 2026-08-25-monogame-coupling-inventory.md
+|   |   |-- 2026-08-25-sdl3-sdlgpu-stage-0-baseline.md
+|   |   |-- 2026-08-26-sdlgpu-stage-5-drawing-conformance.md
+|   |   |-- 2026-08-26-sdlgpu-stage-6-shader-toolchain.md
 |   |   |-- prism-visual-algorithm-checklist-2026-07-25.md
 |   |   +-- prism-visual-style-algorithm-checklist-2026-08-02.md
 |   |-- diagrams/
@@ -427,7 +490,8 @@ Generated from `.`.
 |   |   |-- 2026-08-14-crn-markup-extension-migration.md
 |   |   |-- 2026-08-20-menu-menuitem-menubar.md
 |   |   |-- 2026-08-24-rendersurface2d-complete-drawing-api.md
-|   |   +-- 2026-08-24-rendersurface2d-stage-0-baseline.md
+|   |   |-- 2026-08-24-rendersurface2d-stage-0-baseline.md
+|   |   +-- 2026-08-25-sdl3-sdlgpu-backend-and-explicit-generator-selection.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
@@ -505,6 +569,7 @@ Generated from `.`.
 |   |-- prism-neighborhood-filters.md
 |   |-- prism-public-api-baseline.md
 |   |-- prism-technical-design.md
+|   |-- sdl-desktop-backend.md
 |   |-- visual-studio-community-spike.md
 |   |-- visual-studio-community.md
 |   +-- wpf-event-coverage.md
@@ -1110,13 +1175,15 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Hosting.MonoGame.MonoGameUiHost.md
 |   |   |   |-- Cerneala.UI.Hosting.MonoGame.MonoGameUiHost.MonoGameUiBackend.md
 |   |   |   |-- Cerneala.UI.Hosting.MonoGame.MonoGameUiHostOptions.md
+|   |   |   |-- Cerneala.UI.Hosting.Sdl.SdlGpuApplicationBackend.md
 |   |   |   |-- Cerneala.UI.Hosting.UiCoordinateMapper.md
 |   |   |   |-- Cerneala.UI.Hosting.UiFrame.md
 |   |   |   |-- Cerneala.UI.Hosting.UiHost.md
 |   |   |   |-- Cerneala.UI.Hosting.UiHostOptions.md
 |   |   |   |-- Cerneala.UI.Hosting.UiViewport.md
-|   |   |   |-- Cerneala.UI.Hosting.Windows.GeneratedWindowApplication.md
-|   |   |   |-- Cerneala.UI.Hosting.Windows.GeneratedWindowStartupDescriptor.md
+|   |   |   |-- Cerneala.UI.Hosting.Windowing.ApplicationBackendAttribute.md
+|   |   |   |-- Cerneala.UI.Hosting.Windowing.GeneratedWindowApplication.md
+|   |   |   |-- Cerneala.UI.Hosting.Windowing.GeneratedWindowStartupDescriptor.md
 |   |   |   |-- Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend.md
 |   |   |   |-- Cerneala.UI.Ink.Stroke.md
 |   |   |   |-- Cerneala.UI.Ink.StrokeCollection.md
@@ -1624,220 +1691,18 @@ Generated from `.`.
 |   |   |   |   +-- PrismKernelRegistry.cs
 |   |   |   |-- Shaders/
 |   |   |   |   |-- Blends/
-|   |   |   |   |   |-- AdvancedBlending.fx
-|   |   |   |   |   |-- All.fx
-|   |   |   |   |   |-- BlendIf.fx
-|   |   |   |   |   |-- Color.fx
-|   |   |   |   |   |-- ColorBurn.fx
-|   |   |   |   |   |-- ColorDodge.fx
-|   |   |   |   |   |-- Common.fx
-|   |   |   |   |   |-- Darken.fx
-|   |   |   |   |   |-- DarkerColor.fx
-|   |   |   |   |   |-- Difference.fx
-|   |   |   |   |   |-- Dispatcher.fx
-|   |   |   |   |   |-- Dissolve.fx
-|   |   |   |   |   |-- Divide.fx
-|   |   |   |   |   |-- Exclusion.fx
-|   |   |   |   |   |-- HardLight.fx
-|   |   |   |   |   |-- HardMix.fx
-|   |   |   |   |   |-- Hue.fx
-|   |   |   |   |   |-- Lighten.fx
-|   |   |   |   |   |-- LighterColor.fx
-|   |   |   |   |   |-- LinearBurn.fx
-|   |   |   |   |   |-- LinearDodge.fx
-|   |   |   |   |   |-- LinearLight.fx
-|   |   |   |   |   |-- Luminosity.fx
-|   |   |   |   |   |-- Multiply.fx
-|   |   |   |   |   |-- Normal.fx
-|   |   |   |   |   |-- Overlay.fx
-|   |   |   |   |   |-- PassThrough.fx
-|   |   |   |   |   |-- PinLight.fx
-|   |   |   |   |   |-- Saturation.fx
-|   |   |   |   |   |-- Screen.fx
-|   |   |   |   |   |-- SoftLight.fx
-|   |   |   |   |   |-- Subtract.fx
-|   |   |   |   |   +-- VividLight.fx
 |   |   |   |   |-- Color/
-|   |   |   |   |   |-- All.fx
-|   |   |   |   |   |-- Common.fx
-|   |   |   |   |   |-- DisplayP3.fx
-|   |   |   |   |   |-- LinearDisplayP3.fx
-|   |   |   |   |   |-- LinearSrgb.fx
-|   |   |   |   |   |-- ScRgb.fx
-|   |   |   |   |   |-- Srgb.fx
-|   |   |   |   |   +-- WorkingColorConversion.fx
 |   |   |   |   |-- Common/
+|   |   |   |   |   |-- AllBlends.fx
+|   |   |   |   |   |-- AllColor.fx
 |   |   |   |   |   +-- Parameters.fx
 |   |   |   |   |-- Composition/
-|   |   |   |   |   |-- Clipping.fx
-|   |   |   |   |   |-- Copy.fx
-|   |   |   |   |   +-- Mask.fx
 |   |   |   |   |-- Filters/
-|   |   |   |   |   |-- Catalog/
-|   |   |   |   |   |   |-- AccentedEdges.fx
-|   |   |   |   |   |   |-- AngledStrokes.fx
-|   |   |   |   |   |   |-- Artistic.fx
-|   |   |   |   |   |   |-- BasRelief.fx
-|   |   |   |   |   |   |-- CategoryDispatchers.fx
-|   |   |   |   |   |   |-- ChalkCharcoal.fx
-|   |   |   |   |   |   |-- Charcoal.fx
-|   |   |   |   |   |   |-- ChromaticAberration.fx
-|   |   |   |   |   |   |-- Chrome.fx
-|   |   |   |   |   |   |-- Clouds.fx
-|   |   |   |   |   |   |-- Color.fx
-|   |   |   |   |   |   |-- ColoredPencil.fx
-|   |   |   |   |   |   |-- ColorHalftone.fx
-|   |   |   |   |   |   |-- ColorMatrix.fx
-|   |   |   |   |   |   |-- Common.fx
-|   |   |   |   |   |   |-- ConteCrayon.fx
-|   |   |   |   |   |   |-- Craquelure.fx
-|   |   |   |   |   |   |-- Crosshatch.fx
-|   |   |   |   |   |   |-- Crystallize.fx
-|   |   |   |   |   |   |-- CustomConvolution.fx
-|   |   |   |   |   |   |-- Cutout.fx
-|   |   |   |   |   |   |-- DarkStrokes.fx
-|   |   |   |   |   |   |-- DifferenceClouds.fx
-|   |   |   |   |   |   |-- Diffuse.fx
-|   |   |   |   |   |   |-- Dispatcher.fx
-|   |   |   |   |   |   |-- DryBrush.fx
-|   |   |   |   |   |   |-- Emboss.fx
-|   |   |   |   |   |   |-- Extrude.fx
-|   |   |   |   |   |   |-- Facet.fx
-|   |   |   |   |   |   |-- Fibers.fx
-|   |   |   |   |   |   |-- FilmGrain.fx
-|   |   |   |   |   |   |-- Fragment.fx
-|   |   |   |   |   |   |-- Fresco.fx
-|   |   |   |   |   |   |-- GlowingEdges.fx
-|   |   |   |   |   |   |-- Grain.fx
-|   |   |   |   |   |   |-- GraphicPen.fx
-|   |   |   |   |   |   |-- HalftonePattern.fx
-|   |   |   |   |   |   |-- InkOutlines.fx
-|   |   |   |   |   |   |-- LensFlare.fx
-|   |   |   |   |   |   |-- LightingEffects.fx
-|   |   |   |   |   |   |-- Maximum.fx
-|   |   |   |   |   |   |-- Mezzotint.fx
-|   |   |   |   |   |   |-- Minimum.fx
-|   |   |   |   |   |   |-- Mosaic.fx
-|   |   |   |   |   |   |-- MosaicTiles.fx
-|   |   |   |   |   |   |-- NotePaper.fx
-|   |   |   |   |   |   |-- NtscColors.fx
-|   |   |   |   |   |   |-- OilPaint.fx
-|   |   |   |   |   |   |-- PaintDaubs.fx
-|   |   |   |   |   |   |-- PaletteKnife.fx
-|   |   |   |   |   |   |-- Patchwork.fx
-|   |   |   |   |   |   |-- Photocopy.fx
-|   |   |   |   |   |   |-- Plaster.fx
-|   |   |   |   |   |   |-- PlasticWrap.fx
-|   |   |   |   |   |   |-- Pointillize.fx
-|   |   |   |   |   |   |-- PosterEdges.fx
-|   |   |   |   |   |   |-- Procedural.fx
-|   |   |   |   |   |   |-- Quantization.fx
-|   |   |   |   |   |   |-- Reticulation.fx
-|   |   |   |   |   |   |-- RoughPastels.fx
-|   |   |   |   |   |   |-- Scanlines.fx
-|   |   |   |   |   |   |-- SmudgeStick.fx
-|   |   |   |   |   |   |-- Solarize.fx
-|   |   |   |   |   |   |-- Spatter.fx
-|   |   |   |   |   |   |-- Sponge.fx
-|   |   |   |   |   |   |-- SprayedStrokes.fx
-|   |   |   |   |   |   |-- StainedGlass.fx
-|   |   |   |   |   |   |-- Stamp.fx
-|   |   |   |   |   |   |-- SumiE.fx
-|   |   |   |   |   |   |-- Texture.fx
-|   |   |   |   |   |   |-- Texturizer.fx
-|   |   |   |   |   |   |-- Tiles.fx
-|   |   |   |   |   |   |-- TornEdges.fx
-|   |   |   |   |   |   |-- TraceContour.fx
-|   |   |   |   |   |   |-- Underpainting.fx
-|   |   |   |   |   |   |-- Video.fx
-|   |   |   |   |   |   |-- Watercolor.fx
-|   |   |   |   |   |   |-- WaterPaper.fx
-|   |   |   |   |   |   +-- Wind.fx
-|   |   |   |   |   |-- AdaptiveWideAngle.fx
-|   |   |   |   |   |-- AddNoise.fx
-|   |   |   |   |   |-- Adjustment.fx
-|   |   |   |   |   |-- AdjustmentDispatcher.fx
-|   |   |   |   |   |-- Average.fx
-|   |   |   |   |   |-- BlackWhite.fx
-|   |   |   |   |   |-- Blur.fx
-|   |   |   |   |   |-- BlurMore.fx
-|   |   |   |   |   |-- BoxBlur.fx
-|   |   |   |   |   |-- BrightnessContrast.fx
-|   |   |   |   |   |-- ChannelMixer.fx
-|   |   |   |   |   |-- ColorBalance.fx
-|   |   |   |   |   |-- ColorLookup.fx
-|   |   |   |   |   |-- Curves.fx
-|   |   |   |   |   |-- Despeckle.fx
-|   |   |   |   |   |-- DiffuseGlow.fx
-|   |   |   |   |   |-- Displace.fx
-|   |   |   |   |   |-- DustScratches.fx
-|   |   |   |   |   |-- Exposure.fx
-|   |   |   |   |   |-- FieldBlur.fx
-|   |   |   |   |   |-- GaussianBlur.fx
-|   |   |   |   |   |-- Glass.fx
-|   |   |   |   |   |-- GradientMap.fx
-|   |   |   |   |   |-- HighPass.fx
-|   |   |   |   |   |-- HueSaturation.fx
-|   |   |   |   |   |-- Invert.fx
-|   |   |   |   |   |-- IrisBlur.fx
-|   |   |   |   |   |-- LensBlur.fx
-|   |   |   |   |   |-- LensCorrection.fx
-|   |   |   |   |   |-- Levels.fx
-|   |   |   |   |   |-- Liquify.fx
-|   |   |   |   |   |-- Median.fx
-|   |   |   |   |   |-- MotionBlur.fx
-|   |   |   |   |   |-- Neighborhood.fx
-|   |   |   |   |   |-- NeighborhoodDispatcher.fx
-|   |   |   |   |   |-- NeonGlow.fx
-|   |   |   |   |   |-- OceanRipple.fx
-|   |   |   |   |   |-- Offset.fx
-|   |   |   |   |   |-- OptimizedBilinearGaussian.fx
-|   |   |   |   |   |-- PathBlur.fx
-|   |   |   |   |   |-- PhotoFilter.fx
-|   |   |   |   |   |-- Pinch.fx
-|   |   |   |   |   |-- PolarCoordinates.fx
-|   |   |   |   |   |-- Posterize.fx
-|   |   |   |   |   |-- RadialBlur.fx
-|   |   |   |   |   |-- ReduceNoise.fx
-|   |   |   |   |   |-- Resampling.fx
-|   |   |   |   |   |-- ResamplingDispatcher.fx
-|   |   |   |   |   |-- Ripple.fx
-|   |   |   |   |   |-- SelectiveColor.fx
-|   |   |   |   |   |-- ShapeBlur.fx
-|   |   |   |   |   |-- Sharpen.fx
-|   |   |   |   |   |-- SharpenEdges.fx
-|   |   |   |   |   |-- SharpenMore.fx
-|   |   |   |   |   |-- Shear.fx
-|   |   |   |   |   |-- SmartBlur.fx
-|   |   |   |   |   |-- SmartSharpen.fx
-|   |   |   |   |   |-- Spherize.fx
-|   |   |   |   |   |-- SpinBlur.fx
-|   |   |   |   |   |-- SurfaceBlur.fx
-|   |   |   |   |   |-- Threshold.fx
-|   |   |   |   |   |-- TiltShift.fx
-|   |   |   |   |   |-- Transform.fx
-|   |   |   |   |   |-- Twirl.fx
-|   |   |   |   |   |-- UnsharpMask.fx
-|   |   |   |   |   |-- Vibrance.fx
-|   |   |   |   |   |-- Wave.fx
-|   |   |   |   |   +-- ZigZag.fx
+|   |   |   |   |   +-- Catalog/
 |   |   |   |   |-- Pipeline/
 |   |   |   |   |   |-- StyleTechniques.fx
 |   |   |   |   |   +-- Techniques.fx
 |   |   |   |   |-- Styles/
-|   |   |   |   |   |-- BevelEmboss.fx
-|   |   |   |   |   |-- ColorOverlay.fx
-|   |   |   |   |   |-- Common.fx
-|   |   |   |   |   |-- DistanceField.fx
-|   |   |   |   |   |-- DropShadow.fx
-|   |   |   |   |   |-- GradientOverlay.fx
-|   |   |   |   |   |-- InnerGlow.fx
-|   |   |   |   |   |-- InnerShadow.fx
-|   |   |   |   |   |-- LayerStyle.fx
-|   |   |   |   |   |-- OuterGlow.fx
-|   |   |   |   |   |-- PatternOverlay.fx
-|   |   |   |   |   |-- Satin.fx
-|   |   |   |   |   +-- Stroke.fx
 |   |   |   |   |-- Charcoal.fx
 |   |   |   |   |-- ConteCrayon.fx
 |   |   |   |   |-- CopyComposite.fx
@@ -1864,6 +1729,8 @@ Generated from `.`.
 |   |   |-- MonoGameRenderSurface2DSession.cs
 |   |   +-- MonoGameStrokeMeshBuilder.cs
 |   |-- Paths/
+|   |   |-- DrawEllipseCoverage.cs
+|   |   |-- DrawEllipseRowTessellator.cs
 |   |   |-- DrawPathFlattener.cs
 |   |   |-- DrawPathMeshBuilder.cs
 |   |   |-- DrawStrokeMeshBuilder.cs
@@ -2112,6 +1979,219 @@ Generated from `.`.
 |   |   |   |-- PrismClippingStyle.cs
 |   |   |   |-- PrismMaskMath.cs
 |   |   |   +-- PrismMaskStyle.cs
+|   |   |-- Shaders/
+|   |   |   +-- Hlsl/
+|   |   |       |-- Blends/
+|   |   |       |   |-- AdvancedBlending.hlsl
+|   |   |       |   |-- All.hlsl
+|   |   |       |   |-- BlendIf.hlsl
+|   |   |       |   |-- Color.hlsl
+|   |   |       |   |-- ColorBurn.hlsl
+|   |   |       |   |-- ColorDodge.hlsl
+|   |   |       |   |-- Common.hlsl
+|   |   |       |   |-- Darken.hlsl
+|   |   |       |   |-- DarkerColor.hlsl
+|   |   |       |   |-- Difference.hlsl
+|   |   |       |   |-- Dispatcher.hlsl
+|   |   |       |   |-- Dissolve.hlsl
+|   |   |       |   |-- Divide.hlsl
+|   |   |       |   |-- Exclusion.hlsl
+|   |   |       |   |-- HardLight.hlsl
+|   |   |       |   |-- HardMix.hlsl
+|   |   |       |   |-- Hue.hlsl
+|   |   |       |   |-- Lighten.hlsl
+|   |   |       |   |-- LighterColor.hlsl
+|   |   |       |   |-- LinearBurn.hlsl
+|   |   |       |   |-- LinearDodge.hlsl
+|   |   |       |   |-- LinearLight.hlsl
+|   |   |       |   |-- Luminosity.hlsl
+|   |   |       |   |-- Multiply.hlsl
+|   |   |       |   |-- Normal.hlsl
+|   |   |       |   |-- Overlay.hlsl
+|   |   |       |   |-- PassThrough.hlsl
+|   |   |       |   |-- PinLight.hlsl
+|   |   |       |   |-- Saturation.hlsl
+|   |   |       |   |-- Screen.hlsl
+|   |   |       |   |-- SoftLight.hlsl
+|   |   |       |   |-- Subtract.hlsl
+|   |   |       |   +-- VividLight.hlsl
+|   |   |       |-- Color/
+|   |   |       |   |-- All.hlsl
+|   |   |       |   |-- Common.hlsl
+|   |   |       |   |-- DisplayP3.hlsl
+|   |   |       |   |-- LinearDisplayP3.hlsl
+|   |   |       |   |-- LinearSrgb.hlsl
+|   |   |       |   |-- ScRgb.hlsl
+|   |   |       |   |-- Srgb.hlsl
+|   |   |       |   +-- WorkingColorConversion.hlsl
+|   |   |       |-- Composition/
+|   |   |       |   |-- Clipping.hlsl
+|   |   |       |   |-- Copy.hlsl
+|   |   |       |   +-- Mask.hlsl
+|   |   |       |-- Filters/
+|   |   |       |   |-- Catalog/
+|   |   |       |   |   |-- AccentedEdges.hlsl
+|   |   |       |   |   |-- AngledStrokes.hlsl
+|   |   |       |   |   |-- Artistic.hlsl
+|   |   |       |   |   |-- BasRelief.hlsl
+|   |   |       |   |   |-- CategoryDispatchers.hlsl
+|   |   |       |   |   |-- ChalkCharcoal.hlsl
+|   |   |       |   |   |-- Charcoal.hlsl
+|   |   |       |   |   |-- ChromaticAberration.hlsl
+|   |   |       |   |   |-- Chrome.hlsl
+|   |   |       |   |   |-- Clouds.hlsl
+|   |   |       |   |   |-- Color.hlsl
+|   |   |       |   |   |-- ColoredPencil.hlsl
+|   |   |       |   |   |-- ColorHalftone.hlsl
+|   |   |       |   |   |-- ColorMatrix.hlsl
+|   |   |       |   |   |-- Common.hlsl
+|   |   |       |   |   |-- ConteCrayon.hlsl
+|   |   |       |   |   |-- Craquelure.hlsl
+|   |   |       |   |   |-- Crosshatch.hlsl
+|   |   |       |   |   |-- Crystallize.hlsl
+|   |   |       |   |   |-- CustomConvolution.hlsl
+|   |   |       |   |   |-- Cutout.hlsl
+|   |   |       |   |   |-- DarkStrokes.hlsl
+|   |   |       |   |   |-- DifferenceClouds.hlsl
+|   |   |       |   |   |-- Diffuse.hlsl
+|   |   |       |   |   |-- Dispatcher.hlsl
+|   |   |       |   |   |-- DryBrush.hlsl
+|   |   |       |   |   |-- Emboss.hlsl
+|   |   |       |   |   |-- Extrude.hlsl
+|   |   |       |   |   |-- Facet.hlsl
+|   |   |       |   |   |-- Fibers.hlsl
+|   |   |       |   |   |-- FilmGrain.hlsl
+|   |   |       |   |   |-- Fragment.hlsl
+|   |   |       |   |   |-- Fresco.hlsl
+|   |   |       |   |   |-- GlowingEdges.hlsl
+|   |   |       |   |   |-- Grain.hlsl
+|   |   |       |   |   |-- GraphicPen.hlsl
+|   |   |       |   |   |-- HalftonePattern.hlsl
+|   |   |       |   |   |-- InkOutlines.hlsl
+|   |   |       |   |   |-- LensFlare.hlsl
+|   |   |       |   |   |-- LightingEffects.hlsl
+|   |   |       |   |   |-- Maximum.hlsl
+|   |   |       |   |   |-- Mezzotint.hlsl
+|   |   |       |   |   |-- Minimum.hlsl
+|   |   |       |   |   |-- Mosaic.hlsl
+|   |   |       |   |   |-- MosaicTiles.hlsl
+|   |   |       |   |   |-- NotePaper.hlsl
+|   |   |       |   |   |-- NtscColors.hlsl
+|   |   |       |   |   |-- OilPaint.hlsl
+|   |   |       |   |   |-- PaintDaubs.hlsl
+|   |   |       |   |   |-- PaletteKnife.hlsl
+|   |   |       |   |   |-- Patchwork.hlsl
+|   |   |       |   |   |-- Photocopy.hlsl
+|   |   |       |   |   |-- Plaster.hlsl
+|   |   |       |   |   |-- PlasticWrap.hlsl
+|   |   |       |   |   |-- Pointillize.hlsl
+|   |   |       |   |   |-- PosterEdges.hlsl
+|   |   |       |   |   |-- Procedural.hlsl
+|   |   |       |   |   |-- Quantization.hlsl
+|   |   |       |   |   |-- Reticulation.hlsl
+|   |   |       |   |   |-- RoughPastels.hlsl
+|   |   |       |   |   |-- Scanlines.hlsl
+|   |   |       |   |   |-- SmudgeStick.hlsl
+|   |   |       |   |   |-- Solarize.hlsl
+|   |   |       |   |   |-- Spatter.hlsl
+|   |   |       |   |   |-- Sponge.hlsl
+|   |   |       |   |   |-- SprayedStrokes.hlsl
+|   |   |       |   |   |-- StainedGlass.hlsl
+|   |   |       |   |   |-- Stamp.hlsl
+|   |   |       |   |   |-- SumiE.hlsl
+|   |   |       |   |   |-- Texture.hlsl
+|   |   |       |   |   |-- Texturizer.hlsl
+|   |   |       |   |   |-- Tiles.hlsl
+|   |   |       |   |   |-- TornEdges.hlsl
+|   |   |       |   |   |-- TraceContour.hlsl
+|   |   |       |   |   |-- Underpainting.hlsl
+|   |   |       |   |   |-- Video.hlsl
+|   |   |       |   |   |-- Watercolor.hlsl
+|   |   |       |   |   |-- WaterPaper.hlsl
+|   |   |       |   |   +-- Wind.hlsl
+|   |   |       |   |-- AdaptiveWideAngle.hlsl
+|   |   |       |   |-- AddNoise.hlsl
+|   |   |       |   |-- Adjustment.hlsl
+|   |   |       |   |-- AdjustmentDispatcher.hlsl
+|   |   |       |   |-- Average.hlsl
+|   |   |       |   |-- BlackWhite.hlsl
+|   |   |       |   |-- Blur.hlsl
+|   |   |       |   |-- BlurMore.hlsl
+|   |   |       |   |-- BoxBlur.hlsl
+|   |   |       |   |-- BrightnessContrast.hlsl
+|   |   |       |   |-- ChannelMixer.hlsl
+|   |   |       |   |-- ColorBalance.hlsl
+|   |   |       |   |-- ColorLookup.hlsl
+|   |   |       |   |-- Curves.hlsl
+|   |   |       |   |-- Despeckle.hlsl
+|   |   |       |   |-- DiffuseGlow.hlsl
+|   |   |       |   |-- Displace.hlsl
+|   |   |       |   |-- DustScratches.hlsl
+|   |   |       |   |-- Exposure.hlsl
+|   |   |       |   |-- FieldBlur.hlsl
+|   |   |       |   |-- GaussianBlur.hlsl
+|   |   |       |   |-- Glass.hlsl
+|   |   |       |   |-- GradientMap.hlsl
+|   |   |       |   |-- HighPass.hlsl
+|   |   |       |   |-- HueSaturation.hlsl
+|   |   |       |   |-- Invert.hlsl
+|   |   |       |   |-- IrisBlur.hlsl
+|   |   |       |   |-- LensBlur.hlsl
+|   |   |       |   |-- LensCorrection.hlsl
+|   |   |       |   |-- Levels.hlsl
+|   |   |       |   |-- Liquify.hlsl
+|   |   |       |   |-- Median.hlsl
+|   |   |       |   |-- MotionBlur.hlsl
+|   |   |       |   |-- Neighborhood.hlsl
+|   |   |       |   |-- NeighborhoodDispatcher.hlsl
+|   |   |       |   |-- NeonGlow.hlsl
+|   |   |       |   |-- OceanRipple.hlsl
+|   |   |       |   |-- Offset.hlsl
+|   |   |       |   |-- OptimizedBilinearGaussian.hlsl
+|   |   |       |   |-- PathBlur.hlsl
+|   |   |       |   |-- PhotoFilter.hlsl
+|   |   |       |   |-- Pinch.hlsl
+|   |   |       |   |-- PolarCoordinates.hlsl
+|   |   |       |   |-- Posterize.hlsl
+|   |   |       |   |-- RadialBlur.hlsl
+|   |   |       |   |-- ReduceNoise.hlsl
+|   |   |       |   |-- Resampling.hlsl
+|   |   |       |   |-- ResamplingDispatcher.hlsl
+|   |   |       |   |-- Ripple.hlsl
+|   |   |       |   |-- SelectiveColor.hlsl
+|   |   |       |   |-- ShapeBlur.hlsl
+|   |   |       |   |-- Sharpen.hlsl
+|   |   |       |   |-- SharpenEdges.hlsl
+|   |   |       |   |-- SharpenMore.hlsl
+|   |   |       |   |-- Shear.hlsl
+|   |   |       |   |-- SmartBlur.hlsl
+|   |   |       |   |-- SmartSharpen.hlsl
+|   |   |       |   |-- Spherize.hlsl
+|   |   |       |   |-- SpinBlur.hlsl
+|   |   |       |   |-- SurfaceBlur.hlsl
+|   |   |       |   |-- Threshold.hlsl
+|   |   |       |   |-- TiltShift.hlsl
+|   |   |       |   |-- Transform.hlsl
+|   |   |       |   |-- Twirl.hlsl
+|   |   |       |   |-- UnsharpMask.hlsl
+|   |   |       |   |-- Vibrance.hlsl
+|   |   |       |   |-- Wave.hlsl
+|   |   |       |   +-- ZigZag.hlsl
+|   |   |       |-- Styles/
+|   |   |       |   |-- BevelEmboss.hlsl
+|   |   |       |   |-- ColorOverlay.hlsl
+|   |   |       |   |-- Common.hlsl
+|   |   |       |   |-- DistanceField.hlsl
+|   |   |       |   |-- DropShadow.hlsl
+|   |   |       |   |-- GradientOverlay.hlsl
+|   |   |       |   |-- InnerGlow.hlsl
+|   |   |       |   |-- InnerShadow.hlsl
+|   |   |       |   |-- LayerStyle.hlsl
+|   |   |       |   |-- OuterGlow.hlsl
+|   |   |       |   |-- PatternOverlay.hlsl
+|   |   |       |   |-- Satin.hlsl
+|   |   |       |   +-- Stroke.hlsl
+|   |   |       +-- AllKernels.hlsl
 |   |   |-- Styles/
 |   |   |   |-- PrismBevelEmbossStyle.cs
 |   |   |   |-- PrismColorOverlayStyle.cs
@@ -2209,6 +2289,7 @@ Generated from `.`.
 |   |   |-- Program.cs
 |   |   +-- SvgWindow.cs
 |   |-- Cerneala.ComboBoxLab/
+|   |   |-- BackendRegistration.cs
 |   |   |-- Cerneala.ComboBoxLab.csproj
 |   |   |-- MainWindow.crn
 |   |   +-- MainWindow.crn.cs
@@ -2216,6 +2297,7 @@ Generated from `.`.
 |   |   |-- automation/
 |   |   |   +-- capture-open-menu.json
 |   |   |-- .gitignore
+|   |   |-- BackendRegistration.cs
 |   |   |-- Cerneala.MenuLab.csproj
 |   |   |-- MainWindow.crn
 |   |   |-- MainWindow.crn.cs
@@ -2224,6 +2306,7 @@ Generated from `.`.
 |   |-- Cerneala.Playground/
 |   |   |-- automation/
 |   |   |   +-- capture-drawing-api.json
+|   |   |-- BackendRegistration.cs
 |   |   |-- Cerneala.Playground.csproj
 |   |   |-- DrawingApiShowcase.cs
 |   |   |-- DrawingApiShowcaseView.crn
@@ -2232,6 +2315,7 @@ Generated from `.`.
 |   |   |-- MainWindow.crn.cs
 |   |   +-- SvgWindow.cs
 |   +-- CernealaOracle/
+|       |-- BackendRegistration.cs
 |       |-- CernealaOracle.csproj
 |       |-- MainWindow.crn
 |       +-- MainWindow.crn.cs
@@ -2241,13 +2325,33 @@ Generated from `.`.
 |   +-- PreviewProtocol.cs
 |-- spikes/
 |-- tests/
+|   |-- Baselines/
+|   |   +-- Conformance/
+|   |       |-- WindowsDx/
+|   |       |   |-- drawing-api.png
+|   |       |   |-- multi-window-a.png
+|   |       |   |-- multi-window-b.png
+|   |       |   |-- prism.metrics.txt
+|   |       |   +-- prism.png
+|   |       |-- capture-windowsdx-drawing.json
+|   |       +-- scenes.json
+|   |-- Cerneala.SdlGpuSmoke/
+|   |   |-- App.crn
+|   |   |-- App.crn.cs
+|   |   |-- BackendRegistration.cs
+|   |   |-- Cerneala.SdlGpuSmoke.csproj
+|   |   |-- MainWindow.crn
+|   |   |-- MainWindow.crn.cs
+|   |   |-- SmokeDrawingSurface.cs
+|   |   +-- SmokeOptions.cs
 |   |-- Cerneala.Tests/
 |   |   |-- Architecture/
 |   |   |   |-- DeveloperPreviewScopeTests.cs
 |   |   |   |-- ModernAspectArchitectureTests.cs
 |   |   |   |-- MonoGameDependencyBoundaryTests.cs
 |   |   |   |-- NamespaceBoundaryTests.cs
-|   |   |   +-- RepositoryShapeTests.cs
+|   |   |   |-- RepositoryShapeTests.cs
+|   |   |   +-- SdlDependencyBoundaryTests.cs
 |   |   |-- Controls/
 |   |   |   |-- Primitives/
 |   |   |   |   |-- ButtonBaseCommandStateIntegrationTests.cs
@@ -2423,6 +2527,7 @@ Generated from `.`.
 |   |   |   |   |-- PrismReticulationFilterTests.cs
 |   |   |   |   |-- PrismRoughPastelsFilterTests.cs
 |   |   |   |   |-- PrismScanlinesFilterTests.cs
+|   |   |   |   |-- PrismSdlGpuPixelConformanceTests.cs
 |   |   |   |   |-- PrismSmudgeStickFilterTests.cs
 |   |   |   |   |-- PrismSolarizeFilterTests.cs
 |   |   |   |   |-- PrismSpatterFilterTests.cs
@@ -2453,6 +2558,7 @@ Generated from `.`.
 |   |   |   |-- DrawingShapeTests.cs
 |   |   |   |-- DrawingStateTests.cs
 |   |   |   |-- DrawingTextLayoutTests.cs
+|   |   |   |-- SdlGpuDrawingConformanceTests.cs
 |   |   |   +-- TextPipelineTests.cs
 |   |   |-- Golden/
 |   |   |   +-- Prism/
@@ -2596,6 +2702,8 @@ Generated from `.`.
 |   |   |   |   |-- UIElementTreeTests.cs
 |   |   |   |   +-- UIRootTests.cs
 |   |   |   |-- Hosting/
+|   |   |   |   |-- ApplicationBackendAttributeTests.cs
+|   |   |   |   |-- ApplicationBackendRegistrationTests.cs
 |   |   |   |   |-- ApplicationRuntimeTests.cs
 |   |   |   |   |-- FakeDrawingBackend.cs
 |   |   |   |   |-- FakeInputSource.cs
@@ -2814,6 +2922,22 @@ Generated from `.`.
 |   |-- Cerneala.Tests.PreviewHost/
 |   |   |-- Cerneala.Tests.PreviewHost.csproj
 |   |   +-- PreviewHostTests.cs
+|   |-- Cerneala.Tests.SdlGpu/
+|   |   |-- Cerneala.Tests.SdlGpu.csproj
+|   |   |-- FakeSdlApi.cs
+|   |   |-- NativeSdlLifetimeTests.cs
+|   |   |-- SdlArchitectureTests.cs
+|   |   |-- SdlGpuDeviceOwnerTests.cs
+|   |   |-- SdlGpuDrawingBackendTests.cs
+|   |   |-- SdlGpuPrismExecutorTests.cs
+|   |   |-- SdlGpuShaderArtifactTests.cs
+|   |   |-- SdlGpuWindowGraphicsSessionTests.cs
+|   |   |-- SdlNativeFactAttribute.cs
+|   |   |-- SdlNativeTestCollection.cs
+|   |   |-- SdlPlatformLifetimeTests.cs
+|   |   |-- SdlWindowPlatformTests.cs
+|   |   |-- SdlWindowSurfaceTests.cs
+|   |   +-- WindowTestDoubles.cs
 |   |-- Cerneala.Tests.SourceGen/
 |   |   |-- Prism/
 |   |   |   |-- PrismCatalogCompilerTests.cs
@@ -2822,6 +2946,7 @@ Generated from `.`.
 |   |   |-- Cerneala.Tests.SourceGen.csproj
 |   |   |-- PresentationMarkupRegressionTests.cs
 |   |   |-- UiMarkupGeneratorApplicationTests.cs
+|   |   |-- UiMarkupGeneratorBackendSelectionTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageFiveTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageFourTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageThreeTests.cs
@@ -2885,6 +3010,9 @@ Generated from `.`.
 |           +-- VisualStudioStage5Runner.cs
 |-- tmp/
 |-- Tools/
+|   |-- Cerneala.SdlShaderCompiler/
+|   |   |-- Cerneala.SdlShaderCompiler.csproj
+|   |   +-- Program.cs
 |   |-- PrismAudit/
 |   |   |-- PrismAudit.csproj
 |   |   +-- Program.cs
@@ -2945,9 +3073,12 @@ Generated from `.`.
 |   |   |-- Archive-Repo.ps1
 |   |   |-- Archive-Repo.Tests.ps1
 |   |   |-- Build-CernealaVisualStudioRelease.ps1
+|   |   |-- Invoke-SdlGpuSmoke.ps1
 |   |   |-- Measure-PrismOuterGlowColdStart.ps1
 |   |   |-- New-FileTree.ps1
-|   |   +-- New-PrismFilterReference.ps1
+|   |   |-- New-PrismFilterReference.ps1
+|   |   |-- Publish-SdlGpuSmoke.ps1
+|   |   +-- SdlGpuSmoke.Common.ps1
 |   |-- spikes/
 |   +-- temp/
 |       +-- Stage1RuntimeFixture/
@@ -3242,13 +3373,14 @@ Generated from `.`.
 |   |   |   |-- MonoGameContentServices.cs
 |   |   |   |-- MonoGameUiHost.cs
 |   |   |   +-- MonoGameUiHostOptions.cs
-|   |   |-- Windows/
+|   |   |-- Windowing/
+|   |   |   |-- ApplicationBackendAttribute.cs
 |   |   |   |-- DesignPreviewSession.cs
 |   |   |   |-- GeneratedWindowApplication.cs
 |   |   |   |-- IWindowPlatform.cs
 |   |   |   |-- WindowApplicationRuntime.cs
-|   |   |   |-- WindowGraphicsBackendRegistry.cs
-|   |   |   |-- WindowPlatformBackendRegistry.cs
+|   |   |   +-- WindowingBackendRegistry.cs
+|   |   |-- Windows/
 |   |   |   |-- WindowsDxApplicationBackend.cs
 |   |   |   +-- WindowsDxWindowGraphicsSession.cs
 |   |   |-- BackdropFrameCounters.cs
@@ -3693,7 +3825,7 @@ Generated from `.`.
 |   +-- ApplicationStartupEventArgs.cs
 |-- .gitignore
 |-- .roslyn-index.json
-|-- AGENTS.md
+|-- AGENTS_DEPRECATED.md
 |-- architecture.md
 |-- AUDIT_FIX_PLAN.md
 |-- Cerneala.csproj

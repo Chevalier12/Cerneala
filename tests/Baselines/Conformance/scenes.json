@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "captureApi": "Cerneala.UI.Controls.Window.SaveScreenshot",
+  "pixelContract": {
+    "channelOrder": "RGBA",
+    "colorSpace": "sRGB",
+    "alpha": "straight",
+    "randomSeed": null,
+    "animatedState": false
+  },
+  "scenes": [
+    {
+      "id": "drawing-api",
+      "sourceProject": "Playground/Cerneala.Playground/Cerneala.Playground.csproj",
+      "captureAutomation": "tests/Baselines/Conformance/capture-windowsdx-drawing.json",
+      "logicalSize": [800, 600],
+      "physicalSize": [1000, 750],
+      "dpiScale": 1.25,
+      "frameIndex": 8,
+      "fonts": ["Segoe UI", "Segoe UI Emoji"],
+      "resources": [
+        "docs-site/assets/cerneala-mascot-void-suction-well.png"
+      ],
+      "coverage": [
+        "primitive fill and stroke",
+        "path fill and stroke",
+        "text and reusable text layout",
+        "raster image, quad, nine-slice, geometric clip and sprite batch",
+        "rectangular clip, transform, opacity and Screen blend",
+        "RenderSurface2D",
+        "mesh, point batch and line batch"
+      ],
+      "windowsDx": {
+        "image": "WindowsDx/drawing-api.png",
+        "sha256": "57B11D62651660AE85684D8B8458CFA9D0B5E4EE97FC3551FDCFB7773C9D8ABE"
+      }
+    },
+    {
+      "id": "multi-window",
+      "sourceProject": "tests/Cerneala.WindowsDxSmoke/Cerneala.WindowsDxSmoke.csproj",
+      "commandLine": ["--capture-baseline", "<output-directory>"],
+      "logicalSize": [320, 200],
+      "physicalSize": [320, 200],
+      "dpiScale": 1.0,
+      "frameIndex": 8,
+      "fonts": [],
+      "coverage": [
+        "two simultaneously open windows",
+        "independent platform and graphics sessions",
+        "distinct deterministic presented frames",
+        "independent Window.SaveScreenshot readback"
+      ],
+      "windowsDx": {
+        "images": [
+          {
+            "path": "WindowsDx/multi-window-a.png",
+            "sha256": "CD9270713A577EC2899D1141B2CA68F6EB8B924D8E1C351ACEB793C573AEAC63"
+          },
+          {
+            "path": "WindowsDx/multi-window-b.png",
+            "sha256": "555BC6AFA9139109622B1F78BEC7F432D77407D1868738AA84D6753C258EB64C"
+          }
+        ]
+      }
+    },
+    {
+      "id": "prism-family-sample",
+      "sourceProject": "CernealaPresentation/CernealaPresentation.csproj",
+      "requestedWindowSize": [1320, 860],
+      "logicalClientSize": [1320, 844],
+      "physicalSize": [1650, 1055],
+      "dpiScale": 1.25,
+      "fonts": ["Cascadia Mono"],
+      "selection": "The lexicographically first non-resource operation from each Kind:Category group in PrismCatalog.Filters and PrismCatalog.Styles.",
+      "representatives": [
+        "Filter:artistic-brush-sketch-stylize-and-texture:AccentedEdges",
+        "Filter:blur-and-sharpen:Average",
+        "Filter:color-and-adjustment:BlackWhite",
+        "Filter:distort-geometry-and-morphology:AdaptiveWideAngle",
+        "Filter:general-and-cerneala-native:ChromaticAberration",
+        "Filter:noise-pixelate-render-and-video:AddNoise",
+        "Style:layer-style:BevelEmboss"
+      ],
+      "coverage": [
+        "one deterministic representative from every resource-free Prism filter category",
+        "one deterministic representative from every resource-free Prism style category",
+        "retained multi-layer composition"
+      ],
+      "windowsDx": {
+        "image": "WindowsDx/prism.png",
+        "sha256": "B838ECFF3563D79FE3F2A172FA50DE82774D80ABF2EC45549D7A9180698359A1",
+        "metrics": "WindowsDx/prism.metrics.txt",
+        "metricsSha256": "75C0DE5F21BCCE151D554BDE22AC68B534205EF738B2329CFFD50FA64DE3EFE0"
+      }
+    }
+  ]
+}

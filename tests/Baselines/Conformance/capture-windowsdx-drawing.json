@@ -1,0 +1,17 @@
+{
+  "steps": [
+    {
+      "action": "click",
+      "automationId": "showcase-drawing-api"
+    },
+    {
+      "action": "screenshot",
+      "path": "WindowsDx/drawing-api.png"
+    },
+    {
+      "action": "pressKey",
+      "key": "F4",
+      "modifiers": ["Alt"]
+    }
+  ]
+}

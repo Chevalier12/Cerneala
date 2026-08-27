@@ -429,11 +429,11 @@ public sealed class PrismWindowsDxConformanceTests
         string shader = File.ReadAllText(Path.Combine(
             repositoryRoot,
             "Drawing",
-            "MonoGame",
             "Prism",
             "Shaders",
+            "Hlsl",
             "Styles",
-            "DistanceField.fx"));
+            "DistanceField.hlsl"));
         string executor = File.ReadAllText(Path.Combine(
             repositoryRoot,
             "Drawing",
@@ -449,11 +449,11 @@ public sealed class PrismWindowsDxConformanceTests
         string contourSource = File.ReadAllText(Path.Combine(
             repositoryRoot,
             "Drawing",
-            "MonoGame",
             "Prism",
             "Shaders",
+            "Hlsl",
             "Styles",
-            "Common.fx"));
+            "Common.hlsl"));
         Assert.Contains("SampleStyleContourLut", contourSource, StringComparison.Ordinal);
         Assert.Contains("PrepareStyleDistanceField", executor, StringComparison.Ordinal);
         Assert.Contains("while (jump >= 1)", executor, StringComparison.Ordinal);
@@ -467,11 +467,11 @@ public sealed class PrismWindowsDxConformanceTests
         string shader = File.ReadAllText(Path.Combine(
             repositoryRoot,
             "Drawing",
-            "MonoGame",
             "Prism",
             "Shaders",
+            "Hlsl",
             "Styles",
-            "BevelEmboss.fx"));
+            "BevelEmboss.hlsl"));
         string executor = File.ReadAllText(Path.Combine(
             repositoryRoot,
             "Drawing",
@@ -640,6 +640,7 @@ public sealed class PrismWindowsDxConformanceTests
         SetNumber("Size", 12);
         SetNumber("Spread", 0);
         SetNumber("Opacity", 1);
+        SetInteger("BlendMode", (int)PrismBlendMode.Normal);
         SetColor("Color", new CernealaColor(74, 218, 188));
         using PrismScene scene = BuildScene(
             "drop-shadow-isotropy",
@@ -675,6 +676,17 @@ public sealed class PrismWindowsDxConformanceTests
             PrismCatalogPropertyDescriptor property =
                 entry.Properties.Single(candidate => candidate.Name == name);
             GeneratedMarkup.SetPrismStyleNumber(
+                shadow,
+                entry.StableId,
+                property.TypeSlot,
+                value);
+        }
+
+        void SetInteger(string name, int value)
+        {
+            PrismCatalogPropertyDescriptor property =
+                entry.Properties.Single(candidate => candidate.Name == name);
+            GeneratedMarkup.SetPrismStyleInteger(
                 shadow,
                 entry.StableId,
                 property.TypeSlot,

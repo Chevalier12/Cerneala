@@ -1,0 +1,273 @@
+{
+  "toolVersion": "2",
+  "shaderCrossVersion": "3.0.0",
+  "shaderCrossPackageVersion": "3.0.0.9",
+  "manifestHash": "0648EB911B23B1F264C2116F109323485D5BA7C8E43B5EDADC38AB26487EBED0",
+  "sourceHash": "F838C66F87BCEA14AF5A7B5A3852E40393EBA8978C8F497556D1865D92724F3C",
+  "shaders": [
+    {
+      "logicalName": "drawing-vertex",
+      "stage": "Vertex",
+      "entryPoint": "main",
+      "variants": [
+        "default"
+      ],
+      "bindings": {
+        "samplers": 0,
+        "storageTextures": 0,
+        "storageBuffers": 0,
+        "uniformBuffers": 1,
+        "inputs": 3,
+        "outputs": 2
+      },
+      "layout": {
+        "uniformBuffers": [
+          {
+            "name": "FrameUniforms",
+            "slot": 0
+          }
+        ],
+        "samplers": [],
+        "storageTextures": [],
+        "storageBuffers": [],
+        "vertexInputs": [
+          {
+            "semantic": "TEXCOORD0",
+            "location": 0,
+            "format": "Float2"
+          },
+          {
+            "semantic": "TEXCOORD1",
+            "location": 1,
+            "format": "Float2"
+          },
+          {
+            "semantic": "TEXCOORD2",
+            "location": 2,
+            "format": "Float4"
+          }
+        ]
+      },
+      "outputs": {
+        "spirv": "8D727191D3DF7CA75B76A7C300C015B02EFC3D12E78BB229EA780D9546D7D84B",
+        "dxil": "813734C0ABD786C97E7F9A7EAC9426A5CED8A737FD6A4480332507A84E63E126",
+        "msl": "F6208B7582895270EEA970352328994EDC00634EC5200E19E7DAF503F0141D59"
+      }
+    },
+    {
+      "logicalName": "drawing-fragment",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [
+        "textured",
+        "untextured"
+      ],
+      "bindings": {
+        "samplers": 1,
+        "storageTextures": 0,
+        "storageBuffers": 0,
+        "uniformBuffers": 0,
+        "inputs": 2,
+        "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [],
+        "samplers": [
+          {
+            "name": "DrawingTexture/DrawingSampler",
+            "slot": 0
+          }
+        ],
+        "storageTextures": [],
+        "storageBuffers": [],
+        "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "FD48501A24FEA2D035F614BBF5537B0E039F067A8F61F983F2A357D53A2F0C42",
+        "dxil": "8910334FD4816A5F64E6AA349D4E87554536D18AD0ACFA3B5FD373B3D6C62A54",
+        "msl": "FF0AC3D630DA6F4C681E37B746881C9E966DFB4A80C085F0220E242161600D25"
+      }
+    },
+    {
+      "logicalName": "prism-fullscreen-vertex",
+      "stage": "Vertex",
+      "entryPoint": "main",
+      "variants": [
+        "fullscreen"
+      ],
+      "bindings": {
+        "samplers": 0,
+        "storageTextures": 0,
+        "storageBuffers": 0,
+        "uniformBuffers": 1,
+        "inputs": 3,
+        "outputs": 2
+      },
+      "layout": {
+        "uniformBuffers": [
+          {
+            "name": "PrismVertexUniforms",
+            "slot": 0
+          }
+        ],
+        "samplers": [],
+        "storageTextures": [],
+        "storageBuffers": [],
+        "vertexInputs": [
+          {
+            "semantic": "TEXCOORD0",
+            "location": 0,
+            "format": "Float2"
+          },
+          {
+            "semantic": "TEXCOORD1",
+            "location": 1,
+            "format": "Float2"
+          },
+          {
+            "semantic": "TEXCOORD2",
+            "location": 2,
+            "format": "Float4"
+          }
+        ]
+      },
+      "outputs": {
+        "spirv": "E0D4E5D9A5C2ADA69BF1A33DBBDE6B639B236AD3DA84D829CDCAD14816EB0FA6",
+        "dxil": "2B2493F80B28A25B96075F3021DA1121393C165D75C81265EA572DCEB590CC97",
+        "msl": "172C0AF1BEF22C8A92A017D96F928F1CE8FEF0C05068B458F70C68014D119E63"
+      }
+    },
+    {
+      "logicalName": "prism-copy-fragment",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [
+        "premultiplied-alpha"
+      ],
+      "bindings": {
+        "samplers": 1,
+        "storageTextures": 0,
+        "storageBuffers": 0,
+        "uniformBuffers": 1,
+        "inputs": 2,
+        "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [
+          {
+            "name": "PrismFragmentUniforms",
+            "slot": 0
+          }
+        ],
+        "samplers": [
+          {
+            "name": "SpriteTexture/SpriteTextureSampler",
+            "slot": 0
+          }
+        ],
+        "storageTextures": [],
+        "storageBuffers": [],
+        "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "DEA1E2432A9A325903C4D85FF0984927F678ABC6B8FE1B5FC25D8C3A609633AB",
+        "dxil": "79A625E238FAD08F89E92900DE887319EDFAACB7AA38E6B55DADE6F345429312",
+        "msl": "0FC2FC23911A35B3003002BD9A4DC1C7D173136D7C5D5EB621741B3EED6FAC58"
+      }
+    },
+    {
+      "logicalName": "prism-catalog-fragment",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [
+        "catalog-dispatch"
+      ],
+      "bindings": {
+        "samplers": 15,
+        "storageTextures": 0,
+        "storageBuffers": 0,
+        "uniformBuffers": 1,
+        "inputs": 2,
+        "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [
+          {
+            "name": "PrismFragmentUniforms",
+            "slot": 0
+          }
+        ],
+        "samplers": [
+          {
+            "name": "SpriteTexture/SpriteTextureState",
+            "slot": 0
+          },
+          {
+            "name": "SecondaryTexture/SecondaryTextureState",
+            "slot": 1
+          },
+          {
+            "name": "KnockoutBackdropTexture/KnockoutBackdropState",
+            "slot": 2
+          },
+          {
+            "name": "KnockoutShapeTexture/KnockoutShapeState",
+            "slot": 3
+          },
+          {
+            "name": "StyleTexture/StyleTextureState",
+            "slot": 4
+          },
+          {
+            "name": "StyleMaskTexture/StyleMaskState",
+            "slot": 5
+          },
+          {
+            "name": "FilterAuxiliaryTexture/FilterAuxiliaryState",
+            "slot": 6
+          },
+          {
+            "name": "DissolveThresholdTexture/DissolveThresholdState",
+            "slot": 7
+          },
+          {
+            "name": "StyleBackdropTexture/StyleBackdropState",
+            "slot": 8
+          },
+          {
+            "name": "GradientDitherTexture/GradientDitherState",
+            "slot": 9
+          },
+          {
+            "name": "DisplacementMapTexture/DisplacementMapState",
+            "slot": 10
+          },
+          {
+            "name": "StyleDistanceTexture/StyleDistanceState",
+            "slot": 11
+          },
+          {
+            "name": "StyleMaskSourceTexture/StyleMaskSourceState",
+            "slot": 12
+          },
+          {
+            "name": "WaveNoiseTableTexture/WaveNoiseTableState",
+            "slot": 13
+          },
+          {
+            "name": "SpatterPointTexture/SpatterPointState",
+            "slot": 14
+          }
+        ],
+        "storageTextures": [],
+        "storageBuffers": [],
+        "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "DA1BB0F807460AD207811594ECF6944B0F1462F0ABBA45DD9F67A1AAC5DB3CE9",
+        "dxil": "F214BC99D6F6564AED8909188308E33E7B021FE1A830906E1A08108E60CD2ACC",
+        "msl": "DDC2050CCD07B555F8C7855BC36D7C497A7DC84FFB16EE247509658061677163"
+      }
+    }
+  ]
+}

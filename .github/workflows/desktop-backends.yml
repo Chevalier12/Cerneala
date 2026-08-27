@@ -1,0 +1,208 @@
+name: Desktop Backends
+
+on:
+  push:
+    paths:
+      - ".github/workflows/desktop-backends.yml"
+      - "Cerneala.Backends.MonoGame/**"
+      - "Cerneala.Backends.SdlGpu/**"
+      - "Cerneala.Platforms.Sdl3/**"
+      - "Cerneala.SourceGen/**"
+      - "Drawing/Prism/Shaders/Hlsl/**"
+      - "Tools/Cerneala.SdlShaderCompiler/**"
+      - "Tools/scripts/*SdlGpuSmoke*.ps1"
+      - "UI/Hosting/Windowing/**"
+      - "tests/Cerneala.SdlGpuSmoke/**"
+      - "tests/Cerneala.Tests.SdlGpu/**"
+      - "tests/Cerneala.Tests.SourceGen/**"
+      - "tests/Cerneala.Tests/**"
+  pull_request:
+    paths:
+      - ".github/workflows/desktop-backends.yml"
+      - "Cerneala.Backends.MonoGame/**"
+      - "Cerneala.Backends.SdlGpu/**"
+      - "Cerneala.Platforms.Sdl3/**"
+      - "Cerneala.SourceGen/**"
+      - "Drawing/Prism/Shaders/Hlsl/**"
+      - "Tools/Cerneala.SdlShaderCompiler/**"
+      - "Tools/scripts/*SdlGpuSmoke*.ps1"
+      - "UI/Hosting/Windowing/**"
+      - "tests/Cerneala.SdlGpuSmoke/**"
+      - "tests/Cerneala.Tests.SdlGpu/**"
+      - "tests/Cerneala.Tests.SourceGen/**"
+      - "tests/Cerneala.Tests/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sdlgpu-desktop:
+    name: SDL_GPU ${{ matrix.nativeRid }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            nativeRid: win-x64
+            publishRids: win-x64,win-arm64
+          - os: ubuntu-latest
+            nativeRid: linux-x64
+            publishRids: linux-x64,linux-arm64
+          - os: macos-15
+            nativeRid: osx-arm64
+            publishRids: osx-x64,osx-arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Configure Linux virtual display and software Vulkan
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes xvfb mesa-vulkan-drivers vulkan-tools
+
+      - name: Restore
+        shell: pwsh
+        run: |
+          dotnet restore ./tests/Cerneala.SdlGpuSmoke/Cerneala.SdlGpuSmoke.csproj
+          dotnet restore ./tests/Cerneala.Tests.SdlGpu/Cerneala.Tests.SdlGpu.csproj
+          dotnet restore ./tests/Cerneala.Tests.SourceGen/Cerneala.Tests.SourceGen.csproj
+          dotnet restore ./Tools/Cerneala.SdlShaderCompiler/Cerneala.SdlShaderCompiler.csproj
+
+      - name: Build SDL_GPU smoke
+        shell: pwsh
+        run: dotnet build ./tests/Cerneala.SdlGpuSmoke/Cerneala.SdlGpuSmoke.csproj -c Release --no-restore
+
+      - name: Unit and contract tests
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path artifacts/ci/test-results -Force | Out-Null
+          dotnet test ./tests/Cerneala.Tests.SdlGpu/Cerneala.Tests.SdlGpu.csproj -c Release --no-restore --logger "trx;LogFileName=sdlgpu-${{ matrix.nativeRid }}.trx" --results-directory artifacts/ci/test-results
+          dotnet test ./tests/Cerneala.Tests.SourceGen/Cerneala.Tests.SourceGen.csproj -c Release --no-restore --logger "trx;LogFileName=sourcegen-${{ matrix.nativeRid }}.trx" --results-directory artifacts/ci/test-results
+
+      - name: Verify offline SDL_GPU shaders
+        shell: pwsh
+        run: dotnet run --project ./Tools/Cerneala.SdlShaderCompiler/Cerneala.SdlShaderCompiler.csproj -c Release -- --verify
+
+      - name: Publish both architecture RIDs
+        shell: pwsh
+        run: |
+          $desktopRids = '${{ matrix.publishRids }}'.Split(',')
+          foreach ($desktopRid in $desktopRids) {
+            & ./Tools/scripts/Publish-SdlGpuSmoke.ps1 -RuntimeIdentifier $desktopRid -OutputRoot artifacts/ci/publish
+          }
+
+      - name: Locate Linux lavapipe driver
+        if: runner.os == 'Linux'
+        shell: pwsh
+        run: |
+          $lavapipe = Get-ChildItem -LiteralPath /usr/share/vulkan/icd.d -Filter 'lvp_icd*.json' | Select-Object -First 1
+          if ($null -eq $lavapipe) {
+            throw 'Mesa lavapipe Vulkan ICD was not installed.'
+          }
+          "VK_ICD_FILENAMES=$($lavapipe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+          'LIBGL_ALWAYS_SOFTWARE=1' | Out-File -FilePath $env:GITHUB_ENV -Append
+          'SDL_VIDEODRIVER=x11' | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Native multi-window smoke
+        shell: pwsh
+        run: |
+          $arguments = @(
+            '-NoLogo', '-NoProfile', '-File', './Tools/scripts/Invoke-SdlGpuSmoke.ps1',
+            '-RuntimeIdentifier', '${{ matrix.nativeRid }}',
+            '-PublishedDirectory', 'artifacts/ci/publish/${{ matrix.nativeRid }}',
+            '-Mode', 'multi-window',
+            '-ArtifactDirectory', 'artifacts/ci/smoke/multi-window')
+          if ($IsLinux) {
+            & xvfb-run -a pwsh @arguments
+          }
+          else {
+            & pwsh @arguments
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Native Prism smoke
+        shell: pwsh
+        run: |
+          $arguments = @(
+            '-NoLogo', '-NoProfile', '-File', './Tools/scripts/Invoke-SdlGpuSmoke.ps1',
+            '-RuntimeIdentifier', '${{ matrix.nativeRid }}',
+            '-PublishedDirectory', 'artifacts/ci/publish/${{ matrix.nativeRid }}',
+            '-Mode', 'prism',
+            '-ArtifactDirectory', 'artifacts/ci/smoke/prism')
+          if ($IsLinux) {
+            & xvfb-run -a pwsh @arguments
+          }
+          else {
+            & pwsh @arguments
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload SDL_GPU logs and Window.SaveScreenshot captures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdlgpu-${{ matrix.nativeRid }}
+          if-no-files-found: warn
+          path: |
+            artifacts/ci/test-results/**
+            artifacts/ci/smoke/**
+
+  windowsdx-regression:
+    name: WindowsDX full regression
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        shell: pwsh
+        run: |
+          dotnet tool restore
+          dotnet restore ./Cerneala.slnx
+
+      - name: Build complete solution
+        shell: pwsh
+        run: dotnet build ./Cerneala.slnx -c Release --no-restore
+
+      - name: Test complete solution
+        shell: pwsh
+        run: dotnet test ./Cerneala.slnx -c Release --no-build --no-restore --logger "trx;LogFileName=windowsdx-full.trx" --results-directory artifacts/ci/test-results
+
+      - name: WindowsDX runtime smoke
+        shell: pwsh
+        run: dotnet run --project ./tests/Cerneala.WindowsDxSmoke/Cerneala.WindowsDxSmoke.csproj -c Release --no-build --no-restore
+
+      - name: WindowsDX to SDL_GPU pixel-diff report
+        shell: pwsh
+        env:
+          CERNEALA_SDL_NATIVE_TESTS: 1
+        run: |
+          New-Item -ItemType Directory -Path artifacts/ci/pixel-diff -Force | Out-Null
+          dotnet test ./tests/Cerneala.Tests/Cerneala.Tests.csproj -c Release --no-build --no-restore --filter "FullyQualifiedName~PrismSdlGpuPixelConformanceTests" --logger "console;verbosity=normal" 2>&1 | Tee-Object -FilePath artifacts/ci/pixel-diff/prism-sdlgpu-pixel-diff.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload WindowsDX regression and pixel-diff reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windowsdx-regression
+          if-no-files-found: warn
+          path: |
+            artifacts/ci/test-results/**
+            artifacts/ci/pixel-diff/**
+            tests/Cerneala.Tests/bin/Release/**/TestResults/**

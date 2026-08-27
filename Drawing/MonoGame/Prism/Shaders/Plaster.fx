@@ -1,8 +1,8 @@
 #include "Common/Parameters.fx"
-#include "Blends/All.fx"
-#include "Color/All.fx"
-#include "Filters/Catalog/Common.fx"
-#include "Filters/Catalog/Plaster.fx"
+#include "Common/AllBlends.fx"
+#include "Common/AllColor.fx"
+#include "../../../Prism/Shaders/Hlsl/Filters/Catalog/Common.hlsl"
+#include "../../../Prism/Shaders/Hlsl/Filters/Catalog/Plaster.hlsl"
 
 float4 PlasterFinalize(
     VertexShaderOutput input,

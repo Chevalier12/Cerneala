@@ -10,6 +10,8 @@
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.6.0" />
+    <PackageReference Include="SDL3-CS" Version="3.4.14.1" />
+    <PackageReference Include="SDL3-CS.Windows" Version="3.4.14.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -19,6 +21,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Cerneala.csproj" />
     <ProjectReference Include="..\..\Cerneala.Backends.MonoGame\Cerneala.Backends.MonoGame.csproj" />
+    <ProjectReference Include="..\..\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj" />
+    <ProjectReference Include="..\..\Cerneala.Platforms.Sdl3\Cerneala.Platforms.Sdl3.csproj" />
     <ProjectReference Include="..\..\Cerneala.Platforms.Win32\Cerneala.Platforms.Win32.csproj" />
     <ProjectReference Include="..\..\Cerneala.Language\Cerneala.Language.csproj" />
   </ItemGroup>
