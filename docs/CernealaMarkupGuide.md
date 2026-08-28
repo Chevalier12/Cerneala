@@ -1,7 +1,8 @@
-# Cerneala Markup Guide for Visual UI Work
+# Cerneala Markup Guide
 
-This guide is written for an implementation agent editing Cerneala UI files,
-especially files under `CernealaPresentation/`.
+This guide is for developers and AI agents authoring Cerneala `.crn` files.
+It describes the current compile-time markup language, not a compatibility
+subset inferred from WPF or Avalonia.
 
 The most important rule is simple:
 
@@ -22,15 +23,15 @@ diagnostics before `Cerneala.SourceGen` lowers the validated result to C#.
 Recovery keeps a partially typed document analyzable, but it does not weaken the
 build contract: saved markup is analyzed in strict `Build` mode, errors stop
 source emission, and generated code remains statically typed and reflection-free.
-The Visual Studio Community 2026 18.9 extension ships the local language server,
+The repository's Visual Studio extension ships the local language server,
 TextMate fallback, diagnostics, IntelliSense, navigation, semantic tokens,
 structure, formatting, and code actions for `.crn`. Do not register these files
 as generic XML; follow the
 [Visual Studio Community Extension](visual-studio-community.md) guide instead.
 
-## 1. Agent contract
+## 1. Working contract
 
-When doing visual UI work:
+When editing visual UI:
 
 1. Read the entire target `.crn` file before editing it.
 2. Read `App.crn` and one or two visually related sibling views.
@@ -42,7 +43,8 @@ When doing visual UI work:
 6. Keep behavior in markup only when Cerneala already supports it. Put arbitrary
    application logic in the companion C# partial class.
 7. Build after every meaningful markup change.
-8. Inspect a native Cerneala screenshot. A successful build is not visual QA.
+8. Inspect a screenshot captured through `Window.SaveScreenshot` or the
+   application-owned automation path. A successful build is not visual QA.
 9. Never edit generated files under `obj/`, `bin/`, or
    `tests/CodexPresentationHarness/generated/`.
 
@@ -318,7 +320,8 @@ responsive application UI.
 
 ## 6. Common controls
 
-The repository currently contains these useful visual controls:
+The repository currently contains these useful visual controls. This is a
+practical starting list, not the canonical API inventory.
 
 ### Structure and content
 
@@ -348,9 +351,13 @@ The repository currently contains these useful visual controls:
 
 - `Button`
 - `CheckBox`
+- `ColorPicker`
 - `ComboBox`
 - `ListBox`
 - `ListBoxItem`
+- `Menu`
+- `MenuBar`
+- `MenuItem`
 - `RadioButton`
 - `RepeatButton`
 - `ToggleButton`
@@ -368,10 +375,12 @@ The repository currently contains these useful visual controls:
 - `Image`
 - `Path`
 - `Rectangle`
+- `SvgImage`
 
 ### Specialized
 
 - `InkCanvas`
+- `RenderSurface2D`
 - `ToolTip`
 
 This list describes available runtime classes, not a promise that every WPF
@@ -382,9 +391,18 @@ property exists. Before using an unfamiliar control or property:
 3. Check its page under `docs-site/documentation/classes/`.
 4. Build immediately after the first small usage.
 
-Custom project controls can be used by their CLR class name. For example,
-`CernealaPresentation` defines `BrandMark`. Framework controls such as
-`SvgImage` are provided directly by `Cerneala.UI.Controls`.
+Custom project controls use a CLR namespace prefix:
+
+```xml
+<UserControl xmlns:local="clr-namespace:MyApp">
+    <local:GameView />
+</UserControl>
+```
+
+Framework controls such as `SvgImage` and `RenderSurface2D` are provided by
+`Cerneala.UI.Controls`. `RenderSurface2D` is the retained content control used
+for realtime 2D drawing. Its `Content` remains an ordinary retained subtree, so
+HUD controls can be placed over the game surface.
 
 ## 7. Text
 
@@ -483,6 +501,7 @@ WPF resource dictionaries.
 - `Tween`
 - `Spring`
 - `MotionClip`
+- `PrismComposition`
 
 `VisualBrush` is runtime-only because its source is a live element.
 
@@ -978,11 +997,47 @@ The parser also supports directives including:
 These have strict context and grammar rules. Do not improvise their syntax.
 Copy a current repository example and preserve its structure.
 
-## 14. What is not WPF-compatible
+## 14. Prism
+
+Prism is Cerneala's retained local visual composition system. It owns filters,
+styles, masks, blending, and backdrop work. Prism changes presentation. It does
+not change layout, hit testing, focus, or the logical tree.
+
+Declare a `PrismComposition` as a resource, then attach it with `@prism`:
+
+```xml
+<UserControl xmlns:local="clr-namespace:MyApp">
+    <UserControl.Resources>
+        <PrismComposition Name="GameSurfaceEffect">
+            @layer Game
+            {
+                @style OuterGlow
+                {
+                    Size = 5;
+                    Opacity = 0.34;
+                    Color = #804DF0FF;
+                }
+            }
+        </PrismComposition>
+    </UserControl.Resources>
+
+    <local:GameView>
+        @prism $GameSurfaceEffect;
+    </local:GameView>
+</UserControl>
+```
+
+Prism has a large typed catalog and its own Motion integration. Do not guess
+operation names or parameter types. Use the [Prism Guide](prism-guide.md), the
+[generated filter reference](prism-filter-reference.generated.md), compiler
+completion, and existing `.crn` examples.
+
+## 15. What is not WPF-compatible
 
 Do not use these unless the repository later adds explicit support:
 
-- `xmlns` and `x:` conventions copied from WPF;
+- XML namespace URIs copied from WPF or Avalonia. Cerneala supports its own
+  `xmlns:prefix="clr-namespace:..."` form for CLR controls;
 - `x:Name`, `x:Key`, or `StaticResource`;
 - `{Binding ...}` markup extensions;
 - WPF `Style`, `Setter`, `Trigger`, or `Storyboard`;
@@ -1006,7 +1061,7 @@ The safe Cerneala equivalents are:
 | Storyboard | Motion directives |
 | Visual state animation | `@animate` |
 
-## 15. Visual composition guidance
+## 16. Visual composition guidance
 
 For application and developer-tool UI:
 
@@ -1027,7 +1082,7 @@ For application and developer-tool UI:
   the domain or current presentation language.
 - Preserve a visible next-section cue only on actual landing or hero pages.
 
-## 16. Repository workflow
+## 17. Repository workflow
 
 This repository requires RoslynIndexer for navigation.
 
@@ -1053,13 +1108,17 @@ After code or project-file changes, refresh the index:
 dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- index .\Cerneala.slnx --json
 ```
 
-## 17. Build and native visual validation
+## 18. Build and native visual validation
 
 Build the relevant project:
 
 ```powershell
-dotnet build .\CernealaPresentation\CernealaPresentation.csproj --no-restore
+dotnet build .\CernealaPresentation\CernealaPresentation.csproj --no-restore -p:CernealaDesktopBackend=SDL3
 ```
+
+SDL3 GPU is the strategic backend. The presentation and playground currently
+default to MonoGame when `CernealaDesktopBackend` is omitted, but MonoGame is on
+a gradual retirement path and should not be treated as the long-term target.
 
 For `CernealaPresentation`, the built-in automation supports:
 
@@ -1079,13 +1138,16 @@ $env:CERNEALA_PRESENTATION_TOUR_CAPTURE = ".\presentation.png"
 $env:CERNEALA_PRESENTATION_CAPTURE_DURING_MOTION = "1"
 ```
 
-Launch the built presentation executable, wait for the capture, inspect the PNG,
-then close the process and remove temporary artifacts.
+Launch the presentation through the selected backend, wait for the capture,
+inspect the PNG, then close the process and remove temporary artifacts.
 
 The capture also writes a `.metrics.txt` file with the selected chapter and
-render-cache metrics.
+render-cache metrics. Cerneala application screenshots must come from
+`Window.SaveScreenshot` or an application-owned automation path that calls it.
+Do not substitute an operating-system screen capture and call it renderer
+evidence.
 
-## 18. Validation checklist
+## 19. Validation checklist
 
 Before declaring visual work complete:
 
@@ -1103,7 +1165,7 @@ Before declaring visual work complete:
 - [ ] Infinite motion is canceled when its view leaves the visual stage.
 - [ ] Temporary screenshots and processes were cleaned up.
 
-## 19. Minimal complete example
+## 20. Minimal complete example
 
 The following combines resources, layout, a named aspect, and Motion without
 using WPF-only syntax:
@@ -1235,3 +1297,13 @@ using WPF-only syntax:
 If this guide conflicts with current compiler diagnostics or a working
 repository example, the current compiler and repository win. Update the guide
 instead of forcing stale syntax.
+
+## 21. References And Community
+
+- [Cerneala website](https://chevalier12.github.io/Cerneala/)
+- [API reference](https://chevalier12.github.io/Cerneala/documentation.html)
+- [Getting Started](getting-started.md)
+- [Application Markup](application-markup.md)
+- [Markup Data Bindings](markup-data-bindings.md)
+- [Prism Guide](prism-guide.md)
+- [Discord](https://discord.gg/p6SbqByd59)
