@@ -92,6 +92,26 @@ SDL3 GPU is the strategic backend going forward. MonoGame will be discontinued
 gradually. No removal version or date is committed yet, and some checked-in
 projects still default to MonoGame today.
 
+## Control inventory
+
+This is the current public control surface, not a promise of WPF or Avalonia parity. "Available" means that a public type exists in the repository today. It does not mean that every familiar API or platform scenario is complete. "Not implemented yet" means that Cerneala does not currently expose that common control as a public type. It is not automatically a roadmap commitment.
+
+| Area | Available now | Not implemented yet |
+| --- | --- | --- |
+| Core and content | `Control`, `ContentControl`, `ContentPresenter`, `Decorator`, `UserControl`, `Window` | `Expander`, `GroupBox` |
+| Layout | `Panel`, `Canvas`, `StackPanel`, `Grid`, `VirtualizingStackPanel` | `DockPanel`, `WrapPanel`, `UniformGrid`, `GridSplitter` |
+| Display and media | `Border`, `TextBlock`, `Label`, `Image`, `SvgImage` | `MediaElement` |
+| Shapes | `Rectangle`, `Ellipse`, `Path`, `SvgPath` | `Line`, `Polyline`, `Polygon` |
+| Buttons and choices | `Button`, `RepeatButton`, `ToggleButton`, `CheckBox`, `RadioButton` | `ToggleSwitch`, `SplitButton` |
+| Text input | `TextBox`, `PasswordBox` | `RichTextBox` |
+| Items and selection | `ItemsControl`, `ItemsPresenter`, `ListBox`, `ListBoxItem`, `ComboBox`, `ComboBoxItem` | `TreeView`, `DataGrid` |
+| Range and scrolling | `Slider`, `ProgressBar`, `ScrollBar`, `ScrollViewer`, `ScrollContentPresenter`, `Track`, `Thumb` | `NumericUpDown` |
+| Menus and navigation | `Menu`, `MenuBar`, `MenuItem`, `TabControl`, `TabItem` | `ToolBar`, `StatusBar`, `NavigationView`, `Breadcrumb` |
+| Overlays | `Overlay`, `PopupRoot`, `ToolTip` | `Flyout` |
+| Specialized | `RenderSurface2D`, `InkCanvas`, `ColorPicker`, `ColorSpectrum`, `ColorSwatch` | `Calendar`, `DatePicker`, `TimePicker` |
+
+Some available controls still have known gaps. In particular, full IME, multiline editing, and rich-text scenarios are incomplete. The canonical API documentation and tests define what each existing type actually supports.
+
 ## AI-native, literally
 
 "AI-native" does not mean that an AI generated some files and disappeared.
@@ -110,6 +130,8 @@ The current repository skills cover work such as:
 The repository can also produce the evidence expected from a serious framework change: focused tests, full suites, native runtime smokes, screenshots through the application-owned capture API, pixel diffs, benchmarks, API diffs, and generated documentation checks.
 
 An agent saying "this looks correct" is not evidence. A compiler accepting the code is not enough either. The repo is built around reproducible checks because the framework is too large for one person, or one model, to understand every graphics, mathematics, language, platform, and UI detail from intuition alone.
+
+Using AI is optional. Human-only issues and contributions are welcome. The evidence bar does not change: describe the scenario, explain the expected behavior, provide a reliable reproduction, and record the verification that actually ran. "Doesn't work, fix plz" is not an actionable bug report, regardless of whether a human or an AI wrote it.
 
 ### [Maintainer's model policy](https://chevalier12.github.io/Cerneala/contributors.html#model-policy)
 
@@ -149,9 +171,25 @@ dotnet run --project ./Playground/Cerneala.Playground/Cerneala.Playground.csproj
 
 The SDL3 GPU CI path also builds and runs native smoke scenarios on Windows, Linux, and macOS. The main playground currently targets Windows.
 
+## Help wanted
+
+Cerneala was built primarily for my own use, but I want other people to use it and help make it better.
+
+I am not going to bullshit you: some important areas are outside my strongest expertise. I especially need contributors with real experience in:
+
+- Prism, realtime visual composition, filters, masks, blending, and GPU effects;
+- SDL3 and SDL_GPU rendering architecture;
+- batching, geometry, shaders, uploads, resource lifetime, and GPU synchronization;
+- game loops, frame pacing, input, cameras, sprites, collision, and other practical game-development systems;
+- graphics mathematics and numerical work related to realtime rendering.
+
+You do not need to understand the entire framework before helping. Pick a bounded subsystem or scenario, use the repository tooling, reproduce what actually happens, and bring evidence.
+
+Domain expertise is welcome. Speculative rewrites are not. Issues and pull requests still need documented contracts, focused scope, tests, measurements, visual evidence, or native runtime evidence when applicable.
+
 ## Contributing
 
-Issues and pull requests are welcome. They need to be documented, and technical claims need evidence.
+Issues and pull requests are welcome, with or without AI assistance. They need to be documented, and technical claims need evidence.
 
 For a bug report, include:
 
