@@ -1,0 +1,4 @@
+interface:
+  display_name: "CernealaPerformanceGate"
+  short_description: "Make measured Cerneala performance gates pass"
+  default_prompt: "Use $cerneala-performance-gate to reproduce this observable lag, install any required diagnostic tools, trace and instrument every relevant layer temporarily, fix the owning Cerneala bottleneck without fidelity loss, and prove my unchanged gate passes."

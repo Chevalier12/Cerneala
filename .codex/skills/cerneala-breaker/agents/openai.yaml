@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cerneala Breaker"
+  short_description: "Break Cerneala with evidence, not theater"
+  default_prompt: "Use $cerneala-breaker to adversarially test this target and report only evidence-backed failures."
