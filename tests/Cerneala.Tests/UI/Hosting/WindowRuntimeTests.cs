@@ -58,6 +58,61 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
+    public void NativeWindowIsShownOnlyAfterItsFirstFrameWasPresented()
+    {
+        FakeWindowPlatform platform = new();
+        Install(platform);
+        Window window = new() { Content = new TextBlock { Text = "Ready" } };
+
+        window.Show();
+
+        FakePlatformWindow nativeWindow = Assert.Single(platform.Windows);
+        Assert.Equal(1, nativeWindow.ShowCount);
+        Assert.True(nativeWindow.HadPresentedFrameWhenShown);
+    }
+
+    [Fact]
+    public void NativeActivationFocusesAFocusableWindowWhenNoElementIsFocused()
+    {
+        FakeWindowPlatform platform = new();
+        Install(platform);
+        Window window = new() { Focusable = true };
+
+        window.Show();
+        Assert.False(window.IsKeyboardFocused);
+
+        Assert.Single(platform.Windows).Activate();
+
+        Assert.True(window.IsActive);
+        Assert.True(window.IsKeyboardFocused);
+    }
+
+    [Fact]
+    public void NativeActivationPreservesAnExistingFocusedChild()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Button button = new() { Content = "Focused" };
+        Window window = new() { Content = button, Focusable = true };
+        window.Show();
+        FakePlatformWindow nativeWindow = Assert.Single(platform.Windows);
+        LayoutRect bounds = button.ArrangedBounds;
+        nativeWindow.Input.MovePointer(
+            bounds.X + (bounds.Width / 2),
+            bounds.Y + (bounds.Height / 2));
+        nativeWindow.Input.SetButton(InputMouseButton.Left, true);
+        nativeWindow.RequestRender();
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.True(button.IsKeyboardFocused);
+
+        nativeWindow.Activate();
+
+        Assert.True(button.IsKeyboardFocused);
+        Assert.False(window.IsKeyboardFocused);
+    }
+
+    [Fact]
     public void RenderLifecycleCallbacksRunInsideTheWindowRelaySynchronizationContext()
     {
         FakeWindowPlatform platform = new();
@@ -652,6 +707,10 @@ public sealed class WindowRuntimeTests : IDisposable
 
         public int ApplyPropertiesCount { get; private set; }
 
+        public int ShowCount { get; private set; }
+
+        public bool HadPresentedFrameWhenShown { get; private set; }
+
         public void ApplyProperties(Window source)
         {
             ApplyPropertiesCount++;
@@ -680,6 +739,8 @@ public sealed class WindowRuntimeTests : IDisposable
 
         public void Show()
         {
+            ShowCount++;
+            HadPresentedFrameWhenShown = Session.PresentCount > 0;
         }
 
         public void Hide()

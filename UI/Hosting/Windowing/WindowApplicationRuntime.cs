@@ -43,6 +43,9 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
     public static WindowApplicationRuntime CurrentOrDefault => current ??= CreateDefault();
 
+    internal static WindowApplicationRuntime GetOrCreateDefault(bool useMultisampling) =>
+        current ??= CreateDefault(useMultisampling);
+
     public IReadOnlyList<Window> Windows => windows;
 
     public Window? ActiveWindow { get; private set; }
@@ -145,8 +148,31 @@ internal sealed class WindowApplicationRuntime : IDisposable
         }
 
         window.SetShown(true);
-        context.PlatformWindow.Show();
-        Render(context, TimeSpan.Zero);
+        try
+        {
+            bool rendered = Render(context, TimeSpan.Zero);
+            if (!rendered || !IsLiveContext(context))
+            {
+                return;
+            }
+
+            context.PlatformWindow.Show();
+        }
+        catch
+        {
+            if (!window.IsClosed)
+            {
+                window.SetShown(false);
+            }
+
+            if (context.IsModal)
+            {
+                context.IsModal = false;
+                SetOwnerEnabled(window.Owner, enabled: true);
+            }
+
+            throw;
+        }
     }
 
     public void Hide(Window window)
@@ -688,7 +714,6 @@ internal sealed class WindowApplicationRuntime : IDisposable
             {
                 return false;
             }
-
             IWindowGraphicsSession graphicsSession = context.PlatformWindow.GraphicsSession;
             long beginFrameStarted = Stopwatch.GetTimestamp();
             graphicsSession.BeginFrame(Color.White);
@@ -737,7 +762,6 @@ internal sealed class WindowApplicationRuntime : IDisposable
                 frame.DiagnosticsTiming.ScheduledPhases,
                 frame.DiagnosticsTiming.InputPhases);
             frame.ProcessingTime = Stopwatch.GetElapsedTime(processingStarted);
-
             using (context.Root.Relay.EnterSynchronizationContext())
             {
                 context.Window.MarkFrameRendered(frame);
@@ -837,7 +861,24 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
         ActiveWindow?.SetActive(false);
         ActiveWindow = window;
-        ActiveWindow?.SetActive(true);
+        if (ActiveWindow is not null)
+        {
+            EnsureInitialKeyboardFocus(ActiveWindow);
+            ActiveWindow.SetActive(true);
+        }
+    }
+
+    private void EnsureInitialKeyboardFocus(Window window)
+    {
+        if (!window.Focusable ||
+            !contexts.TryGetValue(window, out WindowContext? context) ||
+            context.Host.InputBridge.FocusManager.FocusedElement is not null)
+        {
+            return;
+        }
+
+        ElementInputRouteMap routes = context.Root.InputCache.EnsureCurrent(context.Root);
+        context.Host.InputBridge.FocusManager.Focus(window, routes);
     }
 
     private void VerifyAccess()
@@ -848,10 +889,10 @@ internal sealed class WindowApplicationRuntime : IDisposable
         }
     }
 
-    private static WindowApplicationRuntime CreateDefault()
+    private static WindowApplicationRuntime CreateDefault(bool useMultisampling = false)
     {
         IWindowPlatform platform = WindowingBackendRegistry.CreatePlatform(
-            useMultisampling: true,
+            useMultisampling,
             coordinateScaleOverride: null);
         return new WindowApplicationRuntime(platform);
     }

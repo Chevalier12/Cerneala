@@ -305,7 +305,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         }
 
         if (ReferenceEquals(element, root) && element.Name == "Application" &&
-            name is "StartupWindow" or "ShutdownMode")
+            name is "StartupWindow" or "ShutdownMode" or "UseMultisampling")
         {
             return null;
         }

@@ -22,10 +22,20 @@ public partial class App : Application
 }
 ```
 
+Application markup can enable multisampling before the windowing backend is created:
+
+```xml
+<Application
+    StartupWindow="MainWindow"
+    UseMultisampling="True" />
+```
+
 ## Remarks
 `Current` identifies the installed application during startup and runtime. Lifecycle operations and window properties must be accessed from the owning UI thread.
 
 `Windows` and `ActiveWindow` are views of the attached window runtime; the application does not maintain a second window collection. `MainWindow` can be reassigned without closing the previous window. The selected `ShutdownMode` is evaluated only after a window closes successfully.
+
+`UseMultisampling` controls whether the windowing backend requests multisampled render targets. It defaults to `false` and is read when the default runtime is created. Changing it after runtime creation does not recreate graphics resources.
 
 `Shutdown(int)` is idempotent. Its first call closes remaining windows, raises `Exit` once, disposes the published service provider when it implements `IDisposable`, and clears `Current`.
 
@@ -43,6 +53,7 @@ public partial class App : Application
 | `MainWindow` | Window currently designated as the main window. |
 | `Windows` | Read-only view of runtime-owned windows. |
 | `ActiveWindow` | Currently active runtime window, if any. |
+| `UseMultisampling` | Whether the windowing backend requests multisampled render targets. The default is `false`. |
 | `ShutdownMode` | Policy evaluated after a successful window close. |
 
 ## Methods

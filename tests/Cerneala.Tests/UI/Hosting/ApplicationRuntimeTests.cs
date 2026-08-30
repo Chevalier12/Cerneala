@@ -38,6 +38,7 @@ public sealed class ApplicationRuntimeTests : IDisposable
         AssertProperty(application, "MainWindow", typeof(Window));
         AssertProperty(application, "Windows");
         AssertProperty(application, "ActiveWindow", typeof(Window));
+        AssertProperty(application, "UseMultisampling", typeof(bool));
         AssertProperty(application, "ShutdownMode", RequireShutdownModeType());
         AssertMethod(application, "Shutdown", Type.EmptyTypes);
         AssertMethod(application, "Shutdown", [typeof(int)]);
@@ -47,6 +48,12 @@ public sealed class ApplicationRuntimeTests : IDisposable
         AssertProtectedVirtual(application, "ConfigureServices");
         AssertProtectedVirtual(application, "OnStartup");
         AssertProtectedVirtual(application, "OnExit");
+    }
+
+    [Fact]
+    public void ApplicationDisablesMultisamplingByDefault()
+    {
+        Assert.False(new Application().UseMultisampling);
     }
 
     [Fact]

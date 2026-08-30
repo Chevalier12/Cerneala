@@ -178,7 +178,7 @@ public sealed partial class UiMarkupGenerator
         }
 
         foreach (MarkupAttribute attribute in root.Attributes().Where(attribute =>
-            attribute.Name.LocalName is not "StartupWindow" and not "ShutdownMode"))
+            attribute.Name.LocalName is not "StartupWindow" and not "ShutdownMode" and not "UseMultisampling"))
         {
             ReportApplicationDiagnostic(context, file, $"Attribute '{attribute.Name.LocalName}' is not valid on Application.", attribute);
             return null;
@@ -255,6 +255,22 @@ public sealed partial class UiMarkupGenerator
 
             source.Append("        ShutdownMode = global::Cerneala.UI.ApplicationShutdownMode.")
                 .Append(mode).AppendLine(";");
+        }
+        if (root.Attribute("UseMultisampling") is MarkupAttribute multisampling)
+        {
+            if (!bool.TryParse(multisampling.Value.Trim(), out bool useMultisampling))
+            {
+                ReportApplicationDiagnostic(
+                    context,
+                    file,
+                    $"UseMultisampling '{multisampling.Value}' is invalid.",
+                    multisampling);
+                return null;
+            }
+
+            source.Append("        UseMultisampling = ")
+                .Append(useMultisampling ? "true" : "false")
+                .AppendLine(";");
         }
         source.AppendLine("    }");
         source.AppendLine("}");

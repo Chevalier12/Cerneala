@@ -161,6 +161,18 @@ because the external host owns the pump.
 
 A canceled `Closing` event does not trigger shutdown.
 
+## Multisampling
+
+`UseMultisampling` controls whether the selected rendering backend requests
+multisampled render targets. It accepts `True` or `False` and defaults to
+`False`. Set it to `True` when the application deliberately prefers
+multisampled edge smoothing over lower GPU memory use:
+
+```xml
+<Application StartupWindow="ShellWindow"
+             UseMultisampling="True" />
+```
+
 ## Application Resources
 
 `Application.Resources` accepts the existing resource syntax for

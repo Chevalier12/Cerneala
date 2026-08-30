@@ -48,6 +48,22 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void ApplicationMarkupEmitsMultisamplingPreference()
+    {
+        GeneratorRunResult result = RunApplicationGenerator(
+            "<Application StartupWindow=\"ShellWindow\" UseMultisampling=\"False\" />",
+            ApplicationInput,
+            OutputKind.WindowsApplication,
+            out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("UseMultisampling = false;", SingleGeneratedSource(result));
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+    }
+
+    [Fact]
     public void PairedApplicationOwnsHostedModuleInitializer()
     {
         const string program = """
@@ -327,6 +343,7 @@ public sealed partial class UiMarkupGeneratorTests
 
     [Theory]
     [InlineData("<Application StartupWindow=\"ShellWindow\" ShutdownMode=\"Whenever\" />", "ShutdownMode")]
+    [InlineData("<Application StartupWindow=\"ShellWindow\" UseMultisampling=\"Sometimes\" />", "UseMultisampling")]
     [InlineData("<Application StartupWindow=\"ShellWindow\">@when Ready { }</Application>", "directives")]
     public void ApplicationRejectsInvalidPolicyAndDirectives(string markup, string expectedMessage)
     {

@@ -66,6 +66,8 @@ public class Application
         }
     }
 
+    public bool UseMultisampling { get; set; } = false;
+
     public ApplicationShutdownMode ShutdownMode { get; set; } = ApplicationShutdownMode.OnLastWindowClose;
 
     public event EventHandler<ApplicationStartupEventArgs>? Startup;

@@ -18,6 +18,7 @@ var window = new Window
     Title = "Cerneala",
     Width = 1024,
     Height = 768,
+    Focusable = true,
     WindowStartupLocation = WindowStartupLocation.CenterScreen
 };
 ```
@@ -32,6 +33,8 @@ The window renders its configured background and border before its content. `Las
 `SaveScreenshot` redraws the current retained command tree into a complete client framebuffer before encoding the PNG. This keeps captures complete even when the displayed frame is changing continuously under Motion. Call it from `FrameRendered` when the capture must correspond to a specific frame boundary.
 
 `CreateAutomationSession` attaches a retained input driver and the `SaveScreenshot` provider to the window's current visual tree. The window must already be shown.
+
+When the native platform activates a window and no retained element already has keyboard focus, a window with `Focusable` set to `true` receives keyboard focus automatically. Activation preserves an existing focused child instead of replacing it with the window.
 
 ## Properties
 | Name | Description |
@@ -58,4 +61,4 @@ The window renders its configured background and border before its content. `Las
 | `CreateAutomationSession()` | Creates an in-process user-like automation session for this shown window. |
 
 ## Applies to
-Windows desktop hosting.
+Desktop window hosting backends.

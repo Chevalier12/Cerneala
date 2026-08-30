@@ -72,7 +72,7 @@ public static class GeneratedWindowApplication
             descriptor,
             "construct Application",
             descriptor.CreateApplication);
-        WindowApplicationRuntime runtime = WindowApplicationRuntime.CurrentOrDefault;
+        WindowApplicationRuntime runtime = WindowApplicationRuntime.GetOrCreateDefault(application.UseMultisampling);
         Exception? failure = null;
         try
         {
@@ -101,12 +101,12 @@ public static class GeneratedWindowApplication
         {
             GeneratedWindowStartupDescriptor descriptor = pendingStartup;
             pendingStartup = null;
-            hostedRuntime = WindowApplicationRuntime.CurrentOrDefault;
             Exception? failure = null;
             try
             {
                 if (descriptor.CreateApplication is null)
                 {
+                    hostedRuntime = WindowApplicationRuntime.CurrentOrDefault;
                     hostedServices = BuildServices(descriptor);
                     hostedRuntime.StartMainWindow(descriptor.CreateMainWindow(hostedServices));
                 }
@@ -116,6 +116,7 @@ public static class GeneratedWindowApplication
                         descriptor,
                         "construct Application",
                         descriptor.CreateApplication);
+                    hostedRuntime = WindowApplicationRuntime.GetOrCreateDefault(application.UseMultisampling);
                     StartApplication(descriptor, application, hostedRuntime, Array.Empty<string>());
                     if (application.IsShutdownRequested)
                     {
