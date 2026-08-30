@@ -52,7 +52,8 @@ public readonly record struct PrismDrawScope
         PrismDrawResources resources,
         long lowerUiVersion = 0,
         bool isLocalDrawingScope = false,
-        IDrawImage? imageDependency = null)
+        IDrawImage? imageDependency = null,
+        long drawContentVersion = 0)
     {
         Instance = instance ?? throw new ArgumentNullException(nameof(instance));
         ArgumentNullException.ThrowIfNull(resources);
@@ -77,6 +78,13 @@ public readonly record struct PrismDrawScope
                 lowerUiVersion,
                 "Prism lower UI versions cannot be negative.");
         }
+        if (drawContentVersion < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(drawContentVersion),
+                drawContentVersion,
+                "Prism draw content versions cannot be negative.");
+        }
 
         CacheOwnerToken = cacheOwnerToken;
         ControlBounds = controlBounds;
@@ -87,6 +95,7 @@ public readonly record struct PrismDrawScope
         Resources = resources;
         IsLocalDrawingScope = isLocalDrawingScope;
         ImageDependency = imageDependency;
+        DrawContentVersion = drawContentVersion;
     }
 
     public PrismInstance Instance { get; }
@@ -115,6 +124,8 @@ public readonly record struct PrismDrawScope
 
     internal IDrawImage? ImageDependency { get; }
 
+    internal long DrawContentVersion { get; }
+
     internal PrismDrawScope TranslateLocal(float offsetX, float offsetY)
     {
         if (!IsLocalDrawingScope || offsetX == 0 && offsetY == 0)
@@ -136,7 +147,8 @@ public readonly record struct PrismDrawScope
             Resources,
             LowerUiVersion,
             isLocalDrawingScope: true,
-            ImageDependency);
+            ImageDependency,
+            DrawContentVersion);
     }
 
     internal PrismDrawScope ApplyLocalTransform(Matrix3x2 transform)
@@ -155,6 +167,7 @@ public readonly record struct PrismDrawScope
             VisualContentVersion,
             Resources,
             LowerUiVersion,
-            imageDependency: ImageDependency);
+            imageDependency: ImageDependency,
+            drawContentVersion: DrawContentVersion);
     }
 }

@@ -125,6 +125,14 @@ internal static class PrismResamplingPlanner
                 StringComparison.Ordinal);
     }
 
+    public static bool RequiresStableHostCoordinates(PrismFilterId filter) =>
+        filter is
+            PrismFilterId.Pinch or
+            PrismFilterId.PolarCoordinates or
+            PrismFilterId.Spherize or
+            PrismFilterId.Twirl or
+            PrismFilterId.ZigZag;
+
     public static PrismResamplingPlan Create(
         PrismFilterId filter,
         ImmutableArray<PrismGraphParameter> parameters,

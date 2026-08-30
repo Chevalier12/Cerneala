@@ -9,6 +9,10 @@ namespace Cerneala.Drawing.Prism.Graph;
 
 internal sealed class PrismGraphBuilder
 {
+    private PrismFrameAnalysis? previousAnalysis;
+    private PrismBackdropFrameDescriptor? previousBackdropFrame;
+    private PrismGraph? previousGraph;
+
     public PrismGraph Build(PrismFrameAnalysis analysis)
     {
         return BuildCore(analysis, backdropFrame: null);
@@ -36,12 +40,18 @@ internal sealed class PrismGraphBuilder
         return BuildCore(analysis, backdropFrame);
     }
 
-    private static PrismGraph BuildCore(
+    private PrismGraph BuildCore(
         PrismFrameAnalysis analysis,
         PrismBackdropFrameDescriptor? backdropFrame)
     {
         ArgumentNullException.ThrowIfNull(analysis);
         EnsureCurrent(analysis);
+        if (ReferenceEquals(previousAnalysis, analysis) &&
+            previousBackdropFrame == backdropFrame &&
+            previousGraph is PrismGraph retainedGraph)
+        {
+            return retainedGraph;
+        }
 
         ImmutableArray<PrismGraphNode>.Builder nodes =
             ImmutableArray.CreateBuilder<PrismGraphNode>();
@@ -63,7 +73,14 @@ internal sealed class PrismGraphBuilder
         }
 
         EnsureCurrent(analysis);
-        return new PrismGraph(nodes.ToImmutable(), edges.ToImmutable(), scopes.MoveToImmutable());
+        PrismGraph graph = new(
+            nodes.ToImmutable(),
+            edges.ToImmutable(),
+            scopes.MoveToImmutable());
+        previousAnalysis = analysis;
+        previousBackdropFrame = backdropFrame;
+        previousGraph = graph;
+        return graph;
     }
 
     private static void EnsureCurrent(PrismFrameAnalysis analysis)
@@ -164,7 +181,7 @@ internal sealed class PrismGraphBuilder
                 ordinal: 0,
                 definitionOrder: -1,
                 diagnosticName: $"{definition.Name}/control",
-                dependencies: Dependencies(
+                dependencies: DependenciesWithoutValues(
                     new PrismGraphDependency(
                         PrismGraphDependencyKind.VisualContent,
                         analyzedScope.DependencyStamp.CacheOwnerToken.Value,
@@ -187,7 +204,7 @@ internal sealed class PrismGraphBuilder
                 ordinal: 0,
                 definitionOrder: -1,
                 diagnosticName: $"{definition.Name}/control-color",
-                dependencies: Dependencies(
+                dependencies: DependenciesWithoutValues(
                     new PrismGraphDependency(
                         PrismGraphDependencyKind.ColorProfile,
                         analyzedScope.DependencyStamp.CacheOwnerToken.Value,
@@ -1074,7 +1091,8 @@ internal sealed class PrismGraphBuilder
                 analyzedScope.DependencyStamp.CacheOwnerToken,
                 definitionNodeId?.Value ?? 0,
                 kind,
-                ordinal);
+                ordinal,
+                analyzedScope.ScopeIndex);
             if (!nodeIds.Add(id))
             {
                 throw Failure(
@@ -1179,6 +1197,23 @@ internal sealed class PrismGraphBuilder
                 ImmutableArray.CreateBuilder<PrismGraphDependency>(
                     scopeDependencies.Length + additional.Length);
             builder.AddRange(scopeDependencies);
+            builder.AddRange(additional);
+            return builder.MoveToImmutable();
+        }
+
+        private ImmutableArray<PrismGraphDependency> DependenciesWithoutValues(
+            params PrismGraphDependency[] additional)
+        {
+            ImmutableArray<PrismGraphDependency>.Builder builder =
+                ImmutableArray.CreateBuilder<PrismGraphDependency>(
+                    scopeDependencies.Length - 1 + additional.Length);
+            foreach (PrismGraphDependency dependency in scopeDependencies)
+            {
+                if (dependency.Kind != PrismGraphDependencyKind.Values)
+                {
+                    builder.Add(dependency);
+                }
+            }
             builder.AddRange(additional);
             return builder.MoveToImmutable();
         }

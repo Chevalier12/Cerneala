@@ -7,4 +7,5 @@ internal readonly record struct PrismDependencyStamp(
     PrismStructuralVersion StructuralVersion,
     PrismValueVersion ValueVersion,
     long VisualContentVersion,
-    long DescendantVersion);
+    long DescendantVersion,
+    long DrawContentVersion = 0);

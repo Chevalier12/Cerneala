@@ -18,8 +18,9 @@ internal sealed class PrismGraphExecutionCache
     private readonly long[] missCounts =
         new long[(int)PrismCacheMissReason.Disabled + 1];
     private readonly Dictionary<
-        PrismCacheOwnerToken,
+        ScopeOccurrence,
         PrismRetainedCacheKey> ownerFinalKeys = [];
+    private readonly List<ScopeOccurrence> ownerFinalKeysToRemove = [];
     private bool[] requiredNodes = [];
     private bool[] requiredTransientSurfaces = [];
     private bool[] cacheResultValid = [];
@@ -253,8 +254,11 @@ internal sealed class PrismGraphExecutionCache
 
             PrismRetainedCacheKey current =
                 retainedKeys[outputIndex];
+            ScopeOccurrence occurrence = new(
+                scope.CacheOwnerToken,
+                scope.AnalysisScopeIndex);
             if (ownerFinalKeys.TryGetValue(
-                    scope.CacheOwnerToken,
+                    occurrence,
                 out PrismRetainedCacheKey previous) &&
                 previous != current)
             {
@@ -268,7 +272,7 @@ internal sealed class PrismGraphExecutionCache
                 pendingMissReason =
                     PrismCacheMissReason.DependencyChanged;
             }
-            ownerFinalKeys[scope.CacheOwnerToken] =
+            ownerFinalKeys[occurrence] =
                 current;
         }
     }
@@ -289,7 +293,18 @@ internal sealed class PrismGraphExecutionCache
         PrismCacheMissReason missReason)
     {
         retainedSurfaceCache.RemoveOwner(ownerToken);
-        ownerFinalKeys.Remove(ownerToken);
+        ownerFinalKeysToRemove.Clear();
+        foreach (ScopeOccurrence occurrence in ownerFinalKeys.Keys)
+        {
+            if (occurrence.OwnerToken == ownerToken)
+            {
+                ownerFinalKeysToRemove.Add(occurrence);
+            }
+        }
+        foreach (ScopeOccurrence occurrence in ownerFinalKeysToRemove)
+        {
+            ownerFinalKeys.Remove(occurrence);
+        }
         pendingMissReason = missReason;
     }
 
@@ -615,6 +630,8 @@ internal sealed class PrismGraphExecutionCache
             changes |= PrismDependencyChange.Owner;
         }
         if (previous.CandidateKind != current.CandidateKind ||
+            previous.StableNodeId.AnalysisScopeIndex !=
+                current.StableNodeId.AnalysisScopeIndex ||
             previous.StableNodeId.DefinitionNodeId !=
                 current.StableNodeId.DefinitionNodeId ||
             previous.StableNodeId.Kind !=
@@ -629,9 +646,11 @@ internal sealed class PrismGraphExecutionCache
             changes |= PrismDependencyChange.Structure;
         }
         if (previous.DependencyStamp.ValueVersion !=
-                current.DependencyStamp.ValueVersion ||
+            current.DependencyStamp.ValueVersion ||
             previous.DependencyStamp.VisualContentVersion !=
                 current.DependencyStamp.VisualContentVersion ||
+            previous.DependencyStamp.DrawContentVersion !=
+                current.DependencyStamp.DrawContentVersion ||
             previous.DependencyStamp.DescendantVersion !=
                 current.DependencyStamp.DescendantVersion ||
             previous.ValueFingerprint != current.ValueFingerprint)
@@ -771,4 +790,8 @@ internal sealed class PrismGraphExecutionCache
         throw new InvalidOperationException(
             $"Prism graph scope '{analysisScopeIndex}' does not exist.");
     }
+
+    private readonly record struct ScopeOccurrence(
+        PrismCacheOwnerToken OwnerToken,
+        int AnalysisScopeIndex);
 }

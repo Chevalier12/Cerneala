@@ -298,9 +298,14 @@ internal readonly record struct PrismRetainedCacheKey(
         }
 
         long lowerUiVersion = 0;
+        bool dependsOnValues = false;
         foreach (PrismGraphDependency dependency in
             plan.CacheDependencies)
         {
+            if (dependency.Kind == PrismGraphDependencyKind.Values)
+            {
+                dependsOnValues = true;
+            }
             if (dependency.Kind ==
                 PrismGraphDependencyKind.BackdropFrame)
             {
@@ -308,11 +313,17 @@ internal readonly record struct PrismRetainedCacheKey(
                 break;
             }
         }
+        PrismDependencyStamp dependencyStamp = dependsOnValues
+            ? scope.DependencyStamp
+            : scope.DependencyStamp with
+            {
+                ValueVersion = default
+            };
 
         key = new PrismRetainedCacheKey(
             plan.CacheCandidateKind,
             nodeId,
-            scope.DependencyStamp,
+            dependencyStamp,
             plan.StructuralFingerprint,
             plan.ValueFingerprint,
             plan.DependencyFingerprint,
@@ -335,83 +346,121 @@ internal readonly record struct PrismRetainedCacheKey(
 
 internal sealed class PrismRetainedFingerprintBuilder
 {
-    private readonly PrismGraph graph;
+    private PrismGraph graph = null!;
     private readonly Dictionary<
         PrismGraphNodeId,
-        ImmutableArray<PrismGraphEdge>> incoming;
-    private readonly Dictionary<int, PrismGraphScope> scopes;
+        List<PrismGraphEdge>> incoming = [];
+    private readonly Stack<List<PrismGraphEdge>> incomingPool = new();
+    private readonly Dictionary<int, PrismGraphScope> scopes = [];
+    private readonly HashSet<PrismGraphNodeId> ancestors = [];
+    private readonly Stack<PrismGraphNodeId> pendingAncestors = new();
+    private readonly List<PrismGraphNode> orderedNodes = [];
+    private readonly List<PrismGraphEdge> orderedEdges = [];
+    private readonly HashSet<int> scopeIndexSet = [];
+    private readonly List<int> scopeIndexes = [];
+    private readonly List<PrismGraphParameter> orderedParameters = [];
+    private readonly List<long> structuralComponents = [];
+    private readonly List<long> valueComponents = [];
+    private readonly List<long> dependencyComponents = [];
 
-    public PrismRetainedFingerprintBuilder(
-        PrismGraph graph)
+    public void Reset(PrismGraph graph)
     {
         this.graph = graph ??
             throw new ArgumentNullException(nameof(graph));
-        incoming = graph.Edges
-            .GroupBy(edge => edge.Target)
-            .ToDictionary(
-                group => group.Key,
-                group => group
-                    .OrderBy(edge => edge.Kind)
-                    .ThenBy(
-                        edge => edge.Source,
-                        NodeIdComparer.Instance)
-                    .ToImmutableArray());
-        scopes = graph.Scopes.ToDictionary(
-            scope => scope.AnalysisScopeIndex);
+        foreach (List<PrismGraphEdge> edges in incoming.Values)
+        {
+            edges.Clear();
+            incomingPool.Push(edges);
+        }
+        incoming.Clear();
+        foreach (PrismGraphEdge edge in graph.Edges)
+        {
+            if (!incoming.TryGetValue(edge.Target, out List<PrismGraphEdge>? edges))
+            {
+                edges = incomingPool.TryPop(out List<PrismGraphEdge>? reused)
+                    ? reused
+                    : [];
+                incoming.Add(edge.Target, edges);
+            }
+            edges.Add(edge);
+        }
+        scopes.Clear();
+        foreach (PrismGraphScope scope in graph.Scopes)
+        {
+            scopes.Add(scope.AnalysisScopeIndex, scope);
+        }
     }
 
     public void Create(
         PrismGraphNodeId target,
         ImmutableArray<PrismGraphDependency> dependencies,
+        PrismGraphNodePlan? reusablePlan,
         out PrismVerifiedFingerprint structural,
         out PrismVerifiedFingerprint values,
         out PrismVerifiedFingerprint dependency)
     {
-        HashSet<PrismGraphNodeId> ancestors =
-            CollectAncestors(target);
-        PrismGraphNode[] orderedNodes = graph.Nodes
-            .Where(node => ancestors.Contains(node.Id))
-            .OrderBy(node => node.Id, NodeIdComparer.Instance)
-            .ToArray();
-        PrismGraphEdge[] orderedEdges = graph.Edges
-            .Where(edge =>
-                ancestors.Contains(edge.Source) &&
-                ancestors.Contains(edge.Target))
-            .OrderBy(edge => edge.Target, NodeIdComparer.Instance)
-            .ThenBy(edge => edge.Kind)
-            .ThenBy(edge => edge.Source, NodeIdComparer.Instance)
-            .ToArray();
+        CollectAncestors(target);
+        orderedNodes.Clear();
+        foreach (PrismGraphNode node in graph.Nodes)
+        {
+            if (ancestors.Contains(node.Id))
+            {
+                orderedNodes.Add(node);
+            }
+        }
+        orderedNodes.Sort(GraphNodeComparer.Instance);
+        PrismVerifiedFingerprint reusableStructural =
+            reusablePlan?.StructuralFingerprint ?? default;
+        if (!reusableStructural.IsInitialized)
+        {
+            orderedEdges.Clear();
+            foreach (PrismGraphEdge edge in graph.Edges)
+            {
+                if (ancestors.Contains(edge.Source) &&
+                    ancestors.Contains(edge.Target))
+                {
+                    orderedEdges.Add(edge);
+                }
+            }
+            orderedEdges.Sort(GraphEdgeComparer.Instance);
 
-        List<long> structuralComponents = [1, orderedNodes.Length];
+            structuralComponents.Clear();
+            structuralComponents.Add(1);
+            structuralComponents.Add(orderedNodes.Count);
+            foreach (PrismGraphNode node in orderedNodes)
+            {
+                AppendNodeId(structuralComponents, node.Id);
+                structuralComponents.Add(node.AnalysisScopeIndex);
+                structuralComponents.Add(
+                    node.DefinitionNodeId is PrismNodeId ? 1 : 0);
+                structuralComponents.Add(
+                    node.DefinitionNodeId?.Value ?? 0);
+                structuralComponents.Add(node.DefinitionOrder);
+                structuralComponents.Add(
+                    node.IsIsolationBoundary ? 1 : 0);
+            }
+            structuralComponents.Add(orderedEdges.Count);
+            foreach (PrismGraphEdge edge in orderedEdges)
+            {
+                AppendNodeId(structuralComponents, edge.Source);
+                AppendNodeId(structuralComponents, edge.Target);
+                structuralComponents.Add((long)edge.Kind);
+            }
+        }
+
+        valueComponents.Clear();
+        valueComponents.Add(1);
+        scopeIndexSet.Clear();
+        scopeIndexes.Clear();
         foreach (PrismGraphNode node in orderedNodes)
         {
-            AppendNodeId(structuralComponents, node.Id);
-            structuralComponents.Add(node.AnalysisScopeIndex);
-            structuralComponents.Add(
-                node.DefinitionNodeId is PrismNodeId definitionId
-                    ? 1
-                    : 0);
-            structuralComponents.Add(
-                node.DefinitionNodeId?.Value ?? 0);
-            structuralComponents.Add(node.DefinitionOrder);
-            structuralComponents.Add(
-                node.IsIsolationBoundary ? 1 : 0);
+            if (scopeIndexSet.Add(node.AnalysisScopeIndex))
+            {
+                scopeIndexes.Add(node.AnalysisScopeIndex);
+            }
         }
-        structuralComponents.Add(orderedEdges.Length);
-        foreach (PrismGraphEdge edge in orderedEdges)
-        {
-            AppendNodeId(structuralComponents, edge.Source);
-            AppendNodeId(structuralComponents, edge.Target);
-            structuralComponents.Add((long)edge.Kind);
-        }
-
-        List<long> valueComponents = [1];
-        int[] scopeIndexes = orderedNodes
-            .Select(node => node.AnalysisScopeIndex)
-            .Distinct()
-            .OrderBy(index => index)
-            .ToArray();
-        valueComponents.Add(scopeIndexes.Length);
+        scopeIndexes.Sort();
+        valueComponents.Add(scopeIndexes.Count);
         foreach (int scopeIndex in scopeIndexes)
         {
             PrismGraphScope scope = scopes[scopeIndex];
@@ -428,7 +477,7 @@ internal sealed class PrismRetainedFingerprintBuilder
             AppendRect(valueComponents, scope.Bounds);
             AppendRect(valueComponents, scope.ControlBounds);
         }
-        valueComponents.Add(orderedNodes.Length);
+        valueComponents.Add(orderedNodes.Count);
         foreach (PrismGraphNode node in orderedNodes)
         {
             AppendNodeValues(
@@ -437,8 +486,9 @@ internal sealed class PrismRetainedFingerprintBuilder
                 scopes[node.AnalysisScopeIndex]);
         }
 
-        List<long> dependencyComponents =
-            [1, dependencies.Length];
+        dependencyComponents.Clear();
+        dependencyComponents.Add(1);
+        dependencyComponents.Add(dependencies.Length);
         foreach (PrismGraphDependency item in dependencies)
         {
             dependencyComponents.Add((long)item.Kind);
@@ -446,40 +496,68 @@ internal sealed class PrismRetainedFingerprintBuilder
             dependencyComponents.Add(item.Version);
         }
 
-        structural = new PrismVerifiedFingerprint(
-            structuralComponents.ToImmutableArray());
-        values = new PrismVerifiedFingerprint(
-            valueComponents.ToImmutableArray());
-        dependency = new PrismVerifiedFingerprint(
-            dependencyComponents.ToImmutableArray());
+        structural = reusableStructural.IsInitialized
+            ? reusableStructural
+            : new PrismVerifiedFingerprint(
+                structuralComponents.ToImmutableArray());
+        values = CreateOrReuse(
+            valueComponents,
+            reusablePlan?.ValueFingerprint ?? default);
+        dependency = CreateOrReuse(
+            dependencyComponents,
+            reusablePlan?.DependencyFingerprint ?? default);
     }
 
-    private HashSet<PrismGraphNodeId> CollectAncestors(
+    private static PrismVerifiedFingerprint CreateOrReuse(
+        List<long> components,
+        PrismVerifiedFingerprint reusable)
+    {
+        ImmutableArray<long> previous = reusable.Components;
+        if (reusable.IsInitialized && previous.Length == components.Count)
+        {
+            bool equal = true;
+            for (int index = 0; index < components.Count; index++)
+            {
+                if (components[index] != previous[index])
+                {
+                    equal = false;
+                    break;
+                }
+            }
+            if (equal)
+            {
+                return reusable;
+            }
+        }
+
+        return new PrismVerifiedFingerprint(
+            components.ToImmutableArray());
+    }
+
+    private void CollectAncestors(
         PrismGraphNodeId target)
     {
-        HashSet<PrismGraphNodeId> result = [];
-        Stack<PrismGraphNodeId> pending = new();
-        pending.Push(target);
-        while (pending.TryPop(out PrismGraphNodeId nodeId))
+        ancestors.Clear();
+        pendingAncestors.Clear();
+        pendingAncestors.Push(target);
+        while (pendingAncestors.TryPop(out PrismGraphNodeId nodeId))
         {
-            if (!result.Add(nodeId) ||
+            if (!ancestors.Add(nodeId) ||
                 !incoming.TryGetValue(
                     nodeId,
-                    out ImmutableArray<PrismGraphEdge> inputs))
+                    out List<PrismGraphEdge>? inputs))
             {
                 continue;
             }
 
             foreach (PrismGraphEdge input in inputs)
             {
-                pending.Push(input.Source);
+                pendingAncestors.Push(input.Source);
             }
         }
-
-        return result;
     }
 
-    private static void AppendNodeValues(
+    private void AppendNodeValues(
         List<long> components,
         PrismGraphNode node,
         PrismGraphScope scope)
@@ -498,9 +576,11 @@ internal sealed class PrismRetainedFingerprintBuilder
         AppendNullableEnum(components, node.MaskPass);
         AppendLayerSettings(components, node.LayerSettings);
 
-        components.Add(node.Parameters.Length);
-        foreach (PrismGraphParameter parameter in
-            node.Parameters.OrderBy(parameter => parameter.Index))
+        orderedParameters.Clear();
+        orderedParameters.AddRange(node.Parameters);
+        orderedParameters.Sort(GraphParameterComparer.Instance);
+        components.Add(orderedParameters.Count);
+        foreach (PrismGraphParameter parameter in orderedParameters)
         {
             components.Add(parameter.Index);
             components.Add((long)parameter.Kind);
@@ -869,5 +949,45 @@ internal sealed class PrismRetainedFingerprintBuilder
                 ? result
                 : left.Ordinal.CompareTo(right.Ordinal);
         }
+    }
+
+    private sealed class GraphNodeComparer : IComparer<PrismGraphNode>
+    {
+        public static GraphNodeComparer Instance { get; } = new();
+
+        public int Compare(PrismGraphNode? left, PrismGraphNode? right) =>
+            NodeIdComparer.Instance.Compare(left!.Id, right!.Id);
+    }
+
+    private sealed class GraphEdgeComparer : IComparer<PrismGraphEdge>
+    {
+        public static GraphEdgeComparer Instance { get; } = new();
+
+        public int Compare(PrismGraphEdge left, PrismGraphEdge right)
+        {
+            int comparison = NodeIdComparer.Instance.Compare(
+                left.Target,
+                right.Target);
+            if (comparison != 0)
+            {
+                return comparison;
+            }
+
+            comparison = left.Kind.CompareTo(right.Kind);
+            return comparison != 0
+                ? comparison
+                : NodeIdComparer.Instance.Compare(left.Source, right.Source);
+        }
+    }
+
+    private sealed class GraphParameterComparer :
+        IComparer<PrismGraphParameter>
+    {
+        public static GraphParameterComparer Instance { get; } = new();
+
+        public int Compare(
+            PrismGraphParameter left,
+            PrismGraphParameter right) =>
+            left.Index.CompareTo(right.Index);
     }
 }

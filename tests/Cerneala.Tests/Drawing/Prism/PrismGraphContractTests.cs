@@ -966,8 +966,8 @@ public sealed class PrismGraphContractTests
             simple,
             """
             captures=1;backdrops=0
-            N:ControlCapture:0:-1:Structure,Values,Descendants,VisualContent,Bounds,PixelScale,Transform
-            N:ColorConversion:0:-1:Structure,Values,Descendants,ColorProfile
+            N:ControlCapture:0:-1:Structure,Descendants,VisualContent,Bounds,PixelScale,Transform
+            N:ColorConversion:0:-1:Structure,Descendants,ColorProfile
             N:Layer:3:2:Structure,Values,Descendants
             N:Filter:3:2:Structure,Values,Descendants,CatalogEntry
             N:Filter:3:2:Structure,Values,Descendants,CatalogEntry
@@ -1000,8 +1000,8 @@ public sealed class PrismGraphContractTests
             nested,
             """
             captures=1;backdrops=0
-            N:ControlCapture:0:-1:Structure,Values,Descendants,VisualContent,Bounds,PixelScale,Transform
-            N:ColorConversion:0:-1:Structure,Values,Descendants,ColorProfile
+            N:ControlCapture:0:-1:Structure,Descendants,VisualContent,Bounds,PixelScale,Transform
+            N:ColorConversion:0:-1:Structure,Descendants,ColorProfile
             N:Layer:12:2:Structure,Values,Descendants
             N:Filter:12:2:Structure,Values,Descendants,CatalogEntry
             N:Filter:12:2:Structure,Values,Descendants,CatalogEntry
@@ -1040,8 +1040,8 @@ public sealed class PrismGraphContractTests
             masked,
             """
             captures=1;backdrops=0
-            N:ControlCapture:0:-1:Structure,Values,Descendants,VisualContent,Bounds,PixelScale,Transform
-            N:ColorConversion:0:-1:Structure,Values,Descendants,ColorProfile
+            N:ControlCapture:0:-1:Structure,Descendants,VisualContent,Bounds,PixelScale,Transform
+            N:ColorConversion:0:-1:Structure,Descendants,ColorProfile
             N:Layer:1:0:Structure,Values,Descendants
             N:Filter:1:0:Structure,Values,Descendants,CatalogEntry
             N:Filter:1:0:Structure,Values,Descendants,CatalogEntry
@@ -1065,8 +1065,8 @@ public sealed class PrismGraphContractTests
             clipped,
             """
             captures=1;backdrops=0
-            N:ControlCapture:0:-1:Structure,Values,Descendants,VisualContent,Bounds,PixelScale,Transform
-            N:ColorConversion:0:-1:Structure,Values,Descendants,ColorProfile
+            N:ControlCapture:0:-1:Structure,Descendants,VisualContent,Bounds,PixelScale,Transform
+            N:ColorConversion:0:-1:Structure,Descendants,ColorProfile
             N:Layer:3:2:Structure,Values,Descendants
             N:Filter:3:2:Structure,Values,Descendants,CatalogEntry
             N:Filter:3:2:Structure,Values,Descendants,CatalogEntry

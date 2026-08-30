@@ -11,10 +11,16 @@ internal sealed class PrismFrameAnalyzer
 {
     private const ulong DependencyOffset = 14695981039346656037UL;
     private const ulong DependencyPrime = 1099511628211UL;
+    private PrismFrameAnalysis? previousAnalysis;
 
     public PrismFrameAnalysis Analyze(DrawCommandList commands)
     {
         ArgumentNullException.ThrowIfNull(commands);
+        if (previousAnalysis is PrismFrameAnalysis retainedAnalysis &&
+            retainedAnalysis.IsCurrent(commands))
+        {
+            return retainedAnalysis;
+        }
 
         long commandListVersion = commands.Version;
         int commandCount = commands.Count;
@@ -140,6 +146,7 @@ internal sealed class PrismFrameAnalyzer
             backdropRequirement,
             stateAnalysis);
         analysis.EnsureCurrent(commands);
+        previousAnalysis = analysis;
         return analysis;
     }
 
@@ -382,6 +389,7 @@ internal sealed class PrismFrameAnalyzer
         hash = Mix(hash, stamp.StructuralVersion.Value);
         hash = Mix(hash, stamp.ValueVersion.Value);
         hash = Mix(hash, stamp.VisualContentVersion);
+        hash = Mix(hash, stamp.DrawContentVersion);
         hash = Mix(hash, stamp.DescendantVersion);
         return unchecked((long)hash);
     }
@@ -453,7 +461,8 @@ internal sealed class PrismFrameAnalyzer
                 Scope.StructuralVersion,
                 Scope.ValueVersion,
                 Scope.VisualContentVersion,
-                DescendantVersion);
+                DescendantVersion,
+                Scope.DrawContentVersion);
 
         public PrismAnalyzedScope Build() =>
             new(

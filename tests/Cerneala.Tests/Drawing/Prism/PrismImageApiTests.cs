@@ -134,6 +134,63 @@ public sealed class PrismImageApiTests
     }
 
     [Fact]
+    public void ObservedOperationMutationInvalidatesRetainedResultsForItsImageOwner()
+    {
+        BlurFilter blur = new() { Radius = 2 };
+        using PrismImage image = global::Cerneala.Drawing.Prism.Prism.Apply(
+            new TestImage(8, 8),
+            blur);
+        DrawCommandList commands = new();
+        new DrawingContext(commands).DrawImage(
+            image,
+            new DrawRect(0, 0, 8, 8),
+            Color.White);
+        PrismCacheOwnerToken ownerToken =
+            commands[0].PrismScope!.Value.CacheOwnerToken;
+        PrismCacheInvalidationQueue queue = new();
+
+        blur.Radius = 6;
+        DrawCommandList changedCommands = new();
+        new DrawingContext(changedCommands).DrawImage(
+            image,
+            new DrawRect(0, 0, 8, 8),
+            Color.White);
+
+        AssertSingleOwnerInvalidation(queue, ownerToken);
+    }
+
+    [Fact]
+    public void FillCanHideLayerContentWhilePreservingItsPrismStyles()
+    {
+        PrismImage image = global::Cerneala.Drawing.Prism.Prism.Apply(
+            new TestImage(8, 8),
+            new OuterGlowStyle());
+        IDrawImageInvalidationSource invalidationSource = image;
+        int changeCount = 0;
+        invalidationSource.ContentChanged += (_, _) => changeCount++;
+        DrawRect destination = new(0, 0, 8, 8);
+        DrawCommandList first = new();
+        new DrawingContext(first).DrawImage(image, destination, Color.White);
+        long firstVersion = first[0].PrismScope!.Value.VisualContentVersion;
+
+        Assert.Equal(1, image.Fill);
+
+        image.Fill = 0;
+        DrawCommandList second = new();
+        new DrawingContext(second).DrawImage(image, destination, Color.White);
+
+        Assert.Equal(1, changeCount);
+        Assert.True(second[0].PrismScope!.Value.VisualContentVersion > firstVersion);
+        PrismLayerState layer = second[0].PrismScope!.Value.Instance
+            .GetLayerState(new Cerneala.UI.Prism.Definitions.PrismNodeId(1));
+        Assert.Equal(0, layer.Fill);
+        Assert.Single(layer.Styles);
+        Assert.Throws<ArgumentOutOfRangeException>(() => image.Fill = -0.01f);
+        Assert.Throws<ArgumentOutOfRangeException>(() => image.Fill = 1.01f);
+        Assert.Throws<ArgumentOutOfRangeException>(() => image.Fill = float.NaN);
+    }
+
+    [Fact]
     public void NestedPrismImagesComposeAsNestedNativeScopes()
     {
         TestImage source = new(12, 12);

@@ -126,7 +126,6 @@ internal readonly record struct PrismGraphSurfaceLifetime
 
 internal sealed class PrismGraphExecutionPlan
 {
-    private readonly ImmutableDictionary<PrismGraphNodeId, PrismGraphNodePlan> nodesById;
     private readonly ImmutableDictionary<PrismGraphNodeId, int> executionIndicesById;
 
     internal PrismGraphExecutionPlan(
@@ -207,7 +206,6 @@ internal sealed class PrismGraphExecutionPlan
         SurfaceLifetimes = surfaceLifetimes;
         RemovedNodeIds = removedNodeIds;
         PeakLiveSurfaces = peakLiveSurfaces;
-        nodesById = nodePlans.ToImmutableDictionary(node => node.NodeId);
         executionIndicesById = executionIndices.ToImmutableDictionary();
         CacheInputExecutionIndices = BuildCacheInputExecutionIndices(
             optimizedGraph,
@@ -220,6 +218,44 @@ internal sealed class PrismGraphExecutionPlan
             .Select(scope => executionIndices[scope.Output!.Value])
             .Distinct()
             .ToImmutableArray();
+    }
+
+    internal PrismGraphExecutionPlan(
+        PrismGraph optimizedGraph,
+        ImmutableArray<PrismGraphNodePlan> nodePlans,
+        PrismGraphExecutionPlan reusableTopology)
+    {
+        ArgumentNullException.ThrowIfNull(optimizedGraph);
+        ArgumentNullException.ThrowIfNull(reusableTopology);
+        if (nodePlans.IsDefault ||
+            optimizedGraph.Nodes.Length != reusableTopology.ExecutionOrder.Length ||
+            nodePlans.Length != reusableTopology.ExecutionOrder.Length ||
+            !optimizedGraph.Edges.AsSpan().SequenceEqual(
+                reusableTopology.OptimizedGraph.Edges.AsSpan()))
+        {
+            throw new ArgumentException(
+                "A reused Prism execution topology requires matching nodes, edges, and node plans.");
+        }
+        for (int index = 0; index < nodePlans.Length; index++)
+        {
+            PrismGraphNodeId expected = reusableTopology.ExecutionOrder[index];
+            if (optimizedGraph.Nodes[index].Id != expected ||
+                nodePlans[index].NodeId != expected)
+            {
+                throw new ArgumentException(
+                    "A reused Prism execution topology must preserve execution order.");
+            }
+        }
+
+        OptimizedGraph = optimizedGraph;
+        ExecutionOrder = reusableTopology.ExecutionOrder;
+        NodePlans = nodePlans;
+        SurfaceLifetimes = reusableTopology.SurfaceLifetimes;
+        RemovedNodeIds = reusableTopology.RemovedNodeIds;
+        PeakLiveSurfaces = reusableTopology.PeakLiveSurfaces;
+        executionIndicesById = reusableTopology.executionIndicesById;
+        CacheInputExecutionIndices = reusableTopology.CacheInputExecutionIndices;
+        RootOutputExecutionIndices = reusableTopology.RootOutputExecutionIndices;
     }
 
     public PrismGraph OptimizedGraph { get; }
@@ -241,8 +277,8 @@ internal sealed class PrismGraphExecutionPlan
 
     public PrismGraphNodePlan GetNodePlan(PrismGraphNodeId nodeId)
     {
-        return nodesById.TryGetValue(nodeId, out PrismGraphNodePlan node)
-            ? node
+        return executionIndicesById.TryGetValue(nodeId, out int index)
+            ? NodePlans[index]
             : throw new KeyNotFoundException(
                 $"Prism graph execution node '{nodeId}' does not exist.");
     }
@@ -315,19 +351,42 @@ internal sealed class PrismGraphExecutionPlan
 
 internal sealed class PrismGraphOptimizer
 {
+    private PrismGraph? previousSourceGraph;
+    private PrismGraphExecutionPlan? previousPlan;
+    private readonly Dictionary<PrismGraphNodeId, PrismGraphNode> originalNodes = [];
+    private readonly Dictionary<int, PrismGraphScope> originalScopes = [];
+    private readonly Dictionary<PrismGraphNodeId, PrismGraphNodeId> aliases = [];
+    private readonly Dictionary<PrismGraphNodeId, PrismGraphNodeId> previousAliases = [];
+    private readonly List<PrismGraphNode> orderedAliasNodes = [];
+    private readonly PrismRetainedFingerprintBuilder fingerprintBuilder = new();
+    private bool hasPreviousAliases;
+
     public PrismGraphExecutionPlan Optimize(PrismGraph graph)
     {
         ArgumentNullException.ThrowIfNull(graph);
+        if (ReferenceEquals(previousSourceGraph, graph) &&
+            previousPlan is PrismGraphExecutionPlan retainedPlan)
+        {
+            return retainedPlan;
+        }
 
-        Dictionary<PrismGraphNodeId, PrismGraphNode> originalNodes =
-            graph.Nodes.ToDictionary(node => node.Id);
-        Dictionary<int, PrismGraphScope> originalScopes =
-            graph.Scopes.ToDictionary(scope => scope.AnalysisScopeIndex);
-        Dictionary<PrismGraphNodeId, PrismGraphNodeId> aliases =
-            FindProvenAliases(
-                graph,
-                originalNodes,
-                originalScopes);
+        originalNodes.Clear();
+        foreach (PrismGraphNode node in graph.Nodes)
+        {
+            originalNodes.Add(node.Id, node);
+        }
+        originalScopes.Clear();
+        foreach (PrismGraphScope scope in graph.Scopes)
+        {
+            originalScopes.Add(scope.AnalysisScopeIndex, scope);
+        }
+        aliases.Clear();
+        FindProvenAliases(
+            graph,
+            originalNodes,
+            originalScopes,
+            aliases,
+            orderedAliasNodes);
         ImmutableDictionary<
             PrismGraphNodeId,
             ImmutableArray<PrismGraphDependency>> aliasedDependencies =
@@ -335,6 +394,41 @@ internal sealed class PrismGraphOptimizer
         ImmutableArray<PrismGraphScope> scopes =
             RewriteScopes(graph.Scopes, aliases);
         ValidateScopeHierarchy(scopes);
+        if (previousSourceGraph is PrismGraph reusableSourceGraph &&
+            previousPlan is PrismGraphExecutionPlan reusableTopologyPlan &&
+            hasPreviousAliases &&
+            CanReuseTopology(
+                reusableSourceGraph,
+                graph,
+                reusableTopologyPlan,
+                previousAliases,
+                aliases,
+                scopes))
+        {
+            ImmutableArray<PrismGraphNode>.Builder reusedNodes =
+                ImmutableArray.CreateBuilder<PrismGraphNode>(
+                    reusableTopologyPlan.ExecutionOrder.Length);
+            foreach (PrismGraphNodeId nodeId in reusableTopologyPlan.ExecutionOrder)
+            {
+                reusedNodes.Add(originalNodes[nodeId]);
+            }
+            PrismGraph reusedOptimizedGraph = new(
+                reusedNodes.MoveToImmutable(),
+                reusableTopologyPlan.OptimizedGraph.Edges,
+                scopes);
+            ImmutableArray<PrismGraphNodePlan> reusedNodePlans =
+                BuildNodePlans(
+                    reusedOptimizedGraph,
+                    aliasedDependencies,
+                    reusableTopologyPlan);
+            PrismGraphExecutionPlan reusedResult = new(
+                reusedOptimizedGraph,
+                reusedNodePlans,
+                reusableTopologyPlan);
+            previousSourceGraph = graph;
+            previousPlan = reusedResult;
+            return reusedResult;
+        }
         ImmutableArray<PrismGraphEdge> rewrittenEdges =
             RewriteEdges(graph.Edges, aliases);
         HashSet<PrismGraphNodeId> reachable =
@@ -348,8 +442,18 @@ internal sealed class PrismGraphOptimizer
         ImmutableArray<PrismGraphEdge> executionEdges =
             SortExecutionEdges(rewrittenEdges, reachable, executionIndices);
         PrismGraph optimizedGraph = new(executionNodes, executionEdges, scopes);
+        PrismGraphExecutionPlan? reusableFingerprintPlan =
+            previousPlan is not null &&
+            HasSameFingerprintStructure(
+                previousPlan.OptimizedGraph,
+                optimizedGraph)
+                ? previousPlan
+                : null;
         ImmutableArray<PrismGraphNodePlan> nodePlans =
-            BuildNodePlans(optimizedGraph, aliasedDependencies);
+            BuildNodePlans(
+                optimizedGraph,
+                aliasedDependencies,
+                reusableFingerprintPlan);
         ImmutableArray<PrismGraphSurfaceLifetime> lifetimes =
             BuildSurfaceLifetimes(optimizedGraph, executionIndices);
         int peakLiveSurfaces = CalculatePeakLiveSurfaces(lifetimes);
@@ -358,14 +462,105 @@ internal sealed class PrismGraphOptimizer
                 .Where(id => !reachable.Contains(id))
                 .OrderBy(id => id, PrismGraphNodeIdComparer.Instance)
                 .ToImmutableArray();
-
-        return new PrismGraphExecutionPlan(
+        PrismGraphExecutionPlan result = new(
             optimizedGraph,
             executionNodes.Select(node => node.Id).ToImmutableArray(),
             nodePlans,
             lifetimes,
             removedNodes,
             peakLiveSurfaces);
+        previousSourceGraph = graph;
+        previousPlan = result;
+        previousAliases.Clear();
+        foreach ((PrismGraphNodeId alias, PrismGraphNodeId source) in aliases)
+        {
+            previousAliases.Add(alias, source);
+        }
+        hasPreviousAliases = true;
+        return result;
+    }
+
+    private static bool CanReuseTopology(
+        PrismGraph previousSource,
+        PrismGraph currentSource,
+        PrismGraphExecutionPlan previousPlan,
+        IReadOnlyDictionary<PrismGraphNodeId, PrismGraphNodeId> previousAliases,
+        IReadOnlyDictionary<PrismGraphNodeId, PrismGraphNodeId> currentAliases,
+        ImmutableArray<PrismGraphScope> currentScopes)
+    {
+        if (previousSource.Nodes.Length != currentSource.Nodes.Length ||
+            previousSource.Edges.Length != currentSource.Edges.Length ||
+            previousAliases.Count != currentAliases.Count ||
+            previousPlan.OptimizedGraph.Scopes.Length != currentScopes.Length)
+        {
+            return false;
+        }
+
+        for (int index = 0; index < currentSource.Nodes.Length; index++)
+        {
+            if (previousSource.Nodes[index].Id != currentSource.Nodes[index].Id)
+            {
+                return false;
+            }
+        }
+        if (!previousSource.Edges.AsSpan().SequenceEqual(currentSource.Edges.AsSpan()))
+        {
+            return false;
+        }
+        foreach ((PrismGraphNodeId alias, PrismGraphNodeId source) in currentAliases)
+        {
+            if (!previousAliases.TryGetValue(alias, out PrismGraphNodeId previousSourceId) ||
+                previousSourceId != source)
+            {
+                return false;
+            }
+        }
+
+        ImmutableArray<PrismGraphScope> previousScopes =
+            previousPlan.OptimizedGraph.Scopes;
+        for (int index = 0; index < currentScopes.Length; index++)
+        {
+            PrismGraphScope previous = previousScopes[index];
+            PrismGraphScope current = currentScopes[index];
+            if (previous.AnalysisScopeIndex != current.AnalysisScopeIndex ||
+                previous.BeginCommandIndex != current.BeginCommandIndex ||
+                previous.EndCommandIndex != current.EndCommandIndex ||
+                previous.Depth != current.Depth ||
+                previous.ParentScopeIndex != current.ParentScopeIndex ||
+                previous.Output != current.Output)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static bool HasSameFingerprintStructure(
+        PrismGraph previous,
+        PrismGraph current)
+    {
+        if (previous.Nodes.Length != current.Nodes.Length ||
+            previous.Edges.Length != current.Edges.Length)
+        {
+            return false;
+        }
+
+        for (int index = 0; index < current.Nodes.Length; index++)
+        {
+            PrismGraphNode left = previous.Nodes[index];
+            PrismGraphNode right = current.Nodes[index];
+            if (left.Id != right.Id ||
+                left.AnalysisScopeIndex != right.AnalysisScopeIndex ||
+                left.DefinitionNodeId != right.DefinitionNodeId ||
+                left.DefinitionOrder != right.DefinitionOrder ||
+                left.IsIsolationBoundary != right.IsIsolationBoundary)
+            {
+                return false;
+            }
+        }
+
+        return previous.Edges.AsSpan().SequenceEqual(
+            current.Edges.AsSpan());
     }
 
     private static ImmutableDictionary<
@@ -397,17 +592,18 @@ internal sealed class PrismGraphOptimizer
                 .ToImmutableArray());
     }
 
-    private static Dictionary<PrismGraphNodeId, PrismGraphNodeId> FindProvenAliases(
+    private static void FindProvenAliases(
         PrismGraph graph,
         IReadOnlyDictionary<PrismGraphNodeId, PrismGraphNode> nodes,
-        IReadOnlyDictionary<int, PrismGraphScope> scopes)
+        IReadOnlyDictionary<int, PrismGraphScope> scopes,
+        Dictionary<PrismGraphNodeId, PrismGraphNodeId> aliases,
+        List<PrismGraphNode> orderedNodes)
     {
-        Dictionary<PrismGraphNodeId, ImmutableArray<PrismGraphEdge>> incoming =
-            IndexIncomingEdges(graph.Edges);
-        Dictionary<PrismGraphNodeId, PrismGraphNodeId> aliases = [];
-        PrismGraphNode[] orderedNodes = graph.Nodes
-            .OrderBy(node => node.Id, PrismGraphNodeIdComparer.Instance)
-            .ToArray();
+        orderedNodes.Clear();
+        orderedNodes.AddRange(graph.Nodes);
+        orderedNodes.Sort(
+            static (left, right) =>
+                PrismGraphNodeIdComparer.Instance.Compare(left.Id, right.Id));
         bool changed;
         do
         {
@@ -417,7 +613,7 @@ internal sealed class PrismGraphOptimizer
                 if (aliases.ContainsKey(node.Id) ||
                     !TryGetAliasSource(
                         node,
-                        incoming,
+                        graph.Edges,
                         aliases,
                         nodes,
                         scopes,
@@ -431,33 +627,34 @@ internal sealed class PrismGraphOptimizer
             }
         }
         while (changed);
-
-        return aliases;
     }
 
     private static bool TryGetAliasSource(
         PrismGraphNode node,
-        IReadOnlyDictionary<PrismGraphNodeId, ImmutableArray<PrismGraphEdge>> incoming,
+        ImmutableArray<PrismGraphEdge> edges,
         IReadOnlyDictionary<PrismGraphNodeId, PrismGraphNodeId> aliases,
         IReadOnlyDictionary<PrismGraphNodeId, PrismGraphNode> nodes,
         IReadOnlyDictionary<int, PrismGraphScope> scopes,
         out PrismGraphNodeId source)
     {
         source = default;
-        if (!incoming.TryGetValue(node.Id, out ImmutableArray<PrismGraphEdge> nodeInputs))
+        int pixelInputCount = 0;
+        PrismGraphNodeId pixelInputSource = default;
+        foreach (PrismGraphEdge edge in edges)
+        {
+            if (edge.Target == node.Id &&
+                edge.Kind is PrismGraphEdgeKind.Content or PrismGraphEdgeKind.Backdrop)
+            {
+                pixelInputCount++;
+                pixelInputSource = edge.Source;
+            }
+        }
+        if (pixelInputCount != 1)
         {
             return false;
         }
 
-        PrismGraphEdge[] pixelInputs = nodeInputs
-            .Where(edge => edge.Kind is PrismGraphEdgeKind.Content or PrismGraphEdgeKind.Backdrop)
-            .ToArray();
-        if (pixelInputs.Length != 1)
-        {
-            return false;
-        }
-
-        source = ResolveAlias(pixelInputs[0].Source, aliases);
+        source = ResolveAlias(pixelInputSource, aliases);
         if (node.Kind is PrismGraphNodeKind.Fill or PrismGraphNodeKind.Opacity)
         {
             return node.Amount == 1f;
@@ -789,19 +986,19 @@ internal sealed class PrismGraphOptimizer
             .ToImmutableArray();
     }
 
-    private static ImmutableArray<PrismGraphNodePlan> BuildNodePlans(
+    private ImmutableArray<PrismGraphNodePlan> BuildNodePlans(
         PrismGraph graph,
         IReadOnlyDictionary<
             PrismGraphNodeId,
-            ImmutableArray<PrismGraphDependency>> aliasedDependencies)
+            ImmutableArray<PrismGraphDependency>> aliasedDependencies,
+        PrismGraphExecutionPlan? reusableFingerprintPlan)
     {
         Dictionary<int, PrismGraphScope> scopes = graph.Scopes
             .ToDictionary(scope => scope.AnalysisScopeIndex);
         Dictionary<PrismGraphNodeId, ImmutableArray<PrismGraphEdge>> incoming =
             IndexIncomingEdges(graph.Edges);
         Dictionary<PrismGraphNodeId, PrismGraphNodePlan> plans = [];
-        PrismRetainedFingerprintBuilder fingerprintBuilder =
-            new(graph);
+        fingerprintBuilder.Reset(graph);
         ImmutableArray<PrismGraphNodePlan>.Builder result =
             ImmutableArray.CreateBuilder<PrismGraphNodePlan>(graph.Nodes.Length);
         foreach (PrismGraphNode node in graph.Nodes)
@@ -838,9 +1035,12 @@ internal sealed class PrismGraphOptimizer
             if (cacheCandidateKind !=
                 PrismRetainedCacheCandidateKind.None)
             {
+                PrismGraphNodePlan? reusablePlan =
+                    reusableFingerprintPlan?.GetNodePlan(node.Id);
                 fingerprintBuilder.Create(
                     node.Id,
                     dependencies,
+                    reusablePlan,
                     out structuralFingerprint,
                     out valueFingerprint,
                     out dependencyFingerprint);
@@ -1294,8 +1494,11 @@ internal sealed class PrismGraphOptimizer
         bool Has(PrismGraphDependencyKind kind) =>
             node.Dependencies.Any(dependency => dependency.Kind == kind);
 
+        bool requiresValues = node.Kind is not (
+            PrismGraphNodeKind.ControlCapture or
+            PrismGraphNodeKind.ColorConversion);
         if (!Has(PrismGraphDependencyKind.Structure) ||
-            !Has(PrismGraphDependencyKind.Values) ||
+            (requiresValues && !Has(PrismGraphDependencyKind.Values)) ||
             !Has(PrismGraphDependencyKind.Descendants))
         {
             return false;

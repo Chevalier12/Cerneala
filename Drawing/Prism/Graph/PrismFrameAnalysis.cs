@@ -63,6 +63,15 @@ internal sealed class PrismFrameAnalysis
         EnsureCurrent(sourceCommands);
     }
 
+    internal bool IsCurrent(DrawCommandList commands)
+    {
+        ArgumentNullException.ThrowIfNull(commands);
+        return ReferenceEquals(sourceCommands, commands) &&
+            commands.Version == CommandListVersion &&
+            commands.Count == StateAnalysis.Entries.Count &&
+            GetStaleScopeIndex() is null;
+    }
+
     internal int? GetStaleScopeIndex()
     {
         if (sourceCommands.Version != CommandListVersion)

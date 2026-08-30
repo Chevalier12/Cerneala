@@ -162,12 +162,81 @@ public sealed partial class DrawingContext
         {
             DrawCommand command = createCommand(prismImage.Source);
             _commands.Add(DrawCommand.BeginPrism(
-                prismImage.CreateDrawScope(command.Rect)));
-            _commands.Add(command);
+                prismImage.CreateDrawScope(
+                    command.Rect,
+                    drawContentVersion: ImageCommandContentVersion(command))));
+            AddImageBackedCommand(prismImage.Source, createCommand);
             _commands.Add(DrawCommand.EndPrism());
             return;
         }
 
         _commands.Add(createCommand(image));
+    }
+
+    private static long ImageCommandContentVersion(DrawCommand command)
+    {
+        const ulong offset = 14695981039346656037UL;
+        const ulong prime = 1099511628211UL;
+        ulong hash = offset;
+
+        MixUInt((uint)command.Kind);
+        MixRect(command.Rect);
+        MixByte(command.Color.R);
+        MixByte(command.Color.G);
+        MixByte(command.Color.B);
+        MixByte(command.Color.A);
+        MixNullableRect(command.ImageSource);
+        MixFloat(command.ImageRotation);
+        MixFloat(command.ImageOrigin.X);
+        MixFloat(command.ImageOrigin.Y);
+        MixUInt((uint)command.ImageFlip);
+        MixFloat(command.LayerDepth);
+        MixFloat(command.Insets.Left);
+        MixFloat(command.Insets.Top);
+        MixFloat(command.Insets.Right);
+        MixFloat(command.Insets.Bottom);
+        if (command.ImageOptions is DrawImageOptions options)
+        {
+            MixNullableRect(options.Source);
+            MixByte(options.Tint.R);
+            MixByte(options.Tint.G);
+            MixByte(options.Tint.B);
+            MixByte(options.Tint.A);
+            MixFloat(options.Opacity);
+            MixFloat(options.Rotation);
+            MixFloat(options.Origin.X);
+            MixFloat(options.Origin.Y);
+            MixUInt((uint)options.Flip);
+            MixFloat(options.LayerDepth);
+            MixUInt((uint)options.Sampling);
+            MixUInt((uint)options.AddressMode);
+        }
+
+        MixUInt(unchecked((uint)(command.Mesh?.GetHashCode() ?? 0)));
+        MixUInt(unchecked((uint)(command.SpriteBatch?.GetHashCode() ?? 0)));
+        return (long)(hash & long.MaxValue);
+
+        void MixNullableRect(DrawRect? rectangle)
+        {
+            MixUInt(rectangle.HasValue ? 1u : 0u);
+            if (rectangle is DrawRect value)
+            {
+                MixRect(value);
+            }
+        }
+
+        void MixRect(DrawRect rectangle)
+        {
+            MixFloat(rectangle.X);
+            MixFloat(rectangle.Y);
+            MixFloat(rectangle.Width);
+            MixFloat(rectangle.Height);
+        }
+
+        void MixFloat(float value) => MixUInt(BitConverter.SingleToUInt32Bits(value));
+
+        void MixByte(byte value) => MixUInt(value);
+
+        void MixUInt(uint value) => hash = unchecked((hash ^ value) * prime);
     }
 }

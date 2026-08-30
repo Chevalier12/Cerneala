@@ -25,12 +25,18 @@ using PrismImage glowImage = Prism.Apply(
         Opacity = 0.8f
     });
 
+// Keep the source alpha as the glow mask, but omit the source pixels from
+// this processed image. Draw the visible source separately when needed.
+glowImage.Fill = 0;
+
 frame.DrawSprite(glowImage, destination);
 ```
 
 ## Remarks
 
 `PrismImage` keeps the original source and pipeline description, synchronizes a native `PrismInstance` only when needed, and uses a stable cache-owner token for repeated draws. Dispose the image when it is no longer needed to request deterministic eviction of its retained Prism cache entries. Eviction occurs at the next safe rendering boundary; an entry that is leased by an active frame is removed as soon as that lease is released.
+
+`Fill` controls only the processed layer's source content. Prism filters and styles still read the unscaled source. Setting `Fill` to `0` therefore supports effect-only images such as an outer glow mask, while the caller can draw separate visible content over the result.
 
 Disposal is idempotent. Drawing a disposed image or adding a new content-change observer throws `ObjectDisposedException`.
 
@@ -46,6 +52,7 @@ Nested `PrismImage` values are supported and compose as nested native Prism scop
 | --- | --- | --- |
 | `Source` | `IDrawImage` | Gets the unprocessed source image. |
 | `Pipeline` | `PrismPipeline` | Gets the live pipeline used for subsequent draws. |
+| `Fill` | `float` | Gets or sets the processed layer's source fill from `0` through `1`. The default is `1`. |
 | `Width` | `int` | Gets the source image width. |
 | `Height` | `int` | Gets the source image height. |
 

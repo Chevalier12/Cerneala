@@ -223,6 +223,11 @@ internal static class PrismCatalogFilterPlanner
             pass.Iteration > 0) ||
         filter == PrismFilterId.Wind;
 
+    public static bool RequiresStableHostCoordinates(PrismFilterId filter) =>
+        filter is
+            PrismFilterId.Crystallize or
+            PrismFilterId.Scanlines;
+
     public static PrismCatalogFilterPlan Create(
         PrismFilterId filter,
         ImmutableArray<PrismGraphParameter> parameters,

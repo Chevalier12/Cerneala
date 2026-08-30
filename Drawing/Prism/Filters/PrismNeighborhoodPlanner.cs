@@ -128,6 +128,11 @@ internal static class PrismNeighborhoodPlanner
                 StringComparison.Ordinal);
     }
 
+    public static bool RequiresStableHostCoordinates(PrismFilterId filter) =>
+        filter is
+            PrismFilterId.IrisBlur or
+            PrismFilterId.SpinBlur;
+
     public static PrismNeighborhoodPlan Create(
         PrismFilterId filter,
         ImmutableArray<PrismGraphParameter> parameters,

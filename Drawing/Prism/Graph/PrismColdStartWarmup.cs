@@ -12,6 +12,8 @@ internal static class PrismColdStartWarmup
 
     public static void Begin() => _ = warmup.Value;
 
+    public static void Complete() => warmup.Value.GetAwaiter().GetResult();
+
     private static Task StartCore() =>
         Task.Factory.StartNew(
             WarmGraphPipeline,
@@ -23,20 +25,36 @@ internal static class PrismColdStartWarmup
     private static void WarmGraphPipeline()
     {
         WarmRuntimeAndRetainedPipeline();
-        (DrawCommandList commands, PrismFrameAnalysis analysis) = CreateOuterGlowWorkload();
-        PrismGraph graph =
-            new PrismGraphBuilder().Build(analysis);
-        PrismGraphExecutionPlan plan =
-            new PrismGraphOptimizer().Optimize(graph);
+        WarmGraphWorkload(CreateOuterGlowWorkload());
+        WarmGraphWorkload(CreateInvertWorkload());
+    }
+
+    private static void WarmGraphWorkload(
+        (DrawCommandList Commands, PrismFrameAnalysis Analysis) workload)
+    {
+        PrismGraph graph = new PrismGraphBuilder().Build(workload.Analysis);
+        PrismGraphExecutionPlan plan = new PrismGraphOptimizer().Optimize(graph);
         GC.KeepAlive(plan);
-        GC.KeepAlive(commands);
+        GC.KeepAlive(workload.Commands);
     }
 
     internal static (DrawCommandList Commands, PrismFrameAnalysis Analysis) CreateOuterGlowWorkload()
     {
         PrismInstance instance = CreateOuterGlowInstance();
         WarmOuterGlowStateAccess(instance);
-        return CreateOuterGlowWorkload(instance);
+        return CreateWorkload(instance);
+    }
+
+    internal static (DrawCommandList Commands, PrismFrameAnalysis Analysis) CreateInvertWorkload()
+    {
+        PrismLayerDefinition layer = new(
+            new PrismNodeId(1),
+            "ColdStart",
+            filters: [new PrismFilterDefinition(PrismFilterId.Invert)]);
+        PrismCompositionDefinition definition = new(
+            "ColdStart",
+            [layer]);
+        return CreateWorkload(new PrismInstance(definition));
     }
 
     private static PrismInstance CreateOuterGlowInstance()
@@ -51,7 +69,7 @@ internal static class PrismColdStartWarmup
         return new PrismInstance(definition);
     }
 
-    private static (DrawCommandList Commands, PrismFrameAnalysis Analysis) CreateOuterGlowWorkload(
+    private static (DrawCommandList Commands, PrismFrameAnalysis Analysis) CreateWorkload(
         PrismInstance instance)
     {
         PrismDrawScope scope = new(

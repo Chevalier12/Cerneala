@@ -75,7 +75,8 @@ internal readonly record struct PrismGraphNodeId
         PrismCacheOwnerToken scopeOwnerToken,
         int definitionNodeId,
         PrismGraphNodeKind kind,
-        int ordinal)
+        int ordinal,
+        int analysisScopeIndex = 0)
     {
         if (scopeOwnerToken.Value <= 0)
         {
@@ -85,6 +86,7 @@ internal readonly record struct PrismGraphNodeId
         }
         ArgumentOutOfRangeException.ThrowIfNegative(definitionNodeId);
         ArgumentOutOfRangeException.ThrowIfNegative(ordinal);
+        ArgumentOutOfRangeException.ThrowIfNegative(analysisScopeIndex);
         if (!Enum.IsDefined(typeof(PrismGraphNodeKind), kind))
         {
             throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown Prism graph node kind.");
@@ -94,6 +96,7 @@ internal readonly record struct PrismGraphNodeId
         DefinitionNodeId = definitionNodeId;
         Kind = kind;
         Ordinal = ordinal;
+        AnalysisScopeIndex = analysisScopeIndex;
     }
 
     public PrismCacheOwnerToken ScopeOwnerToken { get; }
@@ -104,11 +107,13 @@ internal readonly record struct PrismGraphNodeId
 
     public int Ordinal { get; }
 
+    public int AnalysisScopeIndex { get; }
+
     public override string ToString()
     {
         return string.Create(
             CultureInfo.InvariantCulture,
-            $"{ScopeOwnerToken.Value}:{DefinitionNodeId}:{Kind}:{Ordinal}");
+            $"{ScopeOwnerToken.Value}:{AnalysisScopeIndex}:{DefinitionNodeId}:{Kind}:{Ordinal}");
     }
 }
 
@@ -267,10 +272,11 @@ internal readonly record struct PrismGraphScope
                 "A graph scope lower UI version cannot be negative.");
         }
         if (output is PrismGraphNodeId outputId &&
-            outputId.ScopeOwnerToken != cacheOwnerToken)
+            (outputId.ScopeOwnerToken != cacheOwnerToken ||
+                outputId.AnalysisScopeIndex != analysisScopeIndex))
         {
             throw new ArgumentException(
-                "A graph scope output must belong to the same cache owner.",
+                "A graph scope output must belong to the same cache owner and scope occurrence.",
                 nameof(output));
         }
 

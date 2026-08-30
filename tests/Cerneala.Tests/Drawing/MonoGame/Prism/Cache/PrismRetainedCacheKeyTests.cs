@@ -63,6 +63,33 @@ public sealed class PrismRetainedCacheKeyTests
     }
 
     [Fact]
+    public void PrismImageSourceRegionParticipatesInRetainedKey()
+    {
+        using PrismImage image = global::Cerneala.Drawing.Prism.Prism.Apply(
+            new SizedTestImage(2, 1),
+            new InvertFilter());
+
+        PrismRetainedCacheKey first = ImageKey(
+            new DrawRect(0, 0, 1, 1));
+        PrismRetainedCacheKey second = ImageKey(
+            new DrawRect(1, 0, 1, 1));
+
+        Assert.NotEqual(first, second);
+
+        PrismRetainedCacheKey ImageKey(DrawRect source)
+        {
+            DrawCommandList commands = new();
+            new DrawingContext(commands).DrawImage(
+                image,
+                new DrawRect(0, 0, 20, 10),
+                new DrawImageOptions(source: source));
+            PrismGraph graph = new PrismGraphBuilder().Build(
+                new PrismFrameAnalyzer().Analyze(commands));
+            return FinalKey(new PrismGraphOptimizer().Optimize(graph));
+        }
+    }
+
+    [Fact]
     public void EveryExplicitKeyDimensionParticipatesInEquality()
     {
         PrismRetainedCacheKey key = FinalKey(
@@ -91,6 +118,15 @@ public sealed class PrismRetainedCacheKeyTests
                     nodeId.DefinitionNodeId,
                     nodeId.Kind,
                     nodeId.Ordinal)
+            },
+            key with
+            {
+                StableNodeId = new PrismGraphNodeId(
+                    nodeId.ScopeOwnerToken,
+                    nodeId.DefinitionNodeId,
+                    nodeId.Kind,
+                    nodeId.Ordinal,
+                    nodeId.AnalysisScopeIndex + 1)
             },
             key with
             {
@@ -728,5 +764,12 @@ public sealed class PrismRetainedCacheKeyTests
         public int Width => 1;
 
         public int Height => 1;
+    }
+
+    private sealed class SizedTestImage(int width, int height) : IDrawImage
+    {
+        public int Width { get; } = width;
+
+        public int Height { get; } = height;
     }
 }

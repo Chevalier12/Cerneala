@@ -14,7 +14,10 @@ public sealed class PrismImage : IDrawImage, IDrawImageInvalidationSource, IDisp
     private PrismInstance? instance;
     private long appliedTopologyVersion = -1;
     private long appliedContentSignature = -1;
+    private long appliedSettingsVersion = -1;
+    private long settingsVersion;
     private long visualContentVersion = 1;
+    private float fill = 1;
     private int disposed;
     private bool invalidationSourcesAttached;
 
@@ -33,6 +36,33 @@ public sealed class PrismImage : IDrawImage, IDrawImageInvalidationSource, IDisp
     public IDrawImage Source { get; }
 
     public PrismPipeline Pipeline { get; }
+
+    public float Fill
+    {
+        get => fill;
+        set
+        {
+            ObjectDisposedException.ThrowIf(IsDisposed, this);
+            if (!float.IsFinite(value) || value is < 0 or > 1)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(value),
+                    value,
+                    "Prism image fill must be finite and from zero through one.");
+            }
+            if (fill.Equals(value))
+            {
+                return;
+            }
+
+            fill = value;
+            unchecked
+            {
+                settingsVersion++;
+            }
+            RaiseContentChanged();
+        }
+    }
 
     public int Width => Source.Width;
 
@@ -80,9 +110,14 @@ public sealed class PrismImage : IDrawImage, IDrawImageInvalidationSource, IDisp
 
     internal PrismDrawScope CreateDrawScope(
         DrawRect bounds,
-        float pixelScale = 1)
+        float pixelScale = 1,
+        long drawContentVersion = 0)
     {
         ObjectDisposedException.ThrowIf(IsDisposed, this);
+        if (drawContentVersion < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(drawContentVersion));
+        }
         EnsureRuntimeState();
         return new PrismDrawScope(
             instance!,
@@ -94,7 +129,8 @@ public sealed class PrismImage : IDrawImage, IDrawImageInvalidationSource, IDisp
             PrismDrawResources.Empty,
             lowerUiVersion: 0,
             isLocalDrawingScope: true,
-            imageDependency: this);
+            imageDependency: this,
+            drawContentVersion: drawContentVersion);
     }
 
     public void Dispose()
@@ -124,7 +160,17 @@ public sealed class PrismImage : IDrawImage, IDrawImageInvalidationSource, IDisp
                 "A Prism image pipeline must contain at least one operation.");
         }
 
-        if (instance is null || appliedTopologyVersion != Pipeline.TopologyVersion)
+        long topologyVersion = Pipeline.TopologyVersion;
+        long contentSignature = Pipeline.ContentSignature;
+        if (instance is not null &&
+            (appliedTopologyVersion != topologyVersion ||
+             appliedContentSignature != contentSignature ||
+             appliedSettingsVersion != settingsVersion))
+        {
+            PrismCacheInvalidationHub.EnqueueOwner(cacheOwnerToken);
+        }
+
+        if (instance is null || appliedTopologyVersion != topologyVersion)
         {
             PrismFilterDefinition[] filters = Pipeline
                 .Where(operation => operation.IsFilter)
@@ -142,33 +188,44 @@ public sealed class PrismImage : IDrawImage, IDrawImageInvalidationSource, IDisp
                     filters,
                     styles)]);
             instance = new PrismInstance(definition);
-            appliedTopologyVersion = Pipeline.TopologyVersion;
+            appliedTopologyVersion = topologyVersion;
             appliedContentSignature = -1;
+            appliedSettingsVersion = -1;
         }
 
-        long contentSignature = Pipeline.ContentSignature;
-        if (appliedContentSignature == contentSignature)
+        if (appliedContentSignature == contentSignature &&
+            appliedSettingsVersion == settingsVersion)
         {
             return;
         }
 
         PrismLayerState layer = instance.GetLayerState(
             new PrismNodeId(LayerNodeId));
-        int filterIndex = 0;
-        int styleIndex = 0;
-        foreach (PrismOperation operation in Pipeline)
+        if (appliedContentSignature != contentSignature)
         {
-            if (operation.IsFilter)
+            int filterIndex = 0;
+            int styleIndex = 0;
+            foreach (PrismOperation operation in Pipeline)
             {
-                operation.ApplyTo(layer.Filters[filterIndex++]);
+                if (operation.IsFilter)
+                {
+                    operation.ApplyTo(layer.Filters[filterIndex++]);
+                }
+                else
+                {
+                    operation.ApplyTo(layer.Styles[styleIndex++]);
+                }
             }
-            else
-            {
-                operation.ApplyTo(layer.Styles[styleIndex++]);
-            }
+
+            appliedContentSignature = contentSignature;
         }
 
-        appliedContentSignature = contentSignature;
+        if (appliedSettingsVersion != settingsVersion)
+        {
+            layer.Fill = fill;
+            appliedSettingsVersion = settingsVersion;
+        }
+
         unchecked
         {
             visualContentVersion++;
@@ -189,6 +246,7 @@ public sealed class PrismImage : IDrawImage, IDrawImageInvalidationSource, IDisp
 
     private void RaiseContentChanged()
     {
+        PrismCacheInvalidationHub.EnqueueOwner(cacheOwnerToken);
         EventHandler? handlers;
         lock (invalidationGate)
         {

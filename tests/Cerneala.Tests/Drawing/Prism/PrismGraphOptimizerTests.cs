@@ -167,6 +167,46 @@ public sealed class PrismGraphOptimizerTests
     }
 
     [Fact]
+    public void OptimizerKeepsTwelveEffectFingerprintPlanningBelowAllocationBudget()
+    {
+        PrismFilterDefinition[] filters = Enumerable.Range(0, 12)
+            .Select(_ => new PrismFilterDefinition(PrismFilterId.MotionBlur))
+            .ToArray();
+        PrismLayerDefinition layer = new(
+            new PrismNodeId(1),
+            "AnimatedEffects",
+            filters: filters);
+        (PrismGraph graph, _) = BuildGraph(
+            PrismTestData.Composition("FingerprintAllocation", layer),
+            instance =>
+            {
+                PrismLayerState state = instance.GetLayerState(layer.Id);
+                for (int index = 0; index < state.Filters.Count; index++)
+                {
+                    GeneratedMarkup.SetPrismFilterNumber(
+                        state.Filters[index],
+                        (int)PrismFilterId.MotionBlur,
+                        slot: 0,
+                        value: 12 + index);
+                }
+            });
+
+        PrismGraphOptimizer optimizer = new();
+        _ = optimizer.Optimize(graph);
+        long before = GC.GetAllocatedBytesForCurrentThread();
+
+        PrismGraphExecutionPlan plan =
+            optimizer.Optimize(graph);
+
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.Equal(12, plan.OptimizedGraph.Nodes.Count(
+            node => node.Filter == PrismFilterId.MotionBlur));
+        Assert.True(
+            allocated <= 256 * 1024,
+            $"Fingerprint planning allocated {allocated:N0} bytes; budget is 262,144 bytes.");
+    }
+
+    [Fact]
     public void BoundsExpandForBlurShadowStrokeAndTransformWithoutChangingScopeBounds()
     {
         DrawRect scopeBounds = new(0, 0, 20, 10);
