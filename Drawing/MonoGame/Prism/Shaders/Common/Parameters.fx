@@ -1,11 +1,19 @@
+#ifdef CERNEALA_MONOGAME_SPECIALIZED
+Texture2D SpriteTexture : register(t0);
+#else
 Texture2D SpriteTexture;
+#endif
 Texture2D SecondaryTexture;
 Texture2D KnockoutBackdropTexture;
 Texture2D KnockoutShapeTexture;
 Texture2D StyleTexture;
 Texture2D StyleMaskTexture;
 Texture2D StyleBackdropTexture;
+#ifdef CERNEALA_MONOGAME_SPECIALIZED
+Texture2D FilterAuxiliaryTexture : register(t1);
+#else
 Texture2D FilterAuxiliaryTexture;
+#endif
 Texture2D DissolveThresholdTexture;
 float Opacity;
 float2 PixelSize;
@@ -220,4 +228,3 @@ float SampleKnockoutShape(VertexShaderOutput input)
 {
     return tex2D(KnockoutShapeSampler, ResolveUv(input)).a;
 }
-

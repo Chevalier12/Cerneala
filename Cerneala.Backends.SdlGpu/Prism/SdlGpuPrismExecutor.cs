@@ -18,6 +18,7 @@ namespace Cerneala.Backends.SdlGpu;
 internal sealed class SdlGpuPrismExecutor : IDisposable
 {
     private const int PresentationSamplingOutset = 1;
+    private const int ExecutionSurfaceTileSize = 16;
     private const long ShaderPackageVersion = 56;
     private static readonly PrismGraphCapabilities Capabilities =
         PrismGraphCapabilities.ControlCapture |
@@ -41,7 +42,18 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
     private readonly Dictionary<int, SdlGpuPrismSurfaceLease> surfaces = [];
     private readonly List<SdlGpuPrismSurfaceLease> frameLeases = [];
     private readonly HashSet<SdlGpuPrismSurfaceLease> promotedLeases = [];
+    private readonly HashSet<PrismGraphNodeId> mipmappedNodes = [];
+    private readonly Dictionary<StyleDistanceFieldKey, nint> styleDistanceFields = [];
+    private readonly HashSet<PrismRetainedCacheKey> currentRetainedKeys = [];
+    private readonly HashSet<PrismCacheOwnerToken> currentOwners = [];
+    private readonly List<int> expiredSurfaceIndices = [];
+    private readonly Dictionary<int, SdlGpuPrismPresentationSurface> childPresentationSurfaces = [];
+    private readonly List<SdlGpuPrismSurfaceLease> presentationLeases = [];
     private readonly nint[] textures = new nint[15];
+    private int executionOriginPixelX;
+    private int executionOriginPixelY;
+    private int executionPixelWidth;
+    private int executionPixelHeight;
     private bool disposed;
 
     public SdlGpuPrismExecutor(
@@ -59,9 +71,17 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         DrawCommandList commands,
         in DrawingFrameContext frameContext)
     {
+        Execute(commands, frameContext, session.WindowRenderTarget);
+    }
+
+    internal void Execute(
+        DrawCommandList commands,
+        in DrawingFrameContext frameContext,
+        SdlGpuRenderTarget hostTarget)
+    {
         ObjectDisposedException.ThrowIf(disposed, this);
+        ArgumentNullException.ThrowIfNull(hostTarget);
         frameContext.EnsureCurrent(commands);
-        ConsumeInvalidations(frameContext.PrismCacheInvalidations);
         PrismGraph sourceGraph = frameContext.BackdropLease is null
             ? graphBuilder.Build(frameContext.PrismAnalysis)
             : graphBuilder.Build(
@@ -70,6 +90,12 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                 frameContext.BackdropSourceToken);
         PrismGraphExecutionPlan plan = graphOptimizer.Optimize(sourceGraph);
         PrismGraph graph = plan.OptimizedGraph;
+        ResolveExecutionExtent(plan, graph, hostTarget);
+        ResolveMipmappedNodes(graph);
+        ReconcileRetainedEntries(
+            plan,
+            graph,
+            frameContext.PrismCacheInvalidations);
         long started = Stopwatch.GetTimestamp();
         long createdBefore = deviceResources.CreatedSurfaceCount;
         long reusedBefore = deviceResources.ReusedSurfaceCount;
@@ -78,12 +104,19 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             plan,
             checked(plan.ExecutionOrder.Length + graph.Scopes.Length));
 
-        int hostCommandIndex = RenderHostPrelude(commands, graph, frameContext.StateAnalysis);
+        SdlGpuDrawingBackend.CommandRangeState hostState =
+            drawingBackend.CreateCommandRangeState(hostTarget);
+        int hostCommandIndex = RenderHostPrelude(
+            commands,
+            graph,
+            frameContext.StateAnalysis,
+            hostTarget,
+            hostState);
         try
         {
             for (int step = 0; step < plan.ExecutionOrder.Length; step++)
             {
-                ReleaseExpired(plan, step);
+                ReleaseExpired(plan, graph, step);
                 PrismGraphNode node = graph.GetNode(plan.ExecutionOrder[step]);
                 PrismRetainedCacheKey? cacheKey = CreateCacheKey(plan, node.Id);
                 if (cacheKey is PrismRetainedCacheKey retainedKey &&
@@ -97,12 +130,13 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                 }
                 else
                 {
+                    bool mipmapped = mipmappedNodes.Contains(node.Id);
                     SdlGpuPrismSurfaceLease lease = deviceResources.RentSurface(
                         session.WindowIdentity,
-                        session.PixelWidth,
-                        session.PixelHeight,
+                        executionPixelWidth,
+                        executionPixelHeight,
                         SdlGpuTextureFormat.R16G16B16A16Float,
-                        mipmapped: true);
+                        mipmapped);
                     surfaces.Add(step, lease);
                     frameLeases.Add(lease);
                     RenderNode(
@@ -114,7 +148,10 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                         node,
                         lease.Target,
                         frameContext.BackdropLease);
-                    session.GenerateMipmaps(lease.Target);
+                    if (mipmapped)
+                    {
+                        session.GenerateMipmaps(lease.Target);
+                    }
                     diagnostics.RecordGraphPass(node);
                     if (cacheKey is PrismRetainedCacheKey key && diagnostics.Count == 0)
                     {
@@ -130,6 +167,8 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                     graph,
                     step,
                     node,
+                    hostTarget,
+                    hostState,
                     ref hostCommandIndex);
                 diagnostics.ObserveLiveSurfaces(surfaces.Count);
             }
@@ -139,8 +178,9 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                 hostCommandIndex,
                 commands.Count,
                 frameContext.StateAnalysis,
-                session.WindowRenderTarget,
-                childSurfaces: null);
+                hostTarget,
+                childSurfaces: null,
+                hostState);
         }
         catch (PrismSurfaceAllocationException exception)
         {
@@ -150,7 +190,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                 PrismFallbackReason.SurfaceAllocationFailed,
                 exception.Message);
             session.BeginRenderTarget(
-                session.WindowRenderTarget,
+                hostTarget,
                 Color.Transparent,
                 SdlGpuLoadOp.Load);
             drawingBackend.RenderCommandRange(
@@ -158,8 +198,9 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                 hostCommandIndex,
                 commands.Count,
                 frameContext.StateAnalysis,
-                session.WindowRenderTarget,
-                childSurfaces: null);
+                hostTarget,
+                childSurfaces: null,
+                hostState);
         }
         finally
         {
@@ -170,6 +211,8 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             frameLeases.Clear();
             promotedLeases.Clear();
             surfaces.Clear();
+            styleDistanceFields.Clear();
+            mipmappedNodes.Clear();
             diagnostics.CompleteExecution(
                 deviceResources.CreatedSurfaceCount - createdBefore,
                 deviceResources.ReusedSurfaceCount - reusedBefore,
@@ -193,25 +236,35 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         }
         frameLeases.Clear();
         surfaces.Clear();
+        styleDistanceFields.Clear();
+        mipmappedNodes.Clear();
+        currentRetainedKeys.Clear();
+        currentOwners.Clear();
     }
 
     private int RenderHostPrelude(
         DrawCommandList commands,
         PrismGraph graph,
-        DrawCommandStateAnalysis analysis)
+        DrawCommandStateAnalysis analysis,
+        SdlGpuRenderTarget hostTarget,
+        SdlGpuDrawingBackend.CommandRangeState hostState)
     {
-        int firstRoot = graph.Scopes
-            .Where(static scope => scope.Depth == 0)
-            .Select(static scope => scope.BeginCommandIndex)
-            .DefaultIfEmpty(commands.Count)
-            .Min();
+        int firstRoot = commands.Count;
+        foreach (PrismGraphScope scope in graph.Scopes)
+        {
+            if (scope.Depth == 0)
+            {
+                firstRoot = Math.Min(firstRoot, scope.BeginCommandIndex);
+            }
+        }
         drawingBackend.RenderCommandRange(
             commands,
             0,
             firstRoot,
             analysis,
-            session.WindowRenderTarget,
-            childSurfaces: null);
+            hostTarget,
+            childSurfaces: null,
+            hostState);
         return firstRoot;
     }
 
@@ -280,8 +333,8 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         SdlGpuRenderTarget target)
     {
         PrismGraphScope scope = FindScope(graph, node.AnalysisScopeIndex);
-        Dictionary<int, SdlGpuPrismPresentationSurface> children = [];
-        List<SdlGpuPrismSurfaceLease> presentationLeases = [];
+        childPresentationSurfaces.Clear();
+        presentationLeases.Clear();
         try
         {
             foreach (PrismGraphScope child in graph.Scopes)
@@ -296,7 +349,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                         SdlGpuPrismSurfaceLease presentationLease =
                             ConvertForPresentation(childLease.Target, child, childOutput);
                         presentationLeases.Add(presentationLease);
-                        children.Add(
+                        childPresentationSurfaces.Add(
                             child.BeginCommandIndex,
                             new SdlGpuPrismPresentationSurface(
                                 presentationLease.Target,
@@ -304,7 +357,13 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                                     plan,
                                     child,
                                     childOutput,
-                                    presentationLease.Target)));
+                                    presentationLease.Target,
+                                    executionOriginPixelX,
+                                    executionOriginPixelY)));
+                        diagnostics.RecordPresentation(
+                            PrismExecutionPassKind.NestedPresent,
+                            childOutput,
+                            child.AnalysisScopeIndex);
                     }
                 }
             }
@@ -316,7 +375,10 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                 scope.EndCommandIndex,
                 analysis,
                 target,
-                children);
+                childPresentationSurfaces,
+                logicalOrigin: new Vector2(
+                    executionOriginPixelX / drawingBackend.CoordinateScale,
+                    executionOriginPixelY / drawingBackend.CoordinateScale));
         }
         finally
         {
@@ -324,6 +386,8 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             {
                 lease.Dispose();
             }
+            presentationLeases.Clear();
+            childPresentationSurfaces.Clear();
         }
     }
 
@@ -347,8 +411,14 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         try
         {
             nint texture = lease.Texture;
-            _ = lease.Metadata;
-            RenderKernel(target, texture, texture, 0, 1, node, null);
+            BackdropFrameMetadata metadata = lease.Metadata;
+            PrepareBaseUniforms(texture, texture, 0, 1);
+            uniforms[1] = new Vector4(
+                target.PixelWidth / (float)Math.Max(metadata.PixelWidth, 1),
+                target.PixelHeight / (float)Math.Max(metadata.PixelHeight, 1),
+                executionOriginPixelX / (float)Math.Max(metadata.PixelWidth, 1),
+                executionOriginPixelY / (float)Math.Max(metadata.PixelHeight, 1));
+            RenderPrepared(target, texture, texture);
         }
         catch (Exception exception) when (exception is ObjectDisposedException or InvalidOperationException)
         {
@@ -393,7 +463,9 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         SdlRect destination = ResolveBackdropDestination(
             backdropBounds,
             scope.PixelScale,
-            target);
+            target,
+            executionOriginPixelX,
+            executionOriginPixelY);
         if (destination.Width <= 0 || destination.Height <= 0)
         {
             Clear(target, Color.Transparent);
@@ -408,7 +480,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             1,
             1f / backdropMetadata.PixelWidth,
             1f / backdropMetadata.PixelHeight,
-            0);
+            executionOriginPixelX);
         uniforms[6] = new Vector4(
             1,
             (float)backdropMetadata.AlphaMode,
@@ -417,12 +489,16 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         uniforms[7] = new Vector4(
             transform.M11 / (pixelScale * backdropMetadata.PixelWidth),
             transform.M21 / (pixelScale * backdropMetadata.PixelWidth),
-            transform.M31 / backdropMetadata.PixelWidth,
+            ((executionOriginPixelX * transform.M11 +
+                executionOriginPixelY * transform.M21) / pixelScale +
+                transform.M31) / backdropMetadata.PixelWidth,
             0);
         uniforms[8] = new Vector4(
             transform.M12 / (pixelScale * backdropMetadata.PixelHeight),
             transform.M22 / (pixelScale * backdropMetadata.PixelHeight),
-            transform.M32 / backdropMetadata.PixelHeight,
+            ((executionOriginPixelX * transform.M12 +
+                executionOriginPixelY * transform.M22) / pixelScale +
+                transform.M32) / backdropMetadata.PixelHeight,
             0);
         RenderPrepared(target, source, source, destination);
     }
@@ -625,27 +701,21 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             ? scope.ControlBounds.Width / MathF.Max(scope.ControlBounds.Height, 1)
             : target.PixelWidth / (float)Math.Max(target.PixelHeight, 1);
         nint maskTexture = source;
-        SdlGpuTextureFormat scratchFormat = style is
-            PrismStyleId.OuterGlow or
-            PrismStyleId.BevelEmboss or
-            PrismStyleId.Stroke
-                ? SdlGpuTextureFormat.R32G32B32A32Float
-                : SdlGpuTextureFormat.R16G16B16A16Float;
-        using SdlGpuPrismSurfaceLease scratchA = deviceResources.RentSurface(
-            session.WindowIdentity,
-            target.PixelWidth,
-            target.PixelHeight,
-            scratchFormat,
-            mipmapped: false);
-        using SdlGpuPrismSurfaceLease scratchB = deviceResources.RentSurface(
-            session.WindowIdentity,
-            target.PixelWidth,
-            target.PixelHeight,
-            scratchFormat,
-            mipmapped: false);
 
         if (style == PrismStyleId.DropShadow)
         {
+            using SdlGpuPrismSurfaceLease scratchA = deviceResources.RentSurface(
+                session.WindowIdentity,
+                target.PixelWidth,
+                target.PixelHeight,
+                SdlGpuTextureFormat.R16G16B16A16Float,
+                mipmapped: false);
+            using SdlGpuPrismSurfaceLease scratchB = deviceResources.RentSurface(
+                session.WindowIdentity,
+                target.PixelWidth,
+                target.PixelHeight,
+                SdlGpuTextureFormat.R16G16B16A16Float,
+                mipmapped: false);
             maskTexture = PrepareDropShadowMask(
                 source,
                 scratchA.Target,
@@ -658,10 +728,9 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             PrismStyleId.BevelEmboss or
             PrismStyleId.Stroke)
         {
-            maskTexture = PrepareStyleDistanceField(
+            maskTexture = GetOrPrepareStyleDistanceField(
                 source,
-                scratchA.Target,
-                scratchB.Target,
+                target,
                 stylePlan,
                 geometry,
                 rowX,
@@ -674,12 +743,20 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                 gradientOffset);
             if (style == PrismStyleId.BevelEmboss)
             {
-                SdlGpuRenderTarget heightTarget = maskTexture == scratchA.Target.SampleTexture
-                    ? scratchB.Target
-                    : scratchA.Target;
-                SdlGpuRenderTarget lightingTarget = maskTexture == scratchA.Target.SampleTexture
-                    ? scratchA.Target
-                    : scratchB.Target;
+                using SdlGpuPrismSurfaceLease heightLease = deviceResources.RentSurface(
+                    session.WindowIdentity,
+                    target.PixelWidth,
+                    target.PixelHeight,
+                    SdlGpuTextureFormat.R32G32B32A32Float,
+                    mipmapped: false);
+                using SdlGpuPrismSurfaceLease lightingLease = deviceResources.RentSurface(
+                    session.WindowIdentity,
+                    target.PixelWidth,
+                    target.PixelHeight,
+                    SdlGpuTextureFormat.R32G32B32A32Float,
+                    mipmapped: false);
+                SdlGpuRenderTarget heightTarget = heightLease.Target;
+                SdlGpuRenderTarget lightingTarget = lightingLease.Target;
 
                 PrepareBaseUniforms(source, source, 87, 1);
                 ConfigureStyle(
@@ -739,6 +816,62 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         RenderPrepared(target, content, source);
     }
 
+    private nint GetOrPrepareStyleDistanceField(
+        nint source,
+        SdlGpuRenderTarget target,
+        PrismStylePlan stylePlan,
+        PrismStyleSamplingGeometry geometry,
+        Vector3 rowX,
+        Vector3 rowY,
+        nint styleTexture,
+        nint backdrop,
+        bool resourceAvailable,
+        bool backdropAvailable,
+        float gradientAspect,
+        Vector2 gradientOffset)
+    {
+        StyleDistanceFieldKey key = new(
+            source,
+            target.PixelWidth,
+            target.PixelHeight,
+            stylePlan.Kind == (int)PrismStyleId.Stroke);
+        if (styleDistanceFields.TryGetValue(key, out nint cached))
+        {
+            return cached;
+        }
+
+        SdlGpuPrismSurfaceLease scratchA = deviceResources.RentSurface(
+            session.WindowIdentity,
+            target.PixelWidth,
+            target.PixelHeight,
+            SdlGpuTextureFormat.R32G32B32A32Float,
+            mipmapped: false);
+        SdlGpuPrismSurfaceLease scratchB = deviceResources.RentSurface(
+            session.WindowIdentity,
+            target.PixelWidth,
+            target.PixelHeight,
+            SdlGpuTextureFormat.R32G32B32A32Float,
+            mipmapped: false);
+        frameLeases.Add(scratchA);
+        frameLeases.Add(scratchB);
+        nint prepared = PrepareStyleDistanceField(
+            source,
+            scratchA.Target,
+            scratchB.Target,
+            stylePlan,
+            geometry,
+            rowX,
+            rowY,
+            styleTexture,
+            backdrop,
+            resourceAvailable,
+            backdropAvailable,
+            gradientAspect,
+            gradientOffset);
+        styleDistanceFields.Add(key, prepared);
+        return prepared;
+    }
+
     private void ConfigureStyle(
         PrismStylePlan stylePlan,
         bool gradientOverlay,
@@ -763,8 +896,8 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         uniforms[10] = stylePlan.PrimaryColor;
         uniforms[11] = stylePlan.SecondaryColor;
         uniforms[12] = new Vector4(
-            geometry.Offset.X / Math.Max(session.PixelWidth, 1),
-            geometry.Offset.Y / Math.Max(session.PixelHeight, 1),
+            geometry.Offset.X / Math.Max(executionPixelWidth, 1),
+            geometry.Offset.Y / Math.Max(executionPixelHeight, 1),
             geometry.Size,
             geometry.Spread);
         uniforms[13] = new Vector4(
@@ -1242,10 +1375,15 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         textures[0] = source != 0 ? source : textures[0];
         textures[1] = secondary != 0 ? secondary : textures[0];
         uniforms[0] = new Vector4(opacity,
-            1f / Math.Max(session.PixelWidth, 1),
-            1f / Math.Max(session.PixelHeight, 1), 0);
+            1f / Math.Max(executionPixelWidth, 1),
+            1f / Math.Max(executionPixelHeight, 1),
+            executionOriginPixelX);
         uniforms[1] = new Vector4(1, 1, 0, 0);
-        uniforms[34] = new Vector4(session.PixelWidth, session.PixelHeight, kernelId, 0);
+        uniforms[34] = new Vector4(
+            executionPixelWidth,
+            executionPixelHeight,
+            kernelId,
+            executionOriginPixelY);
     }
 
     private void RenderPrepared(
@@ -1267,27 +1405,22 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             0,
             target.PixelWidth,
             target.PixelHeight);
-        float left = destinationRect.X;
-        float top = destinationRect.Y;
-        float right = destinationRect.X + destinationRect.Width;
-        float bottom = destinationRect.Y + destinationRect.Height;
-        SdlGpuVertex[] vertices =
-        [
-            new(new Vector2(left, top), new Vector2(0, 0), Vector4.One),
-            new(new Vector2(right, top), new Vector2(1, 0), Vector4.One),
-            new(new Vector2(right, bottom), new Vector2(1, 1), Vector4.One),
-            new(new Vector2(left, bottom), new Vector2(0, 1), Vector4.One)
-        ];
-        int[] indices = [0, 1, 2, 0, 2, 3];
-        SdlGpuGeometryBinding geometry = session.DrawingResources.UploadGeometry(session, vertices, indices);
         ISdlApi api = session.Api;
         nint pass = session.ActiveRenderPass;
         api.BindGpuGraphicsPipeline(pass, deviceResources.GetPipeline(target.ColorFormat));
-        api.BindGpuVertexBuffer(pass, 0, new SdlGpuBufferBinding(geometry.VertexBuffer));
-        api.BindGpuIndexBuffer(pass, new SdlGpuBufferBinding(geometry.IndexBuffer));
-        float[] viewport = [target.PixelWidth, target.PixelHeight, 0, 0];
+        Span<float> viewport =
+        [
+            target.PixelWidth,
+            target.PixelHeight,
+            0,
+            0,
+            destinationRect.X,
+            destinationRect.Y,
+            destinationRect.Width,
+            destinationRect.Height
+        ];
         api.PushGpuVertexUniformData(session.ActiveCommandBuffer, 0,
-            MemoryMarshal.AsBytes(viewport.AsSpan()));
+            MemoryMarshal.AsBytes(viewport));
         api.PushGpuFragmentUniformData(session.ActiveCommandBuffer, 0, uniforms.Pack());
         for (int slot = 0; slot < textures.Length; slot++)
         {
@@ -1297,7 +1430,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         }
         api.SetGpuScissor(pass, destinationRect);
         api.SetGpuStencilReference(pass, 0);
-        api.DrawGpuIndexedPrimitives(pass, 6, 0, 0);
+        api.DrawGpuPrimitives(pass, 3, 0);
     }
 
     private nint GetSamplerForSlot(int slot) => slot switch
@@ -1326,11 +1459,16 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         PrismGraph graph,
         int step,
         PrismGraphNode node,
+        SdlGpuRenderTarget hostTarget,
+        SdlGpuDrawingBackend.CommandRangeState hostState,
         ref int hostCommandIndex)
     {
-        foreach (PrismGraphScope scope in graph.Scopes
-            .Where(scope => scope.Depth == 0 && scope.Output == node.Id)
-            .OrderBy(static scope => scope.BeginCommandIndex))
+        int previousBeginCommandIndex = -1;
+        while (TryFindNextCompletedRoot(
+            graph,
+            node.Id,
+            previousBeginCommandIndex,
+            out PrismGraphScope scope))
         {
             using SdlGpuPrismSurfaceLease presentationLease =
                 ConvertForPresentation(surfaces[step].Target, scope, node);
@@ -1338,32 +1476,65 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                 plan,
                 scope,
                 node,
-                session.WindowRenderTarget);
-            session.BeginRenderTarget(session.WindowRenderTarget, Color.Transparent, SdlGpuLoadOp.Load);
+                hostTarget);
+            session.BeginRenderTarget(hostTarget, Color.Transparent, SdlGpuLoadOp.Load);
             drawingBackend.DrawPrismTexture(
                 presentationLease.Target.SampleTexture,
-                session.WindowRenderTarget,
-                presentationClip);
+                hostTarget,
+                presentationClip,
+                new DrawRect(
+                    executionOriginPixelX / drawingBackend.CoordinateScale,
+                    executionOriginPixelY / drawingBackend.CoordinateScale,
+                    presentationLease.Target.PixelWidth / drawingBackend.CoordinateScale,
+                    presentationLease.Target.PixelHeight / drawingBackend.CoordinateScale));
             diagnostics.RecordPresentation(
                 PrismExecutionPassKind.RootPresent,
                 node,
                 scope.AnalysisScopeIndex);
             hostCommandIndex = scope.EndCommandIndex + 1;
-            int nextRoot = graph.Scopes
-                .Where(candidate => candidate.Depth == 0 &&
+            int nextRoot = commands.Count;
+            foreach (PrismGraphScope candidate in graph.Scopes)
+            {
+                if (candidate.Depth == 0 &&
                     candidate.BeginCommandIndex > scope.BeginCommandIndex)
-                .Select(static candidate => candidate.BeginCommandIndex)
-                .DefaultIfEmpty(commands.Count)
-                .Min();
+                {
+                    nextRoot = Math.Min(nextRoot, candidate.BeginCommandIndex);
+                }
+            }
             drawingBackend.RenderCommandRange(
                 commands,
                 hostCommandIndex,
                 nextRoot,
                 analysis,
-                session.WindowRenderTarget,
-                childSurfaces: null);
+                hostTarget,
+                childSurfaces: null,
+                hostState);
             hostCommandIndex = nextRoot;
+            previousBeginCommandIndex = scope.BeginCommandIndex;
         }
+    }
+
+    private static bool TryFindNextCompletedRoot(
+        PrismGraph graph,
+        PrismGraphNodeId output,
+        int previousBeginCommandIndex,
+        out PrismGraphScope result)
+    {
+        result = default;
+        bool found = false;
+        foreach (PrismGraphScope scope in graph.Scopes)
+        {
+            if (scope.Depth != 0 ||
+                scope.Output != output ||
+                scope.BeginCommandIndex <= previousBeginCommandIndex ||
+                found && scope.BeginCommandIndex >= result.BeginCommandIndex)
+            {
+                continue;
+            }
+            result = scope;
+            found = true;
+        }
+        return found;
     }
 
     private SdlGpuPrismSurfaceLease ConvertForPresentation(
@@ -1402,8 +1573,8 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         PrismGraphNodeId nodeId)
     {
         PrismRetainedRasterContext context = new(
-            session.PixelWidth,
-            session.PixelHeight,
+            executionPixelWidth,
+            executionPixelHeight,
             PrismColorProfile.Srgb,
             ToBackdropFormat(session.Diagnostics.TextureFormat),
             PrismSampling.Linear,
@@ -1414,25 +1585,101 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             : null;
     }
 
-    private void ReleaseExpired(PrismGraphExecutionPlan plan, int step)
+    private void ReconcileRetainedEntries(
+        PrismGraphExecutionPlan plan,
+        PrismGraph graph,
+        PrismCacheInvalidationQueue? queue)
     {
-        foreach ((int index, SdlGpuPrismSurfaceLease lease) in surfaces
-            .Where(pair => plan.SurfaceLifetimes[pair.Key].LastStep < step)
-            .ToArray())
+        currentOwners.Clear();
+        foreach (PrismGraphScope scope in graph.Scopes)
         {
+            currentOwners.Add(scope.CacheOwnerToken);
+        }
+
+        while (queue?.TryDequeue(out PrismCacheInvalidation invalidation) == true)
+        {
+            if (invalidation.Kind == PrismCacheInvalidationKind.All ||
+                !currentOwners.Contains(invalidation.OwnerToken))
+            {
+                deviceResources.Invalidate(invalidation);
+            }
+        }
+
+        currentRetainedKeys.Clear();
+        foreach (PrismGraphNodeId nodeId in plan.ExecutionOrder)
+        {
+            if (CreateCacheKey(plan, nodeId) is PrismRetainedCacheKey key)
+            {
+                currentRetainedKeys.Add(key);
+            }
+        }
+
+        foreach (PrismCacheOwnerToken owner in currentOwners)
+        {
+            deviceResources.InvalidateStaleOwnerEntries(
+                owner,
+                currentRetainedKeys);
+        }
+    }
+
+    private void ReleaseExpired(
+        PrismGraphExecutionPlan plan,
+        PrismGraph graph,
+        int step)
+    {
+        expiredSurfaceIndices.Clear();
+        foreach ((int index, SdlGpuPrismSurfaceLease _) in surfaces)
+        {
+            if (plan.SurfaceLifetimes[index].LastStep < step &&
+                !IsPendingNestedPresentation(plan, graph, index, step))
+            {
+                expiredSurfaceIndices.Add(index);
+            }
+        }
+        foreach (int index in expiredSurfaceIndices)
+        {
+            SdlGpuPrismSurfaceLease lease = surfaces[index];
             lease.Dispose();
             frameLeases.Remove(lease);
             surfaces.Remove(index);
         }
     }
 
-    private void ConsumeInvalidations(PrismCacheInvalidationQueue? queue)
+    private static bool IsPendingNestedPresentation(
+        PrismGraphExecutionPlan plan,
+        PrismGraph graph,
+        int executionIndex,
+        int step)
     {
-        while (queue?.TryDequeue(out PrismCacheInvalidation invalidation) == true)
+        PrismGraphNodeId nodeId = plan.ExecutionOrder[executionIndex];
+        foreach (PrismGraphScope scope in graph.Scopes)
         {
-            deviceResources.Invalidate(invalidation);
+            if (scope.Output != nodeId ||
+                scope.ParentScopeIndex is not int parentScopeIndex)
+            {
+                continue;
+            }
+
+            foreach (PrismGraphNode parentCapture in graph.Nodes)
+            {
+                if (parentCapture.AnalysisScopeIndex == parentScopeIndex &&
+                    parentCapture.Kind == PrismGraphNodeKind.ControlCapture)
+                {
+                    return plan.GetExecutionIndex(parentCapture.Id) >= step;
+                }
+            }
+            throw new InvalidOperationException(
+                $"Prism scope '{parentScopeIndex}' has no control-capture node.");
         }
+
+        return false;
     }
+
+    private readonly record struct StyleDistanceFieldKey(
+        nint Source,
+        int PixelWidth,
+        int PixelHeight,
+        bool DirectionalCoverage);
 
     private bool TryResolveImage(
         PrismGraphScope scope,
@@ -1502,8 +1749,17 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             : throw new InvalidOperationException(
                 $"SDL_GPU Prism execution surface {executionIndex} is no longer live.");
 
-    private static PrismGraphScope FindScope(PrismGraph graph, int index) =>
-        graph.Scopes.First(scope => scope.AnalysisScopeIndex == index);
+    private static PrismGraphScope FindScope(PrismGraph graph, int index)
+    {
+        foreach (PrismGraphScope scope in graph.Scopes)
+        {
+            if (scope.AnalysisScopeIndex == index)
+            {
+                return scope;
+            }
+        }
+        throw new KeyNotFoundException($"Prism graph scope '{index}' does not exist.");
+    }
 
     private static int FindInputIndex(
         PrismGraphExecutionPlan plan,
@@ -1570,7 +1826,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
     private static Vector4 PackSeed(uint seed) =>
         new(seed & 0xffffu, seed >> 16, 0, 0);
 
-    private static bool ResolveScopeUvMapping(
+    private bool ResolveScopeUvMapping(
         PrismGraphScope scope,
         out Vector3 rowX,
         out Vector3 rowY)
@@ -1586,11 +1842,15 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         rowX = new Vector3(
             inverse.M11 / (scope.PixelScale * bounds.Width),
             inverse.M21 / (scope.PixelScale * bounds.Width),
-            (inverse.M31 - bounds.X) / bounds.Width);
+            ((executionOriginPixelX * inverse.M11 +
+                executionOriginPixelY * inverse.M21) / scope.PixelScale +
+                inverse.M31 - bounds.X) / bounds.Width);
         rowY = new Vector3(
             inverse.M12 / (scope.PixelScale * bounds.Height),
             inverse.M22 / (scope.PixelScale * bounds.Height),
-            (inverse.M32 - bounds.Y) / bounds.Height);
+            ((executionOriginPixelX * inverse.M12 +
+                executionOriginPixelY * inverse.M22) / scope.PixelScale +
+                inverse.M32 - bounds.Y) / bounds.Height);
         return true;
     }
 
@@ -1606,22 +1866,24 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
     private static SdlRect ResolveBackdropDestination(
         DrawRect bounds,
         float pixelScale,
-        SdlGpuRenderTarget target)
+        SdlGpuRenderTarget target,
+        int originPixelX,
+        int originPixelY)
     {
         int left = (int)Math.Clamp(
-            MathF.Floor(bounds.X * pixelScale),
+            MathF.Floor(bounds.X * pixelScale) - originPixelX,
             0,
             target.PixelWidth);
         int top = (int)Math.Clamp(
-            MathF.Floor(bounds.Y * pixelScale),
+            MathF.Floor(bounds.Y * pixelScale) - originPixelY,
             0,
             target.PixelHeight);
         int right = (int)Math.Clamp(
-            MathF.Ceiling(bounds.Right * pixelScale),
+            MathF.Ceiling(bounds.Right * pixelScale) - originPixelX,
             0,
             target.PixelWidth);
         int bottom = (int)Math.Clamp(
-            MathF.Ceiling(bounds.Bottom * pixelScale),
+            MathF.Ceiling(bounds.Bottom * pixelScale) - originPixelY,
             0,
             target.PixelHeight);
         return new SdlRect(
@@ -1635,7 +1897,9 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         PrismGraphExecutionPlan plan,
         PrismGraphScope scope,
         PrismGraphNode node,
-        SdlGpuRenderTarget target)
+        SdlGpuRenderTarget target,
+        int originPixelX = 0,
+        int originPixelY = 0)
     {
         PrismGraphNodePlan nodePlan = plan.GetNodePlan(node.Id);
         if (nodePlan.BoundsStatus == PrismGraphBoundsStatus.Unknown)
@@ -1646,19 +1910,19 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         DrawRect bounds = UnionBounds(nodePlan.Bounds, scope.ControlBounds);
         float pixelScale = scope.PixelScale;
         int left = (int)Math.Clamp(
-            MathF.Floor(bounds.X * pixelScale) - PresentationSamplingOutset,
+            MathF.Floor(bounds.X * pixelScale) - PresentationSamplingOutset - originPixelX,
             0,
             target.PixelWidth);
         int top = (int)Math.Clamp(
-            MathF.Floor(bounds.Y * pixelScale) - PresentationSamplingOutset,
+            MathF.Floor(bounds.Y * pixelScale) - PresentationSamplingOutset - originPixelY,
             0,
             target.PixelHeight);
         int right = (int)Math.Clamp(
-            MathF.Ceiling(bounds.Right * pixelScale) + PresentationSamplingOutset,
+            MathF.Ceiling(bounds.Right * pixelScale) + PresentationSamplingOutset - originPixelX,
             0,
             target.PixelWidth);
         int bottom = (int)Math.Clamp(
-            MathF.Ceiling(bounds.Bottom * pixelScale) + PresentationSamplingOutset,
+            MathF.Ceiling(bounds.Bottom * pixelScale) + PresentationSamplingOutset - originPixelY,
             0,
             target.PixelHeight);
         return new SdlRect(
@@ -1666,6 +1930,136 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             top,
             Math.Max(0, right - left),
             Math.Max(0, bottom - top));
+    }
+
+    private void ResolveExecutionExtent(
+        PrismGraphExecutionPlan plan,
+        PrismGraph graph,
+        SdlGpuRenderTarget hostTarget)
+    {
+        if (graph.Nodes.Any(static node =>
+                node.Filter is PrismFilterId filter &&
+                (PrismNeighborhoodPlanner.RequiresStableHostCoordinates(filter) ||
+                    PrismResamplingPlanner.RequiresStableHostCoordinates(filter) ||
+                    PrismCatalogFilterPlanner.RequiresStableHostCoordinates(filter))))
+        {
+            executionOriginPixelX = 0;
+            executionOriginPixelY = 0;
+            executionPixelWidth = hostTarget.PixelWidth;
+            executionPixelHeight = hostTarget.PixelHeight;
+            return;
+        }
+
+        int left = hostTarget.PixelWidth - 1;
+        int top = hostTarget.PixelHeight - 1;
+        int right = hostTarget.PixelWidth;
+        int bottom = hostTarget.PixelHeight;
+        bool hasKnownOutput = false;
+        foreach (PrismGraphScope scope in graph.Scopes)
+        {
+            if (scope.Output is not PrismGraphNodeId output)
+            {
+                continue;
+            }
+
+            PrismGraphNodePlan outputPlan = plan.GetNodePlan(output);
+            if (outputPlan.BoundsStatus == PrismGraphBoundsStatus.Unknown)
+            {
+                executionOriginPixelX = 0;
+                executionOriginPixelY = 0;
+                executionPixelWidth = hostTarget.PixelWidth;
+                executionPixelHeight = hostTarget.PixelHeight;
+                return;
+            }
+
+            DrawRect bounds = UnionBounds(outputPlan.Bounds, scope.ControlBounds);
+            int scopeLeft =
+                (int)MathF.Floor(bounds.X * scope.PixelScale) -
+                PresentationSamplingOutset;
+            int scopeTop =
+                (int)MathF.Floor(bounds.Y * scope.PixelScale) -
+                PresentationSamplingOutset;
+            int scopeRight =
+                (int)MathF.Ceiling(bounds.Right * scope.PixelScale) +
+                PresentationSamplingOutset;
+            int scopeBottom =
+                (int)MathF.Ceiling(bounds.Bottom * scope.PixelScale) +
+                PresentationSamplingOutset;
+            if (!hasKnownOutput)
+            {
+                left = scopeLeft;
+                top = scopeTop;
+                right = scopeRight;
+                bottom = scopeBottom;
+            }
+            else
+            {
+                left = Math.Min(left, scopeLeft);
+                top = Math.Min(top, scopeTop);
+                right = Math.Max(right, scopeRight);
+                bottom = Math.Max(bottom, scopeBottom);
+            }
+            hasKnownOutput = true;
+        }
+
+        if (!hasKnownOutput)
+        {
+            executionOriginPixelX = 0;
+            executionOriginPixelY = 0;
+            executionPixelWidth = hostTarget.PixelWidth;
+            executionPixelHeight = hostTarget.PixelHeight;
+            return;
+        }
+
+        int clampedLeft = Math.Clamp(left, 0, hostTarget.PixelWidth - 1);
+        int clampedTop = Math.Clamp(top, 0, hostTarget.PixelHeight - 1);
+        int clampedRight = Math.Clamp(
+            right,
+            clampedLeft + 1,
+            hostTarget.PixelWidth);
+        int clampedBottom = Math.Clamp(
+            bottom,
+            clampedTop + 1,
+            hostTarget.PixelHeight);
+        executionOriginPixelX = AlignDown(clampedLeft, ExecutionSurfaceTileSize);
+        executionOriginPixelY = AlignDown(clampedTop, ExecutionSurfaceTileSize);
+        int alignedRight = AlignUp(
+            clampedRight,
+            ExecutionSurfaceTileSize,
+            hostTarget.PixelWidth);
+        int alignedBottom = AlignUp(
+            clampedBottom,
+            ExecutionSurfaceTileSize,
+            hostTarget.PixelHeight);
+        executionPixelWidth = alignedRight - executionOriginPixelX;
+        executionPixelHeight = alignedBottom - executionOriginPixelY;
+    }
+
+    private void ResolveMipmappedNodes(PrismGraph graph)
+    {
+        mipmappedNodes.Clear();
+        foreach (PrismGraphEdge edge in graph.Edges)
+        {
+            PrismGraphNode consumer = graph.GetNode(edge.Target);
+            if (consumer.ResamplingPlan is not null ||
+                consumer.CatalogFilterPlan is not null)
+            {
+                mipmappedNodes.Add(edge.Source);
+            }
+        }
+    }
+
+    private static int AlignDown(int value, int alignment) =>
+        value - (value % alignment);
+
+    private static int AlignUp(int value, int alignment, int maximum)
+    {
+        int remainder = value % alignment;
+        return remainder == 0
+            ? value
+            : (int)Math.Min(
+                (long)value + alignment - remainder,
+                maximum);
     }
 
     private static DrawRect UnionBounds(DrawRect first, DrawRect second)

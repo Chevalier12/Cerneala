@@ -5,6 +5,8 @@ namespace Cerneala.Platforms.Sdl3;
 
 internal sealed class NativeSdlApi : ISdlApi
 {
+    private readonly Dictionary<SdlEventWatch, SDL.EventFilter> eventWatches = [];
+
     public bool InitializeVideo() =>
         SDL.Init(SDL.InitFlags.Video | SDL.InitFlags.Events);
 
@@ -141,39 +143,43 @@ internal sealed class NativeSdlApi : ISdlApi
             EnableBlend = createInfo.BlendState.Enabled,
             EnableColorWriteMask = true
         };
-        SDL.GPUVertexBufferDescription[] vertexBuffers =
-        [
-            new SDL.GPUVertexBufferDescription
-            {
-                Slot = 0,
-                Pitch = 32,
-                InputRate = SDL.GPUVertexInputRate.Vertex
-            }
-        ];
-        SDL.GPUVertexAttribute[] attributes =
-        [
-            new SDL.GPUVertexAttribute
-            {
-                Location = 0,
-                BufferSlot = 0,
-                Format = SDL.GPUVertexElementFormat.Float2,
-                Offset = 0
-            },
-            new SDL.GPUVertexAttribute
-            {
-                Location = 1,
-                BufferSlot = 0,
-                Format = SDL.GPUVertexElementFormat.Float2,
-                Offset = 8
-            },
-            new SDL.GPUVertexAttribute
-            {
-                Location = 2,
-                BufferSlot = 0,
-                Format = SDL.GPUVertexElementFormat.Float4,
-                Offset = 16
-            }
-        ];
+        SDL.GPUVertexBufferDescription[] vertexBuffers = createInfo.UsesVertexInput
+            ?
+            [
+                new SDL.GPUVertexBufferDescription
+                {
+                    Slot = 0,
+                    Pitch = 32,
+                    InputRate = SDL.GPUVertexInputRate.Vertex
+                }
+            ]
+            : [];
+        SDL.GPUVertexAttribute[] attributes = createInfo.UsesVertexInput
+            ?
+            [
+                new SDL.GPUVertexAttribute
+                {
+                    Location = 0,
+                    BufferSlot = 0,
+                    Format = SDL.GPUVertexElementFormat.Float2,
+                    Offset = 0
+                },
+                new SDL.GPUVertexAttribute
+                {
+                    Location = 1,
+                    BufferSlot = 0,
+                    Format = SDL.GPUVertexElementFormat.Float2,
+                    Offset = 8
+                },
+                new SDL.GPUVertexAttribute
+                {
+                    Location = 2,
+                    BufferSlot = 0,
+                    Format = SDL.GPUVertexElementFormat.Float4,
+                    Offset = 16
+                }
+            ]
+            : [];
         SDL.GPUColorTargetDescription[] colorTargets =
         [
             new SDL.GPUColorTargetDescription
@@ -409,6 +415,8 @@ internal sealed class NativeSdlApi : ISdlApi
         SDL.GPUTextureRegion nativeDestination = new()
         {
             Texture = destination.Texture,
+            X = destination.X,
+            Y = destination.Y,
             W = destination.Width,
             H = destination.Height,
             D = 1
@@ -428,6 +436,8 @@ internal sealed class NativeSdlApi : ISdlApi
         SDL.GPUTextureRegion nativeSource = new()
         {
             Texture = source.Texture,
+            X = source.X,
+            Y = source.Y,
             W = source.Width,
             H = source.Height,
             D = 1
@@ -553,6 +563,17 @@ internal sealed class NativeSdlApi : ISdlApi
             vertexOffset,
             0);
 
+    public void DrawGpuPrimitives(
+        nint renderPass,
+        uint vertexCount,
+        uint firstVertex) =>
+        SDL.DrawGPUPrimitives(
+            renderPass,
+            vertexCount,
+            1,
+            firstVertex,
+            0);
+
     public bool WaitForGpuFence(nint device, nint fence) =>
         SDL.WaitForGPUFences(device, waitAll: true, [fence], 1);
 
@@ -624,8 +645,45 @@ internal sealed class NativeSdlApi : ISdlApi
             return false;
         }
 
+        @event = ConvertEvent(native);
+        return true;
+    }
+
+    public bool AddEventWatch(SdlEventWatch watch)
+    {
+        ArgumentNullException.ThrowIfNull(watch);
+        if (eventWatches.ContainsKey(watch))
+        {
+            throw new InvalidOperationException("The SDL event watch is already registered.");
+        }
+
+        SDL.EventFilter nativeWatch = (nint _, ref SDL.Event native) =>
+        {
+            watch(ConvertEvent(native));
+            return true;
+        };
+        if (!SDL.AddEventWatch(nativeWatch, 0))
+        {
+            return false;
+        }
+
+        eventWatches.Add(watch, nativeWatch);
+        return true;
+    }
+
+    public void RemoveEventWatch(SdlEventWatch watch)
+    {
+        ArgumentNullException.ThrowIfNull(watch);
+        if (eventWatches.Remove(watch, out SDL.EventFilter? nativeWatch))
+        {
+            SDL.RemoveEventWatch(nativeWatch, 0);
+        }
+    }
+
+    private static SdlEvent ConvertEvent(in SDL.Event native)
+    {
         SDL.EventType type = (SDL.EventType)native.Type;
-        @event = type switch
+        return type switch
         {
             SDL.EventType.Quit => new SdlEvent(SdlEventKind.Quit),
             SDL.EventType.WindowShown => Window(SdlEventKind.WindowShown, native.Window),
@@ -662,7 +720,6 @@ internal sealed class NativeSdlApi : ISdlApi
                 WheelFlipped: native.Wheel.Direction == SDL.MouseWheelDirection.Flipped),
             _ => default
         };
-        return true;
     }
 
     public nint CreateSystemCursor(SdlSystemCursor cursor) =>

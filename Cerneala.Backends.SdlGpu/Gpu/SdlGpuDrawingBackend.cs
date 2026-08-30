@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Paths;
 using Cerneala.Drawing.Prism;
+using Cerneala.Drawing.Prism.Graph;
 using Cerneala.Drawing.Text;
 using Cerneala.Platforms.Sdl3;
 
@@ -763,7 +763,7 @@ internal sealed partial class SdlGpuDrawingBackend :
         DrawBrushDescriptor descriptor = brush?.CreateDescriptor() ??
             new SolidDrawBrushDescriptor(fallbackColor, 1);
         SdlGpuTextRasterKey rasterKey = new(
-            RuntimeHelpers.GetHashCode(textRun.Font),
+            textRun.Font is SkiaFont skiaFont ? skiaFont.Typeface : textRun.Font,
             textRun.Text,
             textRun.Size,
             CoordinateScale,
@@ -1191,7 +1191,8 @@ internal sealed partial class SdlGpuDrawingBackend :
                     width,
                     height,
                     parentTarget.ColorFormat,
-                    parentTarget.SampleCount));
+                    parentTarget.SampleCount),
+                new SdlGpuPrismExecutor(session, this));
             source.SetBackendState(resources, surface);
         }
 
@@ -1205,34 +1206,49 @@ internal sealed partial class SdlGpuDrawingBackend :
                     0,
                     width / CoordinateScale,
                     height / CoordinateScale));
-            DrawCommandStateAnalysis surfaceAnalysis =
-                new DrawCommandStateAnalyzer().Analyze(surface.Commands);
+            PrismFrameAnalysis surfacePrismAnalysis =
+                new PrismFrameAnalyzer().Analyze(surface.Commands);
+            DrawingFrameContext surfaceFrameContext = new(
+                surfacePrismAnalysis,
+                backdropLease: null,
+                backdropSourceToken: default,
+                surface.PrismCacheInvalidations);
             session.BeginRenderTarget(
                 surface.Target,
                 source.ClearColor,
                 SdlGpuLoadOp.Clear);
-            RenderState surfaceState = RenderState.Create(
-                surface.Target,
-                CoordinateScale);
-            parentBatches.Begin(surface.Target);
-            RenderRange(
-                surface.Commands,
-                0,
-                surface.Commands.Count,
-                surfaceAnalysis,
-                surfaceState,
-                surface.Target,
-                parentBatches,
-                layerDepth: 0);
-            parentBatches.Flush();
+            if (!surfacePrismAnalysis.Scopes.IsDefaultOrEmpty)
+            {
+                surface.PrismExecutor.Execute(
+                    surface.Commands,
+                    surfaceFrameContext,
+                    surface.Target);
+            }
+            else
+            {
+                RenderState surfaceState = RenderState.Create(
+                    surface.Target,
+                    CoordinateScale);
+                parentBatches.Begin(surface.Target);
+                RenderRange(
+                    surface.Commands,
+                    0,
+                    surface.Commands.Count,
+                    surfacePrismAnalysis.StateAnalysis,
+                    surfaceState,
+                    surface.Target,
+                    parentBatches,
+                    layerDepth: 0);
+                parentBatches.Flush();
+            }
             surface.FrameVersion = source.FrameVersion;
             session.BeginRenderTarget(
                 parentTarget,
                 Color.Transparent,
                 SdlGpuLoadOp.Load);
-            parentBatches.Begin(parentTarget);
         }
 
+        parentBatches.Begin(parentTarget);
         AddQuad(
             parentBatches,
             command.Rect,
@@ -1284,7 +1300,9 @@ internal sealed partial class SdlGpuDrawingBackend :
         int end,
         DrawCommandStateAnalysis analysis,
         SdlGpuRenderTarget target,
-        IReadOnlyDictionary<int, SdlGpuPrismPresentationSurface>? childSurfaces)
+        IReadOnlyDictionary<int, SdlGpuPrismPresentationSurface>? childSurfaces,
+        CommandRangeState? continuedState = null,
+        Vector2 logicalOrigin = default)
     {
         ArgumentNullException.ThrowIfNull(commands);
         ArgumentNullException.ThrowIfNull(analysis);
@@ -1297,16 +1315,37 @@ internal sealed partial class SdlGpuDrawingBackend :
             return;
         }
 
-        RenderState state = RenderState.Create(target, CoordinateScale);
-        DrawCommandStateEntry entry = analysis.Entries[start];
-        state.Transforms[0] = entry.Transform;
-        state.Opacities[0] = entry.Opacity;
-        state.Blends[0] = entry.BlendMode;
-        if (entry.ClipBounds is DrawRect clip)
+        RenderState state;
+        if (continuedState is not null)
         {
-            state.Scissors[0] = IntersectScissor(
-                state.Scissors[0],
-                ToScissor(clip, CoordinateScale));
+            if (continuedState.Target != target)
+            {
+                throw new InvalidOperationException(
+                    "A continued SDL_GPU command range cannot change render targets.");
+            }
+            state = continuedState.State;
+        }
+        else
+        {
+            state = RenderState.Create(target, CoordinateScale);
+            DrawCommandStateEntry entry = analysis.Entries[start];
+            state.Transforms[0] = Matrix3x2.Multiply(
+                entry.Transform,
+                Matrix3x2.CreateTranslation(-logicalOrigin));
+            state.Opacities[0] = entry.Opacity;
+            state.Blends[0] = entry.BlendMode;
+            if (entry.ClipBounds is DrawRect clip)
+            {
+                state.Scissors[0] = IntersectScissor(
+                    state.Scissors[0],
+                    ToScissor(
+                        new DrawRect(
+                            clip.X - logicalOrigin.X,
+                            clip.Y - logicalOrigin.Y,
+                            clip.Width,
+                            clip.Height),
+                        CoordinateScale));
+            }
         }
         batches.Begin(target);
         RenderRange(
@@ -1322,10 +1361,15 @@ internal sealed partial class SdlGpuDrawingBackend :
         batches.Flush();
     }
 
+    internal CommandRangeState CreateCommandRangeState(
+        SdlGpuRenderTarget target) =>
+        new(target, RenderState.Create(target, CoordinateScale));
+
     internal void DrawPrismTexture(
         nint texture,
         SdlGpuRenderTarget target,
-        SdlRect? clip = null)
+        SdlRect? clip = null,
+        DrawRect? destination = null)
     {
         if (texture == 0)
         {
@@ -1338,12 +1382,15 @@ internal sealed partial class SdlGpuDrawingBackend :
         }
         session.BeginRenderTarget(target, Color.Transparent, SdlGpuLoadOp.Load);
         RenderState state = RenderState.Create(target, CoordinateScale);
-        float logicalWidth = target.PixelWidth / CoordinateScale;
-        float logicalHeight = target.PixelHeight / CoordinateScale;
+        DrawRect destinationRect = destination ?? new DrawRect(
+            0,
+            0,
+            target.PixelWidth / CoordinateScale,
+            target.PixelHeight / CoordinateScale);
         batches.Begin(target);
         AddQuad(
             batches,
-            new DrawRect(0, 0, logicalWidth, logicalHeight),
+            destinationRect,
             new DrawRect(0, 0, 1, 1),
             Color.White,
             Matrix3x2.Identity,
@@ -1779,7 +1826,7 @@ internal sealed partial class SdlGpuDrawingBackend :
             ColorWriteMask == other.ColorWriteMask;
     }
 
-    private sealed class RenderState
+    internal sealed class RenderState
     {
         public List<Matrix3x2> Transforms { get; } = [Matrix3x2.Identity];
         public List<float> Opacities { get; } = [1];
@@ -1812,7 +1859,22 @@ internal sealed partial class SdlGpuDrawingBackend :
         }
     }
 
-    private sealed record ClipEntry(
+    internal sealed class CommandRangeState
+    {
+        internal CommandRangeState(
+            SdlGpuRenderTarget target,
+            RenderState state)
+        {
+            Target = target;
+            State = state;
+        }
+
+        internal SdlGpuRenderTarget Target { get; }
+
+        internal RenderState State { get; }
+    }
+
+    internal sealed record ClipEntry(
         SdlRect? PreviousScissor,
         CpuDrawBatch? StencilBatch)
     {
@@ -1823,7 +1885,7 @@ internal sealed partial class SdlGpuDrawingBackend :
             new(null, batch);
     }
 
-    private sealed record CpuDrawBatch(
+    internal sealed record CpuDrawBatch(
         SdlGpuVertex[] Vertices,
         int[] Indices,
         DrawPrimitiveTopology Topology,
@@ -1904,13 +1966,15 @@ internal sealed partial class SdlGpuDrawingBackend :
 
     private sealed record SdlGpuRenderSurfaceState(
         SdlGpuDrawingResources Resources,
-        SdlGpuRenderTarget Target) : IRenderSurface2DBackendState
+        SdlGpuRenderTarget Target,
+        SdlGpuPrismExecutor PrismExecutor) : IRenderSurface2DBackendState
     {
         private bool disposed;
 
         public int PixelWidth => Target.PixelWidth;
         public int PixelHeight => Target.PixelHeight;
         public DrawCommandList Commands { get; } = new();
+        public PrismCacheInvalidationQueue PrismCacheInvalidations { get; } = new();
         public long FrameVersion { get; set; } = long.MinValue;
 
         public void Dispose()
@@ -1920,6 +1984,7 @@ internal sealed partial class SdlGpuDrawingBackend :
                 return;
             }
             disposed = true;
+            PrismExecutor.Dispose();
             Resources.RetireRenderTarget(Target);
         }
     }

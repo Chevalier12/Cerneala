@@ -6,6 +6,7 @@ namespace Cerneala.Tests.SdlGpu;
 internal sealed class FakeSdlApi : ISdlApi
 {
     private readonly Queue<SdlEvent> events = [];
+    private readonly List<SdlEventWatch> eventWatches = [];
     private int nextWindow = 100;
     private int nextCursor = 1000;
     private int nextTexture = 2000;
@@ -24,6 +25,10 @@ internal sealed class FakeSdlApi : ISdlApi
 
     public bool InitializeResult { get; set; } = true;
 
+    public bool AddEventWatchResult { get; set; } = true;
+
+    public bool GetWindowSizeInPixelsResult { get; set; } = true;
+
     public string Error { get; set; } = "fake SDL error";
 
     public nint DeviceResult { get; set; } = (nint)0x1234;
@@ -34,6 +39,12 @@ internal sealed class FakeSdlApi : ISdlApi
     public int InitializeCount { get; private set; }
 
     public int QuitCount { get; private set; }
+
+    public int AddEventWatchCount { get; private set; }
+
+    public int RemoveEventWatchCount { get; private set; }
+
+    public int RegisteredEventWatchCount => eventWatches.Count;
 
     public int CreateDeviceCount { get; private set; }
 
@@ -105,6 +116,9 @@ internal sealed class FakeSdlApi : ISdlApi
     public List<nint> ReleasedGpuTextures { get; } = [];
 
     public List<SdlGpuBlitInfo> Blits { get; } = [];
+
+    public List<(SdlGpuTextureTransferInfo Source, SdlGpuTextureRegion Destination, bool Cycle)>
+        GpuTextureUploads { get; } = [];
 
     public List<SdlGpuColorTargetInfo> RenderTargets { get; } = [];
 
@@ -550,6 +564,7 @@ internal sealed class FakeSdlApi : ISdlApi
         in SdlGpuTextureRegion destination,
         bool cycle)
     {
+        GpuTextureUploads.Add((source, destination, cycle));
         FakeTransferBuffer buffer = TransferBuffers[source.TransferBuffer];
         int pixelsPerRow = checked((int)(source.PixelsPerRow == 0
             ? destination.Width
@@ -558,7 +573,9 @@ internal sealed class FakeSdlApi : ISdlApi
             buffer.Pointer + checked((int)source.Offset),
             checked((int)destination.Width),
             checked((int)destination.Height),
-            checked(pixelsPerRow * 4));
+            checked(pixelsPerRow * 4),
+            checked((int)destination.X),
+            checked((int)destination.Y));
         GpuActions.Add($"upload-texture:{copyPass}:{source.TransferBuffer}:{destination.Texture}:{cycle}");
     }
 
@@ -576,7 +593,9 @@ internal sealed class FakeSdlApi : ISdlApi
             buffer.Pointer + checked((int)destination.Offset),
             checked((int)source.Width),
             checked((int)source.Height),
-            checked(pixelsPerRow * 4));
+            checked(pixelsPerRow * 4),
+            checked((int)source.X),
+            checked((int)source.Y));
         GpuActions.Add($"download:{copyPass}:{source.Texture}:{destination.TransferBuffer}");
     }
 
@@ -647,6 +666,12 @@ internal sealed class FakeSdlApi : ISdlApi
         uint firstIndex,
         int vertexOffset) =>
         GpuActions.Add($"draw-indexed:{renderPass}:{indexCount}:{firstIndex}:{vertexOffset}");
+
+    public void DrawGpuPrimitives(
+        nint renderPass,
+        uint vertexCount,
+        uint firstVertex) =>
+        GpuActions.Add($"draw:{renderPass}:{vertexCount}:{firstVertex}");
 
     public bool WaitForGpuFence(nint device, nint fence)
     {
@@ -765,6 +790,13 @@ internal sealed class FakeSdlApi : ISdlApi
 
     public bool GetWindowSizeInPixels(nint window, out int width, out int height)
     {
+        if (!GetWindowSizeInPixelsResult)
+        {
+            width = 0;
+            height = 0;
+            return false;
+        }
+
         width = (int)MathF.Ceiling(Windows[window].Width * WindowPixelDensity);
         height = (int)MathF.Ceiling(Windows[window].Height * WindowPixelDensity);
         return true;
@@ -801,6 +833,32 @@ internal sealed class FakeSdlApi : ISdlApi
 
         @event = default;
         return false;
+    }
+
+    public bool AddEventWatch(SdlEventWatch watch)
+    {
+        AddEventWatchCount++;
+        if (!AddEventWatchResult)
+        {
+            return false;
+        }
+
+        eventWatches.Add(watch);
+        return true;
+    }
+
+    public void RemoveEventWatch(SdlEventWatch watch)
+    {
+        RemoveEventWatchCount++;
+        eventWatches.Remove(watch);
+    }
+
+    public void RaiseWatchedEvent(SdlEvent @event)
+    {
+        foreach (SdlEventWatch watch in eventWatches.ToArray())
+        {
+            watch(@event);
+        }
     }
 
     public nint CreateSystemCursor(SdlSystemCursor cursor) => (nint)nextCursor++;
@@ -894,7 +952,13 @@ internal sealed class FakeSdlApi : ISdlApi
             source.pixels.AsSpan(0, length).CopyTo(pixels);
         }
 
-        public void CopyFrom(nint source, int width, int height, int sourceStride)
+        public void CopyFrom(
+            nint source,
+            int width,
+            int height,
+            int sourceStride,
+            int destinationX = 0,
+            int destinationY = 0)
         {
             int destinationStride = checked((int)CreateInfo.Width * 4);
             int rowLength = checked(width * 4);
@@ -903,12 +967,18 @@ internal sealed class FakeSdlApi : ISdlApi
                 Marshal.Copy(
                     source + y * sourceStride,
                     pixels,
-                    y * destinationStride,
+                    checked(((destinationY + y) * destinationStride) + (destinationX * 4)),
                     rowLength);
             }
         }
 
-        public void CopyTo(nint destination, int width, int height, int destinationStride)
+        public void CopyTo(
+            nint destination,
+            int width,
+            int height,
+            int destinationStride,
+            int sourceX = 0,
+            int sourceY = 0)
         {
             int sourceStride = checked((int)CreateInfo.Width * 4);
             int rowLength = checked(width * 4);
@@ -916,7 +986,7 @@ internal sealed class FakeSdlApi : ISdlApi
             {
                 Marshal.Copy(
                     pixels,
-                    y * sourceStride,
+                    checked(((sourceY + y) * sourceStride) + (sourceX * 4)),
                     destination + y * destinationStride,
                     rowLength);
             }

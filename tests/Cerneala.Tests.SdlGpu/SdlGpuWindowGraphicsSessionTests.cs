@@ -11,6 +11,48 @@ namespace Cerneala.Tests.SdlGpu;
 public sealed class SdlGpuWindowGraphicsSessionTests
 {
     [Fact]
+    public void PrismWarmupRunsOnlyAfterTheFirstFrameIsSubmitted()
+    {
+        FakeSdlApi api = new();
+        nint window = api.CreateWindow("prism warmup", 8, 6, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+
+        using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window, 8, 6);
+
+        Assert.DoesNotContain(api.GpuPipelines.Values, pipeline =>
+            pipeline.ColorFormat == SdlGpuTextureFormat.R16G16B16A16Float &&
+            pipeline.DepthStencilFormat == SdlGpuTextureFormat.Invalid &&
+            pipeline.SampleCount == SdlGpuSampleCount.One);
+        Assert.Equal(0, api.SubmitCount);
+
+        session.BeginFrame(Color.Black);
+        session.CompleteFrame(present: true);
+
+        Assert.Contains(api.GpuPipelines.Values, pipeline =>
+            pipeline.ColorFormat == SdlGpuTextureFormat.R16G16B16A16Float &&
+            pipeline.DepthStencilFormat == SdlGpuTextureFormat.Invalid &&
+            pipeline.SampleCount == SdlGpuSampleCount.One);
+        int submitIndex = api.GpuActions.FindIndex(action =>
+            action.StartsWith("submit:", StringComparison.Ordinal));
+        int prismPipelineIndex = api.GpuActions.FindIndex(action =>
+            action.StartsWith("create-pipeline:", StringComparison.Ordinal));
+        Assert.InRange(submitIndex, 0, prismPipelineIndex - 1);
+    }
+
+    [Fact]
+    public void DefaultFactoryDisablesMultisampling()
+    {
+        FakeSdlApi api = new();
+        nint window = api.CreateWindow("default msaa", 8, 6, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api);
+
+        using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window, 8, 6);
+
+        Assert.Equal(SdlGpuSampleCount.One, session.Diagnostics.SampleCount);
+        Assert.Equal(0, session.MultisampleTexture);
+    }
+
+    [Fact]
     public void PresentedFramesSubmitWithoutForcingACpuFenceWait()
     {
         FakeSdlApi api = new();
@@ -29,6 +71,49 @@ public sealed class SdlGpuWindowGraphicsSessionTests
             action.StartsWith("submit:", StringComparison.Ordinal));
         Assert.Contains(api.RenderTargets, target => target.Cycle);
         Assert.Contains(api.DepthStencilTargets, target => target.Cycle);
+    }
+
+    [Fact]
+    public void RenderTargetsCycleOnlyOnTheirFirstWritePerCommandBuffer()
+    {
+        FakeSdlApi api = new();
+        nint window = api.CreateWindow(
+            "single-cycle-per-command-buffer",
+            8,
+            6,
+            SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(
+            api,
+            useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = CreateSession(
+            factory,
+            api,
+            window,
+            8,
+            6);
+
+        session.BeginFrame(Color.Black);
+        session.BeginRenderTarget(
+            session.WindowRenderTarget,
+            Color.Transparent,
+            SdlGpuLoadOp.Clear);
+        session.BeginRenderTarget(
+            session.WindowRenderTarget,
+            Color.Transparent,
+            SdlGpuLoadOp.Clear);
+        session.CompleteFrame(present: false);
+
+        session.BeginFrame(Color.Black);
+        session.CompleteFrame(present: false);
+
+        SdlGpuColorTargetInfo[] writes = api.RenderTargets
+            .Where(target =>
+                target.Texture == session.WindowRenderTarget.ColorTexture)
+            .ToArray();
+        Assert.Equal(4, writes.Length);
+        Assert.True(writes[0].Cycle);
+        Assert.All(writes[1..3], target => Assert.False(target.Cycle));
+        Assert.True(writes[3].Cycle);
     }
 
     [Fact]

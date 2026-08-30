@@ -227,8 +227,8 @@ float4 CharcoalSdl(VertexShaderOutput input)
 
 float4 ConteCrayonSdl(VertexShaderOutput input)
 {
-    int profile = (int)(FilterHeader.y + 0.5);
     float2 uv = ResolveUv(input);
+    int profile = (int)(FilterHeader.y + 0.5);
     float4 original = ConteCrayonOriginal(uv, profile);
     return PrismFinalizeCatalog(
         input,
@@ -291,7 +291,6 @@ float4 DeinterlaceSdl(VertexShaderOutput input)
         CatalogDeinterlace(ResolveUv(input), source, profile),
         profile);
 }
-
 float4 main(VertexShaderOutput input) : SV_Target0
 {
     switch (PrismKernelId)

@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Catalog;
+using Cerneala.Drawing.Prism.Graph;
 using Cerneala.Platforms.Sdl3;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windowing;
@@ -23,7 +24,7 @@ internal sealed class SdlGpuWindowGraphicsSessionFactory :
 
     public SdlGpuWindowGraphicsSessionFactory(
         ISdlApi api,
-        bool useMultisampling = true)
+        bool useMultisampling = false)
         : this(api, SdlGpuPresentationOptions.CreateDefault(useMultisampling))
     {
     }
@@ -63,7 +64,7 @@ internal sealed class SdlGpuWindowGraphicsSessionFactory :
 
         try
         {
-            return new SdlGpuWindowGraphicsSession(
+            SdlGpuWindowGraphicsSession session = new(
                 api,
                 lease,
                 sdlSurface,
@@ -72,6 +73,7 @@ internal sealed class SdlGpuWindowGraphicsSessionFactory :
                 coordinateScale,
                 options,
                 labels);
+            return session;
         }
         catch
         {
@@ -108,6 +110,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
     private readonly SdlGpuPresentationOptions requestedOptions;
     private readonly SdlGpuDebugLabels debugLabels;
     private readonly SdlGpuDrawingBackend drawingBackend;
+    private readonly HashSet<nint> writtenTextures = [];
     private nint frameTexture;
     private nint multisampleTexture;
     private nint depthStencilTexture;
@@ -124,6 +127,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
     private bool windowClaimed;
     private bool suspended;
     private bool frameActive;
+    private bool prismWarmupStarted;
     private bool disposed;
 
     public SdlGpuWindowGraphicsSession(
@@ -305,6 +309,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
 
         try
         {
+            writtenTextures.Clear();
             activeCommandBuffer = RequireHandle(
                 api.AcquireGpuCommandBuffer(deviceLease.Device),
                 "SDL GPU command-buffer acquisition");
@@ -370,6 +375,11 @@ internal sealed class SdlGpuWindowGraphicsSession :
             }
 
             EndFrameState();
+        }
+
+        if (present && commandSubmitted)
+        {
+            BeginPrismWarmupAfterPresent();
         }
     }
 
@@ -804,6 +814,27 @@ internal sealed class SdlGpuWindowGraphicsSession :
         }
     }
 
+    private void BeginPrismWarmupAfterPresent()
+    {
+        if (prismWarmupStarted)
+        {
+            return;
+        }
+        prismWarmupStarted = true;
+        PrismColdStartWarmup.Begin();
+        SdlGpuPrismExecutionColdStartWarmup.Begin();
+        try
+        {
+            _ = deviceLease.DrawingResources.PrismResources.GetPipeline(
+                SdlGpuTextureFormat.R16G16B16A16Float);
+        }
+        catch
+        {
+            // Prism remains optional. A warmup failure must not invalidate an
+            // already submitted application frame or prevent normal rendering.
+        }
+    }
+
     private void ReleaseSizeResources()
     {
         if (depthStencilTexture != 0)
@@ -882,6 +913,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
 
         activeRenderPass = 0;
         activeTarget = null;
+        writtenTextures.Clear();
     }
 
     private void EndFrameState()
@@ -889,6 +921,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
         activeRenderPass = 0;
         activeTarget = null;
         activeCommandBuffer = 0;
+        writtenTextures.Clear();
         activeDebugGroup?.Dispose();
         activeDebugGroup = null;
         drawingBackend.EndFrame();
@@ -964,6 +997,17 @@ internal sealed class SdlGpuWindowGraphicsSession :
             EndActiveRenderPass();
         }
 
+        bool cycleColor =
+            writtenTextures.Add(target.ColorTexture) &&
+            loadOp != SdlGpuLoadOp.Load;
+        bool cycleResolve =
+            target.ResolveTexture != 0 &&
+            writtenTextures.Add(target.ResolveTexture) &&
+            loadOp != SdlGpuLoadOp.Load;
+        bool cycleDepthStencil =
+            target.DepthStencilTexture != 0 &&
+            writtenTextures.Add(target.DepthStencilTexture) &&
+            loadOp != SdlGpuLoadOp.Load;
         SdlGpuColorTargetInfo colorTarget = new(
             target.ColorTexture,
             ToGpuColor(clearColor),
@@ -972,9 +1016,8 @@ internal sealed class SdlGpuWindowGraphicsSession :
                 ? SdlGpuStoreOp.ResolveAndStore
                 : SdlGpuStoreOp.Store,
             target.ResolveTexture,
-            Cycle: loadOp != SdlGpuLoadOp.Load,
-            CycleResolveTexture:
-                target.ResolveTexture != 0 && loadOp != SdlGpuLoadOp.Load);
+            Cycle: cycleColor,
+            CycleResolveTexture: cycleResolve);
         activeRenderPass = RequireHandle(
             target.DepthStencilTexture == 0
                 ? api.BeginGpuRenderPass(activeCommandBuffer, colorTarget)
@@ -987,7 +1030,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
                         SdlGpuStoreOp.Store,
                         loadOp,
                         SdlGpuStoreOp.Store,
-                        Cycle: loadOp != SdlGpuLoadOp.Load)),
+                        Cycle: cycleDepthStencil)),
             "SDL GPU render-pass creation");
         SdlGpuViewport viewport = new(0, 0, target.PixelWidth, target.PixelHeight);
         api.SetGpuViewport(activeRenderPass, viewport);
@@ -1031,6 +1074,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
 
         commandSubmitted = true;
         activeCommandBuffer = 0;
+        writtenTextures.Clear();
     }
 
     private nint RequireHandle(nint handle, string operation) =>

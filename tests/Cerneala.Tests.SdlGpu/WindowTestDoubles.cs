@@ -12,6 +12,7 @@ internal sealed class RecordingWindowCallbacks : IWindowPlatformCallbacks
     public List<bool> Activations { get; } = [];
     public List<(UiViewport Viewport, float Left, float Top, WindowState State)> Bounds { get; } = [];
     public int RenderRequests { get; private set; }
+    public int ImmediateRenderRequests { get; private set; }
 
     public void RequestClose() => CloseRequests++;
 
@@ -21,6 +22,8 @@ internal sealed class RecordingWindowCallbacks : IWindowPlatformCallbacks
         Bounds.Add((viewport, left, top, state));
 
     public void RenderRequested() => RenderRequests++;
+
+    public void RenderImmediately() => ImmediateRenderRequests++;
 }
 
 internal sealed class RecordingGraphicsFactory : IWindowGraphicsSessionFactory

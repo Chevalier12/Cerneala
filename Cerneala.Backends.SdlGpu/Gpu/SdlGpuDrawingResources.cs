@@ -18,6 +18,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     private readonly Dictionary<object, SdlGpuTextureResource> textures = [];
     private readonly Dictionary<SdlGpuTextLayerTextureKey, SdlGpuTextAtlasEntry> textAtlasEntries = [];
     private readonly List<SdlGpuTextAtlasPage> textAtlasPages = [];
+    private readonly Stack<SdlGpuTextAtlasPage> spareTextAtlasPages = [];
     private readonly HashSet<SdlGpuTextAtlasPage> dirtyTextAtlasPages = [];
     private readonly Dictionary<SdlGpuLayerTargetKey, SdlGpuRenderTarget> layerTargets = [];
     private readonly HashSet<nint> ownedTextures = [];
@@ -34,6 +35,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     private uint transferCapacity;
     private long nextTextAtlasFrameToken;
     private long textAtlasUsageSequence;
+    private int compactedTextAtlasPageCount = 1;
     private SdlGpuPrismDeviceResources? prismResources;
     private bool disposed;
 
@@ -53,7 +55,8 @@ internal sealed class SdlGpuDrawingResources : IDisposable
 
     internal int SamplerCount => samplers.Count;
 
-    internal int CachedTextureCount => textures.Count + textAtlasPages.Count;
+    internal int CachedTextureCount =>
+        textures.Count + textAtlasPages.Count + spareTextAtlasPages.Count;
 
     internal int TextAtlasPageCount => textAtlasPages.Count;
 
@@ -267,10 +270,48 @@ internal sealed class SdlGpuDrawingResources : IDisposable
             return;
         }
 
+        bool shouldCompact =
+            textAtlasPages.Count > compactedTextAtlasPageCount ||
+            ShouldCompactTextAtlas(frameToken);
         foreach (SdlGpuTextAtlasPage page in textAtlasPages)
         {
             page.EndFrame(frameToken);
         }
+        if (shouldCompact)
+        {
+            CompactTextAtlas(frameToken);
+        }
+    }
+
+    private bool ShouldCompactTextAtlas(long frameToken)
+    {
+        foreach (SdlGpuTextAtlasPage page in textAtlasPages)
+        {
+            int activeEntryCount = 0;
+            int maximumActiveWidth = 0;
+            int maximumActiveHeight = 0;
+            foreach (SdlGpuTextAtlasEntry entry in textAtlasEntries.Values)
+            {
+                if (!ReferenceEquals(entry.Page, page) ||
+                    entry.LastUsedFrameToken != frameToken)
+                {
+                    continue;
+                }
+
+                activeEntryCount++;
+                maximumActiveWidth = Math.Max(maximumActiveWidth, entry.Width);
+                maximumActiveHeight = Math.Max(maximumActiveHeight, entry.Height);
+            }
+
+            if (activeEntryCount != 0 &&
+                page.Keys.Count > activeEntryCount &&
+                !page.CanAllocate(maximumActiveWidth, maximumActiveHeight, 3))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public bool TryGetTextAtlasEntries(
@@ -290,6 +331,9 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         }
 
         long usage = checked(++textAtlasUsageSequence);
+        red.MarkUsed(frameToken);
+        green.MarkUsed(frameToken);
+        blue.MarkUsed(frameToken);
         red.Page.MarkUsed(frameToken, usage);
         green.Page.MarkUsed(frameToken, usage);
         blue.Page.MarkUsed(frameToken, usage);
@@ -342,6 +386,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     {
         if (textAtlasEntries.TryGetValue(key, out SdlGpuTextAtlasEntry? existing))
         {
+            existing.MarkUsed(frameToken);
             existing.Page.MarkUsed(
                 frameToken,
                 checked(++textAtlasUsageSequence));
@@ -367,12 +412,20 @@ internal sealed class SdlGpuDrawingResources : IDisposable
 
         foreach (SdlGpuTextAtlasPage page in dirtyTextAtlasPages)
         {
-            UploadTexture(
+            if (!page.TryGetDirtyRegion(out SdlRect dirtyRegion))
+            {
+                continue;
+            }
+
+            UploadTextureRegion(
                 session,
                 page.Texture.Handle,
                 TextAtlasDimension,
                 TextAtlasDimension,
-                page.Pixels);
+                page.Pixels,
+                dirtyRegion,
+                bytesPerPixel: 4);
+            page.MarkUploaded();
         }
         dirtyTextAtlasPages.Clear();
     }
@@ -633,6 +686,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         textures.Clear();
         textAtlasEntries.Clear();
         textAtlasPages.Clear();
+        spareTextAtlasPages.Clear();
         dirtyTextAtlasPages.Clear();
         layerTargets.Clear();
         if (vertexBuffer != 0)
@@ -669,14 +723,68 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         int height,
         ReadOnlySpan<byte> pixels)
     {
-        uint size = checked((uint)pixels.Length);
+        int pixelCount = checked(width * height);
+        if (pixels.Length % pixelCount != 0)
+        {
+            throw new ArgumentException(
+                "Texture upload data must contain a whole number of bytes per pixel.",
+                nameof(pixels));
+        }
+        UploadTextureRegion(
+            session,
+            texture,
+            width,
+            height,
+            pixels,
+            new SdlRect(0, 0, width, height),
+            pixels.Length / pixelCount);
+    }
+
+    private void UploadTextureRegion(
+        SdlGpuWindowGraphicsSession session,
+        nint texture,
+        int textureWidth,
+        int textureHeight,
+        ReadOnlySpan<byte> pixels,
+        SdlRect region,
+        int bytesPerPixel)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(bytesPerPixel);
+        if (pixels.Length != checked(textureWidth * textureHeight * bytesPerPixel))
+        {
+            throw new ArgumentException(
+                "Texture upload data does not match its dimensions and pixel size.",
+                nameof(pixels));
+        }
+        if (region.X < 0 || region.Y < 0 ||
+            region.Width <= 0 || region.Height <= 0 ||
+            region.X + region.Width > textureWidth ||
+            region.Y + region.Height > textureHeight)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(region),
+                "The texture upload region must be non-empty and contained by the texture.");
+        }
+
+        int rowByteCount = checked(region.Width * bytesPerPixel);
+        uint size = checked((uint)(rowByteCount * region.Height));
         EnsureTransferCapacity(size);
         nint mapped = RequireHandle(
             api.MapGpuTransferBuffer(device, uploadTransferBuffer, cycle: true),
             "SDL GPU texture upload-buffer mapping");
         try
         {
-            CopyToUnmanaged(pixels, mapped);
+            int sourceStride = checked(textureWidth * bytesPerPixel);
+            int sourceOffset = checked(
+                (region.Y * sourceStride) + (region.X * bytesPerPixel));
+            for (int row = 0; row < region.Height; row++)
+            {
+                CopyToUnmanaged(
+                    pixels.Slice(
+                        checked(sourceOffset + (row * sourceStride)),
+                        rowByteCount),
+                    mapped + checked(row * rowByteCount));
+            }
         }
         finally
         {
@@ -685,16 +793,24 @@ internal sealed class SdlGpuDrawingResources : IDisposable
 
         session.RunCopyPass(copyPass =>
         {
+            bool uploadsWholeTexture = region.X == 0 && region.Y == 0 &&
+                region.Width == textureWidth && region.Height == textureHeight;
             SdlGpuTextureTransferInfo source = new(
                 uploadTransferBuffer,
                 Offset: 0,
-                PixelsPerRow: checked((uint)width),
-                RowsPerLayer: checked((uint)height));
+                PixelsPerRow: checked((uint)region.Width),
+                RowsPerLayer: checked((uint)region.Height));
             SdlGpuTextureRegion destination = new(
                 texture,
-                checked((uint)width),
-                checked((uint)height));
-            api.UploadToGpuTexture(copyPass, source, destination, cycle: true);
+                checked((uint)region.Width),
+                checked((uint)region.Height),
+                checked((uint)region.X),
+                checked((uint)region.Y));
+            api.UploadToGpuTexture(
+                copyPass,
+                source,
+                destination,
+                cycle: uploadsWholeTexture);
         });
     }
 
@@ -725,27 +841,27 @@ internal sealed class SdlGpuDrawingResources : IDisposable
 
         if (page is null)
         {
-            if (textAtlasPages.Count < MaximumTextAtlasPages)
+            page = textAtlasPages
+                .Where(static candidate => candidate.ActiveFrameCount == 0)
+                .OrderBy(static candidate => candidate.LastUsedSequence)
+                .FirstOrDefault();
+            if (page is not null)
             {
-                page = CreateTextAtlasPage();
-                textAtlasPages.Add(page);
-            }
-            else
-            {
-                page = textAtlasPages
-                    .Where(static candidate => candidate.ActiveFrameCount == 0)
-                    .OrderBy(static candidate => candidate.LastUsedSequence)
-                    .FirstOrDefault();
-                if (page is null)
-                {
-                    return false;
-                }
-
                 foreach (SdlGpuTextLayerTextureKey staleKey in page.Keys)
                 {
                     textAtlasEntries.Remove(staleKey);
                 }
                 page.Reset();
+            }
+            else if (spareTextAtlasPages.Count != 0 ||
+                textAtlasPages.Count + spareTextAtlasPages.Count < MaximumTextAtlasPages)
+            {
+                page = RentTextAtlasPage();
+                textAtlasPages.Add(page);
+            }
+            else
+            {
+                return false;
             }
 
             if (!page.TryAllocate(layer.Width, layer.Height, out x, out y))
@@ -768,7 +884,10 @@ internal sealed class SdlGpuDrawingResources : IDisposable
             layer.Width,
             layer.Height,
             layer.OriginOffset,
-            page);
+            page,
+            x,
+            y,
+            frameToken);
         page.Keys.Add(key);
         textAtlasEntries.Add(key, entry);
         return true;
@@ -791,6 +910,103 @@ internal sealed class SdlGpuDrawingResources : IDisposable
                 TextAtlasDimension,
                 TextAtlasDimension),
             TextAtlasDimension);
+    }
+
+    private SdlGpuTextAtlasPage RentTextAtlasPage() =>
+        spareTextAtlasPages.TryPop(out SdlGpuTextAtlasPage? page)
+            ? page
+            : CreateTextAtlasPage();
+
+    private void CompactTextAtlas(long frameToken)
+    {
+        SdlGpuTextAtlasSnapshot[] retained = textAtlasEntries
+            .Where(pair => pair.Value.LastUsedFrameToken == frameToken)
+            .Select(pair => new SdlGpuTextAtlasSnapshot(
+                pair.Key,
+                pair.Value.Width,
+                pair.Value.Height,
+                pair.Value.OriginOffset,
+                pair.Value.Page.CopyPixels(
+                    pair.Value.PixelX,
+                    pair.Value.PixelY,
+                    pair.Value.Width,
+                    pair.Value.Height)))
+            .OrderByDescending(static snapshot => snapshot.Height)
+            .ThenByDescending(static snapshot => snapshot.Width)
+            .ToArray();
+
+        foreach (SdlGpuTextAtlasPage page in textAtlasPages)
+        {
+            page.Reset();
+        }
+        textAtlasEntries.Clear();
+        dirtyTextAtlasPages.Clear();
+
+        int usedPageCount = 0;
+        foreach (SdlGpuTextAtlasSnapshot snapshot in retained)
+        {
+            SdlGpuTextAtlasPage? page = null;
+            int x = 0;
+            int y = 0;
+            for (int pageIndex = 0; pageIndex < usedPageCount; pageIndex++)
+            {
+                SdlGpuTextAtlasPage candidate = textAtlasPages[pageIndex];
+                if (candidate.TryAllocate(snapshot.Width, snapshot.Height, out x, out y))
+                {
+                    page = candidate;
+                    break;
+                }
+            }
+
+            if (page is null)
+            {
+                page = usedPageCount < textAtlasPages.Count
+                    ? textAtlasPages[usedPageCount]
+                    : RentTextAtlasPage();
+                if (usedPageCount == textAtlasPages.Count)
+                {
+                    textAtlasPages.Add(page);
+                }
+                usedPageCount++;
+                if (!page.TryAllocate(snapshot.Width, snapshot.Height, out x, out y))
+                {
+                    throw new InvalidOperationException(
+                        "A fresh SDL_GPU text atlas page rejected a retained fitting raster layer.");
+                }
+            }
+
+            page.CopyPixels(x, y, snapshot.Width, snapshot.Height, snapshot.Pixels);
+            page.MarkUsed(0, checked(++textAtlasUsageSequence));
+            DrawRect textureCoordinates = new(
+                x / (float)TextAtlasDimension,
+                y / (float)TextAtlasDimension,
+                snapshot.Width / (float)TextAtlasDimension,
+                snapshot.Height / (float)TextAtlasDimension);
+            SdlGpuTextAtlasEntry entry = new(
+                page.Texture,
+                textureCoordinates,
+                snapshot.Width,
+                snapshot.Height,
+                snapshot.OriginOffset,
+                page,
+                x,
+                y,
+                frameToken);
+            page.Keys.Add(snapshot.Key);
+            textAtlasEntries.Add(snapshot.Key, entry);
+            dirtyTextAtlasPages.Add(page);
+        }
+
+        for (int pageIndex = textAtlasPages.Count - 1;
+             pageIndex >= usedPageCount;
+             pageIndex--)
+        {
+            SdlGpuTextAtlasPage unused = textAtlasPages[pageIndex];
+            textAtlasPages.RemoveAt(pageIndex);
+            dirtyTextAtlasPages.Remove(unused);
+            spareTextAtlasPages.Push(unused);
+        }
+        compactedTextAtlasPageCount = Math.Max(1, usedPageCount);
     }
 
     private void EnsureShaders()
@@ -953,13 +1169,37 @@ internal readonly record struct SdlGpuVertex(
 
 internal sealed record SdlGpuTextureResource(nint Handle, int Width, int Height);
 
-internal sealed record SdlGpuTextAtlasEntry(
-    SdlGpuTextureResource Texture,
-    DrawRect TextureCoordinates,
-    int Width,
-    int Height,
-    DrawPoint OriginOffset,
-    SdlGpuTextAtlasPage Page);
+internal sealed class SdlGpuTextAtlasEntry(
+    SdlGpuTextureResource texture,
+    DrawRect textureCoordinates,
+    int width,
+    int height,
+    DrawPoint originOffset,
+    SdlGpuTextAtlasPage page,
+    int pixelX,
+    int pixelY,
+    long lastUsedFrameToken)
+{
+    public SdlGpuTextureResource Texture { get; } = texture;
+
+    public DrawRect TextureCoordinates { get; } = textureCoordinates;
+
+    public int Width { get; } = width;
+
+    public int Height { get; } = height;
+
+    public DrawPoint OriginOffset { get; } = originOffset;
+
+    public SdlGpuTextAtlasPage Page { get; } = page;
+
+    public int PixelX { get; } = pixelX;
+
+    public int PixelY { get; } = pixelY;
+
+    public long LastUsedFrameToken { get; private set; } = lastUsedFrameToken;
+
+    public void MarkUsed(long frameToken) => LastUsedFrameToken = frameToken;
+}
 
 internal readonly record struct SdlGpuTextAtlasEntries(
     SdlGpuTextAtlasEntry Red,
@@ -976,7 +1216,7 @@ internal readonly record struct SdlGpuTextAtlasEntries(
 }
 
 internal readonly record struct SdlGpuTextRasterKey(
-    int FontIdentity,
+    object FontIdentity,
     string Text,
     float Size,
     float CoordinateScale,
@@ -985,6 +1225,13 @@ internal readonly record struct SdlGpuTextRasterKey(
 internal readonly record struct SdlGpuTextLayerTextureKey(
     SdlGpuTextRasterKey Raster,
     SdlGpuColorWriteMask Channel);
+
+internal readonly record struct SdlGpuTextAtlasSnapshot(
+    SdlGpuTextLayerTextureKey Key,
+    int Width,
+    int Height,
+    DrawPoint OriginOffset,
+    byte[] Pixels);
 
 internal sealed class SdlGpuTextAtlasPage(
     SdlGpuTextureResource texture,
@@ -995,6 +1242,10 @@ internal sealed class SdlGpuTextAtlasPage(
     private int nextX;
     private int nextY;
     private int rowHeight;
+    private int dirtyLeft = int.MaxValue;
+    private int dirtyTop = int.MaxValue;
+    private int dirtyRight;
+    private int dirtyBottom;
 
     public SdlGpuTextureResource Texture { get; } = texture;
 
@@ -1037,17 +1288,103 @@ internal sealed class SdlGpuTextAtlasPage(
         return true;
     }
 
+    public bool CanAllocate(int width, int height, int count)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(count);
+        int paddedWidth = checked(width + (Padding * 2));
+        int paddedHeight = checked(height + (Padding * 2));
+        if (paddedWidth > dimension || paddedHeight > dimension)
+        {
+            return false;
+        }
+
+        int candidateX = nextX;
+        int candidateY = nextY;
+        int candidateRowHeight = rowHeight;
+        for (int index = 0; index < count; index++)
+        {
+            if (candidateX + paddedWidth > dimension)
+            {
+                candidateX = 0;
+                candidateY += candidateRowHeight;
+                candidateRowHeight = 0;
+            }
+            if (candidateY + paddedHeight > dimension)
+            {
+                return false;
+            }
+
+            candidateX += paddedWidth;
+            candidateRowHeight = Math.Max(candidateRowHeight, paddedHeight);
+        }
+
+        return true;
+    }
+
     public void CopyPixels(int x, int y, RasterizedText layer)
     {
-        int sourceStride = checked(layer.Width * 4);
+        CopyPixels(x, y, layer.Width, layer.Height, layer.PixelSpan);
+    }
+
+    public void CopyPixels(
+        int x,
+        int y,
+        int width,
+        int height,
+        ReadOnlySpan<byte> pixels)
+    {
+        int sourceStride = checked(width * 4);
         int destinationStride = checked(dimension * 4);
-        for (int row = 0; row < layer.Height; row++)
+        for (int row = 0; row < height; row++)
         {
-            layer.PixelSpan.Slice(row * sourceStride, sourceStride).CopyTo(
+            pixels.Slice(row * sourceStride, sourceStride).CopyTo(
                 Pixels.AsSpan(
                     checked(((y + row) * destinationStride) + (x * 4)),
                     sourceStride));
         }
+
+        dirtyLeft = Math.Min(dirtyLeft, x - Padding);
+        dirtyTop = Math.Min(dirtyTop, y - Padding);
+        dirtyRight = Math.Max(dirtyRight, checked(x + width + Padding));
+        dirtyBottom = Math.Max(dirtyBottom, checked(y + height + Padding));
+    }
+
+    public byte[] CopyPixels(int x, int y, int width, int height)
+    {
+        int rowByteCount = checked(width * 4);
+        int sourceStride = checked(dimension * 4);
+        byte[] copied = new byte[checked(rowByteCount * height)];
+        for (int row = 0; row < height; row++)
+        {
+            Pixels.AsSpan(
+                checked(((y + row) * sourceStride) + (x * 4)),
+                rowByteCount).CopyTo(copied.AsSpan(row * rowByteCount, rowByteCount));
+        }
+        return copied;
+    }
+
+    public bool TryGetDirtyRegion(out SdlRect region)
+    {
+        if (dirtyRight <= dirtyLeft || dirtyBottom <= dirtyTop)
+        {
+            region = default;
+            return false;
+        }
+
+        region = new SdlRect(
+            dirtyLeft,
+            dirtyTop,
+            dirtyRight - dirtyLeft,
+            dirtyBottom - dirtyTop);
+        return true;
+    }
+
+    public void MarkUploaded()
+    {
+        dirtyLeft = int.MaxValue;
+        dirtyTop = int.MaxValue;
+        dirtyRight = 0;
+        dirtyBottom = 0;
     }
 
     public void MarkUsed(long frameToken, long usageSequence)
@@ -1070,6 +1407,7 @@ internal sealed class SdlGpuTextAtlasPage(
         nextY = 0;
         rowHeight = 0;
         LastUsedSequence = 0;
+        MarkUploaded();
     }
 }
 

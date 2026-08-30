@@ -1,3 +1,4 @@
+#define CERNEALA_MONOGAME_SPECIALIZED
 #include "Common/Parameters.fx"
 #include "Common/AllBlends.fx"
 #include "Common/AllColor.fx"

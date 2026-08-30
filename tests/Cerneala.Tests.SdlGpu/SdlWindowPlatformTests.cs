@@ -136,6 +136,99 @@ public sealed class SdlWindowPlatformTests
     }
 
     [Fact]
+    public void LiveResizeExposeRefreshesGeometryAndRendersImmediatelyFromEventWatch()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1 };
+        RecordingGraphicsFactory graphics = new();
+        RecordingWindowCallbacks callbacks = new();
+        SdlWindowPlatform platform = new(api, graphics);
+        SdlPlatformWindow window = Assert.IsType<SdlPlatformWindow>(
+            platform.CreateWindow(new Window { Width = 640, Height = 480 }, callbacks));
+        api.Windows[window.Handle].Width = 900;
+        api.Windows[window.Handle].Height = 700;
+
+        Assert.Equal(1, api.RegisteredEventWatchCount);
+        api.RaiseWatchedEvent(
+            new SdlEvent(SdlEventKind.WindowExposed, window.WindowId, Data1: 1));
+
+        Assert.Equal(1, callbacks.ImmediateRenderRequests);
+        Assert.Equal(900, window.Viewport.Width);
+        Assert.Equal(700, window.Viewport.Height);
+        Assert.Equal(900, graphics.Sessions[0].PixelWidth);
+        Assert.Equal(700, graphics.Sessions[0].PixelHeight);
+
+        api.Enqueue(new SdlEvent(SdlEventKind.WindowExposed, window.WindowId, Data1: 1));
+        platform.PumpEvents();
+        Assert.Equal(1, callbacks.ImmediateRenderRequests);
+
+        platform.Dispose();
+        Assert.Equal(0, api.RegisteredEventWatchCount);
+        Assert.Equal(1, api.RemoveEventWatchCount);
+    }
+
+    [Fact]
+    public void LiveResizeEventWatchDoesNotRenderFromANonOwnerThread()
+    {
+        FakeSdlApi api = new();
+        RecordingWindowCallbacks callbacks = new();
+        using SdlWindowPlatform platform = new(api, new RecordingGraphicsFactory());
+        SdlPlatformWindow window = Assert.IsType<SdlPlatformWindow>(
+            platform.CreateWindow(new Window(), callbacks));
+
+        Exception? workerFailure = null;
+        Thread worker = new(() =>
+        {
+            try
+            {
+                api.RaiseWatchedEvent(
+                    new SdlEvent(SdlEventKind.WindowExposed, window.WindowId, Data1: 1));
+            }
+            catch (Exception exception)
+            {
+                workerFailure = exception;
+            }
+        });
+        worker.Start();
+        Assert.True(worker.Join(TimeSpan.FromSeconds(5)));
+        Assert.Null(workerFailure);
+
+        Assert.Equal(0, callbacks.ImmediateRenderRequests);
+        api.Enqueue(new SdlEvent(SdlEventKind.WindowExposed, window.WindowId, Data1: 1));
+        platform.PumpEvents();
+        Assert.Equal(1, callbacks.RenderRequests);
+    }
+
+    [Fact]
+    public void LiveResizeEventWatchFailureIsRethrownByTheEventPump()
+    {
+        FakeSdlApi api = new();
+        using SdlWindowPlatform platform = new(api, new RecordingGraphicsFactory());
+        SdlPlatformWindow window = Assert.IsType<SdlPlatformWindow>(
+            platform.CreateWindow(new Window(), new RecordingWindowCallbacks()));
+        api.GetWindowSizeInPixelsResult = false;
+
+        Exception? callbackFailure = Record.Exception(() => api.RaiseWatchedEvent(
+            new SdlEvent(SdlEventKind.WindowExposed, window.WindowId, Data1: 1)));
+
+        Assert.Null(callbackFailure);
+        Assert.Throws<InvalidOperationException>(() => platform.PumpEvents());
+    }
+
+    [Fact]
+    public void EventWatchRegistrationFailureReleasesTheSdlLifetime()
+    {
+        FakeSdlApi api = new() { AddEventWatchResult = false };
+
+        Assert.Throws<InvalidOperationException>(() =>
+            new SdlWindowPlatform(api, new RecordingGraphicsFactory()));
+
+        Assert.Equal(1, api.AddEventWatchCount);
+        Assert.Equal(0, api.RegisteredEventWatchCount);
+        Assert.Equal(1, api.InitializeCount);
+        Assert.Equal(1, api.QuitCount);
+    }
+
+    [Fact]
     public void CursorServiceCachesAndDisposesNativeCursors()
     {
         FakeSdlApi api = new();

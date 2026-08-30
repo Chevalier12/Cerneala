@@ -110,7 +110,7 @@
         "storageTextures": 0,
         "storageBuffers": 0,
         "uniformBuffers": 1,
-        "inputs": 3,
+        "inputs": 0,
         "outputs": 2
       },
       "layout": {
@@ -123,23 +123,7 @@
         "samplers": [],
         "storageTextures": [],
         "storageBuffers": [],
-        "vertexInputs": [
-          {
-            "semantic": "TEXCOORD0",
-            "location": 0,
-            "format": "Float2"
-          },
-          {
-            "semantic": "TEXCOORD1",
-            "location": 1,
-            "format": "Float2"
-          },
-          {
-            "semantic": "TEXCOORD2",
-            "location": 2,
-            "format": "Float4"
-          }
-        ]
+        "vertexInputs": []
       },
       "outputs": {
         "spirv": "../Prism/Shaders/Prism.vert.spv",

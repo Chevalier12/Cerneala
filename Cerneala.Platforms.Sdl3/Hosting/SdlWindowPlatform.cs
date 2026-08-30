@@ -3,6 +3,7 @@ using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Input;
 using Cerneala.UI.Platform;
+using System.Runtime.ExceptionServices;
 
 namespace Cerneala.Platforms.Sdl3;
 
@@ -23,6 +24,7 @@ internal sealed class SdlWindowPlatformFactory
 internal sealed class SdlWindowPlatform : IWindowPlatform
 {
     private readonly object sync = new();
+    private readonly int ownerThreadId = Environment.CurrentManagedThreadId;
     private readonly ISdlApi api;
     private readonly IWindowGraphicsSessionFactory graphicsSessionFactory;
     private readonly float? coordinateScaleOverride;
@@ -30,6 +32,8 @@ internal sealed class SdlWindowPlatform : IWindowPlatform
     private readonly SdlCursorService cursorService;
     private readonly PlatformServices platformServices;
     private readonly Dictionary<uint, SdlPlatformWindow> windows = [];
+    private readonly SdlEventWatch eventWatch;
+    private ExceptionDispatchInfo? pendingEventWatchFailure;
     private bool disposed;
 
     public SdlWindowPlatform(
@@ -51,6 +55,27 @@ internal sealed class SdlWindowPlatform : IWindowPlatform
         platformServices = new PlatformServices(
             Cursor: cursorService,
             TextInput: new SdlTextInputPlatform());
+        eventWatch = ProcessWatchedEvent;
+        try
+        {
+            if (!api.AddEventWatch(eventWatch))
+            {
+                throw SdlApiError.Create(api, "SDL live-resize event watch registration");
+            }
+        }
+        catch
+        {
+            try
+            {
+                cursorService.Dispose();
+            }
+            finally
+            {
+                lifetime.Dispose();
+            }
+
+            throw;
+        }
     }
 
     public IPlatformServices PlatformServices => platformServices;
@@ -86,8 +111,10 @@ internal sealed class SdlWindowPlatform : IWindowPlatform
     {
         ObjectDisposedException.ThrowIf(disposed, this);
         lifetime.VerifyUiThread();
+        ThrowPendingEventWatchFailure();
         while (api.PollEvent(out SdlEvent @event))
         {
+            ThrowPendingEventWatchFailure();
             if (@event.Kind == SdlEventKind.Quit)
             {
                 foreach (SdlPlatformWindow window in SnapshotWindows())
@@ -106,6 +133,8 @@ internal sealed class SdlWindowPlatform : IWindowPlatform
 
             target?.ProcessEvent(@event);
         }
+
+        ThrowPendingEventWatchFailure();
     }
 
     public void Dispose()
@@ -117,6 +146,7 @@ internal sealed class SdlWindowPlatform : IWindowPlatform
 
         lifetime.VerifyUiThread();
         disposed = true;
+        api.RemoveEventWatch(eventWatch);
         foreach (SdlPlatformWindow window in SnapshotWindows())
         {
             window.Dispose();
@@ -145,6 +175,45 @@ internal sealed class SdlWindowPlatform : IWindowPlatform
         {
             windows.Remove(windowId);
         }
+    }
+
+    private void ProcessWatchedEvent(SdlEvent @event)
+    {
+        if (@event.Kind != SdlEventKind.WindowExposed || @event.Data1 != 1 ||
+            Environment.CurrentManagedThreadId != ownerThreadId || disposed)
+        {
+            return;
+        }
+
+        try
+        {
+            SdlPlatformWindow? target;
+            lock (sync)
+            {
+                windows.TryGetValue(@event.WindowId, out target);
+            }
+
+            target?.ProcessLiveResizeExpose();
+        }
+        catch (Exception exception)
+        {
+            lock (sync)
+            {
+                pendingEventWatchFailure ??= ExceptionDispatchInfo.Capture(exception);
+            }
+        }
+    }
+
+    private void ThrowPendingEventWatchFailure()
+    {
+        ExceptionDispatchInfo? failure;
+        lock (sync)
+        {
+            failure = pendingEventWatchFailure;
+            pendingEventWatchFailure = null;
+        }
+
+        failure?.Throw();
     }
 
     private sealed class SdlTextInputPlatform : ITextInputPlatform
@@ -422,6 +491,17 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
                 callbacks.RenderRequested();
                 break;
         }
+    }
+
+    internal void ProcessLiveResizeExpose()
+    {
+        if (destroyed)
+        {
+            return;
+        }
+
+        RefreshGeometry(resizeGraphics: true);
+        callbacks.RenderImmediately();
     }
 
     private void ApplyPosition(Window value)

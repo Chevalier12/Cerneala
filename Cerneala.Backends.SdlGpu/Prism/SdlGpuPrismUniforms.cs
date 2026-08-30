@@ -9,6 +9,7 @@ internal sealed class SdlGpuPrismUniforms
     internal const int ByteCount = VectorCount * 16;
 
     private readonly Vector4[] values = new Vector4[VectorCount];
+    private readonly byte[] packedValues = new byte[ByteCount];
 
     public Vector4 this[int index]
     {
@@ -20,9 +21,8 @@ internal sealed class SdlGpuPrismUniforms
 
     public byte[] Pack()
     {
-        byte[] bytes = new byte[ByteCount];
-        MemoryMarshal.AsBytes(values.AsSpan()).CopyTo(bytes);
-        return bytes;
+        MemoryMarshal.AsBytes(values.AsSpan()).CopyTo(packedValues);
+        return packedValues;
     }
 
     public void Reset()

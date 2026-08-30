@@ -2,8 +2,8 @@
   "toolVersion": "2",
   "shaderCrossVersion": "3.0.0",
   "shaderCrossPackageVersion": "3.0.0.9",
-  "manifestHash": "0648EB911B23B1F264C2116F109323485D5BA7C8E43B5EDADC38AB26487EBED0",
-  "sourceHash": "F838C66F87BCEA14AF5A7B5A3852E40393EBA8978C8F497556D1865D92724F3C",
+  "manifestHash": "7CDC7F366B9107AEA14B7647314A6F0FEE823F0FFAFF2A4A423B74EF44D854D1",
+  "sourceHash": "B1EE8ADE7B487061154CEC2422C06F24AE31A75684CEF3D689D61C4148E357A4",
   "shaders": [
     {
       "logicalName": "drawing-vertex",
@@ -100,7 +100,7 @@
         "storageTextures": 0,
         "storageBuffers": 0,
         "uniformBuffers": 1,
-        "inputs": 3,
+        "inputs": 0,
         "outputs": 2
       },
       "layout": {
@@ -113,28 +113,12 @@
         "samplers": [],
         "storageTextures": [],
         "storageBuffers": [],
-        "vertexInputs": [
-          {
-            "semantic": "TEXCOORD0",
-            "location": 0,
-            "format": "Float2"
-          },
-          {
-            "semantic": "TEXCOORD1",
-            "location": 1,
-            "format": "Float2"
-          },
-          {
-            "semantic": "TEXCOORD2",
-            "location": 2,
-            "format": "Float4"
-          }
-        ]
+        "vertexInputs": []
       },
       "outputs": {
-        "spirv": "E0D4E5D9A5C2ADA69BF1A33DBBDE6B639B236AD3DA84D829CDCAD14816EB0FA6",
-        "dxil": "2B2493F80B28A25B96075F3021DA1121393C165D75C81265EA572DCEB590CC97",
-        "msl": "172C0AF1BEF22C8A92A017D96F928F1CE8FEF0C05068B458F70C68014D119E63"
+        "spirv": "25AD603950814E90E73549F445F666C60FDC382B2ED4360627E7525AD89C4761",
+        "dxil": "8BD772E8DF5EBA4FF70A6C9DA445F78BE8918A8EA0A93BD554419F19243B8AB9",
+        "msl": "F2DAA76CBFF9489E8756FA12F67FF289A5F650145D23AC98A3F315148FAC8583"
       }
     },
     {
@@ -264,9 +248,9 @@
         "vertexInputs": []
       },
       "outputs": {
-        "spirv": "DA1BB0F807460AD207811594ECF6944B0F1462F0ABBA45DD9F67A1AAC5DB3CE9",
-        "dxil": "F214BC99D6F6564AED8909188308E33E7B021FE1A830906E1A08108E60CD2ACC",
-        "msl": "DDC2050CCD07B555F8C7855BC36D7C497A7DC84FFB16EE247509658061677163"
+        "spirv": "FAB29514B7843AD1DB341E0FE56C1C55355DD499A88DDAE2F98C41FF03B2FE1E",
+        "dxil": "A9E1C86F27D09966EDB423B3B8AFB7FABD4E5F56A2A17E8001769773AB3EFEDF",
+        "msl": "A41115D6BD8BAE7F86E85333BE3DEA837969A0441F70596E4B6CA73EAC7E0B7D"
       }
     }
   ]

@@ -1,3 +1,4 @@
+#define CERNEALA_MONOGAME_SPECIALIZED
 #include "Common/Parameters.fx"
 #include "Common/AllBlends.fx"
 #include "Common/AllColor.fx"
@@ -7,8 +8,8 @@
 float4 ConteCrayonFilterPixelShader(
     VertexShaderOutput input) : COLOR0
 {
-    int profile = (int)(FilterHeader.y + 0.5);
     float2 uv = ResolveUv(input);
+    int profile = (int)(FilterHeader.y + 0.5);
     float4 original = ConteCrayonOriginal(uv, profile);
     float4 filtered = ConteCrayonComposite(uv, original);
     filtered.a = saturate(filtered.a);

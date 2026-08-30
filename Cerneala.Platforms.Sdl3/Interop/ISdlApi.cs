@@ -291,7 +291,8 @@ internal readonly record struct SdlGpuGraphicsPipelineCreateInfo(
     SdlGpuPrimitiveType PrimitiveType,
     SdlGpuBlendState BlendState,
     SdlGpuStencilMode StencilMode,
-    SdlGpuColorWriteMask ColorWriteMask = SdlGpuColorWriteMask.All);
+    SdlGpuColorWriteMask ColorWriteMask = SdlGpuColorWriteMask.All,
+    bool UsesVertexInput = true);
 
 internal readonly record struct SdlGpuBufferCreateInfo(
     SdlGpuBufferUsage Usage,
@@ -324,7 +325,9 @@ internal readonly record struct SdlGpuBlitInfo(
 internal readonly record struct SdlGpuTextureRegion(
     nint Texture,
     uint Width,
-    uint Height);
+    uint Height,
+    uint X = 0,
+    uint Y = 0);
 
 internal readonly record struct SdlGpuTextureTransferInfo(
     nint TransferBuffer,
@@ -348,6 +351,8 @@ internal readonly record struct SdlEvent(
     bool Repeat = false,
     bool WheelFlipped = false,
     string? Text = null);
+
+internal delegate void SdlEventWatch(SdlEvent @event);
 
 internal interface ISdlApi
 {
@@ -518,6 +523,11 @@ internal interface ISdlApi
         uint firstIndex,
         int vertexOffset);
 
+    void DrawGpuPrimitives(
+        nint renderPass,
+        uint vertexCount,
+        uint firstVertex);
+
     bool WaitForGpuFence(nint device, nint fence);
 
     void ReleaseGpuFence(nint device, nint fence);
@@ -571,6 +581,10 @@ internal interface ISdlApi
     bool GetDisplayUsableBounds(uint displayId, out SdlRect bounds);
 
     bool PollEvent(out SdlEvent @event);
+
+    bool AddEventWatch(SdlEventWatch watch);
+
+    void RemoveEventWatch(SdlEventWatch watch);
 
     nint CreateSystemCursor(SdlSystemCursor cursor);
 

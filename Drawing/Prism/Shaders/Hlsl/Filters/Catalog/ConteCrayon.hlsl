@@ -3,7 +3,11 @@
 
 
 #ifndef CERNEALA_SDL_GPU
-sampler2D ConteCrayonOriginalSampler = sampler_state
+sampler2D ConteCrayonOriginalSampler
+#ifdef CERNEALA_MONOGAME_SPECIALIZED
+    : register(s1)
+#endif
+    = sampler_state
 {
     Texture = <FilterAuxiliaryTexture>;
     MinFilter = Linear;
