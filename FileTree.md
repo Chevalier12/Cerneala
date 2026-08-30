@@ -246,6 +246,7 @@ Generated from `.`.
 |   |   |   +-- PrismCopy.frag.spv
 |   |   |-- ISdlGpuBackdropFrameLease.cs
 |   |   |-- SdlGpuPrismDeviceResources.cs
+|   |   |-- SdlGpuPrismExecutionColdStartWarmup.cs
 |   |   |-- SdlGpuPrismExecutor.cs
 |   |   |-- SdlGpuPrismKernelSelector.cs
 |   |   +-- SdlGpuPrismUniforms.cs
@@ -634,7 +635,9 @@ Generated from `.`.
 |   |-- assets/
 |   |   |-- mascot-concepts/
 |   |   |-- cerneala-mascot-void-suction-well.png
-|   |   +-- cerneala-mascot-void-suction-well.svg
+|   |   |-- cerneala-mascot-void-suction-well.svg
+|   |   |-- cerneala-mascot-void-suction-well.svg.cerneala.png
+|   |   +-- cerneala-mascot-void-suction-well.svg.cerneala.png.sha256
 |   |-- documentation/
 |   |   |-- classes/
 |   |   |   |-- Cerneala.Drawing.Color.md
@@ -2571,6 +2574,7 @@ Generated from `.`.
 |   |   |   |   |-- PrismGraphContractTests.cs
 |   |   |   |   |-- PrismGraphicPenFilterTests.cs
 |   |   |   |   |-- PrismGraphOptimizerTests.cs
+|   |   |   |   |-- PrismGraphPlanningAllocationTests.cs
 |   |   |   |   |-- PrismImageApiTests.cs
 |   |   |   |   |-- PrismInkOutlinesFilterTests.cs
 |   |   |   |   |-- PrismLensProfileTests.cs
@@ -2987,13 +2991,17 @@ Generated from `.`.
 |   |   +-- PreviewHostTests.cs
 |   |-- Cerneala.Tests.SdlGpu/
 |   |   |-- Cerneala.Tests.SdlGpu.csproj
+|   |   |-- ColorPickerSdlGpuTests.cs
 |   |   |-- FakeSdlApi.cs
 |   |   |-- NativeSdlLifetimeTests.cs
 |   |   |-- SdlArchitectureTests.cs
 |   |   |-- SdlGpuDeviceOwnerTests.cs
 |   |   |-- SdlGpuDrawingBackendTests.cs
+|   |   |-- SdlGpuPrismBuiltinTextureAllocationTests.cs
 |   |   |-- SdlGpuPrismExecutorTests.cs
+|   |   |-- SdlGpuPrismUniformAllocationTests.cs
 |   |   |-- SdlGpuShaderArtifactTests.cs
+|   |   |-- SdlGpuTextCacheTests.cs
 |   |   |-- SdlGpuWindowGraphicsSessionTests.cs
 |   |   |-- SdlNativeFactAttribute.cs
 |   |   |-- SdlNativeTestCollection.cs
@@ -3077,6 +3085,9 @@ Generated from `.`.
 |   |-- Cerneala.SdlShaderCompiler/
 |   |   |-- Cerneala.SdlShaderCompiler.csproj
 |   |   +-- Program.cs
+|   |-- Cerneala.SvgAssetCompiler/
+|   |   |-- Cerneala.SvgAssetCompiler.csproj
+|   |   +-- Program.cs
 |   |-- PrismAudit/
 |   |   |-- PrismAudit.csproj
 |   |   +-- Program.cs
@@ -3142,7 +3153,8 @@ Generated from `.`.
 |   |   |-- New-FileTree.ps1
 |   |   |-- New-PrismFilterReference.ps1
 |   |   |-- Publish-SdlGpuSmoke.ps1
-|   |   +-- SdlGpuSmoke.Common.ps1
+|   |   |-- SdlGpuSmoke.Common.ps1
+|   |   +-- Test-PrismMotionBlur144Hz.ps1
 |   |-- spikes/
 |   +-- temp/
 |       +-- Stage1RuntimeFixture/
@@ -3903,6 +3915,7 @@ Generated from `.`.
 |-- GameBootstrap.cs
 |-- global.json
 |-- LICENSE
+|-- README.md
 |-- ROADMAP.md
 |-- ROADMAPv2_AUDIT.md
 |-- ROADMAPv2.md
