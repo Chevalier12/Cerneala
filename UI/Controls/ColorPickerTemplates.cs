@@ -6,13 +6,12 @@ using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Media;
+using Cerneala.UI.Rendering;
 
 namespace Cerneala.UI.Controls;
 
 internal static class ColorPickerTemplates
 {
-    private static readonly DrawingBrush AlphaCheckerboard = CreateAlphaCheckerboard();
-
     public static readonly ComponentTemplate<ColorPicker> Default = new("ColorPicker.Default", context =>
     {
         ColorSpectrum spectrum = new()
@@ -24,7 +23,7 @@ internal static class ColorPickerTemplates
         Slider hueSlider = CreateRampSlider();
         hueSlider.Margin = new Thickness(0, 0, 0, 8);
         Slider alphaSlider = CreateRampSlider();
-        Border alphaCheckerboard = new() { Background = AlphaCheckerboard };
+        AlphaCheckerboard alphaCheckerboard = new();
         Grid alphaRamp = new()
         {
             Width = 220,
@@ -76,39 +75,43 @@ internal static class ColorPickerTemplates
         return slider;
     }
 
-    private static DrawingBrush CreateAlphaCheckerboard()
+    private sealed class AlphaCheckerboard : Control
     {
-        const float CheckerSize = 6;
-        const float Width = 220;
-        const float Height = 16;
-        Color checkerLight = new(232, 234, 238);
-        Color checkerDark = new(166, 171, 180);
-        DrawRect bounds = new(0, 0, Width, Height);
-        List<DrawCommand> commands = [DrawCommand.FillRectangle(bounds, checkerLight)];
-        int rows = (int)MathF.Ceiling(Height / CheckerSize);
-        int columns = (int)MathF.Ceiling(Width / CheckerSize);
-        for (int row = 0; row < rows; row++)
+        protected override void OnRender(RenderContext context)
         {
-            for (int column = 0; column < columns; column++)
+            const float CheckerSize = 6;
+            Color checkerLight = new(232, 234, 238);
+            Color checkerDark = new(166, 171, 180);
+            DrawRect bounds = Border.ToDrawRect(context.Bounds);
+            if (bounds.Width <= 0 || bounds.Height <= 0)
             {
-                if (((row + column) & 1) == 0)
-                {
-                    continue;
-                }
+                return;
+            }
 
-                float x = column * CheckerSize;
-                float y = row * CheckerSize;
-                commands.Add(DrawCommand.FillRectangle(
-                    new DrawRect(
-                        x,
-                        y,
-                        MathF.Min(CheckerSize, Width - x),
-                        MathF.Min(CheckerSize, Height - y)),
-                    checkerDark));
+            context.DrawingContext.FillRectangle(bounds, checkerLight);
+            int rows = (int)MathF.Ceiling(bounds.Height / CheckerSize);
+            int columns = (int)MathF.Ceiling(bounds.Width / CheckerSize);
+            for (int row = 0; row < rows; row++)
+            {
+                for (int column = 0; column < columns; column++)
+                {
+                    if (((row + column) & 1) == 0)
+                    {
+                        continue;
+                    }
+
+                    float x = column * CheckerSize;
+                    float y = row * CheckerSize;
+                    context.DrawingContext.FillRectangle(
+                        new DrawRect(
+                            bounds.X + x,
+                            bounds.Y + y,
+                            MathF.Min(CheckerSize, bounds.Width - x),
+                            MathF.Min(CheckerSize, bounds.Height - y)),
+                        checkerDark);
+                }
             }
         }
-
-        return new DrawingBrush(commands, bounds);
     }
 
     private static void Add(StackPanel panel, UIElement child)

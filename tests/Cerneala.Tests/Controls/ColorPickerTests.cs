@@ -107,12 +107,21 @@ public sealed class ColorPickerTests
         Assert.Equal(0, alphaGradient.Stops[0].Color.A);
         Assert.Equal(255, alphaGradient.Stops[^1].Color.A);
 
-        DrawingBrush checkerboard = Assert.Single(DescendantsAndSelf(picker)
-            .OfType<Control>()
-            .Select(control => control.Background)
-            .OfType<DrawingBrush>());
-        Assert.True(checkerboard.Commands.Count > 2);
-        Assert.True(checkerboard.Commands
+        UIElement alphaRamp = Assert.IsAssignableFrom<UIElement>(alphaSlider.VisualParent);
+        UIElement checkerboard = Assert.Single(alphaRamp.VisualChildren
+            .Where(child => !ReferenceEquals(child, alphaSlider)));
+        ElementRenderCache checkerboardCache = new();
+        checkerboardCache.Ensure(checkerboard, new RenderCounters(), forceRebuild: true);
+        DrawCommand[] checkerboardCommands = checkerboardCache.Commands.ToArray();
+        Assert.True(checkerboardCommands.Length > 2);
+        Assert.Equal(Border.ToDrawRect(checkerboard.ArrangedBounds), checkerboardCommands[0].Rect);
+        Assert.Equal(new Color(232, 234, 238), checkerboardCommands[0].Color);
+        Assert.All(checkerboardCommands, command =>
+        {
+            Assert.Equal(DrawCommandKind.FillRectangle, command.Kind);
+            Assert.Null(command.Brush);
+        });
+        Assert.True(checkerboardCommands
             .Select(command => command.Color)
             .Distinct()
             .Count() >= 2);
