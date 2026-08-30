@@ -25,6 +25,7 @@
   </Folder>
   <Folder Name="/Tools/">
     <Project Path="Tools/Cerneala.SdlShaderCompiler/Cerneala.SdlShaderCompiler.csproj" />
+    <Project Path="Tools/Cerneala.SvgAssetCompiler/Cerneala.SvgAssetCompiler.csproj" />
   </Folder>
   <Project Path="Cerneala.csproj" />
   <Project Path="Cerneala.Backends.MonoGame/Cerneala.Backends.MonoGame.csproj" />

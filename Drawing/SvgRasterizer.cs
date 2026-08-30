@@ -1,32 +1,65 @@
 using SkiaSharp;
 using Svg.Skia;
+using System.Security.Cryptography;
 
 namespace Cerneala.Drawing;
 
 internal static class SvgRasterizer
 {
+    internal const string CompiledSidecarSuffix = ".cerneala.png";
+
     private static readonly object CacheLock = new();
     private static readonly Dictionary<string, CacheEntry> Cache = new(StringComparer.OrdinalIgnoreCase);
 
     public static byte[] Rasterize(string path)
     {
-        FileInfo source = new(path);
+        string compiledPath = path + CompiledSidecarSuffix;
+        bool hasCompiledSidecar = HasCurrentCompiledSidecar(path, compiledPath);
+        string artifactPath = hasCompiledSidecar ? compiledPath : path;
+        FileInfo source = new(artifactPath);
         long lastWriteTicks = source.LastWriteTimeUtc.Ticks;
         long length = source.Length;
 
         lock (CacheLock)
         {
             if (Cache.TryGetValue(path, out CacheEntry cached) &&
+                string.Equals(cached.ArtifactPath, artifactPath, StringComparison.OrdinalIgnoreCase) &&
                 cached.LastWriteTicks == lastWriteTicks &&
                 cached.SourceLength == length)
             {
                 return cached.PngBytes;
             }
 
-            byte[] pngBytes = RasterizeCore(path);
-            Cache[path] = new CacheEntry(lastWriteTicks, length, pngBytes);
+            byte[] pngBytes = hasCompiledSidecar
+                ? File.ReadAllBytes(compiledPath)
+                : RasterizeCore(path);
+            Cache[path] = new CacheEntry(artifactPath, lastWriteTicks, length, pngBytes);
             return pngBytes;
         }
+    }
+
+    internal static byte[] Compile(string path) => RasterizeCore(path);
+
+    internal static string ComputeSourceSignature(string path)
+    {
+        using FileStream source = File.OpenRead(path);
+        return Convert.ToHexString(SHA256.HashData(source));
+    }
+
+    private static bool HasCurrentCompiledSidecar(string sourcePath, string compiledPath)
+    {
+        string signaturePath = compiledPath + ".sha256";
+        if (!File.Exists(compiledPath) || !File.Exists(signaturePath))
+        {
+            return false;
+        }
+
+        string expectedSignature = File.ReadAllText(signaturePath).Trim();
+        return expectedSignature.Length == 64 &&
+            string.Equals(
+                expectedSignature,
+                ComputeSourceSignature(sourcePath),
+                StringComparison.OrdinalIgnoreCase);
     }
 
     private static byte[] RasterizeCore(string path)
@@ -51,5 +84,9 @@ internal static class SvgRasterizer
         return data.ToArray();
     }
 
-    private readonly record struct CacheEntry(long LastWriteTicks, long SourceLength, byte[] PngBytes);
+    private readonly record struct CacheEntry(
+        string ArtifactPath,
+        long LastWriteTicks,
+        long SourceLength,
+        byte[] PngBytes);
 }

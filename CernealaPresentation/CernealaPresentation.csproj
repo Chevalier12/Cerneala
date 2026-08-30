@@ -23,6 +23,12 @@
     <Content Include="..\docs-site\assets\cerneala-mascot-void-suction-well.svg"
              Link="Assets\cerneala-mascot-void-suction-well.svg"
              CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\docs-site\assets\cerneala-mascot-void-suction-well.svg.cerneala.png"
+             Link="Assets\cerneala-mascot-void-suction-well.svg.cerneala.png"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\docs-site\assets\cerneala-mascot-void-suction-well.svg.cerneala.png.sha256"
+             Link="Assets\cerneala-mascot-void-suction-well.svg.cerneala.png.sha256"
+             CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <Target Name="ValidateCernealaDesktopBackend" BeforeTargets="PrepareForBuild"

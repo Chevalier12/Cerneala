@@ -1,10 +1,11 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Core;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Resources;
 
 namespace Cerneala.UI.Controls;
 
-public class SvgImage : Image
+public class SvgImage : Image, IElementLifecycleBehavior
 {
     public static readonly UiProperty<string?> SourcePathProperty = UiProperty<string?>.Register(
         nameof(SourcePath),
@@ -15,6 +16,11 @@ public class SvgImage : Image
 
     private IDrawImage? loadedImage;
 
+    public SvgImage()
+    {
+        AddLifecycleBehavior(this);
+    }
+
     public string? SourcePath
     {
         get => GetValue(SourcePathProperty);
@@ -24,7 +30,6 @@ public class SvgImage : Image
     protected override void OnAttached()
     {
         base.OnAttached();
-        ReloadSource();
     }
 
     protected override void OnDetached()
@@ -36,7 +41,29 @@ public class SvgImage : Image
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
         base.OnPropertyChanged(args);
-        if (ReferenceEquals(args.Property, SourcePathProperty) && Root is not null)
+        if (ReferenceEquals(args.Property, SourcePathProperty) &&
+            Root is not null &&
+            UIElementVisibility.IsEffectivelyVisible(this))
+        {
+            ReloadSource();
+        }
+    }
+
+    void IElementLifecycleBehavior.Attach()
+    {
+        if (UIElementVisibility.IsEffectivelyVisible(this))
+        {
+            ReloadSource();
+        }
+    }
+
+    void IElementLifecycleBehavior.Detach()
+    {
+    }
+
+    void IElementLifecycleBehavior.OnRenderabilityChanged(bool isRenderable)
+    {
+        if (isRenderable && loadedImage is null)
         {
             ReloadSource();
         }

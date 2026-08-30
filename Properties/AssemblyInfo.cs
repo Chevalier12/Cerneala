@@ -10,3 +10,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Cerneala.Platforms.Sdl3")]
 [assembly: InternalsVisibleTo("Cerneala.Platforms.Win32")]
 [assembly: InternalsVisibleTo("Cerneala.Tests.SdlGpu")]
+[assembly: InternalsVisibleTo("Cerneala.SvgAssetCompiler")]

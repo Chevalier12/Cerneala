@@ -1,6 +1,8 @@
 using Cerneala.Drawing;
+using System.Security.Cryptography;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Layout;
 using Cerneala.UI.Resources;
 using SkiaSharp;
 
@@ -89,11 +91,110 @@ public sealed class SvgImageTests
         Assert.Null(image.Source);
     }
 
+    [Fact]
+    public void SvgInCollapsedSubtreeDoesNotRasterizeUntilTheSubtreeBecomesVisible()
+    {
+        string path = WriteSvg(
+            """
+            <svg xmlns="http://www.w3.org/2000/svg" width="5" height="3">
+              <rect width="5" height="3" fill="#ffffff" />
+            </svg>
+            """);
+
+        try
+        {
+            RecordingImageLoader loader = new();
+            UIRoot root = new();
+            root.SetImageLoader(loader);
+            UIElement collapsedParent = new() { Visibility = Visibility.Collapsed };
+            SvgImage image = new() { SourcePath = path };
+            collapsedParent.VisualChildren.Add(image);
+
+            root.VisualChildren.Add(collapsedParent);
+
+            Assert.Equal(0, loader.StreamLoadCount);
+            Assert.Null(image.Source);
+
+            collapsedParent.Visibility = Visibility.Visible;
+
+            Assert.Equal(1, loader.StreamLoadCount);
+            Assert.NotNull(image.Source);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void SvgRasterizerUsesACompiledSidecarWithoutParsingTheSourceAtRuntime()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"cerneala-svg-{Guid.NewGuid():N}.svg");
+        string compiledPath = path + ".cerneala.png";
+        string signaturePath = compiledPath + ".sha256";
+        File.WriteAllText(path, "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"7\" height=\"5\" />");
+        byte[] expected = CreatePng(width: 3, height: 2);
+        File.WriteAllBytes(compiledPath, expected);
+        File.WriteAllText(signaturePath, Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))));
+
+        try
+        {
+            byte[] actual = SvgRasterizer.Rasterize(path);
+
+            Assert.Equal(expected, actual);
+        }
+        finally
+        {
+            File.Delete(path);
+            File.Delete(compiledPath);
+            File.Delete(signaturePath);
+        }
+    }
+
+    [Fact]
+    public void SvgRasterizerRejectsACompiledSidecarForDifferentSourceContent()
+    {
+        string path = WriteSvg(
+            """
+            <svg xmlns="http://www.w3.org/2000/svg" width="7" height="5">
+              <rect width="7" height="5" fill="#00ff00" />
+            </svg>
+            """);
+        string compiledPath = path + ".cerneala.png";
+        string signaturePath = compiledPath + ".sha256";
+        File.WriteAllBytes(compiledPath, CreatePng(width: 3, height: 2));
+        File.WriteAllText(signaturePath, new string('0', 64));
+
+        try
+        {
+            byte[] actual = SvgRasterizer.Rasterize(path);
+            using SKBitmap bitmap = SKBitmap.Decode(actual);
+
+            Assert.Equal(7, bitmap.Width);
+            Assert.Equal(5, bitmap.Height);
+        }
+        finally
+        {
+            File.Delete(path);
+            File.Delete(compiledPath);
+            File.Delete(signaturePath);
+        }
+    }
+
     private static string WriteSvg(string markup)
     {
         string path = Path.Combine(Path.GetTempPath(), $"cerneala-svg-{Guid.NewGuid():N}.svg");
         File.WriteAllText(path, markup);
         return path;
+    }
+
+    private static byte[] CreatePng(int width, int height)
+    {
+        using SKBitmap bitmap = new(width, height);
+        bitmap.Erase(SKColors.Magenta);
+        using SKImage image = SKImage.FromBitmap(bitmap);
+        using SKData data = image.Encode(SKEncodedImageFormat.Png, 100);
+        return data.ToArray();
     }
 
     private sealed class RecordingImageLoader : IImageLoader
