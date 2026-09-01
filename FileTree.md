@@ -223,9 +223,12 @@ Generated from `.`.
 |   |   |-- SdlGpuDebugLabels.cs
 |   |   |-- SdlGpuDeviceOwner.cs
 |   |   |-- SdlGpuDrawingBackend.cs
+|   |   |-- SdlGpuDrawingFrameCounters.cs
 |   |   |-- SdlGpuDrawingResources.cs
+|   |   |-- SdlGpuGeometryUploadArena.cs
 |   |   |-- SdlGpuImageLoader.cs
 |   |   |-- SdlGpuPresentationOptions.cs
+|   |   |-- SdlGpuPrismFrameCounters.cs
 |   |   |-- SdlGpuShaderArtifacts.cs
 |   |   +-- SdlGpuWindowGraphicsSession.cs
 |   |-- Hosting/
@@ -1095,6 +1098,9 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.RenderSurface2DRedrawMode.md
 |   |   |   |-- Cerneala.UI.Controls.RenderSurface2DSpriteFlip.md
 |   |   |   |-- Cerneala.UI.Controls.ResizeMode.md
+|   |   |   |-- Cerneala.UI.Controls.Scene2D.md
+|   |   |   |-- Cerneala.UI.Controls.SceneItems2D.md
+|   |   |   |-- Cerneala.UI.Controls.SceneNode2D.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollBarVisibility.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollChangedEventArgs.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollContentPresenter.md
@@ -1109,6 +1115,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Shapes.Shape.md
 |   |   |   |-- Cerneala.UI.Controls.Shapes.SvgPath.md
 |   |   |   |-- Cerneala.UI.Controls.Slider.md
+|   |   |   |-- Cerneala.UI.Controls.Sprite2D.md
 |   |   |   |-- Cerneala.UI.Controls.StackPanel.md
 |   |   |   |-- Cerneala.UI.Controls.SvgImage.md
 |   |   |   |-- Cerneala.UI.Controls.TabControl.md
@@ -2464,6 +2471,7 @@ Generated from `.`.
 |   |   |   |-- PanelTests.cs
 |   |   |   |-- PasswordBoxTests.cs
 |   |   |   |-- ProgressBarTests.cs
+|   |   |   |-- RenderSurface2DSceneTests.cs
 |   |   |   |-- RenderSurface2DTests.cs
 |   |   |   |-- ScrollBarTests.cs
 |   |   |   |-- ScrollViewerTests.cs
@@ -2997,6 +3005,7 @@ Generated from `.`.
 |   |   |-- SdlArchitectureTests.cs
 |   |   |-- SdlGpuDeviceOwnerTests.cs
 |   |   |-- SdlGpuDrawingBackendTests.cs
+|   |   |-- SdlGpuDrawingFrameCountersTests.cs
 |   |   |-- SdlGpuPrismBuiltinTextureAllocationTests.cs
 |   |   |-- SdlGpuPrismExecutorTests.cs
 |   |   |-- SdlGpuPrismUniformAllocationTests.cs
@@ -3080,6 +3089,36 @@ Generated from `.`.
 |           |-- VisualStudioStage4Runner.cs
 |           |-- VisualStudioStage4Runner.Presentation.cs
 |           +-- VisualStudioStage5Runner.cs
+|-- Tetrisish/
+|   |-- Assets/
+|   |   |-- tetromino-atlas.svg
+|   |   |-- tetromino-atlas.svg.cerneala.png
+|   |   +-- tetromino-atlas.svg.cerneala.png.sha256
+|   |-- Core/
+|   |   |-- IPiece.cs
+|   |   |-- JPiece.cs
+|   |   |-- LPiece.cs
+|   |   |-- OPiece.cs
+|   |   |-- SPiece.cs
+|   |   |-- TetrisBoard.cs
+|   |   |-- TetrisGame.cs
+|   |   |-- TetrominoPiece.cs
+|   |   |-- TPiece.cs
+|   |   +-- ZPiece.cs
+|   |-- Tests/
+|   |   |-- Tetris.Tests.csproj
+|   |   +-- TetrisGameTests.cs
+|   |-- .gitignore
+|   |-- App.crn
+|   |-- App.crn.cs
+|   |-- MainWindow.crn
+|   |-- MainWindow.crn.cs
+|   |-- README.md
+|   |-- Tetris.csproj
+|   |-- Tetris.slnx
+|   |-- TetrisGameSurface.cs
+|   |-- TetrisSceneModel.cs
+|   +-- TetrominoAtlas.cs
 |-- tmp/
 |-- Tools/
 |   |-- Cerneala.SdlShaderCompiler/
@@ -3352,6 +3391,9 @@ Generated from `.`.
 |   |   |-- RenderSurface2DFrame.Text.cs
 |   |   |-- RenderSurface2DRedrawMode.cs
 |   |   |-- ResizeMode.cs
+|   |   |-- Scene2D.cs
+|   |   |-- SceneItems2D.cs
+|   |   |-- SceneNode2D.cs
 |   |   |-- ScrollBarVisibility.cs
 |   |   |-- ScrollChangedEventArgs.cs
 |   |   |-- ScrollContentPresenter.cs
@@ -3359,6 +3401,7 @@ Generated from `.`.
 |   |   |-- ScrollViewerTemplates.cs
 |   |   |-- Slider.cs
 |   |   |-- SliderTemplates.cs
+|   |   |-- Sprite2D.cs
 |   |   |-- StackPanel.cs
 |   |   |-- SvgImage.cs
 |   |   |-- TabControl.cs
