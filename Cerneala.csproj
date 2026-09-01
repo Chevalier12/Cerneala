@@ -24,6 +24,7 @@
     <Compile Remove="benchmarks\**" />
     <Compile Remove="Tools\**" />
     <Compile Remove="tests\**" />
+    <Compile Remove="Tetrisish\**" />
     <Compile Remove="Drawing\MonoGame\**" />
     <Compile Remove="UI\Hosting\MonoGame\**" />
     <Compile Remove="UI\Input\MonoGame\**" />
@@ -46,6 +47,7 @@
     <EmbeddedResource Remove="benchmarks\**" />
     <EmbeddedResource Remove="Tools\**" />
     <EmbeddedResource Remove="tests\**" />
+    <EmbeddedResource Remove="Tetrisish\**" />
     <None Remove="docs\**" />
     <None Remove="Cerneala.SourceGen\**" />
     <None Remove="Cerneala.Backends.MonoGame\**" />
@@ -62,6 +64,7 @@
     <None Remove="benchmarks\**" />
     <None Remove="Tools\**" />
     <None Remove="tests\**" />
+    <None Remove="Tetrisish\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -74,7 +77,7 @@
 
   <ItemGroup>
     <ProjectReference Include="Cerneala.SourceGen\Cerneala.SourceGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    <AdditionalFiles Include="**\*.crn" Exclude="bin\**;obj\**;Cerneala.Language\**;Cerneala.LanguageServer\**;Cerneala.PreviewHost\**;Cerneala.SourceGen\**;CernealaPresentation\**;docs\**;Playground\**;Shared\**;Tools\**;tests\**" />
+    <AdditionalFiles Include="**\*.crn" Exclude="bin\**;obj\**;Cerneala.Language\**;Cerneala.LanguageServer\**;Cerneala.PreviewHost\**;Cerneala.SourceGen\**;CernealaPresentation\**;docs\**;Playground\**;Shared\**;Tetrisish\**;Tools\**;tests\**" />
     <AdditionalFiles Include="Cerneala.SourceGen\Prism\Catalog\prism-catalog.json" />
     <EmbeddedResource Include="Drawing\Prism\Filters\Assets\bluenoise.bin">
       <LogicalName>Cerneala.Drawing.Prism.Filters.Assets.bluenoise.bin</LogicalName>

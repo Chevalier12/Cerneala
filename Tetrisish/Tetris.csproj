@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Cerneala.Tetris</AssemblyName>
+    <RootNamespace>Cerneala.Tetris</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <CernealaDesktopBackend Condition="'$(CernealaDesktopBackend)' == ''">SDL3</CernealaDesktopBackend>
+    <TargetFramework Condition="'$(CernealaDesktopBackend)' == 'SDL3'">net8.0</TargetFramework>
+    <TargetFramework Condition="'$(CernealaDesktopBackend)' == 'MonoGame'">net8.0-windows</TargetFramework>
+    <DefineConstants Condition="'$(CernealaDesktopBackend)' == 'SDL3'">$(DefineConstants);CERNEALA_SDL3</DefineConstants>
+    <DefineConstants Condition="'$(CernealaDesktopBackend)' == 'MonoGame'">$(DefineConstants);CERNEALA_MONOGAME</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Tests\**" />
+    <EmbeddedResource Remove="Tests\**" />
+    <None Remove="Tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Cerneala.csproj" />
+    <ProjectReference Include="..\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj"
+                      Condition="'$(CernealaDesktopBackend)' == 'SDL3'" />
+    <ProjectReference Include="..\Cerneala.Backends.MonoGame\Cerneala.Backends.MonoGame.csproj"
+                      Condition="'$(CernealaDesktopBackend)' == 'MonoGame'" />
+    <ProjectReference Include="..\Cerneala.SourceGen\Cerneala.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <AdditionalFiles Include="**\*.crn" Exclude="bin\**;obj\**;Tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Cerneala.Tetris.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\tetromino-atlas.svg"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Assets\tetromino-atlas.svg.cerneala.png"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Assets\tetromino-atlas.svg.cerneala.png.sha256"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <Target Name="ValidateCernealaDesktopBackend" BeforeTargets="PrepareForBuild"
+          Condition="'$(CernealaDesktopBackend)' != 'MonoGame' and '$(CernealaDesktopBackend)' != 'SDL3'">
+    <Error Text="CernealaDesktopBackend must be either 'MonoGame' or 'SDL3'." />
+  </Target>
+
+</Project>

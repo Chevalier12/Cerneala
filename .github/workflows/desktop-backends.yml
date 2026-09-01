@@ -16,6 +16,7 @@ on:
       - "tests/Cerneala.Tests.SdlGpu/**"
       - "tests/Cerneala.Tests.SourceGen/**"
       - "tests/Cerneala.Tests/**"
+      - "Tetrisish/**"
   pull_request:
     paths:
       - ".github/workflows/desktop-backends.yml"
@@ -31,6 +32,7 @@ on:
       - "tests/Cerneala.Tests.SdlGpu/**"
       - "tests/Cerneala.Tests.SourceGen/**"
       - "tests/Cerneala.Tests/**"
+      - "Tetrisish/**"
   workflow_dispatch:
 
 permissions:
@@ -77,6 +79,7 @@ jobs:
           dotnet restore ./tests/Cerneala.Tests.SdlGpu/Cerneala.Tests.SdlGpu.csproj
           dotnet restore ./tests/Cerneala.Tests.SourceGen/Cerneala.Tests.SourceGen.csproj
           dotnet restore ./Tools/Cerneala.SdlShaderCompiler/Cerneala.SdlShaderCompiler.csproj
+          dotnet restore ./Tetrisish/Tests/Tetris.Tests.csproj
 
       - name: Build SDL_GPU smoke
         shell: pwsh
@@ -88,6 +91,7 @@ jobs:
           New-Item -ItemType Directory -Path artifacts/ci/test-results -Force | Out-Null
           dotnet test ./tests/Cerneala.Tests.SdlGpu/Cerneala.Tests.SdlGpu.csproj -c Release --no-restore --logger "trx;LogFileName=sdlgpu-${{ matrix.nativeRid }}.trx" --results-directory artifacts/ci/test-results
           dotnet test ./tests/Cerneala.Tests.SourceGen/Cerneala.Tests.SourceGen.csproj -c Release --no-restore --logger "trx;LogFileName=sourcegen-${{ matrix.nativeRid }}.trx" --results-directory artifacts/ci/test-results
+          dotnet test ./Tetrisish/Tests/Tetris.Tests.csproj -c Release --no-restore --logger "trx;LogFileName=tetrisish-${{ matrix.nativeRid }}.trx" --results-directory artifacts/ci/test-results
 
       - name: Verify offline SDL_GPU shaders
         shell: pwsh

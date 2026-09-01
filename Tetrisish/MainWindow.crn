@@ -1,0 +1,207 @@
+<Window
+    xmlns:local="clr-namespace:Cerneala.Tetris"
+    Title="Cerneala Tetris — SDL_GPU"
+    Width="780"
+    Height="820"
+    MinWidth="650"
+    MinHeight="700"
+    WindowStartupLocation="CenterScreen"
+    Focusable="True"
+    PreviewKeyDown="OnPreviewKeyDown"
+    PreviewKeyUp="OnPreviewKeyUp"
+    Deactivated="OnDeactivated"
+    FrameRendered="OnFrameRendered"
+    Background="#FF070B14">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="82" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="54" />
+        </Grid.RowDefinitions>
+
+        <Border
+            Grid.Row="0"
+            Background="#FF0E1728"
+            BorderBrush="#FF35D8FF"
+            BorderThickness="0,0,0,2"
+            Padding="24,14,24,12">
+            <StackPanel>
+                <TextBlock Text="CERNEALA TETRIS" FontSize="25" Foreground="#FFF3F8FF" />
+                <TextBlock Text="SDL3 + SDL_GPU + RenderSurface2D" FontSize="12" Foreground="#FF35D8FF" Margin="0,5,0,0" />
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="1" Margin="24,20,24,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="220" />
+            </Grid.ColumnDefinitions>
+
+            <Border
+                Grid.Column="0"
+                Background="#FF0A1120"
+                BorderBrush="#FF253A5B"
+                BorderThickness="2"
+                Padding="8"
+                Margin="0,0,22,0">
+                <Grid>
+                    <local:TetrisGameSurface
+                        Name="GameSurface"
+                        DataContext="$GameSurface.SceneModel:OneWay"
+                        ViewBox="$DataContext.ViewBox:OneWay"
+                        Stretch="Uniform"
+                        Margin="10">
+                        <local:TetrisGameSurface.Scene>
+                            <Scene2D>
+                                <SceneItems2D ItemsSource="$DataContext.LockedPieces:OneWay">
+                                    @templates
+                                    {
+                                        <ContentTemplate DataType="Cerneala.Tetris.TetrisSpriteModel">
+                                            <Sprite2D
+                                                Source="$DataContext.Source:OneWay"
+                                                SourceRect="$DataContext.SourceRect:OneWay"
+                                                Destination="$DataContext.Destination:OneWay"
+                                                Tint="$DataContext.Tint:OneWay" />
+                                        </ContentTemplate>
+                                    }
+                                </SceneItems2D>
+
+                                <Sprite2D
+                                    Name="GhostPiece"
+                                    Source="$DataContext.GhostImage:OneWay"
+                                    SourceRect="$DataContext.GhostSource:OneWay"
+                                    Destination="$DataContext.GhostDestination:OneWay"
+                                    Tint="$DataContext.GhostTint:OneWay"
+                                    IsVisible="$DataContext.GhostVisible:OneWay" />
+
+                                <Sprite2D
+                                    Name="CurrentPiece"
+                                    Source="$DataContext.CurrentImage:OneWay"
+                                    SourceRect="$DataContext.CurrentSource:OneWay"
+                                    Destination="$DataContext.CurrentDestination:OneWay"
+                                    Tint="$DataContext.CurrentTint:OneWay"
+                                    IsVisible="$DataContext.CurrentVisible:OneWay">
+                                    <Sprite2D.Aspect>
+                                        <Aspect>
+                                            @when $self.IsVisible
+                                            {
+                                                @if $self.IsVisible == true
+                                                {
+                                                    @animate with PingPong(Tween(900ms, EaseInOut), forever)
+                                                    {
+                                                        @from 
+                                                        { 
+                                                            $self.prism.CurrentEffects.StyledPiece.GlowSize = 4; 
+                                                        }
+                                                        @to 
+                                                        { 
+                                                            $self.prism.CurrentEffects.StyledPiece.GlowSize = 10; 
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        </Aspect>
+                                    </Sprite2D.Aspect>
+                                    @prism
+                                    {
+                                        @group CurrentEffects
+                                        {
+                                            BlendMode = Normal;
+
+                                            @layer StyledPiece
+                                            {
+                                                @parameter GlowSize: float = 4;
+                                                @style BevelEmboss { }
+                                                @style OuterGlow
+                                                {
+                                                    Color = $self.Tint:OneWay;
+                                                    Opacity = 0.82;
+                                                    Size = GlowSize;
+                                                }
+                                            }
+
+                                            @filter MotionBlur
+                                            {
+                                                Visible = $GameSurface.IsBlurActive:OneWay;
+                                                Angle = 90;
+                                                Distance = $GameSurface.BlurDistance:OneWay;
+                                                Quality = Good;
+                                            }
+                                        }
+                                    }
+                                </Sprite2D>
+                            </Scene2D>
+                        </local:TetrisGameSurface.Scene>
+                    </local:TetrisGameSurface>
+                    <TextBlock
+                        Name="OverlayText"
+                        Text="READY"
+                        FontSize="30"
+                        Foreground="#FFFFFFFF"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <StackPanel Grid.Column="1">
+                <TextBlock Text="SCORE" FontSize="12" Foreground="#FF7183A3" />
+                <TextBlock Name="ScoreText" Text="0" FontSize="30" Foreground="#FFFFFFFF" Margin="0,2,0,18" />
+
+                <Grid Margin="0,0,0,18">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="LINES" FontSize="11" Foreground="#FF7183A3" />
+                        <TextBlock Name="LinesText" Text="0" FontSize="21" Foreground="#FFF3F8FF" Margin="0,3,0,0" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="LEVEL" FontSize="11" Foreground="#FF7183A3" />
+                        <TextBlock Name="LevelText" Text="1" FontSize="21" Foreground="#FFF3F8FF" Margin="0,3,0,0" />
+                    </StackPanel>
+                </Grid>
+
+                <TextBlock Text="NEXT" FontSize="12" Foreground="#FF7183A3" />
+                <Border Background="#FF0A1120" BorderBrush="#FF253A5B" BorderThickness="1" Height="108" Margin="0,6,0,18">
+                    <TextBlock
+                        Name="NextText"
+                        Text="?"
+                        FontSize="42"
+                        Foreground="#FF35D8FF"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+                </Border>
+
+                <TextBlock Text="HOLD" FontSize="12" Foreground="#FF7183A3" />
+                <Border Background="#FF0A1120" BorderBrush="#FF253A5B" BorderThickness="1" Height="108" Margin="0,6,0,22">
+                    <TextBlock
+                        Name="HoldText"
+                        Text="—"
+                        FontSize="42"
+                        Foreground="#FFB969FF"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+                </Border>
+
+                <TextBlock Text="CONTROLS" FontSize="12" Foreground="#FF7183A3" Margin="0,0,0,8" />
+                <TextBlock Text="← →    Move" FontSize="13" Foreground="#FFD6E2F5" Margin="0,0,0,5" />
+                <TextBlock Text="↓        Soft drop" FontSize="13" Foreground="#FFD6E2F5" Margin="0,0,0,5" />
+                <TextBlock Text="Space  Hard drop" FontSize="13" Foreground="#FFD6E2F5" Margin="0,0,0,5" />
+                <TextBlock Text="↑ / X   Rotate CW" FontSize="13" Foreground="#FFD6E2F5" Margin="0,0,0,5" />
+                <TextBlock Text="Z        Rotate CCW" FontSize="13" Foreground="#FFD6E2F5" Margin="0,0,0,5" />
+                <TextBlock Text="C        Hold" FontSize="13" Foreground="#FFD6E2F5" Margin="0,0,0,5" />
+                <TextBlock Text="P / Esc Pause · R Restart" FontSize="12" Foreground="#FF35D8FF" Margin="0,3,0,0" />
+            </StackPanel>
+        </Grid>
+
+        <Border Grid.Row="2" Background="#FF0E1728" Padding="24,12,24,10">
+            <TextBlock
+                Name="StatusText"
+                Text="Playing"
+                FontSize="13"
+                Foreground="#FF91FFC7"
+                HorizontalAlignment="Center" />
+        </Border>
+    </Grid>
+</Window>

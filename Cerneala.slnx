@@ -23,6 +23,10 @@
     <Project Path="tests/Cerneala.Tests/Cerneala.Tests.csproj" />
     <Project Path="tests/Fixtures/VisualStudioConsumer/VisualStudioConsumer.csproj" />
   </Folder>
+  <Folder Name="/Tetrisish/">
+    <Project Path="Tetrisish/Tetris.csproj" />
+    <Project Path="Tetrisish/Tests/Tetris.Tests.csproj" />
+  </Folder>
   <Folder Name="/Tools/">
     <Project Path="Tools/Cerneala.SdlShaderCompiler/Cerneala.SdlShaderCompiler.csproj" />
     <Project Path="Tools/Cerneala.SvgAssetCompiler/Cerneala.SvgAssetCompiler.csproj" />
