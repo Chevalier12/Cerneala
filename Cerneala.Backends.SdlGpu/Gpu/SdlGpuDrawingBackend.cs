@@ -91,6 +91,10 @@ internal sealed partial class SdlGpuDrawingBackend :
 
     internal DrawingBackendFrameTiming LastFrameTiming { get; private set; }
 
+    internal SdlGpuDrawingFrameCounters LastFrameCounters { get; private set; }
+
+    internal SdlGpuPrismFrameCounters LastFramePrismCounters { get; private set; }
+
     public void Render(DrawCommandList commands, in DrawingFrameContext frameContext)
     {
         ArgumentNullException.ThrowIfNull(commands);
@@ -118,6 +122,7 @@ internal sealed partial class SdlGpuDrawingBackend :
             if (!frameContext.PrismAnalysis.Scopes.IsDefaultOrEmpty)
             {
                 prismExecutor.Execute(commands, frameContext);
+                CountPrismExecution(prismExecutor.Diagnostics);
                 return;
             }
 
@@ -160,7 +165,19 @@ internal sealed partial class SdlGpuDrawingBackend :
         textRequestCount = 0;
         rasterizedPixelCount = 0;
         LastFrameTiming = default;
+        LastFrameCounters = default;
+        LastFramePrismCounters = default;
         frameActive = true;
+    }
+
+    private void CountBatch(int vertices, int indices, int draws)
+    {
+        LastFrameCounters = LastFrameCounters.AddFlush(vertices, indices, draws);
+    }
+
+    private void CountPrismExecution(PrismExecutionDiagnostics diagnostics)
+    {
+        LastFramePrismCounters = LastFramePrismCounters.Add(diagnostics);
     }
 
     internal void EndFrame()
@@ -1223,6 +1240,7 @@ internal sealed partial class SdlGpuDrawingBackend :
                     surface.Commands,
                     surfaceFrameContext,
                     surface.Target);
+                CountPrismExecution(surface.PrismExecutor.Diagnostics);
             }
             else
             {

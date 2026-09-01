@@ -645,6 +645,48 @@ public sealed class SdlGpuPrismExecutorTests
     }
 
     [Fact]
+    public void ChangingPrismBoundsRespectTheTransientCacheBudget()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1 };
+        nint window = api.CreateWindow(
+            "prism-changing-bounds",
+            512,
+            512,
+            SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(
+            api,
+            useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session =
+            Assert.IsType<SdlGpuWindowGraphicsSession>(factory.Create(
+                new SdlWindowSurface(window, api.GetWindowId(window)),
+                512,
+                512,
+                coordinateScale: 1));
+        SdlGpuPrismDeviceResources resources =
+            session.DrawingResources.PrismResources;
+        PrismCatalogOperationInfo outerGlow =
+            PrismCatalog.GetStyle(PrismStyleId.OuterGlow);
+
+        Render(
+            session,
+            CreateCommands(outerGlow, extent: 512),
+            512,
+            512);
+        for (int extent = 504; extent >= 64; extent -= 8)
+        {
+            Render(
+                session,
+                CreateCommands(outerGlow, extent: extent),
+                512,
+                512);
+        }
+
+        Assert.True(
+            resources.FreeBytes <= 32L * 1024 * 1024,
+            $"Changing Prism bounds retained {resources.FreeBytes} transient bytes.");
+    }
+
+    [Fact]
     public void SoftLimitEvictsTheColdestFreeSurfaceInsteadOfTheJustReturnedHotSurface()
     {
         FakeSdlApi api = new() { WindowPixelDensity = 1 };
@@ -953,7 +995,8 @@ public sealed class SdlGpuPrismExecutorTests
         long ownerToken = 1,
         Color? color = null,
         PrismBlendMode blendMode = PrismBlendMode.Normal,
-        Vector2? origin = null)
+        Vector2? origin = null,
+        float? extent = null)
     {
         PrismLayerDefinition layer = operation.Kind == PrismCatalogOperationKind.Filter
             ? new PrismLayerDefinition(
@@ -968,7 +1011,9 @@ public sealed class SdlGpuPrismExecutorTests
                 blendMode: blendMode);
         PrismInstance instance = new(new PrismCompositionDefinition(operation.Symbol, [layer]));
         Vector2 drawOrigin = origin ?? Vector2.Zero;
-        DrawRect bounds = new(drawOrigin.X, drawOrigin.Y, 48, 32);
+        DrawRect bounds = extent is float size
+            ? new DrawRect(drawOrigin.X, drawOrigin.Y, size, size)
+            : new DrawRect(drawOrigin.X, drawOrigin.Y, 48, 32);
         PrismDrawScope scope = new(
             instance,
             new PrismCacheOwnerToken(ownerToken),

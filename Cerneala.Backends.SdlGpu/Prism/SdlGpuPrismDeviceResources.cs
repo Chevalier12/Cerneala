@@ -57,8 +57,11 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
 
     internal long TotalBytes => totalBytes;
     internal long PeakBytes => peakBytes;
+    internal long FreeBytes => freeBytes;
     internal long CreatedSurfaceCount => createdSurfaceCount;
     internal long ReusedSurfaceCount => reusedSurfaceCount;
+    internal int FreeSurfaceCount => freeSurfaces.Values.Sum(
+        static entries => entries.Count);
     internal int RetainedCount => retained.Count;
 
     public SdlGpuPrismSurfaceLease RentSurface(

@@ -7,7 +7,7 @@ namespace Cerneala.Backends.SdlGpu;
 
 internal sealed class SdlGpuDrawingResources : IDisposable
 {
-    private const uint InitialGeometryCapacity = 64 * 1024;
+    private const uint InitialTransferCapacity = 64 * 1024;
     private const int TextAtlasDimension = 1024;
     private const int MaximumTextAtlasPages = 8;
     private readonly ISdlApi api;
@@ -23,15 +23,10 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     private readonly Dictionary<SdlGpuLayerTargetKey, SdlGpuRenderTarget> layerTargets = [];
     private readonly HashSet<nint> ownedTextures = [];
     private readonly List<nint> retiredTextures = [];
-    private readonly List<nint> retiredBuffers = [];
     private readonly List<nint> retiredTransferBuffers = [];
     private nint vertexShader;
     private nint fragmentShader;
-    private nint vertexBuffer;
-    private nint indexBuffer;
     private nint uploadTransferBuffer;
-    private uint vertexCapacity;
-    private uint indexCapacity;
     private uint transferCapacity;
     private long nextTextAtlasFrameToken;
     private long textAtlasUsageSequence;
@@ -74,7 +69,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
             this,
             new Drawing.Prism.PrismRendererOptions
             {
-                RetainedCacheSoftByteLimit = 64L * 1024 * 1024
+                RetainedCacheSoftByteLimit = 32L * 1024 * 1024
             });
 
     public nint GetPipeline(
@@ -577,62 +572,6 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         RetireTexture(target.ResolveTexture);
     }
 
-    public SdlGpuGeometryBinding UploadGeometry(
-        SdlGpuWindowGraphicsSession session,
-        ReadOnlySpan<SdlGpuVertex> vertices,
-        ReadOnlySpan<int> indices)
-    {
-        ThrowIfDisposed();
-        ArgumentNullException.ThrowIfNull(session);
-        if (vertices.IsEmpty || indices.IsEmpty)
-        {
-            throw new ArgumentException("GPU geometry cannot be empty.");
-        }
-
-        ReadOnlySpan<byte> vertexBytes = MemoryMarshal.AsBytes(vertices);
-        ReadOnlySpan<byte> indexBytes = MemoryMarshal.AsBytes(indices);
-        uint vertexByteCount = checked((uint)vertexBytes.Length);
-        uint indexByteCount = checked((uint)indexBytes.Length);
-        EnsureGeometryCapacity(
-            vertexByteCount,
-            indexByteCount);
-        uint totalBytes = checked((uint)(vertexBytes.Length + indexBytes.Length));
-        EnsureTransferCapacity(totalBytes);
-        nint mapped = RequireHandle(
-            api.MapGpuTransferBuffer(device, uploadTransferBuffer, cycle: true),
-            "SDL GPU drawing upload-buffer mapping");
-        try
-        {
-            CopyToUnmanaged(vertexBytes, mapped);
-            CopyToUnmanaged(indexBytes, mapped + vertexBytes.Length);
-        }
-        finally
-        {
-            api.UnmapGpuTransferBuffer(device, uploadTransferBuffer);
-        }
-
-        session.RunCopyPass(copyPass =>
-        {
-            api.UploadToGpuBuffer(
-                copyPass,
-                uploadTransferBuffer,
-                0,
-                vertexBuffer,
-                0,
-                vertexByteCount,
-                cycle: true);
-            api.UploadToGpuBuffer(
-                copyPass,
-                uploadTransferBuffer,
-                vertexByteCount,
-                indexBuffer,
-                0,
-                indexByteCount,
-                cycle: true);
-        });
-        return new SdlGpuGeometryBinding(vertexBuffer, indexBuffer);
-    }
-
     public void FlushRetired()
     {
         foreach (nint texture in retiredTextures)
@@ -644,17 +583,12 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         }
         retiredTextures.Clear();
 
-        foreach (nint buffer in retiredBuffers)
-        {
-            api.ReleaseGpuBuffer(device, buffer);
-        }
-        retiredBuffers.Clear();
-
         foreach (nint transfer in retiredTransferBuffers)
         {
             api.ReleaseGpuTransferBuffer(device, transfer);
         }
         retiredTransferBuffers.Clear();
+
     }
 
     public void Dispose()
@@ -689,16 +623,6 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         spareTextAtlasPages.Clear();
         dirtyTextAtlasPages.Clear();
         layerTargets.Clear();
-        if (vertexBuffer != 0)
-        {
-            api.ReleaseGpuBuffer(device, vertexBuffer);
-            vertexBuffer = 0;
-        }
-        if (indexBuffer != 0)
-        {
-            api.ReleaseGpuBuffer(device, indexBuffer);
-            indexBuffer = 0;
-        }
         if (uploadTransferBuffer != 0)
         {
             api.ReleaseGpuTransferBuffer(device, uploadTransferBuffer);
@@ -1037,38 +961,12 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         }
     }
 
-    private void EnsureGeometryCapacity(uint requiredVertexBytes, uint requiredIndexBytes)
+    private void RetireTexture(nint texture)
     {
-        if (requiredVertexBytes > vertexCapacity)
+        if (texture != 0 && ownedTextures.Contains(texture) &&
+            !retiredTextures.Contains(texture))
         {
-            uint next = GrowCapacity(vertexCapacity, requiredVertexBytes);
-            nint created = RequireHandle(
-                api.CreateGpuBuffer(
-                    device,
-                    new SdlGpuBufferCreateInfo(SdlGpuBufferUsage.Vertex, next)),
-                "SDL GPU vertex-buffer creation");
-            if (vertexBuffer != 0)
-            {
-                retiredBuffers.Add(vertexBuffer);
-            }
-            vertexBuffer = created;
-            vertexCapacity = next;
-        }
-
-        if (requiredIndexBytes > indexCapacity)
-        {
-            uint next = GrowCapacity(indexCapacity, requiredIndexBytes);
-            nint created = RequireHandle(
-                api.CreateGpuBuffer(
-                    device,
-                    new SdlGpuBufferCreateInfo(SdlGpuBufferUsage.Index, next)),
-                "SDL GPU index-buffer creation");
-            if (indexBuffer != 0)
-            {
-                retiredBuffers.Add(indexBuffer);
-            }
-            indexBuffer = created;
-            indexCapacity = next;
+            retiredTextures.Add(texture);
         }
     }
 
@@ -1079,7 +977,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
             return;
         }
 
-        uint next = GrowCapacity(transferCapacity, requiredBytes);
+        uint next = GrowTransferCapacity(transferCapacity, requiredBytes);
         nint created = RequireHandle(
             api.CreateGpuTransferBuffer(
                 device,
@@ -1095,18 +993,9 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         transferCapacity = next;
     }
 
-    private void RetireTexture(nint texture)
+    private static uint GrowTransferCapacity(uint current, uint required)
     {
-        if (texture != 0 && ownedTextures.Contains(texture) &&
-            !retiredTextures.Contains(texture))
-        {
-            retiredTextures.Add(texture);
-        }
-    }
-
-    private static uint GrowCapacity(uint current, uint required)
-    {
-        uint next = Math.Max(current, InitialGeometryCapacity);
+        uint next = Math.Max(current, InitialTransferCapacity);
         while (next < required)
         {
             next = checked(next * 2);
@@ -1425,10 +1314,6 @@ internal sealed record SdlGpuRenderTarget(
         ? ResolveTexture
         : ColorTexture;
 }
-
-internal readonly record struct SdlGpuGeometryBinding(
-    nint VertexBuffer,
-    nint IndexBuffer);
 
 internal readonly record struct SdlGpuPipelineKey(
     SdlGpuTextureFormat ColorFormat,

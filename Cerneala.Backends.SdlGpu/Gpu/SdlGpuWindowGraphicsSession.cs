@@ -110,6 +110,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
     private readonly SdlGpuPresentationOptions requestedOptions;
     private readonly SdlGpuDebugLabels debugLabels;
     private readonly SdlGpuDrawingBackend drawingBackend;
+    private readonly SdlGpuGeometryUploadArena geometryUploadArena;
     private readonly HashSet<nint> writtenTextures = [];
     private nint frameTexture;
     private nint multisampleTexture;
@@ -150,6 +151,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
         this.pixelWidth = pixelWidth;
         this.pixelHeight = pixelHeight;
         this.coordinateScale = coordinateScale;
+        geometryUploadArena = new SdlGpuGeometryUploadArena(api, deviceLease.Device);
         drawingBackend = new SdlGpuDrawingBackend(this);
 
         try
@@ -169,6 +171,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
         }
         catch
         {
+            geometryUploadArena.Dispose();
             ReleaseSizeResources();
             if (windowClaimed)
             {
@@ -218,6 +221,8 @@ internal sealed class SdlGpuWindowGraphicsSession :
     internal nint ActiveCommandBuffer => activeCommandBuffer;
 
     internal nint ActiveRenderPass => activeRenderPass;
+
+    internal SdlGpuGeometryUploadArena GeometryUploadArena => geometryUploadArena;
 
     internal SdlGpuDrawingResources DrawingResources => deviceLease.DrawingResources;
 
@@ -315,6 +320,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
                 "SDL GPU command-buffer acquisition");
             activeDebugGroup = debugLabels.Push(activeCommandBuffer, $"Cerneala window {windowSurface.WindowId} frame");
             contentVersion = checked(contentVersion + 1);
+            geometryUploadArena.BeginFrame(contentVersion);
             activeBackdropMetadata = new BackdropFrameMetadata(
                 pixelWidth,
                 pixelHeight,
@@ -365,6 +371,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
             }
 
             SubmitActiveCommandBuffer(ref commandSubmitted);
+            geometryUploadArena.FlushRetired();
             deviceLease.DrawingResources.FlushRetired();
         }
         finally
@@ -567,6 +574,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
         try
         {
             drawingBackend.Dispose();
+            geometryUploadArena.Dispose();
             ReleaseSizeResources();
         }
         catch (Exception exception)

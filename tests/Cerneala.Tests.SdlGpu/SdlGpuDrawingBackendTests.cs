@@ -117,7 +117,10 @@ public sealed class SdlGpuDrawingBackendTests
                 Color.White);
         }
         DrawingFrameContext frame = new(new PrismFrameAnalyzer().Analyze(commands));
-        Render(session, commands, frame);
+        for (int warmupFrame = 0; warmupFrame < 3; warmupFrame++)
+        {
+            Render(session, commands, frame);
+        }
 
         long before = GC.GetAllocatedBytesForCurrentThread();
         Render(session, commands, frame);
@@ -126,6 +129,67 @@ public sealed class SdlGpuDrawingBackendTests
         Assert.True(
             allocated < 50_000,
             $"A warm frame with 1,000 adjacent rectangles allocated {allocated:N0} bytes.");
+    }
+
+    [Fact]
+    public void GeometryFlushesUseFrameSlotBuffersAndAppendWithoutCycling()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1 };
+        nint window = api.CreateWindow("geometry-ring", 64, 48, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window);
+        DrawCommandList warmup = new();
+        new DrawingContext(warmup).FillRectangle(
+            new DrawRect(0, 0, 1, 1),
+            Color.White);
+        Render(session, warmup);
+        api.GpuActions.Clear();
+
+        TestRenderSurface surface = new();
+        DrawCommandList commands = new();
+        DrawingContext drawing = new(commands);
+        drawing.FillRectangle(
+            new DrawRect(2, 2, 8, 8),
+            Color.White);
+        commands.Add(DrawCommand.RenderSurface2D(
+            surface,
+            new DrawRect(12, 2, 20, 16),
+            Color.White));
+        drawing.FillRectangle(
+            new DrawRect(36, 2, 8, 8),
+            Color.Coral);
+
+        Render(session, commands);
+
+        string[] vertexBindings = api.GpuActions
+            .Where(action => action.StartsWith("bind-vertex:", StringComparison.Ordinal))
+            .ToArray();
+        string[] indexBindings = api.GpuActions
+            .Where(action => action.StartsWith("bind-index:", StringComparison.Ordinal))
+            .ToArray();
+        string[] geometryUploads = api.GpuActions
+            .Where(action => action.StartsWith("upload-buffer:", StringComparison.Ordinal))
+            .ToArray();
+        string[] transferMaps = api.GpuActions
+            .Where(action => action.StartsWith("map-transfer:", StringComparison.Ordinal))
+            .ToArray();
+
+        Assert.Equal(3, vertexBindings.Length);
+        Assert.Equal(3, indexBindings.Length);
+        Assert.EndsWith(":0", vertexBindings[0], StringComparison.Ordinal);
+        Assert.EndsWith(":0", indexBindings[0], StringComparison.Ordinal);
+        Assert.False(vertexBindings[1].EndsWith(":0", StringComparison.Ordinal));
+        Assert.False(indexBindings[1].EndsWith(":0", StringComparison.Ordinal));
+        Assert.NotEqual(vertexBindings[1], vertexBindings[2]);
+        Assert.NotEqual(indexBindings[1], indexBindings[2]);
+        Assert.Equal(6, geometryUploads.Length);
+        Assert.DoesNotContain(
+            geometryUploads,
+            action => action.EndsWith(":True", StringComparison.Ordinal));
+        Assert.Equal(3, transferMaps.Length);
+        Assert.DoesNotContain(
+            transferMaps,
+            action => action.EndsWith(":True", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -318,6 +382,19 @@ public sealed class SdlGpuDrawingBackendTests
         using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
         using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window, 64, 64);
         DrawCommandList empty = new();
+        using (SdlGpuImage warmupImage = new(1, 1, [255, 255, 255, 255]))
+        {
+            DrawCommandList warmup = new();
+            new DrawingContext(warmup).DrawImage(
+                warmupImage,
+                new DrawRect(0, 0, 1, 1),
+                Color.White);
+            for (int warmupFrame = 0; warmupFrame < 3; warmupFrame++)
+            {
+                Render(session, warmup);
+            }
+        }
+        Render(session, empty);
         int baselineGpuTextureCount = api.GpuTextures.Count;
         int baselineReleasedTextureCount = api.ReleasedGpuTextures.Count;
         (int Buffers, int Transfers, int Pipelines, int Samplers)? steadyNonTextureCounts = null;
@@ -715,7 +792,10 @@ public sealed class SdlGpuDrawingBackendTests
             new DrawPoint(2.25f, 44.5f),
             Color.White);
 
-        Render(session, commands);
+        for (int warmupFrame = 0; warmupFrame < 3; warmupFrame++)
+        {
+            Render(session, commands);
+        }
         (int Textures, int Pipelines, int Samplers, int Buffers, int Transfers) baseline =
             (api.GpuTextures.Count, api.GpuPipelines.Count, api.GpuSamplers.Count,
                 api.GpuBuffers.Count, api.TransferBuffers.Count);

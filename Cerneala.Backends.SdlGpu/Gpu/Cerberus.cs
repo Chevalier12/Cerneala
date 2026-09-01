@@ -104,7 +104,8 @@ internal sealed partial class SdlGpuDrawingBackend
                 throw new InvalidOperationException("SDL_GPU batching requires an active target.");
             try
             {
-                SdlGpuGeometryBinding geometry = owner.resources.UploadGeometry(
+                owner.CountBatch(vertexCount, indexCount, drawCount);
+                SdlGpuGeometryBinding geometry = owner.session.GeometryUploadArena.UploadGeometry(
                     owner.session,
                     vertices.AsSpan(0, vertexCount),
                     indices.AsSpan(0, indexCount));
@@ -113,10 +114,14 @@ internal sealed partial class SdlGpuDrawingBackend
                 api.BindGpuVertexBuffer(
                     renderPass,
                     0,
-                    new SdlGpuBufferBinding(geometry.VertexBuffer));
+                    new SdlGpuBufferBinding(
+                        geometry.VertexBuffer,
+                        geometry.VertexOffset));
                 api.BindGpuIndexBuffer(
                     renderPass,
-                    new SdlGpuBufferBinding(geometry.IndexBuffer));
+                    new SdlGpuBufferBinding(
+                        geometry.IndexBuffer,
+                        geometry.IndexOffset));
                 Span<float> viewport = stackalloc float[4]
                 {
                     activeTarget.PixelWidth,
