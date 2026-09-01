@@ -26,7 +26,7 @@ public sealed class Stage4IntegrationHarnessTests
             "@prism ",
             "<consumer:StatusCard",
             "<ItemsControl>",
-            "<ItemsControl.Templates>",
+            "@templates",
             "<ContentTemplate "
         })
         {

@@ -8,7 +8,7 @@ using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.Shell;
 
 [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
-[InstalledProductRegistration("Cerneala", "Cerneala language support", "0.1.46")]
+[InstalledProductRegistration("Cerneala", "Cerneala language support", "0.1.47")]
 [ProvideMenuResource("Menus.ctmenu", 1)]
 [Guid(PackageGuidString)]
 public sealed class CernealaPackage : AsyncPackage

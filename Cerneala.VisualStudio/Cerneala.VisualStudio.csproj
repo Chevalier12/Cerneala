@@ -7,7 +7,7 @@
     <NeutralLanguage>en-US</NeutralLanguage>
     <AssemblyName>Cerneala.VisualStudio</AssemblyName>
     <RootNamespace>Cerneala.VisualStudio</RootNamespace>
-    <Version>0.1.46</Version>
+    <Version>0.1.47</Version>
     <VSSDKBuildToolsAutoSetup>true</VSSDKBuildToolsAutoSetup>
     <GeneratePkgDefFile>true</GeneratePkgDefFile>
     <CreateVsixContainer>true</CreateVsixContainer>

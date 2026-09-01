@@ -6,7 +6,7 @@ does not target Visual Studio 2022, Professional, or Enterprise.
 
 ## Install
 
-1. Obtain the signed `Cerneala.VisualStudio.0.1.46.vsix` and its adjacent
+1. Obtain the signed `Cerneala.VisualStudio.0.1.47.vsix` and its adjacent
    `.sha256` file from the release artifacts.
 2. Close every running Visual Studio instance. The installer never forces an
    active IDE to close.
@@ -20,7 +20,7 @@ process, or PATH change is required.
 The checksum can be verified before installation with:
 
 ```powershell
-Get-FileHash .\Cerneala.VisualStudio.0.1.46.vsix -Algorithm SHA256
+Get-FileHash .\Cerneala.VisualStudio.0.1.47.vsix -Algorithm SHA256
 ```
 
 ## Update And Downgrade
@@ -30,7 +30,7 @@ Close Visual Studio, then install the newer VSIX over the existing extension. Th
 without a second extension entry. Visual Studio refuses or otherwise leaves the
 newer version active when an older VSIX is offered.
 
-Version 0.1.46 has no persisted settings schema to migrate. The Live Preview
+Version 0.1.47 has no persisted settings schema to migrate. The Live Preview
 refresh cap is configured per editor tab and resets when that preview session
 closes. Updates preserve the extension identity and normal enabled state.
 
@@ -111,7 +111,7 @@ Document contents are not required for a lifecycle failure report.
 
 ## Privacy
 
-Version 0.1.46 sends no telemetry and no document content off the machine. Source
+Version 0.1.47 sends no telemetry and no document content off the machine. Source
 text is passed only between the local Visual Studio process and the bundled
 local language server or Live Preview host. Future telemetry is outside this
 release and must be opt-in.
@@ -122,7 +122,7 @@ Official artifacts are built and signed from the Windows Certificate Store:
 
 ```powershell
 $env:CERNEALA_VSIX_SIGNING_THUMBPRINT = '<SHA-1 certificate thumbprint>'
-.\Tools\scripts\Build-CernealaVisualStudioRelease.ps1 -Version 0.1.46
+.\Tools\scripts\Build-CernealaVisualStudioRelease.ps1 -Version 0.1.47
 ```
 
 The script creates a deterministic unsigned package, signs a copy with Sign CLI
