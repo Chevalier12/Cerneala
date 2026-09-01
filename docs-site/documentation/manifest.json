@@ -1465,6 +1465,21 @@
     "source": "UI/Controls/ResizeMode.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.Scene2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.Scene2D.md",
+    "source": "UI/Controls/Scene2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.SceneItems2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.SceneItems2D.md",
+    "source": "UI/Controls/SceneItems2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.SceneNode2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.SceneNode2D.md",
+    "source": "UI/Controls/SceneNode2D.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.ScrollBarVisibility",
     "file": "documentation/classes/Cerneala.UI.Controls.ScrollBarVisibility.md",
     "source": "UI/Controls/ScrollBarVisibility.cs"
@@ -1533,6 +1548,11 @@
     "name": "Cerneala.UI.Controls.Slider",
     "file": "documentation/classes/Cerneala.UI.Controls.Slider.md",
     "source": "UI/Controls/Slider.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Sprite2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.Sprite2D.md",
+    "source": "UI/Controls/Sprite2D.cs"
   },
   {
     "name": "Cerneala.UI.Controls.StackPanel",

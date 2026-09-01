@@ -67,14 +67,15 @@ public sealed partial class UiMarkupGeneratorTests
     {
         const string markup = """
             <ItemsControl>
-              <ItemsControl.Templates>
+              @templates
+              {
                 <ContentTemplate DataType="System.String">
                   <TextBlock Text="STRING" />
                 </ContentTemplate>
                 <ContentTemplate DataType="System.Int32">
                   <TextBlock Text="INTEGER" />
                 </ContentTemplate>
-              </ItemsControl.Templates>
+              }
             </ItemsControl>
             """;
 
@@ -95,6 +96,155 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal(2, templates.Count);
         Assert.Equal(typeof(string), templates[0].DataType);
         Assert.Equal(typeof(int), templates[1].DataType);
+    }
+
+    [Fact]
+    public void LegacyTemplatesPropertyElementIsRejected()
+    {
+        const string markup = """
+            <ItemsControl>
+              <ItemsControl.Templates>
+                <ContentTemplate DataType="System.String">
+                  <TextBlock Text="LEGACY" />
+                </ContentTemplate>
+              </ItemsControl.Templates>
+            </ItemsControl>
+            """;
+
+        GeneratorRunResult result = RunGenerator(
+            "LegacyItemsControlTemplates.crn",
+            markup,
+            out Compilation compilation);
+        Diagnostic diagnostic = Assert.Single(
+            result.Diagnostics,
+            candidate => candidate.Id == "CERNEALAUI005");
+        Assert.Contains("use @templates", diagnostic.GetMessage(), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("<ItemsControl>@templates { }</ItemsControl>", "CERNEALAUI006", "one or more")]
+    [InlineData("<Button>@templates { <ContentTemplate DataType=\"System.String\"><TextBlock /></ContentTemplate> }</Button>", "CERNEALAUI005", "only inside")]
+    [InlineData("<ItemsControl>@templates { <TextBlock /> }</ItemsControl>", "CERNEALAUI005", "only ContentTemplate")]
+    [InlineData("<StackPanel><StackPanel.Resources><Aspect TargetType=\"Button\">@templates { <ContentTemplate DataType=\"System.String\"><TextBlock /></ContentTemplate> }</Aspect></StackPanel.Resources></StackPanel>", "CERNEALAUI006", "Aspect bodies may contain only")]
+    public void TemplatesDirectiveRejectsInvalidShape(string markup, string diagnosticId, string message)
+    {
+        GeneratorRunResult result = RunGenerator(
+            "InvalidTemplatesDirective.crn",
+            markup,
+            out Compilation compilation);
+
+        Diagnostic diagnostic = Assert.Single(
+            result.Diagnostics,
+            candidate => candidate.Id == diagnosticId);
+        Assert.Contains(message, diagnostic.GetMessage(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ComponentTemplateCanContainItemsControlTemplatesDirective()
+    {
+        const string markup = """
+            <Button>
+              @template
+              {
+                <ItemsControl>
+                  @templates
+                  {
+                    <ContentTemplate DataType="System.String">
+                      <TextBlock Text="ITEM" />
+                    </ContentTemplate>
+                  }
+                </ItemsControl>
+              }
+            </Button>
+            """;
+
+        GeneratorRunResult result = RunGenerator(
+            "NestedTemplatesDirective.crn",
+            markup,
+            out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+    }
+
+    [Fact]
+    public void RenderSurfaceOwnsDeclarativeSceneWithTemplatedItems()
+    {
+        const string inputSource = """
+            using System.Collections;
+            using System.ComponentModel;
+            using Cerneala.Drawing;
+
+            namespace TestInput;
+
+            public sealed class RootModel : INotifyPropertyChanged
+            {
+                public event PropertyChangedEventHandler? PropertyChanged;
+                public SceneModel Scene { get; } = new();
+            }
+
+            public sealed class SceneModel
+            {
+                public IEnumerable Items { get; } = new SpriteModel[0];
+                public IDrawImage? CurrentImage { get; set; }
+                public DrawRect CurrentDestination { get; set; }
+            }
+
+            public sealed class SpriteModel
+            {
+                public IDrawImage? Image { get; set; }
+                public DrawRect Destination { get; set; }
+            }
+            """;
+        const string markup = """
+            <RenderSurface2D
+                xmlns:models="clr-namespace:TestInput;assembly=GeneratorTests"
+                DataType="TestInput.RootModel"
+                DataContext="$DataContext.Scene"
+                Stretch="Uniform">
+              <RenderSurface2D.Scene>
+                <Scene2D>
+                  <SceneItems2D ItemsSource="$DataContext.Items">
+                    @templates
+                    {
+                      <ContentTemplate DataType="models:SpriteModel">
+                        <Sprite2D Source="$DataContext.Image" Destination="$DataContext.Destination" />
+                      </ContentTemplate>
+                    }
+                  </SceneItems2D>
+                  <Sprite2D Name="CurrentPiece" Source="$DataContext.CurrentImage" Destination="$DataContext.CurrentDestination" />
+                </Scene2D>
+              </RenderSurface2D.Scene>
+            </RenderSurface2D>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput(
+            "RenderSurfaceScene.crn",
+            markup,
+            inputSource,
+            out Compilation compilation);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+
+        Assembly assembly = Assembly.Load(stream.ToArray());
+        object dataContext = Activator.CreateInstance(
+            assembly.GetType("TestInput.RootModel", throwOnError: true)!)!;
+        Type factoryType = assembly.GetType(
+            "Cerneala.GeneratedUi.RenderSurfaceSceneFactory",
+            throwOnError: true)!;
+        MethodInfo create = factoryType.GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Single(candidate => candidate.Name == "Create" && candidate.GetParameters().Length == 1);
+        RenderSurface2D surface = Assert.IsType<RenderSurface2D>(
+            create.Invoke(null, new[] { dataContext }));
+        Assert.NotNull(surface.Scene);
+        Assert.Equal(2, surface.Scene.Children.Count);
+        SceneItems2D items = Assert.IsType<SceneItems2D>(surface.Scene.Children[0]);
+        Assert.Single(items.Templates);
+        Assert.Equal("TestInput.SpriteModel", items.Templates[0].DataType?.FullName);
+        Assert.IsType<Sprite2D>(surface.Scene.Children[1]);
     }
 
     [Fact]
@@ -128,11 +278,12 @@ public sealed partial class UiMarkupGeneratorTests
     {
         const string markup = """
             <ComboBox>
-              <ComboBox.Templates>
+              @templates
+              {
                 <ContentTemplate DataType="System.String">
                   <TextBlock Text="STRING" />
                 </ContentTemplate>
-              </ComboBox.Templates>
+              }
             </ComboBox>
             """;
 
@@ -166,14 +317,15 @@ public sealed partial class UiMarkupGeneratorTests
             <ItemsControl
                 xmlns:rows="clr-namespace:TestInput"
                 xmlns:controls="clr-namespace:Cerneala.UI.Controls;assembly=Cerneala">
-              <ItemsControl.Templates>
+              @templates
+              {
                 <ContentTemplate DataType="rows:PropertyRow">
                   <TextBlock Text="ROW" />
                 </ContentTemplate>
                 <ContentTemplate DataType="controls:Button">
                   <TextBlock Text="BUTTON" />
                 </ContentTemplate>
-              </ItemsControl.Templates>
+              }
             </ItemsControl>
             """;
 

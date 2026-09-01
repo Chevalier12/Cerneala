@@ -267,7 +267,8 @@
                         <ItemsControl.ItemsPanel>
                             <VirtualizingStackPanel />
                         </ItemsControl.ItemsPanel>
-                        <ItemsControl.Templates>
+                        @templates
+                        {
                             <ContentTemplate DataType="studio:AspectStudioHeaderRow">
                                 <TextBlock
                                     Text="$DataContext.Label"
@@ -388,7 +389,7 @@
                                     </Grid>
                                 </Border>
                             </ContentTemplate>
-                        </ItemsControl.Templates>
+                        }
                     </ItemsControl>
                 </ScrollViewer>
             </Grid>

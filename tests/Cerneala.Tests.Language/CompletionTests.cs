@@ -324,6 +324,18 @@ public sealed class CompletionTests
     }
 
     [Fact]
+    public void TemplatesDirectiveCompletionIsRestrictedToTemplateCollectionOwners()
+    {
+        using CompletionFixture items = CompletionFixture.Create("<ItemsControl>@tem|caret|</ItemsControl>");
+        using CompletionFixture sceneItems = CompletionFixture.Create("<SceneItems2D>@tem|caret|</SceneItems2D>");
+        using CompletionFixture button = CompletionFixture.Create("<Button>@tem|caret|</Button>");
+
+        Assert.Contains(items.Complete(), item => item.Label == "@templates" && item.InsertText == "@templates { }");
+        Assert.Contains(sceneItems.Complete(), item => item.Label == "@templates");
+        Assert.DoesNotContain(button.Complete(), item => item.Label == "@templates");
+    }
+
+    [Fact]
     public void PrismCompositionCompletionOffersOnlyRootMembersOnExplicitInvocation()
     {
         using CompletionFixture fixture = CompletionFixture.Create(

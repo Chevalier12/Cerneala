@@ -1,4 +1,3 @@
-using Cerneala.Drawing.Prism;
 using System.Numerics;
 
 namespace Cerneala.Drawing;
@@ -174,32 +173,17 @@ public sealed partial class DrawingContext
         DrawImageFlip flip = DrawImageFlip.None,
         float layerDepth = 0)
     {
-        if (image is PrismImage prismImage)
-        {
-            _commands.Add(DrawCommand.BeginPrism(
-                prismImage.CreateDrawScope(destination)));
-            DrawImage(
-                prismImage.Source,
+        AddImageBackedCommand(
+            image,
+            resolved => DrawCommand.DrawImage(
+                resolved,
                 destination,
                 source,
                 color,
                 rotation,
                 origin,
                 flip,
-                layerDepth);
-            _commands.Add(DrawCommand.EndPrism());
-            return;
-        }
-
-        _commands.Add(DrawCommand.DrawImage(
-            image,
-            destination,
-            source,
-            color,
-            rotation,
-            origin,
-            flip,
-            layerDepth));
+                layerDepth));
     }
 
     internal void DrawRenderSurface2D(

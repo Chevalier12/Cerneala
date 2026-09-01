@@ -1,4 +1,8 @@
 using Cerneala.Drawing;
+using Cerneala.Drawing.Prism;
+using Cerneala.UI.Elements;
+using Cerneala.UI.Prism.Runtime;
+using Cerneala.UI.Rendering;
 using System.Numerics;
 
 namespace Cerneala.UI.Controls;
@@ -16,12 +20,28 @@ public sealed partial class RenderSurface2DFrame
     private readonly DrawingContext drawingContext;
     private readonly DrawCommandList commands;
     private readonly Action<IDrawImage>? trackImageDependency;
+    private readonly long contentVersion;
     private bool active = true;
 
     internal RenderSurface2DFrame(
         DrawCommandList commands,
         DrawRect bounds,
         TimeSpan frameTime,
+        Action<IDrawImage>? trackImageDependency = null)
+        : this(
+            commands,
+            bounds,
+            frameTime,
+            contentVersion: 1,
+            trackImageDependency)
+    {
+    }
+
+    internal RenderSurface2DFrame(
+        DrawCommandList commands,
+        DrawRect bounds,
+        TimeSpan frameTime,
+        long contentVersion,
         Action<IDrawImage>? trackImageDependency = null)
     {
         drawingContext = new DrawingContext(
@@ -30,6 +50,7 @@ public sealed partial class RenderSurface2DFrame
         this.commands = commands;
         Bounds = bounds;
         FrameTime = frameTime;
+        this.contentVersion = contentVersion;
         this.trackImageDependency = trackImageDependency;
     }
 
@@ -386,6 +407,36 @@ public sealed partial class RenderSurface2DFrame
             DrawCommandMetadata.Create(command).TrackImageDependencies(
                 trackImageDependency);
         }
+    }
+
+    internal bool BeginPrism(UIElement owner, DrawRect bounds)
+    {
+        EnsureActive();
+        if (!PrismAttachment.TryGetRenderState(
+                owner,
+                out PrismInstance? instance,
+                out PrismCacheOwnerToken cacheOwnerToken))
+        {
+            return false;
+        }
+
+        PrismDrawScope scope = DrawCommandListBuilder.CreatePrismScope(
+            owner,
+            instance!,
+            cacheOwnerToken,
+            bounds,
+            Cerneala.UI.Media.Matrix3x2.Identity,
+            owner.PrismVisualVersion,
+            contentVersion,
+            DrawCommandListBuilder.ResolvePrismResources(owner, instance!));
+        commands.Add(DrawCommand.BeginPrism(scope));
+        return true;
+    }
+
+    internal void EndPrism()
+    {
+        EnsureActive();
+        commands.Add(DrawCommand.EndPrism());
     }
 
     private void EnsureActive()

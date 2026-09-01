@@ -26,14 +26,15 @@ Declare typed templates directly on the `ItemsControl` that resolves them:
 <ItemsControl
     xmlns:sample="clr-namespace:Sample"
     ItemsSource="$DataContext.Rows">
-    <ItemsControl.Templates>
+    @templates
+    {
         <ContentTemplate DataType="sample:PersonRow">
             <TextBlock Text="$DataContext.Name" />
         </ContentTemplate>
         <ContentTemplate DataType="sample:ToggleRow">
             <CheckBox IsChecked="$DataContext.Value:TwoWay" />
         </ContentTemplate>
-    </ItemsControl.Templates>
+    }
 </ItemsControl>
 ```
 
@@ -124,7 +125,7 @@ public sealed record MessageViewModel(string Title, bool IsImportant);
 
 `ContentPresenter.ContentTemplate` can apply a template directly. When no explicit template is set, `ContentPresenter.LocalTemplateRegistry` can resolve one from a registry. If neither path produces a template, the presenter falls back to hosting an existing `UIElement`, generating a `TextBlock` for string content, or producing no child.
 
-The `.crn` source generator accepts `ContentTemplate` only as the inline value of a content-template property or inside `ItemsControl.Templates`. A `ContentTemplate` declaration inside any `Resources` collection is rejected, regardless of whether it has a `Name`; templates must have an explicit owning control or property. `DataType` accepts a fully qualified metadata name or a scoped XML alias declared as `xmlns:prefix="clr-namespace:Namespace"`. References to another assembly may use `clr-namespace:Namespace;assembly=AssemblyName`. `DataType` is required, while `Key` and `Priority` are optional. Each declaration must contain exactly one visual root. Names inside the repeated visual tree are rejected until per-realization name scopes are supported.
+The `.crn` source generator accepts `ContentTemplate` only as the inline value of a content-template property or inside an `@templates { ... }` block owned by an `ItemsControl`-derived control or `SceneItems2D`. Property-element collection wrappers such as `ItemsControl.Templates` and `SceneItems2D.Templates` are rejected. A `ContentTemplate` declaration inside any `Resources` collection is rejected, regardless of whether it has a `Name`; templates must have an explicit owning control or property. `DataType` accepts a fully qualified metadata name or a scoped XML alias declared as `xmlns:prefix="clr-namespace:Namespace"`. References to another assembly may use `clr-namespace:Namespace;assembly=AssemblyName`. `DataType` is required, while `Key` and `Priority` are optional. Each declaration must contain exactly one visual root. Names inside the repeated visual tree are rejected until per-realization name scopes are supported.
 
 By default, the generated factory assigns the item to the visual root's `DataContext`, and `$DataContext` bindings are validated statically against the template's `DataType`. An element may override that inherited context with a direct binding such as `DataContext="$DataContext.Details"`. The override expression is validated against the surrounding context type; descendant `$DataContext` expressions are then validated against the override expression's result type. The new context applies only to that element's subtree, so later siblings resume the surrounding context. Runtime bindings observe both the path that supplies the local `DataContext` and descendant paths. Replacing an intermediate object retargets the local context and its descendant bindings. When the template root declares `DataContext` explicitly, the generated factory does not overwrite it with the original item.
 

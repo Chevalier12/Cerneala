@@ -52,11 +52,11 @@ public sealed class EmbeddedSyntaxTests
     [Fact]
     public void GeneralDirectiveGrammarFindsTemplatesConditionsAssignmentsAndComparators()
     {
-        const string text = "@template { <Border /> } @when Value { @if value <= 4 and Name != \"x\" { Opacity = 0.5; } @default { Opacity = 1; } }";
+        const string text = "@template { <Border /> } @templates { <ContentTemplate><TextBlock /></ContentTemplate> } @when Value { @if value <= 4 and Name != \"x\" { Opacity = 0.5; } @default { Opacity = 1; } }";
         EmbeddedParseResult<DirectiveDocumentSyntax> result = DirectiveSyntaxParser.Parse(text, absoluteOffset: 31);
 
         Assert.Empty(result.Diagnostics);
-        Assert.Equal(["@template", "@when", "@if", "@default"], result.Syntax.Directives.Select(item => item.Keyword));
+        Assert.Equal(["@template", "@templates", "@when", "@if", "@default"], result.Syntax.Directives.Select(item => item.Keyword));
         Assert.Equal(2, result.Syntax.Assignments.Count);
         Assert.All(result.Syntax.Directives, directive => Assert.True(directive.Span.Start >= 31));
     }

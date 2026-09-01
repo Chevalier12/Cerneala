@@ -812,11 +812,23 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         public string? DataTypeCode => dataType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
-        private ITypeSymbol? CurrentDataType => localDataContextTypes.Count > 0
-            ? localDataContextTypes.Peek()
-            : contentTemplateDataTypes.Count == 0
-                ? dataType
-                : contentTemplateDataTypes.Peek();
+        private ITypeSymbol? CurrentDataType
+        {
+            get
+            {
+                if (contentTemplateDataTypes.Count > 0)
+                {
+                    int inheritedLocalDepth = contentTemplateLocalDataContextDepths.Peek();
+                    return localDataContextTypes.Count > inheritedLocalDepth
+                        ? localDataContextTypes.Peek()
+                        : contentTemplateDataTypes.Peek();
+                }
+
+                return localDataContextTypes.Count > 0
+                    ? localDataContextTypes.Peek()
+                    : dataType;
+            }
+        }
 
         public bool HasErrors { get; private set; }
 
@@ -1215,6 +1227,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private readonly Stack<TemplateEmissionContext> templateEmissionContexts = new();
         private readonly Stack<INamedTypeSymbol?> contentTemplateDataTypes = new();
         private readonly Stack<string> contentTemplateContextVariables = new();
+        private readonly Stack<int> contentTemplateLocalDataContextDepths = new();
         private readonly Stack<ITypeSymbol> localDataContextTypes = new();
         private readonly Dictionary<DirectiveTemplateNode, IReadOnlyDictionary<string, MarkupElement>> templateParts = new();
         private readonly List<NamedElementMember> namedElementMembers = [];
@@ -2578,6 +2591,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             IReadOnlyList<AspectResource> aspects = ResolveAspects(element);
             DirectiveTemplateNode[] templates = parsedContent.Nodes.OfType<DirectiveTemplateNode>().ToArray();
+            DirectiveTemplatesNode[] templateCollections = parsedContent.Nodes.OfType<DirectiveTemplatesNode>().ToArray();
             if (templates.Length > 1)
             {
                 Report(
@@ -2585,6 +2599,15 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     templates[1].Source,
                     Path.GetFileName(file.Path),
                     "An element may declare only one @template block.");
+            }
+
+            if (templateCollections.Length > 1)
+            {
+                Report(
+                    InvalidDocumentShape,
+                    templateCollections[1].Source,
+                    Path.GetFileName(file.Path),
+                    "An element may declare only one @templates block.");
             }
 
             MarkupAttribute[] propertyAttributes = element.Attributes()
@@ -2647,7 +2670,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 EmitBrushPropertyElement(element, variable);
                 EmitGridDefinitionElements(element, variable);
                 EmitContentTemplatePropertyElement(element, variable);
-                EmitItemsControlTemplatesElement(element, variable);
+                EmitRenderSurfaceSceneElement(element, variable);
+                ReportLegacyTemplatesPropertyElements(element);
+                if (templateCollections.Length == 1)
+                {
+                    EmitTemplatesDirective(element, variable, templateCollections[0]);
+                }
                 EmitItemsControlItemsPanelElement(element, variable);
 
                 if (parsedContent.HasDirectives)
@@ -2673,6 +2701,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                                 EmitChild(element, variable, childVariable);
                                 break;
                             case DirectiveTemplateNode _:
+                            case DirectiveTemplatesNode _:
                                 break;
                             case DirectiveDefaultNode defaults:
                                 Report(InvalidDirective, defaults.Source, Path.GetFileName(file.Path), "@default is valid only inside Aspect resources.");
@@ -2950,7 +2979,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         {
             return IsBrushPropertyElement(owner, child) ||
                 GetContentTemplatePropertyName(owner, child) is not null ||
-                IsItemsControlTemplatesElement(owner, child) ||
+                IsRenderSurfaceSceneElement(owner, child) ||
+                IsLegacyTemplatesPropertyElement(owner, child) ||
                 IsItemsControlItemsPanelElement(owner, child) ||
                 (owner.Name.LocalName == "Grid" &&
                     child.Name.LocalName is "Grid.ColumnDefinitions" or "Grid.RowDefinitions");
@@ -2974,7 +3004,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 IsOrDerivesFrom(ownerType, itemsControlType);
         }
 
-        private bool IsItemsControlTemplatesElement(MarkupElement owner, MarkupElement child)
+        private bool IsLegacyTemplatesPropertyElement(MarkupElement owner, MarkupElement child)
         {
             string ownerName = owner.Name.LocalName;
             if (child.Name.LocalName != ownerName + ".Templates")
@@ -2982,20 +3012,46 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return false;
             }
 
+            return SupportsTemplateCollection(owner);
+        }
+
+        private bool SupportsTemplateCollection(MarkupElement owner)
+        {
+            string ownerName = owner.Name.LocalName;
             INamedTypeSymbol? ownerType = ResolvePropertyOwnerType(
                 ownerName,
                 isRoot: ReferenceEquals(owner, document.Root));
             INamedTypeSymbol? itemsControlType = compilation.GetTypeByMetadataName(
                 "Cerneala.UI.Controls.ItemsControl");
+            INamedTypeSymbol? sceneItemsType = compilation.GetTypeByMetadataName(
+                "Cerneala.UI.Controls.SceneItems2D");
             return ownerType is not null &&
-                itemsControlType is not null &&
-                IsOrDerivesFrom(ownerType, itemsControlType);
+                ((itemsControlType is not null && IsOrDerivesFrom(ownerType, itemsControlType)) ||
+                 (sceneItemsType is not null && IsOrDerivesFrom(ownerType, sceneItemsType)));
         }
 
-        private void EmitItemsControlTemplatesElement(MarkupElement owner, string ownerVariable)
+        private bool IsRenderSurfaceSceneElement(MarkupElement owner, MarkupElement child)
+        {
+            string ownerName = owner.Name.LocalName;
+            if (child.Name.LocalName != ownerName + ".Scene")
+            {
+                return false;
+            }
+
+            INamedTypeSymbol? ownerType = ResolvePropertyOwnerType(
+                ownerName,
+                isRoot: ReferenceEquals(owner, document.Root));
+            INamedTypeSymbol? renderSurfaceType = compilation.GetTypeByMetadataName(
+                "Cerneala.UI.Controls.RenderSurface2D");
+            return ownerType is not null &&
+                renderSurfaceType is not null &&
+                IsOrDerivesFrom(ownerType, renderSurfaceType);
+        }
+
+        private void EmitRenderSurfaceSceneElement(MarkupElement owner, string ownerVariable)
         {
             MarkupElement[] propertyElements = owner.Elements()
-                .Where(child => IsItemsControlTemplatesElement(owner, child))
+                .Where(child => IsRenderSurfaceSceneElement(owner, child))
                 .ToArray();
             if (propertyElements.Length == 0)
             {
@@ -3008,34 +3064,70 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     InvalidDocumentShape,
                     propertyElements[1],
                     Path.GetFileName(file.Path),
-                    owner.Name.LocalName + ".Templates may be declared only once.");
+                    owner.Name.LocalName + ".Scene may be declared only once.");
                 return;
             }
 
             MarkupElement propertyElement = propertyElements[0];
+            MarkupElement[] children = propertyElement.Elements().ToArray();
             if (propertyElement.Attributes().Any(attribute => !attribute.IsNamespaceDeclaration) ||
-                propertyElement.Nodes().OfType<MarkupText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+                propertyElement.Nodes().OfType<MarkupText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)) ||
+                children.Length != 1 ||
+                children[0].Name.LocalName != "Scene2D")
             {
                 Report(
                     InvalidDocumentShape,
                     propertyElement,
                     Path.GetFileName(file.Path),
-                    owner.Name.LocalName + ".Templates accepts only ContentTemplate children.");
+                    owner.Name.LocalName + ".Scene requires exactly one Scene2D child.");
                 return;
             }
 
-            MarkupElement[] templates = propertyElement.Elements().ToArray();
-            if (templates.Length == 0 || templates.Any(template => template.Name.LocalName != "ContentTemplate"))
+            string sceneVariable = EmitElement(children[0]);
+            currentLines.Add(ownerVariable + ".Scene = " + sceneVariable + ";");
+        }
+
+        private void ReportLegacyTemplatesPropertyElements(MarkupElement owner)
+        {
+            MarkupElement[] propertyElements = owner.Elements()
+                .Where(child => IsLegacyTemplatesPropertyElement(owner, child))
+                .ToArray();
+            foreach (MarkupElement propertyElement in propertyElements)
             {
                 Report(
                     InvalidDocumentShape,
                     propertyElement,
                     Path.GetFileName(file.Path),
-                    owner.Name.LocalName + ".Templates requires one or more ContentTemplate children.");
+                    propertyElement.Name.LocalName + " is not supported; use @templates { ... }.");
+            }
+        }
+
+        private void EmitTemplatesDirective(
+            MarkupElement owner,
+            string ownerVariable,
+            DirectiveTemplatesNode directive)
+        {
+            if (!SupportsTemplateCollection(owner))
+            {
+                Report(
+                    InvalidDocumentShape,
+                    directive.Source,
+                    Path.GetFileName(file.Path),
+                    "@templates is valid only inside ItemsControl-derived controls and SceneItems2D.");
                 return;
             }
 
-            foreach (MarkupElement templateElement in templates)
+            if (directive.Templates.Any(template => template.Name.LocalName != "ContentTemplate"))
+            {
+                Report(
+                    InvalidDocumentShape,
+                    directive.Source,
+                    Path.GetFileName(file.Path),
+                    "@templates accepts only ContentTemplate elements.");
+                return;
+            }
+
+            foreach (MarkupElement templateElement in directive.Templates)
             {
                 ContentTemplateResource? template = ParseContentTemplate(templateElement);
                 if (template is null)
@@ -3281,6 +3373,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             string rootVariable = string.Empty;
             WithEmissionBuffers(factoryLines, factoryPostLines, () =>
             {
+                contentTemplateLocalDataContextDepths.Push(localDataContextTypes.Count);
                 contentTemplateDataTypes.Push(template.DataType);
                 contentTemplateContextVariables.Push(contextVariable);
                 try
@@ -3291,6 +3384,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 {
                     contentTemplateContextVariables.Pop();
                     contentTemplateDataTypes.Pop();
+                    contentTemplateLocalDataContextDepths.Pop();
                 }
             });
 
@@ -4925,6 +5019,13 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             INamedTypeSymbol? decoratorType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Decorator");
             INamedTypeSymbol? contentControlType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.ContentControl");
             INamedTypeSymbol? scrollViewerType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.ScrollViewer");
+            INamedTypeSymbol? sceneType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Scene2D");
+
+            if (parentType is not null && sceneType is not null && IsOrDerivesFrom(parentType, sceneType))
+            {
+                currentLines.Add(parentVariable + ".Children.Add(" + childVariable + ");");
+                return;
+            }
 
             if (parentType is not null && panelType is not null && IsOrDerivesFrom(parentType, panelType))
             {

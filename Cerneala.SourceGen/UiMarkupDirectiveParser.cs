@@ -112,6 +112,16 @@ public sealed partial class UiMarkupGenerator
         public MarkupElement Root { get; }
     }
 
+    private sealed class DirectiveTemplatesNode : DirectiveNode
+    {
+        public DirectiveTemplatesNode(IReadOnlyList<MarkupElement> templates, MarkupObject source) : base(source)
+        {
+            Templates = templates;
+        }
+
+        public IReadOnlyList<MarkupElement> Templates { get; }
+    }
+
     private sealed class DirectiveExpressionLocation
     {
         public DirectiveExpressionLocation(MarkupObject source, int offset, int length = 1)
@@ -382,6 +392,17 @@ public sealed partial class UiMarkupGenerator
                 if (StartsWith("@default"))
                 {
                     nodes.Add(ParseDefault(allowedContent));
+                    continue;
+                }
+
+                if (StartsWith("@templates"))
+                {
+                    if (!Allows(allowedContent, DirectiveContentKind.Templates))
+                    {
+                        throw Error("@templates is not allowed in this directive context.");
+                    }
+
+                    nodes.Add(ParseTemplates());
                     continue;
                 }
 
@@ -1484,6 +1505,28 @@ public sealed partial class UiMarkupGenerator
             }
 
             return new DirectiveTemplateNode(roots[0].Element, source);
+        }
+
+        private DirectiveTemplatesNode ParseTemplates()
+        {
+            MarkupObject source = CurrentSource;
+            Consume("@templates");
+            SkipWhitespace();
+            if (Read() != '{')
+            {
+                throw new DirectiveParseException("@templates must be followed by a block.", source);
+            }
+
+            IReadOnlyList<DirectiveNode> body = ParseNodes(
+                stopAtClosingBrace: true,
+                DirectiveContentKind.Elements);
+            DirectiveElementNode[] templates = body.OfType<DirectiveElementNode>().ToArray();
+            if (templates.Length == 0 || templates.Length != body.Count)
+            {
+                throw new DirectiveParseException("@templates requires one or more XML elements.", source);
+            }
+
+            return new DirectiveTemplatesNode(templates.Select(node => node.Element).ToArray(), source);
         }
 
         private DirectiveAssignmentNode ParseAssignment()

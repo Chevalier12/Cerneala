@@ -78,6 +78,7 @@ public sealed class DrawCommandListBuilder
                 element,
                 prismInstance!,
                 cacheOwnerToken,
+                ToDrawRect(element.ArrangedBounds),
                 elementTransform,
                 visualContentVersion: 0,
                 prismLowerUiVersion,
@@ -110,6 +111,7 @@ public sealed class DrawCommandListBuilder
                 element,
                 prismInstance!,
                 cacheOwnerToken,
+                ToDrawRect(element.ArrangedBounds),
                 elementTransform,
                 element.PrismVisualVersion,
                 prismLowerUiVersion,
@@ -171,10 +173,11 @@ public sealed class DrawCommandListBuilder
         }
     }
 
-    private static PrismDrawScope CreatePrismScope(
+    internal static PrismDrawScope CreatePrismScope(
         UIElement element,
         PrismInstance instance,
         PrismCacheOwnerToken cacheOwnerToken,
+        DrawRect controlBounds,
         Matrix3x2 effectiveTransform,
         long visualContentVersion,
         long lowerUiVersion,
@@ -186,7 +189,7 @@ public sealed class DrawCommandListBuilder
         return new PrismDrawScope(
             instance,
             cacheOwnerToken,
-            ToDrawRect(element.ArrangedBounds),
+            controlBounds,
             ToNumerics(effectiveTransform),
             pixelScale,
             visualContentVersion,
@@ -194,7 +197,7 @@ public sealed class DrawCommandListBuilder
             lowerUiVersion);
     }
 
-    private static PrismDrawResources ResolvePrismResources(
+    internal static PrismDrawResources ResolvePrismResources(
         UIElement element,
         PrismInstance instance)
     {

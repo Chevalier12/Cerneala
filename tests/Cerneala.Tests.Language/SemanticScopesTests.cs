@@ -152,11 +152,12 @@ public sealed class SemanticScopesTests
         const string markup = """
             <UserControl xmlns:d="clr-namespace:Demo" DataType="d:ViewModel">
               <ItemsControl ItemsSource="$DataContext.Rows">
-                <ItemsControl.Templates>
+                @templates
+                {
                   <ContentTemplate DataType="d:Row" Key="row" Priority="1">
                     <TextBlock Text="$DataContext.Name" />
                   </ContentTemplate>
-                </ItemsControl.Templates>
+                }
                 <ItemsControl.ItemsPanel><StackPanel /></ItemsControl.ItemsPanel>
               </ItemsControl>
             </UserControl>
@@ -167,7 +168,6 @@ public sealed class SemanticScopesTests
         Assert.Equal("Demo.Row", SymbolAt(model, markup, "Row\" Key").ValueType);
         Assert.Equal("string", SymbolAt(model, markup, "Name\"").ValueType);
         Assert.Contains(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.ContentTemplate && symbol.ValueType == "Demo.Row");
-        Assert.Contains(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.PropertyElement && symbol.Name == "Templates");
         Assert.Contains(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.PropertyElement && symbol.Name == "ItemsPanel");
         Assert.Contains(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.ContentOwner && symbol.Name == "Content");
     }

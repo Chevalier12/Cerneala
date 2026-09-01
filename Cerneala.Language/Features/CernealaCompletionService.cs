@@ -832,6 +832,10 @@ internal sealed class CernealaCompletionService
         }
 
         string elementName = element?.Name.Split(':').Last() ?? string.Empty;
+        ILanguageTypeSymbol? elementType = model?.GetCompletionElementType(element);
+        bool supportsTemplateCollection = elementType is not null &&
+            (elementType.IsOrDerivesFrom("Cerneala.UI.Controls.ItemsControl") ||
+             elementType.IsOrDerivesFrom("Cerneala.UI.Controls.SceneItems2D"));
         IEnumerable<string> keywords;
         if (elementName == "PrismComposition" || IsInsideDirective(site.Source, site.Offset, "@prism"))
         {
@@ -852,7 +856,9 @@ internal sealed class CernealaCompletionService
         }
         else
         {
-            keywords = ["@prism", "@run"];
+            keywords = supportsTemplateCollection
+                ? ["@templates", "@prism", "@run"]
+                : ["@prism", "@run"];
         }
 
         foreach (string keyword in keywords.Distinct(StringComparer.Ordinal))

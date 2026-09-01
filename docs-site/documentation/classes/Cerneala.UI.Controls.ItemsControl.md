@@ -33,14 +33,15 @@ ItemsControl control = new()
     <ItemsControl.ItemsPanel>
         <VirtualizingStackPanel />
     </ItemsControl.ItemsPanel>
-    <ItemsControl.Templates>
+    @templates
+    {
         <ContentTemplate DataType="models:TextRow">
             <TextBlock Text="$DataContext.Text" />
         </ContentTemplate>
         <ContentTemplate DataType="models:BooleanRow">
             <CheckBox IsChecked="$DataContext.Value:TwoWay" />
         </ContentTemplate>
-    </ItemsControl.Templates>
+    }
 </ItemsControl>
 ```
 
@@ -59,6 +60,8 @@ Virtualization is automatic when `ItemsControl` is the content of a `ScrollViewe
 `ItemContainerAspect` is assigned to every prepared container through `UIElement.AspectProperty` at the `AspectBase` policy source and removed when the container is cleared or recycled. The assigned `ElementAspect` is then resolved by the root `AspectProcessor`; it does not write container properties directly. An aspect assigned directly on the item at a higher UI-property source wins. Changing the policy refreshes realized containers, and containers created during measure are resolved in the following Aspect phase.
 
 `ItemsControl` does not discover `ContentTemplate` values from resource collections. Assign one template explicitly through `ItemTemplate`, or add several owned templates to `Templates` for heterogeneous item sources. `ItemTemplate` has priority when both paths are configured.
+
+In `.crn` markup, declare the owned collection exclusively with `@templates { ... }`. The legacy `ItemsControl.Templates` property-element wrapper is rejected by the source generator.
 
 ## Constructors
 

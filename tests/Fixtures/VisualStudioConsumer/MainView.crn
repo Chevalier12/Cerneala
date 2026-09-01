@@ -42,7 +42,8 @@
             <ItemsControl.ItemsPanel>
                 <StackPanel />
             </ItemsControl.ItemsPanel>
-            <ItemsControl.Templates>
+            @templates
+            {
                 <ContentTemplate DataType="consumer:DashboardRow">
                     <Border Aspect="$CardAspect">
                         <StackPanel Orientation="Horizontal">
@@ -51,7 +52,7 @@
                         </StackPanel>
                     </Border>
                 </ContentTemplate>
-            </ItemsControl.Templates>
+            }
         </ItemsControl>
         <Border Aspect="$CardAspect">
             @prism $GlowFx(Radius = 8);

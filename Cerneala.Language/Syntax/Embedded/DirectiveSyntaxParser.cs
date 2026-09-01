@@ -6,7 +6,7 @@ internal static class DirectiveSyntaxParser
 {
     private static readonly string[] generalKeywords =
     [
-        "@template", "@when", "@if", "@default"
+        "@templates", "@template", "@when", "@if", "@default"
     ];
 
     private static readonly string[] motionKeywords =

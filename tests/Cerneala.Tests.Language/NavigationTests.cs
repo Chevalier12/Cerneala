@@ -109,11 +109,12 @@ public sealed class NavigationTests
               </Window.Resources>
               <StackPanel>
                 <ItemsControl>
-                  <ItemsControl.Templates>
+                  @templates
+                  {
                     <ContentTemplate DataType="Test.ViewModel">
                       <TextBlock Text="$DataContext.Title" />
                     </ContentTemplate>
-                  </ItemsControl.Templates>
+                  }
                 </ItemsControl>
                 <Button Name="Action" Background="$Accent" Aspect="$Primary" />
                 <TextBlock Text="$DataContext.Title" />

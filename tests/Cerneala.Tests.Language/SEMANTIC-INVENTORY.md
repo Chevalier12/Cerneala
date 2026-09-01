@@ -9,7 +9,7 @@ This stage-0 inventory is executable through `Corpus/constructs.json`. Every row
 | XML document shape, root and locations | `UiMarkupGenerator.ParseDocument` | `UiMarkupGeneratorTests` |
 | Elements, properties, content, events and literal conversion | `UiMarkupGenerator.GenerationScope` | `UiMarkupGeneratorTests`, application tests |
 | Binding tokens, interpolation, modes and source resolution | `UiMarkupBindingResolver` | binding stages zero, three, four and five |
-| `@template`, `@when`, `@if`, `@default` and assignments | `UiMarkupDirectiveParser` | `UiMarkupGeneratorTests` |
+| `@template`, `@templates`, `@when`, `@if`, `@default` and assignments | `UiMarkupDirectiveParser` | `UiMarkupGeneratorTests` |
 | Aspect resources, target validation and application | `GenerationScope` partials | `UiMarkupGeneratorTests` and presentation tests |
 | Motion grammar and resolution | `UiMarkupDirectiveParser`, `UiMarkupMotionSyntax`, `MotionMarkupLanguage` and motion resolvers | all `UiMarkupGeneratorMotion*Tests` suites |
 | Prism grammar, catalog and binding | `Prism/Syntax`, `Prism/Catalog` and `Prism/Binding` | `PrismMarkupContractTests` |

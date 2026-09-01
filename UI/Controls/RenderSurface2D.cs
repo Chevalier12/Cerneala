@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Numerics;
 using Cerneala.Drawing;
 using Cerneala.UI.Core;
 using Cerneala.UI.Invalidation;
@@ -30,6 +31,30 @@ public class RenderSurface2D : ContentControl,
                 RenderSurface2DRedrawMode.Continuous,
                 UiPropertyOptions.AffectsRender));
 
+    public static readonly UiProperty<Scene2D?> SceneProperty =
+        UiProperty<Scene2D?>.Register(
+            nameof(Scene),
+            typeof(RenderSurface2D),
+            new UiPropertyMetadata<Scene2D?>(null, UiPropertyOptions.AffectsRender));
+
+    public static readonly UiProperty<DrawRect?> ViewBoxProperty =
+        UiProperty<DrawRect?>.Register(
+            nameof(ViewBox),
+            typeof(RenderSurface2D),
+            new UiPropertyMetadata<DrawRect?>(
+                null,
+                UiPropertyOptions.AffectsRender,
+                validateValue: value => value is null ||
+                    (value.Value.Width > 0 && value.Value.Height > 0)));
+
+    public static readonly UiProperty<DrawBrushStretch> StretchProperty =
+        UiProperty<DrawBrushStretch>.Register(
+            nameof(Stretch),
+            typeof(RenderSurface2D),
+            new UiPropertyMetadata<DrawBrushStretch>(
+                DrawBrushStretch.Fill,
+                UiPropertyOptions.AffectsRender));
+
     private static readonly object OnDrawOverrideCacheLock = new();
     private static readonly Dictionary<Type, bool> OnDrawOverrideCache = [];
 
@@ -59,6 +84,24 @@ public class RenderSurface2D : ContentControl,
     {
         get => GetValue(RedrawModeProperty);
         set => SetValue(RedrawModeProperty, value);
+    }
+
+    public Scene2D? Scene
+    {
+        get => GetValue(SceneProperty);
+        set => SetValue(SceneProperty, value);
+    }
+
+    public DrawRect? ViewBox
+    {
+        get => GetValue(ViewBoxProperty);
+        set => SetValue(ViewBoxProperty, value);
+    }
+
+    public DrawBrushStretch Stretch
+    {
+        get => GetValue(StretchProperty);
+        set => SetValue(StretchProperty, value);
     }
 
     public event RenderSurface2DDrawEventHandler? Draw
@@ -134,17 +177,45 @@ public class RenderSurface2D : ContentControl,
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
+        if (args is UiPropertyChangedEventArgs<Scene2D?> sceneChange &&
+            ReferenceEquals(args.Property, SceneProperty))
+        {
+            sceneChange.OldValue?.AttachSurface(null);
+            if (sceneChange.OldValue is not null)
+            {
+                LogicalChildren.Remove(sceneChange.OldValue);
+            }
+
+            if (sceneChange.NewValue is not null)
+            {
+                LogicalChildren.Add(sceneChange.NewValue);
+                sceneChange.NewValue.AttachSurface(this);
+            }
+        }
+
         base.OnPropertyChanged(args);
         if (ReferenceEquals(args.Property, ClearColorProperty) ||
-            ReferenceEquals(args.Property, RedrawModeProperty))
+            ReferenceEquals(args.Property, RedrawModeProperty) ||
+            ReferenceEquals(args.Property, ViewBoxProperty) ||
+            ReferenceEquals(args.Property, StretchProperty))
         {
             AdvanceFrameVersion();
+        }
+
+        if (ReferenceEquals(args.Property, SceneProperty))
+        {
+            if (!IsDrawingActive)
+            {
+                DisposeManagedSession();
+            }
+
+            InvalidateFrame();
         }
     }
 
     internal bool IsDrawingActiveForTests => IsDrawingActive;
 
-    private bool IsDrawingActive => draw is not null || hasOnDrawOverride;
+    private bool IsDrawingActive => draw is not null || hasOnDrawOverride || Scene is not null;
 
     Color IRenderSurface2DFrameSource.ClearColor => ClearColor;
 
@@ -159,10 +230,12 @@ public class RenderSurface2D : ContentControl,
             commands,
             bounds,
             currentFrameTime,
+            frameVersion,
             TrackImageDependency);
         try
         {
             InvokeDraw(frame);
+            RecordScene(frame, bounds);
             frame.Complete();
             CommitImageDependencies();
         }
@@ -221,6 +294,54 @@ public class RenderSurface2D : ContentControl,
         {
             handler(this, frame);
         }
+    }
+
+    private void RecordScene(RenderSurface2DFrame frame, DrawRect bounds)
+    {
+        Scene2D? scene = Scene;
+        if (scene is null)
+        {
+            return;
+        }
+
+        DrawRect? viewBox = ViewBox;
+        if (viewBox is null)
+        {
+            scene.Record(frame);
+            return;
+        }
+
+        Matrix3x2 transform = CreateViewBoxTransform(viewBox.Value, bounds, Stretch);
+        frame.PushClip(bounds);
+        frame.PushTransform(transform);
+        scene.Record(frame);
+        frame.PopTransform();
+        frame.PopClip();
+    }
+
+    private static Matrix3x2 CreateViewBoxTransform(
+        DrawRect viewBox,
+        DrawRect bounds,
+        DrawBrushStretch stretch)
+    {
+        float scaleX = stretch == DrawBrushStretch.None ? 1 : bounds.Width / viewBox.Width;
+        float scaleY = stretch == DrawBrushStretch.None ? 1 : bounds.Height / viewBox.Height;
+        if (stretch == DrawBrushStretch.Uniform)
+        {
+            scaleX = scaleY = MathF.Min(scaleX, scaleY);
+        }
+        else if (stretch == DrawBrushStretch.UniformToFill)
+        {
+            scaleX = scaleY = MathF.Max(scaleX, scaleY);
+        }
+
+        float contentWidth = viewBox.Width * scaleX;
+        float contentHeight = viewBox.Height * scaleY;
+        float offsetX = bounds.X + ((bounds.Width - contentWidth) * 0.5f);
+        float offsetY = bounds.Y + ((bounds.Height - contentHeight) * 0.5f);
+        return Matrix3x2.CreateTranslation(-viewBox.X, -viewBox.Y) *
+            Matrix3x2.CreateScale(scaleX, scaleY) *
+            Matrix3x2.CreateTranslation(offsetX, offsetY);
     }
 
     private void TrackImageDependency(IDrawImage image)

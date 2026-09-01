@@ -451,7 +451,8 @@
                             <ItemsControl.ItemsPanel>
                                 <StackPanel />
                             </ItemsControl.ItemsPanel>
-                            <ItemsControl.Templates>
+                            @templates
+                            {
                                 <ContentTemplate DataType="studio:PrismStudioLayerRow">
                                     <Border
                                         Background="#FF14181E"
@@ -489,7 +490,8 @@
                                                 <ItemsControl.ItemsPanel>
                                                     <StackPanel />
                                                 </ItemsControl.ItemsPanel>
-                                                <ItemsControl.Templates>
+                                                @templates
+                                                {
                                                     <ContentTemplate DataType="studio:PrismStudioOperationRow">
                                                         <StackPanel Orientation="Horizontal">
                                                             <CheckBox
@@ -505,7 +507,7 @@
                                                             <Button Aspect="$PrismStudioButton" Content="v" Command="$DataContext.MoveDownCommand" Padding="4" />
                                                         </StackPanel>
                                                     </ContentTemplate>
-                                                </ItemsControl.Templates>
+                                                }
                                             </ItemsControl>
                                             <TextBlock
                                                 Text="STYLES"
@@ -517,7 +519,8 @@
                                                 <ItemsControl.ItemsPanel>
                                                     <StackPanel />
                                                 </ItemsControl.ItemsPanel>
-                                                <ItemsControl.Templates>
+                                                @templates
+                                                {
                                                     <ContentTemplate DataType="studio:PrismStudioOperationRow">
                                                         <StackPanel Orientation="Horizontal">
                                                             <CheckBox
@@ -533,12 +536,12 @@
                                                             <Button Aspect="$PrismStudioButton" Content="v" Command="$DataContext.MoveDownCommand" Padding="4" />
                                                         </StackPanel>
                                                     </ContentTemplate>
-                                                </ItemsControl.Templates>
+                                                }
                                             </ItemsControl>
                                         </StackPanel>
                                     </Border>
                                 </ContentTemplate>
-                            </ItemsControl.Templates>
+                            }
                         </ItemsControl>
                 </ScrollViewer>
                 <Grid Grid.Row="2" Margin="0,8,0,0">
@@ -617,7 +620,8 @@
                             <ItemsControl.ItemsPanel>
                                 <VirtualizingStackPanel />
                             </ItemsControl.ItemsPanel>
-                            <ItemsControl.Templates>
+                            @templates
+                            {
                                 <ContentTemplate DataType="studio:PrismStudioCatalogRow">
                                     <Button
                                         Aspect="$PrismStudioButton"
@@ -625,7 +629,7 @@
                                         Command="$DataContext.Command"
                                         Margin="0,0,0,4" />
                                 </ContentTemplate>
-                            </ItemsControl.Templates>
+                            }
                         </ItemsControl>
                     </ScrollViewer>
                 </Grid>
@@ -660,7 +664,8 @@
                         <ItemsControl.ItemsPanel>
                             <StackPanel />
                         </ItemsControl.ItemsPanel>
-                        <ItemsControl.Templates>
+                        @templates
+                        {
                             <ContentTemplate DataType="studio:PrismStudioLayerTitleRow">
                                 <TextBlock Text="$DataContext.Label" FontFamily="Cascadia Mono SemiBold" FontSize="8" Foreground="$LimeBrush" Margin="0,6,0,4" TextWrapping="Wrap" />
                             </ContentTemplate>
@@ -726,11 +731,12 @@
                                         <ItemsControl.ItemsPanel>
                                             <StackPanel Orientation="Horizontal" />
                                         </ItemsControl.ItemsPanel>
-                                        <ItemsControl.Templates>
+                                        @templates
+                                        {
                                             <ContentTemplate DataType="studio:PrismStudioVectorComponentRow">
                                                 <TextBox Aspect="$PrismStudioTextBox" Text="$DataContext.Text:TwoWay" Width="54" Margin="0,0,3,0" />
                                             </ContentTemplate>
-                                        </ItemsControl.Templates>
+                                        }
                                     </ItemsControl>
                                 </StackPanel>
                             </ContentTemplate>
@@ -747,7 +753,7 @@
                                     <Button Aspect="$PrismStudioButton" Content="DELETE OP" Command="$DataContext.DeleteCommand" />
                                 </StackPanel>
                             </ContentTemplate>
-                        </ItemsControl.Templates>
+                        }
                     </ItemsControl>
                 </ScrollViewer>
             </Grid>
