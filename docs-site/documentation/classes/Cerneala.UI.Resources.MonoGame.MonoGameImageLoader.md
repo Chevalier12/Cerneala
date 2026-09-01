@@ -36,7 +36,7 @@ IDrawImage image = loader.Load("Assets/logo.png");
 
 ## Remarks
 
-`MonoGameImageLoader` uses `Texture2D.FromStream` with the supplied `GraphicsDevice`, then wraps the created texture in a `MonoGameImage`.
+`MonoGameImageLoader` uses `Texture2D.FromStream` with the supplied `GraphicsDevice`, premultiplies decoded RGB channels by their alpha channel before texture upload, and then wraps the texture in a `MonoGameImage`. This normalization matches Cerneala's premultiplied-alpha drawing pipeline and keeps translucent image edges consistent with other rendering backends.
 
 The constructor throws `ArgumentNullException` when `graphicsDevice` is `null`. `Load(string)` throws `ArgumentException` when `path` is `null`, empty, or whitespace. It opens the file with `File.OpenRead`, so file system exceptions can surface when the path cannot be read. `Load(Stream)` throws `ArgumentNullException` for a null stream and `ArgumentException` for a stream that cannot be read. Neither overload takes ownership of a caller-supplied stream.
 

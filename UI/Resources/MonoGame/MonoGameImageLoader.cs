@@ -32,8 +32,31 @@ public sealed class MonoGameImageLoader : IImageLoader
             throw new ArgumentException("Image stream must be readable.", nameof(stream));
         }
 
-        return new MonoGameImage(Texture2D.FromStream(graphicsDevice, stream));
+        return new MonoGameImage(Texture2D.FromStream(
+            graphicsDevice,
+            stream,
+            PremultiplyRgba));
     }
+
+    private static void PremultiplyRgba(byte[] pixels)
+    {
+        ArgumentNullException.ThrowIfNull(pixels);
+        if ((pixels.Length & 3) != 0)
+        {
+            throw new InvalidDataException("Decoded RGBA pixels were not four-byte aligned.");
+        }
+
+        for (int offset = 0; offset < pixels.Length; offset += 4)
+        {
+            byte alpha = pixels[offset + 3];
+            pixels[offset] = Premultiply(pixels[offset], alpha);
+            pixels[offset + 1] = Premultiply(pixels[offset + 1], alpha);
+            pixels[offset + 2] = Premultiply(pixels[offset + 2], alpha);
+        }
+    }
+
+    private static byte Premultiply(byte channel, byte alpha) =>
+        checked((byte)(((channel * alpha) + 127) / 255));
 
     internal static string ResolvePath(string path)
     {

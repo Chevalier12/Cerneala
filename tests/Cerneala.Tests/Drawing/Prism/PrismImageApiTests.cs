@@ -109,6 +109,32 @@ public sealed class PrismImageApiTests
     }
 
     [Fact]
+    public void SourceRectangleChangesPrismImageDrawContentVersion()
+    {
+        using PrismImage image = global::Cerneala.Drawing.Prism.Prism.Apply(
+            new TestImage(64, 64),
+            new OuterGlowStyle());
+        DrawRect destination = new(10, 20, 32, 32);
+        DrawCommandList first = new();
+        DrawCommandList second = new();
+
+        new DrawingContext(first).DrawImage(
+            image,
+            destination,
+            new DrawRect(0, 0, 16, 16),
+            Color.White);
+        new DrawingContext(second).DrawImage(
+            image,
+            destination,
+            new DrawRect(16, 0, 16, 16),
+            Color.White);
+
+        long firstVersion = first[0].PrismScope!.Value.DrawContentVersion;
+        long secondVersion = second[0].PrismScope!.Value.DrawContentVersion;
+        Assert.NotEqual(firstVersion, secondVersion);
+    }
+
+    [Fact]
     public void OperationMutationInvalidatesTheNextDrawScope()
     {
         BlurFilter blur = new() { Radius = 2 };

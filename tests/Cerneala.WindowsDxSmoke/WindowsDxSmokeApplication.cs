@@ -9,6 +9,7 @@ using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Hosting.Windows;
 using Cerneala.UI.Media;
 using Microsoft.Xna.Framework.Graphics;
+using SkiaSharp;
 using CernealaColor = Cerneala.Drawing.Color;
 using XnaColor = Microsoft.Xna.Framework.Color;
 using XnaVector2 = Microsoft.Xna.Framework.Vector2;
@@ -63,6 +64,7 @@ internal static class WindowsDxSmokeApplication
             RenderAndCheck(secondSession, new Color(30, 150, 80));
             RenderAndCheck(thirdSession, new Color(55, 95, 175));
             VerifyPerDeviceImages(firstSession, secondSession);
+            VerifyImageLoaderPremultipliesAlpha(firstSession);
             RenderTextAndCheck(secondSession);
             RenderBrushTextAndCheck(secondSession);
             RenderOffscreenBrushWithoutDiscardingBackBuffer(secondSession);
@@ -204,6 +206,29 @@ internal static class WindowsDxSmokeApplication
         {
             File.Delete(path);
         }
+    }
+
+    private static void VerifyImageLoaderPremultipliesAlpha(
+        WindowsDxWindowGraphicsSession session)
+    {
+        using SKBitmap bitmap = new(new SKImageInfo(
+            1,
+            1,
+            SKColorType.Rgba8888,
+            SKAlphaType.Unpremul));
+        bitmap.SetPixel(0, 0, new SKColor(200, 100, 50, 128));
+        using SKImage encodedImage = SKImage.FromBitmap(bitmap);
+        using SKData encoded = encodedImage.Encode(SKEncodedImageFormat.Png, 100);
+        using MemoryStream stream = new(encoded.ToArray(), writable: false);
+        using MonoGameImage image = AssertImage(session.ImageLoader.Load(stream));
+        XnaColor[] pixels = new XnaColor[1];
+
+        image.Texture.GetData(pixels);
+
+        XnaColor pixel = pixels[0];
+        Assert(
+            pixel.R == 100 && pixel.G == 50 && pixel.B == 25 && pixel.A == 128,
+            $"Image alpha was not premultiplied. Received {pixel}.");
     }
 
     private static void RenderTextAndCheck(WindowsDxWindowGraphicsSession session)
