@@ -150,6 +150,8 @@ internal sealed class FakeSdlApi : ISdlApi
 
     public float WindowPixelDensity { get; set; } = 2;
 
+    public float WindowDisplayScale { get; set; } = 2;
+
     public SdlRect DisplayBounds { get; set; } = new(0, 0, 1920, 1080);
 
     public void Enqueue(params SdlEvent[] values)
@@ -787,6 +789,8 @@ internal sealed class FakeSdlApi : ISdlApi
     }
 
     public float GetWindowPixelDensity(nint window) => WindowPixelDensity;
+
+    public float GetWindowDisplayScale(nint window) => WindowDisplayScale;
 
     public bool GetWindowSizeInPixels(nint window, out int width, out int height)
     {

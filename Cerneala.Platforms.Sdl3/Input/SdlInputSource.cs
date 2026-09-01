@@ -10,6 +10,8 @@ internal sealed class SdlInputSource : IInputSource
     private readonly HashSet<InputKey> downKeys = [];
     private readonly List<TextInputSnapshotEvent> textInput = [];
 
+    public float CoordinateScale { get; set; } = 1;
+
     public InputFrame GetFrame()
     {
         KeyboardSnapshot currentKeyboard = KeyboardSnapshot.FromDownKeys(downKeys);
@@ -20,7 +22,10 @@ internal sealed class SdlInputSource : IInputSource
         return frame;
     }
 
-    public void MovePointer(float x, float y) => currentPointer = currentPointer.WithPosition(x, y);
+    public void MovePointer(float x, float y) => currentPointer =
+        currentPointer.WithPosition(
+            x / CoordinateScale,
+            y / CoordinateScale);
 
     public void LeavePointer() => currentPointer = currentPointer.WithPosition(-1, -1);
 

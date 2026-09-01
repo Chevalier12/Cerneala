@@ -8,6 +8,46 @@ namespace Cerneala.Tests.SdlGpu;
 public sealed class SdlWindowPlatformTests
 {
     [Fact]
+    public void DisplayScaleControlsLogicalWindowSizeRenderingAndPointerCoordinates()
+    {
+        FakeSdlApi api = new()
+        {
+            WindowPixelDensity = 1,
+            WindowDisplayScale = 1.25f
+        };
+        RecordingGraphicsFactory graphics = new();
+        using SdlWindowPlatform platform = new(api, graphics);
+        Window model = new()
+        {
+            Width = 640,
+            Height = 480,
+            MinWidth = 200,
+            MinHeight = 100
+        };
+
+        SdlPlatformWindow window = Assert.IsType<SdlPlatformWindow>(
+            platform.CreateWindow(model, new RecordingWindowCallbacks()));
+        api.Enqueue(new SdlEvent(
+            SdlEventKind.MouseMotion,
+            window.WindowId,
+            X: 400,
+            Y: 300));
+        platform.PumpEvents();
+
+        Assert.Equal(800, api.Windows[window.Handle].Width);
+        Assert.Equal(600, api.Windows[window.Handle].Height);
+        Assert.Equal(250, api.Windows[window.Handle].MinimumWidth);
+        Assert.Equal(125, api.Windows[window.Handle].MinimumHeight);
+        Assert.Equal(800, graphics.Sessions[0].PixelWidth);
+        Assert.Equal(600, graphics.Sessions[0].PixelHeight);
+        Assert.Equal(1.25f, graphics.Sessions[0].CoordinateScale);
+        Assert.Equal(640, window.Viewport.Width);
+        Assert.Equal(480, window.Viewport.Height);
+        Assert.Equal(320, window.InputSource.GetFrame().Pointer.X);
+        Assert.Equal(240, window.InputSource.GetFrame().Pointer.Y);
+    }
+
+    [Fact]
     public void TwoWindowsHaveIndependentPropertiesOwnershipAndLifetime()
     {
         FakeSdlApi api = new();
@@ -77,6 +117,7 @@ public sealed class SdlWindowPlatformTests
         SdlPlatformWindow second = Assert.IsType<SdlPlatformWindow>(
             platform.CreateWindow(new Window { Title = "Second" }, secondCallbacks));
         api.WindowPixelDensity = 1.5f;
+        api.WindowDisplayScale = 1.5f;
         api.Enqueue(
             new SdlEvent(SdlEventKind.MouseMotion, first.WindowId, X: 12, Y: 34),
             new SdlEvent(SdlEventKind.KeyDown, first.WindowId, Scancode: 4),
@@ -138,7 +179,11 @@ public sealed class SdlWindowPlatformTests
     [Fact]
     public void LiveResizeExposeRefreshesGeometryAndRendersImmediatelyFromEventWatch()
     {
-        FakeSdlApi api = new() { WindowPixelDensity = 1 };
+        FakeSdlApi api = new()
+        {
+            WindowPixelDensity = 1,
+            WindowDisplayScale = 1
+        };
         RecordingGraphicsFactory graphics = new();
         RecordingWindowCallbacks callbacks = new();
         SdlWindowPlatform platform = new(api, graphics);

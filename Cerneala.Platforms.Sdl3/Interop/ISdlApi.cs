@@ -570,6 +570,8 @@ internal interface ISdlApi
 
     float GetWindowPixelDensity(nint window);
 
+    float GetWindowDisplayScale(nint window);
+
     bool GetWindowSizeInPixels(nint window, out int width, out int height);
 
     bool GetWindowPosition(nint window, out int x, out int y);

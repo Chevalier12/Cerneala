@@ -239,6 +239,7 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
     private int graphicsPixelWidth;
     private int graphicsPixelHeight;
     private float graphicsScale;
+    private float nativeCoordinateScale = 1;
     private SdlPlatformWindow? owner;
 
     public SdlPlatformWindow(
@@ -290,6 +291,8 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
 
         try
         {
+            UpdateCoordinateScales();
+            ApplyLogicalSize(window);
             Surface = new SdlWindowSurface(Handle, WindowId);
             (int pixelWidth, int pixelHeight, float scale) = ReadPixelGeometry();
             Viewport = UiViewport.FromPhysicalPixels(pixelWidth, pixelHeight, scale);
@@ -328,19 +331,7 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
         }
 
         Require(api.SetWindowTitle(Handle, window.Title), "SDL window title update");
-        Require(api.SetWindowSize(
-            Handle,
-            Math.Max(1, (int)MathF.Ceiling(window.Width)),
-            Math.Max(1, (int)MathF.Ceiling(window.Height))), "SDL window size update");
-        Require(api.SetWindowMinimumSize(
-            Handle,
-            Math.Max(0, (int)MathF.Ceiling(window.MinWidth)),
-            Math.Max(0, (int)MathF.Ceiling(window.MinHeight))), "SDL window minimum size update");
-        Require(api.SetWindowMaximumSize(
-            Handle,
-            float.IsFinite(window.MaxWidth) ? Math.Max(1, (int)MathF.Ceiling(window.MaxWidth)) : 0,
-            float.IsFinite(window.MaxHeight) ? Math.Max(1, (int)MathF.Ceiling(window.MaxHeight)) : 0),
-            "SDL window maximum size update");
+        ApplyLogicalSize(window);
         Require(api.SetWindowAlwaysOnTop(Handle, window.Topmost), "SDL topmost update");
         Require(api.SetWindowBordered(Handle, window.ResizeMode != ResizeMode.NoResize), "SDL border update");
         Require(api.SetWindowResizable(
@@ -515,10 +506,12 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
         if (value.WindowStartupLocation == WindowStartupLocation.CenterScreen)
         {
             uint display = api.GetPrimaryDisplay();
-            if (display != 0 && api.GetDisplayUsableBounds(display, out SdlRect bounds))
+            if (display != 0 &&
+                api.GetDisplayUsableBounds(display, out SdlRect bounds) &&
+                api.GetWindowSize(Handle, out int width, out int height))
             {
-                int x = bounds.X + Math.Max(0, (bounds.Width - (int)MathF.Ceiling(value.Width)) / 2);
-                int y = bounds.Y + Math.Max(0, (bounds.Height - (int)MathF.Ceiling(value.Height)) / 2);
+                int x = bounds.X + Math.Max(0, (bounds.Width - width) / 2);
+                int y = bounds.Y + Math.Max(0, (bounds.Height - height) / 2);
                 Require(api.SetWindowPosition(Handle, x, y), "SDL centered window position update");
             }
 
@@ -529,8 +522,9 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
         {
             Require(api.SetWindowPosition(
                 Handle,
-                (int)MathF.Round(value.Left),
-                (int)MathF.Round(value.Top)), "SDL manual window position update");
+                (int)MathF.Round(value.Left * nativeCoordinateScale),
+                (int)MathF.Round(value.Top * nativeCoordinateScale)),
+                "SDL manual window position update");
         }
     }
 
@@ -579,11 +573,17 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
             throw SdlApiError.Create(api, "SDL window position lookup");
         }
 
-        var current = (Viewport, (float)x, (float)y, desiredState);
+        float logicalX = x / nativeCoordinateScale;
+        float logicalY = y / nativeCoordinateScale;
+        var current = (Viewport, logicalX, logicalY, desiredState);
         if (lastBounds != current)
         {
             lastBounds = current;
-            callbacks.BoundsChanged(Viewport, x, y, desiredState);
+            callbacks.BoundsChanged(
+                Viewport,
+                logicalX,
+                logicalY,
+                desiredState);
         }
 
         callbacks.RenderRequested();
@@ -596,14 +596,65 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
             throw SdlApiError.Create(api, "SDL window pixel size lookup");
         }
 
-        float scale = coordinateScaleOverride ?? api.GetWindowPixelDensity(Handle);
-        if (!float.IsFinite(scale) || scale <= 0)
-        {
-            scale = 1;
-        }
+        float scale = UpdateCoordinateScales();
 
         return (Math.Max(1, pixelWidth), Math.Max(1, pixelHeight), scale);
     }
+
+    private void ApplyLogicalSize(Window value)
+    {
+        Require(api.SetWindowSize(
+            Handle,
+            ToNativeDimension(value.Width, minimum: 1),
+            ToNativeDimension(value.Height, minimum: 1)),
+            "SDL window size update");
+        Require(api.SetWindowMinimumSize(
+            Handle,
+            ToNativeDimension(value.MinWidth, minimum: 0),
+            ToNativeDimension(value.MinHeight, minimum: 0)),
+            "SDL window minimum size update");
+        Require(api.SetWindowMaximumSize(
+            Handle,
+            float.IsFinite(value.MaxWidth)
+                ? ToNativeDimension(value.MaxWidth, minimum: 1)
+                : 0,
+            float.IsFinite(value.MaxHeight)
+                ? ToNativeDimension(value.MaxHeight, minimum: 1)
+                : 0),
+            "SDL window maximum size update");
+    }
+
+    private float UpdateCoordinateScales()
+    {
+        float pixelDensity = api.GetWindowPixelDensity(Handle);
+        if (!float.IsFinite(pixelDensity) || pixelDensity <= 0)
+        {
+            pixelDensity = 1;
+        }
+
+        float displayScale = coordinateScaleOverride ??
+            api.GetWindowDisplayScale(Handle);
+        if (!float.IsFinite(displayScale) || displayScale <= 0)
+        {
+            displayScale = pixelDensity;
+        }
+
+        nativeCoordinateScale = coordinateScaleOverride.HasValue
+            ? 1
+            : displayScale / pixelDensity;
+        if (!float.IsFinite(nativeCoordinateScale) ||
+            nativeCoordinateScale <= 0)
+        {
+            nativeCoordinateScale = 1;
+        }
+        inputSource.CoordinateScale = nativeCoordinateScale;
+        return displayScale;
+    }
+
+    private int ToNativeDimension(float logical, int minimum) =>
+        Math.Max(
+            minimum,
+            (int)MathF.Ceiling(logical * nativeCoordinateScale));
 
     private void ReportActivation(bool active)
     {
