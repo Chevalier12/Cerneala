@@ -44,6 +44,7 @@ Generated from `.`.
 |   |   |   +-- 2026-08-27-sdlgpu-prism-comparison.md
 |   |   |-- AspectResolutionBenchmarks.cs
 |   |   |-- AspectVisualConformanceRunner.cs
+|   |   |-- CerberusPlanningBenchmarks.cs
 |   |   |-- Cerneala.Benchmarks.csproj
 |   |   |-- CernealaLanguageBenchmarks.cs
 |   |   |-- DrawingBatchBenchmarks.cs
@@ -163,49 +164,64 @@ Generated from `.`.
 |       |-- 2026-07-17-presentation-frame-budget/
 |       |   +-- README.md
 |       |-- 2026-08-11-aspect-mutation/
-|       +-- 2026-08-27-aspect-unification/
-|           |-- baseline-bdn/
+|       |-- 2026-08-27-aspect-unification/
+|       |   |-- baseline-bdn/
+|       |   |   |-- results/
+|       |   |   |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report-github.md
+|       |   |   |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report.csv
+|       |   |   |   +-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report.html
+|       |   |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-20260827-134839.log
+|       |   |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-20260827-135516.log
+|       |   |   +-- Cerneala.Benchmarks.AspectResolutionBenchmarks-20260827-135725.log
+|       |   |-- final-bdn/
+|       |   |   |-- results/
+|       |   |   |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report-github.md
+|       |   |   |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report.csv
+|       |   |   |   +-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report.html
+|       |   |   +-- Cerneala.Benchmarks.AspectResolutionBenchmarks-20260827-180317.log
+|       |   |-- final-bdn-optimized/
+|       |   |   |-- results/
+|       |   |   |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report-github.md
+|       |   |   |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report.csv
+|       |   |   |   +-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report.html
+|       |   |   +-- Cerneala.Benchmarks.AspectResolutionBenchmarks-20260827-180758.log
+|       |   |-- aspect-visual-diff.diff.png
+|       |   |-- aspect-visual-diff.json
+|       |   |-- baseline-aspect.metrics.txt
+|       |   |-- baseline-aspect.png
+|       |   |-- baseline-markup.metrics.txt
+|       |   |-- baseline-markup.png
+|       |   |-- baseline-presentation-frame-budget.json
+|       |   |-- final-api-diff.md
+|       |   |-- final-api-diff.txt
+|       |   |-- final-aspect-metrics.json
+|       |   |-- final-aspect.metrics.txt
+|       |   |-- final-aspect.png
+|       |   |-- final-markup.metrics.txt
+|       |   |-- final-markup.png
+|       |   |-- final-presentation-frame-budget.json
+|       |   |-- final-verification.md
+|       |   |-- markup-visual-diff.diff.png
+|       |   |-- markup-visual-diff.json
+|       |   |-- README.md
+|       |   |-- stage5-api-diff.md
+|       |   |-- stage5-api-diff.txt
+|       |   +-- stage6-results.md
+|       +-- 2026-09-02-cerberus/
+|           |-- final/
 |           |   |-- results/
-|           |   |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report-github.md
-|           |   |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report.csv
-|           |   |   +-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report.html
-|           |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-20260827-134839.log
-|           |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-20260827-135516.log
-|           |   +-- Cerneala.Benchmarks.AspectResolutionBenchmarks-20260827-135725.log
-|           |-- final-bdn/
-|           |   |-- results/
-|           |   |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report-github.md
-|           |   |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report.csv
-|           |   |   +-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report.html
-|           |   +-- Cerneala.Benchmarks.AspectResolutionBenchmarks-20260827-180317.log
-|           |-- final-bdn-optimized/
-|           |   |-- results/
-|           |   |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report-github.md
-|           |   |   |-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report.csv
-|           |   |   +-- Cerneala.Benchmarks.AspectResolutionBenchmarks-report.html
-|           |   +-- Cerneala.Benchmarks.AspectResolutionBenchmarks-20260827-180758.log
-|           |-- aspect-visual-diff.diff.png
-|           |-- aspect-visual-diff.json
-|           |-- baseline-aspect.metrics.txt
-|           |-- baseline-aspect.png
-|           |-- baseline-markup.metrics.txt
-|           |-- baseline-markup.png
-|           |-- baseline-presentation-frame-budget.json
-|           |-- final-api-diff.md
-|           |-- final-api-diff.txt
-|           |-- final-aspect-metrics.json
-|           |-- final-aspect.metrics.txt
-|           |-- final-aspect.png
-|           |-- final-markup.metrics.txt
-|           |-- final-markup.png
-|           |-- final-presentation-frame-budget.json
-|           |-- final-verification.md
-|           |-- markup-visual-diff.diff.png
-|           |-- markup-visual-diff.json
-|           |-- README.md
-|           |-- stage5-api-diff.md
-|           |-- stage5-api-diff.txt
-|           +-- stage6-results.md
+|           |   |   |-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-report-full-compressed.json
+|           |   |   |-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-report-github.md
+|           |   |   |-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-report.csv
+|           |   |   +-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-report.html
+|           |   |-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-20260902-030038.log
+|           |   |-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-20260902-031046.log
+|           |   |-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-20260902-031239.log
+|           |   +-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-20260902-032111.log
+|           |-- api-compat.md
+|           |-- api-compat.proj
+|           |-- baseline.md
+|           +-- final.md
 |-- Cerneala.Backends.MonoGame/
 |   +-- Cerneala.Backends.MonoGame.csproj
 |-- Cerneala.Backends.SdlGpu/
@@ -547,12 +563,8 @@ Generated from `.`.
 |   |   |-- 2026-08-24-rendersurface2d-complete-drawing-api.md
 |   |   |-- 2026-08-24-rendersurface2d-stage-0-baseline.md
 |   |   |-- 2026-08-25-sdl3-sdlgpu-backend-and-explicit-generator-selection.md
-|   |   |-- 2026-08-27-cerberus-v2-core.md
-|   |   |-- 2026-08-27-cerberus-v2-frame-pipeline.md
-|   |   |-- 2026-08-27-cerberus-v2-multitexture.md
-|   |   |-- 2026-08-27-cerberus-v2-retained-geometry.md
-|   |   |-- 2026-08-27-cerberus-v2.md
-|   |   +-- 2026-08-27-unify-aspect-runtime.md
+|   |   |-- 2026-08-27-unify-aspect-runtime.md
+|   |   +-- 2026-09-02-private-sdlgpu-cerberus.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
@@ -2892,6 +2904,7 @@ Generated from `.`.
 |   |   |   |   +-- UiHostPlatformServicesIntegrationTests.cs
 |   |   |   |-- Prism/
 |   |   |   |   |-- PrismAttachmentTests.cs
+|   |   |   |   |-- PrismDeepNestingContractTests.cs
 |   |   |   |   |-- PrismDefinitionContractTests.cs
 |   |   |   |   |-- PrismInstanceTests.cs
 |   |   |   |   +-- PrismMotionIntegrationTests.cs
@@ -2998,6 +3011,7 @@ Generated from `.`.
 |   |   |-- Cerneala.Tests.PreviewHost.csproj
 |   |   +-- PreviewHostTests.cs
 |   |-- Cerneala.Tests.SdlGpu/
+|   |   |-- CerberusTests.cs
 |   |   |-- Cerneala.Tests.SdlGpu.csproj
 |   |   |-- ColorPickerSdlGpuTests.cs
 |   |   |-- FakeSdlApi.cs
@@ -3949,6 +3963,7 @@ Generated from `.`.
 |-- .roslyn-index.json
 |-- AGENTS_DEPRECATED.md
 |-- architecture.md
+|-- Aspect_Audit_09022026.md
 |-- AUDIT_FIX_PLAN.md
 |-- Cerneala.csproj
 |-- Cerneala.slnx
@@ -3958,7 +3973,10 @@ Generated from `.`.
 |-- GameBootstrap.cs
 |-- global.json
 |-- LICENSE
+|-- Motion_Audit_09022026.md
+|-- Prism_Audit_09022026.md
 |-- README.md
+|-- Relay_Audit_09022026.md
 |-- ROADMAP.md
 |-- ROADMAPv2_AUDIT.md
 |-- ROADMAPv2.md

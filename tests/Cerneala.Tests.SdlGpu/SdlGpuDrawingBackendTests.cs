@@ -8,11 +8,19 @@ using Cerneala.Drawing.Text;
 using Cerneala.Platforms.Sdl3;
 using Cerneala.UI.Media;
 using SkiaSharp;
+using Xunit.Abstractions;
 
 namespace Cerneala.Tests.SdlGpu;
 
 public sealed class SdlGpuDrawingBackendTests
 {
+    private readonly ITestOutputHelper output;
+
+    public SdlGpuDrawingBackendTests(ITestOutputHelper output)
+    {
+        this.output = output;
+    }
+
     [Fact]
     public void TextMissesBatchAtlasUploadAndPublishBackendTiming()
     {
@@ -132,6 +140,31 @@ public sealed class SdlGpuDrawingBackendTests
     }
 
     [Fact]
+    public void WarmCerberusWorkloadsRecordMeasuredAllocationAndStateBaselines()
+    {
+        WorkloadBaseline compatible = MeasureWarmWorkload(
+            "1,000 compatible quads",
+            drawCount: 1_000,
+            alternateTextures: false);
+        WorkloadBaseline alternating = MeasureWarmWorkload(
+            "4,096 alternating textures",
+            drawCount: 4_096,
+            alternateTextures: true);
+        WorkloadBaseline capacityGrowth = MeasureWarmWorkload(
+            "257 alternating quads (exceeds all initial capacities)",
+            drawCount: 257,
+            alternateTextures: true);
+
+        WriteBaseline(compatible);
+        WriteBaseline(alternating);
+        WriteBaseline(capacityGrowth);
+
+        Assert.Equal(1, compatible.DrawCalls);
+        Assert.Equal(4_096, alternating.DrawCalls);
+        Assert.Equal(257, capacityGrowth.DrawCalls);
+    }
+
+    [Fact]
     public void GeometryFlushesUseFrameSlotBuffersAndAppendWithoutCycling()
     {
         FakeSdlApi api = new() { WindowPixelDensity = 1 };
@@ -190,6 +223,10 @@ public sealed class SdlGpuDrawingBackendTests
         Assert.DoesNotContain(
             transferMaps,
             action => action.EndsWith(":True", StringComparison.Ordinal));
+        Assert.True(CountGpuActions(api, "bind-pipeline:") >= vertexBindings.Length);
+        Assert.True(CountGpuActions(api, "bind-sampler:") >= vertexBindings.Length);
+        Assert.True(CountGpuActions(api, "scissor:") >= vertexBindings.Length);
+        Assert.True(CountGpuActions(api, "stencil-reference:") >= vertexBindings.Length);
     }
 
     [Fact]
@@ -259,6 +296,10 @@ public sealed class SdlGpuDrawingBackendTests
         Render(first, commands);
 
         Assert.Equal(2, api.GpuActions.Count(action => action.StartsWith("draw-indexed:", StringComparison.Ordinal)));
+        Assert.Equal(2, CountGpuActions(api, "bind-pipeline:"));
+        Assert.Equal(2, CountGpuActions(api, "bind-sampler:"));
+        Assert.Equal(1, CountGpuActions(api, "scissor:"));
+        Assert.Equal(1, CountGpuActions(api, "stencil-reference:"));
         Assert.Equal(2, first.DrawingResources.PipelineCount);
         Assert.Equal(1, first.DrawingResources.SamplerCount);
         int pipelineCount = first.DrawingResources.PipelineCount;
@@ -271,6 +312,65 @@ public sealed class SdlGpuDrawingBackendTests
         Assert.Equal(pipelineCount, second.DrawingResources.PipelineCount);
         Assert.Equal(samplerCount, second.DrawingResources.SamplerCount);
         Assert.Equal(textureCount, second.DrawingResources.CachedTextureCount);
+    }
+
+    [Fact]
+    public void TwoWindowBackendsKeepIndependentCerberusQueuesAndTargets()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1 };
+        nint firstWindow = api.CreateWindow("independent-a", 64, 48, SdlWindowOptions.Hidden);
+        nint secondWindow = api.CreateWindow("independent-b", 80, 60, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession first = CreateSession(factory, api, firstWindow);
+        using SdlGpuWindowGraphicsSession second = CreateSession(factory, api, secondWindow, 80, 60);
+        DrawCommandList firstCommands = new();
+        new DrawingContext(firstCommands).FillRectangle(new DrawRect(1, 1, 8, 8), Color.Red);
+        DrawCommandList secondCommands = new();
+        new DrawingContext(secondCommands).FillRectangle(new DrawRect(2, 2, 10, 10), Color.Blue);
+        DrawingFrameContext firstFrame = new(new PrismFrameAnalyzer().Analyze(firstCommands));
+        DrawingFrameContext secondFrame = new(new PrismFrameAnalyzer().Analyze(secondCommands));
+
+        first.BeginFrame(Color.Transparent);
+        second.BeginFrame(Color.Transparent);
+        first.DrawingBackend.Render(firstCommands, in firstFrame);
+        second.DrawingBackend.Render(secondCommands, in secondFrame);
+        first.CompleteFrame(present: false);
+        second.CompleteFrame(present: false);
+
+        Assert.NotSame(first.DrawingBackend, second.DrawingBackend);
+        Assert.Equal(
+            2,
+            api.GpuActions.Count(action =>
+                action.StartsWith("draw-indexed:", StringComparison.Ordinal)));
+        Assert.True(api.RenderTargets.Select(target => target.Texture).Distinct().Count() >= 2);
+    }
+
+    [Fact]
+    public void LayerTargetSwitchFlushesParentAndChildGeometryInPainterOrder()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1 };
+        nint window = api.CreateWindow("layer-target-switch", 64, 48, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window);
+        DrawCommandList commands = new();
+        DrawingContext drawing = new(commands);
+        drawing.FillRectangle(new DrawRect(1, 1, 8, 8), Color.Red);
+        drawing.PushLayer(new DrawLayerOptions(opacity: 0.75f));
+        drawing.FillRectangle(new DrawRect(12, 1, 8, 8), Color.Green);
+        drawing.PopLayer();
+        drawing.FillRectangle(new DrawRect(23, 1, 8, 8), Color.Blue);
+
+        Render(session, commands);
+
+        nint[] textureOrder = api.FragmentSamplerBindings
+            .Select(static binding => binding.Binding.Texture)
+            .ToArray();
+        Assert.Equal(4, textureOrder.Length);
+        Assert.Equal(textureOrder[0], textureOrder[1]);
+        Assert.NotEqual(textureOrder[1], textureOrder[2]);
+        Assert.Equal(textureOrder[0], textureOrder[3]);
+        Assert.Equal(2, api.RenderTargets.Select(target => target.Texture).Distinct().Count());
+        Assert.Equal(4, CountGpuActions(api, "draw-indexed:"));
     }
 
     [Fact]
@@ -309,9 +409,34 @@ public sealed class SdlGpuDrawingBackendTests
             api.GpuActions.Count(action =>
                 action.StartsWith("draw-indexed:", StringComparison.Ordinal)));
         Assert.Equal(
+            1,
+            api.GpuActions.Count(action =>
+                action.StartsWith("bind-pipeline:", StringComparison.Ordinal)));
+        Assert.Equal(
+            drawCount,
+            api.GpuActions.Count(action =>
+                action.StartsWith("bind-sampler:", StringComparison.Ordinal)));
+        Assert.Equal(
+            1,
+            api.GpuActions.Count(action =>
+                action.StartsWith("scissor:", StringComparison.Ordinal)));
+        Assert.Equal(
+            1,
+            api.GpuActions.Count(action =>
+                action.StartsWith("stencil-reference:", StringComparison.Ordinal)));
+        Assert.Equal(
             2,
             api.GpuActions.Count(action =>
                 action.StartsWith("upload-texture:", StringComparison.Ordinal)));
+        SdlGpuDrawingBackend backend = Assert.IsType<SdlGpuDrawingBackend>(
+            session.DrawingBackend);
+        Assert.Equal(drawCount, backend.LastFrameCounters.SubmissionCount);
+        Assert.Equal(0, backend.LastFrameCounters.MergedSubmissionCount);
+        Assert.Equal(drawCount, backend.LastFrameCounters.DrawCallCount);
+        Assert.Equal(1, backend.LastFrameCounters.PipelineBindCount);
+        Assert.Equal(drawCount, backend.LastFrameCounters.SamplerBindCount);
+        Assert.Equal(1, backend.LastFrameCounters.ScissorSetCount);
+        Assert.Equal(1, backend.LastFrameCounters.StencilReferenceSetCount);
     }
 
     [Fact]
@@ -833,6 +958,69 @@ public sealed class SdlGpuDrawingBackendTests
             height,
             coordinateScale: 1));
 
+    private WorkloadBaseline MeasureWarmWorkload(
+        string name,
+        int drawCount,
+        bool alternateTextures)
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1 };
+        nint window = api.CreateWindow(name, 256, 256, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window, 256, 256);
+        using SdlGpuImage first = new(1, 1, [255, 0, 0, 255]);
+        using SdlGpuImage second = new(1, 1, [0, 0, 255, 255]);
+        DrawCommandList commands = new();
+        DrawingContext drawing = new(commands);
+        for (int index = 0; index < drawCount; index++)
+        {
+            DrawRect destination = new(index % 256, (index / 256) % 256, 1, 1);
+            if (alternateTextures)
+            {
+                drawing.DrawImage((index & 1) == 0 ? first : second, destination, Color.White);
+            }
+            else
+            {
+                drawing.FillRectangle(destination, Color.White);
+            }
+        }
+
+        DrawingFrameContext frame = new(new PrismFrameAnalyzer().Analyze(commands));
+        for (int warmupFrame = 0; warmupFrame < 3; warmupFrame++)
+        {
+            Render(session, commands, frame);
+            ClearRecordedGpuActions(api);
+        }
+
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        Render(session, commands, frame);
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        return new WorkloadBaseline(
+            name,
+            allocated,
+            CountGpuActions(api, "draw-indexed:"),
+            CountGpuActions(api, "bind-pipeline:"),
+            CountGpuActions(api, "bind-sampler:"),
+            CountGpuActions(api, "scissor:"),
+            CountGpuActions(api, "stencil-reference:"));
+    }
+
+    private void WriteBaseline(WorkloadBaseline baseline) => output.WriteLine(
+        $"{baseline.Name}: allocated={baseline.AllocatedBytes}; " +
+        $"draws={baseline.DrawCalls}; pipelines={baseline.PipelineBinds}; " +
+        $"samplers={baseline.SamplerBinds}; scissors={baseline.ScissorSets}; " +
+        $"stencilReferences={baseline.StencilReferenceSets}");
+
+    private static int CountGpuActions(FakeSdlApi api, string prefix) =>
+        api.GpuActions.Count(action => action.StartsWith(prefix, StringComparison.Ordinal));
+
+    private static void ClearRecordedGpuActions(FakeSdlApi api)
+    {
+        api.GpuActions.Clear();
+        api.FragmentSamplerBindings.Clear();
+        api.RenderTargets.Clear();
+    }
+
     private static void Render(
         SdlGpuWindowGraphicsSession session,
         DrawCommandList commands)
@@ -922,4 +1110,13 @@ public sealed class SdlGpuDrawingBackendTests
             }
         }
     }
+
+    private readonly record struct WorkloadBaseline(
+        string Name,
+        long AllocatedBytes,
+        int DrawCalls,
+        int PipelineBinds,
+        int SamplerBinds,
+        int ScissorSets,
+        int StencilReferenceSets);
 }

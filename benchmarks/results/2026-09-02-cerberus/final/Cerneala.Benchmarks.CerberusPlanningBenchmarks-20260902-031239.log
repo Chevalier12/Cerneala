@@ -1,0 +1,401 @@
+// Validating benchmarks:
+// ***** BenchmarkRunner: Start   *****
+// ***** Found 4 benchmark(s) in total *****
+// ***** Building 1 exe(s) in Parallel: Start   *****
+// ***** Done, took 00:00:00 (0.04 sec)   *****
+// Found 4 benchmarks:
+//   CerberusPlanningBenchmarks.HomogeneousMergeAndIndexRebasing: InProcess(Toolchain=InProcessEmitToolchain, InvocationCount=1, IterationCount=5, UnrollFactor=1, WarmupCount=3)
+//   CerberusPlanningBenchmarks.AlternatingEnqueue: InProcess(Toolchain=InProcessEmitToolchain, InvocationCount=1, IterationCount=5, UnrollFactor=1, WarmupCount=3)
+//   CerberusPlanningBenchmarks.GrowthBeyondInitialCapacity: InProcess(Toolchain=InProcessEmitToolchain, InvocationCount=1, IterationCount=5, UnrollFactor=1, WarmupCount=3)
+//   CerberusPlanningBenchmarks.AlternatingEnqueueAndDiscard: InProcess(Toolchain=InProcessEmitToolchain, InvocationCount=1, IterationCount=5, UnrollFactor=1, WarmupCount=3)
+
+Setup power plan (GUID: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c FriendlyName: High performance)
+// **************************
+// Benchmark: CerberusPlanningBenchmarks.HomogeneousMergeAndIndexRebasing: InProcess(Toolchain=InProcessEmitToolchain, InvocationCount=1, IterationCount=5, UnrollFactor=1, WarmupCount=3)
+// *** Execute ***
+// Launch: 1 / 1
+
+// Benchmark Process Environment Information:
+// BenchmarkDotNet v0.15.8
+// Runtime=.NET 8.0.30 (8.0.30, 8.0.3026.36720), X64 RyuJIT x86-64-v3
+// GC=Concurrent Workstation
+// HardwareIntrinsics=AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256
+// Job: Job-KKDDCK(Toolchain=InProcessEmitToolchain, InvocationCount=1, IterationCount=5, UnrollFactor=1, WarmupCount=3)
+
+OverheadJitting  1: 1024 op, 164100.00 ns, 160.2539 ns/op
+WorkloadJitting  1: 1024 op, 2627600.00 ns, 2.5660 us/op
+
+OverheadWarmup   1: 1024 op, 1600.00 ns, 1.5625 ns/op
+OverheadWarmup   2: 1024 op, 200.00 ns, 0.1953 ns/op
+OverheadWarmup   3: 1024 op, 300.00 ns, 0.2930 ns/op
+OverheadWarmup   4: 1024 op, 300.00 ns, 0.2930 ns/op
+OverheadWarmup   5: 1024 op, 500.00 ns, 0.4883 ns/op
+OverheadWarmup   6: 1024 op, 300.00 ns, 0.2930 ns/op
+
+OverheadActual   1: 1024 op, 300.00 ns, 0.2930 ns/op
+OverheadActual   2: 1024 op, 300.00 ns, 0.2930 ns/op
+OverheadActual   3: 1024 op, 300.00 ns, 0.2930 ns/op
+OverheadActual   4: 1024 op, 400.00 ns, 0.3906 ns/op
+OverheadActual   5: 1024 op, 400.00 ns, 0.3906 ns/op
+OverheadActual   6: 1024 op, 300.00 ns, 0.2930 ns/op
+OverheadActual   7: 1024 op, 300.00 ns, 0.2930 ns/op
+OverheadActual   8: 1024 op, 300.00 ns, 0.2930 ns/op
+OverheadActual   9: 1024 op, 300.00 ns, 0.2930 ns/op
+OverheadActual  10: 1024 op, 300.00 ns, 0.2930 ns/op
+OverheadActual  11: 1024 op, 400.00 ns, 0.3906 ns/op
+OverheadActual  12: 1024 op, 600.00 ns, 0.5859 ns/op
+OverheadActual  13: 1024 op, 300.00 ns, 0.2930 ns/op
+OverheadActual  14: 1024 op, 600.00 ns, 0.5859 ns/op
+OverheadActual  15: 1024 op, 300.00 ns, 0.2930 ns/op
+OverheadActual  16: 1024 op, 300.00 ns, 0.2930 ns/op
+OverheadActual  17: 1024 op, 300.00 ns, 0.2930 ns/op
+OverheadActual  18: 1024 op, 600.00 ns, 0.5859 ns/op
+OverheadActual  19: 1024 op, 300.00 ns, 0.2930 ns/op
+OverheadActual  20: 1024 op, 300.00 ns, 0.2930 ns/op
+
+WorkloadWarmup   1: 1024 op, 348500.00 ns, 340.3320 ns/op
+WorkloadWarmup   2: 1024 op, 488600.00 ns, 477.1484 ns/op
+WorkloadWarmup   3: 1024 op, 366500.00 ns, 357.9102 ns/op
+
+WorkloadActual   1: 1024 op, 364600.00 ns, 356.0547 ns/op
+WorkloadActual   2: 1024 op, 382800.00 ns, 373.8281 ns/op
+WorkloadActual   3: 1024 op, 462900.00 ns, 452.0508 ns/op
+WorkloadActual   4: 1024 op, 339000.00 ns, 331.0547 ns/op
+WorkloadActual   5: 1024 op, 434500.00 ns, 424.3164 ns/op
+
+WorkloadResult   1: 1024 op, 364300.00 ns, 355.7617 ns/op
+WorkloadResult   2: 1024 op, 382500.00 ns, 373.5352 ns/op
+WorkloadResult   3: 1024 op, 462600.00 ns, 451.7578 ns/op
+WorkloadResult   4: 1024 op, 338700.00 ns, 330.7617 ns/op
+WorkloadResult   5: 1024 op, 434200.00 ns, 424.0234 ns/op
+// GC:  0 0 0 0 1024
+// Threading:  0 0 1024
+
+
+Mean = 387.168 ns, StdErr = 22.231 ns (5.74%), N = 5, StdDev = 49.709 ns
+Min = 330.762 ns, Q1 = 355.762 ns, Median = 373.535 ns, Q3 = 424.023 ns, Max = 451.758 ns
+IQR = 68.262 ns, LowerFence = 253.369 ns, UpperFence = 526.416 ns
+ConfidenceInterval = [195.755 ns; 578.581 ns] (CI 99.9%), Margin = 191.413 ns (49.44% of Mean)
+Skewness = 0.17, Kurtosis = 1, MValue = 2
+
+// ** Remained 3 (75.0%) benchmark(s) to run. Estimated finish 2026-09-02 3:12 (0h 0m from now) **
+Setup power plan (GUID: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c FriendlyName: High performance)
+// **************************
+// Benchmark: CerberusPlanningBenchmarks.AlternatingEnqueue: InProcess(Toolchain=InProcessEmitToolchain, InvocationCount=1, IterationCount=5, UnrollFactor=1, WarmupCount=3)
+// *** Execute ***
+// Launch: 1 / 1
+
+// Benchmark Process Environment Information:
+// BenchmarkDotNet v0.15.8
+// Runtime=.NET 8.0.30 (8.0.30, 8.0.3026.36720), X64 RyuJIT x86-64-v3
+// GC=Concurrent Workstation
+// HardwareIntrinsics=AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256
+// Job: Job-KKDDCK(Toolchain=InProcessEmitToolchain, InvocationCount=1, IterationCount=5, UnrollFactor=1, WarmupCount=3)
+
+OverheadJitting  1: 1024 op, 246300.00 ns, 240.5273 ns/op
+WorkloadJitting  1: 1024 op, 1331600.00 ns, 1.3004 us/op
+
+OverheadWarmup   1: 1024 op, 2300.00 ns, 2.2461 ns/op
+OverheadWarmup   2: 1024 op, 500.00 ns, 0.4883 ns/op
+OverheadWarmup   3: 1024 op, 400.00 ns, 0.3906 ns/op
+OverheadWarmup   4: 1024 op, 600.00 ns, 0.5859 ns/op
+OverheadWarmup   5: 1024 op, 400.00 ns, 0.3906 ns/op
+OverheadWarmup   6: 1024 op, 500.00 ns, 0.4883 ns/op
+OverheadWarmup   7: 1024 op, 700.00 ns, 0.6836 ns/op
+OverheadWarmup   8: 1024 op, 500.00 ns, 0.4883 ns/op
+
+OverheadActual   1: 1024 op, 400.00 ns, 0.3906 ns/op
+OverheadActual   2: 1024 op, 700.00 ns, 0.6836 ns/op
+OverheadActual   3: 1024 op, 500.00 ns, 0.4883 ns/op
+OverheadActual   4: 1024 op, 200.00 ns, 0.1953 ns/op
+OverheadActual   5: 1024 op, 400.00 ns, 0.3906 ns/op
+OverheadActual   6: 1024 op, 300.00 ns, 0.2930 ns/op
+OverheadActual   7: 1024 op, 400.00 ns, 0.3906 ns/op
+OverheadActual   8: 1024 op, 500.00 ns, 0.4883 ns/op
+OverheadActual   9: 1024 op, 600.00 ns, 0.5859 ns/op
+OverheadActual  10: 1024 op, 500.00 ns, 0.4883 ns/op
+OverheadActual  11: 1024 op, 400.00 ns, 0.3906 ns/op
+OverheadActual  12: 1024 op, 400.00 ns, 0.3906 ns/op
+OverheadActual  13: 1024 op, 400.00 ns, 0.3906 ns/op
+OverheadActual  14: 1024 op, 400.00 ns, 0.3906 ns/op
+OverheadActual  15: 1024 op, 500.00 ns, 0.4883 ns/op
+OverheadActual  16: 1024 op, 600.00 ns, 0.5859 ns/op
+OverheadActual  17: 1024 op, 500.00 ns, 0.4883 ns/op
+OverheadActual  18: 1024 op, 400.00 ns, 0.3906 ns/op
+OverheadActual  19: 1024 op, 500.00 ns, 0.4883 ns/op
+OverheadActual  20: 1024 op, 300.00 ns, 0.2930 ns/op
+
+WorkloadWarmup   1: 1024 op, 464900.00 ns, 454.0039 ns/op
+WorkloadWarmup   2: 1024 op, 438100.00 ns, 427.8320 ns/op
+WorkloadWarmup   3: 1024 op, 419100.00 ns, 409.2773 ns/op
+
+WorkloadActual   1: 1024 op, 420800.00 ns, 410.9375 ns/op
+WorkloadActual   2: 1024 op, 440000.00 ns, 429.6875 ns/op
+WorkloadActual   3: 1024 op, 424300.00 ns, 414.3555 ns/op
+WorkloadActual   4: 1024 op, 437200.00 ns, 426.9531 ns/op
+WorkloadActual   5: 1024 op, 467700.00 ns, 456.7383 ns/op
+
+WorkloadResult   1: 1024 op, 420400.00 ns, 410.5469 ns/op
+WorkloadResult   2: 1024 op, 439600.00 ns, 429.2969 ns/op
+WorkloadResult   3: 1024 op, 423900.00 ns, 413.9648 ns/op
+WorkloadResult   4: 1024 op, 436800.00 ns, 426.5625 ns/op
+// GC:  0 0 0 624 1024
+// Threading:  0 0 1024
+
+
+Mean = 420.093 ns, StdErr = 4.612 ns (1.10%), N = 4, StdDev = 9.224 ns
+Min = 410.547 ns, Q1 = 413.110 ns, Median = 420.264 ns, Q3 = 427.246 ns, Max = 429.297 ns
+IQR = 14.136 ns, LowerFence = 391.907 ns, UpperFence = 448.450 ns
+ConfidenceInterval = [360.487 ns; 479.698 ns] (CI 99.9%), Margin = 59.606 ns (14.19% of Mean)
+Skewness = -0.02, Kurtosis = 0.64, MValue = 2
+
+// ** Remained 2 (50.0%) benchmark(s) to run. Estimated finish 2026-09-02 3:12 (0h 0m from now) **
+Setup power plan (GUID: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c FriendlyName: High performance)
+// **************************
+// Benchmark: CerberusPlanningBenchmarks.GrowthBeyondInitialCapacity: InProcess(Toolchain=InProcessEmitToolchain, InvocationCount=1, IterationCount=5, UnrollFactor=1, WarmupCount=3)
+// *** Execute ***
+// Launch: 1 / 1
+
+// Benchmark Process Environment Information:
+// BenchmarkDotNet v0.15.8
+// Runtime=.NET 8.0.30 (8.0.30, 8.0.3026.36720), X64 RyuJIT x86-64-v3
+// GC=Concurrent Workstation
+// HardwareIntrinsics=AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256
+// Job: Job-KKDDCK(Toolchain=InProcessEmitToolchain, InvocationCount=1, IterationCount=5, UnrollFactor=1, WarmupCount=3)
+
+OverheadJitting  1: 512 op, 268700.00 ns, 524.8047 ns/op
+WorkloadJitting  1: 512 op, 471500.00 ns, 920.8984 ns/op
+
+OverheadWarmup   1: 512 op, 2000.00 ns, 3.9063 ns/op
+OverheadWarmup   2: 512 op, 400.00 ns, 0.7813 ns/op
+OverheadWarmup   3: 512 op, 400.00 ns, 0.7813 ns/op
+OverheadWarmup   4: 512 op, 300.00 ns, 0.5859 ns/op
+OverheadWarmup   5: 512 op, 200.00 ns, 0.3906 ns/op
+OverheadWarmup   6: 512 op, 300.00 ns, 0.5859 ns/op
+OverheadWarmup   7: 512 op, 400.00 ns, 0.7813 ns/op
+OverheadWarmup   8: 512 op, 700.00 ns, 1.3672 ns/op
+OverheadWarmup   9: 512 op, 300.00 ns, 0.5859 ns/op
+
+OverheadActual   1: 512 op, 400.00 ns, 0.7813 ns/op
+OverheadActual   2: 512 op, 1200.00 ns, 2.3438 ns/op
+OverheadActual   3: 512 op, 300.00 ns, 0.5859 ns/op
+OverheadActual   4: 512 op, 300.00 ns, 0.5859 ns/op
+OverheadActual   5: 512 op, 300.00 ns, 0.5859 ns/op
+OverheadActual   6: 512 op, 300.00 ns, 0.5859 ns/op
+OverheadActual   7: 512 op, 400.00 ns, 0.7813 ns/op
+OverheadActual   8: 512 op, 300.00 ns, 0.5859 ns/op
+OverheadActual   9: 512 op, 400.00 ns, 0.7813 ns/op
+OverheadActual  10: 512 op, 400.00 ns, 0.7813 ns/op
+OverheadActual  11: 512 op, 500.00 ns, 0.9766 ns/op
+OverheadActual  12: 512 op, 400.00 ns, 0.7813 ns/op
+OverheadActual  13: 512 op, 400.00 ns, 0.7813 ns/op
+OverheadActual  14: 512 op, 300.00 ns, 0.5859 ns/op
+OverheadActual  15: 512 op, 300.00 ns, 0.5859 ns/op
+OverheadActual  16: 512 op, 400.00 ns, 0.7813 ns/op
+OverheadActual  17: 512 op, 300.00 ns, 0.5859 ns/op
+OverheadActual  18: 512 op, 400.00 ns, 0.7813 ns/op
+OverheadActual  19: 512 op, 600.00 ns, 1.1719 ns/op
+OverheadActual  20: 512 op, 300.00 ns, 0.5859 ns/op
+
+WorkloadWarmup   1: 512 op, 187500.00 ns, 366.2109 ns/op
+WorkloadWarmup   2: 512 op, 196600.00 ns, 383.9844 ns/op
+WorkloadWarmup   3: 512 op, 212300.00 ns, 414.6484 ns/op
+
+WorkloadActual   1: 512 op, 196000.00 ns, 382.8125 ns/op
+WorkloadActual   2: 512 op, 232800.00 ns, 454.6875 ns/op
+WorkloadActual   3: 512 op, 212500.00 ns, 415.0391 ns/op
+WorkloadActual   4: 512 op, 298200.00 ns, 582.4219 ns/op
+WorkloadActual   5: 512 op, 277400.00 ns, 541.7969 ns/op
+
+WorkloadResult   1: 512 op, 195600.00 ns, 382.0313 ns/op
+WorkloadResult   2: 512 op, 232400.00 ns, 453.9063 ns/op
+WorkloadResult   3: 512 op, 212100.00 ns, 414.2578 ns/op
+WorkloadResult   4: 512 op, 297800.00 ns, 581.6406 ns/op
+WorkloadResult   5: 512 op, 277000.00 ns, 541.0156 ns/op
+// GC:  0 0 0 336 512
+// Threading:  0 0 512
+
+
+Mean = 474.570 ns, StdErr = 37.754 ns (7.96%), N = 5, StdDev = 84.420 ns
+Min = 382.031 ns, Q1 = 414.258 ns, Median = 453.906 ns, Q3 = 541.016 ns, Max = 581.641 ns
+IQR = 126.758 ns, LowerFence = 224.121 ns, UpperFence = 731.152 ns
+ConfidenceInterval = [149.498 ns; 799.643 ns] (CI 99.9%), Margin = 325.072 ns (68.50% of Mean)
+Skewness = 0.17, Kurtosis = 0.94, MValue = 2
+
+// ** Remained 1 (25.0%) benchmark(s) to run. Estimated finish 2026-09-02 3:12 (0h 0m from now) **
+Setup power plan (GUID: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c FriendlyName: High performance)
+// **************************
+// Benchmark: CerberusPlanningBenchmarks.AlternatingEnqueueAndDiscard: InProcess(Toolchain=InProcessEmitToolchain, InvocationCount=1, IterationCount=5, UnrollFactor=1, WarmupCount=3)
+// *** Execute ***
+// Launch: 1 / 1
+
+// Benchmark Process Environment Information:
+// BenchmarkDotNet v0.15.8
+// Runtime=.NET 8.0.30 (8.0.30, 8.0.3026.36720), X64 RyuJIT x86-64-v3
+// GC=Concurrent Workstation
+// HardwareIntrinsics=AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256
+// Job: Job-KKDDCK(Toolchain=InProcessEmitToolchain, InvocationCount=1, IterationCount=5, UnrollFactor=1, WarmupCount=3)
+
+OverheadJitting  1: 512 op, 215100.00 ns, 420.1172 ns/op
+WorkloadJitting  1: 512 op, 822500.00 ns, 1.6064 us/op
+
+OverheadWarmup   1: 512 op, 2100.00 ns, 4.1016 ns/op
+OverheadWarmup   2: 512 op, 500.00 ns, 0.9766 ns/op
+OverheadWarmup   3: 512 op, 500.00 ns, 0.9766 ns/op
+OverheadWarmup   4: 512 op, 600.00 ns, 1.1719 ns/op
+OverheadWarmup   5: 512 op, 500.00 ns, 0.9766 ns/op
+OverheadWarmup   6: 512 op, 400.00 ns, 0.7813 ns/op
+OverheadWarmup   7: 512 op, 600.00 ns, 1.1719 ns/op
+
+OverheadActual   1: 512 op, 500.00 ns, 0.9766 ns/op
+OverheadActual   2: 512 op, 600.00 ns, 1.1719 ns/op
+OverheadActual   3: 512 op, 600.00 ns, 1.1719 ns/op
+OverheadActual   4: 512 op, 500.00 ns, 0.9766 ns/op
+OverheadActual   5: 512 op, 400.00 ns, 0.7813 ns/op
+OverheadActual   6: 512 op, 400.00 ns, 0.7813 ns/op
+OverheadActual   7: 512 op, 600.00 ns, 1.1719 ns/op
+OverheadActual   8: 512 op, 500.00 ns, 0.9766 ns/op
+OverheadActual   9: 512 op, 300.00 ns, 0.5859 ns/op
+OverheadActual  10: 512 op, 500.00 ns, 0.9766 ns/op
+OverheadActual  11: 512 op, 400.00 ns, 0.7813 ns/op
+OverheadActual  12: 512 op, 500.00 ns, 0.9766 ns/op
+OverheadActual  13: 512 op, 500.00 ns, 0.9766 ns/op
+OverheadActual  14: 512 op, 400.00 ns, 0.7813 ns/op
+OverheadActual  15: 512 op, 600.00 ns, 1.1719 ns/op
+OverheadActual  16: 512 op, 400.00 ns, 0.7813 ns/op
+OverheadActual  17: 512 op, 400.00 ns, 0.7813 ns/op
+OverheadActual  18: 512 op, 600.00 ns, 1.1719 ns/op
+OverheadActual  19: 512 op, 400.00 ns, 0.7813 ns/op
+OverheadActual  20: 512 op, 300.00 ns, 0.5859 ns/op
+
+WorkloadWarmup   1: 512 op, 219700.00 ns, 429.1016 ns/op
+WorkloadWarmup   2: 512 op, 348400.00 ns, 680.4688 ns/op
+WorkloadWarmup   3: 512 op, 221500.00 ns, 432.6172 ns/op
+
+WorkloadActual   1: 512 op, 230100.00 ns, 449.4141 ns/op
+WorkloadActual   2: 512 op, 187900.00 ns, 366.9922 ns/op
+WorkloadActual   3: 512 op, 256000.00 ns, 500.0000 ns/op
+WorkloadActual   4: 512 op, 193100.00 ns, 377.1484 ns/op
+WorkloadActual   5: 512 op, 184200.00 ns, 359.7656 ns/op
+
+WorkloadResult   1: 512 op, 229600.00 ns, 448.4375 ns/op
+WorkloadResult   2: 512 op, 187400.00 ns, 366.0156 ns/op
+WorkloadResult   3: 512 op, 255500.00 ns, 499.0234 ns/op
+WorkloadResult   4: 512 op, 192600.00 ns, 376.1719 ns/op
+WorkloadResult   5: 512 op, 183700.00 ns, 358.7891 ns/op
+// GC:  0 0 0 48 512
+// Threading:  0 0 512
+
+
+Mean = 409.688 ns, StdErr = 27.481 ns (6.71%), N = 5, StdDev = 61.448 ns
+Min = 358.789 ns, Q1 = 366.016 ns, Median = 376.172 ns, Q3 = 448.438 ns, Max = 499.023 ns
+IQR = 82.422 ns, LowerFence = 242.383 ns, UpperFence = 572.070 ns
+ConfidenceInterval = [173.071 ns; 646.304 ns] (CI 99.9%), Margin = 236.616 ns (57.76% of Mean)
+Skewness = 0.45, Kurtosis = 1.09, MValue = 2
+
+// ** Remained 0 (0.0%) benchmark(s) to run. Estimated finish 2026-09-02 3:12 (0h 0m from now) **
+Successfully reverted power plan (GUID: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c FriendlyName: High performance)
+// ***** BenchmarkRunner: Finish  *****
+
+// * Export *
+  benchmarks\results\2026-09-02-cerberus\final\results\Cerneala.Benchmarks.CerberusPlanningBenchmarks-report.csv
+  benchmarks\results\2026-09-02-cerberus\final\results\Cerneala.Benchmarks.CerberusPlanningBenchmarks-report-github.md
+  benchmarks\results\2026-09-02-cerberus\final\results\Cerneala.Benchmarks.CerberusPlanningBenchmarks-report.html
+  benchmarks\results\2026-09-02-cerberus\final\results\Cerneala.Benchmarks.CerberusPlanningBenchmarks-report-full-compressed.json
+
+// * Detailed results *
+CerberusPlanningBenchmarks.HomogeneousMergeAndIndexRebasing: InProcess(Toolchain=InProcessEmitToolchain, InvocationCount=1, IterationCount=5, UnrollFactor=1, WarmupCount=3)
+Runtime = ; GC =
+Mean = 387.168 ns, StdErr = 22.231 ns (5.74%), N = 5, StdDev = 49.709 ns
+Min = 330.762 ns, Q1 = 355.762 ns, Median = 373.535 ns, Q3 = 424.023 ns, Max = 451.758 ns
+IQR = 68.262 ns, LowerFence = 253.369 ns, UpperFence = 526.416 ns
+ConfidenceInterval = [195.755 ns; 578.581 ns] (CI 99.9%), Margin = 191.413 ns (49.44% of Mean)
+Skewness = 0.17, Kurtosis = 1, MValue = 2
+-------------------- Histogram --------------------
+[313.994 ns ; 399.736 ns) | @@@
+[399.736 ns ; 489.913 ns) | @@
+---------------------------------------------------
+
+CerberusPlanningBenchmarks.AlternatingEnqueue: InProcess(Toolchain=InProcessEmitToolchain, InvocationCount=1, IterationCount=5, UnrollFactor=1, WarmupCount=3)
+Runtime = ; GC =
+Mean = 420.093 ns, StdErr = 4.612 ns (1.10%), N = 4, StdDev = 9.224 ns
+Min = 410.547 ns, Q1 = 413.110 ns, Median = 420.264 ns, Q3 = 427.246 ns, Max = 429.297 ns
+IQR = 14.136 ns, LowerFence = 391.907 ns, UpperFence = 448.450 ns
+ConfidenceInterval = [360.487 ns; 479.698 ns] (CI 99.9%), Margin = 59.606 ns (14.19% of Mean)
+Skewness = -0.02, Kurtosis = 0.64, MValue = 2
+-------------------- Histogram --------------------
+[402.920 ns ; 420.303 ns) | @@
+[420.303 ns ; 436.924 ns) | @@
+---------------------------------------------------
+
+CerberusPlanningBenchmarks.GrowthBeyondInitialCapacity: InProcess(Toolchain=InProcessEmitToolchain, InvocationCount=1, IterationCount=5, UnrollFactor=1, WarmupCount=3)
+Runtime = ; GC =
+Mean = 474.570 ns, StdErr = 37.754 ns (7.96%), N = 5, StdDev = 84.420 ns
+Min = 382.031 ns, Q1 = 414.258 ns, Median = 453.906 ns, Q3 = 541.016 ns, Max = 581.641 ns
+IQR = 126.758 ns, LowerFence = 224.121 ns, UpperFence = 731.152 ns
+ConfidenceInterval = [149.498 ns; 799.643 ns] (CI 99.9%), Margin = 325.072 ns (68.50% of Mean)
+Skewness = 0.17, Kurtosis = 0.94, MValue = 2
+-------------------- Histogram --------------------
+[353.172 ns ; 496.531 ns) | @@@
+[496.531 ns ; 646.438 ns) | @@
+---------------------------------------------------
+
+CerberusPlanningBenchmarks.AlternatingEnqueueAndDiscard: InProcess(Toolchain=InProcessEmitToolchain, InvocationCount=1, IterationCount=5, UnrollFactor=1, WarmupCount=3)
+Runtime = ; GC =
+Mean = 409.688 ns, StdErr = 27.481 ns (6.71%), N = 5, StdDev = 61.448 ns
+Min = 358.789 ns, Q1 = 366.016 ns, Median = 376.172 ns, Q3 = 448.438 ns, Max = 499.023 ns
+IQR = 82.422 ns, LowerFence = 242.383 ns, UpperFence = 572.070 ns
+ConfidenceInterval = [173.071 ns; 646.304 ns] (CI 99.9%), Margin = 236.616 ns (57.76% of Mean)
+Skewness = 0.45, Kurtosis = 1.09, MValue = 2
+-------------------- Histogram --------------------
+[356.448 ns ; 450.778 ns) | @@@@
+[450.778 ns ; 546.189 ns) | @
+---------------------------------------------------
+
+// * Summary *
+
+BenchmarkDotNet v0.15.8, Windows 11 (10.0.26200.9168/25H2/2025Update/HudsonValley2)
+Intel Core i5-9300H CPU 2.40GHz, 1 CPU, 8 logical and 4 physical cores
+.NET SDK 10.0.303
+  [Host] : .NET 8.0.30 (8.0.30, 8.0.3026.36720), X64 RyuJIT x86-64-v3
+
+Job=InProcess  Toolchain=InProcessEmitToolchain  InvocationCount=1
+IterationCount=5  UnrollFactor=1  WarmupCount=3
+
+| Method                           | Mean     | Error     | StdDev   | Ratio | RatioSD | Allocated | Alloc Ratio |
+|--------------------------------- |---------:|----------:|---------:|------:|--------:|----------:|------------:|
+| HomogeneousMergeAndIndexRebasing | 387.2 ns | 191.41 ns | 49.71 ns |  1.01 |    0.17 |         - |          NA |
+| AlternatingEnqueue               | 420.1 ns |  59.61 ns |  9.22 ns |  1.10 |    0.13 |       1 B |          NA |
+| GrowthBeyondInitialCapacity      | 474.6 ns | 325.07 ns | 84.42 ns |  1.24 |    0.25 |       1 B |          NA |
+| AlternatingEnqueueAndDiscard     | 409.7 ns | 236.62 ns | 61.45 ns |  1.07 |    0.19 |         - |          NA |
+
+// * Warnings *
+MinIterationTime
+  CerberusPlanningBenchmarks.HomogeneousMergeAndIndexRebasing: InProcess -> The minimum observed iteration time is 339μs which is very small. It's recommended to increase it to at least 100ms using more operations.
+  CerberusPlanningBenchmarks.AlternatingEnqueue: InProcess               -> The minimum observed iteration time is 420.8μs which is very small. It's recommended to increase it to at least 100ms using more operations.
+  CerberusPlanningBenchmarks.GrowthBeyondInitialCapacity: InProcess      -> The minimum observed iteration time is 196μs which is very small. It's recommended to increase it to at least 100ms using more operations.
+  CerberusPlanningBenchmarks.AlternatingEnqueueAndDiscard: InProcess     -> The minimum observed iteration time is 184.2μs which is very small. It's recommended to increase it to at least 100ms using more operations.
+
+// * Hints *
+Outliers
+  CerberusPlanningBenchmarks.AlternatingEnqueue: InProcess -> 1 outlier  was  removed (456.74 ns)
+
+// * Legends *
+  Mean        : Arithmetic mean of all measurements
+  Error       : Half of 99.9% confidence interval
+  StdDev      : Standard deviation of all measurements
+  Ratio       : Mean of the ratio distribution ([Current]/[Baseline])
+  RatioSD     : Standard deviation of the ratio distribution ([Current]/[Baseline])
+  Allocated   : Allocated memory per single operation (managed only, inclusive, 1KB = 1024B)
+  Alloc Ratio : Allocated memory ratio distribution ([Current]/[Baseline])
+  1 ns        : 1 Nanosecond (0.000000001 sec)
+
+// * Diagnostic Output - MemoryDiagnoser *
+
+
+// ***** BenchmarkRunner: End *****
+Run time: 00:00:01 (1.6 sec), executed benchmarks: 4
+
+Global total time: 00:00:03 (3.28 sec), executed benchmarks: 4
+// * Artifacts cleanup *
+Artifacts cleanup is finished
