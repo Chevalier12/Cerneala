@@ -214,8 +214,6 @@ Generated from `.`.
 |           |   |   |-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-report-github.md
 |           |   |   |-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-report.csv
 |           |   |   +-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-report.html
-|           |   |-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-20260902-030038.log
-|           |   |-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-20260902-031046.log
 |           |   |-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-20260902-031239.log
 |           |   +-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-20260902-032111.log
 |           |-- api-compat.md
