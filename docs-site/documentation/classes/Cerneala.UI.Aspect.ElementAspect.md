@@ -32,7 +32,7 @@ root.ProcessFrame();
 ```
 
 ## Remarks
-Assignments are copied and exposed through a read-only list, and a property may appear only once. The default constructor targets `UIElement`; the named overload records an optional resource name and an explicit target type. Attaching an aspect to an incompatible element throws before it can participate in resolution.
+Assignments are copied and exposed through a read-only list, and a property may appear only once. The default constructor targets `UIElement`; the named overload records an optional resource name and an explicit target type. Assigning an aspect validates the target and every default and conditional property before the property-store mutation is committed. A rejected replacement therefore leaves the previous `UIElement.Aspect` value and its registrations intact.
 
 `ElementAspect` does not write UI properties directly. It projects its assignments into an `AspectPackage` consumed with the root, application, and scoped packages by `AspectProcessor`. Winning values are published through the canonical `AspectBase` source. Replacing or clearing `UIElement.Aspect` invalidates the element's Aspect work; detach clears engine output, and reattach resolves the current aspect again.
 
@@ -40,7 +40,7 @@ Assignments are copied and exposed through a read-only list, and a property may 
 
 `IsConditional` records that generated conditional behavior accompanies the default declarations. It does not create a second property applicator.
 
-The full generated-code constructor accepts immutable `ElementAspectCondition` entries, an optional behavior factory, and optional `AspectOrigin`. The factory may attach observations, event handlers, or Motion sessions and returns their lifetime. `UIElement` creates that lifetime when the aspect becomes effective, preserves lifecycle detach/reattach behavior, and disposes it when the aspect is replaced or cleared. Conditional declarations still win through `AspectEngine`; the behavior only changes `AspectConditionKey` state. Generated named and inline Aspects preserve their document and authoring kind without changing `Name` semantics or cascade.
+The full generated-code constructor accepts immutable `ElementAspectCondition` entries, an optional behavior factory, and optional `AspectOrigin`. The factory may attach observations, event handlers, or Motion sessions and returns their lifetime. `UIElement` creates that lifetime only while the element is attached to a root, disposes it on detach, creates a new lifetime on reattach, and also disposes it when the aspect is replaced or cleared. Conditional declarations still win through `AspectEngine`; the behavior only changes `AspectConditionKey` state. Generated named and inline Aspects preserve their document and authoring kind without changing `Name` semantics or cascade.
 
 ## Constructors
 | Name | Description |

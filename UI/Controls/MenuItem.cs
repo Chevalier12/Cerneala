@@ -37,11 +37,11 @@ public class MenuItem : ItemsControl, IInputCommandSource, ICommandStateSource, 
         {
             Orientation = Orientation.Vertical
         };
-        SetValue(BackgroundProperty, new SolidColorBrush(Color.White), UiPropertyValueSource.AspectBase);
-        SetValue(ForegroundProperty, new SolidColorBrush(Color.Black), UiPropertyValueSource.AspectBase);
-        SetValue(BorderBrushProperty, new SolidColorBrush(new Color(210, 214, 220)), UiPropertyValueSource.AspectBase);
-        SetValue(PaddingProperty, new Thickness(8, 5, 8, 5), UiPropertyValueSource.AspectBase);
-        SetValue(ComponentTemplateProperty, MenuTemplates.MenuItem, UiPropertyValueSource.AspectBase);
+        SetFrameworkDefault(BackgroundProperty, new SolidColorBrush(Color.White));
+        SetFrameworkDefault(ForegroundProperty, new SolidColorBrush(Color.Black));
+        SetFrameworkDefault(BorderBrushProperty, new SolidColorBrush(new Color(210, 214, 220)));
+        SetFrameworkDefault(PaddingProperty, new Thickness(8, 5, 8, 5));
+        SetFrameworkDefault(ComponentTemplateProperty, MenuTemplates.MenuItem);
         AddHandler(MouseUpEvent, OnMouseUp);
         AddHandler(MouseEnterEvent, OnMouseEnter);
         AddHandler(KeyDownEvent, OnKeyDown);

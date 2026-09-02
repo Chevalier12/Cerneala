@@ -11,8 +11,8 @@ public static class AspectDiagnostics
             AspectEngineCounters? counters = null)
         {
             ResolvedAspect = resolvedAspect;
-            ResolutionSteps = resolutionSteps ?? [];
-            TokenTraces = tokenTraces ?? [];
+            ResolutionSteps = Array.AsReadOnly((resolutionSteps ?? []).ToArray());
+            TokenTraces = Array.AsReadOnly((tokenTraces ?? []).ToArray());
             Counters = counters ?? new AspectEngineCounters();
         }
 

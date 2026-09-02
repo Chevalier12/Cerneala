@@ -12,6 +12,41 @@ public class UiObject
     {
     }
 
+    internal virtual void ValidatePropertyMutation(UiProperty property, object? value)
+    {
+    }
+
+    internal void SetFrameworkDefault<T>(UiProperty<T> property, T value)
+    {
+        ArgumentNullException.ThrowIfNull(property);
+        VerifyMutationAccess();
+        T oldValue = GetValue(property);
+        UiPropertyValueSource oldSource = GetValueSource(property);
+        object? coerced = property.CoerceUntyped(this, value);
+        property.ValidateUntyped(coerced);
+        ValidatePropertyMutation(property, coerced);
+        propertyStore.SetFrameworkDefault(property, coerced);
+        T newValue = GetValue(property);
+        if (!property.Metadata.EqualityComparer.Equals(oldValue, newValue))
+        {
+            NotifyPropertyChanged(
+                property,
+                oldValue,
+                newValue,
+                UiPropertyValueSource.Default,
+                UiPropertyValueSource.Default,
+                oldSource,
+                oldValue,
+                coerced,
+                !EqualityComparer<T>.Default.Equals(value, (T)coerced!));
+        }
+    }
+
+    internal bool HasFrameworkDefault(UiProperty property)
+    {
+        return propertyStore.HasFrameworkDefault(property);
+    }
+
     public T GetValue<T>(UiProperty<T> property)
     {
         ArgumentNullException.ThrowIfNull(property);
@@ -111,6 +146,7 @@ public class UiObject
         object? oldSourceValue = GetSourceValue(property, source);
         object? coerced = property.CoerceUntyped(this, value);
         property.ValidateUntyped(coerced);
+        ValidatePropertyMutation(property, coerced);
         propertyStore.SetValue(property, source, coerced);
         object? newValue = GetValue(property);
         UiPropertyValueSource newSource = GetValueSource(property);
@@ -167,6 +203,7 @@ public class UiObject
         object? oldSourceValue = GetSourceValue(property, source);
         object? coerced = property.CoerceUntyped(this, value);
         property.ValidateUntyped(coerced);
+        ValidatePropertyMutation(property, coerced);
 
         propertyStore.SetValue(property, source, coerced);
         T newValue = GetValue(property);

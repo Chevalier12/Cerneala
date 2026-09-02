@@ -55,7 +55,7 @@ AspectDependencySet dependencies = new(
 
 `AspectDependencySet` is a small data container used by the aspect resolution and invalidation pipeline. `AspectEngine` builds one from the dependencies discovered while matching aspect conditions and resolving declaration values, then stores it with the resolved aspect. `AspectInvalidationGraph` tracks the set per `UIElement`, and `AspectEngine.GetDependencies` returns the tracked set or an empty set when no dependencies are available.
 
-Constructor arguments are optional. Passing `null` for any dependency list stores an empty list for that category. Non-null lists are stored as provided; callers that need stable snapshots should pass lists they will not mutate after construction.
+Constructor arguments are optional. Passing `null` for any dependency list stores an empty list for that category. Non-null lists are copied into read-only snapshots, so later changes to the input lists do not alter the dependency set.
 
 `CatalogVersion` and `EnvironmentVersion` identify the aspect catalog and environment versions used during resolution. They are version stamps only; this class does not compare versions or perform invalidation by itself.
 

@@ -17,7 +17,7 @@ public class Menu : ItemsControl
         Focusable = true;
         IsTabStop = true;
         ItemsPanel = new global::Cerneala.UI.Layout.Panels.StackPanel { Orientation = Orientation.Vertical };
-        SetValue(ComponentTemplateProperty, MenuTemplates.Menu, UiPropertyValueSource.AspectBase);
+        SetFrameworkDefault(ComponentTemplateProperty, MenuTemplates.Menu);
     }
 
     internal MenuSession Session => session;

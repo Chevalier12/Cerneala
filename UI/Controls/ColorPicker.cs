@@ -43,12 +43,12 @@ public class ColorPicker : Control
 
     public ColorPicker()
     {
-        SetValue(BackgroundProperty, new SolidColorBrush(Color.White), UiPropertyValueSource.AspectBase);
-        SetValue(ForegroundProperty, new SolidColorBrush(Color.Black), UiPropertyValueSource.AspectBase);
-        SetValue(BorderBrushProperty, new SolidColorBrush(new Color(90, 98, 110)), UiPropertyValueSource.AspectBase);
-        SetValue(BorderThicknessProperty, new Thickness(1), UiPropertyValueSource.AspectBase);
-        SetValue(PaddingProperty, new Thickness(10), UiPropertyValueSource.AspectBase);
-        SetValue(ComponentTemplateProperty, ColorPickerTemplates.Default, UiPropertyValueSource.AspectBase);
+        SetFrameworkDefault(BackgroundProperty, new SolidColorBrush(Color.White));
+        SetFrameworkDefault(ForegroundProperty, new SolidColorBrush(Color.Black));
+        SetFrameworkDefault(BorderBrushProperty, new SolidColorBrush(new Color(90, 98, 110)));
+        SetFrameworkDefault(BorderThicknessProperty, new Thickness(1));
+        SetFrameworkDefault(PaddingProperty, new Thickness(10));
+        SetFrameworkDefault(ComponentTemplateProperty, ColorPickerTemplates.Default);
         ColorPickerColorMath.ToHsv(SelectedColor, out hue, out saturation, out value);
     }
 
@@ -127,7 +127,7 @@ public class ColorPicker : Control
 
         if (ReferenceEquals(args.Property, ComponentTemplateProperty) &&
             ComponentTemplate is null &&
-            GetSourceValue(ComponentTemplateProperty, UiPropertyValueSource.AspectBase) is ComponentTemplate)
+            HasFrameworkDefault(ComponentTemplateProperty))
         {
             ClearValue(ComponentTemplateProperty);
         }

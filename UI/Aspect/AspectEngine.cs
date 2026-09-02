@@ -91,6 +91,7 @@ public sealed class AspectEngine
             slotPath,
             captureDiagnostics: true,
             out AspectRuleEvaluationSnapshot[] ruleEvaluations);
+        ValidateResolvedValues(element, resolved);
         AspectEngineElementState state = states.GetOrCreateValue(element);
         bool changed = ApplyResolved(element, state.LastResolved, resolved, themeProvider);
         state.LastResolved = resolved;
@@ -101,6 +102,19 @@ public sealed class AspectEngine
         state.Diagnostics = null;
         invalidationGraph.Track(element, resolved.Dependencies);
         return new AspectApplicationResult(changed, resolved);
+    }
+
+    private static void ValidateResolvedValues(UIElement element, ResolvedAspect resolved)
+    {
+        foreach (UiProperty property in resolved.Values.Keys)
+        {
+            if (ReferenceEquals(property, UIElement.AspectProperty) ||
+                !property.OwnerType.IsAssignableFrom(element.GetType()))
+            {
+                throw new InvalidOperationException(
+                    $"UI property '{property.DiagnosticName}' cannot be applied to element '{element.GetType().FullName}'.");
+            }
+        }
     }
 
     public ResolvedAspect Resolve(

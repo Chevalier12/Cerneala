@@ -346,7 +346,7 @@ public class ItemsControl : Control
 
     protected internal virtual void ClearItemContainer(UIElement container)
     {
-        container.ClearValue(UIElement.AspectProperty, UiPropertyValueSource.AspectBase);
+        container.ClearValue(UIElement.AspectProperty, UiPropertyValueSource.TemplateBinding);
         ItemContainerGenerator.ClearInfo(container);
         if (container is ISelectableItemContainer selectable)
         {
@@ -532,11 +532,11 @@ public class ItemsControl : Control
     {
         if (ItemContainerAspect is ElementAspect aspect)
         {
-            container.SetValue(UIElement.AspectProperty, aspect, UiPropertyValueSource.AspectBase);
+            container.SetValue(UIElement.AspectProperty, aspect, UiPropertyValueSource.TemplateBinding);
         }
         else
         {
-            container.ClearValue(UIElement.AspectProperty, UiPropertyValueSource.AspectBase);
+            container.ClearValue(UIElement.AspectProperty, UiPropertyValueSource.TemplateBinding);
         }
     }
 

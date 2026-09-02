@@ -55,7 +55,7 @@ int tokenTraceCount = diagnostics.TokenTraces.Count;
 
 `AspectDiagnostics.Snapshot` is the nested diagnostics payload used by `AspectEngine`. `AspectEngine.Apply` builds a snapshot from the resolved aspect, matched and rejected resolution steps, token traces, and the current `AspectEngineCounters` snapshot. `AspectEngine.GetDiagnostics` returns the stored snapshot for an element, or a new empty snapshot when the element has no stored aspect diagnostics.
 
-The constructor substitutes empty read-only lists when `resolutionSteps` or `tokenTraces` is `null`. When `counters` is `null`, it creates a new `AspectEngineCounters` instance. `ResolvedAspect` remains nullable so an empty snapshot can represent the absence of aspect resolution data.
+The constructor substitutes empty read-only lists when `resolutionSteps` or `tokenTraces` is `null` and copies non-null inputs into read-only snapshots. Later mutations of the input lists cannot change the diagnostic result. When `counters` is `null`, it creates a new `AspectEngineCounters` instance. `ResolvedAspect` remains nullable so an empty snapshot can represent the absence of aspect resolution data.
 
 `AspectTrace.Capture` consumes this type to build human-readable diagnostic trace lines for a specific UI property.
 

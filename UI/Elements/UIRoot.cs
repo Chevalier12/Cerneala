@@ -12,6 +12,7 @@ using Cerneala.UI.Rendering;
 using Cerneala.UI.Resources;
 using Cerneala.UI.Theming;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Core;
 
 namespace Cerneala.UI.Elements;
 
@@ -99,6 +100,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         AspectProcessor = new AspectProcessor(this);
         Scheduler = new UiFrameScheduler(LayoutQueue, InheritedPropertyQueue, CommandStateQueue, AspectQueue, RenderQueue, HitTestQueue, Trace);
         Motion = new MotionSystem(this, motionClock ?? new SystemMotionClock(), reducedMotion ?? ReducedMotionPolicy.Default);
+        PropertyMutations = new RootPropertyMutationObserver(this);
         IsLayoutBoundary = true;
         ElementLifecycle.AttachSubtree(this, this);
     }
@@ -166,6 +168,8 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     public UiRelay Relay { get; }
 
     public MotionSystem Motion { get; }
+
+    internal UiPropertyMutationObserver PropertyMutations { get; }
 
     internal PrismCacheInvalidationQueue PrismCacheInvalidations { get; } =
         new();

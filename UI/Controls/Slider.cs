@@ -14,7 +14,7 @@ public class Slider : RangeBase
 
     public Slider()
     {
-        SetValue(ComponentTemplateProperty, SliderTemplates.Default, UiPropertyValueSource.AspectBase);
+        SetFrameworkDefault(ComponentTemplateProperty, SliderTemplates.Default);
     }
 
     public static readonly UiProperty<Orientation> OrientationProperty = UiProperty<Orientation>.Register(

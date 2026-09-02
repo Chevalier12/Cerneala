@@ -19,15 +19,13 @@ public class Thumb : Control, IPointerDragSource
 
     public Thumb()
     {
-        SetValue(
+        SetFrameworkDefault(
             BackgroundProperty,
-            new Cerneala.UI.Media.SolidColorBrush(new Color(180, 180, 180)),
-            UiPropertyValueSource.AspectBase);
-        SetValue(
+            new Cerneala.UI.Media.SolidColorBrush(new Color(180, 180, 180)));
+        SetFrameworkDefault(
             BorderBrushProperty,
-            new Cerneala.UI.Media.SolidColorBrush(new Color(80, 80, 80)),
-            UiPropertyValueSource.AspectBase);
-        SetValue(BorderThicknessProperty, new Thickness(1), UiPropertyValueSource.AspectBase);
+            new Cerneala.UI.Media.SolidColorBrush(new Color(80, 80, 80)));
+        SetFrameworkDefault(BorderThicknessProperty, new Thickness(1));
         Handlers.AddHandler(InputEvents.MouseMoveEvent, OnCapturedPointerInput);
         Handlers.AddHandler(InputEvents.MouseWheelEvent, OnCapturedPointerInput);
         Handlers.AddHandler(InputEvents.MouseDownEvent, OnCapturedPointerInput);

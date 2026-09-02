@@ -16,19 +16,17 @@ public class Track : Control
 
     public Track()
     {
-        SetValue(
+        SetFrameworkDefault(
             BackgroundProperty,
-            new Cerneala.UI.Media.SolidColorBrush(new Color(225, 225, 225)),
-            UiPropertyValueSource.AspectBase);
-        SetValue(
+            new Cerneala.UI.Media.SolidColorBrush(new Color(225, 225, 225)));
+        SetFrameworkDefault(
             BorderBrushProperty,
-            new Cerneala.UI.Media.SolidColorBrush(new Color(120, 120, 120)),
-            UiPropertyValueSource.AspectBase);
-        SetValue(BorderThicknessProperty, new Thickness(1), UiPropertyValueSource.AspectBase);
+            new Cerneala.UI.Media.SolidColorBrush(new Color(120, 120, 120)));
+        SetFrameworkDefault(BorderThicknessProperty, new Thickness(1));
         SmallChange = 0.1f;
         LargeChange = 1;
         Handlers.AddHandler(InputEvents.MouseDownEvent, OnMouseDown);
-        SetValue(ComponentTemplateProperty, TrackTemplates.Default, UiPropertyValueSource.AspectBase);
+        SetFrameworkDefault(ComponentTemplateProperty, TrackTemplates.Default);
     }
 
     public static readonly UiProperty<float> MinimumProperty = UiProperty<float>.Register(
@@ -223,7 +221,7 @@ public class Track : Control
 
         if (ReferenceEquals(args.Property, ComponentTemplateProperty) &&
             ComponentTemplate is null &&
-            GetSourceValue(ComponentTemplateProperty, UiPropertyValueSource.AspectBase) is ComponentTemplate)
+            HasFrameworkDefault(ComponentTemplateProperty))
         {
             ClearValue(ComponentTemplateProperty);
         }

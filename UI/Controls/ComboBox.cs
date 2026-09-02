@@ -29,6 +29,7 @@ public class ComboBox : Selector
     [
         new ElementAspectValue(Control.PaddingProperty, new Thickness(6))
     ]);
+
     private readonly VirtualizingStackPanel defaultItemsPanel = new();
     private ContentPresenter? selectionPresenter;
     private TextBox? editableTextBox;
@@ -55,14 +56,11 @@ public class ComboBox : Selector
         ItemsPanel = defaultItemsPanel;
         Handlers.AddHandler(InputEvents.KeyDownEvent, OnKeyDown);
         Handlers.AddHandler(InputEvents.TextInputEvent, OnTextInput);
-        SetValue(BackgroundProperty, new SolidColorBrush(Color.White), UiPropertyValueSource.AspectBase);
-        SetValue(ForegroundProperty, new SolidColorBrush(Color.Black), UiPropertyValueSource.AspectBase);
-        SetValue(
-            BorderBrushProperty,
-            new SolidColorBrush(new Color(120, 130, 145)),
-            UiPropertyValueSource.AspectBase);
-        SetValue(ItemContainerAspectProperty, DefaultItemContainerAspect, UiPropertyValueSource.AspectBase);
-        SetValue(ComponentTemplateProperty, ComboBoxTemplates.Default, UiPropertyValueSource.AspectBase);
+        SetFrameworkDefault(BackgroundProperty, new SolidColorBrush(Color.White));
+        SetFrameworkDefault(ForegroundProperty, new SolidColorBrush(Color.Black));
+        SetFrameworkDefault(BorderBrushProperty, new SolidColorBrush(new Color(120, 130, 145)));
+        SetFrameworkDefault(ItemContainerAspectProperty, DefaultItemContainerAspect);
+        SetFrameworkDefault(ComponentTemplateProperty, ComboBoxTemplates.Default);
     }
 
     public static readonly RoutedEvent DropDownOpenedEvent = RoutedEventRegistry.Register(

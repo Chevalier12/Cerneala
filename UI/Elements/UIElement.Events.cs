@@ -180,23 +180,24 @@ public partial class UIElement
         {
             if (args.OldValue is ElementAspect oldAspect)
             {
-                elementAspectBehavior?.Dispose();
-                elementAspectBehavior = null;
+                DetachElementAspectBehavior();
                 oldAspect.Detach(aspectConsumer);
             }
 
             if (args.NewValue is ElementAspect newAspect)
             {
-                ValidateLocalAspect(newAspect);
                 newAspect.Attach(aspectConsumer);
-                try
+                if (IsAttached)
                 {
-                    elementAspectBehavior = newAspect.AttachBehavior(this);
-                }
-                catch
-                {
-                    newAspect.Detach(aspectConsumer);
-                    throw;
+                    try
+                    {
+                        AttachElementAspectBehavior();
+                    }
+                    catch
+                    {
+                        newAspect.Detach(aspectConsumer);
+                        throw;
+                    }
                 }
             }
         }

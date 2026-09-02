@@ -16,6 +16,7 @@ public sealed class UiPropertyStore
     ];
 
     private readonly Dictionary<UiProperty, Dictionary<UiPropertyValueSource, object?>> values = new();
+    private readonly Dictionary<UiProperty, object?> frameworkDefaults = new();
 
     public object? GetValue(UiProperty property)
     {
@@ -68,6 +69,18 @@ public sealed class UiPropertyStore
         }
     }
 
+    internal void SetFrameworkDefault(UiProperty property, object? value)
+    {
+        ArgumentNullException.ThrowIfNull(property);
+        frameworkDefaults[property] = value;
+    }
+
+    internal bool HasFrameworkDefault(UiProperty property)
+    {
+        ArgumentNullException.ThrowIfNull(property);
+        return frameworkDefaults.ContainsKey(property);
+    }
+
     private (object? Value, UiPropertyValueSource Source) GetEffectiveValue(UiProperty property)
     {
         ArgumentNullException.ThrowIfNull(property);
@@ -81,6 +94,11 @@ public sealed class UiPropertyStore
                     return (value, source);
                 }
             }
+        }
+
+        if (frameworkDefaults.TryGetValue(property, out object? frameworkDefault))
+        {
+            return (frameworkDefault, UiPropertyValueSource.Default);
         }
 
         return (property.DefaultValueUntyped, UiPropertyValueSource.Default);

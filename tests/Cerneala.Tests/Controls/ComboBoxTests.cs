@@ -28,8 +28,8 @@ public sealed class ComboBoxTests
         Assert.False(comboBox.IsTextSearchCaseSensitive);
         Assert.False(comboBox.ShouldPreserveUserEnteredPrefix);
         Assert.True(comboBox.IsTextFilterEnabled);
-        Assert.Equal(UiPropertyValueSource.AspectBase, comboBox.GetValueSource(Control.BackgroundProperty));
-        Assert.Equal(UiPropertyValueSource.AspectBase, comboBox.GetValueSource(Control.ForegroundProperty));
+        Assert.Equal(UiPropertyValueSource.Default, comboBox.GetValueSource(Control.BackgroundProperty));
+        Assert.Equal(UiPropertyValueSource.Default, comboBox.GetValueSource(Control.ForegroundProperty));
         Assert.Equal(Color.White, Assert.IsType<SolidColorBrush>(comboBox.Background).Color);
         Assert.Equal(Color.Black, Assert.IsType<SolidColorBrush>(comboBox.Foreground).Color);
     }

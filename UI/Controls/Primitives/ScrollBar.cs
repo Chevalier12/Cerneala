@@ -26,7 +26,7 @@ public class ScrollBar : RangeBase
         BorderBrush = new Cerneala.UI.Media.SolidColorBrush(new Color(130, 130, 130));
         BorderThickness = new Thickness(1);
         ViewportSize = 0;
-        SetValue(ComponentTemplateProperty, ScrollBarTemplates.Default, UiPropertyValueSource.AspectBase);
+        SetFrameworkDefault(ComponentTemplateProperty, ScrollBarTemplates.Default);
     }
 
     public static readonly UiProperty<Orientation> OrientationProperty = UiProperty<Orientation>.Register(
@@ -136,7 +136,7 @@ public class ScrollBar : RangeBase
 
         if (ReferenceEquals(args.Property, ComponentTemplateProperty) &&
             ComponentTemplate is null &&
-            GetSourceValue(ComponentTemplateProperty, UiPropertyValueSource.AspectBase) is ComponentTemplate)
+            HasFrameworkDefault(ComponentTemplateProperty))
         {
             ClearValue(ComponentTemplateProperty);
         }

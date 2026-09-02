@@ -1,7 +1,9 @@
 using System.Runtime.CompilerServices;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Templates;
+using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Invalidation;
 using Cerneala.UI.Resources;
 using Cerneala.UI.Theming;
 
@@ -15,6 +17,7 @@ public sealed class AspectProcessor
     private readonly ConditionalWeakTable<UIElement, EnvironmentState> environmentStates = new();
     private readonly ConditionalWeakTable<UIElement, BehaviorState> behaviorStates = new();
     private int nextCompositeVersion = 1_000_000;
+    private bool isApplying;
 
     public AspectProcessor(UIRoot root)
     {
@@ -40,7 +43,7 @@ public sealed class AspectProcessor
 
         if (TemplateAspectContext.TryGet(element, out TemplateAspectContext.Registration registration))
         {
-            engine.ApplyTemplateSlot(
+            ApplyEngine(() => engine.ApplyTemplateSlot(
                 element,
                 registration.Owner,
                 catalog,
@@ -48,20 +51,20 @@ public sealed class AspectProcessor
                 root.ThemeProvider,
                 registration.Owner.AspectVariants,
                 new AspectDataContext(element.DataContext, owner: registration.Owner),
-                registration.SlotPath);
+                registration.SlotPath));
         }
         else
         {
             AspectVariantSet variants = element is Control control
                 ? control.AspectVariants
                 : AspectVariantSet.Empty;
-            engine.Apply(
+            ApplyEngine(() => engine.Apply(
                 element,
                 catalog,
                 environment,
                 root.ThemeProvider,
                 variants,
-                new AspectDataContext(element.DataContext, owner: element));
+                new AspectDataContext(element.DataContext, owner: element)));
         }
 
         if (element is Control templatedControl)
@@ -79,9 +82,36 @@ public sealed class AspectProcessor
             behaviorStates.Remove(element);
         }
 
-        engine.Clear(element);
+        ApplyEngine(() => engine.Clear(element));
         catalogStates.Remove(element);
         environmentStates.Remove(element);
+    }
+
+    internal void OnPropertyMutated(UiPropertyMutation mutation)
+    {
+        if (isApplying ||
+            mutation.Target is not UIElement element ||
+            !ReferenceEquals(element.Root, root) ||
+            mutation.Property.AreEqualUntyped(mutation.OldEffectiveValue, mutation.NewEffectiveValue) ||
+            !engine.GetDependencies(element).Properties.Contains(mutation.Property, ReferenceEqualityComparer.Instance))
+        {
+            return;
+        }
+
+        element.Invalidate(InvalidationFlags.Aspect, "Aspect property dependency changed");
+    }
+
+    private void ApplyEngine(Action action)
+    {
+        isApplying = true;
+        try
+        {
+            action();
+        }
+        finally
+        {
+            isApplying = false;
+        }
     }
 
     internal ComponentTemplate? ResolveComponentTemplate(Control owner, string? key)

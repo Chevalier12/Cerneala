@@ -242,16 +242,10 @@ public class TextBox : Control, ITimeSensitiveRenderElement, IPointerDragSource,
     {
         Focusable = true;
         IsTabStop = true;
-        SetValue(PaddingProperty, new Thickness(4, 2, 4, 2), UiPropertyValueSource.AspectBase);
-        SetValue(BorderThicknessProperty, new Thickness(1), UiPropertyValueSource.AspectBase);
-        SetValue(
-            BorderBrushProperty,
-            new SolidColorBrush(new Color(120, 130, 145)),
-            UiPropertyValueSource.AspectBase);
-        SetValue(
-            BackgroundProperty,
-            new SolidColorBrush(Color.White),
-            UiPropertyValueSource.AspectBase);
+        SetFrameworkDefault(PaddingProperty, new Thickness(4, 2, 4, 2));
+        SetFrameworkDefault(BorderThicknessProperty, new Thickness(1));
+        SetFrameworkDefault(BorderBrushProperty, new SolidColorBrush(new Color(120, 130, 145)));
+        SetFrameworkDefault(BackgroundProperty, new SolidColorBrush(Color.White));
         Cursor = Cerneala.UI.Input.Cursor.IBeam;
     }
 }

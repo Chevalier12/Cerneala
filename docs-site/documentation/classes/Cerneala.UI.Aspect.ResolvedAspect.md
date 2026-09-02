@@ -50,7 +50,7 @@ foreach (RejectedAspectDeclaration rejected in resolved.RejectedDeclarations)
 
 ## Remarks
 
-`ResolvedAspect` is produced by `AspectEngine.Resolve` and returned from `AspectEngine.Apply` through `AspectApplicationResult.ResolvedAspect`. It is a read-only container over collections supplied by the resolver; the constructor requires non-null values for every collection and for the dependency set.
+`ResolvedAspect` is produced by `AspectEngine.Resolve` and returned from `AspectEngine.Apply` through `AspectApplicationResult.ResolvedAspect`. Its constructor copies the values, matched rules, and rejected declarations into read-only snapshots and requires non-null values for every collection and for the dependency set. Casting an exposed collection to a mutable collection interface does not permit mutation.
 
 `Values` is keyed by `UiProperty` and stores only the winning `ResolvedAspectValue` for each property. When several matching declarations target the same property, `AspectEngine` keeps the declaration with the strongest cascade key and records the losing declaration in `RejectedDeclarations`.
 

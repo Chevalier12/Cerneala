@@ -9,6 +9,6 @@ public class MenuBar : Menu
     public MenuBar()
     {
         ItemsPanel = new global::Cerneala.UI.Layout.Panels.StackPanel { Orientation = Orientation.Horizontal };
-        SetValue(ComponentTemplateProperty, MenuTemplates.MenuBar, UiPropertyValueSource.AspectBase);
+        SetFrameworkDefault(ComponentTemplateProperty, MenuTemplates.MenuBar);
     }
 }

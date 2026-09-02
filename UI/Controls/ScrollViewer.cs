@@ -24,7 +24,7 @@ public class ScrollViewer : Control
     public ScrollViewer()
     {
         Handlers.AddHandler(InputEvents.MouseWheelEvent, OnMouseWheel);
-        SetValue(ComponentTemplateProperty, ScrollViewerTemplates.Default, UiPropertyValueSource.AspectBase);
+        SetFrameworkDefault(ComponentTemplateProperty, ScrollViewerTemplates.Default);
     }
 
     public static readonly RoutedEvent ScrollChangedEvent = RoutedEventRegistry.Register(
@@ -182,7 +182,7 @@ public class ScrollViewer : Control
         base.OnPropertyChanged(args);
         if (ReferenceEquals(args.Property, ComponentTemplateProperty) &&
             ComponentTemplate is null &&
-            GetSourceValue(ComponentTemplateProperty, UiPropertyValueSource.AspectBase) is ComponentTemplate)
+            HasFrameworkDefault(ComponentTemplateProperty))
         {
             ClearValue(ComponentTemplateProperty);
         }

@@ -9,9 +9,9 @@ public sealed class AspectConditionResult
         IReadOnlyList<AspectConditionResult>? children = null)
     {
         Matches = matches;
-        Dependencies = dependencies ?? throw new ArgumentNullException(nameof(dependencies));
+        Dependencies = Array.AsReadOnly((dependencies ?? throw new ArgumentNullException(nameof(dependencies))).ToArray());
         DiagnosticText = diagnosticText ?? string.Empty;
-        Children = children ?? [];
+        Children = Array.AsReadOnly((children ?? []).ToArray());
     }
 
     public bool Matches { get; }

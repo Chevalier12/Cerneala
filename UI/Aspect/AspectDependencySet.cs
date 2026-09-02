@@ -14,11 +14,11 @@ public sealed class AspectDependencySet
         int catalogVersion = 0,
         int environmentVersion = 0)
     {
-        Tokens = tokens ?? [];
-        States = states ?? [];
-        Variants = variants ?? [];
-        Properties = properties ?? [];
-        Data = data ?? [];
+        Tokens = Array.AsReadOnly((tokens ?? []).ToArray());
+        States = Array.AsReadOnly((states ?? []).ToArray());
+        Variants = Array.AsReadOnly((variants ?? []).ToArray());
+        Properties = Array.AsReadOnly((properties ?? []).ToArray());
+        Data = Array.AsReadOnly((data ?? []).ToArray());
         Slot = slot;
         CatalogVersion = catalogVersion;
         EnvironmentVersion = environmentVersion;

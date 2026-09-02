@@ -256,7 +256,7 @@ public sealed class ItemsControlTests
         UIElement generated = control.ItemsPresenter.LayoutPanelRoot!.VisualChildren[0];
         Assert.Same(containerAspect, generated.Aspect);
         Assert.Equal(new Thickness(3, 0, 3, 3), generated.Margin);
-        Assert.Equal(UiPropertyValueSource.AspectBase, generated.GetValueSource(UIElement.AspectProperty));
+        Assert.Equal(UiPropertyValueSource.TemplateBinding, generated.GetValueSource(UIElement.AspectProperty));
 
         ElementAspect localAspect = new(
             [new ElementAspectValue(UIElement.MarginProperty, new Thickness(9))]);
@@ -272,7 +272,7 @@ public sealed class ItemsControlTests
         Assert.Equal(new Thickness(9), explicitItem.Margin);
         Assert.Same(containerAspect, explicitItem.GetSourceValue(
             UIElement.AspectProperty,
-            UiPropertyValueSource.AspectBase));
+            UiPropertyValueSource.TemplateBinding));
     }
 
     [Fact]

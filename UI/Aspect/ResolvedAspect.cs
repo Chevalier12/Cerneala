@@ -10,9 +10,11 @@ public sealed class ResolvedAspect
         IReadOnlyList<RejectedAspectDeclaration> rejectedDeclarations,
         AspectDependencySet dependencies)
     {
-        Values = values ?? throw new ArgumentNullException(nameof(values));
-        MatchedRules = matchedRules ?? throw new ArgumentNullException(nameof(matchedRules));
-        RejectedDeclarations = rejectedDeclarations ?? throw new ArgumentNullException(nameof(rejectedDeclarations));
+        ArgumentNullException.ThrowIfNull(values);
+        Values = new System.Collections.ObjectModel.ReadOnlyDictionary<UiProperty, ResolvedAspectValue>(
+            new Dictionary<UiProperty, ResolvedAspectValue>(values, ReferenceEqualityComparer.Instance));
+        MatchedRules = Array.AsReadOnly((matchedRules ?? throw new ArgumentNullException(nameof(matchedRules))).ToArray());
+        RejectedDeclarations = Array.AsReadOnly((rejectedDeclarations ?? throw new ArgumentNullException(nameof(rejectedDeclarations))).ToArray());
         Dependencies = dependencies ?? throw new ArgumentNullException(nameof(dependencies));
     }
 

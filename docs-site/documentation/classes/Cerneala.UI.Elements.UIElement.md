@@ -59,6 +59,8 @@ An attached element's property mutations are UI-thread-affine and use `Root.Rela
 
 Most element settings are registered `UiProperty<T>` values. Setting properties such as `Margin`, `Visibility`, `Opacity`, focus state, or transform values flows through `UiObject.SetValue`, raises property notifications, and calls `OnPropertyInvalidated` with the metadata options from the registered property.
 
+`Aspect` holds an optional `ElementAspect`. Assignment validates the aspect target type and every default and conditional declaration against the runtime element type before committing the property-store change. Compatible aspects are composed by the attached root's `AspectProcessor`. A generated behavior lifetime exists only while the element is attached: detach disposes it, reattach creates a new lifetime, and replacement or clear also disposes the active lifetime.
+
 `IsHitTestVisible` controls direct pointer hit testing without changing layout or rendering. When it is `false`, the element and its visual subtree are skipped by hit testing; the default is `true`.
 
 Changing `Visibility` from `Visible` to `Hidden` or `Collapsed`, or changing `IsVisible` to `false`, cancels active property motion for the element and its visual descendants. Canceled motion does not resume automatically when the subtree becomes visible again; callers or markup conditions can start it again explicitly.

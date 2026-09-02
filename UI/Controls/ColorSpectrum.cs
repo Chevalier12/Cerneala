@@ -50,8 +50,8 @@ public class ColorSpectrum : Control, IPointerDragSource
         Focusable = true;
         IsTabStop = true;
         Cursor = Cerneala.UI.Input.Cursor.Crosshair;
-        SetValue(BorderBrushProperty, new SolidColorBrush(new Color(70, 76, 86)), UiPropertyValueSource.AspectBase);
-        SetValue(BorderThicknessProperty, new Thickness(1), UiPropertyValueSource.AspectBase);
+        SetFrameworkDefault(BorderBrushProperty, new SolidColorBrush(new Color(70, 76, 86)));
+        SetFrameworkDefault(BorderThicknessProperty, new Thickness(1));
         Handlers.AddHandler(InputEvents.KeyDownEvent, OnKeyDown);
         Handlers.AddHandler(InputEvents.LostMouseCaptureEvent, (_, _) => isDragging = false);
     }

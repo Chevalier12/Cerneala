@@ -36,9 +36,9 @@ public class ColorSwatch : Control
     {
         Width = 20;
         Height = 20;
-        SetValue(BorderBrushProperty, new SolidColorBrush(new Color(90, 98, 110)), UiPropertyValueSource.AspectBase);
-        SetValue(BorderThicknessProperty, new Thickness(1), UiPropertyValueSource.AspectBase);
-        SetValue(ComponentTemplateProperty, ColorSwatchTemplates.Default, UiPropertyValueSource.AspectBase);
+        SetFrameworkDefault(BorderBrushProperty, new SolidColorBrush(new Color(90, 98, 110)));
+        SetFrameworkDefault(BorderThicknessProperty, new Thickness(1));
+        SetFrameworkDefault(ComponentTemplateProperty, ColorSwatchTemplates.Default);
     }
 
     public event EventHandler<RoutedPropertyChangedEventArgs<Color>> SelectedColorChanged
@@ -103,7 +103,7 @@ public class ColorSwatch : Control
 
         if (ReferenceEquals(args.Property, ComponentTemplateProperty) &&
             ComponentTemplate is null &&
-            GetSourceValue(ComponentTemplateProperty, UiPropertyValueSource.AspectBase) is ComponentTemplate)
+            HasFrameworkDefault(ComponentTemplateProperty))
         {
             ClearValue(ComponentTemplateProperty);
         }

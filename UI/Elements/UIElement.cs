@@ -264,7 +264,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     public float PresenceScale { get; private set; } = 1;
 
-    protected override UiPropertyMutationObserver? MutationObserver => Root?.Motion.Transactions;
+    protected override UiPropertyMutationObserver? MutationObserver => Root?.PropertyMutations;
 
     protected override void VerifyMutationAccess() => Root?.Relay.VerifyAccess();
 
@@ -647,6 +647,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         Root = root ?? throw new ArgumentNullException(nameof(root));
         ElementId = id;
         attachmentGeneration++;
+        AttachElementAspectBehavior();
         if (!isInitialized)
         {
             isInitialized = true;
@@ -673,6 +674,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     internal void DetachFromRoot()
     {
         attachmentGeneration++;
+        DetachElementAspectBehavior();
         RaiseEvent(new RoutedEventArgs(UnloadedEvent, this));
         Root?.Motion.Layout.MarkDetached(this);
         Root?.Motion.Presence.MarkDetached(this);
@@ -1245,6 +1247,36 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         {
             ValidateLocalAspectProperty(value.Property);
         }
+
+        foreach (ElementAspectCondition condition in aspect.Conditions)
+        {
+            foreach (ElementAspectValue value in condition.Values)
+            {
+                ValidateLocalAspectProperty(value.Property);
+            }
+        }
+    }
+
+    internal override void ValidatePropertyMutation(UiProperty property, object? value)
+    {
+        if (ReferenceEquals(property, AspectProperty) && value is ElementAspect aspect)
+        {
+            ValidateLocalAspect(aspect);
+        }
+    }
+
+    private void AttachElementAspectBehavior()
+    {
+        if (elementAspectBehavior is null && Aspect is ElementAspect aspect)
+        {
+            elementAspectBehavior = aspect.AttachBehavior(this);
+        }
+    }
+
+    private void DetachElementAspectBehavior()
+    {
+        elementAspectBehavior?.Dispose();
+        elementAspectBehavior = null;
     }
 
     private void ValidateIncrementalAspectValue(UiProperty property)

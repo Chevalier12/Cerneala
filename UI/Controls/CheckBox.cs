@@ -18,9 +18,9 @@ public class CheckBox : ToggleButton
 
     public CheckBox()
     {
-        SetValue(ComponentTemplateProperty, CheckBoxTemplates.Default, UiPropertyValueSource.AspectBase);
-        SetValue(BorderBrushProperty, DefaultBorderBrush, UiPropertyValueSource.AspectBase);
-        SetValue(BorderThicknessProperty, new Thickness(1), UiPropertyValueSource.AspectBase);
+        SetFrameworkDefault(ComponentTemplateProperty, CheckBoxTemplates.Default);
+        SetFrameworkDefault(BorderBrushProperty, DefaultBorderBrush);
+        SetFrameworkDefault(BorderThicknessProperty, new Thickness(1));
     }
 
     protected override LayoutSize MeasureCore(MeasureContext context)

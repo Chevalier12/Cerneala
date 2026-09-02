@@ -65,7 +65,7 @@ foreach (AspectConditionResult child in result.Children)
 
 `DiagnosticText` stores short human-readable text supplied by the condition node. The constructor normalizes a `null` diagnostic string to `string.Empty`.
 
-`Children` contains nested results for compound conditions. Simple conditions use an empty child collection. The constructor requires a non-null `Dependencies` collection and uses an empty child collection when `children` is `null`.
+`Children` contains nested results for compound conditions. Simple conditions use an empty child collection. The constructor requires a non-null `Dependencies` collection, uses an empty child collection when `children` is `null`, and copies both supplied lists into read-only snapshots.
 
 ## Constructors
 
