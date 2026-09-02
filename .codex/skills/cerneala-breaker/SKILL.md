@@ -34,12 +34,20 @@ Do not waste the attack budget on naming, formatting, aesthetics, friendly diagn
 - Follow repository instructions and preserve the dirty worktree. Existing changes and failures are not yours.
 - Generate and read `FileTree.md` before broad repository reasoning. Use RoslynIndexer as the primary C# navigation tool and read complete source files before editing test or harness code.
 - Establish the documented or observable contract before calling behavior broken. Distinguish valid hostile use from invalid use that the API is allowed to reject.
-- Baseline the focused existing tests before adding a probe when practical. Separate pre-existing failures, harness defects, environment failures, and target failures.
+- Before adding a probe, record the baseline revision, dirty state, toolchain/runtime identity, applicable backend/platform/configuration, focused command, and broader command. Run the focused baseline when practical and capture duration, skips, retries, hangs, leaks, and known flakes instead of reducing it to pass/fail.
+- Classify every anomalous result as unclassified until evidence distinguishes a Cerneala defect, test defect, harness/environment defect, specification gap, or flake. Only Cerneala defects are indictments against the target.
+- Treat coverage, mutation score, generated-case count, repeated passes, and executed lines as supporting evidence, never as correctness or suite-quality verdicts. Separate reachability from whether an independent oracle can observe the wrong behavior.
 - Do not implement production behavior changes or fixes. This skill attacks and diagnoses; use a bug-fix workflow only when the user separately asks for a fix.
 - Temporary production-source instrumentation is permitted only when a lower reproduction rung cannot observe the real behavior. It must be narrowly scoped, explicitly opt-in, observational rather than corrective, add no public API, and be removed completely after evidence capture. Reindex after adding and removing it, then verify that the instrumented production files retain no audit-created diff.
 - Prefer temporary probes and harnesses during discovery. For every confirmed finding, replace or minimize the successful probe into a permanent regression test in the architecture-correct test project. Keep that test active and intentionally RED at handoff; remove only superseded exploratory artifacts.
+- Existing tests are repository evidence, not cleanup opportunities. Do not delete, consolidate, rewrite, quarantine, or weaken them under this skill. If an existing test is vacuous, flaky, order-dependent, or incapable of detecting the target failure, record that as an evidence limitation and add the smallest distinct regression needed for the confirmed Cerneala defect.
 - Never hide a finding with `Skip`, quarantine, conditional suppression, an expected-failure wrapper, weakened assertions, or an updated baseline that blesses the broken behavior. The resulting suite is deliberately red until the defect is fixed.
 - Never commit, push, publish, or install dependencies without explicit authorization.
+
+Load supporting guidance only when the attack needs it:
+
+- Read [references/attack-techniques.md](references/attack-techniques.md) before choosing property-based, fuzz, metamorphic, model-based, combinatorial, differential, concurrency, fault-injection, or minimization techniques.
+- Read [references/test-evidence.md](references/test-evidence.md) when judging oracle strength, coverage, mutation results, flakes, isolation, or whether existing tests actually protect the contract.
 
 ## Attack Workflow
 
@@ -54,13 +62,29 @@ Before writing probes, build a compact attack model:
 - for a stateful target, write a minimal state/action table with expected and forbidden outcomes, then derive hostile sequences from it;
 - mark unsupported assumptions and contract ambiguities instead of silently turning them into test expectations.
 
+Track the attack model as a compact risk ledger. Every behaviorally distinct row must name the contract and its source, consequence, falsifiable hypothesis, oracle, current evidence gap, selected technique, budget, priority, and disposition. Use only these dispositions:
+
+- `pending`: not yet exercised;
+- `covered`: the declared bounded attack ran without contradiction;
+- `confirmed-defect`: a reproducible Cerneala contract violation exists;
+- `excluded`: outside scope for a recorded reason;
+- `escalated`: requires another authorized discipline, environment, or product decision;
+- `unresolved`: blocked or contradictory evidence remains.
+
+`Covered` means only that the declared attack did not falsify the contract. It does not mean correct, exhaustive, race-free, leak-free, or safe.
+
 Define a proportional attack budget from that model. At minimum, attempt to falsify every identified plausible Critical or Major invariant, exercise at least one applicable boundary or hostile sequence, test one cross-feature interaction when a plausible shared invariant exists, and use a real runtime path when the contract depends on input, frames, rendering, native code, or backend lifetime. A narrow target may collapse these into the same probe. Record justified exclusions. Do not stop merely because the first finding appeared; stop when the declared budget is exhausted, an environmental blocker prevents further faithful testing, or an explicit user limit is reached.
 
 Choose only attack families that can actually falsify the target's contract:
 
 - boundary values: empty, zero, negative, huge, duplicate, degenerate, `NaN`, infinity, precision edges, or malformed data;
 - hostile sequences: repeat, reorder, interrupt, cancel, dispose, recreate, reenter, or alternate state transitions;
+- rule and configuration interactions: use decision tables or constrained pairwise/higher-strength cases when several independent parameters affect the outcome; encode impossible combinations and preserve known high-risk combinations explicitly;
+- generated inputs: exercise valid structured values, deliberately invalid values, and valid action sequences as applicable; bias toward named risk partitions, measure which partitions were actually generated, and preserve the minimized concrete counterexample rather than only a seed;
+- semantic properties: round trips, idempotence, conservation, monotonicity, equivalence to a smaller reference model, invariants after transitions, or metamorphic relations grounded in the real contract;
 - deterministic stress: fixed seed, fixed iteration count, bounded timing variations, and explicit timeout;
+- controlled dependency and resource faults: immediate/delayed failure, timeout, cancellation, partial completion, stale/duplicate/reordered/corrupt output, acquisition exhaustion, and cleanup failure at explicit seams, each with a predeclared recovery oracle;
+- harness attacks: run relevant tests alone, in normal order, reordered, and concurrently when supported; vary controlled time, locale, configuration, seed, and private resource identity when those can expose false greens or leaked state;
 - integration boundaries: parser to generator, generated code to runtime, retained state to renderer, platform to backend, CPU to GPU, or managed to native code;
 - interaction attacks: combine the target with one or two independently valid neighboring subsystems whose contracts may share an invariant, especially lifecycle plus Motion, layout plus virtualization, input plus template replacement, Prism plus resize, or backend recreation plus retained caches. Do not create arbitrary combinatorial explosions; choose interactions with a plausible shared invariant;
 - user-like input: click, key, text, focus, pointer capture, drag, and routing rather than direct property assignment;
@@ -68,7 +92,7 @@ Choose only attack families that can actually falsify the target's contract:
 - performance limits: declare the oracle before measuring, using a documented budget, a controlled same-environment baseline, a justified reference implementation/backend, or a scaling curve across realistic valid workloads. Warm up first, take repeated samples, report variability, then measure CPU time, allocations, work counts, resource churn, and GPU time when available;
 - visual contracts: deterministic scenes, application-owned `Window.SaveScreenshot`, pixel/color diffs, and backend conformance with justified tolerances.
 
-Do not fire a generic test shotgun. Rank hypotheses by impact and likelihood, then use the smallest experiment that can kill each hypothesis.
+Do not fire a generic test shotgun. Rank hypotheses by impact and likelihood, then use the smallest experiment that can kill each hypothesis. Start with direct examples and explicit boundaries; escalate to a more powerful technique only when it closes a named ledger gap that cheaper tests cannot reach.
 
 ### 2. Build hostile but faithful tests
 
@@ -85,10 +109,13 @@ Escalate when a weaker layer cannot reproduce the relevant ownership boundary. A
 For every probe record:
 
 - exact input, sequence, seed, iteration count, timing pattern, timeout, backend, and environment;
+- tool and version, generator/corpus version, configuration, and generated-case distribution across the risk partitions when applicable;
 - the invariant and explicit failure signal;
 - observed versus expected values;
 - whether the result reproduced on an identical rerun;
 - measurements rather than adjectives for performance claims.
+
+Build the oracle before multiplying cases. Prefer, in order: an exact contractual result; a small independent model or reference implementation; a domain invariant; a valid metamorphic relation; a compatible independent backend/mode comparison; then a bounded robustness oracle such as no crash, hang, leak, invalid output, unbounded growth, or forbidden side effect. State the oracle's blind spots. An input generator without a discriminating oracle is noise.
 
 Do not grade an isolated performance number as a defect without a comparison oracle. If no defensible threshold or baseline exists, report the measurement as an observation, not a Major or Critical finding. Demonstrated unbounded growth, pathological scaling, or exhaustion under a realistic valid workload can itself supply the oracle when the scaling experiment and machine limits are explicit.
 
@@ -98,9 +125,11 @@ Keep stress bounded and local. Do not attempt machine-wide denial of service, un
 
 A finding needs a faithful reproduction that fails for the intended reason. Confirm deterministic failures with the same scenario again. For intermittent behavior, report the exact failure count over a fixed number of iterations and preserve the first representative trace.
 
+A flake is the same code and declared configuration producing both pass and fail outcomes. Preserve both outcomes and investigate synchronization, order dependence, leaked global/framework/native state, uncontrolled time/randomness, resource pressure, and product concurrency defects. Do not assume the test is guilty merely because the symptom appears in a test runner.
+
 For every Major or Critical finding, attempt one materially different reproduction path when practical. Change an ownership boundary, execution layer, input route, backend, or observation method; renaming or lightly rearranging the same harness does not count. If a second path is not practical, record why and reduce the claimed confidence.
 
-Minimize every confirmed reproduction without removing the failure. Preserve its exact command, environment, inputs, seed, timing, and expected failure signal. The final permanent RED test is the canonical rerunnable artifact; remove a temporary probe only after the permanent test reproduces the same violated contract.
+Minimize every confirmed reproduction without removing the failure. Remove irrelevant input fragments, actions, actors, faults, and environment differences while the same contract still fails. Preserve the minimized concrete input or action sequence, exact command, environment, tool versions, configuration, generator version, seed, event/schedule trace, injected fault location, timing, and expected failure signal. Deduplicate by violated contract and supported cause, not merely by stack trace or visible symptom. The final permanent RED test is the canonical rerunnable artifact; remove a temporary probe only after the permanent test reproduces the same violated contract.
 
 Trace confirmed behavior far enough to identify the violated invariant and likely owner. Call it a root cause only when source inspection or a distinguishing experiment supports that conclusion. Otherwise label it a hypothesis.
 
@@ -116,6 +145,7 @@ Every confirmed finding, including Material findings, must finish with the small
 - For visual findings, use deterministic scenes, application-owned screenshots, and explicit pixel/color comparisons with justified tolerance.
 - For performance findings, prefer deterministic work/allocation/resource counters or a dedicated performance gate with a declared oracle. Do not add noisy wall-clock assertions to an ordinary unit suite.
 - Keep the test active and unskipped. Its failure must be an assertion or explicit failure signal caused by the target defect, not a broken fixture, compilation error, missing asset, unavailable environment, or unrelated exception.
+- Prove that the regression has discrimination power: observe it RED against the defective behavior, and when practical show that a controlled non-defective comparison or narrowly reversed fault does not trigger the same failure. Merely executing the suspected code is not enough.
 - Run each new RED test in isolation at least twice when deterministic. Then run its affected test project to inventory the intentional failures and detect collateral fixture or compilation damage. Run broader repository gates required by repository policy and report their expected nonzero result separately from any unexpected failure.
 - If a faithful permanent automated test is technically impossible, report the exact blocker. The evidence may still be reported, but the finding is not fully delivered under this skill and the audit remains incomplete for it.
 
@@ -145,7 +175,8 @@ Lead with a blunt verdict:
 Report:
 
 - target and tested contract;
-- attack model, declared budget, exhausted items, and justified exclusions;
+- baseline revision, dirty state, toolchain, environment/configuration matrix, commands, durations, skips, retries, and pre-existing failures;
+- risk ledger with every row covered, confirmed, excluded, escalated, or unresolved; attack model, declared budget, exhausted items, and justified exclusions;
 - attack matrix actually executed;
 - confirmed findings ordered by severity, each with exact repro, evidence, impact, and owner/root-cause status;
 - for every Major or Critical finding, the materially different reproduction result or the reason it was impractical and the resulting confidence limitation;
@@ -154,6 +185,7 @@ Report:
 - commands and verification run;
 - cleanup status and the exact intentionally retained RED test files;
 - untested surfaces, environmental blockers, and remaining uncertainty;
+- evidence limits: which oracles, generated partitions, configurations, schedules, tools, or techniques were unavailable or deliberately not run, and which conclusions therefore remain unsupported;
 - the expected red-suite status, intentional failure count, pre-existing failure count, and every unexpected failure separately.
 
 No compliments as filler. No softened verdicts. No bullshit certainty.

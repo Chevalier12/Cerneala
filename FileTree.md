@@ -4,10 +4,6 @@ Generated from `.`.
 
 ```text
 ./
-|-- .agents/
-|   +-- generated-aspect/
-|       +-- Cerneala.SourceGen/
-|           +-- Cerneala.SourceGen.UiMarkupGenerator/
 |-- .config/
 |   +-- dotnet-tools.json
 |-- .github/
@@ -1551,6 +1547,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Motion.MotionProperty.md
 |   |   |   |-- Cerneala.UI.Motion.MotionPropertyShortcut_T_.md
 |   |   |   |-- Cerneala.UI.Motion.MotionStateBuilder.md
+|   |   |   |-- Cerneala.UI.Motion.MotionStateTargetBuilder.md
 |   |   |   |-- Cerneala.UI.Motion.ObjectMotionAnimationBuilder_TTarget_TValue_.md
 |   |   |   |-- Cerneala.UI.Motion.ObjectMotionFacade_TTarget_.md
 |   |   |   |-- Cerneala.UI.Motion.ObjectMotionFacade.md
@@ -2730,6 +2727,7 @@ Generated from `.`.
 |   |   |   |   |-- SemanticsTreeTests.cs
 |   |   |   |   +-- TextBoxSemanticsTests.cs
 |   |   |   |-- Aspect/
+|   |   |   |   |-- AspectAuditRegressionTests.cs
 |   |   |   |   |-- AspectEngineStressBudgetTests.cs
 |   |   |   |   |-- AspectEngineTests.cs
 |   |   |   |   |-- AspectPackageTests.cs
@@ -2902,7 +2900,6 @@ Generated from `.`.
 |   |   |   |   +-- UiHostPlatformServicesIntegrationTests.cs
 |   |   |   |-- Prism/
 |   |   |   |   |-- PrismAttachmentTests.cs
-|   |   |   |   |-- PrismDeepNestingContractTests.cs
 |   |   |   |   |-- PrismDefinitionContractTests.cs
 |   |   |   |   |-- PrismInstanceTests.cs
 |   |   |   |   +-- PrismMotionIntegrationTests.cs
@@ -3497,6 +3494,7 @@ Generated from `.`.
 |   |   |-- IElementHost.cs
 |   |   |-- IElementLifecycleBehavior.cs
 |   |   |-- InheritedPropertyPropagator.cs
+|   |   |-- RootPropertyMutationObserver.cs
 |   |   |-- UIElement.cs
 |   |   |-- UIElement.Events.cs
 |   |   |-- UIElement.InputEvents.cs
@@ -3838,6 +3836,7 @@ Generated from `.`.
 |   |   |-- MotionProperty.cs
 |   |   |-- MotionPropertyShortcut.cs
 |   |   |-- MotionStateBuilder.cs
+|   |   |-- MotionStateTargetBuilder.cs
 |   |   |-- ObjectMotionAnimationBuilder.cs
 |   |   |-- ObjectMotionExpressionPropertyCache.cs
 |   |   |-- ObjectMotionFacade.cs

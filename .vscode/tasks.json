@@ -73,6 +73,24 @@
       },
       "problemMatcher": "$msCompile",
       "group": "build"
+    },
+    {
+      "label": "build tetrisish - sdl3",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/Tetrisish/Tetris.csproj",
+        "-p:CernealaDesktopBackend=SDL3"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "MSBuildEnableWorkloadResolver": "false"
+        }
+      },
+      "problemMatcher": "$msCompile",
+      "group": "build"
     }
   ]
 }

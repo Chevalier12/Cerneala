@@ -44,6 +44,17 @@
       "cwd": "${workspaceFolder}/CernealaPresentation",
       "console": "internalConsole",
       "stopAtEntry": false
+    },
+    {
+      "name": "Tetrisish - SDL3",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build tetrisish - sdl3",
+      "program": "${workspaceFolder}/Tetrisish/bin/Debug/net8.0/Cerneala.Tetris.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}/Tetrisish",
+      "console": "internalConsole",
+      "stopAtEntry": false
     }
   ]
 }
