@@ -148,7 +148,7 @@
         <div>
           <span class="lineage-state">Forward policy</span>
           <h3>Better models inherit the repo</h3>
-          <p>OpenAI 5.6 or newer is approved. Anthropic Fable-tier models or newer peers are approved. The standard rises with capable models instead of preserving nostalgia for weaker ones.</p>
+          <p>OpenAI 5.6 or newer is approved. Anthropic models evaluated through September 2, 2026, including Fable 5.1, are not approved for core engineering. Future models earn trust through observed compliance and repository evidence, not provider branding.</p>
         </div>
       </article>
     </div>
@@ -204,18 +204,39 @@
       <p>This is a repository contribution policy, not a universal leaderboard. Core engineering requires models that can sustain architecture, tool discipline, long context, testing, and precise changes across a large C# codebase.</p>
     </header>
 
+    <aside class="anthropic-warning" aria-labelledby="anthropic-warning-title">
+      <div class="anthropic-warning__sign" aria-hidden="true">
+        <svg viewBox="0 0 120 108" focusable="false">
+          <path d="M60 5 115 103H5L60 5Z" fill="none" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/>
+          <path d="M60 34V70" stroke="currentColor" stroke-width="9" stroke-linecap="round"/>
+          <circle cx="60" cy="87" r="5.5" fill="currentColor"/>
+        </svg>
+      </div>
+      <div class="anthropic-warning__content">
+        <span>MAINTAINER WARNING / 02 SEPTEMBER 2026</span>
+        <h3 id="anthropic-warning-title">Do not use Anthropic models for Cerneala core engineering.</h3>
+        <p><strong>Maintainer assessment:</strong> every Anthropic model evaluated through September 2, 2026—including Fable 5.1—is unreliable and dangerous to use for Cerneala architecture, implementation, and bug fixing. The maintainer considers the observed behavior a provider-wide regression, not an Opus-only problem.</p>
+        <ul>
+          <li>They may ignore or only imitate the instructions in repository skills.</li>
+          <li>They may skip RoslynIndexer and navigate C# through weaker, prohibited shortcuts.</li>
+          <li>They may disregard <code>AGENTS.md</code> and established ownership or verification rules.</li>
+          <li>They may claim they performed one action while the diff, commands, or artifacts show that they performed something else.</li>
+        </ul>
+        <strong class="anthropic-warning__gate">If you use Claude despite an explicit instruction not to, treat every claim as untrusted: inspect the exact diff, rerun every claimed command, confirm RoslynIndexer usage, and reproduce every test or runtime result yourself. Visual CSS, composition, and art direction remain a separate allowed lane; that exception does not include architecture, implementation, or bug fixes.</strong>
+      </div>
+    </aside>
+
     <div class="model-matrix">
       <div class="model-row model-row--head"><span>Provider / model</span><span>Core engineering</span><span>Visual work</span><span>Maintainer verdict</span></div>
       <div class="model-row model-row--approved"><span><strong>OpenAI GPT-5.6+</strong><small>5.6 is the baseline</small></span><span><i></i>Approved</span><span><i></i>Approved</span><span>Preferred for repository work</span></div>
-      <div class="model-row model-row--approved"><span><strong>Anthropic Fable tier+</strong><small>Fable or a newer peer</small></span><span><i></i>Approved</span><span><i></i>Approved</span><span>Tolerated for engineering</span></div>
-      <div class="model-row model-row--rejected"><span><strong>Anthropic Opus</strong><small>Yes, specifically</small></span><span><i></i>Rejected</span><span><i></i>Allowed</span><span>Too unreliable here. Stupid as hell for this repo.</span></div>
+      <div class="model-row model-row--rejected"><span><strong>Anthropic Claude</strong><small>All evaluated releases through 2026-09-02, including Fable 5.1</small></span><span><i></i>Rejected</span><span><i></i>Restricted</span><span>Unreliable and dangerous for Cerneala core work</span></div>
       <div class="model-row model-row--rejected"><span><strong>Older OpenAI models</strong><small>Including historical 5.5</small></span><span><i></i>Rejected</span><span><i></i>Case by case</span><span>History, not the current quality floor</span></div>
-      <div class="model-row model-row--visual"><span><strong>Anthropic visual work</strong><small>CSS, composition, visual direction</small></span><span><i></i>Not the lane</span><span><i></i>Approved</span><span>Often stronger than OpenAI visually</span></div>
+      <div class="model-row model-row--visual"><span><strong>Anthropic visual work</strong><small>CSS, composition, visual direction only</small></span><span><i></i>Not allowed</span><span><i></i>Allowed</span><span>Review carefully; the exception stops before engineering</span></div>
     </div>
 
     <div class="model-policy__footer">
-      <span>Detection policy</span>
-      <strong>If you use an unapproved Anthropic model for core engineering, the maintainer expects its fingerprints to show up in the diff.</strong>
+      <span>Verification policy</span>
+      <strong>If an Anthropic model touched architecture, implementation, or a bug fix, assume nothing. Audit the diff and reproduce its claimed evidence before the work enters Cerneala.</strong>
     </div>
   </section>
 
