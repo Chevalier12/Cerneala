@@ -1,6 +1,7 @@
 using Cerneala.UI.Elements;
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Diagnostics;
+using Cerneala.UI.Motion.Properties;
 using Cerneala.Tests.UI.Motion.Core;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
@@ -48,5 +49,49 @@ public sealed class MotionDiagnosticsTests
         MotionGraphSnapshot snapshot = root.Motion.Diagnostics.CreateSnapshot(root.Motion);
 
         Assert.Equal(1, snapshot.ActiveNodeCount);
+    }
+
+    [Fact]
+    public void SnapshotReportsLatestFrameSamplingAndPropertyWrites()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(100, 100, motionClock: clock);
+        UIElement element = new();
+        root.VisualChildren.Add(element);
+        MotionPropertyBinding<float> binding = root.Motion.Properties.GetOrCreateBinding(
+            root.Motion,
+            element,
+            UIElement.OpacityProperty);
+        binding.AnimateTo(
+            0f,
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)),
+            new MotionPropertyStartOptions { HoldOnComplete = true });
+        root.Motion.Tick();
+        clock.Advance(TimeSpan.FromMilliseconds(50));
+
+        MotionFrameResult frame = root.Motion.Tick();
+        MotionGraphSnapshot snapshot = root.Motion.Diagnostics.CreateSnapshot(root.Motion);
+
+        Assert.Equal(frame.MotionNodesSampled, snapshot.ValuesSampledThisFrame);
+        Assert.Equal(frame.MotionPropertyWrites, snapshot.PropertiesWrittenThisFrame);
+        Assert.True(snapshot.ValuesSampledThisFrame > 0);
+        Assert.True(snapshot.PropertiesWrittenThisFrame > 0);
+        Assert.Equal(1, snapshot.ActivePropertyBindings);
+    }
+
+    [Fact]
+    public void SnapshotDoesNotCountIdleCachedPropertyBindingAsActive()
+    {
+        UIRoot root = new();
+        UIElement element = new();
+        root.VisualChildren.Add(element);
+        root.Motion.Properties.GetOrCreateBinding(
+            root.Motion,
+            element,
+            UIElement.OpacityProperty);
+
+        MotionGraphSnapshot snapshot = root.Motion.Diagnostics.CreateSnapshot(root.Motion);
+
+        Assert.Equal(0, snapshot.ActivePropertyBindings);
     }
 }

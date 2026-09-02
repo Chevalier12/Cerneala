@@ -8,7 +8,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Motion/Transactions/MotionTransactionOptions.cs`
 
-Configures the default motion specification and disabled state for a motion transaction.
+Configures the default motion specification, disabled state, and conflict priority for a motion transaction.
 
 ```csharp
 public sealed class MotionTransactionOptions
@@ -26,6 +26,7 @@ using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Media;
+using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Transactions;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
@@ -34,7 +35,8 @@ Control control = new();
 root.VisualChildren.Add(control);
 
 MotionTransactionOptions options = new(
-    MotionFactory.Tween(TimeSpan.FromMilliseconds(120)));
+    MotionFactory.Tween(TimeSpan.FromMilliseconds(120)),
+    priority: MotionPriority.Interactive);
 
 using (root.Motion.BeginTransaction(options))
 {
@@ -59,6 +61,8 @@ MotionTransactionOptions disabled = new(
 
 `DefaultSpec` is the transaction-level `MotionSpec` used when an animatable property mutation is converted into a motion property animation. The transaction pipeline uses the current top transaction on the stack, so nested transactions use the inner transaction's options for mutations performed inside the inner scope.
 
+`Priority` is forwarded to each motion created from an observed mutation. An incoming transaction motion replaces an active motion on the same value only when its priority is greater than or equal to the active priority. Lower-priority transaction motion is ignored without canceling the active motion.
+
 When `IsDisabled` is `true`, the transaction context suppresses transaction-created animations. Property mutations still apply normally through their original value source; the transaction simply does not create a motion property binding for them.
 
 The constructor requires a non-null `defaultSpec`. Use `MotionTransactionContext.Disable()` or `MotionSystem.Disable()` when the goal is to suppress implicit transaction animation through the built-in disabled transaction helper.
@@ -67,7 +71,7 @@ The constructor requires a non-null `defaultSpec`. Use `MotionTransactionContext
 
 | Name | Description |
 | --- | --- |
-| `MotionTransactionOptions(MotionSpec defaultSpec, bool isDisabled = false)` | Initializes transaction options with the supplied default motion specification and optional disabled flag. |
+| `MotionTransactionOptions(MotionSpec defaultSpec, bool isDisabled = false, MotionPriority priority = MotionPriority.Normal)` | Initializes transaction options with the supplied default specification, disabled flag, and conflict priority. |
 
 ## Properties
 
@@ -75,12 +79,13 @@ The constructor requires a non-null `defaultSpec`. Use `MotionTransactionContext
 | --- | --- | --- |
 | `DefaultSpec` | `MotionSpec` | Gets the default motion specification used for animatable property mutations captured by the transaction. |
 | `IsDisabled` | `bool` | Gets whether the transaction suppresses transaction-created animations. |
+| `Priority` | `MotionPriority` | Gets the priority assigned to transaction-created animations. The default is `MotionPriority.Normal`. |
 
 ## Exceptions
 
 | Member | Exception | Condition |
 | --- | --- | --- |
-| `MotionTransactionOptions(MotionSpec, bool)` | `ArgumentNullException` | `defaultSpec` is `null`. |
+| `MotionTransactionOptions(MotionSpec, bool, MotionPriority)` | `ArgumentNullException` | `defaultSpec` is `null`. |
 
 ## Applies to
 
@@ -95,3 +100,4 @@ Target framework: `net8.0`
 - `Cerneala.UI.Motion.Transactions.MotionTransactionScope`
 - `Cerneala.UI.Motion.Core.MotionSystem`
 - `Cerneala.UI.Motion.Specs.MotionSpec`
+- `Cerneala.UI.Motion.Core.MotionPriority`

@@ -36,7 +36,7 @@ bool incomingWon = resolved == incoming;
 
 `MotionConflictResolver` centralizes the conflict rule for two `MotionComposition` values. The resolver compares only `MotionComposition.Priority`; it does not inspect the motion channel or any other state.
 
-When `incoming.Priority` is greater than or equal to `current.Priority`, `Resolve` returns `incoming`. Otherwise, it returns `current`. With the current `MotionPriority` enum, `Normal` is the only defined priority value, so conflicts between normal compositions resolve to the incoming composition.
+When `incoming.Priority` is greater than or equal to `current.Priority`, `Resolve` returns `incoming`. Otherwise, it returns `current`. The built-in priority order is `Interactive`, `Normal`, then `ReducedMotion`; conflicts at the same priority resolve to the incoming composition.
 
 ## Constructors
 

@@ -88,14 +88,20 @@ public sealed class MotionTransactionContext : UiPropertyMutationObserver, IDisp
             return;
         }
 
-        AnimateMutationUntyped(element, mutation, options, transaction.Options.DefaultSpec);
+        AnimateMutationUntyped(
+            element,
+            mutation,
+            options,
+            transaction.Options.DefaultSpec,
+            transaction.Options.Priority);
     }
 
     private void AnimateMutationUntyped(
         UIElement element,
         UiPropertyMutation mutation,
         MotionPropertyOptions options,
-        MotionSpec spec)
+        MotionSpec spec,
+        MotionPriority priority)
     {
         IValueMixer mixer = motion.Mixers.Resolve(mutation.Property.ValueType, mutation.Property.DiagnosticName);
         MotionSpec typedSpec = spec is null ? options.DefaultSpec : spec;
@@ -104,19 +110,28 @@ public sealed class MotionTransactionContext : UiPropertyMutationObserver, IDisp
             throw new InvalidOperationException($"Mixer for {mutation.Property.ValueType.Name} cannot animate property mutations.");
         }
 
-        dispatcher.AnimateMutation(this, element, mutation, typedSpec);
+        dispatcher.AnimateMutation(this, element, mutation, typedSpec, priority);
     }
 
     internal void AnimateMutation<T>(
         UIElement element,
         UiPropertyMutation mutation,
         ValueMixer<T> mixer,
-        MotionSpec spec)
+        MotionSpec spec,
+        MotionPriority priority)
     {
         UiProperty<T> property = (UiProperty<T>)mutation.Property;
         MotionPropertyBinding<T> binding = motion.Properties.GetOrCreateBinding(motion, element, property);
+        if (!binding.Value.CanStart(priority))
+        {
+            return;
+        }
+
         binding.Value.JumpTo(Cast<T>(mutation.OldEffectiveValue));
-        binding.AnimateTo(Cast<T>(mutation.NewEffectiveValue), ToTypedSpec<T>(spec, mixer));
+        binding.AnimateTo(
+            Cast<T>(mutation.NewEffectiveValue),
+            ToTypedSpec<T>(spec, mixer),
+            new MotionPropertyStartOptions { Priority = priority });
     }
 
     private static MotionSpec<T> ToTypedSpec<T>(MotionSpec spec, ValueMixer<T> mixer)

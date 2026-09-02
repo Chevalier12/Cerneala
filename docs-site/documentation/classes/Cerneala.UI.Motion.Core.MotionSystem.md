@@ -50,7 +50,7 @@ using (root.Motion.BeginTransaction(Motion.Tween(TimeSpan.FromMilliseconds(150))
 
 ## Remarks
 
-`MotionSystem` is created by `UIRoot` and is available through `UIRoot.Motion`. It composes the main motion subsystems used by the retained UI runtime: `MotionGraph`, `MotionFrameCoordinator`, `MotionPropertyStore`, `MotionTransactionContext`, `LayoutMotionCoordinator`, `PresenceCoordinator`, diagnostics, tokens, mixers, and animatable-property registration.
+`MotionSystem` is created by `UIRoot` and is available through `UIRoot.Motion`. It composes the main motion subsystems used by the retained UI runtime: `MotionGraph`, `MotionFrameCoordinator`, `MotionPropertyStore`, `MotionTransactionContext`, `LayoutMotionCoordinator`, `PresenceCoordinator`, diagnostics, named timelines, tokens, mixers, and animatable-property registration.
 
 The system delegates thread affinity to `UIRoot.Relay`; it does not own a second thread guard. Public APIs that mutate or sample motion, such as `Tick`, transaction creation, and the `MaxDelta` setter, verify the same owner thread used by the retained UI tree. Marshal cross-thread motion requests through the root Relay before calling motion APIs.
 
@@ -81,7 +81,7 @@ The frame result combines graph counters with property flush counters. `NeedsAno
 | `Root` | `UIRoot` | Gets the root that owns this motion system. |
 | `ReducedMotion` | `ReducedMotionPolicy` | Gets the reduced-motion policy used by the graph and related motion services. |
 | `Graph` | `MotionGraph` | Gets the graph that owns active motion nodes and graph-bound motion values. |
-| `Timelines` | `MotionTimelineRegistry` | Gets the registry for named or shared motion timelines. |
+| `Timelines` | `MotionTimelineRegistry` | Gets the root-affine registry for named or shared motion timelines. |
 | `Diagnostics` | `MotionDiagnostics` | Gets the diagnostics recorder and snapshot source for motion frames. |
 | `Frames` | `MotionFrameCoordinator` | Gets the coordinator that integrates motion sampling with retained frame phases. |
 | `Tokens` | `MotionTokens` | Gets the motion token set used by motion-aware styling and state APIs. |
@@ -91,7 +91,7 @@ The frame result combines graph counters with property flush counters. `NeedsAno
 | `Transactions` | `MotionTransactionContext` | Gets the transaction context that observes eligible property mutations and turns them into animations. |
 | `Layout` | `LayoutMotionCoordinator` | Gets the coordinator for layout-motion bindings and snapshot-based correction work. |
 | `Presence` | `PresenceCoordinator` | Gets the coordinator for presence and exit-motion state. |
-| `MaxDelta` | `TimeSpan` | Gets or sets the maximum per-frame delta accepted by `Tick`. The default is `100` milliseconds. |
+| `MaxDelta` | `TimeSpan` | Gets or sets the non-negative maximum per-frame delta accepted by `Tick`. The default is `100` milliseconds. |
 | `HasActiveMotion` | `bool` | Gets whether the graph has active motion or the property store has pending writes. |
 
 ## Methods
@@ -120,6 +120,7 @@ public MotionFrameResult Tick(
 | Member | Exception | Condition |
 | --- | --- | --- |
 | `MotionSystem(UIRoot, IMotionClock, ReducedMotionPolicy)` | `ArgumentNullException` | `root`, `clock`, or `reducedMotion` is `null`. |
+| `MaxDelta` setter | `ArgumentOutOfRangeException` | The assigned value is negative. |
 | `BeginTransaction(MotionSpec)`, `BeginTransaction(MotionTransactionOptions)`, `Disable()`, `Tick(...)`, `MaxDelta` setter | `InvalidOperationException` | The current thread is not accepted by the owning root's Relay. |
 
 ## Applies to

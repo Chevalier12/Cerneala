@@ -65,7 +65,7 @@ binding.AnimateTo(
 
 `MotionPropertyStartOptions` is the property-binding counterpart to `MotionStartOptions`. `MotionPropertyBinding<T>.AnimateTo` uses it to start the underlying `MotionValue<T>` animation and to decide what happens to the animated UI property when the animation completes.
 
-`RetargetMode`, `Priority`, and `DebugName` are forwarded to the core motion layer. `RetargetMode.PreserveProgress` allows an already active `MotionValue<T>` animation to reuse its elapsed progress when retargeting is possible; otherwise the core motion value falls back to restart behavior. `DebugName` flows into `MotionSpecContext` and diagnostic traces that record motion-related events.
+`RetargetMode`, `Priority`, and `DebugName` are forwarded to the core motion layer. `RetargetMode.PreserveProgress` allows an already active `MotionValue<T>` animation to reuse its elapsed progress when retargeting is possible; otherwise the core motion value falls back to restart behavior. A request with lower priority than the active motion returns a canceled handle and does not change the binding's active completion or hold behavior. `DebugName` flows into `MotionSpecContext` and diagnostic traces that record motion-related events.
 
 `HoldOnComplete` is handled by `MotionPropertyBinding<T>` rather than by `MotionValue<T>`. When `false`, the binding clears the animation value source after natural completion so the target property falls back to its next available source. When `true`, the binding stages the current animated value after completion so the property keeps the final animation value.
 
@@ -83,7 +83,7 @@ The type is mutable only through init-only properties. Use object initializer sy
 | --- | --- | --- |
 | `Default` | `MotionPropertyStartOptions` | Gets the shared default options instance. |
 | `RetargetMode` | `RetargetMode` | Gets the core retargeting mode forwarded to `MotionValue<T>.AnimateTo`; the default is `RetargetMode.Restart`. |
-| `Priority` | `MotionPriority` | Gets the motion priority forwarded to the core motion start options; the default is `MotionPriority.Normal`. |
+| `Priority` | `MotionPriority` | Gets the conflict priority forwarded to the core motion start options; the default is `MotionPriority.Normal`. |
 | `DebugName` | `string?` | Gets the optional diagnostic name forwarded to the core motion spec context. |
 | `HoldOnComplete` | `bool` | Gets whether `MotionPropertyBinding<T>` should keep the current animated property value after natural completion instead of clearing the animation source. |
 

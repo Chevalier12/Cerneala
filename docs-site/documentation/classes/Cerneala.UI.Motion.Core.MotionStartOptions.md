@@ -45,7 +45,7 @@ opacity.AnimateTo(
 
 `RetargetMode.PreserveProgress` is used only when the value already has an active sampler and active handle. In that path, the old handle is canceled, the new sampler is created from the current value to the new target, and the previous elapsed animation time is advanced into the new sampler. If the active motion cannot be detached safely, `MotionValue<T>` falls back to restart behavior while preserving the requested priority and debug name.
 
-`DebugName` is passed into the motion graph's specification context when the sampler is created. `Priority` is stored on the options object; the current public priority enum exposes `MotionPriority.Normal`.
+`DebugName` is passed into the motion graph's specification context when the sampler is created. `Priority` participates in active-motion conflict resolution. `Interactive` yields to the default `Normal` priority, while `ReducedMotion` is stronger than both. Equal priority lets the incoming motion replace the active motion.
 
 ## Constructors
 | Name | Description |
@@ -56,7 +56,7 @@ opacity.AnimateTo(
 | Name | Type | Description |
 | --- | --- | --- |
 | `RetargetMode` | `RetargetMode` | Gets how `AnimateTo` handles an already active motion. The default is `RetargetMode.Restart`. |
-| `Priority` | `MotionPriority` | Gets the motion priority value carried with the start request. The default is `MotionPriority.Normal`. |
+| `Priority` | `MotionPriority` | Gets the priority used when the request competes with an active motion. The default is `MotionPriority.Normal`. |
 | `DebugName` | `string?` | Gets the optional name supplied to the motion specification context when creating the sampler. |
 | `Default` | `MotionStartOptions` | Gets the shared default options instance. |
 

@@ -7,6 +7,8 @@ public abstract class MotionPropertyBinding : IDisposable
 {
     internal abstract MotionSystem Motion { get; }
 
+    internal abstract bool IsActive { get; }
+
     public abstract UiObject Target { get; }
 
     public abstract UiProperty PropertyUntyped { get; }

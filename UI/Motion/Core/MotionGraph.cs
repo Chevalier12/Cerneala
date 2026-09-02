@@ -103,9 +103,9 @@ public sealed class MotionGraph
         finally
         {
             isTicking = false;
+            ApplyPendingChanges();
         }
 
-        ApplyPendingChanges();
         bool needsAnotherFrame = nodes.Count > 0 || pendingAdds.Count > 0;
         return new MotionFrameResult(
             frame,

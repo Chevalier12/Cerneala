@@ -3660,6 +3660,11 @@
     "source": "UI/Motion/MotionStateBuilder.cs"
   },
   {
+    "name": "Cerneala.UI.Motion.MotionStateTargetBuilder",
+    "file": "documentation/classes/Cerneala.UI.Motion.MotionStateTargetBuilder.md",
+    "source": "UI/Motion/MotionStateTargetBuilder.cs"
+  },
+  {
     "name": "Cerneala.UI.Motion.Presence.PresenceCoordinator",
     "file": "documentation/classes/Cerneala.UI.Motion.Presence.PresenceCoordinator.md",
     "source": "UI/Motion/Presence/PresenceCoordinator.cs"

@@ -102,9 +102,10 @@ public abstract class ValueMixer<T> : IValueMixer, IValueMixerDispatcher
         MotionTransactionContext context,
         UIElement element,
         UiPropertyMutation mutation,
-        MotionSpec spec)
+        MotionSpec spec,
+        Core.MotionPriority priority)
     {
-        context.AnimateMutation(element, mutation, this, spec);
+        context.AnimateMutation(element, mutation, this, spec, priority);
     }
 
     protected static InvalidOperationException CreateVectorException()

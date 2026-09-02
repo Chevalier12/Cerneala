@@ -75,6 +75,15 @@ public sealed class MotionSystemTests
     }
 
     [Fact]
+    public void MotionSystemRejectsNegativeMaxDeltaAtAssignment()
+    {
+        UIRoot root = new();
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            root.Motion.MaxDelta = TimeSpan.FromMilliseconds(-1));
+    }
+
+    [Fact]
     public void MotionSystemRestartsDeltaAtZeroAfterMotionBecomesIdle()
     {
         ManualMotionClock clock = new();

@@ -22,16 +22,43 @@ public static class MotionSequence
                 return;
             }
 
-            active = steps[index++]();
-            active.Completed += (_, args) =>
+            MotionHandle current = steps[index++]() ??
+                throw new InvalidOperationException("Motion sequence steps cannot return null handles.");
+            active = current;
+            bool completionObserved = false;
+            void OnCompleted(object? sender, MotionCompletedEventArgs args)
             {
-                if (args.IsCanceled)
+                if (completionObserved)
                 {
                     return;
                 }
 
+                completionObserved = true;
+                current.Completed -= OnCompleted;
+                if (args.IsCanceled)
+                {
+                    group!.Cancel();
+                    return;
+                }
+
                 StartNext();
-            };
+            }
+
+            current.Completed += OnCompleted;
+            if (current.IsCompleted)
+            {
+                OnCompleted(
+                    current,
+                    new MotionCompletedEventArgs(MotionCompletionState.Completed, null));
+            }
+            else if (current.IsCanceled)
+            {
+                OnCompleted(
+                    current,
+                    new MotionCompletedEventArgs(
+                        MotionCompletionState.Canceled,
+                        MotionCancelBehavior.KeepCurrent));
+            }
         }
 
         group = new MotionGroupHandle(() => active?.Cancel());

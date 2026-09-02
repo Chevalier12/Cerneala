@@ -60,6 +60,8 @@ Infinite repeats are treated as non-essential motion when reduced motion is enab
 
 The current sampler does not retarget repeat animations. Calling `Retarget` does not change the target, current value, elapsed time, or completion state.
 
+Created samplers reject negative frame deltas. Zero is accepted and leaves elapsed time unchanged.
+
 ## Constructors
 
 | Name | Description |
@@ -80,6 +82,7 @@ The current sampler does not retarget repeat animations. Calling `Retarget` does
 | `RepeatSpec(TweenSpec<T>, int?)` | `ArgumentNullException` | `inner` is `null`. |
 | `RepeatSpec(TweenSpec<T>, int?)` | `ArgumentOutOfRangeException` | `repeatCount` is zero or negative. |
 | `CreateSampler(T, T, ValueMixer<T>, MotionSpecContext)` | `ArgumentNullException` | `context` is `null`. |
+| `MotionSampler<T>.Advance(TimeSpan)` on a sampler created by this specification | `ArgumentOutOfRangeException` | `delta` is negative. |
 
 ## Applies to
 

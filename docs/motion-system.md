@@ -4,7 +4,7 @@ Cerneala motion is root-owned through `UIRoot.Motion`. A root owns the clock, gr
 
 The mental model is state-first: application/style/input state changes establish target values, and motion decides how values visually travel there. Render-only properties such as opacity, transform channels, layout correction, presence opacity/scale, drag translation, and scroll-linked opacity must not enqueue measure/arrange work.
 
-Layout motion uses FLIP correction. Normal layout computes the final rect; an internal render correction preserves visual continuity and animates back to identity. Cross-parent relocation is intentionally same-parent-only for v1 unless coordinate conversion is added.
+Layout motion uses FLIP correction. Normal layout computes the final rect; an internal render correction preserves visual continuity and animates back to identity. Snapshot capture uses root coordinates, so relocation across different parents can preserve visual continuity when both layouts belong to the same root.
 
 Presence exit removes the element from public layout collections immediately, keeps it attached in a render sidecar until exit completes, excludes it from input, then detaches exactly once.
 
@@ -15,6 +15,17 @@ Presence exit removes the element from public layout collections immediately, ke
 or fault; the system removes terminal work instead of retaining it in the active
 graph. Starting a new animation on the same channel uses the configured priority
 and retarget policy rather than silently creating competing writers.
+
+The built-in priority order is `Interactive`, `Normal`, then `ReducedMotion`.
+Incoming motion replaces equal- or lower-priority active motion. A lower-priority
+request returns a canceled handle without changing the active motion. State
+builders and state-driven Aspect motion use `Interactive`; explicit motion uses
+`Normal` unless callers specify another priority.
+
+`element.Motion().States().When(state).Set(property, value, spec)` registers
+state targets and restores the property's captured baseline when no registered
+state matches. `root.Motion.Timelines` registers and resolves named timelines;
+its operations are root-thread-affine.
 
 Specs are typed and include tween, spring, keyframes, decay, repeat and
 ping-pong behavior. `MotionPropertyStore` classifies invalidation so transform,

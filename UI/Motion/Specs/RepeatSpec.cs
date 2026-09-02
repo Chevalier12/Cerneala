@@ -39,6 +39,10 @@ public sealed class RepeatSpec<T> : MotionSpec<T>
 
         public override void Advance(TimeSpan delta)
         {
+            if (delta < TimeSpan.Zero)
+            {
+                throw new ArgumentOutOfRangeException(nameof(delta), "Delta cannot be negative.");
+            }
         }
 
         public override void Retarget(T to, RetargetMode mode)
@@ -73,6 +77,11 @@ public sealed class RepeatSpec<T> : MotionSpec<T>
 
         public override void Advance(TimeSpan delta)
         {
+            if (delta < TimeSpan.Zero)
+            {
+                throw new ArgumentOutOfRangeException(nameof(delta), "Delta cannot be negative.");
+            }
+
             elapsed += delta;
             TimeSpan duration = spec.Duration;
             if (repeatCount is int count && elapsed >= duration * count)

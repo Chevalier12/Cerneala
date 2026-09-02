@@ -66,6 +66,8 @@ The facade stores the target `UIElement` and resolves the owning `MotionSystem` 
 
 `Opacity`, `TranslateX`, `TranslateY`, and `Scale` are convenience shortcuts over the corresponding `UIElement` motion properties. For other animatable properties, use `Animate<T>(UiProperty<T>)`.
 
+`States()` returns the element-owned `MotionStateBuilder`. Repeated calls, including calls made through different facade instances for the same element, return the same builder so state registrations are not split across transient facades.
+
 `Gestures()` and `Drag()` create input-oriented controllers for the same element. `Drag()` requires the element to be attached because its controller creates motion values immediately. `ScrollTimeline()` is only valid for `ScrollViewer` instances and throws for other element types.
 
 ## Properties
@@ -82,7 +84,7 @@ The facade stores the target `UIElement` and resolves the owning `MotionSystem` 
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `Animate<T>(UiProperty<T> property)` | `MotionAnimationBuilder<T>` | Creates a builder for animating the supplied UI property on the target element. Throws `ArgumentNullException` when `property` is `null`. |
-| `States()` | `MotionStateBuilder` | Creates a state builder tied to the same motion facade. |
+| `States()` | `MotionStateBuilder` | Gets the reusable state builder owned by the target element. |
 | `Gestures()` | `GestureMotionController` | Creates a pointer gesture controller for press and release scale motion on the target element. |
 | `Drag()` | `DragMotionController` | Creates a drag controller for translating the target element with motion-backed drag values. |
 | `ScrollTimeline()` | `ScrollTimeline` | Creates a scroll timeline for the target element when it is a `ScrollViewer`. |
@@ -107,6 +109,7 @@ Target framework: `net8.0`
 - `Cerneala.UI.Motion.MotionExtensions`
 - `Cerneala.UI.Motion.MotionAnimationBuilder<T>`
 - `Cerneala.UI.Motion.MotionPropertyShortcut<T>`
+- `Cerneala.UI.Motion.MotionStateBuilder`
 - `Cerneala.UI.Elements.UIElement`
 - `Cerneala.UI.Elements.UIRoot`
 - `Cerneala.UI.Motion.Core.MotionSystem`

@@ -55,6 +55,30 @@ public sealed class MotionRepeatTimelineTests
     }
 
     [Fact]
+    public void RepeatRejectsNegativeDelta()
+    {
+        RepeatSpec<float> spec = new(
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100), Easings.Linear),
+            repeatCount: 2);
+        MotionSampler<float> sampler = spec.CreateSampler(0, 10, new FloatMixer(), DefaultContext());
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            sampler.Advance(TimeSpan.FromMilliseconds(-1)));
+    }
+
+    [Fact]
+    public void PingPongRejectsNegativeDelta()
+    {
+        PingPongSpec<float> spec = new(
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100), Easings.Linear),
+            cycles: 2);
+        MotionSampler<float> sampler = spec.CreateSampler(0, 10, new FloatMixer(), DefaultContext());
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            sampler.Advance(TimeSpan.FromMilliseconds(-1)));
+    }
+
+    [Fact]
     public void EvenCyclePingPongMotionValueCompletesAtStart()
     {
         ManualMotionClock clock = new();
@@ -150,6 +174,71 @@ public sealed class MotionRepeatTimelineTests
         value.JumpTo(timeline.Progress);
 
         Assert.Equal(0.75f, value.Current);
+    }
+
+    [Fact]
+    public void TimelineRegistryRegistersLooksUpEnumeratesAndRemovesTimelines()
+    {
+        UIRoot root = new();
+        ManualMotionTimeline timeline = new();
+
+        root.Motion.Timelines.Register("primary", timeline);
+
+        Assert.Equal(1, root.Motion.Timelines.Count);
+        Assert.Equal(["primary"], root.Motion.Timelines.Names);
+        Assert.Same(timeline, root.Motion.Timelines.Get("primary"));
+        Assert.True(root.Motion.Timelines.TryGet("primary", out MotionTimeline? found));
+        Assert.Same(timeline, found);
+        Assert.Throws<InvalidOperationException>(() =>
+            root.Motion.Timelines.Register("primary", new ManualMotionTimeline()));
+        Assert.True(root.Motion.Timelines.Remove("primary"));
+        Assert.False(root.Motion.Timelines.TryGet("primary", out _));
+    }
+
+    [Fact]
+    public void RootTimelineRegistryRejectsMutationFromWrongThread()
+    {
+        UIRoot root = new();
+        Exception? thrown = null;
+        Thread thread = new(() =>
+        {
+            try
+            {
+                root.Motion.Timelines.Register("background", new ManualMotionTimeline());
+            }
+            catch (Exception exception)
+            {
+                thrown = exception;
+            }
+        });
+
+        thread.Start();
+        thread.Join();
+
+        Assert.IsType<InvalidOperationException>(thrown);
+    }
+
+    [Fact]
+    public void RootTimelineRegistryRejectsReadFromWrongThread()
+    {
+        UIRoot root = new();
+        Exception? thrown = null;
+        Thread thread = new(() =>
+        {
+            try
+            {
+                _ = root.Motion.Timelines.Count;
+            }
+            catch (Exception exception)
+            {
+                thrown = exception;
+            }
+        });
+
+        thread.Start();
+        thread.Join();
+
+        Assert.IsType<InvalidOperationException>(thrown);
     }
 
     private static MotionSpecContext DefaultContext()

@@ -2,5 +2,7 @@ namespace Cerneala.UI.Motion.Core;
 
 public enum MotionPriority
 {
-    Normal
+    Interactive = 0,
+    Normal = 100,
+    ReducedMotion = 200
 }

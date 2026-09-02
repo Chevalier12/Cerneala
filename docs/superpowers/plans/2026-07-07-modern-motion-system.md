@@ -8,6 +8,8 @@
 
 **Tech Stack:** C#/.NET, existing Cerneala `UiProperty` value-source system, existing invalidation/layout/render queues, existing retained renderer, xUnit tests, playground samples, RoslynIndexer for navigation/indexing.
 
+**Audit remediation (2026-09-02):** The Motion audit findings in `Motion_Audit_09022026.md` are remediated. Permanent regressions cover terminal listener exceptions, already-terminal and canceled sequence children, transaction-stack recovery, truthful diagnostic snapshots, priority conflict enforcement, state-builder registration, named timeline registry operations/thread affinity, and negative-delta validation. Focused verification: 292 core Motion tests, 182 SourceGen Motion tests, and 52 Language Motion tests passed. The repository-wide test command still reproduces the pre-existing non-Motion Language, LanguageServer, and VisualStudio fixture failures recorded in the audit report.
+
 ---
 
 ## Current Inventory
@@ -613,6 +615,8 @@ public sealed class MotionValue<T> : MotionValue
   - [x] Store optional velocity vector.
   - [x] Notify only when effective sampled value changes.
   - [x] Allow retarget without tearing.
+  - [x] Apply `MotionPriority` in the production start path: lower-priority requests are rejected without replacing the active motion, and equal/higher priority may replace it.
+  - [x] Terminalize handles and unregister graph work even when a value-change subscriber throws during completion or cancellation.
 
 ### `MotionGraph`
 
@@ -825,6 +829,7 @@ public sealed class MotionPropertyBinding<T> : IDisposable
 - [x] Add `UI/Motion/MotionElementFacade.cs`.
 - [x] Add `UI/Motion/MotionAnimationBuilder.cs`.
 - [x] Add `UI/Motion/MotionStateBuilder.cs`.
+- [x] Add `UI/Motion/MotionStateTargetBuilder.cs`.
 - [x] Add `UI/Motion/MotionDefaults.cs`.
 
 ### API Shape
@@ -857,6 +862,8 @@ element.Motion().TranslateX.To(24f, Motion.Spring<float>());
   - [x] Resolve value mixer.
   - [x] Create/reuse a binding per target/property.
   - [x] Fail clearly if element is detached and no root exists.
+  - [x] Reuse one state builder per element.
+  - [x] Register `When(state).Set(property, value, spec)` targets, restore captured baselines, and use interactive priority.
 
 ### Tests
 
@@ -1265,6 +1272,7 @@ header.Motion().Opacity.Bind(timeline.Progress.Map(1f, 0f));
   - [x] Values sampled this frame.
   - [x] Properties written this frame.
   - [x] Next-frame-needed flag.
+- [x] Snapshot counters come from the most recent `MotionFrameResult`, and active binding counts exclude retained idle bindings.
 
 ### Frame Stats Text
 
@@ -1305,6 +1313,7 @@ motion=3, sampled=3, motionWrites=2, motionRender=2, motionLayout=0
   - [x] Scroll-based.
   - [x] Input/gesture-based.
   - [x] Manual/test-based.
+- [x] Named timelines can be registered, looked up, enumerated, removed, and cleared through a thread-affine registry.
 - [x] Repeating animation must not leak handles or graph nodes.
 
 ### Tests
@@ -1331,6 +1340,7 @@ motion=3, sampled=3, motionWrites=2, motionRender=2, motionLayout=0
 - [x] Add `UI/Motion/Core/MotionSequence.cs`.
 - [x] Add `UI/Motion/Core/MotionStagger.cs`.
 - [x] Add `UI/Motion/Core/MotionGroupHandle.cs`.
+- [x] Sequences observe already-terminal children and become canceled when an active child is canceled.
 
 ### Strategy
 

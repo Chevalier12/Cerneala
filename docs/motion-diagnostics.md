@@ -6,7 +6,7 @@ Enable tracing through:
 root.Motion.Diagnostics.IsEnabled = true;
 ```
 
-Trace events include motion start, sample, and completion. Snapshots report active graph nodes, property bindings, layout motions, presence exits, property writes, and whether another frame is needed.
+Trace events include motion start, sample, and completion. Snapshots report active graph nodes, property bindings that are actually active, active layout motions, presence exits, the latest frame's sampled-node and property-write counts, and whether another frame is needed. Cached but idle property bindings are excluded from active counts.
 
 Frame stats include concise motion counters:
 

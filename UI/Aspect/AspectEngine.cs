@@ -2,6 +2,8 @@ using System.Runtime.CompilerServices;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Motion.States;
+using Cerneala.UI.Motion.Core;
+using Cerneala.UI.Motion.Transactions;
 using Cerneala.UI.Relay;
 using Cerneala.UI.Theming;
 
@@ -466,7 +468,13 @@ public sealed class AspectEngine
             return;
         }
 
-        using (element.Root.Motion.BeginTransaction(ThemeMotionTokens.Resolve(themeProvider, motion.TokenName)))
+        MotionPriority priority = (motionValue.MotionSource & AspectMotionSource.State) != 0
+            ? MotionPriority.Interactive
+            : MotionPriority.Normal;
+        using (element.Root.Motion.BeginTransaction(
+            new MotionTransactionOptions(
+                ThemeMotionTokens.Resolve(themeProvider, motion.TokenName),
+                priority: priority)))
         {
             mutation();
         }

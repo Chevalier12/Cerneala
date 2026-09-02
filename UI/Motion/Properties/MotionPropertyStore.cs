@@ -13,6 +13,8 @@ public sealed class MotionPropertyStore
 
     public int BindingCount => bindings.Count;
 
+    internal int ActiveBindingCount => bindings.Values.Count(binding => binding.IsActive);
+
     public MotionPropertyBinding<T> GetOrCreateBinding<T>(
         Core.MotionSystem motion,
         UIElement target,

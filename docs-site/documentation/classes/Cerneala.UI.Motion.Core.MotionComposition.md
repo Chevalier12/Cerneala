@@ -36,7 +36,7 @@ bool incomingWon = resolved == incoming;
 
 `Default` represents the normal default composition: `MotionChannel.Default` with `MotionPriority.Normal`.
 
-With the current `MotionPriority` enum, `Normal` is the only defined priority value. Because `MotionConflictResolver` lets the incoming composition win equal-priority conflicts, two normal-priority compositions resolve to the incoming value.
+The built-in priority order is `Interactive`, `Normal`, then `ReducedMotion`. `MotionConflictResolver` lets the incoming composition win equal-priority conflicts, so two normal-priority compositions resolve to the incoming value.
 
 ## Constructors
 

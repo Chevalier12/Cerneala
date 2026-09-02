@@ -20,7 +20,7 @@ public sealed class MotionTransactionScope : IDisposable
             return;
         }
 
-        disposed = true;
         context.Pop(Transaction);
+        disposed = true;
     }
 }

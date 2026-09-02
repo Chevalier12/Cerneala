@@ -1,9 +1,11 @@
 using Cerneala.Drawing;
+using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Motion;
 using Cerneala.UI.Motion.Core;
+using Cerneala.UI.Motion.Properties;
 using Cerneala.UI.Media;
 using Cerneala.Tests.UI.Motion.Core;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
@@ -87,6 +89,62 @@ public sealed class MotionFacadeTests
         Assert.True(translate.IsActive);
         Assert.InRange(element.Opacity, 0.5f, 1);
         Assert.InRange(element.TranslateX, 0, 20);
+    }
+
+    [Fact]
+    public void StateBuilderAnimatesMatchingStateAndRestoresBaseline()
+    {
+        ManualMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        UIElement element = new();
+        root.VisualChildren.Add(element);
+        root.ProcessFrame();
+        MotionStateBuilder states = element.Motion().States();
+        states.When(AspectState.Hover).Set(
+            UIElement.OpacityProperty,
+            0.5f,
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)));
+
+        element.IsPointerOver = true;
+        root.ProcessFrame();
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        root.ProcessFrame();
+
+        Assert.Equal(0.5f, element.Opacity);
+
+        element.IsPointerOver = false;
+        root.ProcessFrame();
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        root.ProcessFrame();
+
+        Assert.Equal(1f, element.Opacity);
+    }
+
+    [Fact]
+    public void StateBuilderIsReusedAndExplicitMotionOutranksInteractiveState()
+    {
+        UIRoot root = new();
+        UIElement element = new();
+        root.VisualChildren.Add(element);
+        MotionStateBuilder states = element.Motion().States();
+        states.When(AspectState.Hover).Set(
+            UIElement.OpacityProperty,
+            0.5f,
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)));
+        element.IsPointerOver = true;
+        MotionHandle explicitHandle = element.Motion().Opacity.To(
+            0.8f,
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)));
+
+        element.IsPointerOver = false;
+
+        Assert.Same(states, element.Motion().States());
+        Assert.True(explicitHandle.IsActive);
+        MotionPropertyBinding<float> binding = root.Motion.Properties.GetOrCreateBinding(
+            root.Motion,
+            element,
+            UIElement.OpacityProperty);
+        Assert.Equal(0.8f, binding.Value.Target);
     }
 
     private readonly record struct UnmixedValue(int Value);

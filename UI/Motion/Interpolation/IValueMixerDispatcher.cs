@@ -2,6 +2,7 @@ using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Motion.Specs;
 using Cerneala.UI.Motion.Transactions;
+using Cerneala.UI.Motion.Core;
 
 namespace Cerneala.UI.Motion.Interpolation;
 
@@ -26,5 +27,6 @@ internal interface IValueMixerDispatcher
         MotionTransactionContext context,
         UIElement element,
         UiPropertyMutation mutation,
-        MotionSpec spec);
+        MotionSpec spec,
+        MotionPriority priority);
 }

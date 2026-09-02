@@ -56,11 +56,13 @@ bool completed = handle.IsCompleted;
 
 `AnimateTo` verifies access through the owning graph, creates a sampler from the supplied `MotionSpec<T>`, records the requested target, and registers an internal motion node with the graph while the animation is active. When the sampler completes naturally, the value applies the sampler's final `Current` value, updates `Target` to that completed value, records completion diagnostics when diagnostics are configured, finishes the handle as completed, and unregisters its node. This preserves specifications whose natural endpoint can differ from the originally requested target, such as an even-cycle `PingPongSpec<T>`.
 
-Starting a new animation cancels the previous active handle with `MotionCancelBehavior.KeepCurrent`. When `MotionStartOptions.RetargetMode` is `RetargetMode.PreserveProgress`, the previous elapsed animation time is reused with the new sampler when the active motion can be detached safely; otherwise the operation falls back to a restart.
+Starting an animation with equal or higher priority cancels the previous active handle with `MotionCancelBehavior.KeepCurrent`. A lower-priority request is rejected without changing the active animation and returns an already canceled handle. When `MotionStartOptions.RetargetMode` is `RetargetMode.PreserveProgress`, the previous elapsed animation time is reused with the new sampler when the active motion can be detached safely; otherwise the operation falls back to a restart.
 
 `JumpTo` cancels active motion, sets the target and animation start to the supplied value, and notifies subscribers only when the mixed value differs from `Current`. Change notifications are delivered to a snapshot of the subscription list, so listeners may cancel, complete, or start motion while a notification is being processed.
 
 `Velocity` is read from the active sampler after graph ticks. If the sampler does not expose velocity and throws `InvalidOperationException`, `Velocity` is reported as `null`.
+
+If a subscriber throws while a terminal value is applied, the exception propagates to the caller. The motion still becomes terminal and unregisters its graph node before the exception escapes, so the handle is not left active.
 
 ## Properties
 
@@ -75,7 +77,7 @@ Starting a new animation cancels the previous active handle with `MotionCancelBe
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `AnimateTo(T target, MotionSpec<T> spec, MotionStartOptions? options = null)` | `MotionHandle` | Starts animating from `Current` toward `target` with `spec`, optionally using start options for retargeting, priority, and debug naming. |
+| `AnimateTo(T target, MotionSpec<T> spec, MotionStartOptions? options = null)` | `MotionHandle` | Starts animating from `Current` toward `target`, or returns a canceled handle when an active motion has higher priority. |
 | `JumpTo(T value)` | `void` | Cancels active motion, sets the target to `value`, and applies the value immediately. |
 | `Subscribe(Action<MotionValueChanged<T>> listener)` | `IDisposable` | Adds a listener for value changes and returns a subscription that removes the listener when disposed. |
 

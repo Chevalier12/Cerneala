@@ -50,6 +50,36 @@ public sealed class MotionGroupTests
     }
 
     [Fact]
+    public void SequenceObservesChildrenThatCompleteBeforeSubscription()
+    {
+        MotionHandle completed = FakeHandle();
+        MotionHandle second = FakeHandle();
+        completed.FinishCompleted(fireEvent: true);
+        int started = 0;
+
+        MotionGroupHandle group = MotionSequence.Start(
+            () => { started++; return completed; },
+            () => { started++; return second; });
+
+        Assert.Equal(2, started);
+        second.FinishCompleted(fireEvent: true);
+        Assert.True(group.IsCompleted);
+    }
+
+    [Fact]
+    public async Task SequenceBecomesCanceledWhenActiveChildIsCanceled()
+    {
+        MotionHandle child = FakeHandle();
+        MotionGroupHandle group = MotionSequence.Start(() => child);
+
+        child.Cancel();
+
+        Assert.True(group.IsCanceled);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+            await group.Completion.AsTask());
+    }
+
+    [Fact]
     public void CancelingGroupCancelsActiveChildrenAndPreventsFutureSequenceChildren()
     {
         MotionHandle first = FakeHandle();

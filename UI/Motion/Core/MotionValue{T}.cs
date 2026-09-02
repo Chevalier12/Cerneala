@@ -6,6 +6,7 @@ namespace Cerneala.UI.Motion.Core;
 
 public sealed class MotionValue<T> : MotionValue
 {
+    private static readonly MotionConflictResolver ConflictResolver = new();
     private readonly MotionGraph graph;
     private readonly ValueMixer<T> mixer;
     private readonly ValueNode node;
@@ -14,6 +15,7 @@ public sealed class MotionValue<T> : MotionValue
     private int notificationDepth;
     private MotionSampler<T>? sampler;
     private MotionHandle? activeHandle;
+    private MotionComposition activeComposition = MotionComposition.Default;
     private T current;
     private T target;
     private T animationStart;
@@ -42,11 +44,30 @@ public sealed class MotionValue<T> : MotionValue
 
     internal MotionGraph Graph => graph;
 
+    internal bool CanStart(MotionPriority priority)
+    {
+        graph.VerifyAccess();
+        if (activeHandle?.IsActive != true)
+        {
+            return true;
+        }
+
+        MotionComposition incomingComposition = new(MotionChannel.Default, priority);
+        return ConflictResolver.Resolve(activeComposition, incomingComposition) == incomingComposition;
+    }
+
     public MotionHandle AnimateTo(T target, MotionSpec<T> spec, MotionStartOptions? options = null)
     {
         graph.VerifyAccess();
         ArgumentNullException.ThrowIfNull(spec);
         MotionStartOptions effectiveOptions = options ?? MotionStartOptions.Default;
+        MotionComposition incomingComposition = new(
+            MotionChannel.Default,
+            effectiveOptions.Priority);
+        if (!CanStart(effectiveOptions.Priority))
+        {
+            return CreateRejectedHandle();
+        }
 
         if (sampler is not null &&
             activeHandle?.IsActive == true &&
@@ -84,6 +105,7 @@ public sealed class MotionValue<T> : MotionValue
 
             MotionHandle retargetedHandle = CreateHandle();
             activeHandle = retargetedHandle;
+            activeComposition = incomingComposition;
 
             graph.Register(node);
             return retargetedHandle;
@@ -102,6 +124,7 @@ public sealed class MotionValue<T> : MotionValue
 
         MotionHandle handle = CreateHandle();
         activeHandle = handle;
+        activeComposition = incomingComposition;
         graph.Diagnostics?.Record(MotionTraceEventKind.MotionStarted);
 
         if (sampler.IsComplete)
@@ -183,6 +206,16 @@ public sealed class MotionValue<T> : MotionValue
         return handle;
     }
 
+    private static MotionHandle CreateRejectedHandle()
+    {
+        MotionHandle handle = new(
+            _ => { },
+            () => { },
+            () => { });
+        handle.FinishCanceled(MotionCancelBehavior.KeepCurrent, fireEvent: false);
+        return handle;
+    }
+
     private void CompleteHandle(MotionHandle? handle)
     {
         if (handle is not null && !ReferenceEquals(handle, activeHandle))
@@ -203,9 +236,15 @@ public sealed class MotionValue<T> : MotionValue
             return;
         }
 
-        ApplySample(completionTarget);
-        graph.Diagnostics?.Record(MotionTraceEventKind.MotionCompleted);
-        finishingHandle?.FinishCompleted(fireEvent: true);
+        try
+        {
+            ApplySample(completionTarget);
+        }
+        finally
+        {
+            graph.Diagnostics?.Record(MotionTraceEventKind.MotionCompleted);
+            finishingHandle?.FinishCompleted(fireEvent: true);
+        }
     }
 
     private void DisposeHandle(MotionHandle? handle)
@@ -253,12 +292,17 @@ public sealed class MotionValue<T> : MotionValue
             return;
         }
 
-        if (applyValue)
+        try
         {
-            ApplySample(valueToApply);
+            if (applyValue)
+            {
+                ApplySample(valueToApply);
+            }
         }
-
-        finishingHandle?.FinishCanceled(behavior, fireEvent);
+        finally
+        {
+            finishingHandle?.FinishCanceled(behavior, fireEvent);
+        }
     }
 
     private void CancelCallbackCreatedMotion()
@@ -280,9 +324,16 @@ public sealed class MotionValue<T> : MotionValue
         }
 
         target = completionValue;
-        ApplySample(completionValue);
-        graph.Diagnostics?.Record(MotionTraceEventKind.MotionCompleted);
-        finishingHandle?.FinishCompleted(fireEvent: true);
+        try
+        {
+            ApplySample(completionValue);
+        }
+        finally
+        {
+            graph.Diagnostics?.Record(MotionTraceEventKind.MotionCompleted);
+            finishingHandle?.FinishCompleted(fireEvent: true);
+        }
+
         return sampler is null && activeHandle is null;
     }
 
@@ -305,6 +356,7 @@ public sealed class MotionValue<T> : MotionValue
 
         finishingHandle = activeHandle;
         activeHandle = null;
+        activeComposition = MotionComposition.Default;
         return true;
     }
 

@@ -27,6 +27,8 @@ public sealed class LayoutMotionCoordinator
 
     public int ActiveBindingCount => bindings.Count;
 
+    internal int ActiveMotionCount => bindings.Values.Count(binding => binding.IsActive);
+
     internal void MarkAttached(UIElement element)
     {
         motion.VerifyAccess();

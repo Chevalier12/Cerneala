@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
@@ -7,6 +8,7 @@ namespace Cerneala.UI.Motion;
 
 public sealed class MotionElementFacade
 {
+    private static readonly ConditionalWeakTable<UIElement, MotionStateBuilder> StateBuilders = new();
     private readonly UIElement element;
 
     internal MotionElementFacade(UIElement element)
@@ -30,7 +32,9 @@ public sealed class MotionElementFacade
 
     public MotionStateBuilder States()
     {
-        return new MotionStateBuilder(this);
+        return StateBuilders.GetValue(
+            element,
+            static element => new MotionStateBuilder(new MotionElementFacade(element)));
     }
 
     public GestureMotionController Gestures()

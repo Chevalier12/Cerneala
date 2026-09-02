@@ -107,6 +107,22 @@ public sealed class MotionTransactionTests
     }
 
     [Fact]
+    public void TransactionScopeCanRecoverAfterOutOfOrderDispose()
+    {
+        UIRoot root = new();
+        MotionTransactionScope outer = root.Motion.BeginTransaction(
+            MotionFactory.Tween(TimeSpan.FromMilliseconds(100)));
+        MotionTransactionScope inner = root.Motion.BeginTransaction(
+            MotionFactory.Tween(TimeSpan.FromMilliseconds(10)));
+
+        Assert.Throws<InvalidOperationException>(outer.Dispose);
+        inner.Dispose();
+        outer.Dispose();
+
+        Assert.Equal(0, root.Motion.Transactions.Depth);
+    }
+
+    [Fact]
     public void DisabledTransactionSuppressesAnimation()
     {
         UIRoot root = new();

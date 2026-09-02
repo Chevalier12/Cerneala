@@ -36,6 +36,9 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
 
     internal override MotionSystem Motion => motion;
 
+    internal override bool IsActive =>
+        activeHandle?.IsActive == true || Value.IsAnimating || hasPendingSample;
+
     public override UiObject Target { get; }
 
     public UiProperty<T> Property { get; }
@@ -51,9 +54,14 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
         ArgumentNullException.ThrowIfNull(spec);
 
         MotionPropertyStartOptions effectiveOptions = options ?? MotionPropertyStartOptions.Default;
+        MotionHandle handle = Value.AnimateTo(to, spec, effectiveOptions.ToMotionStartOptions());
+        if (handle.IsCanceled && Value.IsAnimating)
+        {
+            return handle;
+        }
+
         holdOnComplete = effectiveOptions.HoldOnComplete;
         completedNaturally = false;
-        MotionHandle handle = Value.AnimateTo(to, spec, effectiveOptions.ToMotionStartOptions());
         activeHandle = handle;
         activeHandle.Completed += OnMotionCompleted;
         if (Target is UIElement element && !UIElementVisibility.IsEffectivelyVisible(element))

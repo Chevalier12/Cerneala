@@ -33,7 +33,7 @@ public sealed class MotionSystem
         Root = root ?? throw new ArgumentNullException(nameof(root));
         this.clock = clock ?? throw new ArgumentNullException(nameof(clock));
         ReducedMotion = reducedMotion ?? throw new ArgumentNullException(nameof(reducedMotion));
-        Timelines = new MotionTimelineRegistry();
+        Timelines = new MotionTimelineRegistry(root.Relay);
         Diagnostics = new MotionDiagnostics();
         Tokens = new MotionTokens();
         Mixers = new ValueMixerRegistry();
@@ -79,9 +79,16 @@ public sealed class MotionSystem
         set
         {
             VerifyAccess();
+            if (value < TimeSpan.Zero)
+            {
+                throw new ArgumentOutOfRangeException(nameof(value), "Maximum delta cannot be negative.");
+            }
+
             maxDelta = value;
         }
     }
+
+    internal MotionFrameResult LastFrameResult { get; private set; }
 
     public bool HasActiveMotion => Graph.HasActiveMotion || Properties.HasPendingWrites;
 
@@ -111,7 +118,8 @@ public sealed class MotionSystem
         {
             previousTimestamp = null;
             wasActiveLastTick = false;
-            return MotionFrameResult.Empty(idleFrame);
+            LastFrameResult = MotionFrameResult.Empty(idleFrame);
+            return LastFrameResult;
         }
 
         TimeSpan delta = !wasActiveLastTick || previousTimestamp is null ? TimeSpan.Zero : now - previousTimestamp.Value;
@@ -149,6 +157,7 @@ public sealed class MotionSystem
             previousTimestamp = null;
         }
 
+        LastFrameResult = result;
         return result;
     }
 

@@ -245,6 +245,15 @@ internal sealed class ObjectMotionBinding<TTarget, TValue> :
         ArgumentNullException.ThrowIfNull(spec);
         ArgumentNullException.ThrowIfNull(options);
 
+        MotionHandle handle = value.AnimateTo(
+            destination,
+            spec,
+            options.ToMotionStartOptions());
+        if (handle.IsCanceled && value.IsAnimating)
+        {
+            return handle;
+        }
+
         runtime.PrepareForAnimation();
         if (activeHandle is not null)
         {
@@ -254,10 +263,6 @@ internal sealed class ObjectMotionBinding<TTarget, TValue> :
         holdOnComplete = options.HoldOnComplete;
         completedNaturally = false;
         finished = false;
-        MotionHandle handle = value.AnimateTo(
-            destination,
-            spec,
-            options.ToMotionStartOptions());
         activeHandle = handle;
         if (handle.IsCompleted)
         {

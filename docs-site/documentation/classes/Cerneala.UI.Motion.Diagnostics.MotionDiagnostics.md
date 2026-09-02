@@ -59,7 +59,7 @@ Trace event recording is opt-in. `Record` returns without changing the trace whe
 
 Warnings are independent from `IsEnabled`. `RecordWarning` always validates and stores a non-empty message in `Warnings`. The per-frame phase and warning collections are cleared by the internal frame pipeline when it begins a frame.
 
-`CreateSnapshot` reads aggregate state from a supplied `MotionSystem`: active graph nodes, active property bindings, active layout motion bindings, active presence exits, and whether another frame is needed. The current implementation reports `0` for `ValuesSampledThisFrame` and `PropertiesWrittenThisFrame`.
+`CreateSnapshot` reads aggregate state from a supplied `MotionSystem`: active graph nodes, property bindings that are actually animating or have pending samples, active layout motions, active presence exits, the most recent frame's sampled-node and property-write counts, and whether another frame is needed. Retained but idle property bindings are not reported as active.
 
 ## Constructors
 

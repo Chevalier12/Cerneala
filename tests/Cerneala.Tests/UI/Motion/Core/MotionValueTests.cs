@@ -86,6 +86,66 @@ public sealed class MotionValueTests
     }
 
     [Fact]
+    public void LowerPriorityAnimationCannotReplaceActiveAnimation()
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> value = harness.Graph.CreateValue(0d);
+        MotionHandle explicitHandle = value.AnimateTo(
+            10d,
+            MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)),
+            new MotionStartOptions(Priority: MotionPriority.Normal));
+
+        MotionHandle interactiveHandle = value.AnimateTo(
+            20d,
+            MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)),
+            new MotionStartOptions(Priority: MotionPriority.Interactive));
+
+        Assert.True(explicitHandle.IsActive);
+        Assert.True(interactiveHandle.IsCanceled);
+        Assert.Equal(10d, value.Target);
+    }
+
+    [Fact]
+    public void HigherPriorityAnimationReplacesLowerPriorityAnimation()
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> value = harness.Graph.CreateValue(0d);
+        MotionHandle interactiveHandle = value.AnimateTo(
+            10d,
+            MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)),
+            new MotionStartOptions(Priority: MotionPriority.Interactive));
+
+        MotionHandle explicitHandle = value.AnimateTo(
+            20d,
+            MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)),
+            new MotionStartOptions(Priority: MotionPriority.Normal));
+
+        Assert.True(interactiveHandle.IsCanceled);
+        Assert.True(explicitHandle.IsActive);
+        Assert.Equal(20d, value.Target);
+    }
+
+    [Fact]
+    public void ReducedMotionPriorityCannotBeReplacedByNormalAnimation()
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> value = harness.Graph.CreateValue(0d);
+        MotionHandle reducedMotionHandle = value.AnimateTo(
+            10d,
+            MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)),
+            new MotionStartOptions(Priority: MotionPriority.ReducedMotion));
+
+        MotionHandle normalHandle = value.AnimateTo(
+            20d,
+            MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)),
+            new MotionStartOptions(Priority: MotionPriority.Normal));
+
+        Assert.True(reducedMotionHandle.IsActive);
+        Assert.True(normalHandle.IsCanceled);
+        Assert.Equal(10d, value.Target);
+    }
+
+    [Fact]
     public void PreserveProgressRetargetUsesNewSpec()
     {
         UIRootHarness harness = new();
@@ -415,6 +475,66 @@ public sealed class MotionValueTests
 
         Assert.False(callbackTarget.IsAlive);
         GC.KeepAlive(handle);
+    }
+
+    [Fact]
+    public async Task ThrowingValueListenerStillTerminalizesNaturalCompletion()
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> value = harness.Graph.CreateValue(0d);
+        using IDisposable subscription = value.Subscribe(_ =>
+            throw new InvalidOperationException("Value listener failed."));
+        MotionHandle handle = value.AnimateTo(
+            10d,
+            MotionFactory.Tween<double>(TimeSpan.FromMilliseconds(100)));
+
+        Assert.Throws<InvalidOperationException>(() =>
+            harness.Tick(TimeSpan.FromMilliseconds(100)));
+
+        Assert.True(handle.IsCompleted);
+        Assert.False(handle.IsActive);
+        Assert.False(harness.Graph.HasActiveMotion);
+        await handle.Completion;
+    }
+
+    [Fact]
+    public async Task ThrowingValueListenerStillTerminalizesExplicitCompletion()
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> value = harness.Graph.CreateValue(0d);
+        using IDisposable subscription = value.Subscribe(_ =>
+            throw new InvalidOperationException("Value listener failed."));
+        MotionHandle handle = value.AnimateTo(
+            10d,
+            MotionFactory.Tween<double>(TimeSpan.FromSeconds(1)));
+
+        Assert.Throws<InvalidOperationException>(handle.Complete);
+
+        Assert.True(handle.IsCompleted);
+        Assert.False(handle.IsActive);
+        Assert.False(harness.Graph.HasActiveMotion);
+        await handle.Completion;
+    }
+
+    [Fact]
+    public async Task ThrowingValueListenerStillTerminalizesCancellation()
+    {
+        UIRootHarness harness = new();
+        MotionValue<double> value = harness.Graph.CreateValue(0d);
+        using IDisposable subscription = value.Subscribe(_ =>
+            throw new InvalidOperationException("Value listener failed."));
+        MotionHandle handle = value.AnimateTo(
+            10d,
+            MotionFactory.Tween<double>(TimeSpan.FromSeconds(1)));
+
+        Assert.Throws<InvalidOperationException>(() =>
+            handle.Cancel(MotionCancelBehavior.Complete));
+
+        Assert.True(handle.IsCanceled);
+        Assert.False(handle.IsActive);
+        Assert.False(harness.Graph.HasActiveMotion);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+            await handle.Completion.AsTask());
     }
 
     [Fact]

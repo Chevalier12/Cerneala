@@ -1,13 +1,14 @@
 # MotionStateBuilder Class
 
 ## Definition
+
 Namespace: `Cerneala.UI.Motion`
 
 Assembly/Project: `Cerneala`
 
 Source: `UI/Motion/MotionStateBuilder.cs`
 
-Represents the fluent motion-state builder returned by `MotionElementFacade.States()`.
+Registers property targets that animate when an element enters or leaves an Aspect state.
 
 ```csharp
 public sealed class MotionStateBuilder
@@ -18,46 +19,52 @@ Inheritance:
 
 ## Examples
 
-Create a motion-state builder from a UI element motion facade:
+Animate opacity while a pointer is over an attached element, then return to the captured baseline:
 
 ```csharp
+using Cerneala.UI.Aspect;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Motion;
+using Cerneala.UI.Motion.Specs;
 
-UIElement element = new();
+UIRoot root = new();
+UIElement element = new() { Opacity = 1f };
+root.VisualChildren.Add(element);
 
-MotionStateBuilder states = element.Motion().States();
+element.Motion().States()
+    .When(AspectState.Hover)
+    .Set(
+        UIElement.OpacityProperty,
+        0.6f,
+        Motion.Tween<float>(TimeSpan.FromMilliseconds(100)));
 ```
 
 ## Remarks
 
-`MotionStateBuilder` is created by `MotionElementFacade.States()`. Its constructor is internal, so application code obtains an instance through `element.Motion().States()` rather than constructing it directly.
+Obtain the builder through `element.Motion().States()`. Calls for the same element return the same builder, so registrations made through separate facade instances participate in one state table. The element must be attached to a `UIRoot`, or be the root itself, when `Set` registers a target.
 
-The current class stores the owning `MotionElementFacade` internally and does not expose public state-registration members yet. It is part of the motion fluent API surface, alongside property animation, gesture, drag, and scroll timeline entry points exposed by `MotionElementFacade`.
+The builder observes the built-in element states represented by `AspectStateSet.FromElement`, including hover, pressed, focus, enabled/disabled, checked, selected, expanded, validation, and drag states. When more than one registered state matches the same property, the most recently registered matching state wins.
+
+The property's effective value at its first registration is captured as its baseline. When no registered state matches, the property animates back to that baseline using the last active state's specification. State-created motion uses `MotionPriority.Interactive`, holds its completed value, and yields to active normal- or reduced-motion-priority animation.
 
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| None | `MotionStateBuilder` has no public constructors. Use `MotionElementFacade.States()` to create an instance. |
-
-## Properties
-
-| Name | Type | Description |
-| --- | --- | --- |
-| None | N/A | This class declares no public properties. |
+| None | Use `MotionElementFacade.States()` to obtain the element-owned builder. |
 
 ## Methods
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| None | N/A | This class declares no public methods beyond inherited `object` members. |
+| `When(AspectState state)` | `MotionStateTargetBuilder` | Selects a state for a subsequent property target registration. |
 
-## Events
+## Exceptions
 
-| Name | Description |
-| --- | --- |
-| None | This class declares no public events. |
+| Member | Exception | Condition |
+| --- | --- | --- |
+| `When` | `ArgumentNullException` | `state` is `null`. |
+| `MotionStateTargetBuilder.Set` | `InvalidOperationException` | The target element is detached and is not a `UIRoot`. |
 
 ## Applies to
 
@@ -67,6 +74,7 @@ Target framework: `net8.0`
 
 ## See also
 
+- `Cerneala.UI.Motion.MotionStateTargetBuilder`
 - `Cerneala.UI.Motion.MotionElementFacade`
-- `Cerneala.UI.Motion.MotionExtensions`
-- `Cerneala.UI.Elements.UIElement`
+- `Cerneala.UI.Aspect.AspectState`
+- `Cerneala.UI.Motion.Core.MotionPriority`

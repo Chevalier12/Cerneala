@@ -4,6 +4,9 @@ using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Motion;
+using Cerneala.UI.Motion.Core;
+using Cerneala.UI.Motion.Properties;
 using Cerneala.UI.Motion.States;
 using Cerneala.UI.Theming;
 using Cerneala.Tests.UI.Motion.Core;
@@ -248,6 +251,43 @@ public sealed class AspectEngineTests
         Assert.Equal(new Cerneala.UI.Media.SolidColorBrush(Color.Black), button.Background);
         Assert.Equal(UiPropertyValueSource.AspectBase, button.GetValueSource(Control.BackgroundProperty));
         Assert.Equal(0, root.Motion.Properties.BindingCount);
+    }
+
+    [Fact]
+    public void StateAspectMotionCannotReplaceActiveExplicitMotion()
+    {
+        const string tokenName = "aspect.hover.priority";
+        UIRoot root = new();
+        Button button = new();
+        root.VisualChildren.Add(button);
+        ThemeProvider themeProvider = MotionTheme(tokenName);
+        AspectEngine engine = new();
+        AspectCatalog catalog = CatalogWith(
+            Rule("base", Declaration(Color.White)),
+            new AspectRuleSet(
+                "hover",
+                AspectLayer.Runtime,
+                new AspectTarget(typeof(Button), conditions: [AspectCondition.State(AspectState.Hover)]),
+                [Declaration(Color.Black, new AspectMotion(Control.BackgroundProperty, tokenName, AspectMotionSource.State))],
+                1));
+
+        engine.Apply(button, catalog, new AspectEnvironment("test"), themeProvider);
+        Cerneala.UI.Media.Brush? explicitTarget = new Cerneala.UI.Media.SolidColorBrush(Color.Red);
+        MotionHandle explicitHandle = button.Motion()
+            .Animate(Control.BackgroundProperty)
+            .To(explicitTarget)
+            .With(MotionFactory.Tween<Cerneala.UI.Media.Brush?>(TimeSpan.FromMilliseconds(200)));
+        Assert.True(explicitHandle.IsActive);
+
+        button.IsPointerOver = true;
+        engine.Apply(button, catalog, new AspectEnvironment("test"), themeProvider);
+
+        MotionPropertyBinding<Cerneala.UI.Media.Brush?> binding = root.Motion.Properties.GetOrCreateBinding(
+            root.Motion,
+            button,
+            Control.BackgroundProperty);
+        Assert.True(explicitHandle.IsActive);
+        Assert.Equal(explicitTarget, binding.Value.Target);
     }
 
     [Fact]

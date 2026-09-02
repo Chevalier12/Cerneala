@@ -60,6 +60,8 @@ For a finite cycle count, the total runtime is `inner.Duration * cycles`. When t
 
 `Retarget` is implemented as a no-op by the current sampler. Calling it does not change the target, current value, elapsed time, or completion state.
 
+Created samplers reject negative frame deltas. Zero is accepted and leaves elapsed time unchanged.
+
 ## Constructors
 
 | Name | Description |
@@ -79,6 +81,7 @@ For a finite cycle count, the total runtime is `inner.Duration * cycles`. When t
 | --- | --- | --- |
 | `PingPongSpec(TweenSpec<T>, int?)` | `ArgumentNullException` | `inner` is `null`. |
 | `PingPongSpec(TweenSpec<T>, int?)` | `ArgumentOutOfRangeException` | `cycles` is zero or negative. |
+| `MotionSampler<T>.Advance(TimeSpan)` on a sampler created by this specification | `ArgumentOutOfRangeException` | `delta` is negative. |
 
 ## Applies to
 

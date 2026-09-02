@@ -71,11 +71,11 @@ public sealed class MotionDiagnostics
         ArgumentNullException.ThrowIfNull(motion);
         return new MotionGraphSnapshot(
             motion.Graph.ActiveNodeCount,
-            motion.Properties.BindingCount,
-            motion.Layout.ActiveBindingCount,
+            motion.Properties.ActiveBindingCount,
+            motion.Layout.ActiveMotionCount,
             motion.Presence.ActiveExitCount,
-            ValuesSampledThisFrame: 0,
-            PropertiesWrittenThisFrame: 0,
+            motion.LastFrameResult.MotionNodesSampled,
+            motion.LastFrameResult.MotionPropertyWrites,
             motion.HasActiveMotion);
     }
 }
