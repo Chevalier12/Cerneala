@@ -62,9 +62,11 @@ for the same madness would only produce confusion.
 - Each root has its own Relay and its own queue. There isn't one
   `UiRelay.Current` global static, because Cerneala supports more
   roots and windows.
-- `Post` and `InvokeAsync` always put the work in the queue, including when they are
-  called from the UI thread, for predictable FIFO order. Code already found
-  the UI thread can directly call the operation if it wants immediate execution.
+- `Post` and accepted `InvokeAsync` work are put in the queue, including when they
+  are called from the UI thread, for predictable FIFO order. An `InvokeAsync`
+  call whose token is already canceled returns a canceled task without enqueuing.
+  Code already on the UI thread can directly call the operation if it wants
+  immediate execution.
 - There is no `Invoke`/`Send` public blocker, nested message pump or waiting
   synchronous. `.Wait()`, `.Result` and `GetAwaiter().GetResult()` on the UI thread
   wrong uses remain and must be documented as potential deadlock.
@@ -87,7 +89,7 @@ for the same madness would only produce confusion.
   synchronous callback has started, the token cannot interrupt it. The async overload
   receives the token and cooperatively controls its cancellation.
 - `SynchronizationContext.Send` executes inline only on the owner thread;
-  off-thread throws `NotSupportedException` and indicates `InvokeAsync`. `Post`
+  off-thread throws `InvalidOperationException` and indicates `InvokeAsync`. `Post`
   delegate to Relay.
 - An off-thread `INotifyPropertyChanged` is not evaluated on the worker. The handler
   filter only the property name, mark an atomic version and schedule
@@ -222,6 +224,10 @@ public sealed class UiRelay
         CancellationToken cancellationToken = default);
 
     public Task InvokeAsync(
+        Func<Task> callback,
+        CancellationToken cancellationToken = default);
+
+    public Task InvokeAsync(
         Func<CancellationToken, Task> callback,
         CancellationToken cancellationToken = default);
 }
@@ -229,11 +235,14 @@ public sealed class UiRelay
 Rules:
 
 - all overloads validate `null` synchronously;
-- all enqueues are FIFO and asynchronous to the caller;
+- all accepted enqueues are FIFO and asynchronous to the caller; a pre-canceled
+  `InvokeAsync` completes canceled without entering the queue;
 - `TaskCompletionSource` uses `RunContinuationsAsynchronously`;
-- `InvokeAsync(Func<CancellationToken, Task>)` starts the delegate on the UI thread,
-  it does not block the drain until completion and propagates the result in the task
-  returned;
+- the `Func<Task>` and `Func<CancellationToken, Task>` overloads start the delegate
+  on the UI thread, unwrap its returned task, do not block the drain until
+  completion, and propagate eventual completion in the returned task;
+- the token-aware async overload passes the operation token to the callback and
+  preserves the token carried by cooperative cancellation;
 - `Post` is for controlled fire-and-forget; the code that needs the result,
   canceling or handling the exception uses `InvokeAsync`;
 - `PendingCount` includes unstarted work items, not already started async operations;
@@ -472,10 +481,10 @@ Each integration declares its policy of coalescing, lifecycle and consistency.
 - `RelayBacklogAfterUpdate`.
 
 `HasWork` includes the callbacks executed in the update. A frame that just drains
-The relay is not reported as idle. `UiRelay` keeps internal cumulative counters
-for benchmarks and tests, without a parallel logging system. Completion
-the subsequent async delegate does not retroactively modify an already `FrameStats`
-published; the result or exception remains on `Task`.
+the relay is not reported as idle. Relay diagnostics are published per frame through
+`FrameStats`; `UiRelay` does not keep a second set of cumulative counters. Completion
+of a subsequently completed async delegate does not retroactively modify an already
+published `FrameStats`; the result or exception remains on `Task`.
 
 Fail-fast messages include:
 
@@ -587,7 +596,8 @@ Dependencies between plans:
 - [x] Implements the MPSC queue with `ConcurrentQueue`, pending counter atomic and
   work item state machine that cannot be executed twice.
 - [x] Implements `Post(Action)` with capture `ExecutionContext`.
-- [x] Implements the `InvokeAsync` overloads with
+- [x] Implements the `InvokeAsync` overloads for actions, synchronous results,
+  parameterless async callbacks, and token-aware async callbacks with
   `TaskCompletionSource` configured `RunContinuationsAsynchronously`.
 - [x] Implements race-safe cancellation before dequeue, between dequeue and run
   and after starting the async callback.
@@ -848,7 +858,8 @@ they have the same owner thread.
   exception accepted.
 - [x] Documents the Relay branding along with Aspect and Motion, without alias
   public `Dispatcher` and no names mixed between namespaces, types and hosts.
-- [x] Document examples for `Post`, `InvokeAsync`, generic result,
+- [x] Document examples for `Post`, `InvokeAsync`, generic result, parameterless
+  async completion,
   cancellation, exceptions and the mutation of a `ObservableList<T>` on UI thread.
 - [x] Documents the exact order compared to the input/scheduler, the snapshot,
 the budget, the latency of an update and the fact that the root must be pumped.

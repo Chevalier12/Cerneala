@@ -78,6 +78,32 @@ public sealed class UiRelayHostingIntegrationTests
     }
 
     [Fact]
+    public void HostAppliesTheCurrentViewportBeforeDrainingRelay()
+    {
+        UIRoot root = new(100, 100);
+        UiHost host = new(new UiHostOptions
+        {
+            Root = root,
+            Viewport = new UiViewport(100, 100)
+        });
+        float observedWidth = 0;
+        float observedHeight = 0;
+        root.Relay.Post(() =>
+        {
+            observedWidth = root.ViewportWidth;
+            observedHeight = root.ViewportHeight;
+        });
+
+        host.Update(
+            FakeInputSource.CreateFrame(),
+            new UiViewport(640, 480),
+            TimeSpan.Zero);
+
+        Assert.Equal(640, observedWidth);
+        Assert.Equal(480, observedHeight);
+    }
+
+    [Fact]
     public void HostDrainsOnlyOnceWhenCallbackReposts()
     {
         UIRoot root = new();

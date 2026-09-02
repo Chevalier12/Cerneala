@@ -69,6 +69,15 @@ public sealed class UiRelay : IUiThreadAccess
         return task;
     }
 
+    public Task InvokeAsync(Func<Task> callback, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(callback);
+        AsyncWorkItem item = new(callback, ExecutionContext.Capture(), cancellationToken);
+        Task task = item.Task;
+        Enqueue(item);
+        return task;
+    }
+
     public Task InvokeAsync(
         Func<CancellationToken, Task> callback,
         CancellationToken cancellationToken = default)
@@ -406,11 +415,12 @@ public sealed class UiRelay : IUiThreadAccess
     private sealed class AsyncWorkItem : UiRelayWorkItem
     {
         private readonly Task task;
-        private Func<CancellationToken, Task>? callback;
+        private Func<Task>? callback;
+        private Func<CancellationToken, Task>? cancellableCallback;
         private TaskCompletionSource? completion;
 
         public AsyncWorkItem(
-            Func<CancellationToken, Task> callback,
+            Func<Task> callback,
             ExecutionContext? executionContext,
             CancellationToken cancellationToken)
             : base(executionContext, cancellationToken)
@@ -421,11 +431,26 @@ public sealed class UiRelay : IUiThreadAccess
             RegisterCancellation();
         }
 
+        public AsyncWorkItem(
+            Func<CancellationToken, Task> callback,
+            ExecutionContext? executionContext,
+            CancellationToken cancellationToken)
+            : base(executionContext, cancellationToken)
+        {
+            cancellableCallback = callback;
+            completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            task = completion.Task;
+            RegisterCancellation();
+        }
+
         public Task Task => task;
 
         protected override void InvokeCore()
         {
-            Task operation = callback!(CancellationToken)
+            Task operation = callback is not null
+                ? callback()
+                : cancellableCallback!(CancellationToken);
+            operation = operation
                 ?? throw new InvalidOperationException("The asynchronous Relay callback returned null.");
             TaskCompletionSource target = completion!;
             completion = null;
@@ -457,6 +482,7 @@ public sealed class UiRelay : IUiThreadAccess
         protected override void ReleaseCallbackReferences()
         {
             callback = null;
+            cancellableCallback = null;
             completion = null;
         }
 
@@ -464,7 +490,17 @@ public sealed class UiRelay : IUiThreadAccess
         {
             if (operation.IsCanceled)
             {
-                completion.TrySetCanceled();
+                CancellationToken cancellationToken = default;
+                try
+                {
+                    operation.GetAwaiter().GetResult();
+                }
+                catch (OperationCanceledException exception)
+                {
+                    cancellationToken = exception.CancellationToken;
+                }
+
+                completion.TrySetCanceled(cancellationToken);
             }
             else if (operation.Exception is not null)
             {

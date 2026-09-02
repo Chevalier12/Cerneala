@@ -126,18 +126,19 @@ public sealed class UiHost
         UiViewport currentViewport = viewport ?? this.viewport;
         TimeSpan frameTime = elapsedTime ?? Clock?.GetElapsedTime() ?? TimeSpan.Zero;
         FrameStats stats = new();
+        using UiRelaySynchronizationContext.Scope contextScope = currentRoot.Relay.EnterSynchronizationContext();
+        long updatePhaseStarted = Stopwatch.GetTimestamp();
+        ApplyViewportIfChanged(currentRoot, currentViewport);
+        PrimeInitialFrame(currentRoot);
+        if (advanceRenderTime)
+        {
+            ObjectMotionRuntime.TickCurrent();
+            TimeSensitiveRenderInvalidator.Invalidate(currentRoot, frameTime);
+        }
+        TimeSpan updatePreparationTime = Stopwatch.GetElapsedTime(updatePhaseStarted);
+
         using (currentRoot.BeginUpdate(stats))
         {
-            long updatePhaseStarted = Stopwatch.GetTimestamp();
-            ApplyViewportIfChanged(currentRoot, currentViewport);
-            PrimeInitialFrame(currentRoot);
-            if (advanceRenderTime)
-            {
-                ObjectMotionRuntime.TickCurrent();
-                TimeSensitiveRenderInvalidator.Invalidate(currentRoot, frameTime);
-            }
-            TimeSpan updatePreparationTime = Stopwatch.GetElapsedTime(updatePhaseStarted);
-
             updatePhaseStarted = Stopwatch.GetTimestamp();
             FramePhaseTiming scheduledPhases = default;
             if (currentRoot.Scheduler.HasWork)

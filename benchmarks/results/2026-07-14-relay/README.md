@@ -30,7 +30,7 @@ Scheduling is measured per accepted operation. `Post` is the baseline for the
 | `Post` | 1.920 us | 64 B | 0.52 M ops/s |
 | `InvokeAsync` | 2.640 us | 168 B | 0.38 M ops/s |
 
-Frame drain uses `MaxCallbacksPerFrame = 1024`. The 2,048 callback case executes
+Frame drain uses `MaxCallbacksPerUpdate = 1024`. The 2,048 callback case executes
 1,024 callbacks and intentionally leaves 1,024 pending for the next frame.
 
 | Callbacks queued | Mean/frame | Allocated/frame | Approx. executed throughput |

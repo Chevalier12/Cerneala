@@ -43,6 +43,18 @@ static Task<int> ReadOnUiThreadAsync(
 }
 ```
 
+Run a parameterless asynchronous callback on the UI thread and track its full completion:
+
+```csharp
+static Task RunOnUiThreadAsync(
+    UiRelay relay,
+    Func<Task> operation,
+    CancellationToken cancellationToken)
+{
+    return relay.InvokeAsync(operation, cancellationToken);
+}
+```
+
 Observe cancellation and callback exceptions through the returned task:
 
 ```csharp
@@ -81,13 +93,13 @@ static Task AddItemAsync<T>(
 
 `UIRoot.ProcessFrame` and each host update drain one queue snapshot on the owner thread before retained scheduler and input work. The root must keep being pumped for queued callbacks and captured continuations to run. Relay invalidations can therefore participate in the same update, while callbacks posted during the drain or input wait for a later update.
 
-`Post` and every `InvokeAsync` overload always enqueue work, including calls made from the owner thread. Work is dequeued in FIFO order after enqueue linearization. A drain processes a stable snapshot up to the configured callback budget, so callbacks posted during a drain remain pending for a later update.
+`Post` and accepted `InvokeAsync` work enqueue even when called from the owner thread. An `InvokeAsync` call whose token is already canceled instead returns a canceled task without enqueuing or invoking the callback. Enqueued work is dequeued in FIFO order after enqueue linearization. A drain processes a stable snapshot up to the configured callback budget, so callbacks posted during a drain remain pending for a later update.
 
 Scheduling captures the caller's `ExecutionContext`. `AsyncLocal` state, culture, and tracing context therefore flow into the callback. `PendingCount` includes callbacks that have not started; it does not include asynchronous callbacks after their delegate has started.
 
 Relay drains install a root-specific `SynchronizationContext` only for the duration of the update and restore the previous context even when a callback fails. An `await` that captures this context posts its continuation back to the same root's Relay queue for a later update. Two roots on one thread therefore keep their continuation queues independent.
 
-Cancellation that wins before execution prevents the callback from running. Cancellation cannot interrupt a synchronous callback after it starts. The asynchronous overload receives the token for cooperative cancellation and begins the delegate on the owner thread without synchronously blocking the drain until its returned task completes.
+Cancellation that wins before execution prevents the callback from running. Cancellation cannot interrupt a synchronous callback after it starts. Both asynchronous overloads begin the delegate on the owner thread, unwrap its returned task, and propagate eventual completion without synchronously blocking the drain. The `Func<CancellationToken, Task>` overload also passes the operation token into the callback for cooperative cancellation. When that callback completes by throwing `OperationCanceledException`, the returned task preserves the exception's cancellation token.
 
 Exceptions from `InvokeAsync` are stored on the returned task. Exceptions from `Post` are collected while the rest of the drain snapshot continues, then surfaced by the update as an `AggregateException`. Prefer `InvokeAsync` whenever the caller must observe failure.
 
@@ -122,6 +134,7 @@ Do not call `.Wait()`, `.Result`, or `GetAwaiter().GetResult()` for Relay work o
 | `Post(Action callback)` | `void` | Enqueues a fire-and-forget callback and captures the caller's execution context. |
 | `InvokeAsync(Action callback, CancellationToken cancellationToken = default)` | `Task` | Enqueues an action and returns a task for completion, cancellation, or failure. |
 | `InvokeAsync<T>(Func<T> callback, CancellationToken cancellationToken = default)` | `Task<T>` | Enqueues a value-producing callback and returns its result asynchronously. |
+| `InvokeAsync(Func<Task> callback, CancellationToken cancellationToken = default)` | `Task` | Starts a parameterless asynchronous callback on the UI thread and propagates its eventual completion without exposing a nested task. |
 | `InvokeAsync(Func<CancellationToken, Task> callback, CancellationToken cancellationToken = default)` | `Task` | Starts an asynchronous callback on the UI thread and propagates its eventual completion without blocking the drain. |
 
 ## Exceptions

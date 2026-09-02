@@ -34,6 +34,10 @@ public sealed class UiRelayCoreTests
         });
         Assert.Throws<ArgumentNullException>(() =>
         {
+            _ = relay.InvokeAsync((Func<Task>)null!);
+        });
+        Assert.Throws<ArgumentNullException>(() =>
+        {
             _ = relay.InvokeAsync((Func<CancellationToken, Task>)null!);
         });
     }
@@ -106,6 +110,32 @@ public sealed class UiRelayCoreTests
     }
 
     [Fact]
+    public async Task ParameterlessAsyncInvokeTracksCompletionAndFaultWithoutNestedTask()
+    {
+        UiRelay relay = new();
+        int executions = 0;
+        Task operation = relay.InvokeAsync(async () =>
+        {
+            await Task.Yield();
+            executions++;
+            throw new InvalidOperationException("async-expected");
+        });
+
+        UiRelayDrainResult first = relay.Drain();
+
+        Assert.Equal(1, first.Executed);
+        Assert.False(operation.IsCompleted);
+        Assert.Equal(0, executions);
+        Assert.True(relay.HasPendingWork);
+
+        relay.Drain();
+
+        InvalidOperationException exception = await Assert.ThrowsAsync<InvalidOperationException>(() => operation);
+        Assert.Equal("async-expected", exception.Message);
+        Assert.Equal(1, executions);
+    }
+
+    [Fact]
     public void PostFaultDoesNotAbandonTheSnapshot()
     {
         UiRelay relay = new();
@@ -170,6 +200,25 @@ public sealed class UiRelayCoreTests
         Assert.True(relay.HasPendingWork);
         relay.Drain();
         await operation;
+    }
+
+    [Fact]
+    public async Task CancellationAfterAsyncStartPreservesTheOperationToken()
+    {
+        UiRelay relay = new();
+        using CancellationTokenSource cancellation = new();
+        Task operation = relay.InvokeAsync(async token =>
+        {
+            await Task.Yield();
+            token.ThrowIfCancellationRequested();
+        }, cancellation.Token);
+
+        relay.Drain();
+        cancellation.Cancel();
+        relay.Drain();
+
+        OperationCanceledException exception = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => operation);
+        Assert.Equal(cancellation.Token, exception.CancellationToken);
     }
 
     [Fact]
