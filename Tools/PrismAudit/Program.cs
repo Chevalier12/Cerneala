@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Cerneala.Drawing.MonoGame;
 using Cerneala.UI.Prism.Runtime;
 
 namespace Cerneala.Tools.PrismAudit;
@@ -151,6 +152,16 @@ internal static class Program
         "Cerneala.UI.Prism.Runtime.PrismValueVersion"
     };
 
+    private static readonly string[] ExpectedHighLevelPrismTypes =
+    [
+        "Cerneala.Drawing.Prism.Prism",
+        "Cerneala.Drawing.Prism.PrismFilter",
+        "Cerneala.Drawing.Prism.PrismImage",
+        "Cerneala.Drawing.Prism.PrismOperation",
+        "Cerneala.Drawing.Prism.PrismPipeline",
+        "Cerneala.Drawing.Prism.PrismStyle"
+    ];
+
     private static readonly HashSet<string> ExpectedCrossSurfaceTypes = new(StringComparer.Ordinal)
     {
         "Cerneala.Drawing.DrawCommand",
@@ -218,7 +229,11 @@ internal static class Program
             }
             else
             {
-                if (!File.Exists(reportPath) || !string.Equals(File.ReadAllText(reportPath), report, StringComparison.Ordinal))
+                if (!File.Exists(reportPath) ||
+                    !string.Equals(
+                        File.ReadAllText(reportPath).ReplaceLineEndings("\n"),
+                        report,
+                        StringComparison.Ordinal))
                 {
                     Console.Error.WriteLine(
                         "Prism completeness report is stale. Run: dotnet run --project Tools/PrismAudit -- --write");
@@ -260,7 +275,7 @@ internal static class Program
         CatalogSnapshot catalog = CatalogSnapshot.Read(catalogPath);
         ValidateCatalog(catalog, errors);
 
-        string catalogHash = HashFile(catalogPath);
+        string catalogHash = HashTextFile(catalogPath);
         string filterReference = File.ReadAllText(Path.Combine(repositoryRoot, "docs", "prism-filter-reference.generated.md"));
         if (!filterReference.Contains($"<!-- catalog-sha256: {catalogHash} -->", StringComparison.Ordinal))
         {
@@ -282,8 +297,15 @@ internal static class Program
             ["catalog", "graph", "kernel", "Motion", "diagnostic", "DrawingFrameContext", "IBackdropFrameSource", "LinearSrgb"],
             errors);
 
-        Assembly assembly = typeof(PrismInstance).Assembly;
-        Type[] exportedTypes = assembly.GetExportedTypes();
+        Assembly[] assemblies =
+        [
+            typeof(PrismInstance).Assembly,
+            typeof(MonoGameDrawingBackend).Assembly
+        ];
+        Type[] exportedTypes = assemblies
+            .SelectMany(static assembly => assembly.GetExportedTypes())
+            .DistinctBy(static type => type.FullName, StringComparer.Ordinal)
+            .ToArray();
         Type[] publicPrismTypes = exportedTypes
             .Where(type => type.FullName?.Contains(".Prism", StringComparison.Ordinal) == true)
             .OrderBy(type => type.FullName, StringComparer.Ordinal)
@@ -293,15 +315,15 @@ internal static class Program
             .Where(type => PrismRelatedMemberSignatures(type).Any())
             .OrderBy(type => type.FullName, StringComparer.Ordinal)
             .ToArray();
-        ValidatePublicApi(assembly, publicPrismTypes, crossSurfaceTypes, errors);
+        ValidatePublicApi(assemblies, catalog, publicPrismTypes, crossSurfaceTypes, errors);
 
         return new AuditResult(
             repositoryRoot,
             catalog,
             catalogHash,
-            HashFile(proposalPath),
-            HashFile(technicalDesignPath),
-            HashFile(Path.Combine(repositoryRoot, "docs", "prism-public-api-baseline.md")),
+            HashTextFile(proposalPath),
+            HashTextFile(technicalDesignPath),
+            HashTextFile(Path.Combine(repositoryRoot, "docs", "prism-public-api-baseline.md")),
             publicPrismTypes,
             crossSurfaceTypes,
             errors);
@@ -410,7 +432,8 @@ internal static class Program
     }
 
     private static void ValidatePublicApi(
-        Assembly assembly,
+        IReadOnlyList<Assembly> assemblies,
+        CatalogSnapshot catalog,
         Type[] publicPrismTypes,
         Type[] crossSurfaceTypes,
         List<string> errors)
@@ -418,7 +441,22 @@ internal static class Program
         HashSet<string> actualTypes = publicPrismTypes
             .Select(type => type.FullName!)
             .ToHashSet(StringComparer.Ordinal);
-        CompareSet(actualTypes, ExpectedPublicPrismTypes, "public Prism types", errors);
+        HashSet<string> expectedTypes = new(ExpectedPublicPrismTypes, StringComparer.Ordinal);
+        expectedTypes.UnionWith(ExpectedHighLevelPrismTypes);
+        foreach (CatalogEntry entry in catalog.Entries)
+        {
+            string? suffix = entry.Kind switch
+            {
+                "filter" => "Filter",
+                "style" => "Style",
+                _ => null
+            };
+            if (suffix is not null)
+            {
+                expectedTypes.Add($"Cerneala.Drawing.Prism.{entry.Symbol}{suffix}");
+            }
+        }
+        CompareSet(actualTypes, expectedTypes, "public Prism types", errors);
 
         string[] publicGraphTypes = actualTypes
             .Where(name => name.StartsWith("Cerneala.Drawing.Prism.Graph.", StringComparison.Ordinal))
@@ -450,7 +488,7 @@ internal static class Program
             }
         }
 
-        Type drawingBackend = RequiredType(assembly, "Cerneala.Drawing.IDrawingBackend", errors);
+        Type drawingBackend = RequiredType(assemblies, "Cerneala.Drawing.IDrawingBackend", errors);
         MethodInfo[] renderMethods = drawingBackend.GetMethods().Where(method => method.Name == "Render").ToArray();
         if (renderMethods.Length != 1 ||
             renderMethods[0].GetParameters() is not { Length: 2 } renderParameters ||
@@ -461,37 +499,50 @@ internal static class Program
             errors.Add("IDrawingBackend.Render does not match the approved command-list plus frame-context touch point.");
         }
 
-        Type uiBackend = RequiredType(assembly, "Cerneala.UI.Hosting.IUiBackend", errors);
+        Type uiBackend = RequiredType(assemblies, "Cerneala.UI.Hosting.IUiBackend", errors);
         CompareSet(
-            uiBackend.GetProperties().Select(property => property.Name),
-            ["InputSource", "DrawingBackend", "BackdropFrameSource"],
-            "IUiBackend properties",
+            uiBackend.GetProperties()
+                .Where(property =>
+                    NameIsPrismRelated(property.Name) ||
+                    TypeIsPrismRelated(property.PropertyType))
+                .Select(property => property.Name),
+            ["BackdropFrameSource"],
+            "IUiBackend Prism properties",
             errors);
 
-        Type hostOptions = RequiredType(assembly, "Cerneala.UI.Hosting.MonoGame.MonoGameUiHostOptions", errors);
+        Type hostOptions = RequiredType(
+            assemblies,
+            "Cerneala.UI.Hosting.MonoGame.MonoGameUiHostOptions",
+            errors);
         CompareSet(
-            hostOptions.GetProperties().Select(property => property.Name),
-            [
-                "SpriteBatch", "WhitePixel", "Root", "Viewport", "InputSource", "ContentServices",
-                "ImageLoader", "Clock", "TextRasterizer", "PlatformServices", "BackdropFrameSource",
-                "PrismRendererOptions"
-            ],
-            "MonoGameUiHostOptions properties",
+            hostOptions.GetProperties()
+                .Where(property =>
+                    NameIsPrismRelated(property.Name) ||
+                    TypeIsPrismRelated(property.PropertyType))
+                .Select(property => property.Name),
+            ["BackdropFrameSource", "PrismRendererOptions"],
+            "MonoGameUiHostOptions Prism properties",
             errors);
 
-        Type frameContext = RequiredType(assembly, "Cerneala.Drawing.DrawingFrameContext", errors);
+        Type frameContext = RequiredType(assemblies, "Cerneala.Drawing.DrawingFrameContext", errors);
         CompareSet(
             frameContext.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)
+                .Where(property =>
+                    NameIsPrismRelated(property.Name) ||
+                    TypeIsPrismRelated(property.PropertyType))
                 .Select(property => property.Name),
             ["BackdropLease"],
-            "DrawingFrameContext public properties",
+            "DrawingFrameContext Prism properties",
             errors);
         if (frameContext.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly).Length != 0)
         {
             errors.Add("DrawingFrameContext exposes a public constructor instead of remaining host-created.");
         }
 
-        Type backdropRequest = RequiredType(assembly, "Cerneala.Drawing.Prism.BackdropFrameRequest", errors);
+        Type backdropRequest = RequiredType(
+            assemblies,
+            "Cerneala.Drawing.Prism.BackdropFrameRequest",
+            errors);
         CompareSet(
             backdropRequest.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)
                 .Select(property => property.Name),
@@ -629,7 +680,7 @@ internal static class Program
         report.AppendLine();
         report.AppendLine("## Public API diff and justification");
         report.AppendLine();
-        report.AppendLine("The foundation baseline anticipated exactly three host changes. The implemented diff is: `IDrawingBackend.Render` receives `DrawingFrameContext`; `IUiBackend` exposes optional `BackdropFrameSource`; `MonoGameUiHostOptions` adds `BackdropFrameSource` and `PrismRendererOptions`. Graph planning and execution remain internal.");
+        report.AppendLine("The approved surface includes the frame/backdrop host changes, the public catalog and runtime contracts, and the catalog-generated high-level `PrismImage` pipeline API. Graph planning and backend execution remain internal.");
         report.AppendLine();
         report.AppendLine("| Public type | Public member | Approved current scenario |");
         report.AppendLine("| --- | --- | --- |");
@@ -821,12 +872,18 @@ internal static class Program
         _ => null
     };
 
-    private static Type RequiredType(Assembly assembly, string name, List<string> errors)
+    private static Type RequiredType(
+        IEnumerable<Assembly> assemblies,
+        string name,
+        List<string> errors)
     {
-        Type? type = assembly.GetType(name, throwOnError: false, ignoreCase: false);
-        if (type is not null)
+        foreach (Assembly assembly in assemblies)
         {
-            return type;
+            Type? type = assembly.GetType(name, throwOnError: false, ignoreCase: false);
+            if (type is not null)
+            {
+                return type;
+            }
         }
         errors.Add($"Required public API type '{name}' is missing.");
         return typeof(object);
@@ -898,8 +955,11 @@ internal static class Program
 
     private static string Cell(string value) => $"`{value.Replace("|", "\\|", StringComparison.Ordinal).Replace("`", "\\`", StringComparison.Ordinal)}`";
 
-    private static string HashFile(string path) => Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path)))
-        .ToLowerInvariant();
+    private static string HashTextFile(string path) => Convert.ToHexString(
+        SHA256.HashData(
+            Encoding.UTF8.GetBytes(
+                File.ReadAllText(path).ReplaceLineEndings("\n"))))
+            .ToLowerInvariant();
 
     private static string FindRepositoryRoot()
     {

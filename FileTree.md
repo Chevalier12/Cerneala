@@ -3957,6 +3957,7 @@ Generated from `.`.
 |   |-- ApplicationExitEventArgs.cs
 |   |-- ApplicationShutdownMode.cs
 |   +-- ApplicationStartupEventArgs.cs
+|-- .gitattributes
 |-- .gitignore
 |-- .roslyn-index.json
 |-- AGENTS_DEPRECATED.md

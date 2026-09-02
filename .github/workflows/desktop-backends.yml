@@ -3,15 +3,22 @@ name: Desktop Backends
 on:
   push:
     paths:
+      - ".gitattributes"
       - ".github/workflows/desktop-backends.yml"
       - "Cerneala.Backends.MonoGame/**"
       - "Cerneala.Backends.SdlGpu/**"
       - "Cerneala.Platforms.Sdl3/**"
       - "Cerneala.SourceGen/**"
-      - "Drawing/Prism/Shaders/Hlsl/**"
+      - "Cerneala.csproj"
+      - "Drawing/**"
       - "Tools/Cerneala.SdlShaderCompiler/**"
+      - "Tools/PrismAudit/**"
+      - "docs/prism-*.md"
+      - "docs-site/documentation/classes/**"
+      - "docs-site/documentation/manifest.json"
       - "Tools/scripts/*SdlGpuSmoke*.ps1"
       - "UI/Hosting/Windowing/**"
+      - "UI/Prism/**"
       - "tests/Cerneala.SdlGpuSmoke/**"
       - "tests/Cerneala.Tests.SdlGpu/**"
       - "tests/Cerneala.Tests.SourceGen/**"
@@ -19,15 +26,22 @@ on:
       - "Tetrisish/**"
   pull_request:
     paths:
+      - ".gitattributes"
       - ".github/workflows/desktop-backends.yml"
       - "Cerneala.Backends.MonoGame/**"
       - "Cerneala.Backends.SdlGpu/**"
       - "Cerneala.Platforms.Sdl3/**"
       - "Cerneala.SourceGen/**"
-      - "Drawing/Prism/Shaders/Hlsl/**"
+      - "Cerneala.csproj"
+      - "Drawing/**"
       - "Tools/Cerneala.SdlShaderCompiler/**"
+      - "Tools/PrismAudit/**"
+      - "docs/prism-*.md"
+      - "docs-site/documentation/classes/**"
+      - "docs-site/documentation/manifest.json"
       - "Tools/scripts/*SdlGpuSmoke*.ps1"
       - "UI/Hosting/Windowing/**"
+      - "UI/Prism/**"
       - "tests/Cerneala.SdlGpuSmoke/**"
       - "tests/Cerneala.Tests.SdlGpu/**"
       - "tests/Cerneala.Tests.SourceGen/**"
@@ -182,6 +196,10 @@ jobs:
       - name: Build complete solution
         shell: pwsh
         run: dotnet build ./Cerneala.slnx -c Release --no-restore
+
+      - name: Verify Prism completeness report and public surface
+        shell: pwsh
+        run: dotnet run --project ./Tools/PrismAudit/PrismAudit.csproj -c Release --no-build --no-restore -- --check
 
       - name: Test complete solution
         shell: pwsh

@@ -19,8 +19,8 @@ The audit treats generated runtime and documentation owners as concrete only bec
 | Contract | SHA-256 |
 | --- | --- |
 | `docs/prism-markup-syntax-proposal.md` | `4c6972df9c37bbc9e3807b78b39ac7a558c8370fb984c605159cc3d9e24e55c9` |
-| `docs/prism-technical-design.md` | `b2ac2b8c048c6c584d633285dd2178678065ac0b78cb297e5a2ee3327ba25d81` |
-| `docs/prism-public-api-baseline.md` | `94a0a47399cea8c88ac2011ad700d9ea74dde7f04d4d356d0d818e4bf13a8275` |
+| `docs/prism-technical-design.md` | `339bb2bada45312d5951a974e548f0e1eb298537a5d00df037e5dc05f2097af6` |
+| `docs/prism-public-api-baseline.md` | `37e6b902655b22a850c226b1f0f9832e4c1dab63952a6f37fe6de7f948113093` |
 | `Cerneala.SourceGen/Prism/Catalog/prism-catalog.json` | `93078fa3c59727a37d406a34e566bf5339e60301aa838a317267e4c10d622f4e` |
 
 ## Approved matrix
@@ -37,7 +37,7 @@ The audit treats generated runtime and documentation owners as concrete only bec
 | masks | 5 properties + feature | 5 properties + feature | PASS |
 | implicit backdrop | lazy destination input + host contract | analyzer + host contract | PASS |
 | conformance features | 4 | 4 | PASS |
-| public Prism types | 67 | 67 | PASS |
+| public Prism types | 67 | 217 | PASS |
 | existing public types extended for Prism | 10 | 10 | PASS |
 
 Directives: `@prism`, `@parameter`, `@layer`, `@group`, `@filter`, `@style`, `@mask`.
@@ -975,15 +975,15 @@ Syntax is owned by `PrismDirectiveParser` and `PrismMarkupLanguage`; binding by 
 
 ## Public API diff and justification
 
-The foundation baseline anticipated exactly three host changes. The implemented diff is: `IDrawingBackend.Render` receives `DrawingFrameContext`; `IUiBackend` exposes optional `BackdropFrameSource`; `MonoGameUiHostOptions` adds `BackdropFrameSource` and `PrismRendererOptions`. Graph planning and execution remain internal.
+The approved surface includes the frame/backdrop host changes, the public catalog and runtime contracts, and the catalog-generated high-level `PrismImage` pipeline API. Graph planning and backend execution remain internal.
 
 | Public type | Public member | Approved current scenario |
 | --- | --- | --- |
 | `Cerneala.Drawing.DrawCommand` | `Cerneala.Drawing.DrawCommand BeginPrism(Cerneala.Drawing.Prism.PrismDrawScope scope)` | Command-list Prism scope ABI consumed by retained rendering and backends. |
 | `Cerneala.Drawing.DrawCommand` | `Cerneala.Drawing.DrawCommand EndPrism()` | Command-list Prism scope ABI consumed by retained rendering and backends. |
 | `Cerneala.Drawing.DrawCommand` | `System.Nullable<Cerneala.Drawing.Prism.PrismDrawScope> PrismScope { get; }` | Command-list Prism scope ABI consumed by retained rendering and backends. |
-| `Cerneala.Drawing.DrawCommandKind` | `BeginPrism = 11` | Command-list Prism scope ABI consumed by retained rendering and backends. |
-| `Cerneala.Drawing.DrawCommandKind` | `EndPrism = 12` | Command-list Prism scope ABI consumed by retained rendering and backends. |
+| `Cerneala.Drawing.DrawCommandKind` | `BeginPrism = 19` | Command-list Prism scope ABI consumed by retained rendering and backends. |
+| `Cerneala.Drawing.DrawCommandKind` | `EndPrism = 20` | Command-list Prism scope ABI consumed by retained rendering and backends. |
 | `Cerneala.Drawing.DrawingFrameContext` | `Cerneala.Drawing.Prism.IBackdropFrameLease BackdropLease { get; }` | Per-frame Prism analysis and optional backdrop submission contract. |
 | `Cerneala.Drawing.IDrawingBackend` | `System.Void Render(Cerneala.Drawing.DrawCommandList commands, in Cerneala.Drawing.DrawingFrameContext frameContext)` | Per-frame Prism analysis and optional backdrop submission contract. |
 | `Cerneala.Drawing.MonoGame.MonoGameDrawingBackend` | `Cerneala.Drawing.Prism.PrismRendererDiagnostics RendererDiagnostics { get; }` | Per-frame Prism analysis and optional backdrop submission contract. |
@@ -1029,6 +1029,24 @@ The foundation baseline anticipated exactly three host changes. The implemented 
 | `Cerneala.UI.Markup.GeneratedMarkup` | `System.Void SetPrismStyleVector(Cerneala.UI.Prism.Runtime.PrismStyleState state, System.Int32 entryStableId, System.Int32 slot, System.Numerics.Vector4 value)` | Generated markup accessors used by typed Prism Motion paths. |
 | `Cerneala.UI.Rendering.RetainedRenderer` | `System.Void Submit(Cerneala.UI.Elements.UIRoot root, Cerneala.Drawing.IDrawingBackend backend, in Cerneala.Drawing.DrawingFrameContext frameContext)` | Retained-render traversal discovers and submits attached Prism instances. |
 | `Cerneala.Drawing.MonoGame.Prism.IMonoGameBackdropFrameLease` | `Microsoft.Xna.Framework.Graphics.Texture2D Texture { get; }` | Optional host/backend backdrop acquisition contract. |
+| `Cerneala.Drawing.Prism.AccentedEdgesFilter` | `AccentedEdgesFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.AccentedEdgesFilter` | `System.Single EdgeBrightness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.AccentedEdgesFilter` | `System.Single EdgeWidth { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.AccentedEdgesFilter` | `System.Single Smoothness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.AdaptiveWideAngleFilter` | `AdaptiveWideAngleFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.AdaptiveWideAngleFilter` | `System.Numerics.Vector4 DistortionCoefficients { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.AdaptiveWideAngleFilter` | `System.Numerics.Vector4 FocalLength { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.AdaptiveWideAngleFilter` | `System.Numerics.Vector4 PrincipalPoint { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.AddNoiseFilter` | `AddNoiseFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.AddNoiseFilter` | `System.Boolean Monochromatic { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.AddNoiseFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.AddNoiseFilter` | `System.Single Amount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.AddNoiseFilter` | `System.String Distribution { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.AngledStrokesFilter` | `AngledStrokesFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.AngledStrokesFilter` | `System.Single DirectionBalance { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.AngledStrokesFilter` | `System.Single Sharpness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.AngledStrokesFilter` | `System.Single StrokeLength { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.AverageFilter` | `AverageFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.BackdropAlphaMode` | `Opaque = 0` | Optional host/backend backdrop acquisition contract. |
 | `Cerneala.Drawing.Prism.BackdropAlphaMode` | `Premultiplied = 1` | Optional host/backend backdrop acquisition contract. |
 | `Cerneala.Drawing.Prism.BackdropAlphaMode` | `Straight = 2` | Optional host/backend backdrop acquisition contract. |
@@ -1056,6 +1074,62 @@ The foundation baseline anticipated exactly three host changes. The implemented 
 | `Cerneala.Drawing.Prism.BackdropPixelFormat` | `Bgra8Unorm = 1` | Optional host/backend backdrop acquisition contract. |
 | `Cerneala.Drawing.Prism.BackdropPixelFormat` | `Rgba16Float = 2` | Optional host/backend backdrop acquisition contract. |
 | `Cerneala.Drawing.Prism.BackdropPixelFormat` | `Rgba8Unorm = 0` | Optional host/backend backdrop acquisition contract. |
+| `Cerneala.Drawing.Prism.BasReliefFilter` | `BasReliefFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BasReliefFilter` | `Cerneala.Drawing.Color Background { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BasReliefFilter` | `Cerneala.Drawing.Color Foreground { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BasReliefFilter` | `System.Single Detail { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BasReliefFilter` | `System.Single Smoothness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BasReliefFilter` | `System.String LightDirection { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `BevelEmbossStyle()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `Cerneala.Drawing.Color HighlightColor { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `Cerneala.Drawing.Color ShadowColor { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `Cerneala.UI.Prism.Definitions.PrismResourceId Pattern { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.Boolean AntiAlias { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.Boolean ContourAntiAlias { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.Boolean ContourEnabled { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.Boolean TextureEnabled { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.Boolean TextureInvert { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.Boolean TextureLinkWithLayer { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.Boolean UseGlobalLight { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.Numerics.Vector4 TextureOffset { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.Single Altitude { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.Single Angle { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.Single ContourRange { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.Single Depth { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.Single HighlightOpacity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.Single ShadowOpacity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.Single Size { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.Single Soften { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.Single TextureDepth { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.Single TextureScale { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.String Contour { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.String Direction { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.String GlossContour { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.String HighlightMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.String ShadowMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.String Style { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BevelEmbossStyle` | `System.String Technique { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BlackWhiteFilter` | `BlackWhiteFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BlackWhiteFilter` | `System.Boolean PreserveLuminosity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BlackWhiteFilter` | `System.Single Blue { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BlackWhiteFilter` | `System.Single Green { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BlackWhiteFilter` | `System.Single Red { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BlurFilter` | `BlurFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BlurFilter` | `System.Single Radius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BlurFilter` | `System.String EdgeMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BlurFilter` | `System.String Quality { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BlurMoreFilter` | `BlurMoreFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BlurMoreFilter` | `System.Single Radius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BlurMoreFilter` | `System.String EdgeMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BlurMoreFilter` | `System.String Quality { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BoxBlurFilter` | `BoxBlurFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BoxBlurFilter` | `System.Single Iterations { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BoxBlurFilter` | `System.Single Radius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BoxBlurFilter` | `System.String EdgeMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BrightnessContrastFilter` | `BrightnessContrastFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BrightnessContrastFilter` | `System.Boolean UseLegacy { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BrightnessContrastFilter` | `System.Single Brightness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.BrightnessContrastFilter` | `System.Single Contrast { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.Catalog.PrismBlendMode` | `Color = 170` | Strongly typed catalog authoring value used by markup definitions. |
 | `Cerneala.Drawing.Prism.Catalog.PrismBlendMode` | `ColorBurn = 149` | Strongly typed catalog authoring value used by markup definitions. |
 | `Cerneala.Drawing.Prism.Catalog.PrismBlendMode` | `ColorDodge = 154` | Strongly typed catalog authoring value used by markup definitions. |
@@ -1266,6 +1340,205 @@ The foundation baseline anticipated exactly three host changes. The implemented 
 | `Cerneala.Drawing.Prism.Catalog.PrismStyleId` | `PatternOverlay = 143` | Strongly typed catalog authoring value used by markup definitions. |
 | `Cerneala.Drawing.Prism.Catalog.PrismStyleId` | `Satin = 140` | Strongly typed catalog authoring value used by markup definitions. |
 | `Cerneala.Drawing.Prism.Catalog.PrismStyleId` | `Stroke = 144` | Strongly typed catalog authoring value used by markup definitions. |
+| `Cerneala.Drawing.Prism.ChalkCharcoalFilter` | `Cerneala.Drawing.Color Background { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ChalkCharcoalFilter` | `Cerneala.Drawing.Color Foreground { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ChalkCharcoalFilter` | `ChalkCharcoalFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ChalkCharcoalFilter` | `System.Single ChalkArea { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ChalkCharcoalFilter` | `System.Single CharcoalArea { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ChalkCharcoalFilter` | `System.Single StrokePressure { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ChannelMixerFilter` | `ChannelMixerFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ChannelMixerFilter` | `System.Numerics.Vector4 Blue { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ChannelMixerFilter` | `System.Numerics.Vector4 Constant { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ChannelMixerFilter` | `System.Numerics.Vector4 Green { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ChannelMixerFilter` | `System.Numerics.Vector4 Red { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CharcoalFilter` | `Cerneala.Drawing.Color Background { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CharcoalFilter` | `Cerneala.Drawing.Color Foreground { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CharcoalFilter` | `CharcoalFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CharcoalFilter` | `System.Single CharcoalThickness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CharcoalFilter` | `System.Single Detail { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CharcoalFilter` | `System.Single LightDarkBalance { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ChromaticAberrationFilter` | `ChromaticAberrationFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ChromaticAberrationFilter` | `System.Boolean Radial { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ChromaticAberrationFilter` | `System.Numerics.Vector4 Center { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ChromaticAberrationFilter` | `System.Numerics.Vector4 Direction { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ChromaticAberrationFilter` | `System.Single Amount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ChromaticAberrationFilter` | `System.String Sampling { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ChromeFilter` | `ChromeFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ChromeFilter` | `System.Single Detail { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ChromeFilter` | `System.Single Smoothness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CloudsFilter` | `Cerneala.Drawing.Color Background { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CloudsFilter` | `Cerneala.Drawing.Color Foreground { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CloudsFilter` | `CloudsFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CloudsFilter` | `System.Int32 DirectionCount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CloudsFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CloudsFilter` | `System.Numerics.Vector4 Anisotropy { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CloudsFilter` | `System.Numerics.Vector4 FrequencyRange { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CloudsFilter` | `System.Single Scale { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CloudsFilter` | `System.Single SliceThickness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CloudsFilter` | `System.String Spectrum { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorBalanceFilter` | `ColorBalanceFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorBalanceFilter` | `System.Boolean PreserveLuminosity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorBalanceFilter` | `System.Numerics.Vector4 Highlights { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorBalanceFilter` | `System.Numerics.Vector4 Midtones { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorBalanceFilter` | `System.Numerics.Vector4 Shadows { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorFilter` | `Cerneala.Drawing.Color Tint { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorFilter` | `ColorFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorFilter` | `System.Boolean Clamp { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorFilter` | `System.Single Brightness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorFilter` | `System.Single Contrast { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorFilter` | `System.Single Exposure { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorFilter` | `System.Single Hue { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorFilter` | `System.Single Saturation { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorFilter` | `System.Single Temperature { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorFilter` | `System.String Matrix { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorHalftoneFilter` | `ColorHalftoneFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorHalftoneFilter` | `System.Numerics.Vector4 Angles { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorHalftoneFilter` | `System.Single MaxRadius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorLookupFilter` | `Cerneala.UI.Prism.Definitions.PrismResourceId Lookup { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorLookupFilter` | `ColorLookupFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorMatrixFilter` | `Cerneala.UI.Prism.Definitions.PrismResourceId Matrix { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorMatrixFilter` | `ColorMatrixFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorMatrixFilter` | `System.Boolean Clamp { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorOverlayStyle` | `Cerneala.Drawing.Color Color { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorOverlayStyle` | `ColorOverlayStyle()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorOverlayStyle` | `System.Single Opacity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColorOverlayStyle` | `System.String BlendMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColoredPencilFilter` | `Cerneala.Drawing.Color PaperColor { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColoredPencilFilter` | `ColoredPencilFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColoredPencilFilter` | `System.Single PaperBrightness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColoredPencilFilter` | `System.Single PencilWidth { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ColoredPencilFilter` | `System.Single StrokePressure { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ConteCrayonFilter` | `Cerneala.Drawing.Color Background { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ConteCrayonFilter` | `Cerneala.Drawing.Color Foreground { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ConteCrayonFilter` | `ConteCrayonFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ConteCrayonFilter` | `System.Single BackgroundLevel { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ConteCrayonFilter` | `System.Single ForegroundLevel { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ConteCrayonFilter` | `System.Single Relief { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ConteCrayonFilter` | `System.Single Scaling { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ConteCrayonFilter` | `System.String LightDirection { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ConteCrayonFilter` | `System.String Texture { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CraquelureFilter` | `CraquelureFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CraquelureFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CraquelureFilter` | `System.Single CrackBrightness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CraquelureFilter` | `System.Single CrackDepth { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CraquelureFilter` | `System.Single CrackSpacing { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CrosshatchFilter` | `CrosshatchFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CrosshatchFilter` | `System.Single Sharpness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CrosshatchFilter` | `System.Single Strength { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CrosshatchFilter` | `System.Single StrokeLength { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CrystallizeFilter` | `CrystallizeFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CrystallizeFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CrystallizeFilter` | `System.Single CellSize { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CurvesFilter` | `Cerneala.UI.Prism.Definitions.PrismResourceId Curves { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CurvesFilter` | `CurvesFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CustomConvolutionFilter` | `Cerneala.UI.Prism.Definitions.PrismResourceId Kernel { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CustomConvolutionFilter` | `CustomConvolutionFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CustomConvolutionFilter` | `System.Boolean AffectAlpha { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CustomConvolutionFilter` | `System.Single Offset { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CustomConvolutionFilter` | `System.Single Scale { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CustomConvolutionFilter` | `System.String EdgeMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CutoutFilter` | `CutoutFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CutoutFilter` | `System.Single EdgeFidelity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CutoutFilter` | `System.Single EdgeSimplicity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.CutoutFilter` | `System.Single Levels { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DarkStrokesFilter` | `DarkStrokesFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DarkStrokesFilter` | `System.Single Balance { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DarkStrokesFilter` | `System.Single BlackIntensity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DarkStrokesFilter` | `System.Single WhiteIntensity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DeinterlaceFilter` | `DeinterlaceFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DeinterlaceFilter` | `System.String Field { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DeinterlaceFilter` | `System.String Replacement { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DespeckleFilter` | `DespeckleFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DespeckleFilter` | `System.Single Radius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DespeckleFilter` | `System.Single Threshold { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DifferenceCloudsFilter` | `Cerneala.Drawing.Color Background { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DifferenceCloudsFilter` | `Cerneala.Drawing.Color Foreground { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DifferenceCloudsFilter` | `DifferenceCloudsFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DifferenceCloudsFilter` | `System.Int32 DirectionCount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DifferenceCloudsFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DifferenceCloudsFilter` | `System.Numerics.Vector4 Anisotropy { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DifferenceCloudsFilter` | `System.Numerics.Vector4 FrequencyRange { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DifferenceCloudsFilter` | `System.Single Scale { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DifferenceCloudsFilter` | `System.Single SliceThickness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DifferenceCloudsFilter` | `System.String Spectrum { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DiffuseFilter` | `DiffuseFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DiffuseFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DiffuseFilter` | `System.Single Iterations { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DiffuseFilter` | `System.String Mode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DiffuseGlowFilter` | `Cerneala.Drawing.Color Color { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DiffuseGlowFilter` | `DiffuseGlowFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DiffuseGlowFilter` | `System.Single ClearAmount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DiffuseGlowFilter` | `System.Single GlowAmount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DiffuseGlowFilter` | `System.Single Grain { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DisplaceFilter` | `Cerneala.UI.Prism.Definitions.PrismResourceId Map { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DisplaceFilter` | `DisplaceFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DisplaceFilter` | `System.Single HorizontalScale { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DisplaceFilter` | `System.Single VerticalScale { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DisplaceFilter` | `System.String ChannelX { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DisplaceFilter` | `System.String ChannelY { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DisplaceFilter` | `System.String MapFit { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DisplaceFilter` | `System.String UndefinedAreas { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DropShadowStyle` | `Cerneala.Drawing.Color Color { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DropShadowStyle` | `DropShadowStyle()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DropShadowStyle` | `System.Boolean AntiAlias { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DropShadowStyle` | `System.Boolean LayerKnocksOut { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DropShadowStyle` | `System.Boolean UseGlobalLight { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DropShadowStyle` | `System.Single Angle { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DropShadowStyle` | `System.Single Distance { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DropShadowStyle` | `System.Single Noise { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DropShadowStyle` | `System.Single Opacity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DropShadowStyle` | `System.Single Size { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DropShadowStyle` | `System.Single Spread { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DropShadowStyle` | `System.String BlendMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DropShadowStyle` | `System.String Contour { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DryBrushFilter` | `DryBrushFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DryBrushFilter` | `System.Single BrushDetail { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DryBrushFilter` | `System.Single BrushSize { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DryBrushFilter` | `System.Single Texture { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DustScratchesFilter` | `DustScratchesFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DustScratchesFilter` | `System.Single Radius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.DustScratchesFilter` | `System.Single Threshold { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.EmbossFilter` | `EmbossFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.EmbossFilter` | `System.Single Amount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.EmbossFilter` | `System.Single Angle { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.EmbossFilter` | `System.Single Height { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ExposureFilter` | `ExposureFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ExposureFilter` | `System.Single Contrast { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ExposureFilter` | `System.Single Exposure { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ExposureFilter` | `System.Single Gamma { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ExposureFilter` | `System.Single LogExposureStep { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ExposureFilter` | `System.Single LogMidGray { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ExposureFilter` | `System.Single Pivot { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ExposureFilter` | `System.String Direction { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ExposureFilter` | `System.String Style { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ExtrudeFilter` | `ExtrudeFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ExtrudeFilter` | `System.Boolean MaskIncompleteBlocks { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ExtrudeFilter` | `System.Boolean SolidFrontFaces { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ExtrudeFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ExtrudeFilter` | `System.Single Depth { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ExtrudeFilter` | `System.Single Size { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ExtrudeFilter` | `System.String DepthMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ExtrudeFilter` | `System.String Type { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FacetFilter` | `FacetFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FacetFilter` | `System.Single Iterations { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FibersFilter` | `Cerneala.Drawing.Color Background { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FibersFilter` | `Cerneala.Drawing.Color Foreground { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FibersFilter` | `FibersFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FibersFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FibersFilter` | `System.Single Strength { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FibersFilter` | `System.Single Variance { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FieldBlurFilter` | `Cerneala.UI.Prism.Definitions.PrismResourceId BlurField { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FieldBlurFilter` | `FieldBlurFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FieldBlurFilter` | `System.Boolean Invert { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FieldBlurFilter` | `System.Single Blur { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FieldBlurFilter` | `System.Single FocalDistance { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FieldBlurFilter` | `System.Single Highlight { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FieldBlurFilter` | `System.String Quality { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FilmGrainFilter` | `FilmGrainFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FilmGrainFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FilmGrainFilter` | `System.Single Grain { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FilmGrainFilter` | `System.Single HighlightArea { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FilmGrainFilter` | `System.Single Intensity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.Filters.PrismLensFlareRaySample` | `PrismLensFlareRaySample(System.Int32 GhostIndex, System.Numerics.Vector2 PupilPosition, System.Single IncidenceAngleDegrees, System.Single WavelengthNanometers, System.Numerics.Vector2 AperturePosition, System.Numerics.Vector2 SensorPosition, System.Single Transmission, System.Single RelativeRadius, System.Boolean IsValid)` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.Filters.PrismLensFlareRaySample` | `System.Boolean Equals(Cerneala.Drawing.Prism.Filters.PrismLensFlareRaySample other)` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.Filters.PrismLensFlareRaySample` | `System.Boolean Equals(System.Object obj)` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
@@ -1289,9 +1562,292 @@ The foundation baseline anticipated exactly three host changes. The implemented 
 | `Cerneala.Drawing.Prism.Filters.PrismLensProfileFitOptions` | `System.Int32 PupilGridSize { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.Filters.PrismLensProfileFitOptions` | `System.Int32 RegionCount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.Filters.PrismLensProfileFitter` | `Cerneala.UI.Prism.Definitions.PrismLensProfileResource Fit(System.Collections.Generic.IEnumerable<Cerneala.Drawing.Prism.Filters.PrismLensFlareRaySample> samples, Cerneala.Drawing.Prism.Filters.PrismLensProfileFitOptions options)` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FindEdgesFilter` | `FindEdgesFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FindEdgesFilter` | `System.Single Threshold { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FragmentFilter` | `FragmentFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FragmentFilter` | `System.Single Offset { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FrescoFilter` | `FrescoFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FrescoFilter` | `System.Single BrushDetail { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FrescoFilter` | `System.Single BrushSize { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.FrescoFilter` | `System.Single Texture { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GaussianBlurFilter` | `GaussianBlurFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GaussianBlurFilter` | `System.Single Radius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GaussianBlurFilter` | `System.String EdgeMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GaussianBlurFilter` | `System.String Quality { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GlassFilter` | `Cerneala.UI.Prism.Definitions.PrismResourceId TextureImage { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GlassFilter` | `GlassFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GlassFilter` | `System.Boolean Invert { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GlassFilter` | `System.Single Distortion { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GlassFilter` | `System.Single Scaling { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GlassFilter` | `System.Single Smoothness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GlassFilter` | `System.String Texture { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GlowingEdgesFilter` | `GlowingEdgesFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GlowingEdgesFilter` | `System.Single EdgeBrightness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GlowingEdgesFilter` | `System.Single EdgeWidth { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GlowingEdgesFilter` | `System.Single Smoothness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GradientMapFilter` | `Cerneala.UI.Prism.Definitions.PrismResourceId Gradient { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GradientMapFilter` | `GradientMapFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GradientMapFilter` | `System.Boolean Dither { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GradientMapFilter` | `System.Boolean Reverse { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GradientMapFilter` | `System.String Method { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GradientOverlayStyle` | `Cerneala.UI.Prism.Definitions.PrismResourceId Gradient { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GradientOverlayStyle` | `GradientOverlayStyle()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GradientOverlayStyle` | `System.Boolean AlignWithLayer { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GradientOverlayStyle` | `System.Boolean Dither { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GradientOverlayStyle` | `System.Boolean Reverse { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GradientOverlayStyle` | `System.Numerics.Vector4 Offset { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GradientOverlayStyle` | `System.Single Angle { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GradientOverlayStyle` | `System.Single Opacity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GradientOverlayStyle` | `System.Single Scale { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GradientOverlayStyle` | `System.String BlendMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GradientOverlayStyle` | `System.String Method { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GradientOverlayStyle` | `System.String Style { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GrainFilter` | `GrainFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GrainFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GrainFilter` | `System.Single Contrast { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GrainFilter` | `System.Single Intensity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GrainFilter` | `System.String Type { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GraphicPenFilter` | `Cerneala.Drawing.Color Background { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GraphicPenFilter` | `Cerneala.Drawing.Color Foreground { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GraphicPenFilter` | `GraphicPenFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GraphicPenFilter` | `System.Single LightDarkBalance { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GraphicPenFilter` | `System.Single StrokeLength { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.GraphicPenFilter` | `System.String StrokeDirection { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.HalftonePatternFilter` | `Cerneala.Drawing.Color Background { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.HalftonePatternFilter` | `Cerneala.Drawing.Color Foreground { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.HalftonePatternFilter` | `HalftonePatternFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.HalftonePatternFilter` | `System.Single Contrast { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.HalftonePatternFilter` | `System.Single Size { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.HalftonePatternFilter` | `System.String PatternType { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.HighPassFilter` | `HighPassFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.HighPassFilter` | `System.Single Radius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.HighPassFilter` | `System.String EdgeMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.HueSaturationFilter` | `HueSaturationFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.HueSaturationFilter` | `System.Boolean Colorize { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.HueSaturationFilter` | `System.Single Hue { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.HueSaturationFilter` | `System.Single Lightness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.HueSaturationFilter` | `System.Single Saturation { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.HueSaturationFilter` | `System.String Channel { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.IBackdropFrameLease` | `Cerneala.Drawing.Prism.BackdropFrameMetadata Metadata { get; }` | Optional host/backend backdrop acquisition contract. |
 | `Cerneala.Drawing.Prism.IBackdropFrameSource` | `Cerneala.Drawing.Prism.IBackdropFrameLease AcquireFrame(in Cerneala.Drawing.Prism.BackdropFrameRequest request)` | Optional host/backend backdrop acquisition contract. |
 | `Cerneala.Drawing.Prism.IBackdropFrameSource` | `System.Boolean IsCompatibleWith(Cerneala.Drawing.IDrawingBackend drawingBackend)` | Optional host/backend backdrop acquisition contract. |
+| `Cerneala.Drawing.Prism.InkOutlinesFilter` | `InkOutlinesFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InkOutlinesFilter` | `System.Single DarkIntensity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InkOutlinesFilter` | `System.Single LightIntensity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InkOutlinesFilter` | `System.Single StrokeLength { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerGlowStyle` | `Cerneala.Drawing.Color Color { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerGlowStyle` | `Cerneala.UI.Prism.Definitions.PrismResourceId Gradient { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerGlowStyle` | `InnerGlowStyle()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerGlowStyle` | `System.Boolean AntiAlias { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerGlowStyle` | `System.Single Choke { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerGlowStyle` | `System.Single Jitter { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerGlowStyle` | `System.Single Noise { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerGlowStyle` | `System.Single Opacity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerGlowStyle` | `System.Single Range { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerGlowStyle` | `System.Single Size { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerGlowStyle` | `System.String BlendMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerGlowStyle` | `System.String Contour { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerGlowStyle` | `System.String Origin { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerGlowStyle` | `System.String Technique { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerShadowStyle` | `Cerneala.Drawing.Color Color { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerShadowStyle` | `InnerShadowStyle()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerShadowStyle` | `System.Boolean AntiAlias { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerShadowStyle` | `System.Boolean UseGlobalLight { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerShadowStyle` | `System.Single Angle { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerShadowStyle` | `System.Single Choke { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerShadowStyle` | `System.Single Distance { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerShadowStyle` | `System.Single Noise { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerShadowStyle` | `System.Single Opacity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerShadowStyle` | `System.Single Size { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerShadowStyle` | `System.String BlendMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InnerShadowStyle` | `System.String Contour { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.InvertFilter` | `InvertFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.IrisBlurFilter` | `IrisBlurFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.IrisBlurFilter` | `System.Numerics.Vector4 Center { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.IrisBlurFilter` | `System.Numerics.Vector4 Radius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.IrisBlurFilter` | `System.Single Blur { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.IrisBlurFilter` | `System.Single Feather { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.IrisBlurFilter` | `System.Single Rotation { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensBlurFilter` | `Cerneala.UI.Prism.Definitions.PrismResourceId DepthMap { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensBlurFilter` | `LensBlurFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensBlurFilter` | `System.Boolean InvertDepth { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensBlurFilter` | `System.Boolean MonochromaticNoise { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensBlurFilter` | `System.Single BladeCount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensBlurFilter` | `System.Single BladeCurvature { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensBlurFilter` | `System.Single FocalDistance { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensBlurFilter` | `System.Single Noise { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensBlurFilter` | `System.Single Radius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensBlurFilter` | `System.Single Rotation { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensBlurFilter` | `System.Single SpecularBrightness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensBlurFilter` | `System.Single SpecularThreshold { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensBlurFilter` | `System.String DepthChannel { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensBlurFilter` | `System.String NoiseDistribution { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensCorrectionFilter` | `LensCorrectionFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensCorrectionFilter` | `System.Single Angle { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensCorrectionFilter` | `System.Single ChromaticBlueYellow { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensCorrectionFilter` | `System.Single ChromaticRedCyan { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensCorrectionFilter` | `System.Single Distortion { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensCorrectionFilter` | `System.Single PerspectiveHorizontal { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensCorrectionFilter` | `System.Single PerspectiveVertical { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensCorrectionFilter` | `System.Single Scale { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensCorrectionFilter` | `System.Single VignetteAmount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensCorrectionFilter` | `System.Single VignetteMidpoint { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensCorrectionFilter` | `System.String EdgeMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensFlareFilter` | `Cerneala.UI.Prism.Definitions.PrismResourceId Lens { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensFlareFilter` | `LensFlareFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensFlareFilter` | `System.Numerics.Vector4 Center { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LensFlareFilter` | `System.Single Brightness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LevelsFilter` | `LevelsFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LevelsFilter` | `System.Boolean Auto { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LevelsFilter` | `System.Single Gamma { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LevelsFilter` | `System.Single InputBlack { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LevelsFilter` | `System.Single InputWhite { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LevelsFilter` | `System.Single OutputBlack { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LevelsFilter` | `System.Single OutputWhite { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LevelsFilter` | `System.String Channel { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LightingEffectsFilter` | `Cerneala.UI.Prism.Definitions.PrismResourceId Lights { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LightingEffectsFilter` | `Cerneala.UI.Prism.Definitions.PrismResourceId Texture { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LightingEffectsFilter` | `LightingEffectsFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LightingEffectsFilter` | `System.Single Ambient { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LightingEffectsFilter` | `System.Single Exposure { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LightingEffectsFilter` | `System.Single Gloss { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LightingEffectsFilter` | `System.Single Metallic { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LightingEffectsFilter` | `System.Single TextureHeight { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LiquifyFilter` | `Cerneala.UI.Prism.Definitions.PrismResourceId Mask { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LiquifyFilter` | `Cerneala.UI.Prism.Definitions.PrismResourceId Mesh { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LiquifyFilter` | `LiquifyFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LiquifyFilter` | `System.Boolean MaskInvert { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LiquifyFilter` | `System.Single Reconstruct { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.LiquifyFilter` | `System.String EdgeMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MaximumFilter` | `MaximumFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MaximumFilter` | `System.Single Radius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MaximumFilter` | `System.String Preserve { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MedianFilter` | `MedianFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MedianFilter` | `System.Int32 Radius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MezzotintFilter` | `MezzotintFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MezzotintFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MezzotintFilter` | `System.String Type { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MinimumFilter` | `MinimumFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MinimumFilter` | `System.Single Radius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MinimumFilter` | `System.String Preserve { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MosaicFilter` | `MosaicFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MosaicFilter` | `System.Boolean PreserveEdges { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MosaicFilter` | `System.Numerics.Vector4 CellSize { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MosaicTilesFilter` | `MosaicTilesFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MosaicTilesFilter` | `System.Single GroutWidth { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MosaicTilesFilter` | `System.Single LightenGrout { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MosaicTilesFilter` | `System.Single TileSize { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MotionBlurFilter` | `MotionBlurFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MotionBlurFilter` | `System.Single Angle { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MotionBlurFilter` | `System.Single Distance { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MotionBlurFilter` | `System.String EdgeMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.MotionBlurFilter` | `System.String Quality { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.NeonGlowFilter` | `Cerneala.Drawing.Color GlowColor { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.NeonGlowFilter` | `NeonGlowFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.NeonGlowFilter` | `System.Single GlowBrightness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.NeonGlowFilter` | `System.Single GlowSize { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.NotePaperFilter` | `Cerneala.Drawing.Color Background { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.NotePaperFilter` | `Cerneala.Drawing.Color Foreground { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.NotePaperFilter` | `NotePaperFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.NotePaperFilter` | `System.Single Graininess { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.NotePaperFilter` | `System.Single ImageBalance { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.NotePaperFilter` | `System.Single Relief { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.NtscColorsFilter` | `NtscColorsFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.NtscColorsFilter` | `System.String Method { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.NtscColorsFilter` | `System.String Standard { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OceanRippleFilter` | `OceanRippleFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OceanRippleFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OceanRippleFilter` | `System.Single RippleMagnitude { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OceanRippleFilter` | `System.Single RippleSize { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OffsetFilter` | `Cerneala.Drawing.Color FillColor { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OffsetFilter` | `OffsetFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OffsetFilter` | `System.Numerics.Vector4 Offset { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OffsetFilter` | `System.String UndefinedAreas { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OilPaintFilter` | `OilPaintFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OilPaintFilter` | `System.Boolean Lighting { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OilPaintFilter` | `System.Single Angle { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OilPaintFilter` | `System.Single BristleDetail { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OilPaintFilter` | `System.Single Cleanliness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OilPaintFilter` | `System.Single Scale { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OilPaintFilter` | `System.Single Shine { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OilPaintFilter` | `System.Single Stylization { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OuterGlowStyle` | `Cerneala.Drawing.Color Color { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OuterGlowStyle` | `Cerneala.UI.Prism.Definitions.PrismResourceId Gradient { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OuterGlowStyle` | `OuterGlowStyle()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OuterGlowStyle` | `System.Boolean AntiAlias { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OuterGlowStyle` | `System.Single Jitter { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OuterGlowStyle` | `System.Single Noise { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OuterGlowStyle` | `System.Single Opacity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OuterGlowStyle` | `System.Single Range { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OuterGlowStyle` | `System.Single Size { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OuterGlowStyle` | `System.Single Spread { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OuterGlowStyle` | `System.String BlendMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OuterGlowStyle` | `System.String Contour { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.OuterGlowStyle` | `System.String Technique { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PaintDaubsFilter` | `PaintDaubsFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PaintDaubsFilter` | `System.Single BrushSize { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PaintDaubsFilter` | `System.Single Sharpness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PaintDaubsFilter` | `System.String BrushType { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PaletteKnifeFilter` | `PaletteKnifeFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PaletteKnifeFilter` | `System.Single Softness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PaletteKnifeFilter` | `System.Single StrokeDetail { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PaletteKnifeFilter` | `System.Single StrokeSize { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PatchworkFilter` | `PatchworkFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PatchworkFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PatchworkFilter` | `System.Single Relief { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PatchworkFilter` | `System.Single SquareSize { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PathBlurFilter` | `Cerneala.UI.Prism.Definitions.PrismResourceId Path { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PathBlurFilter` | `PathBlurFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PathBlurFilter` | `System.Boolean CenteredBlur { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PathBlurFilter` | `System.Single EndSpeed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PathBlurFilter` | `System.Single Noise { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PathBlurFilter` | `System.Single Speed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PathBlurFilter` | `System.Single Taper { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PathBlurFilter` | `System.String FlashSync { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PathBlurFilter` | `System.String Shape { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PatternOverlayStyle` | `Cerneala.UI.Prism.Definitions.PrismResourceId Pattern { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PatternOverlayStyle` | `PatternOverlayStyle()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PatternOverlayStyle` | `System.Boolean LinkWithLayer { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PatternOverlayStyle` | `System.Numerics.Vector4 Offset { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PatternOverlayStyle` | `System.Single Opacity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PatternOverlayStyle` | `System.Single Scale { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PatternOverlayStyle` | `System.String BlendMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PhotoFilterFilter` | `Cerneala.Drawing.Color Color { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PhotoFilterFilter` | `PhotoFilterFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PhotoFilterFilter` | `System.Single Density { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PhotocopyFilter` | `Cerneala.Drawing.Color Background { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PhotocopyFilter` | `Cerneala.Drawing.Color Foreground { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PhotocopyFilter` | `PhotocopyFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PhotocopyFilter` | `System.Single Darkness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PhotocopyFilter` | `System.Single Detail { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PinchFilter` | `PinchFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PinchFilter` | `System.Numerics.Vector4 Center { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PinchFilter` | `System.Single Amount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PlasterFilter` | `Cerneala.Drawing.Color Background { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PlasterFilter` | `Cerneala.Drawing.Color Foreground { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PlasterFilter` | `PlasterFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PlasterFilter` | `System.Single ImageBalance { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PlasterFilter` | `System.Single Smoothness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PlasterFilter` | `System.String LightDirection { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PlasticWrapFilter` | `PlasticWrapFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PlasticWrapFilter` | `System.Single Detail { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PlasticWrapFilter` | `System.Single HighlightStrength { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PlasticWrapFilter` | `System.Single Smoothness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PointillizeFilter` | `Cerneala.Drawing.Color Background { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PointillizeFilter` | `PointillizeFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PointillizeFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PointillizeFilter` | `System.Single CellSize { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PolarCoordinatesFilter` | `PolarCoordinatesFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PolarCoordinatesFilter` | `System.Numerics.Vector4 Center { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PolarCoordinatesFilter` | `System.String Mode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PosterEdgesFilter` | `PosterEdgesFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PosterEdgesFilter` | `System.Single EdgeIntensity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PosterEdgesFilter` | `System.Single EdgeThickness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PosterEdgesFilter` | `System.Single Posterization { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PosterizeFilter` | `PosterizeFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PosterizeFilter` | `System.Single Levels { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.Prism` | `Cerneala.Drawing.Prism.PrismImage Apply(Cerneala.Drawing.IDrawImage source, Cerneala.Drawing.Prism.PrismOperation[] operations)` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.Prism` | `Cerneala.Drawing.Prism.PrismImage Apply(Cerneala.Drawing.IDrawImage source, Cerneala.Drawing.Prism.PrismPipeline pipeline)` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.PrismCacheEvictionReason` | `Capacity = 1` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.PrismCacheEvictionReason` | `DeviceReset = 6` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.PrismCacheEvictionReason` | `Disposal = 7` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
@@ -1343,6 +1899,20 @@ The foundation baseline anticipated exactly three host changes. The implemented 
 | `Cerneala.Drawing.Prism.PrismDrawScope` | `System.Numerics.Matrix3x2 EffectiveTransform { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.PrismDrawScope` | `System.Single PixelScale { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.PrismDrawScope` | `System.String ToString()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PrismFilter` | `Cerneala.Drawing.Prism.Catalog.PrismBlendMode BlendMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PrismFilter` | `Cerneala.Drawing.Prism.Catalog.PrismFilterId FilterId { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PrismFilter` | `System.Boolean Visible { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PrismFilter` | `System.Single Opacity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PrismImage` | `Cerneala.Drawing.IDrawImage Source { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PrismImage` | `Cerneala.Drawing.Prism.PrismPipeline Pipeline { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PrismImage` | `System.Int32 Height { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PrismImage` | `System.Int32 Width { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PrismImage` | `System.Single Fill { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PrismImage` | `System.Void Dispose()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PrismOperation` | `Cerneala.Drawing.Prism.Catalog.PrismCatalogOperationInfo CatalogInfo { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PrismOperation` | `System.Int64 Version { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PrismPipeline` | `PrismPipeline()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PrismPipeline` | `PrismPipeline(System.Collections.Generic.IEnumerable<Cerneala.Drawing.Prism.PrismOperation> operations)` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `Cerneala.Drawing.Prism.PrismCacheEvictionReason LastEvictionReason { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `Cerneala.Drawing.Prism.PrismCacheMissReason LastMissReason { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `Cerneala.Drawing.Prism.PrismDependencyChange LastDependencyChange { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
@@ -1370,6 +1940,256 @@ The foundation baseline anticipated exactly three host changes. The implemented 
 | `Cerneala.Drawing.Prism.PrismRendererOptions` | `System.Int32 RetainedCacheEntryLimit { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.PrismRendererOptions` | `System.Int64 RetainedCacheSoftByteLimit { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.PrismRendererOptions` | `System.Int64 SurfaceHardByteLimit { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PrismStyle` | `Cerneala.Drawing.Prism.Catalog.PrismStyleId StyleId { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.PrismStyle` | `System.Boolean Visible { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.RadialBlurFilter` | `RadialBlurFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.RadialBlurFilter` | `System.Numerics.Vector4 Center { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.RadialBlurFilter` | `System.Single Amount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.RadialBlurFilter` | `System.String Mode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.RadialBlurFilter` | `System.String Quality { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ReduceNoiseFilter` | `ReduceNoiseFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ReduceNoiseFilter` | `System.Boolean RemoveJpegArtifact { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ReduceNoiseFilter` | `System.Single PreserveDetails { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ReduceNoiseFilter` | `System.Single ReduceColorNoise { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ReduceNoiseFilter` | `System.Single SharpenDetails { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ReduceNoiseFilter` | `System.Single Strength { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ReticulationFilter` | `ReticulationFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ReticulationFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ReticulationFilter` | `System.Single BackgroundLevel { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ReticulationFilter` | `System.Single Density { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ReticulationFilter` | `System.Single ForegroundLevel { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.RippleFilter` | `RippleFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.RippleFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.RippleFilter` | `System.Single Amount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.RippleFilter` | `System.String EdgeMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.RippleFilter` | `System.String Size { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.RoughPastelsFilter` | `RoughPastelsFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.RoughPastelsFilter` | `System.Boolean Invert { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.RoughPastelsFilter` | `System.Single Relief { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.RoughPastelsFilter` | `System.Single Scaling { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.RoughPastelsFilter` | `System.Single StrokeDetail { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.RoughPastelsFilter` | `System.Single StrokeLength { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.RoughPastelsFilter` | `System.String LightDirection { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.RoughPastelsFilter` | `System.String Texture { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SatinStyle` | `Cerneala.Drawing.Color Color { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SatinStyle` | `SatinStyle()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SatinStyle` | `System.Boolean AntiAlias { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SatinStyle` | `System.Boolean Invert { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SatinStyle` | `System.Single Angle { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SatinStyle` | `System.Single Distance { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SatinStyle` | `System.Single Opacity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SatinStyle` | `System.Single Size { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SatinStyle` | `System.String BlendMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SatinStyle` | `System.String Contour { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ScanlinesFilter` | `Cerneala.Drawing.Color Color { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ScanlinesFilter` | `ScanlinesFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ScanlinesFilter` | `System.Single Frequency { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ScanlinesFilter` | `System.Single LineOpacity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ScanlinesFilter` | `System.Single Phase { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ScanlinesFilter` | `System.Single Softness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ScanlinesFilter` | `System.Single Thickness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SelectiveColorFilter` | `SelectiveColorFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SelectiveColorFilter` | `System.Numerics.Vector4 Blacks { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SelectiveColorFilter` | `System.Numerics.Vector4 Blues { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SelectiveColorFilter` | `System.Numerics.Vector4 Cyans { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SelectiveColorFilter` | `System.Numerics.Vector4 Greens { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SelectiveColorFilter` | `System.Numerics.Vector4 Magentas { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SelectiveColorFilter` | `System.Numerics.Vector4 Neutrals { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SelectiveColorFilter` | `System.Numerics.Vector4 Reds { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SelectiveColorFilter` | `System.Numerics.Vector4 Whites { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SelectiveColorFilter` | `System.Numerics.Vector4 Yellows { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SelectiveColorFilter` | `System.String Method { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ShapeBlurFilter` | `Cerneala.UI.Prism.Definitions.PrismResourceId Shape { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ShapeBlurFilter` | `ShapeBlurFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ShapeBlurFilter` | `System.Single Radius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ShapeBlurFilter` | `System.String EdgeMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ShapeBlurFilter` | `System.String Quality { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SharpenEdgesFilter` | `SharpenEdgesFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SharpenEdgesFilter` | `System.Single Amount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SharpenEdgesFilter` | `System.Single Threshold { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SharpenFilter` | `SharpenFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SharpenFilter` | `System.Single Amount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SharpenMoreFilter` | `SharpenMoreFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SharpenMoreFilter` | `System.Single Amount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ShearFilter` | `ShearFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ShearFilter` | `System.Single Amount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ShearFilter` | `System.String Curve { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ShearFilter` | `System.String UndefinedAreas { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmartBlurFilter` | `SmartBlurFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmartBlurFilter` | `System.Single Radius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmartBlurFilter` | `System.Single Threshold { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmartBlurFilter` | `System.String EdgeMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmartBlurFilter` | `System.String Mode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmartBlurFilter` | `System.String Quality { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmartSharpenFilter` | `SmartSharpenFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmartSharpenFilter` | `System.Single Amount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmartSharpenFilter` | `System.Single Angle { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmartSharpenFilter` | `System.Single HighlightFade { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmartSharpenFilter` | `System.Single HighlightRadius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmartSharpenFilter` | `System.Single HighlightTonalWidth { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmartSharpenFilter` | `System.Single Radius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmartSharpenFilter` | `System.Single ReduceNoise { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmartSharpenFilter` | `System.Single ShadowFade { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmartSharpenFilter` | `System.Single ShadowRadius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmartSharpenFilter` | `System.Single ShadowTonalWidth { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmartSharpenFilter` | `System.String Remove { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmudgeStickFilter` | `SmudgeStickFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmudgeStickFilter` | `System.Single HighlightArea { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmudgeStickFilter` | `System.Single Intensity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SmudgeStickFilter` | `System.Single StrokeLength { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SolarizeFilter` | `SolarizeFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SolarizeFilter` | `System.Single Threshold { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SpatterFilter` | `SpatterFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SpatterFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SpatterFilter` | `System.Single Smoothness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SpatterFilter` | `System.Single SprayRadius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SpherizeFilter` | `SpherizeFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SpherizeFilter` | `System.Numerics.Vector4 Center { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SpherizeFilter` | `System.Single Amount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SpherizeFilter` | `System.String Mode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SpinBlurFilter` | `SpinBlurFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SpinBlurFilter` | `System.Int32 StrobeFlashes { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SpinBlurFilter` | `System.Numerics.Vector4 Center { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SpinBlurFilter` | `System.Numerics.Vector4 Radius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SpinBlurFilter` | `System.Single Feather { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SpinBlurFilter` | `System.Single Noise { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SpinBlurFilter` | `System.Single Rotation { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SpinBlurFilter` | `System.Single StrobeDuration { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SpinBlurFilter` | `System.Single StrobeStrength { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SpongeFilter` | `SpongeFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SpongeFilter` | `System.Single BrushSize { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SpongeFilter` | `System.Single Definition { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SpongeFilter` | `System.Single Smoothness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SprayedStrokesFilter` | `SprayedStrokesFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SprayedStrokesFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SprayedStrokesFilter` | `System.Single SprayRadius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SprayedStrokesFilter` | `System.Single StrokeLength { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SprayedStrokesFilter` | `System.String Direction { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StainedGlassFilter` | `Cerneala.Drawing.Color BorderColor { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StainedGlassFilter` | `StainedGlassFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StainedGlassFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StainedGlassFilter` | `System.Single BorderThickness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StainedGlassFilter` | `System.Single CellSize { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StainedGlassFilter` | `System.Single LightIntensity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StampFilter` | `Cerneala.Drawing.Color Background { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StampFilter` | `Cerneala.Drawing.Color Foreground { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StampFilter` | `StampFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StampFilter` | `System.Single LightDarkBalance { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StampFilter` | `System.Single Smoothness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StrokeStyle` | `Cerneala.Drawing.Color Color { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StrokeStyle` | `Cerneala.UI.Prism.Definitions.PrismResourceId Pattern { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StrokeStyle` | `StrokeStyle()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StrokeStyle` | `System.Boolean GradientAlignWithLayer { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StrokeStyle` | `System.Boolean GradientDither { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StrokeStyle` | `System.Boolean GradientReverse { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StrokeStyle` | `System.Boolean PatternLinkWithLayer { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StrokeStyle` | `System.Numerics.Vector4 GradientOffset { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StrokeStyle` | `System.Numerics.Vector4 PatternOffset { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StrokeStyle` | `System.Single GradientAngle { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StrokeStyle` | `System.Single GradientScale { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StrokeStyle` | `System.Single Opacity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StrokeStyle` | `System.Single PatternScale { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StrokeStyle` | `System.Single Size { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StrokeStyle` | `System.String BlendMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StrokeStyle` | `System.String FillType { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StrokeStyle` | `System.String Gradient { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StrokeStyle` | `System.String GradientMethod { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StrokeStyle` | `System.String GradientStyle { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.StrokeStyle` | `System.String Position { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SumiEFilter` | `SumiEFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SumiEFilter` | `System.Single Contrast { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SumiEFilter` | `System.Single StrokePressure { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SumiEFilter` | `System.Single StrokeWidth { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SurfaceBlurFilter` | `SurfaceBlurFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SurfaceBlurFilter` | `System.Single Radius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SurfaceBlurFilter` | `System.Single Threshold { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SurfaceBlurFilter` | `System.String EdgeMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.SurfaceBlurFilter` | `System.String Quality { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TexturizerFilter` | `Cerneala.UI.Prism.Definitions.PrismResourceId TextureImage { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TexturizerFilter` | `System.Boolean Invert { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TexturizerFilter` | `System.Single Relief { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TexturizerFilter` | `System.Single Scaling { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TexturizerFilter` | `System.String LightDirection { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TexturizerFilter` | `System.String Texture { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TexturizerFilter` | `TexturizerFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ThresholdFilter` | `System.Single Level { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ThresholdFilter` | `ThresholdFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TilesFilter` | `Cerneala.Drawing.Color Background { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TilesFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TilesFilter` | `System.Single MaximumOffset { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TilesFilter` | `System.Single Tiles { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TilesFilter` | `System.String Fill { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TilesFilter` | `TilesFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TiltShiftFilter` | `System.Numerics.Vector4 Center { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TiltShiftFilter` | `System.Single Angle { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TiltShiftFilter` | `System.Single Blur { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TiltShiftFilter` | `System.Single Feather { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TiltShiftFilter` | `System.Single FocusWidth { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TiltShiftFilter` | `TiltShiftFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TornEdgesFilter` | `Cerneala.Drawing.Color Background { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TornEdgesFilter` | `Cerneala.Drawing.Color Foreground { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TornEdgesFilter` | `System.Single Contrast { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TornEdgesFilter` | `System.Single ImageBalance { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TornEdgesFilter` | `System.Single Smoothness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TornEdgesFilter` | `TornEdgesFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TraceContourFilter` | `System.Single Level { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TraceContourFilter` | `System.String Edge { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TraceContourFilter` | `TraceContourFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TransformFilter` | `System.Numerics.Vector4 Origin { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TransformFilter` | `System.Numerics.Vector4 Scale { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TransformFilter` | `System.Numerics.Vector4 Skew { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TransformFilter` | `System.Numerics.Vector4 Translate { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TransformFilter` | `System.Single Rotation { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TransformFilter` | `System.String EdgeMode { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TransformFilter` | `System.String Sampling { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TransformFilter` | `TransformFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TwirlFilter` | `System.Numerics.Vector4 Center { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TwirlFilter` | `System.Single Angle { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.TwirlFilter` | `TwirlFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.UnderpaintingFilter` | `System.Boolean Invert { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.UnderpaintingFilter` | `System.Single BrushSize { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.UnderpaintingFilter` | `System.Single Relief { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.UnderpaintingFilter` | `System.Single Scaling { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.UnderpaintingFilter` | `System.Single TextureCoverage { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.UnderpaintingFilter` | `System.String LightDirection { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.UnderpaintingFilter` | `System.String Texture { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.UnderpaintingFilter` | `UnderpaintingFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.UnsharpMaskFilter` | `System.Single Amount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.UnsharpMaskFilter` | `System.Single Radius { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.UnsharpMaskFilter` | `System.Single Threshold { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.UnsharpMaskFilter` | `UnsharpMaskFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.VibranceFilter` | `System.Boolean AvoidSaturatingSkinTones { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.VibranceFilter` | `System.Numerics.Vector4 GrayColorTransform { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.VibranceFilter` | `System.Single Amount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.VibranceFilter` | `System.Single Saturation { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.VibranceFilter` | `VibranceFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WaterPaperFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WaterPaperFilter` | `System.Single Brightness { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WaterPaperFilter` | `System.Single Contrast { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WaterPaperFilter` | `System.Single FiberLength { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WaterPaperFilter` | `WaterPaperFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WatercolorFilter` | `System.Single BrushDetail { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WatercolorFilter` | `System.Single ShadowIntensity { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WatercolorFilter` | `System.Single Texture { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WatercolorFilter` | `WatercolorFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WaveFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WaveFilter` | `System.Numerics.Vector4 Amplitude { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WaveFilter` | `System.Numerics.Vector4 Scale { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WaveFilter` | `System.Numerics.Vector4 Wavelength { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WaveFilter` | `System.Single Generators { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WaveFilter` | `System.String Type { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WaveFilter` | `System.String UndefinedAreas { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WaveFilter` | `WaveFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WindFilter` | `System.Int32 Seed { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WindFilter` | `System.Single Strength { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WindFilter` | `System.String Direction { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WindFilter` | `System.String Method { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.WindFilter` | `WindFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ZigZagFilter` | `System.Numerics.Vector4 Center { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ZigZagFilter` | `System.Single Amount { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ZigZagFilter` | `System.Single Ridges { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ZigZagFilter` | `System.String Style { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.Drawing.Prism.ZigZagFilter` | `ZigZagFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.UI.Prism.Definitions.PrismColorMatrixResource` | `PrismColorMatrixResource(System.Numerics.Matrix4x4 matrix, System.Numerics.Vector4 offset)` | Immutable generated markup definition consumed by Prism markup. |
 | `Cerneala.UI.Prism.Definitions.PrismColorMatrixResource` | `System.Numerics.Matrix4x4 Matrix { get; }` | Immutable generated markup definition consumed by Prism markup. |
 | `Cerneala.UI.Prism.Definitions.PrismColorMatrixResource` | `System.Numerics.Vector4 Offset { get; }` | Immutable generated markup definition consumed by Prism markup. |

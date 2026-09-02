@@ -91,12 +91,12 @@ internal static class ShaderCompilerProgram
                 ToolVersion,
                 ShaderCrossVersion,
                 ShaderCrossPackageVersion,
-                Hash(manifestBytes),
+                HashCanonicalText(manifestBytes),
                 ComputeSourceHash(baseDirectory, manifest),
                 compiled);
             byte[] metadataBytes = JsonSerializer.SerializeToUtf8Bytes(metadata, JsonOptions);
             string metadataPath = Resolve(baseDirectory, manifest.Metadata);
-            VerifyOrWrite(metadataPath, AppendNewline(metadataBytes), verify);
+            VerifyOrWrite(metadataPath, AppendNewline(metadataBytes), verify, textArtifact: true);
             Console.WriteLine(
                 $"{(verify ? "Verified" : "Compiled")} {compiled.Count} SDL shader artifacts from '{manifestPath}'.");
         }
@@ -149,7 +149,7 @@ internal static class ShaderCompilerProgram
 
         VerifyOrWrite(Resolve(baseDirectory, shader.Outputs.Spirv), spirv, verify);
         VerifyOrWrite(Resolve(baseDirectory, shader.Outputs.Dxil), dxil, verify);
-        VerifyOrWrite(Resolve(baseDirectory, shader.Outputs.Msl), msl, verify);
+        VerifyOrWrite(Resolve(baseDirectory, shader.Outputs.Msl), msl, verify, textArtifact: true);
         return new CompiledShaderMetadata(
             shader.LogicalName,
             shader.Stage,
@@ -266,11 +266,17 @@ internal static class ShaderCompilerProgram
         string format) => new(
             $"Shader '{shader.LogicalName}' failed to compile/reflect as {format}: {SDL.GetError()}");
 
-    private static void VerifyOrWrite(string path, byte[] expected, bool verify)
+    private static void VerifyOrWrite(
+        string path,
+        byte[] expected,
+        bool verify,
+        bool textArtifact = false)
     {
+        byte[] canonicalExpected = textArtifact ? CanonicalizeText(expected) : expected;
         if (verify)
         {
-            if (!File.Exists(path) || !File.ReadAllBytes(path).AsSpan().SequenceEqual(expected))
+            if (!File.Exists(path) ||
+                !ArtifactMatches(File.ReadAllBytes(path), canonicalExpected, textArtifact))
             {
                 throw new InvalidDataException(
                     $"SDL shader artifact '{path}' is missing or stale.");
@@ -279,10 +285,22 @@ internal static class ShaderCompilerProgram
         }
 
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        if (!File.Exists(path) || !File.ReadAllBytes(path).AsSpan().SequenceEqual(expected))
+        if (!File.Exists(path) ||
+            !ArtifactMatches(File.ReadAllBytes(path), canonicalExpected, textArtifact))
         {
-            File.WriteAllBytes(path, expected);
+            File.WriteAllBytes(path, canonicalExpected);
         }
+    }
+
+    private static bool ArtifactMatches(
+        byte[] actual,
+        byte[] canonicalExpected,
+        bool textArtifact)
+    {
+        ReadOnlySpan<byte> canonicalActual = textArtifact
+            ? CanonicalizeText(actual)
+            : actual;
+        return canonicalActual.SequenceEqual(canonicalExpected);
     }
 
     private static string ComputeSourceHash(string baseDirectory, ShaderManifest manifest)
@@ -310,7 +328,7 @@ internal static class ShaderCompilerProgram
             hash.AppendData(Encoding.UTF8.GetBytes(
                 Path.GetRelativePath(baseDirectory, file).Replace('\\', '/')));
             hash.AppendData([0]);
-            hash.AppendData(File.ReadAllBytes(file));
+            hash.AppendData(CanonicalizeText(File.ReadAllBytes(file)));
             hash.AppendData([0]);
         }
         return Convert.ToHexString(hash.GetHashAndReset());
@@ -486,6 +504,13 @@ internal static class ShaderCompilerProgram
 
     private static string Hash(ReadOnlySpan<byte> bytes) =>
         Convert.ToHexString(SHA256.HashData(bytes));
+
+    private static string HashCanonicalText(ReadOnlySpan<byte> bytes) =>
+        Hash(CanonicalizeText(bytes));
+
+    private static byte[] CanonicalizeText(ReadOnlySpan<byte> bytes) =>
+        Encoding.UTF8.GetBytes(
+            Encoding.UTF8.GetString(bytes).ReplaceLineEndings("\n"));
 }
 
 internal sealed record ShaderManifest(

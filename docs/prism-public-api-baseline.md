@@ -63,7 +63,7 @@ The foundation-and-catalog plan does not change these three APIs.
 
 ## Final Compatibility Result
 
-The final Prism public-surface audit covers 53 Prism types and 10 existing types
+The current Prism public-surface audit covers 217 Prism types and 10 existing types
 extended for Prism. Every retained symbol has a current author, backend, hosting,
 or diagnostics scenario and a matching API page/manifest entry.
 
@@ -73,6 +73,7 @@ or diagnostics scenario and a matching API page/manifest entry.
 | `IUiBackend.BackdropFrameSource` | Additive default interface member | Existing implementations inherit `null`; no backdrop provider is required. |
 | `MonoGameUiHostOptions.BackdropFrameSource` and `PrismRendererOptions` | Additive optional properties | Existing construction remains valid. |
 | `BeginPrism`/`EndPrism` and the public authoring/runtime/host Prism types | Additive | Non-Prism backends ignore the delimiters and render interior commands. Exhaustive enum switches should retain a default case. |
+| `PrismImage`, `PrismPipeline`, `PrismOperation`, `PrismFilter`, `PrismStyle`, and the 144 catalog-generated filter/style types | Additive | Strongly typed image-pipeline authoring approved by the RenderSurface2D delivery; the catalog remains the source of operation names and parameter contracts. |
 | Interim public graph/planning types, graph-bearing frame/request members, and framework-only context construction | Source and binary breaking for consumers of the unfinished pre-release Prism surface | Necessary: graph analysis, freshness, planning, and requirement ownership are internal framework invariants, not application extension points. |
 
 The .NET SDK ApiCompat task was also run from the `HEAD` assembly to the final
@@ -86,3 +87,9 @@ No public third-party operation SDK, runtime shader source, adaptive-quality API
 or speculative graph abstraction was retained. The reproducible compatibility
 check is `dotnet run --project .\Tools\PrismAudit\PrismAudit.csproj -- --check`;
 its generated report is `docs/prism-completeness-report.generated.md`.
+
+The audit loads both the core and MonoGame assemblies. Catalog-generated filter
+and style type names are derived from `prism-catalog.json` rather than copied into
+a second manual list. For existing types extended by Prism, the audit compares the
+Prism/backdrop members only; unrelated approved members such as
+`DrawingFrameContext.StateAnalysis` belong to their own drawing contract.

@@ -28,6 +28,7 @@
     <Project Path="Tetrisish/Tests/Tetris.Tests.csproj" />
   </Folder>
   <Folder Name="/Tools/">
+    <Project Path="Tools/PrismAudit/PrismAudit.csproj" />
     <Project Path="Tools/Cerneala.SdlShaderCompiler/Cerneala.SdlShaderCompiler.csproj" />
     <Project Path="Tools/Cerneala.SvgAssetCompiler/Cerneala.SvgAssetCompiler.csproj" />
   </Folder>

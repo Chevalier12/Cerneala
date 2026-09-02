@@ -18,6 +18,13 @@ public sealed class PrismShaderBuildIncrementalityTests
             Path.Combine(shaderRoot, "CopyComposite.fx"));
         string stylesPackage = File.ReadAllText(
             Path.Combine(shaderRoot, "Styles.fx"));
+        string sharedStyleRoot = Path.Combine(
+            repositoryRoot,
+            "Drawing",
+            "Prism",
+            "Shaders",
+            "Hlsl",
+            "Styles");
 
         Assert.DoesNotContain(
             "#include \"Styles/",
@@ -25,12 +32,12 @@ public sealed class PrismShaderBuildIncrementalityTests
             StringComparison.Ordinal);
 
         foreach (string stylePath in Directory.EnumerateFiles(
-            Path.Combine(shaderRoot, "Styles"),
-            "*.fx",
+            sharedStyleRoot,
+            "*.hlsl",
             SearchOption.TopDirectoryOnly))
         {
             Assert.Contains(
-                $"#include \"Styles/{Path.GetFileName(stylePath)}\"",
+                $"#include \"../../../Prism/Shaders/Hlsl/Styles/{Path.GetFileName(stylePath)}\"",
                 stylesPackage,
                 StringComparison.Ordinal);
         }
@@ -45,6 +52,9 @@ public sealed class PrismShaderBuildIncrementalityTests
                 (string?)target.Attribute("Name") == "CompilePrismShaders"));
         string inputs = Assert.IsType<string>(
             (string?)compileTarget.Attribute("Inputs"));
+        XElement styleInclude = Assert.Single(project.Descendants("PrismStyleInclude"));
+        string styleDependencies = Assert.IsType<string>(
+            (string?)styleInclude.Attribute("Include"));
 
         Assert.Contains(
             "%(PrismShaderSource.Dependencies)",
@@ -53,6 +63,10 @@ public sealed class PrismShaderBuildIncrementalityTests
         Assert.DoesNotContain(
             "@(PrismShaderInclude)",
             inputs,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            @"Drawing\Prism\Shaders\Hlsl\Styles\*.hlsl",
+            styleDependencies,
             StringComparison.Ordinal);
     }
 
