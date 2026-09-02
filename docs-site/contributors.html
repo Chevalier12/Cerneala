@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="How to contribute to Cerneala: ownership, support, model policy, Codex planning, implementation and bug-fixing skills, and pull request gates.">
+<meta name="description" content="How to contribute to Cerneala: ownership, support, model policy, repository Codex skills, and pull request gates.">
 <title>Contributors - Cerneala UI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -225,7 +225,7 @@
         <span class="section-code">Codex workflow skills</span>
         <h2>Discuss it. Plan it. Then finish the damn thing.</h2>
       </div>
-      <p>Cerneala keeps these two Codex skills under <code>.codex/skills/</code> for the handoff between a resolved engineering discussion and verified implementation. Codex can load the workflow directly from the repository that owns it.</p>
+      <p>Cerneala keeps this planning pair under <code>.codex/skills/</code> for the handoff between a resolved engineering discussion and verified implementation. Codex can load the workflow directly from the repository that owns it.</p>
     </header>
 
     <div class="skill-pipeline" aria-label="Planning and implementation skill workflow">
@@ -280,6 +280,83 @@
         <header><div><span>READY-TO-USE PROMPT</span><strong>Implement the plan</strong></div><button type="button" data-copy-target="implement-skill-prompt">Copy prompt</button></header>
         <pre id="implement-skill-prompt"><code>Use $cerneala-implement-plan to implement &lt;plan-name&gt; end to end. Create a persistent /goal and check off each item only as its batch is completed and verified.</code></pre>
       </article>
+    </div>
+  </section>
+
+  <section class="specialist-skills-section" id="specialist-skills">
+    <header class="section-head">
+      <div>
+        <span class="section-code">Specialist repository skills</span>
+        <h2>Research, attack, measure, and document with the right contract.</h2>
+      </div>
+      <p>The repository currently ships seven executable skills. The planning pair above and the bug-fix workflow below cover the common paths; these four specialist workflows handle work that needs a stricter research, adversarial, performance, or documentation protocol.</p>
+    </header>
+
+    <div class="specialist-skill-grid" aria-label="Specialist Codex skill catalog">
+      <article class="specialist-skill-card specialist-skill-card--market">
+        <header><span>RESEARCH / READ-ONLY BY DEFAULT</span><strong>Algorithm selection</strong></header>
+        <div class="specialist-skill-card__body">
+          <code class="skill-command">$algorithm-market</code>
+          <h3>Algorithm Market</h3>
+          <p>Use it before committing Cerneala to a nontrivial algorithm. It researches established candidates across primary research and production implementations, then separates the strongest absolute method from the best fit for the actual constraints.</p>
+          <ul>
+            <li>Normalizes the target contract and hard gates before scoring candidates</li>
+            <li>Requires broad family coverage, search saturation, source and license evidence</li>
+            <li>Returns a comparison and implementation outline without editing code by default</li>
+          </ul>
+        </div>
+        <footer><span>USE WHEN</span><strong>The algorithm is not already fixed</strong><a href="https://github.com/Chevalier12/Cerneala/blob/master/.codex/skills/algorithm-market/SKILL.md">Read SKILL.md</a></footer>
+      </article>
+
+      <article class="specialist-skill-card specialist-skill-card--breaker">
+        <header><span>ADVERSARIAL / TEST-ONLY</span><strong>Red-team audit</strong></header>
+        <div class="specialist-skill-card__body">
+          <code class="skill-command">$cerneala-breaker</code>
+          <h3>Cerneala Breaker</h3>
+          <p>Give it a concrete Cerneala API, subsystem, backend, feature, or scenario and it tries to break the documented contract with bounded hostile tests. Unsupported criticism does not count as a finding.</p>
+          <ul>
+            <li>Targets major correctness, stability, lifecycle, rendering, and performance failures</li>
+            <li>Classifies anomalies before blaming Cerneala and preserves minimized evidence</li>
+            <li>Adds active RED regression tests for confirmed defects but does not fix production code</li>
+          </ul>
+        </div>
+        <footer><span>USE WHEN</span><strong>You want an adversarial audit, not a routine fix</strong><a href="https://github.com/Chevalier12/Cerneala/blob/master/.codex/skills/cerneala-breaker/SKILL.md">Read SKILL.md</a></footer>
+      </article>
+
+      <article class="specialist-skill-card specialist-skill-card--performance">
+        <header><span>MEASURE / OPTIMIZE / PROVE</span><strong>Performance repair</strong></header>
+        <div class="specialist-skill-card__body">
+          <code class="skill-command">$cerneala-performance-gate</code>
+          <h3>Cerneala Performance Gate</h3>
+          <p>Use it for observable lag, stutter, startup, CPU, allocation, memory, GPU, or frame-time failures only when the acceptance threshold is concrete. “Make it faster” is not a gate.</p>
+          <ul>
+            <li>Freezes workload, metric, percentile, hardware, warmup, and correctness constraints</li>
+            <li>Measures a RED baseline and attributes cost before production changes</li>
+            <li>Reruns the identical gate and relevant visual, memory, and correctness checks</li>
+          </ul>
+        </div>
+        <footer><span>USE WHEN</span><strong>An observed performance defect has a numeric gate</strong><a href="https://github.com/Chevalier12/Cerneala/blob/master/.codex/skills/cerneala-performance-gate/SKILL.md">Read SKILL.md</a></footer>
+      </article>
+
+      <article class="specialist-skill-card specialist-skill-card--docs">
+        <header><span>SOURCE / TESTS / CONTRACTS</span><strong>API documentation</strong></header>
+        <div class="specialist-skill-card__body">
+          <code class="skill-command">$writing-api-documentation</code>
+          <h3>Writing API Documentation</h3>
+          <p>Use it to create or update public API documentation from implementation, tests, established contracts, and existing canonical pages. Names alone are not evidence of behavior.</p>
+          <ul>
+            <li>Produces focused WPF-style class or member documentation with real APIs</li>
+            <li>Groups public members for scanning and keeps examples minimal and factual</li>
+            <li>Verifies the canonical documentation location and manifest requirements</li>
+          </ul>
+        </div>
+        <footer><span>USE WHEN</span><strong>A public API or documented behavior changes</strong><a href="https://github.com/Chevalier12/Cerneala/blob/master/.codex/skills/writing-api-documentation/SKILL.md">Read SKILL.md</a></footer>
+      </article>
+    </div>
+
+    <div class="specialist-skill-note">
+      <span>SELECTION RULE</span>
+      <strong>Use the narrowest matching skill. Research is not implementation, an adversarial audit is not a bug fix, and performance work without a frozen numeric gate is guesswork.</strong>
     </div>
   </section>
 
