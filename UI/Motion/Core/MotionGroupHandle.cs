@@ -24,8 +24,14 @@ public sealed class MotionGroupHandle
         }
 
         IsCanceled = true;
-        cancel();
-        completion.TrySetCanceled();
+        try
+        {
+            cancel();
+        }
+        finally
+        {
+            completion.TrySetCanceled();
+        }
     }
 
     internal void Complete()

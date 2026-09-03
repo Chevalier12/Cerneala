@@ -1,3 +1,5 @@
+using System.Runtime.ExceptionServices;
+
 namespace Cerneala.UI.Motion.Core;
 
 public sealed class MotionHandle : IDisposable
@@ -91,7 +93,7 @@ public sealed class MotionHandle : IDisposable
         {
             if (fireEvent)
             {
-                completed?.Invoke(this, new MotionCompletedEventArgs(MotionCompletionState.Completed, null));
+                RaiseCompleted(new MotionCompletedEventArgs(MotionCompletionState.Completed, null));
             }
         }
         finally
@@ -114,7 +116,7 @@ public sealed class MotionHandle : IDisposable
         {
             if (fireEvent)
             {
-                completed?.Invoke(this, new MotionCompletedEventArgs(MotionCompletionState.Canceled, behavior));
+                RaiseCompleted(new MotionCompletedEventArgs(MotionCompletionState.Canceled, behavior));
             }
         }
         finally
@@ -129,6 +131,29 @@ public sealed class MotionHandle : IDisposable
         cancel = null;
         complete = null;
         dispose = null;
+    }
+
+    private void RaiseCompleted(MotionCompletedEventArgs args)
+    {
+        if (completed is null)
+        {
+            return;
+        }
+
+        ExceptionDispatchInfo? firstFailure = null;
+        foreach (EventHandler<MotionCompletedEventArgs> handler in completed.GetInvocationList())
+        {
+            try
+            {
+                handler(this, args);
+            }
+            catch (Exception exception)
+            {
+                firstFailure ??= ExceptionDispatchInfo.Capture(exception);
+            }
+        }
+
+        firstFailure?.Throw();
     }
 }
 

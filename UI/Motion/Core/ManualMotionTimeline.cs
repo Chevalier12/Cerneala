@@ -20,7 +20,9 @@ public sealed class ManualMotionTimeline : MotionTimeline
     public void SetProgress(float progress)
     {
         threadAccess.VerifyAccess();
-        this.progress = Math.Clamp(progress, 0, 1);
+        this.progress = float.IsNaN(progress)
+            ? 0
+            : Math.Clamp(progress, 0, 1);
     }
 
     public MotionValue<T> CreateValue<T>(T initial)

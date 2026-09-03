@@ -61,7 +61,7 @@ The handle has one active state and two terminal states. `IsActive` is `true` on
 
 `Dispose()` releases completion event subscribers and owner callbacks. When the handle is still active, disposal cancels the owning motion with `MotionCancelBehavior.KeepCurrent` without firing `Completed`; this is useful when caller code wants to stop observing the handle without keeping callback targets alive.
 
-Handlers added to `Completed` after the handle is completed, canceled, or disposed are ignored. If a `Completed` handler throws, the handle still clears its subscribers and callbacks in a `finally` block.
+Handlers added to `Completed` after the handle is completed, canceled, or disposed are ignored. If a `Completed` handler throws, the handle still invokes the remaining handlers, clears all subscribers and callbacks, then rethrows the first captured exception.
 
 ## Properties
 

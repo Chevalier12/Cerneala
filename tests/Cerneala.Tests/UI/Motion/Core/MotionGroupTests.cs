@@ -1,4 +1,6 @@
 using Cerneala.UI.Motion.Core;
+using Cerneala.UI.Motion.Specs;
+using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
 namespace Cerneala.Tests.UI.Motion.Core;
 
@@ -95,6 +97,74 @@ public sealed class MotionGroupTests
         Assert.False(second.IsCanceled);
         Assert.Equal(1, started);
         Assert.True(group.IsCanceled);
+    }
+
+    [Fact]
+    public void ParallelObservesTerminalChildWhenEarlierCompletionSubscriberThrows()
+    {
+        MotionGraph graph = new();
+        MotionValue<float> value = graph.CreateValue(0f);
+        MotionHandle child = value.AnimateTo(
+            1f,
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100), Easings.Linear));
+        child.Completed += (_, _) => throw new InvalidOperationException("hostile subscriber");
+        MotionGroupHandle group = MotionGroup.Parallel(child);
+
+        Assert.Throws<InvalidOperationException>(() => child.Complete());
+
+        Assert.True(child.IsCompleted);
+        Assert.True(group.IsCompleted);
+        Assert.True(group.Completion.IsCompletedSuccessfully);
+    }
+
+    [Fact]
+    public void SequenceObservesTerminalChildWhenEarlierCompletionSubscriberThrows()
+    {
+        MotionGraph graph = new();
+        MotionValue<float> value = graph.CreateValue(0f);
+        MotionValue<float> secondValue = graph.CreateValue(0f);
+        MotionHandle first = value.AnimateTo(
+            1f,
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100), Easings.Linear));
+        first.Completed += (_, _) => throw new InvalidOperationException("hostile subscriber");
+        MotionHandle second = secondValue.AnimateTo(
+            2f,
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100), Easings.Linear));
+        second.Cancel();
+        int started = 0;
+        MotionGroupHandle group = MotionSequence.Start(
+            () => first,
+            () => { started++; return second; });
+
+        Assert.Throws<InvalidOperationException>(() => first.Complete());
+
+        Assert.Equal(1, started);
+        Assert.True(group.IsCanceled);
+        Assert.True(group.Completion.IsCanceled);
+    }
+
+    [Fact]
+    public void CancelingParallelGroupFinishesCancellationWhenAChildSubscriberThrows()
+    {
+        MotionGraph graph = new();
+        MotionValue<float> firstValue = graph.CreateValue(0f);
+        MotionValue<float> secondValue = graph.CreateValue(0f);
+        MotionHandle first = firstValue.AnimateTo(
+            1f,
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100), Easings.Linear));
+        MotionHandle second = secondValue.AnimateTo(
+            1f,
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100), Easings.Linear));
+        first.Completed += (_, _) => throw new InvalidOperationException("hostile subscriber");
+        MotionGroupHandle group = MotionGroup.Parallel(first, second);
+
+        Assert.Throws<InvalidOperationException>(() => group.Cancel());
+
+        Assert.True(group.IsCanceled);
+        Assert.True(first.IsCanceled);
+        Assert.True(
+            group.Completion.IsCanceled && second.IsCanceled,
+            $"completionCanceled={group.Completion.IsCanceled}; secondCanceled={second.IsCanceled}");
     }
 
     [Fact]

@@ -184,6 +184,39 @@ public sealed class ObjectMotionTests
     }
 
     [Fact]
+    public void UiFrameLoopBoundsAResumeDeltaForActiveObjectSpring()
+    {
+        ManualMotionClock clock = new();
+        ObjectMotionRuntime.ResetForTests(clock);
+        try
+        {
+            AnimatedGauge gauge = new();
+            MotionHandle handle = gauge.Motion()
+                .Animate(AnimatedGauge.ValueProperty)
+                .To(20)
+                .Start(Cerneala.UI.Motion.Specs.Motion.Spring<float>());
+            UiHost host = new(new UiHostOptions
+            {
+                Root = new UIRoot(),
+                Viewport = new UiViewport(100, 100)
+            });
+            clock.Advance(TimeSpan.FromSeconds(9));
+
+            Exception? exception = Record.Exception(() => host.Update(
+                EmptyInputFrame(),
+                elapsedTime: TimeSpan.FromSeconds(9)));
+
+            Assert.Null(exception);
+            Assert.True(handle.IsActive || handle.IsCompleted);
+            Assert.True(float.IsFinite(gauge.Value));
+        }
+        finally
+        {
+            ObjectMotionRuntime.ResetForTests();
+        }
+    }
+
+    [Fact]
     public void HoldOnCompleteFalseRestoresTheOriginalClrValue()
     {
         ManualMotionClock clock = new();

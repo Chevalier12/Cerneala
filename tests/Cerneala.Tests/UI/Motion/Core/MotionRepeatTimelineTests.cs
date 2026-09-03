@@ -177,6 +177,17 @@ public sealed class MotionRepeatTimelineTests
     }
 
     [Fact]
+    public void ManualTimelineKeepsProgressNormalizedForNaNInput()
+    {
+        ManualMotionTimeline timeline = new();
+
+        timeline.SetProgress(float.NaN);
+
+        Assert.True(float.IsFinite(timeline.Progress));
+        Assert.InRange(timeline.Progress, 0f, 1f);
+    }
+
+    [Fact]
     public void TimelineRegistryRegistersLooksUpEnumeratesAndRemovesTimelines()
     {
         UIRoot root = new();

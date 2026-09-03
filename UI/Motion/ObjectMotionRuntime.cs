@@ -74,6 +74,11 @@ internal sealed class ObjectMotionRuntimeState
             delta = TimeSpan.Zero;
         }
 
+        if (delta > MotionSystem.DefaultMaxDelta)
+        {
+            delta = MotionSystem.DefaultMaxDelta;
+        }
+
         previousTimestamp = now;
         frameIndex++;
         Graph.Tick(new MotionFrame(

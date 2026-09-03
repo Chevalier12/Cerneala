@@ -1,3 +1,5 @@
+using System.Runtime.ExceptionServices;
+
 namespace Cerneala.UI.Motion.Core;
 
 public static class MotionGroup
@@ -9,10 +11,20 @@ public static class MotionGroup
         MotionGroupHandle? group = null;
         group = new MotionGroupHandle(() =>
         {
+            ExceptionDispatchInfo? firstFailure = null;
             foreach (MotionHandle child in children)
             {
-                child.Cancel();
+                try
+                {
+                    child.Cancel();
+                }
+                catch (Exception exception)
+                {
+                    firstFailure ??= ExceptionDispatchInfo.Capture(exception);
+                }
             }
+
+            firstFailure?.Throw();
         });
 
         if (remaining == 0)

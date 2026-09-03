@@ -16,12 +16,13 @@ public sealed class MotionSystem
     public const int ActiveOpacityRenderInvalidationsPerTickBudget = 1;
     public const int SimultaneousRenderAnimationStressBudget = 100;
     public const int LayoutMotionStressBudget = 100;
+    internal static readonly TimeSpan DefaultMaxDelta = TimeSpan.FromMilliseconds(100);
 
     private readonly IMotionClock clock;
     private TimeSpan? previousTimestamp;
     private int frameIndex;
     private bool wasActiveLastTick;
-    private TimeSpan maxDelta = TimeSpan.FromMilliseconds(100);
+    private TimeSpan maxDelta = DefaultMaxDelta;
 
 
 

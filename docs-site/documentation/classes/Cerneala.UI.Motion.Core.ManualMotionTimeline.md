@@ -34,7 +34,7 @@ float current = value.Current; // 0.75f
 
 ## Remarks
 
-`ManualMotionTimeline` is useful when an interaction, scrubber, scroll position, or test needs to drive normalized progress explicitly. `SetProgress` clamps the supplied value to the inclusive range from `0` to `1`, and `Progress` returns the last clamped value.
+`ManualMotionTimeline` is useful when an interaction, scrubber, scroll position, or test needs to drive normalized progress explicitly. `SetProgress` treats `NaN` as `0`, clamps other supplied values to the inclusive range from `0` to `1`, and `Progress` returns the normalized value.
 
 The timeline owns an internal `MotionGraph` configured with built-in value mixers and `ReducedMotionPolicy.Default`. `CreateValue<T>` creates a `MotionValue<T>` from that graph. Setting timeline progress does not automatically write to created values; caller code decides how the timeline's normalized progress maps to motion values.
 
@@ -56,7 +56,7 @@ The timeline captures the constructing managed thread internally. `SetProgress`,
 
 | Name | Return Type | Description |
 | --- | --- | --- |
-| `SetProgress(float progress)` | `void` | Sets `Progress` after clamping `progress` to the range `0` through `1`. |
+| `SetProgress(float progress)` | `void` | Sets `Progress`, treating `NaN` as `0` and clamping other values to the range `0` through `1`. |
 | `CreateValue<T>(T initial)` | `MotionValue<T>` | Creates a motion value on the timeline's internal graph with the supplied initial value. |
 
 ## Exceptions
