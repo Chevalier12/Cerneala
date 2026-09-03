@@ -76,6 +76,12 @@ internal interface IWindowGraphicsSession : IDisposable
 internal interface IWindowScreenshotSource
 {
     void RenderPng(Stream output, Color clearColor, Action<IDrawingBackend> draw);
+
+    void RenderPng(
+        Stream output,
+        Color clearColor,
+        WindowScreenshotRegion region,
+        Action<IDrawingBackend> draw);
 }
 
 internal readonly record struct WindowPreviewFrame(

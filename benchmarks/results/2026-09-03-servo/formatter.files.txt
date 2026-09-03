@@ -1,0 +1,10 @@
+Cerneala.LanguageServer\Features\FormattingService.cs
+Cerneala.SourceGen\Prism\Emission\PrismMarkupEmitter.cs
+Drawing\DrawState.cs
+Drawing\Prism\Filters\PrismLensProfileFitter.cs
+Drawing\Prism\Graph\PrismFrameAnalyzer.cs
+Drawing\Prism\Graph\PrismGraphOptimizer.cs
+tests\Cerneala.Tests.LanguageServer\DiagnosticsTests.cs
+tests\Cerneala.Tests.SdlGpu\FakeSdlApi.cs
+tests\Cerneala.Tests\Drawing\Prism\PrismLensProfileTests.cs
+UI\Prism\Runtime\PrismInstance.cs

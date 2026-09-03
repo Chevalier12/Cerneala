@@ -2,7 +2,7 @@ using System.Collections;
 using System.Globalization;
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
-using Cerneala.UI.Automation;
+using ServoApi = Cerneala.UI.Servo.Servo;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Core;
@@ -147,9 +147,9 @@ public partial class AspectChapterView : UserControl
 
         if (targets.Count == 0)
         {
-            AutomationProperties.SetAutomationId(BorderElementButton, "aspect-element-border");
-            AutomationProperties.SetAutomationId(TextBlockElementButton, "aspect-element-textblock");
-            AutomationProperties.SetAutomationId(ButtonElementButton, "aspect-element-button");
+            ServoApi.SetId(BorderElementButton, "aspect-element-border");
+            ServoApi.SetId(TextBlockElementButton, "aspect-element-textblock");
+            ServoApi.SetId(ButtonElementButton, "aspect-element-button");
             BuildTargets();
         }
 

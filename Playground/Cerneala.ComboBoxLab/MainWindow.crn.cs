@@ -1,8 +1,8 @@
-using Cerneala.UI.Automation;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using System.Text.Json;
+using ServoApi = Cerneala.UI.Servo.Servo;
 
 namespace Cerneala.ComboBoxLab;
 
@@ -123,9 +123,9 @@ public partial class MainWindow : Window
 
     private void AssignAutomationIds()
     {
-        AutomationProperties.SetAutomationId(FilteredCombo, "filtered-combo");
-        AutomationProperties.SetAutomationId(SelectionCombo, "selection-combo");
-        AutomationProperties.SetAutomationId(BottomCombo, "bottom-combo");
+        ServoApi.SetId(FilteredCombo, "filtered-combo");
+        ServoApi.SetId(SelectionCombo, "selection-combo");
+        ServoApi.SetId(BottomCombo, "bottom-combo");
     }
 
     private static bool UpdateStateText(ComboBox comboBox, TextBlock committed, TextBlock runtime)

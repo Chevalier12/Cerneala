@@ -359,6 +359,48 @@ public sealed class SdlGpuWindowGraphicsSessionTests
         Assert.Equal(7, bitmap.Height);
     }
 
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(1.5f)]
+    [InlineData(2f)]
+    public void RegionalPngUsesTheSharedPixelRegionContract(float scale)
+    {
+        const int dipWidth = 8;
+        const int dipHeight = 6;
+        int pixelWidth = (int)Math.Ceiling(dipWidth * scale);
+        int pixelHeight = (int)Math.Ceiling(dipHeight * scale);
+        FakeSdlApi api = new();
+        nint window = api.CreateWindow("regional png", pixelWidth, pixelHeight, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = Assert.IsType<SdlGpuWindowGraphicsSession>(factory.Create(
+            new SdlWindowSurface(window, api.GetWindowId(window)),
+            pixelWidth,
+            pixelHeight,
+            scale));
+        Assert.True(WindowScreenshotRegion.TryCreate(
+            new Cerneala.UI.Layout.LayoutRect(1.2f, 1.4f, 3.2f, 2.2f),
+            new Cerneala.UI.Hosting.UiViewport(dipWidth, dipHeight, scale),
+            out WindowScreenshotRegion region));
+        using MemoryStream fullOutput = new();
+        ((IWindowScreenshotSource)session).RenderPng(
+            fullOutput,
+            new Color(10, 20, 30, 255),
+            _ => { });
+        using MemoryStream output = new();
+
+        ((IWindowScreenshotSource)session).RenderPng(
+            output,
+            new Color(10, 20, 30, 255),
+            region,
+            _ => { });
+
+        using SKBitmap full = SKBitmap.Decode(fullOutput.ToArray());
+        using SKBitmap bitmap = SKBitmap.Decode(output.ToArray());
+        Assert.Equal((pixelWidth, pixelHeight), (full.Width, full.Height));
+        Assert.Equal((region.Width, region.Height), (bitmap.Width, bitmap.Height));
+        Assert.Equal(new SKColor(10, 20, 30, 255), bitmap.GetPixel(0, 0));
+    }
+
     [Fact]
     public void TwoWindowsCaptureThroughWindowSaveScreenshot()
     {

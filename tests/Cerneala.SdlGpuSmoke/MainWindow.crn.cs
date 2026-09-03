@@ -9,6 +9,8 @@ using Cerneala.UI.Markup;
 using Cerneala.UI.Media;
 using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
+using Cerneala.UI.Servo;
+using ServoApi = Cerneala.UI.Servo.Servo;
 
 namespace Cerneala.SdlGpuSmoke;
 
@@ -21,6 +23,7 @@ public partial class MainWindow : Window
     private int mainFrames;
     private int secondaryFrames;
     private bool inputObserved;
+    private bool servoActivated;
     private bool completed;
 
     private void OnContentRendered(object? sender, EventArgs args)
@@ -56,6 +59,18 @@ public partial class MainWindow : Window
             secondaryWindow.FrameRendered += (_, _) => secondaryFrames++;
             secondaryWindow.Show();
         }
+
+        if (options.Mode == "servo")
+        {
+            _ = RunServoAsync(options);
+        }
+    }
+
+    private void OnServoClick(UiElementId sender, RoutedEventArgs args)
+    {
+        servoActivated = true;
+        ServoButton.Content = "SERVO ACTIVE";
+        StatusText.Text = "servo: activated";
     }
 
     private void OnPreviewKeyDown(UiElementId sender, RoutedEventArgs args)
@@ -75,6 +90,11 @@ public partial class MainWindow : Window
 
         mainFrames++;
         SmokeOptions options = SmokeOptions.Current;
+        if (options.Mode == "servo")
+        {
+            return;
+        }
+
         if (options.Mode == "resize" && mainFrames == 1)
         {
             Width = 720;
@@ -119,6 +139,47 @@ public partial class MainWindow : Window
             $"secondaryFrames={secondaryFrames} inputObserved={inputObserved}");
         secondaryWindow?.Close();
         Close();
+    }
+
+    private async Task RunServoAsync(SmokeOptions options)
+    {
+        string fullPath = Path.Combine(options.ArtifactDirectory, "servo-main.png");
+        string targetPath = Path.Combine(options.ArtifactDirectory, "servo-target.png");
+        string errorPath = Path.Combine(options.ArtifactDirectory, "servo.error.txt");
+        try
+        {
+            Directory.CreateDirectory(options.ArtifactDirectory);
+            ServoApi servo = new(this);
+            ServoTarget button = ServoTarget.ById("servo-target");
+            _ = await servo.FindAsync(button);
+            await servo.ClickAsync(button);
+            await servo.WaitUntilAsync(async token =>
+                (await servo.FindAsync(ServoTarget.ById("servo-status"), token)).Name == "servo: activated");
+            if (!servoActivated)
+            {
+                throw new InvalidOperationException("Servo input completed without the routed click handler running.");
+            }
+
+            if (options.CaptureScreenshots)
+            {
+                await servo.SaveScreenshotAsync(fullPath);
+                await servo.SaveScreenshotAsync(button, targetPath);
+            }
+
+            completed = true;
+            Console.WriteLine(
+                $"SDL_GPU_SMOKE_OK mode=servo state={StatusText.Text} " +
+                $"full={fullPath} target={targetPath}");
+            Close();
+        }
+        catch (Exception exception)
+        {
+            completed = true;
+            Directory.CreateDirectory(options.ArtifactDirectory);
+            await File.WriteAllTextAsync(errorPath, exception.ToString());
+            Console.Error.WriteLine($"SDL_GPU_SMOKE_FAIL servo: {exception}");
+            Application.Current?.Shutdown(2);
+        }
     }
 
     protected override void OnDetached()

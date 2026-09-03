@@ -2648,7 +2648,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         continue;
                     }
 
-                    if (TryEmitAutomationAttachedProperty(element, variable, attribute))
+                    if (TryEmitServoAttachedProperty(element, variable, attribute))
                     {
                         continue;
                     }
@@ -2825,23 +2825,23 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return true;
         }
 
-        private bool TryEmitAutomationAttachedProperty(
+        private bool TryEmitServoAttachedProperty(
             MarkupElement element,
             string variable,
             MarkupAttribute attribute)
         {
             if (!string.Equals(
                     attribute.Name.LocalName,
-                    "AutomationProperties.AutomationId",
+                    "Servo.Id",
                     StringComparison.Ordinal))
             {
                 return false;
             }
 
             INamedTypeSymbol? ownerType = compilation.GetTypeByMetadataName(
-                "Cerneala.UI.Automation.AutomationProperties");
+                "Cerneala.UI.Servo.Servo");
             IFieldSymbol? propertyField = ownerType?
-                .GetMembers("AutomationIdProperty")
+                .GetMembers("IdProperty")
                 .OfType<IFieldSymbol>()
                 .FirstOrDefault();
             if (propertyField?.Type is not INamedTypeSymbol fieldType || fieldType.TypeArguments.Length != 1)
@@ -2855,7 +2855,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             PropertySpec spec = new(
-                "AutomationId",
+                "Id",
                 MarkupValueKind.String,
                 propertyField.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) +
                     "." + propertyField.Name,
@@ -2865,7 +2865,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 variable,
                 attribute,
                 spec,
-                "AutomationProperties.AutomationId",
+                "Servo.Id",
                 forceUiPropertyAssignment: true);
             return true;
         }
@@ -3841,7 +3841,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 compilation.GetTypeByMetadataName("Cerneala.UI.Elements." + metadataName) ??
                 compilation.GetTypeByMetadataName("Cerneala.UI.Layout.Panels." + metadataName) ??
                 compilation.GetTypeByMetadataName("Cerneala.UI.Media." + metadataName) ??
-                compilation.GetTypeByMetadataName("Cerneala.UI.Automation." + metadataName);
+                compilation.GetTypeByMetadataName("Cerneala.UI.Servo." + metadataName);
         }
 
         private INamedTypeSymbol? ResolveElementTypeSymbol(string elementName)

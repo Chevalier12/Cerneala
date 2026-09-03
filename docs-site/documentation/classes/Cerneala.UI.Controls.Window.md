@@ -32,8 +32,6 @@ The window renders its configured background and border before its content. `Las
 
 `SaveScreenshot` redraws the current retained command tree into a complete client framebuffer before encoding the PNG. This keeps captures complete even when the displayed frame is changing continuously under Motion. Call it from `FrameRendered` when the capture must correspond to a specific frame boundary.
 
-`CreateAutomationSession` attaches a retained input driver and the `SaveScreenshot` provider to the window's current visual tree. The window must already be shown.
-
 When the native platform activates a window and no retained element already has keyboard focus, a window with `Focusable` set to `true` receives keyboard focus automatically. Activation preserves an existing focused child instead of replacing it with the window.
 
 ## Properties
@@ -58,7 +56,6 @@ When the native platform activates a window and no retained element already has 
 | Name | Description |
 | --- | --- |
 | `SaveScreenshot(string path)` | Draws the current retained client frame and saves it as a PNG. |
-| `CreateAutomationSession()` | Creates an in-process user-like automation session for this shown window. |
 
 ## Applies to
 Desktop window hosting backends.

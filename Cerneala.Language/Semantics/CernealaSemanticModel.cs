@@ -16,7 +16,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         "Cerneala.UI.Elements",
         "Cerneala.UI.Layout.Panels",
         "Cerneala.UI.Media",
-        "Cerneala.UI.Automation"
+        "Cerneala.UI.Servo"
     ];
 
     private readonly CernealaDocument document;

@@ -1,7 +1,7 @@
-using Cerneala.UI.Automation;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
+using Cerneala.UI.Servo;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Cerneala.UI.Hosting.Windowing;
@@ -110,7 +110,7 @@ internal sealed class DesignPreviewSession : IDisposable
         runtime.SendPreviewText(window, text);
     }
 
-    public void PressKey(InputKey key, AutomationModifiers modifiers)
+    public void PressKey(InputKey key, ServoModifiers modifiers)
     {
         ThrowIfDisposed();
         runtime.PressPreviewKey(window, key, modifiers);

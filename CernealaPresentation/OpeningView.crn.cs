@@ -1,8 +1,9 @@
 using Cerneala.UI.Controls;
-using Cerneala.UI.Automation;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
+using Cerneala.UI.Servo;
+using ServoApi = Cerneala.UI.Servo.Servo;
 
 namespace Cerneala.Presentation;
 
@@ -22,7 +23,7 @@ internal partial class OpeningView : UserControl
         }
 
         sequenceStarted = true;
-        AutomationProperties.SetAutomationId(ContinueButton, "presentation-continue");
+        ServoApi.SetId(ContinueButton, "presentation-continue");
         StartRequested?.Invoke(this, EventArgs.Empty);
         _ = RunLoadingAutomationAsync();
     }
@@ -32,10 +33,8 @@ internal partial class OpeningView : UserControl
         if (IsPresentationAutomationRequested())
         {
             ContinueButton.IsEnabled = true;
-            FindHostWindow()
-                .CreateAutomationSession()
-                .FindByAutomationId("presentation-continue")
-                .Click();
+            await new ServoApi(FindHostWindow())
+                .ClickAsync(ServoTarget.ById("presentation-continue"));
             return;
         }
 

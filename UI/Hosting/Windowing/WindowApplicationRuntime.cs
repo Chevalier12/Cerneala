@@ -1,12 +1,12 @@
 using System.Diagnostics;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Prism;
-using Cerneala.UI.Automation;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Platform;
 using Cerneala.UI.Resources;
+using Cerneala.UI.Servo;
 using Cerneala.UI.Theming;
 
 namespace Cerneala.UI.Hosting.Windowing;
@@ -23,7 +23,6 @@ internal sealed class WindowApplicationRuntime : IDisposable
     private readonly ThemeProvider themeProvider;
     private readonly IPlatformServices? platformServices;
     private bool disposed;
-    private bool automationScriptStarted;
     private Window? legacyMainWindow;
     private Application? application;
 
@@ -334,6 +333,46 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
     public void SaveScreenshot(Window window, string path)
     {
+        SaveScreenshotCore(window, path, region: null);
+    }
+
+    internal void SaveScreenshot(
+        Window window,
+        string path,
+        WindowScreenshotRegion region)
+    {
+        SaveScreenshotCore(window, path, region);
+    }
+
+    internal Task SaveServoScreenshotAsync(
+        Window window,
+        string path,
+        Func<UIRoot, WindowScreenshotRegion?>? resolveRegion,
+        CancellationToken cancellationToken)
+    {
+        VerifyAccess();
+        ArgumentNullException.ThrowIfNull(window);
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        cancellationToken.ThrowIfCancellationRequested();
+        WindowContext context = RequireContext(window);
+        WindowScreenshotRegion? resolvedRegion = resolveRegion?.Invoke(context.Root);
+        if (!context.IsRendering && context.Root.RetainedRenderCache.IsRootValid)
+        {
+            SaveScreenshotCore(window, path, resolvedRegion);
+            return Task.CompletedTask;
+        }
+
+        ServoScreenshotRequest request = new(path, resolveRegion, cancellationToken);
+        context.ServoScreenshotRequests.Enqueue(request);
+        context.RenderRequested = true;
+        return request.Task;
+    }
+
+    private void SaveScreenshotCore(
+        Window window,
+        string path,
+        WindowScreenshotRegion? region)
+    {
         VerifyAccess();
         ArgumentNullException.ThrowIfNull(window);
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
@@ -352,12 +391,17 @@ internal sealed class WindowApplicationRuntime : IDisposable
         }
 
         using FileStream output = File.Create(fullPath);
-        screenshotSource.RenderPng(
-            output,
-            Color.White,
-            drawingBackend => context.Host.Draw(
-                drawingBackend,
-                graphicsSession as IBackdropFrameSource));
+        Action<IDrawingBackend> draw = drawingBackend => context.Host.Draw(
+            drawingBackend,
+            graphicsSession as IBackdropFrameSource);
+        if (region is WindowScreenshotRegion pixelRegion)
+        {
+            screenshotSource.RenderPng(output, Color.White, pixelRegion, draw);
+        }
+        else
+        {
+            screenshotSource.RenderPng(output, Color.White, draw);
+        }
     }
 
     internal WindowPreviewFrame CapturePreviewFrame(
@@ -372,18 +416,10 @@ internal sealed class WindowApplicationRuntime : IDisposable
             : throw new NotSupportedException("The active Window graphics backend cannot capture its presented frame.");
     }
 
-    public AutomationSession CreateAutomationSession(Window window)
+    internal ServoInputState GetServoInputState(Window window)
     {
         VerifyAccess();
-        ArgumentNullException.ThrowIfNull(window);
-        WindowContext context = RequireContext(window);
-        return new AutomationSession(
-            context.Root,
-            new RetainedAutomationInputDriver(
-                context.Host,
-                (frames, cancellationToken) =>
-                    EnqueueAutomationDragAsync(context, frames, cancellationToken)),
-            path => SaveScreenshot(window, path));
+        return RequireContext(window).ServoInput;
     }
 
     internal void ClickPreview(Window window, float x, float y)
@@ -456,7 +492,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
         context.RenderRequested = true;
     }
 
-    internal void PressPreviewKey(Window window, InputKey key, AutomationModifiers modifiers)
+    internal void PressPreviewKey(Window window, InputKey key, ServoModifiers modifiers)
     {
         VerifyAccess();
         WindowContext context = RequireContext(window);
@@ -464,31 +500,26 @@ internal sealed class WindowApplicationRuntime : IDisposable
         context.RenderRequested = true;
     }
 
-    private Task EnqueueAutomationDragAsync(
+    private Task EnqueueServoInputAsync(
         WindowContext context,
-        IReadOnlyList<InputFrame> frames,
+        ServoInputSequence sequence,
         CancellationToken cancellationToken)
     {
         VerifyAccess();
         cancellationToken.ThrowIfCancellationRequested();
         if (!IsLiveContext(context))
         {
-            throw new InvalidOperationException("Automation input requires a visible, open Window.");
+            throw new ServoException("Servo input requires a visible, open Window.");
         }
-        if (frames.Count == 0)
+        if (sequence.Steps.Count == 0)
         {
             return Task.CompletedTask;
         }
 
-        TaskCompletionSource completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        for (int index = 0; index < frames.Count; index++)
-        {
-            context.AutomationFrames.Enqueue(new AutomationFrameRequest(
-                frames[index],
-                index == frames.Count - 1 ? completion : null));
-        }
+        ServoInputOperation operation = new(sequence, cancellationToken);
+        context.ServoInputOperations.Enqueue(operation);
         context.RenderRequested = true;
-        return completion.Task.WaitAsync(cancellationToken);
+        return operation.Task;
     }
 
     internal PrismOperationalDiagnostics? CapturePrismDiagnostics(Window window)
@@ -655,7 +686,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
             InputSource = platformWindow.InputSource,
             PlatformServices = platformServices
         });
-        WindowContext context = new(window, platformWindow, root, host);
+        WindowContext context = new(this, window, platformWindow, root, host);
         callbacks.Context = context;
         contexts.Add(window, context);
         windows.Add(window);
@@ -685,15 +716,13 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
         context.IsRendering = true;
         context.RenderRequested = false;
+        ServoInputFrameRequest? servoRequest = null;
         try
         {
             long processingStarted = Stopwatch.GetTimestamp();
             long inputCollectionStarted = Stopwatch.GetTimestamp();
-            AutomationFrameRequest? automationRequest =
-                context.AutomationFrames.TryDequeue(out AutomationFrameRequest? queuedRequest)
-                    ? queuedRequest
-                    : null;
-            InputFrame inputFrame = automationRequest?.Frame ??
+            servoRequest = context.TryBeginServoInputFrame();
+            InputFrame inputFrame = servoRequest?.Step.Frame ??
                 (context.IsPreview
                     ? context.PreviewInputDriver.GetCurrentFrame()
                     : context.PlatformWindow.InputSource.GetFrame());
@@ -762,10 +791,14 @@ internal sealed class WindowApplicationRuntime : IDisposable
                 frame.DiagnosticsTiming.ScheduledPhases,
                 frame.DiagnosticsTiming.InputPhases);
             frame.ProcessingTime = Stopwatch.GetElapsedTime(processingStarted);
+            CompleteServoScreenshotRequests(context);
             using (context.Root.Relay.EnterSynchronizationContext())
             {
                 context.Window.MarkFrameRendered(frame);
-                automationRequest?.Completion?.TrySetResult();
+                if (servoRequest is not null)
+                {
+                    context.CompleteServoInputFrame(servoRequest);
+                }
 
                 if (!context.ContentRendered)
                 {
@@ -776,18 +809,19 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
             return true;
         }
+        catch (Exception exception) when (servoRequest is not null)
+        {
+            context.FailServoInputFrame(servoRequest, exception);
+            return false;
+        }
         finally
         {
             context.IsRendering = false;
-            if (IsLiveContext(context) && context.AutomationFrames.Count > 0)
+            if (IsLiveContext(context) &&
+                (context.ServoInputOperations.Count > 0 ||
+                 context.ServoScreenshotRequests.Count > 0))
             {
                 context.RenderRequested = true;
-            }
-            if (IsLiveContext(context) &&
-                context.ContentRendered &&
-                context.Root.RetainedRenderCache.IsRootValid)
-            {
-                RunAutomationScriptIfRequested(context);
             }
         }
     }
@@ -800,38 +834,14 @@ internal sealed class WindowApplicationRuntime : IDisposable
             : throw new InvalidOperationException("The Window has not been shown.");
     }
 
-    private void RunAutomationScriptIfRequested(WindowContext context)
+    private void CompleteServoScreenshotRequests(WindowContext context)
     {
-        if (automationScriptStarted)
+        while (context.ServoScreenshotRequests.TryDequeue(out ServoScreenshotRequest? request))
         {
-            return;
-        }
-
-        string? path = Environment.GetEnvironmentVariable("CERNEALA_AUTOMATION_SCRIPT");
-        if (string.IsNullOrWhiteSpace(path))
-        {
-            return;
-        }
-
-        string? requiredWindowTitle =
-            Environment.GetEnvironmentVariable("CERNEALA_AUTOMATION_WINDOW_TITLE");
-        if (!string.IsNullOrWhiteSpace(requiredWindowTitle) &&
-            !string.Equals(context.Window.Title, requiredWindowTitle, StringComparison.Ordinal))
-        {
-            return;
-        }
-
-        automationScriptStarted = true;
-        try
-        {
-            AutomationScriptRunner.RunFile(
-                CreateAutomationSession(context.Window),
-                path);
-        }
-        catch (Exception exception)
-        {
-            File.WriteAllText(Path.GetFullPath(path) + ".error.txt", exception.ToString());
-            throw;
+            request.Execute(() => SaveScreenshotCore(
+                context.Window,
+                request.Path,
+                request.ResolveRegion?.Invoke(context.Root)));
         }
     }
 
@@ -959,13 +969,21 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
     private sealed class WindowContext : IDisposable
     {
-        public WindowContext(Window window, IPlatformWindow platformWindow, UIRoot root, UiHost host)
+        public WindowContext(
+            WindowApplicationRuntime runtime,
+            Window window,
+            IPlatformWindow platformWindow,
+            UIRoot root,
+            UiHost host)
         {
             Window = window;
             PlatformWindow = platformWindow;
             Root = root;
             Host = host;
-            PreviewInputDriver = new RetainedAutomationInputDriver(host);
+            ServoInput = new ServoInputState(
+                host,
+                (sequence, cancellationToken) =>
+                    runtime.EnqueueServoInputAsync(this, sequence, cancellationToken));
         }
 
         public Window Window { get; }
@@ -976,7 +994,9 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
         public UiHost Host { get; }
 
-        public RetainedAutomationInputDriver PreviewInputDriver { get; }
+        public ServoInputState ServoInput { get; }
+
+        public RetainedServoInputDriver PreviewInputDriver => ServoInput.Driver;
 
         public bool IsModal { get; set; }
 
@@ -992,22 +1012,265 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
         public UiViewport? OverrideViewport { get; set; }
 
-        public Queue<AutomationFrameRequest> AutomationFrames { get; } = new();
+        public Queue<ServoInputOperation> ServoInputOperations { get; } = new();
+
+        public Queue<ServoScreenshotRequest> ServoScreenshotRequests { get; } = new();
+
+        public ServoInputFrameRequest? TryBeginServoInputFrame()
+        {
+            while (ServoInputOperations.TryPeek(out ServoInputOperation? operation))
+            {
+                ServoInputFrameRequest? request = operation.GetNextFrame();
+                if (request is not null)
+                {
+                    return request;
+                }
+
+                ServoInputOperations.Dequeue();
+            }
+
+            return null;
+        }
+
+        public void CompleteServoInputFrame(ServoInputFrameRequest request)
+        {
+            request.Operation.CompleteFrame(request);
+            RemoveCompletedServoOperation(request.Operation);
+        }
+
+        public void FailServoInputFrame(ServoInputFrameRequest request, Exception exception)
+        {
+            request.Operation.FailFrame(request, exception);
+            RemoveCompletedServoOperation(request.Operation);
+        }
 
         public void Dispose()
         {
-            foreach (AutomationFrameRequest request in AutomationFrames)
+            foreach (ServoInputOperation operation in ServoInputOperations)
             {
-                request.Completion?.TrySetCanceled();
+                operation.Fail(new ServoException(
+                    "The Servo Window closed before the input operation completed."));
             }
-            AutomationFrames.Clear();
+            ServoInputOperations.Clear();
+            foreach (ServoScreenshotRequest request in ServoScreenshotRequests)
+            {
+                request.Fail(new ServoException(
+                    "The Servo Window closed before the screenshot operation completed."));
+            }
+            ServoScreenshotRequests.Clear();
             PlatformWindow.Dispose();
+        }
+
+        private void RemoveCompletedServoOperation(ServoInputOperation operation)
+        {
+            if (!operation.Task.IsCompleted)
+            {
+                return;
+            }
+
+            if (ServoInputOperations.TryPeek(out ServoInputOperation? current) &&
+                ReferenceEquals(current, operation))
+            {
+                ServoInputOperations.Dequeue();
+            }
         }
     }
 
-    private sealed record AutomationFrameRequest(
-        InputFrame Frame,
-        TaskCompletionSource? Completion);
+    private sealed class ServoInputOperation
+    {
+        private readonly ServoInputSequence sequence;
+        private readonly CancellationToken cancellationToken;
+        private readonly TaskCompletionSource completion =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly CancellationTokenRegistration cancellationRegistration;
+        private int nextIndex;
+        private ServoInputStep? cleanupStep;
+        private ServoInputStep? lastAttempted;
+        private Exception? failure;
+        private int started;
+
+        public ServoInputOperation(
+            ServoInputSequence sequence,
+            CancellationToken cancellationToken)
+        {
+            this.sequence = sequence;
+            this.cancellationToken = cancellationToken;
+            cancellationRegistration = cancellationToken.Register(
+                static state => ((ServoInputOperation)state!).OnCancellationRequested(),
+                this);
+        }
+
+        public Task Task => completion.Task;
+
+        public ServoInputFrameRequest? GetNextFrame()
+        {
+            if (Task.IsCompleted)
+            {
+                return null;
+            }
+
+            if (cancellationToken.IsCancellationRequested && Volatile.Read(ref started) != 0)
+            {
+                nextIndex = sequence.Steps.Count;
+                ServoInputStep last = lastAttempted ?? sequence.Steps[0];
+                cleanupStep ??= ServoInputSequence.CreateResetStep(last.Pointer, last.Keyboard);
+            }
+
+            if (cleanupStep is ServoInputStep cleanup)
+            {
+                cleanupStep = null;
+                return new ServoInputFrameRequest(this, cleanup, IsCleanup: true);
+            }
+
+            if (nextIndex >= sequence.Steps.Count)
+            {
+                return null;
+            }
+
+            Interlocked.Exchange(ref started, 1);
+            ServoInputStep step = sequence.Steps[nextIndex++];
+            lastAttempted = step;
+            return new ServoInputFrameRequest(this, step, IsCleanup: false);
+        }
+
+        public void CompleteFrame(ServoInputFrameRequest request)
+        {
+            if (!request.IsCleanup && cancellationToken.IsCancellationRequested)
+            {
+                nextIndex = sequence.Steps.Count;
+                cleanupStep = ServoInputSequence.CreateResetStep(
+                    request.Step.Pointer,
+                    request.Step.Keyboard);
+                return;
+            }
+
+            if (request.IsCleanup || nextIndex >= sequence.Steps.Count)
+            {
+                Complete();
+            }
+        }
+
+        public void FailFrame(ServoInputFrameRequest request, Exception exception)
+        {
+            failure ??= exception;
+            if (request.IsCleanup)
+            {
+                Complete();
+                return;
+            }
+
+            nextIndex = sequence.Steps.Count;
+            cleanupStep = ServoInputSequence.CreateResetStep(
+                request.Step.Pointer,
+                request.Step.Keyboard);
+        }
+
+        public void Fail(Exception exception)
+        {
+            ArgumentNullException.ThrowIfNull(exception);
+            failure ??= exception;
+            Complete();
+        }
+
+        private void Complete()
+        {
+            cancellationRegistration.Dispose();
+            if (failure is not null)
+            {
+                completion.TrySetException(failure);
+            }
+            else if (cancellationToken.IsCancellationRequested)
+            {
+                completion.TrySetCanceled(cancellationToken);
+            }
+            else
+            {
+                completion.TrySetResult();
+            }
+        }
+
+        private void OnCancellationRequested()
+        {
+            if (Volatile.Read(ref started) == 0)
+            {
+                completion.TrySetCanceled(cancellationToken);
+            }
+        }
+    }
+
+    private sealed class ServoScreenshotRequest
+    {
+        private readonly CancellationToken cancellationToken;
+        private readonly TaskCompletionSource completion =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly CancellationTokenRegistration cancellationRegistration;
+
+        public ServoScreenshotRequest(
+            string path,
+            Func<UIRoot, WindowScreenshotRegion?>? resolveRegion,
+            CancellationToken cancellationToken)
+        {
+            Path = path;
+            ResolveRegion = resolveRegion;
+            this.cancellationToken = cancellationToken;
+            cancellationRegistration = cancellationToken.Register(
+                static state => ((ServoScreenshotRequest)state!).Cancel(),
+                this);
+        }
+
+        public string Path { get; }
+
+        public Func<UIRoot, WindowScreenshotRegion?>? ResolveRegion { get; }
+
+        public Task Task => completion.Task;
+
+        public void Execute(Action capture)
+        {
+            ArgumentNullException.ThrowIfNull(capture);
+            if (Task.IsCompleted)
+            {
+                cancellationRegistration.Dispose();
+                return;
+            }
+
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                capture();
+                cancellationToken.ThrowIfCancellationRequested();
+                completion.TrySetResult();
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                completion.TrySetCanceled(cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                completion.TrySetException(exception);
+            }
+            finally
+            {
+                cancellationRegistration.Dispose();
+            }
+        }
+
+        public void Fail(Exception exception)
+        {
+            ArgumentNullException.ThrowIfNull(exception);
+            cancellationRegistration.Dispose();
+            completion.TrySetException(exception);
+        }
+
+        private void Cancel()
+        {
+            completion.TrySetCanceled(cancellationToken);
+        }
+    }
+
+    private sealed record ServoInputFrameRequest(
+        ServoInputOperation Operation,
+        ServoInputStep Step,
+        bool IsCleanup);
 
     private sealed class ReferenceEqualityComparer : IEqualityComparer<Window>
     {

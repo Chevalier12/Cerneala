@@ -102,6 +102,29 @@ public sealed class SemanticWorkspaceTests
     }
 
     [Fact]
+    public void SemanticModelResolvesServoIdAsABuiltInAttachedProperty()
+    {
+        CSharpCompilation project = CreateCompilation([]);
+        CernealaDocument document = Document(
+            "ServoId.crn",
+            "<TextBlock Servo.Id=\"target\" />");
+        using CernealaCompilation compilation = new(
+            new RoslynCompilationSymbols(project),
+            [document],
+            AnalysisMode.Build);
+
+        CernealaSemanticModel model = compilation.GetSemanticModel(document.Path);
+
+        Assert.Empty(model.Diagnostics);
+        CernealaSemanticSymbol property = Assert.Single(
+            model.Symbols,
+            symbol => symbol.Kind == CernealaSemanticSymbolKind.AttachedProperty);
+        Assert.Equal("Servo.Id", property.Name);
+        Assert.Equal("target", property.Value);
+        Assert.Equal("Cerneala.UI.Servo.Servo", property.MemberSymbol?.DeclaringTypeMetadataName);
+    }
+
+    [Fact]
     public void ProjectReferencesAndAssemblyQualifiedAliasesResolveWithoutLoadingAssemblies()
     {
         CSharpCompilation referenced = CreateCompilation(

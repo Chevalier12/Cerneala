@@ -1,7 +1,7 @@
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Accessibility;
-using Cerneala.UI.Automation;
+using ServoApi = Cerneala.UI.Servo.Servo;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
@@ -70,8 +70,8 @@ public partial class PresentationWindow : Window
 
         contentReady = true;
         ApplyRequestedWindowSize();
-        AutomationProperties.SetAutomationId(OpeningSurface, "presentation-opening");
-        AutomationProperties.SetAutomationId(TourSurface, "presentation-tour");
+        ServoApi.SetId(OpeningSurface, "presentation-opening");
+        ServoApi.SetId(TourSurface, "presentation-tour");
         InitializeTourNavigation();
         int initialChapter = int.TryParse(
             Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_START_CHAPTER"),

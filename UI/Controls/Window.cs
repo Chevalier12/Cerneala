@@ -1,4 +1,3 @@
-using Cerneala.UI.Automation;
 using Cerneala.UI.Core;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windowing;
@@ -291,10 +290,10 @@ public class Window : ContentControl
         (runtimeOwner ?? WindowApplicationRuntime.CurrentOrDefault).SaveScreenshot(this, path);
     }
 
-    public AutomationSession CreateAutomationSession()
+    internal void SaveScreenshot(string path, WindowScreenshotRegion region)
     {
-        return (runtimeOwner ?? WindowApplicationRuntime.CurrentOrDefault)
-            .CreateAutomationSession(this);
+        (runtimeOwner ?? WindowApplicationRuntime.CurrentOrDefault)
+            .SaveScreenshot(this, path, region);
     }
 
     public void Close()
@@ -375,6 +374,8 @@ public class Window : ContentControl
     {
         runtimeOwner = value;
     }
+
+    internal WindowApplicationRuntime? RuntimeOwner => runtimeOwner;
 
     internal void SetShown(bool value)
     {

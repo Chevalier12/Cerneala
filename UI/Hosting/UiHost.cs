@@ -69,6 +69,10 @@ public sealed class UiHost
 
     public UiFrame? LastFrame { get; private set; }
 
+    internal event EventHandler? FrameUpdated;
+
+    internal event EventHandler? RootChanged;
+
     internal BackdropFrameCounters BackdropFrameCounters =>
         backdropFrameCounters;
 
@@ -85,6 +89,7 @@ public sealed class UiHost
         needsInitialFrame = true;
         root.SetPlatformServices(platformServices);
         ApplyViewport(root, viewport);
+        RootChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public UiFrame Update(UiViewport? viewport = null, TimeSpan? elapsedTime = null)
@@ -187,6 +192,7 @@ public sealed class UiHost
                 cursorPublicationTime,
                 scheduledPhases,
                 inputPhases);
+            FrameUpdated?.Invoke(this, EventArgs.Empty);
             return LastFrame;
         }
     }

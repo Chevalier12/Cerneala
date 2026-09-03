@@ -1,14 +1,16 @@
 using System.Diagnostics;
-using System.Text.Json;
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Input;
 using Cerneala.UI.Platform;
 using Microsoft.Extensions.DependencyInjection;
 using Cerneala.UI.Resources;
+using Cerneala.UI.Servo;
+using ServoApi = Cerneala.UI.Servo.Servo;
 
 namespace Cerneala.Tests.UI.Hosting;
 
@@ -61,7 +63,7 @@ public sealed class WindowRuntimeTests : IDisposable
     public void NativeWindowIsShownOnlyAfterItsFirstFrameWasPresented()
     {
         FakeWindowPlatform platform = new();
-        Install(platform);
+        WindowApplicationRuntime runtime = Install(platform);
         Window window = new() { Content = new TextBlock { Text = "Ready" } };
 
         window.Show();
@@ -345,6 +347,118 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
+    public async Task ServoWindowActionCompletesOnlyAfterItsInputFrameWasPresented()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Button button = new() { Content = "Target", Width = 160, Height = 48 };
+        ServoApi.SetId(button, "target");
+        Window window = new() { Content = button };
+        window.Show();
+        FakeGraphicsSession session = Assert.Single(platform.Windows).Session;
+        int presentsBefore = session.PresentCount;
+        int presentCountDuringClick = -1;
+        button.Click += (_, _) => presentCountDuringClick = session.PresentCount;
+        ServoApi servo = new(window);
+
+        Task action = servo.ClickAsync(Cerneala.UI.Servo.ServoTarget.ById("target"));
+
+        Assert.False(action.IsCompleted);
+        Assert.Equal(-1, presentCountDuringClick);
+        while (!action.IsCompleted)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+
+        await action;
+        Assert.Equal(presentsBefore + 2, presentCountDuringClick);
+        Assert.Equal(presentsBefore + 3, session.PresentCount);
+    }
+
+    [Fact]
+    public async Task ServoSerializesInstancesPerWindowAndKeepsWindowsIndependent()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        List<string> clicks = [];
+        Button firstButton = new() { Content = "First" };
+        Button secondButton = new() { Content = "Second" };
+        ServoApi.SetId(firstButton, "first");
+        ServoApi.SetId(secondButton, "second");
+        firstButton.Click += (_, _) => clicks.Add("first");
+        secondButton.Click += (_, _) => clicks.Add("second");
+        Window first = new() { Content = firstButton };
+        Window second = new() { Content = secondButton };
+        first.Show();
+        second.Show();
+        ServoApi firstServo = new(first);
+        ServoApi sameWindowServo = new(first);
+        ServoApi secondServo = new(second);
+
+        Task firstAction = firstServo.ClickAsync(Cerneala.UI.Servo.ServoTarget.ById("first"));
+        Task serializedAction = sameWindowServo.ClickAsync(Cerneala.UI.Servo.ServoTarget.ById("first"));
+        Task independentAction = secondServo.ClickAsync(Cerneala.UI.Servo.ServoTarget.ById("second"));
+
+        while (!Task.WhenAll(firstAction, serializedAction, independentAction).IsCompleted)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+
+        await Task.WhenAll(firstAction, serializedAction, independentAction);
+        Assert.Equal(2, clicks.Count(value => value == "first"));
+        Assert.Equal(1, clicks.Count(value => value == "second"));
+        Assert.True(platform.Windows[1].Session.PresentCount < platform.Windows[0].Session.PresentCount);
+    }
+
+    [Fact]
+    public async Task ServoWindowChordFailurePresentsResetBeforeTheNextAction()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        TextBox editor = new() { Width = 200, Height = 40 };
+        ServoApi.SetId(editor, "editor");
+        Window window = new() { Content = editor };
+        window.Show();
+        ServoApi servo = new(window);
+        Task focus = servo.ClickAsync(Cerneala.UI.Servo.ServoTarget.ById("editor"));
+        PumpUntilCompleted(runtime, focus);
+        await focus;
+        bool throwOnce = true;
+        KeyEventArgs? nextKey = null;
+        editor.AddHandler(
+            InputEvents.KeyDownEvent,
+            (_, args) =>
+            {
+                KeyEventArgs key = Assert.IsType<KeyEventArgs>(args);
+                if (throwOnce && key.Key == InputKey.A)
+                {
+                    throwOnce = false;
+                    throw new InvalidOperationException("Injected window key failure.");
+                }
+
+                if (key.Key == InputKey.B)
+                {
+                    nextKey = key;
+                }
+            },
+            handledEventsToo: true);
+
+        Task failed = servo.PressKeyAsync(
+            InputKey.A,
+            Cerneala.UI.Servo.ServoModifiers.Control | Cerneala.UI.Servo.ServoModifiers.Shift);
+        PumpUntilCompleted(runtime, failed);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => failed);
+
+        Task next = servo.PressKeyAsync(InputKey.B);
+        PumpUntilCompleted(runtime, next);
+        await next;
+        Assert.NotNull(nextKey);
+        Assert.False(nextKey.IsControlDown);
+        Assert.False(nextKey.IsShiftDown);
+        Assert.False(nextKey.IsAltDown);
+    }
+
+    [Fact]
     public void RuntimeUsesNativePlatformCursorWhenNoServicesOverrideIsProvided()
     {
         FakeWindowPlatform platform = new();
@@ -414,43 +528,171 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
-    public void AutomationScriptWaitsForACommittedFrameAfterContentRenderedChanges()
+    public async Task ServoScreenshotUsesWindowOwnerForFullAndFreshTargetCapture()
     {
         FakeWindowPlatform platform = new();
         WindowApplicationRuntime runtime = Install(platform);
-        TextBlock content = new() { Text = "Before" };
-        Window window = new() { Content = content, Title = "Automation target" };
-        string scriptPath = Path.Combine(Path.GetTempPath(), $"cerneala-automation-{Guid.NewGuid():N}.json");
-        string screenshotPath = Path.ChangeExtension(scriptPath, ".png");
-        string? previousScript = Environment.GetEnvironmentVariable("CERNEALA_AUTOMATION_SCRIPT");
-        string? previousTitle = Environment.GetEnvironmentVariable("CERNEALA_AUTOMATION_WINDOW_TITLE");
-        File.WriteAllText(scriptPath, JsonSerializer.Serialize(new
+        Border target = new()
         {
-            steps = new[] { new { action = "screenshot", path = screenshotPath } }
-        }));
-        Environment.SetEnvironmentVariable("CERNEALA_AUTOMATION_SCRIPT", scriptPath);
-        Environment.SetEnvironmentVariable("CERNEALA_AUTOMATION_WINDOW_TITLE", window.Title);
-        window.ContentRendered += (_, _) => content.Text = "After";
+            Width = 40,
+            Height = 20,
+            IsEnabled = false,
+            IsHitTestVisible = false
+        };
+        ServoApi.SetId(target, "capture");
+        Window window = new() { Content = target, Width = 120, Height = 80 };
+        window.Show();
+        ServoApi servo = new(window);
+        string directory = Path.Combine(Path.GetTempPath(), $"cerneala-servo-capture-{Guid.NewGuid():N}");
+        string fullPath = Path.Combine(directory, "full.png");
+        string targetPath = Path.Combine(directory, "target.png");
+
+        try
+        {
+            await servo.SaveScreenshotAsync(fullPath);
+            Assert.Null(Assert.Single(platform.Windows).Session.LastRegion);
+
+            target.Arrange(new ArrangeContext(new LayoutRect(10.25f, 11.5f, 20.5f, 12.25f)));
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+            await servo.SaveScreenshotAsync(ServoTarget.ById("capture"), targetPath);
+
+            Assert.Equal(new WindowScreenshotRegion(10, 11, 21, 13), platform.Windows[0].Session.LastRegion);
+            Assert.Equal(2, platform.Windows[0].Session.SavePngCount);
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task ServoScreenshotAwaitedFromWindowRelayRunsAfterRetainedCommit()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Button button = new() { Content = "Capture", Width = 80, Height = 30 };
+        ServoApi.SetId(button, "capture");
+        Window window = new() { Content = button, Width = 120, Height = 80 };
+        ServoApi servo = new(window);
+        string path = Path.Combine(Path.GetTempPath(), $"cerneala-servo-relay-{Guid.NewGuid():N}.png");
+        Task? flow = null;
+        window.FrameRendered += (_, _) => window.Invalidate(
+            Cerneala.UI.Invalidation.InvalidationFlags.Render,
+            "keep the next relay phase ahead of retained commit");
+        window.ContentRendered += (_, _) => flow = ClickThenCaptureAsync();
 
         try
         {
             window.Show();
-
-            Assert.Equal(0, Assert.Single(platform.Windows).Session.SavePngCount);
-
-            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+            Assert.NotNull(flow);
+            PumpUntilCompleted(runtime, flow);
+            await flow;
 
             Assert.Equal(1, Assert.Single(platform.Windows).Session.SavePngCount);
-            Assert.True(File.Exists(screenshotPath));
         }
         finally
         {
-            Environment.SetEnvironmentVariable("CERNEALA_AUTOMATION_SCRIPT", previousScript);
-            Environment.SetEnvironmentVariable("CERNEALA_AUTOMATION_WINDOW_TITLE", previousTitle);
-            File.Delete(scriptPath);
-            File.Delete(screenshotPath);
-            File.Delete(scriptPath + ".error.txt");
+            File.Delete(path);
         }
+
+        async Task ClickThenCaptureAsync()
+        {
+            await servo.ClickAsync(ServoTarget.ById("capture"));
+            await servo.SaveScreenshotAsync(path);
+        }
+    }
+
+    [Fact]
+    public async Task ServoTargetCaptureRejectsMissingAmbiguousHiddenZeroAndOutsideTargets()
+    {
+        FakeWindowPlatform platform = new();
+        Install(platform);
+        UIElement container = new();
+        Border first = new() { Width = 20, Height = 20 };
+        Border second = new() { Width = 20, Height = 20 };
+        ServoApi.SetId(first, "target");
+        ServoApi.SetId(second, "other");
+        container.VisualChildren.Add(first);
+        container.VisualChildren.Add(second);
+        Window window = new() { Content = container, Width = 100, Height = 60 };
+        window.Show();
+        ServoApi servo = new(window);
+        string path = Path.Combine(Path.GetTempPath(), $"cerneala-servo-target-{Guid.NewGuid():N}.png");
+
+        try
+        {
+            await Assert.ThrowsAsync<ServoTargetNotFoundException>(
+                () => servo.SaveScreenshotAsync(ServoTarget.ById("missing"), path));
+
+            ServoApi.SetId(second, "target");
+            await Assert.ThrowsAsync<ServoTargetAmbiguousException>(
+                () => servo.SaveScreenshotAsync(ServoTarget.ById("target"), path));
+
+            ServoApi.SetId(second, "other");
+            first.Visibility = Visibility.Hidden;
+            await Assert.ThrowsAsync<ServoTargetNotActionableException>(
+                () => servo.SaveScreenshotAsync(ServoTarget.ById("target"), path));
+
+            first.Visibility = Visibility.Visible;
+            first.Arrange(new ArrangeContext(new LayoutRect(0, 0, 0, 10)));
+            await Assert.ThrowsAsync<ServoTargetNotActionableException>(
+                () => servo.SaveScreenshotAsync(ServoTarget.ById("target"), path));
+
+            first.Arrange(new ArrangeContext(new LayoutRect(200, 200, 10, 10)));
+            await Assert.ThrowsAsync<ServoTargetNotActionableException>(
+                () => servo.SaveScreenshotAsync(ServoTarget.ById("target"), path));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task ServoHostScreenshotsAreUnsupportedWithoutAnOsFallback()
+    {
+        UIRoot root = new(100, 60);
+        Border target = new() { Width = 20, Height = 20 };
+        ServoApi.SetId(target, "target");
+        root.VisualChildren.Add(target);
+        UiHost host = new(new UiHostOptions { Root = root, Viewport = new UiViewport(100, 60) });
+        host.Update(new InputFrame(PointerSnapshot.Empty, PointerSnapshot.Empty, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []));
+        ServoApi servo = new(host);
+
+        await Assert.ThrowsAsync<NotSupportedException>(() => servo.SaveScreenshotAsync("full.png"));
+        await Assert.ThrowsAsync<NotSupportedException>(
+            () => servo.SaveScreenshotAsync(ServoTarget.ById("target"), "target.png"));
+    }
+
+    [Fact]
+    public async Task ServoWindowTimeoutCloseAndNextActionHaveExplicitLifecycleResults()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Button button = new() { Content = "Target", Width = 80, Height = 30 };
+        ServoApi.SetId(button, "target");
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        Window window = new() { Content = button };
+        window.Show();
+        ServoApi servo = new(window, new ServoOptions
+        {
+            DefaultTimeout = TimeSpan.FromSeconds(1)
+        });
+
+        Assert.Throws<ServoTimeoutException>(
+            () => CompleteSynchronously(servo.ClickAsync(ServoTarget.ById("target"))));
+        Task next = servo.ClickAsync(ServoTarget.ById("target"));
+        PumpUntilCompleted(runtime, next);
+        await next;
+        Assert.Equal(1, clicks);
+
+        Task waiting = servo.WaitUntilAsync(_ => Task.FromResult(false));
+        window.Close();
+        Assert.Throws<ServoException>(() => CompleteSynchronously(waiting));
     }
 
     [Fact]
@@ -625,6 +867,22 @@ public sealed class WindowRuntimeTests : IDisposable
         WindowApplicationRuntime runtime = new(platform);
         WindowApplicationRuntime.Install(runtime);
         return runtime;
+    }
+
+    private static void PumpUntilCompleted(WindowApplicationRuntime runtime, Task operation)
+    {
+        for (int frame = 0; frame < 64 && !operation.IsCompleted; frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+            Thread.Sleep(1);
+        }
+
+        Assert.True(operation.IsCompleted, "The Servo operation did not complete within 64 deterministic frames.");
+    }
+
+    private static void CompleteSynchronously(Task operation)
+    {
+        operation.GetAwaiter().GetResult();
     }
 
     private sealed class FakeWindowPlatform : IWindowPlatform
@@ -825,6 +1083,8 @@ public sealed class WindowRuntimeTests : IDisposable
 
         public int RenderCountAtSave { get; private set; }
 
+        public WindowScreenshotRegion? LastRegion { get; private set; }
+
         public TimeSpan PresentDelay { get; set; }
 
         public void Resize(int pixelWidth, int pixelHeight, float coordinateScale)
@@ -845,7 +1105,25 @@ public sealed class WindowRuntimeTests : IDisposable
 
         public void RenderPng(Stream output, Color clearColor, Action<IDrawingBackend> draw)
         {
+            RenderPngCore(output, draw, null);
+        }
+
+        public void RenderPng(
+            Stream output,
+            Color clearColor,
+            WindowScreenshotRegion region,
+            Action<IDrawingBackend> draw)
+        {
+            RenderPngCore(output, draw, region);
+        }
+
+        private void RenderPngCore(
+            Stream output,
+            Action<IDrawingBackend> draw,
+            WindowScreenshotRegion? region)
+        {
             SavePngCount++;
+            LastRegion = region;
             draw(Backend);
             RenderCountAtSave = Backend.RenderCount;
             output.WriteByte(0);

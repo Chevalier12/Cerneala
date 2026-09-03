@@ -1055,39 +1055,64 @@
     "source": "UI/Aspect/AspectConditionNode.cs"
   },
   {
-    "name": "Cerneala.UI.Automation.AutomationElement",
-    "file": "documentation/classes/Cerneala.UI.Automation.AutomationElement.md",
-    "source": "UI/Automation/AutomationElement.cs"
+    "name": "Cerneala.UI.Servo.Servo",
+    "file": "documentation/classes/Cerneala.UI.Servo.Servo.md",
+    "source": "UI/Servo/Servo.cs"
   },
   {
-    "name": "Cerneala.UI.Automation.AutomationModifiers",
-    "file": "documentation/classes/Cerneala.UI.Automation.AutomationModifiers.md",
-    "source": "UI/Automation/AutomationModifiers.cs"
+    "name": "Cerneala.UI.Servo.ServoCondition",
+    "file": "documentation/classes/Cerneala.UI.Servo.ServoCondition.md",
+    "source": "UI/Servo/ServoCondition.cs"
   },
   {
-    "name": "Cerneala.UI.Automation.AutomationProperties",
-    "file": "documentation/classes/Cerneala.UI.Automation.AutomationProperties.md",
-    "source": "UI/Automation/AutomationProperties.cs"
+    "name": "Cerneala.UI.Servo.ServoElement",
+    "file": "documentation/classes/Cerneala.UI.Servo.ServoElement.md",
+    "source": "UI/Servo/ServoElement.cs"
   },
   {
-    "name": "Cerneala.UI.Automation.AutomationScriptRunner",
-    "file": "documentation/classes/Cerneala.UI.Automation.AutomationScriptRunner.md",
-    "source": "UI/Automation/AutomationScriptRunner.cs"
+    "name": "Cerneala.UI.Servo.ServoException",
+    "file": "documentation/classes/Cerneala.UI.Servo.ServoException.md",
+    "source": "UI/Servo/ServoException.cs"
   },
   {
-    "name": "Cerneala.UI.Automation.AutomationSession",
-    "file": "documentation/classes/Cerneala.UI.Automation.AutomationSession.md",
-    "source": "UI/Automation/AutomationSession.cs"
+    "name": "Cerneala.UI.Servo.ServoModifiers",
+    "file": "documentation/classes/Cerneala.UI.Servo.ServoModifiers.md",
+    "source": "UI/Servo/ServoModifiers.cs"
   },
   {
-    "name": "Cerneala.UI.Automation.IAutomationInputDriver",
-    "file": "documentation/classes/Cerneala.UI.Automation.IAutomationInputDriver.md",
-    "source": "UI/Automation/IAutomationInputDriver.cs"
+    "name": "Cerneala.UI.Servo.ServoOptions",
+    "file": "documentation/classes/Cerneala.UI.Servo.ServoOptions.md",
+    "source": "UI/Servo/ServoOptions.cs"
   },
   {
-    "name": "Cerneala.UI.Automation.RetainedAutomationInputDriver",
-    "file": "documentation/classes/Cerneala.UI.Automation.RetainedAutomationInputDriver.md",
-    "source": "UI/Automation/RetainedAutomationInputDriver.cs"
+    "name": "Cerneala.UI.Servo.ServoPoint",
+    "file": "documentation/classes/Cerneala.UI.Servo.ServoPoint.md",
+    "source": "UI/Servo/ServoPoint.cs"
+  },
+  {
+    "name": "Cerneala.UI.Servo.ServoTarget",
+    "file": "documentation/classes/Cerneala.UI.Servo.ServoTarget.md",
+    "source": "UI/Servo/ServoTarget.cs"
+  },
+  {
+    "name": "Cerneala.UI.Servo.ServoTargetAmbiguousException",
+    "file": "documentation/classes/Cerneala.UI.Servo.ServoTargetAmbiguousException.md",
+    "source": "UI/Servo/ServoException.cs"
+  },
+  {
+    "name": "Cerneala.UI.Servo.ServoTargetNotActionableException",
+    "file": "documentation/classes/Cerneala.UI.Servo.ServoTargetNotActionableException.md",
+    "source": "UI/Servo/ServoException.cs"
+  },
+  {
+    "name": "Cerneala.UI.Servo.ServoTargetNotFoundException",
+    "file": "documentation/classes/Cerneala.UI.Servo.ServoTargetNotFoundException.md",
+    "source": "UI/Servo/ServoException.cs"
+  },
+  {
+    "name": "Cerneala.UI.Servo.ServoTimeoutException",
+    "file": "documentation/classes/Cerneala.UI.Servo.ServoTimeoutException.md",
+    "source": "UI/Servo/ServoException.cs"
   },
   {
     "name": "Cerneala.UI.Controls.Border",

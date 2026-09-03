@@ -317,12 +317,38 @@ internal sealed class WindowsDxWindowGraphicsSession :
         RenderPng(
             output,
             clearColor,
+            region: null,
+            retainedCacheEnabled: true,
+            draw);
+
+    public void RenderPng(
+        Stream output,
+        CernealaColor clearColor,
+        WindowScreenshotRegion region,
+        Action<IDrawingBackend> draw) =>
+        RenderPng(
+            output,
+            clearColor,
+            region,
             retainedCacheEnabled: true,
             draw);
 
     internal void RenderPng(
         Stream output,
         CernealaColor clearColor,
+        bool retainedCacheEnabled,
+        Action<IDrawingBackend> draw) =>
+        RenderPng(
+            output,
+            clearColor,
+            region: null,
+            retainedCacheEnabled,
+            draw);
+
+    private void RenderPng(
+        Stream output,
+        CernealaColor clearColor,
+        WindowScreenshotRegion? region,
         bool retainedCacheEnabled,
         Action<IDrawingBackend> draw)
     {
@@ -381,7 +407,29 @@ internal sealed class WindowsDxWindowGraphicsSession :
                 "complete a screenshot");
             EndBackdropFrame();
             stateSnapshot.Restore(graphicsDevice);
-            target.SaveAsPng(output, width, height);
+            if (region is WindowScreenshotRegion pixelRegion)
+            {
+                pixelRegion.ValidateWithin(width, height);
+                XnaColor[] pixels = new XnaColor[checked(pixelRegion.Width * pixelRegion.Height)];
+                target.GetData(
+                    0,
+                    new Rectangle(pixelRegion.X, pixelRegion.Y, pixelRegion.Width, pixelRegion.Height),
+                    pixels,
+                    0,
+                    pixels.Length);
+                using Texture2D cropped = new(
+                    graphicsDevice,
+                    pixelRegion.Width,
+                    pixelRegion.Height,
+                    false,
+                    SurfaceFormat.Color);
+                cropped.SetData(pixels);
+                cropped.SaveAsPng(output, pixelRegion.Width, pixelRegion.Height);
+            }
+            else
+            {
+                target.SaveAsPng(output, width, height);
+            }
         }
         finally
         {

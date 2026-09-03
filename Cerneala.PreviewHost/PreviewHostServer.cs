@@ -1,6 +1,6 @@
 using Cerneala.Preview;
-using Cerneala.UI.Automation;
 using Cerneala.UI.Input;
+using Cerneala.UI.Servo;
 
 namespace Cerneala.PreviewHost;
 
@@ -104,7 +104,7 @@ internal sealed class PreviewHostServer : IDisposable
                         throw new InvalidOperationException($"Preview key '{request.Key}' is not supported.");
                     }
 
-                    active.PressKey(key, (AutomationModifiers)request.Modifiers);
+                    active.PressKey(key, (ServoModifiers)request.Modifiers);
                     break;
                 case PreviewRequestKind.PointerMove:
                     active.MovePointer((float)request.X, (float)request.Y);

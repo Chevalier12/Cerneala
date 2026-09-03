@@ -426,7 +426,7 @@ public sealed partial class UiMarkupGeneratorTests
               <ItemsControl.ItemTemplate>
                 <ContentTemplate DataType="TestInput.PropertyRow">
                   <TextBlock
-                    AutomationProperties.AutomationId="$DataContext.AutomationId"
+                    Servo.Id="$DataContext.AutomationId"
                     Text="$DataContext.Label" />
                 </ContentTemplate>
               </ItemsControl.ItemTemplate>
@@ -455,7 +455,7 @@ public sealed partial class UiMarkupGeneratorTests
 
         Assert.Equal(row, text.DataContext);
         Assert.Equal("BOUND", text.Text);
-        Assert.Equal("bound-row", Cerneala.UI.Automation.AutomationProperties.GetAutomationId(text));
+        Assert.Equal("bound-row", Cerneala.UI.Servo.Servo.GetId(text));
     }
 
     [Fact]

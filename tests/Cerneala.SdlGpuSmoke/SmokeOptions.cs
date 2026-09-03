@@ -15,7 +15,8 @@ internal sealed record SmokeOptions(
         "drawing",
         "rendersurface2d",
         "prism",
-        "screenshot"
+        "screenshot",
+        "servo"
     };
 
     public static SmokeOptions Current { get; private set; } = new(

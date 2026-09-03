@@ -1,6 +1,6 @@
-using Cerneala.UI.Automation;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Input;
+using ServoApi = Cerneala.UI.Servo.Servo;
 
 namespace Cerneala.MenuLab;
 
@@ -17,10 +17,10 @@ public partial class MainWindow : Window<MenuLabViewModel>
 
         initialized = true;
         ViewModel.CloseRequested += OnCloseRequested;
-        AutomationProperties.SetAutomationId(FileMenuItem, "file-menu");
-        AutomationProperties.SetAutomationId(RecentMenuItem, "recent-menu");
-        AutomationProperties.SetAutomationId(ExitMenuItem, "exit-item");
-        AutomationProperties.SetAutomationId(EdgeMenuItem, "edge-menu");
+        ServoApi.SetId(FileMenuItem, "file-menu");
+        ServoApi.SetId(RecentMenuItem, "recent-menu");
+        ServoApi.SetId(ExitMenuItem, "exit-item");
+        ServoApi.SetId(EdgeMenuItem, "edge-menu");
     }
 
     private void OnFrameRendered(object? sender, EventArgs args)

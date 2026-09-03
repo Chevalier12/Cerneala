@@ -1,5 +1,5 @@
 using Cerneala.Drawing;
-using Cerneala.UI.Automation;
+using ServoApi = Cerneala.UI.Servo.Servo;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Diagnostics;
 using Cerneala.UI.Elements;
@@ -201,7 +201,7 @@ public sealed class ShowcaseNavigation : ScrollViewer
             Padding = new Thickness(12, 8, 12, 8),
             Margin = new Thickness(0, 0, 0, 3)
         };
-        AutomationProperties.SetAutomationId(
+        ServoApi.SetId(
             button,
             $"showcase-{text.ToLowerInvariant().Replace(' ', '-')}");
         button.Click += OnNavigationButtonClick;

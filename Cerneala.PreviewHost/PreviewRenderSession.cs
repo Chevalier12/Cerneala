@@ -2,11 +2,11 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.Loader;
 using Cerneala.UI;
-using Cerneala.UI.Automation;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Hosting.Windows;
 using Cerneala.UI.Input;
+using Cerneala.UI.Servo;
 
 namespace Cerneala.PreviewHost;
 
@@ -132,7 +132,7 @@ internal sealed class PreviewRenderSession : IDisposable
         session.SendText(text);
     }
 
-    public void PressKey(InputKey key, AutomationModifiers modifiers)
+    public void PressKey(InputKey key, ServoModifiers modifiers)
     {
         ThrowIfDisposed();
         session.PressKey(key, modifiers);

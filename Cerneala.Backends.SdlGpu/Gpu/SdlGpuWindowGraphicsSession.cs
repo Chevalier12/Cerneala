@@ -504,6 +504,24 @@ internal sealed class SdlGpuWindowGraphicsSession :
         Color clearColor,
         Action<IDrawingBackend> draw)
     {
+        RenderPngCore(output, clearColor, region: null, draw);
+    }
+
+    public void RenderPng(
+        Stream output,
+        Color clearColor,
+        WindowScreenshotRegion region,
+        Action<IDrawingBackend> draw)
+    {
+        RenderPngCore(output, clearColor, region, draw);
+    }
+
+    private void RenderPngCore(
+        Stream output,
+        Color clearColor,
+        WindowScreenshotRegion? region,
+        Action<IDrawingBackend> draw)
+    {
         ObjectDisposedException.ThrowIf(disposed, this);
         ArgumentNullException.ThrowIfNull(output);
         ArgumentNullException.ThrowIfNull(draw);
@@ -529,6 +547,10 @@ internal sealed class SdlGpuWindowGraphicsSession :
         }
 
         WindowPreviewFrame frame = CapturePresentedFrame();
+        if (region is WindowScreenshotRegion pixelRegion)
+        {
+            frame = WindowScreenshotPixels.CropRgba(frame, pixelRegion);
+        }
         using SKBitmap bitmap = new(new SKImageInfo(
             frame.PixelWidth,
             frame.PixelHeight,

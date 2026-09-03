@@ -295,7 +295,7 @@
                                         <TextBox
                                             Grid.Column="1"
                                             Aspect="$AspectStudioTextInput"
-                                            AutomationProperties.AutomationId="$DataContext.AutomationId"
+                                            Servo.Id="$DataContext.AutomationId"
                                             Text="$DataContext.Text:TwoWay"
                                             BorderBrush="$DataContext.BorderBrush" />
                                     </Grid>
@@ -318,7 +318,7 @@
                                             Margin="0,0,8,0" />
                                         <CheckBox
                                             Grid.Column="1"
-                                            AutomationProperties.AutomationId="$DataContext.AutomationId"
+                                            Servo.Id="$DataContext.AutomationId"
                                             Width="24"
                                             Height="24"
                                             HorizontalAlignment="Left"
@@ -344,7 +344,7 @@
                                         <ComboBox
                                             Grid.Column="1"
                                             Aspect="$AspectStudioComboInput"
-                                            AutomationProperties.AutomationId="$DataContext.AutomationId"
+                                            Servo.Id="$DataContext.AutomationId"
                                             ItemsSource="$DataContext.Items"
                                             SelectedIndex="$DataContext.SelectedIndex:TwoWay" />
                                     </Grid>
@@ -371,7 +371,7 @@
                                                 <ColumnDefinition Width="*" />
                                             </Grid.ColumnDefinitions>
                                             <ColorSwatch
-                                                AutomationProperties.AutomationId="$DataContext.SwatchAutomationId"
+                                                Servo.Id="$DataContext.SwatchAutomationId"
                                                 Width="20"
                                                 Height="20"
                                                 BorderBrush="#FF343C46"
@@ -381,7 +381,7 @@
                                             <TextBox
                                                 Grid.Column="1"
                                                 Aspect="$AspectStudioTextInput"
-                                                AutomationProperties.AutomationId="$DataContext.AutomationId"
+                                                Servo.Id="$DataContext.AutomationId"
                                                 Text="$DataContext.Text:TwoWay"
                                                 BorderBrush="$DataContext.BorderBrush"
                                                 Margin="0" />

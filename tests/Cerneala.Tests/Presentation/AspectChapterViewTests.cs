@@ -2,7 +2,6 @@ using System.Xml.Linq;
 using Cerneala.Drawing;
 using Cerneala.Presentation;
 using Cerneala.UI;
-using Cerneala.UI.Automation;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Core;
@@ -14,8 +13,10 @@ using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Media;
+using Cerneala.UI.Servo;
 using Cerneala.UI.Text;
 using Cerneala.Tests.UI.Hosting;
+using ServoApi = Cerneala.UI.Servo.Servo;
 using SvgPath = Cerneala.UI.Controls.Shapes.SvgPath;
 
 namespace Cerneala.Tests.Presentation;
@@ -122,7 +123,7 @@ public sealed class AspectChapterViewTests : IDisposable
     }
 
     [Fact]
-    public void BooleanPropertyEditorsReceiveTheApplicationCheckBoxAspect()
+    public async Task BooleanPropertyEditorsReceiveTheApplicationCheckBoxAspect()
     {
         UIRoot root = AttachStudio(out AspectChapterView view);
         CheckBox checkBox = Assert.IsAssignableFrom<CheckBox>(PropertyRow(view, UIElement.ClipToBoundsProperty).Editor);
@@ -144,9 +145,7 @@ public sealed class AspectChapterViewTests : IDisposable
             Root = root,
             Viewport = new UiViewport(root.ViewportWidth, root.ViewportHeight)
         });
-        new AutomationSession(root, new RetainedAutomationInputDriver(host))
-            .FindByAutomationId("aspect-property-ClipToBounds")
-            .Click();
+        await new ServoApi(host).ClickAsync(ServoTarget.ById("aspect-property-ClipToBounds"));
         AspectStudioBooleanRow model = Assert.IsType<AspectStudioBooleanRow>(
             PropertyRow(view, UIElement.ClipToBoundsProperty).Model);
         HitTestResult? checkBoxHit = new HitTestService().HitTest(
@@ -155,7 +154,7 @@ public sealed class AspectChapterViewTests : IDisposable
             checkBox.ArrangedBounds.Y + (checkBox.ArrangedBounds.Height / 2));
         Assert.True(
             checkBox.IsChecked,
-            $"Automation click missed the generated CheckBox at {checkBox.ArrangedBounds}; " +
+            $"Servo click missed the generated CheckBox at {checkBox.ArrangedBounds}; " +
             $"hit {checkBoxHit?.Element.GetType().Name ?? "nothing"} at {checkBoxHit?.Element.ArrangedBounds}.");
         Assert.True(model.IsChecked, "The generated TwoWay binding did not update its data item.");
         root.ProcessFrame();
@@ -254,8 +253,6 @@ public sealed class AspectChapterViewTests : IDisposable
             Root = root,
             Viewport = new UiViewport(root.ViewportWidth, root.ViewportHeight)
         });
-        AutomationSession session = new(root, new RetainedAutomationInputDriver(host));
-
         PointerSnapshot pointer = PointerSnapshot.Empty;
         Assert.True(
             swatchButton.ArrangedBounds.Width > 0 && swatchButton.ArrangedBounds.Height > 0,
@@ -432,7 +429,7 @@ public sealed class AspectChapterViewTests : IDisposable
     }
 
     [Fact]
-    public void PropertyEditorsExposeStableAutomationIds()
+    public void PropertyEditorsExposeStableServoIds()
     {
         UIRoot root = AttachStudio(out AspectChapterView view);
         view.SelectForTests(AspectStudioElementKind.Button);
@@ -442,10 +439,10 @@ public sealed class AspectChapterViewTests : IDisposable
 
         Assert.Equal(
             "aspect-property-Cursor",
-            AutomationProperties.GetAutomationId(cursorEditor));
+            ServoApi.GetId(cursorEditor));
         Assert.Equal(
             "aspect-element-textblock",
-            AutomationProperties.GetAutomationId(
+            ServoApi.GetId(
                 Assert.Single(Descendants(view).OfType<Button>().Where(button => Equals(button.Content, "TEXTBLOCK")))));
     }
 
@@ -460,8 +457,6 @@ public sealed class AspectChapterViewTests : IDisposable
             Root = root,
             Viewport = new UiViewport(root.ViewportWidth, root.ViewportHeight)
         });
-        AutomationSession session = new(root, new RetainedAutomationInputDriver(host));
-
         ComboBox comboBox = Assert.IsAssignableFrom<ComboBox>(PropertyRow(view, UIElement.CursorProperty).Editor);
         TextBox editableTextBox = Assert.IsType<TextBox>(
             comboBox.ComponentTemplateInstance!.Parts["PART_EditableTextBox"]);

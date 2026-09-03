@@ -23,7 +23,7 @@
             Padding="20,14,20,12">
             <StackPanel>
                 <TextBlock Text="SDL3 + SDL_GPU" FontSize="21" Foreground="#FFF1F5F8" />
-                <TextBlock Name="StatusText" Text="initializing" FontSize="12" Foreground="#FF4DF0FF" Margin="0,5,0,0" />
+                <TextBlock Name="StatusText" Servo.Id="servo-status" Text="initializing" FontSize="12" Foreground="#FF4DF0FF" Margin="0,5,0,0" />
             </StackPanel>
         </Border>
         <Grid Grid.Row="1">
@@ -44,6 +44,16 @@
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center" />
             </Border>
+            <Button
+                Name="ServoButton"
+                Servo.Id="servo-target"
+                Content="RUN SERVO"
+                Width="160"
+                Height="48"
+                Margin="0,0,28,24"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Click="OnServoClick" />
         </Grid>
     </Grid>
 </Window>

@@ -6,23 +6,35 @@ public sealed class SemanticsProvider
 {
     public SemanticsTree Build(UIRoot root)
     {
-        ArgumentNullException.ThrowIfNull(root);
-        return new SemanticsTree(BuildNode(root));
+        return Build(root, SemanticsProjection.Accessibility);
     }
 
-    private static SemanticsNode BuildNode(UIElement element)
+    internal SemanticsTree Build(UIRoot root, SemanticsProjection projection)
+    {
+        ArgumentNullException.ThrowIfNull(root);
+        return new SemanticsTree(BuildNode(root, projection));
+    }
+
+    private static SemanticsNode BuildNode(UIElement element, SemanticsProjection projection)
     {
         List<SemanticsNode> children = [];
         foreach (UIElement child in element.VisualChildren)
         {
-            if (!UIElementVisibility.ParticipatesInRendering(child))
+            if (projection == SemanticsProjection.Accessibility &&
+                !UIElementVisibility.ParticipatesInRendering(child))
             {
                 continue;
             }
 
-            children.Add(BuildNode(child));
+            children.Add(BuildNode(child, projection));
         }
 
         return AutomationPeer.Create(element).CreateNode(children);
     }
+}
+
+internal enum SemanticsProjection
+{
+    Accessibility,
+    Servo
 }
