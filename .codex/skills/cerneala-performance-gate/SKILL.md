@@ -25,7 +25,8 @@ Use the user's metric as written. Do not silently replace working set with manag
 
 - Reproduce the reported lag before optimizing. Preserve the original observable symptom separately from the numeric gate.
 - Exercise the real owning path. Rendering, presentation, input, startup, and native-resource problems require the relevant real backend and frame loop, not a weaker unit benchmark.
-- Prefer deterministic application automation or supported input APIs. Do not use real mouse or keyboard input when it can disrupt the user or when the user forbids it.
+- For in-process Cerneala UI, drive deterministic queries, input, and waits through public `Cerneala.UI.Servo.Servo` on the real `Window` or `UiHost`; capture through `SaveScreenshotAsync` only from a window-backed Servo. Servo is the exclusive user-interaction path: do not invoke handlers directly or assign control state to imitate input.
+- Inspect `UIRoot.Detective` first for frame, input, layout, rendering, Aspect, Motion, invalidation, resource, and platform evidence. Correlate those snapshots, traces, and counters with external profilers instead of creating a parallel diagnostic owner.
 - Keep probes bounded and make their overhead measurable. Do not let logging, screenshots, debugger attachment, or per-frame file I/O dominate the result.
 - Use identical warmup, workload, sample collection, and process lifecycle for baseline and final measurements.
 - Retain the raw report and exact command outside the repository when the harness is temporary.
@@ -41,13 +42,34 @@ The user authorizes comprehensive temporary instrumentation across every accessi
 - shaders, intermediate surfaces, textures, buffers, pools, caches, pipelines, descriptors, fences, and device-loss or disposal paths;
 - managed/native interop, SDL calls, platform integration, allocator and object lifetimes, and background initialization;
 - CPU profilers, allocation and retained-object captures, ETW or equivalent platform traces, GPU captures, timestamp queries, validation layers, and supported driver diagnostics;
-- temporary native runtime harnesses, opt-in automation branches, structured traces, counters, assertions, and resource inventories.
+- temporary native runtime harnesses, opt-in Servo-driven scenario entry points, structured traces, counters, assertions, and resource inventories.
 
 Instrument production source temporarily when that is the narrowest faithful observation point. Guard behavioral probes with a unique environment variable, command-line switch, or internal diagnostic entry point so normal runs remain unchanged. A diagnostic patch may be broad enough to observe the whole relevant pipeline; it must not become a speculative production redesign.
 
 Keep the instrumentation observational and quantify its overhead. If a probe perturbs timing, allocations, synchronization, resource lifetime, output, or scheduling enough to invalidate the gate, replace it with a lower-overhead probe or measure in separate diagnostic and gate runs. Never mistake profiler overhead for product cost.
 
-This authority ends at relevance and observability: do not inspect unrelated subsystems for sport, bypass platform security, or claim visibility into proprietary driver internals that the available APIs and tools do not expose. Before final verification, remove every temporary source branch, shader change, hook, environment variable, harness, trace sink, assertion, native artifact, and generated report from the repository. Reindex and rebuild after cleanup, then confirm the instrumented files have no residual diagnostic diff.
+This authority ends at relevance and observability: do not inspect unrelated subsystems for sport, bypass platform security, or claim visibility into proprietary driver internals that the available APIs and tools do not expose. Before final verification, remove every temporary source branch, shader change, hook, environment variable, harness, trace sink, assertion, native artifact, and generated report from the repository. Reindex and rebuild after cleanup, then confirm the instrumented files have no residual temporary diagnostic diff. Retain only permanent Detective additions that satisfy the policy below.
+
+### Permanent Detective Diagnostics
+
+The skill may add a permanent diagnostic to `Cerneala.UI.Detective` when the frozen gate exposes a reusable observability gap that existing Detective APIs and external tools cannot close.
+
+- Put the diagnostic under `UI/Detective/` and integrate it with the root-owned `UIRoot.Detective` model when it needs root context. Do not leave permanent profiler hooks or application-specific reporting branches elsewhere in production code.
+- Keep it observational. A snapshot, counter, trace, formatter, or dumper must not change scheduling, invalidation, rendering, resource lifetime, or the workload measured by the gate.
+- Establish its contract with focused tests. Cover bounded retention, enable/disable and reset/lifetime semantics, thread ownership, and collection overhead when relevant.
+- For public or protected API, use the repository API-documentation workflow, update canonical pages under `docs-site/documentation/classes/`, synchronize the manifest when required, and run API compatibility review.
+- Prefer disabled-by-default or on-demand collection on hot paths. Measure its perturbation against the frozen workload; if it invalidates the gate, use it only in a separate diagnostic run and keep the final gate uninstrumented.
+- Retain the justified Detective implementation, tests, and documentation. Remove every temporary caller, switch, harness, trace artifact, and scenario-specific probe around it.
+
+### Repair Servo and Detective When They Fail
+
+Treat Servo and Detective as fallible parts of the measurement path. If either subsystem violates an established contract while building or running the gate, isolate that failure from the measured product cost.
+
+- Confirm the subsystem defect with a focused RED reproduction, then fix it without asking the user for separate permission.
+- Add the regression test, repair the owning invariant, run focused and affected verification, and rerun the same Servo action or Detective observation that failed.
+- Discard measurements contaminated by the subsystem defect. Re-establish the frozen baseline with the repaired tooling under the same workload and conditions.
+- Do not reinterpret documented behavior, harness misuse, or an unresolved semantic choice as a bug.
+- Report the supporting subsystem fix and its verification separately from the performance optimization.
 
 ### Diagnostic Tool and Trace Authority
 
@@ -89,7 +111,7 @@ Create the smallest permanent regression test or maintained performance gate tha
 
 ## 5. Attribute Cost Before Editing
 
-- Instrument phase boundaries and resource lifetimes until the dominant cost and its owner are evidenced.
+- Use existing Detective evidence first, then instrument phase boundaries and resource lifetimes until the dominant cost and its owner are evidenced.
 - Distinguish the component exposing the lag, the trigger, and the subsystem owning the violated invariant.
 - Consider at least one plausible owner outside the most recently modified subsystem when evidence allows.
 - Use allocation profiles, retained-object roots, native resource counts, GPU captures, or startup traces according to the metric. Do not infer retained memory from allocations alone.
@@ -135,7 +157,7 @@ Run, in order:
 4. broader affected suites and the required repository-wide gate;
 5. applicable visual, startup, memory-lifetime, API, and conformance gates.
 
-Remove temporary instrumentation, harnesses, generated reports inside the repository, and application modifications. Preserve raw evidence outside the repository only when useful and safe. Never claim human manual validation unless the user performed it.
+Remove temporary instrumentation, harnesses, generated reports inside the repository, and application modifications. Preserve justified permanent Detective diagnostics with their tests and documentation, and run their focused, API, documentation, and overhead gates. Preserve raw evidence outside the repository only when useful and safe. Never claim human manual validation unless the user performed it.
 
 ## 9. Report the Evidence
 
@@ -147,6 +169,8 @@ State:
 - production change and why it preserves fidelity and contracts;
 - final measurements from the identical gate;
 - correctness, visual, memory, focused, and full-suite verification;
+- any permanent Detective diagnostic added, the reusable evidence gap it closes, its API/documentation status, and measured collection overhead;
+- any Servo or Detective defect repaired during measurement, its independent RED-to-GREEN evidence, and the uncontaminated rerun result;
 - remaining uncertainty, environmental limits, and any user-validation step.
 
 Explicitly distinguish “the requested percentile passes” from “every frame meets budget.” If an environmental disturbance invalidates a run, rerun it rather than laundering it into the aggregate. If the gate conflicts with correctness, fidelity, architecture, or physical platform limits, stop and present the evidence instead of cheating the measurement.

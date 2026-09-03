@@ -13,7 +13,7 @@ The tone may be blunt, profane, and contemptuous of broken behavior. Never attac
 
 Require a concrete target: a public API, type, subsystem, backend, feature, scenario, or documented contract. If the target or desired contract is materially ambiguous, stop and ask the user. Do not silently choose what Cerneala ought to mean.
 
-Treat the invocation as authorization to inspect the repository, run bounded adversarial tests against that target, and add permanent active RED regression tests for confirmed findings. It does not authorize production fixes, permanent public API changes, new dependencies, commits, destructive stress, or attacks on external systems.
+Treat the invocation as authorization to inspect the repository, run bounded adversarial tests against that target, add permanent regression tests for confirmed findings, add a justified permanent Detective diagnostic under the policy below, and repair confirmed Servo or Detective defects encountered during the audit. Findings outside Servo and Detective remain active RED tests. It does not authorize other production fixes, other permanent public API changes, new dependencies, commits, destructive stress, or attacks on external systems.
 
 ## Scope
 
@@ -37,12 +37,35 @@ Do not waste the attack budget on naming, formatting, aesthetics, friendly diagn
 - Before adding a probe, record the baseline revision, dirty state, toolchain/runtime identity, applicable backend/platform/configuration, focused command, and broader command. Run the focused baseline when practical and capture duration, skips, retries, hangs, leaks, and known flakes instead of reducing it to pass/fail.
 - Classify every anomalous result as unclassified until evidence distinguishes a Cerneala defect, test defect, harness/environment defect, specification gap, or flake. Only Cerneala defects are indictments against the target.
 - Treat coverage, mutation score, generated-case count, repeated passes, and executed lines as supporting evidence, never as correctness or suite-quality verdicts. Separate reachability from whether an independent oracle can observe the wrong behavior.
-- Do not implement production behavior changes or fixes. This skill attacks and diagnoses; use a bug-fix workflow only when the user separately asks for a fix.
-- Temporary production-source instrumentation is permitted only when a lower reproduction rung cannot observe the real behavior. It must be narrowly scoped, explicitly opt-in, observational rather than corrective, add no public API, and be removed completely after evidence capture. Reindex after adding and removing it, then verify that the instrumented production files retain no audit-created diff.
-- Prefer temporary probes and harnesses during discovery. For every confirmed finding, replace or minimize the successful probe into a permanent regression test in the architecture-correct test project. Keep that test active and intentionally RED at handoff; remove only superseded exploratory artifacts.
+- Do not implement production behavior changes or fixes outside Servo and Detective. This skill normally attacks and diagnoses; the self-repair policy below is the explicit exception.
+- For in-process Cerneala UI scenarios, use public `Cerneala.UI.Servo.Servo` for semantic queries, real input, and waits, and use `SaveScreenshotAsync` from a window-backed Servo for application-owned screenshots. Servo is the exclusive user-interaction path: do not invoke handlers directly or assign control state to imitate input.
+- Use the root-owned `UIRoot.Detective` surface before inventing probes for frame, input, layout, rendering, Aspect, Motion, invalidation, resource, or platform state.
+- Temporary production-source instrumentation is permitted only when a lower reproduction rung and existing Detective evidence cannot observe the real behavior. It must be narrowly scoped, explicitly opt-in, observational rather than corrective, add no public API, and be removed completely after evidence capture. Reindex after adding and removing it, then verify that the instrumented production files retain no audit-created diff. A permanent Detective addition satisfying the policy below is not temporary instrumentation.
+- Prefer temporary probes and harnesses during discovery. For every confirmed finding, replace or minimize the successful probe into a permanent regression test in the architecture-correct test project. Keep findings outside Servo and Detective intentionally RED at handoff; keep repaired Servo and Detective regressions GREEN. Remove only superseded exploratory artifacts.
 - Existing tests are repository evidence, not cleanup opportunities. Do not delete, consolidate, rewrite, quarantine, or weaken them under this skill. If an existing test is vacuous, flaky, order-dependent, or incapable of detecting the target failure, record that as an evidence limitation and add the smallest distinct regression needed for the confirmed Cerneala defect.
 - Never hide a finding with `Skip`, quarantine, conditional suppression, an expected-failure wrapper, weakened assertions, or an updated baseline that blesses the broken behavior. The resulting suite is deliberately red until the defect is fixed.
 - Never commit, push, publish, or install dependencies without explicit authorization.
+
+### Permanent Detective Diagnostics
+
+This skill may add a permanent diagnostic to `Cerneala.UI.Detective` only when an attack demonstrates a reusable framework observability gap that existing Detective APIs and external tools cannot close.
+
+- Put the diagnostic under `UI/Detective/` and expose it through the root-owned `UIRoot.Detective` model when root context is required. Do not preserve application-specific branches or arbitrary debug hooks as framework API.
+- Keep it observational. It may expose snapshots, counters, traces, formatters, or dumpers, but it must not fix the attacked defect, alter product state, weaken the oracle, or make the RED regression pass.
+- Define and test its own contract independently from the defect test. Cover bounded retention, enable/disable and reset/lifetime semantics, and hot-path cost when relevant.
+- Public or protected additions must follow the repository API-documentation workflow, update canonical pages under `docs-site/documentation/classes/`, synchronize the manifest when required, and pass API compatibility review. This is the only permanent public API exception granted by this skill.
+- Prefer disabled-by-default or on-demand collection for hot paths and measure perturbation when performance conclusions depend on it.
+- Retain the justified Detective implementation, tests, and documentation at handoff; remove all temporary callers, switches, reports, and harness-only instrumentation.
+
+### Repair Servo and Detective When They Fail
+
+Servo and Detective are attack infrastructure but remain ordinary Cerneala code. If the audit proves that either violates an established contract, fix that subsystem without asking the user for separate permission, including when Servo or Detective is the named attack target.
+
+- Isolate the subsystem failure from the current target finding and confirm a focused RED regression before changing production behavior.
+- Repair the owning invariant, prove the focused test GREEN, run the affected subsystem suite, and rerun the audit operation that exposed the defect.
+- Continue the declared attack budget after repair; do not stop merely because the supporting subsystem is usable again.
+- Do not treat documented behavior, harness misuse, or unresolved product semantics as a bug.
+- Report the repaired Servo or Detective finding separately. Other confirmed Cerneala findings remain active RED tests under the normal breaker contract.
 
 Load supporting guidance only when the attack needs it:
 
@@ -87,8 +110,8 @@ Choose only attack families that can actually falsify the target's contract:
 - harness attacks: run relevant tests alone, in normal order, reordered, and concurrently when supported; vary controlled time, locale, configuration, seed, and private resource identity when those can expose false greens or leaked state;
 - integration boundaries: parser to generator, generated code to runtime, retained state to renderer, platform to backend, CPU to GPU, or managed to native code;
 - interaction attacks: combine the target with one or two independently valid neighboring subsystems whose contracts may share an invariant, especially lifecycle plus Motion, layout plus virtualization, input plus template replacement, Prism plus resize, or backend recreation plus retained caches. Do not create arbitrary combinatorial explosions; choose interactions with a plausible shared invariant;
-- user-like input: click, key, text, focus, pointer capture, drag, and routing rather than direct property assignment;
-- retained UI invariants: invalidation counts, measure/arrange state, cache reuse, hit-test state, render work, resource lifetime, and frame output;
+- user-like input: use Servo click, key, text, hover, scroll, and drag operations plus observable waits rather than direct property assignment or handler calls;
+- retained UI invariants: inspect Detective snapshots, traces, counters, and dumpers for invalidation counts, measure/arrange state, cache reuse, hit-test state, render work, resource lifetime, and frame output;
 - performance limits: declare the oracle before measuring, using a documented budget, a controlled same-environment baseline, a justified reference implementation/backend, or a scaling curve across realistic valid workloads. Warm up first, take repeated samples, report variability, then measure CPU time, allocations, work counts, resource churn, and GPU time when available;
 - visual contracts: deterministic scenes, application-owned `Window.SaveScreenshot`, pixel/color diffs, and backend conformance with justified tolerances.
 
@@ -104,7 +127,7 @@ Use the cheapest reproduction rung that can exercise the real behavior:
 4. instrumented real application view;
 5. native/runtime harness using the real frame, input, rendering, or platform path.
 
-Escalate when a weaker layer cannot reproduce the relevant ownership boundary. A mock that skips the renderer does not test rendering. Direct property assignment does not test input. Compilation does not test runtime correctness.
+Escalate when a weaker layer cannot reproduce the relevant ownership boundary. A mock that skips the renderer does not test rendering. Direct property assignment does not test input; a real hosted Cerneala interaction should use Servo. Compilation does not test runtime correctness. Prefer Detective as the observation surface at every rung that owns a `UIRoot`.
 
 For every probe record:
 
@@ -129,27 +152,27 @@ A flake is the same code and declared configuration producing both pass and fail
 
 For every Major or Critical finding, attempt one materially different reproduction path when practical. Change an ownership boundary, execution layer, input route, backend, or observation method; renaming or lightly rearranging the same harness does not count. If a second path is not practical, record why and reduce the claimed confidence.
 
-Minimize every confirmed reproduction without removing the failure. Remove irrelevant input fragments, actions, actors, faults, and environment differences while the same contract still fails. Preserve the minimized concrete input or action sequence, exact command, environment, tool versions, configuration, generator version, seed, event/schedule trace, injected fault location, timing, and expected failure signal. Deduplicate by violated contract and supported cause, not merely by stack trace or visible symptom. The final permanent RED test is the canonical rerunnable artifact; remove a temporary probe only after the permanent test reproduces the same violated contract.
+Minimize every confirmed reproduction without removing the failure. Remove irrelevant input fragments, actions, actors, faults, and environment differences while the same contract still fails. Preserve the minimized concrete input or action sequence, exact command, environment, tool versions, configuration, generator version, seed, event/schedule trace, injected fault location, timing, and expected failure signal. Deduplicate by violated contract and supported cause, not merely by stack trace or visible symptom. The final permanent regression test is the canonical rerunnable artifact; remove a temporary probe only after that test reproduces the same violated contract.
 
 Trace confirmed behavior far enough to identify the violated invariant and likely owner. Call it a root cause only when source inspection or a distinguishing experiment supports that conclusion. Otherwise label it a hypothesis.
 
 If two targeted experiments fail to support the same theory, discard the theory and reset the hypothesis set. Do not keep torturing one subsystem because the story sounds good.
 
-### 4. Materialize Permanent RED Tests
+### 4. Materialize Permanent Regression Tests
 
 Every confirmed finding, including Material findings, must finish with the smallest permanent automated regression test that faithfully expresses the violated contract.
 
 - Put the test in the existing project that owns the contract. If no faithful test home exists and adding one would require a new project, dependency, or architecture decision, stop and ask rather than dumping the test into a convenient unrelated suite.
 - Test observable behavior through the real owning path. Do not replace a rendering, input, frame, backend, or native failure with a weaker mock-level assertion merely to obtain a test file.
 - For process crashes or hangs, isolate the scenario in a bounded child-process or native harness so the test runner can assert the exit, timeout, and captured diagnostics.
-- For visual findings, use deterministic scenes, application-owned screenshots, and explicit pixel/color comparisons with justified tolerance.
-- For performance findings, prefer deterministic work/allocation/resource counters or a dedicated performance gate with a declared oracle. Do not add noisy wall-clock assertions to an ordinary unit suite.
-- Keep the test active and unskipped. Its failure must be an assertion or explicit failure signal caused by the target defect, not a broken fixture, compilation error, missing asset, unavailable environment, or unrelated exception.
+- For visual findings, use deterministic scenes, explicit pixel/color comparisons with justified tolerance, and window-backed Servo screenshots when the scenario is Servo-driven; those captures remain in the application-owned `Window.SaveScreenshot` pipeline.
+- For performance findings, prefer deterministic Detective work/allocation/resource counters or a dedicated performance gate with a declared oracle. Do not add noisy wall-clock assertions to an ordinary unit suite.
+- Keep the test active and unskipped. Before any permitted fix, its RED result must be an assertion or explicit failure signal caused by the target defect, not a broken fixture, compilation error, missing asset, unavailable environment, or unrelated exception. At handoff it remains RED unless the self-repair policy required the Servo or Detective defect to be fixed.
 - Prove that the regression has discrimination power: observe it RED against the defective behavior, and when practical show that a controlled non-defective comparison or narrowly reversed fault does not trigger the same failure. Merely executing the suspected code is not enough.
-- Run each new RED test in isolation at least twice when deterministic. Then run its affected test project to inventory the intentional failures and detect collateral fixture or compilation damage. Run broader repository gates required by repository policy and report their expected nonzero result separately from any unexpected failure.
+- Run each new test in isolation at least twice while confirming deterministic RED behavior. For a Servo or Detective self-repair, rerun the unchanged test to prove GREEN and run the affected subsystem suite. Otherwise run the affected test project to inventory the intentional failures and detect collateral fixture or compilation damage. Run broader repository gates required by repository policy and distinguish expected RED findings, repaired GREEN regressions, and unexpected failures.
 - If a faithful permanent automated test is technically impossible, report the exact blocker. The evidence may still be reported, but the finding is not fully delivered under this skill and the audit remains incomplete for it.
 
-Do not change production behavior to make the RED test easier to express. The test records the indictment; it does not smuggle in the fix.
+Do not change production behavior merely to make the RED test easier to express. A Servo or Detective self-repair must fix the owning invariant so the unchanged regression becomes GREEN; the test must not smuggle in the fix.
 
 ### 5. Grade the damage
 
@@ -164,7 +187,7 @@ Severity follows impact and reproducibility, not how angry the prose sounds.
 
 ### 6. Clean up and report
 
-Remove temporary probes, reports, generated files, instrumentation, and superseded harness projects using exact validated paths. Preserve the permanent RED regression tests for every confirmed finding. Refresh the Roslyn index after C# or project-file changes, including cleanup. Confirm with `git status` that the retained audit changes are exactly the intended RED tests and that unrelated user changes are untouched.
+Remove temporary probes, reports, generated files, instrumentation, and superseded harness projects using exact validated paths. Preserve every permanent regression test, including GREEN Servo or Detective self-repair coverage, and any justified Detective diagnostic with its focused tests and documentation. Refresh the Roslyn index after C# or project-file changes, including cleanup. Confirm with `git status` that the retained audit changes are exactly those intended artifacts and that unrelated user changes are untouched.
 
 Lead with a blunt verdict:
 
@@ -180,10 +203,12 @@ Report:
 - attack matrix actually executed;
 - confirmed findings ordered by severity, each with exact repro, evidence, impact, and owner/root-cause status;
 - for every Major or Critical finding, the materially different reproduction result or the reason it was impractical and the resulting confidence limitation;
-- for every confirmed finding, the permanent RED test path, test name, isolated command, repeated RED result, and affected-project result;
+- for every confirmed finding, the permanent regression path, test name, isolated command, repeated RED result, and affected-project result; include the final GREEN result for repaired Servo or Detective defects;
 - negative results and discarded hypotheses;
 - commands and verification run;
-- cleanup status and the exact intentionally retained RED test files;
+- cleanup status and the exact intentionally retained regression test files, separated into unresolved RED findings and repaired GREEN Servo or Detective coverage;
+- any permanent Detective diagnostic retained, the evidence gap that justified it, its contract tests, documentation/API review, and measured or bounded runtime cost;
+- any Servo or Detective defect repaired during the audit, its RED-to-GREEN verification, and the repeated attack result;
 - untested surfaces, environmental blockers, and remaining uncertainty;
 - evidence limits: which oracles, generated partitions, configurations, schedules, tools, or techniques were unavailable or deliberately not run, and which conclusions therefore remain unsupported;
 - the expected red-suite status, intentional failure count, pre-existing failure count, and every unexpected failure separately.
