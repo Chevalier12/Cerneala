@@ -55,6 +55,19 @@ static Task RunOnUiThreadAsync(
 }
 ```
 
+Asynchronous callbacks can return a value without exposing a nested task:
+
+```csharp
+static Task<int> ReadOnUiThreadAfterYieldAsync(UiRelay relay)
+{
+    return relay.InvokeAsync(async () =>
+    {
+        await Task.Yield();
+        return 42;
+    });
+}
+```
+
 Observe cancellation and callback exceptions through the returned task:
 
 ```csharp
@@ -93,7 +106,7 @@ static Task AddItemAsync<T>(
 
 `UIRoot.ProcessFrame` and each host update drain one queue snapshot on the owner thread before retained scheduler and input work. The root must keep being pumped for queued callbacks and captured continuations to run. Relay invalidations can therefore participate in the same update, while callbacks posted during the drain or input wait for a later update.
 
-`Post` and accepted `InvokeAsync` work enqueue even when called from the owner thread. An `InvokeAsync` call whose token is already canceled instead returns a canceled task without enqueuing or invoking the callback. Enqueued work is dequeued in FIFO order after enqueue linearization. A drain processes a stable snapshot up to the configured callback budget, so callbacks posted during a drain remain pending for a later update.
+`Post` and accepted `InvokeAsync` work enqueue even when called from the owner thread. An `InvokeAsync` call whose token is already canceled instead returns a canceled task without enqueuing or invoking the callback. Enqueued work is dequeued in FIFO order after enqueue linearization. A drain processes a stable snapshot up to the configured callback budget, so callbacks posted during a drain remain pending for a later update. Value-producing asynchronous callbacks are unwrapped: the returned `Task<T>` completes only after the callback's task completes and carries its result, cancellation, or exception.
 
 Scheduling captures the caller's `ExecutionContext`. `AsyncLocal` state, culture, and tracing context therefore flow into the callback. `PendingCount` includes callbacks that have not started; it does not include asynchronous callbacks after their delegate has started.
 
@@ -134,6 +147,7 @@ Do not call `.Wait()`, `.Result`, or `GetAwaiter().GetResult()` for Relay work o
 | `Post(Action callback)` | `void` | Enqueues a fire-and-forget callback and captures the caller's execution context. |
 | `InvokeAsync(Action callback, CancellationToken cancellationToken = default)` | `Task` | Enqueues an action and returns a task for completion, cancellation, or failure. |
 | `InvokeAsync<T>(Func<T> callback, CancellationToken cancellationToken = default)` | `Task<T>` | Enqueues a value-producing callback and returns its result asynchronously. |
+| `InvokeAsync<T>(Func<Task<T>> callback, CancellationToken cancellationToken = default)` | `Task<T>` | Starts a value-producing asynchronous callback on the UI thread, unwraps its task, and propagates its result, cancellation, or failure. |
 | `InvokeAsync(Func<Task> callback, CancellationToken cancellationToken = default)` | `Task` | Starts a parameterless asynchronous callback on the UI thread and propagates its eventual completion without exposing a nested task. |
 | `InvokeAsync(Func<CancellationToken, Task> callback, CancellationToken cancellationToken = default)` | `Task` | Starts an asynchronous callback on the UI thread and propagates its eventual completion without blocking the drain. |
 

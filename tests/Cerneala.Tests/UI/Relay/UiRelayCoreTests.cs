@@ -136,6 +136,25 @@ public sealed class UiRelayCoreTests
     }
 
     [Fact]
+    public async Task AsyncResultInvokeReturnsOneTaskAndTracksTheResult()
+    {
+        UiRelay relay = new();
+        object scheduled = relay.InvokeAsync(async () =>
+        {
+            await Task.Yield();
+            return 42;
+        });
+
+        Task scheduledTask = Assert.IsAssignableFrom<Task>(scheduled);
+
+        relay.Drain();
+        Assert.False(scheduledTask.IsCompleted);
+        relay.Drain();
+        Task<int> operation = Assert.IsType<Task<int>>(scheduled);
+        Assert.Equal(42, await operation);
+    }
+
+    [Fact]
     public void PostFaultDoesNotAbandonTheSnapshot()
     {
         UiRelay relay = new();

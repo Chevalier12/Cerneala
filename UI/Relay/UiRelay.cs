@@ -69,6 +69,15 @@ public sealed class UiRelay : IUiThreadAccess
         return task;
     }
 
+    public Task<T> InvokeAsync<T>(Func<Task<T>> callback, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(callback);
+        AsyncFuncWorkItem<T> item = new(callback, ExecutionContext.Capture(), cancellationToken);
+        Task<T> task = item.Task;
+        Enqueue(item);
+        return task;
+    }
+
     public Task InvokeAsync(Func<Task> callback, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(callback);
@@ -509,6 +518,90 @@ public sealed class UiRelay : IUiThreadAccess
             else
             {
                 completion.TrySetResult();
+            }
+        }
+    }
+
+    private sealed class AsyncFuncWorkItem<T> : UiRelayWorkItem
+    {
+        private readonly Task<T> task;
+        private Func<Task<T>>? callback;
+        private TaskCompletionSource<T>? completion;
+
+        public AsyncFuncWorkItem(
+            Func<Task<T>> callback,
+            ExecutionContext? executionContext,
+            CancellationToken cancellationToken)
+            : base(executionContext, cancellationToken)
+        {
+            this.callback = callback;
+            completion = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+            task = completion.Task;
+            RegisterCancellation();
+        }
+
+        public Task<T> Task => task;
+
+        protected override void InvokeCore()
+        {
+            Task<T> operation = callback!()
+                ?? throw new InvalidOperationException("The asynchronous Relay callback returned null.");
+            TaskCompletionSource<T> target = completion!;
+            completion = null;
+            if (operation.IsCompleted)
+            {
+                CompleteFromTask(operation, target);
+                return;
+            }
+
+            _ = operation.ContinueWith(
+                static (completed, state) => CompleteFromTask(completed, (TaskCompletionSource<T>)state!),
+                target,
+                CancellationToken.None,
+                TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
+        }
+
+        protected override void CompleteCanceled(CancellationToken token)
+        {
+            completion!.TrySetCanceled(token);
+        }
+
+        protected override Exception? CompleteFault(Exception exception)
+        {
+            completion!.TrySetException(exception);
+            return null;
+        }
+
+        protected override void ReleaseCallbackReferences()
+        {
+            callback = null;
+            completion = null;
+        }
+
+        private static void CompleteFromTask(Task<T> operation, TaskCompletionSource<T> completion)
+        {
+            if (operation.IsCanceled)
+            {
+                CancellationToken cancellationToken = default;
+                try
+                {
+                    operation.GetAwaiter().GetResult();
+                }
+                catch (OperationCanceledException exception)
+                {
+                    cancellationToken = exception.CancellationToken;
+                }
+
+                completion.TrySetCanceled(cancellationToken);
+            }
+            else if (operation.Exception is not null)
+            {
+                completion.TrySetException(operation.Exception.InnerExceptions);
+            }
+            else
+            {
+                completion.TrySetResult(operation.Result);
             }
         }
     }
