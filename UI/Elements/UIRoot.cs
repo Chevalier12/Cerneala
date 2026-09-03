@@ -1,4 +1,4 @@
-using Cerneala.UI.Diagnostics;
+using Cerneala.UI.Detective;
 using Cerneala.Drawing.Prism;
 using Cerneala.UI.Accessibility;
 using Cerneala.UI.Aspect;
@@ -74,6 +74,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         InvalidationTrace invalidationTrace)
     {
         Relay = new UiRelay(relayOptions);
+        Detective = new Cerneala.UI.Detective.Detective(this, invalidationTrace);
         ViewportWidth = viewportWidth;
         ViewportHeight = viewportHeight;
         Scale = scale;
@@ -121,7 +122,9 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public ElementIdProvider ElementIds { get; }
 
-    public InvalidationTrace Trace { get; }
+    internal InvalidationTrace Trace { get; }
+
+    public Cerneala.UI.Detective.Detective Detective { get; }
 
     public LayoutQueue LayoutQueue { get; }
 
@@ -143,7 +146,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     internal FocusManager? ActiveFocusManager { get; set; }
 
-    public RenderCounters RenderCounters { get; }
+    internal RenderCounters RenderCounters { get; }
 
     public RetainedRenderCache RetainedRenderCache { get; }
 

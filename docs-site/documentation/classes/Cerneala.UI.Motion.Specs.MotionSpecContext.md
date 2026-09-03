@@ -27,7 +27,7 @@ Create a context for a typed sampler:
 
 ```csharp
 using Cerneala.UI.Motion.Core;
-using Cerneala.UI.Motion.Diagnostics;
+using Cerneala.UI.Detective;
 using Cerneala.UI.Motion.Interpolation;
 using Cerneala.UI.Motion.Specs;
 
@@ -89,4 +89,4 @@ Cerneala UI motion specifications and samplers that need reduced-motion behavior
 - `Cerneala.UI.Motion.Core.MotionGraph`
 - `Cerneala.UI.Motion.Core.ReducedMotionPolicy`
 - `Cerneala.UI.Motion.Interpolation.ValueMixerRegistry`
-- `Cerneala.UI.Motion.Diagnostics.MotionDiagnostics`
+- `Cerneala.UI.Detective.MotionDiagnostics`

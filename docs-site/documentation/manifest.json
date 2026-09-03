@@ -460,9 +460,9 @@
     "source": "Drawing/Prism/PrismDrawScope.cs"
   },
   {
-    "name": "Cerneala.Drawing.Prism.PrismRendererDiagnostics",
-    "file": "documentation/classes/Cerneala.Drawing.Prism.PrismRendererDiagnostics.md",
-    "source": "Drawing/Prism/PrismRendererOptions.cs"
+    "name": "Cerneala.UI.Detective.PrismRendererDiagnostics",
+    "file": "documentation/classes/Cerneala.UI.Detective.PrismRendererDiagnostics.md",
+    "source": "UI/Detective/PrismRendererDiagnostics.cs"
   },
   {
     "name": "Cerneala.Drawing.Prism.PrismRendererOptions",
@@ -700,9 +700,9 @@
     "source": "UI/Aspect/AspectConditionResult.cs"
   },
   {
-    "name": "Cerneala.UI.Aspect.AspectConditionTrace",
-    "file": "documentation/classes/Cerneala.UI.Aspect.AspectConditionTrace.md",
-    "source": "UI/Aspect/AspectConditionTrace.cs"
+    "name": "Cerneala.UI.Detective.AspectConditionTrace",
+    "file": "documentation/classes/Cerneala.UI.Detective.AspectConditionTrace.md",
+    "source": "UI/Detective/AspectConditionTrace.cs"
   },
   {
     "name": "Cerneala.UI.Aspect.AspectDataContext",
@@ -725,14 +725,14 @@
     "source": "UI/Aspect/AspectDependencySet.cs"
   },
   {
-    "name": "Cerneala.UI.Aspect.AspectDiagnostics",
-    "file": "documentation/classes/Cerneala.UI.Aspect.AspectDiagnostics.md",
-    "source": "UI/Aspect/AspectDiagnostics.cs"
+    "name": "Cerneala.UI.Detective.AspectDiagnostics",
+    "file": "documentation/classes/Cerneala.UI.Detective.AspectDiagnostics.md",
+    "source": "UI/Detective/AspectDiagnostics.cs"
   },
   {
-    "name": "Cerneala.UI.Aspect.AspectDiagnostics.Snapshot",
-    "file": "documentation/classes/Cerneala.UI.Aspect.AspectDiagnostics.Snapshot.md",
-    "source": "UI/Aspect/AspectDiagnostics.cs"
+    "name": "Cerneala.UI.Detective.AspectDiagnostics.Snapshot",
+    "file": "documentation/classes/Cerneala.UI.Detective.AspectDiagnostics.Snapshot.md",
+    "source": "UI/Detective/AspectDiagnostics.cs"
   },
   {
     "name": "Cerneala.UI.Aspect.AspectEngine",
@@ -740,9 +740,9 @@
     "source": "UI/Aspect/AspectEngine.cs"
   },
   {
-    "name": "Cerneala.UI.Aspect.AspectEngineCounters",
-    "file": "documentation/classes/Cerneala.UI.Aspect.AspectEngineCounters.md",
-    "source": "UI/Aspect/AspectEngineCounters.cs"
+    "name": "Cerneala.UI.Detective.AspectEngineCounters",
+    "file": "documentation/classes/Cerneala.UI.Detective.AspectEngineCounters.md",
+    "source": "UI/Detective/AspectEngineCounters.cs"
   },
   {
     "name": "Cerneala.UI.Aspect.AspectEngineElementState",
@@ -835,9 +835,9 @@
     "source": "UI/Aspect/AspectResolutionContext.cs"
   },
   {
-    "name": "Cerneala.UI.Aspect.AspectResolutionStep",
-    "file": "documentation/classes/Cerneala.UI.Aspect.AspectResolutionStep.md",
-    "source": "UI/Aspect/AspectResolutionStep.cs"
+    "name": "Cerneala.UI.Detective.AspectResolutionStep",
+    "file": "documentation/classes/Cerneala.UI.Detective.AspectResolutionStep.md",
+    "source": "UI/Detective/AspectResolutionStep.cs"
   },
   {
     "name": "Cerneala.UI.Aspect.AspectRuleSet",
@@ -905,9 +905,9 @@
     "source": "UI/Aspect/AspectTokenDefinition.cs"
   },
   {
-    "name": "Cerneala.UI.Aspect.AspectTokenTrace",
-    "file": "documentation/classes/Cerneala.UI.Aspect.AspectTokenTrace.md",
-    "source": "UI/Aspect/AspectTokenTrace.cs"
+    "name": "Cerneala.UI.Detective.AspectTokenTrace",
+    "file": "documentation/classes/Cerneala.UI.Detective.AspectTokenTrace.md",
+    "source": "UI/Detective/AspectTokenTrace.cs"
   },
   {
     "name": "Cerneala.UI.Aspect.AspectValue",
@@ -1970,154 +1970,148 @@
     "source": "UI/Data/UiPropertyBinding{T}.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.AspectTrace",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.AspectTrace.md",
-    "source": "UI/Diagnostics/AspectTrace.cs"
+    "name": "Cerneala.UI.Detective.Detective",
+    "file": "documentation/classes/Cerneala.UI.Detective.Detective.md",
+    "source": "UI/Detective/Detective.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.AspectTraceSnapshot",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.AspectTraceSnapshot.md",
-    "source": "UI/Diagnostics/AspectTrace.cs"
+    "name": "Cerneala.UI.Detective.DetectiveSnapshot",
+    "file": "documentation/classes/Cerneala.UI.Detective.DetectiveSnapshot.md",
+    "source": "UI/Detective/Detective.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.DebugAdorner",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.DebugAdorner.md",
-    "source": "UI/Diagnostics/DebugAdorner.cs"
+    "name": "Cerneala.UI.Detective.PlatformDiagnosticsSnapshot",
+    "file": "documentation/classes/Cerneala.UI.Detective.PlatformDiagnosticsSnapshot.md",
+    "source": "UI/Detective/Detective.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.DebugOverlay",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.DebugOverlay.md",
-    "source": "UI/Diagnostics/DebugOverlay.cs"
+    "name": "Cerneala.UI.Detective.ResourceDiagnosticsSnapshot",
+    "file": "documentation/classes/Cerneala.UI.Detective.ResourceDiagnosticsSnapshot.md",
+    "source": "UI/Detective/Detective.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.DirtyTreeDumper",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.DirtyTreeDumper.md",
-    "source": "UI/Diagnostics/DirtyTreeDumper.cs"
+    "name": "Cerneala.UI.Detective.RootInputDiagnosticsSnapshot",
+    "file": "documentation/classes/Cerneala.UI.Detective.RootInputDiagnosticsSnapshot.md",
+    "source": "UI/Detective/Detective.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.DirtyTreeDumper.DirtyTraceInfo",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.DirtyTreeDumper.DirtyTraceInfo.md",
-    "source": "UI/Diagnostics/DirtyTreeDumper.cs"
+    "name": "Cerneala.UI.Detective.ViewportDiagnosticsSnapshot",
+    "file": "documentation/classes/Cerneala.UI.Detective.ViewportDiagnosticsSnapshot.md",
+    "source": "UI/Detective/Detective.cs"
+  },  {
+    "name": "Cerneala.UI.Detective.AspectTrace",
+    "file": "documentation/classes/Cerneala.UI.Detective.AspectTrace.md",
+    "source": "UI/Detective/AspectTrace.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.ElementRenderDiagnosticsSnapshot",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.ElementRenderDiagnosticsSnapshot.md",
-    "source": "UI/Diagnostics/RenderDiagnostics.cs"
+    "name": "Cerneala.UI.Detective.AspectTraceSnapshot",
+    "file": "documentation/classes/Cerneala.UI.Detective.AspectTraceSnapshot.md",
+    "source": "UI/Detective/AspectTrace.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.ElementTreeDumper",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.ElementTreeDumper.md",
-    "source": "UI/Diagnostics/ElementTreeDumper.cs"
+    "name": "Cerneala.UI.Detective.DebugAdorner",
+    "file": "documentation/classes/Cerneala.UI.Detective.DebugAdorner.md",
+    "source": "UI/Detective/DebugAdorner.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.FrameDiagnostics",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.FrameDiagnostics.md",
-    "source": "UI/Diagnostics/FrameDiagnostics.cs"
+    "name": "Cerneala.UI.Detective.DebugOverlay",
+    "file": "documentation/classes/Cerneala.UI.Detective.DebugOverlay.md",
+    "source": "UI/Detective/DebugOverlay.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.FrameDiagnosticsSnapshot",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.FrameDiagnosticsSnapshot.md",
-    "source": "UI/Diagnostics/FrameDiagnostics.cs"
+    "name": "Cerneala.UI.Detective.DirtyTreeDumper",
+    "file": "documentation/classes/Cerneala.UI.Detective.DirtyTreeDumper.md",
+    "source": "UI/Detective/DirtyTreeDumper.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.InputDiagnostics",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.InputDiagnostics.md",
-    "source": "UI/Diagnostics/InputDiagnostics.cs"
+    "name": "Cerneala.UI.Detective.DirtyTreeDumper.DirtyTraceInfo",
+    "file": "documentation/classes/Cerneala.UI.Detective.DirtyTreeDumper.DirtyTraceInfo.md",
+    "source": "UI/Detective/DirtyTreeDumper.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.InputDiagnosticsSnapshot",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.InputDiagnosticsSnapshot.md",
-    "source": "UI/Diagnostics/InputDiagnostics.cs"
+    "name": "Cerneala.UI.Detective.ElementRenderDiagnosticsSnapshot",
+    "file": "documentation/classes/Cerneala.UI.Detective.ElementRenderDiagnosticsSnapshot.md",
+    "source": "UI/Detective/RenderDiagnostics.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.InvalidationTrace",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.InvalidationTrace.md",
-    "source": "UI/Diagnostics/InvalidationTrace.cs"
+    "name": "Cerneala.UI.Detective.ElementTreeDumper",
+    "file": "documentation/classes/Cerneala.UI.Detective.ElementTreeDumper.md",
+    "source": "UI/Detective/ElementTreeDumper.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.InvalidationTraceEntry",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.InvalidationTraceEntry.md",
-    "source": "UI/Diagnostics/InvalidationTrace.cs"
+    "name": "Cerneala.UI.Detective.FrameDiagnostics",
+    "file": "documentation/classes/Cerneala.UI.Detective.FrameDiagnostics.md",
+    "source": "UI/Detective/FrameDiagnostics.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.InvalidationTraceEventKind",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.InvalidationTraceEventKind.md",
-    "source": "UI/Diagnostics/InvalidationTrace.cs"
+    "name": "Cerneala.UI.Detective.FrameDiagnosticsSnapshot",
+    "file": "documentation/classes/Cerneala.UI.Detective.FrameDiagnosticsSnapshot.md",
+    "source": "UI/Detective/FrameDiagnostics.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.LayoutDiagnostics",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.LayoutDiagnostics.md",
-    "source": "UI/Diagnostics/LayoutDiagnostics.cs"
+    "name": "Cerneala.UI.Detective.InputDiagnostics",
+    "file": "documentation/classes/Cerneala.UI.Detective.InputDiagnostics.md",
+    "source": "UI/Detective/InputDiagnostics.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.LayoutDiagnosticsSnapshot",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.LayoutDiagnosticsSnapshot.md",
-    "source": "UI/Diagnostics/LayoutDiagnostics.cs"
+    "name": "Cerneala.UI.Detective.InputDiagnosticsSnapshot",
+    "file": "documentation/classes/Cerneala.UI.Detective.InputDiagnosticsSnapshot.md",
+    "source": "UI/Detective/InputDiagnostics.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.RenderCacheDumper",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.RenderCacheDumper.md",
-    "source": "UI/Diagnostics/RenderCacheDumper.cs"
+    "name": "Cerneala.UI.Detective.InvalidationTrace",
+    "file": "documentation/classes/Cerneala.UI.Detective.InvalidationTrace.md",
+    "source": "UI/Detective/InvalidationTrace.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.RenderDiagnostics",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.RenderDiagnostics.md",
-    "source": "UI/Diagnostics/RenderDiagnostics.cs"
+    "name": "Cerneala.UI.Detective.InvalidationTraceEntry",
+    "file": "documentation/classes/Cerneala.UI.Detective.InvalidationTraceEntry.md",
+    "source": "UI/Detective/InvalidationTrace.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.RootRenderDiagnosticsSnapshot",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.RootRenderDiagnosticsSnapshot.md",
-    "source": "UI/Diagnostics/RenderDiagnostics.cs"
+    "name": "Cerneala.UI.Detective.InvalidationTraceEventKind",
+    "file": "documentation/classes/Cerneala.UI.Detective.InvalidationTraceEventKind.md",
+    "source": "UI/Detective/InvalidationTrace.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.RoutedEventTrace",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.RoutedEventTrace.md",
-    "source": "UI/Diagnostics/RoutedEventTrace.cs"
+    "name": "Cerneala.UI.Detective.LayoutDiagnostics",
+    "file": "documentation/classes/Cerneala.UI.Detective.LayoutDiagnostics.md",
+    "source": "UI/Detective/LayoutDiagnostics.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.RoutedEventTraceSnapshot",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.RoutedEventTraceSnapshot.md",
-    "source": "UI/Diagnostics/RoutedEventTrace.cs"
+    "name": "Cerneala.UI.Detective.LayoutDiagnosticsSnapshot",
+    "file": "documentation/classes/Cerneala.UI.Detective.LayoutDiagnosticsSnapshot.md",
+    "source": "UI/Detective/LayoutDiagnostics.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.RoutedEventTraceStep",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.RoutedEventTraceStep.md",
-    "source": "UI/Diagnostics/RoutedEventTrace.cs"
+    "name": "Cerneala.UI.Detective.RenderCacheDumper",
+    "file": "documentation/classes/Cerneala.UI.Detective.RenderCacheDumper.md",
+    "source": "UI/Detective/RenderCacheDumper.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.RuntimeDiagnostics",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.RuntimeDiagnostics.md",
-    "source": "UI/Diagnostics/RuntimeDiagnostics.cs"
+    "name": "Cerneala.UI.Detective.RenderDiagnostics",
+    "file": "documentation/classes/Cerneala.UI.Detective.RenderDiagnostics.md",
+    "source": "UI/Detective/RenderDiagnostics.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.RuntimeDiagnosticsSnapshot",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.RuntimeDiagnosticsSnapshot.md",
-    "source": "UI/Diagnostics/RuntimeDiagnostics.cs"
+    "name": "Cerneala.UI.Detective.RootRenderDiagnosticsSnapshot",
+    "file": "documentation/classes/Cerneala.UI.Detective.RootRenderDiagnosticsSnapshot.md",
+    "source": "UI/Detective/RenderDiagnostics.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.RuntimeInputDiagnosticsSnapshot",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.RuntimeInputDiagnosticsSnapshot.md",
-    "source": "UI/Diagnostics/RuntimeDiagnostics.cs"
+    "name": "Cerneala.UI.Detective.RoutedEventTrace",
+    "file": "documentation/classes/Cerneala.UI.Detective.RoutedEventTrace.md",
+    "source": "UI/Detective/RoutedEventTrace.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.RuntimePlatformDiagnosticsSnapshot",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.RuntimePlatformDiagnosticsSnapshot.md",
-    "source": "UI/Diagnostics/RuntimeDiagnostics.cs"
+    "name": "Cerneala.UI.Detective.RoutedEventTraceSnapshot",
+    "file": "documentation/classes/Cerneala.UI.Detective.RoutedEventTraceSnapshot.md",
+    "source": "UI/Detective/RoutedEventTrace.cs"
   },
   {
-    "name": "Cerneala.UI.Diagnostics.RuntimeRenderDiagnosticsSnapshot",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.RuntimeRenderDiagnosticsSnapshot.md",
-    "source": "UI/Diagnostics/RuntimeDiagnostics.cs"
-  },
-  {
-    "name": "Cerneala.UI.Diagnostics.RuntimeResourceDiagnosticsSnapshot",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.RuntimeResourceDiagnosticsSnapshot.md",
-    "source": "UI/Diagnostics/RuntimeDiagnostics.cs"
-  },
-  {
-    "name": "Cerneala.UI.Diagnostics.RuntimeViewportDiagnosticsSnapshot",
-    "file": "documentation/classes/Cerneala.UI.Diagnostics.RuntimeViewportDiagnosticsSnapshot.md",
-    "source": "UI/Diagnostics/RuntimeDiagnostics.cs"
+    "name": "Cerneala.UI.Detective.RoutedEventTraceStep",
+    "file": "documentation/classes/Cerneala.UI.Detective.RoutedEventTraceStep.md",
+    "source": "UI/Detective/RoutedEventTrace.cs"
   },
   {
     "name": "Cerneala.UI.Elements.ElementChildRole",
@@ -3495,29 +3489,29 @@
     "source": "UI/Motion/Core/SystemMotionClock.cs"
   },
   {
-    "name": "Cerneala.UI.Motion.Diagnostics.MotionDiagnostics",
-    "file": "documentation/classes/Cerneala.UI.Motion.Diagnostics.MotionDiagnostics.md",
-    "source": "UI/Motion/Diagnostics/MotionDiagnostics.cs"
+    "name": "Cerneala.UI.Detective.MotionDiagnostics",
+    "file": "documentation/classes/Cerneala.UI.Detective.MotionDiagnostics.md",
+    "source": "UI/Detective/MotionDiagnostics.cs"
   },
   {
-    "name": "Cerneala.UI.Motion.Diagnostics.MotionGraphSnapshot",
-    "file": "documentation/classes/Cerneala.UI.Motion.Diagnostics.MotionGraphSnapshot.md",
-    "source": "UI/Motion/Diagnostics/MotionGraphSnapshot.cs"
+    "name": "Cerneala.UI.Detective.MotionGraphSnapshot",
+    "file": "documentation/classes/Cerneala.UI.Detective.MotionGraphSnapshot.md",
+    "source": "UI/Detective/MotionGraphSnapshot.cs"
   },
   {
-    "name": "Cerneala.UI.Motion.Diagnostics.MotionTrace",
-    "file": "documentation/classes/Cerneala.UI.Motion.Diagnostics.MotionTrace.md",
-    "source": "UI/Motion/Diagnostics/MotionTrace.cs"
+    "name": "Cerneala.UI.Detective.MotionTrace",
+    "file": "documentation/classes/Cerneala.UI.Detective.MotionTrace.md",
+    "source": "UI/Detective/MotionTrace.cs"
   },
   {
-    "name": "Cerneala.UI.Motion.Diagnostics.MotionTraceEvent",
-    "file": "documentation/classes/Cerneala.UI.Motion.Diagnostics.MotionTraceEvent.md",
-    "source": "UI/Motion/Diagnostics/MotionTraceEvent.cs"
+    "name": "Cerneala.UI.Detective.MotionTraceEvent",
+    "file": "documentation/classes/Cerneala.UI.Detective.MotionTraceEvent.md",
+    "source": "UI/Detective/MotionTraceEvent.cs"
   },
   {
-    "name": "Cerneala.UI.Motion.Diagnostics.MotionTraceEventKind",
-    "file": "documentation/classes/Cerneala.UI.Motion.Diagnostics.MotionTraceEventKind.md",
-    "source": "UI/Motion/Diagnostics/MotionTraceEvent.cs"
+    "name": "Cerneala.UI.Detective.MotionTraceEventKind",
+    "file": "documentation/classes/Cerneala.UI.Detective.MotionTraceEventKind.md",
+    "source": "UI/Detective/MotionTraceEvent.cs"
   },
   {
     "name": "Cerneala.UI.Motion.Input.DragMotionController",

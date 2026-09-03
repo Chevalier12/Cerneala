@@ -1,6 +1,7 @@
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
+using Cerneala.UI.Detective;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 

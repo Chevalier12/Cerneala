@@ -986,12 +986,12 @@ The approved surface includes the frame/backdrop host changes, the public catalo
 | `Cerneala.Drawing.DrawCommandKind` | `EndPrism = 20` | Command-list Prism scope ABI consumed by retained rendering and backends. |
 | `Cerneala.Drawing.DrawingFrameContext` | `Cerneala.Drawing.Prism.IBackdropFrameLease BackdropLease { get; }` | Per-frame Prism analysis and optional backdrop submission contract. |
 | `Cerneala.Drawing.IDrawingBackend` | `System.Void Render(Cerneala.Drawing.DrawCommandList commands, in Cerneala.Drawing.DrawingFrameContext frameContext)` | Per-frame Prism analysis and optional backdrop submission contract. |
-| `Cerneala.Drawing.MonoGame.MonoGameDrawingBackend` | `Cerneala.Drawing.Prism.PrismRendererDiagnostics RendererDiagnostics { get; }` | Per-frame Prism analysis and optional backdrop submission contract. |
+| `Cerneala.Drawing.MonoGame.MonoGameDrawingBackend` | `Cerneala.UI.Detective.PrismRendererDiagnostics RendererDiagnostics { get; }` | Per-frame Prism analysis and optional backdrop submission contract. |
 | `Cerneala.Drawing.MonoGame.MonoGameDrawingBackend` | `MonoGameDrawingBackend(Microsoft.Xna.Framework.Graphics.SpriteBatch spriteBatch, Microsoft.Xna.Framework.Graphics.Texture2D whitePixel, Cerneala.Drawing.Text.SkiaTextRasterizer textRasterizer, Cerneala.Drawing.Prism.PrismRendererOptions prismRendererOptions)` | Per-frame Prism analysis and optional backdrop submission contract. |
 | `Cerneala.Drawing.MonoGame.MonoGameDrawingBackend` | `System.Void Render(Cerneala.Drawing.DrawCommandList commands, in Cerneala.Drawing.DrawingFrameContext frameContext)` | Per-frame Prism analysis and optional backdrop submission contract. |
 | `Cerneala.UI.Hosting.IUiBackend` | `Cerneala.Drawing.Prism.IBackdropFrameSource BackdropFrameSource { get; }` | Optional host backdrop source and Prism renderer configuration. |
 | `Cerneala.UI.Hosting.MonoGame.MonoGameUiHost` | `Cerneala.Drawing.Prism.IBackdropFrameSource BackdropFrameSource { get; set; }` | Optional host backdrop source and Prism renderer configuration. |
-| `Cerneala.UI.Hosting.MonoGame.MonoGameUiHost` | `Cerneala.Drawing.Prism.PrismRendererDiagnostics PrismDiagnostics { get; }` | Optional host backdrop source and Prism renderer configuration. |
+| `Cerneala.UI.Hosting.MonoGame.MonoGameUiHost` | `Cerneala.UI.Detective.PrismRendererDiagnostics PrismDiagnostics { get; }` | Optional host backdrop source and Prism renderer configuration. |
 | `Cerneala.UI.Hosting.MonoGame.MonoGameUiHostOptions` | `Cerneala.Drawing.Prism.IBackdropFrameSource BackdropFrameSource { get; set; }` | Optional host backdrop source and Prism renderer configuration. |
 | `Cerneala.UI.Hosting.MonoGame.MonoGameUiHostOptions` | `Cerneala.Drawing.Prism.PrismRendererOptions PrismRendererOptions { get; set; }` | Optional host backdrop source and Prism renderer configuration. |
 | `Cerneala.UI.Markup.GeneratedMarkup` | `Cerneala.Drawing.Color GetPrismFilterColor(Cerneala.UI.Prism.Runtime.PrismFilterState state, System.Int32 entryStableId, System.Int32 slot)` | Generated markup accessors used by typed Prism Motion paths. |
@@ -1913,27 +1913,6 @@ The approved surface includes the frame/backdrop host changes, the public catalo
 | `Cerneala.Drawing.Prism.PrismOperation` | `System.Int64 Version { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.PrismPipeline` | `PrismPipeline()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.PrismPipeline` | `PrismPipeline(System.Collections.Generic.IEnumerable<Cerneala.Drawing.Prism.PrismOperation> operations)` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `Cerneala.Drawing.Prism.PrismCacheEvictionReason LastEvictionReason { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `Cerneala.Drawing.Prism.PrismCacheMissReason LastMissReason { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `Cerneala.Drawing.Prism.PrismDependencyChange LastDependencyChange { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `System.Boolean RetainedCacheEnabled { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `System.Int32 PinnedEntryCount { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `System.Int32 RetainedEntryCount { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `System.Int64 EvictionCount { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `System.Int64 FinalHitCount { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `System.Int64 GetEvictionCount(Cerneala.Drawing.Prism.PrismCacheEvictionReason reason)` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `System.Int64 GetMissCount(Cerneala.Drawing.Prism.PrismCacheMissReason reason)` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `System.Int64 IntermediateHitCount { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `System.Int64 LookupCount { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `System.Int64 MissCount { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `System.Int64 PeakTotalByteCount { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `System.Int64 PromotionCount { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `System.Int64 RejectedPromotionCount { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `System.Int64 RetainedByteCount { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `System.Int64 SavedCaptureCount { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `System.Int64 SavedPassCount { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `System.Int64 TotalByteCount { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
-| `Cerneala.Drawing.Prism.PrismRendererDiagnostics` | `System.Int64 TransientByteCount { get; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.PrismRendererOptions` | `Cerneala.Drawing.Prism.Catalog.PrismColorProfile HostColorProfile { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.PrismRendererOptions` | `PrismRendererOptions()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.PrismRendererOptions` | `System.Boolean EnableDevelopmentDiagnostics { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
@@ -2190,6 +2169,27 @@ The approved surface includes the frame/backdrop host changes, the public catalo
 | `Cerneala.Drawing.Prism.ZigZagFilter` | `System.Single Ridges { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.ZigZagFilter` | `System.String Style { get; set; }` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
 | `Cerneala.Drawing.Prism.ZigZagFilter` | `ZigZagFilter()` | Renderer hosting, retained-cache invalidation, and diagnostics contract. |
+| `Cerneala.UI.Detective.PrismRendererDiagnostics` | `Cerneala.Drawing.Prism.PrismCacheEvictionReason LastEvictionReason { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
+| `Cerneala.UI.Detective.PrismRendererDiagnostics` | `Cerneala.Drawing.Prism.PrismCacheMissReason LastMissReason { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
+| `Cerneala.UI.Detective.PrismRendererDiagnostics` | `Cerneala.Drawing.Prism.PrismDependencyChange LastDependencyChange { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
+| `Cerneala.UI.Detective.PrismRendererDiagnostics` | `System.Boolean RetainedCacheEnabled { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
+| `Cerneala.UI.Detective.PrismRendererDiagnostics` | `System.Int32 PinnedEntryCount { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
+| `Cerneala.UI.Detective.PrismRendererDiagnostics` | `System.Int32 RetainedEntryCount { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
+| `Cerneala.UI.Detective.PrismRendererDiagnostics` | `System.Int64 EvictionCount { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
+| `Cerneala.UI.Detective.PrismRendererDiagnostics` | `System.Int64 FinalHitCount { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
+| `Cerneala.UI.Detective.PrismRendererDiagnostics` | `System.Int64 GetEvictionCount(Cerneala.Drawing.Prism.PrismCacheEvictionReason reason)` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
+| `Cerneala.UI.Detective.PrismRendererDiagnostics` | `System.Int64 GetMissCount(Cerneala.Drawing.Prism.PrismCacheMissReason reason)` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
+| `Cerneala.UI.Detective.PrismRendererDiagnostics` | `System.Int64 IntermediateHitCount { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
+| `Cerneala.UI.Detective.PrismRendererDiagnostics` | `System.Int64 LookupCount { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
+| `Cerneala.UI.Detective.PrismRendererDiagnostics` | `System.Int64 MissCount { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
+| `Cerneala.UI.Detective.PrismRendererDiagnostics` | `System.Int64 PeakTotalByteCount { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
+| `Cerneala.UI.Detective.PrismRendererDiagnostics` | `System.Int64 PromotionCount { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
+| `Cerneala.UI.Detective.PrismRendererDiagnostics` | `System.Int64 RejectedPromotionCount { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
+| `Cerneala.UI.Detective.PrismRendererDiagnostics` | `System.Int64 RetainedByteCount { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
+| `Cerneala.UI.Detective.PrismRendererDiagnostics` | `System.Int64 SavedCaptureCount { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
+| `Cerneala.UI.Detective.PrismRendererDiagnostics` | `System.Int64 SavedPassCount { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
+| `Cerneala.UI.Detective.PrismRendererDiagnostics` | `System.Int64 TotalByteCount { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
+| `Cerneala.UI.Detective.PrismRendererDiagnostics` | `System.Int64 TransientByteCount { get; }` | Detective-owned Prism retained-cache evidence produced by the renderer backend. |
 | `Cerneala.UI.Prism.Definitions.PrismColorMatrixResource` | `PrismColorMatrixResource(System.Numerics.Matrix4x4 matrix, System.Numerics.Vector4 offset)` | Immutable generated markup definition consumed by Prism markup. |
 | `Cerneala.UI.Prism.Definitions.PrismColorMatrixResource` | `System.Numerics.Matrix4x4 Matrix { get; }` | Immutable generated markup definition consumed by Prism markup. |
 | `Cerneala.UI.Prism.Definitions.PrismColorMatrixResource` | `System.Numerics.Vector4 Offset { get; }` | Immutable generated markup definition consumed by Prism markup. |

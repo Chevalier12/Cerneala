@@ -83,4 +83,4 @@ Cerneala UI aspect resolution, aspect diagnostics, and aspect application throug
 - `Cerneala.UI.Aspect.AspectEngine`
 - `Cerneala.UI.Aspect.AspectDeclaration`
 - `Cerneala.UI.Aspect.AspectValue`
-- `Cerneala.UI.Diagnostics.AspectTrace`
+- `Cerneala.UI.Detective.AspectTrace`

@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Using Include="Cerneala.UI.Detective" />
     <Using Include="Cerneala.UI.Hosting.Windowing" />
   </ItemGroup>
 

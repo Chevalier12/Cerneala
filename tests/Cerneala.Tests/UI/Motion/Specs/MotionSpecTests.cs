@@ -1,6 +1,6 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Motion.Core;
-using Cerneala.UI.Motion.Diagnostics;
+using Cerneala.UI.Detective;
 using Cerneala.UI.Motion.Interpolation;
 using Cerneala.UI.Motion.Specs;
 using Cerneala.UI.Media;

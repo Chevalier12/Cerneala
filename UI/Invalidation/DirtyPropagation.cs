@@ -1,4 +1,4 @@
-using Cerneala.UI.Diagnostics;
+using Cerneala.UI.Detective;
 using Cerneala.UI.Elements;
 
 namespace Cerneala.UI.Invalidation;

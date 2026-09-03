@@ -125,14 +125,14 @@ public sealed class FirstPartyRelayIntegrationTests
         Assert.Equal("one", target.FindResource<string>("first"));
         Assert.Equal("two", target.FindResource<string>("second"));
 
-        int resourceInvalidations = root.Trace.Entries.Count(entry => entry.Reason == "Element resources changed");
+        int resourceInvalidations = root.Detective.Invalidation.Entries.Count(entry => entry.Reason == "Element resources changed");
         Assert.Null(RunWorker(() => target.Resources.Add("stale", "value")));
         root.VisualChildren.Remove(target);
         root.VisualChildren.Add(target);
         root.ProcessFrame();
         Assert.Equal(
             resourceInvalidations,
-            root.Trace.Entries.Count(entry => entry.Reason == "Element resources changed"));
+            root.Detective.Invalidation.Entries.Count(entry => entry.Reason == "Element resources changed"));
     }
 
     [Fact]

@@ -162,7 +162,7 @@ public sealed class MotionSystemTests
                 MotionFramePhase.BeforeRender,
                 MotionFramePhase.AfterRender
             ],
-            root.Motion.Diagnostics.Phases);
+            root.Detective.Motion.Phases);
     }
 
     [Fact]
@@ -181,10 +181,10 @@ public sealed class MotionSystemTests
         {
             Measure = _ =>
             {
-                beforeLayoutObservedDuringMeasure = root.Motion.Diagnostics.Phases.Contains(MotionFramePhase.BeforeLayout);
-                afterLayoutNotObservedDuringMeasure = !root.Motion.Diagnostics.Phases.Contains(MotionFramePhase.AfterLayout);
+                beforeLayoutObservedDuringMeasure = root.Detective.Motion.Phases.Contains(MotionFramePhase.BeforeLayout);
+                afterLayoutNotObservedDuringMeasure = !root.Detective.Motion.Phases.Contains(MotionFramePhase.AfterLayout);
             },
-            RenderCache = _ => beforeRenderObservedDuringRender = root.Motion.Diagnostics.Phases.Contains(MotionFramePhase.BeforeRender)
+            RenderCache = _ => beforeRenderObservedDuringRender = root.Detective.Motion.Phases.Contains(MotionFramePhase.BeforeRender)
         });
 
         Assert.True(beforeLayoutObservedDuringMeasure);
@@ -198,7 +198,7 @@ public sealed class MotionSystemTests
                 MotionFramePhase.BeforeRender,
                 MotionFramePhase.AfterRender
             ],
-            root.Motion.Diagnostics.Phases);
+            root.Detective.Motion.Phases);
     }
 
     [Fact]
@@ -223,8 +223,8 @@ public sealed class MotionSystemTests
 
         root.ProcessFrame();
 
-        Assert.Equal(1, root.Motion.Diagnostics.BeforeLayoutSnapshotCaptures);
-        Assert.Equal(1, root.Motion.Diagnostics.AfterLayoutSnapshotCaptures);
+        Assert.Equal(1, root.Detective.Motion.BeforeLayoutSnapshotCaptures);
+        Assert.Equal(1, root.Detective.Motion.AfterLayoutSnapshotCaptures);
     }
 
     [Fact]

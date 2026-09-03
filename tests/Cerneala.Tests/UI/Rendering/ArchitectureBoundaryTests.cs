@@ -307,9 +307,9 @@ public sealed class ArchitectureBoundaryTests
     }
 
     [Fact]
-    public void UiDiagnosticsDoesNotReferenceConcreteBackends()
+    public void DetectiveDoesNotReferenceConcreteBackends()
     {
-        string diagnosticsRoot = FindRepositoryPath("UI", "Diagnostics");
+        string detectiveRoot = FindRepositoryPath("UI", "Detective");
         string[] forbiddenTerms =
         [
             "MonoGame",
@@ -320,7 +320,7 @@ public sealed class ArchitectureBoundaryTests
             "MonoGameDrawingBackend"
         ];
 
-        foreach (string file in Directory.EnumerateFiles(diagnosticsRoot, "*.cs", SearchOption.AllDirectories))
+        foreach (string file in Directory.EnumerateFiles(detectiveRoot, "*.cs", SearchOption.AllDirectories))
         {
             string text = File.ReadAllText(file);
             foreach (string forbiddenTerm in forbiddenTerms)

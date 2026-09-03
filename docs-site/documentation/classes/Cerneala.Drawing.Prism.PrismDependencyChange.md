@@ -50,5 +50,5 @@ Cerneala Prism development diagnostics.
 ## See also
 
 - `Cerneala.Drawing.Prism.PrismRendererOptions`
-- `Cerneala.Drawing.Prism.PrismRendererDiagnostics`
+- `Cerneala.UI.Detective.PrismRendererDiagnostics`
 - `Cerneala.Drawing.Prism.PrismCacheMissReason`

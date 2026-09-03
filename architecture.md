@@ -98,7 +98,7 @@ Each root owns the retained systems for one UI tree:
 - layout;
 - retained rendering;
 - hit testing, routed input, focus, capture, and commands;
-- resources and diagnostics.
+- resources and Detective diagnostics.
 
 This ownership matters. These systems are coordinated at the root instead of
 running as unrelated global managers.
@@ -309,11 +309,15 @@ The SDL3 path separates native platform ownership from GPU drawing ownership:
 
 Core UI code remains unaware of the selected native backend.
 
-## Diagnostics And Evidence
+## Detective And Evidence
 
 Cerneala treats runtime behavior as something to measure, not something to
-guess about. The repository contains diagnostics for invalidation, layout,
-render caches, routed input, Motion, Aspect, Prism, and frame work.
+guess about. `UIRoot.Detective` is the public owner for runtime snapshots,
+traces, and counters covering invalidation, layout, render caches, routed input,
+Motion, Aspect, resources, platform services, and frame work. The functional
+domains still produce the evidence; Detective exposes it without taking over
+their runtime invariants. Backend-specific Prism evidence remains produced at
+the backend boundary.
 
 Applicable changes are verified through combinations of:
 

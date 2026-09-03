@@ -39,5 +39,5 @@ Cerneala Prism retained-cache diagnostics.
 
 ## See also
 
-- `Cerneala.Drawing.Prism.PrismRendererDiagnostics`
+- `Cerneala.UI.Detective.PrismRendererDiagnostics`
 - `Cerneala.Drawing.Prism.PrismDependencyChange`

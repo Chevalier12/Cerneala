@@ -103,4 +103,4 @@ Cerneala UI aspect rule matching and cascade ordering.
 - `Cerneala.UI.Aspect.AspectTarget`
 - `Cerneala.UI.Aspect.AspectCondition`
 - `Cerneala.UI.Aspect.AspectRuleSet`
-- `Cerneala.UI.Aspect.AspectResolutionStep`
+- `Cerneala.UI.Detective.AspectResolutionStep`

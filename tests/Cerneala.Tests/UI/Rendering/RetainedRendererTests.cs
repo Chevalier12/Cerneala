@@ -99,7 +99,7 @@ public sealed class RetainedRendererTests
     private static void PrepareSubtree(UIElement element)
     {
         UIRoot root = element.Root ?? throw new InvalidOperationException("Element must be attached.");
-        RenderCounters counters = root.RenderCounters;
+        RenderCounters counters = root.Detective.RenderingCounters;
         root.RetainedRenderCache.GetElementCache(element).Ensure(element, counters, forceRebuild: true);
         foreach (UIElement child in element.VisualChildren)
         {

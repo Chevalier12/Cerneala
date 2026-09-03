@@ -1,5 +1,5 @@
 using Cerneala.UI.Motion.Core;
-using Cerneala.UI.Motion.Diagnostics;
+using Cerneala.UI.Detective;
 using Cerneala.UI.Motion.Interpolation;
 
 namespace Cerneala.UI.Motion.Specs;

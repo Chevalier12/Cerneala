@@ -1,7 +1,7 @@
 using Cerneala.Drawing;
-using ServoApi = Cerneala.UI.Servo.Servo;
 using Cerneala.UI.Controls;
-using Cerneala.UI.Diagnostics;
+using ServoApi = Cerneala.UI.Servo.Servo;
+using Cerneala.UI.Detective;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;

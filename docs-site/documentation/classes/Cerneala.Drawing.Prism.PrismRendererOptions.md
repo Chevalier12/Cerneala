@@ -106,6 +106,6 @@ Cerneala MonoGame Prism rendering and UI hosting.
 
 ## See also
 
-- `Cerneala.Drawing.Prism.PrismRendererDiagnostics`
+- `Cerneala.UI.Detective.PrismRendererDiagnostics`
 - `Cerneala.Drawing.MonoGame.MonoGameDrawingBackend`
 - `Cerneala.UI.Hosting.MonoGame.MonoGameUiHostOptions`

@@ -42,9 +42,9 @@ public sealed class RetainedStressBudgetTests
         host.Update(EmptyFrame(), new UiViewport(800, 600), TimeSpan.Zero);
         int cacheVersion = root.RetainedRenderCache.Version;
         int treeVersion = root.TreeVersion;
-        int cacheHits = root.RenderCounters.CacheHits;
-        int cacheMisses = root.RenderCounters.CacheMisses;
-        int localRebuilds = root.RenderCounters.LocalRebuilds;
+        int cacheHits = root.Detective.RenderingCounters.CacheHits;
+        int cacheMisses = root.Detective.RenderingCounters.CacheMisses;
+        int localRebuilds = root.Detective.RenderingCounters.LocalRebuilds;
 
         for (int i = 0; i < 100; i++)
         {
@@ -55,9 +55,9 @@ public sealed class RetainedStressBudgetTests
         Assert.NotNull(backend.LastCommands);
         Assert.Equal(cacheVersion, root.RetainedRenderCache.Version);
         Assert.Equal(treeVersion, root.TreeVersion);
-        Assert.Equal(cacheHits, root.RenderCounters.CacheHits);
-        Assert.Equal(cacheMisses, root.RenderCounters.CacheMisses);
-        Assert.Equal(localRebuilds, root.RenderCounters.LocalRebuilds);
+        Assert.Equal(cacheHits, root.Detective.RenderingCounters.CacheHits);
+        Assert.Equal(cacheMisses, root.Detective.RenderingCounters.CacheMisses);
+        Assert.Equal(localRebuilds, root.Detective.RenderingCounters.LocalRebuilds);
         Assert.False(root.Scheduler.HasWork);
     }
 

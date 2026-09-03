@@ -199,5 +199,5 @@ Cerneala MonoGame drawing integration.
 - `Cerneala.Drawing.DrawingFrameContext`
 - `Cerneala.Drawing.MonoGame.MonoGameImage`
 - `Cerneala.Drawing.Prism.PrismRendererOptions`
-- `Cerneala.Drawing.Prism.PrismRendererDiagnostics`
+- `Cerneala.UI.Detective.PrismRendererDiagnostics`
 - `Cerneala.UI.Hosting.MonoGame.MonoGameUiHost`

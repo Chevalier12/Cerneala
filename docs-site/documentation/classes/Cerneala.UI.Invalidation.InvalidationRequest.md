@@ -92,4 +92,4 @@ Cerneala retained UI invalidation requests, dirty propagation, layout scheduling
 - `Cerneala.UI.Invalidation.InvalidationFlags`
 - `Cerneala.UI.Elements.UIElement`
 - `Cerneala.UI.Elements.UIRoot`
-- `Cerneala.UI.Diagnostics.InvalidationTrace`
+- `Cerneala.UI.Detective.InvalidationTrace`

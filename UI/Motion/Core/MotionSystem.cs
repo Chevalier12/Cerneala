@@ -1,5 +1,5 @@
 using Cerneala.UI.Elements;
-using Cerneala.UI.Motion.Diagnostics;
+using Cerneala.UI.Detective;
 using Cerneala.UI.Motion.Interpolation;
 using Cerneala.UI.Motion.Layout;
 using Cerneala.UI.Motion.Presence;
@@ -56,7 +56,7 @@ public sealed class MotionSystem
 
     public MotionTimelineRegistry Timelines { get; }
 
-    public MotionDiagnostics Diagnostics { get; }
+    internal MotionDiagnostics Diagnostics { get; }
 
     public MotionFrameCoordinator Frames { get; }
 

@@ -1,4 +1,4 @@
-using Cerneala.UI.Diagnostics;
+using Cerneala.UI.Detective;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
@@ -79,7 +79,7 @@ public sealed class HoverTrackerTests
 
         tracker.Update(new HitTestResult(target, id, 1, 1), map);
 
-        Assert.Contains(root.Trace.Entries, entry =>
+        Assert.Contains(root.Detective.Invalidation.Entries, entry =>
             ReferenceEquals(entry.Element, target) &&
             ReferenceEquals(entry.SourceProperty, UIElement.IsPointerOverProperty) &&
             entry.Flags.HasFlag(InvalidationFlags.InputVisual));

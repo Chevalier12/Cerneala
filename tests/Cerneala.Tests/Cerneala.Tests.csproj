@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Using Include="Cerneala.UI.Detective" />
     <Using Include="Cerneala.Drawing.Prism.Execution" />
     <Using Include="Cerneala.Drawing.Prism.Kernels" />
     <Using Include="Cerneala.Drawing.Prism.Surfaces" />

@@ -57,11 +57,12 @@ root.SetResourceProvider(resources);
 The following example opts into retained invalidation tracing for a diagnostic session.
 
 ```csharp
-using Cerneala.UI.Diagnostics;
+using Cerneala.UI.Detective;
 using Cerneala.UI.Elements;
 
 InvalidationTrace trace = new();
 UIRoot root = new(invalidationTrace: trace);
+IReadOnlyList<InvalidationTraceEntry> entries = root.Detective.Invalidation.Entries;
 ```
 
 ## Remarks
@@ -76,7 +77,7 @@ Children are attached by adding them to the inherited `VisualChildren` or `Logic
 
 The root viewport is stored in `ViewportWidth`, `ViewportHeight`, and the root-level `Scale` property. `SetViewport` updates those values and increments `TreeVersion`. Adding, removing, or moving attached children also increments `TreeVersion`, which invalidates cached visual queue order and semantics. The root `Scale` property hides `UIElement.Scale`; on `UIRoot`, it represents viewport scale rather than the inherited render scale UI property.
 
-Invalidation requests are expanded through `DirtyPropagation` and queued into the root-owned layout, inherited property, command-state, aspect, render, and hit-test queues. Invalidation tracing is disabled by default so routine invalidation does not allocate diagnostic entries in the frame hot path. Pass an enabled `InvalidationTrace` to the constructor when retained invalidation history is required. Queue snapshots share one visual preorder index per `TreeVersion`, while idle `HasWork` checks read queue counts without tree traversal. Render invalidation clears the retained render root, hit-test invalidation clears the input cache, and semantics invalidation marks the cached semantics tree dirty.
+Invalidation requests are expanded through `DirtyPropagation` and queued into the root-owned layout, inherited property, command-state, aspect, render, and hit-test queues. Invalidation tracing is disabled by default so routine invalidation does not allocate diagnostic entries in the frame hot path. Pass an enabled `InvalidationTrace` to the constructor when retained invalidation history is required, then inspect it through `Detective.Invalidation`. Queue snapshots share one visual preorder index per `TreeVersion`, while idle `HasWork` checks read queue counts without tree traversal. Render invalidation clears the retained render root, hit-test invalidation clears the input cache, and semantics invalidation marks the cached semantics tree dirty.
 
 `ProcessFrame` verifies Relay access, drains one stable Relay snapshot, and then runs scheduled frame work through `Scheduler`. Relay invalidations participate in that same frame; callbacks posted during the drain remain queued for the next call. If the scheduler has work or `Motion` has active motion, the frame is processed with the root motion frame coordinator.
 
@@ -97,6 +98,7 @@ Invalidation requests are expanded through `DirtyPropagation` and queued into th
 | `AspectQueue` | `AspectQueue` | Queues elements that need aspect processing. |
 | `AspectRegistry` | `AspectRegistry` | Stores aspect packages for the root; the default aspect package is registered during construction. |
 | `CommandStateQueue` | `CommandStateQueue` | Queues elements whose command state must be refreshed. |
+| `Detective` | `Detective` | Gets the root-owned diagnostics entry point for snapshots, traces, and counters. |
 | `ElementIds` | `ElementIdProvider` | Provides stable element IDs for attached elements. |
 | `HitTestQueue` | `HitTestQueue` | Queues hit-test cache work. |
 | `ImageLoader` | `IImageLoader?` | Gets the image loader assigned by `SetImageLoader` or `SetImageResourceCache`. |
@@ -109,7 +111,6 @@ Invalidation requests are expanded through `DirtyPropagation` and queued into th
 | `Motion` | `MotionSystem` | Coordinates motion values and motion frames for the root. |
 | `PlatformServices` | `IPlatformServices` | Gets the platform services assigned by `SetPlatformServices`, or the empty platform services object when none are assigned. |
 | `Relay` | `UiRelay` | Gets the root-owned queue used to marshal callbacks to the UI thread captured during construction. |
-| `RenderCounters` | `RenderCounters` | Tracks render counters for retained rendering. |
 | `RenderQueue` | `RenderQueue` | Queues render cache work. |
 | `RenderQueueProcessor` | `RenderQueueProcessor` | Processes render queue entries into the retained render cache. |
 | `ResourceDependencyTracker` | `ResourceDependencyTracker` | Tracks resource dependencies and maps resource changes to invalidation effects. |
@@ -119,7 +120,6 @@ Invalidation requests are expanded through `DirtyPropagation` and queued into th
 | `Scale` | `float` | Gets the root viewport scale. This property hides `UIElement.Scale`. |
 | `Scheduler` | `UiFrameScheduler` | Coordinates retained frame phases for queued root work. |
 | `ThemeProvider` | `ThemeProvider?` | Gets the current theme provider assigned by `SetThemeProvider`. |
-| `Trace` | `InvalidationTrace` | Gets the supplied invalidation trace, or the disabled trace when none was supplied. |
 | `TreeVersion` | `int` | Gets the root tree version. It changes when the tree or viewport changes. |
 | `ViewportHeight` | `float` | Gets the viewport height assigned at construction or by `SetViewport`. |
 | `ViewportWidth` | `float` | Gets the viewport width assigned at construction or by `SetViewport`. |

@@ -277,7 +277,7 @@ public sealed class AspectUnificationContractTests
         root.ProcessFrame();
 
         Assert.Contains(
-            root.AspectProcessor.Engine.GetDiagnostics(button).ResolutionSteps,
+            root.Detective.CaptureAspect(button).ResolutionSteps,
             step => string.Equals(step.PackageName, "Scoped", StringComparison.Ordinal));
     }
 
@@ -470,7 +470,7 @@ public sealed class AspectUnificationContractTests
         root.ProcessFrame();
 
         Assert.Contains(
-            root.AspectProcessor.Engine.GetDiagnostics(button).ResolutionSteps,
+            root.Detective.CaptureAspect(button).ResolutionSteps,
             step => string.Equals(step.PackageName, "Named", StringComparison.Ordinal));
     }
 

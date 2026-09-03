@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Cerneala.UI.Core;
+using Cerneala.UI.Detective;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Motion.States;
 using Cerneala.UI.Motion.Core;
@@ -26,7 +27,7 @@ public sealed class AspectEngine
         this.threadAccess = threadAccess ?? throw new ArgumentNullException(nameof(threadAccess));
     }
 
-    public AspectEngineCounters Counters => counters;
+    internal AspectEngineCounters Counters => counters;
 
     public AspectApplicationResult Apply(
         UIElement element,
@@ -317,7 +318,7 @@ public sealed class AspectEngine
         return 1 + result.Children.Sum(CountConditionEvaluations);
     }
 
-    public AspectDiagnostics.Snapshot GetDiagnostics(UIElement element)
+    internal AspectDiagnostics.Snapshot GetDiagnostics(UIElement element)
     {
         threadAccess.VerifyAccess();
         ArgumentNullException.ThrowIfNull(element);

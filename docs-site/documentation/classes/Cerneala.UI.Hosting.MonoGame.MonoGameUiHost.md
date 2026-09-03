@@ -122,7 +122,7 @@ Cerneala MonoGame UI hosting.
 - `Cerneala.Drawing.MonoGame.MonoGameDrawingBackend`
 - `Cerneala.Drawing.MonoGame.Prism.IMonoGameBackdropFrameLease`
 - `Cerneala.Drawing.Prism.IBackdropFrameSource`
-- `Cerneala.Drawing.Prism.PrismRendererDiagnostics`
+- `Cerneala.UI.Detective.PrismRendererDiagnostics`
 - `Cerneala.Drawing.Prism.PrismRendererOptions`
 - `Cerneala.UI.Hosting.MonoGame.MonoGameContentServices`
 - `Cerneala.UI.Hosting.DrawingContentServices`

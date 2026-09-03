@@ -23,6 +23,7 @@ Use the canonical processor exposed by a `UIRoot`:
 ```csharp
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Detective;
 using Cerneala.UI.Elements;
 
 UIRoot root = new();
@@ -32,7 +33,7 @@ root.LogicalChildren.Add(button);
 root.AspectProcessor.Process(button);
 
 AspectDiagnostics.Snapshot diagnostics =
-    root.AspectProcessor.Engine.GetDiagnostics(button);
+    root.Detective.CaptureAspect(button);
 ```
 
 Clear aspect state when manually coordinating element cleanup:
@@ -69,7 +70,7 @@ The engine receives the target element, current catalog, synchronized environmen
 
 `Clear` disposes synchronized behavior lifetimes, delegates to `AspectEngine.Clear`, and discards the element's catalog/environment caches. Element lifecycle cleanup calls this during detach, which removes previously applied aspect-base values and tracked diagnostics/dependencies; reattach resolves the current ancestry and local aspect afresh.
 
-The `Engine` property exposes the owned `AspectEngine` for diagnostics, dependency inspection, and low-level aspect operations. Mutating the engine directly can bypass the root-level catalog and token-default synchronization performed by `Process`.
+The `Engine` property exposes the owned `AspectEngine` for dependency inspection and low-level aspect operations. Read root-owned Aspect diagnostics through `UIRoot.Detective`; mutating the engine directly can bypass the root-level catalog and token-default synchronization performed by `Process`.
 
 ## Constructors
 

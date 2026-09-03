@@ -4,7 +4,7 @@ using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Media;
 using Cerneala.UI.Motion;
 using Cerneala.UI.Motion.Core;
-using Cerneala.UI.Motion.Diagnostics;
+using Cerneala.UI.Detective;
 using Cerneala.UI.Motion.Layout;
 using Cerneala.UI.Motion.Presence;
 using Cerneala.UI.Platform;
@@ -82,14 +82,14 @@ public sealed class MotionCompositionReducedMotionTests
     {
         ManualMotionClock clock = new();
         UIRoot root = new(100, 100, motionClock: clock, reducedMotion: new ReducedMotionPolicy(ReducedMotionMode.Reduce));
-        root.Motion.Diagnostics.IsEnabled = true;
+        root.Detective.Motion.IsEnabled = true;
         MotionValue<float> value = root.Motion.Graph.CreateValue(0f);
 
         value.AnimateTo(10f, MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(200)));
 
-        Assert.Equal(1, root.Motion.Diagnostics.ReducedMotionSkipCount);
+        Assert.Equal(1, root.Detective.Motion.ReducedMotionSkipCount);
         Assert.Contains(
-            root.Motion.Diagnostics.Trace.Events,
+            root.Detective.Motion.Trace.Events,
             e => e.Kind == MotionTraceEventKind.MotionSkippedReducedMotion);
     }
 

@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using Cerneala.UI.Diagnostics;
+using Cerneala.UI.Detective;
 using Cerneala.UI.Motion.Core;
 
 namespace Cerneala.UI.Invalidation;

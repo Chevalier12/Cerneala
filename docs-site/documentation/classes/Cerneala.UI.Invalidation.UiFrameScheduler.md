@@ -113,4 +113,4 @@ Cerneala retained UI invalidation, layout, render-cache, hit-test, command-state
 - `Cerneala.UI.Invalidation.FramePhaseProcessors`
 - `Cerneala.UI.Invalidation.FrameStats`
 - `Cerneala.UI.Invalidation.FrameBudget`
-- `Cerneala.UI.Diagnostics.InvalidationTrace`
+- `Cerneala.UI.Detective.InvalidationTrace`

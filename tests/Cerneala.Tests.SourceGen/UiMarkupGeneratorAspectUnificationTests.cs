@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.Emit;
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Detective;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Media;
 
@@ -67,13 +68,13 @@ public sealed partial class UiMarkupGeneratorTests
         Button namedButton = Assert.IsType<Button>(panel.VisualChildren[0]);
         Button inlineButton = Assert.IsType<Button>(panel.VisualChildren[1]);
         UIRoot root = AttachAndProcess(panel);
-        AspectOrigin namedOrigin = Assert.Single(root.AspectProcessor.Engine
-            .GetDiagnostics(namedButton)
+        AspectOrigin namedOrigin = Assert.Single(root.Detective
+            .CaptureAspect(namedButton)
             .ResolutionSteps
             .Where(step => step.Origin.Kind == AspectAuthoringKind.MarkupNamed))
             .Origin;
-        AspectOrigin inlineOrigin = Assert.Single(root.AspectProcessor.Engine
-            .GetDiagnostics(inlineButton)
+        AspectOrigin inlineOrigin = Assert.Single(root.Detective
+            .CaptureAspect(inlineButton)
             .ResolutionSteps
             .Where(step => step.Origin.Kind == AspectAuthoringKind.MarkupInline))
             .Origin;
@@ -213,8 +214,8 @@ public sealed partial class UiMarkupGeneratorTests
             "Cerneala.GeneratedUi.DiagnosticParityFactory"));
         Button markupButton = Assert.IsType<Button>(Assert.Single(markupPanel.VisualChildren));
         UIRoot markupRoot = AttachAndProcess(markupPanel);
-        AspectResolutionStep[] markupSteps = markupRoot.AspectProcessor.Engine
-            .GetDiagnostics(markupButton)
+        AspectResolutionStep[] markupSteps = markupRoot.Detective
+            .CaptureAspect(markupButton)
             .ResolutionSteps
             .Where(step => string.Equals(step.Origin.Document, "DiagnosticParity.crn", StringComparison.Ordinal))
             .ToArray();
@@ -241,8 +242,8 @@ public sealed partial class UiMarkupGeneratorTests
         Button codeButton = new();
         codePanel.VisualChildren.Add(codeButton);
         UIRoot codeRoot = AttachAndProcess(codePanel);
-        AspectResolutionStep[] codeSteps = codeRoot.AspectProcessor.Engine
-            .GetDiagnostics(codeButton)
+        AspectResolutionStep[] codeSteps = codeRoot.Detective
+            .CaptureAspect(codeButton)
             .ResolutionSteps
             .Where(step => string.Equals(step.PackageName, "Code.DiagnosticParity", StringComparison.Ordinal))
             .ToArray();

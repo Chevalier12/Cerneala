@@ -138,7 +138,7 @@ public sealed class MotionRepeatTimelineTests
         Assert.Equal(1, value.Current);
         Assert.False(first.NeedsAnotherFrame);
         Assert.False(second.NeedsAnotherFrame);
-        Assert.True(root.Motion.Diagnostics.ReducedMotionSkipCount > 0);
+        Assert.True(root.Detective.Motion.ReducedMotionSkipCount > 0);
     }
 
     [Fact]

@@ -82,7 +82,6 @@ The frame result combines graph counters with property flush counters. `NeedsAno
 | `ReducedMotion` | `ReducedMotionPolicy` | Gets the reduced-motion policy used by the graph and related motion services. |
 | `Graph` | `MotionGraph` | Gets the graph that owns active motion nodes and graph-bound motion values. |
 | `Timelines` | `MotionTimelineRegistry` | Gets the root-affine registry for named or shared motion timelines. |
-| `Diagnostics` | `MotionDiagnostics` | Gets the diagnostics recorder and snapshot source for motion frames. |
 | `Frames` | `MotionFrameCoordinator` | Gets the coordinator that integrates motion sampling with retained frame phases. |
 | `Tokens` | `MotionTokens` | Gets the motion token set used by motion-aware styling and state APIs. |
 | `Mixers` | `ValueMixerRegistry` | Gets the value mixer registry. Built-in mixers are registered during construction. |

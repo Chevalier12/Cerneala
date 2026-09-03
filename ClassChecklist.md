@@ -183,19 +183,19 @@ Excluded RoslynRepoIndexer class-like types: 0
 
 - [x] `Cerneala.UI.Aspect.AspectDependencySet` - class, public, sealed, line 5
 
-### UI/Aspect/AspectDiagnostics.cs
+### UI/Detective/AspectDiagnostics.cs
 
-- [x] `Cerneala.UI.Aspect.AspectDiagnostics` - class, public, static, line 3
-- [x] `Cerneala.UI.Aspect.AspectDiagnostics.Snapshot` - class, public, sealed, line 5
+- [x] `Cerneala.UI.Detective.AspectDiagnostics` - class, public, static, line 3
+- [x] `Cerneala.UI.Detective.AspectDiagnostics.Snapshot` - class, public, sealed, line 5
 
 ### UI/Aspect/AspectEngine.cs
 
 - [x] `Cerneala.UI.Aspect.AspectEngine` - class, public, sealed, line 8
 - [x] `Cerneala.UI.Aspect.AspectApplicationResult` - record, public, sealed, line 219
 
-### UI/Aspect/AspectEngineCounters.cs
+### UI/Detective/AspectEngineCounters.cs
 
-- [x] `Cerneala.UI.Aspect.AspectEngineCounters` - class, public, sealed, line 3
+- [x] `Cerneala.UI.Detective.AspectEngineCounters` - class, public, sealed, line 3
 
 ### UI/Aspect/AspectEngineElementState.cs
 
@@ -250,9 +250,9 @@ Excluded RoslynRepoIndexer class-like types: 0
 
 - [x] `Cerneala.UI.Aspect.AspectResolutionContext` - class, public, sealed, line 6
 
-### UI/Aspect/AspectResolutionStep.cs
+### UI/Detective/AspectResolutionStep.cs
 
-- [x] `Cerneala.UI.Aspect.AspectResolutionStep` - record, public, sealed, line 3
+- [x] `Cerneala.UI.Detective.AspectResolutionStep` - record, public, sealed, line 3
 
 ### UI/Aspect/AspectRuleSet.cs
 
@@ -307,9 +307,9 @@ Excluded RoslynRepoIndexer class-like types: 0
 
 - [x] `Cerneala.UI.Aspect.AspectTokenDefinition` - class, public, sealed, line 3
 
-### UI/Aspect/AspectTokenTrace.cs
+### UI/Detective/AspectTokenTrace.cs
 
-- [x] `Cerneala.UI.Aspect.AspectTokenTrace` - record, public, sealed, line 3
+- [x] `Cerneala.UI.Detective.AspectTokenTrace` - record, public, sealed, line 3
 
 ### UI/Aspect/AspectValue.cs
 
@@ -780,73 +780,71 @@ Excluded RoslynRepoIndexer class-like types: 0
 
 - [x] `Cerneala.UI.Data.UiPropertyBinding<T>` - class, public, sealed, line 5
 
-### UI/Diagnostics/AspectTrace.cs
+### UI/Detective/Detective.cs
 
-- [x] `Cerneala.UI.Diagnostics.AspectTrace` - class, public, static, line 7
-- [x] `Cerneala.UI.Diagnostics.AspectTraceSnapshot` - class, public, sealed, line 55
+- [x] `Cerneala.UI.Detective.Detective` - class, public, sealed
+- [x] `Cerneala.UI.Detective.DetectiveSnapshot` - record, public, sealed
+- [x] `Cerneala.UI.Detective.ViewportDiagnosticsSnapshot` - record, public, sealed
+- [x] `Cerneala.UI.Detective.RootInputDiagnosticsSnapshot` - record, public, sealed
+- [x] `Cerneala.UI.Detective.ResourceDiagnosticsSnapshot` - record, public, sealed
+- [x] `Cerneala.UI.Detective.PlatformDiagnosticsSnapshot` - record, public, sealed
+### UI/Detective/AspectTrace.cs
 
-### UI/Diagnostics/DebugAdorner.cs
+- [x] `Cerneala.UI.Detective.AspectTrace` - class, public, static, line 7
+- [x] `Cerneala.UI.Detective.AspectTraceSnapshot` - class, public, sealed, line 55
 
-- [x] `Cerneala.UI.Diagnostics.DebugAdorner` - class, public, sealed, line 9
+### UI/Detective/DebugAdorner.cs
 
-### UI/Diagnostics/DebugOverlay.cs
+- [x] `Cerneala.UI.Detective.DebugAdorner` - class, public, sealed, line 9
 
-- [x] `Cerneala.UI.Diagnostics.DebugOverlay` - class, public, sealed, line 10
+### UI/Detective/DebugOverlay.cs
 
-### UI/Diagnostics/DirtyTreeDumper.cs
+- [x] `Cerneala.UI.Detective.DebugOverlay` - class, public, sealed, line 10
 
-- [x] `Cerneala.UI.Diagnostics.DirtyTreeDumper` - class, public, sealed, line 7
-- [x] `Cerneala.UI.Diagnostics.DirtyTreeDumper.DirtyTraceInfo` - record, private, sealed, line 99
+### UI/Detective/DirtyTreeDumper.cs
 
-### UI/Diagnostics/ElementTreeDumper.cs
+- [x] `Cerneala.UI.Detective.DirtyTreeDumper` - class, public, sealed, line 7
+- [x] `Cerneala.UI.Detective.DirtyTreeDumper.DirtyTraceInfo` - record, private, sealed, line 99
 
-- [x] `Cerneala.UI.Diagnostics.ElementTreeDumper` - class, public, sealed, line 7
+### UI/Detective/ElementTreeDumper.cs
 
-### UI/Diagnostics/FrameDiagnostics.cs
+- [x] `Cerneala.UI.Detective.ElementTreeDumper` - class, public, sealed, line 7
 
-- [x] `Cerneala.UI.Diagnostics.FrameDiagnostics` - class, public, static, line 6
-- [x] `Cerneala.UI.Diagnostics.FrameDiagnosticsSnapshot` - record, public, sealed, line 40
+### UI/Detective/FrameDiagnostics.cs
 
-### UI/Diagnostics/InputDiagnostics.cs
+- [x] `Cerneala.UI.Detective.FrameDiagnostics` - class, public, static, line 6
+- [x] `Cerneala.UI.Detective.FrameDiagnosticsSnapshot` - record, public, sealed, line 40
 
-- [x] `Cerneala.UI.Diagnostics.InputDiagnostics` - class, public, static, line 6
-- [x] `Cerneala.UI.Diagnostics.InputDiagnosticsSnapshot` - record, public, sealed, line 18
+### UI/Detective/InputDiagnostics.cs
 
-### UI/Diagnostics/InvalidationTrace.cs
+- [x] `Cerneala.UI.Detective.InputDiagnostics` - class, public, static, line 6
+- [x] `Cerneala.UI.Detective.InputDiagnosticsSnapshot` - record, public, sealed, line 18
 
-- [x] `Cerneala.UI.Diagnostics.InvalidationTrace` - class, public, sealed, line 7
-- [x] `Cerneala.UI.Diagnostics.InvalidationTraceEntry` - record, public, sealed, line 108
+### UI/Detective/InvalidationTrace.cs
 
-### UI/Diagnostics/LayoutDiagnostics.cs
+- [x] `Cerneala.UI.Detective.InvalidationTrace` - class, public, sealed, line 7
+- [x] `Cerneala.UI.Detective.InvalidationTraceEntry` - record, public, sealed, line 108
 
-- [x] `Cerneala.UI.Diagnostics.LayoutDiagnostics` - class, public, static, line 7
-- [x] `Cerneala.UI.Diagnostics.LayoutDiagnosticsSnapshot` - record, public, sealed, line 26
+### UI/Detective/LayoutDiagnostics.cs
 
-### UI/Diagnostics/RenderCacheDumper.cs
+- [x] `Cerneala.UI.Detective.LayoutDiagnostics` - class, public, static, line 7
+- [x] `Cerneala.UI.Detective.LayoutDiagnosticsSnapshot` - record, public, sealed, line 26
 
-- [x] `Cerneala.UI.Diagnostics.RenderCacheDumper` - class, public, sealed, line 7
+### UI/Detective/RenderCacheDumper.cs
 
-### UI/Diagnostics/RenderDiagnostics.cs
+- [x] `Cerneala.UI.Detective.RenderCacheDumper` - class, public, sealed, line 7
 
-- [x] `Cerneala.UI.Diagnostics.RenderDiagnostics` - class, public, static, line 7
-- [x] `Cerneala.UI.Diagnostics.RootRenderDiagnosticsSnapshot` - record, public, sealed, line 35
-- [x] `Cerneala.UI.Diagnostics.ElementRenderDiagnosticsSnapshot` - record, public, sealed, line 45
+### UI/Detective/RenderDiagnostics.cs
 
-### UI/Diagnostics/RoutedEventTrace.cs
+- [x] `Cerneala.UI.Detective.RenderDiagnostics` - class, public, static, line 7
+- [x] `Cerneala.UI.Detective.RootRenderDiagnosticsSnapshot` - record, public, sealed, line 35
+- [x] `Cerneala.UI.Detective.ElementRenderDiagnosticsSnapshot` - record, public, sealed, line 45
 
-- [x] `Cerneala.UI.Diagnostics.RoutedEventTrace` - class, public, static, line 6
-- [x] `Cerneala.UI.Diagnostics.RoutedEventTraceSnapshot` - record, public, sealed, line 30
-- [x] `Cerneala.UI.Diagnostics.RoutedEventTraceStep` - record, public, sealed, line 42
+### UI/Detective/RoutedEventTrace.cs
 
-### UI/Diagnostics/RuntimeDiagnostics.cs
-
-- [x] `Cerneala.UI.Diagnostics.RuntimeDiagnostics` - class, public, static, line 8
-- [x] `Cerneala.UI.Diagnostics.RuntimeDiagnosticsSnapshot` - record, public, sealed, line 45
-- [x] `Cerneala.UI.Diagnostics.RuntimeViewportDiagnosticsSnapshot` - record, public, sealed, line 61
-- [x] `Cerneala.UI.Diagnostics.RuntimeInputDiagnosticsSnapshot` - record, public, sealed, line 63
-- [x] `Cerneala.UI.Diagnostics.RuntimeRenderDiagnosticsSnapshot` - record, public, sealed, line 65
-- [x] `Cerneala.UI.Diagnostics.RuntimeResourceDiagnosticsSnapshot` - record, public, sealed, line 67
-- [x] `Cerneala.UI.Diagnostics.RuntimePlatformDiagnosticsSnapshot` - record, public, sealed, line 69
+- [x] `Cerneala.UI.Detective.RoutedEventTrace` - class, public, static, line 6
+- [x] `Cerneala.UI.Detective.RoutedEventTraceSnapshot` - record, public, sealed, line 30
+- [x] `Cerneala.UI.Detective.RoutedEventTraceStep` - record, public, sealed, line 42
 
 ### UI/Elements/ElementHandlerStore.cs
 
@@ -1598,21 +1596,21 @@ Excluded RoslynRepoIndexer class-like types: 0
 
 - [x] `Cerneala.UI.Motion.Core.SystemMotionClock` - class, public, sealed, line 5
 
-### UI/Motion/Diagnostics/MotionDiagnostics.cs
+### UI/Detective/MotionDiagnostics.cs
 
-- [x] `Cerneala.UI.Motion.Diagnostics.MotionDiagnostics` - class, public, sealed, line 5
+- [x] `Cerneala.UI.Detective.MotionDiagnostics` - class, public, sealed, line 5
 
-### UI/Motion/Diagnostics/MotionGraphSnapshot.cs
+### UI/Detective/MotionGraphSnapshot.cs
 
-- [x] `Cerneala.UI.Motion.Diagnostics.MotionGraphSnapshot` - record, public, sealed, line 3
+- [x] `Cerneala.UI.Detective.MotionGraphSnapshot` - record, public, sealed, line 3
 
-### UI/Motion/Diagnostics/MotionTrace.cs
+### UI/Detective/MotionTrace.cs
 
-- [x] `Cerneala.UI.Motion.Diagnostics.MotionTrace` - class, public, sealed, line 3
+- [x] `Cerneala.UI.Detective.MotionTrace` - class, public, sealed, line 3
 
-### UI/Motion/Diagnostics/MotionTraceEvent.cs
+### UI/Detective/MotionTraceEvent.cs
 
-- [x] `Cerneala.UI.Motion.Diagnostics.MotionTraceEvent` - record, public, sealed, line 16
+- [x] `Cerneala.UI.Detective.MotionTraceEvent` - record, public, sealed, line 16
 
 ### UI/Motion/Input/DragMotionController.cs
 

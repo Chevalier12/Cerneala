@@ -19,7 +19,7 @@ Inheritance:
 ## Examples
 
 ```csharp
-using Cerneala.UI.Diagnostics;
+using Cerneala.UI.Detective;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 
@@ -37,7 +37,7 @@ DirtyPropagation.Default.Propagate(
     root.AspectQueue,
     root.RenderQueue,
     root.HitTestQueue,
-    root.Trace);
+    root.Detective.Invalidation);
 
 bool childNeedsMeasure = child.DirtyState.Has(InvalidationFlags.Measure);
 bool renderQueued = root.RenderQueue.Count > 0;
@@ -101,4 +101,4 @@ Cerneala retained UI invalidation, layout scheduling, render scheduling, inherit
 - `Cerneala.UI.Invalidation.InvalidationFlags`
 - `Cerneala.UI.Elements.UIRoot`
 - `Cerneala.UI.Elements.UIElement`
-- `Cerneala.UI.Diagnostics.InvalidationTrace`
+- `Cerneala.UI.Detective.InvalidationTrace`

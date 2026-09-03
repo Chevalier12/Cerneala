@@ -1,5 +1,6 @@
 namespace Cerneala.UI.Aspect;
 
+using Cerneala.UI.Detective;
 using Cerneala.UI.Theming;
 
 internal sealed class AspectEngineElementState

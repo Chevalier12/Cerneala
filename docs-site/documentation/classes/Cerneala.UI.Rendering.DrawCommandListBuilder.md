@@ -27,7 +27,7 @@ using Cerneala.UI.Rendering;
 
 UIRoot root = new(viewportWidth: 800, viewportHeight: 600);
 RetainedRenderCache cache = root.RetainedRenderCache;
-RenderCounters counters = root.RenderCounters;
+RenderCounters counters = root.Detective.RenderingCounters;
 
 root.RenderQueueProcessor.Process(root);
 

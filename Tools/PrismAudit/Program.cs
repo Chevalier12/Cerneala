@@ -108,7 +108,7 @@ internal static class Program
         "Cerneala.Drawing.Prism.PrismCacheOwnerToken",
         "Cerneala.Drawing.Prism.PrismDependencyChange",
         "Cerneala.Drawing.Prism.PrismDrawScope",
-        "Cerneala.Drawing.Prism.PrismRendererDiagnostics",
+        "Cerneala.UI.Detective.PrismRendererDiagnostics",
         "Cerneala.Drawing.Prism.PrismRendererOptions",
         "Cerneala.UI.Prism.Definitions.PrismCompositionDefinition",
         "Cerneala.UI.Prism.Definitions.PrismColorMatrixResource",
@@ -836,6 +836,10 @@ internal static class Program
         if (name.StartsWith("Cerneala.UI.Prism.Runtime.", StringComparison.Ordinal))
         {
             return "Generated markup and typed Motion runtime ABI.";
+        }
+        if (name == "Cerneala.UI.Detective.PrismRendererDiagnostics")
+        {
+            return "Detective-owned Prism retained-cache evidence produced by the renderer backend.";
         }
         if (name.StartsWith("Cerneala.Drawing.Prism.Catalog.", StringComparison.Ordinal))
         {

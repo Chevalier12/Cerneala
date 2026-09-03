@@ -3,6 +3,7 @@ using System.Text.Json;
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Detective;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Media;
 
@@ -141,7 +142,7 @@ public class AspectResolutionBenchmarks
         }
         metrics.Add(CreateMetric("CodeFirstCatalogResolve", iterations, directBefore, engine.Counters, 0));
 
-        CounterSnapshot registeredBefore = CounterSnapshot.Capture(registeredRoot.AspectProcessor.Engine.Counters);
+        CounterSnapshot registeredBefore = CounterSnapshot.Capture(registeredRoot.Detective.AspectCounters);
         int registeredInvalidations = 0;
         for (int iteration = 0; iteration < iterations; iteration++)
         {
@@ -152,10 +153,10 @@ public class AspectResolutionBenchmarks
             "RootRegisteredPackageFrame",
             iterations,
             registeredBefore,
-            registeredRoot.AspectProcessor.Engine.Counters,
+            registeredRoot.Detective.AspectCounters,
             registeredInvalidations));
 
-        CounterSnapshot scopedBefore = CounterSnapshot.Capture(scopedRoot.AspectProcessor.Engine.Counters);
+        CounterSnapshot scopedBefore = CounterSnapshot.Capture(scopedRoot.Detective.AspectCounters);
         int scopedInvalidations = 0;
         for (int iteration = 0; iteration < iterations; iteration++)
         {
@@ -166,10 +167,10 @@ public class AspectResolutionBenchmarks
             "NestedScopeAttachAndFrame",
             iterations,
             scopedBefore,
-            scopedRoot.AspectProcessor.Engine.Counters,
+            scopedRoot.Detective.AspectCounters,
             scopedInvalidations));
 
-        CounterSnapshot localBefore = CounterSnapshot.Capture(localRoot.AspectProcessor.Engine.Counters);
+        CounterSnapshot localBefore = CounterSnapshot.Capture(localRoot.Detective.AspectCounters);
         int localInvalidations = 0;
         for (int iteration = 0; iteration < iterations; iteration++)
         {
@@ -181,7 +182,7 @@ public class AspectResolutionBenchmarks
             "ElementLocalMutationAndFrame",
             iterations,
             localBefore,
-            localRoot.AspectProcessor.Engine.Counters,
+            localRoot.Detective.AspectCounters,
             localInvalidations));
 
         return metrics;

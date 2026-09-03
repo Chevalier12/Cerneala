@@ -42,8 +42,8 @@ The archived [`api-compat.proj`](api-compat.proj) invokes
 
 Current assembly: `C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll`
 
-- Size: `5,078,016` bytes
-- SHA-256: `A7232830C8DD65CA0F6E428BF5E6AC88A8627CB225887AFFBA78CA277F76B5C5`
+- Size: `5,077,504` bytes
+- SHA-256: `68EA2E581C8DD306607E7134160E7BA80FB872E0AA2123485E71FFAC06041945`
 
 The exact final command is:
 
@@ -51,12 +51,17 @@ The exact final command is:
 dotnet msbuild .\benchmarks\results\2026-09-03-servo\api-compat.proj -t:Compare -v:minimal
 ```
 
-[`api-compat.suppressions.xml`](api-compat.suppressions.xml) contains exactly 21
+[`api-compat.suppressions.xml`](api-compat.suppressions.xml) contains exactly 119
 approved differences:
 
 - 20 Servo-plan differences from section 6.5: the 12 public Servo type
   additions, the seven removed `Cerneala.UI.Automation` types, and
   `Window.CreateAutomationSession()` removal;
+- 98 differences belonging to the concurrent Detective API migration, which
+  the user explicitly approved on 2026-09-03. These cover the moves from
+  `Cerneala.UI.Aspect`, `Cerneala.UI.Diagnostics`, and
+  `Cerneala.UI.Motion.Diagnostics` into `Cerneala.UI.Detective`, plus the
+  corresponding owner/member signature changes;
 - the existing public
   `GeneratedMarkup.AttachMotionSession(UIElement, ElementAspect?)` overload,
   introduced by `e0bc2175 fix(aspect-motion-prism): repair lifecycle
@@ -66,5 +71,5 @@ The suppression file intentionally excludes every other difference.
 
 The latest strict output is archived in
 [`api-compat.current.txt`](api-compat.current.txt). Reference resolution is
-complete. With exactly the two approved categories above, the command exits
+complete. With exactly the three approved categories above, the command exits
 `0`; there are no other public or protected differences.

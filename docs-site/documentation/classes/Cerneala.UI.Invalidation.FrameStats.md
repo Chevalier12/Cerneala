@@ -105,6 +105,6 @@ Cerneala retained UI invalidation, frame scheduling, diagnostics, hosting, and m
 - `UI/Invalidation/UiFrameScheduler.cs`
 - `UI/Elements/UIRoot.cs`
 - `UI/Hosting/UiHost.cs`
-- `UI/Diagnostics/FrameDiagnostics.cs`
+- `UI/Detective/FrameDiagnostics.cs`
 - `UI/Motion/Core/MotionFrameResult.cs`
 - `UI/Relay/UiRelay.cs`

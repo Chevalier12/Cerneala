@@ -3,6 +3,7 @@ using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Buttons;
 using Cerneala.UI.Controls.Templates;
+using Cerneala.UI.Detective;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Media;
 
@@ -156,7 +157,7 @@ public sealed class AspectTemplateCatalogIntegrationTests
         root.AspectProcessor.Process(chrome);
 
         Assert.Same(accent, chrome.Background);
-        AspectDiagnostics.Snapshot diagnostics = root.AspectProcessor.Engine.GetDiagnostics(chrome);
+        AspectDiagnostics.Snapshot diagnostics = root.Detective.CaptureAspect(chrome);
         Assert.Equal(slot, diagnostics.ResolvedAspect!.Dependencies.Slot);
         Assert.Contains(ButtonVariants.Kind, diagnostics.ResolvedAspect.Dependencies.Variants);
         Assert.Contains(AspectState.Hover, diagnostics.ResolvedAspect.Dependencies.States);
