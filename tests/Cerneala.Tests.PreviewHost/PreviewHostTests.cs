@@ -75,6 +75,19 @@ public sealed class PreviewHostTests
     }
 
     [Fact]
+    public async Task UnsavedValidMarkupCompilesThroughTheDynamicProject()
+    {
+        string documentPath = OpeningViewPath();
+        string source = File.ReadAllText(documentPath) + Environment.NewLine;
+
+        using PreviewCompiler compiler = new(prewarmBuildOutput: false);
+        PreviewCompilation compilation = await compiler.CompileAsync(documentPath, source);
+
+        Assert.Equal("Cerneala.Presentation.OpeningView", compilation.TargetTypeName);
+        Assert.NotEmpty(compilation.AssemblyImage);
+    }
+
+    [Fact]
     public async Task OpeningViewCapturesThePresentedBgraFrameWithoutPngEncoding()
     {
         string documentPath = OpeningViewPath();

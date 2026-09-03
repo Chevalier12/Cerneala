@@ -16,6 +16,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Cerneala.PreviewHost\Cerneala.PreviewHost.csproj" />
+    <ProjectReference Include="..\..\CernealaPresentation\CernealaPresentation.csproj"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>

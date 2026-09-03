@@ -78,17 +78,18 @@ public sealed class FormattingTests
             Document(formatted).Syntax.DescendantElements().Select(element => element.Attributes.Select(attribute => attribute.NameToken.Text)));
     }
 
-    [Fact]
-    public void RangeAndOnTypeFormattingTouchOnlyTheSelectedLinesAndToleratePartialMarkup()
+    [Theory]
+    [InlineData("\n")]
+    [InlineData("\r\n")]
+    public void RangeAndOnTypeFormattingTouchOnlyTheSelectedLinesAndToleratePartialMarkup(string newLine)
     {
-        const string input = """
-            <Window>
-            <StackPanel>
-            <Button />
-            </StackPanel>
-            <TextBlock
-            Text="partial"
-            """;
+        string input = string.Join(newLine,
+            "<Window>",
+            "<StackPanel>",
+            "<Button />",
+            "</StackPanel>",
+            "<TextBlock",
+            "Text=\"partial\"");
         CernealaFormattingService formatter = new();
         CernealaDocument document = Document(input);
         int buttonStart = input.IndexOf("<Button", StringComparison.Ordinal);
@@ -98,16 +99,16 @@ public sealed class FormattingTests
             document,
             new TextSpan(buttonStart, stackClose - buttonStart),
             new CernealaFormattingOptions(2, InsertSpaces: true)));
-        Assert.StartsWith("<Window>\n<StackPanel>\n", rangeFormatted, StringComparison.Ordinal);
-        Assert.Contains("    <Button />\n  </StackPanel>", rangeFormatted, StringComparison.Ordinal);
-        Assert.EndsWith("<TextBlock\nText=\"partial\"", rangeFormatted, StringComparison.Ordinal);
+        Assert.StartsWith($"<Window>{newLine}<StackPanel>{newLine}", rangeFormatted, StringComparison.Ordinal);
+        Assert.Contains($"    <Button />{newLine}  </StackPanel>", rangeFormatted, StringComparison.Ordinal);
+        Assert.EndsWith($"<TextBlock{newLine}Text=\"partial\"", rangeFormatted, StringComparison.Ordinal);
 
         int attributeOffset = input.IndexOf("Text=", StringComparison.Ordinal) + 2;
         string onType = Apply(input, formatter.FormatOnType(
             document,
             attributeOffset,
             new CernealaFormattingOptions(2, InsertSpaces: true)));
-        Assert.Contains("<TextBlock\n    Text=\"partial\"", onType, StringComparison.Ordinal);
+        Assert.Contains($"<TextBlock{newLine}    Text=\"partial\"", onType, StringComparison.Ordinal);
     }
 
     [Fact]
