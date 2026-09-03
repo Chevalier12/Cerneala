@@ -5,6 +5,7 @@ namespace Cerneala.UI.Aspect;
 public sealed class AspectEnvironment
 {
     private readonly Dictionary<AspectToken, object?> values = [];
+    private readonly List<WeakReference<AspectEnvironment>> children = [];
     private readonly AspectEnvironment? parent;
     private readonly IUiThreadAccess threadAccess;
 
@@ -23,6 +24,7 @@ public sealed class AspectEnvironment
         Name = name;
         this.threadAccess = threadAccess ?? throw new ArgumentNullException(nameof(threadAccess));
         this.parent = parent;
+        parent?.RegisterChild(this);
     }
 
     public string Name { get; }
@@ -37,7 +39,7 @@ public sealed class AspectEnvironment
         ArgumentNullException.ThrowIfNull(token);
         values[token] = value;
         Version++;
-        TokenChanged?.Invoke(token);
+        NotifyTokenChanged(token);
     }
 
     public void Set(AspectToken token, object? value)
@@ -53,7 +55,7 @@ public sealed class AspectEnvironment
 
         values[token] = value;
         Version++;
-        TokenChanged?.Invoke(token);
+        NotifyTokenChanged(token);
     }
 
     public bool TryGet<T>(AspectToken<T> token, out T value)
@@ -114,7 +116,56 @@ public sealed class AspectEnvironment
         Version++;
         foreach (AspectToken token in changedTokens)
         {
-            TokenChanged?.Invoke(token);
+            NotifyTokenChanged(token);
         }
+    }
+
+    private void RegisterChild(AspectEnvironment child)
+    {
+        CompactChildren();
+        children.Add(new WeakReference<AspectEnvironment>(child));
+    }
+
+    private void NotifyTokenChanged(AspectToken token, bool inherited = false)
+    {
+        if (inherited && values.ContainsKey(token))
+        {
+            return;
+        }
+
+        TokenChanged?.Invoke(token);
+        foreach (AspectEnvironment child in GetLiveChildren())
+        {
+            child.NotifyTokenChanged(token, inherited: true);
+        }
+    }
+
+    private AspectEnvironment[] GetLiveChildren()
+    {
+        List<AspectEnvironment> liveChildren = new(children.Count);
+        int liveCount = 0;
+        for (int index = 0; index < children.Count; index++)
+        {
+            WeakReference<AspectEnvironment> reference = children[index];
+            if (!reference.TryGetTarget(out AspectEnvironment? child))
+            {
+                continue;
+            }
+
+            children[liveCount++] = reference;
+            liveChildren.Add(child);
+        }
+
+        if (liveCount < children.Count)
+        {
+            children.RemoveRange(liveCount, children.Count - liveCount);
+        }
+
+        return [.. liveChildren];
+    }
+
+    private void CompactChildren()
+    {
+        _ = GetLiveChildren();
     }
 }

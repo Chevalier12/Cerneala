@@ -60,7 +60,7 @@ An environment captures its constructing thread, and child scopes share the same
 
 Values are stored by `AspectToken`. Tokens compare by ordinal name and value type, so separately created tokens with the same name and type address the same environment entry.
 
-`TryGet<T>` first checks the current environment. If the token is not present, it walks to the parent environment created by `CreateChildScope`. A value found in the current environment shadows the parent value for the same token.
+`TryGet<T>` first checks the current environment. If the token is not present, it walks to the parent environment created by `CreateChildScope`. A value found in the current environment shadows the parent value for the same token. When an ancestor changes a token, descendant environments notify their consumers if they still inherit that token; a local value blocks the inherited notification for that branch.
 
 Calling either `Set` overload increments `Version`, including when replacing an existing value. The processor's internal runtime replacement also increments `Version` when it replaces the environment contents and raises token-change notifications for changed entries. `AspectEngine.Resolve` includes the current environment version in its match context so environment changes can participate in resolution and diagnostics.
 
