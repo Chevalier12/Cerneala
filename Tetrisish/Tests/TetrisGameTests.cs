@@ -152,6 +152,89 @@ public sealed class TetrisGameTests
     }
 
     [Fact]
+    public void RemovingAppliedAspectCancelsItsPrismMotion()
+    {
+        ProbeMotionClock clock = new();
+        (UIRoot root, MainWindow window, Sprite2D sprite) =
+            CreateActivePieceWindow(clock);
+        PrismInstance prism = GeneratedMarkup.GetPrismInstance(sprite);
+
+        clock.Advance(TimeSpan.FromMilliseconds(225));
+        root.ProcessFrame();
+        sprite.Aspect = null;
+        root.ProcessFrame();
+        long versionAfterAspectRemoval = prism.ValueVersion.Value;
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        root.ProcessFrame();
+
+        Assert.Equal(
+            (HasActiveMotion: false, PrismValueVersion: versionAfterAspectRemoval),
+            (
+                HasActiveMotion: root.Motion.HasActiveMotion,
+                PrismValueVersion: prism.ValueVersion.Value));
+
+        root.VisualChildren.Remove(window);
+    }
+
+    [Fact]
+    public void PrismReplacementVisibilityCycleRestartsAspectMotionOnCurrentInstance()
+    {
+        ProbeMotionClock clock = new();
+        (UIRoot root, MainWindow window, Sprite2D sprite) =
+            CreateActivePieceWindow(clock);
+        PrismInstance original = GeneratedMarkup.GetPrismInstance(sprite);
+        using IDisposable replacement = GeneratedMarkup.AttachPrism(
+            sprite,
+            () => new PrismInstance(original.Definition));
+
+        root.ProcessFrame();
+        sprite.Visibility = Visibility.Hidden;
+        root.ProcessFrame();
+        sprite.Visibility = Visibility.Visible;
+        root.ProcessFrame();
+        PrismInstance current = GeneratedMarkup.GetPrismInstance(sprite);
+        long versionBeforeTick = current.ValueVersion.Value;
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        root.ProcessFrame();
+
+        Assert.Equal(
+            (HasActiveMotion: true, PrismValueAdvanced: true),
+            (
+                HasActiveMotion: root.Motion.HasActiveMotion,
+                PrismValueAdvanced: current.ValueVersion.Value > versionBeforeTick));
+
+        root.VisualChildren.Remove(window);
+    }
+
+    [Fact]
+    public void HidingRenderSurfaceAncestorCancelsSceneAspectPrismMotion()
+    {
+        ProbeMotionClock clock = new();
+        (UIRoot root, MainWindow window, Sprite2D sprite) =
+            CreateActivePieceWindow(clock);
+        TetrisGameSurface surface = DescendantsAndSelf(window)
+            .OfType<TetrisGameSurface>()
+            .Single();
+        PrismInstance prism = GeneratedMarkup.GetPrismInstance(sprite);
+
+        surface.Visibility = Visibility.Hidden;
+        root.ProcessFrame();
+        long versionAfterHide = prism.ValueVersion.Value;
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        root.ProcessFrame();
+
+        Assert.Equal(
+            (HasActiveMotion: false, PrismValueVersion: versionAfterHide),
+            (
+                HasActiveMotion: root.Motion.HasActiveMotion,
+                PrismValueVersion: prism.ValueVersion.Value));
+
+        root.VisualChildren.Remove(window);
+    }
+
+    [Fact]
     public void MotionBlurVisibilityTracksTheQuantizedSurfaceValue()
     {
         (UIRoot root, MainWindow window, Sprite2D sprite) =

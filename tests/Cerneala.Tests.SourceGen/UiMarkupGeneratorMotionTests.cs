@@ -211,6 +211,7 @@ public sealed partial class UiMarkupGeneratorTests
         AssertNoGeneratorOrCompilationErrors(result, compilation);
         string generated = SingleGeneratedSource(result);
         Assert.Equal(2, generated.Split("AttachMotionSession", StringSplitOptions.None).Length - 1);
+        Assert.Equal(2, generated.Split(".Aspect!);", StringSplitOptions.None).Length - 1);
         Assert.Equal(2, generated.Split("AddMotionTrigger", StringSplitOptions.None).Length - 1);
     }
 

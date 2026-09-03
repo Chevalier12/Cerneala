@@ -34,7 +34,9 @@ public static class UIElementVisibility
     internal static bool IsEffectivelyVisible(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);
-        for (UIElement? current = element; current is not null; current = current.VisualParent)
+        for (UIElement? current = element;
+            current is not null;
+            current = current.VisualParent ?? current.LogicalParent)
         {
             if (!ParticipatesInRendering(current))
             {

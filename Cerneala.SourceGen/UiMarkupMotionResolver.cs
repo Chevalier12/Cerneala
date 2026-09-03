@@ -1653,7 +1653,11 @@ public sealed partial class UiMarkupGenerator
             return true;
         }
 
-        private void EmitMotionActivations(MarkupElement element, string variable, AspectResource aspect)
+        private void EmitMotionActivations(
+            MarkupElement element,
+            string variable,
+            AspectResource aspect,
+            bool bindToElementAspect)
         {
             if (!resolvedMotionAspects.TryGetValue((aspect, element), out ResolvedMotionAspect? resolved))
             {
@@ -1664,7 +1668,8 @@ public sealed partial class UiMarkupGenerator
             nextReactiveId++;
             currentPostLines.Add(
                 "global::System.IDisposable " + sessionName +
-                " = global::Cerneala.UI.Markup.GeneratedMarkup.AttachMotionSession(" + variable + ");");
+                " = global::Cerneala.UI.Markup.GeneratedMarkup.AttachMotionSession(" + variable +
+                (bindToElementAspect ? ", " + variable + ".Aspect!" : string.Empty) + ");");
             if (templateEmissionContexts.Count > 0)
             {
                 currentPostLines.Add(templateEmissionContexts.Peek().ContextVariable + ".RegisterLifetime(" + sessionName + ");");

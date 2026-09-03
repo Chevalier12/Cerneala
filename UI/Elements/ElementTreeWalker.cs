@@ -30,6 +30,13 @@ public static class ElementTreeWalker
         return DescendantsIterator(root, role);
     }
 
+    internal static IEnumerable<UIElement> PreOrderRenderability(UIElement root)
+    {
+        ArgumentNullException.ThrowIfNull(root);
+        HashSet<UIElement> visited = new(ReferenceEqualityComparer.Instance);
+        return PreOrderRenderabilityIterator(root, visited);
+    }
+
     private static IEnumerable<UIElement> PreOrderIterator(UIElement root, ElementChildRole role)
     {
         yield return root;
@@ -76,6 +83,33 @@ public static class ElementTreeWalker
         {
             yield return child;
             foreach (UIElement descendant in DescendantsIterator(child, role))
+            {
+                yield return descendant;
+            }
+        }
+    }
+
+    private static IEnumerable<UIElement> PreOrderRenderabilityIterator(
+        UIElement root,
+        HashSet<UIElement> visited)
+    {
+        if (!visited.Add(root))
+        {
+            yield break;
+        }
+
+        yield return root;
+        foreach (UIElement child in root.VisualChildren)
+        {
+            foreach (UIElement descendant in PreOrderRenderabilityIterator(child, visited))
+            {
+                yield return descendant;
+            }
+        }
+
+        foreach (UIElement child in root.LogicalChildren.Where(child => child.VisualParent is null))
+        {
+            foreach (UIElement descendant in PreOrderRenderabilityIterator(child, visited))
             {
                 yield return descendant;
             }

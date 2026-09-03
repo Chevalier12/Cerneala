@@ -3464,7 +3464,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 {
                     EmitMotionPresence(targetElement, "target", aspect);
                     EmitMotionLayout(targetElement, "target", aspect);
-                    EmitMotionActivations(targetElement, "target", aspect);
+                    EmitMotionActivations(targetElement, "target", aspect, bindToElementAspect: false);
                 }
                 ReactivePlan plan = BuildAspectReactivePlan(aspect, "target", targetElement.Name.LocalName);
                 if (!includeMotion)
@@ -3971,7 +3971,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
                         EmitMotionPresence(element, variable, aspect);
                         EmitMotionLayout(element, variable, aspect);
-                        EmitMotionActivations(element, variable, aspect);
+                        EmitMotionActivations(element, variable, aspect, bindToElementAspect: false);
                         if (aspect.Conditions.Count > 0)
                         {
                             if (aspect.ConditionKeyVariables.Count > 0)
@@ -4012,7 +4012,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
                     EmitMotionPresence(element, variable, aspect);
                     EmitMotionLayout(element, variable, aspect);
-                    EmitMotionActivations(element, variable, aspect);
+                    EmitMotionActivations(element, variable, aspect, bindToElementAspect: true);
                 }
 
                 if (aspect.RuntimeResourceVariable is not null)

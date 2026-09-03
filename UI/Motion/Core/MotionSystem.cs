@@ -166,7 +166,7 @@ public sealed class MotionSystem
     {
         VerifyAccess();
         ArgumentNullException.ThrowIfNull(element);
-        foreach (UIElement target in ElementTreeWalker.PreOrder(element))
+        foreach (UIElement target in ElementTreeWalker.PreOrderRenderability(element))
         {
             Properties.CancelBindings(target);
         }

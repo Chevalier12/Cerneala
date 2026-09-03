@@ -1201,7 +1201,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
         if ((isVisibilityChange || isIsVisibleChange) && IsAttached)
         {
-            foreach (UIElement element in ElementTreeWalker.PreOrder(this))
+            foreach (UIElement element in ElementTreeWalker.PreOrderRenderability(this))
             {
                 element.NotifyLifecycleRenderabilityChanged();
             }

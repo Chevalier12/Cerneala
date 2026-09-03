@@ -48,6 +48,7 @@ $DataContext.Name:TwoWay      // synchronize and write target changes back
 | `ReadReference<T>(MarkupObservation observation, Func<object?, T> projection)` | `T` | Starts an observation long enough to read and project its current value, then stops it without attaching a binding. |
 | `AttachConditions(UIElement owner, IReadOnlyList<MarkupObservation> observations, IReadOnlyList<MarkupConditionRule> rules)` | `IDisposable` | Attaches observations and rules to an element lifecycle and gates rule activation callbacks on effective renderability. |
 | `AttachMotionSession(UIElement owner)` | `IDisposable` | Creates a lifecycle-scoped session for generated motion triggers and executions. |
+| `AttachMotionSession(UIElement owner, ElementAspect? aspect)` | `IDisposable` | Creates a lifecycle-scoped session that remains active only while the captured Aspect instance is assigned to the owner. A `null` argument waits for the owner's first non-null Aspect assignment. |
 | `AttachMotionTriggers(UIElement owner, Action attach, Action detach)` | `IDisposable` | Runs direct event-subscription callbacks on attach and their matching unsubscription callbacks on detach. |
 | `AddMotionTrigger(IDisposable session, Action attach, Action detach)` | `void` | Adds direct subscribe/unsubscribe callbacks to a generated motion session. |
 | `StartMotion(IDisposable session, Func<IReadOnlyList<MotionHandle>> start)` | `MotionGroupHandle` | Starts one parallel generated execution and returns a group handle canceled with its session. |
@@ -149,7 +150,16 @@ Motion sessions do not subscribe a detached or effectively non-renderable owner.
 the active subscription set and synchronously cancels every owned execution.
 Returning to a renderable state recreates trigger subscriptions but does not
 revive canceled executions. Detach and disposal perform the same cleanup
-idempotently. Sessions attached to other elements are independent.
+idempotently. Sessions attached to other elements are independent. The
+Aspect-scoped overload captures the supplied instance, or the owner's first
+non-null Aspect assignment when the supplied value is `null`. It also removes
+subscriptions and cancels executions when the owner no longer references that
+exact `ElementAspect` instance; assigning the same instance again permits fresh
+trigger activation, while a different replacement is not adopted. Generated
+Aspect Motion uses this overload so delayed resource resolution works without
+allowing Aspect replacement or removal to leave its Motion sidecar active.
+Activation requests received while the scoped Aspect is unavailable or no
+longer current complete without invoking their execution factory.
 
 `StartMotionExecution` accepts the unified generated execution adapter, so
 nested parallel and sequential groups are tracked without treating runtime

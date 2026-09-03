@@ -786,7 +786,20 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
 
     public void OnRenderabilityChanged(bool isRenderable)
     {
+        bool becameRenderable = !renderable && isRenderable;
         renderable = isRenderable;
+        if (becameRenderable && hasRuleActivations && owner.Root is UIRoot root)
+        {
+            deferActivations = true;
+            int version = ++attachmentVersion;
+            root.Relay.Post(() => CompleteInitialActivation(root, version));
+        }
+        else if (!isRenderable)
+        {
+            deferActivations = false;
+            attachmentVersion++;
+        }
+
         Evaluate();
     }
 
