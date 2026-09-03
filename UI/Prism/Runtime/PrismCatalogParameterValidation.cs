@@ -70,6 +70,16 @@ internal static class PrismCatalogParameterValidation
                 value,
                 "must contain only finite components");
         }
+        if (property.Domain.StartsWith(
+                "positive-xy-components:",
+                StringComparison.Ordinal) &&
+            (value.X <= 0 || value.Y <= 0))
+        {
+            throw Invalid(
+                property,
+                value,
+                "must contain positive X and Y components");
+        }
     }
 
     public static void Validate(
@@ -135,6 +145,41 @@ internal static class PrismCatalogParameterValidation
         }
         if (domain[2].Length > 0 &&
             value > double.Parse(
+                domain[2],
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture))
+        {
+            throw Invalid(
+                property,
+                value,
+                $"must be at most {domain[2]}");
+        }
+    }
+
+    private static void ValidateRange(
+        PrismCatalogPropertyDescriptor property,
+        float value)
+    {
+        string[] domain = property.Domain.Split(':');
+        if (domain.Length != 3 ||
+            domain[0] != "range")
+        {
+            return;
+        }
+
+        if (domain[1].Length > 0 &&
+            value < float.Parse(
+                domain[1],
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture))
+        {
+            throw Invalid(
+                property,
+                value,
+                $"must be at least {domain[1]}");
+        }
+        if (domain[2].Length > 0 &&
+            value > float.Parse(
                 domain[2],
                 NumberStyles.Float,
                 CultureInfo.InvariantCulture))

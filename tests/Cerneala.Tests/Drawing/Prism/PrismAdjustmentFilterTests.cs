@@ -150,6 +150,31 @@ public sealed class PrismAdjustmentFilterTests
     }
 
     [Fact]
+    public void AdvertisedLevelsGammaMinimumIsAssignableThroughFloatApis()
+    {
+        PrismCatalogOperationInfo operation =
+            PrismCatalog.GetFilter(PrismFilterId.Levels);
+        PrismCatalogParameterInfo parameter = operation.Parameters.Single(
+            candidate => candidate.Name == "Gamma");
+        float advertisedMinimum = checked(
+            (float)Assert.IsType<double>(parameter.Minimum));
+        (PrismFilterState state, _) = CreateState(PrismFilterId.Levels);
+        LevelsFilter typedFilter = new();
+
+        Exception? stateFailure = Record.Exception(
+            () => state.SetValue(parameter, advertisedMinimum));
+        Exception? typedFailure = Record.Exception(
+            () => typedFilter.Gamma = advertisedMinimum);
+
+        Assert.True(
+            stateFailure is null && typedFailure is null,
+            $"The catalog minimum {parameter.Minimum:R} becomes " +
+            $"{advertisedMinimum:R} in the public float APIs. " +
+            $"Runtime state: {stateFailure?.Message ?? "accepted"}; " +
+            $"typed API: {typedFailure?.Message ?? "accepted"}.");
+    }
+
+    [Fact]
     public void BrightnessContrastUsesLinearExposureAndPivotedContrast()
     {
         PrismAdjustmentPlan exposure =

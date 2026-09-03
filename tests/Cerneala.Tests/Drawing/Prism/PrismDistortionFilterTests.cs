@@ -129,6 +129,25 @@ public sealed class PrismDistortionFilterTests
     }
 
     [Fact]
+    public void CatalogAcceptedAdaptiveWideAngleFocalLengthDoesNotFailDuringGraphBuild()
+    {
+        Exception? failure = Record.Exception(
+            () => CreateGraph(
+                PrismFilterId.AdaptiveWideAngle,
+                new DrawRect(0, 0, 37, 19),
+                (state, entry) => SetVector(
+                    state,
+                    entry,
+                    "FocalLength",
+                    Vector4.Zero)));
+
+        Assert.True(
+            failure is null or ArgumentOutOfRangeException,
+            $"FocalLength must be rejected during assignment or remain " +
+            $"valid through graph construction. Actual: {failure}");
+    }
+
+    [Fact]
     public void ShearUsesSignedAmountCenteredShapePreservingCurveAndBilinearSampling()
     {
         const int width = 9;

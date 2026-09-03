@@ -24,13 +24,13 @@ public sealed class AdaptiveWideAngleFilter : PrismFilter
 
 | Name | Type | Default | Description |
 | --- | --- | --- | --- |
-| `FocalLength` | `Vector4` | `0.5, 0.5` | Optional catalog parameter; unit: `normalized-coordinate`. |
+| `FocalLength` | `Vector4` | `0.5, 0.5` | Optional catalog parameter; all components must be finite, and X and Y must be greater than zero. Unit: `normalized-coordinate`. |
 | `PrincipalPoint` | `Vector4` | `0.5, 0.5` | Optional catalog parameter; unit: `normalized-coordinate`. |
 | `DistortionCoefficients` | `Vector4` | `0, 0, 0, 0` | Optional catalog parameter; unit: `unitless`. |
 
 ## Remarks
 
-Parameter assignments are validated against the `AdaptiveWideAngle` catalog entry. Add the operation to a `PrismPipeline` or pass it directly to `Prism.Apply`.
+Parameter assignments are validated against the `AdaptiveWideAngle` catalog entry. Assigning a `FocalLength` with a nonpositive X or Y component throws `ArgumentOutOfRangeException`. Add the operation to a `PrismPipeline` or pass it directly to `Prism.Apply`.
 
 ## See Also
 

@@ -191,6 +191,7 @@ public sealed class MotionPrismSemanticTests
     [InlineData("@layer Card { @layer Child { } }", "PRISM2005")]
     [InlineData("@layer Card { ClipToBelow = true; @filter Blur { Radius = 2; } }", "PRISM2008")]
     [InlineData("@layer Card { Opacity = 2; }", "PRISM2009")]
+    [InlineData("@layer Card { @filter AdaptiveWideAngle { FocalLength = (0, 0); } }", "PRISM2009")]
     [InlineData("", "PRISM2013")]
     public void PrismBindingDiagnosticsMatchTheSourceGeneratorExactly(string body, string expectedId)
     {

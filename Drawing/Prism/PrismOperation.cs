@@ -204,8 +204,8 @@ public abstract class PrismOperation
         if (value is float number)
         {
             if (!float.IsFinite(number) ||
-                parameter.Minimum is double minimum && number < minimum ||
-                parameter.Maximum is double maximum && number > maximum)
+                parameter.Minimum is double minimum && number < (float)minimum ||
+                parameter.Maximum is double maximum && number > (float)maximum)
             {
                 throw new ArgumentOutOfRangeException(nameof(value), value, null);
             }
@@ -220,7 +220,9 @@ public abstract class PrismOperation
             (!float.IsFinite(vector.X) ||
              !float.IsFinite(vector.Y) ||
              !float.IsFinite(vector.Z) ||
-             !float.IsFinite(vector.W)))
+             !float.IsFinite(vector.W) ||
+             parameter.DomainKind == "positive-xy-components" &&
+             (vector.X <= 0 || vector.Y <= 0)))
         {
             throw new ArgumentOutOfRangeException(nameof(value), value, null);
         }

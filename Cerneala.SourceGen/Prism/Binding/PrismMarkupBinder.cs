@@ -757,6 +757,8 @@ public sealed partial class UiMarkupGenerator
                 return new BoundPrismValue(expectedType, syntax, parameter);
             }
 
+            float vectorX = default;
+            float vectorY = default;
             bool valid = expectedType switch
             {
                 BoundPrismValueType.Boolean =>
@@ -782,7 +784,7 @@ public sealed partial class UiMarkupGenerator
                     ParseHexColor(syntax.Text) is not null,
                 BoundPrismValueType.Vector =>
                     syntax.Kind == PrismValueKind.TupleLiteral &&
-                    IsValidPrismVector(syntax.Text),
+                    IsValidPrismVector(syntax.Text, out vectorX, out vectorY),
                 BoundPrismValueType.Symbol =>
                     syntax.Kind == PrismValueKind.Identifier &&
                     SyntaxFacts.IsValidIdentifier(syntax.Text),
@@ -801,7 +803,12 @@ public sealed partial class UiMarkupGenerator
             }
 
             if (schema is not null &&
-                !ValidatePrismDomain(schema, syntax, family))
+                !ValidatePrismDomain(
+                    schema,
+                    syntax,
+                    family,
+                    vectorX,
+                    vectorY))
             {
                 return null;
             }
@@ -829,7 +836,9 @@ public sealed partial class UiMarkupGenerator
         private bool ValidatePrismDomain(
             PrismCatalogCompiler.CatalogProperty schema,
             PrismValueSyntax syntax,
-            string family)
+            string family,
+            float vectorX,
+            float vectorY)
         {
             if (schema.ValueType is "integer" or "number" &&
                 double.TryParse(
@@ -848,6 +857,18 @@ public sealed partial class UiMarkupGenerator
                         "' is outside catalog domain '" + schema.Domain.Canonical + "'.");
                     return false;
                 }
+            }
+
+            if (schema.ValueType == "vector" &&
+                schema.Domain.Kind == "positive-xy-components" &&
+                (vectorX <= 0 || vectorY <= 0))
+            {
+                ReportPrismBinding(
+                    PrismValueDiagnostic,
+                    syntax.Location,
+                    "Prism property '" + schema.Name + "' value '" + syntax.Text +
+                    "' is outside catalog domain '" + schema.Domain.Canonical + "'.");
+                return false;
             }
 
             if (schema.ValueType != "symbol")
@@ -1094,21 +1115,46 @@ public sealed partial class UiMarkupGenerator
             source == BoundPrismValueType.Integer &&
             target == BoundPrismValueType.Number;
 
-        private static bool IsValidPrismVector(string text)
+        private static bool IsValidPrismVector(
+            string text,
+            out float x,
+            out float y)
         {
+            x = default;
+            y = default;
             string[] components = text.Substring(1, text.Length - 2)
                 .Split(',')
                 .Select(component => component.Trim())
                 .ToArray();
-            return components.Length is >= 2 and <= 4 &&
-                components.All(component =>
-                    float.TryParse(
-                        component,
+            if (components.Length is < 2 or > 4)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < components.Length; index++)
+            {
+                if (!float.TryParse(
+                        components[index],
                         NumberStyles.Float,
                         CultureInfo.InvariantCulture,
-                        out float value) &&
-                    !float.IsNaN(value) &&
-                    !float.IsInfinity(value));
+                        out float value) ||
+                    float.IsNaN(value) ||
+                    float.IsInfinity(value))
+                {
+                    return false;
+                }
+
+                if (index == 0)
+                {
+                    x = value;
+                }
+                else if (index == 1)
+                {
+                    y = value;
+                }
+            }
+
+            return true;
         }
 
         private static bool IsConstantFalse(BoundPrismValue value) =>

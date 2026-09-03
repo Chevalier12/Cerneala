@@ -1492,6 +1492,8 @@ internal sealed partial class CernealaSemanticModel
             return true;
         }
 
+        float vectorX = default;
+        float vectorY = default;
         bool valid = schema.ValueType switch
         {
             "boolean" => value.Kind == PrismValueModelKind.BooleanLiteral,
@@ -1501,7 +1503,8 @@ internal sealed partial class CernealaSemanticModel
                 float.TryParse(value.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out float number) &&
                 !float.IsNaN(number) && !float.IsInfinity(number),
             "color" => value.Kind == PrismValueModelKind.ColorLiteral && IsHexColor(value.Text),
-            "vector" => value.Kind == PrismValueModelKind.TupleLiteral && IsPrismVector(value.Text),
+            "vector" => value.Kind == PrismValueModelKind.TupleLiteral &&
+                IsPrismVector(value.Text, out vectorX, out vectorY),
             "symbol" => value.Kind == PrismValueModelKind.Identifier,
             "resource" => value.Kind is PrismValueModelKind.ResourceReference or PrismValueModelKind.NullLiteral,
             _ => false
@@ -1517,11 +1520,17 @@ internal sealed partial class CernealaSemanticModel
             double.TryParse(value.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out double numeric) &&
             (schema.Minimum is double minimum && numeric < minimum || schema.Maximum is double maximum && numeric > maximum))
         {
-            string canonicalDomain = schema.DomainKind + ":" +
-                (schema.Minimum.HasValue ? schema.Minimum.Value.ToString("R", CultureInfo.InvariantCulture) : string.Empty) + ":" +
-                (schema.Maximum.HasValue ? schema.Maximum.Value.ToString("R", CultureInfo.InvariantCulture) : string.Empty);
             AddPrismDiagnostic("PRISM2009", value.Span,
-                "Prism property '" + schema.Name + "' value '" + value.Text + "' is outside catalog domain '" + canonicalDomain + "'.");
+                "Prism property '" + schema.Name + "' value '" + value.Text + "' is outside catalog domain '" + CanonicalPrismDomain(schema) + "'.");
+            return false;
+        }
+
+        if (schema.ValueType == "vector" &&
+            schema.DomainKind == "positive-xy-components" &&
+            (vectorX <= 0 || vectorY <= 0))
+        {
+            AddPrismDiagnostic("PRISM2009", value.Span,
+                "Prism property '" + schema.Name + "' value '" + value.Text + "' is outside catalog domain '" + CanonicalPrismDomain(schema) + "'.");
             return false;
         }
 
@@ -2194,17 +2203,53 @@ internal sealed partial class CernealaSemanticModel
         return value.Skip(1).All(character => Uri.IsHexDigit(character));
     }
 
-    private static bool IsPrismVector(string value)
+    private static string CanonicalPrismDomain(PrismCatalogProperty schema) =>
+        schema.DomainKind + ":" +
+        (schema.Minimum.HasValue ? schema.Minimum.Value.ToString("R", CultureInfo.InvariantCulture) : string.Empty) + ":" +
+        (schema.Maximum.HasValue ? schema.Maximum.Value.ToString("R", CultureInfo.InvariantCulture) : string.Empty);
+
+    private static bool IsPrismVector(
+        string value,
+        out float x,
+        out float y)
     {
+        x = default;
+        y = default;
         if (value.Length < 2 || value[0] != '(' || value[value.Length - 1] != ')')
         {
             return false;
         }
 
         string[] components = value.Substring(1, value.Length - 2).Split(',');
-        return components.Length is >= 2 and <= 4 && components.All(component =>
-            float.TryParse(component.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out float number) &&
-            !float.IsNaN(number) && !float.IsInfinity(number));
+        if (components.Length is < 2 or > 4)
+        {
+            return false;
+        }
+
+        for (int index = 0; index < components.Length; index++)
+        {
+            if (!float.TryParse(
+                    components[index].Trim(),
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out float number) ||
+                float.IsNaN(number) ||
+                float.IsInfinity(number))
+            {
+                return false;
+            }
+
+            if (index == 0)
+            {
+                x = number;
+            }
+            else if (index == 1)
+            {
+                y = number;
+            }
+        }
+
+        return true;
     }
 
     private static PrismValueModelKind ClassifyPrismValue(string value)

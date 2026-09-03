@@ -3373,7 +3373,7 @@
           "valueType": "vector",
           "required": false,
           "domain": {
-            "kind": "finite-components"
+            "kind": "positive-xy-components"
           },
           "unit": "normalized-coordinate",
           "default": [

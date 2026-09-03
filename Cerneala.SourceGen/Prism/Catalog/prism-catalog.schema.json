@@ -171,6 +171,7 @@
             "boolean",
             "argb32",
             "finite-components",
+            "positive-xy-components",
             "catalog-symbol",
             "typed-resource",
             "finite",
