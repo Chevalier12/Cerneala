@@ -1,6 +1,7 @@
 using Cerneala.UI.Controls;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
+using Cerneala.UI.Servo;
 using System.Text.Json;
 using ServoApi = Cerneala.UI.Servo.Servo;
 
@@ -29,12 +30,12 @@ public partial class MainWindow : Window
 
         initialized = true;
         ResetControls();
-        AssignAutomationIds();
+        AssignServoIds();
         captureRequested = true;
         Invalidate(InvalidationFlags.Render, "ComboBox lab baseline API capture");
     }
 
-    private void OnFrameRendered(object? sender, EventArgs args)
+    private async void OnFrameRendered(object? sender, EventArgs args)
     {
         if (!initialized)
         {
@@ -55,7 +56,7 @@ public partial class MainWindow : Window
             }
 
             captureRequested = false;
-            CaptureAutomationState("manual");
+            await CaptureServoStateAsync("manual");
         }
     }
 
@@ -121,7 +122,7 @@ public partial class MainWindow : Window
         BottomCombo.SetItems(materialized);
     }
 
-    private void AssignAutomationIds()
+    private void AssignServoIds()
     {
         ServoApi.SetId(FilteredCombo, "filtered-combo");
         ServoApi.SetId(SelectionCombo, "selection-combo");
@@ -151,7 +152,7 @@ public partial class MainWindow : Window
         return $"index={comboBox.SelectedIndex}  text=\"{comboBox.Text}\"  open={comboBox.IsDropDownOpen}";
     }
 
-    private void CaptureAutomationState(string label)
+    private async Task CaptureServoStateAsync(string label)
     {
         if (string.IsNullOrWhiteSpace(captureDirectory))
         {
@@ -161,7 +162,8 @@ public partial class MainWindow : Window
         Directory.CreateDirectory(captureDirectory);
         int sequence = captureSequence++;
         string stem = $"{sequence:000}-{label}";
-        SaveScreenshot(Path.Combine(captureDirectory, $"{stem}.png"));
+        ServoApi servo = new(this);
+        await servo.SaveScreenshotAsync(Path.Combine(captureDirectory, $"{stem}.png"));
 
         object state = new
         {
@@ -169,7 +171,7 @@ public partial class MainWindow : Window
             Selection = ComboState(SelectionCombo),
             Bottom = ComboState(BottomCombo)
         };
-        File.WriteAllText(
+        await File.WriteAllTextAsync(
             Path.Combine(captureDirectory, $"{stem}.json"),
             JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true }));
     }

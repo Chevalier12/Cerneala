@@ -1,6 +1,8 @@
 using Cerneala.UI.Controls;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Servo;
 using System.Globalization;
+using ServoApi = Cerneala.UI.Servo.Servo;
 
 namespace CernealaOracle;
 
@@ -9,7 +11,7 @@ public partial class MainWindow : Window
     private bool captured;
     private bool configured;
 
-    private void OnFrameRendered(object? sender, EventArgs args)
+    private async void OnFrameRendered(object? sender, EventArgs args)
     {
         if (!configured)
         {
@@ -67,11 +69,11 @@ public partial class MainWindow : Window
         captured = true;
         string fullPath = Path.GetFullPath(path);
         Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
-        SaveScreenshot(fullPath);
+        await new ServoApi(this).SaveScreenshotAsync(fullPath);
 
         bool motionLabScenario = MotionLabCanvas.Visibility == Visibility.Visible;
         TextBlock measuredText = motionLabScenario ? MotionLabText : OracleText;
-        File.WriteAllLines(Path.ChangeExtension(fullPath, ".metrics.txt"),
+        await File.WriteAllLinesAsync(Path.ChangeExtension(fullPath, ".metrics.txt"),
         [
             $"Scenario={(motionLabScenario ? "motion-lab-header" : "text")}",
             $"Text={measuredText.Text}",

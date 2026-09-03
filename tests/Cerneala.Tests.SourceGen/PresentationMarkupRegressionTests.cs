@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Cerneala.UI.Invalidation;
+using Cerneala.UI.Detective;
 using Xunit;
 
 namespace Cerneala.Tests.SourceGen;
@@ -81,14 +81,19 @@ public sealed class PresentationMarkupRegressionTests
             presentationRoot,
             "PresentationWindow.crn.cs"));
         Assert.DoesNotContain("PresentationChapter.Diagnostics", code, StringComparison.Ordinal);
-        foreach (string counter in typeof(FrameStats)
+        Assert.Contains(
+            "Root?.Detective.CaptureFrame(frame.Stats)",
+            code,
+            StringComparison.Ordinal);
+        foreach (string counter in typeof(FrameDiagnosticsSnapshot)
             .GetProperties()
             .Where(property => property.PropertyType == typeof(int))
             .Select(property => property.Name))
         {
-            Assert.Contains($"frame.Stats.{counter}", code, StringComparison.Ordinal);
+            Assert.Contains($"diagnostics.{counter}", code, StringComparison.Ordinal);
         }
-        Assert.Contains("frame.Stats.HasWork", code, StringComparison.Ordinal);
+        Assert.Contains("diagnostics.HasWork", code, StringComparison.Ordinal);
+        Assert.DoesNotContain("frame.Stats.", code, StringComparison.Ordinal);
         Assert.Contains("frame.ProcessingTime", code, StringComparison.Ordinal);
     }
 

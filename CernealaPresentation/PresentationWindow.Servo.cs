@@ -1,23 +1,25 @@
 using System.Diagnostics;
 using System.Text.Json;
 using Cerneala.Drawing;
-using Cerneala.UI.Accessibility;
+using Cerneala.UI.Detective;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Invalidation;
+using Cerneala.UI.Servo;
 using Cerneala.UI.Text;
+using ServoApi = Cerneala.UI.Servo.Servo;
 
 namespace Cerneala.Presentation;
 
 public partial class PresentationWindow
 {
-    private async Task RunAutomationIfRequestedAsync()
+    private async Task RunServoIfRequestedAsync()
     {
         string? outerGlowLabReportPath =
             Environment.GetEnvironmentVariable("CERNEALA_PRISM_OUTER_GLOW_LAB_REPORT");
         if (!string.IsNullOrWhiteSpace(outerGlowLabReportPath))
         {
-            await RunAutomationWithErrorReportAsync(
+            await RunServoWithErrorReportAsync(
                 outerGlowLabReportPath,
                 () => ExecuteOuterGlowLabAsync(outerGlowLabReportPath));
             return;
@@ -27,9 +29,9 @@ public partial class PresentationWindow
             Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_FRAME_BUDGET_REPORT");
         if (!string.IsNullOrWhiteSpace(frameBudgetReportPath))
         {
-            await RunAutomationWithErrorReportAsync(
+            await RunServoWithErrorReportAsync(
                 frameBudgetReportPath,
-                () => ExecuteFrameBudgetAutomationAsync(frameBudgetReportPath));
+                () => ExecuteFrameBudgetServoAsync(frameBudgetReportPath));
             return;
         }
 
@@ -39,14 +41,14 @@ public partial class PresentationWindow
             return;
         }
 
-        await RunAutomationWithErrorReportAsync(reportPath, () => ExecuteAutomationAsync(reportPath));
+        await RunServoWithErrorReportAsync(reportPath, () => ExecuteServoAsync(reportPath));
     }
 
-    private async Task RunAutomationWithErrorReportAsync(string reportPath, Func<Task> automation)
+    private async Task RunServoWithErrorReportAsync(string reportPath, Func<Task> servoWork)
     {
         try
         {
-            await automation();
+            await servoWork();
         }
         catch (Exception exception)
         {
@@ -57,7 +59,7 @@ public partial class PresentationWindow
         }
     }
 
-    private async Task ExecuteFrameBudgetAutomationAsync(string reportPath)
+    private async Task ExecuteFrameBudgetServoAsync(string reportPath)
     {
         int cycles = ReadBoundedEnvironmentInteger(
             "CERNEALA_PRESENTATION_FRAME_BUDGET_CYCLES",
@@ -70,10 +72,9 @@ public partial class PresentationWindow
             minimum: 1,
             maximum: 1_000);
         List<FrameBudgetSample> samples = new(cycles * framesPerLoad * (ChapterOrder.Length - 1));
-        ButtonAutomationPeer next = new(NextButton);
         Stopwatch runTime = Stopwatch.StartNew();
 
-        await WaitForFrameIdleAsync(TimeSpan.FromSeconds(2));
+        await WaitForServoIdleAsync(TimeSpan.FromSeconds(2));
         for (int cycle = 1; cycle <= cycles; cycle++)
         {
             foreach (PresentationChapter chapter in ChapterOrder.Skip(1))
@@ -81,11 +82,10 @@ public partial class PresentationWindow
                 PresentationChapter previous = ChapterOrder[(ChapterIndex(chapter) - 1 + ChapterOrder.Length) % ChapterOrder.Length];
                 while (currentChapter != previous)
                 {
-                    await InvokeNextAndWaitForFrameAsync(next);
+                    await ClickNextChapterAsync();
                 }
 
                 await CaptureFrameBudgetLoadAsync(
-                    next,
                     cycle,
                     chapter,
                     framesPerLoad,
@@ -109,7 +109,6 @@ public partial class PresentationWindow
     }
 
     private async Task CaptureFrameBudgetLoadAsync(
-        ButtonAutomationPeer next,
         int cycle,
         PresentationChapter chapter,
         int framesPerLoad,
@@ -159,37 +158,54 @@ public partial class PresentationWindow
                 return;
             }
 
-            Invalidate(InvalidationFlags.Render, "frame budget automation sample");
+            Invalidate(InvalidationFlags.Render, "frame budget Servo sample");
         };
 
         FrameRendered += handler;
-        if (!next.Invoke())
+        try
+        {
+            await ClickNextChapterAsync();
+            await completion.Task.WaitAsync(TimeSpan.FromSeconds(30));
+        }
+        catch
         {
             FrameRendered -= handler;
-            throw new InvalidOperationException("Frame-budget automation could not invoke the Next button.");
+            throw;
         }
-
-        await completion.Task.WaitAsync(TimeSpan.FromSeconds(30));
     }
 
-    private async Task InvokeNextAndWaitForFrameAsync(ButtonAutomationPeer next)
+    private async Task ClickNextChapterAsync()
     {
-        TaskCompletionSource completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        EventHandler? handler = null;
-        handler = (_, _) =>
-        {
-            FrameRendered -= handler;
-            completion.TrySetResult();
-        };
+        int currentIndex = ChapterIndex(currentChapter);
+        PresentationChapter expectedChapter = ChapterOrder[
+            currentIndex == ChapterOrder.Length - 1 ? 0 : currentIndex + 1];
+        await PresentationServo.ClickAsync(ServoTarget.ById(PresentationNextServoId));
+        await WaitForChapterAsync(expectedChapter);
+    }
 
-        FrameRendered += handler;
-        if (!next.Invoke())
+    private async Task ClickChapterNavigationAsync(PresentationChapter chapter)
+    {
+        await PresentationServo.ClickAsync(ServoTarget.ById(ChapterNavigationServoId(chapter)));
+        await WaitForChapterAsync(chapter);
+    }
+
+    private Task WaitForChapterAsync(PresentationChapter chapter) =>
+        PresentationServo.WaitForAsync(
+            ServoTarget.ById(PresentationChapterTitleServoId).WithName(ChapterName(chapter)),
+            ServoCondition.Visible);
+
+    private async Task WaitForServoIdleAsync(TimeSpan maximumWait)
+    {
+        ServoApi boundedServo = new(this, new ServoOptions { DefaultTimeout = maximumWait });
+        try
         {
-            FrameRendered -= handler;
-            throw new InvalidOperationException("Frame-budget automation could not navigate to the next chapter.");
+            await boundedServo.WaitForIdleAsync();
         }
-
-        await completion.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        catch (ServoTimeoutException)
+        {
+            // Presentation contains intentionally continuous Motion scenes. Preserve the
+            // existing bounded best-effort settle contract without reporting false idle.
+        }
     }
 
     private static int ReadBoundedEnvironmentInteger(
@@ -208,32 +224,27 @@ public partial class PresentationWindow
         return WindowApplicationRuntime.Current?.CapturePrismDiagnostics(this);
     }
 
-    private async Task ExecuteAutomationAsync(string reportPath)
+    private async Task ExecuteServoAsync(string reportPath)
     {
         int cycles = int.TryParse(
             Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_AUTOMATION_CYCLES"),
             out int requestedCycles)
             ? Math.Clamp(requestedCycles, 1, 100)
             : 10;
-        List<AutomationSample> samples = [];
-        ButtonAutomationPeer next = new(NextButton);
-
-        await WaitForFrameIdleAsync(TimeSpan.FromSeconds(2));
-        samples.Add(CaptureAutomationSample(0, "baseline"));
+        List<ServoSample> samples = [];
+        await WaitForServoIdleAsync(TimeSpan.FromSeconds(2));
+        samples.Add(CaptureServoSample(0, "baseline"));
         for (int cycle = 1; cycle <= cycles; cycle++)
         {
             for (int click = 0; click < ChapterOrder.Length; click++)
             {
-                if (!next.Invoke())
-                {
-                    throw new InvalidOperationException("Presentation automation could not invoke the Next button.");
-                }
+                await ClickNextChapterAsync();
 
                 TimeSpan maximumWait = currentChapter is PresentationChapter.Motion or PresentationChapter.Prism
                     ? TimeSpan.FromSeconds(5)
                     : TimeSpan.FromSeconds(2);
-                await WaitForFrameIdleAsync(maximumWait);
-                samples.Add(CaptureAutomationSample(cycle, ChapterName(currentChapter)));
+                await WaitForServoIdleAsync(maximumWait);
+                samples.Add(CaptureServoSample(cycle, ChapterName(currentChapter)));
             }
         }
 
@@ -245,48 +256,34 @@ public partial class PresentationWindow
         Close();
     }
 
-    private async Task WaitForFrameIdleAsync(TimeSpan maximumWait)
+    private ServoSample CaptureServoSample(int cycle, string chapter)
     {
-        Stopwatch timeout = Stopwatch.StartNew();
-        int stableChecks = 0;
-        while (stableChecks < 4)
-        {
-            await Task.Delay(25);
-            bool hasWork = LastFrame?.Stats.HasWork != false;
-            stableChecks = hasWork ? 0 : stableChecks + 1;
-            if (timeout.Elapsed > maximumWait)
-            {
-                return;
-            }
-        }
-    }
-
-    private AutomationSample CaptureAutomationSample(int cycle, string chapter)
-    {
-        CollectAutomationGarbage();
+        CollectServoGarbage();
 
         using Process process = Process.GetCurrentProcess();
         PrismOperationalDiagnostics? prism = CapturePrismDiagnosticsSnapshot();
-        return new AutomationSample(
+        Detective? detective = Root?.Detective;
+        RootRenderDiagnosticsSnapshot? rendering = detective?.CaptureRendering();
+        return new ServoSample(
             cycle,
             chapter,
             GC.GetTotalMemory(forceFullCollection: false),
             process.PrivateMemorySize64,
             process.WorkingSet64,
             TextMeasurer.Default.LayoutCache.Count,
-            Root?.Trace.Entries.Count ?? 0,
-            Root?.RetainedRenderCache.RootCommands.Count ?? 0,
+            detective?.Invalidation.Entries.Count ?? 0,
+            rendering?.RootCommandCount ?? 0,
             prism);
     }
 
-    private static void CollectAutomationGarbage()
+    private static void CollectServoGarbage()
     {
         GC.Collect(2, GCCollectionMode.Forced, blocking: true, compacting: true);
         GC.WaitForPendingFinalizers();
         GC.Collect(2, GCCollectionMode.Forced, blocking: true, compacting: true);
     }
 
-    private sealed record AutomationSample(
+    private sealed record ServoSample(
         int Cycle,
         string Chapter,
         long ManagedBytes,

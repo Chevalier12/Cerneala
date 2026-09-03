@@ -27,16 +27,16 @@ public partial class PresentationWindow
         OpeningSurface.Visibility = Visibility.Collapsed;
         TourSurface.Visibility = Visibility.Collapsed;
         lab.Visibility = Visibility.Visible;
-        await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+        await WaitForServoIdleAsync(TimeSpan.FromSeconds(5));
         UIElement target = lab.Target;
         if (IsOuterGlowColdOnlyRequested())
         {
             if (IsOuterGlowPrewarmRequested())
             {
                 lab.AttachOuterGlow();
-                await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+                await WaitForServoIdleAsync(TimeSpan.FromSeconds(5));
                 lab.ResetPrism();
-                await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+                await WaitForServoIdleAsync(TimeSpan.FromSeconds(5));
             }
 
             PrismEffectAddSample coldAdd = await CapturePrismAddAsync(
@@ -64,7 +64,7 @@ public partial class PresentationWindow
             "baseline-no-prism",
             target,
             forcedFrameCount);
-        await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+        await WaitForServoIdleAsync(TimeSpan.FromSeconds(5));
 
         using IDisposable motionSession = GeneratedMarkup.AttachMotionSession(lab);
         PrismOuterGlowFramePhase uiOpacityMotion = await CaptureMotionPhaseAsync(
@@ -85,29 +85,29 @@ public partial class PresentationWindow
                     HoldOnComplete = true,
                     DebugName = "UI opacity performance lab baseline"
                 }));
-        await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+        await WaitForServoIdleAsync(TimeSpan.FromSeconds(5));
 
         PrismEffectAddSample coldFullAdd = await CapturePrismAddAsync(
             "cold-add",
             lab.AttachOuterGlow);
-        await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+        await WaitForServoIdleAsync(TimeSpan.FromSeconds(5));
         PrismOuterGlowFramePhase coldStatic = await CaptureForcedFramePhaseAsync(
             "cold-static-outer-glow",
             target,
             forcedFrameCount);
 
         lab.ResetPrism();
-        await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+        await WaitForServoIdleAsync(TimeSpan.FromSeconds(5));
 
         PrismEffectAddSample warmAdd = await CapturePrismAddAsync(
             "warm-add",
             lab.AttachOuterGlow);
-        await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+        await WaitForServoIdleAsync(TimeSpan.FromSeconds(5));
         PrismOuterGlowFramePhase warmStatic = await CaptureForcedFramePhaseAsync(
             "warm-static-outer-glow",
             target,
             forcedFrameCount);
-        await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+        await WaitForServoIdleAsync(TimeSpan.FromSeconds(5));
 
         PrismOuterGlowFramePhase opacityMotion = await CaptureMotionPhaseAsync(
             "motion-opacity-0.20-to-1.00",
@@ -122,7 +122,7 @@ public partial class PresentationWindow
                 1.00f,
                 animationDuration,
                 propertyId: 137_001));
-        await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+        await WaitForServoIdleAsync(TimeSpan.FromSeconds(5));
         PrismOuterGlowFramePhase opacityMotionRepeat = await CaptureMotionPhaseAsync(
             "motion-opacity-1.00-to-0.20-repeat",
             target,
@@ -136,7 +136,7 @@ public partial class PresentationWindow
                 0.20f,
                 animationDuration,
                 propertyId: 137_001));
-        await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+        await WaitForServoIdleAsync(TimeSpan.FromSeconds(5));
         PrismOuterGlowFramePhase sizeMotion = await CaptureMotionPhaseAsync(
             "motion-size-5-to-40",
             target,
@@ -150,7 +150,7 @@ public partial class PresentationWindow
                 40f,
                 animationDuration,
                 propertyId: 137_002));
-        await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+        await WaitForServoIdleAsync(TimeSpan.FromSeconds(5));
         PrismOuterGlowFramePhase sizeMotionRepeat = await CaptureMotionPhaseAsync(
             "motion-size-40-to-5-repeat",
             target,
@@ -165,19 +165,19 @@ public partial class PresentationWindow
                 animationDuration,
                 propertyId: 137_002));
 
-        await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+        await WaitForServoIdleAsync(TimeSpan.FromSeconds(5));
         lab.ResetPrism();
-        await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+        await WaitForServoIdleAsync(TimeSpan.FromSeconds(5));
 
         PrismEffectAddSample motionBlurAdd = await CapturePrismAddAsync(
             "motion-blur-add",
             lab.AttachMotionBlur);
-        await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+        await WaitForServoIdleAsync(TimeSpan.FromSeconds(5));
         PrismOuterGlowFramePhase motionBlurStatic = await CaptureForcedFramePhaseAsync(
             "motion-blur-static",
             target,
             forcedFrameCount);
-        await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+        await WaitForServoIdleAsync(TimeSpan.FromSeconds(5));
         PrismOuterGlowFramePhase motionBlurDistance = await CaptureMotionPhaseAsync(
             "motion-blur-distance-5-to-40",
             target,
@@ -190,7 +190,7 @@ public partial class PresentationWindow
                 40f,
                 animationDuration,
                 propertyId: 137_101));
-        await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+        await WaitForServoIdleAsync(TimeSpan.FromSeconds(5));
         PrismOuterGlowFramePhase motionBlurDistanceRepeat = await CaptureMotionPhaseAsync(
             "motion-blur-distance-40-to-5-repeat",
             target,

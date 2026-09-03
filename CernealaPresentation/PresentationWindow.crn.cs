@@ -1,7 +1,7 @@
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
-using Cerneala.UI.Accessibility;
 using ServoApi = Cerneala.UI.Servo.Servo;
+using Cerneala.UI.Detective;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
@@ -11,6 +11,7 @@ using Cerneala.UI.Markup;
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Properties;
 using Cerneala.UI.Motion.Specs;
+using Cerneala.UI.Servo;
 
 namespace Cerneala.Presentation;
 
@@ -27,6 +28,9 @@ internal enum PresentationChapter
 
 public partial class PresentationWindow : Window
 {
+    private const string PresentationNextServoId = "presentation-next";
+    private const string PresentationChapterTitleServoId = "presentation-chapter-title";
+
     private static readonly PresentationChapter[] ChapterOrder =
     [
         PresentationChapter.Welcome,
@@ -49,10 +53,15 @@ public partial class PresentationWindow : Window
     private bool suppressLiveDiagnostics;
     private bool outerGlowLabActive;
     private string[] conformancePrismSamples = [];
+    private ServoApi? presentationServo;
     private IReadOnlyDictionary<PresentationChapter, ToggleButton> tourNavigation =
         new Dictionary<PresentationChapter, ToggleButton>();
     private IReadOnlyDictionary<PresentationChapter, UIElement> tourPages =
         new Dictionary<PresentationChapter, UIElement>();
+
+    private ServoApi PresentationServo => presentationServo ??= new ServoApi(
+        this,
+        new ServoOptions { DefaultTimeout = TimeSpan.FromSeconds(30) });
 
     private void OnContentRendered(object? sender, EventArgs args)
     {
@@ -72,6 +81,8 @@ public partial class PresentationWindow : Window
         ApplyRequestedWindowSize();
         ServoApi.SetId(OpeningSurface, "presentation-opening");
         ServoApi.SetId(TourSurface, "presentation-tour");
+        ServoApi.SetId(NextButton, PresentationNextServoId);
+        ServoApi.SetId(HeaderChapterText, PresentationChapterTitleServoId);
         InitializeTourNavigation();
         int initialChapter = int.TryParse(
             Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_START_CHAPTER"),
@@ -198,11 +209,15 @@ public partial class PresentationWindow : Window
         }
 
         await Task.Delay(delay);
-        await CaptureScreenshotFrameAsync(
+        await CaptureServoScreenshotFrameAsync(
             Path.GetFullPath(path),
-            () => Invalidate(
-                Cerneala.UI.Invalidation.InvalidationFlags.Render,
-                "presentation transition screenshot"));
+            () =>
+            {
+                Invalidate(
+                    Cerneala.UI.Invalidation.InvalidationFlags.Render,
+                    "presentation transition screenshot");
+                return Task.CompletedTask;
+            });
     }
 
     internal void ApplyRequestedWindowSize()
@@ -222,7 +237,7 @@ public partial class PresentationWindow : Window
     private async Task RunRequestedWorkAsync()
     {
         await CaptureIfRequestedAsync();
-        await RunAutomationIfRequestedAsync();
+        await RunServoIfRequestedAsync();
     }
 
     private void InitializeTourNavigation()
@@ -247,6 +262,10 @@ public partial class PresentationWindow : Window
             [PresentationChapter.Prism] = PagePrism,
             [PresentationChapter.FramePipeline] = PagePipeline
         };
+        foreach ((PresentationChapter chapter, ToggleButton navigation) in tourNavigation)
+        {
+            ServoApi.SetId(navigation, ChapterNavigationServoId(chapter));
+        }
     }
 
     private void OnFrameRendered(object? sender, EventArgs args)
@@ -278,28 +297,30 @@ public partial class PresentationWindow : Window
             return;
         }
 
+        FrameDiagnosticsSnapshot diagnostics = Root?.Detective.CaptureFrame(frame.Stats) ??
+            throw new InvalidOperationException("Presentation diagnostics require an attached UIRoot.");
         HeaderDiagFrame.Text =
             $"{frame.ProcessingTime.TotalMilliseconds:0.00} ms\n" +
-            (frame.Stats.HasWork ? "WORK COMMITTED" : "IDLE FAST PATH");
+            (diagnostics.HasWork ? "WORK COMMITTED" : "IDLE FAST PATH");
         HeaderDiagPhases.Text =
-            $"INHERITED {frame.Stats.InheritedElements}  COMMAND {frame.Stats.CommandStateElements}\n" +
-            $"ASPECT {frame.Stats.AspectElements}";
+            $"INHERITED {diagnostics.InheritedElements}  COMMAND {diagnostics.CommandStateElements}\n" +
+            $"ASPECT {diagnostics.AspectElements}";
         HeaderDiagLayout.Text =
-            $"QUEUED {frame.Stats.MeasuredElements} / {frame.Stats.ArrangedElements}\n" +
-            $"CALLS {frame.Stats.MeasureCalls} / {frame.Stats.ArrangeCalls}";
+            $"QUEUED {diagnostics.QueuedMeasureElements} / {diagnostics.QueuedArrangeElements}\n" +
+            $"CALLS {diagnostics.MeasureCalls} / {diagnostics.ArrangeCalls}";
         HeaderDiagRender.Text =
-            $"RENDER {frame.Stats.RenderedElements}  HIT {frame.Stats.HitTestElements}\n" +
-            $"REUSED {frame.Stats.ReusedCaches}  NO-WORK {frame.Stats.NoWorkFrames}";
+            $"RENDER {diagnostics.RenderedElements}  HIT {diagnostics.HitTestElements}\n" +
+            $"REUSED {diagnostics.ReusedCaches}  NO-WORK {diagnostics.NoWorkFrames}";
         HeaderDiagMotion.Text =
-            $"FRAME {frame.Stats.MotionFrames}  SAMPLE {frame.Stats.MotionNodesSampled}  " +
-            $"VALUE {frame.Stats.MotionValuesChanged}  WRITE {frame.Stats.MotionPropertyWrites}\n" +
-            $"DONE {frame.Stats.MotionCompleted}  R-INV {frame.Stats.MotionRenderInvalidations}  " +
-            $"L-INV {frame.Stats.MotionLayoutInvalidations}  REDUCED {frame.Stats.MotionSkippedByReducedMotion}";
+            $"FRAME {diagnostics.MotionFrames}  SAMPLE {diagnostics.MotionNodesSampled}  " +
+            $"VALUE {diagnostics.MotionValuesChanged}  WRITE {diagnostics.MotionPropertyWrites}\n" +
+            $"DONE {diagnostics.MotionCompleted}  R-INV {diagnostics.MotionRenderInvalidations}  " +
+            $"L-INV {diagnostics.MotionLayoutInvalidations}  REDUCED {diagnostics.MotionSkippedByReducedMotion}";
         HeaderDiagRelay.Text =
-            $"SNAP {frame.Stats.RelaySnapshotCallbacks}  DEQ {frame.Stats.RelayDequeuedCallbacks}  " +
-            $"EXEC {frame.Stats.RelayExecutedCallbacks}  BACK {frame.Stats.RelayBacklog}\n" +
-            $"CANCEL {frame.Stats.RelayCanceledCallbacks}  FAULT {frame.Stats.RelayFaultedCallbacks}  " +
-            $"DEFER {frame.Stats.RelayDeferredCallbacks}";
+            $"SNAP {diagnostics.RelaySnapshotCallbacks}  DEQ {diagnostics.RelayDequeuedCallbacks}  " +
+            $"EXEC {diagnostics.RelayExecutedCallbacks}  BACK {diagnostics.RelayBacklog}\n" +
+            $"CANCEL {diagnostics.RelayCanceledCallbacks}  FAULT {diagnostics.RelayFaultedCallbacks}  " +
+            $"DEFER {diagnostics.RelayDeferredCallbacks}";
         skipNextHeaderDiagnosticsRefresh = true;
     }
 
@@ -373,6 +394,9 @@ public partial class PresentationWindow : Window
 
     private static int ChapterIndex(PresentationChapter chapter) => Array.IndexOf(ChapterOrder, chapter);
 
+    private static string ChapterNavigationServoId(PresentationChapter chapter) =>
+        $"presentation-navigation-{ChapterIndex(chapter) + 1}";
+
     private static string ChapterName(PresentationChapter chapter) => chapter switch
     {
         PresentationChapter.Welcome => "WELCOME",
@@ -409,13 +433,14 @@ public partial class PresentationWindow : Window
             {
                 conformancePrismSamples = PagePrism.ConfigureConformanceScene();
             }
+            PresentationChapter? hoverTarget = null;
             if (int.TryParse(
                     Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_HOVER_CHAPTER"),
                     out int hoverChapter) &&
                 hoverChapter >= 1 &&
                 hoverChapter <= ChapterOrder.Length)
             {
-                tourNavigation[ChapterOrder[hoverChapter - 1]].IsPointerOver = true;
+                hoverTarget = ChapterOrder[hoverChapter - 1];
             }
 
             bool captureDuringMotion = string.Equals(
@@ -428,15 +453,14 @@ public partial class PresentationWindow : Window
             }
             else if (!closeAfterCapture)
             {
-                await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+                await WaitForServoIdleAsync(TimeSpan.FromSeconds(5));
                 await Task.Delay(100);
             }
 
             int captureIndex = ChapterIndex(captureChapter);
             PresentationChapter previousChapter = ChapterOrder[
                 (captureIndex - 1 + ChapterOrder.Length) % ChapterOrder.Length];
-            ShowChapter(previousChapter);
-            ButtonAutomationPeer next = new(NextButton);
+            await ClickChapterNavigationAsync(previousChapter);
             bool settledCapture = string.Equals(
                 Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_SETTLED_CAPTURE"),
                 "1",
@@ -450,22 +474,26 @@ public partial class PresentationWindow : Window
             {
                 if (settledCapture)
                 {
-                    if (!next.Invoke())
+                    await ClickNextChapterAsync();
+                    if (hoverTarget is PresentationChapter hoveredChapter)
                     {
-                        throw new InvalidOperationException("Presentation capture could not navigate to its target chapter.");
+                        await PresentationServo.HoverAsync(
+                            ServoTarget.ById(ChapterNavigationServoId(hoveredChapter)));
                     }
 
-                    await WaitForFrameIdleAsync(TimeSpan.FromSeconds(5));
+                    await WaitForServoIdleAsync(TimeSpan.FromSeconds(5));
                     await Task.Delay(100);
-                    SaveScreenshot(fullPath);
+                    await PresentationServo.SaveScreenshotAsync(fullPath);
                 }
                 else
                 {
-                    await CaptureScreenshotFrameAsync(fullPath, () =>
+                    await CaptureServoScreenshotFrameAsync(fullPath, async () =>
                     {
-                        if (!next.Invoke())
+                        await ClickNextChapterAsync();
+                        if (hoverTarget is PresentationChapter hoveredChapter)
                         {
-                            throw new InvalidOperationException("Presentation capture could not navigate to its target chapter.");
+                            await PresentationServo.HoverAsync(
+                                ServoTarget.ById(ChapterNavigationServoId(hoveredChapter)));
                         }
                     });
                 }
@@ -474,11 +502,12 @@ public partial class PresentationWindow : Window
             {
                 suppressLiveDiagnostics = false;
             }
+            RootRenderDiagnosticsSnapshot? rendering = Root?.Detective.CaptureRendering();
             await File.WriteAllLinesAsync(Path.ChangeExtension(fullPath, ".metrics.txt"),
             [
                 $"Chapter={ChapterIndex(currentChapter) + 1}",
-                $"RootCommands={Root?.RetainedRenderCache.RootCommands.Count ?? 0}",
-                $"RenderCacheVersion={Root?.RetainedRenderCache.Version ?? 0}",
+                $"RootCommands={rendering?.RootCommandCount ?? 0}",
+                $"RenderCacheVersion={rendering?.Version ?? 0}",
                 .. conformancePrismSamples.Select(sample => $"PrismSample={sample}")
             ]);
             if (closeAfterCapture)
@@ -503,7 +532,7 @@ public partial class PresentationWindow : Window
         HeaderDiagRelay.Text = "SNAP 1  DEQ 1  EXEC 1  BACK 0\nCANCEL 0  FAULT 0  DEFER 0";
     }
 
-    private async Task CaptureScreenshotFrameAsync(string fullPath, Action frameTrigger)
+    private async Task CaptureServoScreenshotFrameAsync(string fullPath, Func<Task> frameTrigger)
     {
         TaskCompletionSource completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
         int renderedFrames = 0;
@@ -511,33 +540,33 @@ public partial class PresentationWindow : Window
         handler = (_, _) =>
         {
             renderedFrames++;
-            if (renderedFrames < 4 || Root?.RetainedRenderCache.IsRootValid != true)
+            if (renderedFrames < 4 || Root?.Detective.CaptureRendering().IsRootValid != true)
             {
                 Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Render, "presentation screenshot settle");
                 return;
             }
 
             FrameRendered -= handler;
-            try
-            {
-                SaveScreenshot(fullPath);
-                completion.TrySetResult();
-            }
-            catch (Exception exception)
-            {
-                completion.TrySetException(exception);
-            }
+            completion.TrySetResult();
         };
 
         FrameRendered += handler;
-        frameTrigger();
-        using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(30));
-        while (!completion.Task.IsCompleted)
+        try
         {
-            timeout.Token.ThrowIfCancellationRequested();
-            Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Render, "presentation screenshot");
-            await Task.WhenAny(completion.Task, Task.Delay(16, timeout.Token));
+            await frameTrigger();
+            using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(30));
+            while (!completion.Task.IsCompleted)
+            {
+                timeout.Token.ThrowIfCancellationRequested();
+                Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Render, "presentation screenshot");
+                await Task.WhenAny(completion.Task, Task.Delay(16, timeout.Token));
+            }
+            await completion.Task;
+            await PresentationServo.SaveScreenshotAsync(fullPath);
         }
-        await completion.Task;
+        finally
+        {
+            FrameRendered -= handler;
+        }
     }
 }

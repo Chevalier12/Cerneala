@@ -37,8 +37,10 @@ public partial class MainWindow : Window
             return;
         }
 
+        FrameDiagnosticsSnapshot diagnostics = Root?.Detective.CaptureFrame(LastFrame.Stats) ??
+            throw new InvalidOperationException("Playground diagnostics require an attached UIRoot.");
         FrameDiagnosticsText.Text =
-            $"{LastFrame.ElapsedTime.TotalMilliseconds:0.00} ms | {FrameDiagnostics.Format(LastFrame.Stats)}";
+            $"{LastFrame.ElapsedTime.TotalMilliseconds:0.00} ms | {diagnostics}";
     }
 
     private void OnShowcaseSelected(object? sender, ShowcaseSelectedEventArgs args)

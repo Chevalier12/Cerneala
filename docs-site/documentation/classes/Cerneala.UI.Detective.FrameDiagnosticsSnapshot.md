@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Detective/FrameDiagnostics.cs`
 
-Represents an immutable snapshot of per-frame retained UI scheduler, render cache, hit-test, and motion counters.
+Represents an immutable snapshot of per-frame retained UI scheduler, render cache, hit-test, Motion, and Relay counters.
 
 ```csharp
 public sealed record FrameDiagnosticsSnapshot(
@@ -63,15 +63,16 @@ string line = snapshot.ToString();
 
 When captured through `FrameDiagnostics.Capture`, `QueuedMeasureElements` is copied from `FrameStats.MeasuredElements`, and `QueuedArrangeElements` is copied from `FrameStats.ArrangedElements`. `HasWork` is copied from `FrameStats.HasWork`.
 
-The primary constructor does not validate counter values. Code that constructs the record directly is responsible for passing meaningful values.
+The primary constructor preserves the original frame and Motion counter contract and initializes every Relay counter to zero. The overload that accepts Relay counters is used by `FrameDiagnostics.Capture(FrameStats)`. Neither constructor validates counter values; code that constructs the record directly is responsible for passing meaningful values.
 
-`ToString()` uses invariant culture and returns a compact diagnostics line with stable counter names. The formatted string includes queued layout, layout calls, render cache, hit-test, cache reuse, no-work frame, motion, and `HasWork` values.
+`ToString()` uses invariant culture and returns a compact diagnostics line with stable counter names. The formatted string includes queued layout, layout calls, render cache, hit-test, cache reuse, no-work frame, Motion, Relay, and `HasWork` values.
 
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `FrameDiagnosticsSnapshot(...)` | Initializes a snapshot with explicit frame, render, hit-test, and motion counter values. |
+| `FrameDiagnosticsSnapshot(..., bool HasWork)` | Initializes a snapshot with explicit frame, render, hit-test, and Motion counter values; Relay counters default to zero. |
+| `FrameDiagnosticsSnapshot(..., int RelaySnapshotCallbacks, ..., bool HasWork)` | Initializes a snapshot with explicit frame, render, hit-test, Motion, and Relay counter values. |
 
 ## Properties
 
@@ -96,6 +97,13 @@ The primary constructor does not validate counter values. Code that constructs t
 | `MotionRenderInvalidations` | `int` | Number of render invalidations caused by motion. |
 | `MotionLayoutInvalidations` | `int` | Number of layout invalidations caused by motion. |
 | `MotionSkippedByReducedMotion` | `int` | Number of motion operations skipped because of reduced-motion behavior. |
+| `RelaySnapshotCallbacks` | `int` | Number of callbacks included in the Relay drain snapshot. |
+| `RelayDequeuedCallbacks` | `int` | Number of Relay callbacks dequeued during the frame. |
+| `RelayExecutedCallbacks` | `int` | Number of Relay callbacks executed during the frame. |
+| `RelayCanceledCallbacks` | `int` | Number of canceled Relay callbacks observed during the frame. |
+| `RelayFaultedCallbacks` | `int` | Number of faulted Relay callbacks observed during the frame. |
+| `RelayDeferredCallbacks` | `int` | Number of Relay callbacks deferred to a later drain. |
+| `RelayBacklog` | `int` | Number of Relay callbacks remaining after the drain. |
 | `HasWork` | `bool` | Indicates whether captured frame counters reported work. |
 
 ## Methods
@@ -103,7 +111,7 @@ The primary constructor does not validate counter values. Code that constructs t
 | Name | Return Type | Description |
 | --- | --- | --- |
 | `ToString()` | `string` | Formats selected counters into a stable invariant-culture diagnostics line. |
-| `Deconstruct(...)` | `void` | Deconstructs the positional record into its public component values. |
+| `Deconstruct(...)` | `void` | Deconstructs the positional record into its original frame, render, hit-test, Motion, and `HasWork` component values. |
 
 ## Applies to
 

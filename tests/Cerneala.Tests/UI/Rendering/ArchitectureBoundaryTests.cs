@@ -331,6 +331,59 @@ public sealed class ArchitectureBoundaryTests
     }
 
     [Fact]
+    public void FirstPartyCernealaApplicationsUseServoAndDetectiveOwnershipBoundaries()
+    {
+        string repositoryRoot = FindRepositoryRoot();
+        string[] forbiddenTerms =
+        [
+            "ButtonAutomationPeer",
+            "WaitForFrameIdleAsync",
+            ".IsPointerOver = true",
+            "Root?.Trace",
+            "Root.Trace",
+            "Root?.RetainedRenderCache",
+            "Root.RetainedRenderCache",
+            "FrameDiagnostics.Format("
+        ];
+
+        foreach (string projectFile in Directory.EnumerateFiles(repositoryRoot, "*.csproj", SearchOption.AllDirectories)
+            .Where(file => !HasPathSegment(file, "bin") && !HasPathSegment(file, "obj")))
+        {
+            string projectText = File.ReadAllText(projectFile);
+            bool isExecutable =
+                projectText.Contains("<OutputType>Exe</OutputType>", StringComparison.Ordinal) ||
+                projectText.Contains("<OutputType>WinExe</OutputType>", StringComparison.Ordinal);
+            bool referencesCerneala = projectText.Contains("Cerneala.csproj", StringComparison.OrdinalIgnoreCase);
+            if (!isExecutable || !referencesCerneala)
+            {
+                continue;
+            }
+
+            string projectRoot = Path.GetDirectoryName(projectFile)!;
+            string projectPath = Path.GetRelativePath(repositoryRoot, projectFile);
+            bool ownsLowLevelScreenshotContract = projectPath.Replace('\\', '/') is
+                "Cerneala.PreviewHost/Cerneala.PreviewHost.csproj" or
+                "tests/Cerneala.SdlGpuSmoke/Cerneala.SdlGpuSmoke.csproj" or
+                "tests/Cerneala.WindowsDxSmoke/Cerneala.WindowsDxSmoke.csproj";
+
+            foreach (string sourceFile in Directory.EnumerateFiles(projectRoot, "*.cs", SearchOption.AllDirectories)
+                .Where(file => !HasPathSegment(file, "bin") && !HasPathSegment(file, "obj")))
+            {
+                string sourceText = File.ReadAllText(sourceFile);
+                foreach (string forbiddenTerm in forbiddenTerms)
+                {
+                    Assert.DoesNotContain(forbiddenTerm, sourceText, StringComparison.Ordinal);
+                }
+
+                if (!ownsLowLevelScreenshotContract)
+                {
+                    Assert.DoesNotContain("SaveScreenshot(", sourceText, StringComparison.Ordinal);
+                }
+            }
+        }
+    }
+
+    [Fact]
     public void MonoGameImageLoadingIsAdapterScoped()
     {
         string resourcesRoot = FindRepositoryPath("UI", "Resources");

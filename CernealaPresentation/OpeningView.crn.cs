@@ -25,24 +25,25 @@ internal partial class OpeningView : UserControl
         sequenceStarted = true;
         ServoApi.SetId(ContinueButton, "presentation-continue");
         StartRequested?.Invoke(this, EventArgs.Empty);
-        _ = RunLoadingAutomationAsync();
+        _ = RunLoadingServoAsync();
     }
 
-    private async Task RunLoadingAutomationAsync()
+    private async Task RunLoadingServoAsync()
     {
-        if (IsPresentationAutomationRequested())
+        ServoApi servo = new(FindHostWindow());
+        ServoTarget continueButton = ServoTarget.ById("presentation-continue");
+        if (IsPresentationServoRequested())
         {
             ContinueButton.IsEnabled = true;
-            await new ServoApi(FindHostWindow())
-                .ClickAsync(ServoTarget.ById("presentation-continue"));
+            await servo.ClickAsync(continueButton);
             return;
         }
 
-        await WaitForContinueButtonAsync();
-        await CaptureIfRequestedAsync("CERNEALA_PRESENTATION_LOADING_CAPTURE");
+        await servo.WaitForAsync(continueButton, ServoCondition.Enabled);
+        await CaptureIfRequestedAsync(servo, "CERNEALA_PRESENTATION_LOADING_CAPTURE");
     }
 
-    private static bool IsPresentationAutomationRequested()
+    private static bool IsPresentationServoRequested()
     {
         return
             !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_AUTOMATION_REPORT")) ||
@@ -53,30 +54,6 @@ internal partial class OpeningView : UserControl
                 Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_AUTO_CONTINUE"),
                 "1",
                 StringComparison.OrdinalIgnoreCase);
-    }
-
-    private Task WaitForContinueButtonAsync()
-    {
-        if (ContinueButton.IsEnabled)
-        {
-            return Task.CompletedTask;
-        }
-
-        TaskCompletionSource completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        EventHandler<UiPropertyChangedEventArgs>? handler = null;
-        handler = (_, _) =>
-        {
-            if (!ContinueButton.IsEnabled)
-            {
-                return;
-            }
-
-            ContinueButton.IsEnabledChanged -= handler;
-            completion.TrySetResult();
-        };
-
-        ContinueButton.IsEnabledChanged += handler;
-        return completion.Task;
     }
 
     private void OnContinue(UiElementId sender, RoutedEventArgs args)
@@ -91,7 +68,7 @@ internal partial class OpeningView : UserControl
         ContinueRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    private async Task CaptureIfRequestedAsync(string environmentVariable)
+    private async Task CaptureIfRequestedAsync(ServoApi servo, string environmentVariable)
     {
         string? path = Environment.GetEnvironmentVariable(environmentVariable);
         if (string.IsNullOrWhiteSpace(path))
@@ -100,7 +77,7 @@ internal partial class OpeningView : UserControl
         }
 
         await Task.Delay(150);
-        await CaptureNextFrameAsync(Path.GetFullPath(path));
+        await servo.SaveScreenshotAsync(Path.GetFullPath(path));
         if (string.Equals(
                 Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_CLOSE_AFTER_CAPTURE"),
                 "1",
@@ -108,23 +85,6 @@ internal partial class OpeningView : UserControl
         {
             FindHostWindow().Close();
         }
-    }
-
-    private async Task CaptureNextFrameAsync(string path)
-    {
-        Window host = FindHostWindow();
-        TaskCompletionSource completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        EventHandler? handler = null;
-        handler = (_, _) =>
-        {
-            host.FrameRendered -= handler;
-            host.SaveScreenshot(path);
-            completion.TrySetResult();
-        };
-
-        host.FrameRendered += handler;
-        host.Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.Render, "presentation screenshot");
-        await completion.Task;
     }
 
     private Window FindHostWindow()
