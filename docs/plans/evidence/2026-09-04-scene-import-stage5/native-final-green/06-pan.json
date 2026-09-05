@@ -1,0 +1,145 @@
+{
+  "player": {
+    "TypeName": "Scene2D",
+    "Id": "world-player",
+    "Name": null,
+    "Role": 2,
+    "Bounds": {
+      "X": 377.59998,
+      "Y": 339.19998,
+      "Width": 12.799988,
+      "Height": 12.799988,
+      "Location": {
+        "X": 377.59998,
+        "Y": 339.19998
+      },
+      "Size": {
+        "Width": 12.799988,
+        "Height": 12.799988,
+        "IsWidthUnconstrained": false,
+        "IsHeightUnconstrained": false
+      }
+    },
+    "IsVisible": true,
+    "IsEnabled": true,
+    "IsFocused": false,
+    "Value": null,
+    "Properties": {
+      "IsEnabled": true,
+      "IsFocused": false
+    }
+  },
+  "door": {
+    "TypeName": "TileInstance2D",
+    "Id": "world-door",
+    "Name": null,
+    "Role": 2,
+    "Bounds": {
+      "X": 376,
+      "Y": 272,
+      "Width": 12.799988,
+      "Height": 12.799988,
+      "Location": {
+        "X": 376,
+        "Y": 272
+      },
+      "Size": {
+        "Width": 12.799988,
+        "Height": 12.799988,
+        "IsWidthUnconstrained": false,
+        "IsHeightUnconstrained": false
+      }
+    },
+    "IsVisible": true,
+    "IsEnabled": true,
+    "IsFocused": false,
+    "Value": null,
+    "Properties": {
+      "IsEnabled": true,
+      "IsFocused": false
+    }
+  },
+  "surface": {
+    "ElementId": "ui-106",
+    "ElementType": "RenderSurface2D",
+    "DesiredSize": {
+      "Width": 0,
+      "Height": 0,
+      "IsWidthUnconstrained": false,
+      "IsHeightUnconstrained": false
+    },
+    "ArrangedBounds": {
+      "X": 292.8,
+      "Y": 150.4,
+      "Width": 494.4,
+      "Height": 400.8,
+      "Location": {
+        "X": 292.8,
+        "Y": 150.4
+      },
+      "Size": {
+        "Width": 494.4,
+        "Height": 400.8,
+        "IsWidthUnconstrained": false,
+        "IsHeightUnconstrained": false
+      }
+    },
+    "LayoutVersion": 0,
+    "Visibility": 0,
+    "LastMeasureAvailableSize": {
+      "Width": 494,
+      "Height": 400.39996,
+      "IsWidthUnconstrained": false,
+      "IsHeightUnconstrained": false
+    },
+    "LastMeasureLayoutVersion": 0,
+    "LastArrangeFinalRect": {
+      "X": 293,
+      "Y": 150.6,
+      "Width": 494,
+      "Height": 400.39996,
+      "Location": {
+        "X": 293,
+        "Y": 150.6
+      },
+      "Size": {
+        "Width": 494,
+        "Height": 400.39996,
+        "IsWidthUnconstrained": false,
+        "IsHeightUnconstrained": false
+      }
+    },
+    "LastArrangeLayoutVersion": 0
+  },
+  "tilemap": {
+    "TotalChunks": 64,
+    "CandidateChunks": 48,
+    "VisibleChunks": 48,
+    "CandidateTiles": 3072,
+    "DrawnTiles": 1688,
+    "BatchesBuilt": 0,
+    "BatchesRebuilt": 0,
+    "BatchesReused": 43,
+    "DrawCommands": 44,
+    "RetainedBytes": 415296,
+    "RetainedObjects": 1923,
+    "TileInvalidations": 0,
+    "PromotedInstancesVisible": 1,
+    "PromotedInstancesCulled": 0,
+    "Promotions": 0,
+    "Demotions": 0,
+    "BatchSplits": 1
+  },
+  "overlay": {
+    "CandidateChunks": 0,
+    "VisitedTiles": 0,
+    "Colliders": 0,
+    "PromotedTiles": 0,
+    "NavigationCells": 0,
+    "Primitives": 0
+  },
+  "PlayerX": 226,
+  "PlayerY": 228,
+  "DoorClosed": false,
+  "PlayerState": "Attack"
+}

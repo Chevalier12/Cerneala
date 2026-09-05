@@ -55,6 +55,18 @@ public sealed class ElementInputRouteBuilder
                 map,
                 includeDisabled);
         }
+
+        if (element is IInputSubtreeHost inputSubtreeHost)
+        {
+            foreach (UIElement child in inputSubtreeHost.GetInputSubtreeChildren())
+            {
+                AddElementAndDescendants(
+                    child,
+                    parentForDescendants,
+                    map,
+                    includeDisabled);
+            }
+        }
     }
 
     private static bool ShouldInclude(UIElement element, bool includeDisabled)

@@ -1,0 +1,94 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="9848ee4e-46c3-4a3f-90f9-82e20f2825f1" name="lauri@DESKTOP-JT43V3D 2026-09-04 22:27:21" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-04T22:27:21.6444135+03:00" queuing="2026-09-04T22:27:21.6444139+03:00" start="2026-09-04T22:27:17.9085768+03:00" finish="2026-09-04T22:27:21.7411276+03:00" />
+  <TestSettings name="default" id="f9e453dc-76ff-4cbc-a7f9-ca7cae24bcdc">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-04_22_27_21" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="d1a0b647-65c5-45fd-a311-ed8b1922271f" testId="be30a149-5cc6-0e4b-b53e-944f9354ed17" testName="Cerneala.Tests.Controls.SpriteAnimationSamplerTests.SamplerIsDeterministicAtEveryBoundaryAndPlaybackRate" computerName="DESKTOP-JT43V3D" duration="00:00:00.0030018" startTime="2026-09-04T22:27:21.6491698+03:00" endTime="2026-09-04T22:27:21.6491701+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d1a0b647-65c5-45fd-a311-ed8b1922271f" />
+    <UnitTestResult executionId="3de97bed-2cde-44ea-8c28-1bb2b174bc97" testId="d8ec3901-daf1-6b44-fad1-51d76e123a9b" testName="Cerneala.Tests.Controls.SpriteAnimationSamplerTests.FixedSeedSequencesMatchAnIndependentReferenceSampler" computerName="DESKTOP-JT43V3D" duration="00:00:00.0272018" startTime="2026-09-04T22:27:21.6459830+03:00" endTime="2026-09-04T22:27:21.6459834+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3de97bed-2cde-44ea-8c28-1bb2b174bc97" />
+    <UnitTestResult executionId="53d1e07a-4c9d-49b1-b72d-a490363042fa" testId="c6a3a8e9-8bf0-3744-55d6-e09f2ff4399b" testName="Cerneala.Tests.Controls.SpriteAnimationIntegrationTests.SpriteUsesCurrentFrameAndXorFlipWithoutMutatingStaticFallback" computerName="DESKTOP-JT43V3D" duration="00:00:00.0075693" startTime="2026-09-04T22:27:20.9870419+03:00" endTime="2026-09-04T22:27:20.9870421+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="53d1e07a-4c9d-49b1-b72d-a490363042fa" />
+    <UnitTestResult executionId="b0d1476b-2348-42db-b68d-604132fbb790" testId="d8e2fc47-c59c-a96e-1a34-d976c0f826a7" testName="Cerneala.Tests.Controls.SpriteAnimationIntegrationTests.StateChangeInvalidatesSurfaceExactlyOnce" computerName="DESKTOP-JT43V3D" duration="00:00:00.1237261" startTime="2026-09-04T22:27:20.9302465+03:00" endTime="2026-09-04T22:27:20.9302674+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b0d1476b-2348-42db-b68d-604132fbb790" />
+    <UnitTestResult executionId="4bcc14d4-c071-4a21-bd83-2794938a1954" testId="43421b78-f993-d3ea-d77b-c75c078ff756" testName="Cerneala.Tests.Controls.SpriteAnimationIntegrationTests.PromotedAnimatedPrismTileKeepsOrdinaryTilesBatched" computerName="DESKTOP-JT43V3D" duration="00:00:00.1501290" startTime="2026-09-04T22:27:21.5826197+03:00" endTime="2026-09-04T22:27:21.5826210+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4bcc14d4-c071-4a21-bd83-2794938a1954" />
+    <UnitTestResult executionId="38a45ff9-6315-4e22-a656-af961c0fc5cc" testId="94cfb8ce-180f-8c61-e9a2-a1d230b8b095" testName="Cerneala.Tests.Controls.SpriteAnimationSamplerTests.DefinitionsValidateAndDefensivelyCopyTheirInputs" computerName="DESKTOP-JT43V3D" duration="00:00:00.0039553" startTime="2026-09-04T22:27:21.5892784+03:00" endTime="2026-09-04T22:27:21.5892788+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="38a45ff9-6315-4e22-a656-af961c0fc5cc" />
+    <UnitTestResult executionId="bf2641aa-4d83-4aaf-bbe4-820dfa8d5dbe" testId="0cf97a06-0165-ec07-d473-36d407dc9544" testName="Cerneala.Tests.Controls.SpriteAnimationIntegrationTests.CurrentFrameChangesOnlyVisualSourceAndNotSpriteBoundsOrPickingBounds" computerName="DESKTOP-JT43V3D" duration="00:00:00.0088833" startTime="2026-09-04T22:27:21.4322765+03:00" endTime="2026-09-04T22:27:21.4322771+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bf2641aa-4d83-4aaf-bbe4-820dfa8d5dbe" />
+    <UnitTestResult executionId="8d3bc93e-cbd6-494a-a42b-5e7271c63e50" testId="e17f21d2-6d44-9f67-6f42-bd8177ab7072" testName="Cerneala.Tests.Controls.SpriteAnimationIntegrationTests.AspectSelectsClipWhileMotionAndPrismPreserveFrameOwnership" computerName="DESKTOP-JT43V3D" duration="00:00:00.4359660" startTime="2026-09-04T22:27:21.4231754+03:00" endTime="2026-09-04T22:27:21.4231758+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8d3bc93e-cbd6-494a-a42b-5e7271c63e50" />
+    <UnitTestResult executionId="87c284e7-ef7e-4b31-9e1b-a3e0e09d66de" testId="0157b9a4-c5e1-012e-4e51-5a668b347055" testName="Cerneala.Tests.Controls.SpriteAnimationIntegrationTests.AtlasAndDataContextChangesPreserveProgressButDefinitionReplacementResets" computerName="DESKTOP-JT43V3D" duration="00:00:00.0006091" startTime="2026-09-04T22:27:20.9793440+03:00" endTime="2026-09-04T22:27:20.9793441+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="87c284e7-ef7e-4b31-9e1b-a3e0e09d66de" />
+    <UnitTestResult executionId="7a93c364-3f5a-43cf-a801-3be7c5acf848" testId="e915e4ff-686c-2d6c-95bf-15f5dbc4e311" testName="Cerneala.Tests.Controls.SpriteAnimationSamplerTests.MillionCycleJumpsAreReducedBeforeFrameSearch" computerName="DESKTOP-JT43V3D" duration="00:00:00.0153503" startTime="2026-09-04T22:27:21.6048376+03:00" endTime="2026-09-04T22:27:21.6048380+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7a93c364-3f5a-43cf-a801-3be7c5acf848" />
+    <UnitTestResult executionId="2defcd0d-cdb9-4762-a6d2-32a610fc8022" testId="a686d43c-33fe-1b89-8b1e-43287fc0c807" testName="Cerneala.Tests.Controls.SpriteAnimationIntegrationTests.SharedDefinitionsKeepIndependentProgressAndRestartResumePolicy" computerName="DESKTOP-JT43V3D" duration="00:00:00.0432293" startTime="2026-09-04T22:27:20.9778664+03:00" endTime="2026-09-04T22:27:20.9778669+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2defcd0d-cdb9-4762-a6d2-32a610fc8022" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationSamplerTests.MillionCycleJumpsAreReducedBeforeFrameSearch" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="e915e4ff-686c-2d6c-95bf-15f5dbc4e311">
+      <Execution id="7a93c364-3f5a-43cf-a801-3be7c5acf848" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationSamplerTests" name="MillionCycleJumpsAreReducedBeforeFrameSearch" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationIntegrationTests.AspectSelectsClipWhileMotionAndPrismPreserveFrameOwnership" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="e17f21d2-6d44-9f67-6f42-bd8177ab7072">
+      <Execution id="8d3bc93e-cbd6-494a-a42b-5e7271c63e50" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationIntegrationTests" name="AspectSelectsClipWhileMotionAndPrismPreserveFrameOwnership" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationIntegrationTests.StateChangeInvalidatesSurfaceExactlyOnce" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="d8e2fc47-c59c-a96e-1a34-d976c0f826a7">
+      <Execution id="b0d1476b-2348-42db-b68d-604132fbb790" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationIntegrationTests" name="StateChangeInvalidatesSurfaceExactlyOnce" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationIntegrationTests.PromotedAnimatedPrismTileKeepsOrdinaryTilesBatched" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="43421b78-f993-d3ea-d77b-c75c078ff756">
+      <Execution id="4bcc14d4-c071-4a21-bd83-2794938a1954" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationIntegrationTests" name="PromotedAnimatedPrismTileKeepsOrdinaryTilesBatched" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationIntegrationTests.AtlasAndDataContextChangesPreserveProgressButDefinitionReplacementResets" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="0157b9a4-c5e1-012e-4e51-5a668b347055">
+      <Execution id="87c284e7-ef7e-4b31-9e1b-a3e0e09d66de" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationIntegrationTests" name="AtlasAndDataContextChangesPreserveProgressButDefinitionReplacementResets" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationIntegrationTests.SharedDefinitionsKeepIndependentProgressAndRestartResumePolicy" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="a686d43c-33fe-1b89-8b1e-43287fc0c807">
+      <Execution id="2defcd0d-cdb9-4762-a6d2-32a610fc8022" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationIntegrationTests" name="SharedDefinitionsKeepIndependentProgressAndRestartResumePolicy" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationSamplerTests.FixedSeedSequencesMatchAnIndependentReferenceSampler" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="d8ec3901-daf1-6b44-fad1-51d76e123a9b">
+      <Execution id="3de97bed-2cde-44ea-8c28-1bb2b174bc97" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationSamplerTests" name="FixedSeedSequencesMatchAnIndependentReferenceSampler" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationIntegrationTests.CurrentFrameChangesOnlyVisualSourceAndNotSpriteBoundsOrPickingBounds" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="0cf97a06-0165-ec07-d473-36d407dc9544">
+      <Execution id="bf2641aa-4d83-4aaf-bbe4-820dfa8d5dbe" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationIntegrationTests" name="CurrentFrameChangesOnlyVisualSourceAndNotSpriteBoundsOrPickingBounds" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationSamplerTests.SamplerIsDeterministicAtEveryBoundaryAndPlaybackRate" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="be30a149-5cc6-0e4b-b53e-944f9354ed17">
+      <Execution id="d1a0b647-65c5-45fd-a311-ed8b1922271f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationSamplerTests" name="SamplerIsDeterministicAtEveryBoundaryAndPlaybackRate" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationSamplerTests.DefinitionsValidateAndDefensivelyCopyTheirInputs" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="94cfb8ce-180f-8c61-e9a2-a1d230b8b095">
+      <Execution id="38a45ff9-6315-4e22-a656-af961c0fc5cc" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationSamplerTests" name="DefinitionsValidateAndDefensivelyCopyTheirInputs" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationIntegrationTests.SpriteUsesCurrentFrameAndXorFlipWithoutMutatingStaticFallback" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="c6a3a8e9-8bf0-3744-55d6-e09f2ff4399b">
+      <Execution id="53d1e07a-4c9d-49b1-b72d-a490363042fa" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationIntegrationTests" name="SpriteUsesCurrentFrameAndXorFlipWithoutMutatingStaticFallback" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="be30a149-5cc6-0e4b-b53e-944f9354ed17" executionId="d1a0b647-65c5-45fd-a311-ed8b1922271f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d8ec3901-daf1-6b44-fad1-51d76e123a9b" executionId="3de97bed-2cde-44ea-8c28-1bb2b174bc97" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c6a3a8e9-8bf0-3744-55d6-e09f2ff4399b" executionId="53d1e07a-4c9d-49b1-b72d-a490363042fa" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d8e2fc47-c59c-a96e-1a34-d976c0f826a7" executionId="b0d1476b-2348-42db-b68d-604132fbb790" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="43421b78-f993-d3ea-d77b-c75c078ff756" executionId="4bcc14d4-c071-4a21-bd83-2794938a1954" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="94cfb8ce-180f-8c61-e9a2-a1d230b8b095" executionId="38a45ff9-6315-4e22-a656-af961c0fc5cc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0cf97a06-0165-ec07-d473-36d407dc9544" executionId="bf2641aa-4d83-4aaf-bbe4-820dfa8d5dbe" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e17f21d2-6d44-9f67-6f42-bd8177ab7072" executionId="8d3bc93e-cbd6-494a-a42b-5e7271c63e50" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0157b9a4-c5e1-012e-4e51-5a668b347055" executionId="87c284e7-ef7e-4b31-9e1b-a3e0e09d66de" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e915e4ff-686c-2d6c-95bf-15f5dbc4e311" executionId="7a93c364-3f5a-43cf-a801-3be7c5acf848" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a686d43c-33fe-1b89-8b1e-43287fc0c807" executionId="2defcd0d-cdb9-4762-a6d2-32a610fc8022" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="11" executed="11" passed="11" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.37]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.25]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.27]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:02.25]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

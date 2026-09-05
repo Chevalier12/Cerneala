@@ -1,0 +1,117 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="0ecbef14-f8aa-4120-95ac-9acf8ce97fb5" name="lauri@DESKTOP-JT43V3D 2026-09-05 13:19:15" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T13:19:15.2808166+03:00" queuing="2026-09-05T13:19:15.2808170+03:00" start="2026-09-05T13:19:10.2896028+03:00" finish="2026-09-05T13:19:15.9131060+03:00" />
+  <TestSettings name="default" id="8bf88578-c622-4894-b8cf-6ef665c476e1">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_13_19_15" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="72e124a8-afcd-4899-b649-d7ceb68dac53" testId="b9038c57-61d9-910a-4063-d7c6f8a354b7" testName="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(sourceType: &quot;System.Collections.ObjectModel.ObservableCollectio&quot;···)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1758365" startTime="2026-09-05T13:19:15.6677191+03:00" endTime="2026-09-05T13:19:15.6677194+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="72e124a8-afcd-4899-b649-d7ceb68dac53">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.DoesNotContain() Failure: Filter matched in collection&#xD;
+             ↓ (pos 0)&#xD;
+Collection: [WorldBindings.crn(4,21): error CERNEALAUI007: Markup binding source '$DataContext.Items' is invalid: Source type 'System.Collections.ObjectModel.ObservableCollection&lt;string&gt;' is not compatible with target type 'System.Collections.IEnumerable?'.]</Message>
+          <StackTrace>   at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(String sourceType) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorSceneWorldBindingTests.cs:line 37&#xD;
+   at InvokeStub_UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="ed2beb19-7f08-4986-947e-0291b3a22a6d" testId="0d9a70c9-882a-b437-9d65-0762e7e554f8" testName="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(sourceType: &quot;System.Collections.Generic.IReadOnlyList&lt;string&gt;&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.2407661" startTime="2026-09-05T13:19:15.4923002+03:00" endTime="2026-09-05T13:19:15.4923005+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ed2beb19-7f08-4986-947e-0291b3a22a6d">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.DoesNotContain() Failure: Filter matched in collection&#xD;
+             ↓ (pos 0)&#xD;
+Collection: [WorldBindings.crn(4,21): error CERNEALAUI007: Markup binding source '$DataContext.Items' is invalid: Source type 'System.Collections.Generic.IReadOnlyList&lt;string&gt;' is not compatible with target type 'System.Collections.IEnumerable?'.]</Message>
+          <StackTrace>   at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(String sourceType) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorSceneWorldBindingTests.cs:line 37&#xD;
+   at InvokeStub_UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="7beb2173-bb08-4517-86ae-a67123f0bea1" testId="2f8a89ed-3c0e-0392-b019-df74193a3811" testName="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsRejectsUnsafeTwoWayReferenceConversion" computerName="DESKTOP-JT43V3D" duration="00:00:00.1730332" startTime="2026-09-05T13:19:15.8406443+03:00" endTime="2026-09-05T13:19:15.8406446+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7beb2173-bb08-4517-86ae-a67123f0bea1" />
+    <UnitTestResult executionId="6d59683d-58de-4580-8c4f-3e7c4c344c88" testId="d40e2a7c-37bc-e9db-4570-be1fd06de89f" testName="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(sourceType: &quot;string[]&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:02.9596554" startTime="2026-09-05T13:19:15.2539712+03:00" endTime="2026-09-05T13:19:15.2539912+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6d59683d-58de-4580-8c4f-3e7c4c344c88">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.DoesNotContain() Failure: Filter matched in collection&#xD;
+             ↓ (pos 0)&#xD;
+Collection: [WorldBindings.crn(4,34): error CERNEALAUI007: Markup binding source '$DataContext.Items:OneWay' is invalid: Source type '&lt;unknown&gt;' is not compatible with target type 'System.Collections.IEnumerable?'.]</Message>
+          <StackTrace>   at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(String sourceType) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorSceneWorldBindingTests.cs:line 37&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(sourceType: &quot;string[]&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sourcegen\bin\debug\net8.0-windows\cerneala.tests.sourcegen.dll" id="d40e2a7c-37bc-e9db-4570-be1fd06de89f">
+      <Execution id="6d59683d-58de-4580-8c4f-3e7c4c344c88" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Debug\net8.0-windows\Cerneala.Tests.SourceGen.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests" name="SceneItemsAcceptsOneWayReferenceAssignableCollection" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(sourceType: &quot;System.Collections.ObjectModel.ObservableCollectio&quot;···)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sourcegen\bin\debug\net8.0-windows\cerneala.tests.sourcegen.dll" id="b9038c57-61d9-910a-4063-d7c6f8a354b7">
+      <Execution id="72e124a8-afcd-4899-b649-d7ceb68dac53" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Debug\net8.0-windows\Cerneala.Tests.SourceGen.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests" name="SceneItemsAcceptsOneWayReferenceAssignableCollection" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsRejectsUnsafeTwoWayReferenceConversion" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sourcegen\bin\debug\net8.0-windows\cerneala.tests.sourcegen.dll" id="2f8a89ed-3c0e-0392-b019-df74193a3811">
+      <Execution id="7beb2173-bb08-4517-86ae-a67123f0bea1" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Debug\net8.0-windows\Cerneala.Tests.SourceGen.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests" name="SceneItemsRejectsUnsafeTwoWayReferenceConversion" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(sourceType: &quot;System.Collections.Generic.IReadOnlyList&lt;string&gt;&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sourcegen\bin\debug\net8.0-windows\cerneala.tests.sourcegen.dll" id="0d9a70c9-882a-b437-9d65-0762e7e554f8">
+      <Execution id="ed2beb19-7f08-4986-947e-0291b3a22a6d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Debug\net8.0-windows\Cerneala.Tests.SourceGen.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests" name="SceneItemsAcceptsOneWayReferenceAssignableCollection" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="b9038c57-61d9-910a-4063-d7c6f8a354b7" executionId="72e124a8-afcd-4899-b649-d7ceb68dac53" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0d9a70c9-882a-b437-9d65-0762e7e554f8" executionId="ed2beb19-7f08-4986-947e-0291b3a22a6d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2f8a89ed-3c0e-0392-b019-df74193a3811" executionId="7beb2173-bb08-4517-86ae-a67123f0bea1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d40e2a7c-37bc-e9db-4570-be1fd06de89f" executionId="6d59683d-58de-4580-8c4f-3e7c4c344c88" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="4" executed="4" passed="1" failed="3" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.59]   Discovering: Cerneala.Tests.SourceGen&#xD;
+[xUnit.net 00:00:00.71]   Discovered:  Cerneala.Tests.SourceGen&#xD;
+[xUnit.net 00:00:00.72]   Starting:    Cerneala.Tests.SourceGen&#xD;
+[xUnit.net 00:00:03.75]       Assert.DoesNotContain() Failure: Filter matched in collection&#xD;
+[xUnit.net 00:00:03.75]                    ↓ (pos 0)&#xD;
+[xUnit.net 00:00:03.75]       Collection: [WorldBindings.crn(4,34): error CERNEALAUI007: Markup binding source '$DataContext.Items:OneWay' is invalid: Source type '&lt;unknown&gt;' is not compatible with target type 'System.Collections.IEnumerable?'.]&#xD;
+[xUnit.net 00:00:03.75]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.75]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorSceneWorldBindingTests.cs(37,0): at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(String sourceType)&#xD;
+[xUnit.net 00:00:03.75]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:03.75]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:03.99]       Assert.DoesNotContain() Failure: Filter matched in collection&#xD;
+[xUnit.net 00:00:03.99]                    ↓ (pos 0)&#xD;
+[xUnit.net 00:00:03.99]       Collection: [WorldBindings.crn(4,21): error CERNEALAUI007: Markup binding source '$DataContext.Items' is invalid: Source type 'System.Collections.Generic.IReadOnlyList&lt;string&gt;' is not compatible with target type 'System.Collections.IEnumerable?'.]&#xD;
+[xUnit.net 00:00:03.99]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.99]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorSceneWorldBindingTests.cs(37,0): at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(String sourceType)&#xD;
+[xUnit.net 00:00:03.99]            at InvokeStub_UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(Object, Span`1)&#xD;
+[xUnit.net 00:00:03.99]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:04.17]       Assert.DoesNotContain() Failure: Filter matched in collection&#xD;
+[xUnit.net 00:00:04.17]                    ↓ (pos 0)&#xD;
+[xUnit.net 00:00:04.17]       Collection: [WorldBindings.crn(4,21): error CERNEALAUI007: Markup binding source '$DataContext.Items' is invalid: Source type 'System.Collections.ObjectModel.ObservableCollection&lt;string&gt;' is not compatible with target type 'System.Collections.IEnumerable?'.]&#xD;
+[xUnit.net 00:00:04.17]       Stack Trace:&#xD;
+[xUnit.net 00:00:04.17]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorSceneWorldBindingTests.cs(37,0): at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(String sourceType)&#xD;
+[xUnit.net 00:00:04.17]            at InvokeStub_UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(Object, Span`1)&#xD;
+[xUnit.net 00:00:04.17]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:04.35]   Finished:    Cerneala.Tests.SourceGen&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T13:19:15.2512986+03:00">
+        <Text>[xUnit.net 00:00:03.75]     Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(sourceType: "string[]") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T13:19:15.4911288+03:00">
+        <Text>[xUnit.net 00:00:03.99]     Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(sourceType: "System.Collections.Generic.IReadOnlyList&lt;string&gt;") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T13:19:15.6673110+03:00">
+        <Text>[xUnit.net 00:00:04.17]     Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(sourceType: "System.Collections.ObjectModel.ObservableCollectio"···) [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="994a80fd-609c-481b-bfe5-25a380a3c9cf" name="lauri@DESKTOP-JT43V3D 2026-09-05 03:00:05" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T03:00:05.3720792+03:00" queuing="2026-09-05T03:00:05.3720796+03:00" start="2026-09-05T03:00:03.2862990+03:00" finish="2026-09-05T03:00:05.3807388+03:00" />
+  <TestSettings name="default" id="6c7ac43f-7b69-46bf-a826-71a5a925ad88">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_03_00_05" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="e7483d16-dd24-41d2-b122-c5316b7b02ec" testId="0d7f9a6a-90ed-cf18-8f9a-98f2de3fe5e3" testName="Cerneala.Tests.Controls.SceneDocumentContractTests.ProgrammaticGraphCannotAmplifySharedChunksPastTheMapBudget" computerName="DESKTOP-JT43V3D" duration="00:00:00.0655686" startTime="2026-09-05T03:00:05.1536493+03:00" endTime="2026-09-05T03:00:05.1536695+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e7483d16-dd24-41d2-b122-c5316b7b02ec">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.IsAssignableFrom() Failure: Value is null&#xD;
+Expected: typeof(System.ArgumentException)&#xD;
+Actual:   null</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneDocumentContractTests.AssertCode(String code, Action action) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneDocumentContractTests.cs:line 208&#xD;
+   at Cerneala.Tests.Controls.SceneDocumentContractTests.ProgrammaticGraphCannotAmplifySharedChunksPastTheMapBudget() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneDocumentContractTests.cs:line 236&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="cf3dd27c-0af4-46b9-87c7-cfdb4bb6774b" testId="2ecce4b8-83e4-1aeb-5759-6f71cf790347" testName="Cerneala.Tests.Controls.SceneDocumentContractTests.DiagnosticTextCannotMultiplyUntrustedStringsAcrossTheRetentionBudget" computerName="DESKTOP-JT43V3D" duration="00:00:00.0035184" startTime="2026-09-05T03:00:05.1617844+03:00" endTime="2026-09-05T03:00:05.1617850+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cf3dd27c-0af4-46b9-87c7-cfdb4bb6774b">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.InRange() Failure: Value not in range&#xD;
+Range:  (1 - 4096)&#xD;
+Actual: 10000</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneDocumentContractTests.DiagnosticTextCannotMultiplyUntrustedStringsAcrossTheRetentionBudget() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneDocumentContractTests.cs:line 155&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Controls.SceneDocumentContractTests.DiagnosticTextCannotMultiplyUntrustedStringsAcrossTheRetentionBudget" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="2ecce4b8-83e4-1aeb-5759-6f71cf790347">
+      <Execution id="cf3dd27c-0af4-46b9-87c7-cfdb4bb6774b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneDocumentContractTests" name="DiagnosticTextCannotMultiplyUntrustedStringsAcrossTheRetentionBudget" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneDocumentContractTests.ProgrammaticGraphCannotAmplifySharedChunksPastTheMapBudget" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="0d7f9a6a-90ed-cf18-8f9a-98f2de3fe5e3">
+      <Execution id="e7483d16-dd24-41d2-b122-c5316b7b02ec" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneDocumentContractTests" name="ProgrammaticGraphCannotAmplifySharedChunksPastTheMapBudget" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="0d7f9a6a-90ed-cf18-8f9a-98f2de3fe5e3" executionId="e7483d16-dd24-41d2-b122-c5316b7b02ec" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2ecce4b8-83e4-1aeb-5759-6f71cf790347" executionId="cf3dd27c-0af4-46b9-87c7-cfdb4bb6774b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="2" executed="2" passed="0" failed="2" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.22]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.90]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.91]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.03]       Assert.IsAssignableFrom() Failure: Value is null&#xD;
+[xUnit.net 00:00:01.03]       Expected: typeof(System.ArgumentException)&#xD;
+[xUnit.net 00:00:01.03]       Actual:   null&#xD;
+[xUnit.net 00:00:01.03]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.03]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneDocumentContractTests.cs(208,0): at Cerneala.Tests.Controls.SceneDocumentContractTests.AssertCode(String code, Action action)&#xD;
+[xUnit.net 00:00:01.03]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneDocumentContractTests.cs(236,0): at Cerneala.Tests.Controls.SceneDocumentContractTests.ProgrammaticGraphCannotAmplifySharedChunksPastTheMapBudget()&#xD;
+[xUnit.net 00:00:01.03]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.03]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.04]       Assert.InRange() Failure: Value not in range&#xD;
+[xUnit.net 00:00:01.04]       Range:  (1 - 4096)&#xD;
+[xUnit.net 00:00:01.04]       Actual: 10000&#xD;
+[xUnit.net 00:00:01.04]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.04]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneDocumentContractTests.cs(155,0): at Cerneala.Tests.Controls.SceneDocumentContractTests.DiagnosticTextCannotMultiplyUntrustedStringsAcrossTheRetentionBudget()&#xD;
+[xUnit.net 00:00:01.04]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.04]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.05]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:00:05.1491028+03:00">
+        <Text>[xUnit.net 00:00:01.03]     Cerneala.Tests.Controls.SceneDocumentContractTests.ProgrammaticGraphCannotAmplifySharedChunksPastTheMapBudget [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:00:05.1613474+03:00">
+        <Text>[xUnit.net 00:00:01.04]     Cerneala.Tests.Controls.SceneDocumentContractTests.DiagnosticTextCannotMultiplyUntrustedStringsAcrossTheRetentionBudget [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

@@ -173,28 +173,30 @@ The generator enforces these rules:
 
 ## Inline Aspect
 
+`<Type.Aspect>` is the declaration itself. Its directives go directly in the
+property element. A nested `<Aspect>` wrapper is illegal and reports
+`CERNEALAUI005`; named/default Aspect declarations in resources are unchanged.
+
 ```xml
 <Border>
     <Border.Aspect>
-        <Aspect>
-            @when IsMouseOver
+        @when IsMouseOver
+        {
+            @animate with Tween(160ms, EaseOut)
             {
-                @animate with Tween(160ms, EaseOut)
+                @from
                 {
-                    @from
-                    {
-                        Opacity = current;
-                        Scale = current;
-                    }
+                    Opacity = current;
+                    Scale = current;
+                }
 
-                    @to
-                    {
-                        Opacity = IsMouseOver ? 1 : 0.72;
-                        Scale = IsMouseOver ? 1.04 : 1;
-                    }
+                @to
+                {
+                    Opacity = IsMouseOver ? 1 : 0.72;
+                    Scale = IsMouseOver ? 1.04 : 1;
                 }
             }
-        </Aspect>
+        }
     </Border.Aspect>
 </Border>
 ```
@@ -526,6 +528,10 @@ The relationship must be explicit inside one body:
 Each `@run` creates an independent execution with its own handles and cancellation state. The resource remains immutable and owns no event subscriptions. `@run` is an execution leaf and may participate in `@sequence` and `@parallel` composition inside an Aspect.
 
 ## Language Model
+
+The `Aspect` body below belongs directly to `<Type.Aspect>` for an inline
+declaration, or to `<Aspect TargetType="...">` in a resource scope. It is not
+an additional wrapper inside the inline property element.
 
 ```text
 <Aspect>

@@ -12,6 +12,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Cerneala.csproj" />
+    <ProjectReference Include="..\..\Cerneala.Scene2D.Importers\Cerneala.Scene2D.Importers.csproj" />
+    <Content Include="SceneWorldAssets\*.tmj;SceneWorldAssets\*.ldtk;SceneWorldAssets\*.png" CopyToOutputDirectory="PreserveNewest" />
     <ProjectReference Include="..\..\Cerneala.Backends.MonoGame\Cerneala.Backends.MonoGame.csproj"
                       Condition="'$(CernealaDesktopBackend)' == 'MonoGame'" />
     <ProjectReference Include="..\..\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj"

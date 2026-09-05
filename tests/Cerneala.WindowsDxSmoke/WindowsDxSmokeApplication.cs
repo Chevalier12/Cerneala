@@ -3,6 +3,7 @@ using Cerneala.Drawing.MonoGame;
 using Cerneala.Drawing.MonoGame.Prism.Kernels;
 using Cerneala.Drawing.Prism.Graph;
 using Cerneala.Drawing.Text;
+using Cerneala.SmokeTests;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windowing;
@@ -28,9 +29,58 @@ internal static class WindowsDxSmokeApplication
         try
         {
             WindowsDxApplicationBackend.EnsureRegistered();
+            if (args is ["--capture-scene-debug", string debugDirectory])
+            {
+                CaptureSceneDebug(debugDirectory);
+                return 0;
+            }
+            if (args is ["--verify-scene-debug", string debugWindows, string debugSdl, string debugReport])
+            {
+                TileMapStage5ConformanceFixture.CompareBackends(debugWindows, debugSdl, debugReport,
+                    SceneDebugOverlayConformanceFixture.CaptureNames, "Scene debug overlay");
+                return 0;
+            }
+            if (args is ["--capture-sprite-animation", string animationDirectory])
+            {
+                CaptureSpriteAnimation(animationDirectory);
+                return 0;
+            }
+            if (args is ["--verify-sprite-animation", string animationWindows, string animationSdl, string animationReport])
+            {
+                TileMapStage5ConformanceFixture.CompareBackends(animationWindows, animationSdl, animationReport,
+                    SpriteAnimationConformanceFixture.CaptureNames, "Sprite animation");
+                return 0;
+            }
             if (args is ["--capture-baseline", string captureDirectory])
             {
                 CaptureMultiWindowBaseline(captureDirectory);
+                return 0;
+            }
+            if (args is ["--capture-tilemap", string tileMapCaptureDirectory])
+            {
+                CaptureTileMapBoundaryPan(tileMapCaptureDirectory);
+                return 0;
+            }
+            if (args is ["--capture-tilemap-conformance", string conformanceDirectory])
+            {
+                CaptureTileMapConformance(conformanceDirectory);
+                return 0;
+            }
+            if (args is ["--capture-collision", string collisionDirectory])
+            {
+                CaptureCollisionScene(collisionDirectory);
+                return 0;
+            }
+            if (args is [
+                "--verify-tilemap-conformance",
+                string windowsDirectory,
+                string sdlGpuDirectory,
+                string reportPath])
+            {
+                TileMapStage5ConformanceFixture.CompareBackends(
+                    windowsDirectory,
+                    sdlGpuDirectory,
+                    reportPath);
                 return 0;
             }
 
@@ -135,6 +185,196 @@ internal static class WindowsDxSmokeApplication
             Top = 80,
             Background = new SolidColorBrush(background)
         };
+    }
+
+    private static void CaptureTileMapBoundaryPan(string captureDirectory)
+    {
+        string fullDirectory = Path.GetFullPath(captureDirectory);
+        Directory.CreateDirectory(fullDirectory);
+        RenderSurface2D surface = TileMapStage3CaptureFixture.CreateSurface(fullDirectory);
+        Window window = new()
+        {
+            Title = "Cerneala TileMap2D stage 3",
+            Width = 640,
+            Height = 240,
+            Left = 80,
+            Top = 80,
+            Background = new SolidColorBrush(new Color(8, 16, 24)),
+            Content = surface
+        };
+
+        using WindowApplicationRuntime runtime = new(
+            new Win32WindowPlatform(
+                new WindowsDxWindowGraphicsSessionFactory(),
+                coordinateScaleOverride: 1f));
+        runtime.StartMainWindow(window);
+        for (int frame = 0; frame < 8; frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+        string beforePath = Path.Combine(fullDirectory, "tilemap-before.png");
+        string afterPath = Path.Combine(fullDirectory, "tilemap-after.png");
+        window.SaveScreenshot(beforePath);
+        surface.ViewBox = new DrawRect(16, 0, 64, 16);
+        for (int frame = 0; frame < 4; frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+        window.SaveScreenshot(afterPath);
+        TileMapStage3CaptureFixture.VerifyPanCaptures(
+            beforePath,
+            afterPath,
+            "WindowsDX");
+        window.Close();
+        runtime.PumpOnce(TimeSpan.Zero);
+    }
+
+    private static void CaptureTileMapConformance(string captureDirectory)
+    {
+        string fullDirectory = Path.GetFullPath(captureDirectory);
+        Directory.CreateDirectory(fullDirectory);
+        using TileMapStage5ConformanceFixture fixture =
+            TileMapStage5ConformanceFixture.Create(fullDirectory);
+        Window window = new()
+        {
+            Title = "Cerneala TileMap2D stage 5 conformance",
+            Width = 640,
+            Height = 420,
+            Left = 80,
+            Top = 80,
+            Background = new SolidColorBrush(new Color(8, 16, 24)),
+            Content = fixture.Surface
+        };
+
+        using WindowApplicationRuntime runtime = new(
+            new Win32WindowPlatform(
+                new WindowsDxWindowGraphicsSessionFactory(useMultisampling: false)));
+        runtime.StartMainWindow(window);
+        for (int frame = 0; frame < 8; frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+
+        window.SaveScreenshot(Path.Combine(
+            fullDirectory,
+            TileMapStage5ConformanceFixture.InitialCaptureName));
+        fixture.StartMotion();
+        for (int frame = 0; frame < 4; frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+        window.SaveScreenshot(Path.Combine(
+            fullDirectory,
+            TileMapStage5ConformanceFixture.MotionCaptureName));
+
+        fixture.PanAndZoom();
+        for (int frame = 0; frame < 4; frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+        window.SaveScreenshot(Path.Combine(
+            fullDirectory,
+            TileMapStage5ConformanceFixture.PanZoomCaptureName));
+        TileMapStage5ConformanceFixture.VerifyCaptures(fullDirectory, "WindowsDX");
+        window.Close();
+        runtime.PumpOnce(TimeSpan.Zero);
+    }
+
+    private static void CaptureCollisionScene(string captureDirectory)
+    {
+        string fullDirectory = Path.GetFullPath(captureDirectory);
+        Directory.CreateDirectory(fullDirectory);
+        CollisionStageFiveFixture fixture =
+            CollisionStageFiveFixture.Create(fullDirectory);
+        Window window = new()
+        {
+            Title = "Cerneala collision stage 5",
+            Width = 640,
+            Height = 400,
+            Left = 80,
+            Top = 80,
+            Background = new SolidColorBrush(new Color(8, 16, 24)),
+            Content = fixture.Surface
+        };
+
+        using WindowApplicationRuntime runtime = new(
+            new Win32WindowPlatform(
+                new WindowsDxWindowGraphicsSessionFactory(useMultisampling: false),
+                coordinateScaleOverride: 1f));
+        runtime.StartMainWindow(window);
+        for (int frame = 0; frame < 8; frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+
+        fixture.VerifyClosedContract();
+        fixture.VerifyCoordinateRoundTrip();
+        window.SaveScreenshot(Path.Combine(
+            fullDirectory,
+            CollisionStageFiveFixture.ClosedCaptureName));
+
+        fixture.OpenDoor();
+        for (int frame = 0; frame < 4; frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+
+        fixture.VerifyOpenContract();
+        window.SaveScreenshot(Path.Combine(
+            fullDirectory,
+            CollisionStageFiveFixture.OpenCaptureName));
+        CollisionStageFiveFixture.VerifyCaptures(fullDirectory, "WindowsDX");
+        window.Close();
+        runtime.PumpOnce(TimeSpan.Zero);
+    }
+
+    private static void CaptureSpriteAnimation(string captureDirectory)
+    {
+        string directory = Path.GetFullPath(captureDirectory);
+        using SpriteAnimationConformanceFixture fixture = new(directory);
+        Window window = new()
+        {
+            Title = "Cerneala sprite animation conformance", Width = 640, Height = 420,
+            Left = 80, Top = 80, Content = fixture.Surface
+        };
+        using WindowApplicationRuntime runtime = new(new Win32WindowPlatform(
+            new WindowsDxWindowGraphicsSessionFactory(useMultisampling: false)));
+        runtime.StartMainWindow(window);
+        fixture.Prepare();
+        for (int sample = 0; sample < 4; sample++)
+        {
+            if (sample > 0) fixture.Advance(sample);
+            for (int frame = 0; frame < 4; frame++) runtime.PumpOnce(TimeSpan.Zero);
+            fixture.VerifySample(sample);
+            window.SaveScreenshot(Path.Combine(directory, SpriteAnimationConformanceFixture.CaptureNames[sample]));
+        }
+        SpriteAnimationConformanceFixture.VerifyCaptures(directory, "WindowsDX");
+        window.Close();
+        runtime.PumpOnce(TimeSpan.Zero);
+    }
+
+    private static void CaptureSceneDebug(string captureDirectory)
+    {
+        string directory = Path.GetFullPath(captureDirectory);
+        using SceneDebugOverlayConformanceFixture fixture = new(directory);
+        Window window = new()
+        {
+            Title = "Cerneala scene debug conformance", Width = 640, Height = 420,
+            Left = 80, Top = 80, Content = fixture.Surface
+        };
+        using WindowApplicationRuntime runtime = new(new Win32WindowPlatform(
+            new WindowsDxWindowGraphicsSessionFactory(useMultisampling: false)));
+        runtime.StartMainWindow(window);
+        for (int sample = 0; sample < SceneDebugOverlayConformanceFixture.CaptureNames.Length; sample++)
+        {
+            fixture.SelectSample(sample);
+            for (int frame = 0; frame < 4; frame++) { runtime.PumpOnce(TimeSpan.Zero); }
+            fixture.VerifySample(sample);
+            window.SaveScreenshot(Path.Combine(directory, SceneDebugOverlayConformanceFixture.CaptureNames[sample]));
+        }
+        fixture.VerifyCaptures("WindowsDX");
+        window.Close();
+        runtime.PumpOnce(TimeSpan.Zero);
     }
 
     private static WindowsDxWindowGraphicsSession RequireWindowsDx(IPlatformWindow window)

@@ -1,0 +1,38 @@
+{
+  "Backend": "SDL_GPU",
+  "CaptureApi": "Window.SaveScreenshot",
+  "Frames": [
+    {
+      "TimeMilliseconds": 0,
+      "File": "animation-000.png",
+      "Width": 800,
+      "Height": 525,
+      "Sha256": "12BEEAEAE13E0CF4E8F50A9DC06723900E983BEDCC73BFF6827B94C62E6C0A07"
+    },
+    {
+      "TimeMilliseconds": 100,
+      "File": "animation-100.png",
+      "Width": 800,
+      "Height": 525,
+      "Sha256": "E38B9E7C12ED41C00E9DC3CFB4F3CC2B4F9654CD4105B950D1483DF7139B7963"
+    },
+    {
+      "TimeMilliseconds": 200,
+      "File": "animation-200.png",
+      "Width": 800,
+      "Height": 525,
+      "Sha256": "E6713B111A61ACF1C83203E3F19631AD3A667637FDA06D1E4BA04D50B03CF0A7"
+    },
+    {
+      "TimeMilliseconds": 300,
+      "File": "animation-300.png",
+      "Width": 800,
+      "Height": 525,
+      "Sha256": "BE9434073006A5BCB96AF2BF349458362C69771C56854EF3BB0A3D051CF9B8C2"
+    }
+  ],
+  "GeometryPicking": "PASS",
+  "AnimatedSpriteGroupTilePixels": "PASS",
+  "LoopPixels": "PASS",
+  "Timing": "Exact 100 ms UI-surface pulses; playback paused between captures; Motion uses explicit completion endpoints."
+}

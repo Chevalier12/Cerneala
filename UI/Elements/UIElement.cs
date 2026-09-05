@@ -250,6 +250,8 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     internal long PrismVisualVersion { get; private set; } = 1;
 
+    internal virtual UIElement? PrismVisualParent => VisualParent ?? retainedVisualParent;
+
     internal Transform LayoutCorrectionTransform { get; private set; } = Transform.Identity;
 
     internal bool IsPresenceExiting { get; private set; }
@@ -1410,7 +1412,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     {
         for (UIElement? current = this;
             current is not null;
-            current = current.VisualParent ?? current.retainedVisualParent)
+            current = current.PrismVisualParent)
         {
             current.PrismVisualVersion =
                 NextPrismVisualVersion(current.PrismVisualVersion);

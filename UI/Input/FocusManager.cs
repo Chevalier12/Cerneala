@@ -4,6 +4,8 @@ namespace Cerneala.UI.Input;
 
 public sealed class FocusManager
 {
+    private IReadOnlyList<UIElement> focusedPath = [];
+
     public UIElement? FocusedElement { get; private set; }
 
     public bool Focus(UIElement? element, ElementInputRouteMap routeMap)
@@ -28,7 +30,11 @@ public sealed class FocusManager
         UIElement? oldFocus = FocusedElement;
         FocusedElement = element;
 
-        UpdateFocusState(oldFocus, element);
+        IReadOnlyList<UIElement> nextPath = element is null
+            ? []
+            : routeMap.GetRouteToRoot(element);
+        UpdateFocusState(oldFocus, element, focusedPath, nextPath);
+        focusedPath = nextPath;
         KeyboardFocusChangedEventArgs? previewLostArgs = RaisePreviewFocusLost(routeMap, oldFocus, element);
         KeyboardFocusChangedEventArgs? previewGotArgs = RaisePreviewFocusGot(routeMap, oldFocus, element);
         RaiseFocusLost(routeMap, oldFocus, element, previewLostArgs);
@@ -175,14 +181,18 @@ public sealed class FocusManager
         RoutedEventRouter.Raise(routeMap.InputTree, newId, new RoutedEventArgs(InputEvents.GotFocusEvent, newId));
     }
 
-    private static void UpdateFocusState(UIElement? oldFocus, UIElement? newFocus)
+    private static void UpdateFocusState(
+        UIElement? oldFocus,
+        UIElement? newFocus,
+        IReadOnlyList<UIElement> oldPath,
+        IReadOnlyList<UIElement> newPath)
     {
         if (oldFocus is not null)
         {
             oldFocus.IsKeyboardFocused = false;
-            foreach (UIElement element in FocusPath(oldFocus))
+            foreach (UIElement element in oldPath)
             {
-                if (!FocusPathContains(newFocus, element))
+                if (!ContainsReference(newPath, element))
                 {
                     element.IsKeyboardFocusWithin = false;
                 }
@@ -192,29 +202,25 @@ public sealed class FocusManager
         if (newFocus is not null)
         {
             newFocus.IsKeyboardFocused = true;
-            foreach (UIElement element in FocusPath(newFocus))
+            foreach (UIElement element in newPath)
             {
                 element.IsKeyboardFocusWithin = true;
             }
         }
     }
 
-    private static bool FocusPathContains(UIElement? focusedElement, UIElement candidate)
+    private static bool ContainsReference(
+        IReadOnlyList<UIElement> elements,
+        UIElement candidate)
     {
-        if (focusedElement is null)
+        foreach (UIElement element in elements)
         {
-            return false;
+            if (ReferenceEquals(element, candidate))
+            {
+                return true;
+            }
         }
 
-        return FocusPath(focusedElement).Any(element => ReferenceEquals(element, candidate));
-    }
-
-    private static IEnumerable<UIElement> FocusPath(UIElement element)
-    {
-        yield return element;
-        foreach (UIElement ancestor in ElementTreeWalker.Ancestors(element, ElementChildRole.Visual))
-        {
-            yield return ancestor;
-        }
+        return false;
     }
 }

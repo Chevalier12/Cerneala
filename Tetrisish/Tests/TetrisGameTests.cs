@@ -1,4 +1,5 @@
 using Cerneala.Tetris.Game;
+using Cerneala.Drawing;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
@@ -23,6 +24,45 @@ public sealed class TetrisGameTests
         TetrisGameSurface surface = new();
 
         Assert.Equal(RenderSurface2DRedrawMode.Continuous, surface.RedrawMode);
+    }
+
+    [Fact]
+    public void MarkupSurfaceRecordsImperativeBoardBeforeRetainedScene()
+    {
+        MainWindow window = new();
+        UIRoot root = new(780, 820);
+        root.SetImageLoader(new TestImageLoader());
+        root.VisualChildren.Add(window);
+        window.Arrange(new ArrangeContext(new LayoutRect(0, 0, 780, 820)));
+        root.ProcessFrame();
+        TetrisGameSurface surface = DescendantsAndSelf(window)
+            .OfType<TetrisGameSurface>()
+            .Single();
+        surface.SceneModel.UpdateActivePiece(
+            new TestImage(256, 448),
+            new TestImage(256, 448),
+            new DrawRect(0, 0, 64, 64),
+            new DrawRect(3, 2, 4, 4),
+            Color.White,
+            new DrawRect(3, 16, 4, 4),
+            visible: true);
+        root.ProcessFrame();
+
+        DrawCommandList commands = RecordSurfaceFrame(
+            surface,
+            new DrawRect(0, 0, 300, 600));
+
+        int boardBorderIndex = commands
+            .Select((command, index) => (command, index))
+            .Last(entry => entry.command.Kind == DrawCommandKind.DrawRectangle)
+            .index;
+        int firstSceneImageIndex = commands
+            .Select((command, index) => (command, index))
+            .First(entry => entry.command.Kind == DrawCommandKind.DrawImage)
+            .index;
+        Assert.True(boardBorderIndex < firstSceneImageIndex);
+
+        root.VisualChildren.Remove(window);
     }
 
     [Fact]
@@ -675,6 +715,20 @@ public sealed class TetrisGameTests
         }
 
         return count;
+    }
+
+    private static DrawCommandList RecordSurfaceFrame(
+        RenderSurface2D surface,
+        DrawRect bounds)
+    {
+        DrawCommandList commands = new();
+        System.Reflection.MethodInfo method = typeof(RenderSurface2D).GetMethod(
+            "Cerneala.Drawing.IRenderSurface2DFrameSource.RecordFrame",
+            System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.NonPublic)
+            ?? throw new InvalidOperationException("RenderSurface2D frame recorder was not found.");
+        method.Invoke(surface, [commands, bounds]);
+        return commands;
     }
 
     private static IEnumerable<UIElement> DescendantsAndSelf(UIElement element)

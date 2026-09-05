@@ -19,7 +19,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
 {
     private const int PresentationSamplingOutset = 1;
     private const int ExecutionSurfaceTileSize = 16;
-    private const long ShaderPackageVersion = 56;
+    private const long ShaderPackageVersion = 57;
     private static readonly PrismGraphCapabilities Capabilities =
         PrismGraphCapabilities.ControlCapture |
         PrismGraphCapabilities.FilterProcessing |
@@ -190,7 +190,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                 PrismFallbackReason.SurfaceAllocationFailed,
                 exception.Message);
             session.BeginRenderTarget(
-                hostTarget,
+                hostState.Target,
                 Color.Transparent,
                 SdlGpuLoadOp.Load);
             drawingBackend.RenderCommandRange(
@@ -378,7 +378,8 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                 childPresentationSurfaces,
                 logicalOrigin: new Vector2(
                     executionOriginPixelX / drawingBackend.CoordinateScale,
-                    executionOriginPixelY / drawingBackend.CoordinateScale));
+                    executionOriginPixelY / drawingBackend.CoordinateScale),
+                isolateCompositingState: true);
         }
         finally
         {
@@ -1472,21 +1473,26 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         {
             using SdlGpuPrismSurfaceLease presentationLease =
                 ConvertForPresentation(surfaces[step].Target, scope, node);
+            SdlGpuRenderTarget presentationTarget = hostState.Target;
             SdlRect? presentationClip = ResolvePresentationClip(
                 plan,
                 scope,
                 node,
-                hostTarget);
-            session.BeginRenderTarget(hostTarget, Color.Transparent, SdlGpuLoadOp.Load);
+                presentationTarget);
+            session.BeginRenderTarget(
+                presentationTarget,
+                Color.Transparent,
+                SdlGpuLoadOp.Load);
             drawingBackend.DrawPrismTexture(
                 presentationLease.Target.SampleTexture,
-                hostTarget,
+                presentationTarget,
                 presentationClip,
                 new DrawRect(
                     executionOriginPixelX / drawingBackend.CoordinateScale,
                     executionOriginPixelY / drawingBackend.CoordinateScale,
                     presentationLease.Target.PixelWidth / drawingBackend.CoordinateScale,
-                    presentationLease.Target.PixelHeight / drawingBackend.CoordinateScale));
+                    presentationLease.Target.PixelHeight / drawingBackend.CoordinateScale),
+                presentationState: hostState);
             diagnostics.RecordPresentation(
                 PrismExecutionPassKind.RootPresent,
                 node,

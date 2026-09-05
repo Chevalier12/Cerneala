@@ -1,0 +1,690 @@
+[
+  {
+    "Driver": "Hardware",
+    "BorrowedMonoGameDevice": true,
+    "ShaderModel": "4_0",
+    "NonBackgroundSamples": 5400,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Samples": 4,
+    "Quality": 0,
+    "MaximumSampleDelta255": 0,
+    "Pixel": 5074,
+    "Initial255": [
+      221,
+      221,
+      20,
+      20
+    ],
+    "AfterBlend255": [
+      221,
+      221,
+      121,
+      121
+    ],
+    "Final255": [
+      80,
+      80,
+      121,
+      121
+    ],
+    "Reference255": [
+      80,
+      80,
+      121,
+      121
+    ]
+  },
+  {
+    "Driver": "Hardware",
+    "BorrowedMonoGameDevice": true,
+    "ShaderModel": "4_0_level_9_1",
+    "NonBackgroundSamples": 5400,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Samples": 4,
+    "Quality": 0,
+    "MaximumSampleDelta255": 0,
+    "Pixel": 5074,
+    "Initial255": [
+      221,
+      221,
+      20,
+      20
+    ],
+    "AfterBlend255": [
+      221,
+      221,
+      121,
+      121
+    ],
+    "Final255": [
+      80,
+      80,
+      121,
+      121
+    ],
+    "Reference255": [
+      80,
+      80,
+      121,
+      121
+    ]
+  },
+  {
+    "Driver": "Hardware",
+    "BorrowedMonoGameDevice": true,
+    "ShaderModel": "4_0",
+    "NonBackgroundSamples": 5400,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Samples": 4,
+    "Quality": -1,
+    "MaximumSampleDelta255": 0,
+    "Pixel": 5074,
+    "Initial255": [
+      221,
+      221,
+      20,
+      20
+    ],
+    "AfterBlend255": [
+      221,
+      221,
+      121,
+      121
+    ],
+    "Final255": [
+      80,
+      80,
+      121,
+      121
+    ],
+    "Reference255": [
+      80,
+      80,
+      121,
+      121
+    ]
+  },
+  {
+    "Driver": "Hardware",
+    "BorrowedMonoGameDevice": true,
+    "ShaderModel": "4_0_level_9_1",
+    "NonBackgroundSamples": 5400,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Samples": 4,
+    "Quality": -1,
+    "MaximumSampleDelta255": 0,
+    "Pixel": 5074,
+    "Initial255": [
+      221,
+      221,
+      20,
+      20
+    ],
+    "AfterBlend255": [
+      221,
+      221,
+      121,
+      121
+    ],
+    "Final255": [
+      80,
+      80,
+      121,
+      121
+    ],
+    "Reference255": [
+      80,
+      80,
+      121,
+      121
+    ]
+  },
+  {
+    "Driver": "Hardware",
+    "BorrowedMonoGameDevice": true,
+    "ShaderModel": "4_0",
+    "NonBackgroundSamples": 10806,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Samples": 8,
+    "Quality": 0,
+    "MaximumSampleDelta255": 0,
+    "Pixel": 5074,
+    "Initial255": [
+      221,
+      20,
+      221,
+      221,
+      20,
+      20,
+      20,
+      221
+    ],
+    "AfterBlend255": [
+      221,
+      121,
+      221,
+      221,
+      121,
+      121,
+      121,
+      221
+    ],
+    "Final255": [
+      80,
+      121,
+      80,
+      80,
+      121,
+      121,
+      121,
+      80
+    ],
+    "Reference255": [
+      80,
+      121,
+      80,
+      80,
+      121,
+      121,
+      121,
+      80
+    ]
+  },
+  {
+    "Driver": "Hardware",
+    "BorrowedMonoGameDevice": true,
+    "ShaderModel": "4_0_level_9_1",
+    "NonBackgroundSamples": 10806,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Samples": 8,
+    "Quality": 0,
+    "MaximumSampleDelta255": 0,
+    "Pixel": 5074,
+    "Initial255": [
+      221,
+      20,
+      221,
+      221,
+      20,
+      20,
+      20,
+      221
+    ],
+    "AfterBlend255": [
+      221,
+      121,
+      221,
+      221,
+      121,
+      121,
+      121,
+      221
+    ],
+    "Final255": [
+      80,
+      121,
+      80,
+      80,
+      121,
+      121,
+      121,
+      80
+    ],
+    "Reference255": [
+      80,
+      121,
+      80,
+      80,
+      121,
+      121,
+      121,
+      80
+    ]
+  },
+  {
+    "Driver": "Hardware",
+    "BorrowedMonoGameDevice": true,
+    "ShaderModel": "4_0",
+    "NonBackgroundSamples": 10806,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Samples": 8,
+    "Quality": -1,
+    "MaximumSampleDelta255": 0,
+    "Pixel": 5074,
+    "Initial255": [
+      221,
+      20,
+      221,
+      221,
+      20,
+      20,
+      20,
+      221
+    ],
+    "AfterBlend255": [
+      221,
+      121,
+      221,
+      221,
+      121,
+      121,
+      121,
+      221
+    ],
+    "Final255": [
+      80,
+      121,
+      80,
+      80,
+      121,
+      121,
+      121,
+      80
+    ],
+    "Reference255": [
+      80,
+      121,
+      80,
+      80,
+      121,
+      121,
+      121,
+      80
+    ]
+  },
+  {
+    "Driver": "Hardware",
+    "BorrowedMonoGameDevice": true,
+    "ShaderModel": "4_0_level_9_1",
+    "NonBackgroundSamples": 10806,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Samples": 8,
+    "Quality": -1,
+    "MaximumSampleDelta255": 0,
+    "Pixel": 5074,
+    "Initial255": [
+      221,
+      20,
+      221,
+      221,
+      20,
+      20,
+      20,
+      221
+    ],
+    "AfterBlend255": [
+      221,
+      121,
+      221,
+      221,
+      121,
+      121,
+      121,
+      221
+    ],
+    "Final255": [
+      80,
+      121,
+      80,
+      80,
+      121,
+      121,
+      121,
+      80
+    ],
+    "Reference255": [
+      80,
+      121,
+      80,
+      80,
+      121,
+      121,
+      121,
+      80
+    ]
+  },
+  {
+    "Driver": "Warp",
+    "BorrowedMonoGameDevice": true,
+    "ShaderModel": "4_0",
+    "NonBackgroundSamples": 5400,
+    "Adapter": "Microsoft Basic Render Driver",
+    "Samples": 4,
+    "Quality": 0,
+    "MaximumSampleDelta255": 0,
+    "Pixel": 5074,
+    "Initial255": [
+      221,
+      221,
+      20,
+      20
+    ],
+    "AfterBlend255": [
+      221,
+      221,
+      121,
+      121
+    ],
+    "Final255": [
+      80,
+      80,
+      121,
+      121
+    ],
+    "Reference255": [
+      80,
+      80,
+      121,
+      121
+    ]
+  },
+  {
+    "Driver": "Warp",
+    "BorrowedMonoGameDevice": true,
+    "ShaderModel": "4_0_level_9_1",
+    "NonBackgroundSamples": 5400,
+    "Adapter": "Microsoft Basic Render Driver",
+    "Samples": 4,
+    "Quality": 0,
+    "MaximumSampleDelta255": 0,
+    "Pixel": 5074,
+    "Initial255": [
+      221,
+      221,
+      20,
+      20
+    ],
+    "AfterBlend255": [
+      221,
+      221,
+      121,
+      121
+    ],
+    "Final255": [
+      80,
+      80,
+      121,
+      121
+    ],
+    "Reference255": [
+      80,
+      80,
+      121,
+      121
+    ]
+  },
+  {
+    "Driver": "Warp",
+    "BorrowedMonoGameDevice": true,
+    "ShaderModel": "4_0",
+    "NonBackgroundSamples": 5400,
+    "Adapter": "Microsoft Basic Render Driver",
+    "Samples": 4,
+    "Quality": -1,
+    "MaximumSampleDelta255": 0,
+    "Pixel": 5074,
+    "Initial255": [
+      221,
+      221,
+      20,
+      20
+    ],
+    "AfterBlend255": [
+      221,
+      221,
+      121,
+      121
+    ],
+    "Final255": [
+      80,
+      80,
+      121,
+      121
+    ],
+    "Reference255": [
+      80,
+      80,
+      121,
+      121
+    ]
+  },
+  {
+    "Driver": "Warp",
+    "BorrowedMonoGameDevice": true,
+    "ShaderModel": "4_0_level_9_1",
+    "NonBackgroundSamples": 5400,
+    "Adapter": "Microsoft Basic Render Driver",
+    "Samples": 4,
+    "Quality": -1,
+    "MaximumSampleDelta255": 0,
+    "Pixel": 5074,
+    "Initial255": [
+      221,
+      221,
+      20,
+      20
+    ],
+    "AfterBlend255": [
+      221,
+      221,
+      121,
+      121
+    ],
+    "Final255": [
+      80,
+      80,
+      121,
+      121
+    ],
+    "Reference255": [
+      80,
+      80,
+      121,
+      121
+    ]
+  },
+  {
+    "Driver": "Warp",
+    "BorrowedMonoGameDevice": true,
+    "ShaderModel": "4_0",
+    "NonBackgroundSamples": 10806,
+    "Adapter": "Microsoft Basic Render Driver",
+    "Samples": 8,
+    "Quality": 0,
+    "MaximumSampleDelta255": 0,
+    "Pixel": 5074,
+    "Initial255": [
+      221,
+      20,
+      221,
+      221,
+      20,
+      20,
+      20,
+      221
+    ],
+    "AfterBlend255": [
+      221,
+      121,
+      221,
+      221,
+      121,
+      121,
+      121,
+      221
+    ],
+    "Final255": [
+      80,
+      121,
+      80,
+      80,
+      121,
+      121,
+      121,
+      80
+    ],
+    "Reference255": [
+      80,
+      121,
+      80,
+      80,
+      121,
+      121,
+      121,
+      80
+    ]
+  },
+  {
+    "Driver": "Warp",
+    "BorrowedMonoGameDevice": true,
+    "ShaderModel": "4_0_level_9_1",
+    "NonBackgroundSamples": 10806,
+    "Adapter": "Microsoft Basic Render Driver",
+    "Samples": 8,
+    "Quality": 0,
+    "MaximumSampleDelta255": 0,
+    "Pixel": 5074,
+    "Initial255": [
+      221,
+      20,
+      221,
+      221,
+      20,
+      20,
+      20,
+      221
+    ],
+    "AfterBlend255": [
+      221,
+      121,
+      221,
+      221,
+      121,
+      121,
+      121,
+      221
+    ],
+    "Final255": [
+      80,
+      121,
+      80,
+      80,
+      121,
+      121,
+      121,
+      80
+    ],
+    "Reference255": [
+      80,
+      121,
+      80,
+      80,
+      121,
+      121,
+      121,
+      80
+    ]
+  },
+  {
+    "Driver": "Warp",
+    "BorrowedMonoGameDevice": true,
+    "ShaderModel": "4_0",
+    "NonBackgroundSamples": 10806,
+    "Adapter": "Microsoft Basic Render Driver",
+    "Samples": 8,
+    "Quality": -1,
+    "MaximumSampleDelta255": 0,
+    "Pixel": 5074,
+    "Initial255": [
+      221,
+      20,
+      221,
+      221,
+      20,
+      20,
+      20,
+      221
+    ],
+    "AfterBlend255": [
+      221,
+      121,
+      221,
+      221,
+      121,
+      121,
+      121,
+      221
+    ],
+    "Final255": [
+      80,
+      121,
+      80,
+      80,
+      121,
+      121,
+      121,
+      80
+    ],
+    "Reference255": [
+      80,
+      121,
+      80,
+      80,
+      121,
+      121,
+      121,
+      80
+    ]
+  },
+  {
+    "Driver": "Warp",
+    "BorrowedMonoGameDevice": true,
+    "ShaderModel": "4_0_level_9_1",
+    "NonBackgroundSamples": 10806,
+    "Adapter": "Microsoft Basic Render Driver",
+    "Samples": 8,
+    "Quality": -1,
+    "MaximumSampleDelta255": 0,
+    "Pixel": 5074,
+    "Initial255": [
+      221,
+      20,
+      221,
+      221,
+      20,
+      20,
+      20,
+      221
+    ],
+    "AfterBlend255": [
+      221,
+      121,
+      221,
+      221,
+      121,
+      121,
+      121,
+      221
+    ],
+    "Final255": [
+      80,
+      121,
+      80,
+      80,
+      121,
+      121,
+      121,
+      80
+    ],
+    "Reference255": [
+      80,
+      121,
+      80,
+      80,
+      121,
+      121,
+      121,
+      80
+    ]
+  }
+]

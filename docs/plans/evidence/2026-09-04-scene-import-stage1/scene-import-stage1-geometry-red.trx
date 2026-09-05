@@ -1,0 +1,252 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="0217e240-ca9c-4d22-aee4-dddffc3f373f" name="lauri@DESKTOP-JT43V3D 2026-09-05 02:22:48" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T02:22:48.7059484+03:00" queuing="2026-09-05T02:22:48.7059488+03:00" start="2026-09-05T02:22:46.4771500+03:00" finish="2026-09-05T02:22:48.8121539+03:00" />
+  <TestSettings name="default" id="b2dd618e-e894-42a7-9c4d-4c3c76d19d08">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_02_22_48" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="b17e7c19-a765-4cd1-946a-32de175cfe37" testId="99087cd1-11db-89b2-b72e-1f82768ac476" testName="Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(flags: 7)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001544" startTime="2026-09-05T02:22:48.6518772+03:00" endTime="2026-09-05T02:22:48.6518773+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b17e7c19-a765-4cd1-946a-32de175cfe37">
+      <Output>
+        <ErrorInfo>
+          <Message>System.ArgumentOutOfRangeException : Specified argument was out of the range of valid values. (Parameter 'flip')</Message>
+          <StackTrace>   at Cerneala.UI.Controls.TileCell2D..ctor(Int32 tileId, TileFlip2D flip) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\TileMap2DModel.cs:line 97&#xD;
+   at Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(Int32 flags) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs:line 28&#xD;
+   at InvokeStub_SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="7d1e0543-9ec4-4873-a358-485ab8b31ca6" testId="9dac28d1-233e-f33f-de49-497e44affdd8" testName="Cerneala.Tests.Controls.SceneImportGeometryTests.SegmentsDoNotIntersectWhenTheyAreCollinearButDisjoint" computerName="DESKTOP-JT43V3D" duration="00:00:00.0004104" startTime="2026-09-05T02:22:48.6850873+03:00" endTime="2026-09-05T02:22:48.6850875+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7d1e0543-9ec4-4873-a358-485ab8b31ca6">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: SegmentCollider2D is absent.</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneImportGeometryTests.Segment() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs:line 123&#xD;
+   at Cerneala.Tests.Controls.SceneImportGeometryTests.SegmentsDoNotIntersectWhenTheyAreCollinearButDisjoint() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs:line 81&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="d4307711-fa83-4a4e-a738-17c0b00f184a" testId="2ad4ba71-0525-4436-d3e7-a9c32545f909" testName="Cerneala.Tests.Controls.SceneImportGeometryTests.SegmentRaycastHonorsEndpointsCollinearityAndTransforms(rotated: False)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0007264" startTime="2026-09-05T02:22:48.6825697+03:00" endTime="2026-09-05T02:22:48.6825698+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d4307711-fa83-4a4e-a738-17c0b00f184a">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: SegmentCollider2D is absent.</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneImportGeometryTests.Segment() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs:line 123&#xD;
+   at Cerneala.Tests.Controls.SceneImportGeometryTests.SegmentRaycastHonorsEndpointsCollinearityAndTransforms(Boolean rotated) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs:line 61&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="7fe6fc18-860f-4309-8390-930661a46d55" testId="cb25094f-60b1-0126-d28e-d92519777897" testName="Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(flags: 6)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0013530" startTime="2026-09-05T02:22:48.6507426+03:00" endTime="2026-09-05T02:22:48.6507429+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7fe6fc18-860f-4309-8390-930661a46d55">
+      <Output>
+        <ErrorInfo>
+          <Message>System.ArgumentOutOfRangeException : Specified argument was out of the range of valid values. (Parameter 'flip')</Message>
+          <StackTrace>   at Cerneala.UI.Controls.TileCell2D..ctor(Int32 tileId, TileFlip2D flip) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\TileMap2DModel.cs:line 97&#xD;
+   at Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(Int32 flags) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs:line 28&#xD;
+   at InvokeStub_SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="38bf44e6-546c-4265-acc5-877b3c096984" testId="94564756-c3e6-c06e-720e-0a51d660c895" testName="Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(flags: 1)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010115" startTime="2026-09-05T02:22:48.6530043+03:00" endTime="2026-09-05T02:22:48.6530048+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="38bf44e6-546c-4265-acc5-877b3c096984" />
+    <UnitTestResult executionId="76cf9e48-f3c7-45a1-bfce-9335b222b33b" testId="106e9f2c-1a9c-90f5-a439-655b18b7403b" testName="Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(flags: 0)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0018632" startTime="2026-09-05T02:22:48.6262187+03:00" endTime="2026-09-05T02:22:48.6262190+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="76cf9e48-f3c7-45a1-bfce-9335b222b33b" />
+    <UnitTestResult executionId="90b61d85-1b90-48c7-8a58-678c16bcbc16" testId="3b708cbf-2b6c-50a0-dece-f733c139ce87" testName="Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(flags: 2)" computerName="DESKTOP-JT43V3D" duration="00:00:00.3008514" startTime="2026-09-05T02:22:48.6193724+03:00" endTime="2026-09-05T02:22:48.6194026+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="90b61d85-1b90-48c7-8a58-678c16bcbc16" />
+    <UnitTestResult executionId="7692f3fc-2d1b-43e7-9d40-d94de190df97" testId="f4439b96-86ba-0b62-be10-46d56fc7c549" testName="Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(flags: 3)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0015978" startTime="2026-09-05T02:22:48.6548699+03:00" endTime="2026-09-05T02:22:48.6548703+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7692f3fc-2d1b-43e7-9d40-d94de190df97" />
+    <UnitTestResult executionId="53eb9688-8a6a-474b-ae4f-c9f161256c09" testId="c39c1ed3-df70-c7b5-5ef8-c639fa19cbbe" testName="Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(flags: 4)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001802" startTime="2026-09-05T02:22:48.6584779+03:00" endTime="2026-09-05T02:22:48.6584782+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="53eb9688-8a6a-474b-ae4f-c9f161256c09">
+      <Output>
+        <ErrorInfo>
+          <Message>System.ArgumentOutOfRangeException : Specified argument was out of the range of valid values. (Parameter 'flip')</Message>
+          <StackTrace>   at Cerneala.UI.Controls.TileCell2D..ctor(Int32 tileId, TileFlip2D flip) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\TileMap2DModel.cs:line 97&#xD;
+   at Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(Int32 flags) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs:line 28&#xD;
+   at InvokeStub_SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="d8d3b807-f266-4c81-9f73-a51f1e6dbec6" testId="e2028b31-dd81-4f72-9d0f-fd49594a7fa4" testName="Cerneala.Tests.Controls.SceneImportGeometryTests.SegmentRaycastHonorsEndpointsCollinearityAndTransforms(rotated: True)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0003419" startTime="2026-09-05T02:22:48.6836210+03:00" endTime="2026-09-05T02:22:48.6836211+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d8d3b807-f266-4c81-9f73-a51f1e6dbec6">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: SegmentCollider2D is absent.</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneImportGeometryTests.Segment() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs:line 123&#xD;
+   at Cerneala.Tests.Controls.SceneImportGeometryTests.SegmentRaycastHonorsEndpointsCollinearityAndTransforms(Boolean rotated) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs:line 61&#xD;
+   at InvokeStub_SceneImportGeometryTests.SegmentRaycastHonorsEndpointsCollinearityAndTransforms(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="e155402c-ad81-4d25-a240-afa05471056d" testId="7feb09b3-4daf-be08-347a-6d98f2e3b459" testName="Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(flags: 5)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0002069" startTime="2026-09-05T02:22:48.6566959+03:00" endTime="2026-09-05T02:22:48.6566979+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e155402c-ad81-4d25-a240-afa05471056d">
+      <Output>
+        <ErrorInfo>
+          <Message>System.ArgumentOutOfRangeException : Specified argument was out of the range of valid values. (Parameter 'flip')</Message>
+          <StackTrace>   at Cerneala.UI.Controls.TileCell2D..ctor(Int32 tileId, TileFlip2D flip) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\TileMap2DModel.cs:line 97&#xD;
+   at Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(Int32 flags) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs:line 28&#xD;
+   at InvokeStub_SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="ee833a8e-837d-4624-9e87-16615b22c185" testId="7ea216c4-401e-a4c4-8c4e-c0b593af7cec" testName="Cerneala.Tests.Controls.SceneImportGeometryTests.TileColliderDescriptorRetainsAffineEllipseWithoutApproximation" computerName="DESKTOP-JT43V3D" duration="00:00:00.0037353" startTime="2026-09-05T02:22:48.6693454+03:00" endTime="2026-09-05T02:22:48.6693456+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ee833a8e-837d-4624-9e87-16615b22c185">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Single() Failure: The collection was empty</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneImportGeometryTests.TileColliderDescriptorRetainsAffineEllipseWithoutApproximation() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs:line 96&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(flags: 5)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="7feb09b3-4daf-be08-347a-6d98f2e3b459">
+      <Execution id="e155402c-ad81-4d25-a240-afa05471056d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneImportGeometryTests" name="RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(flags: 0)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="106e9f2c-1a9c-90f5-a439-655b18b7403b">
+      <Execution id="76cf9e48-f3c7-45a1-bfce-9335b222b33b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneImportGeometryTests" name="RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(flags: 1)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="94564756-c3e6-c06e-720e-0a51d660c895">
+      <Execution id="38bf44e6-546c-4265-acc5-877b3c096984" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneImportGeometryTests" name="RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(flags: 7)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="99087cd1-11db-89b2-b72e-1f82768ac476">
+      <Execution id="b17e7c19-a765-4cd1-946a-32de175cfe37" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneImportGeometryTests" name="RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneImportGeometryTests.SegmentsDoNotIntersectWhenTheyAreCollinearButDisjoint" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="9dac28d1-233e-f33f-de49-497e44affdd8">
+      <Execution id="7d1e0543-9ec4-4873-a358-485ab8b31ca6" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneImportGeometryTests" name="SegmentsDoNotIntersectWhenTheyAreCollinearButDisjoint" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(flags: 6)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="cb25094f-60b1-0126-d28e-d92519777897">
+      <Execution id="7fe6fc18-860f-4309-8390-930661a46d55" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneImportGeometryTests" name="RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(flags: 3)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="f4439b96-86ba-0b62-be10-46d56fc7c549">
+      <Execution id="7692f3fc-2d1b-43e7-9d40-d94de190df97" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneImportGeometryTests" name="RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneImportGeometryTests.SegmentRaycastHonorsEndpointsCollinearityAndTransforms(rotated: False)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="2ad4ba71-0525-4436-d3e7-a9c32545f909">
+      <Execution id="d4307711-fa83-4a4e-a738-17c0b00f184a" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneImportGeometryTests" name="SegmentRaycastHonorsEndpointsCollinearityAndTransforms" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneImportGeometryTests.SegmentRaycastHonorsEndpointsCollinearityAndTransforms(rotated: True)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="e2028b31-dd81-4f72-9d0f-fd49594a7fa4">
+      <Execution id="d8d3b807-f266-4c81-9f73-a51f1e6dbec6" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneImportGeometryTests" name="SegmentRaycastHonorsEndpointsCollinearityAndTransforms" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(flags: 4)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="c39c1ed3-df70-c7b5-5ef8-c639fa19cbbe">
+      <Execution id="53eb9688-8a6a-474b-ae4f-c9f161256c09" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneImportGeometryTests" name="RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneImportGeometryTests.TileColliderDescriptorRetainsAffineEllipseWithoutApproximation" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="7ea216c4-401e-a4c4-8c4e-c0b593af7cec">
+      <Execution id="ee833a8e-837d-4624-9e87-16615b22c185" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneImportGeometryTests" name="TileColliderDescriptorRetainsAffineEllipseWithoutApproximation" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(flags: 2)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="3b708cbf-2b6c-50a0-dece-f733c139ce87">
+      <Execution id="90b61d85-1b90-48c7-8a58-678c16bcbc16" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneImportGeometryTests" name="RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="99087cd1-11db-89b2-b72e-1f82768ac476" executionId="b17e7c19-a765-4cd1-946a-32de175cfe37" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9dac28d1-233e-f33f-de49-497e44affdd8" executionId="7d1e0543-9ec4-4873-a358-485ab8b31ca6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2ad4ba71-0525-4436-d3e7-a9c32545f909" executionId="d4307711-fa83-4a4e-a738-17c0b00f184a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cb25094f-60b1-0126-d28e-d92519777897" executionId="7fe6fc18-860f-4309-8390-930661a46d55" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="94564756-c3e6-c06e-720e-0a51d660c895" executionId="38bf44e6-546c-4265-acc5-877b3c096984" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="106e9f2c-1a9c-90f5-a439-655b18b7403b" executionId="76cf9e48-f3c7-45a1-bfce-9335b222b33b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3b708cbf-2b6c-50a0-dece-f733c139ce87" executionId="90b61d85-1b90-48c7-8a58-678c16bcbc16" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f4439b96-86ba-0b62-be10-46d56fc7c549" executionId="7692f3fc-2d1b-43e7-9d40-d94de190df97" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c39c1ed3-df70-c7b5-5ef8-c639fa19cbbe" executionId="53eb9688-8a6a-474b-ae4f-c9f161256c09" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e2028b31-dd81-4f72-9d0f-fd49594a7fa4" executionId="d8d3b807-f266-4c81-9f73-a51f1e6dbec6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7feb09b3-4daf-be08-347a-6d98f2e3b459" executionId="e155402c-ad81-4d25-a240-afa05471056d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7ea216c4-401e-a4c4-8c4e-c0b593af7cec" executionId="ee833a8e-837d-4624-9e87-16615b22c185" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="12" executed="12" passed="4" failed="8" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.23]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.90]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.92]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.29]       System.ArgumentOutOfRangeException : Specified argument was out of the range of valid values. (Parameter 'flip')&#xD;
+[xUnit.net 00:00:01.29]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.29]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\TileMap2DModel.cs(97,0): at Cerneala.UI.Controls.TileCell2D..ctor(Int32 tileId, TileFlip2D flip)&#xD;
+[xUnit.net 00:00:01.29]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs(28,0): at Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(Int32 flags)&#xD;
+[xUnit.net 00:00:01.29]            at InvokeStub_SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(Object, Span`1)&#xD;
+[xUnit.net 00:00:01.29]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:01.30]       System.ArgumentOutOfRangeException : Specified argument was out of the range of valid values. (Parameter 'flip')&#xD;
+[xUnit.net 00:00:01.30]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.30]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\TileMap2DModel.cs(97,0): at Cerneala.UI.Controls.TileCell2D..ctor(Int32 tileId, TileFlip2D flip)&#xD;
+[xUnit.net 00:00:01.30]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs(28,0): at Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(Int32 flags)&#xD;
+[xUnit.net 00:00:01.30]            at InvokeStub_SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(Object, Span`1)&#xD;
+[xUnit.net 00:00:01.30]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:01.30]       System.ArgumentOutOfRangeException : Specified argument was out of the range of valid values. (Parameter 'flip')&#xD;
+[xUnit.net 00:00:01.30]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.30]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\TileMap2DModel.cs(97,0): at Cerneala.UI.Controls.TileCell2D..ctor(Int32 tileId, TileFlip2D flip)&#xD;
+[xUnit.net 00:00:01.30]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs(28,0): at Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(Int32 flags)&#xD;
+[xUnit.net 00:00:01.30]            at InvokeStub_SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(Object, Span`1)&#xD;
+[xUnit.net 00:00:01.30]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:01.30]       System.ArgumentOutOfRangeException : Specified argument was out of the range of valid values. (Parameter 'flip')&#xD;
+[xUnit.net 00:00:01.30]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.30]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\TileMap2DModel.cs(97,0): at Cerneala.UI.Controls.TileCell2D..ctor(Int32 tileId, TileFlip2D flip)&#xD;
+[xUnit.net 00:00:01.30]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs(28,0): at Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(Int32 flags)&#xD;
+[xUnit.net 00:00:01.30]            at InvokeStub_SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(Object, Span`1)&#xD;
+[xUnit.net 00:00:01.30]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:01.31]       Assert.Single() Failure: The collection was empty&#xD;
+[xUnit.net 00:00:01.31]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.31]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs(96,0): at Cerneala.Tests.Controls.SceneImportGeometryTests.TileColliderDescriptorRetainsAffineEllipseWithoutApproximation()&#xD;
+[xUnit.net 00:00:01.31]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.31]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.33]       RED: SegmentCollider2D is absent.&#xD;
+[xUnit.net 00:00:01.33]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.33]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs(123,0): at Cerneala.Tests.Controls.SceneImportGeometryTests.Segment()&#xD;
+[xUnit.net 00:00:01.33]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs(61,0): at Cerneala.Tests.Controls.SceneImportGeometryTests.SegmentRaycastHonorsEndpointsCollinearityAndTransforms(Boolean rotated)&#xD;
+[xUnit.net 00:00:01.33]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.33]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.33]       RED: SegmentCollider2D is absent.&#xD;
+[xUnit.net 00:00:01.33]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.33]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs(123,0): at Cerneala.Tests.Controls.SceneImportGeometryTests.Segment()&#xD;
+[xUnit.net 00:00:01.33]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs(61,0): at Cerneala.Tests.Controls.SceneImportGeometryTests.SegmentRaycastHonorsEndpointsCollinearityAndTransforms(Boolean rotated)&#xD;
+[xUnit.net 00:00:01.33]            at InvokeStub_SceneImportGeometryTests.SegmentRaycastHonorsEndpointsCollinearityAndTransforms(Object, Span`1)&#xD;
+[xUnit.net 00:00:01.33]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:01.33]       RED: SegmentCollider2D is absent.&#xD;
+[xUnit.net 00:00:01.33]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.33]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs(123,0): at Cerneala.Tests.Controls.SceneImportGeometryTests.Segment()&#xD;
+[xUnit.net 00:00:01.33]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneImportGeometryTests.cs(81,0): at Cerneala.Tests.Controls.SceneImportGeometryTests.SegmentsDoNotIntersectWhenTheyAreCollinearButDisjoint()&#xD;
+[xUnit.net 00:00:01.33]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.33]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.33]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:22:48.6482269+03:00">
+        <Text>[xUnit.net 00:00:01.29]     Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(flags: 6) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:22:48.6542045+03:00">
+        <Text>[xUnit.net 00:00:01.30]     Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(flags: 7) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:22:48.6560373+03:00">
+        <Text>[xUnit.net 00:00:01.30]     Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(flags: 5) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:22:48.6576846+03:00">
+        <Text>[xUnit.net 00:00:01.30]     Cerneala.Tests.Controls.SceneImportGeometryTests.RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(flags: 4) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:22:48.6691566+03:00">
+        <Text>[xUnit.net 00:00:01.31]     Cerneala.Tests.Controls.SceneImportGeometryTests.TileColliderDescriptorRetainsAffineEllipseWithoutApproximation [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:22:48.7207180+03:00">
+        <Text>[xUnit.net 00:00:01.33]     Cerneala.Tests.Controls.SceneImportGeometryTests.SegmentRaycastHonorsEndpointsCollinearityAndTransforms(rotated: False) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:22:48.7207980+03:00">
+        <Text>[xUnit.net 00:00:01.33]     Cerneala.Tests.Controls.SceneImportGeometryTests.SegmentRaycastHonorsEndpointsCollinearityAndTransforms(rotated: True) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:22:48.7208652+03:00">
+        <Text>[xUnit.net 00:00:01.33]     Cerneala.Tests.Controls.SceneImportGeometryTests.SegmentsDoNotIntersectWhenTheyAreCollinearButDisjoint [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

@@ -1,0 +1,74 @@
+[
+  {
+    "Project": "Cerneala.Tests.Language.dll",
+    "Passed": 190,
+    "Failed": 0,
+    "Skipped": 0,
+    "Failures": []
+  },
+  {
+    "Project": "Cerneala.Tests.LanguageServer.dll",
+    "Passed": 40,
+    "Failed": 0,
+    "Skipped": 0,
+    "Failures": []
+  },
+  {
+    "Project": "Cerneala.Tests.Scene2DImporters.dll",
+    "Passed": 151,
+    "Failed": 0,
+    "Skipped": 0,
+    "Failures": []
+  },
+  {
+    "Project": "Cerneala.Tests.SourceGen.dll",
+    "Passed": 518,
+    "Failed": 0,
+    "Skipped": 0,
+    "Failures": []
+  },
+  {
+    "Project": "Cerneala.Tetris.Tests.dll",
+    "Passed": 29,
+    "Failed": 0,
+    "Skipped": 0,
+    "Failures": []
+  },
+  {
+    "Project": "Cerneala.Tests.SdlGpu.dll",
+    "Passed": 121,
+    "Failed": 0,
+    "Skipped": 5,
+    "Failures": []
+  },
+  {
+    "Project": "Cerneala.Tests.VisualStudio.dll",
+    "Passed": 47,
+    "Failed": 0,
+    "Skipped": 0,
+    "Failures": []
+  },
+  {
+    "Project": "Cerneala.Tests.PreviewHost.dll",
+    "Passed": 13,
+    "Failed": 0,
+    "Skipped": 0,
+    "Failures": []
+  },
+  {
+    "Project": "Cerneala.Tests.dll",
+    "Passed": 3482,
+    "Failed": 2,
+    "Skipped": 2,
+    "Failures": [
+      {
+        "Name": "Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 2)",
+        "Message": "A fully occluded stroke changed the output by 25/255 (interleaved content: 2)."
+      },
+      {
+        "Name": "Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 1)",
+        "Message": "A fully occluded stroke changed the output by 47/255 (interleaved content: 1)."
+      }
+    ]
+  }
+]

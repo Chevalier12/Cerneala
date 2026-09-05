@@ -1,0 +1,25 @@
+  Determining projects to restore...
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Win32\Cerneala.Platforms.Win32.csproj (in 322 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.MonoGame\Cerneala.Backends.MonoGame.csproj (in 343 ms).
+  10 of 12 projects are up-to-date for restore.
+  Tool 'dotnet-mgfxc' (version '3.8.4.1') was restored. Available commands: mgfxc
+  Tool 'sign' (version '0.9.1-beta.26330.1') was restored. Available commands: sign
+  
+  Restore was successful.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Debug\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Debug\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Debug\net8.0\Cerneala.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Debug\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Platforms.Win32 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Win32\bin\Debug\net8.0-windows\Cerneala.Platforms.Win32.dll
+  Cerneala.Scene2D.Importers -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\bin\Debug\net8.0\Cerneala.Scene2D.Importers.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Debug\net8.0\Cerneala.Backends.SdlGpu.dll
+  Cerneala.Backends.MonoGame -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.MonoGame\bin\Debug\net8.0-windows\Cerneala.Backends.MonoGame.dll
+  CernealaPresentation -> C:\Users\lauri\Desktop\Cerneala\CernealaPresentation\bin\Debug\net8.0-windows\CernealaPresentation.dll
+  Cerneala.Playground -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\bin\Debug\net8.0-windows\Cerneala.Playground.dll
+  Cerneala.WindowsDxSmoke -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.WindowsDxSmoke\bin\Debug\net8.0-windows\Cerneala.WindowsDxSmoke.dll
+  Cerneala.Tests -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-04-scene-import-stage6\core-affected-green.trx
+
+Passed!  - Failed:     0, Passed:   277, Skipped:     0, Total:   277, Duration: 13 s - Cerneala.Tests.dll (net8.0)

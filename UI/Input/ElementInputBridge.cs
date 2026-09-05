@@ -96,13 +96,13 @@ public sealed class ElementInputBridge
             inputFrame.Pointer.X != lastPointerX ||
             inputFrame.Pointer.Y != lastPointerY;
 
-        if (moved)
+        if (moved || !hoverTracker.IsCurrentRouteValid(routeMap))
         {
             hoverTracker.Update(pointerTarget, routeMap, inputFrame.Pointer.X, inputFrame.Pointer.Y);
             if (hasLastPointerPosition)
             {
                 RaiseMouseMovePair(routeMap, pointerTarget);
-                UpdatePointerDrag(pointerTarget);
+                UpdatePointerDrag(routeMap, pointerTarget);
             }
         }
 
@@ -120,8 +120,8 @@ public sealed class ElementInputBridge
 
             if (inputFrame.Pointer.IsPressed(button))
             {
-                clickTracker.Press(ResolveClickTarget(hitTarget?.Element));
-                pressedStateTracker.Press(pointerTarget?.Element);
+                clickTracker.Press(ResolveClickTarget(hitTarget?.Element, routeMap));
+                pressedStateTracker.Press(pointerTarget?.Element, routeMap);
                 if (button == InputMouseButton.Left &&
                     pointerTarget is not null &&
                     ResolveFocusTarget(pointerTarget.Element, routeMap) is UIElement focusTarget)
@@ -175,7 +175,7 @@ public sealed class ElementInputBridge
                     repeatButtonController.Cancel(pressedStateTracker);
                 }
 
-                int clickCount = clickTracker.Release(ResolveClickTarget(hitTarget?.Element));
+                int clickCount = clickTracker.Release(ResolveClickTarget(hitTarget?.Element, routeMap));
                 bool handled = RaiseMousePair(routeMap, pointerTarget, InputEvents.PreviewMouseUpEvent, InputEvents.MouseUpEvent, button, clickCount);
                 handled |= RaiseMouseButtonSpecificPair(routeMap, pointerTarget, button, isDown: false, clickCount);
                 if (button == InputMouseButton.Left && clickCount == 2)
@@ -226,7 +226,7 @@ public sealed class ElementInputBridge
             return;
         }
 
-        UIElement? commandElement = FindAncestor<IInputCommandSource>(clickTarget.Element);
+        UIElement? commandElement = FindAncestor<IInputCommandSource>(clickTarget.Element, routeMap);
         if (commandElement is not IInputCommandSource commandSource ||
             !commandElement.ActivatesOnPointerRelease ||
             (!ReferenceEquals(routedTarget.Element, clickTarget.Element) &&
@@ -245,31 +245,29 @@ public sealed class ElementInputBridge
             return;
         }
 
-        if (FindAncestor<IPointerDragSource>(target.Element) is not IPointerDragSource dragSource)
+        if (FindAncestor<IPointerDragSource>(target.Element, routeMap) is not IPointerDragSource dragSource)
         {
             return;
         }
 
-        int x = (int)MathF.Round(target.X);
-        int y = (int)MathF.Round(target.Y);
-        dragSource.BeginPointerDrag(pointerCaptureManager, routeMap, new MouseButtonEventArgs(InputEvents.MouseDownEvent, target.ElementId, button, x, y, 1));
+        dragSource.BeginPointerDrag(pointerCaptureManager, routeMap, new MouseButtonEventArgs(InputEvents.MouseDownEvent, target.ElementId, button, target.X, target.Y, 1));
     }
 
-    private static void UpdatePointerDrag(HitTestResult? target)
+    private static void UpdatePointerDrag(
+        ElementInputRouteMap routeMap,
+        HitTestResult? target)
     {
         if (target is null)
         {
             return;
         }
 
-        if (FindAncestor<IPointerDragSource>(target.Element) is not IPointerDragSource dragSource)
+        if (FindAncestor<IPointerDragSource>(target.Element, routeMap) is not IPointerDragSource dragSource)
         {
             return;
         }
 
-        int x = (int)MathF.Round(target.X);
-        int y = (int)MathF.Round(target.Y);
-        dragSource.UpdatePointerDrag(new MouseEventArgs(InputEvents.MouseMoveEvent, target.ElementId, x, y));
+        dragSource.UpdatePointerDrag(new MouseEventArgs(InputEvents.MouseMoveEvent, target.ElementId, target.X, target.Y));
     }
 
     private void CompletePointerDrag(ElementInputRouteMap routeMap, HitTestResult? target, InputMouseButton button, int clickCount)
@@ -279,19 +277,19 @@ public sealed class ElementInputBridge
             return;
         }
 
-        if (FindAncestor<IPointerDragSource>(target.Element) is not IPointerDragSource dragSource)
+        if (FindAncestor<IPointerDragSource>(target.Element, routeMap) is not IPointerDragSource dragSource)
         {
             return;
         }
 
-        int x = (int)MathF.Round(target.X);
-        int y = (int)MathF.Round(target.Y);
-        dragSource.CompletePointerDrag(pointerCaptureManager, routeMap, new MouseButtonEventArgs(InputEvents.MouseUpEvent, target.ElementId, button, x, y, clickCount));
+        dragSource.CompletePointerDrag(pointerCaptureManager, routeMap, new MouseButtonEventArgs(InputEvents.MouseUpEvent, target.ElementId, button, target.X, target.Y, clickCount));
     }
 
-    private static UIElement? FindAncestor<TContract>(UIElement element)
+    private static UIElement? FindAncestor<TContract>(
+        UIElement element,
+        ElementInputRouteMap routeMap)
     {
-        for (UIElement? current = element; current is not null; current = current.VisualParent)
+        foreach (UIElement current in routeMap.GetRouteToRoot(element))
         {
             if (current is TContract)
             {
@@ -302,19 +300,21 @@ public sealed class ElementInputBridge
         return null;
     }
 
-    private static UIElement? ResolveClickTarget(UIElement? element)
+    private static UIElement? ResolveClickTarget(
+        UIElement? element,
+        ElementInputRouteMap routeMap)
     {
         if (element is null)
         {
             return null;
         }
 
-        return FindAncestor<IInputCommandSource>(element) ?? element;
+        return FindAncestor<IInputCommandSource>(element, routeMap) ?? element;
     }
 
     private static UIElement? ResolveFocusTarget(UIElement element, ElementInputRouteMap routeMap)
     {
-        for (UIElement? current = element; current is not null; current = current.VisualParent)
+        foreach (UIElement current in routeMap.GetRouteToRoot(element))
         {
             if (FocusPolicy.CanFocus(current, routeMap))
             {
@@ -351,10 +351,8 @@ public sealed class ElementInputBridge
             return false;
         }
 
-        int x = (int)MathF.Round(target.X);
-        int y = (int)MathF.Round(target.Y);
-        MouseButtonEventArgs previewArgs = new(previewEvent, target.ElementId, button, x, y, clickCount);
-        MouseButtonEventArgs bubbleArgs = new(bubbleEvent, target.ElementId, button, x, y, clickCount);
+        MouseButtonEventArgs previewArgs = new(previewEvent, target.ElementId, button, target.X, target.Y, clickCount);
+        MouseButtonEventArgs bubbleArgs = new(bubbleEvent, target.ElementId, button, target.X, target.Y, clickCount);
         RoutedEventRouter.RaisePair(
             routeMap.InputTree,
             target.ElementId,
@@ -421,14 +419,12 @@ public sealed class ElementInputBridge
             return false;
         }
 
-        int x = (int)MathF.Round(target.X);
-        int y = (int)MathF.Round(target.Y);
         IReadOnlyList<UiElementId> route = routeMap.InputTree.GetRouteToRoot(target.ElementId);
         bool handled = false;
 
         foreach (UiElementId elementId in route.Reverse())
         {
-            MouseButtonEventArgs args = new(previewEvent, target.ElementId, button, x, y, clickCount) { Handled = handled };
+            MouseButtonEventArgs args = new(previewEvent, target.ElementId, button, target.X, target.Y, clickCount) { Handled = handled };
             RoutedEventRouter.Raise(routeMap.InputTree, elementId, args);
             handled |= args.Handled;
         }
@@ -436,7 +432,7 @@ public sealed class ElementInputBridge
         previewHandled = handled;
         foreach (UiElementId elementId in route)
         {
-            MouseButtonEventArgs args = new(bubbleEvent, target.ElementId, button, x, y, clickCount) { Handled = handled };
+            MouseButtonEventArgs args = new(bubbleEvent, target.ElementId, button, target.X, target.Y, clickCount) { Handled = handled };
             RoutedEventRouter.Raise(routeMap.InputTree, elementId, args);
             handled |= args.Handled;
         }
@@ -451,13 +447,11 @@ public sealed class ElementInputBridge
             return;
         }
 
-        int x = (int)MathF.Round(target.X);
-        int y = (int)MathF.Round(target.Y);
         RoutedEventRouter.RaisePair(
             routeMap.InputTree,
             target.ElementId,
-            new MouseEventArgs(InputEvents.PreviewMouseMoveEvent, target.ElementId, x, y),
-            new MouseEventArgs(InputEvents.MouseMoveEvent, target.ElementId, x, y));
+            new MouseEventArgs(InputEvents.PreviewMouseMoveEvent, target.ElementId, target.X, target.Y),
+            new MouseEventArgs(InputEvents.MouseMoveEvent, target.ElementId, target.X, target.Y));
     }
 
     private static void RaiseWheelPair(ElementInputRouteMap routeMap, HitTestResult? target, int delta)
@@ -467,12 +461,10 @@ public sealed class ElementInputBridge
             return;
         }
 
-        int x = (int)MathF.Round(target.X);
-        int y = (int)MathF.Round(target.Y);
         RoutedEventRouter.RaisePair(
             routeMap.InputTree,
             target.ElementId,
-            new MouseWheelEventArgs(InputEvents.PreviewMouseWheelEvent, target.ElementId, x, y, delta),
-            new MouseWheelEventArgs(InputEvents.MouseWheelEvent, target.ElementId, x, y, delta));
+            new MouseWheelEventArgs(InputEvents.PreviewMouseWheelEvent, target.ElementId, target.X, target.Y, delta),
+            new MouseWheelEventArgs(InputEvents.MouseWheelEvent, target.ElementId, target.X, target.Y, delta));
     }
 }

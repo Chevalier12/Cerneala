@@ -1,0 +1,232 @@
+[
+  {
+    "Requested": "Base",
+    "ProfileName": "Base Profile",
+    "Settings": [
+      {
+        "Id": "10FC2D9C",
+        "Status": -160,
+        "Name": null,
+        "Type": 0,
+        "Location": 3,
+        "IsCurrentPredefined": 0,
+        "IsPredefinedValid": 0,
+        "Predefined": "00000000",
+        "Current": "00000000"
+      },
+      {
+        "Id": "107D639D",
+        "Status": 0,
+        "Name": "Antialiasing - Gamma correction",
+        "Type": 0,
+        "Location": 0,
+        "IsCurrentPredefined": 0,
+        "IsPredefinedValid": 0,
+        "Predefined": "00000000",
+        "Current": "00000002"
+      },
+      {
+        "Id": "10D773D2",
+        "Status": 0,
+        "Name": "Antialiasing - Setting",
+        "Type": 0,
+        "Location": 0,
+        "IsCurrentPredefined": 0,
+        "IsPredefinedValid": 0,
+        "Predefined": "00000000",
+        "Current": "00000000"
+      },
+      {
+        "Id": "10D48A85",
+        "Status": 0,
+        "Name": "Antialiasing - Transparency Supersampling",
+        "Type": 0,
+        "Location": 0,
+        "IsCurrentPredefined": 0,
+        "IsPredefinedValid": 0,
+        "Predefined": "00000000",
+        "Current": "00000000"
+      },
+      {
+        "Id": "107EFC5B",
+        "Status": 0,
+        "Name": "Antialiasing - Mode",
+        "Type": 0,
+        "Location": 0,
+        "IsCurrentPredefined": 0,
+        "IsPredefinedValid": 0,
+        "Predefined": "00000000",
+        "Current": "00000001"
+      },
+      {
+        "Id": "107AFC5B",
+        "Status": 0,
+        "Name": "Antialiasing - SLI AA",
+        "Type": 0,
+        "Location": 0,
+        "IsCurrentPredefined": 0,
+        "IsPredefinedValid": 0,
+        "Predefined": "00000000",
+        "Current": "00000000"
+      },
+      {
+        "Id": "1034CB89",
+        "Status": -160,
+        "Name": null,
+        "Type": 0,
+        "Location": 3,
+        "IsCurrentPredefined": 0,
+        "IsPredefinedValid": 0,
+        "Predefined": "00000000",
+        "Current": "00000000"
+      },
+      {
+        "Id": "1074C972",
+        "Status": 0,
+        "Name": "Enable FXAA",
+        "Type": 0,
+        "Location": 0,
+        "IsCurrentPredefined": 0,
+        "IsPredefinedValid": 0,
+        "Predefined": "00000000",
+        "Current": "00000000"
+      },
+      {
+        "Id": "0098C1AC",
+        "Status": 0,
+        "Name": "Enable sample interleaving (MFAA)",
+        "Type": 0,
+        "Location": 0,
+        "IsCurrentPredefined": 0,
+        "IsPredefinedValid": 0,
+        "Predefined": "00000000",
+        "Current": "00000000"
+      }
+    ]
+  },
+  {
+    "Requested": "Global",
+    "ProfileName": "Base Profile",
+    "Settings": [
+      {
+        "Id": "10FC2D9C",
+        "Status": -160,
+        "Name": null,
+        "Type": 0,
+        "Location": 3,
+        "IsCurrentPredefined": 0,
+        "IsPredefinedValid": 0,
+        "Predefined": "00000000",
+        "Current": "00000000"
+      },
+      {
+        "Id": "107D639D",
+        "Status": 0,
+        "Name": "Antialiasing - Gamma correction",
+        "Type": 0,
+        "Location": 0,
+        "IsCurrentPredefined": 0,
+        "IsPredefinedValid": 0,
+        "Predefined": "00000000",
+        "Current": "00000002"
+      },
+      {
+        "Id": "10D773D2",
+        "Status": 0,
+        "Name": "Antialiasing - Setting",
+        "Type": 0,
+        "Location": 0,
+        "IsCurrentPredefined": 0,
+        "IsPredefinedValid": 0,
+        "Predefined": "00000000",
+        "Current": "00000000"
+      },
+      {
+        "Id": "10D48A85",
+        "Status": 0,
+        "Name": "Antialiasing - Transparency Supersampling",
+        "Type": 0,
+        "Location": 0,
+        "IsCurrentPredefined": 0,
+        "IsPredefinedValid": 0,
+        "Predefined": "00000000",
+        "Current": "00000000"
+      },
+      {
+        "Id": "107EFC5B",
+        "Status": 0,
+        "Name": "Antialiasing - Mode",
+        "Type": 0,
+        "Location": 0,
+        "IsCurrentPredefined": 0,
+        "IsPredefinedValid": 0,
+        "Predefined": "00000000",
+        "Current": "00000001"
+      },
+      {
+        "Id": "107AFC5B",
+        "Status": 0,
+        "Name": "Antialiasing - SLI AA",
+        "Type": 0,
+        "Location": 0,
+        "IsCurrentPredefined": 0,
+        "IsPredefinedValid": 0,
+        "Predefined": "00000000",
+        "Current": "00000000"
+      },
+      {
+        "Id": "1034CB89",
+        "Status": -160,
+        "Name": null,
+        "Type": 0,
+        "Location": 3,
+        "IsCurrentPredefined": 0,
+        "IsPredefinedValid": 0,
+        "Predefined": "00000000",
+        "Current": "00000000"
+      },
+      {
+        "Id": "1074C972",
+        "Status": 0,
+        "Name": "Enable FXAA",
+        "Type": 0,
+        "Location": 0,
+        "IsCurrentPredefined": 0,
+        "IsPredefinedValid": 0,
+        "Predefined": "00000000",
+        "Current": "00000000"
+      },
+      {
+        "Id": "0098C1AC",
+        "Status": 0,
+        "Name": "Enable sample interleaving (MFAA)",
+        "Type": 0,
+        "Location": 0,
+        "IsCurrentPredefined": 0,
+        "IsPredefinedValid": 0,
+        "Predefined": "00000000",
+        "Current": "00000000"
+      }
+    ]
+  },
+  {
+    "Application": "C:\\Users\\lauri\\Desktop\\Cerneala\\tests\\Cerneala.Tests\\bin\\Debug\\net8.0-windows\\testhost.exe",
+    "Status": -166
+  },
+  {
+    "Application": "C:\\Users\\lauri\\Desktop\\Cerneala\\tests\\Cerneala.WindowsDxSmoke\\bin\\Debug\\net8.0-windows\\Cerneala.WindowsDxSmoke.exe",
+    "Status": -166
+  },
+  {
+    "Application": "C:\\Users\\lauri\\Desktop\\Cerneala\\tests\\Cerneala.SdlGpuSmoke\\bin\\Debug\\net8.0\\Cerneala.SdlGpuSmoke.exe",
+    "Status": -166
+  },
+  {
+    "Application": "C:\\Program Files\\dotnet\\dotnet.exe",
+    "Status": -166
+  },
+  {
+    "Application": "C:\\Users\\lauri\\Desktop\\Cerneala\\tests\\CodexGpuDriverHarness\\bin\\Debug\\net8.0-windows\\CodexGpuDriverHarness.exe",
+    "Status": -166
+  }
+]

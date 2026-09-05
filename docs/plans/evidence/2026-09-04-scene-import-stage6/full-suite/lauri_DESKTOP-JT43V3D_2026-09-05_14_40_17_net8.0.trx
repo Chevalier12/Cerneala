@@ -1,0 +1,202 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="31ef885d-dab1-45b0-a3b5-52c60e577dae" name="lauri@DESKTOP-JT43V3D 2026-09-05 14:40:17" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T14:40:17.5691768+03:00" queuing="2026-09-05T14:40:17.5691773+03:00" start="2026-09-05T14:40:12.8144697+03:00" finish="2026-09-05T14:40:17.8314740+03:00" />
+  <TestSettings name="default" id="c23ae43f-72de-4e4a-b92a-71cccb608167">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_14_40_17" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="6caf5423-2a7d-4595-a3e9-5e26a9ee0e4e" testId="5a28d3ea-b7e8-a8cb-b493-cf00d6c7bda5" testName="Cerneala.Tetris.Tests.TetrisGameTests.FrameTimeAdvancesGravityThroughTheContinuousGameLoop" computerName="DESKTOP-JT43V3D" duration="00:00:00.0002507" startTime="2026-09-05T14:40:17.5496503+03:00" endTime="2026-09-05T14:40:17.5496505+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6caf5423-2a7d-4595-a3e9-5e26a9ee0e4e" />
+    <UnitTestResult executionId="043d58c7-9474-425a-a734-6fab0e89fb60" testId="53efd3e7-b4d1-9eb7-1703-5c3b3b98cf2b" testName="Cerneala.Tetris.Tests.TetrisGameTests.LockedSpriteModelsAreImmutableSnapshots" computerName="DESKTOP-JT43V3D" duration="00:00:00.0002927" startTime="2026-09-05T14:40:17.5477355+03:00" endTime="2026-09-05T14:40:17.5477355+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="043d58c7-9474-425a-a734-6fab0e89fb60" />
+    <UnitTestResult executionId="f9a6c102-ce28-4286-a7d5-7f44daadd235" testId="9375b240-8875-34de-4432-6f1cb99bf247" testName="Cerneala.Tetris.Tests.TetrisGameTests.SoftDropMotionPublishesIntermediateQuantizedValues" computerName="DESKTOP-JT43V3D" duration="00:00:00.0131893" startTime="2026-09-05T14:40:17.5485520+03:00" endTime="2026-09-05T14:40:17.5485529+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f9a6c102-ce28-4286-a7d5-7f44daadd235" />
+    <UnitTestResult executionId="1db9cd72-88bc-4005-b580-32cc96dc81be" testId="f0932614-460e-5b34-7366-dcfaaa31d854" testName="Cerneala.Tetris.Tests.TetrisGameTests.ActivePieceMovementDoesNotChangeTheLockedBoardVersion" computerName="DESKTOP-JT43V3D" duration="00:00:00.0036016" startTime="2026-09-05T14:40:17.6020329+03:00" endTime="2026-09-05T14:40:17.6020334+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1db9cd72-88bc-4005-b580-32cc96dc81be" />
+    <UnitTestResult executionId="ad57e2df-ddf3-48a7-a7e5-ab567c352136" testId="31436e3d-7a6e-6967-5039-5532484c3b61" testName="Cerneala.Tetris.Tests.TetrisGameTests.PieceEffectsMatchTheConfirmedGlowAndSoftDropContract" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001725" startTime="2026-09-05T14:40:17.5499247+03:00" endTime="2026-09-05T14:40:17.5499255+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ad57e2df-ddf3-48a7-a7e5-ab567c352136" />
+    <UnitTestResult executionId="b014d51c-be93-4f04-b7dc-88efffbfaf61" testId="cb6c0833-e9ec-8bc9-797c-2c99f4c20e7b" testName="Cerneala.Tetris.Tests.TetrisGameTests.RestartClearsAnActiveSoftDropPresentation" computerName="DESKTOP-JT43V3D" duration="00:00:00.0018962" startTime="2026-09-05T14:40:17.5824340+03:00" endTime="2026-09-05T14:40:17.5824349+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b014d51c-be93-4f04-b7dc-88efffbfaf61" />
+    <UnitTestResult executionId="39b6e15e-6c1b-4c9d-bcf2-42c994352cca" testId="43c80ee3-066a-c3d5-b297-37c4f9df63b8" testName="Cerneala.Tetris.Tests.TetrisGameTests.MotionBlurVisibilityTracksTheQuantizedSurfaceValue" computerName="DESKTOP-JT43V3D" duration="00:00:00.0133199" startTime="2026-09-05T14:40:17.6155113+03:00" endTime="2026-09-05T14:40:17.6155119+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="39b6e15e-6c1b-4c9d-bcf2-42c994352cca" />
+    <UnitTestResult executionId="4e49090a-bbf4-44b2-a2d5-c213d55ac549" testId="c27ed751-6f3b-6f63-a147-ec01d4e8d2ba" testName="Cerneala.Tetris.Tests.TetrisGameTests.LockingAPieceChangesTheLockedBoardVersion" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001514" startTime="2026-09-05T14:40:17.5476636+03:00" endTime="2026-09-05T14:40:17.5476638+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4e49090a-bbf4-44b2-a2d5-c213d55ac549" />
+    <UnitTestResult executionId="8f4b398f-b117-4a7a-9bb6-580c32b33282" testId="a26690ec-2f48-bb34-ab71-2d83e219301c" testName="Cerneala.Tetris.Tests.TetrisGameTests.PrismReplacementVisibilityCycleRestartsAspectMotionOnCurrentInstance" computerName="DESKTOP-JT43V3D" duration="00:00:00.0192411" startTime="2026-09-05T14:40:17.6348916+03:00" endTime="2026-09-05T14:40:17.6348921+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8f4b398f-b117-4a7a-9bb6-580c32b33282" />
+    <UnitTestResult executionId="78491e80-0523-4888-9148-11017f3007bd" testId="d96c4064-f62b-6cf4-bfdc-d11f1db82a53" testName="Cerneala.Tetris.Tests.TetrisGameTests.PausedGameDoesNotAdvanceGravity" computerName="DESKTOP-JT43V3D" duration="00:00:00.3468361" startTime="2026-09-05T14:40:16.4574236+03:00" endTime="2026-09-05T14:40:16.4574585+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="78491e80-0523-4888-9148-11017f3007bd" />
+    <UnitTestResult executionId="18abb3f8-b278-402b-bbfd-a7e9164a5ee2" testId="86f6d23b-9125-7e13-21db-9d4dc3788b11" testName="Cerneala.Tetris.Tests.TetrisGameTests.HeldSoftDropContinuesAtTheSoftDropCadenceUntilReleased" computerName="DESKTOP-JT43V3D" duration="00:00:00.0007521" startTime="2026-09-05T14:40:17.5985181+03:00" endTime="2026-09-05T14:40:17.5985182+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="18abb3f8-b278-402b-bbfd-a7e9164a5ee2" />
+    <UnitTestResult executionId="3dcd5d14-7230-41af-8bbb-3866f49fde19" testId="72cb5f25-459f-023e-57d9-b85c03373f0c" testName="Cerneala.Tetris.Tests.TetrisGameTests.HardDropLocksExactlyOneTetrominoAndSpawnsTheNext" computerName="DESKTOP-JT43V3D" duration="00:00:00.0323366" startTime="2026-09-05T14:40:16.4892911+03:00" endTime="2026-09-05T14:40:16.4892915+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3dcd5d14-7230-41af-8bbb-3866f49fde19" />
+    <UnitTestResult executionId="c9830435-613a-43bd-b768-4bb4bc3d62ba" testId="248895d2-3a09-1b10-c03f-8291ea4104cf" testName="Cerneala.Tetris.Tests.TetrisGameTests.RemovingAppliedAspectCancelsItsPrismMotion" computerName="DESKTOP-JT43V3D" duration="00:00:00.0275961" startTime="2026-09-05T14:40:17.5804319+03:00" endTime="2026-09-05T14:40:17.5804323+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c9830435-613a-43bd-b768-4bb4bc3d62ba" />
+    <UnitTestResult executionId="a6ed10d1-2a16-4a94-bf43-60feeccc9e68" testId="4841d809-33f7-6db3-a479-6743f5bd22c0" testName="Cerneala.Tetris.Tests.TetrisGameTests.FullLinesAreRemovedAndRowsAboveMoveDown" computerName="DESKTOP-JT43V3D" duration="00:00:00.0043730" startTime="2026-09-05T14:40:16.4937123+03:00" endTime="2026-09-05T14:40:16.4937127+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a6ed10d1-2a16-4a94-bf43-60feeccc9e68" />
+    <UnitTestResult executionId="bc068559-3e25-40c4-b6d5-454bdbb2fd09" testId="75537422-49a5-7d05-644a-e0c34d4d539d" testName="Cerneala.Tetris.Tests.TetrisGameTests.MarkupSurfaceRecordsImperativeBoardBeforeRetainedScene" computerName="DESKTOP-JT43V3D" duration="00:00:00.9572270" startTime="2026-09-05T14:40:17.4512476+03:00" endTime="2026-09-05T14:40:17.4512482+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bc068559-3e25-40c4-b6d5-454bdbb2fd09" />
+    <UnitTestResult executionId="5611f6b7-f188-4540-b97d-3b8b9cba4963" testId="efba01a6-0a8f-6f65-c7eb-beead7f32a0d" testName="Cerneala.Tetris.Tests.TetrisGameTests.LineClearedFragmentsRemainLockedSpriteModels" computerName="DESKTOP-JT43V3D" duration="00:00:00.0146739" startTime="2026-09-05T14:40:17.5345460+03:00" endTime="2026-09-05T14:40:17.5345463+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5611f6b7-f188-4540-b97d-3b8b9cba4963" />
+    <UnitTestResult executionId="c5c29b85-085e-471d-9784-a5f74e16e701" testId="8604d75b-2836-b5a4-5c1e-c2af2d33d478" testName="Cerneala.Tetris.Tests.TetrisGameTests.HidingRenderSurfaceAncestorCancelsSceneAspectPrismMotion" computerName="DESKTOP-JT43V3D" duration="00:00:00.0143562" startTime="2026-09-05T14:40:17.5984254+03:00" endTime="2026-09-05T14:40:17.5984258+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c5c29b85-085e-471d-9784-a5f74e16e701" />
+    <UnitTestResult executionId="b64fc715-e337-489f-8eff-02ddc585dcea" testId="488bf801-1f86-2a87-1041-4896348a30a8" testName="Cerneala.Tetris.Tests.TetrisGameTests.ExpensivePrismAnimationPublishesQuantizedSamples" computerName="DESKTOP-JT43V3D" duration="00:00:00.0033035" startTime="2026-09-05T14:40:17.5173736+03:00" endTime="2026-09-05T14:40:17.5173746+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b64fc715-e337-489f-8eff-02ddc585dcea" />
+    <UnitTestResult executionId="4660e1ea-3dab-4c81-b455-a2693c05414e" testId="06c37492-b577-7a60-e29c-febb8a0a66b1" testName="Cerneala.Tetris.Tests.TetrisGameTests.TetrominoAtlasProvidesOneConnectedSilhouettePerRotation" computerName="DESKTOP-JT43V3D" duration="00:00:00.0445057" startTime="2026-09-05T14:40:17.7206101+03:00" endTime="2026-09-05T14:40:17.7206105+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4660e1ea-3dab-4c81-b455-a2693c05414e" />
+    <UnitTestResult executionId="fae9be11-45ab-446e-8364-1ab582728515" testId="9b688157-587a-4e1e-e069-f180b10839dc" testName="Cerneala.Tetris.Tests.TetrisGameTests.HorizontalMovementCannotMoveCellsOutsideTheBoard" computerName="DESKTOP-JT43V3D" duration="00:00:00.0014464" startTime="2026-09-05T14:40:17.7221686+03:00" endTime="2026-09-05T14:40:17.7221690+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fae9be11-45ab-446e-8364-1ab582728515" />
+    <UnitTestResult executionId="fb7519fd-4905-476a-b649-2288c306c493" testId="db1d9063-3e58-6537-049a-38ac69857568" testName="Cerneala.Tetris.Tests.TetrisGameTests.PointerActivationThenRightArrowMovesTheActivePiece" computerName="DESKTOP-JT43V3D" duration="00:00:00.0602834" startTime="2026-09-05T14:40:17.5139525+03:00" endTime="2026-09-05T14:40:17.5139529+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fb7519fd-4905-476a-b649-2288c306c493" />
+    <UnitTestResult executionId="efcfdec1-a7bc-42c2-a807-31f0b386d8fe" testId="6cbcb30e-eda0-03a2-bd01-09a18f5dc94e" testName="Cerneala.Tetris.Tests.TetrisGameTests.ClosingAfterSoftDroppedPieceLandsDoesNotStartMotionAfterDetach" computerName="DESKTOP-JT43V3D" duration="00:00:00.0022546" startTime="2026-09-05T14:40:17.7245296+03:00" endTime="2026-09-05T14:40:17.7245301+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="efcfdec1-a7bc-42c2-a807-31f0b386d8fe" />
+    <UnitTestResult executionId="9037e139-b9c0-4cee-9d4c-cef3c78a8451" testId="ebd3997b-c1be-b3d2-21f4-1c305d7cef04" testName="Cerneala.Tetris.Tests.TetrisGameTests.RepeatedSoftDropKeyDownDoesNotApplyAnotherImmediateStep" computerName="DESKTOP-JT43V3D" duration="00:00:00.0003445" startTime="2026-09-05T14:40:17.5493081+03:00" endTime="2026-09-05T14:40:17.5493083+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9037e139-b9c0-4cee-9d4c-cef3c78a8451" />
+    <UnitTestResult executionId="17b38b5c-b16b-473b-b7ea-e40906d6e362" testId="4a880a0b-37ce-16d1-b8ad-42dc1c78a588" testName="Cerneala.Tetris.Tests.TetrisGameTests.HoldCanBeUsedOnlyOnceUntilThePieceLocks" computerName="DESKTOP-JT43V3D" duration="00:00:00.0004143" startTime="2026-09-05T14:40:17.7250365+03:00" endTime="2026-09-05T14:40:17.7250366+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="17b38b5c-b16b-473b-b7ea-e40906d6e362" />
+    <UnitTestResult executionId="2080a9fc-15c0-4833-9c77-edfde7b5b66c" testId="88339057-b604-f2fb-c819-a1e4a23ebc67" testName="Cerneala.Tetris.Tests.TetrisGameTests.EveryTetrominoKindCreatesItsOwnConcretePieceClass" computerName="DESKTOP-JT43V3D" duration="00:00:00.0023138" startTime="2026-09-05T14:40:17.5523728+03:00" endTime="2026-09-05T14:40:17.5523732+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2080a9fc-15c0-4833-9c77-edfde7b5b66c" />
+    <UnitTestResult executionId="26f74892-de3e-4624-8e09-ceb943d3a35b" testId="8ee8a295-0963-6fbb-6c8f-6566e18a5fe3" testName="Cerneala.Tetris.Tests.TetrisGameTests.ActivePieceMarkupMotionAnimatesItsPrismGlow" computerName="DESKTOP-JT43V3D" duration="00:00:00.0108856" startTime="2026-09-05T14:40:17.6759773+03:00" endTime="2026-09-05T14:40:17.6759778+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="26f74892-de3e-4624-8e09-ceb943d3a35b" />
+    <UnitTestResult executionId="83832672-84c4-4e2c-b680-3b582507751d" testId="4f48c4e5-96d7-0dcf-0566-6586a41c5de2" testName="Cerneala.Tetris.Tests.TetrisGameTests.SurfaceUsesContinuousRedrawForTheRealtimeGameLoop" computerName="DESKTOP-JT43V3D" duration="00:00:00.0022084" startTime="2026-09-05T14:40:17.4535604+03:00" endTime="2026-09-05T14:40:17.4535606+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="83832672-84c4-4e2c-b680-3b582507751d" />
+    <UnitTestResult executionId="43598b7c-ce05-422b-9a84-5126b6bcb1d4" testId="3fe30c0b-4cc3-18c4-2d7f-b8bcdfbd869d" testName="Cerneala.Tetris.Tests.TetrisGameTests.PlacementIdentitySurvivesLineClearAndSeparatesSameKindPieces" computerName="DESKTOP-JT43V3D" duration="00:00:00.0022152" startTime="2026-09-05T14:40:17.5197030+03:00" endTime="2026-09-05T14:40:17.5197034+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="43598b7c-ce05-422b-9a84-5126b6bcb1d4" />
+    <UnitTestResult executionId="8171eb59-1e90-44dd-8d30-18a83e7cfd8e" testId="42540635-f6f5-fbf8-fe67-e4abad8dcab3" testName="Cerneala.Tetris.Tests.TetrisGameTests.ActivePieceOwnsMarkupPrismWithNestedEffectOrder" computerName="DESKTOP-JT43V3D" duration="00:00:00.0294317" startTime="2026-09-05T14:40:17.6645831+03:00" endTime="2026-09-05T14:40:17.6645835+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8171eb59-1e90-44dd-8d30-18a83e7cfd8e" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.RestartClearsAnActiveSoftDropPresentation" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="cb6c0833-e9ec-8bc9-797c-2c99f4c20e7b">
+      <Execution id="b014d51c-be93-4f04-b7dc-88efffbfaf61" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="RestartClearsAnActiveSoftDropPresentation" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.RemovingAppliedAspectCancelsItsPrismMotion" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="248895d2-3a09-1b10-c03f-8291ea4104cf">
+      <Execution id="c9830435-613a-43bd-b768-4bb4bc3d62ba" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="RemovingAppliedAspectCancelsItsPrismMotion" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.HidingRenderSurfaceAncestorCancelsSceneAspectPrismMotion" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="8604d75b-2836-b5a4-5c1e-c2af2d33d478">
+      <Execution id="c5c29b85-085e-471d-9784-a5f74e16e701" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="HidingRenderSurfaceAncestorCancelsSceneAspectPrismMotion" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.LockedSpriteModelsAreImmutableSnapshots" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="53efd3e7-b4d1-9eb7-1703-5c3b3b98cf2b">
+      <Execution id="043d58c7-9474-425a-a734-6fab0e89fb60" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="LockedSpriteModelsAreImmutableSnapshots" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.ClosingAfterSoftDroppedPieceLandsDoesNotStartMotionAfterDetach" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="6cbcb30e-eda0-03a2-bd01-09a18f5dc94e">
+      <Execution id="efcfdec1-a7bc-42c2-a807-31f0b386d8fe" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="ClosingAfterSoftDroppedPieceLandsDoesNotStartMotionAfterDetach" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.LockingAPieceChangesTheLockedBoardVersion" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="c27ed751-6f3b-6f63-a147-ec01d4e8d2ba">
+      <Execution id="4e49090a-bbf4-44b2-a2d5-c213d55ac549" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="LockingAPieceChangesTheLockedBoardVersion" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.HoldCanBeUsedOnlyOnceUntilThePieceLocks" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="4a880a0b-37ce-16d1-b8ad-42dc1c78a588">
+      <Execution id="17b38b5c-b16b-473b-b7ea-e40906d6e362" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="HoldCanBeUsedOnlyOnceUntilThePieceLocks" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.SurfaceUsesContinuousRedrawForTheRealtimeGameLoop" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="4f48c4e5-96d7-0dcf-0566-6586a41c5de2">
+      <Execution id="83832672-84c4-4e2c-b680-3b582507751d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="SurfaceUsesContinuousRedrawForTheRealtimeGameLoop" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.HorizontalMovementCannotMoveCellsOutsideTheBoard" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="9b688157-587a-4e1e-e069-f180b10839dc">
+      <Execution id="fae9be11-45ab-446e-8364-1ab582728515" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="HorizontalMovementCannotMoveCellsOutsideTheBoard" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.ActivePieceMarkupMotionAnimatesItsPrismGlow" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="8ee8a295-0963-6fbb-6c8f-6566e18a5fe3">
+      <Execution id="26f74892-de3e-4624-8e09-ceb943d3a35b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="ActivePieceMarkupMotionAnimatesItsPrismGlow" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.FrameTimeAdvancesGravityThroughTheContinuousGameLoop" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="5a28d3ea-b7e8-a8cb-b493-cf00d6c7bda5">
+      <Execution id="6caf5423-2a7d-4595-a3e9-5e26a9ee0e4e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="FrameTimeAdvancesGravityThroughTheContinuousGameLoop" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.ActivePieceMovementDoesNotChangeTheLockedBoardVersion" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="f0932614-460e-5b34-7366-dcfaaa31d854">
+      <Execution id="1db9cd72-88bc-4005-b580-32cc96dc81be" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="ActivePieceMovementDoesNotChangeTheLockedBoardVersion" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.RepeatedSoftDropKeyDownDoesNotApplyAnotherImmediateStep" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="ebd3997b-c1be-b3d2-21f4-1c305d7cef04">
+      <Execution id="9037e139-b9c0-4cee-9d4c-cef3c78a8451" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="RepeatedSoftDropKeyDownDoesNotApplyAnotherImmediateStep" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.ExpensivePrismAnimationPublishesQuantizedSamples" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="488bf801-1f86-2a87-1041-4896348a30a8">
+      <Execution id="b64fc715-e337-489f-8eff-02ddc585dcea" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="ExpensivePrismAnimationPublishesQuantizedSamples" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.EveryTetrominoKindCreatesItsOwnConcretePieceClass" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="88339057-b604-f2fb-c819-a1e4a23ebc67">
+      <Execution id="2080a9fc-15c0-4833-9c77-edfde7b5b66c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="EveryTetrominoKindCreatesItsOwnConcretePieceClass" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.TetrominoAtlasProvidesOneConnectedSilhouettePerRotation" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="06c37492-b577-7a60-e29c-febb8a0a66b1">
+      <Execution id="4660e1ea-3dab-4c81-b455-a2693c05414e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="TetrominoAtlasProvidesOneConnectedSilhouettePerRotation" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.ActivePieceOwnsMarkupPrismWithNestedEffectOrder" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="42540635-f6f5-fbf8-fe67-e4abad8dcab3">
+      <Execution id="8171eb59-1e90-44dd-8d30-18a83e7cfd8e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="ActivePieceOwnsMarkupPrismWithNestedEffectOrder" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.FullLinesAreRemovedAndRowsAboveMoveDown" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="4841d809-33f7-6db3-a479-6743f5bd22c0">
+      <Execution id="a6ed10d1-2a16-4a94-bf43-60feeccc9e68" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="FullLinesAreRemovedAndRowsAboveMoveDown" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.PausedGameDoesNotAdvanceGravity" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="d96c4064-f62b-6cf4-bfdc-d11f1db82a53">
+      <Execution id="78491e80-0523-4888-9148-11017f3007bd" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="PausedGameDoesNotAdvanceGravity" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.PrismReplacementVisibilityCycleRestartsAspectMotionOnCurrentInstance" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="a26690ec-2f48-bb34-ab71-2d83e219301c">
+      <Execution id="8f4b398f-b117-4a7a-9bb6-580c32b33282" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="PrismReplacementVisibilityCycleRestartsAspectMotionOnCurrentInstance" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.PointerActivationThenRightArrowMovesTheActivePiece" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="db1d9063-3e58-6537-049a-38ac69857568">
+      <Execution id="fb7519fd-4905-476a-b649-2288c306c493" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="PointerActivationThenRightArrowMovesTheActivePiece" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.SoftDropMotionPublishesIntermediateQuantizedValues" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="9375b240-8875-34de-4432-6f1cb99bf247">
+      <Execution id="f9a6c102-ce28-4286-a7d5-7f44daadd235" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="SoftDropMotionPublishesIntermediateQuantizedValues" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.MotionBlurVisibilityTracksTheQuantizedSurfaceValue" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="43c80ee3-066a-c3d5-b297-37c4f9df63b8">
+      <Execution id="39b6e15e-6c1b-4c9d-bcf2-42c994352cca" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="MotionBlurVisibilityTracksTheQuantizedSurfaceValue" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.PlacementIdentitySurvivesLineClearAndSeparatesSameKindPieces" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="3fe30c0b-4cc3-18c4-2d7f-b8bcdfbd869d">
+      <Execution id="43598b7c-ce05-422b-9a84-5126b6bcb1d4" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="PlacementIdentitySurvivesLineClearAndSeparatesSameKindPieces" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.HeldSoftDropContinuesAtTheSoftDropCadenceUntilReleased" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="86f6d23b-9125-7e13-21db-9d4dc3788b11">
+      <Execution id="18abb3f8-b278-402b-bbfd-a7e9164a5ee2" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="HeldSoftDropContinuesAtTheSoftDropCadenceUntilReleased" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.LineClearedFragmentsRemainLockedSpriteModels" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="efba01a6-0a8f-6f65-c7eb-beead7f32a0d">
+      <Execution id="5611f6b7-f188-4540-b97d-3b8b9cba4963" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="LineClearedFragmentsRemainLockedSpriteModels" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.HardDropLocksExactlyOneTetrominoAndSpawnsTheNext" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="72cb5f25-459f-023e-57d9-b85c03373f0c">
+      <Execution id="3dcd5d14-7230-41af-8bbb-3866f49fde19" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="HardDropLocksExactlyOneTetrominoAndSpawnsTheNext" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.PieceEffectsMatchTheConfirmedGlowAndSoftDropContract" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="31436e3d-7a6e-6967-5039-5532484c3b61">
+      <Execution id="ad57e2df-ddf3-48a7-a7e5-ab567c352136" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="PieceEffectsMatchTheConfirmedGlowAndSoftDropContract" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tetris.Tests.TetrisGameTests.MarkupSurfaceRecordsImperativeBoardBeforeRetainedScene" storage="c:\users\lauri\desktop\cerneala\tetrisish\tests\bin\debug\net8.0\cerneala.tetris.tests.dll" id="75537422-49a5-7d05-644a-e0c34d4d539d">
+      <Execution id="bc068559-3e25-40c4-b6d5-454bdbb2fd09" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tetris.Tests.TetrisGameTests" name="MarkupSurfaceRecordsImperativeBoardBeforeRetainedScene" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="5a28d3ea-b7e8-a8cb-b493-cf00d6c7bda5" executionId="6caf5423-2a7d-4595-a3e9-5e26a9ee0e4e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="53efd3e7-b4d1-9eb7-1703-5c3b3b98cf2b" executionId="043d58c7-9474-425a-a734-6fab0e89fb60" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9375b240-8875-34de-4432-6f1cb99bf247" executionId="f9a6c102-ce28-4286-a7d5-7f44daadd235" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f0932614-460e-5b34-7366-dcfaaa31d854" executionId="1db9cd72-88bc-4005-b580-32cc96dc81be" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="31436e3d-7a6e-6967-5039-5532484c3b61" executionId="ad57e2df-ddf3-48a7-a7e5-ab567c352136" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cb6c0833-e9ec-8bc9-797c-2c99f4c20e7b" executionId="b014d51c-be93-4f04-b7dc-88efffbfaf61" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="43c80ee3-066a-c3d5-b297-37c4f9df63b8" executionId="39b6e15e-6c1b-4c9d-bcf2-42c994352cca" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c27ed751-6f3b-6f63-a147-ec01d4e8d2ba" executionId="4e49090a-bbf4-44b2-a2d5-c213d55ac549" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a26690ec-2f48-bb34-ab71-2d83e219301c" executionId="8f4b398f-b117-4a7a-9bb6-580c32b33282" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d96c4064-f62b-6cf4-bfdc-d11f1db82a53" executionId="78491e80-0523-4888-9148-11017f3007bd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="86f6d23b-9125-7e13-21db-9d4dc3788b11" executionId="18abb3f8-b278-402b-bbfd-a7e9164a5ee2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="72cb5f25-459f-023e-57d9-b85c03373f0c" executionId="3dcd5d14-7230-41af-8bbb-3866f49fde19" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="248895d2-3a09-1b10-c03f-8291ea4104cf" executionId="c9830435-613a-43bd-b768-4bb4bc3d62ba" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4841d809-33f7-6db3-a479-6743f5bd22c0" executionId="a6ed10d1-2a16-4a94-bf43-60feeccc9e68" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="75537422-49a5-7d05-644a-e0c34d4d539d" executionId="bc068559-3e25-40c4-b6d5-454bdbb2fd09" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="efba01a6-0a8f-6f65-c7eb-beead7f32a0d" executionId="5611f6b7-f188-4540-b97d-3b8b9cba4963" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8604d75b-2836-b5a4-5c1e-c2af2d33d478" executionId="c5c29b85-085e-471d-9784-a5f74e16e701" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="488bf801-1f86-2a87-1041-4896348a30a8" executionId="b64fc715-e337-489f-8eff-02ddc585dcea" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="06c37492-b577-7a60-e29c-febb8a0a66b1" executionId="4660e1ea-3dab-4c81-b455-a2693c05414e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9b688157-587a-4e1e-e069-f180b10839dc" executionId="fae9be11-45ab-446e-8364-1ab582728515" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="db1d9063-3e58-6537-049a-38ac69857568" executionId="fb7519fd-4905-476a-b649-2288c306c493" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6cbcb30e-eda0-03a2-bd01-09a18f5dc94e" executionId="efcfdec1-a7bc-42c2-a807-31f0b386d8fe" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ebd3997b-c1be-b3d2-21f4-1c305d7cef04" executionId="9037e139-b9c0-4cee-9d4c-cef3c78a8451" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4a880a0b-37ce-16d1-b8ad-42dc1c78a588" executionId="17b38b5c-b16b-473b-b7ea-e40906d6e362" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="88339057-b604-f2fb-c819-a1e4a23ebc67" executionId="2080a9fc-15c0-4833-9c77-edfde7b5b66c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8ee8a295-0963-6fbb-6c8f-6566e18a5fe3" executionId="26f74892-de3e-4624-8e09-ceb943d3a35b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4f48c4e5-96d7-0dcf-0566-6586a41c5de2" executionId="83832672-84c4-4e2c-b680-3b582507751d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3fe30c0b-4cc3-18c4-2d7f-b8bcdfbd869d" executionId="43598b7c-ce05-422b-9a84-5126b6bcb1d4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="42540635-f6f5-fbf8-fe67-e4abad8dcab3" executionId="8171eb59-1e90-44dd-8d30-18a83e7cfd8e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="29" executed="29" passed="29" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.01] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:01.58]   Discovering: Cerneala.Tetris.Tests&#xD;
+[xUnit.net 00:00:01.64]   Discovered:  Cerneala.Tetris.Tests&#xD;
+[xUnit.net 00:00:01.64]   Starting:    Cerneala.Tetris.Tests&#xD;
+[xUnit.net 00:00:03.33]   Finished:    Cerneala.Tetris.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

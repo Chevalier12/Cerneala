@@ -1,0 +1,16 @@
+  Determining projects to restore...
+  Restored C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\Cerneala.Playground.csproj (in 413 ms).
+  6 of 7 projects are up-to-date for restore.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Debug\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Debug\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Debug\net8.0\Cerneala.dll
+  Cerneala.Scene2D.Importers -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\bin\Debug\net8.0\Cerneala.Scene2D.Importers.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Debug\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Debug\net8.0\Cerneala.Backends.SdlGpu.dll
+  Cerneala.Playground -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\bin\Debug\net8.0-windows\Cerneala.Playground.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:05.80

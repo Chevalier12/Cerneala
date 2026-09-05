@@ -33,7 +33,7 @@ internal sealed class ServoActionEngine
             throw new ServoTargetNotActionableException("The Servo target is disabled.");
         }
 
-        LayoutRect bounds = element.ArrangedBounds;
+        LayoutRect bounds = InputCoordinateConverter.GetRootBounds(element);
         if (!HasUsableBounds(bounds))
         {
             throw new ServoTargetNotActionableException("The Servo target has no usable arranged bounds.");
@@ -42,7 +42,7 @@ internal sealed class ServoActionEngine
         float x = bounds.X + (bounds.Width / 2);
         float y = bounds.Y + (bounds.Height / 2);
         HitTestResult? hit = root.InputCache.HitTest(root, x, y);
-        if (hit is null || !IsSelfOrDescendant(hit.Element, element))
+        if (hit is null || !root.InputCache.EnsureCurrent(root).GetRouteToRoot(hit.Element).Contains(element))
         {
             throw new ServoTargetNotActionableException(
                 "The Servo target center is not hit-testable in the current tree.");
@@ -61,18 +61,6 @@ internal sealed class ServoActionEngine
             bounds.Height > 0;
     }
 
-    private static bool IsSelfOrDescendant(UIElement candidate, UIElement target)
-    {
-        for (UIElement? current = candidate; current is not null; current = current.VisualParent)
-        {
-            if (ReferenceEquals(current, target))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
 }
 
 internal readonly record struct ServoActionTarget(UIElement Element, float X, float Y);

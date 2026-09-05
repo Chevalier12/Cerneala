@@ -129,7 +129,7 @@ internal sealed class KeyboardActivationController
 
     private static UIElement? FindValidAncestor<TContract>(UIElement element, ElementInputRouteMap routeMap)
     {
-        for (UIElement? current = element; current is not null; current = current.VisualParent)
+        foreach (UIElement current in routeMap.GetRouteToRoot(element))
         {
             if (current is TContract && IsValidInputElement(current, routeMap))
             {

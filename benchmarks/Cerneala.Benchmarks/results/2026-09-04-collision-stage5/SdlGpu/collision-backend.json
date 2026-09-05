@@ -1,0 +1,11 @@
+{
+  "Backend": "SDL_GPU",
+  "Width": 800,
+  "Height": 500,
+  "DistinctClosedColors": 460,
+  "ChangedPixels": 8775,
+  "ClosedSha256": "C18F860224ACC3E2C6433956D1A2654DE47462A7094632CFB072623118D49BE0",
+  "OpenSha256": "7159B46029FB7FE3C6FA7F88A94B85BC61723AADA99585688A56B1F7F0FBDF8F",
+  "CollisionContract": "PASS",
+  "CoordinateRoundTrip": "PASS"
+}

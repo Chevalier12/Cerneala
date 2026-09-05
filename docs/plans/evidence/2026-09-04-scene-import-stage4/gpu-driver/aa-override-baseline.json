@@ -1,0 +1,21 @@
+{
+  "Executable": "C:\\Users\\lauri\\Desktop\\Cerneala\\tests\\CodexGpuDriverHarness\\bin\\Debug\\net8.0-windows\\CodexGpuDriverHarness.exe",
+  "TimestampUtc": "2026-09-05T07:52:18.8208681+00:00",
+  "Cases": [
+    {
+      "Content": 0,
+      "Passed": true,
+      "Error": null
+    },
+    {
+      "Content": 1,
+      "Passed": false,
+      "Error": "Xunit.Sdk.TrueException: A fully occluded stroke changed the output by 47/255 (interleaved content: 1).\r\n   at Xunit.Assert.True(Nullable\u00601 condition, String userMessage) in /_/src/xunit.assert/Asserts/BooleanAsserts.cs:line 146\r\n   at Xunit.Assert.True(Boolean condition, String userMessage) in /_/src/xunit.assert/Asserts/BooleanAsserts.cs:line 128\r\n   at Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(Int32 content) in C:\\Users\\lauri\\Desktop\\Cerneala\\tests\\Cerneala.Tests\\Drawing\\MonoGame\\AlphaBlendRenderingTests.cs:line 35\r\n   at Program.\u003CMain\u003E$(String[] args) in C:\\Users\\lauri\\Desktop\\Cerneala\\tests\\CodexGpuDriverHarness\\Program.cs:line 11"
+    },
+    {
+      "Content": 2,
+      "Passed": false,
+      "Error": "Xunit.Sdk.TrueException: A fully occluded stroke changed the output by 25/255 (interleaved content: 2).\r\n   at Xunit.Assert.True(Nullable\u00601 condition, String userMessage) in /_/src/xunit.assert/Asserts/BooleanAsserts.cs:line 146\r\n   at Xunit.Assert.True(Boolean condition, String userMessage) in /_/src/xunit.assert/Asserts/BooleanAsserts.cs:line 128\r\n   at Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(Int32 content) in C:\\Users\\lauri\\Desktop\\Cerneala\\tests\\Cerneala.Tests\\Drawing\\MonoGame\\AlphaBlendRenderingTests.cs:line 35\r\n   at Program.\u003CMain\u003E$(String[] args) in C:\\Users\\lauri\\Desktop\\Cerneala\\tests\\CodexGpuDriverHarness\\Program.cs:line 11"
+    }
+  ]
+}

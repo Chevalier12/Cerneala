@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="20575749-1ebf-43e6-91b4-35cf419a4e74" name="lauri@DESKTOP-JT43V3D 2026-09-05 15:26:51" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T15:26:51.5300553+03:00" queuing="2026-09-05T15:26:51.5300557+03:00" start="2026-09-05T15:26:46.2206030+03:00" finish="2026-09-05T15:26:52.6445383+03:00" />
+  <TestSettings name="default" id="36f95a9e-88bb-4d51-ba81-83e4b9922410">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_15_26_51" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="ae6a40b9-2bb5-4c2e-b1e0-b00a8519e9c3" testId="16d99ca7-2c1d-1a94-256e-7ca788608339" testName="Cerneala.Tests.Language.SemanticScopesTests.InlineAspectRejectsRedundantWrapperWithSharedDiagnostic(body: &quot;&lt;Aspect /&gt;&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.3863628" startTime="2026-09-05T15:26:52.3426488+03:00" endTime="2026-09-05T15:26:52.3426490+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ae6a40b9-2bb5-4c2e-b1e0-b00a8519e9c3">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Single() Failure: The collection was empty</Message>
+          <StackTrace>   at Cerneala.Tests.Language.SemanticScopesTests.InlineAspectRejectsRedundantWrapperWithSharedDiagnostic(String body) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\SemanticScopesTests.cs:line 271&#xD;
+   at InvokeStub_SemanticScopesTests.InlineAspectRejectsRedundantWrapperWithSharedDiagnostic(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="bd9638f9-6082-4581-a822-a4dea152ba9d" testId="1ced0ae6-5cd0-ae5e-464d-9a82ed503d78" testName="Cerneala.Tests.Language.SemanticScopesTests.InlineAspectRejectsRedundantWrapperWithSharedDiagnostic(body: &quot;&lt;!-- legacy wrapper --&gt; &lt;Aspect&gt;@default { Opacity&quot;···)" computerName="DESKTOP-JT43V3D" duration="00:00:00.4723523" startTime="2026-09-05T15:26:51.9564593+03:00" endTime="2026-09-05T15:26:51.9564596+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bd9638f9-6082-4581-a822-a4dea152ba9d">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Single() Failure: The collection was empty</Message>
+          <StackTrace>   at Cerneala.Tests.Language.SemanticScopesTests.InlineAspectRejectsRedundantWrapperWithSharedDiagnostic(String body) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\SemanticScopesTests.cs:line 271&#xD;
+   at InvokeStub_SemanticScopesTests.InlineAspectRejectsRedundantWrapperWithSharedDiagnostic(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="7ad23559-625e-441c-9088-35bb7edb3a9c" testId="5213a066-95e4-2f27-ed27-ceb4c9c0bb93" testName="Cerneala.Tests.Language.SemanticScopesTests.DirectInlineAspectBindsDefaultsConditionsMotionAndTemplateDeclaration" computerName="DESKTOP-JT43V3D" duration="00:00:00.2105144" startTime="2026-09-05T15:26:52.5534391+03:00" endTime="2026-09-05T15:26:52.5534396+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7ad23559-625e-441c-9088-35bb7edb3a9c" />
+    <UnitTestResult executionId="5a9547b2-688f-4f67-89a5-d8b2deefa5ec" testId="e97af087-b118-0e69-9bf4-55ef1eec023d" testName="Cerneala.Tests.Language.SemanticScopesTests.InlineAspectRejectsRedundantWrapperWithSharedDiagnostic(body: &quot;&lt;Aspect&gt;@default { Opacity = 0.5; }&lt;/Aspect&gt;&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:03.2800102" startTime="2026-09-05T15:26:51.4904730+03:00" endTime="2026-09-05T15:26:51.4904951+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5a9547b2-688f-4f67-89a5-d8b2deefa5ec">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Single() Failure: The collection was empty</Message>
+          <StackTrace>   at Cerneala.Tests.Language.SemanticScopesTests.InlineAspectRejectsRedundantWrapperWithSharedDiagnostic(String body) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\SemanticScopesTests.cs:line 271&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Language.SemanticScopesTests.InlineAspectRejectsRedundantWrapperWithSharedDiagnostic(body: &quot;&lt;Aspect&gt;@default { Opacity = 0.5; }&lt;/Aspect&gt;&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\debug\net8.0-windows\cerneala.tests.language.dll" id="e97af087-b118-0e69-9bf4-55ef1eec023d">
+      <Execution id="5a9547b2-688f-4f67-89a5-d8b2deefa5ec" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Debug\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.SemanticScopesTests" name="InlineAspectRejectsRedundantWrapperWithSharedDiagnostic" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.SemanticScopesTests.InlineAspectRejectsRedundantWrapperWithSharedDiagnostic(body: &quot;&lt;!-- legacy wrapper --&gt; &lt;Aspect&gt;@default { Opacity&quot;···)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\debug\net8.0-windows\cerneala.tests.language.dll" id="1ced0ae6-5cd0-ae5e-464d-9a82ed503d78">
+      <Execution id="bd9638f9-6082-4581-a822-a4dea152ba9d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Debug\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.SemanticScopesTests" name="InlineAspectRejectsRedundantWrapperWithSharedDiagnostic" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.SemanticScopesTests.DirectInlineAspectBindsDefaultsConditionsMotionAndTemplateDeclaration" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\debug\net8.0-windows\cerneala.tests.language.dll" id="5213a066-95e4-2f27-ed27-ceb4c9c0bb93">
+      <Execution id="7ad23559-625e-441c-9088-35bb7edb3a9c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Debug\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.SemanticScopesTests" name="DirectInlineAspectBindsDefaultsConditionsMotionAndTemplateDeclaration" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.SemanticScopesTests.InlineAspectRejectsRedundantWrapperWithSharedDiagnostic(body: &quot;&lt;Aspect /&gt;&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\debug\net8.0-windows\cerneala.tests.language.dll" id="16d99ca7-2c1d-1a94-256e-7ca788608339">
+      <Execution id="ae6a40b9-2bb5-4c2e-b1e0-b00a8519e9c3" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Debug\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.SemanticScopesTests" name="InlineAspectRejectsRedundantWrapperWithSharedDiagnostic" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="16d99ca7-2c1d-1a94-256e-7ca788608339" executionId="ae6a40b9-2bb5-4c2e-b1e0-b00a8519e9c3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1ced0ae6-5cd0-ae5e-464d-9a82ed503d78" executionId="bd9638f9-6082-4581-a822-a4dea152ba9d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5213a066-95e4-2f27-ed27-ceb4c9c0bb93" executionId="7ad23559-625e-441c-9088-35bb7edb3a9c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e97af087-b118-0e69-9bf4-55ef1eec023d" executionId="5a9547b2-688f-4f67-89a5-d8b2deefa5ec" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="4" executed="4" passed="1" failed="3" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.62]   Discovering: Cerneala.Tests.Language&#xD;
+[xUnit.net 00:00:00.74]   Discovered:  Cerneala.Tests.Language&#xD;
+[xUnit.net 00:00:00.75]   Starting:    Cerneala.Tests.Language&#xD;
+[xUnit.net 00:00:04.08]       Assert.Single() Failure: The collection was empty&#xD;
+[xUnit.net 00:00:04.09]       Stack Trace:&#xD;
+[xUnit.net 00:00:04.09]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\SemanticScopesTests.cs(271,0): at Cerneala.Tests.Language.SemanticScopesTests.InlineAspectRejectsRedundantWrapperWithSharedDiagnostic(String body)&#xD;
+[xUnit.net 00:00:04.09]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:04.09]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:04.55]       Assert.Single() Failure: The collection was empty&#xD;
+[xUnit.net 00:00:04.55]       Stack Trace:&#xD;
+[xUnit.net 00:00:04.55]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\SemanticScopesTests.cs(271,0): at Cerneala.Tests.Language.SemanticScopesTests.InlineAspectRejectsRedundantWrapperWithSharedDiagnostic(String body)&#xD;
+[xUnit.net 00:00:04.55]            at InvokeStub_SemanticScopesTests.InlineAspectRejectsRedundantWrapperWithSharedDiagnostic(Object, Span`1)&#xD;
+[xUnit.net 00:00:04.55]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:04.94]       Assert.Single() Failure: The collection was empty&#xD;
+[xUnit.net 00:00:04.94]       Stack Trace:&#xD;
+[xUnit.net 00:00:04.94]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\SemanticScopesTests.cs(271,0): at Cerneala.Tests.Language.SemanticScopesTests.InlineAspectRejectsRedundantWrapperWithSharedDiagnostic(String body)&#xD;
+[xUnit.net 00:00:04.94]            at InvokeStub_SemanticScopesTests.InlineAspectRejectsRedundantWrapperWithSharedDiagnostic(Object, Span`1)&#xD;
+[xUnit.net 00:00:04.94]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:05.16]   Finished:    Cerneala.Tests.Language&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T15:26:51.4862600+03:00">
+        <Text>[xUnit.net 00:00:04.08]     Cerneala.Tests.Language.SemanticScopesTests.InlineAspectRejectsRedundantWrapperWithSharedDiagnostic(body: "&lt;Aspect&gt;@default { Opacity = 0.5; }&lt;/Aspect&gt;") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T15:26:51.9556408+03:00">
+        <Text>[xUnit.net 00:00:04.55]     Cerneala.Tests.Language.SemanticScopesTests.InlineAspectRejectsRedundantWrapperWithSharedDiagnostic(body: "&lt;!-- legacy wrapper --&gt; &lt;Aspect&gt;@default { Opacity"···) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T15:26:52.3420977+03:00">
+        <Text>[xUnit.net 00:00:04.94]     Cerneala.Tests.Language.SemanticScopesTests.InlineAspectRejectsRedundantWrapperWithSharedDiagnostic(body: "&lt;Aspect /&gt;") [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

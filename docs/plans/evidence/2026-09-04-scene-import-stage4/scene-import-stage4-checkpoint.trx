@@ -1,0 +1,154 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="70a923fc-f6e5-47a6-9658-0ca43c7f6f48" name="lauri@DESKTOP-JT43V3D 2026-09-05 06:09:39" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T06:09:39.5323922+03:00" queuing="2026-09-05T06:09:39.5323925+03:00" start="2026-09-05T06:09:37.5210242+03:00" finish="2026-09-05T06:09:41.9021443+03:00" />
+  <TestSettings name="default" id="570553fb-4521-49cb-831f-265efcf4e0b3">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_06_09_39" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="785b4c20-1312-4d4e-a9f2-b8798002ace7" testId="bd3dcadf-c856-062e-2047-1ba20d2ec83a" testName="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 2)" computerName="DESKTOP-JT43V3D" duration="00:00:00.8734925" startTime="2026-09-05T06:09:40.6645064+03:00" endTime="2026-09-05T06:09:40.6645066+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="785b4c20-1312-4d4e-a9f2-b8798002ace7">
+      <Output>
+        <ErrorInfo>
+          <Message>A fully occluded stroke changed the output by 25/255 (interleaved content: 2).</Message>
+          <StackTrace>   at Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(Int32 content) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Drawing\MonoGame\AlphaBlendRenderingTests.cs:line 35&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="799d7c7e-4795-44bf-9f45-284b23df92ab" testId="dccfc703-99ea-ceff-781f-b9d85a5a4515" testName="Cerneala.Tests.Controls.SceneDebugOverlayTests.EveryFlagEmitsOnlyItsOwnCategory(flag: TileIds)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0004876" startTime="2026-09-05T06:09:39.3899633+03:00" endTime="2026-09-05T06:09:39.3899636+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="799d7c7e-4795-44bf-9f45-284b23df92ab" />
+    <UnitTestResult executionId="90b1d85b-09ca-4bd1-9faf-8ffe8de66c25" testId="9e29f659-f3cb-ca99-89b2-1e04f2981181" testName="Cerneala.Tests.Controls.SceneDebugOverlayTests.EveryFlagEmitsOnlyItsOwnCategory(flag: PromotedTiles)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0466268" startTime="2026-09-05T06:09:39.3783828+03:00" endTime="2026-09-05T06:09:39.3783831+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="90b1d85b-09ca-4bd1-9faf-8ffe8de66c25" />
+    <UnitTestResult executionId="a0cdea8c-442d-41a9-9e23-060e025a0178" testId="0e360ac9-9662-3c7e-09e0-d58afa01a551" testName="Cerneala.Tests.Controls.SceneDebugOverlayTests.EveryFlagEmitsOnlyItsOwnCategory(flag: Navigation)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0012613" startTime="2026-09-05T06:09:39.3799768+03:00" endTime="2026-09-05T06:09:39.3799770+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a0cdea8c-442d-41a9-9e23-060e025a0178" />
+    <UnitTestResult executionId="945d9e92-d1f4-4d36-9309-d7fb410f163f" testId="09aab2c7-90d8-c69e-b836-57b188621495" testName="Cerneala.Tests.Controls.SceneDebugOverlayTests.EveryFlagEmitsOnlyItsOwnCategory(flag: TileCoordinates)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0004894" startTime="2026-09-05T06:09:39.3806141+03:00" endTime="2026-09-05T06:09:39.3806145+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="945d9e92-d1f4-4d36-9309-d7fb410f163f" />
+    <UnitTestResult executionId="163ae329-ec67-4497-b06a-0c5b9621a8db" testId="e5783f21-51c3-0dff-eb56-9a4510a3c846" testName="Cerneala.Tests.Controls.SceneDebugOverlayTests.OverlayUsesPostPassAndNeverChangesGameplayOrderOrBounds" computerName="DESKTOP-JT43V3D" duration="00:00:00.0157715" startTime="2026-09-05T06:09:39.4687054+03:00" endTime="2026-09-05T06:09:39.4687056+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="163ae329-ec67-4497-b06a-0c5b9621a8db" />
+    <UnitTestResult executionId="225da2dd-0cc6-4df9-b76e-e5ef6ef60404" testId="965b71d3-4e8b-e5e8-73f3-f3255f8f83e2" testName="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 0)" computerName="DESKTOP-JT43V3D" duration="00:00:00.5001753" startTime="2026-09-05T06:09:41.1650275+03:00" endTime="2026-09-05T06:09:41.1650278+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="225da2dd-0cc6-4df9-b76e-e5ef6ef60404" />
+    <UnitTestResult executionId="54ada73d-f3db-4af0-94f5-c05f1d3702fd" testId="51574d07-e251-0d0e-6208-b058a051f085" testName="Cerneala.Tests.Controls.SceneDebugOverlayTests.EveryFlagEmitsOnlyItsOwnCategory(flag: Order)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0003159" startTime="2026-09-05T06:09:39.3903912+03:00" endTime="2026-09-05T06:09:39.3903913+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="54ada73d-f3db-4af0-94f5-c05f1d3702fd" />
+    <UnitTestResult executionId="e9f2a700-aa73-42b8-b5e5-b2580156ebdb" testId="d5ec48f4-751e-5e51-4624-c0b5407de7f2" testName="Cerneala.Tests.Controls.SceneDebugOverlayTests.DisabledOverlayRecordHasNoCommandsOrAllocationsAfterWarmup" computerName="DESKTOP-JT43V3D" duration="00:00:00.0035842" startTime="2026-09-05T06:09:39.7737123+03:00" endTime="2026-09-05T06:09:39.7737125+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e9f2a700-aa73-42b8-b5e5-b2580156ebdb" />
+    <UnitTestResult executionId="2d6a13c0-f584-4e03-9a90-e1b408f42cf1" testId="a32a3ccd-85cb-04b9-0541-dfcc03da58ec" testName="Cerneala.Tests.Controls.SceneDebugOverlayTests.DebugOutlinesUseExplicitCenteredVectorStrokesWithoutIdentityOpacityLayers" computerName="DESKTOP-JT43V3D" duration="00:00:00.0054821" startTime="2026-09-05T06:09:39.5025927+03:00" endTime="2026-09-05T06:09:39.5025930+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2d6a13c0-f584-4e03-9a90-e1b408f42cf1" />
+    <UnitTestResult executionId="bcf668b3-f69a-4348-a70c-30127c14f384" testId="f47c8e65-55f4-b549-05de-86484bc18729" testName="Cerneala.Tests.Controls.SceneDebugOverlayTests.EveryFlagEmitsOnlyItsOwnCategory(flag: Colliders)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0084971" startTime="2026-09-05T06:09:39.3892864+03:00" endTime="2026-09-05T06:09:39.3892870+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bcf668b3-f69a-4348-a70c-30127c14f384" />
+    <UnitTestResult executionId="99feb1cb-4643-4416-a1a6-c563b2e1b786" testId="37fbc935-a49b-499e-5d72-fb088736243e" testName="Cerneala.Tests.Controls.SceneDebugOverlayTests.SparseMapAndExternalGridQueriesStayViewportBounded" computerName="DESKTOP-JT43V3D" duration="00:00:00.0620258" startTime="2026-09-05T06:09:39.4527945+03:00" endTime="2026-09-05T06:09:39.4527948+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="99feb1cb-4643-4416-a1a6-c563b2e1b786" />
+    <UnitTestResult executionId="eacd3e06-8f56-4a07-bf9a-05bd0da7c0e8" testId="2a14f0ef-753a-44fd-5fc9-c166acf0084b" testName="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 1)" computerName="DESKTOP-JT43V3D" duration="00:00:00.6185676" startTime="2026-09-05T06:09:41.7851352+03:00" endTime="2026-09-05T06:09:41.7851354+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="eacd3e06-8f56-4a07-bf9a-05bd0da7c0e8">
+      <Output>
+        <ErrorInfo>
+          <Message>A fully occluded stroke changed the output by 47/255 (interleaved content: 1).</Message>
+          <StackTrace>   at Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(Int32 content) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Drawing\MonoGame\AlphaBlendRenderingTests.cs:line 35&#xD;
+   at InvokeStub_AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="de0a77ad-76c0-4808-ab2f-84083f0a8162" testId="24579f9c-e984-2a44-4da4-28fb42bca73d" testName="Cerneala.Tests.Controls.SceneDebugOverlayTests.AspectMotionAndPrismChangeOnlyDebugPresentation" computerName="DESKTOP-JT43V3D" duration="00:00:00.2671458" startTime="2026-09-05T06:09:39.7699755+03:00" endTime="2026-09-05T06:09:39.7699759+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="de0a77ad-76c0-4808-ab2f-84083f0a8162" />
+    <UnitTestResult executionId="83d80d80-f0ed-454e-8e19-34c27c45e24e" testId="4468c1f3-8b11-f818-13ef-75b10d694650" testName="Cerneala.Tests.Controls.SceneDebugOverlayTests.EveryFlagEmitsOnlyItsOwnCategory(flag: ChunkBounds)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1769528" startTime="2026-09-05T06:09:39.3289175+03:00" endTime="2026-09-05T06:09:39.3289356+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="83d80d80-f0ed-454e-8e19-34c27c45e24e" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Controls.SceneDebugOverlayTests.EveryFlagEmitsOnlyItsOwnCategory(flag: Order)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="51574d07-e251-0d0e-6208-b058a051f085">
+      <Execution id="54ada73d-f3db-4af0-94f5-c05f1d3702fd" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneDebugOverlayTests" name="EveryFlagEmitsOnlyItsOwnCategory" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneDebugOverlayTests.DebugOutlinesUseExplicitCenteredVectorStrokesWithoutIdentityOpacityLayers" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="a32a3ccd-85cb-04b9-0541-dfcc03da58ec">
+      <Execution id="2d6a13c0-f584-4e03-9a90-e1b408f42cf1" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneDebugOverlayTests" name="DebugOutlinesUseExplicitCenteredVectorStrokesWithoutIdentityOpacityLayers" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneDebugOverlayTests.EveryFlagEmitsOnlyItsOwnCategory(flag: Navigation)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="0e360ac9-9662-3c7e-09e0-d58afa01a551">
+      <Execution id="a0cdea8c-442d-41a9-9e23-060e025a0178" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneDebugOverlayTests" name="EveryFlagEmitsOnlyItsOwnCategory" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 0)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="965b71d3-4e8b-e5e8-73f3-f3255f8f83e2">
+      <Execution id="225da2dd-0cc6-4df9-b76e-e5ef6ef60404" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests" name="OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 2)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="bd3dcadf-c856-062e-2047-1ba20d2ec83a">
+      <Execution id="785b4c20-1312-4d4e-a9f2-b8798002ace7" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests" name="OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneDebugOverlayTests.OverlayUsesPostPassAndNeverChangesGameplayOrderOrBounds" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="e5783f21-51c3-0dff-eb56-9a4510a3c846">
+      <Execution id="163ae329-ec67-4497-b06a-0c5b9621a8db" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneDebugOverlayTests" name="OverlayUsesPostPassAndNeverChangesGameplayOrderOrBounds" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneDebugOverlayTests.EveryFlagEmitsOnlyItsOwnCategory(flag: TileCoordinates)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="09aab2c7-90d8-c69e-b836-57b188621495">
+      <Execution id="945d9e92-d1f4-4d36-9309-d7fb410f163f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneDebugOverlayTests" name="EveryFlagEmitsOnlyItsOwnCategory" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneDebugOverlayTests.EveryFlagEmitsOnlyItsOwnCategory(flag: TileIds)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="dccfc703-99ea-ceff-781f-b9d85a5a4515">
+      <Execution id="799d7c7e-4795-44bf-9f45-284b23df92ab" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneDebugOverlayTests" name="EveryFlagEmitsOnlyItsOwnCategory" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneDebugOverlayTests.SparseMapAndExternalGridQueriesStayViewportBounded" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="37fbc935-a49b-499e-5d72-fb088736243e">
+      <Execution id="99feb1cb-4643-4416-a1a6-c563b2e1b786" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneDebugOverlayTests" name="SparseMapAndExternalGridQueriesStayViewportBounded" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneDebugOverlayTests.EveryFlagEmitsOnlyItsOwnCategory(flag: Colliders)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="f47c8e65-55f4-b549-05de-86484bc18729">
+      <Execution id="bcf668b3-f69a-4348-a70c-30127c14f384" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneDebugOverlayTests" name="EveryFlagEmitsOnlyItsOwnCategory" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 1)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="2a14f0ef-753a-44fd-5fc9-c166acf0084b">
+      <Execution id="eacd3e06-8f56-4a07-bf9a-05bd0da7c0e8" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests" name="OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneDebugOverlayTests.AspectMotionAndPrismChangeOnlyDebugPresentation" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="24579f9c-e984-2a44-4da4-28fb42bca73d">
+      <Execution id="de0a77ad-76c0-4808-ab2f-84083f0a8162" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneDebugOverlayTests" name="AspectMotionAndPrismChangeOnlyDebugPresentation" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneDebugOverlayTests.DisabledOverlayRecordHasNoCommandsOrAllocationsAfterWarmup" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="d5ec48f4-751e-5e51-4624-c0b5407de7f2">
+      <Execution id="e9f2a700-aa73-42b8-b5e5-b2580156ebdb" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneDebugOverlayTests" name="DisabledOverlayRecordHasNoCommandsOrAllocationsAfterWarmup" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneDebugOverlayTests.EveryFlagEmitsOnlyItsOwnCategory(flag: PromotedTiles)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="9e29f659-f3cb-ca99-89b2-1e04f2981181">
+      <Execution id="90b1d85b-09ca-4bd1-9faf-8ffe8de66c25" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneDebugOverlayTests" name="EveryFlagEmitsOnlyItsOwnCategory" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneDebugOverlayTests.EveryFlagEmitsOnlyItsOwnCategory(flag: ChunkBounds)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="4468c1f3-8b11-f818-13ef-75b10d694650">
+      <Execution id="83d80d80-f0ed-454e-8e19-34c27c45e24e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneDebugOverlayTests" name="EveryFlagEmitsOnlyItsOwnCategory" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="bd3dcadf-c856-062e-2047-1ba20d2ec83a" executionId="785b4c20-1312-4d4e-a9f2-b8798002ace7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="dccfc703-99ea-ceff-781f-b9d85a5a4515" executionId="799d7c7e-4795-44bf-9f45-284b23df92ab" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9e29f659-f3cb-ca99-89b2-1e04f2981181" executionId="90b1d85b-09ca-4bd1-9faf-8ffe8de66c25" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0e360ac9-9662-3c7e-09e0-d58afa01a551" executionId="a0cdea8c-442d-41a9-9e23-060e025a0178" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="09aab2c7-90d8-c69e-b836-57b188621495" executionId="945d9e92-d1f4-4d36-9309-d7fb410f163f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e5783f21-51c3-0dff-eb56-9a4510a3c846" executionId="163ae329-ec67-4497-b06a-0c5b9621a8db" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="965b71d3-4e8b-e5e8-73f3-f3255f8f83e2" executionId="225da2dd-0cc6-4df9-b76e-e5ef6ef60404" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="51574d07-e251-0d0e-6208-b058a051f085" executionId="54ada73d-f3db-4af0-94f5-c05f1d3702fd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d5ec48f4-751e-5e51-4624-c0b5407de7f2" executionId="e9f2a700-aa73-42b8-b5e5-b2580156ebdb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a32a3ccd-85cb-04b9-0541-dfcc03da58ec" executionId="2d6a13c0-f584-4e03-9a90-e1b408f42cf1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f47c8e65-55f4-b549-05de-86484bc18729" executionId="bcf668b3-f69a-4348-a70c-30127c14f384" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="37fbc935-a49b-499e-5d72-fb088736243e" executionId="99feb1cb-4643-4416-a1a6-c563b2e1b786" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2a14f0ef-753a-44fd-5fc9-c166acf0084b" executionId="eacd3e06-8f56-4a07-bf9a-05bd0da7c0e8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="24579f9c-e984-2a44-4da4-28fb42bca73d" executionId="de0a77ad-76c0-4808-ab2f-84083f0a8162" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4468c1f3-8b11-f818-13ef-75b10d694650" executionId="83d80d80-f0ed-454e-8e19-34c27c45e24e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="15" executed="15" passed="13" failed="2" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.19]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.68]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.69]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:02.24]       A fully occluded stroke changed the output by 25/255 (interleaved content: 2).&#xD;
+[xUnit.net 00:00:02.24]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.24]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Drawing\MonoGame\AlphaBlendRenderingTests.cs(35,0): at Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(Int32 content)&#xD;
+[xUnit.net 00:00:02.24]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.24]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:03.36]       A fully occluded stroke changed the output by 47/255 (interleaved content: 1).&#xD;
+[xUnit.net 00:00:03.36]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.36]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Drawing\MonoGame\AlphaBlendRenderingTests.cs(35,0): at Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(Int32 content)&#xD;
+[xUnit.net 00:00:03.36]            at InvokeStub_AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(Object, Span`1)&#xD;
+[xUnit.net 00:00:03.36]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:03.36]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T06:09:40.6612213+03:00">
+        <Text>[xUnit.net 00:00:02.24]     Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 2) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T06:09:41.7852571+03:00">
+        <Text>[xUnit.net 00:00:03.36]     Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 1) [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

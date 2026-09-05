@@ -1,0 +1,33 @@
+{
+  "success": true,
+  "exitCode": 0,
+  "data": {
+    "repoRoot": "C:\\Users\\lauri\\Desktop\\Cerneala",
+    "documents": 4093,
+    "symbols": 102888,
+    "references": 421692,
+    "tokens": 6671466,
+    "warnings": 12,
+    "duration": "00:00:35.9629820",
+    "fullRebuild": false,
+    "incremental": true,
+    "dirtyDocuments": 25,
+    "deletedDocuments": 0,
+    "unchangedDocuments": 4068,
+    "timings": {
+      "discoveryMs": 4798,
+      "workspaceLoadMs": 11669,
+      "semanticIndexMs": 3930,
+      "textIndexMs": 681,
+      "persistMs": 1102,
+      "totalMs": 27050
+    },
+    "totalMs": 27050
+  },
+  "warnings": [],
+  "errors": [],
+  "command": "index",
+  "repoRoot": "C:\\Users\\lauri\\Desktop\\Cerneala",
+  "elapsedMs": 36086,
+  "indexUpdatedUtc": "2026-09-05T12:35:10.690159+00:00"
+}

@@ -25,7 +25,10 @@ public sealed class CursorService
         ArgumentNullException.ThrowIfNull(root);
         ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
         HitTestResult? hit = hitTestService.HitTest(root, routeMap, x, y);
-        for (UIElement? current = hit?.Element; current is not null; current = current.VisualParent)
+        IReadOnlyList<UIElement> route = hit is null
+            ? []
+            : routeMap.GetRouteToRoot(hit.Element);
+        foreach (UIElement current in route)
         {
             if (cursors.TryGetValue(current, out CursorBox? box))
             {

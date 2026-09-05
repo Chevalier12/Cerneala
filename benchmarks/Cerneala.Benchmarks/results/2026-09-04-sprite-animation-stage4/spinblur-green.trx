@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="c660a3c0-6ada-4e76-a6a9-bd0bd3864f91" name="lauri@DESKTOP-JT43V3D 2026-09-05 00:24:41" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T00:24:41.4245956+03:00" queuing="2026-09-05T00:24:41.4245959+03:00" start="2026-09-05T00:24:02.9563158+03:00" finish="2026-09-05T00:24:42.3452520+03:00" />
+  <TestSettings name="default" id="d3c4650a-833a-4c82-8fa8-28d0ea5f4207">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_00_24_41" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="cf229353-9397-457c-be00-9a786ed21058" testId="fd93cb1d-3048-8b42-b488-3fdd0fe1087d" testName="Cerneala.Tests.Drawing.MonoGame.PrismSpinBlurGpuTests.PixelSpaceKernelReadsBaseLevelRegardlessOfMipAvailability(mipmapped: False)" computerName="DESKTOP-JT43V3D" duration="00:00:00.4314714" startTime="2026-09-05T00:24:41.8394275+03:00" endTime="2026-09-05T00:24:41.8394280+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cf229353-9397-457c-be00-9a786ed21058" />
+    <UnitTestResult executionId="174a0431-fe0f-46eb-aadb-0ee85cf8a31c" testId="6885fb90-4bca-d060-93ea-f4fbbbae8be6" testName="Cerneala.Tests.Drawing.MonoGame.PrismSpinBlurGpuTests.PixelSpaceKernelReadsBaseLevelRegardlessOfMipAvailability(mipmapped: True)" computerName="DESKTOP-JT43V3D" duration="00:00:00.4137681" startTime="2026-09-05T00:24:42.2542521+03:00" endTime="2026-09-05T00:24:42.2542525+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="174a0431-fe0f-46eb-aadb-0ee85cf8a31c" />
+    <UnitTestResult executionId="6196351c-e9af-4578-b4d4-c6b465330ba6" testId="bb448acc-5e56-c844-5208-916fe616d292" testName="Cerneala.Tests.Drawing.Prism.PrismSdlGpuPixelConformanceTests.EveryResourceFreeCatalogEntryMatchesWindowsDxPixelThresholds(symbol: &quot;SpinBlur&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:36.8652438" startTime="2026-09-05T00:24:41.3943295+03:00" endTime="2026-09-05T00:24:41.3943485+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6196351c-e9af-4578-b4d4-c6b465330ba6">
+      <Output>
+        <StdOut>SpinBlur: MAE=0.0011, P99=0, max=1</StdOut>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Drawing.MonoGame.PrismSpinBlurGpuTests.PixelSpaceKernelReadsBaseLevelRegardlessOfMipAvailability(mipmapped: True)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="6885fb90-4bca-d060-93ea-f4fbbbae8be6">
+      <Execution id="174a0431-fe0f-46eb-aadb-0ee85cf8a31c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Drawing.MonoGame.PrismSpinBlurGpuTests" name="PixelSpaceKernelReadsBaseLevelRegardlessOfMipAvailability" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Drawing.MonoGame.PrismSpinBlurGpuTests.PixelSpaceKernelReadsBaseLevelRegardlessOfMipAvailability(mipmapped: False)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="fd93cb1d-3048-8b42-b488-3fdd0fe1087d">
+      <Execution id="cf229353-9397-457c-be00-9a786ed21058" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Drawing.MonoGame.PrismSpinBlurGpuTests" name="PixelSpaceKernelReadsBaseLevelRegardlessOfMipAvailability" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Drawing.Prism.PrismSdlGpuPixelConformanceTests.EveryResourceFreeCatalogEntryMatchesWindowsDxPixelThresholds(symbol: &quot;SpinBlur&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="bb448acc-5e56-c844-5208-916fe616d292">
+      <Execution id="6196351c-e9af-4578-b4d4-c6b465330ba6" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Drawing.Prism.PrismSdlGpuPixelConformanceTests" name="EveryResourceFreeCatalogEntryMatchesWindowsDxPixelThresholds" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="fd93cb1d-3048-8b42-b488-3fdd0fe1087d" executionId="cf229353-9397-457c-be00-9a786ed21058" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6885fb90-4bca-d060-93ea-f4fbbbae8be6" executionId="174a0431-fe0f-46eb-aadb-0ee85cf8a31c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bb448acc-5e56-c844-5208-916fe616d292" executionId="6196351c-e9af-4578-b4d4-c6b465330ba6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="3" executed="3" passed="3" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.35]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.87]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.88]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:38.65]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="e2287638-ea6f-4038-a2c9-cebe3a5a42e1" name="lauri@DESKTOP-JT43V3D 2026-09-05 00:07:35" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T00:07:35.3527225+03:00" queuing="2026-09-05T00:07:35.3527228+03:00" start="2026-09-05T00:07:28.3381003+03:00" finish="2026-09-05T00:07:35.3579889+03:00" />
+  <TestSettings name="default" id="707775b8-6de2-464a-8c72-ad013ffb39e6">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_00_07_35" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="7f60494c-67b9-4bcd-8e06-ee9100b872a6" testId="bb448acc-5e56-c844-5208-916fe616d292" testName="Cerneala.Tests.Drawing.Prism.PrismSdlGpuPixelConformanceTests.EveryResourceFreeCatalogEntryMatchesWindowsDxPixelThresholds(symbol: &quot;SpinBlur&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:03.8820908" startTime="2026-09-05T00:07:35.2282552+03:00" endTime="2026-09-05T00:07:35.2282751+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7f60494c-67b9-4bcd-8e06-ee9100b872a6">
+      <Output>
+        <StdOut>SpinBlur: MAE=0.0000, P99=0, max=0</StdOut>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Drawing.Prism.PrismSdlGpuPixelConformanceTests.EveryResourceFreeCatalogEntryMatchesWindowsDxPixelThresholds(symbol: &quot;SpinBlur&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="bb448acc-5e56-c844-5208-916fe616d292">
+      <Execution id="7f60494c-67b9-4bcd-8e06-ee9100b872a6" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Drawing.Prism.PrismSdlGpuPixelConformanceTests" name="EveryResourceFreeCatalogEntryMatchesWindowsDxPixelThresholds" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="bb448acc-5e56-c844-5208-916fe616d292" executionId="7f60494c-67b9-4bcd-8e06-ee9100b872a6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="1" executed="1" passed="1" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.26]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.47]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.50]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:05.50]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

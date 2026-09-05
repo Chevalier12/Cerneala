@@ -1,6 +1,7 @@
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windowing;
+using Cerneala.UI.Input;
 
 namespace Cerneala.UI.Servo;
 
@@ -31,7 +32,7 @@ internal sealed class ServoCaptureEngine
 
         UiViewport viewport = new(root.ViewportWidth, root.ViewportHeight, root.Scale);
         if (!WindowScreenshotRegion.TryCreate(
-                element.ArrangedBounds,
+                InputCoordinateConverter.GetRootBounds(element),
                 viewport,
                 out WindowScreenshotRegion region))
         {

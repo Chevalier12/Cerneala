@@ -12,6 +12,21 @@ namespace Cerneala.Tests.SourceGen;
 
 public sealed partial class UiMarkupGeneratorTests
 {
+    [Theory]
+    [InlineData("<Aspect>@default { Opacity = 0.5; }</Aspect>")]
+    [InlineData("<Aspect />")]
+    public void InlineAspectRejectsRedundantWrapperWithoutEmittingSource(string body)
+    {
+        string markup = "<Button><Button.Aspect>" + body + "</Button.Aspect></Button>";
+        GeneratorRunResult result = RunGenerator("RedundantInlineAspect.crn", markup, out _);
+
+        Diagnostic diagnostic = Assert.Single(result.Diagnostics);
+        Assert.Equal("CERNEALAUI005", diagnostic.Id);
+        Assert.Contains("<Button.Aspect> already declares the inline Aspect", diagnostic.GetMessage(), StringComparison.Ordinal);
+        Assert.Equal("Aspect", markup.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length));
+        Assert.Empty(result.GeneratedSources);
+    }
+
     private static UIRoot AttachAndProcess(UIElement element, int frameCount = 2)
     {
         UIRoot root = new();
@@ -22,6 +37,35 @@ public sealed partial class UiMarkupGeneratorTests
         }
 
         return root;
+    }
+
+    [Fact]
+    public void DirectInlineAspectCompilesDefaultsConditionsMotionAndLiveTemplateOwnerBinding()
+    {
+        const string markup = """
+            <Button>
+              <Button.Aspect>
+                @default { Opacity = 0.5; }
+                @when IsMouseOver { Opacity = 0.8; }
+                @on Click { @animate with Tween(100ms) { @from { Opacity = 0.5; } @to { Opacity = 1; } } }
+                @template { <Border Name="Chrome" IsEnabled="$owner.IsEnabled:OneWay" /> }
+              </Button.Aspect>
+            </Button>
+            """;
+        GeneratorRunResult result = RunGenerator("DirectInlineAspect.crn", markup, out Compilation compilation);
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        Assert.Contains("AddMotionTrigger", SingleGeneratedSource(result), StringComparison.Ordinal);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+        Button button = Assert.IsType<Button>(InvokeCreate(stream, "Cerneala.GeneratedUi.DirectInlineAspectFactory"));
+        UIRoot root = AttachAndProcess(button);
+        Assert.Equal(0.5f, button.Opacity);
+        Border chrome = Assert.IsType<Border>(button.ComponentTemplateInstance!.Root);
+        Assert.True(chrome.IsEnabled);
+        button.IsEnabled = false;
+        root.ProcessFrame();
+        Assert.False(chrome.IsEnabled);
     }
 
     [Fact]

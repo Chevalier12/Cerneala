@@ -1,0 +1,94 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="ab4a5d9d-fb7d-4031-a91d-db8d60b05c84" name="lauri@DESKTOP-JT43V3D 2026-09-05 05:58:31" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T05:58:31.4034487+03:00" queuing="2026-09-05T05:58:31.4034493+03:00" start="2026-09-05T05:58:27.7608800+03:00" finish="2026-09-05T05:58:33.8087256+03:00" />
+  <TestSettings name="default" id="e7a8cb39-f317-4977-92e7-aef1115dba0b">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_05_58_31" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="e5fb7070-9d68-48e2-93cb-453e9d6af661" testId="889fa258-6f30-dce1-032e-2a4399a6e4b2" testName="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved(includeText: True, textAlpha: 255)" computerName="DESKTOP-JT43V3D" duration="00:00:00.5193956" startTime="2026-09-05T05:58:33.1431410+03:00" endTime="2026-09-05T05:58:33.1431413+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e5fb7070-9d68-48e2-93cb-453e9d6af661">
+      <Output>
+        <ErrorInfo>
+          <Message>A fully occluded stroke changed the output by 47/255 (interleaved text: True).  (30,26): {R:161 G:144 B:159 A:255}/{R:153 G:129 B:148 A:255} (31,26): {R:138 G:151 B:146 A:255}/{R:131 G:139 B:139 A:255} (30,27): {R:217 G:105 B:196 A:255}/{R:200 G:75 B:178 A:255} (33,27): {R:238 G:96 B:210 A:255}/{R:231 G:83 B:203 A:255} (34,27): {R:201 G:121 B:186 A:255}/{R:191 G:101 B:172 A:255} (35,27): {R:162 G:141 B:154 A:255}/{R:155 G:126 B:141 A:255} (36,27): {R:136 G:153 B:148 A:255}/{R:128 G:144 B:142 A:255} (48,30): {R:238 G:96 B:210 A:255}/{R:229 G:81 B:204 A:255} (49,30): {R:199 G:118 B:187 A:255}/{R:184 G:95 B:175 A:255} (50,30): {R:164 G:144 B:159 A:255}/{R:157 G:131 B:149 A:255} (51,30): {R:145 G:154 B:140 A:255}/{R:141 G:144 B:131 A:255} (48,31): {R:131 G:91 B:131 A:255}/{R:104 G:44 B:104 A:255} (49,31): {R:193 G:107 B:179 A:255}/{R:168 G:65 B:154 A:255} (50,31): {R:218 G:105 B:197 A:255}/{R:201 G:76 B:179 A:255} (52,31): {R:238 G:95 B:210 A:255}/{R:229 G:80 B:202 A:255} (53,31): {R:238 G:96 B:210 A:255}/{R:229 G:82 B:204 A:255} (54,31): {R:202 G:123 B:188 A:255}/{R:192 G:107 B:178 A:255} (55,31): {R:161 G:136 B:152 A:255}/{R:152 G:116 B:137 A:255}</Message>
+          <StackTrace>   at Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved(Boolean includeText, Byte textAlpha) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Drawing\MonoGame\AlphaBlendRenderingTests.cs:line 39&#xD;
+   at InvokeStub_AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="965d2ab6-ecde-4e30-80eb-39675672d9df" testId="7fd397d5-34f9-508b-5ea0-50f0f01a83b9" testName="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved(includeText: False, textAlpha: 255)" computerName="DESKTOP-JT43V3D" duration="00:00:01.4114488" startTime="2026-09-05T05:58:31.0835283+03:00" endTime="2026-09-05T05:58:31.0835582+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="965d2ab6-ecde-4e30-80eb-39675672d9df" />
+    <UnitTestResult executionId="307d4285-4510-44df-989c-874fef874044" testId="176da4dc-3409-383c-d5ce-66533d39c947" testName="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved(includeText: True, textAlpha: 1)" computerName="DESKTOP-JT43V3D" duration="00:00:00.5047643" startTime="2026-09-05T05:58:32.6053396+03:00" endTime="2026-09-05T05:58:32.6053399+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="307d4285-4510-44df-989c-874fef874044" />
+    <UnitTestResult executionId="1998c155-b714-437c-b98f-fb6dc93a4973" testId="4b70486a-c290-0d1e-2bbe-73647f1acae1" testName="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved(includeText: True, textAlpha: 2)" computerName="DESKTOP-JT43V3D" duration="00:00:00.5477870" startTime="2026-09-05T05:58:33.6968490+03:00" endTime="2026-09-05T05:58:33.6968493+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1998c155-b714-437c-b98f-fb6dc93a4973">
+      <Output>
+        <ErrorInfo>
+          <Message>A fully occluded stroke changed the output by 25/255 (interleaved text: True).  (33,27): {R:238 G:96 B:210 A:255}/{R:232 G:85 B:204 A:255} (34,27): {R:199 G:119 B:185 A:255}/{R:186 G:95 B:172 A:255} (35,27): {R:153 G:129 B:154 A:255}/{R:140 G:106 B:140 A:255} (36,27): {R:127 G:129 B:134 A:255}/{R:117 G:111 B:124 A:255} (32,28): {R:100 G:126 B:114 A:255}/{R:94 G:116 B:108 A:255} (33,28): {R:153 G:129 B:154 A:255}/{R:140 G:106 B:140 A:255} (34,28): {R:177 G:125 B:170 A:255}/{R:163 G:100 B:156 A:255} (35,28): {R:220 G:109 B:199 A:255}/{R:209 G:90 B:188 A:255} (37,28): {R:238 G:96 B:210 A:255}/{R:232 G:85 B:204 A:255} (38,28): {R:238 G:96 B:210 A:255}/{R:232 G:85 B:204 A:255} (39,28): {R:199 G:119 B:185 A:255}/{R:186 G:95 B:172 A:255} (40,28): {R:153 G:129 B:154 A:255}/{R:140 G:106 B:140 A:255} (41,28): {R:127 G:129 B:134 A:255}/{R:117 G:111 B:124 A:255} (37,29): {R:100 G:126 B:114 A:255}/{R:94 G:116 B:108 A:255} (38,29): {R:153 G:129 B:154 A:255}/{R:140 G:106 B:140 A:255} (39,29): {R:199 G:119 B:185 A:255}/{R:186 G:95 B:172 A:255} (40,29): {R:220 G:109 B:199 A:255}/{R:209 G:90 B:188 A:255} (42,29): {R:238 G:96 B:210 A:255}/{R:232 G:85 B:204 A:255} (43,29): {R:238 G:96 B:210 A:255}/{R:232 G:85 B:204 A:255} (44,29): {R:199 G:119 B:185 A:255}/{R:186 G:95 B:172 A:255} (45,29): {R:153 G:129 B:154 A:255}/{R:140 G:106 B:140 A:255} (46,29): {R:127 G:129 B:134 A:255}/{R:117 G:111 B:124 A:255} (42,30): {R:100 G:126 B:114 A:255}/{R:94 G:116 B:108 A:255} (43,30): {R:153 G:129 B:154 A:255}/{R:140 G:106 B:140 A:255} (44,30): {R:199 G:119 B:185 A:255}/{R:186 G:95 B:172 A:255}</Message>
+          <StackTrace>   at Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved(Boolean includeText, Byte textAlpha) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Drawing\MonoGame\AlphaBlendRenderingTests.cs:line 39&#xD;
+   at InvokeStub_AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="e81f138f-de84-4407-9690-a1bba341d504" testId="14f169ab-9bce-4072-563d-bb779e0a341d" testName="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved(includeText: True, textAlpha: 0)" computerName="DESKTOP-JT43V3D" duration="00:00:01.0071087" startTime="2026-09-05T05:58:32.0996893+03:00" endTime="2026-09-05T05:58:32.0996897+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e81f138f-de84-4407-9690-a1bba341d504" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved(includeText: True, textAlpha: 1)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="176da4dc-3409-383c-d5ce-66533d39c947">
+      <Execution id="307d4285-4510-44df-989c-874fef874044" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests" name="OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved(includeText: True, textAlpha: 255)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="889fa258-6f30-dce1-032e-2a4399a6e4b2">
+      <Execution id="e5fb7070-9d68-48e2-93cb-453e9d6af661" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests" name="OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved(includeText: True, textAlpha: 0)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="14f169ab-9bce-4072-563d-bb779e0a341d">
+      <Execution id="e81f138f-de84-4407-9690-a1bba341d504" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests" name="OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved(includeText: False, textAlpha: 255)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="7fd397d5-34f9-508b-5ea0-50f0f01a83b9">
+      <Execution id="965d2ab6-ecde-4e30-80eb-39675672d9df" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests" name="OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved(includeText: True, textAlpha: 2)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="4b70486a-c290-0d1e-2bbe-73647f1acae1">
+      <Execution id="1998c155-b714-437c-b98f-fb6dc93a4973" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests" name="OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="889fa258-6f30-dce1-032e-2a4399a6e4b2" executionId="e5fb7070-9d68-48e2-93cb-453e9d6af661" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7fd397d5-34f9-508b-5ea0-50f0f01a83b9" executionId="965d2ab6-ecde-4e30-80eb-39675672d9df" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="176da4dc-3409-383c-d5ce-66533d39c947" executionId="307d4285-4510-44df-989c-874fef874044" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4b70486a-c290-0d1e-2bbe-73647f1acae1" executionId="1998c155-b714-437c-b98f-fb6dc93a4973" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="14f169ab-9bce-4072-563d-bb779e0a341d" executionId="e81f138f-de84-4407-9690-a1bba341d504" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="5" executed="5" passed="3" failed="2" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.24]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.89]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.90]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:04.42]       A fully occluded stroke changed the output by 47/255 (interleaved text: True).  (30,26): {R:161 G:144 B:159 A:255}/{R:153 G:129 B:148 A:255} (31,26): {R:138 G:151 B:146 A:255}/{R:131 G:139 B:139 A:255} (30,27): {R:217 G:105 B:196 A:255}/{R:200 G:75 B:178 A:255} (33,27): {R:238 G:96 B:210 A:255}/{R:231 G:83 B:203 A:255} (34,27): {R:201 G:121 B:186 A:255}/{R:191 G:101 B:172 A:255} (35,27): {R:162 G:141 B:154 A:255}/{R:155 G:126 B:141 A:255} (36,27): {R:136 G:153 B:148 A:255}/{R:128 G:144 B:142 A:255} (48,30): {R:238 G:96 B:210 A:255}/{R:229 G:81 B:204 A:255} (49,30): {R:199 G:118 B:187 A:255}/{R:184 G:95 B:175 A:255} (50,30): {R:164 G:144 B:159 A:255}/{R:157 G:131 B:149 A:255} (51,30): {R:145 G:154 B:140 A:255}/{R:141 G:144 B:131 A:255} (48,31): {R:131 G:91 B:131 A:255}/{R:104 G:44 B:104 A:255} (49,31): {R:193 G:107 B:179 A:255}/{R:168 G:65 B:154 A:255} (50,31): {R:218 G:105 B:197 A:255}/{R:201 G:76 B:179 A:255} (52,31): {R:238 G:95 B:210 A:255}/{R:229 G:80 B:202 A:255} (53,31): {R:238 G:96 B:210 A:255}/{R:229 G:82 B:204 A:255} (54,31): {R:202 G:123 B:188 A:255}/{R:192 G:107 B:178 A:255} (55,31): {R:161 G:136 B:152 A:255}/{R:152 G:116 B:137 A:255}&#xD;
+[xUnit.net 00:00:04.42]       Stack Trace:&#xD;
+[xUnit.net 00:00:04.42]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Drawing\MonoGame\AlphaBlendRenderingTests.cs(39,0): at Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved(Boolean includeText, Byte textAlpha)&#xD;
+[xUnit.net 00:00:04.43]            at InvokeStub_AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved(Object, Span`1)&#xD;
+[xUnit.net 00:00:04.43]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:04.98]       A fully occluded stroke changed the output by 25/255 (interleaved text: True).  (33,27): {R:238 G:96 B:210 A:255}/{R:232 G:85 B:204 A:255} (34,27): {R:199 G:119 B:185 A:255}/{R:186 G:95 B:172 A:255} (35,27): {R:153 G:129 B:154 A:255}/{R:140 G:106 B:140 A:255} (36,27): {R:127 G:129 B:134 A:255}/{R:117 G:111 B:124 A:255} (32,28): {R:100 G:126 B:114 A:255}/{R:94 G:116 B:108 A:255} (33,28): {R:153 G:129 B:154 A:255}/{R:140 G:106 B:140 A:255} (34,28): {R:177 G:125 B:170 A:255}/{R:163 G:100 B:156 A:255} (35,28): {R:220 G:109 B:199 A:255}/{R:209 G:90 B:188 A:255} (37,28): {R:238 G:96 B:210 A:255}/{R:232 G:85 B:204 A:255} (38,28): {R:238 G:96 B:210 A:255}/{R:232 G:85 B:204 A:255} (39,28): {R:199 G:119 B:185 A:255}/{R:186 G:95 B:172 A:255} (40,28): {R:153 G:129 B:154 A:255}/{R:140 G:106 B:140 A:255} (41,28): {R:127 G:129 B:134 A:255}/{R:117 G:111 B:124 A:255} (37,29): {R:100 G:126 B:114 A:255}/{R:94 G:116 B:108 A:255} (38,29): {R:153 G:129 B:154 A:255}/{R:140 G:106 B:140 A:255} (39,29): {R:199 G:119 B:185 A:255}/{R:186 G:95 B:172 A:255} (40,29): {R:220 G:109 B:199 A:255}/{R:209 G:90 B:188 A:255} (42,29): {R:238 G:96 B:210 A:255}/{R:232 G:85 B:204 A:255} (43,29): {R:238 G:96 B:210 A:255}/{R:232 G:85 B:204 A:255} (44,29): {R:199 G:119 B:185 A:255}/{R:186 G:95 B:172 A:255} (45,29): {R:153 G:129 B:154 A:255}/{R:140 G:106 B:140 A:255} (46,29): {R:127 G:129 B:134 A:255}/{R:117 G:111 B:124 A:255} (42,30): {R:100 G:126 B:114 A:255}/{R:94 G:116 B:108 A:255} (43,30): {R:153 G:129 B:154 A:255}/{R:140 G:106 B:140 A:255} (44,30): {R:199 G:119 B:185 A:255}/{R:186 G:95 B:172 A:255}&#xD;
+[xUnit.net 00:00:04.98]       Stack Trace:&#xD;
+[xUnit.net 00:00:04.98]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Drawing\MonoGame\AlphaBlendRenderingTests.cs(39,0): at Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved(Boolean includeText, Byte textAlpha)&#xD;
+[xUnit.net 00:00:04.98]            at InvokeStub_AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved(Object, Span`1)&#xD;
+[xUnit.net 00:00:04.98]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:04.99]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T05:58:33.1407121+03:00">
+        <Text>[xUnit.net 00:00:04.42]     Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved(includeText: True, textAlpha: 255) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T05:58:33.6970900+03:00">
+        <Text>[xUnit.net 00:00:04.98]     Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeEvenWhenSubpixelTextIsInterleaved(includeText: True, textAlpha: 2) [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

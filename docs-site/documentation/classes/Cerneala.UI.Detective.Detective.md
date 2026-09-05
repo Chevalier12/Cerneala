@@ -54,6 +54,7 @@ Invalidation tracing is disabled by the default `UIRoot` constructor. Supply an 
 | `CaptureMotion()` | `MotionGraphSnapshot` | Captures current Motion graph and latest-frame activity. |
 | `CaptureRendering()` | `RootRenderDiagnosticsSnapshot` | Captures retained root render-cache state. |
 | `CaptureRendering(UIElement element)` | `ElementRenderDiagnosticsSnapshot` | Captures retained render-cache state for an element. |
+| `CaptureTileMap(TileMap2D map)` | `TileMapDiagnosticsSnapshot` | Copies the latest tilemap recording counters. The map must be attached to this root; null throws `ArgumentNullException`, detached/foreign-root maps throw `ArgumentException`. Does not record, invalidate, synchronize, or reset the map. |
 | `Format(DetectiveSnapshot snapshot)` | `string` | Returns the aggregate snapshot's invariant diagnostic line. |
 | `TraceAspect(UIElement element, UiProperty property)` | `AspectTraceSnapshot` | Captures a property-specific Aspect resolution trace. |
 | `TraceRoutedEvent(UIElement target, RoutedEvent routedEvent, ElementChildRole role = ElementChildRole.Visual)` | `RoutedEventTraceSnapshot` | Builds the routed-event path without raising the event. |
@@ -62,3 +63,4 @@ Invalidation tracing is disabled by the default `UIRoot` constructor. Supply an 
 
 - [`DetectiveSnapshot`](Cerneala.UI.Detective.DetectiveSnapshot.md)
 - [`UIRoot`](Cerneala.UI.Elements.UIRoot.md)
+- [`TileMapDiagnosticsSnapshot`](Cerneala.UI.Detective.TileMapDiagnosticsSnapshot.md)

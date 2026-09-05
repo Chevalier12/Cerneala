@@ -48,6 +48,7 @@ public sealed class AnimatablePropertyRegistry
     {
         MotionSpec colorSpec = MotionFactory.Tween(TimeSpan.FromMilliseconds(160));
         MotionSpec thicknessSpec = MotionFactory.Tween(TimeSpan.FromMilliseconds(180));
+        MotionSpec colliderGeometrySpec = MotionFactory.Tween(TimeSpan.FromMilliseconds(180));
 
         Register(Control.BackgroundProperty, Options<Brush?, BrushMixer>(Control.BackgroundProperty, colorSpec, isSafeForImplicitAnimation: true));
         Register(Control.ForegroundProperty, Options<Brush?, BrushMixer>(Control.ForegroundProperty, colorSpec, isSafeForImplicitAnimation: true));
@@ -65,6 +66,13 @@ public sealed class AnimatablePropertyRegistry
         Register(UIElement.RotationProperty, Options<float, FloatMixer>(UIElement.RotationProperty, MotionFactory.Tween(TimeSpan.FromMilliseconds(180)), isSafeForImplicitAnimation: true));
         Register(UIElement.SkewXProperty, Options<float, FloatMixer>(UIElement.SkewXProperty, MotionFactory.Tween(TimeSpan.FromMilliseconds(180)), isSafeForImplicitAnimation: true));
         Register(UIElement.SkewYProperty, Options<float, FloatMixer>(UIElement.SkewYProperty, MotionFactory.Tween(TimeSpan.FromMilliseconds(180)), isSafeForImplicitAnimation: true));
+        Register(Collider2D.OffsetXProperty, Options<float, FloatMixer>(Collider2D.OffsetXProperty, colliderGeometrySpec, isSafeForImplicitAnimation: false));
+        Register(Collider2D.OffsetYProperty, Options<float, FloatMixer>(Collider2D.OffsetYProperty, colliderGeometrySpec, isSafeForImplicitAnimation: false));
+        Register(BoxCollider2D.WidthProperty, Options<float, FloatMixer>(BoxCollider2D.WidthProperty, colliderGeometrySpec, isSafeForImplicitAnimation: false));
+        Register(BoxCollider2D.HeightProperty, Options<float, FloatMixer>(BoxCollider2D.HeightProperty, colliderGeometrySpec, isSafeForImplicitAnimation: false));
+        Register(CircleCollider2D.RadiusProperty, Options<float, FloatMixer>(CircleCollider2D.RadiusProperty, colliderGeometrySpec, isSafeForImplicitAnimation: false));
+        Register(Sprite2D.AnimationPlaybackRateProperty, Options<double, DoubleMixer>(Sprite2D.AnimationPlaybackRateProperty, MotionFactory.Tween(TimeSpan.FromMilliseconds(120)), isSafeForImplicitAnimation: false));
+        Register(TileInstance2D.AnimationPlaybackRateProperty, Options<double, DoubleMixer>(TileInstance2D.AnimationPlaybackRateProperty, MotionFactory.Tween(TimeSpan.FromMilliseconds(120)), isSafeForImplicitAnimation: false));
     }
 
     private static MotionPropertyOptions Options<TValue, TMixer>(

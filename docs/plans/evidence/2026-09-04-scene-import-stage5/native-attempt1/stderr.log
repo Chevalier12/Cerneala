@@ -1,0 +1,11 @@
+Unhandled exception. System.IO.FileNotFoundException: Could not load file or assembly 'SDL3-CS, Version=3.4.14.0, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.
+File name: 'SDL3-CS, Version=3.4.14.0, Culture=neutral, PublicKeyToken=null'
+   at Cerneala.Platforms.Sdl3.NativeSdlApi..ctor()
+   at Cerneala.UI.Hosting.Sdl.SdlGpuApplicationBackend.SdlGpuWindowingBackend.CreatePlatform(Boolean useMultisampling, Nullable`1 coordinateScaleOverride) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Hosting\SdlGpuApplicationBackend.cs:line 26
+   at Cerneala.UI.Hosting.Windowing.WindowingBackendRegistry.CreatePlatform(Boolean useMultisampling, Nullable`1 coordinateScaleOverride) in C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowingBackendRegistry.cs:line 41
+   at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.CreateDefault(Boolean useMultisampling) in C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs:line 904
+   at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.get_CurrentOrDefault() in C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs:line 43
+   at Cerneala.UI.Hosting.Windowing.GeneratedWindowApplication.RunLegacy(GeneratedWindowStartupDescriptor descriptor) in C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\GeneratedWindowApplication.cs:line 174
+   at Cerneala.UI.Hosting.Windowing.GeneratedWindowApplication.Run(GeneratedWindowStartupDescriptor descriptor, IReadOnlyList`1 args) in C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\GeneratedWindowApplication.cs:line 67
+   at Cerneala.UI.Hosting.Windowing.GeneratedWindowApplication.Run(GeneratedWindowStartupDescriptor descriptor) in C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\GeneratedWindowApplication.cs:line 58
+   at Cerneala.Playground.__CernealaGeneratedWindowStartup.Main() in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\obj\Debug\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\MainWindowWindow.c102e276.g.cs:line 178

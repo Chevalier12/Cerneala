@@ -433,6 +433,15 @@ public sealed partial class RenderSurface2DFrame
         return true;
     }
 
+    internal bool HasPrism(UIElement owner)
+    {
+        EnsureActive();
+        return PrismAttachment.TryGetRenderState(
+            owner,
+            out _,
+            out _);
+    }
+
     internal void EndPrism()
     {
         EnsureActive();

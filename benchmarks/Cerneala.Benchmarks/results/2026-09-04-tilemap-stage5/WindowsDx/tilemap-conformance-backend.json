@@ -1,0 +1,31 @@
+{
+  "Backend": "WindowsDX",
+  "CaptureApi": "Window.SaveScreenshot(string)",
+  "Features": [
+    "multiple atlases",
+    "opacity and tint",
+    "horizontal and vertical flips",
+    "map, layer, and promoted-tile transforms",
+    "semantic layers",
+    "chunk edge x=8 and promoted edge tile x=7",
+    "pan and zoom",
+    "promoted tile with Aspect, Motion, and Prism Invert"
+  ],
+  "DistinctColors": 222,
+  "MotionChangedPixels": 2744,
+  "PanZoomChangedPixels": 381825,
+  "Captures": [
+    {
+      "File": "tilemap-conformance-initial.png",
+      "Sha256": "970C5273BE02CFDC0F82BCC4C928CCB26FA392D7FD5E11406106B35094F9CD6E"
+    },
+    {
+      "File": "tilemap-conformance-motion-prism.png",
+      "Sha256": "D726B526270B8A27BA960AAE12EA3D61A432F8B64317103BF4869F29E629FB6E"
+    },
+    {
+      "File": "tilemap-conformance-pan-zoom.png",
+      "Sha256": "7293DADA6234E2D299C59E805BBE3039CE7DC08A0EEB59D15CC3DDC4C4C2B6C0"
+    }
+  ]
+}

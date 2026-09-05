@@ -31,7 +31,20 @@ aspect.SetValue(UIElement.OpacityProperty, 0.6f);
 root.ProcessFrame();
 ```
 
+An inline markup Aspect places its body directly inside the owning property element:
+
+```xml
+<Button>
+    <Button.Aspect>
+        @default { Opacity = 0.5; }
+        @when IsMouseOver { Opacity = 0.8; }
+    </Button.Aspect>
+</Button>
+```
+
 ## Remarks
+`<Type.Aspect>` already declares the inline Aspect and infers its target from the owning element. Its body accepts defaults, conditions, Motion and a component template directly. A nested `<Aspect>` wrapper, including `<Aspect />`, is illegal and reports `CERNEALAUI005` at the redundant element name in both editor and build analysis. Remove only that wrapper when migrating existing markup. Named and default `<Aspect TargetType="...">` declarations inside resources remain unchanged.
+
 Assignments are copied and exposed through a read-only list, and a property may appear only once. The default constructor targets `UIElement`; the named overload records an optional resource name and an explicit target type. Assigning an aspect validates the target and every default and conditional property before the property-store mutation is committed. A rejected replacement therefore leaves the previous `UIElement.Aspect` value and its registrations intact.
 
 `ElementAspect` does not write UI properties directly. It projects its assignments into an `AspectPackage` consumed with the root, application, and scoped packages by `AspectProcessor`. Winning values are published through the canonical `AspectBase` source. Replacing or clearing `UIElement.Aspect` invalidates the element's Aspect work; detach clears engine output, and reattach resolves the current aspect again.

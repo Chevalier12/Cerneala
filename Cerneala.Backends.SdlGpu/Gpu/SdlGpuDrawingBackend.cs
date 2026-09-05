@@ -114,6 +114,7 @@ internal sealed partial class SdlGpuDrawingBackend :
         DrawCommandStateAnalysis analysis = frameContext.StateAnalysis;
         SdlGpuRenderTarget target = session.WindowRenderTarget;
         RenderState state = RenderState.Create(target, CoordinateScale);
+        CommandRangeState rangeState = new(target, state);
         batches.Begin(target);
         TimeSpan preparationTime = Stopwatch.GetElapsedTime(preparationStarted);
         long commandRenderingStarted = Stopwatch.GetTimestamp();
@@ -126,8 +127,9 @@ internal sealed partial class SdlGpuDrawingBackend :
                 return;
             }
 
-            RenderRange(commands, 0, commands.Count, analysis, state, target, batches, 0);
+            RenderRange(commands, 0, commands.Count, analysis, rangeState, batches);
             FlushBatches();
+            EnsureCompositingScopesClosed(rangeState);
         }
         catch
         {
@@ -239,15 +241,15 @@ internal sealed partial class SdlGpuDrawingBackend :
         int start,
         int end,
         DrawCommandStateAnalysis analysis,
-        RenderState state,
-        SdlGpuRenderTarget target,
+        CommandRangeState rangeState,
         Cerberus batches,
-        int layerDepth,
         IReadOnlyDictionary<int, SdlGpuPrismPresentationSurface>? childSurfaces = null)
     {
         for (int index = start; index < end; index++)
         {
             DrawCommand command = commands[index];
+            RenderState state = rangeState.State;
+            SdlGpuRenderTarget target = rangeState.Target;
             switch (command.Kind)
             {
                 case DrawCommandKind.FillRectangle:
@@ -297,10 +299,28 @@ internal sealed partial class SdlGpuDrawingBackend :
                     state.Transforms.RemoveAt(state.Transforms.Count - 1);
                     break;
                 case DrawCommandKind.PushOpacity:
-                    state.Opacities.Add(state.Opacities[^1] * command.Opacity);
-                    break;
+                    {
+                        int matching = analysis.Entries[index].MatchingCommandIndex;
+                        if (matching <= index || matching >= commands.Count)
+                        {
+                            throw new InvalidOperationException(
+                                $"PushOpacity at command index {index} has no valid matching PopOpacity.");
+                        }
+                        FlushBatches();
+                        BeginCompositingLayer(
+                            rangeState,
+                            command.Opacity,
+                            DrawBlendMode.Normal,
+                            DrawCommandKind.PushOpacity,
+                            batches);
+                        break;
+                    }
                 case DrawCommandKind.PopOpacity:
-                    state.Opacities.RemoveAt(state.Opacities.Count - 1);
+                    EndCompositingLayer(
+                        rangeState,
+                        DrawCommandKind.PushOpacity,
+                        index,
+                        batches);
                     break;
                 case DrawCommandKind.PushBlend:
                     state.Blends.Add(command.BlendMode);
@@ -320,29 +340,27 @@ internal sealed partial class SdlGpuDrawingBackend :
                 case DrawCommandKind.PushLayer:
                     {
                         int matching = analysis.Entries[index].MatchingCommandIndex;
-                        if (matching <= index || matching >= end)
+                        if (matching <= index || matching >= commands.Count)
                         {
                             throw new InvalidOperationException(
                                 $"PushLayer at command index {index} has no valid matching PopLayer.");
                         }
                         FlushBatches();
-                        RenderLayer(
-                            commands,
-                            index + 1,
-                            matching,
-                            analysis,
-                            state,
-                            target,
-                            command.LayerOptions!,
-                            layerDepth + 1,
-                            batches,
-                            childSurfaces);
-                        index = matching;
+                        BeginCompositingLayer(
+                            rangeState,
+                            command.LayerOptions!.Opacity,
+                            command.LayerOptions.BlendMode,
+                            DrawCommandKind.PushLayer,
+                            batches);
                         break;
                     }
                 case DrawCommandKind.PopLayer:
-                    throw new InvalidOperationException(
-                        $"Unexpected PopLayer at command index {index}.");
+                    EndCompositingLayer(
+                        rangeState,
+                        DrawCommandKind.PushLayer,
+                        index,
+                        batches);
+                    break;
                 case DrawCommandKind.BeginPrism:
                     if (childSurfaces is not null &&
                         childSurfaces.TryGetValue(index, out SdlGpuPrismPresentationSurface child))
@@ -354,10 +372,15 @@ internal sealed partial class SdlGpuDrawingBackend :
                                 $"BeginPrism at command index {index} has no valid matching EndPrism.");
                         }
                         FlushBatches();
-                        DrawPrismTexture(
+                        DrawPrismTextureCore(
                             child.Target.SampleTexture,
                             target,
-                            child.Clip);
+                            child.Clip,
+                            destination: null,
+                            state);
+                        // Presenting the child flushes (and ends) its batch. The
+                        // enclosing range must resume its target for later siblings.
+                        batches.Begin(target);
                         index = matching;
                     }
                     break;
@@ -1169,20 +1192,17 @@ internal sealed partial class SdlGpuDrawingBackend :
         });
     }
 
-    private void RenderLayer(
-        DrawCommandList commands,
-        int start,
-        int end,
-        DrawCommandStateAnalysis analysis,
-        RenderState parentState,
-        SdlGpuRenderTarget parentTarget,
-        DrawLayerOptions options,
-        int layerDepth,
-        Cerberus parentBatches,
-        IReadOnlyDictionary<int, SdlGpuPrismPresentationSurface>? childSurfaces = null)
+    private void BeginCompositingLayer(
+        CommandRangeState rangeState,
+        float opacity,
+        DrawBlendMode blendMode,
+        DrawCommandKind pushKind,
+        Cerberus batches)
     {
+        RenderState parentState = rangeState.State;
+        SdlGpuRenderTarget parentTarget = rangeState.Target;
         SdlGpuRenderTarget layer = resources.GetLayerTarget(
-            layerDepth,
+            rangeState.CompositingScopes.Count + 1,
             parentTarget.PixelWidth,
             parentTarget.PixelHeight,
             parentTarget.ColorFormat,
@@ -1190,28 +1210,71 @@ internal sealed partial class SdlGpuDrawingBackend :
         session.BeginRenderTarget(layer, Color.Transparent, SdlGpuLoadOp.Clear);
         RenderState childState = RenderState.Create(layer, CoordinateScale);
         childState.Transforms[0] = parentState.Transform;
-        parentBatches.Begin(layer);
-        RenderRange(
-            commands,
-            start,
-            end,
-            analysis,
-            childState,
-            layer,
-            parentBatches,
-            layerDepth,
-            childSurfaces);
-        FlushBatches();
-        session.BeginRenderTarget(parentTarget, Color.Transparent, SdlGpuLoadOp.Load);
-        parentBatches.Begin(parentTarget);
-
-        AddTargetComposite(
-            layer,
+        batches.Begin(layer);
+        rangeState.CompositingScopes.Add(new CompositingScope(
             parentTarget,
             parentState,
-            options.Opacity * parentState.Opacity,
-            options.BlendMode,
-            parentBatches);
+            layer,
+            opacity,
+            blendMode,
+            pushKind));
+        rangeState.Target = layer;
+        rangeState.State = childState;
+    }
+
+    private void EndCompositingLayer(
+        CommandRangeState rangeState,
+        DrawCommandKind expectedPushKind,
+        int commandIndex,
+        Cerberus batches)
+    {
+        if (rangeState.CompositingScopes.Count == 0)
+        {
+            throw new InvalidOperationException(
+                $"Unexpected {expectedPushKind switch
+                {
+                    DrawCommandKind.PushOpacity => nameof(DrawCommandKind.PopOpacity),
+                    DrawCommandKind.PushLayer => nameof(DrawCommandKind.PopLayer),
+                    _ => expectedPushKind.ToString()
+                }} at command index {commandIndex}.");
+        }
+
+        CompositingScope scope = rangeState.CompositingScopes[^1];
+        if (scope.PushKind != expectedPushKind)
+        {
+            throw new InvalidOperationException(
+                $"Compositing scope opened by {scope.PushKind} cannot be closed by " +
+                $"{expectedPushKind} at command index {commandIndex}.");
+        }
+
+        FlushBatches();
+        rangeState.CompositingScopes.RemoveAt(rangeState.CompositingScopes.Count - 1);
+        rangeState.Target = scope.ParentTarget;
+        rangeState.State = scope.ParentState;
+        session.BeginRenderTarget(
+            scope.ParentTarget,
+            Color.Transparent,
+            SdlGpuLoadOp.Load);
+        batches.Begin(scope.ParentTarget);
+        AddTargetComposite(
+            scope.LayerTarget,
+            scope.ParentTarget,
+            scope.ParentState,
+            scope.Opacity * scope.ParentState.Opacity,
+            scope.BlendMode,
+            batches);
+    }
+
+    private static void EnsureCompositingScopesClosed(CommandRangeState rangeState)
+    {
+        if (rangeState.CompositingScopes.Count == 0)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            $"The SDL_GPU command range ended with {rangeState.CompositingScopes.Count} " +
+            "unclosed compositing scope(s).");
     }
 
     private void AddRenderSurface(
@@ -1223,10 +1286,8 @@ internal sealed partial class SdlGpuDrawingBackend :
         IRenderSurface2DFrameSource source = command.RenderSurface as IRenderSurface2DFrameSource ??
             throw new InvalidOperationException(
                 "RenderSurface2D requires a frame-producing source.");
-        int width = Math.Max(1, checked((int)MathF.Ceiling(
-            command.Rect.Width * CoordinateScale)));
-        int height = Math.Max(1, checked((int)MathF.Ceiling(
-            command.Rect.Height * CoordinateScale)));
+        (int width, int height) = RenderSurface2DGeometry.GetPixelSize(
+            command.Rect.Width, command.Rect.Height, CoordinateScale);
         SdlGpuRenderSurfaceState? surface =
             source.GetBackendState(resources) as SdlGpuRenderSurfaceState;
         if (surface is null || surface.PixelWidth != width || surface.PixelHeight != height)
@@ -1245,55 +1306,27 @@ internal sealed partial class SdlGpuDrawingBackend :
 
         if (surface.FrameVersion != source.FrameVersion)
         {
-            surface.Commands.Clear();
-            source.RecordFrame(
-                surface.Commands,
-                new DrawRect(
-                    0,
-                    0,
-                    width / CoordinateScale,
-                    height / CoordinateScale));
-            PrismFrameAnalysis surfacePrismAnalysis =
-                new PrismFrameAnalyzer().Analyze(surface.Commands);
-            DrawingFrameContext surfaceFrameContext = new(
-                surfacePrismAnalysis,
-                backdropLease: null,
-                backdropSourceToken: default,
-                surface.PrismCacheInvalidations);
-            session.BeginRenderTarget(
-                surface.Target,
-                source.ClearColor,
-                SdlGpuLoadOp.Clear);
-            if (!surfacePrismAnalysis.Scopes.IsDefaultOrEmpty)
+            // A surface records local pixels, not the hosting window's DIPs.
+            // Keep that coordinate contract through text, clips and Prism, then
+            // restore the host scale before compositing the surface into it.
+            float parentCoordinateScale = CoordinateScale;
+            float parentThreadScale = threadScale;
+            CoordinateScale = 1;
+            threadScale = 1;
+            try
             {
-                surface.PrismExecutor.Execute(
-                    surface.Commands,
-                    surfaceFrameContext,
-                    surface.Target);
-                CountPrismExecution(surface.PrismExecutor.Diagnostics);
+                RenderSurfaceFrame(source, surface, parentBatches);
+                surface.FrameVersion = source.FrameVersion;
             }
-            else
+            finally
             {
-                RenderState surfaceState = RenderState.Create(
-                    surface.Target,
-                    CoordinateScale);
-                parentBatches.Begin(surface.Target);
-                RenderRange(
-                    surface.Commands,
-                    0,
-                    surface.Commands.Count,
-                    surfacePrismAnalysis.StateAnalysis,
-                    surfaceState,
-                    surface.Target,
-                    parentBatches,
-                    layerDepth: 0);
-                FlushBatches();
+                CoordinateScale = parentCoordinateScale;
+                threadScale = parentThreadScale;
+                session.BeginRenderTarget(
+                    parentTarget,
+                    Color.Transparent,
+                    SdlGpuLoadOp.Load);
             }
-            surface.FrameVersion = source.FrameVersion;
-            session.BeginRenderTarget(
-                parentTarget,
-                Color.Transparent,
-                SdlGpuLoadOp.Load);
         }
 
         parentBatches.Begin(parentTarget);
@@ -1310,6 +1343,39 @@ internal sealed partial class SdlGpuDrawingBackend :
                 DrawSamplingMode.Linear,
                 DrawAddressMode.Clamp,
                 state));
+    }
+
+    private void RenderSurfaceFrame(
+        IRenderSurface2DFrameSource source,
+        SdlGpuRenderSurfaceState surface,
+        Cerberus surfaceBatches)
+    {
+        surface.Commands.Clear();
+        source.RecordFrame(
+            surface.Commands,
+            new DrawRect(0, 0, surface.PixelWidth, surface.PixelHeight));
+        PrismFrameAnalysis analysis = new PrismFrameAnalyzer().Analyze(surface.Commands);
+        DrawingFrameContext frameContext = new(
+            analysis,
+            backdropLease: null,
+            backdropSourceToken: default,
+            surface.PrismCacheInvalidations);
+        session.BeginRenderTarget(surface.Target, source.ClearColor, SdlGpuLoadOp.Clear);
+        if (!analysis.Scopes.IsDefaultOrEmpty)
+        {
+            surface.PrismExecutor.Execute(surface.Commands, frameContext, surface.Target);
+            CountPrismExecution(surface.PrismExecutor.Diagnostics);
+        }
+        else
+        {
+            RenderState state = RenderState.Create(surface.Target, CoordinateScale);
+            CommandRangeState rangeState = new(surface.Target, state);
+            surfaceBatches.Begin(surface.Target);
+            RenderRange(surface.Commands, 0, surface.Commands.Count,
+                analysis.StateAnalysis, rangeState, surfaceBatches);
+            FlushBatches();
+            EnsureCompositingScopesClosed(rangeState);
+        }
     }
 
     private void AddTargetComposite(
@@ -1350,7 +1416,8 @@ internal sealed partial class SdlGpuDrawingBackend :
         SdlGpuRenderTarget target,
         IReadOnlyDictionary<int, SdlGpuPrismPresentationSurface>? childSurfaces,
         CommandRangeState? continuedState = null,
-        Vector2 logicalOrigin = default)
+        Vector2 logicalOrigin = default,
+        bool isolateCompositingState = false)
     {
         ArgumentNullException.ThrowIfNull(commands);
         ArgumentNullException.ThrowIfNull(analysis);
@@ -1363,50 +1430,56 @@ internal sealed partial class SdlGpuDrawingBackend :
             return;
         }
 
-        RenderState state;
+        CommandRangeState rangeState;
         if (continuedState is not null)
         {
-            if (continuedState.Target != target)
+            if (continuedState.RootTarget != target)
             {
                 throw new InvalidOperationException(
-                    "A continued SDL_GPU command range cannot change render targets.");
+                    "A continued SDL_GPU command range cannot change its root render target.");
             }
-            state = continuedState.State;
+            rangeState = continuedState;
         }
         else
         {
-            state = RenderState.Create(target, CoordinateScale);
+            RenderState state = RenderState.Create(target, CoordinateScale);
             DrawCommandStateEntry entry = analysis.Entries[start];
             state.Transforms[0] = Matrix3x2.Multiply(
                 entry.Transform,
                 Matrix3x2.CreateTranslation(-logicalOrigin));
-            state.Opacities[0] = entry.Opacity;
-            state.Blends[0] = entry.BlendMode;
-            if (entry.ClipBounds is DrawRect clip)
+            if (!isolateCompositingState)
             {
-                state.Scissors[0] = IntersectScissor(
-                    state.Scissors[0],
-                    ToScissor(
-                        new DrawRect(
-                            clip.X - logicalOrigin.X,
-                            clip.Y - logicalOrigin.Y,
-                            clip.Width,
-                            clip.Height),
-                        CoordinateScale));
+                state.Opacities[0] = entry.Opacity;
+                state.Blends[0] = entry.BlendMode;
+                if (entry.ClipBounds is DrawRect clip)
+                {
+                    state.Scissors[0] = IntersectScissor(
+                        state.Scissors[0],
+                        ToScissor(
+                            new DrawRect(
+                                clip.X - logicalOrigin.X,
+                                clip.Y - logicalOrigin.Y,
+                                clip.Width,
+                                clip.Height),
+                            CoordinateScale));
+                }
             }
+            rangeState = new CommandRangeState(target, state);
         }
-        batches.Begin(target);
+        batches.Begin(rangeState.Target);
         RenderRange(
             commands,
             start,
             end,
             analysis,
-            state,
-            target,
+            rangeState,
             batches,
-            layerDepth: 0,
             childSurfaces);
         FlushBatches();
+        if (continuedState is null || end == commands.Count)
+        {
+            EnsureCompositingScopesClosed(rangeState);
+        }
     }
 
     internal CommandRangeState CreateCommandRangeState(
@@ -1417,7 +1490,28 @@ internal sealed partial class SdlGpuDrawingBackend :
         nint texture,
         SdlGpuRenderTarget target,
         SdlRect? clip = null,
-        DrawRect? destination = null)
+        DrawRect? destination = null,
+        CommandRangeState? presentationState = null)
+    {
+        if (presentationState is not null && presentationState.Target != target)
+        {
+            throw new InvalidOperationException(
+                "A continued SDL_GPU Prism presentation cannot change render targets.");
+        }
+        DrawPrismTextureCore(
+            texture,
+            target,
+            clip,
+            destination,
+            presentationState?.State ?? RenderState.Create(target, CoordinateScale));
+    }
+
+    private void DrawPrismTextureCore(
+        nint texture,
+        SdlGpuRenderTarget target,
+        SdlRect? clip,
+        DrawRect? destination,
+        RenderState state)
     {
         if (texture == 0)
         {
@@ -1429,7 +1523,6 @@ internal sealed partial class SdlGpuDrawingBackend :
             return;
         }
         session.BeginRenderTarget(target, Color.Transparent, SdlGpuLoadOp.Load);
-        RenderState state = RenderState.Create(target, CoordinateScale);
         DrawRect destinationRect = destination ?? new DrawRect(
             0,
             0,
@@ -1442,16 +1535,18 @@ internal sealed partial class SdlGpuDrawingBackend :
             new DrawRect(0, 0, 1, 1),
             Color.White,
             Matrix3x2.Identity,
-            opacity: 1,
+            state.Opacity,
             new CerberusBatchKey(
                 DrawPrimitiveTopology.TriangleList,
                 texture,
                 DrawSamplingMode.Linear,
                 DrawAddressMode.Clamp,
-                DrawBlendMode.Normal,
-                SdlGpuStencilMode.Disabled,
-                0,
-                clip ?? state.Scissor,
+                state.Blend,
+                state.StencilMode,
+                state.StencilDepth,
+                clip is SdlRect presentationClip
+                    ? IntersectScissor(state.Scissor, presentationClip)
+                    : state.Scissor,
                 SdlGpuColorWriteMask.All));
         FlushBatches();
     }
@@ -1878,14 +1973,27 @@ internal sealed partial class SdlGpuDrawingBackend :
             SdlGpuRenderTarget target,
             RenderState state)
         {
+            RootTarget = target;
             Target = target;
             State = state;
         }
 
-        internal SdlGpuRenderTarget Target { get; }
+        internal SdlGpuRenderTarget RootTarget { get; }
 
-        internal RenderState State { get; }
+        internal SdlGpuRenderTarget Target { get; set; }
+
+        internal RenderState State { get; set; }
+
+        internal List<CompositingScope> CompositingScopes { get; } = [];
     }
+
+    internal sealed record CompositingScope(
+        SdlGpuRenderTarget ParentTarget,
+        RenderState ParentState,
+        SdlGpuRenderTarget LayerTarget,
+        float Opacity,
+        DrawBlendMode BlendMode,
+        DrawCommandKind PushKind);
 
     internal sealed record ClipEntry(
         SdlRect? PreviousScissor,

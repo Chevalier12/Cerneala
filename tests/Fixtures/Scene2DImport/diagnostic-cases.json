@@ -1,0 +1,92 @@
+[
+  {
+    "category": "Fatal",
+    "code": "SCN2D003",
+    "file": "invalid/version.tmj",
+    "format": "Tiled"
+  },
+  {
+    "category": "Error",
+    "code": "SCN2D006",
+    "file": "invalid/tile-id.tmj",
+    "format": "Tiled"
+  },
+  {
+    "category": "Error",
+    "code": "SCN2D007",
+    "file": "invalid/atlas-bounds.tmj",
+    "format": "Tiled"
+  },
+  {
+    "category": "Fatal",
+    "code": "SCN2D001",
+    "file": "invalid/missing-file.tmj",
+    "format": "Tiled"
+  },
+  {
+    "category": "Fatal",
+    "code": "SCN2D010",
+    "file": "invalid/path-escape.tmj",
+    "format": "Tiled"
+  },
+  {
+    "category": "Unsupported",
+    "code": "SCN2D004",
+    "file": "invalid/unsupported.tmj",
+    "format": "Tiled"
+  },
+  {
+    "category": "Unsupported",
+    "code": "SCN2D004",
+    "file": "invalid/unknown-field.tmj",
+    "format": "Tiled"
+  },
+  {
+    "category": "Warning",
+    "code": "SCN2D017",
+    "file": "invalid/editor-warning.tmj",
+    "format": "Tiled"
+  },
+  {
+    "category": "Error",
+    "code": "SCN2D011",
+    "file": "invalid/chunk-overlap.tmj",
+    "format": "Tiled"
+  },
+  {
+    "category": "Error",
+    "code": "SCN2D008",
+    "file": "invalid/degenerate-collider.tmj",
+    "format": "Tiled"
+  },
+  {
+    "category": "Error",
+    "code": "SCN2D009",
+    "file": "invalid/layer-mask.tmj",
+    "format": "Tiled"
+  },
+  {
+    "category": "Error",
+    "code": "SCN2D012",
+    "file": "invalid/duplicate-promotion.tmj",
+    "format": "Tiled"
+  },
+  {
+    "category": "Error",
+    "code": "SCN2D012",
+    "file": "invalid/absent-promotion.tmj",
+    "format": "Tiled"
+  },
+  {
+    "category": "Error",
+    "code": "SCN2D012",
+    "file": "invalid/empty-promotion.tmj",
+    "format": "Tiled"
+  },
+  {
+    "category": "Unsupported",
+    "code": "SCN2D004",
+    "file": "invalid/ldtk-field.ldtk",
+    "format": "LDtk"
+  }
+]

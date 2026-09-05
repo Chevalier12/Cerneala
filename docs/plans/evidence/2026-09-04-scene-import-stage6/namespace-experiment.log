@@ -1,0 +1,6 @@
+C# script runner and REPL tool for build automation
+0: (1,84): error CS0118: 'Scene2D' is a namespace but is used like a type
+1: (1,109): error CS0118: 'Scene2D' is a namespace but is used like a type
+2: PASS
+
+Running succeeded.

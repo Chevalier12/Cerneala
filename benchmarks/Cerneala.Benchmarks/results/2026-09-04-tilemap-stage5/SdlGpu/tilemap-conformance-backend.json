@@ -1,0 +1,31 @@
+{
+  "Backend": "SDL_GPU",
+  "CaptureApi": "Window.SaveScreenshot(string)",
+  "Features": [
+    "multiple atlases",
+    "opacity and tint",
+    "horizontal and vertical flips",
+    "map, layer, and promoted-tile transforms",
+    "semantic layers",
+    "chunk edge x=8 and promoted edge tile x=7",
+    "pan and zoom",
+    "promoted tile with Aspect, Motion, and Prism Invert"
+  ],
+  "DistinctColors": 110,
+  "MotionChangedPixels": 2744,
+  "PanZoomChangedPixels": 380731,
+  "Captures": [
+    {
+      "File": "tilemap-conformance-initial.png",
+      "Sha256": "97750B395F8CD26FA408CE5E0BBFE497748C3DEF7126D4AADC9A38BCD313AF13"
+    },
+    {
+      "File": "tilemap-conformance-motion-prism.png",
+      "Sha256": "1E359F38A086A99246B29BE450851592804C48FD2E294DDF909661F0D68410BA"
+    },
+    {
+      "File": "tilemap-conformance-pan-zoom.png",
+      "Sha256": "6CA739456082F7910986C2822BA2A6BBC5E5BC7FCDDCC024FB0CD359117A0233"
+    }
+  ]
+}

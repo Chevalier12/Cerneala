@@ -1,0 +1,16 @@
+Cerneala.UI.Servo.ServoTargetNotFoundException: The Servo target did not match any element.
+   at Cerneala.UI.Servo.ServoQueryEngine.Resolve(UIRoot root, ServoTarget target) in C:\Users\lauri\Desktop\Cerneala\UI\Servo\ServoQueryEngine.cs:line 21
+   at Cerneala.UI.Servo.ServoActionEngine.ResolveActionable(UIRoot root, ServoTarget target) in C:\Users\lauri\Desktop\Cerneala\UI\Servo\ServoActionEngine.cs:line 18
+   at Cerneala.UI.Servo.Servo.<>c__DisplayClass20_0.<ClickAsync>b__1(UIRoot root, IServoInputDriver input, CancellationToken operationToken) in C:\Users\lauri\Desktop\Cerneala\UI\Servo\Servo.cs:line 102
+   at Cerneala.UI.Servo.ServoContext.<>c__DisplayClass15_0.<ExecuteInputAsync>b__0(UIRoot root, ServoInputState state, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\UI\Servo\ServoContext.cs:line 155
+   at Cerneala.UI.Servo.ServoContext.<>c__DisplayClass16_0.<ExecuteSerializedAsync>b__0(UIRoot root) in C:\Users\lauri\Desktop\Cerneala\UI\Servo\ServoContext.cs:line 179
+   at Cerneala.UI.Servo.ServoContext.InvokeAsync(Func`2 operation, CancellationToken cancellationToken) in C:\Users\lauri\Desktop\Cerneala\UI\Servo\ServoContext.cs:line 228
+--- End of stack trace from previous location ---
+   at Cerneala.UI.Servo.ServoContext.ExecuteSerializedAsync(Func`4 operation, CancellationToken cancellationToken) in C:\Users\lauri\Desktop\Cerneala\UI\Servo\ServoContext.cs:line 170
+   at Cerneala.UI.Servo.ServoContext.ExecuteInputAsync(Func`4 operation, CancellationToken cancellationToken) in C:\Users\lauri\Desktop\Cerneala\UI\Servo\ServoContext.cs:line 154
+   at Cerneala.UI.Servo.ServoOperation.<>c__DisplayClass0_0.<<RunAsync>b__0>d.MoveNext() in C:\Users\lauri\Desktop\Cerneala\UI\Servo\ServoOperation.cs:line 14
+--- End of stack trace from previous location ---
+   at Cerneala.UI.Servo.ServoOperation.RunAsync[T](TimeSpan timeout, Func`2 operation, CancellationToken cancellationToken) in C:\Users\lauri\Desktop\Cerneala\UI\Servo\ServoOperation.cs:line 34
+   at Cerneala.UI.Servo.ServoOperation.RunAsync(TimeSpan timeout, Func`2 operation, CancellationToken cancellationToken) in C:\Users\lauri\Desktop\Cerneala\UI\Servo\ServoOperation.cs:line 10
+   at Cerneala.Playground.SceneWorldShowcase.CaptureConformanceAsync(Servo servo, String directory) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldConformance.cs:line 65
+   at Cerneala.Playground.MainWindow.CaptureSceneWorldAsync(String directory) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldConformance.cs:line 32

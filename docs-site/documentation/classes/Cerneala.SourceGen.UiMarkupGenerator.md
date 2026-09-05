@@ -103,6 +103,27 @@ An `@if` expression may combine typed comparisons and reactive operands:
 
 Evaluation short-circuits, while every syntactic source is still observed. Compound `@when` expressions require Boolean source leaves, and `value` inside their `@if` blocks is the Boolean result of the complete expression. The directive language does not accept `not`, `&&`, `||`, or arbitrary C# expressions. This is a source-generator language change only and does not add or modify a public runtime API.
 
+### Inline Aspects
+
+`<Type.Aspect>` contains the Aspect body directly; the owner supplies the target
+type. Do not wrap that body in another `<Aspect>` element:
+
+```xml
+<Button>
+  <Button.Aspect>
+    @default { Opacity = 0.5; }
+    @when IsMouseOver { Opacity = 0.8; }
+  </Button.Aspect>
+</Button>
+```
+
+Defaults, conditions, Motion and a component template use this same direct body.
+The shared language model reports `CERNEALAUI005` at a redundant nested `Aspect`
+name, even for an empty wrapper, in both editor and build analysis. The generator
+does not emit source for that invalid document. Migrate by removing the nested
+opening and closing tags, not their contents. Named and default
+`<Aspect TargetType="...">` declarations in resources are unaffected.
+
 ### Source-Generated Data Bindings
 
 Property attributes accept a typed source path with an optional final mode:
@@ -159,6 +180,19 @@ directive strings may interpolate multiple paths; interpolation is always
 `OneWay`, rejects fragment modes, deduplicates repeated paths, and uses `\$` as
 the literal-dollar escape.
 
+For reference types, `OneWay` also accepts implicit reference assignments to a
+base class or implemented interface. For example, an
+`ObservableCollection<string>`, `IReadOnlyList<string>`, or `string[]` source can
+bind to `SceneItems2D.ItemsSource` (`IEnumerable`). The original collection is
+passed through, not copied; collection notifications remain available to the
+receiving control. This does not enable numeric or user-defined conversions.
+`TwoWay` still requires the same endpoint type: writing an arbitrary
+`IEnumerable` back to a narrower collection type would not be safe.
+
+An `init` accessor is not a writable binding endpoint. Its property can be read
+by an initial reference or `OneWay` binding, but `TwoWay` reports `CERNEALAUI007`
+instead of emitting an assignment outside object initialization.
+
 Directive references and bindings are written unquoted and end with `;`:
 
 ```text
@@ -206,6 +240,7 @@ Supported generated value categories include:
 | Scalar literals | `bool`, integer, `float`, `double`, `decimal`, enum, and finite positive values where the target property requires them |
 | Layout values | `Thickness` and `LayoutPoint`, including comma-separated forms |
 | Drawing values | Named or hexadecimal colors, byte color components, and brush resources/property elements |
+| Sprite animation | Immutable `SpriteAnimationSet` resources containing named `SpriteAnimationClip` and duration-based `SpriteAnimationFrame` declarations; references on `Sprite2D` and promoted `TileInstance2D` |
 | Generated content | Direct text for content-bearing controls and `ContentTemplate` declarations |
 | Reactive values | Typed `$DataContext`, `$element`, `$self`, `$root`, `$control.parts.$part`, and `$owner` paths, including `OneWay` and `TwoWay` modes where the endpoint is writable |
 
@@ -221,7 +256,7 @@ The generator reports diagnostics instead of emitting source when markup cannot 
 | `CERNEALAUI002` | The markup contains an unsupported element. |
 | `CERNEALAUI003` | The markup contains an unsupported property, text content, or child relationship. |
 | `CERNEALAUI004` | The markup contains an invalid value for a supported property. |
-| `CERNEALAUI005` | The document shape is invalid, including invalid resource or template placement. |
+| `CERNEALAUI005` | The document shape is invalid, including invalid resource or template placement, or a redundant `<Aspect>` wrapper inside `<Type.Aspect>`. |
 | `CERNEALAUI006` | A markup directive is invalid. |
 | `CERNEALAUI007` | A binding or reactive source has invalid syntax, scope, mode, type, accessibility, observability, or writability. |
 | `CERNEALAUI008` | A `UserControl` declaration is invalid. |
@@ -232,6 +267,7 @@ The generator reports diagnostics instead of emitting source when markup cannot 
 | `CERNEALAUI013` | An `Application` declaration is invalid. |
 | `CERNEALAUI014` | Application startup is invalid. |
 | `CERNEALAUI015` | The executable backend selection is missing, duplicate, inaccessible, generic, non-concrete, or lacks the exact `public static void EnsureRegistered()` contract. |
+| `CERNEALAUI016` | A sprite-animation declaration has invalid attributes, duplicate clip names, an invalid source rectangle or duration, or a statically selected missing clip. |
 | `CERNEALAUI020`-`CERNEALAUI026` | Motion syntax, target, event, type, composition, lifecycle, or runtime capability is invalid. |
 
 Diagnostics use exact source spans from the shared syntax and semantic model and

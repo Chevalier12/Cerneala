@@ -79,6 +79,24 @@ public sealed class HitTestService
             }
         }
 
+        if (containsElement && element is IGeometricHitTestHost geometricHost)
+        {
+            UIElement? geometricElement = geometricHost.HitTestGeometry(
+                routeMap,
+                x,
+                y,
+                filter);
+            if (geometricElement is not null &&
+                routeMap.TryGetId(geometricElement, out UiElementId geometricElementId))
+            {
+                return new HitTestResult(
+                    geometricElement,
+                    geometricElementId,
+                    x,
+                    y);
+            }
+        }
+
         if (!containsElement ||
             behavior == HitTestFilterBehavior.Exclude ||
             !CanHitElementDirectly(element))

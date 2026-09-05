@@ -117,8 +117,10 @@ internal sealed partial class CernealaSemanticModel
             referenceSpan,
             resourceType,
             definitionLocation: resource.Location));
-        resultType = resourceType;
-        if (resource.Kind == ResourceKind.Aspect || !IsTypeCompatible(resourceType, target))
+        bool resourceIdReference = IsResourceIdCompatible(resourceType, target);
+        resultType = resourceIdReference ? target.ValueType : resourceType;
+        if (resource.Kind == ResourceKind.Aspect ||
+            (!resourceIdReference && !IsTypeCompatible(resourceType, target)))
         {
             AddDiagnostic("CERNEALAUI004", contentSpan, element.Name, target.Name, value);
         }
@@ -897,6 +899,31 @@ internal sealed partial class CernealaSemanticModel
         string sourceName = source.MetadataName.TrimEnd('?');
         return string.Equals(sourceName, targetName, StringComparison.Ordinal) ||
             source.IsOrImplements(targetName);
+    }
+
+    private static bool IsResourceIdCompatible(ILanguageTypeSymbol? resourceType, ILanguageMemberSymbol target)
+    {
+        ILanguageTypeSymbol? targetType = target.ValueType;
+        if (targetType?.Name == "Nullable" &&
+            targetType.Namespace == "System" &&
+            targetType.TypeArguments.Count == 1)
+        {
+            targetType = targetType.TypeArguments[0];
+        }
+
+        if (resourceType is null || targetType is null ||
+            targetType.Name != "ResourceId" ||
+            targetType.Namespace != "Cerneala.UI.Resources" ||
+            targetType.TypeArguments.Count != 1)
+        {
+            return false;
+        }
+
+        string resourceName = resourceType.MetadataName.TrimEnd('?');
+        ILanguageTypeSymbol expectedResourceType = targetType.TypeArguments[0];
+        string expectedName = expectedResourceType.MetadataName.TrimEnd('?');
+        return string.Equals(resourceName, expectedName, StringComparison.Ordinal) ||
+            resourceType.IsOrImplements(expectedName);
     }
 
     private sealed class BindingResolution

@@ -7,6 +7,7 @@ public sealed class ElementInputCache
     private readonly ElementInputRouteBuilder routeBuilder = new();
     private readonly HitTestService hitTestService = new();
     private UIRoot? currentRoot;
+    private int currentTreeVersion = -1;
     private bool isDirty = true;
 
     public ElementInputCache()
@@ -34,7 +35,9 @@ public sealed class ElementInputCache
     public ElementInputRouteMap EnsureCurrent(UIRoot root)
     {
         ArgumentNullException.ThrowIfNull(root);
-        if (isDirty || !ReferenceEquals(currentRoot, root))
+        if (isDirty ||
+            !ReferenceEquals(currentRoot, root) ||
+            currentTreeVersion != root.TreeVersion)
         {
             Rebuild(root);
         }
@@ -47,6 +50,7 @@ public sealed class ElementInputCache
         ArgumentNullException.ThrowIfNull(root);
         RouteMap = routeBuilder.Build(root);
         currentRoot = root;
+        currentTreeVersion = root.TreeVersion;
         RebuildCount++;
         isDirty = false;
         return RouteMap;

@@ -404,6 +404,210 @@ Framework controls such as `SvgImage` and `RenderSurface2D` are provided by
 for realtime 2D drawing. Its `Content` remains an ordinary retained subtree, so
 HUD controls can be placed over the game surface.
 
+### Retained `RenderSurface2D` scenes
+
+`RenderSurface2D.Scene` accepts one `Scene2D` root. That is not a one-group
+limit: nest any number of `Scene2D` nodes to represent world groups and major
+layers. A group uses scene-space transform channels such as `TranslateX`,
+`TranslateY`, `Scale`, and `Rotation`; `TransformOrigin` is an absolute local
+scene-space point.
+
+The default `OrderMode="Source"` preserves declaration or collection order.
+`Layer` sorts by `SceneNode2D.Layer`. `LayerThenY` sorts by layer, then by the
+bottom edge of each child's transformed scene-space bounds, and finally by
+stable source order. `Sprite2D.LayerDepth` is a backend sprite value and does
+not replace `Layer`.
+
+Groups, layers, and visual nodes can each own Aspect, Motion, and Prism.
+`SceneItems2D` is only a materializer: put those declarations on the node
+created inside `@templates`, not on `SceneItems2D` as a substitute effect
+scope. Aspect can assign structural `Layer` and `OrderMode` values, but Motion
+rejects them because they have no interpolation contract. Transform and
+opacity Motion remain supported. A local UI-property value masks Motion for
+the same property, so do not set a local value on the channel an animation is
+expected to drive.
+
+The following syntax is compiled by the RenderSurface2D source-generator
+contract test. Bind or assign `SceneItems2D.ItemsSource` when instances of the
+template are needed.
+
+```xml
+<RenderSurface2D
+    xmlns:resources="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
+    <RenderSurface2D.Resources>
+        <resources:ImageResource Name="WorldAtlas" Source="Assets/world.png" />
+    </RenderSurface2D.Resources>
+    <RenderSurface2D.Scene>
+        <Scene2D OrderMode="LayerThenY"
+                 TranslateX="32"
+                 TransformOrigin="128,96">
+            <Scene2D.Aspect>
+                @on Loaded
+                {
+                    @animate with Tween(100ms)
+                    {
+                        @to { TranslateY = 8; }
+                    }
+                }
+            </Scene2D.Aspect>
+            @prism
+            {
+                @layer GroupContent
+                {
+                    Opacity = 1;
+                    @filter Blur { Radius = 1; }
+                }
+            }
+            <Scene2D Layer="1">
+                <Scene2D.Aspect>
+                    @on Loaded
+                    {
+                        @animate with Tween(100ms)
+                        {
+                            @to { Opacity = 0.75; }
+                        }
+                    }
+                </Scene2D.Aspect>
+                @prism
+                {
+                    @layer LayerContent
+                    {
+                        Opacity = 1;
+                        @filter Blur { Radius = 1; }
+                    }
+                }
+                <SceneItems2D>
+                    @templates
+                    {
+                        <ContentTemplate DataType="System.String">
+                            <Sprite2D SourceResourceId="$WorldAtlas">
+                                <Sprite2D.Aspect>
+                                    @on Loaded
+                                    {
+                                        @animate with Tween(100ms)
+                                        {
+                                            @to { Opacity = 0.5; }
+                                        }
+                                    }
+                                </Sprite2D.Aspect>
+                                @prism
+                                {
+                                    @layer SpriteContent
+                                    {
+                                        Opacity = 1;
+                                        @filter Blur { Radius = 1; }
+                                    }
+                                }
+                            </Sprite2D>
+                        </ContentTemplate>
+                    }
+                </SceneItems2D>
+            </Scene2D>
+        </Scene2D>
+    </RenderSurface2D.Scene>
+</RenderSurface2D>
+```
+
+### Collision and routed input in a retained scene
+
+Colliders are nonvisual `SceneNode2D` elements. Put a sprite and its colliders
+under the same `Scene2D` entity so they inherit the same data context and group
+transform. The root `Scene2D` owns the shared `CollisionWorld`; do not add a
+second physics or input tree.
+
+`CollisionLayer` and `CollisionMask` are bit fields. Two colliders interact only
+when each mask accepts the other collider's layer. `CollisionLayer="0"` disables
+collision and picking participation; `CollisionMask="0"` disables collision
+pairs but does not by itself disable UI picking. Triggers appear in overlap,
+raycast, and `MoveAndCollide.TriggerHits`, but never block movement. Edge contact
+is included.
+
+This house is made from separate wall colliders. The door is a normal scene
+entity: clicking its collider raises the inherited routed `MouseDown` event,
+and the same `IsClosed` state controls the visible door and its blocking
+collider. `WorldView` and the sprite destinations below are typed `DrawRect?` or
+`DrawRect` properties on the view model; Cerneala markup does not invent a
+string rectangle syntax for them. The structure and bindings in this example
+are covered by the collision source-generator tests.
+
+```xml
+<UserControl>
+    <RenderSurface2D
+        DataType="Game.WorldState"
+        ViewBox="$DataContext.WorldView:OneWay"
+        xmlns:resources="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
+        <RenderSurface2D.Resources>
+            <resources:ImageResource Name="WorldAtlas" Source="Assets/world.png" />
+        </RenderSurface2D.Resources>
+        <RenderSurface2D.Scene>
+            <Scene2D OrderMode="LayerThenY">
+                <Scene2D Name="House" TranslateX="40" TranslateY="16" Layer="1">
+                    <Sprite2D SourceResourceId="$WorldAtlas"
+                              Destination="$DataContext.HouseDestination:OneWay" />
+
+                    <BoxCollider2D Width="80" Height="8" />
+                    <BoxCollider2D Width="8" Height="56" OffsetY="8" />
+                    <BoxCollider2D Width="8" Height="56" OffsetX="72" OffsetY="8" />
+                    <BoxCollider2D Width="28" Height="8" OffsetY="56" />
+                    <BoxCollider2D Width="28" Height="8" OffsetX="52" OffsetY="56" />
+
+                    <Scene2D Name="Door"
+                             TranslateX="28"
+                             TranslateY="56"
+                             Layer="2"
+                             MouseDown="OnDoorMouseDown">
+                        <Sprite2D SourceResourceId="$WorldAtlas"
+                                  Destination="$DataContext.DoorDestination:OneWay"
+                                  IsVisible="$DataContext.IsClosed:OneWay" />
+                        <BoxCollider2D Width="24"
+                                       Height="8"
+                                       Enabled="$DataContext.IsClosed:OneWay"
+                                       CollisionLayer="2"
+                                       CollisionMask="1" />
+                    </Scene2D>
+                </Scene2D>
+
+                <Scene2D Name="Player" TranslateX="72" TranslateY="84" Layer="3">
+                    <Sprite2D SourceResourceId="$WorldAtlas"
+                              Destination="$DataContext.PlayerDestination:OneWay" />
+                    <CircleCollider2D Radius="4"
+                                      OffsetX="4"
+                                      OffsetY="4"
+                                      CollisionLayer="1"
+                                      CollisionMask="2" />
+                </Scene2D>
+            </Scene2D>
+        </RenderSurface2D.Scene>
+    </RenderSurface2D>
+</UserControl>
+```
+
+The owning `.crn.cs` uses the standard routed-event signature. Opening the door
+changes application state; Cerneala then updates rendering, picking, and the
+collision index through the same binding mutation.
+
+```csharp
+private void OnDoorMouseDown(UiElementId sender, RoutedEventArgs args)
+{
+    ViewModel.IsClosed = false;
+    args.Handled = true;
+}
+```
+
+Use `scene.CollisionWorld.Overlap`, `Raycast`, or `MoveAndCollide` for gameplay
+queries. `MoveAndCollide` returns the permitted travel and contacts; it does not
+move the player, slide it, or run a hidden simulation. In a mouse handler, use
+`args.GetPosition(surface)`, `args.GetPosition(scene)`, or
+`args.GetPosition(routedNode)` to retain subpixel precision. The legacy `X` and
+`Y` properties are rounded root coordinates.
+
+Collider shape, offsets, enabled/trigger state, and layer/mask can be assigned
+by Aspect. Motion can animate float geometry and scene transforms with their
+registered mixers; discrete values use bindings, Aspect, or `@set`. A collider
+draws no pixels, so Prism on the collider has nothing to process and never
+changes a collision or picking result. Apply Prism to the associated sprite,
+entity, or a visual debug overlay instead.
+
 ## 7. Text
 
 Common `TextBlock` properties:
@@ -497,6 +701,7 @@ WPF resource dictionaries.
 - `RadialGradientBrush`
 - `ImageBrush`
 - `DrawingBrush`
+- `ImageResource`
 - `Aspect`
 - `Tween`
 - `Spring`
@@ -547,6 +752,27 @@ WPF resource dictionaries.
 ```
 
 Gradient stop offsets must be between `0` and `1`.
+
+### Image resources for sprites
+
+Declare a path-backed atlas as a typed resource and reference it from any
+number of sprites. A non-null `SourceResourceId` takes precedence over
+`Sprite2D.Source`; all sprites under one root share the root-owned image cache.
+
+```xml
+<RenderSurface2D
+    xmlns:resources="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
+    <RenderSurface2D.Resources>
+        <resources:ImageResource Name="WorldAtlas" Source="Assets/world.png" />
+    </RenderSurface2D.Resources>
+    <RenderSurface2D.Scene>
+        <Scene2D>
+            <Sprite2D SourceResourceId="$WorldAtlas" />
+            <Sprite2D SourceResourceId="$WorldAtlas" />
+        </Scene2D>
+    </RenderSurface2D.Scene>
+</RenderSurface2D>
+```
 
 ### Current CernealaPresentation palette
 
@@ -701,6 +927,25 @@ To render a literal dollar sign where interpolation is possible, escape it as
 
 `Aspect` is Cerneala's styling, state, template, and motion composition system.
 Do not create WPF `Style`, trigger, or storyboard markup.
+
+### Inline aspect
+
+`<Type.Aspect>` already declares an Aspect for its owning element. Put the body
+directly inside that property element:
+
+```xml
+<Button>
+    <Button.Aspect>
+        @default { Opacity = 0.5; }
+        @when IsMouseOver { Opacity = 0.8; }
+    </Button.Aspect>
+</Button>
+```
+
+A nested `<Aspect>` wrapper is illegal (`CERNEALAUI005`), including an empty
+`<Aspect />`. Remove the redundant tags and keep their body. This is a breaking
+syntax change for wrapped inline declarations only; named and default Aspects
+inside resources still use `<Aspect TargetType="...">`.
 
 ### Named aspect
 

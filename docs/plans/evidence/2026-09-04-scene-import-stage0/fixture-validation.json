@@ -1,0 +1,104 @@
+{
+  "ldtkSchemaVersion": "1.5.3",
+  "ldtkSchemaSha256": "2AA84B0DB6E5EF1B530B1F557C5802DA1AA8BC62D10184D358C346734FB84893",
+  "tiledEditorVersion": "1.12.2",
+  "tiledExecutableSha256": "F6DA55B3F236B600A46F522EEFFCAC8281251C8EDA21255E401D6B186461A97A",
+  "checks": [
+    {
+      "file": "ldtk-inline.ldtk",
+      "check": "official-ldtk-1.5.3-schema",
+      "passed": true,
+      "sha256": "0C27B23A685A13A0695074C4045C620AAD9D0288A777A631318A3E17DF649816"
+    },
+    {
+      "file": "ldtk-separate.ldtk",
+      "check": "official-ldtk-1.5.3-schema",
+      "passed": true,
+      "sha256": "29A535C3D0F963DA8B707C2B32BCE15542766F3BB199C3FF6094A8227F0E5F35"
+    },
+    {
+      "file": "invalid/ldtk-field.ldtk",
+      "check": "official-ldtk-1.5.3-schema",
+      "passed": true,
+      "sha256": "2D564EA062EF86D4DFB4004649D043E665EA5813C8BBBF714C61152B6DAC9EFE"
+    },
+    {
+      "file": "levels/Fixture.ldtkl",
+      "check": "official-ldtk-1.5.3-Level-payload-and-separate-header",
+      "passed": true,
+      "sha256": "1E31B1EB4D4276F6B9D523D8360884231E2ED1158F003FD37FCA88E496C42FF2"
+    },
+    {
+      "file": "tiled-finite.tmj",
+      "check": "official-Tiled-1.12.2-JSON-roundtrip",
+      "passed": true,
+      "sha256": "A0137B935BE97E6150C3DBCFF7FB464CA3F43EB80454339438BC0E817A148BF4"
+    },
+    {
+      "file": "tiled-external.tmj",
+      "check": "official-Tiled-1.12.2-JSON-roundtrip",
+      "passed": true,
+      "sha256": "68B4DD784ED3F1DAF97C59E30BF469A636B92386D1E866D3CFFD282E108D4F7A"
+    },
+    {
+      "file": "tiled-infinite.tmj",
+      "check": "official-Tiled-1.12.2-JSON-roundtrip",
+      "passed": true,
+      "sha256": "6B4F2898931FC8572FF093EF8AC09E5CD5CFFF33C21A9D24DBDCF746A2910E80"
+    },
+    {
+      "file": "tiled-flips.tmj",
+      "check": "official-Tiled-1.12.2-JSON-roundtrip",
+      "passed": true,
+      "sha256": "BFCAA254270D657DD8ADCA438BE1CCF09DC9472BFC935D68EEA79706E4C82840"
+    },
+    {
+      "file": "tiled-group.tmj",
+      "check": "official-Tiled-1.12.2-JSON-roundtrip",
+      "passed": true,
+      "sha256": "A67FAB9874E8FC76FC9E492F1380A0246274CF8058B15718574353F212EB23CF"
+    },
+    {
+      "file": "tiled-objects.tmj",
+      "check": "official-Tiled-1.12.2-JSON-roundtrip",
+      "passed": true,
+      "sha256": "8DAFFEE623138A65C88415773F17C61475122B11BFD4205B5362D9DDAAD1F54E"
+    },
+    {
+      "file": "tiled-empty-promotion.tmj",
+      "check": "official-Tiled-1.12.2-JSON-roundtrip",
+      "passed": true,
+      "sha256": "2EB63A64728C4A0CBCDC0D3E7E2B06277EA73A6763ED5CCF6AE745F80141A606"
+    },
+    {
+      "file": "tiled-raw.tmj",
+      "check": "official-Tiled-1.12.2-JSON-roundtrip",
+      "passed": true,
+      "sha256": "1CDCE476E720D2CDDC8AA4D143148E39D04129456E368891355E7B6C0BD161B5"
+    },
+    {
+      "file": "tiled-zlib.tmj",
+      "check": "official-Tiled-1.12.2-JSON-roundtrip",
+      "passed": true,
+      "sha256": "3D6762A046D50CC9152D477C80584658F5A0121E8FA8CD6D862E88168BA7CE3A"
+    },
+    {
+      "file": "tiled-gzip.tmj",
+      "check": "official-Tiled-1.12.2-JSON-roundtrip",
+      "passed": true,
+      "sha256": "D9BF64027B5A754FF76DCC444B7C82CF4F3D4DC986A683BC9A97D9C17BE25168"
+    },
+    {
+      "file": "ldtk-inline.ldtk + levels/Fixture.ldtkl",
+      "check": "identical-level-data",
+      "passed": true
+    },
+    {
+      "file": "diagnostic-cases.json",
+      "check": "all-intended-invalid-cases-have-valid-JSON-syntax",
+      "count": 15,
+      "passed": true
+    }
+  ],
+  "note": "These checks validate fixtures, not the Cerneala importer or validator. Expected invalid data remains invalid by design."
+}

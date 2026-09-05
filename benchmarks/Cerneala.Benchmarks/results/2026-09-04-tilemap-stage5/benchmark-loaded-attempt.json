@@ -1,0 +1,207 @@
+{
+  "Schema": "cerneala-tilemap-stage4-v1",
+  "TimestampUtc": "2026-09-04T12:52:26.438497+00:00",
+  "Commit": "2d82aaca04ea7b00f534e6148a367df08e386fc2",
+  "WorkingTreeDirty": true,
+  "Runtime": ".NET 8.0.30",
+  "OperatingSystem": "Microsoft Windows 10.0.26200",
+  "ProcessArchitecture": "X64",
+  "Processor": "Intel64 Family 6 Model 158 Stepping 10, GenuineIntel",
+  "LogicalProcessorCount": 8,
+  "StopwatchFrequency": 10000000,
+  "WarmupIterations": 64,
+  "MeasurementIterations": 512,
+  "Fixture": {
+    "Seed": 23063,
+    "WidthInTiles": 128,
+    "HeightInTiles": 96,
+    "LayerCount": 3,
+    "ChunkSize": 16,
+    "ViewWidthInTiles": 48,
+    "ViewHeightInTiles": 32
+  },
+  "Baseline": {
+    "Artifact": "benchmarks/Cerneala.Benchmarks/results/2026-09-04-tilemap-baseline/baseline.json",
+    "WarmStaticP95Microseconds": 3495.2,
+    "WarmStaticAllocatedBytes": 2910116,
+    "CameraPanP95Microseconds": 2915.2,
+    "CameraPanAllocatedBytes": 3822182.203125,
+    "ChunkMutationP95Microseconds": 2262.2,
+    "ChunkMutationAllocatedBytes": 2865317.140625
+  },
+  "Scenarios": [
+    {
+      "Name": "warm-static",
+      "CpuP50Microseconds": 139.5,
+      "CpuP95Microseconds": 264.9,
+      "AllocatedBytesPerOperation": 15818.8125,
+      "Counters": {
+        "TotalChunks": 144,
+        "CandidateChunks": 45,
+        "VisibleChunks": 27,
+        "CandidateTiles": 6912,
+        "DrawnTiles": 6283,
+        "BatchesBuilt": 0,
+        "BatchesRebuilt": 0,
+        "BatchesReused": 36,
+        "DrawCommands": 36,
+        "RetainedBytes": 917120,
+        "RetainedObjects": 6427,
+        "TileInvalidations": 0,
+        "PromotedInstancesVisible": 0,
+        "PromotedInstancesCulled": 0,
+        "Promotions": 0,
+        "Demotions": 0,
+        "BatchSplits": 0
+      }
+    },
+    {
+      "Name": "camera-pan",
+      "CpuP50Microseconds": 141.3,
+      "CpuP95Microseconds": 387.5,
+      "AllocatedBytesPerOperation": 18833.8125,
+      "Counters": {
+        "TotalChunks": 144,
+        "CandidateChunks": 36,
+        "VisibleChunks": 36,
+        "CandidateTiles": 9216,
+        "DrawnTiles": 8379,
+        "BatchesBuilt": 0,
+        "BatchesRebuilt": 0,
+        "BatchesReused": 48,
+        "DrawCommands": 48,
+        "RetainedBytes": 1528704,
+        "RetainedObjects": 10713,
+        "TileInvalidations": 0,
+        "PromotedInstancesVisible": 0,
+        "PromotedInstancesCulled": 0,
+        "Promotions": 0,
+        "Demotions": 0,
+        "BatchSplits": 0
+      }
+    },
+    {
+      "Name": "chunk-mutation",
+      "CpuP50Microseconds": 570.7,
+      "CpuP95Microseconds": 1217.1,
+      "AllocatedBytesPerOperation": 198923.375,
+      "Counters": {
+        "TotalChunks": 144,
+        "CandidateChunks": 45,
+        "VisibleChunks": 27,
+        "CandidateTiles": 6912,
+        "DrawnTiles": 6283,
+        "BatchesBuilt": 1,
+        "BatchesRebuilt": 1,
+        "BatchesReused": 35,
+        "DrawCommands": 36,
+        "RetainedBytes": 917120,
+        "RetainedObjects": 6427,
+        "TileInvalidations": 1,
+        "PromotedInstancesVisible": 0,
+        "PromotedInstancesCulled": 0,
+        "Promotions": 0,
+        "Demotions": 0,
+        "BatchSplits": 0
+      }
+    }
+  ],
+  "FullFixtureRetainedBytes": 4891904,
+  "Gates": [
+    {
+      "Name": "warm-static-p95-us",
+      "Passed": true,
+      "Evidence": "actual=264.9, maximum=875"
+    },
+    {
+      "Name": "warm-static-allocated-bytes",
+      "Passed": true,
+      "Evidence": "actual=15818.813, maximum=30000"
+    },
+    {
+      "Name": "warm-static-rebuilds",
+      "Passed": true,
+      "Evidence": "actual=0, expected=0"
+    },
+    {
+      "Name": "warm-static-reused-segments",
+      "Passed": true,
+      "Evidence": "actual=36, minimum=36"
+    },
+    {
+      "Name": "warm-static-draw-commands",
+      "Passed": true,
+      "Evidence": "actual=36, maximum=36"
+    },
+    {
+      "Name": "warm-static-retained-bytes",
+      "Passed": true,
+      "Evidence": "actual=917120, maximum=1048576"
+    },
+    {
+      "Name": "camera-pan-p95-us",
+      "Passed": true,
+      "Evidence": "actual=387.5, maximum=1460"
+    },
+    {
+      "Name": "camera-pan-allocated-bytes",
+      "Passed": true,
+      "Evidence": "actual=18833.813, maximum=192000"
+    },
+    {
+      "Name": "camera-pan-rebuilds",
+      "Passed": true,
+      "Evidence": "actual=0, expected=0"
+    },
+    {
+      "Name": "camera-pan-draw-commands",
+      "Passed": true,
+      "Evidence": "actual=48, maximum=48"
+    },
+    {
+      "Name": "chunk-mutation-p95-us",
+      "Passed": false,
+      "Evidence": "actual=1217.1, maximum=1135"
+    },
+    {
+      "Name": "chunk-mutation-allocated-bytes",
+      "Passed": true,
+      "Evidence": "actual=198923.375, maximum=717000"
+    },
+    {
+      "Name": "chunk-mutation-rebuilds",
+      "Passed": true,
+      "Evidence": "actual=1, expected=1"
+    },
+    {
+      "Name": "chunk-mutation-other-visible-segments-reused",
+      "Passed": true,
+      "Evidence": "actual=35, expected=35"
+    },
+    {
+      "Name": "chunk-mutation-tile-invalidations",
+      "Passed": true,
+      "Evidence": "actual=1, expected=1"
+    },
+    {
+      "Name": "warm-static-indexed-culling",
+      "Passed": true,
+      "Evidence": "candidateChunks=45, totalChunks=144, candidateTiles=6912, visibleChunks=27"
+    },
+    {
+      "Name": "camera-pan-indexed-culling",
+      "Passed": true,
+      "Evidence": "candidateChunks=36, totalChunks=144, candidateTiles=9216, visibleChunks=36"
+    },
+    {
+      "Name": "chunk-mutation-indexed-culling",
+      "Passed": true,
+      "Evidence": "candidateChunks=45, totalChunks=144, candidateTiles=6912, visibleChunks=27"
+    },
+    {
+      "Name": "full-fixture-retained-bytes",
+      "Passed": true,
+      "Evidence": "actual=4891904, maximum=5242880"
+    }
+  ]
+}

@@ -1,0 +1,242 @@
+[
+  {
+    "Driver": "Hardware",
+    "Format": "Color",
+    "Requested": 0,
+    "Actual": 0,
+    "SampleDescription": "{1, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "Hardware",
+    "Format": "Color",
+    "Requested": 2,
+    "Actual": 2,
+    "SampleDescription": "{2, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "Hardware",
+    "Format": "Color",
+    "Requested": 4,
+    "Actual": 4,
+    "SampleDescription": "{4, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "Hardware",
+    "Format": "Color",
+    "Requested": 8,
+    "Actual": 8,
+    "SampleDescription": "{8, 0}",
+    "MaximumDelta255": 24.999998,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "Hardware",
+    "Format": "HalfVector4",
+    "Requested": 0,
+    "Actual": 0,
+    "SampleDescription": "{1, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "Hardware",
+    "Format": "HalfVector4",
+    "Requested": 2,
+    "Actual": 2,
+    "SampleDescription": "{2, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "Hardware",
+    "Format": "HalfVector4",
+    "Requested": 4,
+    "Actual": 4,
+    "SampleDescription": "{4, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "Hardware",
+    "Format": "HalfVector4",
+    "Requested": 8,
+    "Actual": 8,
+    "SampleDescription": "{8, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "Hardware",
+    "Format": "Vector4",
+    "Requested": 0,
+    "Actual": 0,
+    "SampleDescription": "{1, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "Hardware",
+    "Format": "Vector4",
+    "Requested": 2,
+    "Actual": 2,
+    "SampleDescription": "{2, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "Hardware",
+    "Format": "Vector4",
+    "Requested": 4,
+    "Actual": 4,
+    "SampleDescription": "{4, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "Hardware",
+    "Format": "Vector4",
+    "Requested": 8,
+    "Actual": 8,
+    "SampleDescription": "{8, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "FastSoftware",
+    "Format": "Color",
+    "Requested": 0,
+    "Actual": 0,
+    "SampleDescription": "{1, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "FastSoftware",
+    "Format": "Color",
+    "Requested": 2,
+    "Actual": 2,
+    "SampleDescription": "{2, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "FastSoftware",
+    "Format": "Color",
+    "Requested": 4,
+    "Actual": 4,
+    "SampleDescription": "{4, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "FastSoftware",
+    "Format": "Color",
+    "Requested": 8,
+    "Actual": 8,
+    "SampleDescription": "{8, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "FastSoftware",
+    "Format": "HalfVector4",
+    "Requested": 0,
+    "Actual": 0,
+    "SampleDescription": "{1, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "FastSoftware",
+    "Format": "HalfVector4",
+    "Requested": 2,
+    "Actual": 2,
+    "SampleDescription": "{2, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "FastSoftware",
+    "Format": "HalfVector4",
+    "Requested": 4,
+    "Actual": 4,
+    "SampleDescription": "{4, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "FastSoftware",
+    "Format": "HalfVector4",
+    "Requested": 8,
+    "Actual": 8,
+    "SampleDescription": "{8, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "FastSoftware",
+    "Format": "Vector4",
+    "Requested": 0,
+    "Actual": 0,
+    "SampleDescription": "{1, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "FastSoftware",
+    "Format": "Vector4",
+    "Requested": 2,
+    "Actual": 2,
+    "SampleDescription": "{2, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "FastSoftware",
+    "Format": "Vector4",
+    "Requested": 4,
+    "Actual": 4,
+    "SampleDescription": "{4, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  },
+  {
+    "Driver": "FastSoftware",
+    "Format": "Vector4",
+    "Requested": 8,
+    "Actual": 8,
+    "SampleDescription": "{8, 0}",
+    "MaximumDelta255": 0,
+    "Adapter": "NVIDIA GeForce RTX 2060",
+    "Feature": "Level_11_0"
+  }
+]

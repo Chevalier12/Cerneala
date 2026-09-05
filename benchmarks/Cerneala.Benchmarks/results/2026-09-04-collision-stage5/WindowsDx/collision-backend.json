@@ -1,0 +1,11 @@
+{
+  "Backend": "WindowsDX",
+  "Width": 640,
+  "Height": 400,
+  "DistinctClosedColors": 431,
+  "ChangedPixels": 5600,
+  "ClosedSha256": "A8C3836B7CCED4D863B1FFC33CD9F0399B6AB50B36F27D18AC798DBE942D91A9",
+  "OpenSha256": "F51A1B501FA951F189758C23E9DE01CA1E41C65C425706F904F180395C5BB358",
+  "CollisionContract": "PASS",
+  "CoordinateRoundTrip": "PASS"
+}

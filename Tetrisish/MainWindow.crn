@@ -82,25 +82,23 @@
                                     Tint="$DataContext.CurrentTint:OneWay"
                                     IsVisible="$DataContext.CurrentVisible:OneWay">
                                     <Sprite2D.Aspect>
-                                        <Aspect>
-                                            @when $self.IsVisible
+                                        @when $self.IsVisible
+                                        {
+                                            @if $self.IsVisible == true
                                             {
-                                                @if $self.IsVisible == true
+                                                @animate with PingPong(Tween(900ms, EaseInOut), forever)
                                                 {
-                                                    @animate with PingPong(Tween(900ms, EaseInOut), forever)
+                                                    @from
                                                     {
-                                                        @from 
-                                                        { 
-                                                            $self.prism.CurrentEffects.StyledPiece.GlowSize = 4; 
-                                                        }
-                                                        @to 
-                                                        { 
-                                                            $self.prism.CurrentEffects.StyledPiece.GlowSize = 10; 
-                                                        }
+                                                        $self.prism.CurrentEffects.StyledPiece.GlowSize = 4;
+                                                    }
+                                                    @to
+                                                    {
+                                                        $self.prism.CurrentEffects.StyledPiece.GlowSize = 10;
                                                     }
                                                 }
                                             }
-                                        </Aspect>
+                                        }
                                     </Sprite2D.Aspect>
                                     @prism
                                     {

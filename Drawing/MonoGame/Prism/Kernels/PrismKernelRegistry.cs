@@ -125,7 +125,7 @@ internal readonly record struct PrismKernelParameters(
 
 internal sealed class PrismKernelRegistry : IDisposable
 {
-    public const long ShaderPackageVersion = 56;
+    public const long ShaderPackageVersion = 57;
 
     private const string CatalogOwnerPrefix =
         "PrismKernelRegistry/";

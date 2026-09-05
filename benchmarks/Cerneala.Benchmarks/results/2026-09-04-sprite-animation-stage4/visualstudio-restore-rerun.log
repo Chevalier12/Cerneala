@@ -1,0 +1,34 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Cerneala.Tests.VisualStudio -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.VisualStudio\bin\Release\net10.0-windows\Cerneala.Tests.VisualStudio.dll
+  Cerneala.VisualStudio -> C:\Users\lauri\Desktop\Cerneala\Cerneala.VisualStudio\bin\Release\net472\Cerneala.VisualStudio.dll
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.LanguageServer -> C:\Users\lauri\Desktop\Cerneala\Cerneala.LanguageServer\bin\Release\net10.0\win-x64\Cerneala.LanguageServer.dll
+  Cerneala.LanguageServer -> C:\Users\lauri\Desktop\Cerneala\Cerneala.VisualStudio\obj\Release\net472\bundled-server\
+  Determining projects to restore...
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Win32\Cerneala.Platforms.Win32.csproj (in 302 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.csproj (in 302 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\Cerneala.SourceGen.csproj (in 302 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.PreviewHost\Cerneala.PreviewHost.csproj (in 372 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.MonoGame\Cerneala.Backends.MonoGame.csproj (in 374 ms).
+  1 of 6 projects are up-to-date for restore.
+  Tool 'dotnet-mgfxc' (version '3.8.4.1') was restored. Available commands: mgfxc
+  Tool 'sign' (version '0.9.1-beta.26330.1') was restored. Available commands: sign
+  
+  Restore was successful.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Platforms.Win32 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Win32\bin\Release\net8.0-windows\Cerneala.Platforms.Win32.dll
+  Cerneala.Backends.MonoGame -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.MonoGame\bin\Release\net8.0-windows\Cerneala.Backends.MonoGame.dll
+  Cerneala.PreviewHost -> C:\Users\lauri\Desktop\Cerneala\Cerneala.PreviewHost\bin\Release\net10.0-windows\win-x64\Cerneala.PreviewHost.dll
+  Cerneala.PreviewHost -> C:\Users\lauri\Desktop\Cerneala\Cerneala.VisualStudio\obj\Release\net472\bundled-preview-host\
+  Cerneala.VisualStudio -> C:\Users\lauri\Desktop\Cerneala\Cerneala.VisualStudio\bin\Release\net472\Cerneala.VisualStudio.vsix
+  VisualStudioIntegrationHost -> C:\Users\lauri\Desktop\Cerneala\tests\Fixtures\VisualStudioIntegrationHost\bin\Release\net472\Cerneala.VisualStudio.IntegrationHost.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.VisualStudio\bin\Release\net10.0-windows\Cerneala.Tests.VisualStudio.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\results\2026-09-04-sprite-animation-stage4\visualstudio-restore-rerun.trx
+
+Passed!  - Failed:     0, Passed:    47, Skipped:     0, Total:    47, Duration: 553 ms - Cerneala.Tests.VisualStudio.dll (net10.0)

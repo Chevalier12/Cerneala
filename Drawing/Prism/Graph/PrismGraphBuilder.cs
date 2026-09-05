@@ -165,7 +165,7 @@ internal sealed class PrismGraphBuilder
                     compositionSettings,
                     analyzedScope.Bounds,
                     analyzedScope.Scope.ControlBounds,
-                    analyzedScope.Scope.EffectiveTransform,
+                    analyzedScope.EffectiveTransform,
                     analyzedScope.Scope.PixelScale,
                     analyzedScope.DependencyStamp,
                     analyzedScope.Scope.LowerUiVersion,
@@ -197,7 +197,7 @@ internal sealed class PrismGraphBuilder
                     new PrismGraphDependency(
                         PrismGraphDependencyKind.Transform,
                         analyzedScope.DependencyStamp.CacheOwnerToken.Value,
-                        StableTransformHash(analyzedScope.Scope.EffectiveTransform))));
+                        StableTransformHash(analyzedScope.EffectiveTransform))));
             PrismGraphNode conversion = AddNode(
                 PrismGraphNodeKind.ColorConversion,
                 definitionNodeId: null,
@@ -262,7 +262,7 @@ internal sealed class PrismGraphBuilder
                 compositionSettings,
                 analyzedScope.Bounds,
                 analyzedScope.Scope.ControlBounds,
-                analyzedScope.Scope.EffectiveTransform,
+                analyzedScope.EffectiveTransform,
                 analyzedScope.Scope.PixelScale,
                 analyzedScope.DependencyStamp,
                 analyzedScope.Scope.LowerUiVersion,

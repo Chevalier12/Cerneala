@@ -75,7 +75,7 @@ public sealed class ElementInputCacheInvalidationTests
     }
 
     [Fact]
-    public void HitTestPhaseRebuildsDirtyInputCacheBeforeNoWorkFrames()
+    public void HitTestPhaseProcessesGeometryWithoutRebuildingRouteMap()
     {
         UIRoot root = RootWithChildAfterFrame(out UIElement child);
         root.InputCache.EnsureCurrent(root);
@@ -84,7 +84,7 @@ public sealed class ElementInputCacheInvalidationTests
         child.Invalidate(Cerneala.UI.Invalidation.InvalidationFlags.HitTest, "route changed");
         Cerneala.UI.Invalidation.FrameStats stats = root.ProcessFrame();
 
-        Assert.Equal(rebuildsAfterInitialBuild + 1, root.InputCache.RebuildCount);
+        Assert.Equal(rebuildsAfterInitialBuild, root.InputCache.RebuildCount);
         Assert.True(stats.HitTestElements > 0);
         Assert.False(root.Scheduler.HasWork);
     }

@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="b771e57f-85a6-4d22-9930-1f8c38fd6a12" name="lauri@DESKTOP-JT43V3D 2026-09-05 03:41:58" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T03:41:58.8156652+03:00" queuing="2026-09-05T03:41:58.8156656+03:00" start="2026-09-05T03:41:54.7335969+03:00" finish="2026-09-05T03:41:59.0126652+03:00" />
+  <TestSettings name="default" id="94de9e1a-8962-4d3f-b7b2-b21e4a8510a9">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_03_41_58" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="62f9cd08-0e7e-4775-b2f1-81471595babe" testId="a55b5358-e53c-cc34-feea-60f1d4b8f40d" testName="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.FieldsForADifferentLayerKindAreNotSilentlyLost(mutation: &quot;tile-nested-layers&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0179183" startTime="2026-09-05T03:41:58.1310371+03:00" endTime="2026-09-05T03:41:58.1310375+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="62f9cd08-0e7e-4775-b2f1-81471595babe" />
+    <UnitTestResult executionId="dedd3d0c-8a92-42d1-b785-0c4a3644474c" testId="121d7706-e7f7-805a-fe12-ebd66d3c3beb" testName="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.FieldsForADifferentLayerKindAreNotSilentlyLost(mutation: &quot;tile-objects&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0195849" startTime="2026-09-05T03:41:58.1465969+03:00" endTime="2026-09-05T03:41:58.1465979+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="dedd3d0c-8a92-42d1-b785-0c4a3644474c" />
+    <UnitTestResult executionId="66d39336-3a88-4c65-ab42-22b1b54f5676" testId="44edae4e-4cf3-b98f-9509-b4eca9aaa9a0" testName="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.TruncatedCompressionContainerDoesNotBecomeAValidMap(compression: &quot;gzip&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.5408776" startTime="2026-09-05T03:41:58.7201076+03:00" endTime="2026-09-05T03:41:58.7201087+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="66d39336-3a88-4c65-ab42-22b1b54f5676" />
+    <UnitTestResult executionId="479c65fa-f873-4f8d-9aeb-b8cf2b0d918c" testId="69934315-3c79-d856-7e72-26d250eb6c9a" testName="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.TruncatedCompressionContainerDoesNotBecomeAValidMap(compression: &quot;zlib&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1146723" startTime="2026-09-05T03:41:58.8350395+03:00" endTime="2026-09-05T03:41:58.8350400+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="479c65fa-f873-4f8d-9aeb-b8cf2b0d918c" />
+    <UnitTestResult executionId="d9e32b5d-fa08-45de-bfa0-24c69a559fd3" testId="40e184e2-fbf6-b1f1-3d82-bc99fd9364bf" testName="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.FieldsForADifferentLayerKindAreNotSilentlyLost(mutation: &quot;group-data&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.9551264" startTime="2026-09-05T03:41:58.1150352+03:00" endTime="2026-09-05T03:41:58.1150683+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d9e32b5d-fa08-45de-bfa0-24c69a559fd3" />
+    <UnitTestResult executionId="a29d1ecf-b2ac-453a-8e32-0d21a70849f8" testId="1479f4b9-f165-c703-70a1-e81898fff92f" testName="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.FieldsForADifferentLayerKindAreNotSilentlyLost(mutation: &quot;object-data&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0316004" startTime="2026-09-05T03:41:58.1785259+03:00" endTime="2026-09-05T03:41:58.1785276+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a29d1ecf-b2ac-453a-8e32-0d21a70849f8" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.TruncatedCompressionContainerDoesNotBecomeAValidMap(compression: &quot;zlib&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="69934315-3c79-d856-7e72-26d250eb6c9a">
+      <Execution id="479c65fa-f873-4f8d-9aeb-b8cf2b0d918c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests" name="TruncatedCompressionContainerDoesNotBecomeAValidMap" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.FieldsForADifferentLayerKindAreNotSilentlyLost(mutation: &quot;tile-objects&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="121d7706-e7f7-805a-fe12-ebd66d3c3beb">
+      <Execution id="dedd3d0c-8a92-42d1-b785-0c4a3644474c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests" name="FieldsForADifferentLayerKindAreNotSilentlyLost" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.FieldsForADifferentLayerKindAreNotSilentlyLost(mutation: &quot;group-data&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="40e184e2-fbf6-b1f1-3d82-bc99fd9364bf">
+      <Execution id="d9e32b5d-fa08-45de-bfa0-24c69a559fd3" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests" name="FieldsForADifferentLayerKindAreNotSilentlyLost" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.FieldsForADifferentLayerKindAreNotSilentlyLost(mutation: &quot;object-data&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="1479f4b9-f165-c703-70a1-e81898fff92f">
+      <Execution id="a29d1ecf-b2ac-453a-8e32-0d21a70849f8" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests" name="FieldsForADifferentLayerKindAreNotSilentlyLost" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.TruncatedCompressionContainerDoesNotBecomeAValidMap(compression: &quot;gzip&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="44edae4e-4cf3-b98f-9509-b4eca9aaa9a0">
+      <Execution id="66d39336-3a88-4c65-ab42-22b1b54f5676" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests" name="TruncatedCompressionContainerDoesNotBecomeAValidMap" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.FieldsForADifferentLayerKindAreNotSilentlyLost(mutation: &quot;tile-nested-layers&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="a55b5358-e53c-cc34-feea-60f1d4b8f40d">
+      <Execution id="62f9cd08-0e7e-4775-b2f1-81471595babe" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests" name="FieldsForADifferentLayerKindAreNotSilentlyLost" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="a55b5358-e53c-cc34-feea-60f1d4b8f40d" executionId="62f9cd08-0e7e-4775-b2f1-81471595babe" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="121d7706-e7f7-805a-fe12-ebd66d3c3beb" executionId="dedd3d0c-8a92-42d1-b785-0c4a3644474c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="44edae4e-4cf3-b98f-9509-b4eca9aaa9a0" executionId="66d39336-3a88-4c65-ab42-22b1b54f5676" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="69934315-3c79-d856-7e72-26d250eb6c9a" executionId="479c65fa-f873-4f8d-9aeb-b8cf2b0d918c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="40e184e2-fbf6-b1f1-3d82-bc99fd9364bf" executionId="d9e32b5d-fa08-45de-bfa0-24c69a559fd3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1479f4b9-f165-c703-70a1-e81898fff92f" executionId="a29d1ecf-b2ac-453a-8e32-0d21a70849f8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="6" executed="6" passed="6" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.17]   Discovering: Cerneala.Tests.Scene2DImporters&#xD;
+[xUnit.net 00:00:00.42]   Discovered:  Cerneala.Tests.Scene2DImporters&#xD;
+[xUnit.net 00:00:00.44]   Starting:    Cerneala.Tests.Scene2DImporters&#xD;
+[xUnit.net 00:00:02.30]   Finished:    Cerneala.Tests.Scene2DImporters&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

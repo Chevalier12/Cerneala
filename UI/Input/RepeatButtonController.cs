@@ -19,8 +19,8 @@ internal sealed class RepeatButtonController
         CommandRouter commandRouter,
         PressedStateTracker pressedStateTracker)
     {
-        UIElement? hitSource = FindAncestor(hitElement);
-        UIElement? routedSource = FindAncestor(routedElement);
+        UIElement? hitSource = FindAncestor(hitElement, routeMap);
+        UIElement? routedSource = FindAncestor(routedElement, routeMap);
         if (hitSource is null || !ReferenceEquals(hitSource, routedSource) || !IsValid(hitSource, root, routeMap))
         {
             Clear();
@@ -54,7 +54,7 @@ internal sealed class RepeatButtonController
         }
 
         if (!isLeftButtonDown ||
-            !ReferenceEquals(FindAncestor(hitElement), source) ||
+            !ReferenceEquals(FindAncestor(hitElement, routeMap), source) ||
             !IsActiveAndValid(root, routeMap, pressedStateTracker))
         {
             Cancel(pressedStateTracker);
@@ -137,9 +137,14 @@ internal sealed class RepeatButtonController
         ((IInputCommandSource)candidate).ExecuteCommand(commandRouter, routeMap);
     }
 
-    private static UIElement? FindAncestor(UIElement? element)
+    private static UIElement? FindAncestor(
+        UIElement? element,
+        ElementInputRouteMap routeMap)
     {
-        for (UIElement? current = element; current is not null; current = current.VisualParent)
+        IReadOnlyList<UIElement> route = element is null
+            ? []
+            : routeMap.GetRouteToRoot(element);
+        foreach (UIElement current in route)
         {
             if (current.PointerRepeatDelay is not null)
             {

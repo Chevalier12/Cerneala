@@ -1,0 +1,92 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="2e7eda02-6cb2-41df-8f7b-020bea0a606f" name="lauri@DESKTOP-JT43V3D 2026-09-05 14:02:26" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T14:02:26.7484793+03:00" queuing="2026-09-05T14:02:26.7484796+03:00" start="2026-09-05T14:02:24.5981587+03:00" finish="2026-09-05T14:02:26.7555305+03:00" />
+  <TestSettings name="default" id="dac441c0-d1e1-4ff2-950f-5b30f6bf918a">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_14_02_26" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="567cef40-2884-419a-90dc-7c74360616d6" testId="74ed9c53-d74f-a96c-3f1e-88c9cbcb23c5" testName="Cerneala.Tests.UI.Servo.ServoSceneTests.SurfaceLayoutOriginIsIncludedWithAndWithoutViewBox(useViewBox: True, dpi: 1)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0020529" startTime="2026-09-05T14:02:26.6365863+03:00" endTime="2026-09-05T14:02:26.6365867+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="567cef40-2884-419a-90dc-7c74360616d6" />
+    <UnitTestResult executionId="2bd659da-286c-47c8-9325-fb29f77545df" testId="1c2476f0-c5a8-60e4-3119-73b304d395f6" testName="Cerneala.Tests.UI.Servo.ServoSceneTests.SurfaceLayoutOriginIsIncludedWithAndWithoutViewBox(useViewBox: False, dpi: 1.25)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0005151" startTime="2026-09-05T14:02:26.6382709+03:00" endTime="2026-09-05T14:02:26.6382711+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2bd659da-286c-47c8-9325-fb29f77545df">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.InRange() Failure: Value not in range&#xD;
+Range:  (0 - 9.99999975E-05)&#xD;
+Actual: 14</Message>
+          <StackTrace>   at Cerneala.Tests.UI.Servo.ServoSceneTests.SurfaceLayoutOriginIsIncludedWithAndWithoutViewBox(Boolean useViewBox, Single dpi) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\UI\Servo\ServoSceneTests.cs:line 35&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="57b166dd-ec5b-4567-8fc9-c1783b37ab14" testId="6a1d90f5-2bd6-9cda-b16a-96e1f3b23cfc" testName="Cerneala.Tests.UI.Servo.ServoSceneTests.SurfaceLayoutOriginIsIncludedWithAndWithoutViewBox(useViewBox: False, dpi: 1)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0020751" startTime="2026-09-05T14:02:26.6339799+03:00" endTime="2026-09-05T14:02:26.6339804+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="57b166dd-ec5b-4567-8fc9-c1783b37ab14">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.InRange() Failure: Value not in range&#xD;
+Range:  (0 - 9.99999975E-05)&#xD;
+Actual: 20</Message>
+          <StackTrace>   at Cerneala.Tests.UI.Servo.ServoSceneTests.SurfaceLayoutOriginIsIncludedWithAndWithoutViewBox(Boolean useViewBox, Single dpi) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\UI\Servo\ServoSceneTests.cs:line 35&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="0133b267-8c9f-47ad-854f-15a857608e81" testId="275f7b8e-af7d-1d1e-f960-2fead64f1290" testName="Cerneala.Tests.UI.Servo.ServoSceneTests.SurfaceLayoutOriginIsIncludedWithAndWithoutViewBox(useViewBox: True, dpi: 1.25)" computerName="DESKTOP-JT43V3D" duration="00:00:00.3013124" startTime="2026-09-05T14:02:26.6118258+03:00" endTime="2026-09-05T14:02:26.6118470+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0133b267-8c9f-47ad-854f-15a857608e81" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.UI.Servo.ServoSceneTests.SurfaceLayoutOriginIsIncludedWithAndWithoutViewBox(useViewBox: True, dpi: 1.25)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="275f7b8e-af7d-1d1e-f960-2fead64f1290">
+      <Execution id="0133b267-8c9f-47ad-854f-15a857608e81" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.UI.Servo.ServoSceneTests" name="SurfaceLayoutOriginIsIncludedWithAndWithoutViewBox" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.UI.Servo.ServoSceneTests.SurfaceLayoutOriginIsIncludedWithAndWithoutViewBox(useViewBox: True, dpi: 1)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="74ed9c53-d74f-a96c-3f1e-88c9cbcb23c5">
+      <Execution id="567cef40-2884-419a-90dc-7c74360616d6" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.UI.Servo.ServoSceneTests" name="SurfaceLayoutOriginIsIncludedWithAndWithoutViewBox" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.UI.Servo.ServoSceneTests.SurfaceLayoutOriginIsIncludedWithAndWithoutViewBox(useViewBox: False, dpi: 1)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="6a1d90f5-2bd6-9cda-b16a-96e1f3b23cfc">
+      <Execution id="57b166dd-ec5b-4567-8fc9-c1783b37ab14" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.UI.Servo.ServoSceneTests" name="SurfaceLayoutOriginIsIncludedWithAndWithoutViewBox" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.UI.Servo.ServoSceneTests.SurfaceLayoutOriginIsIncludedWithAndWithoutViewBox(useViewBox: False, dpi: 1.25)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="1c2476f0-c5a8-60e4-3119-73b304d395f6">
+      <Execution id="2bd659da-286c-47c8-9325-fb29f77545df" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.UI.Servo.ServoSceneTests" name="SurfaceLayoutOriginIsIncludedWithAndWithoutViewBox" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="74ed9c53-d74f-a96c-3f1e-88c9cbcb23c5" executionId="567cef40-2884-419a-90dc-7c74360616d6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1c2476f0-c5a8-60e4-3119-73b304d395f6" executionId="2bd659da-286c-47c8-9325-fb29f77545df" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6a1d90f5-2bd6-9cda-b16a-96e1f3b23cfc" executionId="57b166dd-ec5b-4567-8fc9-c1783b37ab14" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="275f7b8e-af7d-1d1e-f960-2fead64f1290" executionId="0133b267-8c9f-47ad-854f-15a857608e81" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="4" executed="4" passed="2" failed="2" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.20]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.82]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.85]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.22]       Assert.InRange() Failure: Value not in range&#xD;
+[xUnit.net 00:00:01.22]       Range:  (0 - 9.99999975E-05)&#xD;
+[xUnit.net 00:00:01.22]       Actual: 20&#xD;
+[xUnit.net 00:00:01.22]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.22]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\UI\Servo\ServoSceneTests.cs(35,0): at Cerneala.Tests.UI.Servo.ServoSceneTests.SurfaceLayoutOriginIsIncludedWithAndWithoutViewBox(Boolean useViewBox, Single dpi)&#xD;
+[xUnit.net 00:00:01.22]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.23]       Assert.InRange() Failure: Value not in range&#xD;
+[xUnit.net 00:00:01.23]       Range:  (0 - 9.99999975E-05)&#xD;
+[xUnit.net 00:00:01.23]       Actual: 14&#xD;
+[xUnit.net 00:00:01.23]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.23]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\UI\Servo\ServoSceneTests.cs(35,0): at Cerneala.Tests.UI.Servo.ServoSceneTests.SurfaceLayoutOriginIsIncludedWithAndWithoutViewBox(Boolean useViewBox, Single dpi)&#xD;
+[xUnit.net 00:00:01.23]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.23]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T14:02:26.6320898+03:00">
+        <Text>[xUnit.net 00:00:01.22]     Cerneala.Tests.UI.Servo.ServoSceneTests.SurfaceLayoutOriginIsIncludedWithAndWithoutViewBox(useViewBox: False, dpi: 1) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T14:02:26.6380088+03:00">
+        <Text>[xUnit.net 00:00:01.23]     Cerneala.Tests.UI.Servo.ServoSceneTests.SurfaceLayoutOriginIsIncludedWithAndWithoutViewBox(useViewBox: False, dpi: 1.25) [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

@@ -40,32 +40,27 @@ internal sealed partial class CernealaSemanticModel
                 continue;
             }
 
-            ElementSyntax[] declarations = property.Children.OfType<ElementSyntax>()
-                .Where(element => element.Name == "Aspect")
-                .ToArray();
-            if (declarations.Length > 1)
+            foreach (ElementSyntax declaration in property.Children.OfType<ElementSyntax>()
+                .Where(element => LocalElementName(element.Name) == "Aspect"))
             {
-                AddShapeDiagnostic(property.NameToken.Span, "An inline Aspect property element accepts at most one Aspect declaration.");
-                continue;
+                AddShapeDiagnostic(
+                    declaration.NameToken.Span,
+                    "<" + property.Name + "> already declares the inline Aspect; remove the redundant <Aspect> wrapper " +
+                    "and place its body directly in <" + property.Name + ">.");
             }
 
-            ElementSyntax body = declarations.Length == 1 ? declarations[0] : property;
             ILanguageTypeSymbol? targetType = GetElementType(owner, ReferenceEquals(owner, root));
             ResourceDefinition definition = new(
                 name: null,
                 ResourceKind.Aspect,
                 type: null,
                 targetType,
-                body,
+                property,
                 document.Path,
                 property.NameToken.Span,
                 isApplication: false);
             inlineAspectProperties[property] = definition;
             resourceElements[property] = definition;
-            if (!ReferenceEquals(body, property))
-            {
-                resourceElements[body] = definition;
-            }
 
             if (FindAttribute(owner, "Aspect") is AttributeSyntax aspectAttribute)
             {
@@ -204,10 +199,13 @@ internal sealed partial class CernealaSemanticModel
         IReadOnlyDictionary<string, NamespaceAlias> namespaceAliases,
         bool isApplication)
     {
-        ResourceKind kind = element.Name switch
+        string elementName = LocalElementName(element.Name);
+        ResourceKind kind = elementName switch
         {
             "Aspect" => ResourceKind.Aspect,
             "SolidColorBrush" or "LinearGradientBrush" or "RadialGradientBrush" or "ImageBrush" or "DrawingBrush" => ResourceKind.Brush,
+            "ImageResource" => ResourceKind.ImageResource,
+            "SpriteAnimationSet" => ResourceKind.SpriteAnimationSet,
             "ContentTemplate" => ResourceKind.ContentTemplate,
             "Tween" or "Spring" => ResourceKind.MotionSpec,
             "MotionClip" => ResourceKind.MotionClip,
@@ -223,7 +221,9 @@ internal sealed partial class CernealaSemanticModel
 
         ILanguageTypeSymbol? type = kind switch
         {
-            ResourceKind.Brush => compilation.FindType("Cerneala.UI.Media." + element.Name),
+            ResourceKind.Brush => compilation.FindType("Cerneala.UI.Media." + elementName),
+            ResourceKind.ImageResource => compilation.FindType("Cerneala.UI.Resources.ImageResource"),
+            ResourceKind.SpriteAnimationSet => compilation.FindType("Cerneala.UI.Controls.SpriteAnimationSet"),
             ResourceKind.MotionSpec or ResourceKind.MotionClip or ResourceKind.PrismComposition =>
                 compilation.FindType("System.Object"),
             _ => null
@@ -301,7 +301,8 @@ internal sealed partial class CernealaSemanticModel
         Dictionary<SemanticTemplateContext, SemanticNameScope> templateScopes = new();
         foreach (ElementSyntax element in document.Syntax.DescendantElements().OrderBy(candidate => candidate.Span.Start))
         {
-            if (element.Kind == SyntaxKind.PropertyElement || resourceElements.ContainsKey(element) || element.Name == "ContentTemplate")
+            if (element.Kind == SyntaxKind.PropertyElement || resourceElements.ContainsKey(element) ||
+                IsSpriteAnimationDefinitionElement(element) || element.Name == "ContentTemplate")
             {
                 continue;
             }
@@ -589,9 +590,19 @@ internal sealed partial class CernealaSemanticModel
         element.Kind == SyntaxKind.PropertyElement && element.Name.EndsWith(".Resources", StringComparison.Ordinal);
 
     private bool IsSpecialElement(ElementSyntax element) =>
-        element.Name is "Aspect" or "ContentTemplate" or "SolidColorBrush" or "LinearGradientBrush" or
-            "RadialGradientBrush" or "ImageBrush" or "DrawingBrush" or "Tween" or "Spring" or
-            "MotionClip" or "PrismComposition" || IsResourcePropertyElement(element);
+        LocalElementName(element.Name) is "Aspect" or "ContentTemplate" or "SolidColorBrush" or "LinearGradientBrush" or
+            "RadialGradientBrush" or "ImageBrush" or "DrawingBrush" or "ImageResource" or "Tween" or "Spring" or
+            "MotionClip" or "PrismComposition" or "SpriteAnimationSet" or "SpriteAnimationClip" or
+            "SpriteAnimationFrame" || IsResourcePropertyElement(element);
+
+    private static bool IsSpriteAnimationDefinitionElement(ElementSyntax element) =>
+        LocalElementName(element.Name) is "SpriteAnimationSet" or "SpriteAnimationClip" or "SpriteAnimationFrame";
+
+    private static string LocalElementName(string name)
+    {
+        int separator = name.LastIndexOf(':');
+        return separator < 0 ? name : name.Substring(separator + 1);
+    }
 
     private static IEnumerable<ElementSyntax> Descendants(ElementSyntax element)
     {
@@ -710,6 +721,8 @@ internal sealed partial class CernealaSemanticModel
     private enum ResourceKind
     {
         Brush,
+        ImageResource,
+        SpriteAnimationSet,
         Aspect,
         ContentTemplate,
         MotionSpec,

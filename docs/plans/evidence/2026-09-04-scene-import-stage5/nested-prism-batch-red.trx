@@ -1,0 +1,124 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="aa2c09d8-8fa6-49fc-a0ce-b0d1d1d5c391" name="lauri@DESKTOP-JT43V3D 2026-09-05 13:36:39" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T13:36:39.1876184+03:00" queuing="2026-09-05T13:36:39.1876186+03:00" start="2026-09-05T13:36:36.4006101+03:00" finish="2026-09-05T13:36:39.1939389+03:00" />
+  <TestSettings name="default" id="85754f84-4d0d-43b4-9864-cd13dd53f7f9">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_13_36_39" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="135cf2c7-0ace-41b1-b54e-9a6c9d23ae1f" testId="f8465be6-9052-28e3-6550-3f2c21110f48" testName="Cerneala.Tests.SdlGpu.SdlGpuDrawingBackendTests.NestedPrismPresentationRestoresBatchTargetForFollowingGeometry(inRenderSurface: False)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0058703" startTime="2026-09-05T13:36:39.1041996+03:00" endTime="2026-09-05T13:36:39.1041998+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="135cf2c7-0ace-41b1-b54e-9a6c9d23ae1f">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : SDL_GPU batching requires an active target.</Message>
+          <StackTrace>   at Cerneala.Backends.SdlGpu.Cerberus.Flush(CerberusExecutionContext context) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\Cerberus.cs:line 107&#xD;
+   at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.FlushBatches() in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingBackend.cs:line 189&#xD;
+   at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.RenderCommandRange(DrawCommandList commands, Int32 start, Int32 end, DrawCommandStateAnalysis analysis, SdlGpuRenderTarget target, IReadOnlyDictionary`2 childSurfaces, CommandRangeState continuedState, Vector2 logicalOrigin, Boolean isolateCompositingState) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingBackend.cs:line 1477&#xD;
+   at Cerneala.Backends.SdlGpu.SdlGpuPrismExecutor.RenderControlCapture(DrawCommandList commands, DrawCommandStateAnalysis analysis, PrismGraphExecutionPlan plan, PrismGraph graph, PrismGraphNode node, SdlGpuRenderTarget target) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Prism\SdlGpuPrismExecutor.cs:line 372&#xD;
+   at Cerneala.Backends.SdlGpu.SdlGpuPrismExecutor.RenderNode(DrawCommandList commands, DrawCommandStateAnalysis stateAnalysis, PrismGraphExecutionPlan plan, PrismGraph graph, Int32 step, PrismGraphNode node, SdlGpuRenderTarget target, IBackdropFrameLease backdropLease) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Prism\SdlGpuPrismExecutor.cs:line 284&#xD;
+   at Cerneala.Backends.SdlGpu.SdlGpuPrismExecutor.Execute(DrawCommandList commands, DrawingFrameContext&amp; frameContext, SdlGpuRenderTarget hostTarget) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Prism\SdlGpuPrismExecutor.cs:line 142&#xD;
+   at Cerneala.Backends.SdlGpu.SdlGpuPrismExecutor.Execute(DrawCommandList commands, DrawingFrameContext&amp; frameContext) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Prism\SdlGpuPrismExecutor.cs:line 74&#xD;
+   at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.Render(DrawCommandList commands, DrawingFrameContext&amp; frameContext) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingBackend.cs:line 125&#xD;
+   at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.Cerneala.Drawing.IDrawingBackend.Render(DrawCommandList commands, DrawingFrameContext&amp; frameContext)&#xD;
+   at Cerneala.Tests.SdlGpu.SdlGpuDrawingBackendTests.Render(SdlGpuWindowGraphicsSession session, DrawCommandList commands, DrawingFrameContext frame) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlGpuDrawingBackendTests.cs:line 1105&#xD;
+   at Cerneala.Tests.SdlGpu.SdlGpuDrawingBackendTests.Render(SdlGpuWindowGraphicsSession session, DrawCommandList commands) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlGpuDrawingBackendTests.cs:line 1096&#xD;
+   at Cerneala.Tests.SdlGpu.SdlGpuDrawingBackendTests.NestedPrismPresentationRestoresBatchTargetForFollowingGeometry(Boolean inRenderSurface) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlGpuDrawingBackendTests.cs:line 801&#xD;
+   at InvokeStub_SdlGpuDrawingBackendTests.NestedPrismPresentationRestoresBatchTargetForFollowingGeometry(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="a25e38b9-05b2-4231-bdbc-ef4e8173c330" testId="4dd7ba71-070f-d1ed-51b7-b045d824a3cd" testName="Cerneala.Tests.SdlGpu.SdlGpuDrawingBackendTests.NestedPrismPresentationRestoresBatchTargetForFollowingGeometry(inRenderSurface: True)" computerName="DESKTOP-JT43V3D" duration="00:00:00.5898157" startTime="2026-09-05T13:36:39.0992169+03:00" endTime="2026-09-05T13:36:39.0992591+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a25e38b9-05b2-4231-bdbc-ef4e8173c330">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : SDL_GPU batching requires an active target.</Message>
+          <StackTrace>   at Cerneala.Backends.SdlGpu.Cerberus.Flush(CerberusExecutionContext context) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\Cerberus.cs:line 107&#xD;
+   at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.FlushBatches() in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingBackend.cs:line 189&#xD;
+   at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.RenderCommandRange(DrawCommandList commands, Int32 start, Int32 end, DrawCommandStateAnalysis analysis, SdlGpuRenderTarget target, IReadOnlyDictionary`2 childSurfaces, CommandRangeState continuedState, Vector2 logicalOrigin, Boolean isolateCompositingState) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingBackend.cs:line 1477&#xD;
+   at Cerneala.Backends.SdlGpu.SdlGpuPrismExecutor.RenderControlCapture(DrawCommandList commands, DrawCommandStateAnalysis analysis, PrismGraphExecutionPlan plan, PrismGraph graph, PrismGraphNode node, SdlGpuRenderTarget target) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Prism\SdlGpuPrismExecutor.cs:line 372&#xD;
+   at Cerneala.Backends.SdlGpu.SdlGpuPrismExecutor.RenderNode(DrawCommandList commands, DrawCommandStateAnalysis stateAnalysis, PrismGraphExecutionPlan plan, PrismGraph graph, Int32 step, PrismGraphNode node, SdlGpuRenderTarget target, IBackdropFrameLease backdropLease) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Prism\SdlGpuPrismExecutor.cs:line 284&#xD;
+   at Cerneala.Backends.SdlGpu.SdlGpuPrismExecutor.Execute(DrawCommandList commands, DrawingFrameContext&amp; frameContext, SdlGpuRenderTarget hostTarget) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Prism\SdlGpuPrismExecutor.cs:line 142&#xD;
+   at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.RenderSurfaceFrame(IRenderSurface2DFrameSource source, SdlGpuRenderSurfaceState surface, Cerberus surfaceBatches) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingBackend.cs:line 1365&#xD;
+   at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.AddRenderSurface(DrawCommand command, RenderState state, SdlGpuRenderTarget parentTarget, Cerberus parentBatches) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingBackend.cs:line 1317&#xD;
+   at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.RenderRange(DrawCommandList commands, Int32 start, Int32 end, DrawCommandStateAnalysis analysis, CommandRangeState rangeState, Cerberus batches, IReadOnlyDictionary`2 childSurfaces) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingBackend.cs:line 291&#xD;
+   at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.Render(DrawCommandList commands, DrawingFrameContext&amp; frameContext) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingBackend.cs:line 130&#xD;
+   at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.Cerneala.Drawing.IDrawingBackend.Render(DrawCommandList commands, DrawingFrameContext&amp; frameContext)&#xD;
+   at Cerneala.Tests.SdlGpu.SdlGpuDrawingBackendTests.Render(SdlGpuWindowGraphicsSession session, DrawCommandList commands, DrawingFrameContext frame) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlGpuDrawingBackendTests.cs:line 1105&#xD;
+   at Cerneala.Tests.SdlGpu.SdlGpuDrawingBackendTests.Render(SdlGpuWindowGraphicsSession session, DrawCommandList commands) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlGpuDrawingBackendTests.cs:line 1096&#xD;
+   at Cerneala.Tests.SdlGpu.SdlGpuDrawingBackendTests.NestedPrismPresentationRestoresBatchTargetForFollowingGeometry(Boolean inRenderSurface) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlGpuDrawingBackendTests.cs:line 801&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlGpuDrawingBackendTests.NestedPrismPresentationRestoresBatchTargetForFollowingGeometry(inRenderSurface: False)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\debug\net8.0\cerneala.tests.sdlgpu.dll" id="f8465be6-9052-28e3-6550-3f2c21110f48">
+      <Execution id="135cf2c7-0ace-41b1-b54e-9a6c9d23ae1f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Debug\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlGpuDrawingBackendTests" name="NestedPrismPresentationRestoresBatchTargetForFollowingGeometry" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlGpuDrawingBackendTests.NestedPrismPresentationRestoresBatchTargetForFollowingGeometry(inRenderSurface: True)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\debug\net8.0\cerneala.tests.sdlgpu.dll" id="4dd7ba71-070f-d1ed-51b7-b045d824a3cd">
+      <Execution id="a25e38b9-05b2-4231-bdbc-ef4e8173c330" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Debug\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlGpuDrawingBackendTests" name="NestedPrismPresentationRestoresBatchTargetForFollowingGeometry" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="f8465be6-9052-28e3-6550-3f2c21110f48" executionId="135cf2c7-0ace-41b1-b54e-9a6c9d23ae1f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4dd7ba71-070f-d1ed-51b7-b045d824a3cd" executionId="a25e38b9-05b2-4231-bdbc-ef4e8173c330" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="2" executed="2" passed="0" failed="2" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.81]   Discovering: Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:00.87]   Discovered:  Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:00.88]   Starting:    Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:01.53]       System.InvalidOperationException : SDL_GPU batching requires an active target.&#xD;
+[xUnit.net 00:00:01.53]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.53]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\Cerberus.cs(107,0): at Cerneala.Backends.SdlGpu.Cerberus.Flush(CerberusExecutionContext context)&#xD;
+[xUnit.net 00:00:01.53]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingBackend.cs(189,0): at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.FlushBatches()&#xD;
+[xUnit.net 00:00:01.53]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingBackend.cs(1477,0): at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.RenderCommandRange(DrawCommandList commands, Int32 start, Int32 end, DrawCommandStateAnalysis analysis, SdlGpuRenderTarget target, IReadOnlyDictionary`2 childSurfaces, CommandRangeState continuedState, Vector2 logicalOrigin, Boolean isolateCompositingState)&#xD;
+[xUnit.net 00:00:01.53]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Prism\SdlGpuPrismExecutor.cs(372,0): at Cerneala.Backends.SdlGpu.SdlGpuPrismExecutor.RenderControlCapture(DrawCommandList commands, DrawCommandStateAnalysis analysis, PrismGraphExecutionPlan plan, PrismGraph graph, PrismGraphNode node, SdlGpuRenderTarget target)&#xD;
+[xUnit.net 00:00:01.53]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Prism\SdlGpuPrismExecutor.cs(284,0): at Cerneala.Backends.SdlGpu.SdlGpuPrismExecutor.RenderNode(DrawCommandList commands, DrawCommandStateAnalysis stateAnalysis, PrismGraphExecutionPlan plan, PrismGraph graph, Int32 step, PrismGraphNode node, SdlGpuRenderTarget target, IBackdropFrameLease backdropLease)&#xD;
+[xUnit.net 00:00:01.53]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Prism\SdlGpuPrismExecutor.cs(142,0): at Cerneala.Backends.SdlGpu.SdlGpuPrismExecutor.Execute(DrawCommandList commands, DrawingFrameContext&amp; frameContext, SdlGpuRenderTarget hostTarget)&#xD;
+[xUnit.net 00:00:01.53]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingBackend.cs(1365,0): at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.RenderSurfaceFrame(IRenderSurface2DFrameSource source, SdlGpuRenderSurfaceState surface, Cerberus surfaceBatches)&#xD;
+[xUnit.net 00:00:01.53]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingBackend.cs(1317,0): at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.AddRenderSurface(DrawCommand command, RenderState state, SdlGpuRenderTarget parentTarget, Cerberus parentBatches)&#xD;
+[xUnit.net 00:00:01.53]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingBackend.cs(291,0): at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.RenderRange(DrawCommandList commands, Int32 start, Int32 end, DrawCommandStateAnalysis analysis, CommandRangeState rangeState, Cerberus batches, IReadOnlyDictionary`2 childSurfaces)&#xD;
+[xUnit.net 00:00:01.53]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingBackend.cs(130,0): at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.Render(DrawCommandList commands, DrawingFrameContext&amp; frameContext)&#xD;
+[xUnit.net 00:00:01.53]            at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.Cerneala.Drawing.IDrawingBackend.Render(DrawCommandList commands, DrawingFrameContext&amp; frameContext)&#xD;
+[xUnit.net 00:00:01.53]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlGpuDrawingBackendTests.cs(1105,0): at Cerneala.Tests.SdlGpu.SdlGpuDrawingBackendTests.Render(SdlGpuWindowGraphicsSession session, DrawCommandList commands, DrawingFrameContext frame)&#xD;
+[xUnit.net 00:00:01.53]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlGpuDrawingBackendTests.cs(1096,0): at Cerneala.Tests.SdlGpu.SdlGpuDrawingBackendTests.Render(SdlGpuWindowGraphicsSession session, DrawCommandList commands)&#xD;
+[xUnit.net 00:00:01.53]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlGpuDrawingBackendTests.cs(801,0): at Cerneala.Tests.SdlGpu.SdlGpuDrawingBackendTests.NestedPrismPresentationRestoresBatchTargetForFollowingGeometry(Boolean inRenderSurface)&#xD;
+[xUnit.net 00:00:01.53]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.53]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.54]       System.InvalidOperationException : SDL_GPU batching requires an active target.&#xD;
+[xUnit.net 00:00:01.54]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.54]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\Cerberus.cs(107,0): at Cerneala.Backends.SdlGpu.Cerberus.Flush(CerberusExecutionContext context)&#xD;
+[xUnit.net 00:00:01.54]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingBackend.cs(189,0): at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.FlushBatches()&#xD;
+[xUnit.net 00:00:01.54]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingBackend.cs(1477,0): at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.RenderCommandRange(DrawCommandList commands, Int32 start, Int32 end, DrawCommandStateAnalysis analysis, SdlGpuRenderTarget target, IReadOnlyDictionary`2 childSurfaces, CommandRangeState continuedState, Vector2 logicalOrigin, Boolean isolateCompositingState)&#xD;
+[xUnit.net 00:00:01.54]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Prism\SdlGpuPrismExecutor.cs(372,0): at Cerneala.Backends.SdlGpu.SdlGpuPrismExecutor.RenderControlCapture(DrawCommandList commands, DrawCommandStateAnalysis analysis, PrismGraphExecutionPlan plan, PrismGraph graph, PrismGraphNode node, SdlGpuRenderTarget target)&#xD;
+[xUnit.net 00:00:01.54]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Prism\SdlGpuPrismExecutor.cs(284,0): at Cerneala.Backends.SdlGpu.SdlGpuPrismExecutor.RenderNode(DrawCommandList commands, DrawCommandStateAnalysis stateAnalysis, PrismGraphExecutionPlan plan, PrismGraph graph, Int32 step, PrismGraphNode node, SdlGpuRenderTarget target, IBackdropFrameLease backdropLease)&#xD;
+[xUnit.net 00:00:01.54]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Prism\SdlGpuPrismExecutor.cs(142,0): at Cerneala.Backends.SdlGpu.SdlGpuPrismExecutor.Execute(DrawCommandList commands, DrawingFrameContext&amp; frameContext, SdlGpuRenderTarget hostTarget)&#xD;
+[xUnit.net 00:00:01.54]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Prism\SdlGpuPrismExecutor.cs(74,0): at Cerneala.Backends.SdlGpu.SdlGpuPrismExecutor.Execute(DrawCommandList commands, DrawingFrameContext&amp; frameContext)&#xD;
+[xUnit.net 00:00:01.54]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingBackend.cs(125,0): at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.Render(DrawCommandList commands, DrawingFrameContext&amp; frameContext)&#xD;
+[xUnit.net 00:00:01.54]            at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.Cerneala.Drawing.IDrawingBackend.Render(DrawCommandList commands, DrawingFrameContext&amp; frameContext)&#xD;
+[xUnit.net 00:00:01.54]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlGpuDrawingBackendTests.cs(1105,0): at Cerneala.Tests.SdlGpu.SdlGpuDrawingBackendTests.Render(SdlGpuWindowGraphicsSession session, DrawCommandList commands, DrawingFrameContext frame)&#xD;
+[xUnit.net 00:00:01.54]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlGpuDrawingBackendTests.cs(1096,0): at Cerneala.Tests.SdlGpu.SdlGpuDrawingBackendTests.Render(SdlGpuWindowGraphicsSession session, DrawCommandList commands)&#xD;
+[xUnit.net 00:00:01.54]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlGpuDrawingBackendTests.cs(801,0): at Cerneala.Tests.SdlGpu.SdlGpuDrawingBackendTests.NestedPrismPresentationRestoresBatchTargetForFollowingGeometry(Boolean inRenderSurface)&#xD;
+[xUnit.net 00:00:01.54]            at InvokeStub_SdlGpuDrawingBackendTests.NestedPrismPresentationRestoresBatchTargetForFollowingGeometry(Object, Span`1)&#xD;
+[xUnit.net 00:00:01.54]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:01.54]   Finished:    Cerneala.Tests.SdlGpu&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T13:36:39.0940695+03:00">
+        <Text>[xUnit.net 00:00:01.53]     Cerneala.Tests.SdlGpu.SdlGpuDrawingBackendTests.NestedPrismPresentationRestoresBatchTargetForFollowingGeometry(inRenderSurface: True) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T13:36:39.1029080+03:00">
+        <Text>[xUnit.net 00:00:01.54]     Cerneala.Tests.SdlGpu.SdlGpuDrawingBackendTests.NestedPrismPresentationRestoresBatchTargetForFollowingGeometry(inRenderSurface: False) [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

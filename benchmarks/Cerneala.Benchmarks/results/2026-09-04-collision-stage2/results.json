@@ -1,0 +1,99 @@
+{
+  "SchemaVersion": 1,
+  "TimestampUtc": "2026-09-04T15:24:39.2245107+00:00",
+  "Runtime": ".NET 8.0.30",
+  "OperatingSystem": "Microsoft Windows 10.0.26200",
+  "Processor": "Intel64 Family 6 Model 158 Stepping 10, GenuineIntel",
+  "LogicalProcessorCount": 8,
+  "StopwatchFrequency": 10000000,
+  "Seed": 201396691,
+  "WarmupPasses": 8,
+  "MeasurementPasses": 48,
+  "Scenarios": [
+    {
+      "Scenario": "small-world",
+      "BuildMicroseconds": 41,
+      "UpdateP50Microseconds": 2.6,
+      "UpdateP95Microseconds": 2.7,
+      "QueryP50Microseconds": 23,
+      "QueryP95Microseconds": 25.1,
+      "AverageCandidates": 10.078125,
+      "EstimatedRetainedBytes": 5248,
+      "FalseNegatives": 0,
+      "GatePassed": true
+    },
+    {
+      "Scenario": "large-sparse",
+      "BuildMicroseconds": 4734.9,
+      "UpdateP50Microseconds": 33.9,
+      "UpdateP95Microseconds": 107.6,
+      "QueryP50Microseconds": 171.7,
+      "QueryP95Microseconds": 268.6,
+      "AverageCandidates": 0.017578125,
+      "EstimatedRetainedBytes": 1425544,
+      "FalseNegatives": 0,
+      "GatePassed": true
+    },
+    {
+      "Scenario": "long-fence",
+      "BuildMicroseconds": 909.4,
+      "UpdateP50Microseconds": 9.8,
+      "UpdateP95Microseconds": 16.2,
+      "QueryP50Microseconds": 36.3,
+      "QueryP95Microseconds": 51.4,
+      "AverageCandidates": 0.0625,
+      "EstimatedRetainedBytes": 205184,
+      "FalseNegatives": 0,
+      "GatePassed": true
+    },
+    {
+      "Scenario": "tile-corners",
+      "BuildMicroseconds": 570.2,
+      "UpdateP50Microseconds": 20.8,
+      "UpdateP95Microseconds": 31,
+      "QueryP50Microseconds": 193.8,
+      "QueryP95Microseconds": 248.1,
+      "AverageCandidates": 53.349609375,
+      "EstimatedRetainedBytes": 136776,
+      "FalseNegatives": 0,
+      "GatePassed": true
+    },
+    {
+      "Scenario": "initial-overlap",
+      "BuildMicroseconds": 2488.3,
+      "UpdateP50Microseconds": 46,
+      "UpdateP95Microseconds": 68.9,
+      "QueryP50Microseconds": 2664.7,
+      "QueryP95Microseconds": 3609.5,
+      "AverageCandidates": 2048,
+      "EstimatedRetainedBytes": 65784,
+      "FalseNegatives": 0,
+      "GatePassed": true
+    },
+    {
+      "Scenario": "fast-motion",
+      "BuildMicroseconds": 972.5,
+      "UpdateP50Microseconds": 150.6,
+      "UpdateP95Microseconds": 241.5,
+      "QueryP50Microseconds": 133.4,
+      "QueryP95Microseconds": 213.4,
+      "AverageCandidates": 0.775390625,
+      "EstimatedRetainedBytes": 183768,
+      "FalseNegatives": 0,
+      "GatePassed": true
+    },
+    {
+      "Scenario": "high-churn",
+      "BuildMicroseconds": 1711.8,
+      "UpdateP50Microseconds": 218.2,
+      "UpdateP95Microseconds": 293.1,
+      "QueryP50Microseconds": 63.9,
+      "QueryP95Microseconds": 100.2,
+      "AverageCandidates": 0.34375,
+      "EstimatedRetainedBytes": 403040,
+      "FalseNegatives": 0,
+      "GatePassed": true
+    }
+  ],
+  "GatesPassed": true
+}

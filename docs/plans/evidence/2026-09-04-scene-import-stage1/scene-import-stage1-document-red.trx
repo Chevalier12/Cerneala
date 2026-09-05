@@ -1,0 +1,322 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="28a6fd8b-4edb-4f08-a3de-836556eb5786" name="lauri@DESKTOP-JT43V3D 2026-09-05 02:29:53" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T02:29:53.5797343+03:00" queuing="2026-09-05T02:29:53.5797353+03:00" start="2026-09-05T02:29:51.6833681+03:00" finish="2026-09-05T02:29:53.6422383+03:00" />
+  <TestSettings name="default" id="00574da7-9070-453e-8654-b2e19d015a9f">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_02_29_53" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="b2794515-1cc2-4766-82af-c25756aa834e" testId="040ed33d-28a1-6078-1e75-8872109aba55" testName="Cerneala.Tests.Controls.SceneModelValidationTests.ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells(scenario: 0, code: &quot;SCN2D012&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010765" startTime="2026-09-05T02:29:53.5189966+03:00" endTime="2026-09-05T02:29:53.5189967+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b2794515-1cc2-4766-82af-c25756aa834e">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: missing core contract TilePromotion2D</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneModelValidationTests.CoreType(String name) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 198&#xD;
+   at Cerneala.Tests.Controls.SceneModelValidationTests.Construct(String name, ValueTuple`2[] supplied) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 186&#xD;
+   at Cerneala.Tests.Controls.SceneModelValidationTests.ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells(Int32 scenario, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 159&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c12a863b-45e3-4034-ad86-7d3b7a85e380" testId="17d77800-59d8-4348-703c-5074b8a707b0" testName="Cerneala.Tests.Controls.SceneModelValidationTests.DocumentDoesNotPublishWithUnresolvedAtlas" computerName="DESKTOP-JT43V3D" duration="00:00:00.0656531" startTime="2026-09-05T02:29:53.4790386+03:00" endTime="2026-09-05T02:29:53.4790389+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c12a863b-45e3-4034-ad86-7d3b7a85e380">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: missing core contract Scene2DLevel</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneModelValidationTests.CoreType(String name) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 198&#xD;
+   at Cerneala.Tests.Controls.SceneModelValidationTests.Construct(String name, ValueTuple`2[] supplied) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 186&#xD;
+   at Cerneala.Tests.Controls.SceneModelValidationTests.DocumentDoesNotPublishWithUnresolvedAtlas() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 176&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="d4d8da2e-03ce-4e73-846b-c80fb99bd9fe" testId="aae4868c-8647-6ec8-6c1c-b95c541fa36d" testName="Cerneala.Tests.Controls.SceneModelValidationTests.CollisionBitsetsUseTheWholeUnsignedRange(text: &quot;0x80000000&quot;, expected: 2147483648)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001184" startTime="2026-09-05T02:29:53.4120589+03:00" endTime="2026-09-05T02:29:53.4120591+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d4d8da2e-03ce-4e73-846b-c80fb99bd9fe">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneModelValidationTests.CollisionBitsetsUseTheWholeUnsignedRange(String text, UInt32 expected) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 133&#xD;
+   at InvokeStub_SceneModelValidationTests.CollisionBitsetsUseTheWholeUnsignedRange(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c5b7d46b-bf46-4f05-9045-e61634406233" testId="0f0d615c-925b-b894-922a-6f5030274426" testName="Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(text: &quot;4294967296&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0019194" startTime="2026-09-05T02:29:53.3977918+03:00" endTime="2026-09-05T02:29:53.3978115+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c5b7d46b-bf46-4f05-9045-e61634406233">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(String text) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 147&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="bff7bc4a-3fa8-4a81-842a-da5a6dfc2dd9" testId="30361694-3257-25aa-b5ed-156cbe7fa554" testName="Cerneala.Tests.Controls.SceneModelValidationTests.CollisionBitsetsUseTheWholeUnsignedRange(text: &quot;4294967295&quot;, expected: 4294967295)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0005106" startTime="2026-09-05T02:29:53.4091852+03:00" endTime="2026-09-05T02:29:53.4091856+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bff7bc4a-3fa8-4a81-842a-da5a6dfc2dd9">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneModelValidationTests.CollisionBitsetsUseTheWholeUnsignedRange(String text, UInt32 expected) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 133&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="79cb87f4-552b-4e69-ae6b-896db845888c" testId="bff9b8bd-2fba-41b9-1619-c25c114c63a0" testName="Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(text: &quot;&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0002455" startTime="2026-09-05T02:29:53.4071552+03:00" endTime="2026-09-05T02:29:53.4071556+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="79cb87f4-552b-4e69-ae6b-896db845888c">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(String text) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 147&#xD;
+   at InvokeStub_SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="0ba9d10c-cf58-4130-9715-122515c0f9a5" testId="53af697d-bc14-f5c6-7b1f-2780cd68e021" testName="Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(text: &quot;1.5&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001208" startTime="2026-09-05T02:29:53.4035624+03:00" endTime="2026-09-05T02:29:53.4035628+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0ba9d10c-cf58-4130-9715-122515c0f9a5">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(String text) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 147&#xD;
+   at InvokeStub_SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="6594dd26-8fb2-4222-b916-c3e484c4e393" testId="c621997d-7f73-be4d-e7e8-dc6fb8d0f2a8" testName="Cerneala.Tests.Controls.SceneModelValidationTests.ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells(scenario: 2, code: &quot;SCN2D012&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001475" startTime="2026-09-05T02:29:53.5222899+03:00" endTime="2026-09-05T02:29:53.5222908+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6594dd26-8fb2-4222-b916-c3e484c4e393">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: missing core contract TilePromotion2D</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneModelValidationTests.CoreType(String name) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 198&#xD;
+   at Cerneala.Tests.Controls.SceneModelValidationTests.Construct(String name, ValueTuple`2[] supplied) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 186&#xD;
+   at Cerneala.Tests.Controls.SceneModelValidationTests.ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells(Int32 scenario, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 159&#xD;
+   at InvokeStub_SceneModelValidationTests.ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="54867e76-cffc-4165-ac68-c55c6f3ad1ce" testId="f30129d1-4641-2807-2651-619593528f98" testName="Cerneala.Tests.Controls.SceneModelValidationTests.ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells(scenario: 1, code: &quot;SCN2D012&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0004931" startTime="2026-09-05T02:29:53.5210294+03:00" endTime="2026-09-05T02:29:53.5210297+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="54867e76-cffc-4165-ac68-c55c6f3ad1ce">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: missing core contract TilePromotion2D</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneModelValidationTests.CoreType(String name) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 198&#xD;
+   at Cerneala.Tests.Controls.SceneModelValidationTests.Construct(String name, ValueTuple`2[] supplied) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 186&#xD;
+   at Cerneala.Tests.Controls.SceneModelValidationTests.ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells(Int32 scenario, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 159&#xD;
+   at InvokeStub_SceneModelValidationTests.ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="0527c126-683a-49a4-8a74-e10df62686d2" testId="a293e560-46b2-2a02-feac-ab95609748ee" testName="Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(text: &quot;0x100000000&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001380" startTime="2026-09-05T02:29:53.4049268+03:00" endTime="2026-09-05T02:29:53.4049270+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0527c126-683a-49a4-8a74-e10df62686d2">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(String text) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 147&#xD;
+   at InvokeStub_SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="bce7f2f8-f11d-4b9f-82ce-1752cc281d38" testId="7bd04972-504c-0f55-1942-a2cb855a221f" testName="Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(text: &quot;-1&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0002222" startTime="2026-09-05T02:29:53.4017904+03:00" endTime="2026-09-05T02:29:53.4017906+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bce7f2f8-f11d-4b9f-82ce-1752cc281d38">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(String text) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 147&#xD;
+   at InvokeStub_SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="6a4f3ff6-b881-494a-abd2-2cb20bd492e1" testId="25906487-2055-f637-518d-049a57f9a5a2" testName="Cerneala.Tests.Controls.SceneModelValidationTests.CollisionBitsetsUseTheWholeUnsignedRange(text: &quot;0&quot;, expected: 0)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0004699" startTime="2026-09-05T02:29:53.4107443+03:00" endTime="2026-09-05T02:29:53.4107448+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6a4f3ff6-b881-494a-abd2-2cb20bd492e1">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneModelValidationTests.CollisionBitsetsUseTheWholeUnsignedRange(String text, UInt32 expected) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 133&#xD;
+   at InvokeStub_SceneModelValidationTests.CollisionBitsetsUseTheWholeUnsignedRange(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(text: &quot;&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="bff9b8bd-2fba-41b9-1619-c25c114c63a0">
+      <Execution id="79cb87f4-552b-4e69-ae6b-896db845888c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneModelValidationTests" name="InvalidBitsetsHaveStableDiagnostics" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneModelValidationTests.ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells(scenario: 1, code: &quot;SCN2D012&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="f30129d1-4641-2807-2651-619593528f98">
+      <Execution id="54867e76-cffc-4165-ac68-c55c6f3ad1ce" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneModelValidationTests" name="ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(text: &quot;4294967296&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="0f0d615c-925b-b894-922a-6f5030274426">
+      <Execution id="c5b7d46b-bf46-4f05-9045-e61634406233" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneModelValidationTests" name="InvalidBitsetsHaveStableDiagnostics" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneModelValidationTests.CollisionBitsetsUseTheWholeUnsignedRange(text: &quot;0&quot;, expected: 0)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="25906487-2055-f637-518d-049a57f9a5a2">
+      <Execution id="6a4f3ff6-b881-494a-abd2-2cb20bd492e1" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneModelValidationTests" name="CollisionBitsetsUseTheWholeUnsignedRange" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(text: &quot;1.5&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="53af697d-bc14-f5c6-7b1f-2780cd68e021">
+      <Execution id="0ba9d10c-cf58-4130-9715-122515c0f9a5" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneModelValidationTests" name="InvalidBitsetsHaveStableDiagnostics" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneModelValidationTests.DocumentDoesNotPublishWithUnresolvedAtlas" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="17d77800-59d8-4348-703c-5074b8a707b0">
+      <Execution id="c12a863b-45e3-4034-ad86-7d3b7a85e380" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneModelValidationTests" name="DocumentDoesNotPublishWithUnresolvedAtlas" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneModelValidationTests.CollisionBitsetsUseTheWholeUnsignedRange(text: &quot;4294967295&quot;, expected: 4294967295)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="30361694-3257-25aa-b5ed-156cbe7fa554">
+      <Execution id="bff7bc4a-3fa8-4a81-842a-da5a6dfc2dd9" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneModelValidationTests" name="CollisionBitsetsUseTheWholeUnsignedRange" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneModelValidationTests.ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells(scenario: 0, code: &quot;SCN2D012&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="040ed33d-28a1-6078-1e75-8872109aba55">
+      <Execution id="b2794515-1cc2-4766-82af-c25756aa834e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneModelValidationTests" name="ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(text: &quot;-1&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="7bd04972-504c-0f55-1942-a2cb855a221f">
+      <Execution id="bce7f2f8-f11d-4b9f-82ce-1752cc281d38" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneModelValidationTests" name="InvalidBitsetsHaveStableDiagnostics" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneModelValidationTests.ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells(scenario: 2, code: &quot;SCN2D012&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="c621997d-7f73-be4d-e7e8-dc6fb8d0f2a8">
+      <Execution id="6594dd26-8fb2-4222-b916-c3e484c4e393" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneModelValidationTests" name="ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneModelValidationTests.CollisionBitsetsUseTheWholeUnsignedRange(text: &quot;0x80000000&quot;, expected: 2147483648)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="aae4868c-8647-6ec8-6c1c-b95c541fa36d">
+      <Execution id="d4d8da2e-03ce-4e73-846b-c80fb99bd9fe" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneModelValidationTests" name="CollisionBitsetsUseTheWholeUnsignedRange" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(text: &quot;0x100000000&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="a293e560-46b2-2a02-feac-ab95609748ee">
+      <Execution id="0527c126-683a-49a4-8a74-e10df62686d2" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneModelValidationTests" name="InvalidBitsetsHaveStableDiagnostics" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="040ed33d-28a1-6078-1e75-8872109aba55" executionId="b2794515-1cc2-4766-82af-c25756aa834e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="17d77800-59d8-4348-703c-5074b8a707b0" executionId="c12a863b-45e3-4034-ad86-7d3b7a85e380" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="aae4868c-8647-6ec8-6c1c-b95c541fa36d" executionId="d4d8da2e-03ce-4e73-846b-c80fb99bd9fe" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0f0d615c-925b-b894-922a-6f5030274426" executionId="c5b7d46b-bf46-4f05-9045-e61634406233" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="30361694-3257-25aa-b5ed-156cbe7fa554" executionId="bff7bc4a-3fa8-4a81-842a-da5a6dfc2dd9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bff9b8bd-2fba-41b9-1619-c25c114c63a0" executionId="79cb87f4-552b-4e69-ae6b-896db845888c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="53af697d-bc14-f5c6-7b1f-2780cd68e021" executionId="0ba9d10c-cf58-4130-9715-122515c0f9a5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c621997d-7f73-be4d-e7e8-dc6fb8d0f2a8" executionId="6594dd26-8fb2-4222-b916-c3e484c4e393" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f30129d1-4641-2807-2651-619593528f98" executionId="54867e76-cffc-4165-ac68-c55c6f3ad1ce" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a293e560-46b2-2a02-feac-ab95609748ee" executionId="0527c126-683a-49a4-8a74-e10df62686d2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7bd04972-504c-0f55-1942-a2cb855a221f" executionId="bce7f2f8-f11d-4b9f-82ce-1752cc281d38" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="25906487-2055-f637-518d-049a57f9a5a2" executionId="6a4f3ff6-b881-494a-abd2-2cb20bd492e1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="12" executed="12" passed="0" failed="12" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.20]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.79]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.80]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.86]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.86]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.86]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(147,0): at Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(String text)&#xD;
+[xUnit.net 00:00:00.86]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.86]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.86]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.86]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.86]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(147,0): at Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(String text)&#xD;
+[xUnit.net 00:00:00.86]            at InvokeStub_SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.86]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.87]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.87]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.87]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(147,0): at Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(String text)&#xD;
+[xUnit.net 00:00:00.87]            at InvokeStub_SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.87]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.87]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.87]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.87]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(147,0): at Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(String text)&#xD;
+[xUnit.net 00:00:00.87]            at InvokeStub_SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.87]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.87]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.87]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.87]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(147,0): at Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(String text)&#xD;
+[xUnit.net 00:00:00.87]            at InvokeStub_SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.87]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.87]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.87]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.87]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(133,0): at Cerneala.Tests.Controls.SceneModelValidationTests.CollisionBitsetsUseTheWholeUnsignedRange(String text, UInt32 expected)&#xD;
+[xUnit.net 00:00:00.87]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.87]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.87]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.87]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.87]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(133,0): at Cerneala.Tests.Controls.SceneModelValidationTests.CollisionBitsetsUseTheWholeUnsignedRange(String text, UInt32 expected)&#xD;
+[xUnit.net 00:00:00.87]            at InvokeStub_SceneModelValidationTests.CollisionBitsetsUseTheWholeUnsignedRange(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.87]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.87]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.87]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.87]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(133,0): at Cerneala.Tests.Controls.SceneModelValidationTests.CollisionBitsetsUseTheWholeUnsignedRange(String text, UInt32 expected)&#xD;
+[xUnit.net 00:00:00.87]            at InvokeStub_SceneModelValidationTests.CollisionBitsetsUseTheWholeUnsignedRange(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.88]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.94]       RED: missing core contract Scene2DLevel&#xD;
+[xUnit.net 00:00:00.94]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.94]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(198,0): at Cerneala.Tests.Controls.SceneModelValidationTests.CoreType(String name)&#xD;
+[xUnit.net 00:00:00.94]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(186,0): at Cerneala.Tests.Controls.SceneModelValidationTests.Construct(String name, ValueTuple`2[] supplied)&#xD;
+[xUnit.net 00:00:00.94]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(176,0): at Cerneala.Tests.Controls.SceneModelValidationTests.DocumentDoesNotPublishWithUnresolvedAtlas()&#xD;
+[xUnit.net 00:00:00.94]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.94]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.98]       RED: missing core contract TilePromotion2D&#xD;
+[xUnit.net 00:00:00.98]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.98]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(198,0): at Cerneala.Tests.Controls.SceneModelValidationTests.CoreType(String name)&#xD;
+[xUnit.net 00:00:00.98]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(186,0): at Cerneala.Tests.Controls.SceneModelValidationTests.Construct(String name, ValueTuple`2[] supplied)&#xD;
+[xUnit.net 00:00:00.98]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(159,0): at Cerneala.Tests.Controls.SceneModelValidationTests.ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells(Int32 scenario, String code)&#xD;
+[xUnit.net 00:00:00.98]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.98]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.98]       RED: missing core contract TilePromotion2D&#xD;
+[xUnit.net 00:00:00.98]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.98]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(198,0): at Cerneala.Tests.Controls.SceneModelValidationTests.CoreType(String name)&#xD;
+[xUnit.net 00:00:00.98]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(186,0): at Cerneala.Tests.Controls.SceneModelValidationTests.Construct(String name, ValueTuple`2[] supplied)&#xD;
+[xUnit.net 00:00:00.98]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(159,0): at Cerneala.Tests.Controls.SceneModelValidationTests.ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells(Int32 scenario, String code)&#xD;
+[xUnit.net 00:00:00.98]            at InvokeStub_SceneModelValidationTests.ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.98]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.98]       RED: missing core contract TilePromotion2D&#xD;
+[xUnit.net 00:00:00.98]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.98]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(198,0): at Cerneala.Tests.Controls.SceneModelValidationTests.CoreType(String name)&#xD;
+[xUnit.net 00:00:00.99]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(186,0): at Cerneala.Tests.Controls.SceneModelValidationTests.Construct(String name, ValueTuple`2[] supplied)&#xD;
+[xUnit.net 00:00:00.99]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(159,0): at Cerneala.Tests.Controls.SceneModelValidationTests.ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells(Int32 scenario, String code)&#xD;
+[xUnit.net 00:00:00.99]            at InvokeStub_SceneModelValidationTests.ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.99]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.99]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:29:53.3950104+03:00">
+        <Text>[xUnit.net 00:00:00.86]     Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(text: "4294967296") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:29:53.4016581+03:00">
+        <Text>[xUnit.net 00:00:00.86]     Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(text: "-1") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:29:53.4028846+03:00">
+        <Text>[xUnit.net 00:00:00.87]     Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(text: "1.5") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:29:53.4044581+03:00">
+        <Text>[xUnit.net 00:00:00.87]     Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(text: "0x100000000") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:29:53.4064947+03:00">
+        <Text>[xUnit.net 00:00:00.87]     Cerneala.Tests.Controls.SceneModelValidationTests.InvalidBitsetsHaveStableDiagnostics(text: "") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:29:53.4088776+03:00">
+        <Text>[xUnit.net 00:00:00.87]     Cerneala.Tests.Controls.SceneModelValidationTests.CollisionBitsetsUseTheWholeUnsignedRange(text: "4294967295", expected: 4294967295) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:29:53.4104689+03:00">
+        <Text>[xUnit.net 00:00:00.87]     Cerneala.Tests.Controls.SceneModelValidationTests.CollisionBitsetsUseTheWholeUnsignedRange(text: "0", expected: 0) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:29:53.4114129+03:00">
+        <Text>[xUnit.net 00:00:00.87]     Cerneala.Tests.Controls.SceneModelValidationTests.CollisionBitsetsUseTheWholeUnsignedRange(text: "0x80000000", expected: 2147483648) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:29:53.4785030+03:00">
+        <Text>[xUnit.net 00:00:00.94]     Cerneala.Tests.Controls.SceneModelValidationTests.DocumentDoesNotPublishWithUnresolvedAtlas [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:29:53.5996375+03:00">
+        <Text>[xUnit.net 00:00:00.98]     Cerneala.Tests.Controls.SceneModelValidationTests.ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells(scenario: 0, code: "SCN2D012") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:29:53.5997515+03:00">
+        <Text>[xUnit.net 00:00:00.98]     Cerneala.Tests.Controls.SceneModelValidationTests.ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells(scenario: 1, code: "SCN2D012") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:29:53.5999221+03:00">
+        <Text>[xUnit.net 00:00:00.98]     Cerneala.Tests.Controls.SceneModelValidationTests.ProgrammaticPromotionReferencesRejectEmptyMissingAndDuplicateCells(scenario: 2, code: "SCN2D012") [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

@@ -22,6 +22,7 @@ public partial class MainWindow : Window
 
     private void OnFrameRendered(object? sender, EventArgs args)
     {
+        ObserveSceneWorldFrame();
         if (LastFrame is null)
         {
             return;
@@ -46,6 +47,11 @@ public partial class MainWindow : Window
     private void OnShowcaseSelected(object? sender, ShowcaseSelectedEventArgs args)
     {
         SelectedShowcaseText.Text = args.ShowcaseName;
+        if (args.ShowcaseName == "Scene World")
+        {
+            MountShowcase(new SceneWorldShowcase());
+            return;
+        }
         if (args.ShowcaseName == "ScrollViewer")
         {
             MountShowcase(CreateScrollViewerShowcase());
@@ -130,7 +136,7 @@ public sealed class ShowcaseNavigation : ScrollViewer
     [
         ("CONTROALE",
         [
-            "Drawing API", "Border", "Button", "CheckBox", "ComboBox", "ContentControl", "Image", "InkCanvas",
+            "Scene World", "Drawing API", "Border", "Button", "CheckBox", "ComboBox", "ContentControl", "Image", "InkCanvas",
             "ItemsControl", "Label", "ListBox", "PasswordBox", "ProgressBar", "RadioButton",
             "ScrollViewer", "Slider", "TabControl", "TextBlock", "TextBox", "ToolTip"
         ]),

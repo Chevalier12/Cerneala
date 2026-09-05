@@ -41,7 +41,7 @@ internal sealed class RetainedInputBindingProcessor
         CommandRouter commandRouter,
         ElementInputRouteMap routeMap)
     {
-        foreach (UIElement owner in FocusedRoute(focusedElement))
+        foreach (UIElement owner in routeMap.GetRouteToRoot(focusedElement))
         {
             if (!IsValidInputElement(owner, routeMap))
             {
@@ -58,14 +58,6 @@ internal sealed class RetainedInputBindingProcessor
         }
 
         return false;
-    }
-
-    private static IEnumerable<UIElement> FocusedRoute(UIElement focusedElement)
-    {
-        for (UIElement? current = focusedElement; current is not null; current = current.VisualParent)
-        {
-            yield return current;
-        }
     }
 
     private static bool IsValidInputElement(UIElement element, ElementInputRouteMap routeMap)

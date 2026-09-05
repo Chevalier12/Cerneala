@@ -181,6 +181,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
     private static readonly DiagnosticDescriptor InvalidApplication = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI013");
     private static readonly DiagnosticDescriptor InvalidApplicationStartup = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI014");
     private static readonly DiagnosticDescriptor InvalidApplicationBackendSelection = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI015");
+    private static readonly DiagnosticDescriptor InvalidSpriteAnimation = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI016");
     private static readonly DiagnosticDescriptor MotionSyntaxDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI020");
     private static readonly DiagnosticDescriptor MotionTargetDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI021");
     private static readonly DiagnosticDescriptor MotionEventDiagnostic = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI022");
@@ -789,6 +790,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
+            ValidateTileMapDeclarations();
+            if (HasErrors)
+            {
+                return;
+            }
+
             ReadResources();
             ReadInlineAspects();
             ImportApplicationAspects();
@@ -834,6 +841,69 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         public IReadOnlyList<NamedElementMember> NamedElementMembers => namedElementMembers;
 
+        private void ValidateTileMapDeclarations()
+        {
+            foreach (MarkupElement map in document.Root.DescendantsAndSelf()
+                .Where(static element => element.Name.LocalName == "TileMap2D"))
+            {
+                HashSet<string> layerIds = new(StringComparer.Ordinal);
+                foreach (MarkupElement layer in map.Elements()
+                    .Where(static element => element.Name.LocalName == "TileLayer2D"))
+                {
+                    MarkupAttribute? layerIdAttribute = layer.Attribute("LayerId");
+                    string layerId = layerIdAttribute?.Value.Trim() ?? string.Empty;
+                    if (layerId.Length == 0)
+                    {
+                        Report(
+                            InvalidDocumentShape,
+                            layerIdAttribute is null ? (object)layer : layerIdAttribute,
+                            Path.GetFileName(file.Path),
+                            "TileLayer2D requires a non-empty LayerId.");
+                        continue;
+                    }
+                    if (!layerIds.Add(layerId))
+                    {
+                        Report(
+                            InvalidDocumentShape,
+                            layerIdAttribute!,
+                            Path.GetFileName(file.Path),
+                            $"Tile layer '{layerId}' is declared more than once in one TileMap2D.");
+                    }
+
+                    HashSet<(int X, int Y)> coordinates = new();
+                    foreach (MarkupElement tile in layer.Elements()
+                        .Where(static element => element.Name.LocalName == "TileInstance2D"))
+                    {
+                        MarkupAttribute? xAttribute = tile.Attribute("X");
+                        MarkupAttribute? yAttribute = tile.Attribute("Y");
+                        if (xAttribute is null || yAttribute is null ||
+                            !int.TryParse(xAttribute.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int x) ||
+                            !int.TryParse(yAttribute.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int y))
+                        {
+                            Report(
+                                InvalidDocumentShape,
+                                xAttribute is not null
+                                    ? (object)xAttribute
+                                    : yAttribute is not null
+                                        ? yAttribute
+                                        : tile,
+                                Path.GetFileName(file.Path),
+                                "TileInstance2D requires explicit integer X and Y coordinates.");
+                            continue;
+                        }
+                        if (!coordinates.Add((x, y)))
+                        {
+                            Report(
+                                InvalidDocumentShape,
+                                xAttribute,
+                                Path.GetFileName(file.Path),
+                                $"Promoted tile coordinate {x},{y} is declared more than once in layer '{layerId}'.");
+                        }
+                    }
+                }
+            }
+        }
+
         private enum MarkupValueKind
         {
             String,
@@ -847,8 +917,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             Thickness,
             NonNegativeThickness,
             LayoutPoint,
+            DrawPoint,
             Color,
             Brush,
+            ImageResourceId,
+            SpriteAnimationSet,
             ContentTemplate,
             Enum,
             Unsupported
@@ -858,6 +931,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         {
             Element,
             Brush,
+            ImageResource,
+            SpriteAnimationSet,
             Aspect,
             MotionSpec,
             MotionClip
@@ -1032,6 +1107,56 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             public IReadOnlyList<string> BehaviorLifetimeVariables { get; set; } = [];
 
             public string? TemplateVariable { get; set; }
+        }
+
+        private sealed class ImageResourceDeclaration
+        {
+            public ImageResourceDeclaration(
+                string name,
+                string variable,
+                string source,
+                MarkupElement element)
+            {
+                Name = name;
+                Variable = variable;
+                Source = source;
+                Element = element;
+            }
+
+            public string Name { get; }
+
+            public string Variable { get; }
+
+            public string Source { get; }
+
+            public MarkupElement Element { get; }
+        }
+
+        private sealed class SpriteAnimationSetResource
+        {
+            public SpriteAnimationSetResource(
+                string name,
+                string variable,
+                string expression,
+                IReadOnlyCollection<string> clipNames,
+                MarkupElement element)
+            {
+                Name = name;
+                Variable = variable;
+                Expression = expression;
+                ClipNames = clipNames;
+                Element = element;
+            }
+
+            public string Name { get; }
+
+            public string Variable { get; }
+
+            public string Expression { get; }
+
+            public IReadOnlyCollection<string> ClipNames { get; }
+
+            public MarkupElement Element { get; }
         }
 
         private sealed class ContentTemplateResource
@@ -1322,6 +1447,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         case "DrawingBrush":
                             ReadBrush(scope, resource);
                             break;
+                        case "ImageResource":
+                            ReadImageResource(scope, resource);
+                            break;
+                        case "SpriteAnimationSet":
+                            ReadSpriteAnimationSet(scope, resource);
+                            break;
                         case "VisualBrush":
                             Report(InvalidDocumentShape, resource, Path.GetFileName(file.Path), "VisualBrush is runtime-only because its source is a live element.");
                             break;
@@ -1567,6 +1698,326 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 ? "new" + brush.Expression.Substring(("new " + brushType).Length)
                 : brush.Expression;
             currentLines.Add(brushType + " " + variable + " = " + initializer + ";");
+        }
+
+        private void ReadImageResource(ResourceScope scope, MarkupElement resource)
+        {
+            string? name = RequiredName(resource);
+            if (name is null)
+            {
+                return;
+            }
+
+            if (scope.NamedResources.ContainsKey(name))
+            {
+                Report(
+                    InvalidDocumentShape,
+                    resource,
+                    Path.GetFileName(file.Path),
+                    "Duplicate resource Name '" + name + "' in the same scope.");
+                return;
+            }
+
+            MarkupAttribute? unsupportedAttribute = resource.Attributes()
+                .FirstOrDefault(attribute => !attribute.IsNamespaceDeclaration &&
+                    attribute.Name.LocalName is not "Name" and not "Source");
+            if (unsupportedAttribute is not null)
+            {
+                Report(
+                    InvalidDocumentShape,
+                    unsupportedAttribute,
+                    Path.GetFileName(file.Path),
+                    "ImageResource supports only Name and Source attributes.");
+                return;
+            }
+
+            if (resource.Elements().Any() ||
+                resource.Nodes().OfType<MarkupText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+            {
+                Report(
+                    InvalidDocumentShape,
+                    resource,
+                    Path.GetFileName(file.Path),
+                    "ImageResource accepts no child content.");
+                return;
+            }
+
+            MarkupAttribute? sourceAttribute = resource.Attribute("Source");
+            string source = sourceAttribute?.Value.Trim() ?? string.Empty;
+            if (source.Length == 0)
+            {
+                Report(
+                    InvalidPropertyValue,
+                    (MarkupObject?)sourceAttribute ?? resource,
+                    "ImageResource",
+                    "Source",
+                    sourceAttribute?.Value ?? string.Empty);
+                return;
+            }
+
+            string variable = CreateIdentifier(name) + "ImageResource" +
+                nextResourceId.ToString(CultureInfo.InvariantCulture);
+            nextResourceId++;
+            ImageResourceDeclaration declaration = new(name, variable, source, resource);
+            scope.NamedResources.Add(
+                name,
+                new NamedSymbol(name, NamedSymbolKind.ImageResource, declaration));
+            scope.RuntimeResources.Add(declaration);
+            currentLines.Add(
+                "global::Cerneala.UI.Resources.ImageResource " + variable +
+                " = new global::Cerneala.UI.Resources.ImageResource(" + Literal(source) + ");");
+        }
+
+        private void ReadSpriteAnimationSet(ResourceScope scope, MarkupElement resource)
+        {
+            string? name = RequiredName(resource);
+            if (name is null)
+            {
+                return;
+            }
+            if (scope.NamedResources.ContainsKey(name))
+            {
+                ReportAnimation((object?)resource.Attribute("Name") ?? resource, "Resource name '" + name + "' is duplicated in the same scope.");
+                return;
+            }
+
+            MarkupAttribute? unsupportedSetAttribute = resource.Attributes()
+                .FirstOrDefault(attribute => !attribute.IsNamespaceDeclaration &&
+                    attribute.Name.LocalName is not "Name" and not "Version");
+            if (unsupportedSetAttribute is not null)
+            {
+                ReportAnimation(unsupportedSetAttribute, "SpriteAnimationSet supports only Name and Version attributes.");
+                return;
+            }
+            if (resource.Nodes().OfType<MarkupText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+            {
+                ReportAnimation(resource, "SpriteAnimationSet accepts clip elements and no text content.");
+                return;
+            }
+
+            string? setVersion = ParseAnimationVersion(resource, "SpriteAnimationSet");
+            if (setVersion is null)
+            {
+                return;
+            }
+
+            List<string> clipExpressions = [];
+            HashSet<string> clipNames = new(StringComparer.Ordinal);
+            foreach (MarkupElement clip in resource.Elements())
+            {
+                if (clip.Name.LocalName != "SpriteAnimationClip")
+                {
+                    ReportAnimation(clip, "SpriteAnimationSet accepts only SpriteAnimationClip children.");
+                    return;
+                }
+
+                MarkupAttribute? clipNameAttribute = clip.Attribute("Name");
+                string clipName = clipNameAttribute?.Value.Trim() ?? string.Empty;
+                if (clipName.Length == 0)
+                {
+                    ReportAnimation((object?)clipNameAttribute ?? clip, "SpriteAnimationClip Name cannot be empty.");
+                    return;
+                }
+                if (!clipNames.Add(clipName))
+                {
+                    ReportAnimation(clipNameAttribute!, "Animation clip name '" + clipName + "' is duplicate.");
+                    return;
+                }
+
+                MarkupAttribute? unsupportedClipAttribute = clip.Attributes()
+                    .FirstOrDefault(attribute => !attribute.IsNamespaceDeclaration &&
+                        attribute.Name.LocalName is not "Name" and not "IsLooping" and not "Version");
+                if (unsupportedClipAttribute is not null)
+                {
+                    ReportAnimation(unsupportedClipAttribute, "SpriteAnimationClip supports only Name, IsLooping, and Version attributes.");
+                    return;
+                }
+                if (clip.Nodes().OfType<MarkupText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+                {
+                    ReportAnimation(clip, "SpriteAnimationClip accepts frame elements and no text content.");
+                    return;
+                }
+
+                bool isLooping = true;
+                MarkupAttribute? loopingAttribute = clip.Attribute("IsLooping");
+                if (loopingAttribute is not null && !bool.TryParse(loopingAttribute.Value, out isLooping))
+                {
+                    ReportAnimation(loopingAttribute, "IsLooping must be true or false.");
+                    return;
+                }
+                string? clipVersion = ParseAnimationVersion(clip, "SpriteAnimationClip");
+                if (clipVersion is null)
+                {
+                    return;
+                }
+
+                List<string> frameExpressions = [];
+                foreach (MarkupElement frame in clip.Elements())
+                {
+                    string? frameExpression = ParseSpriteAnimationFrame(frame);
+                    if (frameExpression is null)
+                    {
+                        return;
+                    }
+                    frameExpressions.Add(frameExpression);
+                }
+                if (frameExpressions.Count == 0)
+                {
+                    ReportAnimation(clip, "SpriteAnimationClip '" + clipName + "' requires at least one frame.");
+                    return;
+                }
+
+                clipExpressions.Add(
+                    "new global::Cerneala.UI.Controls.SpriteAnimationClip(" + Literal(clipName) +
+                    ", new global::Cerneala.UI.Controls.SpriteAnimationFrame[] { " +
+                    string.Join(", ", frameExpressions) + " }, " +
+                    (isLooping ? "true" : "false") + ", " + clipVersion + ")");
+            }
+            if (clipExpressions.Count == 0)
+            {
+                ReportAnimation(resource, "SpriteAnimationSet requires at least one clip.");
+                return;
+            }
+
+            string expression =
+                "new global::Cerneala.UI.Controls.SpriteAnimationSet(" +
+                "new global::Cerneala.UI.Controls.SpriteAnimationClip[] { " +
+                string.Join(", ", clipExpressions) + " }, " + setVersion + ")";
+            string variable = CreateIdentifier(name) + "SpriteAnimationSet" +
+                nextResourceId.ToString(CultureInfo.InvariantCulture);
+            nextResourceId++;
+            SpriteAnimationSetResource declaration = new(name, variable, expression, clipNames.ToArray(), resource);
+            scope.NamedResources.Add(name, new NamedSymbol(name, NamedSymbolKind.SpriteAnimationSet, declaration));
+            scope.RuntimeResources.Add(declaration);
+            currentLines.Add("global::Cerneala.UI.Controls.SpriteAnimationSet " + variable + " = " + expression + ";");
+        }
+
+        private string? ParseAnimationVersion(MarkupElement element, string elementName)
+        {
+            MarkupAttribute? attribute = element.Attribute("Version");
+            if (attribute is null)
+            {
+                return "1L";
+            }
+            if (!long.TryParse(attribute.Value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out long version) || version <= 0)
+            {
+                ReportAnimation(attribute, elementName + " Version must be a positive 64-bit integer.");
+                return null;
+            }
+            return version.ToString(CultureInfo.InvariantCulture) + "L";
+        }
+
+        private string? ParseSpriteAnimationFrame(MarkupElement frame)
+        {
+            if (frame.Name.LocalName != "SpriteAnimationFrame")
+            {
+                ReportAnimation(frame, "SpriteAnimationClip accepts only SpriteAnimationFrame children.");
+                return null;
+            }
+            if (frame.Elements().Any() ||
+                frame.Nodes().OfType<MarkupText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)))
+            {
+                ReportAnimation(frame, "SpriteAnimationFrame accepts attributes only.");
+                return null;
+            }
+
+            string[] required = ["SourceX", "SourceY", "SourceWidth", "SourceHeight", "Duration"];
+            string? missingName = required.FirstOrDefault(attributeName => frame.Attribute(attributeName) is null);
+            if (missingName is not null)
+            {
+                ReportAnimation(frame, "SpriteAnimationFrame requires " + missingName + ".");
+                return null;
+            }
+            MarkupAttribute? unsupported = frame.Attributes()
+                .FirstOrDefault(attribute => !attribute.IsNamespaceDeclaration &&
+                    !required.Contains(attribute.Name.LocalName) && attribute.Name.LocalName != "Flip");
+            if (unsupported is not null)
+            {
+                ReportAnimation(unsupported, "SpriteAnimationFrame attribute '" + unsupported.Name.LocalName + "' is not supported.");
+                return null;
+            }
+
+            MarkupAttribute sourceXAttribute = frame.Attribute("SourceX")!;
+            MarkupAttribute sourceYAttribute = frame.Attribute("SourceY")!;
+            MarkupAttribute sourceWidthAttribute = frame.Attribute("SourceWidth")!;
+            MarkupAttribute sourceHeightAttribute = frame.Attribute("SourceHeight")!;
+            bool validX = TryParseFiniteFloat(sourceXAttribute.Value, out string? sourceX);
+            bool validY = TryParseFiniteFloat(sourceYAttribute.Value, out string? sourceY);
+            bool validWidth = TryParseFiniteFloat(sourceWidthAttribute.Value, out string? sourceWidth) &&
+                float.TryParse(sourceWidthAttribute.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out float width) && width > 0;
+            bool validHeight = TryParseFiniteFloat(sourceHeightAttribute.Value, out string? sourceHeight) &&
+                float.TryParse(sourceHeightAttribute.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out float height) && height > 0;
+            if (!validX || !validY || !validWidth || !validHeight)
+            {
+                MarkupAttribute location = !validWidth
+                    ? sourceWidthAttribute
+                    : !validHeight
+                        ? sourceHeightAttribute
+                        : !validX
+                            ? sourceXAttribute
+                            : sourceYAttribute;
+                ReportAnimation(location, "Frame source rectangle must be finite with positive SourceWidth and SourceHeight.");
+                return null;
+            }
+
+            MarkupAttribute durationAttribute = frame.Attribute("Duration")!;
+            if (!TryBuildDurationExpression(durationAttribute.Value.Trim(), out string duration))
+            {
+                ReportAnimation(durationAttribute, "Frame duration must be positive and use the existing ms or s duration syntax.");
+                return null;
+            }
+
+            string flip = "global::Cerneala.UI.Controls.RenderSurface2DSpriteFlip.None";
+            MarkupAttribute? flipAttribute = frame.Attribute("Flip");
+            if (flipAttribute is not null)
+            {
+                string value = flipAttribute.Value.Trim();
+                if (value is "None" or "Horizontal" or "Vertical")
+                {
+                    flip = "global::Cerneala.UI.Controls.RenderSurface2DSpriteFlip." + value;
+                }
+                else
+                {
+                    ReportAnimation(flipAttribute, "Frame Flip must be None, Horizontal, or Vertical.");
+                    return null;
+                }
+            }
+
+            return "new global::Cerneala.UI.Controls.SpriteAnimationFrame(" +
+                "new global::Cerneala.Drawing.DrawRect(" + sourceX + ", " + sourceY + ", " + sourceWidth + ", " + sourceHeight + "), " +
+                duration + ", " + flip + ")";
+        }
+
+        private void ReportAnimation(object locationSource, string message) =>
+            Report(InvalidSpriteAnimation, locationSource, Path.GetFileName(file.Path), message);
+
+        private void ValidateStaticAnimationState(MarkupElement element)
+        {
+            if (element.Name.LocalName is not ("Sprite2D" or "TileInstance2D"))
+            {
+                return;
+            }
+
+            MarkupAttribute? animationsAttribute = element.Attribute("Animations");
+            MarkupAttribute? stateAttribute = element.Attribute("AnimationState");
+            if (animationsAttribute is null || stateAttribute is null ||
+                LooksLikeBindingPath(animationsAttribute.Value) ||
+                LooksLikeBindingPath(stateAttribute.Value) ||
+                !animationsAttribute.Value.Trim().StartsWith("$", StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            string resourceName = animationsAttribute.Value.Trim().Substring(1);
+            string state = stateAttribute.Value.Trim();
+            if (TryResolveResource(animationsAttribute, resourceName, out NamedSymbol symbol) &&
+                symbol.Source is SpriteAnimationSetResource animation &&
+                !animation.ClipNames.Contains(state))
+            {
+                ReportAnimation(
+                    stateAttribute,
+                    "Animation state '" + state + "' does not exist in SpriteAnimationSet '" + resourceName + "'.");
+            }
         }
 
         private string? BuildSolidColorBrushExpression(MarkupElement resource, out string? colorExpression)
@@ -1932,28 +2383,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         "An inline Aspect property element does not accept attributes.");
                 }
 
-                MarkupElement aspectBody = inline;
-                MarkupElement[] inlineDeclarations = inline.Elements()
-                    .Where(element => element.Name.LocalName == "Aspect")
-                    .ToArray();
-                if (inlineDeclarations.Length == 1 &&
-                    inline.Nodes().All(node => node is MarkupElement element
-                        ? ReferenceEquals(element, inlineDeclarations[0])
-                        : node is MarkupText text && string.IsNullOrWhiteSpace(text.Value)))
-                {
-                    aspectBody = inlineDeclarations[0];
-                    if (aspectBody.HasAttributes)
-                    {
-                        Report(
-                            InvalidDocumentShape,
-                            aspectBody,
-                            Path.GetFileName(file.Path),
-                            "An inline Aspect declaration does not accept attributes.");
-                    }
-                }
-
                 if (TryParseAspectBody(
-                    aspectBody,
+                    inline,
                     out List<AspectPropertyAssignment> assignments,
                     out List<DirectiveWhenNode> conditions,
                     out List<DirectiveOnNode> eventTriggers,
@@ -1976,7 +2407,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         drag,
                         gesturePress,
                         template,
-                        aspectBody,
+                        inline,
                         isInline: true);
                     inlineAspects.Add(owner, aspect);
                     allAspects.Add(aspect);
@@ -2537,6 +2968,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 Report(UnsupportedElement, element, element.Name.LocalName);
                 return variable;
             }
+
+            ValidateStaticAnimationState(element);
 
             currentLines.Add(typeName + " " + variable + " = new();");
             EmitRuntimeResources(element, variable);
@@ -3347,6 +3780,16 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         currentLines.Add(
                             ownerVariable + ".Resources.SetResource(new global::Cerneala.UI.Resources.ResourceId<global::Cerneala.UI.Media.Brush>(" +
                             Literal(brush.Name) + "), " + brush.Variable + ");");
+                        break;
+                    case ImageResourceDeclaration image:
+                        currentLines.Add(
+                            ownerVariable + ".Resources.SetResource(new global::Cerneala.UI.Resources.ResourceId<global::Cerneala.UI.Resources.ImageResource>(" +
+                            Literal(image.Name) + "), " + image.Variable + ");");
+                        break;
+                    case SpriteAnimationSetResource animation:
+                        currentLines.Add(
+                            ownerVariable + ".Resources.SetResource(new global::Cerneala.UI.Resources.ResourceId<global::Cerneala.UI.Controls.SpriteAnimationSet>(" +
+                            Literal(animation.Name) + "), " + animation.Variable + ");");
                         break;
                     case AspectResource aspect:
                         string targetType = ResolveAspectTargetType(aspect.TargetName, aspect.Source)!;
@@ -4427,6 +4870,31 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return new GeneratedExpression(brush.ColorExpression, MarkupValueKind.Color);
             }
 
+            if (targetKind == MarkupValueKind.ImageResourceId &&
+                symbol.Source is ImageResourceDeclaration)
+            {
+                return new GeneratedExpression(
+                    "new global::Cerneala.UI.Resources.ResourceId<global::Cerneala.UI.Resources.ImageResource>(" +
+                    Literal(referenceName) + ")",
+                    MarkupValueKind.ImageResourceId);
+            }
+
+            if (targetKind == MarkupValueKind.SpriteAnimationSet &&
+                symbol.Source is SpriteAnimationSetResource animation)
+            {
+                if (applicationResources?.Contains(symbol) == true)
+                {
+                    return new GeneratedExpression(
+                        "((global::Cerneala.UI.Resources.IResourceProvider)global::Cerneala.UI.Application.Current!.Resources).GetResource(" +
+                        "new global::Cerneala.UI.Resources.ResourceId<global::Cerneala.UI.Controls.SpriteAnimationSet>(" +
+                        Literal(referenceName) + "))",
+                        MarkupValueKind.SpriteAnimationSet,
+                        referenceName);
+                }
+
+                return new GeneratedExpression(animation.Variable, MarkupValueKind.SpriteAnimationSet);
+            }
+
             Report(InvalidPropertyValue, source, elementName, propertyName, "$" + referenceName);
             return null;
         }
@@ -4917,6 +5385,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return MarkupValueKind.LayoutPoint;
             }
 
+            if (typeName == "Cerneala.Drawing.DrawPoint")
+            {
+                return MarkupValueKind.DrawPoint;
+            }
+
             if (typeName == "Cerneala.Drawing.Color")
             {
                 return MarkupValueKind.Color;
@@ -4931,6 +5404,21 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 valueType.ContainingNamespace.ToDisplayString() == "Cerneala.UI.Controls.Templates")
             {
                 return MarkupValueKind.ContentTemplate;
+            }
+
+            if (valueType is INamedTypeSymbol namedType &&
+                namedType.IsGenericType &&
+                namedType.OriginalDefinition.ToDisplayString() == "Cerneala.UI.Resources.ResourceId<T>" &&
+                namedType.TypeArguments.Length == 1 &&
+                namedType.TypeArguments[0].ToDisplayString() == "Cerneala.UI.Resources.ImageResource")
+            {
+                return MarkupValueKind.ImageResourceId;
+            }
+
+            if (valueType.Name == "SpriteAnimationSet" &&
+                valueType.ContainingNamespace.ToDisplayString() == "Cerneala.UI.Controls")
+            {
+                return MarkupValueKind.SpriteAnimationSet;
             }
 
             if (valueType.TypeKind == TypeKind.Enum)
@@ -4970,6 +5458,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 MarkupValueKind.Thickness => Thickness(elementName, propertyName, attribute),
                 MarkupValueKind.NonNegativeThickness => NonNegativeThickness(elementName, propertyName, attribute),
                 MarkupValueKind.LayoutPoint => LayoutPoint(elementName, propertyName, attribute),
+                MarkupValueKind.DrawPoint => DrawPoint(elementName, propertyName, attribute),
                 MarkupValueKind.Color => Color(elementName, propertyName, attribute),
                 MarkupValueKind.Brush => Brush(elementName, propertyName, attribute),
                 MarkupValueKind.Enum => EnumValue(elementName, propertyName, attribute, spec.LiteralType),
@@ -5020,6 +5509,27 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             INamedTypeSymbol? contentControlType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.ContentControl");
             INamedTypeSymbol? scrollViewerType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.ScrollViewer");
             INamedTypeSymbol? sceneType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Scene2D");
+            INamedTypeSymbol? tileMapType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.TileMap2D");
+            INamedTypeSymbol? tileLayerType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.TileLayer2D");
+            INamedTypeSymbol? tileInstanceType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.TileInstance2D");
+
+            if (parentType is not null && tileMapType is not null && IsOrDerivesFrom(parentType, tileMapType))
+            {
+                currentLines.Add(parentVariable + ".Layers.Add(" + childVariable + ");");
+                return;
+            }
+
+            if (parentType is not null && tileLayerType is not null && IsOrDerivesFrom(parentType, tileLayerType))
+            {
+                currentLines.Add(parentVariable + ".PromotedTiles.Add(" + childVariable + ");");
+                return;
+            }
+
+            if (parentType is not null && tileInstanceType is not null && IsOrDerivesFrom(parentType, tileInstanceType))
+            {
+                currentLines.Add(parentVariable + ".Colliders.Add(" + childVariable + ");");
+                return;
+            }
 
             if (parentType is not null && sceneType is not null && IsOrDerivesFrom(parentType, sceneType))
             {
@@ -5246,6 +5756,28 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         private string? LayoutPoint(string elementName, string propertyName, MarkupAttribute attribute)
         {
+            return Point(
+                elementName,
+                propertyName,
+                attribute,
+                "global::Cerneala.UI.Layout.LayoutPoint");
+        }
+
+        private string? DrawPoint(string elementName, string propertyName, MarkupAttribute attribute)
+        {
+            return Point(
+                elementName,
+                propertyName,
+                attribute,
+                "global::Cerneala.Drawing.DrawPoint");
+        }
+
+        private string? Point(
+            string elementName,
+            string propertyName,
+            MarkupAttribute attribute,
+            string typeName)
+        {
             string value = attribute.Value;
             string[] parts = value.Split(',').Select(part => part.Trim()).ToArray();
             if (parts.Length != 2)
@@ -5256,7 +5788,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             string? x = FloatPart(elementName, propertyName, attribute, parts[0]);
             string? y = FloatPart(elementName, propertyName, attribute, parts[1]);
             return x is not null && y is not null
-                ? "new global::Cerneala.UI.Layout.LayoutPoint(" + x + ", " + y + ")"
+                ? "new " + typeName + "(" + x + ", " + y + ")"
                 : null;
         }
 

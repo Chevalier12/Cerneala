@@ -1,5 +1,6 @@
 using Cerneala.Drawing;
 using Cerneala.Drawing.Prism.Catalog;
+using Cerneala.SmokeTests;
 using Cerneala.UI;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
@@ -25,11 +26,61 @@ public partial class MainWindow : Window
     private bool inputObserved;
     private bool servoActivated;
     private bool completed;
+    private RenderSurface2D? tileMapSurface;
+    private TileMapStage5ConformanceFixture? tileMapConformance;
+    private CollisionStageFiveFixture? collisionFixture;
+    private SpriteAnimationConformanceFixture? animationFixture;
+    private SceneDebugOverlayConformanceFixture? debugFixture;
 
     private void OnContentRendered(object? sender, EventArgs args)
     {
         SmokeOptions options = SmokeOptions.Current;
         StatusText.Text = $"mode: {options.Mode}";
+
+        if (options.Mode == "scene-debug")
+        {
+            Width = 640;
+            Height = 420;
+            debugFixture = new SceneDebugOverlayConformanceFixture(options.ArtifactDirectory);
+            Content = debugFixture.Surface;
+        }
+
+        if (options.Mode == "sprite-animation")
+        {
+            Width = 640;
+            Height = 420;
+            animationFixture = new SpriteAnimationConformanceFixture(options.ArtifactDirectory);
+            Content = animationFixture.Surface;
+        }
+
+        if (options.Mode == "tilemap")
+        {
+            Directory.CreateDirectory(options.ArtifactDirectory);
+            tileMapSurface = TileMapStage3CaptureFixture.CreateSurface(options.ArtifactDirectory);
+            Content = tileMapSurface;
+        }
+
+        if (options.Mode == "tilemap-conformance")
+        {
+            Directory.CreateDirectory(options.ArtifactDirectory);
+            Width = 640;
+            Height = 420;
+            Background = new SolidColorBrush(new Color(8, 16, 24));
+            tileMapConformance = TileMapStage5ConformanceFixture.Create(
+                options.ArtifactDirectory);
+            Content = tileMapConformance.Surface;
+        }
+
+        if (options.Mode == "collision")
+        {
+            Directory.CreateDirectory(options.ArtifactDirectory);
+            Width = 640;
+            Height = 400;
+            Background = new SolidColorBrush(new Color(8, 16, 24));
+            collisionFixture = CollisionStageFiveFixture.Create(
+                options.ArtifactDirectory);
+            Content = collisionFixture.Surface;
+        }
 
         if (options.Mode == "prism")
         {
@@ -90,8 +141,171 @@ public partial class MainWindow : Window
 
         mainFrames++;
         SmokeOptions options = SmokeOptions.Current;
+        if (options.Mode == "scene-debug")
+        {
+            if (mainFrames < 4 || mainFrames % 4 != 0) { return; }
+            int sample = mainFrames / 4 - 1;
+            debugFixture!.VerifySample(sample);
+            SaveScreenshot(Path.Combine(options.ArtifactDirectory, SceneDebugOverlayConformanceFixture.CaptureNames[sample]));
+            if (sample + 1 < SceneDebugOverlayConformanceFixture.CaptureNames.Length) { debugFixture.SelectSample(sample + 1); }
+            else
+            {
+                completed = true;
+                debugFixture.VerifyCaptures("SDL_GPU");
+                Console.WriteLine("SDL_GPU_SMOKE_OK mode=scene-debug flags=7 effects=Aspect,Motion,Prism");
+                Close();
+            }
+            return;
+        }
+        if (options.Mode == "sprite-animation")
+        {
+            if (mainFrames == 3) animationFixture!.Prepare();
+            if (mainFrames < 4 || mainFrames % 4 != 0) return;
+            int sample = mainFrames / 4 - 1;
+            animationFixture!.VerifySample(sample);
+            SaveScreenshot(Path.Combine(options.ArtifactDirectory, SpriteAnimationConformanceFixture.CaptureNames[sample]));
+            if (sample < 3) animationFixture.Advance(sample + 1);
+            else
+            {
+                completed = true;
+                SpriteAnimationConformanceFixture.VerifyCaptures(options.ArtifactDirectory, "SDL_GPU");
+                Console.WriteLine("SDL_GPU_SMOKE_OK mode=sprite-animation samples=0,100,200,300");
+                Close();
+            }
+            return;
+        }
         if (options.Mode == "servo")
         {
+            return;
+        }
+
+        if (options.Mode == "tilemap")
+        {
+            if (mainFrames < 3)
+            {
+                return;
+            }
+            if (mainFrames == 3)
+            {
+                if (options.CaptureScreenshots)
+                {
+                    SaveScreenshot(Path.Combine(options.ArtifactDirectory, "tilemap-before.png"));
+                }
+                tileMapSurface!.ViewBox = new DrawRect(16, 0, 64, 16);
+                return;
+            }
+            if (mainFrames < 6)
+            {
+                return;
+            }
+
+            completed = true;
+            if (options.CaptureScreenshots)
+            {
+                string beforePath = Path.Combine(options.ArtifactDirectory, "tilemap-before.png");
+                string afterPath = Path.Combine(options.ArtifactDirectory, "tilemap-after.png");
+                SaveScreenshot(afterPath);
+                TileMapStage3CaptureFixture.VerifyPanCaptures(
+                    beforePath,
+                    afterPath,
+                    "SDL_GPU");
+            }
+            Console.WriteLine($"SDL_GPU_SMOKE_OK mode=tilemap mainFrames={mainFrames}");
+            Close();
+            return;
+        }
+
+        if (options.Mode == "tilemap-conformance")
+        {
+            if (mainFrames < 4)
+            {
+                return;
+            }
+            if (mainFrames == 4)
+            {
+                if (options.CaptureScreenshots)
+                {
+                    SaveScreenshot(Path.Combine(
+                        options.ArtifactDirectory,
+                        TileMapStage5ConformanceFixture.InitialCaptureName));
+                }
+                tileMapConformance!.StartMotion();
+                return;
+            }
+            if (mainFrames < 8)
+            {
+                return;
+            }
+            if (mainFrames == 8)
+            {
+                if (options.CaptureScreenshots)
+                {
+                    SaveScreenshot(Path.Combine(
+                        options.ArtifactDirectory,
+                        TileMapStage5ConformanceFixture.MotionCaptureName));
+                }
+                tileMapConformance!.PanAndZoom();
+                return;
+            }
+            if (mainFrames < 12)
+            {
+                return;
+            }
+
+            completed = true;
+            if (options.CaptureScreenshots)
+            {
+                SaveScreenshot(Path.Combine(
+                    options.ArtifactDirectory,
+                    TileMapStage5ConformanceFixture.PanZoomCaptureName));
+                TileMapStage5ConformanceFixture.VerifyCaptures(
+                    options.ArtifactDirectory,
+                    "SDL_GPU");
+            }
+            Console.WriteLine(
+                $"SDL_GPU_SMOKE_OK mode=tilemap-conformance mainFrames={mainFrames}");
+            Close();
+            return;
+        }
+
+        if (options.Mode == "collision")
+        {
+            if (mainFrames < 4)
+            {
+                return;
+            }
+            if (mainFrames == 4)
+            {
+                collisionFixture!.VerifyClosedContract();
+                collisionFixture.VerifyCoordinateRoundTrip();
+                if (options.CaptureScreenshots)
+                {
+                    SaveScreenshot(Path.Combine(
+                        options.ArtifactDirectory,
+                        CollisionStageFiveFixture.ClosedCaptureName));
+                }
+                collisionFixture.OpenDoor();
+                return;
+            }
+            if (mainFrames < 8)
+            {
+                return;
+            }
+
+            completed = true;
+            collisionFixture!.VerifyOpenContract();
+            if (options.CaptureScreenshots)
+            {
+                SaveScreenshot(Path.Combine(
+                    options.ArtifactDirectory,
+                    CollisionStageFiveFixture.OpenCaptureName));
+                CollisionStageFiveFixture.VerifyCaptures(
+                    options.ArtifactDirectory,
+                    "SDL_GPU");
+            }
+            Console.WriteLine(
+                $"SDL_GPU_SMOKE_OK mode=collision mainFrames={mainFrames}");
+            Close();
             return;
         }
 
@@ -184,6 +398,12 @@ public partial class MainWindow : Window
 
     protected override void OnDetached()
     {
+        debugFixture?.Dispose();
+        debugFixture = null;
+        animationFixture?.Dispose();
+        animationFixture = null;
+        tileMapConformance?.Dispose();
+        tileMapConformance = null;
         prismLifetime?.Dispose();
         prismLifetime = null;
         base.OnDetached();

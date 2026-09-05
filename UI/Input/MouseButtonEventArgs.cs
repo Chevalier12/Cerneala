@@ -18,4 +18,17 @@ public sealed class MouseButtonEventArgs : MouseEventArgs
     public InputMouseButton ChangedButton { get; }
 
     public int ClickCount { get; }
+
+    internal MouseButtonEventArgs(
+        RoutedEvent routedEvent,
+        object originalSource,
+        InputMouseButton changedButton,
+        float rootX,
+        float rootY,
+        int clickCount)
+        : base(routedEvent, originalSource, rootX, rootY)
+    {
+        ChangedButton = changedButton;
+        ClickCount = clickCount;
+    }
 }

@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="0a6c5f7e-4090-4edf-a365-b4dd9ef920fe" name="lauri@DESKTOP-JT43V3D 2026-09-04 23:09:07" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-04T23:09:07.1262598+03:00" queuing="2026-09-04T23:09:07.1262601+03:00" start="2026-09-04T23:09:03.3989548+03:00" finish="2026-09-04T23:09:07.1422094+03:00" />
+  <TestSettings name="default" id="38e383ad-822e-46cc-b2de-51cbd9b3403c">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-04_23_09_07" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="ee935591-82ed-4b05-9034-d509d893ebdb" testId="5ecdfaa6-83b1-f174-ac57-40ecff68475e" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.LayerThenYAppliesTheParentSceneTransformToItsAnchor" computerName="DESKTOP-JT43V3D" duration="00:00:00.0117968" startTime="2026-09-04T23:09:06.9283154+03:00" endTime="2026-09-04T23:09:06.9283158+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ee935591-82ed-4b05-9034-d509d893ebdb" />
+    <UnitTestResult executionId="bee0f83c-36a2-4ec4-9524-c96638ffb6e0" testId="3d827cee-0a8b-93d9-2674-82ee961b0bb7" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.NestedSceneGroupsComposeTransformsInsideViewBoxClip" computerName="DESKTOP-JT43V3D" duration="00:00:00.2285996" startTime="2026-09-04T23:09:06.9101872+03:00" endTime="2026-09-04T23:09:06.9102234+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bee0f83c-36a2-4ec4-9524-c96638ffb6e0" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.LayerThenYAppliesTheParentSceneTransformToItsAnchor" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="5ecdfaa6-83b1-f174-ac57-40ecff68475e">
+      <Execution id="ee935591-82ed-4b05-9034-d509d893ebdb" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="LayerThenYAppliesTheParentSceneTransformToItsAnchor" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.NestedSceneGroupsComposeTransformsInsideViewBoxClip" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="3d827cee-0a8b-93d9-2674-82ee961b0bb7">
+      <Execution id="bee0f83c-36a2-4ec4-9524-c96638ffb6e0" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="NestedSceneGroupsComposeTransformsInsideViewBoxClip" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="5ecdfaa6-83b1-f174-ac57-40ecff68475e" executionId="ee935591-82ed-4b05-9034-d509d893ebdb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3d827cee-0a8b-93d9-2674-82ee961b0bb7" executionId="bee0f83c-36a2-4ec4-9524-c96638ffb6e0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="2" executed="2" passed="2" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.51]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.46]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.48]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.86]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

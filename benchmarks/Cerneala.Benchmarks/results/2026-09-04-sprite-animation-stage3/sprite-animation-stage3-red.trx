@@ -1,0 +1,111 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="9dbb2493-f62f-4ad3-bdb4-fb79917e928e" name="lauri@DESKTOP-JT43V3D 2026-09-04 22:38:46" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-04T22:38:46.8090172+03:00" queuing="2026-09-04T22:38:46.8090175+03:00" start="2026-09-04T22:38:44.1429390+03:00" finish="2026-09-04T22:38:46.8174686+03:00" />
+  <TestSettings name="default" id="b2704530-8e8e-4b1e-9825-71a66caed834">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-04_22_38_46" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="7a53058f-94f4-4fb6-81e4-b255dbff6c6b" testId="67423fd8-f915-6203-68ba-bf61d482d6d8" testName="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.NonLoopCompletionStopsAndRestartRegistersTimeAgain" computerName="DESKTOP-JT43V3D" duration="00:00:00.1828542" startTime="2026-09-04T22:38:46.6099856+03:00" endTime="2026-09-04T22:38:46.6100052+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7a53058f-94f4-4fb6-81e4-b255dbff6c6b">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.True() Failure&#xD;
+Expected: True&#xD;
+Actual:   False</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.NonLoopCompletionStopsAndRestartRegistersTimeAgain() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationSchedulingTests.cs:line 89&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="2b1bdfe1-b585-47c9-a593-201ceaa957fe" testId="f2521b8c-c75a-c8f6-243d-c344a8eeac61" testName="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.NestedAnimationsAdvanceOnceAndCoalesceSurfaceInvalidation" computerName="DESKTOP-JT43V3D" duration="00:00:00.0062503" startTime="2026-09-04T22:38:46.6220382+03:00" endTime="2026-09-04T22:38:46.6220384+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2b1bdfe1-b585-47c9-a593-201ceaa957fe">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: 5&#xD;
+Actual:   4</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.NestedAnimationsAdvanceOnceAndCoalesceSurfaceInvalidation() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationSchedulingTests.cs:line 30&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="aa1b6ad5-d3f9-4583-a903-6826212038bd" testId="749eee47-191b-6437-730f-ddebda937fca" testName="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.HiddenAndCulledNodesKeepProgressButDetachedNodesDoNot" computerName="DESKTOP-JT43V3D" duration="00:00:00.0455975" startTime="2026-09-04T22:38:46.6705713+03:00" endTime="2026-09-04T22:38:46.6705715+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="aa1b6ad5-d3f9-4583-a903-6826212038bd">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: 16&#xD;
+Actual:   0</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.HiddenAndCulledNodesKeepProgressButDetachedNodesDoNot() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationSchedulingTests.cs:line 59&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.NonLoopCompletionStopsAndRestartRegistersTimeAgain" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="67423fd8-f915-6203-68ba-bf61d482d6d8">
+      <Execution id="7a53058f-94f4-4fb6-81e4-b255dbff6c6b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests" name="NonLoopCompletionStopsAndRestartRegistersTimeAgain" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.HiddenAndCulledNodesKeepProgressButDetachedNodesDoNot" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="749eee47-191b-6437-730f-ddebda937fca">
+      <Execution id="aa1b6ad5-d3f9-4583-a903-6826212038bd" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests" name="HiddenAndCulledNodesKeepProgressButDetachedNodesDoNot" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.NestedAnimationsAdvanceOnceAndCoalesceSurfaceInvalidation" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="f2521b8c-c75a-c8f6-243d-c344a8eeac61">
+      <Execution id="2b1bdfe1-b585-47c9-a593-201ceaa957fe" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests" name="NestedAnimationsAdvanceOnceAndCoalesceSurfaceInvalidation" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="67423fd8-f915-6203-68ba-bf61d482d6d8" executionId="7a53058f-94f4-4fb6-81e4-b255dbff6c6b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f2521b8c-c75a-c8f6-243d-c344a8eeac61" executionId="2b1bdfe1-b585-47c9-a593-201ceaa957fe" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="749eee47-191b-6437-730f-ddebda937fca" executionId="aa1b6ad5-d3f9-4583-a903-6826212038bd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="3" executed="3" passed="0" failed="3" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.27]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.92]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.94]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.18]       Assert.True() Failure&#xD;
+[xUnit.net 00:00:01.18]       Expected: True&#xD;
+[xUnit.net 00:00:01.18]       Actual:   False&#xD;
+[xUnit.net 00:00:01.18]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.19]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationSchedulingTests.cs(89,0): at Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.NonLoopCompletionStopsAndRestartRegistersTimeAgain()&#xD;
+[xUnit.net 00:00:01.19]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.19]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.20]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:01.20]       Expected: 5&#xD;
+[xUnit.net 00:00:01.20]       Actual:   4&#xD;
+[xUnit.net 00:00:01.20]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.20]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationSchedulingTests.cs(30,0): at Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.NestedAnimationsAdvanceOnceAndCoalesceSurfaceInvalidation()&#xD;
+[xUnit.net 00:00:01.20]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.20]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.25]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:01.25]       Expected: 16&#xD;
+[xUnit.net 00:00:01.25]       Actual:   0&#xD;
+[xUnit.net 00:00:01.25]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.25]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationSchedulingTests.cs(59,0): at Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.HiddenAndCulledNodesKeepProgressButDetachedNodesDoNot()&#xD;
+[xUnit.net 00:00:01.25]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.25]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.26]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T22:38:46.6039518+03:00">
+        <Text>[xUnit.net 00:00:01.18]     Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.NonLoopCompletionStopsAndRestartRegistersTimeAgain [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T22:38:46.6216988+03:00">
+        <Text>[xUnit.net 00:00:01.20]     Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.NestedAnimationsAdvanceOnceAndCoalesceSurfaceInvalidation [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T22:38:46.6694834+03:00">
+        <Text>[xUnit.net 00:00:01.25]     Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.HiddenAndCulledNodesKeepProgressButDetachedNodesDoNot [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

@@ -9,4 +9,15 @@ public sealed class MouseWheelEventArgs : MouseEventArgs
     }
 
     public int Delta { get; }
+
+    internal MouseWheelEventArgs(
+        RoutedEvent routedEvent,
+        object originalSource,
+        float rootX,
+        float rootY,
+        int delta)
+        : base(routedEvent, originalSource, rootX, rootY)
+    {
+        Delta = delta;
+    }
 }

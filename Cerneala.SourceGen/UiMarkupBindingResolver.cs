@@ -576,6 +576,12 @@ public sealed partial class UiMarkupGenerator
             }
 
             bool sameType = SymbolEqualityComparer.Default.Equals(source.ValueType, target.ValueType);
+            // OneWay can safely project an object to an implemented interface or
+            // base type. TwoWay cannot promise that target writes retain the
+            // narrower source type, so its existing exact-type contract stays.
+            var conversion = compilation.ClassifyCommonConversion(source.ValueType, target.ValueType);
+            bool referenceAssignment = mode == MarkupBindingMode.OneWay &&
+                conversion.IsImplicit && conversion.IsReference;
             bool stringProjection = target.ValueType.SpecialType == SpecialType.System_String && mode == MarkupBindingMode.OneWay;
             bool dataContextAssignment = target.Name == "DataContext" &&
                 target.ValueType.SpecialType == SpecialType.System_Object;
@@ -589,7 +595,7 @@ public sealed partial class UiMarkupGenerator
                 return false;
             }
 
-            if (!sameType && !stringProjection && !dataContextAssignment)
+            if (!sameType && !referenceAssignment && !stringProjection && !dataContextAssignment)
             {
                 Report(
                     InvalidBindingSource,
@@ -1066,7 +1072,7 @@ public sealed partial class UiMarkupGenerator
 
         private bool IsWritablePathProperty(IPropertySymbol property)
         {
-            return property.SetMethod is not null && IsAccessibleFromGeneratedCode(property.SetMethod);
+            return property.SetMethod is { IsInitOnly: false } setter && IsAccessibleFromGeneratedCode(setter);
         }
 
         private bool IsObservablePathOwner(ITypeSymbol ownerType)

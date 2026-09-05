@@ -1,0 +1,27 @@
+{
+  "columns": 2,
+  "image": "../atlas.svg",
+  "imageheight": 16,
+  "imagewidth": 32,
+  "margin": 0,
+  "name": "Atlas",
+  "spacing": 0,
+  "tilecount": 2,
+  "tiledversion": "1.12.2",
+  "tileheight": 16,
+  "tiles": [
+    {
+      "id": 1,
+      "properties": [
+        {
+          "name": "InitialState",
+          "type": "string",
+          "value": "Closed"
+        }
+      ]
+    }
+  ],
+  "tilewidth": 16,
+  "type": "tileset",
+  "version": "1.11"
+}

@@ -107,39 +107,21 @@ public class Image : Control
             InvalidationFlags effects = UseIntrinsicSize
                 ? InvalidationFlags.Measure | InvalidationFlags.Render
                 : InvalidationFlags.Render;
-            ResourceDependencyTracker? tracker = ResolveResourceDependencyTracker();
-            tracker?.RecordDependency(this, id, effects, affectsIntrinsicSize: UseIntrinsicSize);
-            long version = tracker?.GetDependencyVersion(this) ?? GetProviderVersion(id);
+            ImageResourceResolution resolution = ImageResourceResolver.Resolve(
+                this,
+                id,
+                ResourceProvider,
+                ResourceDependencyTracker,
+                effects,
+                affectsIntrinsicSize: UseIntrinsicSize);
             SetRenderDependencies(RenderDependencies
                 .WithResourceIdentity(id.ToString())
-                .WithResourceVersion(version));
-
-            IResourceProvider? provider = ResolveResourceProvider();
-            if (provider is null || !provider.TryGetResource(id, out ImageResource? resource))
-            {
-                return null;
-            }
-
-            ImageResourceCache? cache = Root?.ImageResourceCache;
-            if (cache is not null)
-            {
-                return cache.Resolve(resource);
-            }
-
-            return resource.Resolve();
+                .WithResourceVersion(resolution.Version));
+            return resolution.Image;
         }
 
+        SetRenderDependencies(RenderDependency.None);
         return Source;
-    }
-
-    private long GetProviderVersion(ResourceId<ImageResource> id)
-    {
-        return ResolveResourceProvider() is ResourceStore store ? store.GetVersion(id) : 0;
-    }
-
-    private IResourceProvider? ResolveResourceProvider()
-    {
-        return ResourceProvider ?? Root?.ResourceProvider;
     }
 
     private static DrawRect CalculateDestinationRect(IDrawImage source, LayoutRect bounds)
@@ -150,11 +132,6 @@ public class Image : Control
         float x = bounds.X + ((bounds.Width - width) / 2);
         float y = bounds.Y + ((bounds.Height - height) / 2);
         return new DrawRect(x, y, width, height);
-    }
-
-    private ResourceDependencyTracker? ResolveResourceDependencyTracker()
-    {
-        return ResourceDependencyTracker ?? Root?.ResourceDependencyTracker;
     }
 
     private void InvalidateResolvedSource(string reason)

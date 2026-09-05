@@ -1,0 +1,81 @@
+{
+  "SchemaVersion": 1,
+  "TimestampUtc": "2026-09-04T07:11:12.3465201+00:00",
+  "Commit": "2d82aaca04ea7b00f534e6148a367df08e386fc2",
+  "Runtime": ".NET 8.0.30",
+  "OperatingSystem": "Microsoft Windows 10.0.26200",
+  "ProcessArchitecture": "X64",
+  "Processor": "Intel64 Family 6 Model 158 Stepping 10, GenuineIntel",
+  "LogicalProcessorCount": 8,
+  "StopwatchFrequency": 10000000,
+  "WarmupIterations": 64,
+  "MeasurementIterations": 512,
+  "Fixture": {
+    "Seed": 23063,
+    "WidthInTiles": 128,
+    "HeightInTiles": 96,
+    "LayerCount": 3,
+    "ChunkSize": 16,
+    "ViewWidthInTiles": 48,
+    "ViewHeightInTiles": 32
+  },
+  "Scenarios": [
+    {
+      "Name": "warm-static",
+      "CpuP50Microseconds": 1808.6,
+      "CpuP95Microseconds": 3495.2,
+      "AllocatedBytesPerOperation": 2910116,
+      "Counters": {
+        "TotalChunks": 144,
+        "CandidateChunks": 144,
+        "VisibleChunks": 27,
+        "CandidateTiles": 6912,
+        "DrawnTiles": 6277,
+        "BatchesBuilt": 36,
+        "BatchesRebuilt": 36,
+        "BatchesReused": 0,
+        "Commands": 36,
+        "RetainedBytes": 652808,
+        "Invalidations": 0
+      }
+    },
+    {
+      "Name": "camera-pan",
+      "CpuP50Microseconds": 1988,
+      "CpuP95Microseconds": 2915.2,
+      "AllocatedBytesPerOperation": 3822182.203125,
+      "Counters": {
+        "TotalChunks": 144,
+        "CandidateChunks": 144,
+        "VisibleChunks": 36,
+        "CandidateTiles": 9216,
+        "DrawnTiles": 8379,
+        "BatchesBuilt": 48,
+        "BatchesRebuilt": 48,
+        "BatchesReused": 0,
+        "Commands": 48,
+        "RetainedBytes": 871416,
+        "Invalidations": 0
+      }
+    },
+    {
+      "Name": "chunk-mutation",
+      "CpuP50Microseconds": 1485.3,
+      "CpuP95Microseconds": 2262.2,
+      "AllocatedBytesPerOperation": 2865317.140625,
+      "Counters": {
+        "TotalChunks": 144,
+        "CandidateChunks": 144,
+        "VisibleChunks": 27,
+        "CandidateTiles": 6912,
+        "DrawnTiles": 6277,
+        "BatchesBuilt": 36,
+        "BatchesRebuilt": 36,
+        "BatchesReused": 0,
+        "Commands": 36,
+        "RetainedBytes": 652808,
+        "Invalidations": 1
+      }
+    }
+  ]
+}

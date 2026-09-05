@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="9f919851-788a-4b6d-a5b4-852cae1199d4" name="lauri@DESKTOP-JT43V3D 2026-09-05 13:27:49" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T13:27:49.3675990+03:00" queuing="2026-09-05T13:27:49.3675994+03:00" start="2026-09-05T13:27:45.2424367+03:00" finish="2026-09-05T13:27:50.4315235+03:00" />
+  <TestSettings name="default" id="7db02d5f-872f-411d-8a8e-917078ee88e0">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_13_27_49" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="9d5fb899-70b1-4081-891f-f8b1bfd5f737" testId="2d6a715a-480d-b123-ef18-2bd1b83edd2f" testName="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.InitOnlySourceIsReadableButNotWritableByGeneratedBindings(mode: &quot;TwoWay&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1482787" startTime="2026-09-05T13:27:50.1643851+03:00" endTime="2026-09-05T13:27:50.1643853+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9d5fb899-70b1-4081-891f-f8b1bfd5f737" />
+    <UnitTestResult executionId="24d6f6f4-2908-45a4-baee-2c77e69b062e" testId="b9038c57-61d9-910a-4063-d7c6f8a354b7" testName="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(sourceType: &quot;System.Collections.ObjectModel.ObservableCollectio&quot;···)" computerName="DESKTOP-JT43V3D" duration="00:00:00.2410559" startTime="2026-09-05T13:27:49.8256666+03:00" endTime="2026-09-05T13:27:49.8256670+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="24d6f6f4-2908-45a4-baee-2c77e69b062e" />
+    <UnitTestResult executionId="73b94c7a-ec73-4411-8b3c-96e990d0ae22" testId="2f8a89ed-3c0e-0392-b019-df74193a3811" testName="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsRejectsUnsafeTwoWayReferenceConversion" computerName="DESKTOP-JT43V3D" duration="00:00:00.1899883" startTime="2026-09-05T13:27:50.0160070+03:00" endTime="2026-09-05T13:27:50.0160073+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="73b94c7a-ec73-4411-8b3c-96e990d0ae22" />
+    <UnitTestResult executionId="d80b911c-7e01-4ba5-9c04-297723a5430d" testId="0c18e44d-7eef-70b6-0ceb-13380f90e083" testName="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.InitOnlySourceIsReadableButNotWritableByGeneratedBindings(mode: &quot;OneWay&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1764994" startTime="2026-09-05T13:27:50.3409612+03:00" endTime="2026-09-05T13:27:50.3409614+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d80b911c-7e01-4ba5-9c04-297723a5430d" />
+    <UnitTestResult executionId="9bdf24ad-cf0e-41ec-8940-84d6a960c1c4" testId="0d9a70c9-882a-b437-9d65-0762e7e554f8" testName="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(sourceType: &quot;System.Collections.Generic.IReadOnlyList&lt;string&gt;&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.2518790" startTime="2026-09-05T13:27:49.5845624+03:00" endTime="2026-09-05T13:27:49.5845627+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9bdf24ad-cf0e-41ec-8940-84d6a960c1c4" />
+    <UnitTestResult executionId="380a3d9e-40da-452f-ad11-ca922fb16a38" testId="d40e2a7c-37bc-e9db-4570-be1fd06de89f" testName="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(sourceType: &quot;string[]&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:02.6241849" startTime="2026-09-05T13:27:49.3334639+03:00" endTime="2026-09-05T13:27:49.3334949+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="380a3d9e-40da-452f-ad11-ca922fb16a38" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(sourceType: &quot;string[]&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sourcegen\bin\debug\net8.0-windows\cerneala.tests.sourcegen.dll" id="d40e2a7c-37bc-e9db-4570-be1fd06de89f">
+      <Execution id="380a3d9e-40da-452f-ad11-ca922fb16a38" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Debug\net8.0-windows\Cerneala.Tests.SourceGen.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests" name="SceneItemsAcceptsOneWayReferenceAssignableCollection" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.InitOnlySourceIsReadableButNotWritableByGeneratedBindings(mode: &quot;TwoWay&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sourcegen\bin\debug\net8.0-windows\cerneala.tests.sourcegen.dll" id="2d6a715a-480d-b123-ef18-2bd1b83edd2f">
+      <Execution id="9d5fb899-70b1-4081-891f-f8b1bfd5f737" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Debug\net8.0-windows\Cerneala.Tests.SourceGen.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests" name="InitOnlySourceIsReadableButNotWritableByGeneratedBindings" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(sourceType: &quot;System.Collections.ObjectModel.ObservableCollectio&quot;···)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sourcegen\bin\debug\net8.0-windows\cerneala.tests.sourcegen.dll" id="b9038c57-61d9-910a-4063-d7c6f8a354b7">
+      <Execution id="24d6f6f4-2908-45a4-baee-2c77e69b062e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Debug\net8.0-windows\Cerneala.Tests.SourceGen.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests" name="SceneItemsAcceptsOneWayReferenceAssignableCollection" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.InitOnlySourceIsReadableButNotWritableByGeneratedBindings(mode: &quot;OneWay&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sourcegen\bin\debug\net8.0-windows\cerneala.tests.sourcegen.dll" id="0c18e44d-7eef-70b6-0ceb-13380f90e083">
+      <Execution id="d80b911c-7e01-4ba5-9c04-297723a5430d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Debug\net8.0-windows\Cerneala.Tests.SourceGen.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests" name="InitOnlySourceIsReadableButNotWritableByGeneratedBindings" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsRejectsUnsafeTwoWayReferenceConversion" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sourcegen\bin\debug\net8.0-windows\cerneala.tests.sourcegen.dll" id="2f8a89ed-3c0e-0392-b019-df74193a3811">
+      <Execution id="73b94c7a-ec73-4411-8b3c-96e990d0ae22" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Debug\net8.0-windows\Cerneala.Tests.SourceGen.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests" name="SceneItemsRejectsUnsafeTwoWayReferenceConversion" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SceneItemsAcceptsOneWayReferenceAssignableCollection(sourceType: &quot;System.Collections.Generic.IReadOnlyList&lt;string&gt;&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sourcegen\bin\debug\net8.0-windows\cerneala.tests.sourcegen.dll" id="0d9a70c9-882a-b437-9d65-0762e7e554f8">
+      <Execution id="9bdf24ad-cf0e-41ec-8940-84d6a960c1c4" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Debug\net8.0-windows\Cerneala.Tests.SourceGen.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests" name="SceneItemsAcceptsOneWayReferenceAssignableCollection" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="2d6a715a-480d-b123-ef18-2bd1b83edd2f" executionId="9d5fb899-70b1-4081-891f-f8b1bfd5f737" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b9038c57-61d9-910a-4063-d7c6f8a354b7" executionId="24d6f6f4-2908-45a4-baee-2c77e69b062e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2f8a89ed-3c0e-0392-b019-df74193a3811" executionId="73b94c7a-ec73-4411-8b3c-96e990d0ae22" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0c18e44d-7eef-70b6-0ceb-13380f90e083" executionId="d80b911c-7e01-4ba5-9c04-297723a5430d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0d9a70c9-882a-b437-9d65-0762e7e554f8" executionId="9bdf24ad-cf0e-41ec-8940-84d6a960c1c4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d40e2a7c-37bc-e9db-4570-be1fd06de89f" executionId="380a3d9e-40da-452f-ad11-ca922fb16a38" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="6" executed="6" passed="6" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.22]   Discovering: Cerneala.Tests.SourceGen&#xD;
+[xUnit.net 00:00:00.39]   Discovered:  Cerneala.Tests.SourceGen&#xD;
+[xUnit.net 00:00:00.40]   Starting:    Cerneala.Tests.SourceGen&#xD;
+[xUnit.net 00:00:04.08]   Finished:    Cerneala.Tests.SourceGen&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

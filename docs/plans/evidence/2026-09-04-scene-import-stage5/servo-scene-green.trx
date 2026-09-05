@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="7a5e5e42-5e4a-4753-84e2-a12b2001e240" name="lauri@DESKTOP-JT43V3D 2026-09-05 13:53:27" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T13:53:27.3600618+03:00" queuing="2026-09-05T13:53:27.3600622+03:00" start="2026-09-05T13:53:23.7438993+03:00" finish="2026-09-05T13:53:27.3693782+03:00" />
+  <TestSettings name="default" id="66ff00c9-5c53-45b8-9495-ba8746d8a0e7">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_13_53_27" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="387f7cee-3fc9-4ac4-b8d7-37ef201dbce9" testId="e1c6ece7-96ca-394f-d84b-0fe2b0569b03" testName="Cerneala.Tests.UI.Servo.ServoSceneTests.SceneTargetsUseCurrentGeometryAndRealInputWithoutLayout(colliderOnly: False)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0106161" startTime="2026-09-05T13:53:27.2155020+03:00" endTime="2026-09-05T13:53:27.2155032+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="387f7cee-3fc9-4ac4-b8d7-37ef201dbce9" />
+    <UnitTestResult executionId="4f3a913a-0981-411a-96e3-6a7d2b2167ae" testId="1e99763c-762c-53f5-3d3b-758e4ca2516d" testName="Cerneala.Tests.UI.Servo.ServoSceneTests.ColliderIsQueryableButRealHitTestStillRejectsDisabledAndSingularTargets" computerName="DESKTOP-JT43V3D" duration="00:00:00.0235434" startTime="2026-09-05T13:53:27.2410757+03:00" endTime="2026-09-05T13:53:27.2410762+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4f3a913a-0981-411a-96e3-6a7d2b2167ae" />
+    <UnitTestResult executionId="a6e0a033-9538-4fe0-afdf-f823ec459723" testId="b3cdf49d-d785-75e2-7dfc-140569271e72" testName="Cerneala.Tests.UI.Servo.ServoSceneTests.SceneTargetsUseCurrentGeometryAndRealInputWithoutLayout(colliderOnly: True)" computerName="DESKTOP-JT43V3D" duration="00:00:00.3871116" startTime="2026-09-05T13:53:27.1988386+03:00" endTime="2026-09-05T13:53:27.1988767+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a6e0a033-9538-4fe0-afdf-f823ec459723" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.UI.Servo.ServoSceneTests.SceneTargetsUseCurrentGeometryAndRealInputWithoutLayout(colliderOnly: True)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="b3cdf49d-d785-75e2-7dfc-140569271e72">
+      <Execution id="a6e0a033-9538-4fe0-afdf-f823ec459723" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.UI.Servo.ServoSceneTests" name="SceneTargetsUseCurrentGeometryAndRealInputWithoutLayout" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.UI.Servo.ServoSceneTests.ColliderIsQueryableButRealHitTestStillRejectsDisabledAndSingularTargets" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="1e99763c-762c-53f5-3d3b-758e4ca2516d">
+      <Execution id="4f3a913a-0981-411a-96e3-6a7d2b2167ae" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.UI.Servo.ServoSceneTests" name="ColliderIsQueryableButRealHitTestStillRejectsDisabledAndSingularTargets" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.UI.Servo.ServoSceneTests.SceneTargetsUseCurrentGeometryAndRealInputWithoutLayout(colliderOnly: False)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="e1c6ece7-96ca-394f-d84b-0fe2b0569b03">
+      <Execution id="387f7cee-3fc9-4ac4-b8d7-37ef201dbce9" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.UI.Servo.ServoSceneTests" name="SceneTargetsUseCurrentGeometryAndRealInputWithoutLayout" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="e1c6ece7-96ca-394f-d84b-0fe2b0569b03" executionId="387f7cee-3fc9-4ac4-b8d7-37ef201dbce9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1e99763c-762c-53f5-3d3b-758e4ca2516d" executionId="4f3a913a-0981-411a-96e3-6a7d2b2167ae" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b3cdf49d-d785-75e2-7dfc-140569271e72" executionId="a6e0a033-9538-4fe0-afdf-f823ec459723" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="3" executed="3" passed="3" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.78]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.75]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.76]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:02.30]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

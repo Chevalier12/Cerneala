@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="b7a8f19d-c251-48d1-9bb7-796118671991" name="lauri@DESKTOP-JT43V3D 2026-09-04 23:49:48" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-04T23:49:48.7328917+03:00" queuing="2026-09-04T23:49:48.7328920+03:00" start="2026-09-04T23:49:41.8354240+03:00" finish="2026-09-04T23:49:48.8484932+03:00" />
+  <TestSettings name="default" id="ceb5ea86-6e03-49ce-ad2a-a539e0fedf59">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-04_23_49_48" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="cf5217da-f30f-45a9-ba0b-821dbf33c575" testId="590fcfdf-65f3-6701-c739-fe4141e00b08" testName="Cerneala.Tests.Drawing.Prism.PrismNeighborhoodFilterTests.SpinBlurPlansAnAdaptiveOddTapBudgetFromArcLength" computerName="DESKTOP-JT43V3D" duration="00:00:00.0080270" startTime="2026-09-04T23:49:48.7720653+03:00" endTime="2026-09-04T23:49:48.7720655+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cf5217da-f30f-45a9-ba0b-821dbf33c575" />
+    <UnitTestResult executionId="13a766dd-8814-4565-a101-1eb1e9fc486f" testId="2fe81ba2-7d97-021e-54bc-9a878172a0ce" testName="Cerneala.Tests.Drawing.Prism.PrismNeighborhoodFilterTests.SpinBlurUsesCenteredPixelSpaceArcsAndAssociatedAlpha" computerName="DESKTOP-JT43V3D" duration="00:00:00.0325944" startTime="2026-09-04T23:49:48.7469808+03:00" endTime="2026-09-04T23:49:48.7469811+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="13a766dd-8814-4565-a101-1eb1e9fc486f" />
+    <UnitTestResult executionId="790e8fc4-293f-4b2f-acd5-21da4a63cba6" testId="cae4760c-63eb-6548-de68-0aae9f032f5c" testName="Cerneala.Tests.Drawing.Prism.PrismNeighborhoodFilterTests.SpinBlurMaskFeatherStrobeAndNoiseAreEffectiveAndDeterministic" computerName="DESKTOP-JT43V3D" duration="00:00:00.0163347" startTime="2026-09-04T23:49:48.7636303+03:00" endTime="2026-09-04T23:49:48.7636306+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="790e8fc4-293f-4b2f-acd5-21da4a63cba6" />
+    <UnitTestResult executionId="c232d951-d0b4-4209-81ad-e22fc9be7301" testId="bb448acc-5e56-c844-5208-916fe616d292" testName="Cerneala.Tests.Drawing.Prism.PrismSdlGpuPixelConformanceTests.EveryResourceFreeCatalogEntryMatchesWindowsDxPixelThresholds(symbol: &quot;SpinBlur&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:03.4173046" startTime="2026-09-04T23:49:48.7007927+03:00" endTime="2026-09-04T23:49:48.7008114+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c232d951-d0b4-4209-81ad-e22fc9be7301">
+      <Output>
+        <StdOut>SpinBlur: MAE=0.0431, P99=1, max=62</StdOut>
+        <ErrorInfo>
+          <Message>SDL_GPU Prism pixel diff exceeded the canonical RGBA thresholds for SpinBlur: MAE=0.0431, P99=1, max=62; artifacts: C:\Users\lauri\AppData\Local\Temp\cerneala-sdlgpu-prism-conformance-SpinBlur-8089882366cb46298dd20eb619f481b4</Message>
+          <StackTrace>   at Cerneala.Tests.Drawing.Prism.PrismSdlGpuPixelConformanceTests.EveryResourceFreeCatalogEntryMatchesWindowsDxPixelThresholds(String symbol) in C:\Users\lauri\Desktop\Cerneala-baseline-servo-fed724b\tests\Cerneala.Tests\Drawing\Prism\PrismSdlGpuPixelConformanceTests.cs:line 98&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Drawing.Prism.PrismNeighborhoodFilterTests.SpinBlurUsesCenteredPixelSpaceArcsAndAssociatedAlpha" storage="c:\users\lauri\desktop\cerneala-baseline-servo-fed724b\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="2fe81ba2-7d97-021e-54bc-9a878172a0ce">
+      <Execution id="13a766dd-8814-4565-a101-1eb1e9fc486f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala-baseline-servo-fed724b\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Drawing.Prism.PrismNeighborhoodFilterTests" name="SpinBlurUsesCenteredPixelSpaceArcsAndAssociatedAlpha" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Drawing.Prism.PrismNeighborhoodFilterTests.SpinBlurPlansAnAdaptiveOddTapBudgetFromArcLength" storage="c:\users\lauri\desktop\cerneala-baseline-servo-fed724b\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="590fcfdf-65f3-6701-c739-fe4141e00b08">
+      <Execution id="cf5217da-f30f-45a9-ba0b-821dbf33c575" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala-baseline-servo-fed724b\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Drawing.Prism.PrismNeighborhoodFilterTests" name="SpinBlurPlansAnAdaptiveOddTapBudgetFromArcLength" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Drawing.Prism.PrismSdlGpuPixelConformanceTests.EveryResourceFreeCatalogEntryMatchesWindowsDxPixelThresholds(symbol: &quot;SpinBlur&quot;)" storage="c:\users\lauri\desktop\cerneala-baseline-servo-fed724b\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="bb448acc-5e56-c844-5208-916fe616d292">
+      <Execution id="c232d951-d0b4-4209-81ad-e22fc9be7301" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala-baseline-servo-fed724b\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Drawing.Prism.PrismSdlGpuPixelConformanceTests" name="EveryResourceFreeCatalogEntryMatchesWindowsDxPixelThresholds" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Drawing.Prism.PrismNeighborhoodFilterTests.SpinBlurMaskFeatherStrobeAndNoiseAreEffectiveAndDeterministic" storage="c:\users\lauri\desktop\cerneala-baseline-servo-fed724b\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="cae4760c-63eb-6548-de68-0aae9f032f5c">
+      <Execution id="790e8fc4-293f-4b2f-acd5-21da4a63cba6" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala-baseline-servo-fed724b\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Drawing.Prism.PrismNeighborhoodFilterTests" name="SpinBlurMaskFeatherStrobeAndNoiseAreEffectiveAndDeterministic" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="590fcfdf-65f3-6701-c739-fe4141e00b08" executionId="cf5217da-f30f-45a9-ba0b-821dbf33c575" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2fe81ba2-7d97-021e-54bc-9a878172a0ce" executionId="13a766dd-8814-4565-a101-1eb1e9fc486f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cae4760c-63eb-6548-de68-0aae9f032f5c" executionId="790e8fc4-293f-4b2f-acd5-21da4a63cba6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bb448acc-5e56-c844-5208-916fe616d292" executionId="c232d951-d0b4-4209-81ad-e22fc9be7301" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="4" executed="4" passed="3" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:01.22]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:02.03]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:02.04]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:05.54]       SDL_GPU Prism pixel diff exceeded the canonical RGBA thresholds for SpinBlur: MAE=0.0431, P99=1, max=62; artifacts: C:\Users\lauri\AppData\Local\Temp\cerneala-sdlgpu-prism-conformance-SpinBlur-8089882366cb46298dd20eb619f481b4&#xD;
+[xUnit.net 00:00:05.54]       Stack Trace:&#xD;
+[xUnit.net 00:00:05.54]         C:\Users\lauri\Desktop\Cerneala-baseline-servo-fed724b\tests\Cerneala.Tests\Drawing\Prism\PrismSdlGpuPixelConformanceTests.cs(98,0): at Cerneala.Tests.Drawing.Prism.PrismSdlGpuPixelConformanceTests.EveryResourceFreeCatalogEntryMatchesWindowsDxPixelThresholds(String symbol)&#xD;
+[xUnit.net 00:00:05.54]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:05.54]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:05.54]       Output:&#xD;
+[xUnit.net 00:00:05.54]         SpinBlur: MAE=0.0431, P99=1, max=62&#xD;
+[xUnit.net 00:00:05.62]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T23:49:48.6977374+03:00">
+        <Text>[xUnit.net 00:00:05.54]     Cerneala.Tests.Drawing.Prism.PrismSdlGpuPixelConformanceTests.EveryResourceFreeCatalogEntryMatchesWindowsDxPixelThresholds(symbol: "SpinBlur") [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

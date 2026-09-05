@@ -1,0 +1,85 @@
+{
+  "compressionlevel": -1,
+  "height": 0,
+  "infinite": true,
+  "layers": [
+    {
+      "chunks": [
+        {
+          "data": [
+            1,
+            2147483650,
+            1073741825,
+            0
+          ],
+          "height": 2,
+          "width": 2,
+          "x": -2,
+          "y": -1
+        },
+        {
+          "data": [
+            0,
+            2,
+            0,
+            0
+          ],
+          "height": 2,
+          "width": 2,
+          "x": -1,
+          "y": -1
+        }
+      ],
+      "height": 2,
+      "id": 1,
+      "name": "Ground",
+      "offsetx": 2,
+      "offsety": 3,
+      "opacity": 1,
+      "startx": -2,
+      "starty": -1,
+      "type": "tilelayer",
+      "visible": true,
+      "width": 18,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "nextlayerid": 3,
+  "nextobjectid": 1,
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "tiledversion": "1.12.2",
+  "tileheight": 16,
+  "tilesets": [
+    {
+      "columns": 2,
+      "firstgid": 1,
+      "image": "../atlas.svg",
+      "imageheight": 16,
+      "imagewidth": 32,
+      "margin": 0,
+      "name": "Atlas",
+      "spacing": 0,
+      "tilecount": 2,
+      "tileheight": 16,
+      "tiles": [
+        {
+          "id": 1,
+          "properties": [
+            {
+              "name": "InitialState",
+              "type": "string",
+              "value": "Closed"
+            }
+          ]
+        }
+      ],
+      "tilewidth": 16
+    }
+  ],
+  "tilewidth": 16,
+  "type": "map",
+  "version": "1.11",
+  "width": 0
+}

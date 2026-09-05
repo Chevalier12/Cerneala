@@ -10,6 +10,7 @@
   <ItemGroup>
     <Compile Remove="docs\**" />
     <Compile Remove="Cerneala.SourceGen\**" />
+    <Compile Remove="Cerneala.Scene2D.Importers\**" />
     <Compile Remove="Cerneala.Backends.MonoGame\**" />
     <Compile Remove="Cerneala.Backends.SdlGpu\**" />
     <Compile Remove="Cerneala.Platforms.Win32\**" />
@@ -33,6 +34,7 @@
     <Compile Remove="UI\Hosting\Windows\WindowsDxWindowGraphicsSession.cs" />
     <EmbeddedResource Remove="docs\**" />
     <EmbeddedResource Remove="Cerneala.SourceGen\**" />
+    <EmbeddedResource Remove="Cerneala.Scene2D.Importers\**" />
     <EmbeddedResource Remove="Cerneala.Backends.MonoGame\**" />
     <EmbeddedResource Remove="Cerneala.Backends.SdlGpu\**" />
     <EmbeddedResource Remove="Cerneala.Platforms.Win32\**" />
@@ -50,6 +52,7 @@
     <EmbeddedResource Remove="Tetrisish\**" />
     <None Remove="docs\**" />
     <None Remove="Cerneala.SourceGen\**" />
+    <None Remove="Cerneala.Scene2D.Importers\**" />
     <None Remove="Cerneala.Backends.MonoGame\**" />
     <None Remove="Cerneala.Backends.SdlGpu\**" />
     <None Remove="Cerneala.Platforms.Win32\**" />
@@ -77,7 +80,7 @@
 
   <ItemGroup>
     <ProjectReference Include="Cerneala.SourceGen\Cerneala.SourceGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    <AdditionalFiles Include="**\*.crn" Exclude="bin\**;obj\**;Cerneala.Language\**;Cerneala.LanguageServer\**;Cerneala.PreviewHost\**;Cerneala.SourceGen\**;CernealaPresentation\**;docs\**;Playground\**;Shared\**;Tetrisish\**;Tools\**;tests\**" />
+    <AdditionalFiles Include="**\*.crn" Exclude="bin\**;obj\**;Cerneala.Language\**;Cerneala.LanguageServer\**;Cerneala.PreviewHost\**;Cerneala.SourceGen\**;Cerneala.Scene2D.Importers\**;CernealaPresentation\**;docs\**;Playground\**;Shared\**;Tetrisish\**;Tools\**;tests\**" />
     <AdditionalFiles Include="Cerneala.SourceGen\Prism\Catalog\prism-catalog.json" />
     <EmbeddedResource Include="Drawing\Prism\Filters\Assets\bluenoise.bin">
       <LogicalName>Cerneala.Drawing.Prism.Filters.Assets.bluenoise.bin</LogicalName>

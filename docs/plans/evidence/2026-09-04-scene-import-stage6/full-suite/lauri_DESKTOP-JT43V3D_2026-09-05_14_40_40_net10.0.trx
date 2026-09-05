@@ -1,0 +1,106 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="30a26c37-1759-4978-9cef-478f81fc32de" name="lauri@DESKTOP-JT43V3D 2026-09-05 14:40:40" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T14:40:40.1500440+03:00" queuing="2026-09-05T14:40:40.1500443+03:00" start="2026-09-05T14:40:37.7526191+03:00" finish="2026-09-05T14:41:21.2829122+03:00" />
+  <TestSettings name="default" id="490ad59c-dede-49c1-857e-fe0fe84f59ae">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_14_40_40" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="96d3fc1d-94b3-41c0-9e2c-4aee99842453" testId="84ac8de5-f885-9e33-9fea-b9c3e4f31aaf" testName="Cerneala.Tests.PreviewHost.PreviewHostTests.StructuralMarkupEditStillRequiresCompilation" computerName="DESKTOP-JT43V3D" duration="00:00:00.0003508" startTime="2026-09-05T14:40:47.3976343+03:00" endTime="2026-09-05T14:40:47.3976344+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="96d3fc1d-94b3-41c0-9e2c-4aee99842453" />
+    <UnitTestResult executionId="465d66d4-d506-4963-bff3-a3490eb7bb96" testId="12a63a53-ba24-846d-d04a-0c0216c8a8c3" testName="Cerneala.Tests.PreviewHost.PreviewHostTests.UnsavedMarkupOverridesTheAdditionalFileOnDisk" computerName="DESKTOP-JT43V3D" duration="00:00:12.9497988" startTime="2026-09-05T14:41:04.8252268+03:00" endTime="2026-09-05T14:41:04.8252269+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="465d66d4-d506-4963-bff3-a3490eb7bb96" />
+    <UnitTestResult executionId="f27c1fd3-d166-40ef-b9ea-f57780128a5c" testId="84678635-32b8-072c-2d9d-e7d04bf10c59" testName="Cerneala.Tests.PreviewHost.PreviewHostTests.HostProcessRendersThroughTheBinaryProtocol" computerName="DESKTOP-JT43V3D" duration="00:00:06.1334427" startTime="2026-09-05T14:40:45.6903979+03:00" endTime="2026-09-05T14:40:45.6903986+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f27c1fd3-d166-40ef-b9ea-f57780128a5c" />
+    <UnitTestResult executionId="bcebc3a5-2d1c-45c0-9871-d4f396eace2b" testId="4e30bae5-3742-2467-d20f-daebb4b1ac35" testName="Cerneala.Tests.PreviewHost.PreviewHostTests.OpeningViewCapturesThePresentedBgraFrameWithoutPngEncoding" computerName="DESKTOP-JT43V3D" duration="00:00:01.5067660" startTime="2026-09-05T14:40:47.2742759+03:00" endTime="2026-09-05T14:40:47.2742762+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bcebc3a5-2d1c-45c0-9871-d4f396eace2b" />
+    <UnitTestResult executionId="e45ffacb-cb81-4130-825b-de280e57aec2" testId="94795f4b-46fa-daa7-17e2-bfdc7f71f190" testName="Cerneala.Tests.PreviewHost.PreviewHostTests.IncompleteLiteralIsDeferredWithoutMutatingTheLiveTree" computerName="DESKTOP-JT43V3D" duration="00:00:00.0750273" startTime="2026-09-05T14:40:45.7673866+03:00" endTime="2026-09-05T14:40:45.7673870+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e45ffacb-cb81-4130-825b-de280e57aec2" />
+    <UnitTestResult executionId="66afaca2-6757-438d-bc3d-3ca8d0a88c55" testId="33107818-4276-c3de-28c6-25ca8e3b560d" testName="Cerneala.Tests.PreviewHost.PreviewHostTests.UnsavedValidMarkupCompilesThroughTheDynamicProject" computerName="DESKTOP-JT43V3D" duration="00:00:10.2290811" startTime="2026-09-05T14:41:16.1733270+03:00" endTime="2026-09-05T14:41:16.1733272+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="66afaca2-6757-438d-bc3d-3ca8d0a88c55" />
+    <UnitTestResult executionId="9fc5bc51-397d-4364-86fa-367a29d1c4db" testId="ef1dd837-ae67-a11d-3ac0-a6846e33e049" testName="Cerneala.Tests.PreviewHost.PreviewHostTests.LiteralPropertyEditUpdatesTheLiveTreeWithoutRecompiling" computerName="DESKTOP-JT43V3D" duration="00:00:04.4774172" startTime="2026-09-05T14:40:51.8752883+03:00" endTime="2026-09-05T14:40:51.8752889+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9fc5bc51-397d-4364-86fa-367a29d1c4db" />
+    <UnitTestResult executionId="07d5be84-56c8-4f6c-bdc2-58e270f56aba" testId="38d31ece-25ab-46f8-3a8e-1fe96157c03c" testName="Cerneala.Tests.PreviewHost.PreviewHostTests.UnchangedSavedMarkupReusesTheCurrentBuildOutput" computerName="DESKTOP-JT43V3D" duration="00:00:00.1228185" startTime="2026-09-05T14:40:47.3972231+03:00" endTime="2026-09-05T14:40:47.3972234+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="07d5be84-56c8-4f6c-bdc2-58e270f56aba" />
+    <UnitTestResult executionId="609f42c2-dae1-4dce-a5d1-5704f093525c" testId="53f31151-a2da-47d5-79ad-5ec641f6970d" testName="Cerneala.Tests.PreviewHost.PreviewHostTests.FrameResponsesReuseTheCallersImageBuffer" computerName="DESKTOP-JT43V3D" duration="00:00:00.0040174" startTime="2026-09-05T14:41:16.7453352+03:00" endTime="2026-09-05T14:41:16.7453354+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="609f42c2-dae1-4dce-a5d1-5704f093525c" />
+    <UnitTestResult executionId="3336c595-200e-454d-88b6-9b946b7e3009" testId="0477c440-ed90-a873-a7bf-9f6898efa75d" testName="Cerneala.Tests.PreviewHost.PreviewHostTests.InteractiveInputRoundTripsThroughThePreviewProtocol" computerName="DESKTOP-JT43V3D" duration="00:00:00.1653039" startTime="2026-09-05T14:40:39.5531761+03:00" endTime="2026-09-05T14:40:39.5532286+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3336c595-200e-454d-88b6-9b946b7e3009" />
+    <UnitTestResult executionId="95f89f1d-fc22-4603-baf5-b463b8bd0788" testId="1bd47a0b-3398-b306-f5d8-8a5e2c7749ee" testName="Cerneala.Tests.PreviewHost.PreviewHostTests.PreviewRuntimeCanBeRecreatedAfterARecompile" computerName="DESKTOP-JT43V3D" duration="00:00:01.1187521" startTime="2026-09-05T14:41:05.9440887+03:00" endTime="2026-09-05T14:41:05.9440889+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="95f89f1d-fc22-4603-baf5-b463b8bd0788" />
+    <UnitTestResult executionId="ef17ec51-9d8b-411f-81fa-c4ec25f0e1b4" testId="12dec20d-5434-a571-f45c-351388fbf51a" testName="Cerneala.Tests.PreviewHost.PreviewHostTests.CustomControlTextEditUpdatesTheLiveTreeWithoutRecompiling" computerName="DESKTOP-JT43V3D" duration="00:00:04.3711266" startTime="2026-09-05T14:41:21.1165523+03:00" endTime="2026-09-05T14:41:21.1165526+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ef17ec51-9d8b-411f-81fa-c4ec25f0e1b4" />
+    <UnitTestResult executionId="8c6da8a9-d8ea-4b6a-868a-d645c09c769a" testId="67c7b16c-82f4-999a-7956-afa4ba898d99" testName="Cerneala.Tests.PreviewHost.PreviewHostTests.PreviewRenderScaleIsIndependentOfDesktopDpi" computerName="DESKTOP-JT43V3D" duration="00:00:00.5678634" startTime="2026-09-05T14:41:16.7412552+03:00" endTime="2026-09-05T14:41:16.7412555+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8c6da8a9-d8ea-4b6a-868a-d645c09c769a" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.PreviewHost.PreviewHostTests.UnsavedValidMarkupCompilesThroughTheDynamicProject" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.previewhost\bin\debug\net10.0-windows\cerneala.tests.previewhost.dll" id="33107818-4276-c3de-28c6-25ca8e3b560d">
+      <Execution id="66afaca2-6757-438d-bc3d-3ca8d0a88c55" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Debug\net10.0-windows\Cerneala.Tests.PreviewHost.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.PreviewHost.PreviewHostTests" name="UnsavedValidMarkupCompilesThroughTheDynamicProject" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.PreviewHost.PreviewHostTests.UnsavedMarkupOverridesTheAdditionalFileOnDisk" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.previewhost\bin\debug\net10.0-windows\cerneala.tests.previewhost.dll" id="12a63a53-ba24-846d-d04a-0c0216c8a8c3">
+      <Execution id="465d66d4-d506-4963-bff3-a3490eb7bb96" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Debug\net10.0-windows\Cerneala.Tests.PreviewHost.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.PreviewHost.PreviewHostTests" name="UnsavedMarkupOverridesTheAdditionalFileOnDisk" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.PreviewHost.PreviewHostTests.CustomControlTextEditUpdatesTheLiveTreeWithoutRecompiling" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.previewhost\bin\debug\net10.0-windows\cerneala.tests.previewhost.dll" id="12dec20d-5434-a571-f45c-351388fbf51a">
+      <Execution id="ef17ec51-9d8b-411f-81fa-c4ec25f0e1b4" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Debug\net10.0-windows\Cerneala.Tests.PreviewHost.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.PreviewHost.PreviewHostTests" name="CustomControlTextEditUpdatesTheLiveTreeWithoutRecompiling" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.PreviewHost.PreviewHostTests.IncompleteLiteralIsDeferredWithoutMutatingTheLiveTree" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.previewhost\bin\debug\net10.0-windows\cerneala.tests.previewhost.dll" id="94795f4b-46fa-daa7-17e2-bfdc7f71f190">
+      <Execution id="e45ffacb-cb81-4130-825b-de280e57aec2" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Debug\net10.0-windows\Cerneala.Tests.PreviewHost.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.PreviewHost.PreviewHostTests" name="IncompleteLiteralIsDeferredWithoutMutatingTheLiveTree" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.PreviewHost.PreviewHostTests.FrameResponsesReuseTheCallersImageBuffer" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.previewhost\bin\debug\net10.0-windows\cerneala.tests.previewhost.dll" id="53f31151-a2da-47d5-79ad-5ec641f6970d">
+      <Execution id="609f42c2-dae1-4dce-a5d1-5704f093525c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Debug\net10.0-windows\Cerneala.Tests.PreviewHost.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.PreviewHost.PreviewHostTests" name="FrameResponsesReuseTheCallersImageBuffer" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.PreviewHost.PreviewHostTests.StructuralMarkupEditStillRequiresCompilation" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.previewhost\bin\debug\net10.0-windows\cerneala.tests.previewhost.dll" id="84ac8de5-f885-9e33-9fea-b9c3e4f31aaf">
+      <Execution id="96d3fc1d-94b3-41c0-9e2c-4aee99842453" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Debug\net10.0-windows\Cerneala.Tests.PreviewHost.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.PreviewHost.PreviewHostTests" name="StructuralMarkupEditStillRequiresCompilation" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.PreviewHost.PreviewHostTests.HostProcessRendersThroughTheBinaryProtocol" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.previewhost\bin\debug\net10.0-windows\cerneala.tests.previewhost.dll" id="84678635-32b8-072c-2d9d-e7d04bf10c59">
+      <Execution id="f27c1fd3-d166-40ef-b9ea-f57780128a5c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Debug\net10.0-windows\Cerneala.Tests.PreviewHost.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.PreviewHost.PreviewHostTests" name="HostProcessRendersThroughTheBinaryProtocol" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.PreviewHost.PreviewHostTests.InteractiveInputRoundTripsThroughThePreviewProtocol" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.previewhost\bin\debug\net10.0-windows\cerneala.tests.previewhost.dll" id="0477c440-ed90-a873-a7bf-9f6898efa75d">
+      <Execution id="3336c595-200e-454d-88b6-9b946b7e3009" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Debug\net10.0-windows\Cerneala.Tests.PreviewHost.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.PreviewHost.PreviewHostTests" name="InteractiveInputRoundTripsThroughThePreviewProtocol" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.PreviewHost.PreviewHostTests.LiteralPropertyEditUpdatesTheLiveTreeWithoutRecompiling" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.previewhost\bin\debug\net10.0-windows\cerneala.tests.previewhost.dll" id="ef1dd837-ae67-a11d-3ac0-a6846e33e049">
+      <Execution id="9fc5bc51-397d-4364-86fa-367a29d1c4db" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Debug\net10.0-windows\Cerneala.Tests.PreviewHost.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.PreviewHost.PreviewHostTests" name="LiteralPropertyEditUpdatesTheLiveTreeWithoutRecompiling" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.PreviewHost.PreviewHostTests.OpeningViewCapturesThePresentedBgraFrameWithoutPngEncoding" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.previewhost\bin\debug\net10.0-windows\cerneala.tests.previewhost.dll" id="4e30bae5-3742-2467-d20f-daebb4b1ac35">
+      <Execution id="bcebc3a5-2d1c-45c0-9871-d4f396eace2b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Debug\net10.0-windows\Cerneala.Tests.PreviewHost.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.PreviewHost.PreviewHostTests" name="OpeningViewCapturesThePresentedBgraFrameWithoutPngEncoding" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.PreviewHost.PreviewHostTests.PreviewRenderScaleIsIndependentOfDesktopDpi" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.previewhost\bin\debug\net10.0-windows\cerneala.tests.previewhost.dll" id="67c7b16c-82f4-999a-7956-afa4ba898d99">
+      <Execution id="8c6da8a9-d8ea-4b6a-868a-d645c09c769a" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Debug\net10.0-windows\Cerneala.Tests.PreviewHost.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.PreviewHost.PreviewHostTests" name="PreviewRenderScaleIsIndependentOfDesktopDpi" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.PreviewHost.PreviewHostTests.UnchangedSavedMarkupReusesTheCurrentBuildOutput" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.previewhost\bin\debug\net10.0-windows\cerneala.tests.previewhost.dll" id="38d31ece-25ab-46f8-3a8e-1fe96157c03c">
+      <Execution id="07d5be84-56c8-4f6c-bdc2-58e270f56aba" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Debug\net10.0-windows\Cerneala.Tests.PreviewHost.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.PreviewHost.PreviewHostTests" name="UnchangedSavedMarkupReusesTheCurrentBuildOutput" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.PreviewHost.PreviewHostTests.PreviewRuntimeCanBeRecreatedAfterARecompile" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.previewhost\bin\debug\net10.0-windows\cerneala.tests.previewhost.dll" id="1bd47a0b-3398-b306-f5d8-8a5e2c7749ee">
+      <Execution id="95f89f1d-fc22-4603-baf5-b463b8bd0788" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Debug\net10.0-windows\Cerneala.Tests.PreviewHost.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.PreviewHost.PreviewHostTests" name="PreviewRuntimeCanBeRecreatedAfterARecompile" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="84ac8de5-f885-9e33-9fea-b9c3e4f31aaf" executionId="96d3fc1d-94b3-41c0-9e2c-4aee99842453" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="12a63a53-ba24-846d-d04a-0c0216c8a8c3" executionId="465d66d4-d506-4963-bff3-a3490eb7bb96" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="84678635-32b8-072c-2d9d-e7d04bf10c59" executionId="f27c1fd3-d166-40ef-b9ea-f57780128a5c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4e30bae5-3742-2467-d20f-daebb4b1ac35" executionId="bcebc3a5-2d1c-45c0-9871-d4f396eace2b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="94795f4b-46fa-daa7-17e2-bfdc7f71f190" executionId="e45ffacb-cb81-4130-825b-de280e57aec2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="33107818-4276-c3de-28c6-25ca8e3b560d" executionId="66afaca2-6757-438d-bc3d-3ca8d0a88c55" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ef1dd837-ae67-a11d-3ac0-a6846e33e049" executionId="9fc5bc51-397d-4364-86fa-367a29d1c4db" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="38d31ece-25ab-46f8-3a8e-1fe96157c03c" executionId="07d5be84-56c8-4f6c-bdc2-58e270f56aba" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="53f31151-a2da-47d5-79ad-5ec641f6970d" executionId="609f42c2-dae1-4dce-a5d1-5704f093525c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0477c440-ed90-a873-a7bf-9f6898efa75d" executionId="3336c595-200e-454d-88b6-9b946b7e3009" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1bd47a0b-3398-b306-f5d8-8a5e2c7749ee" executionId="95f89f1d-fc22-4603-baf5-b463b8bd0788" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="12dec20d-5434-a571-f45c-351388fbf51a" executionId="ef17ec51-9d8b-411f-81fa-c4ec25f0e1b4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="67c7b16c-82f4-999a-7956-afa4ba898d99" executionId="8c6da8a9-d8ea-4b6a-868a-d645c09c769a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="13" executed="13" passed="13" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 10.0.11)&#xD;
+[xUnit.net 00:00:00.58]   Discovering: Cerneala.Tests.PreviewHost&#xD;
+[xUnit.net 00:00:00.62]   Discovered:  Cerneala.Tests.PreviewHost&#xD;
+[xUnit.net 00:00:00.62]   Starting:    Cerneala.Tests.PreviewHost&#xD;
+[xUnit.net 00:00:42.41]   Finished:    Cerneala.Tests.PreviewHost&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

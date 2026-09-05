@@ -1,0 +1,630 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="ebb06c33-c9d8-4db7-90c7-2c114fa5b8bd" name="lauri@DESKTOP-JT43V3D 2026-09-05 03:19:38" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T03:19:38.8112323+03:00" queuing="2026-09-05T03:19:38.8112338+03:00" start="2026-09-05T03:19:33.7547216+03:00" finish="2026-09-05T03:19:39.4393503+03:00" />
+  <TestSettings name="default" id="adefe0b8-97a3-4454-bc64-1270f447ca6c">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_03_19_38" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="7e8ba5cc-a3d5-4a09-a36e-25a1fed44c95" testId="83c3d4b2-db7e-ecec-a865-b4f4638cf06d" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/editor-warning.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D017&quot;, category: &quot;Warning&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001797" startTime="2026-09-05T03:19:38.7879768+03:00" endTime="2026-09-05T03:19:38.7879772+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7e8ba5cc-a3d5-4a09-a36e-25a1fed44c95">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 111&#xD;
+   at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="4d2c12d6-e34f-4405-a09e-2205e00bb9bd" testId="a4f0a97f-254d-8a46-8c60-957e7eff66dc" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/duplicate-promotion.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D012&quot;, category: &quot;Error&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001517" startTime="2026-09-05T03:19:38.7273539+03:00" endTime="2026-09-05T03:19:38.7273540+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4d2c12d6-e34f-4405-a09e-2205e00bb9bd">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 111&#xD;
+   at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="f091af29-3850-49af-9380-08a7ab055b00" testId="5f6f8ee7-a498-413f-d490-ddf4775a4e4d" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/tile-id.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D006&quot;, category: &quot;Error&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001239" startTime="2026-09-05T03:19:38.7289252+03:00" endTime="2026-09-05T03:19:38.7289264+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f091af29-3850-49af-9380-08a7ab055b00">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 111&#xD;
+   at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="649c4cf8-5f32-4bb8-87cb-444f35339b6c" testId="0fcb14db-3c45-d522-d12a-e12cf995f6b9" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(format: &quot;Tiled&quot;, file: &quot;tiled-zlib.tmj&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0029329" startTime="2026-09-05T03:19:39.2947464+03:00" endTime="2026-09-05T03:19:39.2947469+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="649c4cf8-5f32-4bb8-87cb-444f35339b6c">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 30&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="21dca89e-aac7-410d-8c3d-fd626ef9d120" testId="9d6da3f6-f964-75da-e83c-9d86d8f0e4dc" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InfiniteMapKeepsNegativeAndRemoteChunksWithoutFillingTheGap" computerName="DESKTOP-JT43V3D" duration="00:00:00.0015896" startTime="2026-09-05T03:19:39.3036878+03:00" endTime="2026-09-05T03:19:39.3036879+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="21dca89e-aac7-410d-8c3d-fd626ef9d120">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InfiniteMapKeepsNegativeAndRemoteChunksWithoutFillingTheGap() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 70&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="64532cfc-9007-4bb2-b608-0958c50103df" testId="9617b4cd-f8b8-8c16-0738-982e9aff80ad" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(format: &quot;Tiled&quot;, file: &quot;tiled-raw.tmj&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001208" startTime="2026-09-05T03:19:39.3020652+03:00" endTime="2026-09-05T03:19:39.3020654+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="64532cfc-9007-4bb2-b608-0958c50103df">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 30&#xD;
+   at InvokeStub_ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="33380a93-77e1-4ef9-a05c-deca7e3d9817" testId="80a69860-e036-fa04-2a49-7ce4d708e483" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/empty-promotion.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D012&quot;, category: &quot;Error&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0863276" startTime="2026-09-05T03:19:38.7184953+03:00" endTime="2026-09-05T03:19:38.7185269+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="33380a93-77e1-4ef9-a05c-deca7e3d9817">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 111&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="4624fc0d-ef0e-4460-bd18-0aa193c15328" testId="b302d150-c1c6-92aa-7c57-256467cd10da" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.SparsePromotionKeepsStableAddressAndTemplatePropertiesWithoutCreatingUiNodes(file: &quot;tiled-empty-promotion.tmj&quot;, x: 1, y: 1)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0012707" startTime="2026-09-05T03:19:39.2764264+03:00" endTime="2026-09-05T03:19:39.2764270+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4624fc0d-ef0e-4460-bd18-0aa193c15328">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.SparsePromotionKeepsStableAddressAndTemplatePropertiesWithoutCreatingUiNodes(String file, Int32 x, Int32 y) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 127&#xD;
+   at InvokeStub_ImportStageZeroContractTests.SparsePromotionKeepsStableAddressAndTemplatePropertiesWithoutCreatingUiNodes(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="fe13d608-f0bf-43d6-b3b6-d42a41e0ae03" testId="0799c4bd-a5b3-d121-c9fd-d7c49ac6f68d" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/absent-promotion.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D012&quot;, category: &quot;Error&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0018863" startTime="2026-09-05T03:19:38.7895123+03:00" endTime="2026-09-05T03:19:38.7895124+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fe13d608-f0bf-43d6-b3b6-d42a41e0ae03">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 111&#xD;
+   at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="8caa894b-5fa7-433c-af27-fbfb7e4379a4" testId="d8e3e2d7-f40c-ed71-cf91-1eb2a41141d8" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/degenerate-collider.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D008&quot;, category: &quot;Error&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001434" startTime="2026-09-05T03:19:38.7304564+03:00" endTime="2026-09-05T03:19:38.7304567+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8caa894b-5fa7-433c-af27-fbfb7e4379a4">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 111&#xD;
+   at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="b887616b-960b-4dce-b9cb-a8c67a2917dc" testId="098ca5c2-b614-53e6-a3fa-964a33c5887a" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/unsupported.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D004&quot;, category: &quot;Unsupported&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0002659" startTime="2026-09-05T03:19:38.7902786+03:00" endTime="2026-09-05T03:19:38.7902788+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b887616b-960b-4dce-b9cb-a8c67a2917dc">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 111&#xD;
+   at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="a31e0d85-298c-43e4-bb9e-0504bda07a9b" testId="60bcf199-30fc-eee8-e53d-a559e020496e" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.SparsePromotionKeepsStableAddressAndTemplatePropertiesWithoutCreatingUiNodes(file: &quot;tiled-objects.tmj&quot;, x: 1, y: 0)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0039357" startTime="2026-09-05T03:19:39.2745175+03:00" endTime="2026-09-05T03:19:39.2745183+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a31e0d85-298c-43e4-bb9e-0504bda07a9b">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.SparsePromotionKeepsStableAddressAndTemplatePropertiesWithoutCreatingUiNodes(String file, Int32 x, Int32 y) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 127&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="da1f01ce-2973-4fa4-b02c-bec916a75b13" testId="0e23bb29-4133-c8c3-90c4-d165f1c33b39" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.AllEightTiledFlipCombinationsSurviveAsCoreData" computerName="DESKTOP-JT43V3D" duration="00:00:00.5504386" startTime="2026-09-05T03:19:39.2704120+03:00" endTime="2026-09-05T03:19:39.2704122+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="da1f01ce-2973-4fa4-b02c-bec916a75b13">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.AllEightTiledFlipCombinationsSurviveAsCoreData() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 84&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="3c540fb7-195d-4bb7-87c7-29cbd25b9180" testId="3bfefb6c-faed-d1b0-181f-18f44d977634" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/version.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D003&quot;, category: &quot;Fatal&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001947" startTime="2026-09-05T03:19:38.7257175+03:00" endTime="2026-09-05T03:19:38.7257177+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3c540fb7-195d-4bb7-87c7-29cbd25b9180">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 111&#xD;
+   at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="1b9d4da4-17a4-4c31-a98f-3bc7093807d9" testId="7fb8cb12-b6d4-765a-382d-1a2d2a7b8bbf" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/chunk-overlap.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D011&quot;, category: &quot;Error&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0008113" startTime="2026-09-05T03:19:38.7887345+03:00" endTime="2026-09-05T03:19:38.7887347+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1b9d4da4-17a4-4c31-a98f-3bc7093807d9">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 111&#xD;
+   at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="f42f1f3f-25fb-4c3b-bf5a-12af1d0a2e9e" testId="44064582-25f9-f07f-5647-1941fbe22d67" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/atlas-bounds.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D007&quot;, category: &quot;Error&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001275" startTime="2026-09-05T03:19:38.7280924+03:00" endTime="2026-09-05T03:19:38.7280925+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f42f1f3f-25fb-4c3b-bf5a-12af1d0a2e9e">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 111&#xD;
+   at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="9ad8db85-5678-4ffc-a994-745228ff1c0b" testId="839f6d59-09e0-c3dc-fc39-c5d348186bcb" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/layer-mask.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D009&quot;, category: &quot;Error&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0005502" startTime="2026-09-05T03:19:38.7243635+03:00" endTime="2026-09-05T03:19:38.7243638+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9ad8db85-5678-4ffc-a994-745228ff1c0b">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 111&#xD;
+   at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="2bed5541-0d57-4b0b-b816-bbb16ae87a0c" testId="a775d205-18de-eb84-e2f9-c98de9bd10d8" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(format: &quot;Tiled&quot;, file: &quot;tiled-external.tmj&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0004231" startTime="2026-09-05T03:19:39.2984335+03:00" endTime="2026-09-05T03:19:39.2984338+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2bed5541-0d57-4b0b-b816-bbb16ae87a0c">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 30&#xD;
+   at InvokeStub_ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="4bb14461-e49c-4bc3-9b34-6d0878bc901c" testId="57a7b9c0-5d80-0f57-6921-5d8b3f1ac080" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/missing-file.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D001&quot;, category: &quot;Fatal&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0002315" startTime="2026-09-05T03:19:38.7266013+03:00" endTime="2026-09-05T03:19:38.7266016+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4bb14461-e49c-4bc3-9b34-6d0878bc901c">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 111&#xD;
+   at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c63f3c62-9e61-40a7-9d17-3b6cb1c8e7a2" testId="20a6e335-2067-179c-dad1-bcee4365174d" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(format: &quot;Tiled&quot;, file: &quot;tiled-gzip.tmj&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0011309" startTime="2026-09-05T03:19:39.3029882+03:00" endTime="2026-09-05T03:19:39.3029886+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c63f3c62-9e61-40a7-9d17-3b6cb1c8e7a2">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 30&#xD;
+   at InvokeStub_ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="040f3ac4-71d0-4826-b677-ffc1eb4f8f06" testId="eff41dd7-044e-602d-8ad1-ef770a1f5078" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/path-escape.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D010&quot;, category: &quot;Fatal&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001457" startTime="2026-09-05T03:19:38.7296151+03:00" endTime="2026-09-05T03:19:38.7296153+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="040f3ac4-71d0-4826-b677-ffc1eb4f8f06">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 111&#xD;
+   at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="34c93e2e-a88c-406e-a628-3c4662acaf93" testId="afed80b0-7084-acdf-e5ae-6be3b230f932" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/unknown-field.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D004&quot;, category: &quot;Unsupported&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001566" startTime="2026-09-05T03:19:38.7872691+03:00" endTime="2026-09-05T03:19:38.7872693+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="34c93e2e-a88c-406e-a628-3c4662acaf93">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 111&#xD;
+   at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="edef88bc-f39b-48a0-9ad6-d33221ea991f" testId="679458d5-2c25-0eff-9ff4-47282b980e7d" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(format: &quot;Tiled&quot;, file: &quot;tiled-finite.tmj&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001336" startTime="2026-09-05T03:19:39.3011516+03:00" endTime="2026-09-05T03:19:39.3011521+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="edef88bc-f39b-48a0-9ad6-d33221ea991f">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 30&#xD;
+   at InvokeStub_ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="f5167217-5995-4600-8321-f558118173b7" testId="8c27b1db-98e3-7f36-933d-d29820e4e303" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.GroupOffsetsOpacityAndTintComposeWithoutChangingLayerIdentity" computerName="DESKTOP-JT43V3D" duration="00:00:00.0011800" startTime="2026-09-05T03:19:39.3044013+03:00" endTime="2026-09-05T03:19:39.3044016+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f5167217-5995-4600-8321-f558118173b7">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 184&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.GroupOffsetsOpacityAndTintComposeWithoutChangingLayerIdentity() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 95&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/empty-promotion.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D012&quot;, category: &quot;Error&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="80a69860-e036-fa04-2a49-7ce4d708e483">
+      <Execution id="33380a93-77e1-4ef9-a05c-deca7e3d9817" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.GroupOffsetsOpacityAndTintComposeWithoutChangingLayerIdentity" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="8c27b1db-98e3-7f36-933d-d29820e4e303">
+      <Execution id="f5167217-5995-4600-8321-f558118173b7" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="GroupOffsetsOpacityAndTintComposeWithoutChangingLayerIdentity" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/absent-promotion.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D012&quot;, category: &quot;Error&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="0799c4bd-a5b3-d121-c9fd-d7c49ac6f68d">
+      <Execution id="fe13d608-f0bf-43d6-b3b6-d42a41e0ae03" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.SparsePromotionKeepsStableAddressAndTemplatePropertiesWithoutCreatingUiNodes(file: &quot;tiled-empty-promotion.tmj&quot;, x: 1, y: 1)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="b302d150-c1c6-92aa-7c57-256467cd10da">
+      <Execution id="4624fc0d-ef0e-4460-bd18-0aa193c15328" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="SparsePromotionKeepsStableAddressAndTemplatePropertiesWithoutCreatingUiNodes" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/path-escape.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D010&quot;, category: &quot;Fatal&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="eff41dd7-044e-602d-8ad1-ef770a1f5078">
+      <Execution id="040f3ac4-71d0-4826-b677-ffc1eb4f8f06" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/editor-warning.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D017&quot;, category: &quot;Warning&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="83c3d4b2-db7e-ecec-a865-b4f4638cf06d">
+      <Execution id="7e8ba5cc-a3d5-4a09-a36e-25a1fed44c95" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(format: &quot;Tiled&quot;, file: &quot;tiled-zlib.tmj&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="0fcb14db-3c45-d522-d12a-e12cf995f6b9">
+      <Execution id="649c4cf8-5f32-4bb8-87cb-444f35339b6c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(format: &quot;Tiled&quot;, file: &quot;tiled-external.tmj&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="a775d205-18de-eb84-e2f9-c98de9bd10d8">
+      <Execution id="2bed5541-0d57-4b0b-b816-bbb16ae87a0c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(format: &quot;Tiled&quot;, file: &quot;tiled-raw.tmj&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="9617b4cd-f8b8-8c16-0738-982e9aff80ad">
+      <Execution id="64532cfc-9007-4bb2-b608-0958c50103df" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/atlas-bounds.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D007&quot;, category: &quot;Error&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="44064582-25f9-f07f-5647-1941fbe22d67">
+      <Execution id="f42f1f3f-25fb-4c3b-bf5a-12af1d0a2e9e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InfiniteMapKeepsNegativeAndRemoteChunksWithoutFillingTheGap" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="9d6da3f6-f964-75da-e83c-9d86d8f0e4dc">
+      <Execution id="21dca89e-aac7-410d-8c3d-fd626ef9d120" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="InfiniteMapKeepsNegativeAndRemoteChunksWithoutFillingTheGap" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(format: &quot;Tiled&quot;, file: &quot;tiled-gzip.tmj&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="20a6e335-2067-179c-dad1-bcee4365174d">
+      <Execution id="c63f3c62-9e61-40a7-9d17-3b6cb1c8e7a2" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.SparsePromotionKeepsStableAddressAndTemplatePropertiesWithoutCreatingUiNodes(file: &quot;tiled-objects.tmj&quot;, x: 1, y: 0)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="60bcf199-30fc-eee8-e53d-a559e020496e">
+      <Execution id="a31e0d85-298c-43e4-bb9e-0504bda07a9b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="SparsePromotionKeepsStableAddressAndTemplatePropertiesWithoutCreatingUiNodes" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/chunk-overlap.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D011&quot;, category: &quot;Error&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="7fb8cb12-b6d4-765a-382d-1a2d2a7b8bbf">
+      <Execution id="1b9d4da4-17a4-4c31-a98f-3bc7093807d9" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/tile-id.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D006&quot;, category: &quot;Error&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="5f6f8ee7-a498-413f-d490-ddf4775a4e4d">
+      <Execution id="f091af29-3850-49af-9380-08a7ab055b00" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/degenerate-collider.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D008&quot;, category: &quot;Error&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="d8e3e2d7-f40c-ed71-cf91-1eb2a41141d8">
+      <Execution id="8caa894b-5fa7-433c-af27-fbfb7e4379a4" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/unknown-field.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D004&quot;, category: &quot;Unsupported&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="afed80b0-7084-acdf-e5ae-6be3b230f932">
+      <Execution id="34c93e2e-a88c-406e-a628-3c4662acaf93" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/missing-file.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D001&quot;, category: &quot;Fatal&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="57a7b9c0-5d80-0f57-6921-5d8b3f1ac080">
+      <Execution id="4bb14461-e49c-4bc3-9b34-6d0878bc901c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.AllEightTiledFlipCombinationsSurviveAsCoreData" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="0e23bb29-4133-c8c3-90c4-d165f1c33b39">
+      <Execution id="da1f01ce-2973-4fa4-b02c-bec916a75b13" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="AllEightTiledFlipCombinationsSurviveAsCoreData" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(format: &quot;Tiled&quot;, file: &quot;tiled-finite.tmj&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="679458d5-2c25-0eff-9ff4-47282b980e7d">
+      <Execution id="edef88bc-f39b-48a0-9ad6-d33221ea991f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/layer-mask.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D009&quot;, category: &quot;Error&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="839f6d59-09e0-c3dc-fc39-c5d348186bcb">
+      <Execution id="9ad8db85-5678-4ffc-a994-745228ff1c0b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/unsupported.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D004&quot;, category: &quot;Unsupported&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="098ca5c2-b614-53e6-a3fa-964a33c5887a">
+      <Execution id="b887616b-960b-4dce-b9cb-a8c67a2917dc" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/version.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D003&quot;, category: &quot;Fatal&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="3bfefb6c-faed-d1b0-181f-18f44d977634">
+      <Execution id="3c540fb7-195d-4bb7-87c7-29cbd25b9180" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: &quot;invalid/duplicate-promotion.tmj&quot;, format: &quot;Tiled&quot;, code: &quot;SCN2D012&quot;, category: &quot;Error&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="a4f0a97f-254d-8a46-8c60-957e7eff66dc">
+      <Execution id="4d2c12d6-e34f-4405-a09e-2205e00bb9bd" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="83c3d4b2-db7e-ecec-a865-b4f4638cf06d" executionId="7e8ba5cc-a3d5-4a09-a36e-25a1fed44c95" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a4f0a97f-254d-8a46-8c60-957e7eff66dc" executionId="4d2c12d6-e34f-4405-a09e-2205e00bb9bd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5f6f8ee7-a498-413f-d490-ddf4775a4e4d" executionId="f091af29-3850-49af-9380-08a7ab055b00" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0fcb14db-3c45-d522-d12a-e12cf995f6b9" executionId="649c4cf8-5f32-4bb8-87cb-444f35339b6c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9d6da3f6-f964-75da-e83c-9d86d8f0e4dc" executionId="21dca89e-aac7-410d-8c3d-fd626ef9d120" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9617b4cd-f8b8-8c16-0738-982e9aff80ad" executionId="64532cfc-9007-4bb2-b608-0958c50103df" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="80a69860-e036-fa04-2a49-7ce4d708e483" executionId="33380a93-77e1-4ef9-a05c-deca7e3d9817" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b302d150-c1c6-92aa-7c57-256467cd10da" executionId="4624fc0d-ef0e-4460-bd18-0aa193c15328" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0799c4bd-a5b3-d121-c9fd-d7c49ac6f68d" executionId="fe13d608-f0bf-43d6-b3b6-d42a41e0ae03" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d8e3e2d7-f40c-ed71-cf91-1eb2a41141d8" executionId="8caa894b-5fa7-433c-af27-fbfb7e4379a4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="098ca5c2-b614-53e6-a3fa-964a33c5887a" executionId="b887616b-960b-4dce-b9cb-a8c67a2917dc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="60bcf199-30fc-eee8-e53d-a559e020496e" executionId="a31e0d85-298c-43e4-bb9e-0504bda07a9b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0e23bb29-4133-c8c3-90c4-d165f1c33b39" executionId="da1f01ce-2973-4fa4-b02c-bec916a75b13" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3bfefb6c-faed-d1b0-181f-18f44d977634" executionId="3c540fb7-195d-4bb7-87c7-29cbd25b9180" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7fb8cb12-b6d4-765a-382d-1a2d2a7b8bbf" executionId="1b9d4da4-17a4-4c31-a98f-3bc7093807d9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="44064582-25f9-f07f-5647-1941fbe22d67" executionId="f42f1f3f-25fb-4c3b-bf5a-12af1d0a2e9e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="839f6d59-09e0-c3dc-fc39-c5d348186bcb" executionId="9ad8db85-5678-4ffc-a994-745228ff1c0b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a775d205-18de-eb84-e2f9-c98de9bd10d8" executionId="2bed5541-0d57-4b0b-b816-bbb16ae87a0c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="57a7b9c0-5d80-0f57-6921-5d8b3f1ac080" executionId="4bb14461-e49c-4bc3-9b34-6d0878bc901c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="20a6e335-2067-179c-dad1-bcee4365174d" executionId="c63f3c62-9e61-40a7-9d17-3b6cb1c8e7a2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="eff41dd7-044e-602d-8ad1-ef770a1f5078" executionId="040f3ac4-71d0-4826-b677-ffc1eb4f8f06" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="afed80b0-7084-acdf-e5ae-6be3b230f932" executionId="34c93e2e-a88c-406e-a628-3c4662acaf93" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="679458d5-2c25-0eff-9ff4-47282b980e7d" executionId="edef88bc-f39b-48a0-9ad6-d33221ea991f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8c27b1db-98e3-7f36-933d-d29820e4e303" executionId="f5167217-5995-4600-8321-f558118173b7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="24" executed="24" passed="0" failed="24" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:01.52]   Discovering: Cerneala.Tests.Scene2DImporters&#xD;
+[xUnit.net 00:00:02.46]   Discovered:  Cerneala.Tests.Scene2DImporters&#xD;
+[xUnit.net 00:00:02.48]   Starting:    Cerneala.Tests.Scene2DImporters&#xD;
+[xUnit.net 00:00:02.76]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:02.77]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.77]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:02.77]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(111,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category)&#xD;
+[xUnit.net 00:00:02.77]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.77]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.78]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:02.78]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.78]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:02.78]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(111,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category)&#xD;
+[xUnit.net 00:00:02.78]            at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+[xUnit.net 00:00:02.78]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:02.78]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:02.78]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.78]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:02.78]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(111,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category)&#xD;
+[xUnit.net 00:00:02.78]            at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+[xUnit.net 00:00:02.78]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:02.78]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:02.78]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.78]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:02.78]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(111,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category)&#xD;
+[xUnit.net 00:00:02.78]            at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+[xUnit.net 00:00:02.78]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:02.78]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:02.78]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.78]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:02.78]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(111,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category)&#xD;
+[xUnit.net 00:00:02.78]            at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+[xUnit.net 00:00:02.78]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:02.78]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:02.78]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.78]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:02.78]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(111,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category)&#xD;
+[xUnit.net 00:00:02.78]            at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+[xUnit.net 00:00:02.78]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:02.78]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:02.78]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.78]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:02.78]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(111,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category)&#xD;
+[xUnit.net 00:00:02.78]            at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+[xUnit.net 00:00:02.78]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:02.78]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:02.78]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.78]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:02.78]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(111,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category)&#xD;
+[xUnit.net 00:00:02.78]            at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+[xUnit.net 00:00:02.78]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:02.78]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:02.78]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.78]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:02.78]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(111,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category)&#xD;
+[xUnit.net 00:00:02.78]            at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+[xUnit.net 00:00:02.78]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:02.84]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:02.84]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.84]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:02.84]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(111,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category)&#xD;
+[xUnit.net 00:00:02.84]            at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+[xUnit.net 00:00:02.84]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:02.84]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:02.84]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.84]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:02.84]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(111,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category)&#xD;
+[xUnit.net 00:00:02.84]            at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+[xUnit.net 00:00:02.84]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:02.84]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:02.84]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.84]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:02.84]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(111,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category)&#xD;
+[xUnit.net 00:00:02.84]            at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+[xUnit.net 00:00:02.84]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:02.84]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:02.84]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.84]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:02.84]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(111,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category)&#xD;
+[xUnit.net 00:00:02.84]            at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+[xUnit.net 00:00:02.84]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:02.84]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:02.84]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.84]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:02.84]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(111,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category)&#xD;
+[xUnit.net 00:00:02.84]            at InvokeStub_ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(Object, Span`1)&#xD;
+[xUnit.net 00:00:02.84]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:03.32]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:03.32]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.32]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:03.32]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(84,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.AllEightTiledFlipCombinationsSurviveAsCoreData()&#xD;
+[xUnit.net 00:00:03.32]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:03.32]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:03.33]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:03.33]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.33]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:03.33]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(127,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.SparsePromotionKeepsStableAddressAndTemplatePropertiesWithoutCreatingUiNodes(String file, Int32 x, Int32 y)&#xD;
+[xUnit.net 00:00:03.33]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:03.33]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:03.33]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:03.33]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.33]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:03.33]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(127,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.SparsePromotionKeepsStableAddressAndTemplatePropertiesWithoutCreatingUiNodes(String file, Int32 x, Int32 y)&#xD;
+[xUnit.net 00:00:03.33]            at InvokeStub_ImportStageZeroContractTests.SparsePromotionKeepsStableAddressAndTemplatePropertiesWithoutCreatingUiNodes(Object, Span`1)&#xD;
+[xUnit.net 00:00:03.33]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:03.35]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:03.35]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.35]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:03.35]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(30,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(String format, String file)&#xD;
+[xUnit.net 00:00:03.35]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:03.35]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:03.35]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:03.35]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.35]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:03.35]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(30,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(String format, String file)&#xD;
+[xUnit.net 00:00:03.35]            at InvokeStub_ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(Object, Span`1)&#xD;
+[xUnit.net 00:00:03.35]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:03.35]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:03.35]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.35]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:03.35]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(30,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(String format, String file)&#xD;
+[xUnit.net 00:00:03.35]            at InvokeStub_ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(Object, Span`1)&#xD;
+[xUnit.net 00:00:03.35]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:03.35]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:03.35]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.35]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:03.35]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(30,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(String format, String file)&#xD;
+[xUnit.net 00:00:03.35]            at InvokeStub_ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(Object, Span`1)&#xD;
+[xUnit.net 00:00:03.35]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:03.35]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:03.35]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.35]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:03.35]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(30,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(String format, String file)&#xD;
+[xUnit.net 00:00:03.35]            at InvokeStub_ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(Object, Span`1)&#xD;
+[xUnit.net 00:00:03.35]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:03.35]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:03.35]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.35]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:03.36]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(70,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InfiniteMapKeepsNegativeAndRemoteChunksWithoutFillingTheGap()&#xD;
+[xUnit.net 00:00:03.36]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:03.36]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:03.36]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:03.36]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.36]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(184,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:03.36]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(95,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.GroupOffsetsOpacityAndTintComposeWithoutChangingLayerIdentity()&#xD;
+[xUnit.net 00:00:03.36]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:03.36]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:03.36]   Finished:    Cerneala.Tests.Scene2DImporters&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:38.7127038+03:00">
+        <Text>[xUnit.net 00:00:02.76]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: "invalid/empty-promotion.tmj", format: "Tiled", code: "SCN2D012", category: "Error") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:38.7378157+03:00">
+        <Text>[xUnit.net 00:00:02.78]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: "invalid/layer-mask.tmj", format: "Tiled", code: "SCN2D009", category: "Error") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:38.7432671+03:00">
+        <Text>[xUnit.net 00:00:02.78]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: "invalid/version.tmj", format: "Tiled", code: "SCN2D003", category: "Fatal") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:38.7437471+03:00">
+        <Text>[xUnit.net 00:00:02.78]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: "invalid/missing-file.tmj", format: "Tiled", code: "SCN2D001", category: "Fatal") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:38.7444280+03:00">
+        <Text>[xUnit.net 00:00:02.78]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: "invalid/duplicate-promotion.tmj", format: "Tiled", code: "SCN2D012", category: "Error") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:38.7449881+03:00">
+        <Text>[xUnit.net 00:00:02.78]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: "invalid/atlas-bounds.tmj", format: "Tiled", code: "SCN2D007", category: "Error") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:38.7454556+03:00">
+        <Text>[xUnit.net 00:00:02.78]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: "invalid/tile-id.tmj", format: "Tiled", code: "SCN2D006", category: "Error") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:38.7459557+03:00">
+        <Text>[xUnit.net 00:00:02.78]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: "invalid/path-escape.tmj", format: "Tiled", code: "SCN2D010", category: "Fatal") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:38.7464647+03:00">
+        <Text>[xUnit.net 00:00:02.78]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: "invalid/degenerate-collider.tmj", format: "Tiled", code: "SCN2D008", category: "Error") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:38.8477323+03:00">
+        <Text>[xUnit.net 00:00:02.84]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: "invalid/unknown-field.tmj", format: "Tiled", code: "SCN2D004", category: "Unsupported") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:38.8478490+03:00">
+        <Text>[xUnit.net 00:00:02.84]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: "invalid/editor-warning.tmj", format: "Tiled", code: "SCN2D017", category: "Warning") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:38.8479444+03:00">
+        <Text>[xUnit.net 00:00:02.84]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: "invalid/chunk-overlap.tmj", format: "Tiled", code: "SCN2D011", category: "Error") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:38.8480152+03:00">
+        <Text>[xUnit.net 00:00:02.84]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: "invalid/absent-promotion.tmj", format: "Tiled", code: "SCN2D012", category: "Error") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:38.8480701+03:00">
+        <Text>[xUnit.net 00:00:02.84]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(file: "invalid/unsupported.tmj", format: "Tiled", code: "SCN2D004", category: "Unsupported") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:39.2699930+03:00">
+        <Text>[xUnit.net 00:00:03.32]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.AllEightTiledFlipCombinationsSurviveAsCoreData [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:39.2743974+03:00">
+        <Text>[xUnit.net 00:00:03.33]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.SparsePromotionKeepsStableAddressAndTemplatePropertiesWithoutCreatingUiNodes(file: "tiled-objects.tmj", x: 1, y: 0) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:39.2757985+03:00">
+        <Text>[xUnit.net 00:00:03.33]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.SparsePromotionKeepsStableAddressAndTemplatePropertiesWithoutCreatingUiNodes(file: "tiled-empty-promotion.tmj", x: 1, y: 1) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:39.2971269+03:00">
+        <Text>[xUnit.net 00:00:03.35]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(format: "Tiled", file: "tiled-zlib.tmj") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:39.3073406+03:00">
+        <Text>[xUnit.net 00:00:03.35]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(format: "Tiled", file: "tiled-external.tmj") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:39.3074011+03:00">
+        <Text>[xUnit.net 00:00:03.35]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(format: "Tiled", file: "tiled-finite.tmj") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:39.3074604+03:00">
+        <Text>[xUnit.net 00:00:03.35]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(format: "Tiled", file: "tiled-raw.tmj") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:39.3075258+03:00">
+        <Text>[xUnit.net 00:00:03.35]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(format: "Tiled", file: "tiled-gzip.tmj") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:39.3075790+03:00">
+        <Text>[xUnit.net 00:00:03.35]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InfiniteMapKeepsNegativeAndRemoteChunksWithoutFillingTheGap [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:19:39.3076311+03:00">
+        <Text>[xUnit.net 00:00:03.36]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.GroupOffsetsOpacityAndTintComposeWithoutChangingLayerIdentity [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

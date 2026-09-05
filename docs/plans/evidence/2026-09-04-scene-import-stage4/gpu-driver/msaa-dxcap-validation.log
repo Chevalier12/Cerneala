@@ -1,0 +1,94 @@
+Launching conformance processes. Press ESC to terminate.
+Warning: difference #0 perfromed on format 10, for which specialized differencing is not implemented.
+Warning: difference #1 perfromed on format 10, for which specialized differencing is not implemented.
+Warning: difference #2 perfromed on format 10, for which specialized differencing is not implemented.
+Warning: difference #3 perfromed on format 10, for which specialized differencing is not implemented.
+Warning: difference #4 perfromed on format 10, for which specialized differencing is not implemented.
+Warning: difference #5 perfromed on format 10, for which specialized differencing is not implemented.
+Warning: difference #6 perfromed on format 10, for which specialized differencing is not implemented.
+Warning: difference #7 perfromed on format 10, for which specialized differencing is not implemented.
+Warning: difference #8 perfromed on format 10, for which specialized differencing is not implemented.
+Warning: difference #9 perfromed on format 10, for which specialized differencing is not implemented.
+Warning: difference #10 perfromed on format 10, for which specialized differencing is not implemented.
+Warning: difference #11 perfromed on format 10, for which specialized differencing is not implemented.
+Warning: difference #12 perfromed on format 10, for which specialized differencing is not implemented.
+Warning: difference #13 perfromed on format 10, for which specialized differencing is not implemented.
+Warning: difference #14 perfromed on format 10, for which specialized differencing is not implemented.
+Warning: difference #15 perfromed on format 10, for which specialized differencing is not implemented.
+Warning: difference #16 perfromed on format 10, for which specialized differencing is not implemented.
+Warning: difference #17 perfromed on format 10, for which specialized differencing is not implemented.
+Warning: difference #18 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #19 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #20 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #21 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #22 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #23 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #24 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #25 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #26 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #27 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #28 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #29 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #30 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #31 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #32 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #33 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #34 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #35 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #36 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #37 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #38 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #39 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #40 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #41 perfromed on format 2, for which specialized differencing is not implemented.
+Warning: difference #42 perfromed on format 10, for which specialized differencing is not implemented.
+Failure at case 42: 512 pixels different by 60 ULP. Tolerance at this difference is 1 pixels.
+    (Re-run with 'DXCap.exe -p -file .artifacts/scene-import-stage4/gpu-driver/msaa-dxcap.vsglog -breakat 575' to break into the debugger just before calling the driver.)
+Warning: difference #43 perfromed on format 10, for which specialized differencing is not implemented.
+Warning: difference #44 perfromed on format 10, for which specialized differencing is not implemented.
+Failure at case 44: 12 pixels different by 33 ULP. Tolerance at this difference is 3 pixels.
+Failure at case 44: 4 pixels different by 36 ULP. Tolerance at this difference is 2 pixels.
+Failure at case 44: 8 pixels different by 38 ULP. Tolerance at this difference is 2 pixels.
+Failure at case 44: 60 pixels different by 39 ULP. Tolerance at this difference is 2 pixels.
+Failure at case 44: 24 pixels different by 42 ULP. Tolerance at this difference is 2 pixels.
+Failure at case 44: 148 pixels different by 43 ULP. Tolerance at this difference is 2 pixels.
+Failure at case 44: 2 pixels different by 44 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 44: 106 pixels different by 45 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 44: 48 pixels different by 46 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 44: 12 pixels different by 47 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 44: 10 pixels different by 48 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 44: 12 pixels different by 49 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 44: 144 pixels different by 50 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 44: 4 pixels different by 51 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 44: 62 pixels different by 52 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 44: 102 pixels different by 54 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 44: 12 pixels different by 55 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 44: 150 pixels different by 56 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 44: 306 pixels different by 58 ULP. Tolerance at this difference is 1 pixels.
+    (Re-run with 'DXCap.exe -p -file .artifacts/scene-import-stage4/gpu-driver/msaa-dxcap.vsglog -breakat 614' to break into the debugger just before calling the driver.)
+Warning: difference #45 perfromed on format 10, for which specialized differencing is not implemented.
+Failure at case 45: 512 pixels different by 60 ULP. Tolerance at this difference is 1 pixels.
+    (Re-run with 'DXCap.exe -p -file .artifacts/scene-import-stage4/gpu-driver/msaa-dxcap.vsglog -breakat 615' to break into the debugger just before calling the driver.)
+Warning: difference #46 perfromed on format 10, for which specialized differencing is not implemented.
+Warning: difference #47 perfromed on format 10, for which specialized differencing is not implemented.
+Failure at case 47: 12 pixels different by 33 ULP. Tolerance at this difference is 3 pixels.
+Failure at case 47: 4 pixels different by 36 ULP. Tolerance at this difference is 2 pixels.
+Failure at case 47: 8 pixels different by 38 ULP. Tolerance at this difference is 2 pixels.
+Failure at case 47: 60 pixels different by 39 ULP. Tolerance at this difference is 2 pixels.
+Failure at case 47: 24 pixels different by 42 ULP. Tolerance at this difference is 2 pixels.
+Failure at case 47: 148 pixels different by 43 ULP. Tolerance at this difference is 2 pixels.
+Failure at case 47: 2 pixels different by 44 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 47: 106 pixels different by 45 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 47: 48 pixels different by 46 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 47: 12 pixels different by 47 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 47: 10 pixels different by 48 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 47: 12 pixels different by 49 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 47: 144 pixels different by 50 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 47: 4 pixels different by 51 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 47: 62 pixels different by 52 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 47: 102 pixels different by 54 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 47: 12 pixels different by 55 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 47: 150 pixels different by 56 ULP. Tolerance at this difference is 1 pixels.
+Failure at case 47: 306 pixels different by 58 ULP. Tolerance at this difference is 1 pixels.
+    (Re-run with 'DXCap.exe -p -file .artifacts/scene-import-stage4/gpu-driver/msaa-dxcap.vsglog -breakat 651' to break into the debugger just before calling the driver.)
+Couldn't create intermediate surface: 80070057

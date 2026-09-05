@@ -1,0 +1,111 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="2d557dcf-41b6-427a-b9cf-fa70b0fa3b3b" name="lauri@DESKTOP-JT43V3D 2026-09-05 03:56:35" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T03:56:35.0658695+03:00" queuing="2026-09-05T03:56:35.0658698+03:00" start="2026-09-05T03:56:34.3083928+03:00" finish="2026-09-05T03:56:35.0722641+03:00" />
+  <TestSettings name="default" id="5fa881dc-b28a-42f6-9035-c87d1675e5a0">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_03_56_35" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="428ce1fc-9ceb-4ea3-ba91-4858e61d8cd3" testId="f4f764d2-2ec9-28ff-b90f-e8abad7fbde7" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.LdtkDiagnosticsRemainLocatedAndAtomic(file: &quot;invalid/ldtk-field.ldtk&quot;, format: &quot;LDtk&quot;, code: &quot;SCN2D004&quot;, category: &quot;Unsupported&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0005987" startTime="2026-09-05T03:56:34.9363539+03:00" endTime="2026-09-05T03:56:34.9363542+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="428ce1fc-9ceb-4ea3-ba91-4858e61d8cd3">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 188&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 111&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.LdtkDiagnosticsRemainLocatedAndAtomic(String file, String format, String code, String category) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 158&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="fba4b8f8-4dc7-40b1-845a-0edb72ac9c1f" testId="76434a2c-dca0-2601-3b79-a9edf028eadd" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.LdtkImportProducesIndependentGolden(file: &quot;ldtk-separate.ldtk&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0092382" startTime="2026-09-05T03:56:34.9305349+03:00" endTime="2026-09-05T03:56:34.9305638+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fba4b8f8-4dc7-40b1-845a-0edb72ac9c1f">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 188&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 30&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.LdtkImportProducesIndependentGolden(String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 152&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="8741f325-67b6-4917-a462-1f45d01c5c1e" testId="d17abdb2-07f9-16a2-455e-5eb3e2321702" testName="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.LdtkImportProducesIndependentGolden(file: &quot;ldtk-inline.ldtk&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0005410" startTime="2026-09-05T03:56:34.9342248+03:00" endTime="2026-09-05T03:56:34.9342250+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8741f325-67b6-4917-a462-1f45d01c5c1e">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 188&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(String format, String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 30&#xD;
+   at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.LdtkImportProducesIndependentGolden(String file) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs:line 152&#xD;
+   at InvokeStub_ImportStageZeroContractTests.LdtkImportProducesIndependentGolden(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.LdtkImportProducesIndependentGolden(file: &quot;ldtk-inline.ldtk&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="d17abdb2-07f9-16a2-455e-5eb3e2321702">
+      <Execution id="8741f325-67b6-4917-a462-1f45d01c5c1e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="LdtkImportProducesIndependentGolden" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.LdtkDiagnosticsRemainLocatedAndAtomic(file: &quot;invalid/ldtk-field.ldtk&quot;, format: &quot;LDtk&quot;, code: &quot;SCN2D004&quot;, category: &quot;Unsupported&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="f4f764d2-2ec9-28ff-b90f-e8abad7fbde7">
+      <Execution id="428ce1fc-9ceb-4ea3-ba91-4858e61d8cd3" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="LdtkDiagnosticsRemainLocatedAndAtomic" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.LdtkImportProducesIndependentGolden(file: &quot;ldtk-separate.ldtk&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="76434a2c-dca0-2601-3b79-a9edf028eadd">
+      <Execution id="fba4b8f8-4dc7-40b1-845a-0edb72ac9c1f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests" name="LdtkImportProducesIndependentGolden" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="f4f764d2-2ec9-28ff-b90f-e8abad7fbde7" executionId="428ce1fc-9ceb-4ea3-ba91-4858e61d8cd3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="76434a2c-dca0-2601-3b79-a9edf028eadd" executionId="fba4b8f8-4dc7-40b1-845a-0edb72ac9c1f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d17abdb2-07f9-16a2-455e-5eb3e2321702" executionId="8741f325-67b6-4917-a462-1f45d01c5c1e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="3" executed="3" passed="0" failed="3" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.07]   Discovering: Cerneala.Tests.Scene2DImporters&#xD;
+[xUnit.net 00:00:00.14]   Discovered:  Cerneala.Tests.Scene2DImporters&#xD;
+[xUnit.net 00:00:00.14]   Starting:    Cerneala.Tests.Scene2DImporters&#xD;
+[xUnit.net 00:00:00.20]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.20]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.20]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(188,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:00.20]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(30,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(String format, String file)&#xD;
+[xUnit.net 00:00:00.20]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(152,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.LdtkImportProducesIndependentGolden(String file)&#xD;
+[xUnit.net 00:00:00.20]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.20]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.20]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.20]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.20]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(188,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:00.20]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(30,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.ImportProducesIndependentGoldenIncludingAtlasFlipOffsetsAndLayerOrder(String format, String file)&#xD;
+[xUnit.net 00:00:00.20]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(152,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.LdtkImportProducesIndependentGolden(String file)&#xD;
+[xUnit.net 00:00:00.20]            at InvokeStub_ImportStageZeroContractTests.LdtkImportProducesIndependentGolden(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.20]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.21]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.21]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.21]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(188,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.Import(String format, String file)&#xD;
+[xUnit.net 00:00:00.21]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(111,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.InvalidAndUnsupportedDataHasStableLocatedDiagnosticsAndNoPartialPublication(String file, String format, String code, String category)&#xD;
+[xUnit.net 00:00:00.21]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\ImportStageZeroContractTests.cs(158,0): at Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.LdtkDiagnosticsRemainLocatedAndAtomic(String file, String format, String code, String category)&#xD;
+[xUnit.net 00:00:00.21]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.21]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.21]   Finished:    Cerneala.Tests.Scene2DImporters&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:56:34.9278893+03:00">
+        <Text>[xUnit.net 00:00:00.20]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.LdtkImportProducesIndependentGolden(file: "ldtk-separate.ldtk") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:56:34.9338148+03:00">
+        <Text>[xUnit.net 00:00:00.20]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.LdtkImportProducesIndependentGolden(file: "ldtk-inline.ldtk") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:56:34.9351454+03:00">
+        <Text>[xUnit.net 00:00:00.21]     Cerneala.Tests.Scene2DImporters.ImportStageZeroContractTests.LdtkDiagnosticsRemainLocatedAndAtomic(file: "invalid/ldtk-field.ldtk", format: "LDtk", code: "SCN2D004", category: "Unsupported") [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

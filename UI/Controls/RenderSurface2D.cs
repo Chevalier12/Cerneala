@@ -2,7 +2,9 @@ using System.Reflection;
 using System.Numerics;
 using Cerneala.Drawing;
 using Cerneala.UI.Core;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
+using Cerneala.UI.Input;
 using Cerneala.UI.Rendering;
 
 namespace Cerneala.UI.Controls;
@@ -13,7 +15,9 @@ public delegate void RenderSurface2DDrawEventHandler(
 
 public class RenderSurface2D : ContentControl,
     ITimeSensitiveRenderElement,
-    IRenderSurface2DFrameSource
+    IRenderSurface2DFrameSource,
+    IInputSubtreeHost,
+    IGeometricHitTestHost
 {
     public static readonly UiProperty<Color> ClearColorProperty =
         UiProperty<Color>.Register(
@@ -68,6 +72,9 @@ public class RenderSurface2D : ContentControl,
     private RenderSurface2DDrawEventHandler? draw;
     private long frameVersion = 1;
     private TimeSpan currentFrameTime;
+    private readonly List<SceneNode2D> activeAnimations = [];
+    private readonly HashSet<Collider2D> hitTestColliders =
+        new(ReferenceEqualityComparer.Instance);
 
     public RenderSurface2D()
     {
@@ -127,16 +134,104 @@ public class RenderSurface2D : ContentControl,
         Invalidate(InvalidationFlags.Render, "RenderSurface2D frame changed");
     }
 
+    public bool TryRootToScene(Vector2 rootPosition, out Vector2 scenePosition)
+    {
+        if (!float.IsFinite(rootPosition.X) || !float.IsFinite(rootPosition.Y) ||
+            !Matrix3x2.Invert(GetSceneToRootTransform(), out Matrix3x2 rootToScene))
+        {
+            scenePosition = default;
+            return false;
+        }
+
+        scenePosition = Vector2.Transform(rootPosition, rootToScene);
+        return float.IsFinite(scenePosition.X) && float.IsFinite(scenePosition.Y);
+    }
+
+    public Vector2 SceneToRoot(Vector2 scenePosition)
+    {
+        if (!float.IsFinite(scenePosition.X) || !float.IsFinite(scenePosition.Y))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(scenePosition),
+                scenePosition,
+                "Scene coordinates must be finite.");
+        }
+
+        return Vector2.Transform(scenePosition, GetSceneToRootTransform());
+    }
+
+    public override void Invalidate(InvalidationRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        base.Invalidate(request);
+        if (request.Flags.HasFlag(InvalidationFlags.Resource) && IsDrawingActive)
+        {
+            AdvanceFrameVersion();
+        }
+    }
+
     bool ITimeSensitiveRenderElement.UpdateRenderTime(TimeSpan frameTime)
     {
+        if (frameTime < TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(frameTime));
+        }
         currentFrameTime = frameTime;
-        if (!IsDrawingActive || RedrawMode != RenderSurface2DRedrawMode.Continuous)
+        bool animationChanged = false;
+        if (IsAttached)
+        {
+            for (int index = activeAnimations.Count - 1; index >= 0; index--)
+            {
+                SceneNode2D node = activeAnimations[index];
+                if (node.AdvanceAnimation(frameTime))
+                {
+                    node.IncrementRenderVersion();
+                    animationChanged = true;
+                }
+                if (!node.HasActiveAnimation)
+                {
+                    RemoveAnimationRegistration(node);
+                }
+            }
+        }
+        if (!animationChanged &&
+            (!IsDrawingActive || RedrawMode != RenderSurface2DRedrawMode.Continuous))
         {
             return false;
         }
 
         InvalidateFrame();
         return true;
+    }
+
+    internal int ActiveAnimationCount => activeAnimations.Count;
+
+    internal void RefreshAnimationRegistration(SceneNode2D node)
+    {
+        if (!node.IsAttached || !node.HasActiveAnimation)
+        {
+            RemoveAnimationRegistration(node);
+        }
+        else if (node.ActiveAnimationIndex < 0)
+        {
+            node.ActiveAnimationIndex = activeAnimations.Count;
+            activeAnimations.Add(node);
+        }
+    }
+
+    internal void RemoveAnimationRegistration(SceneNode2D node)
+    {
+        int index = node.ActiveAnimationIndex;
+        if (index < 0)
+        {
+            return;
+        }
+        int last = activeAnimations.Count - 1;
+        SceneNode2D moved = activeAnimations[last];
+        activeAnimations[index] = moved;
+        moved.ActiveAnimationIndex = index;
+        activeAnimations.RemoveAt(last);
+        node.ActiveAnimationIndex = -1;
     }
 
     protected virtual void OnDraw(RenderSurface2DFrame frame)
@@ -154,6 +249,11 @@ public class RenderSurface2D : ContentControl,
 
     protected override void OnDetached()
     {
+        foreach (SceneNode2D node in activeAnimations)
+        {
+            node.ActiveAnimationIndex = -1;
+        }
+        activeAnimations.Clear();
         DisposeManagedSession();
         base.OnDetached();
     }
@@ -215,6 +315,37 @@ public class RenderSurface2D : ContentControl,
 
     internal bool IsDrawingActiveForTests => IsDrawingActive;
 
+    IEnumerable<UIElement> IInputSubtreeHost.GetInputSubtreeChildren()
+    {
+        if (Scene is not null)
+        {
+            yield return Scene;
+        }
+    }
+
+    UIElement? IGeometricHitTestHost.HitTestGeometry(
+        ElementInputRouteMap routeMap,
+        float rootX,
+        float rootY,
+        HitTestFilter filter)
+    {
+        Scene2D? scene = Scene;
+        if (scene is null ||
+            !TryRootToScene(new Vector2(rootX, rootY), out Vector2 scenePosition))
+        {
+            return null;
+        }
+
+        UIElement? hit = SceneHitTest2D.HitTest(
+            scene,
+            scenePosition,
+            filter,
+            hitTestColliders);
+        return hit is not null && routeMap.TryGetId(hit, out _)
+            ? hit
+            : null;
+    }
+
     private bool IsDrawingActive => draw is not null || hasOnDrawOverride || Scene is not null;
 
     Color IRenderSurface2DFrameSource.ClearColor => ClearColor;
@@ -262,6 +393,7 @@ public class RenderSurface2D : ContentControl,
             !ReferenceEquals(previous, state))
         {
             previous.Dispose();
+            Scene?.ReleaseRenderCaches();
         }
 
         if (state is not null)
@@ -307,16 +439,30 @@ public class RenderSurface2D : ContentControl,
         DrawRect? viewBox = ViewBox;
         if (viewBox is null)
         {
-            scene.Record(frame);
+            scene.Record(new Scene2DRecordContext(
+                this,
+                frame,
+                Matrix3x2.Identity,
+                bounds));
             return;
         }
 
         Matrix3x2 transform = CreateViewBoxTransform(viewBox.Value, bounds, Stretch);
         frame.PushClip(bounds);
         frame.PushTransform(transform);
-        scene.Record(frame);
-        frame.PopTransform();
-        frame.PopClip();
+        try
+        {
+            scene.Record(new Scene2DRecordContext(
+                this,
+                frame,
+                transform,
+                bounds));
+        }
+        finally
+        {
+            frame.PopTransform();
+            frame.PopClip();
+        }
     }
 
     private static Matrix3x2 CreateViewBoxTransform(
@@ -342,6 +488,25 @@ public class RenderSurface2D : ContentControl,
         return Matrix3x2.CreateTranslation(-viewBox.X, -viewBox.Y) *
             Matrix3x2.CreateScale(scaleX, scaleY) *
             Matrix3x2.CreateTranslation(offsetX, offsetY);
+    }
+
+    internal Matrix3x2 GetSceneToRootTransform()
+    {
+        (int pixelWidth, int pixelHeight) = RenderSurface2DGeometry.GetPixelSize(
+            ArrangedBounds.Width, ArrangedBounds.Height, Root?.Scale ?? 1);
+        Matrix3x2 pixelsToLayout = Matrix3x2.CreateScale(
+            ArrangedBounds.Width / pixelWidth,
+            ArrangedBounds.Height / pixelHeight) *
+            Matrix3x2.CreateTranslation(ArrangedBounds.X, ArrangedBounds.Y);
+        DrawRect? viewBox = ViewBox;
+        Matrix3x2 sceneToPixels = viewBox is null
+            ? Matrix3x2.Identity
+            : CreateViewBoxTransform(
+                viewBox.Value,
+                new DrawRect(0, 0, pixelWidth, pixelHeight),
+                Stretch);
+        return sceneToPixels * pixelsToLayout *
+            InputCoordinateConverter.GetElementToRootTransform(this);
     }
 
     private void TrackImageDependency(IDrawImage image)
@@ -414,6 +579,7 @@ public class RenderSurface2D : ContentControl,
 
     private void DisposeManagedSession()
     {
+        Scene?.ReleaseRenderCaches();
         foreach (IDrawImageInvalidationSource dependency in imageDependencies)
         {
             dependency.ContentChanged -= OnImageContentChanged;

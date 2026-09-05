@@ -1,0 +1,217 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="53d84a4e-2deb-4fe8-95a0-247dd3d5edcc" name="lauri@DESKTOP-JT43V3D 2026-09-04 21:18:56" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-04T21:18:56.1044330+03:00" queuing="2026-09-04T21:18:56.1044334+03:00" start="2026-09-04T21:18:53.7576053+03:00" finish="2026-09-04T21:18:56.1163577+03:00" />
+  <TestSettings name="default" id="210f674d-e10e-454f-94cf-d769b514a588">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-04_21_18_56" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="09a929e6-20f8-4e90-832f-55233c601434" testId="1cab435e-0f8b-6728-8732-24a7f42c2c0d" testName="Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.PublicContractExtendsSpriteAndUsesImmutableDurationBasedDefinitions" computerName="DESKTOP-JT43V3D" duration="00:00:00.0008120" startTime="2026-09-04T21:18:55.9623544+03:00" endTime="2026-09-04T21:18:55.9623548+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="09a929e6-20f8-4e90-832f-55233c601434">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: approved sprite-animation capability is absent: SpriteAnimationFrame</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.RequireType(String name) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs:line 448&#xD;
+   at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.PublicContractExtendsSpriteAndUsesImmutableDurationBasedDefinitions() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs:line 30&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="d5bb5a76-d029-470b-bfde-14088b3acb5c" testId="4e0cd74a-89b6-5b2a-d9b5-94185e6f48e2" testName="Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.LifecycleAtlasStateAndSharedDefinitionsHaveExplicitProgressPolicy" computerName="DESKTOP-JT43V3D" duration="00:00:00.0014823" startTime="2026-09-04T21:18:55.9604237+03:00" endTime="2026-09-04T21:18:55.9604238+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d5bb5a76-d029-470b-bfde-14088b3acb5c">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: approved sprite-animation capability is absent: SpriteAnimationFrame</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.RequireType(String name) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs:line 448&#xD;
+   at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.CreateClip(String name, Boolean isLooping, ValueTuple`3[] frames) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs:line 348&#xD;
+   at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.LifecycleAtlasStateAndSharedDefinitionsHaveExplicitProgressPolicy() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs:line 158&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="b238f483-243d-4f96-88f8-b3a7d9cf65c9" testId="b97cf7f6-d6d4-8600-8071-3bb4d761d889" testName="Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.OnDemandInvalidatesOnlyPresentationChangesAndStopsForPauseOrCompletion" computerName="DESKTOP-JT43V3D" duration="00:00:00.0008918" startTime="2026-09-04T21:18:55.9661583+03:00" endTime="2026-09-04T21:18:55.9661586+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b238f483-243d-4f96-88f8-b3a7d9cf65c9">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: approved sprite-animation capability is absent: SpriteAnimationFrame</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.RequireType(String name) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs:line 448&#xD;
+   at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.CreateClip(String name, Boolean isLooping, ValueTuple`3[] frames) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs:line 348&#xD;
+   at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.OnDemandInvalidatesOnlyPresentationChangesAndStopsForPauseOrCompletion() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs:line 122&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="2cbb57cc-13f3-442f-a47c-8da4ad205e5c" testId="5c643d8d-cc76-6cf0-b5d1-9caf52a0cceb" testName="Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.SamplerUsesLeftClosedBoundariesAndConstantCostLargeJumps" computerName="DESKTOP-JT43V3D" duration="00:00:00.0007015" startTime="2026-09-04T21:18:55.9678395+03:00" endTime="2026-09-04T21:18:55.9678403+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2cbb57cc-13f3-442f-a47c-8da4ad205e5c">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: approved sprite-animation capability is absent: SpriteAnimationFrame</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.RequireType(String name) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs:line 448&#xD;
+   at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.CreateClip(String name, Boolean isLooping, ValueTuple`3[] frames) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs:line 348&#xD;
+   at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.SamplerUsesLeftClosedBoundariesAndConstantCostLargeJumps() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs:line 53&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="4ec69c98-5d78-4927-b76d-9f077719d9b5" testId="d7ac16e6-0e4f-df95-8ecb-70799bc84832" testName="Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.PromotedTileUsesTheSameDefinitionAndSamplerWithoutDisablingOtherBatching" computerName="DESKTOP-JT43V3D" duration="00:00:00.0126865" startTime="2026-09-04T21:18:55.9485993+03:00" endTime="2026-09-04T21:18:55.9486226+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4ec69c98-5d78-4927-b76d-9f077719d9b5">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: approved sprite-animation capability is absent: SpriteAnimationFrame</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.RequireType(String name) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs:line 448&#xD;
+   at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.CreateClip(String name, Boolean isLooping, ValueTuple`3[] frames) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs:line 348&#xD;
+   at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.PromotedTileUsesTheSameDefinitionAndSamplerWithoutDisablingOtherBatching() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs:line 275&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="8121de5e-0946-4232-9923-0748f700d475" testId="17336b60-ac7d-f212-5351-6cae457ee239" testName="Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.ActiveFrameOverridesSourceRectAndAnimationFlipXorsWithBaseFlip" computerName="DESKTOP-JT43V3D" duration="00:00:00.0007448" startTime="2026-09-04T21:18:55.9640852+03:00" endTime="2026-09-04T21:18:55.9640855+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8121de5e-0946-4232-9923-0748f700d475">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: approved sprite-animation capability is absent: SpriteAnimationFrame</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.RequireType(String name) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs:line 448&#xD;
+   at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.CreateClip(String name, Boolean isLooping, ValueTuple`3[] frames) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs:line 348&#xD;
+   at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.ActiveFrameOverridesSourceRectAndAnimationFlipXorsWithBaseFlip() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs:line 86&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="fba387b0-6d1a-44c1-8725-8b6fc50e6b80" testId="b39f6f76-c0d3-9a2c-47a6-3b82ad9d6308" testName="Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.AspectMotionAndPrismKeepOneFrameOwnerAndMotionCancellationPreservesProgress" computerName="DESKTOP-JT43V3D" duration="00:00:00.0027607" startTime="2026-09-04T21:18:55.9569875+03:00" endTime="2026-09-04T21:18:55.9569877+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fba387b0-6d1a-44c1-8725-8b6fc50e6b80">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: approved sprite-animation capability is absent: SpriteAnimationFrame</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.RequireType(String name) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs:line 448&#xD;
+   at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.CreateClip(String name, Boolean isLooping, ValueTuple`3[] frames) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs:line 348&#xD;
+   at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.AspectMotionAndPrismKeepOneFrameOwnerAndMotionCancellationPreservesProgress() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs:line 216&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.LifecycleAtlasStateAndSharedDefinitionsHaveExplicitProgressPolicy" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="4e0cd74a-89b6-5b2a-d9b5-94185e6f48e2">
+      <Execution id="d5bb5a76-d029-470b-bfde-14088b3acb5c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests" name="LifecycleAtlasStateAndSharedDefinitionsHaveExplicitProgressPolicy" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.PublicContractExtendsSpriteAndUsesImmutableDurationBasedDefinitions" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="1cab435e-0f8b-6728-8732-24a7f42c2c0d">
+      <Execution id="09a929e6-20f8-4e90-832f-55233c601434" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests" name="PublicContractExtendsSpriteAndUsesImmutableDurationBasedDefinitions" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.PromotedTileUsesTheSameDefinitionAndSamplerWithoutDisablingOtherBatching" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="d7ac16e6-0e4f-df95-8ecb-70799bc84832">
+      <Execution id="4ec69c98-5d78-4927-b76d-9f077719d9b5" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests" name="PromotedTileUsesTheSameDefinitionAndSamplerWithoutDisablingOtherBatching" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.AspectMotionAndPrismKeepOneFrameOwnerAndMotionCancellationPreservesProgress" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="b39f6f76-c0d3-9a2c-47a6-3b82ad9d6308">
+      <Execution id="fba387b0-6d1a-44c1-8725-8b6fc50e6b80" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests" name="AspectMotionAndPrismKeepOneFrameOwnerAndMotionCancellationPreservesProgress" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.SamplerUsesLeftClosedBoundariesAndConstantCostLargeJumps" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="5c643d8d-cc76-6cf0-b5d1-9caf52a0cceb">
+      <Execution id="2cbb57cc-13f3-442f-a47c-8da4ad205e5c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests" name="SamplerUsesLeftClosedBoundariesAndConstantCostLargeJumps" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.OnDemandInvalidatesOnlyPresentationChangesAndStopsForPauseOrCompletion" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="b97cf7f6-d6d4-8600-8071-3bb4d761d889">
+      <Execution id="b238f483-243d-4f96-88f8-b3a7d9cf65c9" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests" name="OnDemandInvalidatesOnlyPresentationChangesAndStopsForPauseOrCompletion" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.ActiveFrameOverridesSourceRectAndAnimationFlipXorsWithBaseFlip" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="17336b60-ac7d-f212-5351-6cae457ee239">
+      <Execution id="8121de5e-0946-4232-9923-0748f700d475" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests" name="ActiveFrameOverridesSourceRectAndAnimationFlipXorsWithBaseFlip" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="1cab435e-0f8b-6728-8732-24a7f42c2c0d" executionId="09a929e6-20f8-4e90-832f-55233c601434" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4e0cd74a-89b6-5b2a-d9b5-94185e6f48e2" executionId="d5bb5a76-d029-470b-bfde-14088b3acb5c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b97cf7f6-d6d4-8600-8071-3bb4d761d889" executionId="b238f483-243d-4f96-88f8-b3a7d9cf65c9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5c643d8d-cc76-6cf0-b5d1-9caf52a0cceb" executionId="2cbb57cc-13f3-442f-a47c-8da4ad205e5c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d7ac16e6-0e4f-df95-8ecb-70799bc84832" executionId="4ec69c98-5d78-4927-b76d-9f077719d9b5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="17336b60-ac7d-f212-5351-6cae457ee239" executionId="8121de5e-0946-4232-9923-0748f700d475" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b39f6f76-c0d3-9a2c-47a6-3b82ad9d6308" executionId="fba387b0-6d1a-44c1-8725-8b6fc50e6b80" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="7" executed="7" passed="0" failed="7" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.24]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.02]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.05]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.19]       RED: approved sprite-animation capability is absent: SpriteAnimationFrame&#xD;
+[xUnit.net 00:00:01.19]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.20]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs(448,0): at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.RequireType(String name)&#xD;
+[xUnit.net 00:00:01.20]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs(348,0): at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.CreateClip(String name, Boolean isLooping, ValueTuple`3[] frames)&#xD;
+[xUnit.net 00:00:01.20]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs(275,0): at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.PromotedTileUsesTheSameDefinitionAndSamplerWithoutDisablingOtherBatching()&#xD;
+[xUnit.net 00:00:01.20]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.20]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.21]       RED: approved sprite-animation capability is absent: SpriteAnimationFrame&#xD;
+[xUnit.net 00:00:01.21]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.21]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs(448,0): at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.RequireType(String name)&#xD;
+[xUnit.net 00:00:01.21]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs(348,0): at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.CreateClip(String name, Boolean isLooping, ValueTuple`3[] frames)&#xD;
+[xUnit.net 00:00:01.21]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs(216,0): at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.AspectMotionAndPrismKeepOneFrameOwnerAndMotionCancellationPreservesProgress()&#xD;
+[xUnit.net 00:00:01.21]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.21]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.21]       RED: approved sprite-animation capability is absent: SpriteAnimationFrame&#xD;
+[xUnit.net 00:00:01.21]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.21]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs(448,0): at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.RequireType(String name)&#xD;
+[xUnit.net 00:00:01.21]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs(348,0): at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.CreateClip(String name, Boolean isLooping, ValueTuple`3[] frames)&#xD;
+[xUnit.net 00:00:01.21]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs(158,0): at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.LifecycleAtlasStateAndSharedDefinitionsHaveExplicitProgressPolicy()&#xD;
+[xUnit.net 00:00:01.21]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.21]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.21]       RED: approved sprite-animation capability is absent: SpriteAnimationFrame&#xD;
+[xUnit.net 00:00:01.21]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.21]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs(448,0): at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.RequireType(String name)&#xD;
+[xUnit.net 00:00:01.21]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs(30,0): at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.PublicContractExtendsSpriteAndUsesImmutableDurationBasedDefinitions()&#xD;
+[xUnit.net 00:00:01.21]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.21]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.21]       RED: approved sprite-animation capability is absent: SpriteAnimationFrame&#xD;
+[xUnit.net 00:00:01.21]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.21]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs(448,0): at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.RequireType(String name)&#xD;
+[xUnit.net 00:00:01.21]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs(348,0): at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.CreateClip(String name, Boolean isLooping, ValueTuple`3[] frames)&#xD;
+[xUnit.net 00:00:01.21]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs(86,0): at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.ActiveFrameOverridesSourceRectAndAnimationFlipXorsWithBaseFlip()&#xD;
+[xUnit.net 00:00:01.21]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.21]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.21]       RED: approved sprite-animation capability is absent: SpriteAnimationFrame&#xD;
+[xUnit.net 00:00:01.22]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.22]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs(448,0): at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.RequireType(String name)&#xD;
+[xUnit.net 00:00:01.22]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs(348,0): at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.CreateClip(String name, Boolean isLooping, ValueTuple`3[] frames)&#xD;
+[xUnit.net 00:00:01.22]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs(122,0): at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.OnDemandInvalidatesOnlyPresentationChangesAndStopsForPauseOrCompletion()&#xD;
+[xUnit.net 00:00:01.22]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.22]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.22]       RED: approved sprite-animation capability is absent: SpriteAnimationFrame&#xD;
+[xUnit.net 00:00:01.22]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.22]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs(448,0): at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.RequireType(String name)&#xD;
+[xUnit.net 00:00:01.22]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs(348,0): at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.CreateClip(String name, Boolean isLooping, ValueTuple`3[] frames)&#xD;
+[xUnit.net 00:00:01.22]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationStageZeroContractTests.cs(53,0): at Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.SamplerUsesLeftClosedBoundariesAndConstantCostLargeJumps()&#xD;
+[xUnit.net 00:00:01.22]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.22]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.22]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T21:18:55.9676472+03:00">
+        <Text>[xUnit.net 00:00:01.19]     Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.PromotedTileUsesTheSameDefinitionAndSamplerWithoutDisablingOtherBatching [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T21:18:55.9730002+03:00">
+        <Text>[xUnit.net 00:00:01.21]     Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.AspectMotionAndPrismKeepOneFrameOwnerAndMotionCancellationPreservesProgress [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T21:18:55.9734511+03:00">
+        <Text>[xUnit.net 00:00:01.21]     Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.LifecycleAtlasStateAndSharedDefinitionsHaveExplicitProgressPolicy [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T21:18:55.9740276+03:00">
+        <Text>[xUnit.net 00:00:01.21]     Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.PublicContractExtendsSpriteAndUsesImmutableDurationBasedDefinitions [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T21:18:55.9746176+03:00">
+        <Text>[xUnit.net 00:00:01.21]     Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.ActiveFrameOverridesSourceRectAndAnimationFlipXorsWithBaseFlip [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T21:18:55.9751342+03:00">
+        <Text>[xUnit.net 00:00:01.21]     Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.OnDemandInvalidatesOnlyPresentationChangesAndStopsForPauseOrCompletion [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T21:18:55.9761021+03:00">
+        <Text>[xUnit.net 00:00:01.22]     Cerneala.Tests.Controls.SpriteAnimationStageZeroContractTests.SamplerUsesLeftClosedBoundariesAndConstantCostLargeJumps [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

@@ -878,19 +878,17 @@ public sealed partial class UiMarkupGeneratorTests
                 }
               }
               <Border.Aspect>
-                <Aspect>
-                  @on Loaded
+                @on Loaded
+                {
+                  @animate with Tween(120ms, Linear)
                   {
-                    @animate with Tween(120ms, Linear)
+                    @to
                     {
-                      @to
-                      {
-                        $self.prism.Glow.Radius = 12;
-                        $self.prism.Glow.Tint = #FF607080;
-                      }
+                      $self.prism.Glow.Radius = 12;
+                      $self.prism.Glow.Tint = #FF607080;
                     }
                   }
-                </Aspect>
+                }
               </Border.Aspect>
             </Border>
             """;
@@ -927,23 +925,21 @@ public sealed partial class UiMarkupGeneratorTests
                 }
               }
               <Border.Aspect>
-                <Aspect>
-                  @on Loaded
+                @on Loaded
+                {
+                  @sequence
                   {
-                    @sequence
+                    @animate with Tween(100ms)
                     {
-                      @animate with Tween(100ms)
-                      {
-                        @to { $self.prism.Glow.Visible = false; }
-                      }
-                      @animate with Tween(100ms)
-                      {
-                        @to { $self.prism.Glow.BlendMode = Screen; }
-                      }
-                      @set { $self.prism.Glow.Visible = true; }
+                      @to { $self.prism.Glow.Visible = false; }
                     }
+                    @animate with Tween(100ms)
+                    {
+                      @to { $self.prism.Glow.BlendMode = Screen; }
+                    }
+                    @set { $self.prism.Glow.Visible = true; }
                   }
-                </Aspect>
+                }
               </Border.Aspect>
             </Border>
             """;
@@ -997,15 +993,13 @@ public sealed partial class UiMarkupGeneratorTests
                 @layer Glow { @filter Blur { Radius = 4; } }
               }
               <Border.Aspect>
-                <Aspect>
-                  @on Loaded
+                @on Loaded
+                {
+                  @animate
                   {
-                    @animate
-                    {
-                      @to { {{target}} = 0.5; }
-                    }
+                    @to { {{target}} = 0.5; }
                   }
-                </Aspect>
+                }
               </Border.Aspect>
             </Border>
             """;
@@ -1050,15 +1044,13 @@ public sealed partial class UiMarkupGeneratorTests
               </Border>
               <Border>
                 <Border.Aspect>
-                  <Aspect>
-                    @on Loaded
+                  @on Loaded
+                  {
+                    @animate
                     {
-                      @animate
-                      {
-                        @to { {{target}} = 0.5; }
-                      }
+                      @to { {{target}} = 0.5; }
                     }
-                  </Aspect>
+                  }
                 </Border.Aspect>
               </Border>
             </StackPanel>

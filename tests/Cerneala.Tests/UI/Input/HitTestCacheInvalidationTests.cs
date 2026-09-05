@@ -25,7 +25,7 @@ public sealed class HitTestCacheInvalidationTests
     }
 
     [Fact]
-    public void LayoutBoundsChangeInvalidatesHitTestResult()
+    public void LayoutBoundsChangeUpdatesHitTestWithoutRebuildingRouteMap()
     {
         UIRoot root = new(100, 100);
         UIElement child = Arranged(0, 0, 20, 20);
@@ -41,8 +41,8 @@ public sealed class HitTestCacheInvalidationTests
         HitTestResult? oldPoint = root.InputCache.HitTest(root, 10, 10);
         HitTestResult? newPoint = root.InputCache.HitTest(root, 55, 10);
 
-        Assert.Equal(rebuildsAfterInitialBuild + 1, root.InputCache.RebuildCount);
-        Assert.NotSame(firstMap, root.InputCache.RouteMap);
+        Assert.Equal(rebuildsAfterInitialBuild, root.InputCache.RebuildCount);
+        Assert.Same(firstMap, root.InputCache.RouteMap);
         Assert.NotSame(child, oldPoint?.Element);
         Assert.Same(child, newPoint!.Element);
     }

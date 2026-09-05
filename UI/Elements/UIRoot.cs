@@ -343,13 +343,22 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
             RetainedRenderCache.InvalidateRoot();
         }
 
-        if (effective.HasFlag(InvalidationFlags.HitTest))
+        if (effective.HasFlag(InvalidationFlags.HitTest) &&
+            RequiresInputRouteRebuild(request))
         {
             InputCache.Invalidate(request.Reason);
         }
 
         DirtyPropagation.Default.Propagate(request, this, LayoutQueue, InheritedPropertyQueue, AspectQueue, RenderQueue, HitTestQueue, Trace);
     }
+
+    private static bool RequiresInputRouteRebuild(InvalidationRequest request) =>
+        ReferenceEquals(request.SourceProperty, UIElement.IsEnabledProperty) ||
+        ReferenceEquals(request.SourceProperty, UIElement.IsVisibleProperty) ||
+        ReferenceEquals(request.SourceProperty, UIElement.VisibilityProperty) ||
+        string.Equals(request.Reason, "Presence state changed", StringComparison.Ordinal) ||
+        string.Equals(request.Reason, "Input handler added", StringComparison.Ordinal) ||
+        string.Equals(request.Reason, "Input handler removed", StringComparison.Ordinal);
 
     public SemanticsTree GetSemanticsTree()
     {

@@ -1,0 +1,325 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="274f1c7a-5341-4ba0-be93-3eabf527a077" name="lauri@DESKTOP-JT43V3D 2026-09-04 17:19:34" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-04T17:19:34.4653986+03:00" queuing="2026-09-04T17:19:34.4653990+03:00" start="2026-09-04T17:19:32.6126450+03:00" finish="2026-09-04T17:19:34.5150054+03:00" />
+  <TestSettings name="default" id="dd52f3ee-799b-4f8a-9ba1-3f1ce0060c45">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-04_17_19_34" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="fda5350b-4577-4c04-b5b1-4310cd95add4" testId="5d3df1b8-1ec4-e0dc-0c18-dcf58cf14216" testName="Cerneala.Tests.Controls.CollisionStageZeroContractTests.FocusKeyboardTextAndAncestorCommandUseTheSameSceneRoute" computerName="DESKTOP-JT43V3D" duration="00:00:00.0835256" startTime="2026-09-04T17:19:34.3075643+03:00" endTime="2026-09-04T17:19:34.3075646+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fda5350b-4577-4c04-b5b1-4310cd95add4">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.RequireType(String name) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 385&#xD;
+   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.CreateCollider(String name, ValueTuple`2[] properties) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 337&#xD;
+   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.SceneRootWithCollider(RenderSurface2D&amp; surface, Scene2D&amp; scene, UIElement&amp; collider) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 321&#xD;
+   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.FocusKeyboardTextAndAncestorCommandUseTheSameSceneRoute() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 253&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="a7ba60c1-cd92-48c8-baa5-58d8528a2f60" testId="134d25c0-d8ad-bfed-4f29-d9bb1a05fc0a" testName="Cerneala.Tests.Controls.CollisionStageZeroContractTests.SceneNodeUsesRealUiRouteForTunnelBubbleHoverCaptureFocusCursorAndCommand" computerName="DESKTOP-JT43V3D" duration="00:00:00.0008500" startTime="2026-09-04T17:19:34.4125883+03:00" endTime="2026-09-04T17:19:34.4125886+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a7ba60c1-cd92-48c8-baa5-58d8528a2f60">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.RequireType(String name) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 385&#xD;
+   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.CreateCollider(String name, ValueTuple`2[] properties) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 337&#xD;
+   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.SceneNodeUsesRealUiRouteForTunnelBubbleHoverCaptureFocusCursorAndCommand() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 190&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="8792f727-efaa-4932-b57f-d3be4ad68139" testId="1fa44306-1a03-4483-de82-6e5f4e57e094" testName="Cerneala.Tests.Controls.CollisionStageZeroContractTests.PublicColliderAndQueryContractExists" computerName="DESKTOP-JT43V3D" duration="00:00:00.0015378" startTime="2026-09-04T17:19:34.2227312+03:00" endTime="2026-09-04T17:19:34.2227313+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8792f727-efaa-4932-b57f-d3be4ad68139">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: approved collision API is absent: Collider2D, BoxCollider2D, CircleCollider2D, PolygonCollider2D, CollisionWorld2D, CollisionQuery2D, CollisionHit2D, MoveCollisionResult2D, CollisionWorld2DDiagnosticsSnapshot</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.PublicColliderAndQueryContractExists() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 34&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="8e438f10-9ee8-4291-a1ba-58c9094c880c" testId="c63985c1-1277-f8af-76cc-9ac68db16522" testName="Cerneala.Tests.Controls.CollisionStageZeroContractTests.ExistingVisualOverlayStillWinsBeforeSceneGeometry" computerName="DESKTOP-JT43V3D" duration="00:00:00.0508851" startTime="2026-09-04T17:19:34.3675244+03:00" endTime="2026-09-04T17:19:34.3675247+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8e438f10-9ee8-4291-a1ba-58c9094c880c" />
+    <UnitTestResult executionId="eed178c2-50ed-498f-ab41-680e5783bbfa" testId="b448ffe6-a498-cece-fa9b-a78fd2a8b835" testName="Cerneala.Tests.Controls.CollisionStageZeroContractTests.SceneNodeUsesExistingWheelHandledEnterLeaveAndCursorServices" computerName="DESKTOP-JT43V3D" duration="00:00:00.0007108" startTime="2026-09-04T17:19:34.4169735+03:00" endTime="2026-09-04T17:19:34.4169736+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="eed178c2-50ed-498f-ab41-680e5783bbfa">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.RequireType(String name) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 385&#xD;
+   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.CreateCollider(String name, ValueTuple`2[] properties) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 337&#xD;
+   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.SceneRootWithCollider(RenderSurface2D&amp; surface, Scene2D&amp; scene, UIElement&amp; collider) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 321&#xD;
+   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.SceneNodeUsesExistingWheelHandledEnterLeaveAndCursorServices() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 225&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="025e9b2c-3268-4805-9106-efbb33eb07fd" testId="51b7d0e0-dae5-a0e7-8843-d05398a04532" testName="Cerneala.Tests.Controls.CollisionStageZeroContractTests.PromotedTileColliderHasReplacementLifecycleAndDoorStateContract" computerName="DESKTOP-JT43V3D" duration="00:00:00.0011585" startTime="2026-09-04T17:19:34.3757002+03:00" endTime="2026-09-04T17:19:34.3757005+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="025e9b2c-3268-4805-9106-efbb33eb07fd">
+      <Output>
+        <ErrorInfo>
+          <Message>TileInstance2D is missing properties: Colliders, ReplacesImportedColliders</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.RequireProperties(Type type, String[] names) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 394&#xD;
+   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.PromotedTileColliderHasReplacementLifecycleAndDoorStateContract() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 172&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="6dd8cca4-0728-4c01-891b-b62e40afb85b" testId="dd4ec496-aa35-a20d-102a-432cc4c5d39e" testName="Cerneala.Tests.Controls.CollisionStageZeroContractTests.RaycastMoveAndCollideAndFastMotionExposeDeterministicContactData" computerName="DESKTOP-JT43V3D" duration="00:00:00.0034094" startTime="2026-09-04T17:19:34.2173902+03:00" endTime="2026-09-04T17:19:34.2174100+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6dd8cca4-0728-4c01-891b-b62e40afb85b">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.RequireType(String name) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 385&#xD;
+   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.CreateCollider(String name, ValueTuple`2[] properties) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 337&#xD;
+   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.RaycastMoveAndCollideAndFastMotionExposeDeterministicContactData() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 148&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c57e26a6-f304-4ab1-ac59-b9b606b0704b" testId="124efd53-c347-43a0-fd77-82c44c5106e1" testName="Cerneala.Tests.Controls.CollisionStageZeroContractTests.ShapeValidationAndContactRulesAreExecutableContracts" computerName="DESKTOP-JT43V3D" duration="00:00:00.0005867" startTime="2026-09-04T17:19:34.3690905+03:00" endTime="2026-09-04T17:19:34.3690912+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c57e26a6-f304-4ab1-ac59-b9b606b0704b">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.RequireType(String name) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 385&#xD;
+   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.CreateCollider(String name, ValueTuple`2[] properties) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 337&#xD;
+   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.ShapeValidationAndContactRulesAreExecutableContracts() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 73&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="755f3825-5992-4584-ae3e-7ce04f646c38" testId="0772a4aa-4938-8c82-ca08-60aac3062c11" testName="Cerneala.Tests.Controls.CollisionStageZeroContractTests.ColliderUiPropertiesFreezeBindableAspectMotionAndDiscretePolicy" computerName="DESKTOP-JT43V3D" duration="00:00:00.0003264" startTime="2026-09-04T17:19:34.3159542+03:00" endTime="2026-09-04T17:19:34.3159545+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="755f3825-5992-4584-ae3e-7ce04f646c38">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.RequireType(String name) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 385&#xD;
+   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.ColliderUiPropertiesFreezeBindableAspectMotionAndDiscretePolicy() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 53&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="ca148fe0-f896-4044-86ac-40470b5c61b9" testId="40c06fff-191a-547a-c2d9-8cfe9667f8f6" testName="Cerneala.Tests.Controls.CollisionStageZeroContractTests.BilateralLayerMaskZeroAllTriggerAndStableOrderAreFrozen" computerName="DESKTOP-JT43V3D" duration="00:00:00.0012777" startTime="2026-09-04T17:19:34.4152740+03:00" endTime="2026-09-04T17:19:34.4152744+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ca148fe0-f896-4044-86ac-40470b5c61b9">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.RequireType(String name) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 385&#xD;
+   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.CreateCollider(String name, ValueTuple`2[] properties) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 337&#xD;
+   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.BilateralLayerMaskZeroAllTriggerAndStableOrderAreFrozen() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 93&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="b29676aa-8ac2-4739-86fe-ec811e16be41" testId="5526301c-c436-86ae-ebea-45ceeca1a5f7" testName="Cerneala.Tests.Controls.CollisionStageZeroContractTests.NestedTransformOffsetMutationAndLifecycleUpdateOneWorld" computerName="DESKTOP-JT43V3D" duration="00:00:00.0025539" startTime="2026-09-04T17:19:34.3725078+03:00" endTime="2026-09-04T17:19:34.3725080+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b29676aa-8ac2-4739-86fe-ec811e16be41">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.RequireType(String name) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 385&#xD;
+   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.CreateCollider(String name, ValueTuple`2[] properties) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 337&#xD;
+   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.NestedTransformOffsetMutationAndLifecycleUpdateOneWorld() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 127&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="60d70f56-78ce-4a65-ac38-82ba62de64fb" testId="defecf98-0b07-9676-c8aa-a87ed40abd0c" testName="Cerneala.Tests.Controls.CollisionStageZeroContractTests.SharedMouseCoordinatesAndNonInvertibleViewBoxHaveOnePublicPath" computerName="DESKTOP-JT43V3D" duration="00:00:00.0003036" startTime="2026-09-04T17:19:34.3736705+03:00" endTime="2026-09-04T17:19:34.3736708+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="60d70f56-78ce-4a65-ac38-82ba62de64fb">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.CollisionStageZeroContractTests.SharedMouseCoordinatesAndNonInvertibleViewBoxHaveOnePublicPath() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs:line 297&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Controls.CollisionStageZeroContractTests.SceneNodeUsesExistingWheelHandledEnterLeaveAndCursorServices" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="b448ffe6-a498-cece-fa9b-a78fd2a8b835">
+      <Execution id="eed178c2-50ed-498f-ab41-680e5783bbfa" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.CollisionStageZeroContractTests" name="SceneNodeUsesExistingWheelHandledEnterLeaveAndCursorServices" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.CollisionStageZeroContractTests.BilateralLayerMaskZeroAllTriggerAndStableOrderAreFrozen" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="40c06fff-191a-547a-c2d9-8cfe9667f8f6">
+      <Execution id="ca148fe0-f896-4044-86ac-40470b5c61b9" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.CollisionStageZeroContractTests" name="BilateralLayerMaskZeroAllTriggerAndStableOrderAreFrozen" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.CollisionStageZeroContractTests.NestedTransformOffsetMutationAndLifecycleUpdateOneWorld" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="5526301c-c436-86ae-ebea-45ceeca1a5f7">
+      <Execution id="b29676aa-8ac2-4739-86fe-ec811e16be41" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.CollisionStageZeroContractTests" name="NestedTransformOffsetMutationAndLifecycleUpdateOneWorld" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.CollisionStageZeroContractTests.SharedMouseCoordinatesAndNonInvertibleViewBoxHaveOnePublicPath" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="defecf98-0b07-9676-c8aa-a87ed40abd0c">
+      <Execution id="60d70f56-78ce-4a65-ac38-82ba62de64fb" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.CollisionStageZeroContractTests" name="SharedMouseCoordinatesAndNonInvertibleViewBoxHaveOnePublicPath" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.CollisionStageZeroContractTests.ColliderUiPropertiesFreezeBindableAspectMotionAndDiscretePolicy" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="0772a4aa-4938-8c82-ca08-60aac3062c11">
+      <Execution id="755f3825-5992-4584-ae3e-7ce04f646c38" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.CollisionStageZeroContractTests" name="ColliderUiPropertiesFreezeBindableAspectMotionAndDiscretePolicy" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.CollisionStageZeroContractTests.RaycastMoveAndCollideAndFastMotionExposeDeterministicContactData" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="dd4ec496-aa35-a20d-102a-432cc4c5d39e">
+      <Execution id="6dd8cca4-0728-4c01-891b-b62e40afb85b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.CollisionStageZeroContractTests" name="RaycastMoveAndCollideAndFastMotionExposeDeterministicContactData" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.CollisionStageZeroContractTests.PromotedTileColliderHasReplacementLifecycleAndDoorStateContract" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="51b7d0e0-dae5-a0e7-8843-d05398a04532">
+      <Execution id="025e9b2c-3268-4805-9106-efbb33eb07fd" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.CollisionStageZeroContractTests" name="PromotedTileColliderHasReplacementLifecycleAndDoorStateContract" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.CollisionStageZeroContractTests.ExistingVisualOverlayStillWinsBeforeSceneGeometry" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="c63985c1-1277-f8af-76cc-9ac68db16522">
+      <Execution id="8e438f10-9ee8-4291-a1ba-58c9094c880c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.CollisionStageZeroContractTests" name="ExistingVisualOverlayStillWinsBeforeSceneGeometry" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.CollisionStageZeroContractTests.FocusKeyboardTextAndAncestorCommandUseTheSameSceneRoute" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="5d3df1b8-1ec4-e0dc-0c18-dcf58cf14216">
+      <Execution id="fda5350b-4577-4c04-b5b1-4310cd95add4" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.CollisionStageZeroContractTests" name="FocusKeyboardTextAndAncestorCommandUseTheSameSceneRoute" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.CollisionStageZeroContractTests.ShapeValidationAndContactRulesAreExecutableContracts" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="124efd53-c347-43a0-fd77-82c44c5106e1">
+      <Execution id="c57e26a6-f304-4ab1-ac59-b9b606b0704b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.CollisionStageZeroContractTests" name="ShapeValidationAndContactRulesAreExecutableContracts" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.CollisionStageZeroContractTests.PublicColliderAndQueryContractExists" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="1fa44306-1a03-4483-de82-6e5f4e57e094">
+      <Execution id="8792f727-efaa-4932-b57f-d3be4ad68139" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.CollisionStageZeroContractTests" name="PublicColliderAndQueryContractExists" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.CollisionStageZeroContractTests.SceneNodeUsesRealUiRouteForTunnelBubbleHoverCaptureFocusCursorAndCommand" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="134d25c0-d8ad-bfed-4f29-d9bb1a05fc0a">
+      <Execution id="a7ba60c1-cd92-48c8-baa5-58d8528a2f60" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.CollisionStageZeroContractTests" name="SceneNodeUsesRealUiRouteForTunnelBubbleHoverCaptureFocusCursorAndCommand" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="5d3df1b8-1ec4-e0dc-0c18-dcf58cf14216" executionId="fda5350b-4577-4c04-b5b1-4310cd95add4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="134d25c0-d8ad-bfed-4f29-d9bb1a05fc0a" executionId="a7ba60c1-cd92-48c8-baa5-58d8528a2f60" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1fa44306-1a03-4483-de82-6e5f4e57e094" executionId="8792f727-efaa-4932-b57f-d3be4ad68139" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c63985c1-1277-f8af-76cc-9ac68db16522" executionId="8e438f10-9ee8-4291-a1ba-58c9094c880c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b448ffe6-a498-cece-fa9b-a78fd2a8b835" executionId="eed178c2-50ed-498f-ab41-680e5783bbfa" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="51b7d0e0-dae5-a0e7-8843-d05398a04532" executionId="025e9b2c-3268-4805-9106-efbb33eb07fd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="dd4ec496-aa35-a20d-102a-432cc4c5d39e" executionId="6dd8cca4-0728-4c01-891b-b62e40afb85b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="124efd53-c347-43a0-fd77-82c44c5106e1" executionId="c57e26a6-f304-4ab1-ac59-b9b606b0704b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0772a4aa-4938-8c82-ca08-60aac3062c11" executionId="755f3825-5992-4584-ae3e-7ce04f646c38" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="40c06fff-191a-547a-c2d9-8cfe9667f8f6" executionId="ca148fe0-f896-4044-86ac-40470b5c61b9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5526301c-c436-86ae-ebea-45ceeca1a5f7" executionId="b29676aa-8ac2-4739-86fe-ec811e16be41" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="defecf98-0b07-9676-c8aa-a87ed40abd0c" executionId="60d70f56-78ce-4a65-ac38-82ba62de64fb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="12" executed="12" passed="1" failed="11" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.19]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.70]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.71]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.77]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.77]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.77]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(385,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.RequireType(String name)&#xD;
+[xUnit.net 00:00:00.77]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(337,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.CreateCollider(String name, ValueTuple`2[] properties)&#xD;
+[xUnit.net 00:00:00.77]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(148,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.RaycastMoveAndCollideAndFastMotionExposeDeterministicContactData()&#xD;
+[xUnit.net 00:00:00.77]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.77]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.78]       RED: approved collision API is absent: Collider2D, BoxCollider2D, CircleCollider2D, PolygonCollider2D, CollisionWorld2D, CollisionQuery2D, CollisionHit2D, MoveCollisionResult2D, CollisionWorld2DDiagnosticsSnapshot&#xD;
+[xUnit.net 00:00:00.78]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.78]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(34,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.PublicColliderAndQueryContractExists()&#xD;
+[xUnit.net 00:00:00.78]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.78]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.86]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.86]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.86]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(385,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.RequireType(String name)&#xD;
+[xUnit.net 00:00:00.86]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(337,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.CreateCollider(String name, ValueTuple`2[] properties)&#xD;
+[xUnit.net 00:00:00.86]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(321,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.SceneRootWithCollider(RenderSurface2D&amp; surface, Scene2D&amp; scene, UIElement&amp; collider)&#xD;
+[xUnit.net 00:00:00.86]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(253,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.FocusKeyboardTextAndAncestorCommandUseTheSameSceneRoute()&#xD;
+[xUnit.net 00:00:00.86]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.86]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.87]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.87]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.87]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(385,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.RequireType(String name)&#xD;
+[xUnit.net 00:00:00.87]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(53,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.ColliderUiPropertiesFreezeBindableAspectMotionAndDiscretePolicy()&#xD;
+[xUnit.net 00:00:00.87]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.87]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.92]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.92]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.92]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(385,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.RequireType(String name)&#xD;
+[xUnit.net 00:00:00.92]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(337,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.CreateCollider(String name, ValueTuple`2[] properties)&#xD;
+[xUnit.net 00:00:00.92]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(73,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.ShapeValidationAndContactRulesAreExecutableContracts()&#xD;
+[xUnit.net 00:00:00.92]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.92]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.93]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.93]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.93]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(385,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.RequireType(String name)&#xD;
+[xUnit.net 00:00:00.93]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(337,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.CreateCollider(String name, ValueTuple`2[] properties)&#xD;
+[xUnit.net 00:00:00.93]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(127,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.NestedTransformOffsetMutationAndLifecycleUpdateOneWorld()&#xD;
+[xUnit.net 00:00:00.93]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.93]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.93]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.93]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.93]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(297,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.SharedMouseCoordinatesAndNonInvertibleViewBoxHaveOnePublicPath()&#xD;
+[xUnit.net 00:00:00.93]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.93]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.93]       TileInstance2D is missing properties: Colliders, ReplacesImportedColliders&#xD;
+[xUnit.net 00:00:00.93]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.93]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(394,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.RequireProperties(Type type, String[] names)&#xD;
+[xUnit.net 00:00:00.93]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(172,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.PromotedTileColliderHasReplacementLifecycleAndDoorStateContract()&#xD;
+[xUnit.net 00:00:00.93]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.93]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.97]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.97]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.97]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(385,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.RequireType(String name)&#xD;
+[xUnit.net 00:00:00.97]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(337,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.CreateCollider(String name, ValueTuple`2[] properties)&#xD;
+[xUnit.net 00:00:00.97]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(190,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.SceneNodeUsesRealUiRouteForTunnelBubbleHoverCaptureFocusCursorAndCommand()&#xD;
+[xUnit.net 00:00:00.97]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.97]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.97]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.97]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.97]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(385,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.RequireType(String name)&#xD;
+[xUnit.net 00:00:00.97]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(337,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.CreateCollider(String name, ValueTuple`2[] properties)&#xD;
+[xUnit.net 00:00:00.97]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(93,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.BilateralLayerMaskZeroAllTriggerAndStableOrderAreFrozen()&#xD;
+[xUnit.net 00:00:00.97]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.97]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.97]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.97]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.97]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(385,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.RequireType(String name)&#xD;
+[xUnit.net 00:00:00.97]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(337,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.CreateCollider(String name, ValueTuple`2[] properties)&#xD;
+[xUnit.net 00:00:00.97]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(321,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.SceneRootWithCollider(RenderSurface2D&amp; surface, Scene2D&amp; scene, UIElement&amp; collider)&#xD;
+[xUnit.net 00:00:00.97]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\CollisionStageZeroContractTests.cs(225,0): at Cerneala.Tests.Controls.CollisionStageZeroContractTests.SceneNodeUsesExistingWheelHandledEnterLeaveAndCursorServices()&#xD;
+[xUnit.net 00:00:00.97]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.97]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.97]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T17:19:34.2127089+03:00">
+        <Text>[xUnit.net 00:00:00.77]     Cerneala.Tests.Controls.CollisionStageZeroContractTests.RaycastMoveAndCollideAndFastMotionExposeDeterministicContactData [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T17:19:34.2226548+03:00">
+        <Text>[xUnit.net 00:00:00.78]     Cerneala.Tests.Controls.CollisionStageZeroContractTests.PublicColliderAndQueryContractExists [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T17:19:34.3072715+03:00">
+        <Text>[xUnit.net 00:00:00.86]     Cerneala.Tests.Controls.CollisionStageZeroContractTests.FocusKeyboardTextAndAncestorCommandUseTheSameSceneRoute [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T17:19:34.3154915+03:00">
+        <Text>[xUnit.net 00:00:00.87]     Cerneala.Tests.Controls.CollisionStageZeroContractTests.ColliderUiPropertiesFreezeBindableAspectMotionAndDiscretePolicy [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T17:19:34.3688823+03:00">
+        <Text>[xUnit.net 00:00:00.92]     Cerneala.Tests.Controls.CollisionStageZeroContractTests.ShapeValidationAndContactRulesAreExecutableContracts [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T17:19:34.3723433+03:00">
+        <Text>[xUnit.net 00:00:00.93]     Cerneala.Tests.Controls.CollisionStageZeroContractTests.NestedTransformOffsetMutationAndLifecycleUpdateOneWorld [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T17:19:34.3733249+03:00">
+        <Text>[xUnit.net 00:00:00.93]     Cerneala.Tests.Controls.CollisionStageZeroContractTests.SharedMouseCoordinatesAndNonInvertibleViewBoxHaveOnePublicPath [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T17:19:34.3755285+03:00">
+        <Text>[xUnit.net 00:00:00.93]     Cerneala.Tests.Controls.CollisionStageZeroContractTests.PromotedTileColliderHasReplacementLifecycleAndDoorStateContract [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T17:19:34.4753178+03:00">
+        <Text>[xUnit.net 00:00:00.96]     Cerneala.Tests.Controls.CollisionStageZeroContractTests.SceneNodeUsesRealUiRouteForTunnelBubbleHoverCaptureFocusCursorAndCommand [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T17:19:34.4754348+03:00">
+        <Text>[xUnit.net 00:00:00.97]     Cerneala.Tests.Controls.CollisionStageZeroContractTests.BilateralLayerMaskZeroAllTriggerAndStableOrderAreFrozen [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T17:19:34.4755439+03:00">
+        <Text>[xUnit.net 00:00:00.97]     Cerneala.Tests.Controls.CollisionStageZeroContractTests.SceneNodeUsesExistingWheelHandledEnterLeaveAndCursorServices [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

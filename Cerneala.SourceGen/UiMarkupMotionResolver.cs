@@ -2184,7 +2184,14 @@ public sealed partial class UiMarkupGenerator
                 property,
                 atom.Location.Source,
                 targetCode);
-            return expression?.Code ?? "default(" + GetMotionTypeCode(property.ValueType) + ")!";
+            if (expression is null)
+            {
+                return "default(" + GetMotionTypeCode(property.ValueType) + ")!";
+            }
+
+            return property.ValueKind == MarkupValueKind.Integer
+                ? "(" + GetMotionTypeCode(property.ValueType) + ")(" + expression.Code + ")"
+                : expression.Code;
         }
 
         private bool TryEmitMotionBinding(
@@ -2572,7 +2579,7 @@ public sealed partial class UiMarkupGenerator
                 MarkupValueKind.Float or MarkupValueKind.NonNegativeFloat or MarkupValueKind.PositiveFloat =>
                     float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out _),
                 MarkupValueKind.Double => double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out _),
-                MarkupValueKind.Integer => int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+                MarkupValueKind.Integer => IsMotionIntegerLiteral(text, property.LiteralType.SpecialType),
                 MarkupValueKind.Bool => bool.TryParse(text, out _),
                 MarkupValueKind.Color =>
                     ParseHexColor(text) is not null ||
@@ -2587,6 +2594,22 @@ public sealed partial class UiMarkupGenerator
             }
 
             return valid;
+        }
+
+        private static bool IsMotionIntegerLiteral(string text, SpecialType type)
+        {
+            return type switch
+            {
+                SpecialType.System_Byte => byte.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+                SpecialType.System_SByte => sbyte.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+                SpecialType.System_Int16 => short.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+                SpecialType.System_UInt16 => ushort.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+                SpecialType.System_Int32 => int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+                SpecialType.System_UInt32 => uint.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+                SpecialType.System_Int64 => long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+                SpecialType.System_UInt64 => ulong.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
+                _ => false
+            };
         }
 
         private static bool IsMotionParameterCompatible(string parameterTypeName, ITypeSymbol propertyType)

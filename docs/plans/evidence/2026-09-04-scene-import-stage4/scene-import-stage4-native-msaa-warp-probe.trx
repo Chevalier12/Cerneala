@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="e5417b5f-586a-49bd-9947-5d0a15390824" name="lauri@DESKTOP-JT43V3D 2026-09-05 06:05:04" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T06:05:04.9095940+03:00" queuing="2026-09-05T06:05:04.9095943+03:00" start="2026-09-05T06:05:01.4039842+03:00" finish="2026-09-05T06:05:05.4918453+03:00" />
+  <TestSettings name="default" id="5158d815-f14f-429b-a959-6927da4adb05">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_06_05_04" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="28e1400a-3c04-4e0a-8653-6b3947d042cf" testId="fcf25093-0900-5a79-5441-96f867c35998" testName="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.NativeMsaaProbe(useSprites: False, software: False)" computerName="DESKTOP-JT43V3D" duration="00:00:00.5287720" startTime="2026-09-05T06:05:05.3927787+03:00" endTime="2026-09-05T06:05:05.3927790+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="28e1400a-3c04-4e0a-8653-6b3947d042cf">
+      <Output>
+        <ErrorInfo>
+          <Message>Native max 25; samples 8; adapter NVIDIA GeForce RTX 2060; sample description {8, 0}; feature Level_11_0.</Message>
+          <StackTrace>   at Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.NativeMsaaProbe(Boolean useSprites, Boolean software) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Drawing\MonoGame\AlphaBlendRenderingTests.cs:line 42&#xD;
+   at InvokeStub_AlphaBlendRenderingTests.NativeMsaaProbe(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="201237ea-b377-474a-aac6-ce8a2b4dbb5d" testId="46ad0f29-7bff-785c-f05f-1c3911907d8c" testName="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.NativeMsaaProbe(useSprites: False, software: True)" computerName="DESKTOP-JT43V3D" duration="00:00:01.6399859" startTime="2026-09-05T06:05:04.8393888+03:00" endTime="2026-09-05T06:05:04.8394255+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="201237ea-b377-474a-aac6-ce8a2b4dbb5d" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.NativeMsaaProbe(useSprites: False, software: False)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="fcf25093-0900-5a79-5441-96f867c35998">
+      <Execution id="28e1400a-3c04-4e0a-8653-6b3947d042cf" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests" name="NativeMsaaProbe" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.NativeMsaaProbe(useSprites: False, software: True)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="46ad0f29-7bff-785c-f05f-1c3911907d8c">
+      <Execution id="201237ea-b377-474a-aac6-ce8a2b4dbb5d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests" name="NativeMsaaProbe" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="fcf25093-0900-5a79-5441-96f867c35998" executionId="28e1400a-3c04-4e0a-8653-6b3947d042cf" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="46ad0f29-7bff-785c-f05f-1c3911907d8c" executionId="201237ea-b377-474a-aac6-ce8a2b4dbb5d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="2" executed="2" passed="1" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.19]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.91]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.92]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:03.16]       Native max 25; samples 8; adapter NVIDIA GeForce RTX 2060; sample description {8, 0}; feature Level_11_0.&#xD;
+[xUnit.net 00:00:03.16]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.16]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Drawing\MonoGame\AlphaBlendRenderingTests.cs(42,0): at Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.NativeMsaaProbe(Boolean useSprites, Boolean software)&#xD;
+[xUnit.net 00:00:03.16]            at InvokeStub_AlphaBlendRenderingTests.NativeMsaaProbe(Object, Span`1)&#xD;
+[xUnit.net 00:00:03.16]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:03.17]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T06:05:05.3898119+03:00">
+        <Text>[xUnit.net 00:00:03.16]     Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.NativeMsaaProbe(useSprites: False, software: False) [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

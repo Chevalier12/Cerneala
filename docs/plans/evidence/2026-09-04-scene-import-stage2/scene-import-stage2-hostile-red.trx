@@ -1,0 +1,705 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="9985147c-652d-4be4-b0ef-317bad865712" name="lauri@DESKTOP-JT43V3D 2026-09-05 03:22:40" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T03:22:40.8779951+03:00" queuing="2026-09-05T03:22:40.8779954+03:00" start="2026-09-05T03:22:39.6194938+03:00" finish="2026-09-05T03:22:40.9732012+03:00" />
+  <TestSettings name="default" id="1b3721d9-c1d0-46b7-a4ea-8d029d1df88c">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_03_22_40" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="0b19640d-61b0-4baf-9981-8e447615483a" testId="c083babc-f0b7-d7a1-fca1-213e3897f13a" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;tileset-offset&quot;, code: &quot;SCN2D004&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0071630" startTime="2026-09-05T03:22:40.7823173+03:00" endTime="2026-09-05T03:22:40.7823175+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0b19640d-61b0-4baf-9981-8e447615483a">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 70&#xD;
+   at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="bd9af0f2-91a3-45ad-a0ba-0a78abd40bb8" testId="9a686bd9-eac4-5e7c-12c7-28ab1578dec8" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;animation&quot;, code: &quot;SCN2D004&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0040425" startTime="2026-09-05T03:22:40.6632583+03:00" endTime="2026-09-05T03:22:40.6632584+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bd9af0f2-91a3-45ad-a0ba-0a78abd40bb8">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 70&#xD;
+   at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="92a2fb4c-aa6b-404d-96c9-88a4ec2746f7" testId="1c5ea004-a29f-c6b6-142c-82a2561bf4dd" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.DecodingRejectsMissingTrailingAndExplosivePayloads(compression: &quot;raw&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0045908" startTime="2026-09-05T03:22:40.7848376+03:00" endTime="2026-09-05T03:22:40.7848380+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="92a2fb4c-aa6b-404d-96c9-88a4ec2746f7">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.DecodingRejectsMissingTrailingAndExplosivePayloads(String compression) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 97&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="08b28266-8a2e-43a6-b451-25b8cb07ec2b" testId="ea8789cf-4e8a-bbb8-8fa7-61802c16714e" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.DiagnosticRetentionCannotHideAnErrorBehindEditorWarnings" computerName="DESKTOP-JT43V3D" duration="00:00:00.0230743" startTime="2026-09-05T03:22:40.6540139+03:00" endTime="2026-09-05T03:22:40.6540534+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="08b28266-8a2e-43a6-b451-25b8cb07ec2b">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.DiagnosticRetentionCannotHideAnErrorBehindEditorWarnings() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 133&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="1fa775e7-000c-4796-8089-d368ae1c84b6" testId="e0de932c-b99a-e913-9e6e-80c8efa381fc" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(option: &quot;MaxCells&quot;, value: 3)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0046702" startTime="2026-09-05T03:22:40.7974497+03:00" endTime="2026-09-05T03:22:40.7974500+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1fa775e7-000c-4796-8089-d368ae1c84b6">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(String option, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 124&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="5d874eb2-a02b-4405-a527-e07474c2dde5" testId="aadd1403-ea24-472b-f30e-086cd933c5aa" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(option: &quot;MaxTotalBytes&quot;, value: 32)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0038340" startTime="2026-09-05T03:22:40.7981631+03:00" endTime="2026-09-05T03:22:40.7981634+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5d874eb2-a02b-4405-a527-e07474c2dde5">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(String option, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 124&#xD;
+   at InvokeStub_TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c38920ef-d213-4176-8bd6-273ef4be10d1" testId="594b0476-0617-b152-f6fc-6df36325c330" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(option: &quot;MaxJsonDepth&quot;, value: 2)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0031376" startTime="2026-09-05T03:22:40.7987963+03:00" endTime="2026-09-05T03:22:40.7987966+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c38920ef-d213-4176-8bd6-273ef4be10d1">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(String option, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 124&#xD;
+   at InvokeStub_TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="bcfaa04f-9c63-458d-9f4d-1c2e704f3ff4" testId="2bdd12a4-6c42-b129-97e3-1c70e7f999fc" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.DecodingRejectsMissingTrailingAndExplosivePayloads(compression: &quot;gzip&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0034503" startTime="2026-09-05T03:22:40.7961171+03:00" endTime="2026-09-05T03:22:40.7961173+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bcfaa04f-9c63-458d-9f4d-1c2e704f3ff4">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.DecodingRejectsMissingTrailingAndExplosivePayloads(String compression) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 97&#xD;
+   at InvokeStub_TiledHostileInputTests.DecodingRejectsMissingTrailingAndExplosivePayloads(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="4d8f5f27-490c-417a-9551-921790d5bb0a" testId="13a0feeb-d0eb-412a-8fe0-e98d2e6e0e20" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;malformed-property&quot;, code: &quot;SCN2D016&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0038158" startTime="2026-09-05T03:22:40.6828803+03:00" endTime="2026-09-05T03:22:40.6828807+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4d8f5f27-490c-417a-9551-921790d5bb0a">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 70&#xD;
+   at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="ae33524e-2ae0-4846-846a-8bddd2638a04" testId="368526ba-9948-0d93-87b1-52f4c8c87e47" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.NormalizationInsideRootAndHistoricalHexBitPreserveTheMap" computerName="DESKTOP-JT43V3D" duration="00:00:00.0056835" startTime="2026-09-05T03:22:40.8006051+03:00" endTime="2026-09-05T03:22:40.8006054+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ae33524e-2ae0-4846-846a-8bddd2638a04">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.NormalizationInsideRootAndHistoricalHexBitPreserveTheMap() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 146&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="f79e3e60-33f1-4b86-ae35-858cac9ef250" testId="0e2495df-a69d-1992-451a-8672a8ab5a69" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;network-asset&quot;, code: &quot;SCN2D010&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0034150" startTime="2026-09-05T03:22:40.7768498+03:00" endTime="2026-09-05T03:22:40.7768504+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f79e3e60-33f1-4b86-ae35-858cac9ef250">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 70&#xD;
+   at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="6635c1e8-51f7-45d0-a0b5-674f488a7903" testId="33315062-641f-5506-86b8-18cbe0915d06" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;nested-unknown&quot;, code: &quot;SCN2D004&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0035435" startTime="2026-09-05T03:22:40.7840546+03:00" endTime="2026-09-05T03:22:40.7840549+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6635c1e8-51f7-45d0-a0b5-674f488a7903">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 70&#xD;
+   at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="08f88dd5-585a-4f3f-811c-37b9059af1b9" testId="7ac7354c-2f6d-1c7f-ae59-aa5ba8d1d0f5" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.TruncatedJsonAndDuplicateMembersProduceControlledLocatedDiagnostics" computerName="DESKTOP-JT43V3D" duration="00:00:00.0035802" startTime="2026-09-05T03:22:40.7967402+03:00" endTime="2026-09-05T03:22:40.7967405+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="08f88dd5-585a-4f3f-811c-37b9059af1b9">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.TruncatedJsonAndDuplicateMembersProduceControlledLocatedDiagnostics() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 110&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c8005e0a-13f8-4959-b804-02eb1090b9ec" testId="03ef74b7-aae3-a3de-167a-a5ecb33c33ff" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;dimensions&quot;, code: &quot;SCN2D005&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0049548" startTime="2026-09-05T03:22:40.6624960+03:00" endTime="2026-09-05T03:22:40.6624962+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c8005e0a-13f8-4959-b804-02eb1090b9ec">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 70&#xD;
+   at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="62e109bb-6ae9-414b-9fb2-acc9381139bf" testId="3002757c-a194-abea-5c1b-9edb408d4817" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(option: &quot;MaxLayers&quot;, value: 1)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0040110" startTime="2026-09-05T03:22:40.7995187+03:00" endTime="2026-09-05T03:22:40.7995189+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="62e109bb-6ae9-414b-9fb2-acc9381139bf">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(String option, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 124&#xD;
+   at InvokeStub_TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="1a453ac0-c944-4c49-a4c7-a948fd143adb" testId="1a10472e-3a53-385d-90ea-e9994a576b8e" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(option: &quot;MaxFileBytes&quot;, value: 32)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0033811" startTime="2026-09-05T03:22:40.7999675+03:00" endTime="2026-09-05T03:22:40.7999676+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1a453ac0-c944-4c49-a4c7-a948fd143adb">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(String option, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 124&#xD;
+   at InvokeStub_TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="d89e9bcb-3865-4ff1-ac3e-bdb501ca64bb" testId="ac414867-553f-e730-093b-326199b5a912" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;missing-asset&quot;, code: &quot;SCN2D001&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0039734" startTime="2026-09-05T03:22:40.6789781+03:00" endTime="2026-09-05T03:22:40.6789783+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d89e9bcb-3865-4ff1-ac3e-bdb501ca64bb">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 70&#xD;
+   at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="88dc676f-101d-4d3c-9bb4-fc400e210a36" testId="98c9c4b6-c957-8981-3a19-9929ec568a49" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;rooted-asset&quot;, code: &quot;SCN2D010&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0036908" startTime="2026-09-05T03:22:40.7832510+03:00" endTime="2026-09-05T03:22:40.7832513+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="88dc676f-101d-4d3c-9bb4-fc400e210a36">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 70&#xD;
+   at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="1a11bca4-72e6-4868-88ec-0e671516f695" testId="fab6c40c-cced-780b-eb95-9535eb02c22f" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;long-gid&quot;, code: &quot;SCN2D006&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0038567" startTime="2026-09-05T03:22:40.6871188+03:00" endTime="2026-09-05T03:22:40.6871191+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1a11bca4-72e6-4868-88ec-0e671516f695">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 70&#xD;
+   at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c45e4597-dd53-4c17-ac2d-20127124bf26" testId="eaefa333-162a-a66c-7a14-d10be44d9480" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;parallax&quot;, code: &quot;SCN2D004&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0037844" startTime="2026-09-05T03:22:40.7814820+03:00" endTime="2026-09-05T03:22:40.7814823+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c45e4597-dd53-4c17-ac2d-20127124bf26">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 70&#xD;
+   at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="8403b147-cd28-49ac-bf5b-31d8a74d981d" testId="6431ea36-efea-c395-d366-808954599a13" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;fractional-gid&quot;, code: &quot;SCN2D006&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0066585" startTime="2026-09-05T03:22:40.6703327+03:00" endTime="2026-09-05T03:22:40.6703330+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8403b147-cd28-49ac-bf5b-31d8a74d981d">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 70&#xD;
+   at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="efbafc9e-9c12-4f78-9b28-22c3a5362bc7" testId="57bc0de0-e4f0-25f5-4087-66c9ff1268e4" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;stream-asset&quot;, code: &quot;SCN2D010&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0033048" startTime="2026-09-05T03:22:40.7794870+03:00" endTime="2026-09-05T03:22:40.7794875+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="efbafc9e-9c12-4f78-9b28-22c3a5362bc7">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 70&#xD;
+   at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="9c7f9b2b-fb30-4245-a758-edbebfa40f2b" testId="71cd2bc2-3c51-19be-775a-b13e5a023ab3" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;duplicate-layer&quot;, code: &quot;SCN2D015&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0032275" startTime="2026-09-05T03:22:40.7805726+03:00" endTime="2026-09-05T03:22:40.7805728+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9c7f9b2b-fb30-4245-a758-edbebfa40f2b">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 70&#xD;
+   at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="73b634a9-2794-43f5-a206-f60ec7cd06c6" testId="83881747-f600-c994-7abc-727db49e13bf" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;renderorder&quot;, code: &quot;SCN2D004&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0054532" startTime="2026-09-05T03:22:40.6606514+03:00" endTime="2026-09-05T03:22:40.6606518+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="73b634a9-2794-43f5-a206-f60ec7cd06c6">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 70&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="7c64731d-d99b-4c34-9aac-b14ea609aba1" testId="d4a30884-a875-c4b4-78c2-cf829c9524d2" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;reserved-property&quot;, code: &quot;SCN2D015&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0039439" startTime="2026-09-05T03:22:40.7780464+03:00" endTime="2026-09-05T03:22:40.7780467+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7c64731d-d99b-4c34-9aac-b14ea609aba1">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 70&#xD;
+   at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="307be698-1313-4bfe-ae8b-2b3a94eb3943" testId="25a90eb8-aa66-f6f0-da89-238e1310fd36" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;duplicate-tile&quot;, code: &quot;SCN2D015&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0038462" startTime="2026-09-05T03:22:40.6744188+03:00" endTime="2026-09-05T03:22:40.6744190+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="307be698-1313-4bfe-ae8b-2b3a94eb3943">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 70&#xD;
+   at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="a108e4c5-f99e-43fd-b40e-132e1deb144f" testId="c1e6f729-8fad-e997-06d3-c3c1f6a51dd8" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.DecodingRejectsMissingTrailingAndExplosivePayloads(compression: &quot;zlib&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0062335" startTime="2026-09-05T03:22:40.7953190+03:00" endTime="2026-09-05T03:22:40.7953192+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a108e4c5-f99e-43fd-b40e-132e1deb144f">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: importer options are not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 159&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.DecodingRejectsMissingTrailingAndExplosivePayloads(String compression) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs:line 97&#xD;
+   at InvokeStub_TiledHostileInputTests.DecodingRejectsMissingTrailingAndExplosivePayloads(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;reserved-property&quot;, code: &quot;SCN2D015&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="d4a30884-a875-c4b4-78c2-cf829c9524d2">
+      <Execution id="7c64731d-d99b-4c34-9aac-b14ea609aba1" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="HostileOrUnsupportedDataCannotPublishAPartialDocument" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;dimensions&quot;, code: &quot;SCN2D005&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="03ef74b7-aae3-a3de-167a-a5ecb33c33ff">
+      <Execution id="c8005e0a-13f8-4959-b804-02eb1090b9ec" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="HostileOrUnsupportedDataCannotPublishAPartialDocument" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;parallax&quot;, code: &quot;SCN2D004&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="eaefa333-162a-a66c-7a14-d10be44d9480">
+      <Execution id="c45e4597-dd53-4c17-ac2d-20127124bf26" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="HostileOrUnsupportedDataCannotPublishAPartialDocument" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;animation&quot;, code: &quot;SCN2D004&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="9a686bd9-eac4-5e7c-12c7-28ab1578dec8">
+      <Execution id="bd9af0f2-91a3-45ad-a0ba-0a78abd40bb8" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="HostileOrUnsupportedDataCannotPublishAPartialDocument" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.DecodingRejectsMissingTrailingAndExplosivePayloads(compression: &quot;gzip&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="2bdd12a4-6c42-b129-97e3-1c70e7f999fc">
+      <Execution id="bcfaa04f-9c63-458d-9f4d-1c2e704f3ff4" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="DecodingRejectsMissingTrailingAndExplosivePayloads" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.DecodingRejectsMissingTrailingAndExplosivePayloads(compression: &quot;zlib&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="c1e6f729-8fad-e997-06d3-c3c1f6a51dd8">
+      <Execution id="a108e4c5-f99e-43fd-b40e-132e1deb144f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="DecodingRejectsMissingTrailingAndExplosivePayloads" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;stream-asset&quot;, code: &quot;SCN2D010&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="57bc0de0-e4f0-25f5-4087-66c9ff1268e4">
+      <Execution id="efbafc9e-9c12-4f78-9b28-22c3a5362bc7" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="HostileOrUnsupportedDataCannotPublishAPartialDocument" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;network-asset&quot;, code: &quot;SCN2D010&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="0e2495df-a69d-1992-451a-8672a8ab5a69">
+      <Execution id="f79e3e60-33f1-4b86-ae35-858cac9ef250" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="HostileOrUnsupportedDataCannotPublishAPartialDocument" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;rooted-asset&quot;, code: &quot;SCN2D010&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="98c9c4b6-c957-8981-3a19-9929ec568a49">
+      <Execution id="88dc676f-101d-4d3c-9bb4-fc400e210a36" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="HostileOrUnsupportedDataCannotPublishAPartialDocument" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(option: &quot;MaxFileBytes&quot;, value: 32)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="1a10472e-3a53-385d-90ea-e9994a576b8e">
+      <Execution id="1a453ac0-c944-4c49-a4c7-a948fd143adb" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="ExplicitBudgetsFailBeforePublishing" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;renderorder&quot;, code: &quot;SCN2D004&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="83881747-f600-c994-7abc-727db49e13bf">
+      <Execution id="73b634a9-2794-43f5-a206-f60ec7cd06c6" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="HostileOrUnsupportedDataCannotPublishAPartialDocument" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;nested-unknown&quot;, code: &quot;SCN2D004&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="33315062-641f-5506-86b8-18cbe0915d06">
+      <Execution id="6635c1e8-51f7-45d0-a0b5-674f488a7903" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="HostileOrUnsupportedDataCannotPublishAPartialDocument" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(option: &quot;MaxJsonDepth&quot;, value: 2)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="594b0476-0617-b152-f6fc-6df36325c330">
+      <Execution id="c38920ef-d213-4176-8bd6-273ef4be10d1" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="ExplicitBudgetsFailBeforePublishing" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(option: &quot;MaxCells&quot;, value: 3)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="e0de932c-b99a-e913-9e6e-80c8efa381fc">
+      <Execution id="1fa775e7-000c-4796-8089-d368ae1c84b6" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="ExplicitBudgetsFailBeforePublishing" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;tileset-offset&quot;, code: &quot;SCN2D004&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="c083babc-f0b7-d7a1-fca1-213e3897f13a">
+      <Execution id="0b19640d-61b0-4baf-9981-8e447615483a" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="HostileOrUnsupportedDataCannotPublishAPartialDocument" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.TruncatedJsonAndDuplicateMembersProduceControlledLocatedDiagnostics" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="7ac7354c-2f6d-1c7f-ae59-aa5ba8d1d0f5">
+      <Execution id="08f88dd5-585a-4f3f-811c-37b9059af1b9" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="TruncatedJsonAndDuplicateMembersProduceControlledLocatedDiagnostics" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;long-gid&quot;, code: &quot;SCN2D006&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="fab6c40c-cced-780b-eb95-9535eb02c22f">
+      <Execution id="1a11bca4-72e6-4868-88ec-0e671516f695" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="HostileOrUnsupportedDataCannotPublishAPartialDocument" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.NormalizationInsideRootAndHistoricalHexBitPreserveTheMap" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="368526ba-9948-0d93-87b1-52f4c8c87e47">
+      <Execution id="ae33524e-2ae0-4846-846a-8bddd2638a04" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="NormalizationInsideRootAndHistoricalHexBitPreserveTheMap" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;fractional-gid&quot;, code: &quot;SCN2D006&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="6431ea36-efea-c395-d366-808954599a13">
+      <Execution id="8403b147-cd28-49ac-bf5b-31d8a74d981d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="HostileOrUnsupportedDataCannotPublishAPartialDocument" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;missing-asset&quot;, code: &quot;SCN2D001&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="ac414867-553f-e730-093b-326199b5a912">
+      <Execution id="d89e9bcb-3865-4ff1-ac3e-bdb501ca64bb" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="HostileOrUnsupportedDataCannotPublishAPartialDocument" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;malformed-property&quot;, code: &quot;SCN2D016&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="13a0feeb-d0eb-412a-8fe0-e98d2e6e0e20">
+      <Execution id="4d8f5f27-490c-417a-9551-921790d5bb0a" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="HostileOrUnsupportedDataCannotPublishAPartialDocument" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.DiagnosticRetentionCannotHideAnErrorBehindEditorWarnings" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="ea8789cf-4e8a-bbb8-8fa7-61802c16714e">
+      <Execution id="08b28266-8a2e-43a6-b451-25b8cb07ec2b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="DiagnosticRetentionCannotHideAnErrorBehindEditorWarnings" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.DecodingRejectsMissingTrailingAndExplosivePayloads(compression: &quot;raw&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="1c5ea004-a29f-c6b6-142c-82a2561bf4dd">
+      <Execution id="92a2fb4c-aa6b-404d-96c9-88a4ec2746f7" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="DecodingRejectsMissingTrailingAndExplosivePayloads" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;duplicate-layer&quot;, code: &quot;SCN2D015&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="71cd2bc2-3c51-19be-775a-b13e5a023ab3">
+      <Execution id="9c7f9b2b-fb30-4245-a758-edbebfa40f2b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="HostileOrUnsupportedDataCannotPublishAPartialDocument" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: &quot;duplicate-tile&quot;, code: &quot;SCN2D015&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="25a90eb8-aa66-f6f0-da89-238e1310fd36">
+      <Execution id="307be698-1313-4bfe-ae8b-2b3a94eb3943" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="HostileOrUnsupportedDataCannotPublishAPartialDocument" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(option: &quot;MaxLayers&quot;, value: 1)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="3002757c-a194-abea-5c1b-9edb408d4817">
+      <Execution id="62e109bb-6ae9-414b-9fb2-acc9381139bf" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="ExplicitBudgetsFailBeforePublishing" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(option: &quot;MaxTotalBytes&quot;, value: 32)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="aadd1403-ea24-472b-f30e-086cd933c5aa">
+      <Execution id="5d874eb2-a02b-4405-a527-e07474c2dde5" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="ExplicitBudgetsFailBeforePublishing" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="c083babc-f0b7-d7a1-fca1-213e3897f13a" executionId="0b19640d-61b0-4baf-9981-8e447615483a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9a686bd9-eac4-5e7c-12c7-28ab1578dec8" executionId="bd9af0f2-91a3-45ad-a0ba-0a78abd40bb8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1c5ea004-a29f-c6b6-142c-82a2561bf4dd" executionId="92a2fb4c-aa6b-404d-96c9-88a4ec2746f7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ea8789cf-4e8a-bbb8-8fa7-61802c16714e" executionId="08b28266-8a2e-43a6-b451-25b8cb07ec2b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e0de932c-b99a-e913-9e6e-80c8efa381fc" executionId="1fa775e7-000c-4796-8089-d368ae1c84b6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="aadd1403-ea24-472b-f30e-086cd933c5aa" executionId="5d874eb2-a02b-4405-a527-e07474c2dde5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="594b0476-0617-b152-f6fc-6df36325c330" executionId="c38920ef-d213-4176-8bd6-273ef4be10d1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2bdd12a4-6c42-b129-97e3-1c70e7f999fc" executionId="bcfaa04f-9c63-458d-9f4d-1c2e704f3ff4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="13a0feeb-d0eb-412a-8fe0-e98d2e6e0e20" executionId="4d8f5f27-490c-417a-9551-921790d5bb0a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="368526ba-9948-0d93-87b1-52f4c8c87e47" executionId="ae33524e-2ae0-4846-846a-8bddd2638a04" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0e2495df-a69d-1992-451a-8672a8ab5a69" executionId="f79e3e60-33f1-4b86-ae35-858cac9ef250" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="33315062-641f-5506-86b8-18cbe0915d06" executionId="6635c1e8-51f7-45d0-a0b5-674f488a7903" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7ac7354c-2f6d-1c7f-ae59-aa5ba8d1d0f5" executionId="08f88dd5-585a-4f3f-811c-37b9059af1b9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="03ef74b7-aae3-a3de-167a-a5ecb33c33ff" executionId="c8005e0a-13f8-4959-b804-02eb1090b9ec" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3002757c-a194-abea-5c1b-9edb408d4817" executionId="62e109bb-6ae9-414b-9fb2-acc9381139bf" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1a10472e-3a53-385d-90ea-e9994a576b8e" executionId="1a453ac0-c944-4c49-a4c7-a948fd143adb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ac414867-553f-e730-093b-326199b5a912" executionId="d89e9bcb-3865-4ff1-ac3e-bdb501ca64bb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="98c9c4b6-c957-8981-3a19-9929ec568a49" executionId="88dc676f-101d-4d3c-9bb4-fc400e210a36" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fab6c40c-cced-780b-eb95-9535eb02c22f" executionId="1a11bca4-72e6-4868-88ec-0e671516f695" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="eaefa333-162a-a66c-7a14-d10be44d9480" executionId="c45e4597-dd53-4c17-ac2d-20127124bf26" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6431ea36-efea-c395-d366-808954599a13" executionId="8403b147-cd28-49ac-bf5b-31d8a74d981d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="57bc0de0-e4f0-25f5-4087-66c9ff1268e4" executionId="efbafc9e-9c12-4f78-9b28-22c3a5362bc7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="71cd2bc2-3c51-19be-775a-b13e5a023ab3" executionId="9c7f9b2b-fb30-4245-a758-edbebfa40f2b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="83881747-f600-c994-7abc-727db49e13bf" executionId="73b634a9-2794-43f5-a206-f60ec7cd06c6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d4a30884-a875-c4b4-78c2-cf829c9524d2" executionId="7c64731d-d99b-4c34-9aac-b14ea609aba1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="25a90eb8-aa66-f6f0-da89-238e1310fd36" executionId="307be698-1313-4bfe-ae8b-2b3a94eb3943" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c1e6f729-8fad-e997-06d3-c3c1f6a51dd8" executionId="a108e4c5-f99e-43fd-b40e-132e1deb144f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="27" executed="27" passed="0" failed="27" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.12]   Discovering: Cerneala.Tests.Scene2DImporters&#xD;
+[xUnit.net 00:00:00.23]   Discovered:  Cerneala.Tests.Scene2DImporters&#xD;
+[xUnit.net 00:00:00.24]   Starting:    Cerneala.Tests.Scene2DImporters&#xD;
+[xUnit.net 00:00:00.36]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.36]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.36]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.36]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(133,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.DiagnosticRetentionCannotHideAnErrorBehindEditorWarnings()&#xD;
+[xUnit.net 00:00:00.36]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.36]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.37]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.37]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.37]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.37]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(70,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code)&#xD;
+[xUnit.net 00:00:00.37]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.37]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.37]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.37]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.37]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.37]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(70,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code)&#xD;
+[xUnit.net 00:00:00.37]            at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.37]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.37]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.37]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.37]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.37]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(70,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code)&#xD;
+[xUnit.net 00:00:00.37]            at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.37]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.38]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.38]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.38]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.38]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(70,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code)&#xD;
+[xUnit.net 00:00:00.38]            at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.38]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.38]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.38]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.38]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.38]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(70,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code)&#xD;
+[xUnit.net 00:00:00.38]            at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.38]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.39]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.39]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.39]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.39]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(70,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code)&#xD;
+[xUnit.net 00:00:00.39]            at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.39]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.39]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.39]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.39]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.39]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(70,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code)&#xD;
+[xUnit.net 00:00:00.39]            at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.39]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.40]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.40]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.40]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.40]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(70,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code)&#xD;
+[xUnit.net 00:00:00.40]            at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.40]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.48]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.48]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.49]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.49]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(70,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code)&#xD;
+[xUnit.net 00:00:00.49]            at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.49]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.49]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.49]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.49]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.49]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(70,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code)&#xD;
+[xUnit.net 00:00:00.49]            at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.49]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.49]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.49]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.49]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.49]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(70,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code)&#xD;
+[xUnit.net 00:00:00.49]            at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.49]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.49]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.49]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.49]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.49]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(70,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code)&#xD;
+[xUnit.net 00:00:00.49]            at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.49]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.49]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.49]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.49]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.49]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(70,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code)&#xD;
+[xUnit.net 00:00:00.49]            at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.49]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.49]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.49]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.49]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.49]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(70,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code)&#xD;
+[xUnit.net 00:00:00.49]            at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.49]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.49]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.49]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.49]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.49]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(70,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code)&#xD;
+[xUnit.net 00:00:00.49]            at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.49]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.49]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.49]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.49]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.49]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(70,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(String mutation, String code)&#xD;
+[xUnit.net 00:00:00.49]            at InvokeStub_TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.49]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.49]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.49]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.49]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.49]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(97,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.DecodingRejectsMissingTrailingAndExplosivePayloads(String compression)&#xD;
+[xUnit.net 00:00:00.49]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.49]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.50]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.50]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.50]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.50]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(97,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.DecodingRejectsMissingTrailingAndExplosivePayloads(String compression)&#xD;
+[xUnit.net 00:00:00.50]            at InvokeStub_TiledHostileInputTests.DecodingRejectsMissingTrailingAndExplosivePayloads(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.50]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.50]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.50]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.50]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.50]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(97,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.DecodingRejectsMissingTrailingAndExplosivePayloads(String compression)&#xD;
+[xUnit.net 00:00:00.50]            at InvokeStub_TiledHostileInputTests.DecodingRejectsMissingTrailingAndExplosivePayloads(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.50]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.50]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.50]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.50]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.51]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(110,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.TruncatedJsonAndDuplicateMembersProduceControlledLocatedDiagnostics()&#xD;
+[xUnit.net 00:00:00.51]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.51]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.51]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.51]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.51]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.51]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(124,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(String option, Int32 value)&#xD;
+[xUnit.net 00:00:00.51]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.51]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.51]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.51]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.51]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.51]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(124,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(String option, Int32 value)&#xD;
+[xUnit.net 00:00:00.51]            at InvokeStub_TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.51]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.51]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.51]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.51]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.51]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(124,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(String option, Int32 value)&#xD;
+[xUnit.net 00:00:00.51]            at InvokeStub_TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.51]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.51]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.51]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.51]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.51]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(124,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(String option, Int32 value)&#xD;
+[xUnit.net 00:00:00.51]            at InvokeStub_TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.51]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.51]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.51]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.51]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.51]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(124,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(String option, Int32 value)&#xD;
+[xUnit.net 00:00:00.51]            at InvokeStub_TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.51]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.51]       RED: importer options are not implemented.&#xD;
+[xUnit.net 00:00:00.51]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.51]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(159,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.Import(String file, String optionName, Int32 value)&#xD;
+[xUnit.net 00:00:00.51]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledHostileInputTests.cs(146,0): at Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.NormalizationInsideRootAndHistoricalHexBitPreserveTheMap()&#xD;
+[xUnit.net 00:00:00.51]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.51]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.51]   Finished:    Cerneala.Tests.Scene2DImporters&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.6496007+03:00">
+        <Text>[xUnit.net 00:00:00.36]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.DiagnosticRetentionCannotHideAnErrorBehindEditorWarnings [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.6599842+03:00">
+        <Text>[xUnit.net 00:00:00.37]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: "renderorder", code: "SCN2D004") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.6619995+03:00">
+        <Text>[xUnit.net 00:00:00.37]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: "dimensions", code: "SCN2D005") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.6628113+03:00">
+        <Text>[xUnit.net 00:00:00.37]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: "animation", code: "SCN2D004") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.6699497+03:00">
+        <Text>[xUnit.net 00:00:00.38]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: "fractional-gid", code: "SCN2D006") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.6741654+03:00">
+        <Text>[xUnit.net 00:00:00.38]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: "duplicate-tile", code: "SCN2D015") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.6786150+03:00">
+        <Text>[xUnit.net 00:00:00.39]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: "missing-asset", code: "SCN2D001") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.6825816+03:00">
+        <Text>[xUnit.net 00:00:00.39]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: "malformed-property", code: "SCN2D016") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.6867617+03:00">
+        <Text>[xUnit.net 00:00:00.39]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: "long-gid", code: "SCN2D006") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.9001879+03:00">
+        <Text>[xUnit.net 00:00:00.48]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: "network-asset", code: "SCN2D010") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.9004577+03:00">
+        <Text>[xUnit.net 00:00:00.49]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: "reserved-property", code: "SCN2D015") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.9005324+03:00">
+        <Text>[xUnit.net 00:00:00.49]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: "stream-asset", code: "SCN2D010") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.9008234+03:00">
+        <Text>[xUnit.net 00:00:00.49]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: "duplicate-layer", code: "SCN2D015") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.9010138+03:00">
+        <Text>[xUnit.net 00:00:00.49]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: "parallax", code: "SCN2D004") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.9011187+03:00">
+        <Text>[xUnit.net 00:00:00.49]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: "tileset-offset", code: "SCN2D004") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.9013362+03:00">
+        <Text>[xUnit.net 00:00:00.49]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: "rooted-asset", code: "SCN2D010") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.9014207+03:00">
+        <Text>[xUnit.net 00:00:00.49]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.HostileOrUnsupportedDataCannotPublishAPartialDocument(mutation: "nested-unknown", code: "SCN2D004") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.9015880+03:00">
+        <Text>[xUnit.net 00:00:00.49]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.DecodingRejectsMissingTrailingAndExplosivePayloads(compression: "raw") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.9082962+03:00">
+        <Text>[xUnit.net 00:00:00.50]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.DecodingRejectsMissingTrailingAndExplosivePayloads(compression: "zlib") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.9084252+03:00">
+        <Text>[xUnit.net 00:00:00.50]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.DecodingRejectsMissingTrailingAndExplosivePayloads(compression: "gzip") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.9085088+03:00">
+        <Text>[xUnit.net 00:00:00.50]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.TruncatedJsonAndDuplicateMembersProduceControlledLocatedDiagnostics [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.9085809+03:00">
+        <Text>[xUnit.net 00:00:00.51]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(option: "MaxCells", value: 3) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.9086583+03:00">
+        <Text>[xUnit.net 00:00:00.51]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(option: "MaxTotalBytes", value: 32) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.9088687+03:00">
+        <Text>[xUnit.net 00:00:00.51]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(option: "MaxJsonDepth", value: 2) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.9090251+03:00">
+        <Text>[xUnit.net 00:00:00.51]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(option: "MaxLayers", value: 1) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.9091689+03:00">
+        <Text>[xUnit.net 00:00:00.51]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.ExplicitBudgetsFailBeforePublishing(option: "MaxFileBytes", value: 32) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:22:40.9093079+03:00">
+        <Text>[xUnit.net 00:00:00.51]     Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.NormalizationInsideRootAndHistoricalHexBitPreserveTheMap [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

@@ -1,0 +1,114 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="90934376-ce07-4804-be90-120c94d98499" name="lauri@DESKTOP-JT43V3D 2026-09-04 22:59:01" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-04T22:59:01.9596799+03:00" queuing="2026-09-04T22:59:01.9596802+03:00" start="2026-09-04T22:58:58.0271224+03:00" finish="2026-09-04T22:59:01.9670216+03:00" />
+  <TestSettings name="default" id="0817d448-b7a6-4bcf-affe-87c0b14f275c">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-04_22_59_01" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="eb8978a7-6e6b-4ffc-9ece-80da18d0691e" testId="94e4f220-2133-9db0-99e3-458cf35bfdc0" testName="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.OffscreenPrismInputIsNotCulledAndFrameChangesInvalidateItsContent(groupPrism: True)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1794007" startTime="2026-09-04T22:59:01.7616369+03:00" endTime="2026-09-04T22:59:01.7616370+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="eb8978a7-6e6b-4ffc-9ece-80da18d0691e">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotEqual() Failure: Values are equal&#xD;
+Expected: Not 1&#xD;
+Actual:       1</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.OffscreenPrismInputIsNotCulledAndFrameChangesInvalidateItsContent(Boolean groupPrism) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationSchedulingTests.cs:line 173&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="44dd8660-387e-40ba-80ab-320c854c0f85" testId="a3bd10ef-f5d7-6c24-6c06-28958ac7ff2b" testName="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.RepeatedFinalPresentationStopsBeforeRedundantTailDurations" computerName="DESKTOP-JT43V3D" duration="00:00:00.1719619" startTime="2026-09-04T22:59:01.5744253+03:00" endTime="2026-09-04T22:59:01.5744470+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="44dd8660-387e-40ba-80ab-320c854c0f85">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: 0&#xD;
+Actual:   1</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.RepeatedFinalPresentationStopsBeforeRedundantTailDurations() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationSchedulingTests.cs:line 122&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="5f319920-0045-4a65-867a-fec3d1b7e76c" testId="457c44be-16e2-bd26-73a1-cca9f3fa2f4f" testName="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.SceneReplacementReattachAndOverlayUseOneUiClock" computerName="DESKTOP-JT43V3D" duration="00:00:00.0043664" startTime="2026-09-04T22:59:01.8078686+03:00" endTime="2026-09-04T22:59:01.8078691+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5f319920-0045-4a65-867a-fec3d1b7e76c" />
+    <UnitTestResult executionId="9fcd3bed-4d9e-4630-b71e-fa7b2eb1c1c8" testId="f2521b8c-c75a-c8f6-243d-c344a8eeac61" testName="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.NestedAnimationsAdvanceOnceAndCoalesceSurfaceInvalidation" computerName="DESKTOP-JT43V3D" duration="00:00:00.0237297" startTime="2026-09-04T22:59:01.8032677+03:00" endTime="2026-09-04T22:59:01.8032681+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9fcd3bed-4d9e-4630-b71e-fa7b2eb1c1c8" />
+    <UnitTestResult executionId="5833bf9f-2a3c-4f2a-ab7b-ba5ca67c9514" testId="9a07460f-5166-9a81-9068-70a8c81936ca" testName="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.OffscreenPrismInputIsNotCulledAndFrameChangesInvalidateItsContent(groupPrism: False)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0140824" startTime="2026-09-04T22:59:01.7771626+03:00" endTime="2026-09-04T22:59:01.7771630+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5833bf9f-2a3c-4f2a-ab7b-ba5ca67c9514" />
+    <UnitTestResult executionId="ae287f58-4286-48f6-a1f9-e761ef6fb479" testId="749eee47-191b-6437-730f-ddebda937fca" testName="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.HiddenAndCulledNodesKeepProgressButDetachedNodesDoNot" computerName="DESKTOP-JT43V3D" duration="00:00:00.0074215" startTime="2026-09-04T22:59:01.8155104+03:00" endTime="2026-09-04T22:59:01.8155116+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ae287f58-4286-48f6-a1f9-e761ef6fb479" />
+    <UnitTestResult executionId="d765f66e-77a1-4505-851e-2d2d86269fd6" testId="67423fd8-f915-6203-68ba-bf61d482d6d8" testName="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.NonLoopCompletionStopsAndRestartRegistersTimeAgain" computerName="DESKTOP-JT43V3D" duration="00:00:00.0016991" startTime="2026-09-04T22:59:01.7793579+03:00" endTime="2026-09-04T22:59:01.7793582+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d765f66e-77a1-4505-851e-2d2d86269fd6" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.NonLoopCompletionStopsAndRestartRegistersTimeAgain" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="67423fd8-f915-6203-68ba-bf61d482d6d8">
+      <Execution id="d765f66e-77a1-4505-851e-2d2d86269fd6" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests" name="NonLoopCompletionStopsAndRestartRegistersTimeAgain" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.OffscreenPrismInputIsNotCulledAndFrameChangesInvalidateItsContent(groupPrism: False)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="9a07460f-5166-9a81-9068-70a8c81936ca">
+      <Execution id="5833bf9f-2a3c-4f2a-ab7b-ba5ca67c9514" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests" name="OffscreenPrismInputIsNotCulledAndFrameChangesInvalidateItsContent" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.SceneReplacementReattachAndOverlayUseOneUiClock" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="457c44be-16e2-bd26-73a1-cca9f3fa2f4f">
+      <Execution id="5f319920-0045-4a65-867a-fec3d1b7e76c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests" name="SceneReplacementReattachAndOverlayUseOneUiClock" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.RepeatedFinalPresentationStopsBeforeRedundantTailDurations" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="a3bd10ef-f5d7-6c24-6c06-28958ac7ff2b">
+      <Execution id="44dd8660-387e-40ba-80ab-320c854c0f85" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests" name="RepeatedFinalPresentationStopsBeforeRedundantTailDurations" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.OffscreenPrismInputIsNotCulledAndFrameChangesInvalidateItsContent(groupPrism: True)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="94e4f220-2133-9db0-99e3-458cf35bfdc0">
+      <Execution id="eb8978a7-6e6b-4ffc-9ece-80da18d0691e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests" name="OffscreenPrismInputIsNotCulledAndFrameChangesInvalidateItsContent" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.HiddenAndCulledNodesKeepProgressButDetachedNodesDoNot" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="749eee47-191b-6437-730f-ddebda937fca">
+      <Execution id="ae287f58-4286-48f6-a1f9-e761ef6fb479" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests" name="HiddenAndCulledNodesKeepProgressButDetachedNodesDoNot" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.NestedAnimationsAdvanceOnceAndCoalesceSurfaceInvalidation" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="f2521b8c-c75a-c8f6-243d-c344a8eeac61">
+      <Execution id="9fcd3bed-4d9e-4630-b71e-fa7b2eb1c1c8" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SpriteAnimationSchedulingTests" name="NestedAnimationsAdvanceOnceAndCoalesceSurfaceInvalidation" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="94e4f220-2133-9db0-99e3-458cf35bfdc0" executionId="eb8978a7-6e6b-4ffc-9ece-80da18d0691e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a3bd10ef-f5d7-6c24-6c06-28958ac7ff2b" executionId="44dd8660-387e-40ba-80ab-320c854c0f85" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="457c44be-16e2-bd26-73a1-cca9f3fa2f4f" executionId="5f319920-0045-4a65-867a-fec3d1b7e76c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f2521b8c-c75a-c8f6-243d-c344a8eeac61" executionId="9fcd3bed-4d9e-4630-b71e-fa7b2eb1c1c8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9a07460f-5166-9a81-9068-70a8c81936ca" executionId="5833bf9f-2a3c-4f2a-ab7b-ba5ca67c9514" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="749eee47-191b-6437-730f-ddebda937fca" executionId="ae287f58-4286-48f6-a1f9-e761ef6fb479" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="67423fd8-f915-6203-68ba-bf61d482d6d8" executionId="d765f66e-77a1-4505-851e-2d2d86269fd6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="7" executed="7" passed="5" failed="2" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:01.03]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.80]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.81]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:02.08]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.08]       Expected: 0&#xD;
+[xUnit.net 00:00:02.08]       Actual:   1&#xD;
+[xUnit.net 00:00:02.08]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.08]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationSchedulingTests.cs(122,0): at Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.RepeatedFinalPresentationStopsBeforeRedundantTailDurations()&#xD;
+[xUnit.net 00:00:02.08]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.08]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.27]       Assert.NotEqual() Failure: Values are equal&#xD;
+[xUnit.net 00:00:02.27]       Expected: Not 1&#xD;
+[xUnit.net 00:00:02.27]       Actual:       1&#xD;
+[xUnit.net 00:00:02.27]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.27]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SpriteAnimationSchedulingTests.cs(173,0): at Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.OffscreenPrismInputIsNotCulledAndFrameChangesInvalidateItsContent(Boolean groupPrism)&#xD;
+[xUnit.net 00:00:02.27]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.27]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.33]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T22:59:01.5712963+03:00">
+        <Text>[xUnit.net 00:00:02.08]     Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.RepeatedFinalPresentationStopsBeforeRedundantTailDurations [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T22:59:01.7612104+03:00">
+        <Text>[xUnit.net 00:00:02.27]     Cerneala.Tests.Controls.SpriteAnimationSchedulingTests.OffscreenPrismInputIsNotCulledAndFrameChangesInvalidateItsContent(groupPrism: True) [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

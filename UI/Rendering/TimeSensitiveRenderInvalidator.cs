@@ -1,3 +1,4 @@
+using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 
 namespace Cerneala.UI.Rendering;
@@ -23,6 +24,12 @@ public static class TimeSensitiveRenderInvalidator
 
         for (int index = 0; index < children.Count; index++)
         {
+            // The surface owns temporal traversal of its retained scene. Overlay
+            // UI children still use the ordinary UI clock traversal.
+            if (element is RenderSurface2D surface && ReferenceEquals(children[index], surface.Scene))
+            {
+                continue;
+            }
             Traverse(children[index], frameTime);
         }
     }

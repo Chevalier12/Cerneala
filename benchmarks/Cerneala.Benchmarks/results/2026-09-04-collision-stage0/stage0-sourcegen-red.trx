@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="3ffd3e8a-a97d-4bd3-871c-235366b734b8" name="lauri@DESKTOP-JT43V3D 2026-09-04 17:15:55" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-04T17:15:55.4087682+03:00" queuing="2026-09-04T17:15:55.4087685+03:00" start="2026-09-04T17:15:53.3969273+03:00" finish="2026-09-04T17:15:55.5774329+03:00" />
+  <TestSettings name="default" id="37bdbd0c-e420-41b0-8a0b-8f8112a891bf">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-04_17_15_55" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="15c6d970-4898-490c-a2c1-d31ed47453c6" testId="c9a6983c-66f5-4642-e4b3-279f4a3b80e3" testName="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.ColliderMarkupUsesSceneStructureBindingsAspectAndMotionWithoutPrism" computerName="DESKTOP-JT43V3D" duration="00:00:00.7722745" startTime="2026-09-04T17:15:55.3029272+03:00" endTime="2026-09-04T17:15:55.3029461+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="15c6d970-4898-490c-a2c1-d31ed47453c6">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.DoesNotContain() Failure: Filter matched in collection&#xD;
+             ↓ (pos 0)&#xD;
+Collection: [CollisionScene.crn(6,10): error CERNEALAUI002: Markup element 'BoxCollider2D' is not supported by the source generator, CollisionScene.crn(20,10): error CERNEALAUI002: Markup element 'CircleCollider2D' is not supported by the source generator, CollisionScene.crn(21,10): error CERNEALAUI002: Markup element 'PolygonCollider2D' is not supported by the source generator]</Message>
+          <StackTrace>   at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.ColliderMarkupUsesSceneStructureBindingsAspectAndMotionWithoutPrism() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorCollisionStageZeroTests.cs:line 42&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="d78388d1-d3d6-40bb-97a3-b330cbb01570" testId="02a53933-be9f-3536-279b-6f6b36ec317a" testName="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.DoorTemplateCanBindVisualAndColliderToTheSameOpenState" computerName="DESKTOP-JT43V3D" duration="00:00:00.1957720" startTime="2026-09-04T17:15:55.4943151+03:00" endTime="2026-09-04T17:15:55.4943154+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d78388d1-d3d6-40bb-97a3-b330cbb01570">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.DoesNotContain() Failure: Filter matched in collection&#xD;
+             ↓ (pos 0)&#xD;
+Collection: [CollisionDoor.crn(6,10): error CERNEALAUI002: Markup element 'BoxCollider2D' is not supported by the source generator]</Message>
+          <StackTrace>   at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.DoorTemplateCanBindVisualAndColliderToTheSameOpenState() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorCollisionStageZeroTests.cs:line 65&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.ColliderMarkupUsesSceneStructureBindingsAspectAndMotionWithoutPrism" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sourcegen\bin\debug\net8.0-windows\cerneala.tests.sourcegen.dll" id="c9a6983c-66f5-4642-e4b3-279f4a3b80e3">
+      <Execution id="15c6d970-4898-490c-a2c1-d31ed47453c6" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Debug\net8.0-windows\Cerneala.Tests.SourceGen.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests" name="ColliderMarkupUsesSceneStructureBindingsAspectAndMotionWithoutPrism" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.DoorTemplateCanBindVisualAndColliderToTheSameOpenState" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sourcegen\bin\debug\net8.0-windows\cerneala.tests.sourcegen.dll" id="02a53933-be9f-3536-279b-6f6b36ec317a">
+      <Execution id="d78388d1-d3d6-40bb-97a3-b330cbb01570" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Debug\net8.0-windows\Cerneala.Tests.SourceGen.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests" name="DoorTemplateCanBindVisualAndColliderToTheSameOpenState" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="c9a6983c-66f5-4642-e4b3-279f4a3b80e3" executionId="15c6d970-4898-490c-a2c1-d31ed47453c6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="02a53933-be9f-3536-279b-6f6b36ec317a" executionId="d78388d1-d3d6-40bb-97a3-b330cbb01570" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="2" executed="2" passed="0" failed="2" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.10]   Discovering: Cerneala.Tests.SourceGen&#xD;
+[xUnit.net 00:00:00.21]   Discovered:  Cerneala.Tests.SourceGen&#xD;
+[xUnit.net 00:00:00.21]   Starting:    Cerneala.Tests.SourceGen&#xD;
+[xUnit.net 00:00:01.05]       Assert.DoesNotContain() Failure: Filter matched in collection&#xD;
+[xUnit.net 00:00:01.05]                    ↓ (pos 0)&#xD;
+[xUnit.net 00:00:01.05]       Collection: [CollisionScene.crn(6,10): error CERNEALAUI002: Markup element 'BoxCollider2D' is not supported by the source generator, CollisionScene.crn(20,10): error CERNEALAUI002: Markup element 'CircleCollider2D' is not supported by the source generator, CollisionScene.crn(21,10): error CERNEALAUI002: Markup element 'PolygonCollider2D' is not supported by the source generator]&#xD;
+[xUnit.net 00:00:01.05]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.05]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorCollisionStageZeroTests.cs(42,0): at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.ColliderMarkupUsesSceneStructureBindingsAspectAndMotionWithoutPrism()&#xD;
+[xUnit.net 00:00:01.05]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.05]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.24]       Assert.DoesNotContain() Failure: Filter matched in collection&#xD;
+[xUnit.net 00:00:01.24]                    ↓ (pos 0)&#xD;
+[xUnit.net 00:00:01.24]       Collection: [CollisionDoor.crn(6,10): error CERNEALAUI002: Markup element 'BoxCollider2D' is not supported by the source generator]&#xD;
+[xUnit.net 00:00:01.24]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.24]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorCollisionStageZeroTests.cs(65,0): at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.DoorTemplateCanBindVisualAndColliderToTheSameOpenState()&#xD;
+[xUnit.net 00:00:01.24]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.24]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.25]   Finished:    Cerneala.Tests.SourceGen&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T17:15:55.2998282+03:00">
+        <Text>[xUnit.net 00:00:01.05]     Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.ColliderMarkupUsesSceneStructureBindingsAspectAndMotionWithoutPrism [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T17:15:55.4935032+03:00">
+        <Text>[xUnit.net 00:00:01.24]     Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.DoorTemplateCanBindVisualAndColliderToTheSameOpenState [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

@@ -1,0 +1,19 @@
+{
+  "tileSize": [16, 16],
+  "bounds": [0, 0, 2, 2],
+  "atlases": [{ "size": [32, 16], "sourceRectangles": [[0, 0, 16, 16], [16, 0, 16, 16]] }],
+  "layers": [
+    {
+      "name": "Ground", "order": 0, "offset": [2, 3], "opacity": 1,
+      "cells": [
+        { "coordinate": [0, 0], "sourceRect": [0, 0, 16, 16], "flip": 0 },
+        { "coordinate": [1, 0], "sourceRect": [16, 0, 16, 16], "flip": 1 },
+        { "coordinate": [0, 1], "sourceRect": [0, 0, 16, 16], "flip": 2 }
+      ]
+    },
+    {
+      "name": "Roof", "order": 1, "offset": [2, 3], "opacity": 0.5,
+      "cells": [{ "coordinate": [1, 1], "sourceRect": [16, 0, 16, 16], "flip": 0 }]
+    }
+  ]
+}

@@ -1,0 +1,333 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="73bcb22d-1d27-47b3-b0f1-04eb0e6b2cbe" name="lauri@DESKTOP-JT43V3D 2026-09-05 03:47:01" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T03:47:01.0597677+03:00" queuing="2026-09-05T03:47:01.0597680+03:00" start="2026-09-05T03:46:59.2134106+03:00" finish="2026-09-05T03:47:04.4240341+03:00" />
+  <TestSettings name="default" id="f251554a-6e71-4b29-af77-7041063d02db">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_03_47_01" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="7d04ffbd-0272-46e8-aa0d-af69d26cf0b4" testId="936ef053-1c62-0d4f-934f-56f1544358e3" testName="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.OversizedTileColliderCollectionStopsBeforeMaterializingEveryObject" computerName="DESKTOP-JT43V3D" duration="00:00:03.1183183" startTime="2026-09-05T03:47:04.2807881+03:00" endTime="2026-09-05T03:47:04.2807892+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7d04ffbd-0272-46e8-aa0d-af69d26cf0b4">
+      <Output>
+        <ErrorInfo>
+          <Message>A rejected tile collider collection allocated 482,011,224 bytes.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.OversizedTileColliderCollectionStopsBeforeMaterializingEveryObject() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs:line 289&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="adcf4b6c-a187-45af-b09a-e6b63b235935" testId="52ff1f11-ce0b-4306-f0fe-638d282bc1a6" testName="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException(payload: &quot;null&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0145291" startTime="2026-09-05T03:47:00.7813901+03:00" endTime="2026-09-05T03:47:00.7813904+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="adcf4b6c-a187-45af-b09a-e6b63b235935">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : The requested operation requires an element of type 'Object', but the target element has type 'Null'.</Message>
+          <StackTrace>   at System.Text.Json.ThrowHelper.ThrowJsonElementWrongTypeException(JsonTokenType expectedType, JsonTokenType actualType)&#xD;
+   at System.Text.Json.JsonDocument.TryGetNamedPropertyValue(Int32 index, ReadOnlySpan`1 propertyName, JsonElement&amp; value)&#xD;
+   at System.Text.Json.JsonElement.TryGetProperty(String propertyName, JsonElement&amp; value)&#xD;
+   at Cerneala.Scene2D.Importers.TiledScene2DImporter.Parser.Version(JsonElement value) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs:line 73&#xD;
+   at Cerneala.Scene2D.Importers.TiledScene2DImporter.Parser.ParseSet(JsonElement reference) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs:line 95&#xD;
+   at Cerneala.Scene2D.Importers.TiledScene2DImporter.Parser.Parse(JsonElement map) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs:line 60&#xD;
+   at Cerneala.Scene2D.Importers.TiledScene2DImporter.Import(String filePath, Scene2DImportOptions options) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs:line 21&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.Import(JsonObject map, Scene2DImportOptions options) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs:line 32&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException(String payload) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs:line 268&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="a0dab359-8783-47c4-a883-ae55795cc017" testId="95902fb2-bc00-0e73-c570-e25dff5fa245" testName="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(mutation: &quot;missing-orientation&quot;, code: &quot;SCN2D002&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0150683" startTime="2026-09-05T03:47:00.7240450+03:00" endTime="2026-09-05T03:47:00.7240452+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a0dab359-8783-47c4-a883-ae55795cc017">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.False() Failure&#xD;
+Expected: False&#xD;
+Actual:   True</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.Failure(Scene2DImportResult result, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs:line 358&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(String mutation, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs:line 255&#xD;
+   at InvokeStub_TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="8bcda4b9-af2e-44e6-bd4e-ea942d939a44" testId="a729db54-dc51-66d0-ec80-aeb0bb3bdb59" testName="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.CompressionTruncationAndCorruptionAreBoundedAndDeterministic(compression: &quot;zlib&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1351326" startTime="2026-09-05T03:47:00.9325046+03:00" endTime="2026-09-05T03:47:00.9325049+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8bcda4b9-af2e-44e6-bd4e-ea942d939a44" />
+    <UnitTestResult executionId="8014e4a9-0cc9-4cdb-b74f-7dfe297a8426" testId="70ff16b7-c4f5-6c3e-0036-b735654cb069" testName="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.CompressionTruncationAndCorruptionAreBoundedAndDeterministic(compression: &quot;gzip&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.2285180" startTime="2026-09-05T03:47:01.1604648+03:00" endTime="2026-09-05T03:47:01.1604651+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8014e4a9-0cc9-4cdb-b74f-7dfe297a8426" />
+    <UnitTestResult executionId="13048b32-7b33-4c1f-a066-37df034bc9f5" testId="dd4a7426-e7ff-3323-1df6-cf23044a5d75" testName="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(mutation: &quot;unknown-alignment&quot;, code: &quot;SCN2D004&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0127148" startTime="2026-09-05T03:47:00.7370799+03:00" endTime="2026-09-05T03:47:00.7370804+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="13048b32-7b33-4c1f-a066-37df034bc9f5">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.False() Failure&#xD;
+Expected: False&#xD;
+Actual:   True</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.Failure(Scene2DImportResult result, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs:line 358&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(String mutation, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs:line 255&#xD;
+   at InvokeStub_TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="a78a1708-20c8-4443-a704-f40a5bae287e" testId="efa54d9c-7d8e-8c14-111d-a7ac0d73c086" testName="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.GzipOptionalHeadersHeaderChecksumAndConcatenatedMembersRemainSupported" computerName="DESKTOP-JT43V3D" duration="00:00:00.0377720" startTime="2026-09-05T03:47:04.3182084+03:00" endTime="2026-09-05T03:47:04.3182089+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a78a1708-20c8-4443-a704-f40a5bae287e" />
+    <UnitTestResult executionId="da311d21-a742-426a-8a1f-574fbef74600" testId="062d4e01-95c0-ca4f-9e89-83382dab0c63" testName="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException(payload: &quot;42&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0057365" startTime="2026-09-05T03:47:00.7997512+03:00" endTime="2026-09-05T03:47:00.7997518+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="da311d21-a742-426a-8a1f-574fbef74600">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : The requested operation requires an element of type 'Object', but the target element has type 'Number'.</Message>
+          <StackTrace>   at System.Text.Json.ThrowHelper.ThrowJsonElementWrongTypeException(JsonTokenType expectedType, JsonTokenType actualType)&#xD;
+   at System.Text.Json.JsonDocument.TryGetNamedPropertyValue(Int32 index, ReadOnlySpan`1 propertyName, JsonElement&amp; value)&#xD;
+   at System.Text.Json.JsonElement.TryGetProperty(String propertyName, JsonElement&amp; value)&#xD;
+   at Cerneala.Scene2D.Importers.TiledScene2DImporter.Parser.Version(JsonElement value) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs:line 73&#xD;
+   at Cerneala.Scene2D.Importers.TiledScene2DImporter.Parser.ParseSet(JsonElement reference) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs:line 95&#xD;
+   at Cerneala.Scene2D.Importers.TiledScene2DImporter.Parser.Parse(JsonElement map) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs:line 60&#xD;
+   at Cerneala.Scene2D.Importers.TiledScene2DImporter.Import(String filePath, Scene2DImportOptions options) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs:line 21&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.Import(JsonObject map, Scene2DImportOptions options) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs:line 32&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException(String payload) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs:line 268&#xD;
+   at InvokeStub_TiledContractCoverageTests.ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="f486454a-1fdb-4734-9fd5-a4a11529de97" testId="5de5f8c7-641c-39a0-5f00-b27911f0b7a9" testName="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(mutation: &quot;unknown-role&quot;, code: &quot;SCN2D004&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1244638" startTime="2026-09-05T03:47:00.6970163+03:00" endTime="2026-09-05T03:47:00.6970374+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f486454a-1fdb-4734-9fd5-a4a11529de97">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.False() Failure&#xD;
+Expected: False&#xD;
+Actual:   True</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.Failure(Scene2DImportResult result, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs:line 358&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(String mutation, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs:line 255&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="5349eda7-8ce9-47bf-9226-d74061eb5619" testId="3e512684-e8b2-aa7b-47f1-19782b2f2c66" testName="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException(payload: &quot;[]&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0115766" startTime="2026-09-05T03:47:00.7918809+03:00" endTime="2026-09-05T03:47:00.7918811+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5349eda7-8ce9-47bf-9226-d74061eb5619">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : The requested operation requires an element of type 'Object', but the target element has type 'Array'.</Message>
+          <StackTrace>   at System.Text.Json.ThrowHelper.ThrowJsonElementWrongTypeException(JsonTokenType expectedType, JsonTokenType actualType)&#xD;
+   at System.Text.Json.JsonDocument.TryGetNamedPropertyValue(Int32 index, ReadOnlySpan`1 propertyName, JsonElement&amp; value)&#xD;
+   at System.Text.Json.JsonElement.TryGetProperty(String propertyName, JsonElement&amp; value)&#xD;
+   at Cerneala.Scene2D.Importers.TiledScene2DImporter.Parser.Version(JsonElement value) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs:line 73&#xD;
+   at Cerneala.Scene2D.Importers.TiledScene2DImporter.Parser.ParseSet(JsonElement reference) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs:line 95&#xD;
+   at Cerneala.Scene2D.Importers.TiledScene2DImporter.Parser.Parse(JsonElement map) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs:line 60&#xD;
+   at Cerneala.Scene2D.Importers.TiledScene2DImporter.Import(String filePath, Scene2DImportOptions options) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs:line 21&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.Import(JsonObject map, Scene2DImportOptions options) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs:line 32&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException(String payload) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs:line 268&#xD;
+   at InvokeStub_TiledContractCoverageTests.ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="bf81069b-085e-4e73-bbce-974ad707dfcb" testId="741cb669-1e0e-831e-1845-9d370058fde9" testName="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(mutation: &quot;tile-object-id&quot;, code: &quot;SCN2D015&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0176141" startTime="2026-09-05T03:47:00.7551040+03:00" endTime="2026-09-05T03:47:00.7551044+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bf81069b-085e-4e73-bbce-974ad707dfcb">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.False() Failure&#xD;
+Expected: False&#xD;
+Actual:   True</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.Failure(Scene2DImportResult result, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs:line 358&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(String mutation, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs:line 255&#xD;
+   at InvokeStub_TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="4379c707-be28-4963-920c-30d3bc96987a" testId="c59996ba-31f8-bf26-4004-b8d5c2fd536e" testName="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(mutation: &quot;columns&quot;, code: &quot;SCN2D007&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0174061" startTime="2026-09-05T03:47:00.7087774+03:00" endTime="2026-09-05T03:47:00.7087778+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4379c707-be28-4963-920c-30d3bc96987a">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.False() Failure&#xD;
+Expected: False&#xD;
+Actual:   True</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.Failure(Scene2DImportResult result, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs:line 358&#xD;
+   at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(String mutation, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs:line 255&#xD;
+   at InvokeStub_TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(mutation: &quot;unknown-alignment&quot;, code: &quot;SCN2D004&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="dd4a7426-e7ff-3323-1df6-cf23044a5d75">
+      <Execution id="13048b32-7b33-4c1f-a066-37df034bc9f5" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests" name="StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(mutation: &quot;columns&quot;, code: &quot;SCN2D007&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="c59996ba-31f8-bf26-4004-b8d5c2fd536e">
+      <Execution id="4379c707-be28-4963-920c-30d3bc96987a" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests" name="StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException(payload: &quot;42&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="062d4e01-95c0-ca4f-9e89-83382dab0c63">
+      <Execution id="da311d21-a742-426a-8a1f-574fbef74600" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests" name="ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(mutation: &quot;missing-orientation&quot;, code: &quot;SCN2D002&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="95902fb2-bc00-0e73-c570-e25dff5fa245">
+      <Execution id="a0dab359-8783-47c4-a883-ae55795cc017" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests" name="StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(mutation: &quot;unknown-role&quot;, code: &quot;SCN2D004&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="5de5f8c7-641c-39a0-5f00-b27911f0b7a9">
+      <Execution id="f486454a-1fdb-4734-9fd5-a4a11529de97" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests" name="StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.GzipOptionalHeadersHeaderChecksumAndConcatenatedMembersRemainSupported" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="efa54d9c-7d8e-8c14-111d-a7ac0d73c086">
+      <Execution id="a78a1708-20c8-4443-a704-f40a5bae287e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests" name="GzipOptionalHeadersHeaderChecksumAndConcatenatedMembersRemainSupported" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(mutation: &quot;tile-object-id&quot;, code: &quot;SCN2D015&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="741cb669-1e0e-831e-1845-9d370058fde9">
+      <Execution id="bf81069b-085e-4e73-bbce-974ad707dfcb" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests" name="StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException(payload: &quot;null&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="52ff1f11-ce0b-4306-f0fe-638d282bc1a6">
+      <Execution id="adcf4b6c-a187-45af-b09a-e6b63b235935" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests" name="ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.OversizedTileColliderCollectionStopsBeforeMaterializingEveryObject" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="936ef053-1c62-0d4f-934f-56f1544358e3">
+      <Execution id="7d04ffbd-0272-46e8-aa0d-af69d26cf0b4" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests" name="OversizedTileColliderCollectionStopsBeforeMaterializingEveryObject" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.CompressionTruncationAndCorruptionAreBoundedAndDeterministic(compression: &quot;zlib&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="a729db54-dc51-66d0-ec80-aeb0bb3bdb59">
+      <Execution id="8bcda4b9-af2e-44e6-bd4e-ea942d939a44" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests" name="CompressionTruncationAndCorruptionAreBoundedAndDeterministic" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.CompressionTruncationAndCorruptionAreBoundedAndDeterministic(compression: &quot;gzip&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="70ff16b7-c4f5-6c3e-0036-b735654cb069">
+      <Execution id="8014e4a9-0cc9-4cdb-b74f-7dfe297a8426" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests" name="CompressionTruncationAndCorruptionAreBoundedAndDeterministic" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException(payload: &quot;[]&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="3e512684-e8b2-aa7b-47f1-19782b2f2c66">
+      <Execution id="5349eda7-8ce9-47bf-9226-d74061eb5619" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests" name="ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="936ef053-1c62-0d4f-934f-56f1544358e3" executionId="7d04ffbd-0272-46e8-aa0d-af69d26cf0b4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="52ff1f11-ce0b-4306-f0fe-638d282bc1a6" executionId="adcf4b6c-a187-45af-b09a-e6b63b235935" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="95902fb2-bc00-0e73-c570-e25dff5fa245" executionId="a0dab359-8783-47c4-a883-ae55795cc017" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a729db54-dc51-66d0-ec80-aeb0bb3bdb59" executionId="8bcda4b9-af2e-44e6-bd4e-ea942d939a44" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="70ff16b7-c4f5-6c3e-0036-b735654cb069" executionId="8014e4a9-0cc9-4cdb-b74f-7dfe297a8426" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="dd4a7426-e7ff-3323-1df6-cf23044a5d75" executionId="13048b32-7b33-4c1f-a066-37df034bc9f5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="efa54d9c-7d8e-8c14-111d-a7ac0d73c086" executionId="a78a1708-20c8-4443-a704-f40a5bae287e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="062d4e01-95c0-ca4f-9e89-83382dab0c63" executionId="da311d21-a742-426a-8a1f-574fbef74600" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5de5f8c7-641c-39a0-5f00-b27911f0b7a9" executionId="f486454a-1fdb-4734-9fd5-a4a11529de97" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3e512684-e8b2-aa7b-47f1-19782b2f2c66" executionId="5349eda7-8ce9-47bf-9226-d74061eb5619" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="741cb669-1e0e-831e-1845-9d370058fde9" executionId="bf81069b-085e-4e73-bbce-974ad707dfcb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c59996ba-31f8-bf26-4004-b8d5c2fd536e" executionId="4379c707-be28-4963-920c-30d3bc96987a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="12" executed="12" passed="3" failed="9" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.11]   Discovering: Cerneala.Tests.Scene2DImporters&#xD;
+[xUnit.net 00:00:00.21]   Discovered:  Cerneala.Tests.Scene2DImporters&#xD;
+[xUnit.net 00:00:00.22]   Starting:    Cerneala.Tests.Scene2DImporters&#xD;
+[xUnit.net 00:00:00.41]       Assert.False() Failure&#xD;
+[xUnit.net 00:00:00.41]       Expected: False&#xD;
+[xUnit.net 00:00:00.41]       Actual:   True&#xD;
+[xUnit.net 00:00:00.41]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.41]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs(358,0): at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.Failure(Scene2DImportResult result, String code)&#xD;
+[xUnit.net 00:00:00.41]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs(255,0): at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(String mutation, String code)&#xD;
+[xUnit.net 00:00:00.41]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.41]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.43]       Assert.False() Failure&#xD;
+[xUnit.net 00:00:00.43]       Expected: False&#xD;
+[xUnit.net 00:00:00.43]       Actual:   True&#xD;
+[xUnit.net 00:00:00.43]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.43]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs(358,0): at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.Failure(Scene2DImportResult result, String code)&#xD;
+[xUnit.net 00:00:00.43]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs(255,0): at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(String mutation, String code)&#xD;
+[xUnit.net 00:00:00.43]            at InvokeStub_TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.43]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.44]       Assert.False() Failure&#xD;
+[xUnit.net 00:00:00.44]       Expected: False&#xD;
+[xUnit.net 00:00:00.44]       Actual:   True&#xD;
+[xUnit.net 00:00:00.44]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.44]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs(358,0): at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.Failure(Scene2DImportResult result, String code)&#xD;
+[xUnit.net 00:00:00.44]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs(255,0): at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(String mutation, String code)&#xD;
+[xUnit.net 00:00:00.44]            at InvokeStub_TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.44]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.46]       Assert.False() Failure&#xD;
+[xUnit.net 00:00:00.46]       Expected: False&#xD;
+[xUnit.net 00:00:00.46]       Actual:   True&#xD;
+[xUnit.net 00:00:00.46]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs(358,0): at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.Failure(Scene2DImportResult result, String code)&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs(255,0): at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(String mutation, String code)&#xD;
+[xUnit.net 00:00:00.46]            at InvokeStub_TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.46]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.47]       Assert.False() Failure&#xD;
+[xUnit.net 00:00:00.47]       Expected: False&#xD;
+[xUnit.net 00:00:00.47]       Actual:   True&#xD;
+[xUnit.net 00:00:00.47]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.47]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs(358,0): at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.Failure(Scene2DImportResult result, String code)&#xD;
+[xUnit.net 00:00:00.47]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs(255,0): at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(String mutation, String code)&#xD;
+[xUnit.net 00:00:00.47]            at InvokeStub_TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.47]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.50]       System.InvalidOperationException : The requested operation requires an element of type 'Object', but the target element has type 'Null'.&#xD;
+[xUnit.net 00:00:00.50]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.50]            at System.Text.Json.ThrowHelper.ThrowJsonElementWrongTypeException(JsonTokenType expectedType, JsonTokenType actualType)&#xD;
+[xUnit.net 00:00:00.50]            at System.Text.Json.JsonDocument.TryGetNamedPropertyValue(Int32 index, ReadOnlySpan`1 propertyName, JsonElement&amp; value)&#xD;
+[xUnit.net 00:00:00.50]            at System.Text.Json.JsonElement.TryGetProperty(String propertyName, JsonElement&amp; value)&#xD;
+[xUnit.net 00:00:00.50]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs(73,0): at Cerneala.Scene2D.Importers.TiledScene2DImporter.Parser.Version(JsonElement value)&#xD;
+[xUnit.net 00:00:00.50]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs(95,0): at Cerneala.Scene2D.Importers.TiledScene2DImporter.Parser.ParseSet(JsonElement reference)&#xD;
+[xUnit.net 00:00:00.50]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs(60,0): at Cerneala.Scene2D.Importers.TiledScene2DImporter.Parser.Parse(JsonElement map)&#xD;
+[xUnit.net 00:00:00.50]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs(21,0): at Cerneala.Scene2D.Importers.TiledScene2DImporter.Import(String filePath, Scene2DImportOptions options)&#xD;
+[xUnit.net 00:00:00.50]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs(32,0): at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.Import(JsonObject map, Scene2DImportOptions options)&#xD;
+[xUnit.net 00:00:00.50]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs(268,0): at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException(String payload)&#xD;
+[xUnit.net 00:00:00.50]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.50]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.51]       System.InvalidOperationException : The requested operation requires an element of type 'Object', but the target element has type 'Array'.&#xD;
+[xUnit.net 00:00:00.51]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.51]            at System.Text.Json.ThrowHelper.ThrowJsonElementWrongTypeException(JsonTokenType expectedType, JsonTokenType actualType)&#xD;
+[xUnit.net 00:00:00.51]            at System.Text.Json.JsonDocument.TryGetNamedPropertyValue(Int32 index, ReadOnlySpan`1 propertyName, JsonElement&amp; value)&#xD;
+[xUnit.net 00:00:00.51]            at System.Text.Json.JsonElement.TryGetProperty(String propertyName, JsonElement&amp; value)&#xD;
+[xUnit.net 00:00:00.51]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs(73,0): at Cerneala.Scene2D.Importers.TiledScene2DImporter.Parser.Version(JsonElement value)&#xD;
+[xUnit.net 00:00:00.51]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs(95,0): at Cerneala.Scene2D.Importers.TiledScene2DImporter.Parser.ParseSet(JsonElement reference)&#xD;
+[xUnit.net 00:00:00.51]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs(60,0): at Cerneala.Scene2D.Importers.TiledScene2DImporter.Parser.Parse(JsonElement map)&#xD;
+[xUnit.net 00:00:00.51]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs(21,0): at Cerneala.Scene2D.Importers.TiledScene2DImporter.Import(String filePath, Scene2DImportOptions options)&#xD;
+[xUnit.net 00:00:00.51]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs(32,0): at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.Import(JsonObject map, Scene2DImportOptions options)&#xD;
+[xUnit.net 00:00:00.51]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs(268,0): at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException(String payload)&#xD;
+[xUnit.net 00:00:00.51]            at InvokeStub_TiledContractCoverageTests.ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.51]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.52]       System.InvalidOperationException : The requested operation requires an element of type 'Object', but the target element has type 'Number'.&#xD;
+[xUnit.net 00:00:00.52]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.52]            at System.Text.Json.ThrowHelper.ThrowJsonElementWrongTypeException(JsonTokenType expectedType, JsonTokenType actualType)&#xD;
+[xUnit.net 00:00:00.52]            at System.Text.Json.JsonDocument.TryGetNamedPropertyValue(Int32 index, ReadOnlySpan`1 propertyName, JsonElement&amp; value)&#xD;
+[xUnit.net 00:00:00.52]            at System.Text.Json.JsonElement.TryGetProperty(String propertyName, JsonElement&amp; value)&#xD;
+[xUnit.net 00:00:00.52]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs(73,0): at Cerneala.Scene2D.Importers.TiledScene2DImporter.Parser.Version(JsonElement value)&#xD;
+[xUnit.net 00:00:00.52]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs(95,0): at Cerneala.Scene2D.Importers.TiledScene2DImporter.Parser.ParseSet(JsonElement reference)&#xD;
+[xUnit.net 00:00:00.52]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs(60,0): at Cerneala.Scene2D.Importers.TiledScene2DImporter.Parser.Parse(JsonElement map)&#xD;
+[xUnit.net 00:00:00.52]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\TiledScene2DImporter.cs(21,0): at Cerneala.Scene2D.Importers.TiledScene2DImporter.Import(String filePath, Scene2DImportOptions options)&#xD;
+[xUnit.net 00:00:00.52]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs(32,0): at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.Import(JsonObject map, Scene2DImportOptions options)&#xD;
+[xUnit.net 00:00:00.52]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs(268,0): at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException(String payload)&#xD;
+[xUnit.net 00:00:00.52]            at InvokeStub_TiledContractCoverageTests.ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.52]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:04.00]       A rejected tile collider collection allocated 482,011,224 bytes.&#xD;
+[xUnit.net 00:00:04.00]       Stack Trace:&#xD;
+[xUnit.net 00:00:04.00]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\TiledContractCoverageTests.cs(289,0): at Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.OversizedTileColliderCollectionStopsBeforeMaterializingEveryObject()&#xD;
+[xUnit.net 00:00:04.00]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:04.00]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:04.05]   Finished:    Cerneala.Tests.Scene2DImporters&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:47:00.6928951+03:00">
+        <Text>[xUnit.net 00:00:00.41]     Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(mutation: "unknown-role", code: "SCN2D004") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:47:00.7080580+03:00">
+        <Text>[xUnit.net 00:00:00.43]     Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(mutation: "columns", code: "SCN2D007") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:47:00.7234326+03:00">
+        <Text>[xUnit.net 00:00:00.44]     Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(mutation: "missing-orientation", code: "SCN2D002") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:47:00.7364547+03:00">
+        <Text>[xUnit.net 00:00:00.46]     Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(mutation: "unknown-alignment", code: "SCN2D004") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:47:00.7544051+03:00">
+        <Text>[xUnit.net 00:00:00.47]     Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.StructuralReferencesAndReservedConventionsCannotBeSilentlyInvented(mutation: "tile-object-id", code: "SCN2D015") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:47:00.7787690+03:00">
+        <Text>[xUnit.net 00:00:00.50]     Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException(payload: "null") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:47:00.7907039+03:00">
+        <Text>[xUnit.net 00:00:00.51]     Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException(payload: "[]") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:47:00.7967402+03:00">
+        <Text>[xUnit.net 00:00:00.52]     Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.ExternalTilesetRequiresAnObjectRatherThanThrowingAnImplementationException(payload: "42") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T03:47:04.2797107+03:00">
+        <Text>[xUnit.net 00:00:04.00]     Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.OversizedTileColliderCollectionStopsBeforeMaterializingEveryObject [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

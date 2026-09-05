@@ -1,0 +1,279 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="6d82bc9c-eb60-4536-b817-663f22847ede" name="lauri@DESKTOP-JT43V3D 2026-09-05 02:11:18" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T02:11:18.9130988+03:00" queuing="2026-09-05T02:11:18.9130991+03:00" start="2026-09-05T02:11:16.9061190+03:00" finish="2026-09-05T02:11:18.9238014+03:00" />
+  <TestSettings name="default" id="c627cc47-a450-4b43-a6fa-e51a22b8af49">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_02_11_18" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="32274581-6686-481f-be69-38aab6d1e443" testId="c655126a-052f-75ce-906e-e0571ec26d20" testName="Cerneala.Tests.Controls.SceneModelValidationTests.ExtremePolygonFailsControlledInsteadOfOverflowingCrossProducts" computerName="DESKTOP-JT43V3D" duration="00:00:00.0137346" startTime="2026-09-05T02:11:18.6196423+03:00" endTime="2026-09-05T02:11:18.6196429+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="32274581-6686-481f-be69-38aab6d1e443">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.IsAssignableFrom() Failure: Value is an incompatible type&#xD;
+Expected: typeof(System.ArgumentException)&#xD;
+Actual:   typeof(System.ArithmeticException)</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneModelValidationTests.ExtremePolygonFailsControlledInsteadOfOverflowingCrossProducts() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 75&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="50ff39f7-dfd3-4aee-944f-97318ecce970" testId="cba95f5c-4d1d-a693-bdc1-9d88dfc5da0f" testName="Cerneala.Tests.Controls.SceneModelValidationTests.DiagnosticRetentionIsBoundedAndDeterministic" computerName="DESKTOP-JT43V3D" duration="00:00:00.0025645" startTime="2026-09-05T02:11:18.6304503+03:00" endTime="2026-09-05T02:11:18.6304506+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="50ff39f7-dfd3-4aee-944f-97318ecce970">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: missing core contract Scene2DModelValidator</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneModelValidationTests.CoreType(String name) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 128&#xD;
+   at Cerneala.Tests.Controls.SceneModelValidationTests.DiagnosticRetentionIsBoundedAndDeterministic() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 97&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="32a74ac5-9645-40a2-9bb2-7964d74e69de" testId="3d92f9b0-4ec2-d973-16e9-2798f7887896" testName="Cerneala.Tests.Controls.SceneModelValidationTests.OverflowingBoundsAreRejectedAtConstruction(x: 2147483647, y: 0)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0019426" startTime="2026-09-05T02:11:18.6241839+03:00" endTime="2026-09-05T02:11:18.6241844+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="32a74ac5-9645-40a2-9bb2-7964d74e69de">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Throws() Failure: No exception was thrown&#xD;
+Expected: typeof(System.ArgumentOutOfRangeException)</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneModelValidationTests.OverflowingBoundsAreRejectedAtConstruction(Int32 x, Int32 y) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 48&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="de6235bd-8185-40bd-9371-a8c43ee6a5e3" testId="1f75b958-9ec6-001d-8a4b-9b412ea9480a" testName="Cerneala.Tests.Controls.SceneModelValidationTests.ExistingConstructorsExposeTheSameStableDiagnosticCategories" computerName="DESKTOP-JT43V3D" duration="00:00:00.0015134" startTime="2026-09-05T02:11:18.6445267+03:00" endTime="2026-09-05T02:11:18.6445271+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="de6235bd-8185-40bd-9371-a8c43ee6a5e3">
+      <Output>
+        <ErrorInfo>
+          <Message>RED: missing core contract Scene2DModelValidator</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneModelValidationTests.CoreType(String name) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 128&#xD;
+   at Cerneala.Tests.Controls.SceneModelValidationTests.AssertDiagnostic(Exception error, String code) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 116&#xD;
+   at Cerneala.Tests.Controls.SceneModelValidationTests.ExistingConstructorsExposeTheSameStableDiagnosticCategories() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 83&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="e4514f32-5e2e-4d79-9ff7-4faf9570d110" testId="c5f3c877-aed6-6b2b-b743-728943e15479" testName="Cerneala.Tests.Controls.SceneModelValidationTests.DefaultBoundsCannotEscapeTheMapConstructor" computerName="DESKTOP-JT43V3D" duration="00:00:00.0101258" startTime="2026-09-05T02:11:18.6417913+03:00" endTime="2026-09-05T02:11:18.6417918+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e4514f32-5e2e-4d79-9ff7-4faf9570d110">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Throws() Failure: No exception was thrown&#xD;
+Expected: typeof(System.ArgumentException)</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneModelValidationTests.DefaultBoundsCannotEscapeTheMapConstructor() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 56&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="67d6cc4a-4fac-4f30-b653-b573c82a4f02" testId="3815a54c-3598-73be-b78d-451bd15c08b2" testName="Cerneala.Tests.Controls.SceneModelValidationTests.ConvexityRejectsSelfIntersectingStarNotOnlyLocalTurnSigns" computerName="DESKTOP-JT43V3D" duration="00:00:00.0013963" startTime="2026-09-05T02:11:18.6589614+03:00" endTime="2026-09-05T02:11:18.6589620+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="67d6cc4a-4fac-4f30-b653-b573c82a4f02">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Throws() Failure: No exception was thrown&#xD;
+Expected: typeof(System.ArgumentException)</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneModelValidationTests.ConvexityRejectsSelfIntersectingStarNotOnlyLocalTurnSigns() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 64&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="8374439e-ff4e-4c79-a276-0bb18bf10593" testId="8093fd8f-2a93-5efd-5352-60e109a7d15d" testName="Cerneala.Tests.Controls.SceneModelValidationTests.HugeChunkRejectsDimensionsBeforeEnumerating" computerName="DESKTOP-JT43V3D" duration="00:00:00.0081301" startTime="2026-09-05T02:11:18.5996818+03:00" endTime="2026-09-05T02:11:18.5997178+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8374439e-ff4e-4c79-a276-0bb18bf10593">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.IsAssignableFrom() Failure: Value is an incompatible type&#xD;
+Expected: typeof(System.ArgumentException)&#xD;
+Actual:   typeof(System.InvalidOperationException)</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneModelValidationTests.HugeChunkRejectsDimensionsBeforeEnumerating() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 38&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="e0261584-c8d2-4b63-bc2f-c99ef61320a8" testId="c3020935-bfac-1b8e-343d-654917a6ce8a" testName="Cerneala.Tests.Controls.SceneModelValidationTests.OverflowingBoundsAreRejectedAtConstruction(x: 0, y: 2147483647)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0006955" startTime="2026-09-05T02:11:18.6266485+03:00" endTime="2026-09-05T02:11:18.6266488+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e0261584-c8d2-4b63-bc2f-c99ef61320a8">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Throws() Failure: No exception was thrown&#xD;
+Expected: typeof(System.ArgumentOutOfRangeException)</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneModelValidationTests.OverflowingBoundsAreRejectedAtConstruction(Int32 x, Int32 y) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 48&#xD;
+   at InvokeStub_SceneModelValidationTests.OverflowingBoundsAreRejectedAtConstruction(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="5c400889-88a7-4d3b-970a-bf38790a241b" testId="4b12835f-6ce8-81f3-76fb-3785c687f5a4" testName="Cerneala.Tests.Controls.SceneModelValidationTests.ChunkRejectsExcessCellsWithoutEnumeratingTheTail" computerName="DESKTOP-JT43V3D" duration="00:00:00.0013502" startTime="2026-09-05T02:11:18.6560626+03:00" endTime="2026-09-05T02:11:18.6560630+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5c400889-88a7-4d3b-970a-bf38790a241b">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Throws() Failure: Exception type was not an exact match&#xD;
+Expected: typeof(System.ArgumentException)&#xD;
+Actual:   typeof(System.InvalidOperationException)&#xD;
+---- System.InvalidOperationException : The unbounded tail must not be visited.</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneModelValidationTests.ChunkRejectsExcessCellsWithoutEnumeratingTheTail() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 21&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+----- Inner Stack Trace -----&#xD;
+   at Cerneala.Tests.Controls.SceneModelValidationTests.&lt;&gt;c__DisplayClass0_0.&lt;&lt;ChunkRejectsExcessCellsWithoutEnumeratingTheTail&gt;g__Cells|0&gt;d.MoveNext() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 18&#xD;
+   at System.Collections.Generic.LargeArrayBuilder`1.AddRange(IEnumerable`1 items)&#xD;
+   at System.Collections.Generic.EnumerableHelpers.ToArray[T](IEnumerable`1 source)&#xD;
+   at System.Linq.Enumerable.ToArray[TSource](IEnumerable`1 source)&#xD;
+   at Cerneala.UI.Controls.TileChunk2D..ctor(TileCoordinate2D origin, Int32 width, Int32 height, IEnumerable`1 tiles, Int64 version, IReadOnlyDictionary`2 properties) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\TileMap2DModel.cs:line 228&#xD;
+   at Cerneala.Tests.Controls.SceneModelValidationTests.&lt;&gt;c__DisplayClass0_0.&lt;ChunkRejectsExcessCellsWithoutEnumeratingTheTail&gt;b__1() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs:line 21</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Controls.SceneModelValidationTests.OverflowingBoundsAreRejectedAtConstruction(x: 2147483647, y: 0)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="3d92f9b0-4ec2-d973-16e9-2798f7887896">
+      <Execution id="32a74ac5-9645-40a2-9bb2-7964d74e69de" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneModelValidationTests" name="OverflowingBoundsAreRejectedAtConstruction" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneModelValidationTests.OverflowingBoundsAreRejectedAtConstruction(x: 0, y: 2147483647)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="c3020935-bfac-1b8e-343d-654917a6ce8a">
+      <Execution id="e0261584-c8d2-4b63-bc2f-c99ef61320a8" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneModelValidationTests" name="OverflowingBoundsAreRejectedAtConstruction" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneModelValidationTests.ChunkRejectsExcessCellsWithoutEnumeratingTheTail" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="4b12835f-6ce8-81f3-76fb-3785c687f5a4">
+      <Execution id="5c400889-88a7-4d3b-970a-bf38790a241b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneModelValidationTests" name="ChunkRejectsExcessCellsWithoutEnumeratingTheTail" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneModelValidationTests.ConvexityRejectsSelfIntersectingStarNotOnlyLocalTurnSigns" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="3815a54c-3598-73be-b78d-451bd15c08b2">
+      <Execution id="67d6cc4a-4fac-4f30-b653-b573c82a4f02" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneModelValidationTests" name="ConvexityRejectsSelfIntersectingStarNotOnlyLocalTurnSigns" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneModelValidationTests.DefaultBoundsCannotEscapeTheMapConstructor" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="c5f3c877-aed6-6b2b-b743-728943e15479">
+      <Execution id="e4514f32-5e2e-4d79-9ff7-4faf9570d110" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneModelValidationTests" name="DefaultBoundsCannotEscapeTheMapConstructor" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneModelValidationTests.ExtremePolygonFailsControlledInsteadOfOverflowingCrossProducts" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="c655126a-052f-75ce-906e-e0571ec26d20">
+      <Execution id="32274581-6686-481f-be69-38aab6d1e443" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneModelValidationTests" name="ExtremePolygonFailsControlledInsteadOfOverflowingCrossProducts" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneModelValidationTests.ExistingConstructorsExposeTheSameStableDiagnosticCategories" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="1f75b958-9ec6-001d-8a4b-9b412ea9480a">
+      <Execution id="de6235bd-8185-40bd-9371-a8c43ee6a5e3" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneModelValidationTests" name="ExistingConstructorsExposeTheSameStableDiagnosticCategories" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneModelValidationTests.DiagnosticRetentionIsBoundedAndDeterministic" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="cba95f5c-4d1d-a693-bdc1-9d88dfc5da0f">
+      <Execution id="50ff39f7-dfd3-4aee-944f-97318ecce970" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneModelValidationTests" name="DiagnosticRetentionIsBoundedAndDeterministic" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneModelValidationTests.HugeChunkRejectsDimensionsBeforeEnumerating" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="8093fd8f-2a93-5efd-5352-60e109a7d15d">
+      <Execution id="8374439e-ff4e-4c79-a276-0bb18bf10593" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneModelValidationTests" name="HugeChunkRejectsDimensionsBeforeEnumerating" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="c655126a-052f-75ce-906e-e0571ec26d20" executionId="32274581-6686-481f-be69-38aab6d1e443" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cba95f5c-4d1d-a693-bdc1-9d88dfc5da0f" executionId="50ff39f7-dfd3-4aee-944f-97318ecce970" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3d92f9b0-4ec2-d973-16e9-2798f7887896" executionId="32a74ac5-9645-40a2-9bb2-7964d74e69de" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1f75b958-9ec6-001d-8a4b-9b412ea9480a" executionId="de6235bd-8185-40bd-9371-a8c43ee6a5e3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c5f3c877-aed6-6b2b-b743-728943e15479" executionId="e4514f32-5e2e-4d79-9ff7-4faf9570d110" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3815a54c-3598-73be-b78d-451bd15c08b2" executionId="67d6cc4a-4fac-4f30-b653-b573c82a4f02" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8093fd8f-2a93-5efd-5352-60e109a7d15d" executionId="8374439e-ff4e-4c79-a276-0bb18bf10593" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c3020935-bfac-1b8e-343d-654917a6ce8a" executionId="e0261584-c8d2-4b63-bc2f-c99ef61320a8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4b12835f-6ce8-81f3-76fb-3785c687f5a4" executionId="5c400889-88a7-4d3b-970a-bf38790a241b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="9" executed="9" passed="0" failed="9" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.19]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.75]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.76]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:00.83]       Assert.IsAssignableFrom() Failure: Value is an incompatible type&#xD;
+[xUnit.net 00:00:00.83]       Expected: typeof(System.ArgumentException)&#xD;
+[xUnit.net 00:00:00.83]       Actual:   typeof(System.InvalidOperationException)&#xD;
+[xUnit.net 00:00:00.83]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.83]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(38,0): at Cerneala.Tests.Controls.SceneModelValidationTests.HugeChunkRejectsDimensionsBeforeEnumerating()&#xD;
+[xUnit.net 00:00:00.83]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.83]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.85]       Assert.IsAssignableFrom() Failure: Value is an incompatible type&#xD;
+[xUnit.net 00:00:00.85]       Expected: typeof(System.ArgumentException)&#xD;
+[xUnit.net 00:00:00.85]       Actual:   typeof(System.ArithmeticException)&#xD;
+[xUnit.net 00:00:00.85]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.85]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(75,0): at Cerneala.Tests.Controls.SceneModelValidationTests.ExtremePolygonFailsControlledInsteadOfOverflowingCrossProducts()&#xD;
+[xUnit.net 00:00:00.85]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.85]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.86]       Assert.Throws() Failure: No exception was thrown&#xD;
+[xUnit.net 00:00:00.86]       Expected: typeof(System.ArgumentOutOfRangeException)&#xD;
+[xUnit.net 00:00:00.86]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.86]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(48,0): at Cerneala.Tests.Controls.SceneModelValidationTests.OverflowingBoundsAreRejectedAtConstruction(Int32 x, Int32 y)&#xD;
+[xUnit.net 00:00:00.86]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.86]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.86]       Assert.Throws() Failure: No exception was thrown&#xD;
+[xUnit.net 00:00:00.86]       Expected: typeof(System.ArgumentOutOfRangeException)&#xD;
+[xUnit.net 00:00:00.86]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.86]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(48,0): at Cerneala.Tests.Controls.SceneModelValidationTests.OverflowingBoundsAreRejectedAtConstruction(Int32 x, Int32 y)&#xD;
+[xUnit.net 00:00:00.86]            at InvokeStub_SceneModelValidationTests.OverflowingBoundsAreRejectedAtConstruction(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.86]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.86]       RED: missing core contract Scene2DModelValidator&#xD;
+[xUnit.net 00:00:00.86]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.86]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(128,0): at Cerneala.Tests.Controls.SceneModelValidationTests.CoreType(String name)&#xD;
+[xUnit.net 00:00:00.86]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(97,0): at Cerneala.Tests.Controls.SceneModelValidationTests.DiagnosticRetentionIsBoundedAndDeterministic()&#xD;
+[xUnit.net 00:00:00.86]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.86]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.87]       Assert.Throws() Failure: No exception was thrown&#xD;
+[xUnit.net 00:00:00.87]       Expected: typeof(System.ArgumentException)&#xD;
+[xUnit.net 00:00:00.87]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.87]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(56,0): at Cerneala.Tests.Controls.SceneModelValidationTests.DefaultBoundsCannotEscapeTheMapConstructor()&#xD;
+[xUnit.net 00:00:00.87]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.87]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.88]       RED: missing core contract Scene2DModelValidator&#xD;
+[xUnit.net 00:00:00.88]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.88]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(128,0): at Cerneala.Tests.Controls.SceneModelValidationTests.CoreType(String name)&#xD;
+[xUnit.net 00:00:00.88]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(116,0): at Cerneala.Tests.Controls.SceneModelValidationTests.AssertDiagnostic(Exception error, String code)&#xD;
+[xUnit.net 00:00:00.88]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(83,0): at Cerneala.Tests.Controls.SceneModelValidationTests.ExistingConstructorsExposeTheSameStableDiagnosticCategories()&#xD;
+[xUnit.net 00:00:00.88]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.88]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.89]       Assert.Throws() Failure: Exception type was not an exact match&#xD;
+[xUnit.net 00:00:00.89]       Expected: typeof(System.ArgumentException)&#xD;
+[xUnit.net 00:00:00.89]       Actual:   typeof(System.InvalidOperationException)&#xD;
+[xUnit.net 00:00:00.89]       ---- System.InvalidOperationException : The unbounded tail must not be visited.&#xD;
+[xUnit.net 00:00:00.89]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.89]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(21,0): at Cerneala.Tests.Controls.SceneModelValidationTests.ChunkRejectsExcessCellsWithoutEnumeratingTheTail()&#xD;
+[xUnit.net 00:00:00.89]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.89]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.89]         ----- Inner Stack Trace -----&#xD;
+[xUnit.net 00:00:00.89]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(18,0): at Cerneala.Tests.Controls.SceneModelValidationTests.&lt;&gt;c__DisplayClass0_0.&lt;&lt;ChunkRejectsExcessCellsWithoutEnumeratingTheTail&gt;g__Cells|0&gt;d.MoveNext()&#xD;
+[xUnit.net 00:00:00.89]            at System.Collections.Generic.LargeArrayBuilder`1.AddRange(IEnumerable`1 items)&#xD;
+[xUnit.net 00:00:00.89]            at System.Collections.Generic.EnumerableHelpers.ToArray[T](IEnumerable`1 source)&#xD;
+[xUnit.net 00:00:00.89]            at System.Linq.Enumerable.ToArray[TSource](IEnumerable`1 source)&#xD;
+[xUnit.net 00:00:00.89]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\TileMap2DModel.cs(228,0): at Cerneala.UI.Controls.TileChunk2D..ctor(TileCoordinate2D origin, Int32 width, Int32 height, IEnumerable`1 tiles, Int64 version, IReadOnlyDictionary`2 properties)&#xD;
+[xUnit.net 00:00:00.89]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(21,0): at Cerneala.Tests.Controls.SceneModelValidationTests.&lt;&gt;c__DisplayClass0_0.&lt;ChunkRejectsExcessCellsWithoutEnumeratingTheTail&gt;b__1()&#xD;
+[xUnit.net 00:00:00.89]       Assert.Throws() Failure: No exception was thrown&#xD;
+[xUnit.net 00:00:00.89]       Expected: typeof(System.ArgumentException)&#xD;
+[xUnit.net 00:00:00.89]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.89]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneModelValidationTests.cs(64,0): at Cerneala.Tests.Controls.SceneModelValidationTests.ConvexityRejectsSelfIntersectingStarNotOnlyLocalTurnSigns()&#xD;
+[xUnit.net 00:00:00.89]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.89]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.90]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:11:18.5956110+03:00">
+        <Text>[xUnit.net 00:00:00.83]     Cerneala.Tests.Controls.SceneModelValidationTests.HugeChunkRejectsDimensionsBeforeEnumerating [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:11:18.6190352+03:00">
+        <Text>[xUnit.net 00:00:00.85]     Cerneala.Tests.Controls.SceneModelValidationTests.ExtremePolygonFailsControlledInsteadOfOverflowingCrossProducts [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:11:18.6236258+03:00">
+        <Text>[xUnit.net 00:00:00.86]     Cerneala.Tests.Controls.SceneModelValidationTests.OverflowingBoundsAreRejectedAtConstruction(x: 2147483647, y: 0) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:11:18.6261392+03:00">
+        <Text>[xUnit.net 00:00:00.86]     Cerneala.Tests.Controls.SceneModelValidationTests.OverflowingBoundsAreRejectedAtConstruction(x: 0, y: 2147483647) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:11:18.6300690+03:00">
+        <Text>[xUnit.net 00:00:00.86]     Cerneala.Tests.Controls.SceneModelValidationTests.DiagnosticRetentionIsBoundedAndDeterministic [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:11:18.6414240+03:00">
+        <Text>[xUnit.net 00:00:00.87]     Cerneala.Tests.Controls.SceneModelValidationTests.DefaultBoundsCannotEscapeTheMapConstructor [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:11:18.6441025+03:00">
+        <Text>[xUnit.net 00:00:00.88]     Cerneala.Tests.Controls.SceneModelValidationTests.ExistingConstructorsExposeTheSameStableDiagnosticCategories [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:11:18.6544775+03:00">
+        <Text>[xUnit.net 00:00:00.89]     Cerneala.Tests.Controls.SceneModelValidationTests.ChunkRejectsExcessCellsWithoutEnumeratingTheTail [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T02:11:18.6586426+03:00">
+        <Text>[xUnit.net 00:00:00.89]     Cerneala.Tests.Controls.SceneModelValidationTests.ConvexityRejectsSelfIntersectingStarNotOnlyLocalTurnSigns [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

@@ -16,6 +16,11 @@
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
     <AdditionalFiles Include="**\*.crn" Exclude="bin\**;obj\**" />
+    <Compile Include="..\Shared\TileMapStage3CaptureFixture.cs" Link="TileMapStage3CaptureFixture.cs" />
+    <Compile Include="..\Shared\TileMapStage5ConformanceFixture.cs" Link="TileMapStage5ConformanceFixture.cs" />
+    <Compile Include="..\Shared\CollisionStageFiveFixture.cs" Link="CollisionStageFiveFixture.cs" />
+    <Compile Include="..\Shared\SpriteAnimationConformanceFixture.cs" Link="SpriteAnimationConformanceFixture.cs" />
+    <Compile Include="..\Shared\SceneDebugOverlayConformanceFixture.cs" Link="SceneDebugOverlayConformanceFixture.cs" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="e92fed96-fc39-48ed-a842-e00bad3abf7c" name="lauri@DESKTOP-JT43V3D 2026-09-05 03:50:31" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T03:50:31.8931440+03:00" queuing="2026-09-05T03:50:31.8931444+03:00" start="2026-09-05T03:50:28.9812686+03:00" finish="2026-09-05T03:50:31.9015271+03:00" />
+  <TestSettings name="default" id="0f1db33a-2c6d-4fba-82e4-64017c12c905">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_03_50_31" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="2ccb3dec-80f7-409d-8221-ac217ca5e293" testId="936ef053-1c62-0d4f-934f-56f1544358e3" testName="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.OversizedTileColliderCollectionStopsBeforeMaterializingEveryObject" computerName="DESKTOP-JT43V3D" duration="00:00:01.3959220" startTime="2026-09-05T03:50:31.7820389+03:00" endTime="2026-09-05T03:50:31.7820393+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2ccb3dec-80f7-409d-8221-ac217ca5e293" />
+    <UnitTestResult executionId="e206cf50-a491-4efb-8f8e-b52bdacc5c20" testId="7ac7354c-2f6d-1c7f-ae59-aa5ba8d1d0f5" testName="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.TruncatedJsonAndDuplicateMembersProduceControlledLocatedDiagnostics" computerName="DESKTOP-JT43V3D" duration="00:00:01.3307732" startTime="2026-09-05T03:50:31.7213313+03:00" endTime="2026-09-05T03:50:31.7213737+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e206cf50-a491-4efb-8f8e-b52bdacc5c20" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests.TruncatedJsonAndDuplicateMembersProduceControlledLocatedDiagnostics" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="7ac7354c-2f6d-1c7f-ae59-aa5ba8d1d0f5">
+      <Execution id="e206cf50-a491-4efb-8f8e-b52bdacc5c20" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledHostileInputTests" name="TruncatedJsonAndDuplicateMembersProduceControlledLocatedDiagnostics" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests.OversizedTileColliderCollectionStopsBeforeMaterializingEveryObject" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dimporters\bin\debug\net8.0\cerneala.tests.scene2dimporters.dll" id="936ef053-1c62-0d4f-934f-56f1544358e3">
+      <Execution id="2ccb3dec-80f7-409d-8221-ac217ca5e293" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DImporters.TiledContractCoverageTests" name="OversizedTileColliderCollectionStopsBeforeMaterializingEveryObject" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="936ef053-1c62-0d4f-934f-56f1544358e3" executionId="2ccb3dec-80f7-409d-8221-ac217ca5e293" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7ac7354c-2f6d-1c7f-ae59-aa5ba8d1d0f5" executionId="e206cf50-a491-4efb-8f8e-b52bdacc5c20" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="2" executed="2" passed="2" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.13]   Discovering: Cerneala.Tests.Scene2DImporters&#xD;
+[xUnit.net 00:00:00.30]   Discovered:  Cerneala.Tests.Scene2DImporters&#xD;
+[xUnit.net 00:00:00.30]   Starting:    Cerneala.Tests.Scene2DImporters&#xD;
+[xUnit.net 00:00:01.80]   Finished:    Cerneala.Tests.Scene2DImporters&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

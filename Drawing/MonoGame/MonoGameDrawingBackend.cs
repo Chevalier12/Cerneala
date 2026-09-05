@@ -3203,11 +3203,24 @@ public sealed class MonoGameDrawingBackend :
     void IPrismCommandRenderer.RestoreHostTarget()
     {
         GraphicsDevice graphicsDevice = _spriteBatch.GraphicsDevice;
-        MonoGameGraphicsDeviceStateSnapshot snapshot =
-            deviceStateSnapshot ??
-            throw new InvalidOperationException(
-                "The backend graphics state snapshot is unavailable.");
-        snapshot.RestoreRenderTargetsAndViewport(graphicsDevice);
+        if (drawingLayers.Count == 0)
+        {
+            MonoGameGraphicsDeviceStateSnapshot snapshot =
+                deviceStateSnapshot ??
+                throw new InvalidOperationException(
+                    "The backend graphics state snapshot is unavailable.");
+            snapshot.RestoreRenderTargetsAndViewport(graphicsDevice);
+        }
+        else
+        {
+            RenderTarget2D target = drawingLayers[^1].Target;
+            graphicsDevice.SetRenderTarget(target);
+            graphicsDevice.Viewport = new Viewport(
+                0,
+                0,
+                target.Width,
+                target.Height);
+        }
         if (clipStack is not null)
         {
             graphicsDevice.ScissorRectangle = clipStack.CurrentClip;

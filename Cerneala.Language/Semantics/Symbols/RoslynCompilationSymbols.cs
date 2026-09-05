@@ -140,9 +140,9 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
     private sealed class RoslynTypeSymbol : ILanguageTypeSymbol
     {
         private readonly Compilation compilation;
-        private readonly INamedTypeSymbol symbol;
+        private readonly ITypeSymbol symbol;
 
-        public RoslynTypeSymbol(Compilation compilation, INamedTypeSymbol symbol)
+        public RoslynTypeSymbol(Compilation compilation, ITypeSymbol symbol)
         {
             this.compilation = compilation;
             this.symbol = symbol;
@@ -167,7 +167,7 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
         public bool IsEnum => symbol.TypeKind == TypeKind.Enum;
 
         public bool HasAccessibleParameterlessConstructor =>
-            symbol.InstanceConstructors.Any(constructor =>
+            symbol is INamedTypeSymbol named && named.InstanceConstructors.Any(constructor =>
                 constructor.Parameters.Length == 0 &&
                 IsAccessible(constructor.DeclaredAccessibility));
 
@@ -177,7 +177,7 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
         {
             get
             {
-                for (INamedTypeSymbol? current = symbol; current is not null; current = current.BaseType)
+                for (ITypeSymbol? current = symbol; current is not null; current = current.BaseType)
                 {
                     AttributeData? attribute = current.GetAttributes().FirstOrDefault(candidate =>
                         candidate.AttributeClass?.ToDisplayString() == "Cerneala.UI.Markup.ContentPropertyAttribute");
@@ -194,8 +194,8 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
         public ILanguageTypeSymbol? BaseType =>
             symbol.BaseType is null ? null : new RoslynTypeSymbol(compilation, symbol.BaseType);
 
-        public IReadOnlyList<ILanguageTypeSymbol> TypeArguments => symbol.TypeArguments
-            .OfType<INamedTypeSymbol>()
+        public IReadOnlyList<ILanguageTypeSymbol> TypeArguments => (symbol is INamedTypeSymbol named
+            ? named.TypeArguments.AsEnumerable() : Enumerable.Empty<ITypeSymbol>())
             .Select(type => (ILanguageTypeSymbol)new RoslynTypeSymbol(compilation, type))
             .ToArray();
 
@@ -203,12 +203,14 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
         {
             get
             {
+                if (symbol is IArrayTypeSymbol array)
+                    return new RoslynTypeSymbol(compilation, array.ElementType);
                 INamedTypeSymbol? enumerable = symbol.AllInterfaces
-                    .Append(symbol)
+                    .Concat(symbol is INamedTypeSymbol named ? new[] { named } : Array.Empty<INamedTypeSymbol>())
                     .FirstOrDefault(candidate =>
                         candidate.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat) ==
                         "System.Collections.Generic.IEnumerable<T>");
-                return enumerable?.TypeArguments.FirstOrDefault() is INamedTypeSymbol itemType
+                return enumerable?.TypeArguments.FirstOrDefault() is ITypeSymbol itemType
                     ? new RoslynTypeSymbol(compilation, itemType)
                     : null;
             }
@@ -217,7 +219,7 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
         public IReadOnlyList<ILanguageMemberSymbol> GetMembers(string name)
         {
             List<ILanguageMemberSymbol> members = new();
-            for (INamedTypeSymbol? current = symbol; current is not null; current = current.BaseType)
+            for (ITypeSymbol? current = symbol; current is not null; current = current.BaseType)
             {
                 members.AddRange(current.GetMembers(name)
                     .Where(member => IsAccessible(member.DeclaredAccessibility))
@@ -230,7 +232,7 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
         public IReadOnlyList<ILanguageMemberSymbol> GetMembers()
         {
             List<ILanguageMemberSymbol> members = new();
-            for (INamedTypeSymbol? current = symbol; current is not null; current = current.BaseType)
+            for (ITypeSymbol? current = symbol; current is not null; current = current.BaseType)
             {
                 members.AddRange(current.GetMembers()
                     .Where(member => IsAccessible(member.DeclaredAccessibility))
@@ -245,7 +247,7 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
 
         public bool IsOrDerivesFrom(string metadataName)
         {
-            for (INamedTypeSymbol? current = symbol; current is not null; current = current.BaseType)
+            for (ITypeSymbol? current = symbol; current is not null; current = current.BaseType)
             {
                 if (string.Equals(
                     current.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
@@ -301,11 +303,11 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
 
         public bool CanRead => symbol is not IPropertySymbol property || property.GetMethod is not null;
 
-        public bool CanWrite => symbol is IPropertySymbol property && property.SetMethod is not null;
+        public bool CanWrite => symbol is IPropertySymbol property && property.SetMethod is { IsInitOnly: false };
 
         public string ValueTypeMetadataName => GetValueType(symbol)?.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat) ?? "System.Object";
 
-        public ILanguageTypeSymbol? ValueType => GetValueType(symbol) is INamedTypeSymbol type
+        public ILanguageTypeSymbol? ValueType => GetValueType(symbol) is ITypeSymbol type
             ? new RoslynTypeSymbol(compilation, type)
             : null;
 

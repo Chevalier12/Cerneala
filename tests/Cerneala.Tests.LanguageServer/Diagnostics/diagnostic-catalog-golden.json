@@ -150,6 +150,16 @@
     "EndCharacter": 5
   },
   {
+    "Id": "CERNEALAUI016",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Sprite animation declaration in \u0027arg0\u0027 is invalid: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
     "Id": "CERNEALAUI020",
     "EditorSeverity": 1,
     "BuildSeverity": 1,

@@ -1,5 +1,30 @@
 [
   {
+    "name": "Cerneala.Scene2D.Importers.LdtkScene2DImporter",
+    "file": "documentation/classes/Cerneala.Scene2D.Importers.LdtkScene2DImporter.md",
+    "source": "Cerneala.Scene2D.Importers/LdtkScene2DImporter.cs"
+  },
+  {
+    "name": "Cerneala.Scene2D.Importers.Scene2DImportOptions",
+    "file": "documentation/classes/Cerneala.Scene2D.Importers.Scene2DImportOptions.md",
+    "source": "Cerneala.Scene2D.Importers/Scene2DImportOptions.cs"
+  },
+  {
+    "name": "Cerneala.Scene2D.Importers.Scene2DImportResult",
+    "file": "documentation/classes/Cerneala.Scene2D.Importers.Scene2DImportResult.md",
+    "source": "Cerneala.Scene2D.Importers/Scene2DImportResult.cs"
+  },
+  {
+    "name": "Cerneala.Scene2D.Importers.TiledScene2DImporter",
+    "file": "documentation/classes/Cerneala.Scene2D.Importers.TiledScene2DImporter.md",
+    "source": "Cerneala.Scene2D.Importers/TiledScene2DImporter.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Scene2DDiagnosticCollector",
+    "file": "documentation/classes/Cerneala.UI.Controls.Scene2DDiagnosticCollector.md",
+    "source": "UI/Controls/Scene2DModelValidator.cs"
+  },
+  {
     "name": "Cerneala.Drawing.Color",
     "file": "documentation/classes/Cerneala.Drawing.Color.md",
     "source": "Drawing/Color.cs"
@@ -1120,6 +1145,11 @@
     "source": "UI/Controls/Border.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.BoxCollider2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.BoxCollider2D.md",
+    "source": "UI/Controls/BoxCollider2D.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.Button",
     "file": "documentation/classes/Cerneala.UI.Controls.Button.md",
     "source": "UI/Controls/Button.cs"
@@ -1165,6 +1195,11 @@
     "source": "UI/Controls/CheckBox.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.CircleCollider2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.CircleCollider2D.md",
+    "source": "UI/Controls/CircleCollider2D.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.ColorPicker",
     "file": "documentation/classes/Cerneala.UI.Controls.ColorPicker.md",
     "source": "UI/Controls/ColorPicker.cs"
@@ -1173,6 +1208,36 @@
     "name": "Cerneala.UI.Controls.ColorSpectrum",
     "file": "documentation/classes/Cerneala.UI.Controls.ColorSpectrum.md",
     "source": "UI/Controls/ColorSpectrum.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Collider2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.Collider2D.md",
+    "source": "UI/Controls/Collider2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.CollisionHit2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.CollisionHit2D.md",
+    "source": "UI/Controls/CollisionHit2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.CollisionQuery2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.CollisionQuery2D.md",
+    "source": "UI/Controls/CollisionQuery2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.CollisionWorld2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.CollisionWorld2D.md",
+    "source": "UI/Controls/CollisionWorld2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.CollisionWorld2DDiagnosticsSnapshot",
+    "file": "documentation/classes/Cerneala.UI.Controls.CollisionWorld2DDiagnosticsSnapshot.md",
+    "source": "UI/Controls/CollisionWorld2DDiagnosticsSnapshot.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.MoveCollisionResult2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.MoveCollisionResult2D.md",
+    "source": "UI/Controls/MoveCollisionResult2D.cs"
   },
   {
     "name": "Cerneala.UI.Controls.ColorSwatch",
@@ -1365,6 +1430,11 @@
     "source": "UI/Controls/PopupRoot.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.PolygonCollider2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.PolygonCollider2D.md",
+    "source": "UI/Controls/PolygonCollider2D.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.Overlay",
     "file": "documentation/classes/Cerneala.UI.Controls.Overlay.md",
     "source": "UI/Controls/Overlay.cs"
@@ -1505,6 +1575,11 @@
     "source": "UI/Controls/SceneNode2D.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.SceneOrderMode",
+    "file": "documentation/classes/Cerneala.UI.Controls.SceneOrderMode.md",
+    "source": "UI/Controls/SceneOrderMode.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.ScrollBarVisibility",
     "file": "documentation/classes/Cerneala.UI.Controls.ScrollBarVisibility.md",
     "source": "UI/Controls/ScrollBarVisibility.cs"
@@ -1578,6 +1653,26 @@
     "name": "Cerneala.UI.Controls.Sprite2D",
     "file": "documentation/classes/Cerneala.UI.Controls.Sprite2D.md",
     "source": "UI/Controls/Sprite2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.SpriteAnimationClip",
+    "file": "documentation/classes/Cerneala.UI.Controls.SpriteAnimationClip.md",
+    "source": "UI/Controls/SpriteAnimation.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.SpriteAnimationFrame",
+    "file": "documentation/classes/Cerneala.UI.Controls.SpriteAnimationFrame.md",
+    "source": "UI/Controls/SpriteAnimation.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.SpriteAnimationSet",
+    "file": "documentation/classes/Cerneala.UI.Controls.SpriteAnimationSet.md",
+    "source": "UI/Controls/SpriteAnimation.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.SpriteAnimationStateChangeMode",
+    "file": "documentation/classes/Cerneala.UI.Controls.SpriteAnimationStateChangeMode.md",
+    "source": "UI/Controls/SpriteAnimation.cs"
   },
   {
     "name": "Cerneala.UI.Controls.StackPanel",
@@ -1738,6 +1833,81 @@
     "name": "Cerneala.UI.Controls.TextSearch",
     "file": "documentation/classes/Cerneala.UI.Controls.TextSearch.md",
     "source": "UI/Controls/TextSearch.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.TileCell2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.TileCell2D.md",
+    "source": "UI/Controls/TileMap2DModel.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.TileCellKey2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.TileCellKey2D.md",
+    "source": "UI/Controls/TileMap2DModel.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.TileChunk2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.TileChunk2D.md",
+    "source": "UI/Controls/TileMap2DModel.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.TileColliderDescriptor2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.TileColliderDescriptor2D.md",
+    "source": "UI/Controls/TileColliderDescriptor2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.TileColliderShape2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.TileColliderShape2D.md",
+    "source": "UI/Controls/TileColliderDescriptor2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.TileCoordinate2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.TileCoordinate2D.md",
+    "source": "UI/Controls/TileMap2DModel.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.TileDefinition2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.TileDefinition2D.md",
+    "source": "UI/Controls/TileMap2DModel.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.TileFlip2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.TileFlip2D.md",
+    "source": "UI/Controls/TileMap2DModel.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.TileInstance2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.TileInstance2D.md",
+    "source": "UI/Controls/TileInstance2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.TileLayer2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.TileLayer2D.md",
+    "source": "UI/Controls/TileLayer2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.TileLayer2DModel",
+    "file": "documentation/classes/Cerneala.UI.Controls.TileLayer2DModel.md",
+    "source": "UI/Controls/TileMap2DModel.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.TileMap2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.TileMap2D.md",
+    "source": "UI/Controls/TileMap2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.TileMap2DModel",
+    "file": "documentation/classes/Cerneala.UI.Controls.TileMap2DModel.md",
+    "source": "UI/Controls/TileMap2DModel.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.TileMapBounds2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.TileMapBounds2D.md",
+    "source": "UI/Controls/TileMap2DModel.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.TileSet2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.TileSet2D.md",
+    "source": "UI/Controls/TileMap2DModel.cs"
   },
   {
     "name": "Cerneala.UI.Controls.ToolTip",
@@ -2092,6 +2262,11 @@
     "name": "Cerneala.UI.Detective.RenderDiagnostics",
     "file": "documentation/classes/Cerneala.UI.Detective.RenderDiagnostics.md",
     "source": "UI/Detective/RenderDiagnostics.cs"
+  },
+  {
+    "name": "Cerneala.UI.Detective.TileMapDiagnosticsSnapshot",
+    "file": "documentation/classes/Cerneala.UI.Detective.TileMapDiagnosticsSnapshot.md",
+    "source": "UI/Detective/TileMapDiagnosticsSnapshot.cs"
   },
   {
     "name": "Cerneala.UI.Detective.RootRenderDiagnosticsSnapshot",
@@ -5417,5 +5592,80 @@
     "name": "Cerneala.UI.Motion.Interpolation.Vector4Mixer",
     "file": "documentation/classes/Cerneala.UI.Motion.Interpolation.Vector4Mixer.md",
     "source": "UI/Motion/Interpolation/Vector4Mixer.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Scene2DModelValidator",
+    "file": "documentation/classes/Cerneala.UI.Controls.Scene2DModelValidator.md",
+    "source": "UI/Controls/Scene2DModelValidator.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Scene2DDiagnostic",
+    "file": "documentation/classes/Cerneala.UI.Controls.Scene2DDiagnostic.md",
+    "source": "UI/Controls/Scene2DModelValidator.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Scene2DDiagnosticSeverity",
+    "file": "documentation/classes/Cerneala.UI.Controls.Scene2DDiagnosticSeverity.md",
+    "source": "UI/Controls/Scene2DModelValidator.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Scene2DValidationOptions",
+    "file": "documentation/classes/Cerneala.UI.Controls.Scene2DValidationOptions.md",
+    "source": "UI/Controls/Scene2DModelValidator.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Scene2DValidationResult",
+    "file": "documentation/classes/Cerneala.UI.Controls.Scene2DValidationResult.md",
+    "source": "UI/Controls/Scene2DModelValidator.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Scene2DDocument",
+    "file": "documentation/classes/Cerneala.UI.Controls.Scene2DDocument.md",
+    "source": "UI/Controls/Scene2DDocument.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Scene2DAsset",
+    "file": "documentation/classes/Cerneala.UI.Controls.Scene2DAsset.md",
+    "source": "UI/Controls/Scene2DDocument.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Scene2DLevel",
+    "file": "documentation/classes/Cerneala.UI.Controls.Scene2DLevel.md",
+    "source": "UI/Controls/Scene2DDocument.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Scene2DEntity",
+    "file": "documentation/classes/Cerneala.UI.Controls.Scene2DEntity.md",
+    "source": "UI/Controls/Scene2DDocument.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.TilePromotion2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.TilePromotion2D.md",
+    "source": "UI/Controls/Scene2DDocument.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.SegmentCollider2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.SegmentCollider2D.md",
+    "source": "UI/Controls/SegmentCollider2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Scene2DDebugOverlay",
+    "file": "documentation/classes/Cerneala.UI.Controls.Scene2DDebugOverlay.md",
+    "source": "UI/Controls/Scene2DDebugOverlay.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Scene2DDebugFlags",
+    "file": "documentation/classes/Cerneala.UI.Controls.Scene2DDebugFlags.md",
+    "source": "UI/Controls/Scene2DDebugOverlay.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.IScene2DDebugNavigationGrid",
+    "file": "documentation/classes/Cerneala.UI.Controls.IScene2DDebugNavigationGrid.md",
+    "source": "UI/Controls/Scene2DDebugOverlay.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Scene2DDebugOverlayDiagnostics",
+    "file": "documentation/classes/Cerneala.UI.Controls.Scene2DDebugOverlayDiagnostics.md",
+    "source": "UI/Controls/Scene2DDebugOverlay.cs"
   }
 ]

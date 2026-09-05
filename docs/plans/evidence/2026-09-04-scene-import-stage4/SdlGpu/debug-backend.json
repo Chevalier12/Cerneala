@@ -1,0 +1,318 @@
+{
+  "Backend": "SDL_GPU",
+  "CaptureApi": "Window.SaveScreenshot",
+  "Captures": [
+    {
+      "File": "debug-off.png",
+      "Width": 800,
+      "Height": 525,
+      "ChangedFromOff": 0,
+      "Sha256": "B4265D8C8E982360124EA1ABD6F4CC5C39F514DD09A98CE0A4ECAECBC705337D"
+    },
+    {
+      "File": "debug-colliders.png",
+      "Width": 800,
+      "Height": 525,
+      "ChangedFromOff": 13322,
+      "Sha256": "A12CB86A4DFCF0CB72A09B720C620FA0DCFD06A50ECA179C6DB12DA865DB077A"
+    },
+    {
+      "File": "debug-chunks.png",
+      "Width": 800,
+      "Height": 525,
+      "ChangedFromOff": 4312,
+      "Sha256": "F78471AF8A80370E019F17452CD31EA1F9DB923A3C9B3D715690291B2C119E9A"
+    },
+    {
+      "File": "debug-coordinates.png",
+      "Width": 800,
+      "Height": 525,
+      "ChangedFromOff": 11115,
+      "Sha256": "58BA7E6F81DAE9F9EFEDB2A5416EE49297FD04BF7010E2003321F5813243A9B3"
+    },
+    {
+      "File": "debug-ids.png",
+      "Width": 800,
+      "Height": 525,
+      "ChangedFromOff": 8010,
+      "Sha256": "BC514FE7DAF7165BA66640E08F5E2A8D7BB858A2765FC22A3F005BC6AF136584"
+    },
+    {
+      "File": "debug-order.png",
+      "Width": 800,
+      "Height": 525,
+      "ChangedFromOff": 5401,
+      "Sha256": "6B0407B6FD34F4A5CB413FFE9C3E7C9C4BC7C42643DFF626EC716057B48A7A3A"
+    },
+    {
+      "File": "debug-navigation.png",
+      "Width": 800,
+      "Height": 525,
+      "ChangedFromOff": 6276,
+      "Sha256": "D9D24F412EA4056F41A62E3E3E21897AA71F4B7350DE5EEE6C3E910C575989F6"
+    },
+    {
+      "File": "debug-promoted.png",
+      "Width": 800,
+      "Height": 525,
+      "ChangedFromOff": 1737,
+      "Sha256": "6E6F3E239B9DB0679B71E4649E7D4DC273BF46A0F4E1D251E76705301E940C08"
+    },
+    {
+      "File": "debug-all.png",
+      "Width": 800,
+      "Height": 525,
+      "ChangedFromOff": 42928,
+      "Sha256": "95529DE25BB1DCB96E07EAAF306256CB81CDB3BF5E72E9171675790832F19F7E"
+    },
+    {
+      "File": "debug-effects.png",
+      "Width": 800,
+      "Height": 525,
+      "ChangedFromOff": 26237,
+      "Sha256": "58B25205172F6282465DCBE5D2F8B0430551680CD4CDF2C06114B539440E54B0"
+    },
+    {
+      "File": "debug-zoom.png",
+      "Width": 800,
+      "Height": 525,
+      "ChangedFromOff": 212578,
+      "Sha256": "6DF4857FA2A248FC6F3D06BFC16C09D2CEE93CB7224033C7CF924DE60EA549AF"
+    },
+    {
+      "File": "debug-off-restored.png",
+      "Width": 800,
+      "Height": 525,
+      "ChangedFromOff": 0,
+      "Sha256": "B4265D8C8E982360124EA1ABD6F4CC5C39F514DD09A98CE0A4ECAECBC705337D"
+    }
+  ],
+  "Samples": [
+    {
+      "Sample": 0,
+      "File": "debug-off.png",
+      "Flags": "None",
+      "Debug": {
+        "CandidateChunks": 0,
+        "VisitedTiles": 0,
+        "Colliders": 0,
+        "PromotedTiles": 0,
+        "NavigationCells": 0,
+        "Primitives": 0
+      },
+      "EntryCount": 6,
+      "RebuildCount": 1,
+      "IncrementalUpdateCount": 0,
+      "Picking": "PASS",
+      "Collision": "PASS"
+    },
+    {
+      "Sample": 1,
+      "File": "debug-colliders.png",
+      "Flags": "Colliders",
+      "Debug": {
+        "CandidateChunks": 0,
+        "VisitedTiles": 0,
+        "Colliders": 5,
+        "PromotedTiles": 0,
+        "NavigationCells": 0,
+        "Primitives": 12
+      },
+      "EntryCount": 6,
+      "RebuildCount": 1,
+      "IncrementalUpdateCount": 0,
+      "Picking": "PASS",
+      "Collision": "PASS"
+    },
+    {
+      "Sample": 2,
+      "File": "debug-chunks.png",
+      "Flags": "ChunkBounds",
+      "Debug": {
+        "CandidateChunks": 3,
+        "VisitedTiles": 0,
+        "Colliders": 0,
+        "PromotedTiles": 0,
+        "NavigationCells": 0,
+        "Primitives": 3
+      },
+      "EntryCount": 6,
+      "RebuildCount": 1,
+      "IncrementalUpdateCount": 0,
+      "Picking": "PASS",
+      "Collision": "PASS"
+    },
+    {
+      "Sample": 3,
+      "File": "debug-coordinates.png",
+      "Flags": "TileCoordinates",
+      "Debug": {
+        "CandidateChunks": 3,
+        "VisitedTiles": 36,
+        "Colliders": 0,
+        "PromotedTiles": 0,
+        "NavigationCells": 0,
+        "Primitives": 36
+      },
+      "EntryCount": 6,
+      "RebuildCount": 1,
+      "IncrementalUpdateCount": 0,
+      "Picking": "PASS",
+      "Collision": "PASS"
+    },
+    {
+      "Sample": 4,
+      "File": "debug-ids.png",
+      "Flags": "TileIds",
+      "Debug": {
+        "CandidateChunks": 3,
+        "VisitedTiles": 36,
+        "Colliders": 0,
+        "PromotedTiles": 0,
+        "NavigationCells": 0,
+        "Primitives": 36
+      },
+      "EntryCount": 6,
+      "RebuildCount": 1,
+      "IncrementalUpdateCount": 0,
+      "Picking": "PASS",
+      "Collision": "PASS"
+    },
+    {
+      "Sample": 5,
+      "File": "debug-order.png",
+      "Flags": "Order",
+      "Debug": {
+        "CandidateChunks": 3,
+        "VisitedTiles": 0,
+        "Colliders": 0,
+        "PromotedTiles": 0,
+        "NavigationCells": 0,
+        "Primitives": 3
+      },
+      "EntryCount": 6,
+      "RebuildCount": 1,
+      "IncrementalUpdateCount": 0,
+      "Picking": "PASS",
+      "Collision": "PASS"
+    },
+    {
+      "Sample": 6,
+      "File": "debug-navigation.png",
+      "Flags": "Navigation",
+      "Debug": {
+        "CandidateChunks": 0,
+        "VisitedTiles": 0,
+        "Colliders": 0,
+        "PromotedTiles": 0,
+        "NavigationCells": 24,
+        "Primitives": 22
+      },
+      "EntryCount": 6,
+      "RebuildCount": 1,
+      "IncrementalUpdateCount": 0,
+      "Picking": "PASS",
+      "Collision": "PASS"
+    },
+    {
+      "Sample": 7,
+      "File": "debug-promoted.png",
+      "Flags": "PromotedTiles",
+      "Debug": {
+        "CandidateChunks": 3,
+        "VisitedTiles": 0,
+        "Colliders": 0,
+        "PromotedTiles": 1,
+        "NavigationCells": 0,
+        "Primitives": 4
+      },
+      "EntryCount": 6,
+      "RebuildCount": 1,
+      "IncrementalUpdateCount": 0,
+      "Picking": "PASS",
+      "Collision": "PASS"
+    },
+    {
+      "Sample": 8,
+      "File": "debug-all.png",
+      "Flags": "All",
+      "Debug": {
+        "CandidateChunks": 3,
+        "VisitedTiles": 36,
+        "Colliders": 5,
+        "PromotedTiles": 1,
+        "NavigationCells": 24,
+        "Primitives": 80
+      },
+      "EntryCount": 6,
+      "RebuildCount": 1,
+      "IncrementalUpdateCount": 0,
+      "Picking": "PASS",
+      "Collision": "PASS"
+    },
+    {
+      "Sample": 9,
+      "File": "debug-effects.png",
+      "Flags": "All",
+      "Debug": {
+        "CandidateChunks": 3,
+        "VisitedTiles": 36,
+        "Colliders": 5,
+        "PromotedTiles": 1,
+        "NavigationCells": 24,
+        "Primitives": 80
+      },
+      "EntryCount": 6,
+      "RebuildCount": 1,
+      "IncrementalUpdateCount": 0,
+      "Picking": "PASS",
+      "Collision": "PASS"
+    },
+    {
+      "Sample": 10,
+      "File": "debug-zoom.png",
+      "Flags": "All",
+      "Debug": {
+        "CandidateChunks": 3,
+        "VisitedTiles": 33,
+        "Colliders": 5,
+        "PromotedTiles": 1,
+        "NavigationCells": 22,
+        "Primitives": 77
+      },
+      "EntryCount": 6,
+      "RebuildCount": 1,
+      "IncrementalUpdateCount": 0,
+      "Picking": "PASS",
+      "Collision": "PASS"
+    },
+    {
+      "Sample": 11,
+      "File": "debug-off-restored.png",
+      "Flags": "None",
+      "Debug": {
+        "CandidateChunks": 0,
+        "VisitedTiles": 0,
+        "Colliders": 0,
+        "PromotedTiles": 0,
+        "NavigationCells": 0,
+        "Primitives": 0
+      },
+      "EntryCount": 6,
+      "RebuildCount": 1,
+      "IncrementalUpdateCount": 0,
+      "Picking": "PASS",
+      "Collision": "PASS"
+    }
+  ],
+  "RecordedFrameBounds": {
+    "X": 0,
+    "Y": 0,
+    "Width": 800,
+    "Height": 525,
+    "Right": 800,
+    "Bottom": 525
+  },
+  "Motion": "Explicit completion endpoints; interpolation separately verified by core tests.",
+  "ManualValidation": "Not performed"
+}

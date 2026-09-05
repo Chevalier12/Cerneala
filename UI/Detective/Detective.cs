@@ -1,5 +1,6 @@
 using System.Globalization;
 using Cerneala.UI.Aspect;
+using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
@@ -75,6 +76,23 @@ public sealed class Detective
 
     public ElementRenderDiagnosticsSnapshot CaptureRendering(UIElement element) =>
         RenderDiagnostics.CaptureElement(element, root.RetainedRenderCache);
+
+    public TileMapDiagnosticsSnapshot CaptureTileMap(TileMap2D map)
+    {
+        ArgumentNullException.ThrowIfNull(map);
+        if (!ReferenceEquals(map.Root, root))
+        {
+            throw new ArgumentException("The tilemap must be attached to this Detective's root.", nameof(map));
+        }
+
+        TileMap2DDiagnosticsSnapshot state = map.GetDiagnosticsSnapshot();
+        return new TileMapDiagnosticsSnapshot(
+            state.TotalChunks, state.CandidateChunks, state.VisibleChunks, state.CandidateTiles,
+            state.DrawnTiles, state.BatchesBuilt, state.BatchesRebuilt, state.BatchesReused,
+            state.DrawCommands, state.RetainedBytes, state.RetainedObjects, state.TileInvalidations,
+            state.PromotedInstancesVisible, state.PromotedInstancesCulled, state.Promotions,
+            state.Demotions, state.BatchSplits);
+    }
 
     public AspectDiagnostics.Snapshot CaptureAspect(UIElement element) =>
         root.AspectProcessor.Engine.GetDiagnostics(element);

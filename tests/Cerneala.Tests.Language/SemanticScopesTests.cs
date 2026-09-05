@@ -147,6 +147,35 @@ public sealed class SemanticScopesTests
     }
 
     [Fact]
+    [Trait("SpriteAnimationStage", "2")]
+    public void SpriteAnimationResourceBindsToSpriteWithoutLeakingClipNamesIntoTheElementNamescope()
+    {
+        const string markup = """
+            <RenderSurface2D>
+              <RenderSurface2D.Resources>
+                <SpriteAnimationSet Name="Animations">
+                  <SpriteAnimationClip Name="Walk">
+                    <SpriteAnimationFrame SourceX="0" SourceY="0" SourceWidth="16" SourceHeight="16" Duration="100ms" />
+                  </SpriteAnimationClip>
+                  <SpriteAnimationClip Name="Idle">
+                    <SpriteAnimationFrame SourceX="16" SourceY="0" SourceWidth="16" SourceHeight="16" Duration="100ms" />
+                  </SpriteAnimationClip>
+                </SpriteAnimationSet>
+              </RenderSurface2D.Resources>
+              <RenderSurface2D.Scene>
+                <Scene2D><Sprite2D Name="Walk" Animations="$Animations" AnimationState="Walk" /></Scene2D>
+              </RenderSurface2D.Scene>
+            </RenderSurface2D>
+            """;
+        CernealaSemanticModel model = Model("Animation.crn", markup, string.Empty);
+
+        Assert.Empty(model.Diagnostics);
+        CernealaSemanticSymbol reference = SymbolAt(model, markup, "$Animations");
+        Assert.Equal(CernealaSemanticSymbolKind.ResourceReference, reference.Kind);
+        Assert.Equal("Cerneala.UI.Controls.SpriteAnimationSet", reference.ValueType);
+    }
+
+    [Fact]
     public void ItemsTemplatesInferOrOverrideDataTypeAndModelContentOwnership()
     {
         const string markup = """
@@ -227,6 +256,58 @@ public sealed class SemanticScopesTests
             Assert.Empty(model.Diagnostics);
             Assert.Empty(sourceGenerator.SourceGeneratorDiagnostics);
         }
+    }
+
+    [Theory]
+    [InlineData("<Aspect>@default { Opacity = 0.5; }</Aspect>")]
+    [InlineData("<Aspect />")]
+    [InlineData("<!-- legacy wrapper --> <Aspect>@default { Opacity = 0.5; }</Aspect>")]
+    public void InlineAspectRejectsRedundantWrapperWithSharedDiagnostic(string body)
+    {
+        string markup = "<Button><Button.Aspect>" + body + "</Button.Aspect></Button>";
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("InlineAspect.crn", markup);
+
+        Assert.Empty(result.Syntax.Diagnostics);
+        HarnessDiagnostic diagnostic = Assert.Single(result.SemanticDiagnostics);
+        Assert.Equal("CERNEALAUI005", diagnostic.Id);
+        Assert.Equal("Error", diagnostic.Severity);
+        Assert.Contains("<Button.Aspect> already declares the inline Aspect", diagnostic.Message, StringComparison.Ordinal);
+        Assert.Equal(markup.IndexOf("<Aspect", StringComparison.Ordinal) + 1, diagnostic.StartCharacter);
+        Assert.Equal(diagnostic.StartCharacter + "Aspect".Length, diagnostic.EndCharacter);
+        Assert.Equal(diagnostic, Assert.Single(result.SourceGeneratorDiagnostics));
+
+        CernealaDocument document = new("InlineAspect.crn", SourceText.From(markup));
+        using CernealaCompilation editor = new(
+            new RoslynCompilationSymbols(CreateCompilation(string.Empty, "InlineAspect.crn.cs")),
+            [document], AnalysisMode.Editor);
+        LanguageDiagnostic editorDiagnostic = Assert.Single(editor.GetSemanticModel(document.Path).Diagnostics);
+        Assert.Equal(diagnostic.Id, editorDiagnostic.Id);
+        Assert.Equal(diagnostic.Message, editorDiagnostic.Message);
+        Assert.Equal(LanguageDiagnosticSeverity.Error, editorDiagnostic.Severity);
+        Assert.Equal(diagnostic.StartCharacter, editorDiagnostic.Span.Start);
+        Assert.Equal("Aspect".Length, editorDiagnostic.Span.Length);
+    }
+
+    [Fact]
+    public void DirectInlineAspectBindsDefaultsConditionsMotionAndTemplateDeclaration()
+    {
+        const string markup = """
+            <Button>
+              <Button.Aspect>
+                @default { Opacity = 0.5; }
+                @when IsMouseOver { Opacity = 0.8; }
+                @on Click { @animate with Tween(100ms) { @from { Opacity = 0.5; } @to { Opacity = 1; } } }
+                @template { <Border Name="Chrome" IsEnabled="$owner.IsEnabled" /> }
+              </Button.Aspect>
+            </Button>
+            """;
+        CernealaSemanticModel model = Model("DirectInlineAspect.crn", markup, string.Empty);
+
+        Assert.Empty(model.Diagnostics);
+        Assert.Contains(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.AspectAssignment && symbol.Name == "Opacity");
+        Assert.Contains(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.AspectCondition);
+        Assert.Contains(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.MotionEvent && symbol.Name == "Click");
+        Assert.Contains(model.Symbols, symbol => symbol.Kind == CernealaSemanticSymbolKind.TemplatePart && symbol.Name == "Chrome");
     }
 
     [Fact]

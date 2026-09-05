@@ -38,15 +38,13 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <Border DataType="TestInput.SnapshotMotionViewModel">
               <Border.Aspect>
-                <Aspect>
-                  @on Loaded
+                @on Loaded
+                {
+                  @animate with Tween(180ms, EaseOut)
                   {
-                    @animate with Tween(180ms, EaseOut)
-                    {
-                      @to { Opacity = $DataContext.TargetOpacity; }
-                    }
+                    @to { Opacity = $DataContext.TargetOpacity; }
                   }
-                </Aspect>
+                }
               </Border.Aspect>
             </Border>
             """;
@@ -72,15 +70,13 @@ public sealed partial class UiMarkupGeneratorTests
         string markup = $$"""
             <Border DataType="TestInput.MotionViewModel">
               <Border.Aspect>
-                <Aspect>
-                  @on Loaded
+                @on Loaded
+                {
+                  @animate with Tween(180ms, EaseOut)
                   {
-                    @animate with Tween(180ms, EaseOut)
-                    {
-                      @to { Opacity = $DataContext.TargetOpacity:{{mode}}; }
-                    }
+                    @to { Opacity = $DataContext.TargetOpacity:{{mode}}; }
                   }
-                </Aspect>
+                }
               </Border.Aspect>
             </Border>
             """;
@@ -103,16 +99,14 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <Border DataType="TestInput.MotionViewModel">
               <Border.Aspect>
-                <Aspect>
-                  @on Loaded
+                @on Loaded
+                {
+                  @animate
                   {
-                    @animate
-                    {
-                      @from { Opacity = $DataContext.TargetOpacity:OneWay; }
-                      @to { Opacity = 1; }
-                    }
+                    @from { Opacity = $DataContext.TargetOpacity:OneWay; }
+                    @to { Opacity = 1; }
                   }
-                </Aspect>
+                }
               </Border.Aspect>
             </Border>
             """;
@@ -132,15 +126,13 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <Border DataType="TestInput.MotionViewModel">
               <Border.Aspect>
-                <Aspect>
-                  @on Loaded
+                @on Loaded
+                {
+                  @animate with Tween(180ms)
                   {
-                    @animate with Tween(180ms)
-                    {
-                      @to { $self.prism.Card.Opacity = $DataContext.TargetOpacity:OneWay; }
-                    }
+                    @to { $self.prism.Card.Opacity = $DataContext.TargetOpacity:OneWay; }
                   }
-                </Aspect>
+                }
               </Border.Aspect>
               @prism { @layer Card { Opacity = 1; @filter Blur { Radius = 1; } } }
             </Border>
@@ -221,16 +213,14 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <Border>
               <Border.Aspect>
-                <Aspect>
-                  @when IsMouseOver
+                @when IsMouseOver
+                {
+                  @animate
                   {
-                    @animate
-                    {
-                      @from { Opacity = current; Scale = current; }
-                      @to { Opacity = 1; Scale = 1.04 with Tween(160ms, EaseOut); }
-                    }
+                    @from { Opacity = current; Scale = current; }
+                    @to { Opacity = 1; Scale = 1.04 with Tween(160ms, EaseOut); }
                   }
-                </Aspect>
+                }
               </Border.Aspect>
             </Border>
             """;
@@ -730,9 +720,7 @@ public sealed partial class UiMarkupGeneratorTests
         const string markup = """
             <Button>
               <Button.Aspect>
-                <Aspect>
-                  @on Click { @animate { @to { Opacity = 1; } } }
-                </Aspect>
+                @on Click { @animate { @to { Opacity = 1; } } }
               </Button.Aspect>
             </Button>
             """;

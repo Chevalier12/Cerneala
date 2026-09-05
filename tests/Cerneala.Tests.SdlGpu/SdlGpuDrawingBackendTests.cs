@@ -7,6 +7,8 @@ using Cerneala.Drawing.Prism.Graph;
 using Cerneala.Drawing.Text;
 using Cerneala.Platforms.Sdl3;
 using Cerneala.UI.Media;
+using Cerneala.UI.Prism.Definitions;
+using Cerneala.UI.Prism.Runtime;
 using SkiaSharp;
 using Xunit.Abstractions;
 
@@ -371,6 +373,31 @@ public sealed class SdlGpuDrawingBackendTests
         Assert.Equal(textureOrder[0], textureOrder[3]);
         Assert.Equal(2, api.RenderTargets.Select(target => target.Texture).Distinct().Count());
         Assert.Equal(4, CountGpuActions(api, "draw-indexed:"));
+    }
+
+    [Fact]
+    public void PushOpacityCompositesOverlappingChildrenAsOneGroup()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1 };
+        nint window = api.CreateWindow("opacity-group", 64, 48, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window);
+        DrawCommandList commands = new();
+        DrawingContext drawing = new(commands);
+        drawing.PushOpacity(0.5f);
+        drawing.FillRectangle(new DrawRect(4, 4, 20, 20), Color.Red);
+        drawing.FillRectangle(new DrawRect(12, 12, 20, 20), Color.Green);
+        drawing.PopOpacity();
+
+        Render(session, commands);
+
+        nint[] textureOrder = api.FragmentSamplerBindings
+            .Select(static binding => binding.Binding.Texture)
+            .ToArray();
+        Assert.Equal(2, api.RenderTargets.Select(target => target.Texture).Distinct().Count());
+        Assert.Equal(2, CountGpuActions(api, "draw-indexed:"));
+        Assert.Equal(2, textureOrder.Length);
+        Assert.NotEqual(textureOrder[0], textureOrder[1]);
     }
 
     [Fact]
@@ -755,6 +782,45 @@ public sealed class SdlGpuDrawingBackendTests
             binding => binding.Slot == 14);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void NestedPrismPresentationRestoresBatchTargetForFollowingGeometry(bool inRenderSurface)
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1 };
+        nint window = api.CreateWindow("nested-prism-sibling", 80, 60, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window, 80, 60);
+        DrawCommandList commands = new();
+        if (inRenderSurface)
+        {
+            commands = SurfaceCommands(new TestRenderSurface(commandRecorder: RecordNested), 20, 16);
+        }
+        else { RecordNested(commands); }
+
+        Render(session, commands);
+
+        // Three ordinary quads, the nested presentation and the outer presentation;
+        // the surface case adds its final host-window composite.
+        Assert.Equal(inRenderSurface ? 6 : 5, CountGpuActions(api, "draw-indexed:"));
+
+        static void RecordNested(DrawCommandList destination)
+        {
+            DrawRect bounds = new(0, 0, 20, 16);
+            PrismCompositionDefinition definition = new("NestedSibling", [new PrismLayerDefinition(
+                new PrismNodeId(1), "Invert", filters: [new PrismFilterDefinition(PrismFilterId.Invert)])]);
+            destination.Add(DrawCommand.BeginPrism(new PrismDrawScope(new PrismInstance(definition),
+                new PrismCacheOwnerToken(501), bounds, System.Numerics.Matrix3x2.Identity, 1, 1)));
+            destination.Add(DrawCommand.FillRectangle(new(0, 0, 4, 4), Color.Red));
+            destination.Add(DrawCommand.BeginPrism(new PrismDrawScope(new PrismInstance(definition),
+                new PrismCacheOwnerToken(502), bounds, System.Numerics.Matrix3x2.Identity, 1, 1)));
+            destination.Add(DrawCommand.FillRectangle(new(6, 0, 4, 4), Color.Green));
+            destination.Add(DrawCommand.EndPrism());
+            destination.Add(DrawCommand.FillRectangle(new(12, 0, 4, 4), Color.Blue));
+            destination.Add(DrawCommand.EndPrism());
+        }
+    }
+
     [Fact]
     public void RenderSurfacePrismInvalidationsDoNotRetainHistoricalImageVersions()
     {
@@ -1069,10 +1135,12 @@ public sealed class SdlGpuDrawingBackendTests
     {
         private readonly Dictionary<object, IRenderSurface2DBackendState?> states = [];
         private readonly Action<DrawingContext, DrawRect>? record;
+        private readonly Action<DrawCommandList>? commandRecorder;
 
-        public TestRenderSurface(Action<DrawingContext, DrawRect>? record = null)
+        public TestRenderSurface(Action<DrawingContext, DrawRect>? record = null, Action<DrawCommandList>? commandRecorder = null)
         {
             this.record = record;
+            this.commandRecorder = commandRecorder;
         }
 
         public Color ClearColor => new(10, 20, 30, 255);
@@ -1084,6 +1152,7 @@ public sealed class SdlGpuDrawingBackendTests
         public void RecordFrame(DrawCommandList commands, DrawRect bounds)
         {
             RecordCount++;
+            if (commandRecorder is not null) { commandRecorder(commands); return; }
             DrawingContext drawing = new(commands);
             if (record is null)
             {

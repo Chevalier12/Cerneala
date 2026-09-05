@@ -1,0 +1,4 @@
+{
+  "DebugLayerAvailable": false,
+  "Error": "SharpDX.SharpDXException: HRESULT: [0x887A002D], Module: [Unknown], ApiCode: [Unknown/Unknown], Message: The application requested an operation that depends on an SDK component that is missing or mismatched.\r\n\r\n   at SharpDX.Result.CheckError()\r\n   at SharpDX.Direct3D11.Device.CreateDevice(Adapter adapter, DriverType driverType, DeviceCreationFlags flags, FeatureLevel[] featureLevels)\r\n   at SharpDX.Direct3D11.Device..ctor(DriverType driverType, DeviceCreationFlags flags, FeatureLevel[] featureLevels)\r\n   at Program.\u003CMain\u003E$(String[] args) in C:\\Users\\lauri\\Desktop\\Cerneala\\tests\\CodexGpuDriverHarness\\Program.cs:line 10"
+}

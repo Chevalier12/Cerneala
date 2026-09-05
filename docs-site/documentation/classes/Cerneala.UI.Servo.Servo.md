@@ -33,9 +33,13 @@ await servo.SaveScreenshotAsync(
 
 Every query resolves its `ServoTarget` against the current Servo semantic projection. Returned `ServoElement` instances are snapshots and do not expose or retain a live `UIElement`.
 
+The Servo projection includes the logical scene input subtree of `RenderSurface2D`, in addition to visual children. Scoped selectors follow that ownership. Scene nodes remain outside layout: their client-DIP bounds are the axis-aligned union of their picking geometry and input descendants, transformed through the scene and surface. This includes collider geometry, but not effect padding or ordinary batched tile cells. Unknown geometry has empty bounds. Querying does not arrange nodes or rebuild the collision index. The accessibility projection is unchanged.
+
 `Servo.IdProperty` is the attached identifier property used by `ById`. Values are trimmed; blank values become `null`.
 
 Target actions resolve the target immediately before input and reject hidden, disabled, detached, zero-bounds, or non-hit-testable elements. Pointer and keyboard actions use Cerneala `InputFrame` routing. A window action completes after its final input frame is presented; a retained-host action completes after `UiHost.Update` commits that frame.
+
+The bounds center must hit the target or a descendant on the current input route. A union with a gap at its center can therefore be queryable but not actionable; Servo does not search for a substitute point. Disabled colliders remain queryable, but cannot supply a hit. Scene target screenshots use the same geometric bounds and capture the rendered window pixels there, not a separate rendering of the node.
 
 Input sequences are serialized per window or host. `TypeIntoAsync` composes a click and text input. `ReplaceTextAsync` composes a click, `Control+A`, and text input rather than assigning a control property.
 

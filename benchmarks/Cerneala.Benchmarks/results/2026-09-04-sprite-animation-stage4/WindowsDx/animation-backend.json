@@ -1,0 +1,38 @@
+{
+  "Backend": "WindowsDX",
+  "CaptureApi": "Window.SaveScreenshot",
+  "Frames": [
+    {
+      "TimeMilliseconds": 0,
+      "File": "animation-000.png",
+      "Width": 800,
+      "Height": 525,
+      "Sha256": "E3B057273DC58A09E464BCB4BFD1994896BD2D68B05952F9F24219631D1734D8"
+    },
+    {
+      "TimeMilliseconds": 100,
+      "File": "animation-100.png",
+      "Width": 800,
+      "Height": 525,
+      "Sha256": "05CE9556A72B3C76EC0F14142C15B9C7EB23670606618232FA146E1E74EB0410"
+    },
+    {
+      "TimeMilliseconds": 200,
+      "File": "animation-200.png",
+      "Width": 800,
+      "Height": 525,
+      "Sha256": "043B1026CAE67BD190AF0A8548E412A4A3125B774476D910C578319019C3BDB5"
+    },
+    {
+      "TimeMilliseconds": 300,
+      "File": "animation-300.png",
+      "Width": 800,
+      "Height": 525,
+      "Sha256": "7CC58D3BA9BF3A8FF6750B41EAAB07EC0B2A5A78CD7C0EB9B072C7097BA603F7"
+    }
+  ],
+  "GeometryPicking": "PASS",
+  "AnimatedSpriteGroupTilePixels": "PASS",
+  "LoopPixels": "PASS",
+  "Timing": "Exact 100 ms UI-surface pulses; playback paused between captures; Motion uses explicit completion endpoints."
+}

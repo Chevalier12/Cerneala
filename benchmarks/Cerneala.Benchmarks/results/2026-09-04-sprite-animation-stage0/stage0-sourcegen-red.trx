@@ -1,0 +1,165 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="f7b3b9c3-b38c-44c8-9923-393ac443ea80" name="lauri@DESKTOP-JT43V3D 2026-09-04 21:21:02" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-04T21:21:02.7008937+03:00" queuing="2026-09-04T21:21:02.7008941+03:00" start="2026-09-04T21:20:58.7852770+03:00" finish="2026-09-04T21:21:03.6350546+03:00" />
+  <TestSettings name="default" id="211d3045-753b-4b16-b128-26c2f199d8cd">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-04_21_21_02" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="02c7b999-0cad-4717-b6a6-b3e58ca8825c" testId="b63cf0e4-0e12-61b4-cafc-1031dfe8eb1f" testName="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics(resource: &quot;&lt;SpriteAnimationSet&gt;&lt;SpriteAnimationClip Name=\&quot;Id&quot;···, expectedMessagePart: &quot;duration&quot;, sourceToken: &quot;Duration&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.2421973" startTime="2026-09-04T21:21:02.6093990+03:00" endTime="2026-09-04T21:21:02.6093994+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="02c7b999-0cad-4717-b6a6-b3e58ca8825c">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Single() Failure: The collection did not contain any matching items&#xD;
+Expected:   (predicate expression)&#xD;
+Collection: [InvalidAnimation.crn(3,6): error CERNEALAUI002: Markup element 'SpriteAnimationSet' is not supported by the source generator]</Message>
+          <StackTrace>   at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics(String resource, String expectedMessagePart, String sourceToken) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorSpriteAnimationStageZeroTests.cs:line 125&#xD;
+   at InvokeStub_UiMarkupGeneratorTests.InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="0b8132a3-6310-4503-9431-d651c0d2de74" testId="69390253-5613-acef-e4f3-4657db55cd78" testName="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics(resource: &quot;&lt;SpriteAnimationSet&gt;&lt;SpriteAnimationClip Name=\&quot;Id&quot;···, expectedMessagePart: &quot;duplicate&quot;, sourceToken: &quot;Idle&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:01.4997690" startTime="2026-09-04T21:21:02.3723874+03:00" endTime="2026-09-04T21:21:02.3724249+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0b8132a3-6310-4503-9431-d651c0d2de74">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Single() Failure: The collection did not contain any matching items&#xD;
+Expected:   (predicate expression)&#xD;
+Collection: [InvalidAnimation.crn(3,6): error CERNEALAUI002: Markup element 'SpriteAnimationSet' is not supported by the source generator, InvalidAnimation.crn(3,205): error CERNEALAUI005: Markup file 'InvalidAnimation.crn' has invalid document shape: Duplicate element Name 'Idle' in the same name scope.]</Message>
+          <StackTrace>   at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics(String resource, String expectedMessagePart, String sourceToken) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorSpriteAnimationStageZeroTests.cs:line 125&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="e6933483-fdae-4244-ab12-c0e937875d72" testId="ed713234-0ee2-8da1-8a49-85eaa2b2cd7c" testName="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics(resource: &quot;&lt;SpriteAnimationSet&gt;&lt;SpriteAnimationClip Name=\&quot;Id&quot;···, expectedMessagePart: &quot;source&quot;, sourceToken: &quot;SourceWidth&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.2579368" startTime="2026-09-04T21:21:02.8665005+03:00" endTime="2026-09-04T21:21:02.8665008+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e6933483-fdae-4244-ab12-c0e937875d72">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Single() Failure: The collection did not contain any matching items&#xD;
+Expected:   (predicate expression)&#xD;
+Collection: [InvalidAnimation.crn(3,6): error CERNEALAUI002: Markup element 'SpriteAnimationSet' is not supported by the source generator]</Message>
+          <StackTrace>   at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics(String resource, String expectedMessagePart, String sourceToken) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorSpriteAnimationStageZeroTests.cs:line 125&#xD;
+   at InvokeStub_UiMarkupGeneratorTests.InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="3dfcd982-2243-472a-ac9f-6efcb2e69087" testId="645c2530-c966-66b9-e1c6-b9563ab0fd7e" testName="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.StaticMissingAnimationStateProducesLocatedDiagnostic" computerName="DESKTOP-JT43V3D" duration="00:00:00.3043897" startTime="2026-09-04T21:21:03.1724429+03:00" endTime="2026-09-04T21:21:03.1724435+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3dfcd982-2243-472a-ac9f-6efcb2e69087">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Single() Failure: The collection did not contain any matching items&#xD;
+Expected:   (predicate expression)&#xD;
+Collection: [MissingAnimationState.crn(3,6): error CERNEALAUI002: Markup element 'SpriteAnimationSet' is not supported by the source generator, MissingAnimationState.crn(11,17): error CERNEALAUI003: Markup property 'Sprite2D.Animations' is not supported by the source generator, MissingAnimationState.crn(11,46): error CERNEALAUI003: Markup property 'Sprite2D.AnimationState' is not supported by the source generator]</Message>
+          <StackTrace>   at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.StaticMissingAnimationStateProducesLocatedDiagnostic() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorSpriteAnimationStageZeroTests.cs:line 158&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="f97ca515-ef4e-45c5-af48-456476e2f177" testId="372848aa-e92d-ec75-4325-038609d522b0" testName="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SpriteAndPromotedTileMarkupCompileWithIdleWalkAttackAspectMotionAndPrism" computerName="DESKTOP-JT43V3D" duration="00:00:00.3491540" startTime="2026-09-04T21:21:03.5214247+03:00" endTime="2026-09-04T21:21:03.5214255+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f97ca515-ef4e-45c5-af48-456476e2f177">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.DoesNotContain() Failure: Filter matched in collection&#xD;
+             ↓ (pos 0)&#xD;
+Collection: [AnimatedWorld.crn(6,6): error CERNEALAUI002: Markup element 'SpriteAnimationSet' is not supported by the source generator, AnimatedWorld.crn(24,17): error CERNEALAUI003: Markup property 'Sprite2D.Animations' is not supported by the source generator, AnimatedWorld.crn(25,17): error CERNEALAUI003: Markup property 'Sprite2D.AnimationState' is not supported by the source generator, AnimatedWorld.crn(26,17): error CERNEALAUI003: Markup property 'Sprite2D.AnimationPlaybackRate' is not supported by the source generator, AnimatedWorld.crn(27,17): error CERNEALAUI003: Markup property 'Sprite2D.IsAnimationPaused' is not supported by the source generator, ···]</Message>
+          <StackTrace>   at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SpriteAndPromotedTileMarkupCompileWithIdleWalkAttackAspectMotionAndPrism() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorSpriteAnimationStageZeroTests.cs:line 93&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SpriteAndPromotedTileMarkupCompileWithIdleWalkAttackAspectMotionAndPrism" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sourcegen\bin\debug\net8.0-windows\cerneala.tests.sourcegen.dll" id="372848aa-e92d-ec75-4325-038609d522b0">
+      <Execution id="f97ca515-ef4e-45c5-af48-456476e2f177" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Debug\net8.0-windows\Cerneala.Tests.SourceGen.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests" name="SpriteAndPromotedTileMarkupCompileWithIdleWalkAttackAspectMotionAndPrism" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics(resource: &quot;&lt;SpriteAnimationSet&gt;&lt;SpriteAnimationClip Name=\&quot;Id&quot;···, expectedMessagePart: &quot;source&quot;, sourceToken: &quot;SourceWidth&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sourcegen\bin\debug\net8.0-windows\cerneala.tests.sourcegen.dll" id="ed713234-0ee2-8da1-8a49-85eaa2b2cd7c">
+      <Execution id="e6933483-fdae-4244-ab12-c0e937875d72" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Debug\net8.0-windows\Cerneala.Tests.SourceGen.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests" name="InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics(resource: &quot;&lt;SpriteAnimationSet&gt;&lt;SpriteAnimationClip Name=\&quot;Id&quot;···, expectedMessagePart: &quot;duration&quot;, sourceToken: &quot;Duration&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sourcegen\bin\debug\net8.0-windows\cerneala.tests.sourcegen.dll" id="b63cf0e4-0e12-61b4-cafc-1031dfe8eb1f">
+      <Execution id="02c7b999-0cad-4717-b6a6-b3e58ca8825c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Debug\net8.0-windows\Cerneala.Tests.SourceGen.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests" name="InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics(resource: &quot;&lt;SpriteAnimationSet&gt;&lt;SpriteAnimationClip Name=\&quot;Id&quot;···, expectedMessagePart: &quot;duplicate&quot;, sourceToken: &quot;Idle&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sourcegen\bin\debug\net8.0-windows\cerneala.tests.sourcegen.dll" id="69390253-5613-acef-e4f3-4657db55cd78">
+      <Execution id="0b8132a3-6310-4503-9431-d651c0d2de74" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Debug\net8.0-windows\Cerneala.Tests.SourceGen.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests" name="InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.StaticMissingAnimationStateProducesLocatedDiagnostic" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sourcegen\bin\debug\net8.0-windows\cerneala.tests.sourcegen.dll" id="645c2530-c966-66b9-e1c6-b9563ab0fd7e">
+      <Execution id="3dfcd982-2243-472a-ac9f-6efcb2e69087" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Debug\net8.0-windows\Cerneala.Tests.SourceGen.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SourceGen.UiMarkupGeneratorTests" name="StaticMissingAnimationStateProducesLocatedDiagnostic" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="b63cf0e4-0e12-61b4-cafc-1031dfe8eb1f" executionId="02c7b999-0cad-4717-b6a6-b3e58ca8825c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="69390253-5613-acef-e4f3-4657db55cd78" executionId="0b8132a3-6310-4503-9431-d651c0d2de74" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ed713234-0ee2-8da1-8a49-85eaa2b2cd7c" executionId="e6933483-fdae-4244-ab12-c0e937875d72" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="645c2530-c966-66b9-e1c6-b9563ab0fd7e" executionId="3dfcd982-2243-472a-ac9f-6efcb2e69087" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="372848aa-e92d-ec75-4325-038609d522b0" executionId="f97ca515-ef4e-45c5-af48-456476e2f177" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="5" executed="5" passed="0" failed="5" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.14]   Discovering: Cerneala.Tests.SourceGen&#xD;
+[xUnit.net 00:00:00.33]   Discovered:  Cerneala.Tests.SourceGen&#xD;
+[xUnit.net 00:00:00.35]   Starting:    Cerneala.Tests.SourceGen&#xD;
+[xUnit.net 00:00:01.92]       Assert.Single() Failure: The collection did not contain any matching items&#xD;
+[xUnit.net 00:00:01.92]       Expected:   (predicate expression)&#xD;
+[xUnit.net 00:00:01.92]       Collection: [InvalidAnimation.crn(3,6): error CERNEALAUI002: Markup element 'SpriteAnimationSet' is not supported by the source generator, InvalidAnimation.crn(3,205): error CERNEALAUI005: Markup file 'InvalidAnimation.crn' has invalid document shape: Duplicate element Name 'Idle' in the same name scope.]&#xD;
+[xUnit.net 00:00:01.92]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.92]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorSpriteAnimationStageZeroTests.cs(125,0): at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics(String resource, String expectedMessagePart, String sourceToken)&#xD;
+[xUnit.net 00:00:01.92]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.92]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.16]       Assert.Single() Failure: The collection did not contain any matching items&#xD;
+[xUnit.net 00:00:02.16]       Expected:   (predicate expression)&#xD;
+[xUnit.net 00:00:02.16]       Collection: [InvalidAnimation.crn(3,6): error CERNEALAUI002: Markup element 'SpriteAnimationSet' is not supported by the source generator]&#xD;
+[xUnit.net 00:00:02.16]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.16]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorSpriteAnimationStageZeroTests.cs(125,0): at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics(String resource, String expectedMessagePart, String sourceToken)&#xD;
+[xUnit.net 00:00:02.16]            at InvokeStub_UiMarkupGeneratorTests.InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics(Object, Span`1)&#xD;
+[xUnit.net 00:00:02.16]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:02.42]       Assert.Single() Failure: The collection did not contain any matching items&#xD;
+[xUnit.net 00:00:02.42]       Expected:   (predicate expression)&#xD;
+[xUnit.net 00:00:02.42]       Collection: [InvalidAnimation.crn(3,6): error CERNEALAUI002: Markup element 'SpriteAnimationSet' is not supported by the source generator]&#xD;
+[xUnit.net 00:00:02.42]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.42]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorSpriteAnimationStageZeroTests.cs(125,0): at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics(String resource, String expectedMessagePart, String sourceToken)&#xD;
+[xUnit.net 00:00:02.42]            at InvokeStub_UiMarkupGeneratorTests.InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics(Object, Span`1)&#xD;
+[xUnit.net 00:00:02.42]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:02.72]       Assert.Single() Failure: The collection did not contain any matching items&#xD;
+[xUnit.net 00:00:02.72]       Expected:   (predicate expression)&#xD;
+[xUnit.net 00:00:02.72]       Collection: [MissingAnimationState.crn(3,6): error CERNEALAUI002: Markup element 'SpriteAnimationSet' is not supported by the source generator, MissingAnimationState.crn(11,17): error CERNEALAUI003: Markup property 'Sprite2D.Animations' is not supported by the source generator, MissingAnimationState.crn(11,46): error CERNEALAUI003: Markup property 'Sprite2D.AnimationState' is not supported by the source generator]&#xD;
+[xUnit.net 00:00:02.72]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.72]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorSpriteAnimationStageZeroTests.cs(158,0): at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.StaticMissingAnimationStateProducesLocatedDiagnostic()&#xD;
+[xUnit.net 00:00:02.72]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.72]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:03.07]       Assert.DoesNotContain() Failure: Filter matched in collection&#xD;
+[xUnit.net 00:00:03.07]                    ↓ (pos 0)&#xD;
+[xUnit.net 00:00:03.07]       Collection: [AnimatedWorld.crn(6,6): error CERNEALAUI002: Markup element 'SpriteAnimationSet' is not supported by the source generator, AnimatedWorld.crn(24,17): error CERNEALAUI003: Markup property 'Sprite2D.Animations' is not supported by the source generator, AnimatedWorld.crn(25,17): error CERNEALAUI003: Markup property 'Sprite2D.AnimationState' is not supported by the source generator, AnimatedWorld.crn(26,17): error CERNEALAUI003: Markup property 'Sprite2D.AnimationPlaybackRate' is not supported by the source generator, AnimatedWorld.crn(27,17): error CERNEALAUI003: Markup property 'Sprite2D.IsAnimationPaused' is not supported by the source generator, ···]&#xD;
+[xUnit.net 00:00:03.07]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.07]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorSpriteAnimationStageZeroTests.cs(93,0): at Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SpriteAndPromotedTileMarkupCompileWithIdleWalkAttackAspectMotionAndPrism()&#xD;
+[xUnit.net 00:00:03.07]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:03.07]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:03.08]   Finished:    Cerneala.Tests.SourceGen&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T21:21:02.3680691+03:00">
+        <Text>[xUnit.net 00:00:01.92]     Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics(resource: "&lt;SpriteAnimationSet&gt;&lt;SpriteAnimationClip Name=\"Id"···, expectedMessagePart: "duplicate", sourceToken: "Idle") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T21:21:02.6074508+03:00">
+        <Text>[xUnit.net 00:00:02.16]     Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics(resource: "&lt;SpriteAnimationSet&gt;&lt;SpriteAnimationClip Name=\"Id"···, expectedMessagePart: "duration", sourceToken: "Duration") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T21:21:02.8656407+03:00">
+        <Text>[xUnit.net 00:00:02.42]     Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.InvalidAnimationDefinitionsProduceLocatedActionableDiagnostics(resource: "&lt;SpriteAnimationSet&gt;&lt;SpriteAnimationClip Name=\"Id"···, expectedMessagePart: "source", sourceToken: "SourceWidth") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T21:21:03.1717964+03:00">
+        <Text>[xUnit.net 00:00:02.72]     Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.StaticMissingAnimationStateProducesLocatedDiagnostic [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-04T21:21:03.5206410+03:00">
+        <Text>[xUnit.net 00:00:03.07]     Cerneala.Tests.SourceGen.UiMarkupGeneratorTests.SpriteAndPromotedTileMarkupCompileWithIdleWalkAttackAspectMotionAndPrism [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

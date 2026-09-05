@@ -1,0 +1,73 @@
+  Determining projects to restore...
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Win32\Cerneala.Platforms.Win32.csproj (in 1.17 sec).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.LanguageServer\Cerneala.LanguageServer.csproj (in 1.14 sec).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.MonoGame\Cerneala.Backends.MonoGame.csproj (in 1.13 sec).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.PreviewHost\Cerneala.PreviewHost.csproj (in 1.2 sec).
+  30 of 34 projects are up-to-date for restore.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Tests.Language -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\results\2026-09-04-sprite-animation-stage4\final-suite\lauri_DESKTOP-JT43V3D_2026-09-05_00_25_21_net8.0.trx
+
+Passed!  - Failed:     0, Passed:   186, Skipped:     0, Total:   186, Duration: 19 s - Cerneala.Tests.Language.dll (net8.0)
+  Cerneala.LanguageServer -> C:\Users\lauri\Desktop\Cerneala\Cerneala.LanguageServer\bin\Release\net10.0\Cerneala.LanguageServer.dll
+  Cerneala.Tests.LanguageServer -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.LanguageServer\bin\Release\net10.0\Cerneala.Tests.LanguageServer.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.LanguageServer\bin\Release\net10.0\Cerneala.Tests.LanguageServer.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\results\2026-09-04-sprite-animation-stage4\final-suite\lauri_DESKTOP-JT43V3D_2026-09-05_00_25_42_net10.0.trx
+
+Passed!  - Failed:     0, Passed:    39, Skipped:     0, Total:    39, Duration: 1 m - Cerneala.Tests.LanguageServer.dll (net10.0)
+  Tool 'dotnet-mgfxc' (version '3.8.4.1') was restored. Available commands: mgfxc
+  Tool 'sign' (version '0.9.1-beta.26330.1') was restored. Available commands: sign
+  
+  Restore was successful.
+  Cerneala.Platforms.Win32 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Win32\bin\Release\net8.0-windows\Cerneala.Platforms.Win32.dll
+  Cerneala.Backends.MonoGame -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.MonoGame\bin\Release\net8.0-windows\Cerneala.Backends.MonoGame.dll
+  Cerneala.PreviewHost -> C:\Users\lauri\Desktop\Cerneala\Cerneala.PreviewHost\bin\Release\net10.0-windows\Cerneala.PreviewHost.dll
+  CernealaPresentation -> C:\Users\lauri\Desktop\Cerneala\CernealaPresentation\bin\Release\net8.0-windows\CernealaPresentation.dll
+  Cerneala.Tests.PreviewHost -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Release\net10.0-windows\Cerneala.Tests.PreviewHost.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Release\net10.0-windows\Cerneala.Tests.PreviewHost.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\results\2026-09-04-sprite-animation-stage4\final-suite\lauri_DESKTOP-JT43V3D_2026-09-05_00_26_46_net10.0.trx
+
+Passed!  - Failed:     0, Passed:    13, Skipped:     0, Total:    13, Duration: 36 s - Cerneala.Tests.PreviewHost.dll (net10.0)
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  Cerneala.Tests.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\results\2026-09-04-sprite-animation-stage4\final-suite\lauri_DESKTOP-JT43V3D_2026-09-05_00_27_22_net8.0.trx
+
+Passed!  - Failed:     0, Passed:   124, Skipped:     0, Total:   124, Duration: 6 s - Cerneala.Tests.SdlGpu.dll (net8.0)
+  Cerneala.Tests.SourceGen -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Release\net8.0-windows\Cerneala.Tests.SourceGen.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Release\net8.0-windows\Cerneala.Tests.SourceGen.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\results\2026-09-04-sprite-animation-stage4\final-suite\lauri_DESKTOP-JT43V3D_2026-09-05_00_27_30_net8.0.trx
+
+Passed!  - Failed:     0, Passed:   507, Skipped:     0, Total:   507, Duration: 52 s - Cerneala.Tests.SourceGen.dll (net8.0)
+  Cerneala.Tests.VisualStudio -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.VisualStudio\bin\Release\net10.0-windows\Cerneala.Tests.VisualStudio.dll
+  Cerneala.VisualStudio -> C:\Users\lauri\Desktop\Cerneala\Cerneala.VisualStudio\bin\Release\net472\Cerneala.VisualStudio.dll
+  Determining projects to restore...
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\Cerneala.Language.csproj (in 85 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.LanguageServer\Cerneala.LanguageServer.csproj (in 110 ms).
+C:\Program Files\dotnet\sdk\10.0.303\Sdks\Microsoft.NET.Sdk\targets\Microsoft.PackageDependencyResolution.targets(266,5): error NETSDK1047: Assets file 'C:\Users\lauri\Desktop\Cerneala\Cerneala.LanguageServer\obj\project.assets.json' doesn't have a target for 'net10.0/win-x64'. Ensure that restore has run and that you have included 'net10.0' in the TargetFrameworks for your project. You may also need to include 'win-x64' in your project's RuntimeIdentifiers. [C:\Users\lauri\Desktop\Cerneala\Cerneala.LanguageServer\Cerneala.LanguageServer.csproj]
+  VisualStudioIntegrationHost -> C:\Users\lauri\Desktop\Cerneala\tests\Fixtures\VisualStudioIntegrationHost\bin\Release\net472\Cerneala.VisualStudio.IntegrationHost.dll
+C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.VisualStudio\Cerneala.Tests.VisualStudio.csproj(40,5): error MSB4181: The "MSBuild" task returned false but did not log an error.
+  Cerneala.Playground -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\bin\Release\net8.0-windows\Cerneala.Playground.dll
+  Cerneala.WindowsDxSmoke -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.WindowsDxSmoke\bin\Release\net8.0-windows\Cerneala.WindowsDxSmoke.dll
+  Cerneala.Tests -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\results\2026-09-04-sprite-animation-stage4\final-suite\lauri_DESKTOP-JT43V3D_2026-09-05_00_28_25_net8.0.trx
+
+Passed!  - Failed:     0, Passed:  3523, Skipped:     0, Total:  3523, Duration: 5 m 1 s - Cerneala.Tests.dll (net8.0)
+  Tetris -> C:\Users\lauri\Desktop\Cerneala\Tetrisish\bin\Release\net8.0\Cerneala.Tetris.dll
+  Tetris.Tests -> C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Release\net8.0\Cerneala.Tetris.Tests.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Release\net8.0\Cerneala.Tetris.Tests.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\results\2026-09-04-sprite-animation-stage4\final-suite\lauri_DESKTOP-JT43V3D_2026-09-05_00_33_29_net8.0.trx
+
+Passed!  - Failed:     0, Passed:    29, Skipped:     0, Total:    29, Duration: 684 ms - Cerneala.Tetris.Tests.dll (net8.0)

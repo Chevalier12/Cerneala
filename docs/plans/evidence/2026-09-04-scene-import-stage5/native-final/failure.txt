@@ -1,0 +1,4 @@
+System.InvalidOperationException: Debug presentation must preserve collision query results.
+   at Cerneala.Playground.SceneWorldShowcase.<CaptureConformanceAsync>g__Require|4_8(Boolean condition, String message) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldConformance.cs:line 171
+   at Cerneala.Playground.SceneWorldShowcase.CaptureConformanceAsync(Servo servo, String directory) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldConformance.cs:line 122
+   at Cerneala.Playground.MainWindow.CaptureSceneWorldAsync(String directory) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldConformance.cs:line 35

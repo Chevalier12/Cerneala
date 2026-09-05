@@ -1,0 +1,135 @@
+<UserControl xmlns:local="clr-namespace:Cerneala.Playground"
+             xmlns:resources="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala"
+             DataType="Cerneala.Playground.SceneWorldState" Loaded="OnLoaded">
+  <UserControl.Resources>
+    <resources:ImageResource Name="WorldAtlas" Source="SceneWorldAssets/world-atlas.png" />
+    <SpriteAnimationSet Name="PlayerAnimations">
+      <SpriteAnimationClip Name="Idle">
+        <SpriteAnimationFrame SourceX="0" SourceY="16" SourceWidth="16" SourceHeight="16" Duration="240ms" />
+        <SpriteAnimationFrame SourceX="16" SourceY="16" SourceWidth="16" SourceHeight="16" Duration="240ms" />
+      </SpriteAnimationClip>
+      <SpriteAnimationClip Name="Walk" IsLooping="false">
+        <SpriteAnimationFrame SourceX="32" SourceY="16" SourceWidth="16" SourceHeight="16" Duration="100ms" />
+        <SpriteAnimationFrame SourceX="48" SourceY="16" SourceWidth="16" SourceHeight="16" Duration="100ms" />
+      </SpriteAnimationClip>
+      <SpriteAnimationClip Name="Attack" IsLooping="false">
+        <SpriteAnimationFrame SourceX="48" SourceY="16" SourceWidth="16" SourceHeight="16" Duration="80ms" Flip="Horizontal" />
+        <SpriteAnimationFrame SourceX="0" SourceY="16" SourceWidth="16" SourceHeight="16" Duration="160ms" />
+      </SpriteAnimationClip>
+    </SpriteAnimationSet>
+    <SpriteAnimationSet Name="DoorAnimations">
+      <SpriteAnimationClip Name="Closed" IsLooping="false">
+        <SpriteAnimationFrame SourceX="96" SourceY="0" SourceWidth="16" SourceHeight="16" Duration="120ms" />
+      </SpriteAnimationClip>
+      <SpriteAnimationClip Name="Open" IsLooping="false">
+        <SpriteAnimationFrame SourceX="96" SourceY="0" SourceWidth="16" SourceHeight="16" Duration="80ms" />
+        <SpriteAnimationFrame SourceX="112" SourceY="0" SourceWidth="16" SourceHeight="16" Duration="120ms" />
+      </SpriteAnimationClip>
+    </SpriteAnimationSet>
+  </UserControl.Resources>
+  <Grid Margin="12">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+    <StackPanel Orientation="Horizontal">
+      <Button Content="Reset" Servo.Id="world-reset" Click="OnReset" Padding="6" />
+      <Button Content="Pan" Servo.Id="world-pan" Click="OnPan" Padding="6" />
+      <Button Content="Home" Servo.Id="world-home" Click="OnHome" Padding="6" />
+      <Button Content="Plant" Servo.Id="world-mutate" Click="OnMutate" Padding="6" />
+      <Button Content="NPC +" Servo.Id="world-add" Click="OnAddNpc" Padding="6" />
+      <Button Content="Debug" Servo.Id="world-debug" Click="OnDebug" Padding="6" />
+      <Button Content="Tiled/LDtk" Servo.Id="world-format" Click="OnFormat" Padding="6" />
+    </StackPanel>
+    <TextBlock Grid.Row="1" Text="Click cyan player; arrows move 64, Space attacks. Click house door." FontSize="11" Margin="0,6,0,6" />
+    <RenderSurface2D Name="Surface" Grid.Row="2" Background="#FF172B25">
+      <RenderSurface2D.Scene>
+        <Scene2D Name="World" TranslateX="$DataContext.CameraX:OneWay" TranslateY="8">
+          <Scene2D.Aspect>
+            @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.7; } @to { Opacity = 1; } } }
+          </Scene2D.Aspect>
+          @prism { @layer WorldInk { @filter Blur { Radius = 0.25; } } }
+          <TileMap2D Name="Map" Model="$DataContext.Model:OneWay">
+            <TileMap2D.Aspect>
+              @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.7; } @to { Opacity = 1; } } }
+            </TileMap2D.Aspect>
+            @prism { @layer MapInk { @filter Blur { Radius = 0.25; } } }
+            <TileLayer2D LayerId="2">
+              <TileLayer2D.Aspect>
+                @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.7; } @to { Opacity = 1; } } }
+              </TileLayer2D.Aspect>
+              @prism { @layer BuildingInk { @filter Blur { Radius = 0.25; } } }
+              <TileInstance2D Name="Door" X="14" Y="9"
+                              Servo.Id="world-door" MouseDown="OnDoor" ReplacesImportedColliders="true"
+                              Animations="$DoorAnimations" AnimationState="$DataContext.DoorState:OneWay">
+                <BoxCollider2D Name="DoorCollider" Width="16" Height="16" CollisionLayer="2" CollisionMask="1"
+                               Enabled="$DataContext.DoorClosed:OneWay">
+                  <BoxCollider2D.Aspect>
+                    @on Loaded { @animate with Tween(150ms) { @from { OffsetX = 1; } @to { OffsetX = 0; } } }
+                  </BoxCollider2D.Aspect>
+                </BoxCollider2D>
+                <TileInstance2D.Aspect>
+                  @on MouseDown { @animate with Tween(180ms) { @from { Opacity = 0.65; } @to { Opacity = 1; } } }
+                </TileInstance2D.Aspect>
+                @prism { @layer DoorGlow { @style OuterGlow { Size = 1; Opacity = 0.3; Color = #FFEAC777; } } }
+              </TileInstance2D>
+            </TileLayer2D>
+          </TileMap2D>
+          <SceneItems2D Name="ImportedColliders" ItemsSource="$DataContext.Colliders:OneWay">
+            @templates {
+              <ContentTemplate DataType="local:SceneWorldBox">
+                <BoxCollider2D TranslateX="$DataContext.X" TranslateY="$DataContext.Y"
+                               Width="$DataContext.Width" Height="$DataContext.Height"
+                               CollisionLayer="$DataContext.Layer" CollisionMask="$DataContext.Mask" />
+              </ContentTemplate>
+            }
+          </SceneItems2D>
+          <Scene2D Name="Actors" OrderMode="LayerThenY">
+            <SceneItems2D Name="Npcs" ItemsSource="$DataContext.Npcs:OneWay">
+              @templates {
+                <ContentTemplate DataType="local:SceneWorldNpc">
+                  <Scene2D TranslateX="$DataContext.X" TranslateY="$DataContext.Y">
+                    <Sprite2D SourceResourceId="$WorldAtlas" SourceRect="$DataContext.SourceRect" Destination="$DataContext.Destination">
+                      <Sprite2D.Aspect>
+                        @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.4; } @to { Opacity = 1; } } }
+                      </Sprite2D.Aspect>
+                      @prism { @layer NpcGlow { @style OuterGlow { Size = 1; Opacity = 0.2; Color = #FFFFC777; } } }
+                    </Sprite2D>
+                    <BoxCollider2D Width="12" Height="14" CollisionLayer="2" CollisionMask="1" />
+                  </Scene2D>
+                </ContentTemplate>
+              }
+            </SceneItems2D>
+            <Scene2D Name="Player" Servo.Id="world-player" Focusable="true" MouseDown="OnSelectPlayer" KeyDown="OnPlayerKey"
+                     TranslateX="$DataContext.PlayerX:OneWay" TranslateY="$DataContext.PlayerY:OneWay">
+              <Scene2D.Aspect>
+                @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.5; } @to { Opacity = 1; } } }
+              </Scene2D.Aspect>
+              @prism { @layer PlayerInk { @filter Blur { Radius = 0.25; } } }
+              <Sprite2D Name="PlayerSprite" SourceResourceId="$WorldAtlas" Destination="$DataContext.PlayerDestination:OneWay"
+                        Animations="$PlayerAnimations" AnimationState="$DataContext.PlayerState:OneWay">
+                <Sprite2D.Aspect>
+                  @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.5; } @to { Opacity = 1; } } }
+                </Sprite2D.Aspect>
+                @prism { @layer PlayerGlow { @style OuterGlow { Size = 1; Opacity = 0.25; Color = #FF55C5D1; } } }
+              </Sprite2D>
+              <BoxCollider2D Name="PlayerCollider" Width="12" Height="14" CollisionLayer="1" CollisionMask="2" />
+            </Scene2D>
+          </Scene2D>
+          <Scene2DDebugOverlay Name="DebugOverlay" Flags="$DataContext.DebugFlags:OneWay" NavigationGrid="$DataContext.Navigation:OneWay" FontSize="8">
+            <Scene2DDebugOverlay.Aspect>
+              @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.5; } @to { Opacity = 0.9; } } }
+            </Scene2DDebugOverlay.Aspect>
+            @prism { @layer DebugInk { @filter Blur { Radius = 0.25; } } }
+          </Scene2DDebugOverlay>
+        </Scene2D>
+      </RenderSurface2D.Scene>
+    </RenderSurface2D>
+    <StackPanel Grid.Row="3" Margin="0,6,0,6">
+      <TextBlock Name="StatusText" Text="$DataContext.Status:OneWay" FontFamily="Consolas" FontSize="10" />
+      <TextBlock Name="MetricsText" FontFamily="Consolas" FontSize="10" />
+    </StackPanel>
+  </Grid>
+</UserControl>

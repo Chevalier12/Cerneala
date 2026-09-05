@@ -30,7 +30,7 @@ The snapshot copies semantic properties and current live state at resolution tim
 | `Id` | Gets the Servo ID at resolution time. |
 | `Name` | Gets the semantic name at resolution time. |
 | `Role` | Gets the semantic role. |
-| `Bounds` | Gets current arranged bounds in client DIP coordinates. |
+| `Bounds` | Gets current arranged bounds in client DIP coordinates for layout elements, or transformed picking-geometry bounds for scene input nodes. Unknown scene geometry produces empty bounds. |
 | `IsVisible` | Gets effective visibility at resolution time. |
 | `IsEnabled` | Gets enabled state at resolution time. |
 | `IsFocused` | Gets keyboard-focus state at resolution time. |

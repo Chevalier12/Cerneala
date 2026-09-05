@@ -18,13 +18,14 @@ public sealed class HoverTracker
         ArgumentNullException.ThrowIfNull(routeMap);
 
         UIElement? next = target?.Element;
-        if (ReferenceEquals(HoveredElement, next))
+        IReadOnlyList<UIElement> nextPath = BuildPath(next, routeMap);
+        if (ReferenceEquals(HoveredElement, next) &&
+            PathsEqual(hoveredPath, nextPath))
         {
             return false;
         }
 
         IReadOnlyList<UIElement> oldPath = hoveredPath;
-        IReadOnlyList<UIElement> nextPath = BuildPath(next);
         HoveredElement = next;
         hoveredPath = nextPath;
 
@@ -53,20 +54,23 @@ public sealed class HoverTracker
         return true;
     }
 
-    private static IReadOnlyList<UIElement> BuildPath(UIElement? element)
+    internal bool IsCurrentRouteValid(ElementInputRouteMap routeMap)
+    {
+        ArgumentNullException.ThrowIfNull(routeMap);
+        IReadOnlyList<UIElement> currentPath = BuildPath(HoveredElement, routeMap);
+        return PathsEqual(hoveredPath, currentPath);
+    }
+
+    private static IReadOnlyList<UIElement> BuildPath(
+        UIElement? element,
+        ElementInputRouteMap routeMap)
     {
         if (element is null)
         {
             return [];
         }
 
-        List<UIElement> path = [];
-        for (UIElement? current = element; current is not null; current = current.VisualParent)
-        {
-            path.Add(current);
-        }
-
-        return path;
+        return routeMap.GetRouteToRoot(element);
     }
 
     private static bool ContainsReference(IReadOnlyList<UIElement> elements, UIElement target)
@@ -80,6 +84,26 @@ public sealed class HoverTracker
         }
 
         return false;
+    }
+
+    private static bool PathsEqual(
+        IReadOnlyList<UIElement> first,
+        IReadOnlyList<UIElement> second)
+    {
+        if (first.Count != second.Count)
+        {
+            return false;
+        }
+
+        for (int index = 0; index < first.Count; index++)
+        {
+            if (!ReferenceEquals(first[index], second[index]))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static void RaiseDirect(ElementInputRouteMap routeMap, UIElement element, RoutedEvent routedEvent, float x, float y)

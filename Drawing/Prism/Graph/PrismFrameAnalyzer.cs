@@ -78,6 +78,7 @@ internal sealed class PrismFrameAnalyzer
                             parentScopeIndex,
                             scope,
                             bounds,
+                            effectiveTransform,
                             estimate.Capabilities,
                             estimate.RequiredSurfaceCount));
                     openScopes.Add(new OpenScope(scopeIndex));
@@ -422,6 +423,7 @@ internal sealed class PrismFrameAnalyzer
             int? parentScopeIndex,
             PrismDrawScope scope,
             DrawRect bounds,
+            Matrix3x2 effectiveTransform,
             PrismGraphCapabilities requiredCapabilities,
             int requiredSurfaceCount)
         {
@@ -431,6 +433,7 @@ internal sealed class PrismFrameAnalyzer
             ParentScopeIndex = parentScopeIndex;
             Scope = scope;
             Bounds = bounds;
+            EffectiveTransform = effectiveTransform;
             RequiredCapabilities = requiredCapabilities;
             RequiredSurfaceCount = requiredSurfaceCount;
         }
@@ -448,6 +451,8 @@ internal sealed class PrismFrameAnalyzer
         public PrismDrawScope Scope { get; }
 
         public DrawRect Bounds { get; }
+
+        public Matrix3x2 EffectiveTransform { get; }
 
         public PrismGraphCapabilities RequiredCapabilities { get; }
 
@@ -473,6 +478,7 @@ internal sealed class PrismFrameAnalyzer
                 ParentScopeIndex,
                 Scope,
                 Bounds,
+                EffectiveTransform,
                 CreateDependencyStamp(),
                 RequiredCapabilities,
                 RequiredSurfaceCount);

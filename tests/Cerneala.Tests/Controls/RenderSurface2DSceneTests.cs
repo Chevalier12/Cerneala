@@ -19,6 +19,8 @@ using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
 namespace Cerneala.Tests.Controls;
 
+using Scene2D = global::Cerneala.UI.Controls.Scene2D;
+
 public sealed class RenderSurface2DSceneTests
 {
     [Fact]
@@ -190,6 +192,10 @@ public sealed class RenderSurface2DSceneTests
             Assert.Equal(
                 new DrawRect(60, 20, 30, 40),
                 scope.Bounds);
+            PrismGraph graph = new PrismGraphBuilder().Build(analysis);
+            Assert.Equal(
+                Matrix3x2.CreateScale(10) * Matrix3x2.CreateTranslation(50, 0),
+                Assert.Single(graph.Scopes).EffectiveTransform);
         }
         finally
         {

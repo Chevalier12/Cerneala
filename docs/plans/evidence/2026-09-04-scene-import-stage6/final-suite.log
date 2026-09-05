@@ -1,0 +1,127 @@
+  Cerneala.Tests.VisualStudio -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.VisualStudio\bin\Debug\net10.0-windows\Cerneala.Tests.VisualStudio.dll
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Debug\netstandard2.0\Cerneala.Language.dll
+  Cerneala.LanguageServer -> C:\Users\lauri\Desktop\Cerneala\Cerneala.LanguageServer\bin\Debug\net10.0\Cerneala.LanguageServer.dll
+  Cerneala.VisualStudio -> C:\Users\lauri\Desktop\Cerneala\Cerneala.VisualStudio\bin\Debug\net472\Cerneala.VisualStudio.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Debug\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Debug\net8.0\Cerneala.dll
+  Tool 'dotnet-mgfxc' (version '3.8.4.1') was restored. Available commands: mgfxc
+  Tool 'sign' (version '0.9.1-beta.26330.1') was restored. Available commands: sign
+  
+  Restore was successful.
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Debug\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Platforms.Win32 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Win32\bin\Debug\net8.0-windows\Cerneala.Platforms.Win32.dll
+  Cerneala.Tests.SourceGen -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Debug\net8.0-windows\Cerneala.Tests.SourceGen.dll
+  Cerneala.Tests.Language -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Debug\net8.0-windows\Cerneala.Tests.Language.dll
+  Cerneala.Scene2D.Importers -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\bin\Debug\net8.0\Cerneala.Scene2D.Importers.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Debug\net8.0-windows\Cerneala.Tests.SourceGen.dll (.NETCoreApp,Version=v8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Debug\net8.0-windows\Cerneala.Tests.Language.dll (.NETCoreApp,Version=v8.0)
+  Cerneala.Backends.MonoGame -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.MonoGame\bin\Debug\net8.0-windows\Cerneala.Backends.MonoGame.dll
+A total of 1 test files matched the specified pattern.
+A total of 1 test files matched the specified pattern.
+  CernealaPresentation -> C:\Users\lauri\Desktop\Cerneala\CernealaPresentation\bin\Debug\net8.0-windows\CernealaPresentation.dll
+  Cerneala.Playground -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\bin\Debug\net8.0-windows\Cerneala.Playground.dll
+  Determining projects to restore...
+  Cerneala.PreviewHost -> C:\Users\lauri\Desktop\Cerneala\Cerneala.PreviewHost\bin\Debug\net10.0-windows\Cerneala.PreviewHost.dll
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\Cerneala.Language.csproj (in 1.66 sec).
+  1 of 2 projects are up-to-date for restore.
+  Cerneala.Tests.Scene2DImporters -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Debug\net8.0\Cerneala.Tests.Scene2DImporters.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Debug\netstandard2.0\Cerneala.Language.dll
+  Cerneala.Tests.PreviewHost -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Debug\net10.0-windows\Cerneala.Tests.PreviewHost.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Debug\net10.0-windows\Cerneala.Tests.PreviewHost.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+  Cerneala.LanguageServer -> C:\Users\lauri\Desktop\Cerneala\Cerneala.LanguageServer\bin\Debug\net10.0\win-x64\Cerneala.LanguageServer.dll
+  Cerneala.LanguageServer -> C:\Users\lauri\Desktop\Cerneala\Cerneala.VisualStudio\obj\Debug\net472\bundled-server\
+  Determining projects to restore...
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-04-scene-import-stage6\final-suite\lauri_DESKTOP-JT43V3D_2026-09-05_15_02_50_net8.0.trx
+
+Passed!  - Failed:     0, Passed:   151, Skipped:     0, Total:   151, Duration: 9 s - Cerneala.Tests.Scene2DImporters.dll (net8.0)
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Win32\Cerneala.Platforms.Win32.csproj (in 1.19 sec).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.csproj (in 1.19 sec).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\Cerneala.SourceGen.csproj (in 1.17 sec).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.MonoGame\Cerneala.Backends.MonoGame.csproj (in 1.9 sec).
+  2 of 6 projects are up-to-date for restore.
+  Tool 'dotnet-mgfxc' (version '3.8.4.1') was restored. Available commands: mgfxc
+  Tool 'sign' (version '0.9.1-beta.26330.1') was restored. Available commands: sign
+  
+  Restore was successful.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Debug\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Debug\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Debug\net8.0\Cerneala.dll
+  Cerneala.Platforms.Win32 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Win32\bin\Debug\net8.0-windows\Cerneala.Platforms.Win32.dll
+  Cerneala.Backends.MonoGame -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.MonoGame\bin\Debug\net8.0-windows\Cerneala.Backends.MonoGame.dll
+  Cerneala.PreviewHost -> C:\Users\lauri\Desktop\Cerneala\Cerneala.PreviewHost\bin\Debug\net10.0-windows\win-x64\Cerneala.PreviewHost.dll
+  Cerneala.PreviewHost -> C:\Users\lauri\Desktop\Cerneala\Cerneala.VisualStudio\obj\Debug\net472\bundled-preview-host\
+  VisualStudioIntegrationHost -> C:\Users\lauri\Desktop\Cerneala\tests\Fixtures\VisualStudioIntegrationHost\bin\Debug\net472\Cerneala.VisualStudio.IntegrationHost.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.VisualStudio\bin\Debug\net10.0-windows\Cerneala.Tests.VisualStudio.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-04-scene-import-stage6\final-suite\lauri_DESKTOP-JT43V3D_2026-09-05_15_03_24_net10.0.trx
+
+Passed!  - Failed:     0, Passed:    47, Skipped:     0, Total:    47, Duration: 1 s - Cerneala.Tests.VisualStudio.dll (net10.0)
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-04-scene-import-stage6\final-suite\lauri_DESKTOP-JT43V3D_2026-09-05_15_02_45_net8.0.trx
+
+Passed!  - Failed:     0, Passed:   186, Skipped:     0, Total:   186, Duration: 52 s - Cerneala.Tests.Language.dll (net8.0)
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Debug\net8.0\Cerneala.Backends.SdlGpu.dll
+  Cerneala.WindowsDxSmoke -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.WindowsDxSmoke\bin\Debug\net8.0-windows\Cerneala.WindowsDxSmoke.dll
+  Tetris -> C:\Users\lauri\Desktop\Cerneala\Tetrisish\bin\Debug\net8.0\Cerneala.Tetris.dll
+  Cerneala.Tests.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Debug\net8.0\Cerneala.Tests.SdlGpu.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Debug\net8.0\Cerneala.Tests.SdlGpu.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:04.93]     Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativeGpuCapturesTwoWindowsThroughWindowSaveScreenshot [SKIP]
+[xUnit.net 00:00:04.93]     Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativePlatformAndGpuDeviceHaveDeterministicLifetime [SKIP]
+[xUnit.net 00:00:04.93]     Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativeEventPumpKeepsTwoWindowsIndependent [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativeGpuCapturesTwoWindowsThroughWindowSaveScreenshot [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativePlatformAndGpuDeviceHaveDeterministicLifetime [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativeEventPumpKeepsTwoWindowsIndependent [1 ms]
+[xUnit.net 00:00:08.06]     Cerneala.Tests.SdlGpu.SdlGpuPrismExecutorTests.NestedPrismPresentationRemainsVisibleAwayFromTheHostOrigin [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.SdlGpuPrismExecutorTests.NestedPrismPresentationRemainsVisibleAwayFromTheHostOrigin [1 ms]
+[xUnit.net 00:00:08.23]     Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Native_device_creates_drawing_and_prism_pipelines_from_offline_artifacts [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Native_device_creates_drawing_and_prism_pipelines_from_offline_artifacts [1 ms]
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-04-scene-import-stage6\final-suite\lauri_DESKTOP-JT43V3D_2026-09-05_15_03_41_net8.0.trx
+
+Passed!  - Failed:     0, Passed:   121, Skipped:     5, Total:   126, Duration: 7 s - Cerneala.Tests.SdlGpu.dll (net8.0)
+  Tetris.Tests -> C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Debug\net8.0\Cerneala.Tetris.Tests.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-04-scene-import-stage6\final-suite\lauri_DESKTOP-JT43V3D_2026-09-05_15_03_51_net8.0.trx
+
+Passed!  - Failed:     0, Passed:    29, Skipped:     0, Total:    29, Duration: 1 s - Cerneala.Tetris.Tests.dll (net8.0)
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-04-scene-import-stage6\final-suite\lauri_DESKTOP-JT43V3D_2026-09-05_15_02_53_net10.0.trx
+
+Passed!  - Failed:     0, Passed:    13, Skipped:     0, Total:    13, Duration: 1 m 26 s - Cerneala.Tests.PreviewHost.dll (net10.0)
+  Cerneala.Tests -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-04-scene-import-stage6\final-suite\lauri_DESKTOP-JT43V3D_2026-09-05_15_02_45_net8.0[1].trx
+
+Passed!  - Failed:     0, Passed:   515, Skipped:     0, Total:   515, Duration: 1 m 47 s - Cerneala.Tests.SourceGen.dll (net8.0)
+[xUnit.net 00:00:56.19]     Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 2) [FAIL]
+  Failed Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 2) [390 ms]
+  Error Message:
+   A fully occluded stroke changed the output by 25/255 (interleaved content: 2).
+  Stack Trace:
+     at Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(Int32 content) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Drawing\MonoGame\AlphaBlendRenderingTests.cs:line 35
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+[xUnit.net 00:00:57.03]     Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 1) [FAIL]
+  Failed Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 1) [438 ms]
+  Error Message:
+   A fully occluded stroke changed the output by 47/255 (interleaved content: 1).
+  Stack Trace:
+     at Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(Int32 content) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Drawing\MonoGame\AlphaBlendRenderingTests.cs:line 35
+   at InvokeStub_AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:01:31.09]     Cerneala.Tests.Drawing.SdlGpuDrawingConformanceTests.DrawingApiShowcaseMatchesWindowsDxPixelThresholds [SKIP]
+[xUnit.net 00:01:31.09]     Cerneala.Tests.Drawing.Prism.PrismSdlGpuPixelConformanceTests.EveryResourceFreeCatalogEntryMatchesWindowsDxPixelThresholds [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpuDrawingConformanceTests.DrawingApiShowcaseMatchesWindowsDxPixelThresholds [1 ms]
+  Skipped Cerneala.Tests.Drawing.Prism.PrismSdlGpuPixelConformanceTests.EveryResourceFreeCatalogEntryMatchesWindowsDxPixelThresholds [1 ms]
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-04-scene-import-stage6\final-suite\lauri_DESKTOP-JT43V3D_2026-09-05_15_04_21_net8.0.trx
+
+Failed!  - Failed:     2, Passed:  3482, Skipped:     2, Total:  3486, Duration: 2 m 14 s - Cerneala.Tests.dll (net8.0)
+  Cerneala.Tests.LanguageServer -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.LanguageServer\bin\Debug\net10.0\Cerneala.Tests.LanguageServer.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.LanguageServer\bin\Debug\net10.0\Cerneala.Tests.LanguageServer.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-04-scene-import-stage6\final-suite\lauri_DESKTOP-JT43V3D_2026-09-05_15_06_37_net10.0.trx
+
+Passed!  - Failed:     0, Passed:    40, Skipped:     0, Total:    40, Duration: 1 m 31 s - Cerneala.Tests.LanguageServer.dll (net10.0)

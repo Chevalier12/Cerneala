@@ -14,7 +14,8 @@ float2 MirrorNeighborhoodUv(float2 uv)
 float4 SampleNeighborhood(
     float2 uv,
     int profile,
-    int edgeMode)
+    int edgeMode,
+    bool baseLevelOnly = false)
 {
     float inside =
         step(0.0, uv.x) *
@@ -36,9 +37,9 @@ float4 SampleNeighborhood(
         uv,
         PixelSize * 0.5,
         1.0 - (PixelSize * 0.5));
-    float4 sample = tex2D(
-        SpriteTextureSampler,
-        uv);
+    float4 sample = baseLevelOnly
+        ? tex2Dlod(SpriteTextureSampler, float4(uv, 0.0, 0.0))
+        : tex2D(SpriteTextureSampler, uv);
     if (edgeMode == 1)
     {
         sample *= inside;
@@ -1544,7 +1545,10 @@ float4 SampleSpinBlur(
     int maximumSamples,
     int profile)
 {
-    float4 centerSample = SampleNeighborhood(uv, profile, 0);
+    // Spin integrates base-level pixels, as does the CPU bilinear sampler.
+    // Adaptive counts/early exits make implicit derivatives unsuitable here:
+    // mipmapped inputs must not add an unrelated, driver-dependent blur.
+    float4 centerSample = SampleNeighborhood(uv, profile, 0, true);
     float2 centerUv = FilterOptions0.xy;
     float2 delta = uv - centerUv;
     float2 normalized =
@@ -1631,7 +1635,8 @@ float4 SampleSpinBlur(
             total += SampleNeighborhood(
                 centerUv + (sampleDelta * PixelSize),
                 profile,
-                0) * weight;
+                0,
+                true) * weight;
             totalWeight += weight;
             rotatedDelta = float2(
                 (rotatedDelta.x * stepCosine) -

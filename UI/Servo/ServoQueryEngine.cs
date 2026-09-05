@@ -169,7 +169,7 @@ internal sealed class ServoQueryEngine
             Servo.GetId(element),
             node.Name,
             node.Role,
-            element.ArrangedBounds,
+            InputCoordinateConverter.GetRootBounds(element),
             UIElementVisibility.IsEffectivelyVisible(element),
             element.IsEnabled,
             element.IsKeyboardFocused,

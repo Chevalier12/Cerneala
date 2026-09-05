@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="f0fdf282-40d9-4923-811a-781668cce6d1" name="lauri@DESKTOP-JT43V3D 2026-09-05 03:51:28" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T03:51:28.1210364+03:00" queuing="2026-09-05T03:51:28.1210367+03:00" start="2026-09-05T03:51:26.9581561+03:00" finish="2026-09-05T03:51:28.1283857+03:00" />
+  <TestSettings name="default" id="2033f8fb-7fa0-4283-8de3-0b31155e9c40">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_03_51_28" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="381576bc-8d1a-4024-9822-26a0bb626c7a" testId="f0bbdeef-5626-7dd3-1ecd-ecfb83aebaad" testName="Cerneala.Tests.VisualStudio.Stage6ReleaseHarnessTests.ApiDocumentationManifestIsValidAndReferencesExistingFiles" computerName="DESKTOP-JT43V3D" duration="00:00:00.0684293" startTime="2026-09-05T03:51:27.9272804+03:00" endTime="2026-09-05T03:51:27.9273438+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="381576bc-8d1a-4024-9822-26a0bb626c7a" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.VisualStudio.Stage6ReleaseHarnessTests.ApiDocumentationManifestIsValidAndReferencesExistingFiles" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.visualstudio\bin\debug\net10.0-windows\cerneala.tests.visualstudio.dll" id="f0bbdeef-5626-7dd3-1ecd-ecfb83aebaad">
+      <Execution id="381576bc-8d1a-4024-9822-26a0bb626c7a" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.VisualStudio\bin\Debug\net10.0-windows\Cerneala.Tests.VisualStudio.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.VisualStudio.Stage6ReleaseHarnessTests" name="ApiDocumentationManifestIsValidAndReferencesExistingFiles" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="f0bbdeef-5626-7dd3-1ecd-ecfb83aebaad" executionId="381576bc-8d1a-4024-9822-26a0bb626c7a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="1" executed="1" passed="1" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 10.0.11)&#xD;
+[xUnit.net 00:00:00.10]   Discovering: Cerneala.Tests.VisualStudio&#xD;
+[xUnit.net 00:00:00.16]   Discovered:  Cerneala.Tests.VisualStudio&#xD;
+[xUnit.net 00:00:00.17]   Starting:    Cerneala.Tests.VisualStudio&#xD;
+[xUnit.net 00:00:00.32]   Finished:    Cerneala.Tests.VisualStudio&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

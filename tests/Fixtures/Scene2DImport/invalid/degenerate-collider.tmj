@@ -1,0 +1,228 @@
+{
+  "compressionlevel": -1,
+  "height": 2,
+  "infinite": false,
+  "layers": [
+    {
+      "data": [
+        1,
+        2147483650,
+        1073741825,
+        0
+      ],
+      "height": 2,
+      "id": 1,
+      "name": "Ground",
+      "offsetx": 2,
+      "offsety": 3,
+      "opacity": 1,
+      "type": "tilelayer",
+      "visible": true,
+      "width": 2,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": [
+        0,
+        0,
+        0,
+        2
+      ],
+      "height": 2,
+      "id": 2,
+      "name": "Roof",
+      "offsetx": 2,
+      "offsety": 3,
+      "opacity": 0.5,
+      "type": "tilelayer",
+      "visible": true,
+      "width": 2,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "draworder": "index",
+      "id": 3,
+      "name": "Objects",
+      "objects": [
+        {
+          "height": 0,
+          "id": 1,
+          "name": "Player",
+          "point": true,
+          "properties": [
+            {
+              "name": "CernealaRole",
+              "type": "string",
+              "value": "Spawn"
+            },
+            {
+              "name": "InitialState",
+              "type": "string",
+              "value": "Idle"
+            }
+          ],
+          "rotation": 0,
+          "type": "Player",
+          "visible": true,
+          "width": 0,
+          "x": 8,
+          "y": 24
+        },
+        {
+          "ellipse": true,
+          "height": 8,
+          "id": 2,
+          "name": "Pond",
+          "properties": [
+            {
+              "name": "CernealaRole",
+              "type": "string",
+              "value": "Collider"
+            },
+            {
+              "name": "CollisionLayer",
+              "type": "int",
+              "value": 2
+            },
+            {
+              "name": "CollisionMask",
+              "type": "int",
+              "value": 1
+            },
+            {
+              "name": "IsTrigger",
+              "type": "bool",
+              "value": true
+            }
+          ],
+          "rotation": 30,
+          "type": "",
+          "visible": true,
+          "width": 16,
+          "x": 4,
+          "y": 4
+        },
+        {
+          "height": 0,
+          "id": 3,
+          "name": "Fence",
+          "polyline": [
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 0,
+              "y": 0
+            },
+            {
+              "x": 16,
+              "y": -8
+            }
+          ],
+          "properties": [
+            {
+              "name": "CernealaRole",
+              "type": "string",
+              "value": "Collider"
+            },
+            {
+              "name": "CollisionLayer",
+              "type": "int",
+              "value": 2
+            }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 0,
+          "y": 28
+        },
+        {
+          "height": 0,
+          "id": 4,
+          "name": "Door",
+          "point": true,
+          "properties": [
+            {
+              "name": "CernealaRole",
+              "type": "string",
+              "value": "Promote"
+            },
+            {
+              "name": "TileLayer",
+              "type": "string",
+              "value": "1"
+            },
+            {
+              "name": "TileX",
+              "type": "int",
+              "value": 1
+            },
+            {
+              "name": "TileY",
+              "type": "int",
+              "value": 0
+            },
+            {
+              "name": "InitialState",
+              "type": "string",
+              "value": "Closed"
+            }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 16,
+          "y": 0
+        }
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "nextlayerid": 4,
+  "nextobjectid": 5,
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "tiledversion": "1.12.2",
+  "tileheight": 16,
+  "tilesets": [
+    {
+      "columns": 2,
+      "firstgid": 1,
+      "image": "../atlas.svg",
+      "imageheight": 16,
+      "imagewidth": 32,
+      "margin": 0,
+      "name": "Atlas",
+      "spacing": 0,
+      "tilecount": 2,
+      "tileheight": 16,
+      "tiles": [
+        {
+          "id": 1,
+          "properties": [
+            {
+              "name": "InitialState",
+              "type": "string",
+              "value": "Closed"
+            }
+          ]
+        }
+      ],
+      "tilewidth": 16
+    }
+  ],
+  "tilewidth": 16,
+  "type": "map",
+  "version": "1.11",
+  "width": 2
+}

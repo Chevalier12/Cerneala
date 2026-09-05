@@ -1,0 +1,260 @@
+{
+  "__header__": {
+    "app": "LDtk",
+    "appVersion": "1.5.3",
+    "doc": "https://ldtk.io/json",
+    "fileType": "LDtk Project JSON",
+    "schema": "https://ldtk.io/files/JSON_SCHEMA.json",
+    "url": "https://ldtk.io"
+  },
+  "appBuildId": 0,
+  "backupLimit": 10,
+  "backupOnSave": false,
+  "bgColor": "#000000",
+  "customCommands": [],
+  "defaultEntityHeight": 16,
+  "defaultEntityWidth": 16,
+  "defaultGridSize": 16,
+  "defaultLevelBgColor": "#000000",
+  "defaultPivotX": 0,
+  "defaultPivotY": 0,
+  "defs": {
+    "entities": [],
+    "enums": [],
+    "externalEnums": [],
+    "layers": [
+      {
+        "__type": "Tiles",
+        "autoRuleGroups": [],
+        "canSelectWhenInactive": true,
+        "displayOpacity": 1,
+        "excludedTags": [],
+        "gridSize": 16,
+        "guideGridHei": 0,
+        "guideGridWid": 0,
+        "hideFieldsWhenInactive": true,
+        "hideInList": false,
+        "identifier": "Roof",
+        "inactiveOpacity": 1,
+        "intGridValues": [],
+        "intGridValuesGroups": [],
+        "parallaxFactorX": 0,
+        "parallaxFactorY": 0,
+        "parallaxScaling": true,
+        "pxOffsetX": 2,
+        "pxOffsetY": 3,
+        "renderInWorldView": true,
+        "requiredTags": [],
+        "tilePivotX": 0,
+        "tilePivotY": 0,
+        "tilesetDefUid": 3,
+        "type": "Tiles",
+        "uiFilterTags": [],
+        "uid": 2,
+        "useAsyncRender": false
+      },
+      {
+        "__type": "Tiles",
+        "autoRuleGroups": [],
+        "canSelectWhenInactive": true,
+        "displayOpacity": 1,
+        "excludedTags": [],
+        "gridSize": 16,
+        "guideGridHei": 0,
+        "guideGridWid": 0,
+        "hideFieldsWhenInactive": true,
+        "hideInList": false,
+        "identifier": "Ground",
+        "inactiveOpacity": 1,
+        "intGridValues": [],
+        "intGridValuesGroups": [],
+        "parallaxFactorX": 0,
+        "parallaxFactorY": 0,
+        "parallaxScaling": true,
+        "pxOffsetX": 2,
+        "pxOffsetY": 3,
+        "renderInWorldView": true,
+        "requiredTags": [],
+        "tilePivotX": 0,
+        "tilePivotY": 0,
+        "tilesetDefUid": 3,
+        "type": "Tiles",
+        "uiFilterTags": [],
+        "uid": 1,
+        "useAsyncRender": false
+      }
+    ],
+    "levelFields": [],
+    "tilesets": [
+      {
+        "__cHei": 1,
+        "__cWid": 2,
+        "customData": [],
+        "enumTags": [],
+        "identifier": "Atlas",
+        "padding": 0,
+        "pxHei": 16,
+        "pxWid": 32,
+        "relPath": "atlas.svg",
+        "savedSelections": [],
+        "spacing": 0,
+        "tags": [],
+        "tileGridSize": 16,
+        "uid": 3
+      }
+    ]
+  },
+  "dummyWorldIid": "66666666-6666-4666-8666-666666666666",
+  "exportLevelBg": false,
+  "exportTiled": false,
+  "externalLevels": false,
+  "flags": [],
+  "identifierStyle": "Capitalize",
+  "iid": "55555555-5555-4555-8555-555555555555",
+  "imageExportMode": "None",
+  "jsonVersion": "1.5.3",
+  "levelNamePattern": "Level_%idx",
+  "levels": [
+    {
+      "__bgColor": "#000000",
+      "__neighbours": [],
+      "__smartColor": "#000000",
+      "bgPivotX": 0.5,
+      "bgPivotY": 0.5,
+      "bgRelPath": null,
+      "externalRelPath": null,
+      "fieldInstances": [],
+      "identifier": "Fixture",
+      "iid": "44444444-4444-4444-8444-444444444444",
+      "layerInstances": [
+        {
+          "__cHei": 2,
+          "__cWid": 2,
+          "__gridSize": 16,
+          "__identifier": "Roof",
+          "__opacity": 0.5,
+          "__pxTotalOffsetX": 2,
+          "__pxTotalOffsetY": 3,
+          "__tilesetDefUid": 3,
+          "__tilesetRelPath": "atlas.svg",
+          "__type": "Tiles",
+          "autoLayerTiles": [],
+          "entityInstances": [],
+          "gridTiles": [
+            {
+              "a": 1,
+              "d": [
+                3
+              ],
+              "f": 0,
+              "px": [
+                16,
+                16
+              ],
+              "src": [
+                16,
+                0
+              ],
+              "t": 1
+            }
+          ],
+          "iid": "22222222-2222-4222-8222-222222222222",
+          "intGridCsv": [],
+          "layerDefUid": 2,
+          "levelId": 4,
+          "optionalRules": [],
+          "pxOffsetX": 0,
+          "pxOffsetY": 0,
+          "seed": 1,
+          "visible": true
+        },
+        {
+          "__cHei": 2,
+          "__cWid": 2,
+          "__gridSize": 16,
+          "__identifier": "Ground",
+          "__opacity": 1.0,
+          "__pxTotalOffsetX": 2,
+          "__pxTotalOffsetY": 3,
+          "__tilesetDefUid": 3,
+          "__tilesetRelPath": "atlas.svg",
+          "__type": "Tiles",
+          "autoLayerTiles": [],
+          "entityInstances": [],
+          "gridTiles": [
+            {
+              "a": 1,
+              "d": [
+                0
+              ],
+              "f": 0,
+              "px": [
+                0,
+                0
+              ],
+              "src": [
+                0,
+                0
+              ],
+              "t": 0
+            },
+            {
+              "a": 1,
+              "d": [
+                1
+              ],
+              "f": 1,
+              "px": [
+                16,
+                0
+              ],
+              "src": [
+                16,
+                0
+              ],
+              "t": 1
+            },
+            {
+              "a": 1,
+              "d": [
+                2
+              ],
+              "f": 2,
+              "px": [
+                0,
+                16
+              ],
+              "src": [
+                0,
+                0
+              ],
+              "t": 0
+            }
+          ],
+          "iid": "11111111-1111-4111-8111-111111111111",
+          "intGridCsv": [],
+          "layerDefUid": 1,
+          "levelId": 4,
+          "optionalRules": [],
+          "pxOffsetX": 0,
+          "pxOffsetY": 0,
+          "seed": 1,
+          "visible": true
+        }
+      ],
+      "pxHei": 32,
+      "pxWid": 32,
+      "uid": 4,
+      "useAutoIdentifier": false,
+      "worldDepth": 0,
+      "worldX": 0,
+      "worldY": 0
+    }
+  ],
+  "minifyJson": false,
+  "nextUid": 5,
+  "simplifiedExport": false,
+  "toc": [],
+  "worldLayout": "Free",
+  "worlds": []
+}

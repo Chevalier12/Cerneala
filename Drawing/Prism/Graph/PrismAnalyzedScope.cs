@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace Cerneala.Drawing.Prism.Graph;
 
 internal readonly record struct PrismAnalyzedScope
@@ -10,6 +12,7 @@ internal readonly record struct PrismAnalyzedScope
         int? parentScopeIndex,
         PrismDrawScope scope,
         DrawRect bounds,
+        Matrix3x2 effectiveTransform,
         PrismDependencyStamp dependencyStamp,
         PrismGraphCapabilities requiredCapabilities,
         int requiredSurfaceCount)
@@ -21,6 +24,7 @@ internal readonly record struct PrismAnalyzedScope
         ParentScopeIndex = parentScopeIndex;
         Scope = scope;
         Bounds = bounds;
+        EffectiveTransform = effectiveTransform;
         DependencyStamp = dependencyStamp;
         RequiredCapabilities = requiredCapabilities;
         RequiredSurfaceCount = requiredSurfaceCount;
@@ -39,6 +43,8 @@ internal readonly record struct PrismAnalyzedScope
     public PrismDrawScope Scope { get; }
 
     public DrawRect Bounds { get; }
+
+    public Matrix3x2 EffectiveTransform { get; }
 
     public PrismDependencyStamp DependencyStamp { get; }
 

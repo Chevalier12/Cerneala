@@ -1,4 +1,5 @@
 using Cerneala.UI.Elements;
+using Cerneala.UI.Input;
 
 namespace Cerneala.UI.Accessibility;
 
@@ -27,6 +28,14 @@ public sealed class SemanticsProvider
             }
 
             children.Add(BuildNode(child, projection));
+        }
+
+        if (projection == SemanticsProjection.Servo && element is IInputSubtreeHost inputHost)
+        {
+            foreach (UIElement child in inputHost.GetInputSubtreeChildren())
+            {
+                children.Add(BuildNode(child, projection));
+            }
         }
 
         return AutomationPeer.Create(element).CreateNode(children);

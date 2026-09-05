@@ -1,0 +1,24 @@
+<Project>
+  <PropertyGroup>
+    <SdkRoot>C:\Program Files\dotnet\sdk\10.0.303</SdkRoot>
+    <TaskAssembly>$(SdkRoot)\Sdks\Microsoft.NET.Sdk\tools\net10.0\Microsoft.DotNet.ApiCompat.Task.dll</TaskAssembly>
+    <BaselineRoot>C:\Users\lauri\Desktop\Cerneala-baseline-servo-fed724b</BaselineRoot>
+    <CurrentRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\..\..'))</CurrentRoot>
+    <ApiCompatGenerateSuppressionFile>false</ApiCompatGenerateSuppressionFile>
+  </PropertyGroup>
+  <UsingTask TaskName="Microsoft.DotNet.ApiCompat.Task.ValidateAssembliesTask" AssemblyFile="$(TaskAssembly)" />
+  <Target Name="Compare">
+    <ValidateAssembliesTask
+      LeftAssemblies="$(BaselineRoot)\bin\Release\net8.0\Cerneala.dll"
+      RightAssemblies="$(CurrentRoot)\bin\Release\net8.0\Cerneala.dll"
+      LeftAssembliesReferences="C:\Program Files\dotnet\shared\Microsoft.NETCore.App\8.0.30,$(BaselineRoot)\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0"
+      RightAssembliesReferences="C:\Program Files\dotnet\shared\Microsoft.NETCore.App\8.0.30,$(CurrentRoot)\tests\Cerneala.Tests.SdlGpu\bin\Debug\net8.0"
+      RoslynAssembliesPath="$(SdkRoot)\Roslyn\bincore"
+      EnableStrictMode="true"
+      EnableRuleCannotChangeParameterName="true"
+      GenerateSuppressionFile="$(ApiCompatGenerateSuppressionFile)"
+      SuppressionFiles="$(CurrentRoot)\benchmarks\results\2026-09-03-servo\api-compat.suppressions.xml;$(CurrentRoot)\benchmarks\results\2026-09-04-rendersurface2d-scene-foundation\api-compat.suppressions.xml;$(CurrentRoot)\benchmarks\Cerneala.Benchmarks\results\2026-09-04-tilemap-stage5\api-compat.suppressions.xml;$(CurrentRoot)\benchmarks\Cerneala.Benchmarks\results\2026-09-04-collision-stage5\api-compat.suppressions.xml;$(CurrentRoot)\benchmarks\Cerneala.Benchmarks\results\2026-09-04-sprite-animation-stage4\api-compat.suppressions.xml;$(MSBuildThisFileDirectory)api-compat.suppressions.xml"
+      SuppressionOutputFile="$(MSBuildThisFileDirectory)api-compat.suppressions.generated.xml"
+      PermitUnnecessarySuppressions="false" />
+  </Target>
+</Project>

@@ -34,4 +34,25 @@ public sealed class ElementInputRouteMap
     {
         return elementsById.TryGetValue(id, out element);
     }
+
+    internal IReadOnlyList<UIElement> GetRouteToRoot(UIElement element)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+        if (!TryGetId(element, out UiElementId id))
+        {
+            return [];
+        }
+
+        IReadOnlyList<UiElementId> ids = InputTree.GetRouteToRoot(id);
+        List<UIElement> route = new(ids.Count);
+        foreach (UiElementId routeId in ids)
+        {
+            if (TryGetElement(routeId, out UIElement? routeElement) && routeElement is not null)
+            {
+                route.Add(routeElement);
+            }
+        }
+
+        return route;
+    }
 }

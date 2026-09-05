@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="7907eb0a-ccc8-4f45-a450-9f0ac5147b23" name="lauri@DESKTOP-JT43V3D 2026-09-05 11:39:45" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-05T11:39:45.4340848+03:00" queuing="2026-09-05T11:39:45.4340852+03:00" start="2026-09-05T11:39:40.8019418+03:00" finish="2026-09-05T11:39:47.4027558+03:00" />
+  <TestSettings name="default" id="743b111e-69dc-420c-873c-bea2881a156c">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-05_11_39_45" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="e45f5068-76a9-4383-a3b7-1ed840481cd4" testId="2a14f0ef-753a-44fd-5fc9-c166acf0084b" testName="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 1)" computerName="DESKTOP-JT43V3D" duration="00:00:00.9063664" startTime="2026-09-05T11:39:47.1525329+03:00" endTime="2026-09-05T11:39:47.1525332+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e45f5068-76a9-4383-a3b7-1ed840481cd4">
+      <Output>
+        <ErrorInfo>
+          <Message>A fully occluded stroke changed the output by 47/255 (interleaved content: 1).</Message>
+          <StackTrace>   at Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(Int32 content) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Drawing\MonoGame\AlphaBlendRenderingTests.cs:line 35&#xD;
+   at InvokeStub_AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="382e8842-0a3d-4a31-b085-422a4eb2d6a0" testId="bd3dcadf-c856-062e-2047-1ba20d2ec83a" testName="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 2)" computerName="DESKTOP-JT43V3D" duration="00:00:01.7153505" startTime="2026-09-05T11:39:45.3813364+03:00" endTime="2026-09-05T11:39:45.3813594+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="382e8842-0a3d-4a31-b085-422a4eb2d6a0">
+      <Output>
+        <ErrorInfo>
+          <Message>A fully occluded stroke changed the output by 25/255 (interleaved content: 2).</Message>
+          <StackTrace>   at Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(Int32 content) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Drawing\MonoGame\AlphaBlendRenderingTests.cs:line 35&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="337a2163-ff98-4b7f-af16-168cf682429a" testId="965b71d3-4e8b-e5e8-73f3-f3255f8f83e2" testName="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 0)" computerName="DESKTOP-JT43V3D" duration="00:00:00.8377623" startTime="2026-09-05T11:39:46.2402425+03:00" endTime="2026-09-05T11:39:46.2402429+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="337a2163-ff98-4b7f-af16-168cf682429a" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 1)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="2a14f0ef-753a-44fd-5fc9-c166acf0084b">
+      <Execution id="e45f5068-76a9-4383-a3b7-1ed840481cd4" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests" name="OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 0)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="965b71d3-4e8b-e5e8-73f3-f3255f8f83e2">
+      <Execution id="337a2163-ff98-4b7f-af16-168cf682429a" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests" name="OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 2)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\debug\net8.0-windows\cerneala.tests.dll" id="bd3dcadf-c856-062e-2047-1ba20d2ec83a">
+      <Execution id="382e8842-0a3d-4a31-b085-422a4eb2d6a0" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests" name="OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="2a14f0ef-753a-44fd-5fc9-c166acf0084b" executionId="e45f5068-76a9-4383-a3b7-1ed840481cd4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bd3dcadf-c856-062e-2047-1ba20d2ec83a" executionId="382e8842-0a3d-4a31-b085-422a4eb2d6a0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="965b71d3-4e8b-e5e8-73f3-f3255f8f83e2" executionId="337a2163-ff98-4b7f-af16-168cf682429a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="3" executed="3" passed="1" failed="2" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:01.14]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.77]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.78]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:03.59]       A fully occluded stroke changed the output by 25/255 (interleaved content: 2).&#xD;
+[xUnit.net 00:00:03.59]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.59]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Drawing\MonoGame\AlphaBlendRenderingTests.cs(35,0): at Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(Int32 content)&#xD;
+[xUnit.net 00:00:03.59]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:03.59]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:05.36]       A fully occluded stroke changed the output by 47/255 (interleaved content: 1).&#xD;
+[xUnit.net 00:00:05.36]       Stack Trace:&#xD;
+[xUnit.net 00:00:05.36]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Drawing\MonoGame\AlphaBlendRenderingTests.cs(35,0): at Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(Int32 content)&#xD;
+[xUnit.net 00:00:05.36]            at InvokeStub_AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(Object, Span`1)&#xD;
+[xUnit.net 00:00:05.36]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:05.37]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T11:39:45.3759915+03:00">
+        <Text>[xUnit.net 00:00:03.59]     Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 2) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-05T11:39:47.1520780+03:00">
+        <Text>[xUnit.net 00:00:05.36]     Cerneala.Tests.Drawing.MonoGame.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 1) [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>
