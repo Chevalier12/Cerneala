@@ -8,9 +8,8 @@ Cerneala puts traditional application UI and realtime rendering inside the same 
 
 It is currently in **Developer Preview**. The architecture is real, the repository has a large test and verification surface, and a lot of the framework already works. The public experience is still being built, contracts can change, and some areas are much more mature than others.
 
-See the [current architecture](architecture.md). The
-[historical diagram](docs/assets/cerneala-architecture.png) predates the removal
-of the MonoGame and WindowsDX backend branches.
+See the [current architecture](architecture.md) and its
+[architecture diagram](docs/assets/cerneala-architecture.png).
 
 ## Why I built it
 

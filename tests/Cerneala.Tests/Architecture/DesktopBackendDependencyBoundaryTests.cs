@@ -15,6 +15,7 @@ public sealed class DesktopBackendDependencyBoundaryTests
             Assert.DoesNotContain("Cerneala.Backends.", name, StringComparison.Ordinal);
             Assert.DoesNotContain("Cerneala.Platforms.", name, StringComparison.Ordinal);
             Assert.DoesNotContain("SDL3", name, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("Graphix-CS", name, StringComparison.Ordinal);
             Assert.DoesNotContain("Graphix.Native", name, StringComparison.Ordinal);
         }
         Assert.Empty(project.Descendants("PrismShaderSource"));
@@ -44,7 +45,8 @@ public sealed class DesktopBackendDependencyBoundaryTests
         XDocument project = XDocument.Load(Path.Combine(platformRoot, "Cerneala.Platforms.Sdl3.csproj"));
         string[] packages = project.Descendants("PackageReference")
             .Select(element => (string?)element.Attribute("Include") ?? string.Empty).ToArray();
-        Assert.Contains("SDL3-CS", packages);
+        Assert.Contains("Graphix-CS", packages);
+        Assert.DoesNotContain("SDL3-CS", packages);
         Assert.Contains("Graphix.Native", packages);
         Assert.Contains(project.Descendants("ProjectReference"), reference =>
             ((string?)reference.Attribute("Include"))?.Replace('\\', '/') == "../Cerneala.csproj");

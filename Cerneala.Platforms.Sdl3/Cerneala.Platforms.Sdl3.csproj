@@ -9,8 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SDL3-CS" Version="3.4.14.1" />
-    <PackageReference Include="Graphix.Native" Version="3.4.16-graphix.2" />
+    <PackageReference Include="Graphix-CS" Version="3.4.16.1" />
+    <PackageReference Include="Graphix.Native" Version="3.4.16-graphix.3" />
   </ItemGroup>
 
   <ItemGroup>

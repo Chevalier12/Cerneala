@@ -4,8 +4,8 @@ on:
   push:
     paths:
       - ".github/workflows/prism-shaders.yml"
-      - "Tools/scripts/Get-GraphixNativePackage.ps1"
       - "NuGet.Config"
+      - "global.json"
       - "Cerneala.Backends.SdlGpu/**"
       - "Drawing/Prism/Shaders/**"
       - "Tools/Cerneala.SdlShaderCompiler/**"
@@ -14,8 +14,8 @@ on:
   pull_request:
     paths:
       - ".github/workflows/prism-shaders.yml"
-      - "Tools/scripts/Get-GraphixNativePackage.ps1"
       - "NuGet.Config"
+      - "global.json"
       - "Cerneala.Backends.SdlGpu/**"
       - "Drawing/Prism/Shaders/**"
       - "Tools/Cerneala.SdlShaderCompiler/**"
@@ -25,7 +25,6 @@ on:
 
 permissions:
   contents: read
-  actions: read
 
 jobs:
   sdlgpu:
@@ -38,12 +37,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
-
-      - name: Fetch and verify temporary Graphix package
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: ./Tools/scripts/Get-GraphixNativePackage.ps1
 
       - name: Restore
         run: |

@@ -53,11 +53,11 @@ fundatia scenei
           `-- demonstratia finala din import/debug
 ```
 
-- [ ] Se implementeaza mai intai [fundatia scenei](./2026-09-04-rendersurface2d-scene-foundation.md); ea stabileste resursele, transformul comun, bounds-urile si ordinea.
-- [ ] [Tilemap si scalare](./2026-09-04-rendersurface2d-tilemap-and-scale.md) incepe numai dupa gate-ul fundatiei.
-- [ ] [Coliziuni si picking](./2026-09-04-rendersurface2d-collision-and-picking.md) poate rula dupa fundatie, dar integrarea colliderelor din tilemap asteapta modelul de date al tilemap-ului.
-- [ ] [Animatie sprite](./2026-09-04-rendersurface2d-sprite-animation.md) poate rula dupa fundatie si ramane independenta de importeri.
-- [ ] [Import, diagnostic si debug](./2026-09-04-rendersurface2d-import-debug-validation.md) este ultimul plan: consuma contractele tilemap-ului si coliziunilor si livreaza demonstratia integrata.
+- [x] Se implementeaza mai intai [fundatia scenei](./2026-09-04-rendersurface2d-scene-foundation.md); ea stabileste resursele, transformul comun, bounds-urile si ordinea.
+- [x] [Tilemap si scalare](./2026-09-04-rendersurface2d-tilemap-and-scale.md) incepe numai dupa gate-ul fundatiei.
+- [x] [Coliziuni si picking](./2026-09-04-rendersurface2d-collision-and-picking.md) poate rula dupa fundatie, dar integrarea colliderelor din tilemap asteapta modelul de date al tilemap-ului.
+- [x] [Animatie sprite](./2026-09-04-rendersurface2d-sprite-animation.md) poate rula dupa fundatie si ramane independenta de importeri.
+- [x] [Import, diagnostic si debug](./2026-09-04-rendersurface2d-import-debug-validation.md) este ultimul plan: consuma contractele tilemap-ului si coliziunilor si livreaza demonstratia integrata.
 
 ## Contract arhitectural comun
 

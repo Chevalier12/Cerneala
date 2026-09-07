@@ -51,35 +51,48 @@ SDL_GPU state caching is local to one flush and its resumed render pass. The fir
 
 ## Runtime identifiers and native assets
 
-### Graphix native dependency and temporary local feed
+### Public Graphix managed/native dependencies
 
-The native runtime comes from `Graphix.Native` version `3.4.16-graphix.2`,
-an independently maintained SDL fork. The `SDL3-CS` managed binding remains
-at `3.4.14.1`; the separate ShaderCross packages are build-tool dependencies,
+The native runtime comes from [Graphix.Native 3.4.16-graphix.3](https://www.nuget.org/packages/Graphix.Native/3.4.16-graphix.3),
+an independently maintained SDL fork. The managed binding is [Graphix-CS 3.4.16.1](https://www.nuget.org/packages/Graphix-CS/3.4.16.1),
+a packaging fork of upstream `SDL3-CS v3.4.16.0`. It preserves namespace `SDL3`,
+public class `SDL`, assembly name `SDL3-CS.dll`, and the upstream binding/generator source.
+Do not reference both `Graphix-CS` and `SDL3-CS` in the same application.
+The separate `SDL3-CS.*.Shadercross` packages remain build-tool dependencies,
 not part of Graphix. Do not add the old `SDL3-CS.Windows`, `SDL3-CS.Linux` or
 `SDL3-CS.MacOS` native providers alongside Graphix.
 
-Publication is pending. The repository's `NuGet.Config` adds the temporary
-`artifacts/graphix-packages` feed without changing user-wide NuGet settings or
-removing existing sources. Before restoring a fresh checkout, copy the verified
-package into that directory. While the CI artifact remains available, the
-repository helper downloads it using authenticated GitHub CLI and verifies its
-SHA256. The desktop and shader workflows call the same helper before restore.
-An existing matching package is reused; mismatched bytes are rejected, not overwritten:
+Both packages are public on NuGet.org. The repository's `NuGet.Config` declares
+the public NuGet source without clearing user-wide package sources. A fresh
+checkout restores directly; no GitHub authentication, temporary Actions artifact
+or local package feed is required by developers or CI:
 
 ```powershell
-.\Tools\scripts\Get-GraphixNativePackage.ps1
 dotnet restore Cerneala.slnx
 ```
 
-This package records Graphix source commit
-`0c23f43af6884849165ebf21ba1d14fa2d6cdf51`. Its six native CTest suites passed
+The managed package comes from verified [Graphix-CS main CI run 34129320508](https://github.com/Chevalier12/Graphix-CS/actions/runs/34129320508),
+commit `79f3958a88aad3ba354aeee8fece42ff33782d56`. The downloaded NuGet.org `.nupkg` SHA256 is
+`C11770CC11D194E22D17C8CD90DCD93D0346B6ED78DDD72475F5F2CFD5C1CA1D`.
+The package records this commit in its repository metadata and contains no native runtime assets.
+
+The inherited callback generator references Roslyn 5.9. Cerneala pins SDK `10.0.400`
+in `global.json` so the compiler can load it; application target frameworks remain unchanged.
+Older Roslyn 5.6 compilers reject the generator with `CS9057`.
+
+The native package records Graphix source commit
+`df43420eff661b2146fd032692cdbce8ab1ec486`, built by
+[Graphix CI run 34129393720](https://github.com/Chevalier12/Graphix/actions/runs/34129393720).
+Its downloaded NuGet.org `.nupkg` SHA256 is
+`43B84FD8B2A5A418565CB80FAA97A38AC2D13B7704F2B25EFA78DCC2C774F341`.
+Its six native CTest suites passed
 25/25 each. A separate real Windows-driver maximize regression passed 400/400
 assertions on x64 and ARM64. These checks do not certify GPU behavior.
-The artifact has a 30-day retention period and is not a permanent feed. The
-package directory is ignored by Git, so other developers and CI must populate
-it before restore. An existing copy can be supplied directly instead of using
-GitHub CLI. Never replace a package's bytes under an already-used version.
+The public packages are independent of Actions artifact retention. NuGet.org adds
+a repository signature, so the public ZIP hashes differ from the unsigned CI
+artifacts. Every managed/native payload entry was compared byte-for-byte against
+the verified CI package, and both NuGet repository signatures were validated.
+Never replace a package's payload under an already-used version.
 
 This version corrects independent maximum dimensions in native Windows
 maximization, including borderless client sizing. Repository verification and

@@ -7,9 +7,9 @@ not a promise that every WPF-shaped type has matching WPF behavior.
 The canonical public API documentation lives under
 [`docs-site/documentation/classes/`](docs-site/documentation/classes/).
 
-The [historical architecture diagram](docs/assets/cerneala-architecture.png)
-predates the MonoGame/WindowsDX removal. Its retired backend branches are not
-current runtime options; the flow and ownership below describe the current source.
+The [architecture diagram](docs/assets/cerneala-architecture.png) summarizes
+the retained runtime and the SDL3 + SDL_GPU desktop composition. The flow and
+ownership below provide the detailed context.
 
 ## The Short Version
 

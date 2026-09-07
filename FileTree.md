@@ -28,6 +28,164 @@ Generated from `.`.
 |-- benchmarks/
 |   |-- Cerneala.Benchmarks/
 |   |   |-- results/
+|   |   |   |-- 2026-09-04-collision-stage0/
+|   |   |   |   |-- algorithm-market.md
+|   |   |   |   |-- baseline.json
+|   |   |   |   |-- stage0-contract-and-gates.md
+|   |   |   |   |-- stage0-core-red.trx
+|   |   |   |   +-- stage0-sourcegen-red.trx
+|   |   |   |-- 2026-09-04-collision-stage2/
+|   |   |   |   |-- README.md
+|   |   |   |   +-- results.json
+|   |   |   |-- 2026-09-04-collision-stage5/
+|   |   |   |   |-- SdlGpu/
+|   |   |   |   |   |-- collision-atlas.png
+|   |   |   |   |   |-- collision-backend.json
+|   |   |   |   |   |-- collision-closed.png
+|   |   |   |   |   +-- collision-open.png
+|   |   |   |   |-- WindowsDx/
+|   |   |   |   |   |-- collision-atlas.png
+|   |   |   |   |   |-- collision-backend.json
+|   |   |   |   |   |-- collision-closed.png
+|   |   |   |   |   +-- collision-open.png
+|   |   |   |   |-- api-compat.md
+|   |   |   |   |-- api-compat.proj
+|   |   |   |   |-- api-compat.suppressions.xml
+|   |   |   |   |-- benchmark-results.json
+|   |   |   |   +-- README.md
+|   |   |   |-- 2026-09-04-sprite-animation-stage0/
+|   |   |   |   |-- stage0-contract-and-gates.md
+|   |   |   |   |-- stage0-core-red.trx
+|   |   |   |   +-- stage0-sourcegen-red.trx
+|   |   |   |-- 2026-09-04-sprite-animation-stage2/
+|   |   |   |   |-- sprite-animation-stage2-core.trx
+|   |   |   |   |-- sprite-animation-stage2-language.trx
+|   |   |   |   |-- sprite-animation-stage2-regressions.trx
+|   |   |   |   +-- sprite-animation-stage2-sourcegen.trx
+|   |   |   |-- 2026-09-04-sprite-animation-stage3/
+|   |   |   |   |-- baseline.json
+|   |   |   |   |-- optimized.json
+|   |   |   |   |-- README.md
+|   |   |   |   |-- sprite-animation-stage3-core-suite.trx
+|   |   |   |   |-- sprite-animation-stage3-first.trx
+|   |   |   |   |-- sprite-animation-stage3-foundation-rerun.trx
+|   |   |   |   |-- sprite-animation-stage3-green.trx
+|   |   |   |   |-- sprite-animation-stage3-red.trx
+|   |   |   |   +-- sprite-animation-stage3-tail-red.trx
+|   |   |   |-- 2026-09-04-sprite-animation-stage4/
+|   |   |   |   |-- Failures/
+|   |   |   |   |   |-- BaselineSpinBlur/
+|   |   |   |   |   |   |-- heatmap.png
+|   |   |   |   |   |   |-- pixel-diff.txt
+|   |   |   |   |   |   |-- sdlgpu.png
+|   |   |   |   |   |   +-- windowsdx.png
+|   |   |   |   |   +-- CurrentSpinBlur/
+|   |   |   |   |       |-- heatmap.png
+|   |   |   |   |       |-- pixel-diff.txt
+|   |   |   |   |       |-- sdlgpu.png
+|   |   |   |   |       +-- windowsdx.png
+|   |   |   |   |-- final-suite/
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_00_25_21_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_00_25_42_net10.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_00_26_46_net10.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_00_27_22_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_00_27_30_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_00_28_25_net8.0.trx
+|   |   |   |   |   +-- lauri_DESKTOP-JT43V3D_2026-09-05_00_33_29_net8.0.trx
+|   |   |   |   |-- full-suite/
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-04_23_34_25_net10.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-04_23_36_48_net10.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-04_23_38_25_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-04_23_38_29_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-04_23_38_31_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-04_23_39_10_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-04_23_40_52_net10.0.trx
+|   |   |   |   |   +-- lauri_DESKTOP-JT43V3D_2026-09-04_23_41_03_net8.0.trx
+|   |   |   |   |-- SdlGpu/
+|   |   |   |   |   |-- animation-000.png
+|   |   |   |   |   |-- animation-100.png
+|   |   |   |   |   |-- animation-200.png
+|   |   |   |   |   |-- animation-300.png
+|   |   |   |   |   |-- animation-atlas.png
+|   |   |   |   |   +-- animation-backend.json
+|   |   |   |   |-- verified-suite/
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_00_34_37_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_00_34_58_net10.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_00_36_19_net10.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_00_36_56_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_00_37_03_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_00_37_57_net10.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_00_38_00_net8.0.trx
+|   |   |   |   |   +-- lauri_DESKTOP-JT43V3D_2026-09-05_00_42_48_net8.0.trx
+|   |   |   |   |-- WindowsDx/
+|   |   |   |   |   |-- animation-000.png
+|   |   |   |   |   |-- animation-100.png
+|   |   |   |   |   |-- animation-200.png
+|   |   |   |   |   |-- animation-300.png
+|   |   |   |   |   |-- animation-atlas.png
+|   |   |   |   |   +-- animation-backend.json
+|   |   |   |   |-- api-compat.md
+|   |   |   |   |-- api-compat.proj
+|   |   |   |   |-- api-compat.suppressions.generated.xml
+|   |   |   |   |-- api-compat.suppressions.xml
+|   |   |   |   |-- comparison.json
+|   |   |   |   |-- final-suite.log
+|   |   |   |   |-- full-suite.log
+|   |   |   |   |-- language-performance-baseline.trx
+|   |   |   |   |-- language-performance-isolated.trx
+|   |   |   |   |-- README.md
+|   |   |   |   |-- spin-input-probe.trx
+|   |   |   |   |-- spin-mip-red.trx
+|   |   |   |   |-- spinblur-baseline.trx
+|   |   |   |   |-- spinblur-green.trx
+|   |   |   |   |-- spinblur-isolated.trx
+|   |   |   |   |-- verified-suite.log
+|   |   |   |   |-- visualstudio-restore-rerun.log
+|   |   |   |   +-- visualstudio-restore-rerun.trx
+|   |   |   |-- 2026-09-04-tilemap-baseline/
+|   |   |   |   |-- baseline.json
+|   |   |   |   |-- stage0-contract-and-gates.md
+|   |   |   |   |-- stage0-core-red.trx
+|   |   |   |   +-- stage0-sourcegen-red.trx
+|   |   |   |-- 2026-09-04-tilemap-stage3/
+|   |   |   |   |-- SdlGpu/
+|   |   |   |   |   |-- tilemap-after.png
+|   |   |   |   |   |-- tilemap-atlas.png
+|   |   |   |   |   +-- tilemap-before.png
+|   |   |   |   |-- WindowsDx/
+|   |   |   |   |   |-- tilemap-after.png
+|   |   |   |   |   |-- tilemap-atlas.png
+|   |   |   |   |   +-- tilemap-before.png
+|   |   |   |   +-- README.md
+|   |   |   |-- 2026-09-04-tilemap-stage4/
+|   |   |   |   |-- backend-profile.json
+|   |   |   |   |-- optimized-rerun.json
+|   |   |   |   |-- optimized.json
+|   |   |   |   |-- profile-structures.png
+|   |   |   |   |-- profile-terrain.png
+|   |   |   |   +-- README.md
+|   |   |   |-- 2026-09-04-tilemap-stage5/
+|   |   |   |   |-- SdlGpu/
+|   |   |   |   |   |-- tilemap-conformance-backend.json
+|   |   |   |   |   |-- tilemap-conformance-initial.png
+|   |   |   |   |   |-- tilemap-conformance-motion-prism.png
+|   |   |   |   |   |-- tilemap-conformance-pan-zoom.png
+|   |   |   |   |   |-- tilemap-conformance-structures.png
+|   |   |   |   |   +-- tilemap-conformance-terrain.png
+|   |   |   |   |-- WindowsDx/
+|   |   |   |   |   |-- tilemap-conformance-backend.json
+|   |   |   |   |   |-- tilemap-conformance-initial.png
+|   |   |   |   |   |-- tilemap-conformance-motion-prism.png
+|   |   |   |   |   |-- tilemap-conformance-pan-zoom.png
+|   |   |   |   |   |-- tilemap-conformance-structures.png
+|   |   |   |   |   +-- tilemap-conformance-terrain.png
+|   |   |   |   |-- api-compat.md
+|   |   |   |   |-- api-compat.proj
+|   |   |   |   |-- api-compat.suppressions.xml
+|   |   |   |   |-- benchmark-final-verification.md
+|   |   |   |   |-- benchmark-loaded-attempt.json
+|   |   |   |   |-- comparison.json
+|   |   |   |   +-- README.md
 |   |   |   |-- 2026-07-13-queue-engine-2.md
 |   |   |   |-- 2026-07-20-prism-filter-catalog.md
 |   |   |   |-- 2026-07-20-prism-retained-cache-off-baseline.md
@@ -43,6 +201,8 @@ Generated from `.`.
 |   |   |-- CerberusPlanningBenchmarks.cs
 |   |   |-- Cerneala.Benchmarks.csproj
 |   |   |-- CernealaLanguageBenchmarks.cs
+|   |   |-- CollisionStageTwoBenchmarks.cs
+|   |   |-- CollisionStageZeroBenchmarks.cs
 |   |   |-- DrawingBatchBenchmarks.cs
 |   |   |-- DrawingShapeBenchmarks.cs
 |   |   |-- DrawingStateBenchmarks.cs
@@ -50,10 +210,15 @@ Generated from `.`.
 |   |   |-- DrawingTextLayoutBenchmarks.cs
 |   |   |-- PrismInstanceBenchmarks.cs
 |   |   |-- PrismRetainedCacheBenchmarkRunner.cs
-|   |   |-- PrismSdlGpuComparisonBenchmarkRunner.cs
+|   |   |-- PrismSdlGpuBenchmarkRunner.cs
 |   |   |-- Program.cs
 |   |   |-- QueueEngineBenchmarks.cs
 |   |   |-- README.md
+|   |   |-- SceneDebugOverlayBenchmarks.cs
+|   |   |-- SpriteAnimationBenchmarks.cs
+|   |   |-- TileMapBaselineBenchmarks.cs
+|   |   |-- TileMapStage4BackendProfileRunner.cs
+|   |   |-- TileMapStage4Benchmarks.cs
 |   |   +-- UiRelayBenchmarks.cs
 |   |-- Cerneala.PresentationFrameBudget/
 |   |   |-- Cerneala.PresentationFrameBudget.csproj
@@ -203,21 +368,31 @@ Generated from `.`.
 |       |   |-- stage5-api-diff.md
 |       |   |-- stage5-api-diff.txt
 |       |   +-- stage6-results.md
-|       +-- 2026-09-02-cerberus/
-|           |-- final/
-|           |   |-- results/
-|           |   |   |-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-report-full-compressed.json
-|           |   |   |-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-report-github.md
-|           |   |   |-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-report.csv
-|           |   |   +-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-report.html
-|           |   |-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-20260902-031239.log
-|           |   +-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-20260902-032111.log
+|       |-- 2026-09-02-cerberus/
+|       |   |-- final/
+|       |   |   |-- results/
+|       |   |   |   |-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-report-full-compressed.json
+|       |   |   |   |-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-report-github.md
+|       |   |   |   |-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-report.csv
+|       |   |   |   +-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-report.html
+|       |   |   |-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-20260902-031239.log
+|       |   |   +-- Cerneala.Benchmarks.CerberusPlanningBenchmarks-20260902-032111.log
+|       |   |-- api-compat.md
+|       |   |-- api-compat.proj
+|       |   |-- baseline.md
+|       |   +-- final.md
+|       |-- 2026-09-03-servo/
+|       |   |-- api-compat.current.txt
+|       |   |-- api-compat.md
+|       |   |-- api-compat.proj
+|       |   |-- api-compat.suppressions.xml
+|       |   |-- formatter.current.txt
+|       |   |-- formatter.files.txt
+|       |   +-- formatter.goal-scoped.txt
+|       +-- 2026-09-04-rendersurface2d-scene-foundation/
 |           |-- api-compat.md
 |           |-- api-compat.proj
-|           |-- baseline.md
-|           +-- final.md
-|-- Cerneala.Backends.MonoGame/
-|   +-- Cerneala.Backends.MonoGame.csproj
+|           +-- api-compat.suppressions.xml
 |-- Cerneala.Backends.SdlGpu/
 |   |-- Gpu/
 |   |   |-- Shaders/
@@ -232,7 +407,9 @@ Generated from `.`.
 |   |   |-- Cerberus.cs
 |   |   |-- SdlGpuDebugLabels.cs
 |   |   |-- SdlGpuDeviceOwner.cs
+|   |   |-- SdlGpuDrawingBackend.BrushCaptures.cs
 |   |   |-- SdlGpuDrawingBackend.cs
+|   |   |-- SdlGpuDrawingBackend.SurfaceDamage.cs
 |   |   |-- SdlGpuDrawingFrameCounters.cs
 |   |   |-- SdlGpuDrawingResources.cs
 |   |   |-- SdlGpuGeometryUploadArena.cs
@@ -256,7 +433,11 @@ Generated from `.`.
 |   |   |   |-- PrismCopy.frag.dxil
 |   |   |   |-- PrismCopy.frag.hlsl
 |   |   |   |-- PrismCopy.frag.msl
-|   |   |   +-- PrismCopy.frag.spv
+|   |   |   |-- PrismCopy.frag.spv
+|   |   |   |-- PrismPresentation.frag.dxil
+|   |   |   |-- PrismPresentation.frag.hlsl
+|   |   |   |-- PrismPresentation.frag.msl
+|   |   |   +-- PrismPresentation.frag.spv
 |   |   |-- ISdlGpuBackdropFrameLease.cs
 |   |   |-- SdlGpuPrismDeviceResources.cs
 |   |   |-- SdlGpuPrismExecutionColdStartWarmup.cs
@@ -372,17 +553,9 @@ Generated from `.`.
 |   |   +-- SdlInputSource.cs
 |   |-- Interop/
 |   |   |-- ISdlApi.cs
-|   |   +-- NativeSdlApi.cs
+|   |   |-- NativeSdlApi.cs
+|   |   +-- SdlWindowsWindowFeatures.cs
 |   +-- Cerneala.Platforms.Sdl3.csproj
-|-- Cerneala.Platforms.Win32/
-|   |-- Hosting/
-|   |   |-- Win32.cs
-|   |   |-- Win32CursorService.cs
-|   |   |-- Win32InputSource.cs
-|   |   |-- Win32WindowPlatform.cs
-|   |   |-- WindowsDpiAwareness.cs
-|   |   +-- WindowsGpuPreference.cs
-|   +-- Cerneala.Platforms.Win32.csproj
 |-- Cerneala.PreviewHost/
 |   |-- Properties/
 |   |   +-- AssemblyInfo.cs
@@ -392,6 +565,15 @@ Generated from `.`.
 |   |-- PreviewMarkupHotReload.cs
 |   |-- PreviewRenderSession.cs
 |   +-- Program.cs
+|-- Cerneala.Scene2D.Importers/
+|   |-- Cerneala.Scene2D.Importers.csproj
+|   |-- ImportContext.cs
+|   |-- ImportConventions.cs
+|   |-- LdtkScene2DImporter.cs
+|   |-- Scene2DImportOptions.cs
+|   |-- Scene2DImportResult.cs
+|   |-- TileDataDecoder.cs
+|   +-- TiledScene2DImporter.cs
 |-- Cerneala.SourceGen/
 |   |-- Prism/
 |   |   |-- Binding/
@@ -485,10 +667,10 @@ Generated from `.`.
 |   |-- MotionChapterView.crn.cs
 |   |-- OpeningView.crn
 |   |-- OpeningView.crn.cs
-|   |-- PresentationWindow.Automation.cs
 |   |-- PresentationWindow.crn
 |   |-- PresentationWindow.crn.cs
 |   |-- PresentationWindow.OuterGlowLab.cs
+|   |-- PresentationWindow.Servo.cs
 |   |-- PrismChapterView.crn
 |   |-- PrismChapterView.crn.cs
 |   |-- PrismOuterGlowLabView.crn
@@ -507,6 +689,7 @@ Generated from `.`.
 |   |   |-- 2026-08-25-sdl3-sdlgpu-stage-0-baseline.md
 |   |   |-- 2026-08-26-sdlgpu-stage-5-drawing-conformance.md
 |   |   |-- 2026-08-26-sdlgpu-stage-6-shader-toolchain.md
+|   |   |-- 2026-09-05-monogame-removal.md
 |   |   |-- prism-visual-algorithm-checklist-2026-07-25.md
 |   |   +-- prism-visual-style-algorithm-checklist-2026-08-02.md
 |   |-- diagrams/
@@ -514,6 +697,332 @@ Generated from `.`.
 |   |   |-- retained-frame-loop.md
 |   |   +-- ui-layer-boundaries.md
 |   |-- plans/
+|   |   |-- evidence/
+|   |   |   |-- 2026-09-04-scene-import-stage0/
+|   |   |   |   |-- compatibility-matrix.md
+|   |   |   |   |-- compatibility-research.md
+|   |   |   |   |-- fixture-validation.json
+|   |   |   |   |-- README.md
+|   |   |   |   |-- scene-import-stage0-core-red.trx
+|   |   |   |   +-- scene-import-stage0-sourcegen-red.trx
+|   |   |   |-- 2026-09-04-scene-import-stage1/
+|   |   |   |   |-- README.md
+|   |   |   |   |-- scene-import-stage1-budget-red.trx
+|   |   |   |   |-- scene-import-stage1-cache-red.trx
+|   |   |   |   |-- scene-import-stage1-docs.trx
+|   |   |   |   |-- scene-import-stage1-document-red.trx
+|   |   |   |   |-- scene-import-stage1-gate-green.trx
+|   |   |   |   |-- scene-import-stage1-geometry-red.trx
+|   |   |   |   |-- scene-import-stage1-hostile-first.trx
+|   |   |   |   |-- scene-import-stage1-original-core.trx
+|   |   |   |   |-- scene-import-stage1-promotion-baseline.trx
+|   |   |   |   |-- scene-import-stage1-publication-red.trx
+|   |   |   |   |-- scene-import-stage1-red.trx
+|   |   |   |   +-- scene-import-stage1-shared-collector-red.trx
+|   |   |   |-- 2026-09-04-scene-import-stage2/
+|   |   |   |   |-- compression-decision.md
+|   |   |   |   |-- README.md
+|   |   |   |   |-- scene-import-stage2-allocation-green.trx
+|   |   |   |   |-- scene-import-stage2-core-regressions.trx
+|   |   |   |   |-- scene-import-stage2-coverage-green.trx
+|   |   |   |   |-- scene-import-stage2-coverage-red.trx
+|   |   |   |   |-- scene-import-stage2-docs.trx
+|   |   |   |   |-- scene-import-stage2-drive-root-green.trx
+|   |   |   |   |-- scene-import-stage2-drive-root-red.trx
+|   |   |   |   |-- scene-import-stage2-final-hostile-green.trx
+|   |   |   |   |-- scene-import-stage2-final-hostile-red.trx
+|   |   |   |   |-- scene-import-stage2-first.trx
+|   |   |   |   |-- scene-import-stage2-gate-final.trx
+|   |   |   |   |-- scene-import-stage2-gate.trx
+|   |   |   |   |-- scene-import-stage2-hostile-red.trx
+|   |   |   |   +-- scene-import-stage2-migrated-red.trx
+|   |   |   |-- 2026-09-04-scene-import-stage3/
+|   |   |   |   |-- README.md
+|   |   |   |   |-- scene-import-stage3-audit-red.trx
+|   |   |   |   |-- scene-import-stage3-core.trx
+|   |   |   |   |-- scene-import-stage3-docs.trx
+|   |   |   |   |-- scene-import-stage3-gate.trx
+|   |   |   |   |-- scene-import-stage3-original-red.trx
+|   |   |   |   +-- scene-import-stage3-valid-expanded-red.trx
+|   |   |   |-- 2026-09-04-scene-import-stage4/
+|   |   |   |   |-- gpu-driver/
+|   |   |   |   |   |-- aa-application-controlled.json
+|   |   |   |   |   |-- aa-gamma-off.json
+|   |   |   |   |   |-- aa-override-baseline.json
+|   |   |   |   |   |-- debug-layer-after-install.json
+|   |   |   |   |   |-- debug-layer-availability.json
+|   |   |   |   |   |-- direct-aligned-state.json
+|   |   |   |   |   |-- direct-all-observed-states.json
+|   |   |   |   |   |-- direct-monogame-states.json
+|   |   |   |   |   |-- gpu-investigation-occlusion.trx
+|   |   |   |   |   |-- graphics-tools-install.json
+|   |   |   |   |   |-- graphics-tools-installed-occlusion.trx
+|   |   |   |   |   |-- msaa-debug-layer-installed.json
+|   |   |   |   |   |-- msaa-dxcap-validation.log
+|   |   |   |   |   |-- msaa-dxcap.vsglog
+|   |   |   |   |   |-- msaa-each-draw.json
+|   |   |   |   |   |-- msaa-matrix-valid.json
+|   |   |   |   |   |-- msaa-pre-resolve.json
+|   |   |   |   |   |-- msaa-under-dxcap.json
+|   |   |   |   |   |-- profiles-before.json
+|   |   |   |   |   |-- profiles-final.json
+|   |   |   |   |   +-- README.md
+|   |   |   |   |-- SdlGpu/
+|   |   |   |   |   |-- debug-all.png
+|   |   |   |   |   |-- debug-atlas.png
+|   |   |   |   |   |-- debug-backend.json
+|   |   |   |   |   |-- debug-chunks.png
+|   |   |   |   |   |-- debug-colliders.png
+|   |   |   |   |   |-- debug-coordinates.png
+|   |   |   |   |   |-- debug-effects.png
+|   |   |   |   |   |-- debug-ids.png
+|   |   |   |   |   |-- debug-navigation.png
+|   |   |   |   |   |-- debug-off-restored.png
+|   |   |   |   |   |-- debug-off.png
+|   |   |   |   |   |-- debug-order.png
+|   |   |   |   |   |-- debug-promoted.png
+|   |   |   |   |   +-- debug-zoom.png
+|   |   |   |   |-- overlay-cost-stable.json
+|   |   |   |   |-- overlay-cost.json
+|   |   |   |   |-- README.md
+|   |   |   |   |-- scene-import-stage4-checkpoint.trx
+|   |   |   |   |-- scene-import-stage4-core.trx
+|   |   |   |   |-- scene-import-stage4-docs.trx
+|   |   |   |   |-- scene-import-stage4-native-msaa-warp-probe.trx
+|   |   |   |   |-- scene-import-stage4-occlusion-blend-red.trx
+|   |   |   |   |-- scene-import-stage4-sdl-dpi.trx
+|   |   |   |   +-- scene-import-stage4-sourcegen-verified.trx
+|   |   |   |-- 2026-09-04-scene-import-stage5/
+|   |   |   |   |-- native-attempt1/
+|   |   |   |   |   |-- stderr.log
+|   |   |   |   |   +-- stdout.log
+|   |   |   |   |-- native-attempt2/
+|   |   |   |   |   |-- failure.txt
+|   |   |   |   |   |-- stderr.log
+|   |   |   |   |   +-- stdout.log
+|   |   |   |   |-- native-attempt3/
+|   |   |   |   |   |-- 01-closed.png
+|   |   |   |   |   |-- failure.txt
+|   |   |   |   |   |-- stderr.log
+|   |   |   |   |   +-- stdout.log
+|   |   |   |   |-- native-attempt4/
+|   |   |   |   |   |-- 01-closed.png
+|   |   |   |   |   |-- failure.txt
+|   |   |   |   |   |-- stderr.log
+|   |   |   |   |   +-- stdout.log
+|   |   |   |   |-- native-attempt5/
+|   |   |   |   |   |-- 01-closed-player.png
+|   |   |   |   |   |-- 01-closed.json
+|   |   |   |   |   |-- 01-closed.png
+|   |   |   |   |   |-- 02-door-contact-player.png
+|   |   |   |   |   |-- 02-door-contact.json
+|   |   |   |   |   |-- 02-door-contact.png
+|   |   |   |   |   |-- 03-open-house-player.png
+|   |   |   |   |   |-- 03-open-house.json
+|   |   |   |   |   |-- 03-open-house.png
+|   |   |   |   |   |-- 04-fence-contact-player.png
+|   |   |   |   |   |-- 04-fence-contact.json
+|   |   |   |   |   |-- 04-fence-contact.png
+|   |   |   |   |   |-- 05-attack-completed-player.png
+|   |   |   |   |   |-- 05-attack-completed.json
+|   |   |   |   |   |-- 05-attack-completed.png
+|   |   |   |   |   |-- 06-pan-player.png
+|   |   |   |   |   |-- 06-pan.json
+|   |   |   |   |   |-- 06-pan.png
+|   |   |   |   |   |-- 07-local-mutation-player.png
+|   |   |   |   |   |-- 07-local-mutation.json
+|   |   |   |   |   |-- 07-local-mutation.png
+|   |   |   |   |   |-- 08-debug-player.png
+|   |   |   |   |   |-- 08-debug.json
+|   |   |   |   |   |-- 08-debug.png
+|   |   |   |   |   |-- 09-ldtk-player.png
+|   |   |   |   |   |-- 09-ldtk.json
+|   |   |   |   |   |-- 09-ldtk.png
+|   |   |   |   |   |-- results.json
+|   |   |   |   |   |-- stderr.log
+|   |   |   |   |   +-- stdout.log
+|   |   |   |   |-- native-attempt6/
+|   |   |   |   |   |-- failure.txt
+|   |   |   |   |   |-- stderr.log
+|   |   |   |   |   +-- stdout.log
+|   |   |   |   |-- native-final/
+|   |   |   |   |   |-- 01-closed-player.png
+|   |   |   |   |   |-- 01-closed.json
+|   |   |   |   |   |-- 01-closed.png
+|   |   |   |   |   |-- 02-door-contact-player.png
+|   |   |   |   |   |-- 02-door-contact.json
+|   |   |   |   |   |-- 02-door-contact.png
+|   |   |   |   |   |-- 03-open-house-player.png
+|   |   |   |   |   |-- 03-open-house.json
+|   |   |   |   |   |-- 03-open-house.png
+|   |   |   |   |   |-- 04-fence-contact-player.png
+|   |   |   |   |   |-- 04-fence-contact.json
+|   |   |   |   |   |-- 04-fence-contact.png
+|   |   |   |   |   |-- 05-attack-completed-player.png
+|   |   |   |   |   |-- 05-attack-completed.json
+|   |   |   |   |   |-- 05-attack-completed.png
+|   |   |   |   |   |-- 06-pan-player.png
+|   |   |   |   |   |-- 06-pan.json
+|   |   |   |   |   |-- 06-pan.png
+|   |   |   |   |   |-- 07-local-mutation-player.png
+|   |   |   |   |   |-- 07-local-mutation.json
+|   |   |   |   |   |-- 07-local-mutation.png
+|   |   |   |   |   |-- failure.txt
+|   |   |   |   |   |-- stderr.log
+|   |   |   |   |   +-- stdout.log
+|   |   |   |   |-- native-final-green/
+|   |   |   |   |   |-- 01-closed-player.png
+|   |   |   |   |   |-- 01-closed.json
+|   |   |   |   |   |-- 01-closed.png
+|   |   |   |   |   |-- 02-door-contact-player.png
+|   |   |   |   |   |-- 02-door-contact.json
+|   |   |   |   |   |-- 02-door-contact.png
+|   |   |   |   |   |-- 03-open-house-player.png
+|   |   |   |   |   |-- 03-open-house.json
+|   |   |   |   |   |-- 03-open-house.png
+|   |   |   |   |   |-- 04-fence-contact-player.png
+|   |   |   |   |   |-- 04-fence-contact.json
+|   |   |   |   |   |-- 04-fence-contact.png
+|   |   |   |   |   |-- 05-attack-completed-player.png
+|   |   |   |   |   |-- 05-attack-completed.json
+|   |   |   |   |   |-- 05-attack-completed.png
+|   |   |   |   |   |-- 06-pan-player.png
+|   |   |   |   |   |-- 06-pan.json
+|   |   |   |   |   |-- 06-pan.png
+|   |   |   |   |   |-- 07-local-mutation-player.png
+|   |   |   |   |   |-- 07-local-mutation.json
+|   |   |   |   |   |-- 07-local-mutation.png
+|   |   |   |   |   |-- 08-debug-player.png
+|   |   |   |   |   |-- 08-debug.json
+|   |   |   |   |   |-- 08-debug.png
+|   |   |   |   |   |-- 09-ldtk-player.png
+|   |   |   |   |   |-- 09-ldtk.json
+|   |   |   |   |   |-- 09-ldtk.png
+|   |   |   |   |   |-- results.json
+|   |   |   |   |   |-- stderr.log
+|   |   |   |   |   +-- stdout.log
+|   |   |   |   |-- collection-bindings-green.trx
+|   |   |   |   |-- collection-bindings-red.trx
+|   |   |   |   |-- detective-tilemap-green.trx
+|   |   |   |   |-- detective-tilemap-red.trx
+|   |   |   |   |-- init-only-bindings-red.trx
+|   |   |   |   |-- nested-prism-batch-green.trx
+|   |   |   |   |-- nested-prism-batch-red.trx
+|   |   |   |   |-- README.md
+|   |   |   |   |-- scene-origin-dpi-red.trx
+|   |   |   |   |-- scene-origin-dpi-valid-red.trx
+|   |   |   |   |-- scene-origin-red.trx
+|   |   |   |   |-- sdl-suite.trx
+|   |   |   |   |-- servo-scene-affected.trx
+|   |   |   |   |-- servo-scene-green.trx
+|   |   |   |   |-- servo-scene-origin-final-green.trx
+|   |   |   |   |-- servo-scene-origin-green.trx
+|   |   |   |   |-- servo-scene-origin-verified.trx
+|   |   |   |   |-- servo-scene-red.trx
+|   |   |   |   |-- sourcegen-suite.trx
+|   |   |   |   |-- stage5-core-affected.trx
+|   |   |   |   |-- stage5-docs.trx
+|   |   |   |   |-- stage5-importers.trx
+|   |   |   |   |-- stage5-language.trx
+|   |   |   |   |-- stage5-sdl.trx
+|   |   |   |   |-- stage5-sourcegen.trx
+|   |   |   |   |-- world-assets-green.trx
+|   |   |   |   |-- world-assets-initial.trx
+|   |   |   |   |-- world-bindings-green.trx
+|   |   |   |   |-- world-markup-contract.trx
+|   |   |   |   |-- world-markup-matrix-green.trx
+|   |   |   |   |-- world-markup-matrix.trx
+|   |   |   |   +-- world-markup-runtime.trx
+|   |   |   |-- 2026-09-04-scene-import-stage6/
+|   |   |   |   |-- final-suite/
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_02_45_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_02_45_net8.0[1].trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_02_50_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_02_53_net10.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_03_24_net10.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_03_41_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_03_51_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_04_21_net8.0.trx
+|   |   |   |   |   +-- lauri_DESKTOP-JT43V3D_2026-09-05_15_06_37_net10.0.trx
+|   |   |   |   |-- full-suite/
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_14_37_41_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_14_37_42_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_14_37_44_net10.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_14_38_09_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_14_38_21_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_14_39_04_net10.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_14_40_17_net8.0.trx
+|   |   |   |   |   +-- lauri_DESKTOP-JT43V3D_2026-09-05_14_40_40_net10.0.trx
+|   |   |   |   |-- api-compat-green.log
+|   |   |   |   |-- api-compat-red.log
+|   |   |   |   |-- api-compat.md
+|   |   |   |   |-- api-compat.proj
+|   |   |   |   |-- api-compat.suppressions.xml
+|   |   |   |   |-- core-affected-green.log
+|   |   |   |   |-- core-affected-green.trx
+|   |   |   |   |-- core-restored-compile.log
+|   |   |   |   |-- diff-check-warnings.log
+|   |   |   |   |-- final-suite.log
+|   |   |   |   |-- full-suite.log
+|   |   |   |   |-- index.json
+|   |   |   |   |-- namespace-experiment.log
+|   |   |   |   |-- README.md
+|   |   |   |   +-- release-build.log
+|   |   |   +-- 2026-09-05-inline-aspect-syntax/
+|   |   |       |-- full-suite/
+|   |   |       |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_40_28_net8.0.trx
+|   |   |       |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_40_33_net10.0.trx
+|   |   |       |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_40_37_net8.0.trx
+|   |   |       |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_40_40_net8.0.trx
+|   |   |       |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_42_45_net8.0.trx
+|   |   |       |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_42_47_net8.0.trx
+|   |   |       |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_43_06_net10.0.trx
+|   |   |       |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_43_14_net10.0.trx
+|   |   |       |   +-- lauri_DESKTOP-JT43V3D_2026-09-05_15_44_03_net8.0.trx
+|   |   |       |-- native/
+|   |   |       |   |-- 01-closed-player.png
+|   |   |       |   |-- 01-closed.json
+|   |   |       |   |-- 01-closed.png
+|   |   |       |   |-- 02-door-contact-player.png
+|   |   |       |   |-- 02-door-contact.json
+|   |   |       |   |-- 02-door-contact.png
+|   |   |       |   |-- 03-open-house-player.png
+|   |   |       |   |-- 03-open-house.json
+|   |   |       |   |-- 03-open-house.png
+|   |   |       |   |-- 04-fence-contact-player.png
+|   |   |       |   |-- 04-fence-contact.json
+|   |   |       |   |-- 04-fence-contact.png
+|   |   |       |   |-- 05-attack-completed-player.png
+|   |   |       |   |-- 05-attack-completed.json
+|   |   |       |   |-- 05-attack-completed.png
+|   |   |       |   |-- 06-pan-player.png
+|   |   |       |   |-- 06-pan.json
+|   |   |       |   |-- 06-pan.png
+|   |   |       |   |-- 07-local-mutation-player.png
+|   |   |       |   |-- 07-local-mutation.json
+|   |   |       |   |-- 07-local-mutation.png
+|   |   |       |   |-- 08-debug-player.png
+|   |   |       |   |-- 08-debug.json
+|   |   |       |   |-- 08-debug.png
+|   |   |       |   |-- 09-ldtk-player.png
+|   |   |       |   |-- 09-ldtk.json
+|   |   |       |   |-- 09-ldtk.png
+|   |   |       |   |-- results.json
+|   |   |       |   |-- stderr.log
+|   |   |       |   +-- stdout.log
+|   |   |       |-- full-suite.log
+|   |   |       |-- index.json
+|   |   |       |-- language-green.trx
+|   |   |       |-- language-suite.trx
+|   |   |       |-- language-valid-red.trx
+|   |   |       |-- README.md
+|   |   |       |-- sdl-build.log
+|   |   |       |-- sourcegen-green.trx
+|   |   |       |-- sourcegen-suite.trx
+|   |   |       |-- sourcegen-valid-red.trx
+|   |   |       |-- suite-summary.json
+|   |   |       |-- tetris.trx
+|   |   |       +-- world-runtime.trx
 |   |   |-- 2026-07-10-inline-component-template-markup.md
 |   |   |-- 2026-07-10-window-windowsdx-migration.md
 |   |   |-- 2026-07-11-background-and-borderbrush-brush-migration.md
@@ -558,7 +1067,14 @@ Generated from `.`.
 |   |   |-- 2026-08-24-rendersurface2d-stage-0-baseline.md
 |   |   |-- 2026-08-25-sdl3-sdlgpu-backend-and-explicit-generator-selection.md
 |   |   |-- 2026-08-27-unify-aspect-runtime.md
-|   |   +-- 2026-09-02-private-sdlgpu-cerberus.md
+|   |   |-- 2026-09-02-private-sdlgpu-cerberus.md
+|   |   |-- 2026-09-03-servo-code-first-ui-automation.md
+|   |   |-- 2026-09-04-rendersurface2d-collision-and-picking.md
+|   |   |-- 2026-09-04-rendersurface2d-import-debug-validation.md
+|   |   |-- 2026-09-04-rendersurface2d-scene-foundation.md
+|   |   |-- 2026-09-04-rendersurface2d-sprite-animation.md
+|   |   |-- 2026-09-04-rendersurface2d-tilemap-and-scale.md
+|   |   +-- 2026-09-04-rendersurface2d-world-authoring-plan-index.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
@@ -637,6 +1153,7 @@ Generated from `.`.
 |   |-- prism-public-api-baseline.md
 |   |-- prism-technical-design.md
 |   |-- sdl-desktop-backend.md
+|   |-- servo.md
 |   |-- visual-studio-community-spike.md
 |   |-- visual-studio-community.md
 |   +-- wpf-event-coverage.md
@@ -723,13 +1240,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.Drawing.IFontSource.md
 |   |   |   |-- Cerneala.Drawing.ImageDrawBrushDescriptor.md
 |   |   |   |-- Cerneala.Drawing.LinearGradientDrawBrushDescriptor.md
-|   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameClipStack.md
-|   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.md
-|   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.TextTexture.md
-|   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.TextTextureKey.md
-|   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameDrawMapper.md
-|   |   |   |-- Cerneala.Drawing.MonoGame.MonoGameImage.md
-|   |   |   |-- Cerneala.Drawing.MonoGame.Prism.IMonoGameBackdropFrameLease.md
 |   |   |   |-- Cerneala.Drawing.Prism.AccentedEdgesFilter.md
 |   |   |   |-- Cerneala.Drawing.Prism.AdaptiveWideAngleFilter.md
 |   |   |   |-- Cerneala.Drawing.Prism.AddNoiseFilter.md
@@ -860,7 +1370,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.Drawing.Prism.PrismImage.md
 |   |   |   |-- Cerneala.Drawing.Prism.PrismOperation.md
 |   |   |   |-- Cerneala.Drawing.Prism.PrismPipeline.md
-|   |   |   |-- Cerneala.Drawing.Prism.PrismRendererDiagnostics.md
 |   |   |   |-- Cerneala.Drawing.Prism.PrismRendererOptions.md
 |   |   |   |-- Cerneala.Drawing.Prism.PrismStyle.md
 |   |   |   |-- Cerneala.Drawing.Prism.RadialBlurFilter.md
@@ -919,6 +1428,10 @@ Generated from `.`.
 |   |   |   |-- Cerneala.Drawing.TileDrawBrushDescriptor.md
 |   |   |   |-- Cerneala.Drawing.VisualDrawBrushDescriptor.md
 |   |   |   |-- Cerneala.GameBootstrap.md
+|   |   |   |-- Cerneala.Scene2D.Importers.LdtkScene2DImporter.md
+|   |   |   |-- Cerneala.Scene2D.Importers.Scene2DImportOptions.md
+|   |   |   |-- Cerneala.Scene2D.Importers.Scene2DImportResult.md
+|   |   |   |-- Cerneala.Scene2D.Importers.TiledScene2DImporter.md
 |   |   |   |-- Cerneala.SourceGen.UiMarkupGenerator.GenerationScope.md
 |   |   |   |-- Cerneala.SourceGen.UiMarkupGenerator.MarkupSource.md
 |   |   |   |-- Cerneala.SourceGen.UiMarkupGenerator.md
@@ -952,15 +1465,11 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Aspect.AspectConditionKey.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectConditionNode.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectConditionResult.md
-|   |   |   |-- Cerneala.UI.Aspect.AspectConditionTrace.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectDataContext.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectDataDependency.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectDeclaration.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectDependencySet.md
-|   |   |   |-- Cerneala.UI.Aspect.AspectDiagnostics.md
-|   |   |   |-- Cerneala.UI.Aspect.AspectDiagnostics.Snapshot.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectEngine.md
-|   |   |   |-- Cerneala.UI.Aspect.AspectEngineCounters.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectEngineElementState.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectEnvironment.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectInvalidation.md
@@ -979,7 +1488,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Aspect.AspectRef.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectRegistry.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectResolutionContext.md
-|   |   |   |-- Cerneala.UI.Aspect.AspectResolutionStep.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectRuleSet.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectRuleSetBuilder.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectSlot_TOwner_TTarget_.md
@@ -993,7 +1501,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Aspect.AspectToken.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectTokenBuilder.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectTokenDefinition.md
-|   |   |   |-- Cerneala.UI.Aspect.AspectTokenTrace.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectValue_T_.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectValue.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectVariantKey_TOwner_TValue_.md
@@ -1023,14 +1530,8 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Aspect.StateAspectCondition.md
 |   |   |   |-- Cerneala.UI.Aspect.ThemeTokenBridge.md
 |   |   |   |-- Cerneala.UI.Aspect.VariantAspectCondition.md
-|   |   |   |-- Cerneala.UI.Automation.AutomationElement.md
-|   |   |   |-- Cerneala.UI.Automation.AutomationModifiers.md
-|   |   |   |-- Cerneala.UI.Automation.AutomationProperties.md
-|   |   |   |-- Cerneala.UI.Automation.AutomationScriptRunner.md
-|   |   |   |-- Cerneala.UI.Automation.AutomationSession.md
-|   |   |   |-- Cerneala.UI.Automation.IAutomationInputDriver.md
-|   |   |   |-- Cerneala.UI.Automation.RetainedAutomationInputDriver.md
 |   |   |   |-- Cerneala.UI.Controls.Border.md
+|   |   |   |-- Cerneala.UI.Controls.BoxCollider2D.md
 |   |   |   |-- Cerneala.UI.Controls.Button.md
 |   |   |   |-- Cerneala.UI.Controls.Buttons.ButtonKind.md
 |   |   |   |-- Cerneala.UI.Controls.Buttons.ButtonSize.md
@@ -1040,6 +1541,12 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Buttons.ButtonVariants.md
 |   |   |   |-- Cerneala.UI.Controls.Canvas.md
 |   |   |   |-- Cerneala.UI.Controls.CheckBox.md
+|   |   |   |-- Cerneala.UI.Controls.CircleCollider2D.md
+|   |   |   |-- Cerneala.UI.Controls.Collider2D.md
+|   |   |   |-- Cerneala.UI.Controls.CollisionHit2D.md
+|   |   |   |-- Cerneala.UI.Controls.CollisionQuery2D.md
+|   |   |   |-- Cerneala.UI.Controls.CollisionWorld2D.md
+|   |   |   |-- Cerneala.UI.Controls.CollisionWorld2DDiagnosticsSnapshot.md
 |   |   |   |-- Cerneala.UI.Controls.ColorPicker.md
 |   |   |   |-- Cerneala.UI.Controls.ColorSpectrum.md
 |   |   |   |-- Cerneala.UI.Controls.ColorSwatch.md
@@ -1062,6 +1569,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.InkCanvas.InkInputKind.md
 |   |   |   |-- Cerneala.UI.Controls.InkCanvas.md
 |   |   |   |-- Cerneala.UI.Controls.InkCanvasStrokeCollectedEventArgs.md
+|   |   |   |-- Cerneala.UI.Controls.IScene2DDebugNavigationGrid.md
 |   |   |   |-- Cerneala.UI.Controls.IScrollInfo.md
 |   |   |   |-- Cerneala.UI.Controls.ISelectableItemContainer.md
 |   |   |   |-- Cerneala.UI.Controls.Items.ItemCollection.md
@@ -1076,10 +1584,12 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Menu.md
 |   |   |   |-- Cerneala.UI.Controls.MenuBar.md
 |   |   |   |-- Cerneala.UI.Controls.MenuItem.md
+|   |   |   |-- Cerneala.UI.Controls.MoveCollisionResult2D.md
 |   |   |   |-- Cerneala.UI.Controls.Overlay.md
 |   |   |   |-- Cerneala.UI.Controls.OverlayPlacement.md
 |   |   |   |-- Cerneala.UI.Controls.Panel.md
 |   |   |   |-- Cerneala.UI.Controls.PasswordBox.md
+|   |   |   |-- Cerneala.UI.Controls.PolygonCollider2D.md
 |   |   |   |-- Cerneala.UI.Controls.PopupRoot.md
 |   |   |   |-- Cerneala.UI.Controls.Primitives.ButtonBase.md
 |   |   |   |-- Cerneala.UI.Controls.Primitives.DragCompletedEventArgs.md
@@ -1105,12 +1615,27 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.RenderSurface2DSpriteFlip.md
 |   |   |   |-- Cerneala.UI.Controls.ResizeMode.md
 |   |   |   |-- Cerneala.UI.Controls.Scene2D.md
+|   |   |   |-- Cerneala.UI.Controls.Scene2DAsset.md
+|   |   |   |-- Cerneala.UI.Controls.Scene2DDebugFlags.md
+|   |   |   |-- Cerneala.UI.Controls.Scene2DDebugOverlay.md
+|   |   |   |-- Cerneala.UI.Controls.Scene2DDebugOverlayDiagnostics.md
+|   |   |   |-- Cerneala.UI.Controls.Scene2DDiagnostic.md
+|   |   |   |-- Cerneala.UI.Controls.Scene2DDiagnosticCollector.md
+|   |   |   |-- Cerneala.UI.Controls.Scene2DDiagnosticSeverity.md
+|   |   |   |-- Cerneala.UI.Controls.Scene2DDocument.md
+|   |   |   |-- Cerneala.UI.Controls.Scene2DEntity.md
+|   |   |   |-- Cerneala.UI.Controls.Scene2DLevel.md
+|   |   |   |-- Cerneala.UI.Controls.Scene2DModelValidator.md
+|   |   |   |-- Cerneala.UI.Controls.Scene2DValidationOptions.md
+|   |   |   |-- Cerneala.UI.Controls.Scene2DValidationResult.md
 |   |   |   |-- Cerneala.UI.Controls.SceneItems2D.md
 |   |   |   |-- Cerneala.UI.Controls.SceneNode2D.md
+|   |   |   |-- Cerneala.UI.Controls.SceneOrderMode.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollBarVisibility.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollChangedEventArgs.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollContentPresenter.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollViewer.md
+|   |   |   |-- Cerneala.UI.Controls.SegmentCollider2D.md
 |   |   |   |-- Cerneala.UI.Controls.Selection.SelectionChangedEventArgs.md
 |   |   |   |-- Cerneala.UI.Controls.Selection.SelectionChangeResult.md
 |   |   |   |-- Cerneala.UI.Controls.Selection.SelectionModel_T_.md
@@ -1122,6 +1647,10 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Shapes.SvgPath.md
 |   |   |   |-- Cerneala.UI.Controls.Slider.md
 |   |   |   |-- Cerneala.UI.Controls.Sprite2D.md
+|   |   |   |-- Cerneala.UI.Controls.SpriteAnimationClip.md
+|   |   |   |-- Cerneala.UI.Controls.SpriteAnimationFrame.md
+|   |   |   |-- Cerneala.UI.Controls.SpriteAnimationSet.md
+|   |   |   |-- Cerneala.UI.Controls.SpriteAnimationStateChangeMode.md
 |   |   |   |-- Cerneala.UI.Controls.StackPanel.md
 |   |   |   |-- Cerneala.UI.Controls.SvgImage.md
 |   |   |   |-- Cerneala.UI.Controls.TabControl.md
@@ -1155,6 +1684,22 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.TextBox.md
 |   |   |   |-- Cerneala.UI.Controls.TextChangedEventArgs.md
 |   |   |   |-- Cerneala.UI.Controls.TextSearch.md
+|   |   |   |-- Cerneala.UI.Controls.TileCell2D.md
+|   |   |   |-- Cerneala.UI.Controls.TileCellKey2D.md
+|   |   |   |-- Cerneala.UI.Controls.TileChunk2D.md
+|   |   |   |-- Cerneala.UI.Controls.TileColliderDescriptor2D.md
+|   |   |   |-- Cerneala.UI.Controls.TileColliderShape2D.md
+|   |   |   |-- Cerneala.UI.Controls.TileCoordinate2D.md
+|   |   |   |-- Cerneala.UI.Controls.TileDefinition2D.md
+|   |   |   |-- Cerneala.UI.Controls.TileFlip2D.md
+|   |   |   |-- Cerneala.UI.Controls.TileInstance2D.md
+|   |   |   |-- Cerneala.UI.Controls.TileLayer2D.md
+|   |   |   |-- Cerneala.UI.Controls.TileLayer2DModel.md
+|   |   |   |-- Cerneala.UI.Controls.TileMap2D.md
+|   |   |   |-- Cerneala.UI.Controls.TileMap2DModel.md
+|   |   |   |-- Cerneala.UI.Controls.TileMapBounds2D.md
+|   |   |   |-- Cerneala.UI.Controls.TilePromotion2D.md
+|   |   |   |-- Cerneala.UI.Controls.TileSet2D.md
 |   |   |   |-- Cerneala.UI.Controls.ToolTip.md
 |   |   |   |-- Cerneala.UI.Controls.UserControl_TViewModel_.md
 |   |   |   |-- Cerneala.UI.Controls.UserControl.md
@@ -1201,36 +1746,48 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Data.SortDescription_T_.md
 |   |   |   |-- Cerneala.UI.Data.StringPropertyPath.md
 |   |   |   |-- Cerneala.UI.Data.UiPropertyBinding_T_.md
-|   |   |   |-- Cerneala.UI.Diagnostics.AspectTrace.md
-|   |   |   |-- Cerneala.UI.Diagnostics.AspectTraceSnapshot.md
-|   |   |   |-- Cerneala.UI.Diagnostics.DebugAdorner.md
-|   |   |   |-- Cerneala.UI.Diagnostics.DebugOverlay.md
-|   |   |   |-- Cerneala.UI.Diagnostics.DirtyTreeDumper.DirtyTraceInfo.md
-|   |   |   |-- Cerneala.UI.Diagnostics.DirtyTreeDumper.md
-|   |   |   |-- Cerneala.UI.Diagnostics.ElementRenderDiagnosticsSnapshot.md
-|   |   |   |-- Cerneala.UI.Diagnostics.ElementTreeDumper.md
-|   |   |   |-- Cerneala.UI.Diagnostics.FrameDiagnostics.md
-|   |   |   |-- Cerneala.UI.Diagnostics.FrameDiagnosticsSnapshot.md
-|   |   |   |-- Cerneala.UI.Diagnostics.InputDiagnostics.md
-|   |   |   |-- Cerneala.UI.Diagnostics.InputDiagnosticsSnapshot.md
-|   |   |   |-- Cerneala.UI.Diagnostics.InvalidationTrace.md
-|   |   |   |-- Cerneala.UI.Diagnostics.InvalidationTraceEntry.md
-|   |   |   |-- Cerneala.UI.Diagnostics.InvalidationTraceEventKind.md
-|   |   |   |-- Cerneala.UI.Diagnostics.LayoutDiagnostics.md
-|   |   |   |-- Cerneala.UI.Diagnostics.LayoutDiagnosticsSnapshot.md
-|   |   |   |-- Cerneala.UI.Diagnostics.RenderCacheDumper.md
-|   |   |   |-- Cerneala.UI.Diagnostics.RenderDiagnostics.md
-|   |   |   |-- Cerneala.UI.Diagnostics.RootRenderDiagnosticsSnapshot.md
-|   |   |   |-- Cerneala.UI.Diagnostics.RoutedEventTrace.md
-|   |   |   |-- Cerneala.UI.Diagnostics.RoutedEventTraceSnapshot.md
-|   |   |   |-- Cerneala.UI.Diagnostics.RoutedEventTraceStep.md
-|   |   |   |-- Cerneala.UI.Diagnostics.RuntimeDiagnostics.md
-|   |   |   |-- Cerneala.UI.Diagnostics.RuntimeDiagnosticsSnapshot.md
-|   |   |   |-- Cerneala.UI.Diagnostics.RuntimeInputDiagnosticsSnapshot.md
-|   |   |   |-- Cerneala.UI.Diagnostics.RuntimePlatformDiagnosticsSnapshot.md
-|   |   |   |-- Cerneala.UI.Diagnostics.RuntimeRenderDiagnosticsSnapshot.md
-|   |   |   |-- Cerneala.UI.Diagnostics.RuntimeResourceDiagnosticsSnapshot.md
-|   |   |   |-- Cerneala.UI.Diagnostics.RuntimeViewportDiagnosticsSnapshot.md
+|   |   |   |-- Cerneala.UI.Detective.AspectConditionTrace.md
+|   |   |   |-- Cerneala.UI.Detective.AspectDiagnostics.md
+|   |   |   |-- Cerneala.UI.Detective.AspectDiagnostics.Snapshot.md
+|   |   |   |-- Cerneala.UI.Detective.AspectEngineCounters.md
+|   |   |   |-- Cerneala.UI.Detective.AspectResolutionStep.md
+|   |   |   |-- Cerneala.UI.Detective.AspectTokenTrace.md
+|   |   |   |-- Cerneala.UI.Detective.AspectTrace.md
+|   |   |   |-- Cerneala.UI.Detective.AspectTraceSnapshot.md
+|   |   |   |-- Cerneala.UI.Detective.DebugAdorner.md
+|   |   |   |-- Cerneala.UI.Detective.DebugOverlay.md
+|   |   |   |-- Cerneala.UI.Detective.Detective.md
+|   |   |   |-- Cerneala.UI.Detective.DetectiveSnapshot.md
+|   |   |   |-- Cerneala.UI.Detective.DirtyTreeDumper.DirtyTraceInfo.md
+|   |   |   |-- Cerneala.UI.Detective.DirtyTreeDumper.md
+|   |   |   |-- Cerneala.UI.Detective.ElementRenderDiagnosticsSnapshot.md
+|   |   |   |-- Cerneala.UI.Detective.ElementTreeDumper.md
+|   |   |   |-- Cerneala.UI.Detective.FrameDiagnostics.md
+|   |   |   |-- Cerneala.UI.Detective.FrameDiagnosticsSnapshot.md
+|   |   |   |-- Cerneala.UI.Detective.InputDiagnostics.md
+|   |   |   |-- Cerneala.UI.Detective.InputDiagnosticsSnapshot.md
+|   |   |   |-- Cerneala.UI.Detective.InvalidationTrace.md
+|   |   |   |-- Cerneala.UI.Detective.InvalidationTraceEntry.md
+|   |   |   |-- Cerneala.UI.Detective.InvalidationTraceEventKind.md
+|   |   |   |-- Cerneala.UI.Detective.LayoutDiagnostics.md
+|   |   |   |-- Cerneala.UI.Detective.LayoutDiagnosticsSnapshot.md
+|   |   |   |-- Cerneala.UI.Detective.MotionDiagnostics.md
+|   |   |   |-- Cerneala.UI.Detective.MotionGraphSnapshot.md
+|   |   |   |-- Cerneala.UI.Detective.MotionTrace.md
+|   |   |   |-- Cerneala.UI.Detective.MotionTraceEvent.md
+|   |   |   |-- Cerneala.UI.Detective.MotionTraceEventKind.md
+|   |   |   |-- Cerneala.UI.Detective.PlatformDiagnosticsSnapshot.md
+|   |   |   |-- Cerneala.UI.Detective.PrismRendererDiagnostics.md
+|   |   |   |-- Cerneala.UI.Detective.RenderCacheDumper.md
+|   |   |   |-- Cerneala.UI.Detective.RenderDiagnostics.md
+|   |   |   |-- Cerneala.UI.Detective.ResourceDiagnosticsSnapshot.md
+|   |   |   |-- Cerneala.UI.Detective.RootInputDiagnosticsSnapshot.md
+|   |   |   |-- Cerneala.UI.Detective.RootRenderDiagnosticsSnapshot.md
+|   |   |   |-- Cerneala.UI.Detective.RoutedEventTrace.md
+|   |   |   |-- Cerneala.UI.Detective.RoutedEventTraceSnapshot.md
+|   |   |   |-- Cerneala.UI.Detective.RoutedEventTraceStep.md
+|   |   |   |-- Cerneala.UI.Detective.TileMapDiagnosticsSnapshot.md
+|   |   |   |-- Cerneala.UI.Detective.ViewportDiagnosticsSnapshot.md
 |   |   |   |-- Cerneala.UI.Elements.ElementChildRole.md
 |   |   |   |-- Cerneala.UI.Elements.ElementHandlerStore.md
 |   |   |   |-- Cerneala.UI.Elements.ElementIdProvider.md
@@ -1250,10 +1807,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Hosting.DrawingContentServices.md
 |   |   |   |-- Cerneala.UI.Hosting.IUiBackend.md
 |   |   |   |-- Cerneala.UI.Hosting.IUiClock.md
-|   |   |   |-- Cerneala.UI.Hosting.MonoGame.MonoGameContentServices.md
-|   |   |   |-- Cerneala.UI.Hosting.MonoGame.MonoGameUiHost.md
-|   |   |   |-- Cerneala.UI.Hosting.MonoGame.MonoGameUiHost.MonoGameUiBackend.md
-|   |   |   |-- Cerneala.UI.Hosting.MonoGame.MonoGameUiHostOptions.md
 |   |   |   |-- Cerneala.UI.Hosting.Sdl.SdlGpuApplicationBackend.md
 |   |   |   |-- Cerneala.UI.Hosting.UiCoordinateMapper.md
 |   |   |   |-- Cerneala.UI.Hosting.UiFrame.md
@@ -1263,7 +1816,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Hosting.Windowing.ApplicationBackendAttribute.md
 |   |   |   |-- Cerneala.UI.Hosting.Windowing.GeneratedWindowApplication.md
 |   |   |   |-- Cerneala.UI.Hosting.Windowing.GeneratedWindowStartupDescriptor.md
-|   |   |   |-- Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend.md
 |   |   |   |-- Cerneala.UI.Ink.Stroke.md
 |   |   |   |-- Cerneala.UI.Ink.StrokeCollection.md
 |   |   |   |-- Cerneala.UI.Ink.StrokeCollectionChangedEventArgs.md
@@ -1334,8 +1886,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Input.ManipulationPoint.md
 |   |   |   |-- Cerneala.UI.Input.ManipulationProcessor.md
 |   |   |   |-- Cerneala.UI.Input.ManipulationSnapshot.md
-|   |   |   |-- Cerneala.UI.Input.MonoGame.MonoGameInputMapper.md
-|   |   |   |-- Cerneala.UI.Input.MonoGame.MonoGameInputSource.md
 |   |   |   |-- Cerneala.UI.Input.MouseButtonEventArgs.md
 |   |   |   |-- Cerneala.UI.Input.MouseEventArgs.md
 |   |   |   |-- Cerneala.UI.Input.MouseWheelEventArgs.md
@@ -1506,11 +2056,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Motion.Core.ReducedMotionMode.md
 |   |   |   |-- Cerneala.UI.Motion.Core.ReducedMotionPolicy.md
 |   |   |   |-- Cerneala.UI.Motion.Core.SystemMotionClock.md
-|   |   |   |-- Cerneala.UI.Motion.Diagnostics.MotionDiagnostics.md
-|   |   |   |-- Cerneala.UI.Motion.Diagnostics.MotionGraphSnapshot.md
-|   |   |   |-- Cerneala.UI.Motion.Diagnostics.MotionTrace.md
-|   |   |   |-- Cerneala.UI.Motion.Diagnostics.MotionTraceEvent.md
-|   |   |   |-- Cerneala.UI.Motion.Diagnostics.MotionTraceEventKind.md
 |   |   |   |-- Cerneala.UI.Motion.Input.DragMotionController.md
 |   |   |   |-- Cerneala.UI.Motion.Input.GestureMotionController.md
 |   |   |   |-- Cerneala.UI.Motion.Input.MotionRange.md
@@ -1686,7 +2231,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Resources.ImageResourceCache.md
 |   |   |   |-- Cerneala.UI.Resources.IObservableResourceProvider.md
 |   |   |   |-- Cerneala.UI.Resources.IResourceProvider.md
-|   |   |   |-- Cerneala.UI.Resources.MonoGame.MonoGameImageLoader.md
 |   |   |   |-- Cerneala.UI.Resources.ResourceChangedEventArgs.md
 |   |   |   |-- Cerneala.UI.Resources.ResourceDependencyChange.md
 |   |   |   |-- Cerneala.UI.Resources.ResourceDependencyTracker.md
@@ -1699,6 +2243,18 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Resources.ResourceStore.Entry.md
 |   |   |   |-- Cerneala.UI.Resources.ResourceStore.md
 |   |   |   |-- Cerneala.UI.Resources.ResourceStore.ResourceKey.md
+|   |   |   |-- Cerneala.UI.Servo.Servo.md
+|   |   |   |-- Cerneala.UI.Servo.ServoCondition.md
+|   |   |   |-- Cerneala.UI.Servo.ServoElement.md
+|   |   |   |-- Cerneala.UI.Servo.ServoException.md
+|   |   |   |-- Cerneala.UI.Servo.ServoModifiers.md
+|   |   |   |-- Cerneala.UI.Servo.ServoOptions.md
+|   |   |   |-- Cerneala.UI.Servo.ServoPoint.md
+|   |   |   |-- Cerneala.UI.Servo.ServoTarget.md
+|   |   |   |-- Cerneala.UI.Servo.ServoTargetAmbiguousException.md
+|   |   |   |-- Cerneala.UI.Servo.ServoTargetNotActionableException.md
+|   |   |   |-- Cerneala.UI.Servo.ServoTargetNotFoundException.md
+|   |   |   |-- Cerneala.UI.Servo.ServoTimeoutException.md
 |   |   |   |-- Cerneala.UI.Text.BidiTextRun.md
 |   |   |   |-- Cerneala.UI.Text.BidiTextService.md
 |   |   |   |-- Cerneala.UI.Text.FontResolver.FallbackDrawFont.md
@@ -1751,62 +2307,19 @@ Generated from `.`.
 |   +-- wpf-compendium.js
 |-- Drawing/
 |   |-- MonoGame/
-|   |   |-- Prism/
-|   |   |   |-- Execution/
-|   |   |   |   |-- IPrismCommandRenderer.cs
-|   |   |   |   |-- PrismCurveTextureCache.cs
-|   |   |   |   |-- PrismExecutionColdStartWarmup.cs
-|   |   |   |   |-- PrismGradientDitherTexture.cs
-|   |   |   |   |-- PrismGradientMapTextureCache.cs
-|   |   |   |   |-- PrismGradientOverlayTextureCache.cs
-|   |   |   |   |-- PrismGraphExecutionCache.cs
-|   |   |   |   |-- PrismGraphExecutor.cs
-|   |   |   |   |-- PrismGraphFilterResources.cs
-|   |   |   |   |-- PrismGraphPresentation.cs
-|   |   |   |   |-- PrismLensProfileTextureCache.cs
-|   |   |   |   |-- PrismSpatterPointTextureCache.cs
-|   |   |   |   +-- PrismWaveNoiseTextureCache.cs
-|   |   |   |-- Kernels/
-|   |   |   |   +-- PrismKernelRegistry.cs
-|   |   |   |-- Shaders/
-|   |   |   |   |-- Blends/
-|   |   |   |   |-- Color/
-|   |   |   |   |-- Common/
-|   |   |   |   |   |-- AllBlends.fx
-|   |   |   |   |   |-- AllColor.fx
-|   |   |   |   |   +-- Parameters.fx
-|   |   |   |   |-- Composition/
-|   |   |   |   |-- Filters/
-|   |   |   |   |   +-- Catalog/
-|   |   |   |   |-- Pipeline/
-|   |   |   |   |   |-- StyleTechniques.fx
-|   |   |   |   |   +-- Techniques.fx
-|   |   |   |   |-- Styles/
-|   |   |   |   |-- Charcoal.fx
-|   |   |   |   |-- ConteCrayon.fx
-|   |   |   |   |-- CopyComposite.fx
-|   |   |   |   |-- Deinterlace.fx
-|   |   |   |   |-- GraphicPen.fx
-|   |   |   |   |-- Plaster.fx
-|   |   |   |   |-- PrismShaderResources.cs
-|   |   |   |   +-- Styles.fx
-|   |   |   |-- Surfaces/
-|   |   |   |   |-- PrismRetainedSurface.cs
-|   |   |   |   |-- PrismRetainedSurfaceCache.cs
-|   |   |   |   |-- PrismScratchSurfaceLease.cs
-|   |   |   |   |-- PrismSurfaceFrame.cs
-|   |   |   |   |-- PrismSurfaceKey.cs
-|   |   |   |   +-- PrismSurfacePool.cs
-|   |   |   |-- IMonoGameBackdropFrameLease.cs
-|   |   |   +-- MonoGameBackdropFrameValidation.cs
-|   |   |-- MonoGameClipStack.cs
-|   |   |-- MonoGameDrawingBackend.cs
-|   |   |-- MonoGameDrawMapper.cs
-|   |   |-- MonoGameGraphicsDeviceStateSnapshot.cs
-|   |   |-- MonoGameImage.cs
-|   |   |-- MonoGamePathMeshBuilder.cs
-|   |   |-- MonoGameRenderSurface2DSession.cs
-|   |   +-- MonoGameStrokeMeshBuilder.cs
+|   |   +-- Prism/
+|   |       |-- Execution/
+|   |       |-- Kernels/
+|   |       |-- Shaders/
+|   |       |   |-- Blends/
+|   |       |   |-- Color/
+|   |       |   |-- Common/
+|   |       |   |-- Composition/
+|   |       |   |-- Filters/
+|   |       |   |   +-- Catalog/
+|   |       |   |-- Pipeline/
+|   |       |   +-- Styles/
+|   |       +-- Surfaces/
 |   |-- Paths/
 |   |   |-- DrawEllipseCoverage.cs
 |   |   |-- DrawEllipseRowTessellator.cs
@@ -2355,6 +2868,7 @@ Generated from `.`.
 |   |-- IDrawingBackend.cs
 |   |-- IFontSource.cs
 |   |-- IRenderSurface2DSource.cs
+|   |-- RenderSurface2DGeometry.cs
 |   +-- SvgRasterizer.cs
 |-- Playground/
 |   |-- Assets/
@@ -2374,7 +2888,6 @@ Generated from `.`.
 |   |   +-- MainWindow.crn.cs
 |   |-- Cerneala.MenuLab/
 |   |   |-- automation/
-|   |   |   +-- capture-open-menu.json
 |   |   |-- .gitignore
 |   |   |-- BackendRegistration.cs
 |   |   |-- Cerneala.MenuLab.csproj
@@ -2384,7 +2897,11 @@ Generated from `.`.
 |   |   +-- README.md
 |   |-- Cerneala.Playground/
 |   |   |-- automation/
-|   |   |   +-- capture-drawing-api.json
+|   |   |-- SceneWorldAssets/
+|   |   |   |-- New-Assets.ps1
+|   |   |   |-- village.ldtk
+|   |   |   |-- village.tmj
+|   |   |   +-- world-atlas.png
 |   |   |-- BackendRegistration.cs
 |   |   |-- Cerneala.Playground.csproj
 |   |   |-- DrawingApiShowcase.cs
@@ -2392,6 +2909,9 @@ Generated from `.`.
 |   |   |-- DrawingApiShowcaseView.crn.cs
 |   |   |-- MainWindow.crn
 |   |   |-- MainWindow.crn.cs
+|   |   |-- SceneWorldConformance.cs
+|   |   |-- SceneWorldShowcase.crn
+|   |   |-- SceneWorldShowcase.crn.cs
 |   |   +-- SvgWindow.cs
 |   +-- CernealaOracle/
 |       |-- BackendRegistration.cs
@@ -2406,6 +2926,143 @@ Generated from `.`.
 |-- tests/
 |   |-- Baselines/
 |   |   +-- Conformance/
+|   |       |-- RetiredWindowsDx/
+|   |       |   |-- AccentedEdges.png
+|   |       |   |-- AdaptiveWideAngle.png
+|   |       |   |-- AddNoise.png
+|   |       |   |-- AngledStrokes.png
+|   |       |   |-- Average.png
+|   |       |   |-- BasRelief.png
+|   |       |   |-- BevelEmboss.png
+|   |       |   |-- BlackWhite.png
+|   |       |   |-- Blur.png
+|   |       |   |-- BlurMore.png
+|   |       |   |-- BoxBlur.png
+|   |       |   |-- BrightnessContrast.png
+|   |       |   |-- ChalkCharcoal.png
+|   |       |   |-- ChannelMixer.png
+|   |       |   |-- Charcoal.png
+|   |       |   |-- ChromaticAberration.png
+|   |       |   |-- Chrome.png
+|   |       |   |-- Clouds.png
+|   |       |   |-- Color.png
+|   |       |   |-- ColorBalance.png
+|   |       |   |-- ColoredPencil.png
+|   |       |   |-- ColorHalftone.png
+|   |       |   |-- ColorMatrix.png
+|   |       |   |-- ColorOverlay.png
+|   |       |   |-- comparison.json
+|   |       |   |-- ConteCrayon.png
+|   |       |   |-- Craquelure.png
+|   |       |   |-- Crosshatch.png
+|   |       |   |-- Crystallize.png
+|   |       |   |-- Cutout.png
+|   |       |   |-- DarkStrokes.png
+|   |       |   |-- Deinterlace.png
+|   |       |   |-- Despeckle.png
+|   |       |   |-- DifferenceClouds.png
+|   |       |   |-- Diffuse.png
+|   |       |   |-- DiffuseGlow.png
+|   |       |   |-- drawing-api.png
+|   |       |   |-- DropShadow.png
+|   |       |   |-- DryBrush.png
+|   |       |   |-- DustScratches.png
+|   |       |   |-- Emboss.png
+|   |       |   |-- Exposure.png
+|   |       |   |-- Extrude.png
+|   |       |   |-- Facet.png
+|   |       |   |-- Fibers.png
+|   |       |   |-- FilmGrain.png
+|   |       |   |-- FindEdges.png
+|   |       |   |-- Fragment.png
+|   |       |   |-- Fresco.png
+|   |       |   |-- GaussianBlur.png
+|   |       |   |-- Glass.png
+|   |       |   |-- GlowingEdges.png
+|   |       |   |-- GradientOverlay.png
+|   |       |   |-- Grain.png
+|   |       |   |-- GraphicPen.png
+|   |       |   |-- HalftonePattern.png
+|   |       |   |-- HighPass.png
+|   |       |   |-- HueSaturation.png
+|   |       |   |-- InkOutlines.png
+|   |       |   |-- InnerGlow.png
+|   |       |   |-- InnerShadow.png
+|   |       |   |-- Invert.png
+|   |       |   |-- IrisBlur.png
+|   |       |   |-- LensBlur.png
+|   |       |   |-- LensCorrection.png
+|   |       |   |-- Levels.png
+|   |       |   |-- Maximum.png
+|   |       |   |-- Median.png
+|   |       |   |-- Mezzotint.png
+|   |       |   |-- Minimum.png
+|   |       |   |-- Mosaic.png
+|   |       |   |-- MosaicTiles.png
+|   |       |   |-- MotionBlur.png
+|   |       |   |-- NeonGlow.png
+|   |       |   |-- NotePaper.png
+|   |       |   |-- NtscColors.png
+|   |       |   |-- OceanRipple.png
+|   |       |   |-- Offset.png
+|   |       |   |-- OilPaint.png
+|   |       |   |-- OuterGlow.png
+|   |       |   |-- PaintDaubs.png
+|   |       |   |-- PaletteKnife.png
+|   |       |   |-- Patchwork.png
+|   |       |   |-- Photocopy.png
+|   |       |   |-- PhotoFilter.png
+|   |       |   |-- Pinch.png
+|   |       |   |-- Plaster.png
+|   |       |   |-- PlasticWrap.png
+|   |       |   |-- Pointillize.png
+|   |       |   |-- PolarCoordinates.png
+|   |       |   |-- PosterEdges.png
+|   |       |   |-- Posterize.png
+|   |       |   |-- RadialBlur.png
+|   |       |   |-- README.md
+|   |       |   |-- ReduceNoise.png
+|   |       |   |-- Reticulation.png
+|   |       |   |-- Ripple.png
+|   |       |   |-- RoughPastels.png
+|   |       |   |-- Satin.png
+|   |       |   |-- Scanlines.png
+|   |       |   |-- SelectiveColor.png
+|   |       |   |-- sha256.json
+|   |       |   |-- Sharpen.png
+|   |       |   |-- SharpenEdges.png
+|   |       |   |-- SharpenMore.png
+|   |       |   |-- Shear.png
+|   |       |   |-- SmartBlur.png
+|   |       |   |-- SmartSharpen.png
+|   |       |   |-- SmudgeStick.png
+|   |       |   |-- Solarize.png
+|   |       |   |-- Spatter.png
+|   |       |   |-- Spherize.png
+|   |       |   |-- SpinBlur.png
+|   |       |   |-- Sponge.png
+|   |       |   |-- SprayedStrokes.png
+|   |       |   |-- StainedGlass.png
+|   |       |   |-- Stamp.png
+|   |       |   |-- Stroke.png
+|   |       |   |-- SumiE.png
+|   |       |   |-- SurfaceBlur.png
+|   |       |   |-- Texturizer.png
+|   |       |   |-- Threshold.png
+|   |       |   |-- Tiles.png
+|   |       |   |-- TiltShift.png
+|   |       |   |-- TornEdges.png
+|   |       |   |-- TraceContour.png
+|   |       |   |-- Transform.png
+|   |       |   |-- Twirl.png
+|   |       |   |-- Underpainting.png
+|   |       |   |-- UnsharpMask.png
+|   |       |   |-- Vibrance.png
+|   |       |   |-- Watercolor.png
+|   |       |   |-- WaterPaper.png
+|   |       |   |-- Wave.png
+|   |       |   |-- Wind.png
+|   |       |   +-- ZigZag.png
 |   |       |-- WindowsDx/
 |   |       |   |-- drawing-api.png
 |   |       |   |-- multi-window-a.png
@@ -2425,9 +3082,9 @@ Generated from `.`.
 |   |   +-- SmokeOptions.cs
 |   |-- Cerneala.Tests/
 |   |   |-- Architecture/
+|   |   |   |-- DesktopBackendDependencyBoundaryTests.cs
 |   |   |   |-- DeveloperPreviewScopeTests.cs
 |   |   |   |-- ModernAspectArchitectureTests.cs
-|   |   |   |-- MonoGameDependencyBoundaryTests.cs
 |   |   |   |-- NamespaceBoundaryTests.cs
 |   |   |   |-- RepositoryShapeTests.cs
 |   |   |   +-- SdlDependencyBoundaryTests.cs
@@ -2451,6 +3108,11 @@ Generated from `.`.
 |   |   |   |-- ButtonTests.cs
 |   |   |   |-- CanvasTests.cs
 |   |   |   |-- CheckBoxTests.cs
+|   |   |   |-- CollisionStageFourInputTests.cs
+|   |   |   |-- CollisionStageOneContractTests.cs
+|   |   |   |-- CollisionStageThreeTileMapTests.cs
+|   |   |   |-- CollisionStageTwoContractTests.cs
+|   |   |   |-- CollisionStageZeroContractTests.cs
 |   |   |   |-- ColorPickerTests.cs
 |   |   |   |-- ColorSwatchTests.cs
 |   |   |   |-- ComboBoxTests.cs
@@ -2478,12 +3140,24 @@ Generated from `.`.
 |   |   |   |-- PanelTests.cs
 |   |   |   |-- PasswordBoxTests.cs
 |   |   |   |-- ProgressBarTests.cs
+|   |   |   |-- RenderSurface2DSceneFoundationContractTests.cs
 |   |   |   |-- RenderSurface2DSceneTests.cs
 |   |   |   |-- RenderSurface2DTests.cs
+|   |   |   |-- SceneDebugOverlayTests.cs
+|   |   |   |-- SceneDocumentContractTests.cs
+|   |   |   |-- SceneImportGeometryTests.cs
+|   |   |   |-- SceneImportStageZeroContractTests.cs
+|   |   |   |-- SceneItems2DIncrementalContractTests.cs
+|   |   |   |-- SceneModelValidationTests.cs
 |   |   |   |-- ScrollBarTests.cs
 |   |   |   |-- ScrollViewerTests.cs
 |   |   |   |-- SelectionModelTests.cs
 |   |   |   |-- SliderTests.cs
+|   |   |   |-- Sprite2DImageResourceTests.cs
+|   |   |   |-- SpriteAnimationIntegrationTests.cs
+|   |   |   |-- SpriteAnimationSamplerTests.cs
+|   |   |   |-- SpriteAnimationSchedulingTests.cs
+|   |   |   |-- SpriteAnimationStageZeroContractTests.cs
 |   |   |   |-- StackPanelTests.cs
 |   |   |   |-- SvgImageTests.cs
 |   |   |   |-- TabControlTests.cs
@@ -2500,6 +3174,9 @@ Generated from `.`.
 |   |   |   |-- TextBoxEditingVisualContractTests.cs
 |   |   |   |-- TextBoxTests.cs
 |   |   |   |-- TextBoxTwoWayBindingTests.cs
+|   |   |   |-- TileMap2DCacheContractTests.cs
+|   |   |   |-- TileMap2DContractTests.cs
+|   |   |   |-- TileMap2DStageZeroContractTests.cs
 |   |   |   |-- ToggleButtonTests.cs
 |   |   |   |-- ToolTipTests.cs
 |   |   |   |-- UserControlTests.cs
@@ -2508,57 +3185,16 @@ Generated from `.`.
 |   |   |-- Docs/
 |   |   |-- Drawing/
 |   |   |   |-- MonoGame/
-|   |   |   |   |-- Prism/
-|   |   |   |   |   +-- Cache/
-|   |   |   |   |       |-- PrismRetainedCacheKeyTests.cs
-|   |   |   |   |       |-- PrismRetainedCacheRedContractTests.cs
-|   |   |   |   |       |-- PrismRetainedSurfaceCacheTests.cs
-|   |   |   |   |       +-- PrismRetainedVisualVersionTests.cs
-|   |   |   |   |-- AlphaBlendRenderingTests.cs
-|   |   |   |   |-- BrushRenderingTests.cs
-|   |   |   |   |-- MonoGameClipStackTests.cs
-|   |   |   |   |-- MonoGameDrawingBackendStateTests.cs
-|   |   |   |   |-- MonoGameDrawMapperTests.cs
-|   |   |   |   |-- PrismBackdropMonoGameAdapterTests.cs
-|   |   |   |   |-- PrismChromaticAberrationGpuTests.cs
-|   |   |   |   |-- PrismChromeGpuTests.cs
-|   |   |   |   |-- PrismColorGpuTests.cs
-|   |   |   |   |-- PrismColorMatrixGpuTests.cs
-|   |   |   |   |-- PrismConteCrayonGpuTests.cs
-|   |   |   |   |-- PrismCraquelureGpuTests.cs
-|   |   |   |   |-- PrismCustomConvolutionGpuTests.cs
-|   |   |   |   |-- PrismDissolveGpuTests.cs
-|   |   |   |   |-- PrismEmbossGpuTests.cs
-|   |   |   |   |-- PrismGrainGpuTests.cs
-|   |   |   |   |-- PrismGraphExecutorTests.cs
-|   |   |   |   |-- PrismGraphicPenGpuTests.cs
-|   |   |   |   |-- PrismMosaicTilesGpuTests.cs
-|   |   |   |   |-- PrismNotePaperGpuTests.cs
-|   |   |   |   |-- PrismOperationalDiagnosticsTests.cs
-|   |   |   |   |-- PrismPatchworkGpuTests.cs
-|   |   |   |   |-- PrismPhotocopyGpuTests.cs
-|   |   |   |   |-- PrismPlasterGpuTests.cs
-|   |   |   |   |-- PrismReticulationGpuTests.cs
-|   |   |   |   |-- PrismScanlinesGpuTests.cs
-|   |   |   |   |-- PrismShaderBuildIncrementalityTests.cs
-|   |   |   |   |-- PrismShaderResourcesTests.cs
-|   |   |   |   |-- PrismSolarizeGpuTests.cs
-|   |   |   |   |-- PrismSpatterPointTextureCacheTests.cs
-|   |   |   |   |-- PrismStainedGlassGpuTests.cs
-|   |   |   |   |-- PrismStrokeDistanceFieldGpuTests.cs
-|   |   |   |   |-- PrismSurfacePoolTests.cs
-|   |   |   |   |-- PrismTexturizerGpuTests.cs
-|   |   |   |   |-- PrismTilesGpuTests.cs
-|   |   |   |   |-- PrismTraceContourGpuTests.cs
-|   |   |   |   |-- PrismWaterPaperGpuTests.cs
-|   |   |   |   |-- PrismWindGpuTests.cs
-|   |   |   |   |-- PrismWindowsDxConformanceTests.cs
-|   |   |   |   +-- RenderSurface2DRenderingTests.cs
+|   |   |   |   +-- Prism/
+|   |   |   |       +-- Cache/
 |   |   |   |-- Paths/
 |   |   |   |   |-- DrawPathTests.cs
 |   |   |   |   |-- DrawStrokeTests.cs
 |   |   |   |   +-- SvgPathFlattenerTests.cs
 |   |   |   |-- Prism/
+|   |   |   |   |-- Cache/
+|   |   |   |   |   |-- PrismRetainedCacheKeyTests.cs
+|   |   |   |   |   +-- PrismRetainedVisualVersionTests.cs
 |   |   |   |   |-- PrismAccentedEdgesFilterTests.cs
 |   |   |   |   |-- PrismAdjustmentFilterTests.cs
 |   |   |   |   |-- PrismAdvancedBlendingKnockoutTests.cs
@@ -2609,6 +3245,7 @@ Generated from `.`.
 |   |   |   |   |-- PrismRoughPastelsFilterTests.cs
 |   |   |   |   |-- PrismScanlinesFilterTests.cs
 |   |   |   |   |-- PrismSdlGpuPixelConformanceTests.cs
+|   |   |   |   |-- PrismShaderBuildIncrementalityTests.cs
 |   |   |   |   |-- PrismSmudgeStickFilterTests.cs
 |   |   |   |   |-- PrismSolarizeFilterTests.cs
 |   |   |   |   |-- PrismSpatterFilterTests.cs
@@ -2618,7 +3255,6 @@ Generated from `.`.
 |   |   |   |   |-- PrismStampFilterTests.cs
 |   |   |   |   |-- PrismStylePipelineTests.cs
 |   |   |   |   |-- PrismSumiEFilterTests.cs
-|   |   |   |   |-- PrismTestData.cs
 |   |   |   |   |-- PrismTexturizerFilterTests.cs
 |   |   |   |   |-- PrismTilesFilterTests.cs
 |   |   |   |   |-- PrismTornEdgesFilterTests.cs
@@ -2628,9 +3264,11 @@ Generated from `.`.
 |   |   |   |   |-- PrismWatercolorFilterTests.cs
 |   |   |   |   |-- PrismWaterPaperFilterTests.cs
 |   |   |   |   +-- PrismWindFilterTests.cs
+|   |   |   |-- SdlGpu/
 |   |   |   |-- AdvancedDrawCommandTests.cs
 |   |   |   |-- ColorTests.cs
 |   |   |   |-- CompleteDrawingApiBaselineTests.cs
+|   |   |   |-- ConformanceBaseline.cs
 |   |   |   |-- DrawCommandListTests.cs
 |   |   |   |-- DrawingContextTests.cs
 |   |   |   |-- DrawingImageMeshBatchTests.cs
@@ -2693,8 +3331,6 @@ Generated from `.`.
 |   |   |   |-- InputGestureTests.cs
 |   |   |   |-- KeyboardNavigationContractTests.cs
 |   |   |   |-- ManipulationProcessorTests.cs
-|   |   |   |-- MonoGameInputCoordinateScaleTests.cs
-|   |   |   |-- MonoGameInputMapperTests.cs
 |   |   |   |-- PointerCaptureManagerTests.cs
 |   |   |   |-- PressedStateTrackerTests.cs
 |   |   |   |-- RetainedInputBindingTests.cs
@@ -2707,7 +3343,8 @@ Generated from `.`.
 |   |   |   +-- TouchInputBridgeTests.cs
 |   |   |-- Playground/
 |   |   |   |-- DrawingApiShowcaseVisualTests.cs
-|   |   |   +-- MainWindowContractTests.cs
+|   |   |   |-- MainWindowContractTests.cs
+|   |   |   +-- SceneWorldShowcaseTests.cs
 |   |   |-- Presentation/
 |   |   |   |-- AspectChapterViewTests.cs
 |   |   |   |-- PresentationChapterLayoutTests.cs
@@ -2728,6 +3365,7 @@ Generated from `.`.
 |   |   |   |   +-- TextBoxSemanticsTests.cs
 |   |   |   |-- Aspect/
 |   |   |   |   |-- AspectAuditRegressionTests.cs
+|   |   |   |   |-- AspectBreakerRegressionTests.cs
 |   |   |   |   |-- AspectEngineStressBudgetTests.cs
 |   |   |   |   |-- AspectEngineTests.cs
 |   |   |   |   |-- AspectPackageTests.cs
@@ -2743,7 +3381,6 @@ Generated from `.`.
 |   |   |   |   |-- DefaultAspectPackageTests.cs
 |   |   |   |   +-- ThemeTokenBridgeTests.cs
 |   |   |   |-- Automation/
-|   |   |   |   +-- AutomationSessionTests.cs
 |   |   |   |-- Controls/
 |   |   |   |   |-- Shapes/
 |   |   |   |   |   +-- ShapeTests.cs
@@ -2764,15 +3401,18 @@ Generated from `.`.
 |   |   |   |   |-- StringPropertyPathTests.cs
 |   |   |   |   |-- TypedBindingTests.cs
 |   |   |   |   +-- UiPropertyBindingTests.cs
-|   |   |   |-- Diagnostics/
+|   |   |   |-- Detective/
+|   |   |   |   |-- DetectiveSnapshotTests.cs
+|   |   |   |   |-- DetectiveTests.cs
 |   |   |   |   |-- DirtyTreeDumperTests.cs
 |   |   |   |   |-- ElementTreeDumperTests.cs
 |   |   |   |   |-- FrameDiagnosticsTests.cs
 |   |   |   |   |-- InvalidationTraceTests.cs
 |   |   |   |   |-- ModernAspectTraceTests.cs
+|   |   |   |   |-- MotionDiagnosticsTests.cs
 |   |   |   |   |-- RenderCacheDumperTests.cs
 |   |   |   |   |-- RoutedEventTraceTests.cs
-|   |   |   |   +-- RuntimeDiagnosticsTests.cs
+|   |   |   |   +-- TileMapDiagnosticsTests.cs
 |   |   |   |-- Elements/
 |   |   |   |   |-- ElementHandlerStoreTests.cs
 |   |   |   |   |-- ElementLifecycleTests.cs
@@ -2788,15 +3428,16 @@ Generated from `.`.
 |   |   |   |   |-- ApplicationBackendAttributeTests.cs
 |   |   |   |   |-- ApplicationBackendRegistrationTests.cs
 |   |   |   |   |-- ApplicationRuntimeTests.cs
+|   |   |   |   |-- CoreHostingBoundaryTests.cs
+|   |   |   |   |-- DrawingContentServicesLifetimeTests.cs
 |   |   |   |   |-- FakeDrawingBackend.cs
 |   |   |   |   |-- FakeInputSource.cs
 |   |   |   |   |-- FakeUiClock.cs
 |   |   |   |   |-- GridAuthoringFrameContractTests.cs
-|   |   |   |   |-- MonoGameContentServicesLifetimeTests.cs
-|   |   |   |   |-- MonoGameUiHostBoundaryTests.cs
 |   |   |   |   |-- ObservableListAuthoringSliceTests.cs
 |   |   |   |   |-- PrismBackdropHostingContractTests.cs
 |   |   |   |   |-- RetainedStressBudgetTests.cs
+|   |   |   |   |-- SdlProcessSmokeTests.cs
 |   |   |   |   |-- TabNavigationFrameContractTests.cs
 |   |   |   |   |-- UiHostFrameContractTests.cs
 |   |   |   |   |-- UiHostFrameStatsIntegrityTests.cs
@@ -2806,12 +3447,8 @@ Generated from `.`.
 |   |   |   |   |-- UiHostViewportFrameContractTests.cs
 |   |   |   |   |-- UiViewportScaleContractTests.cs
 |   |   |   |   |-- UiViewportTests.cs
-|   |   |   |   |-- Win32InputSourceTests.cs
-|   |   |   |   |-- Win32WindowPlatformTests.cs
 |   |   |   |   |-- WindowRuntimeTestCollection.cs
-|   |   |   |   |-- WindowRuntimeTests.cs
-|   |   |   |   |-- WindowsDxProcessSmokeTests.cs
-|   |   |   |   +-- WindowsGpuPreferenceTests.cs
+|   |   |   |   +-- WindowRuntimeTests.cs
 |   |   |   |-- Input/
 |   |   |   |   |-- ElementInputCacheInvalidationTests.cs
 |   |   |   |   |-- HitTestCacheInvalidationTests.cs
@@ -2871,8 +3508,6 @@ Generated from `.`.
 |   |   |   |   |   |-- MotionRepeatTimelineTests.cs
 |   |   |   |   |   |-- MotionSystemTests.cs
 |   |   |   |   |   +-- MotionValueTests.cs
-|   |   |   |   |-- Diagnostics/
-|   |   |   |   |   +-- MotionDiagnosticsTests.cs
 |   |   |   |   |-- Input/
 |   |   |   |   |   +-- MotionInputTimelineTests.cs
 |   |   |   |   |-- Interpolation/
@@ -2940,6 +3575,14 @@ Generated from `.`.
 |   |   |   |   |-- ResourceDependencyTrackerTests.cs
 |   |   |   |   |-- ResourceIdTests.cs
 |   |   |   |   +-- ResourceStoreTests.cs
+|   |   |   |-- Servo/
+|   |   |   |   |-- ServoIdContractTests.cs
+|   |   |   |   |-- ServoInputTests.cs
+|   |   |   |   |-- ServoPublicApiContractTests.cs
+|   |   |   |   |-- ServoQueryTests.cs
+|   |   |   |   |-- ServoSceneTests.cs
+|   |   |   |   |-- ServoSynchronizationTests.cs
+|   |   |   |   +-- WindowScreenshotRegionTests.cs
 |   |   |   |-- Text/
 |   |   |   |   |-- BidiTextServiceTests.cs
 |   |   |   |   |-- FontResolverTests.cs
@@ -2960,7 +3603,7 @@ Generated from `.`.
 |   |   |-- Cerneala.Tests.csproj
 |   |   |-- GameBootstrapTests.cs
 |   |   |-- GlobalUsings.cs
-|   |   |-- MonoGameBackendTestBootstrap.cs
+|   |   |-- SdlBackendTestBootstrap.cs
 |   |   +-- xunit.runner.json
 |   |-- Cerneala.Tests.Language/
 |   |   |-- Corpus/
@@ -3005,26 +3648,97 @@ Generated from `.`.
 |   |-- Cerneala.Tests.PreviewHost/
 |   |   |-- Cerneala.Tests.PreviewHost.csproj
 |   |   +-- PreviewHostTests.cs
+|   |-- Cerneala.Tests.Scene2DImporters/
+|   |   |-- Cerneala.Tests.Scene2DImporters.csproj
+|   |   |-- ImportStageZeroContractTests.cs
+|   |   |-- LdtkImporterTests.cs
+|   |   |-- SceneWorldAssetTests.cs
+|   |   |-- TiledContractCoverageTests.cs
+|   |   +-- TiledHostileInputTests.cs
 |   |-- Cerneala.Tests.SdlGpu/
+|   |   |-- Prism/
+|   |   |   |-- PrismAdditionalKernelGpuTests.cs
+|   |   |   |-- PrismAdjustmentResourceMigrationTests.cs
+|   |   |   |-- PrismBackdropHostingMigrationTests.cs
+|   |   |   |-- PrismBaselineConformanceMigrationTests.cs
+|   |   |   |-- PrismBlendMathMigrationTests.cs
+|   |   |   |-- PrismChromaticAberrationGpuTests.cs
+|   |   |   |-- PrismChromeGpuTests.cs
+|   |   |   |-- PrismColorGpuTests.cs
+|   |   |   |-- PrismColorMatrixGpuTests.cs
+|   |   |   |-- PrismConteCrayonGpuTests.cs
+|   |   |   |-- PrismCraquelureGpuTests.cs
+|   |   |   |-- PrismCurvesTextureMigrationTests.cs
+|   |   |   |-- PrismCustomConvolutionGpuTests.cs
+|   |   |   |-- PrismDissolveGpuTests.cs
+|   |   |   |-- PrismEmbossGpuTests.cs
+|   |   |   |-- PrismExecutionBudgetMigrationTests.cs
+|   |   |   |-- PrismExecutionMigrationTests.cs
+|   |   |   |-- PrismFundamentalGpuTests.cs
+|   |   |   |-- PrismGrainGpuTests.cs
+|   |   |   |-- PrismGraphicPenGpuTests.cs
+|   |   |   |-- PrismMosaicTilesGpuTests.cs
+|   |   |   |-- PrismMultipassKernelGpuTests.cs
+|   |   |   |-- PrismNotePaperGpuTests.cs
+|   |   |   |-- PrismOperationalDiagnosticsTests.cs
+|   |   |   |-- PrismPatchworkGpuTests.cs
+|   |   |   |-- PrismPhotocopyGpuTests.cs
+|   |   |   |-- PrismPlannerOwnershipTests.cs
+|   |   |   |-- PrismPlasterGpuTests.cs
+|   |   |   |-- PrismRetainedDependencyMigrationTests.cs
+|   |   |   |-- PrismRetainedExecutionTests.cs
+|   |   |   |-- PrismReticulationGpuTests.cs
+|   |   |   |-- PrismScanlinesGpuTests.cs
+|   |   |   |-- PrismSolarizeGpuTests.cs
+|   |   |   |-- PrismSpatterPointTextureCacheTests.cs
+|   |   |   |-- PrismSpinBlurGpuTests.cs
+|   |   |   |-- PrismStainedGlassGpuTests.cs
+|   |   |   |-- PrismStrokeDistanceFieldGpuTests.cs
+|   |   |   |-- PrismStyleConformanceMigrationTests.cs
+|   |   |   |-- PrismSurfaceOwnershipTests.cs
+|   |   |   |-- PrismTexturizerGpuTests.cs
+|   |   |   |-- PrismTilesGpuTests.cs
+|   |   |   |-- PrismTraceContourGpuTests.cs
+|   |   |   |-- PrismWaterPaperGpuTests.cs
+|   |   |   |-- PrismWindGpuTests.cs
+|   |   |   +-- SdlPrismKernelFixture.cs
+|   |   |-- AlphaBlendRenderingTests.cs
+|   |   |-- BrushRenderingTests.cs
 |   |   |-- CerberusTests.cs
 |   |   |-- Cerneala.Tests.SdlGpu.csproj
 |   |   |-- ColorPickerSdlGpuTests.cs
+|   |   |-- DrawingBackendLifecycleContractTests.cs
+|   |   |-- DrawingRetainedPayloadTests.cs
 |   |   |-- FakeSdlApi.cs
+|   |   |-- GraphixManagedDependencyTests.cs
+|   |   |-- GraphixNativeDependencyTests.cs
+|   |   |-- NativeDrawingSmokeTests.cs
 |   |   |-- NativeSdlLifetimeTests.cs
+|   |   |-- RectanglePixelBoundaryMigrationTests.cs
+|   |   |-- RenderSurface2DPresentationTests.cs
 |   |   |-- SdlArchitectureTests.cs
+|   |   |-- SdlGpuBrushTextureLifetimeTests.cs
+|   |   |-- SdlGpuCommandRangeStateTests.cs
 |   |   |-- SdlGpuDeviceOwnerTests.cs
 |   |   |-- SdlGpuDrawingBackendTests.cs
 |   |   |-- SdlGpuDrawingFrameCountersTests.cs
+|   |   |-- SdlGpuGeometryAllocationTests.cs
 |   |   |-- SdlGpuPrismBuiltinTextureAllocationTests.cs
 |   |   |-- SdlGpuPrismExecutorTests.cs
 |   |   |-- SdlGpuPrismUniformAllocationTests.cs
+|   |   |-- SdlGpuScreenshotRegionTests.cs
 |   |   |-- SdlGpuShaderArtifactTests.cs
+|   |   |-- SdlGpuSurfaceRetainedTests.cs
+|   |   |-- SdlGpuTextCacheContractTests.cs
 |   |   |-- SdlGpuTextCacheTests.cs
 |   |   |-- SdlGpuWindowGraphicsSessionTests.cs
+|   |   |-- SdlInputSourceTests.cs
 |   |   |-- SdlNativeFactAttribute.cs
 |   |   |-- SdlNativeTestCollection.cs
 |   |   |-- SdlPlatformLifetimeTests.cs
+|   |   |-- SdlWindowMigrationContractTests.cs
 |   |   |-- SdlWindowPlatformTests.cs
+|   |   |-- SdlWindowsNativeContractTests.cs
 |   |   |-- SdlWindowSurfaceTests.cs
 |   |   +-- WindowTestDoubles.cs
 |   |-- Cerneala.Tests.SourceGen/
@@ -3041,6 +3755,7 @@ Generated from `.`.
 |   |   |-- UiMarkupGeneratorBindingStageFourTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageThreeTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageZeroTests.cs
+|   |   |-- UiMarkupGeneratorCollisionStageZeroTests.cs
 |   |   |-- UiMarkupGeneratorFileExtensionTests.cs
 |   |   |-- UiMarkupGeneratorMenuTests.cs
 |   |   |-- UiMarkupGeneratorMotionClipTests.cs
@@ -3054,7 +3769,11 @@ Generated from `.`.
 |   |   |-- UiMarkupGeneratorMotionTimelineTests.cs
 |   |   |-- UiMarkupGeneratorRenderSurface2DTests.cs
 |   |   |-- UiMarkupGeneratorResourceBindingModeTests.cs
-|   |   +-- UiMarkupGeneratorTests.cs
+|   |   |-- UiMarkupGeneratorSceneImportStageZeroTests.cs
+|   |   |-- UiMarkupGeneratorSceneWorldBindingTests.cs
+|   |   |-- UiMarkupGeneratorSpriteAnimationStageZeroTests.cs
+|   |   |-- UiMarkupGeneratorTests.cs
+|   |   +-- UiMarkupGeneratorTileMap2DStageZeroTests.cs
 |   |-- Cerneala.Tests.VisualStudio/
 |   |   |-- Golden/
 |   |   |   |-- cerneala-tokenization.crn
@@ -3069,35 +3788,85 @@ Generated from `.`.
 |   |   |-- Stage6ReleaseHarnessTests.cs
 |   |   +-- VisualStudioPackageTests.cs
 |   |-- Cerneala.WindowsDxSmoke/
-|   |   |-- Cerneala.WindowsDxSmoke.csproj
-|   |   +-- WindowsDxSmokeApplication.cs
-|   +-- Fixtures/
-|       |-- LanguageServerWorkspace/
-|       |   |-- LanguageServerWorkspace.csproj
-|       |   |-- View.crn
-|       |   +-- View.crn.cs
-|       |-- VisualStudioConsumer/
-|       |   |-- AuthoringView.crn
-|       |   |-- AuthoringView.crn.cs
-|       |   |-- DashboardModels.cs
-|       |   |-- Invoke-CommunityIntegration.ps1
-|       |   |-- Invoke-CommunityPerformance.ps1
-|       |   |-- Invoke-CommunityRelease.ps1
-|       |   |-- MainView.crn
-|       |   |-- MainView.crn.cs
-|       |   |-- SecondaryView.crn
-|       |   |-- SecondaryView.crn.cs
-|       |   |-- StatusCard.cs
-|       |   |-- VisualStudioConsumer.csproj
-|       |   +-- VisualStudioConsumer.slnx
-|       +-- VisualStudioIntegrationHost/
-|           |-- source.extension.vsixmanifest
-|           |-- Stage4Commands.vsct
-|           |-- Stage4IntegrationPackage.cs
-|           |-- VisualStudioIntegrationHost.csproj
-|           |-- VisualStudioStage4Runner.cs
-|           |-- VisualStudioStage4Runner.Presentation.cs
-|           +-- VisualStudioStage5Runner.cs
+|   |-- CodexGpuDriverHarness/
+|   |-- CodexMonoGameParityHarness/
+|   |-- CodexTetrisStyleHarness/
+|   |-- Fixtures/
+|   |   |-- LanguageServerWorkspace/
+|   |   |   |-- LanguageServerWorkspace.csproj
+|   |   |   |-- View.crn
+|   |   |   +-- View.crn.cs
+|   |   |-- Scene2DImport/
+|   |   |   |-- invalid/
+|   |   |   |   |-- absent-promotion.tmj
+|   |   |   |   |-- atlas-bounds.tmj
+|   |   |   |   |-- chunk-overlap.tmj
+|   |   |   |   |-- degenerate-collider.tmj
+|   |   |   |   |-- duplicate-promotion.tmj
+|   |   |   |   |-- editor-warning.tmj
+|   |   |   |   |-- empty-promotion.tmj
+|   |   |   |   |-- layer-mask.tmj
+|   |   |   |   |-- ldtk-field.ldtk
+|   |   |   |   |-- missing-file.tmj
+|   |   |   |   |-- path-escape.tmj
+|   |   |   |   |-- tile-id.tmj
+|   |   |   |   |-- unknown-field.tmj
+|   |   |   |   |-- unsupported.tmj
+|   |   |   |   +-- version.tmj
+|   |   |   |-- levels/
+|   |   |   |   +-- Fixture.ldtkl
+|   |   |   |-- tilesets/
+|   |   |   |   +-- atlas.tsj
+|   |   |   |-- atlas.svg
+|   |   |   |-- common.golden.json
+|   |   |   |-- compatibility-matrix.json
+|   |   |   |-- diagnostic-cases.json
+|   |   |   |-- ldtk-inline.ldtk
+|   |   |   |-- ldtk-separate.ldtk
+|   |   |   |-- New-CompatibilityMatrix.ps1
+|   |   |   |-- New-Fixtures.ps1
+|   |   |   |-- Test-Fixtures.ps1
+|   |   |   |-- tiled-empty-promotion.tmj
+|   |   |   |-- tiled-external.tmj
+|   |   |   |-- tiled-finite.tmj
+|   |   |   |-- tiled-flips.tmj
+|   |   |   |-- tiled-group.tmj
+|   |   |   |-- tiled-gzip.tmj
+|   |   |   |-- tiled-infinite.tmj
+|   |   |   |-- tiled-objects.tmj
+|   |   |   |-- tiled-raw.tmj
+|   |   |   +-- tiled-zlib.tmj
+|   |   |-- VisualStudioConsumer/
+|   |   |   |-- AuthoringView.crn
+|   |   |   |-- AuthoringView.crn.cs
+|   |   |   |-- DashboardModels.cs
+|   |   |   |-- Invoke-CommunityIntegration.ps1
+|   |   |   |-- Invoke-CommunityPerformance.ps1
+|   |   |   |-- Invoke-CommunityRelease.ps1
+|   |   |   |-- MainView.crn
+|   |   |   |-- MainView.crn.cs
+|   |   |   |-- SecondaryView.crn
+|   |   |   |-- SecondaryView.crn.cs
+|   |   |   |-- StatusCard.cs
+|   |   |   |-- VisualStudioConsumer.csproj
+|   |   |   +-- VisualStudioConsumer.slnx
+|   |   +-- VisualStudioIntegrationHost/
+|   |       |-- source.extension.vsixmanifest
+|   |       |-- Stage4Commands.vsct
+|   |       |-- Stage4IntegrationPackage.cs
+|   |       |-- VisualStudioIntegrationHost.csproj
+|   |       |-- VisualStudioStage4Runner.cs
+|   |       |-- VisualStudioStage4Runner.Presentation.cs
+|   |       +-- VisualStudioStage5Runner.cs
+|   +-- Shared/
+|       |-- CollisionStageFiveFixture.cs
+|       |-- PrismStainedGlassTestData.cs
+|       |-- PrismTestData.cs
+|       |-- SceneDebugOverlayConformanceFixture.cs
+|       |-- SdlDrawingFixture.cs
+|       |-- SpriteAnimationConformanceFixture.cs
+|       |-- TileMapStage3CaptureFixture.cs
+|       +-- TileMapStage5ConformanceFixture.cs
 |-- Tetrisish/
 |   |-- Assets/
 |   |   |-- tetromino-atlas.svg
@@ -3229,14 +3998,11 @@ Generated from `.`.
 |   |   |-- AspectConditionKey.cs
 |   |   |-- AspectConditionNode.cs
 |   |   |-- AspectConditionResult.cs
-|   |   |-- AspectConditionTrace.cs
 |   |   |-- AspectDataContext.cs
 |   |   |-- AspectDataDependency.cs
 |   |   |-- AspectDeclaration.cs
 |   |   |-- AspectDependencySet.cs
-|   |   |-- AspectDiagnostics.cs
 |   |   |-- AspectEngine.cs
-|   |   |-- AspectEngineCounters.cs
 |   |   |-- AspectEngineElementState.cs
 |   |   |-- AspectEnvironment.cs
 |   |   |-- AspectInvalidation.cs
@@ -3251,7 +4017,6 @@ Generated from `.`.
 |   |   |-- AspectRef.cs
 |   |   |-- AspectRegistry.cs
 |   |   |-- AspectResolutionContext.cs
-|   |   |-- AspectResolutionStep.cs
 |   |   |-- AspectRuleSet.cs
 |   |   |-- AspectRuleSetBuilder.cs
 |   |   |-- AspectSlot.cs
@@ -3265,7 +4030,6 @@ Generated from `.`.
 |   |   |-- AspectToken{T}.cs
 |   |   |-- AspectTokenBuilder.cs
 |   |   |-- AspectTokenDefinition.cs
-|   |   |-- AspectTokenTrace.cs
 |   |   |-- AspectValue.cs
 |   |   |-- AspectValue{T}.cs
 |   |   |-- AspectVariantKey.cs
@@ -3280,14 +4044,6 @@ Generated from `.`.
 |   |   |-- ResolvedAspect.cs
 |   |   |-- ResolvedAspectValue.cs
 |   |   +-- ThemeTokenBridge.cs
-|   |-- Automation/
-|   |   |-- AutomationElement.cs
-|   |   |-- AutomationModifiers.cs
-|   |   |-- AutomationProperties.cs
-|   |   |-- AutomationScriptRunner.cs
-|   |   |-- AutomationSession.cs
-|   |   |-- IAutomationInputDriver.cs
-|   |   +-- RetainedAutomationInputDriver.cs
 |   |-- Controls/
 |   |   |-- Buttons/
 |   |   |   |-- ButtonKind.cs
@@ -3349,10 +4105,19 @@ Generated from `.`.
 |   |   |   |-- TemplateSlotMap.cs
 |   |   |   +-- TemplateTokenBinding.cs
 |   |   |-- Border.cs
+|   |   |-- BoxCollider2D.cs
 |   |   |-- Button.cs
 |   |   |-- Canvas.cs
 |   |   |-- CheckBox.cs
 |   |   |-- CheckBoxTemplates.cs
+|   |   |-- CircleCollider2D.cs
+|   |   |-- Collider2D.cs
+|   |   |-- ColliderGeometry2D.cs
+|   |   |-- CollisionHit2D.cs
+|   |   |-- CollisionNarrowPhase2D.cs
+|   |   |-- CollisionQuery2D.cs
+|   |   |-- CollisionWorld2D.cs
+|   |   |-- CollisionWorld2DDiagnosticsSnapshot.cs
 |   |   |-- ColorPicker.cs
 |   |   |-- ColorPickerColorMath.cs
 |   |   |-- ColorPickerTemplates.cs
@@ -3384,12 +4149,14 @@ Generated from `.`.
 |   |   |-- MenuItemContainerPolicy.cs
 |   |   |-- MenuSession.cs
 |   |   |-- MenuTemplates.cs
+|   |   |-- MoveCollisionResult2D.cs
 |   |   |-- Overlay.cs
 |   |   |-- OverlayDismissScope.cs
 |   |   |-- OverlayManager.cs
 |   |   |-- OverlayPlacement.cs
 |   |   |-- Panel.cs
 |   |   |-- PasswordBox.cs
+|   |   |-- PolygonCollider2D.cs
 |   |   |-- PopupRoot.cs
 |   |   |-- ProgressBar.cs
 |   |   |-- RadioButton.cs
@@ -3401,16 +4168,26 @@ Generated from `.`.
 |   |   |-- RenderSurface2DRedrawMode.cs
 |   |   |-- ResizeMode.cs
 |   |   |-- Scene2D.cs
+|   |   |-- Scene2DDebugOverlay.cs
+|   |   |-- Scene2DDocument.cs
+|   |   |-- Scene2DModelValidator.cs
+|   |   |-- Scene2DRecordContext.cs
+|   |   |-- SceneGeometry2D.cs
+|   |   |-- SceneHitTest2D.cs
 |   |   |-- SceneItems2D.cs
 |   |   |-- SceneNode2D.cs
+|   |   |-- SceneOrderMode.cs
 |   |   |-- ScrollBarVisibility.cs
 |   |   |-- ScrollChangedEventArgs.cs
 |   |   |-- ScrollContentPresenter.cs
 |   |   |-- ScrollViewer.cs
 |   |   |-- ScrollViewerTemplates.cs
+|   |   |-- SegmentCollider2D.cs
 |   |   |-- Slider.cs
 |   |   |-- SliderTemplates.cs
+|   |   |-- SparseCollisionGrid2D.cs
 |   |   |-- Sprite2D.cs
+|   |   |-- SpriteAnimation.cs
 |   |   |-- StackPanel.cs
 |   |   |-- SvgImage.cs
 |   |   |-- TabControl.cs
@@ -3422,6 +4199,16 @@ Generated from `.`.
 |   |   |-- TextInputPolicy.cs
 |   |   |-- TextInputViewport.cs
 |   |   |-- TextSearch.cs
+|   |   |-- TileColliderDescriptor2D.cs
+|   |   |-- TileFlipGeometry2D.cs
+|   |   |-- TileInstance2D.cs
+|   |   |-- TileLayer2D.cs
+|   |   |-- TileMap2D.Cache.cs
+|   |   |-- TileMap2D.Collision.cs
+|   |   |-- TileMap2D.cs
+|   |   |-- TileMap2DDiagnosticsSnapshot.cs
+|   |   |-- TileMap2DModel.cs
+|   |   |-- TileStaticCollider2D.cs
 |   |   |-- ToolTip.cs
 |   |   |-- UserControl.cs
 |   |   |-- Window.cs
@@ -3465,20 +4252,31 @@ Generated from `.`.
 |   |   |-- SortDescription{T}.cs
 |   |   |-- StringPropertyPath.cs
 |   |   +-- UiPropertyBinding{T}.cs
-|   |-- Diagnostics/
+|   |-- Detective/
+|   |   |-- AspectConditionTrace.cs
+|   |   |-- AspectDiagnostics.cs
+|   |   |-- AspectEngineCounters.cs
+|   |   |-- AspectResolutionStep.cs
+|   |   |-- AspectTokenTrace.cs
 |   |   |-- AspectTrace.cs
 |   |   |-- DebugAdorner.cs
 |   |   |-- DebugOverlay.cs
+|   |   |-- Detective.cs
 |   |   |-- DirtyTreeDumper.cs
 |   |   |-- ElementTreeDumper.cs
 |   |   |-- FrameDiagnostics.cs
 |   |   |-- InputDiagnostics.cs
 |   |   |-- InvalidationTrace.cs
 |   |   |-- LayoutDiagnostics.cs
+|   |   |-- MotionDiagnostics.cs
+|   |   |-- MotionGraphSnapshot.cs
+|   |   |-- MotionTrace.cs
+|   |   |-- MotionTraceEvent.cs
+|   |   |-- PrismRendererDiagnostics.cs
 |   |   |-- RenderCacheDumper.cs
 |   |   |-- RenderDiagnostics.cs
 |   |   |-- RoutedEventTrace.cs
-|   |   +-- RuntimeDiagnostics.cs
+|   |   +-- TileMapDiagnosticsSnapshot.cs
 |   |-- Drawing/
 |   |   +-- DrawingContentServices.cs
 |   |-- Elements/
@@ -3503,19 +4301,15 @@ Generated from `.`.
 |   |   +-- UIRoot.cs
 |   |-- Hosting/
 |   |   |-- MonoGame/
-|   |   |   |-- MonoGameContentServices.cs
-|   |   |   |-- MonoGameUiHost.cs
-|   |   |   +-- MonoGameUiHostOptions.cs
 |   |   |-- Windowing/
 |   |   |   |-- ApplicationBackendAttribute.cs
 |   |   |   |-- DesignPreviewSession.cs
 |   |   |   |-- GeneratedWindowApplication.cs
 |   |   |   |-- IWindowPlatform.cs
 |   |   |   |-- WindowApplicationRuntime.cs
-|   |   |   +-- WindowingBackendRegistry.cs
+|   |   |   |-- WindowingBackendRegistry.cs
+|   |   |   +-- WindowScreenshotRegion.cs
 |   |   |-- Windows/
-|   |   |   |-- WindowsDxApplicationBackend.cs
-|   |   |   +-- WindowsDxWindowGraphicsSession.cs
 |   |   |-- BackdropFrameCounters.cs
 |   |   |-- IUiBackend.cs
 |   |   |-- IUiClock.cs
@@ -3532,8 +4326,6 @@ Generated from `.`.
 |   |   +-- StrokeCollectionChangeKind.cs
 |   |-- Input/
 |   |   |-- MonoGame/
-|   |   |   |-- MonoGameInputMapper.cs
-|   |   |   +-- MonoGameInputSource.cs
 |   |   |-- ActionCommand.cs
 |   |   |-- CanExecuteRoutedEventArgs.cs
 |   |   |-- ClickTracker.cs
@@ -3562,13 +4354,17 @@ Generated from `.`.
 |   |   |-- HoverTracker.cs
 |   |   |-- ICommand.cs
 |   |   |-- ICommandStateSource.cs
+|   |   |-- IGeometricHitTestHost.cs
 |   |   |-- IInputActivatable.cs
 |   |   |-- IInputCommandSource.cs
+|   |   |-- IInputCoordinateSpace.cs
 |   |   |-- IInputPressable.cs
 |   |   |-- IInputSource.cs
+|   |   |-- IInputSubtreeHost.cs
 |   |   |-- InputBinding.cs
 |   |   |-- InputBindingCollection.cs
 |   |   |-- InputButtonState.cs
+|   |   |-- InputCoordinateConverter.cs
 |   |   |-- InputEvents.cs
 |   |   |-- InputFrame.cs
 |   |   |-- InputGesture.cs
@@ -3744,11 +4540,6 @@ Generated from `.`.
 |   |   |   |-- ReducedMotionMode.cs
 |   |   |   |-- ReducedMotionPolicy.cs
 |   |   |   +-- SystemMotionClock.cs
-|   |   |-- Diagnostics/
-|   |   |   |-- MotionDiagnostics.cs
-|   |   |   |-- MotionGraphSnapshot.cs
-|   |   |   |-- MotionTrace.cs
-|   |   |   +-- MotionTraceEvent.cs
 |   |   |-- Input/
 |   |   |   |-- DragMotionController.cs
 |   |   |   |-- GestureMotionController.cs
@@ -3906,11 +4697,11 @@ Generated from `.`.
 |   |   +-- TimeSensitiveRenderInvalidator.cs
 |   |-- Resources/
 |   |   |-- MonoGame/
-|   |   |   +-- MonoGameImageLoader.cs
 |   |   |-- FontResource.cs
 |   |   |-- IImageLoader.cs
 |   |   |-- ImageResource.cs
 |   |   |-- ImageResourceCache.cs
+|   |   |-- ImageResourceResolver.cs
 |   |   |-- IObservableResourceProvider.cs
 |   |   |-- IResourceProvider.cs
 |   |   |-- ResourceChangedEventArgs.cs
@@ -3918,6 +4709,25 @@ Generated from `.`.
 |   |   |-- ResourceDictionary.cs
 |   |   |-- ResourceId{T}.cs
 |   |   +-- ResourceStore.cs
+|   |-- Servo/
+|   |   |-- IServoInputDriver.cs
+|   |   |-- RetainedServoInputDriver.cs
+|   |   |-- Servo.cs
+|   |   |-- ServoActionEngine.cs
+|   |   |-- ServoCaptureEngine.cs
+|   |   |-- ServoCondition.cs
+|   |   |-- ServoContext.cs
+|   |   |-- ServoElement.cs
+|   |   |-- ServoException.cs
+|   |   |-- ServoInputSequence.cs
+|   |   |-- ServoInputState.cs
+|   |   |-- ServoModifiers.cs
+|   |   |-- ServoOperation.cs
+|   |   |-- ServoOptions.cs
+|   |   |-- ServoPoint.cs
+|   |   |-- ServoQueryEngine.cs
+|   |   |-- ServoSynchronization.cs
+|   |   +-- ServoTarget.cs
 |   |-- Text/
 |   |   |-- BidiTextRun.cs
 |   |   |-- BidiTextService.cs
@@ -3966,12 +4776,14 @@ Generated from `.`.
 |-- Cerneala.csproj
 |-- Cerneala.slnx
 |-- ClassChecklist.md
+|-- CLAUDE.md
 |-- ConceptualIdeas.md
 |-- DOCUMENTATION_CHECKLIST.md
 |-- GameBootstrap.cs
 |-- global.json
 |-- LICENSE
 |-- Motion_Audit_09022026.md
+|-- NuGet.Config
 |-- Prism_Audit_09022026.md
 |-- README.md
 |-- Relay_Audit_09022026.md

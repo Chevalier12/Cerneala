@@ -16,8 +16,9 @@ on:
       - "docs-site/documentation/classes/**"
       - "docs-site/documentation/manifest.json"
       - "Tools/scripts/*SdlGpuSmoke*.ps1"
-      - "Tools/scripts/Get-GraphixNativePackage.ps1"
       - "NuGet.Config"
+      - "global.json"
+      - "benchmarks/Cerneala.Benchmarks/Cerneala.Benchmarks.csproj"
       - "UI/Hosting/Windowing/**"
       - "UI/Prism/**"
       - "tests/Cerneala.SdlGpuSmoke/**"
@@ -40,8 +41,9 @@ on:
       - "docs-site/documentation/classes/**"
       - "docs-site/documentation/manifest.json"
       - "Tools/scripts/*SdlGpuSmoke*.ps1"
-      - "Tools/scripts/Get-GraphixNativePackage.ps1"
       - "NuGet.Config"
+      - "global.json"
+      - "benchmarks/Cerneala.Benchmarks/Cerneala.Benchmarks.csproj"
       - "UI/Hosting/Windowing/**"
       - "UI/Prism/**"
       - "tests/Cerneala.SdlGpuSmoke/**"
@@ -53,7 +55,6 @@ on:
 
 permissions:
   contents: read
-  actions: read
 
 jobs:
   sdlgpu-desktop:
@@ -81,12 +82,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
-
-      - name: Fetch and verify temporary Graphix package
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: ./Tools/scripts/Get-GraphixNativePackage.ps1
 
       - name: Configure Linux virtual display and software Vulkan
         if: runner.os == 'Linux'
@@ -195,12 +190,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
-
-      - name: Fetch and verify temporary Graphix package
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: ./Tools/scripts/Get-GraphixNativePackage.ps1
 
       - name: Restore
         shell: pwsh

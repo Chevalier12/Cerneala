@@ -24,7 +24,6 @@ pins the SDK used to build and test them.
 Clone the repository, then run these commands from its root:
 
 ```powershell
-./Tools/scripts/Get-GraphixNativePackage.ps1
 dotnet tool restore
 dotnet restore ./Cerneala.slnx
 dotnet build ./Cerneala.slnx -c Release --no-restore
@@ -32,10 +31,10 @@ $env:CERNEALA_SDL_NATIVE_TESTS = '1'
 dotnet test ./Cerneala.slnx -c Release --no-build --no-restore -m:1
 ```
 
-The temporary Graphix package is verified by its pinned hash. Fetching it requires
-`gh` authentication with access to the Graphix Actions artifact, unless the
-verified package is already present. This temporary artifact expires; see the
-[SDL backend guide](sdl-desktop-backend.md) for the current dependency setup.
+`Graphix.Native 3.4.16-graphix.3` and `Graphix-CS 3.4.16.1` restore directly from
+NuGet.org. No GitHub authentication, temporary Actions artifact or local package
+feed is required. See the [SDL backend guide](sdl-desktop-backend.md) for package
+provenance and the unchanged managed/native ownership boundaries.
 
 Native input tests share the interactive desktop, so the full native run
 serializes test projects with `-m:1`. Keep that desktop available to the tests;
