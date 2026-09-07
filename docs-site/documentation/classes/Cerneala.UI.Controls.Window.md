@@ -24,7 +24,15 @@ var window = new Window
 ```
 
 ## Remarks
-Window dimensions and constraints participate in measure; native state and resize settings are translated by the Windows hosting backend. Closing can be cancelled through the closing event args.
+Window dimensions and constraints participate in measure; native state and resize settings are translated by the SDL hosting layer. Closing can be cancelled through the closing event args.
+
+`MaxWidth` and `MaxHeight` constrain the client area, including while the window is maximized. Both default to positive infinity, which means no explicit upper limit. Maximization does not temporarily remove a finite limit; a constrained maximized window may therefore be smaller than the monitor's work area.
+
+Each maximum is independent: a finite `MaxWidth` still applies when `MaxHeight` is positive infinity, and vice versa. The Windows native runtime enforces this for bordered and borderless windows.
+
+When both `Left` and `Top` are finite, that explicit position takes precedence over automatic startup centering. Maximizing or minimizing preserves the model's normal restore position instead of replacing it with the native maximized or minimized coordinates.
+
+On Windows, the host preserves the application icon supplied by SDL. If neither the native window nor its class has an application icon, the host supplies the standard Windows application icon.
 
 The window renders its configured background and border before its content. `LastFrame` is assigned immediately after a frame is presented. The `FrameRendered` event is then raised on the window's UI thread, allowing diagnostic UI to inspect the completed frame without reaching into the hosting runtime.
 
@@ -39,7 +47,7 @@ When the native platform activates a window and no retained element already has 
 | --- | --- |
 | `Title` | Native window title. |
 | `Width`, `Height` | Requested dimensions. |
-| `MinWidth`, `MinHeight`, `MaxWidth`, `MaxHeight` | Dimension constraints. |
+| `MinWidth`, `MinHeight`, `MaxWidth`, `MaxHeight` | Client-area dimension constraints; maximum limits also apply when maximized. |
 | `Left`, `Top` | Requested screen position. |
 | `WindowState` | Normal, minimized, or maximized state. |
 | `ResizeMode` | Native resize policy. |

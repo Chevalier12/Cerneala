@@ -93,15 +93,16 @@ public sealed class AdvancedDrawCommandTests
     }
 
     [Fact]
-    public void MonoGameBackendHandlesAdvancedCommands()
+    public void SdlGpuBackendHandlesAdvancedCommandsThroughGpuGeometry()
     {
-        string backendText = File.ReadAllText(FindRepositoryPath("Drawing", "MonoGame", "MonoGameDrawingBackend.cs"));
+        string backendText = File.ReadAllText(FindRepositoryPath("Cerneala.Backends.SdlGpu", "Gpu", "SdlGpuDrawingBackend.cs"));
+        string submissionText = File.ReadAllText(FindRepositoryPath("Cerneala.Backends.SdlGpu", "Gpu", "Cerberus.cs"));
 
         Assert.Contains("case DrawCommandKind.FillEllipse:", backendText, StringComparison.Ordinal);
         Assert.Contains("case DrawCommandKind.DrawEllipse:", backendText, StringComparison.Ordinal);
         Assert.Contains("case DrawCommandKind.DrawLine:", backendText, StringComparison.Ordinal);
         Assert.Contains("case DrawCommandKind.FillPath:", backendText, StringComparison.Ordinal);
-        Assert.Contains("DrawUserIndexedPrimitives", backendText, StringComparison.Ordinal);
+        Assert.Contains("DrawGpuIndexedPrimitives", submissionText, StringComparison.Ordinal);
         Assert.DoesNotContain("SKPath", backendText, StringComparison.Ordinal);
         Assert.DoesNotContain("SKCanvas", backendText, StringComparison.Ordinal);
         Assert.DoesNotContain("SKBitmap", backendText, StringComparison.Ordinal);

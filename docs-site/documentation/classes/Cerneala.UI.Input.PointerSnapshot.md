@@ -75,5 +75,5 @@ Input namespace: `Cerneala.UI.Input`
 
 - `InputFrame`
 - `InputMouseButton`
-- `MonoGameInputSource`
+- `IInputSource`
 - `UI/Input/PointerSnapshot.cs`

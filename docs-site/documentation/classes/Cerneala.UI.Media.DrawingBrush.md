@@ -20,7 +20,7 @@ DrawingBrush brush = new(
 ```
 
 ## Remarks
-The constructor copies the command sequence, validates positive finite content bounds, and uses structural equality. Content cannot access `UIElement` or layout services. The MonoGame backend rasterizes the command snapshot to a device-owned render target.
+The constructor copies the command sequence, validates positive finite content bounds, and uses structural equality. Content cannot access `UIElement` or layout services. SDL_GPU rasterizes the command snapshot to a device-owned render target, reuses unchanged raster content, and releases unused captures through its deferred GPU-resource retirement path.
 
 ## Constructors
 | Name | Description |

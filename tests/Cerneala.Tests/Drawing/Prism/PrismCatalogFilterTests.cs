@@ -47,7 +47,7 @@ public sealed class PrismCatalogFilterTests
                 entry.Coverage.Planner,
                 StringComparison.Ordinal);
             Assert.Equal(
-                $"PrismKernelRegistry/{entry.Symbol}",
+                $"SdlGpuPrismKernelSelector/{entry.Symbol}",
                 entry.Coverage.Kernel);
             Assert.Equal(
                 $"PrismCatalogFilterTests/{entry.Symbol}",

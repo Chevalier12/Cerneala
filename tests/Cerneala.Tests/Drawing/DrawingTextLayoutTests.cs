@@ -1,6 +1,5 @@
 using System.Numerics;
 using Cerneala.Drawing;
-using Cerneala.Drawing.MonoGame;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Media;
 
@@ -130,40 +129,6 @@ public sealed class DrawingTextLayoutTests
         Assert.Equal(DrawCommandKind.DrawTextLayout, commands[0].Kind);
         Assert.Throws<ObjectDisposedException>(
             () => frame.DrawTextLayout(layout, default));
-    }
-
-    [Fact]
-    [Trait("PlanStage", "6")]
-    public void RetainedSessionReusesLayoutAndDamagesChangedLayoutBounds()
-    {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
-        using MonoGame.PrismGraphExecutorTests.WindowsDxFixture fixture = new();
-        using MonoGameRenderSurface2DSession session = new(
-            fixture.Session.GraphicsDevice,
-            96,
-            40);
-        DrawTextLayout layout = Layout("stable", new DrawTextLayoutOptions(maxWidth: 36));
-
-        void Draw(RenderSurface2DFrame frame) =>
-            frame.DrawTextLayout(layout, new DrawPoint(2, 2));
-
-        session.Render(Draw, Color.Black, TimeSpan.Zero);
-        fixture.Session.GraphicsDevice.SetRenderTarget(null);
-        session.Render(Draw, Color.Black, TimeSpan.FromMilliseconds(16));
-        fixture.Session.GraphicsDevice.SetRenderTarget(null);
-
-        Assert.Equal(1, session.RasterizedFrameCount);
-        Assert.Null(session.LastDamageBounds);
-
-        layout = Layout("changed text", new DrawTextLayoutOptions(maxWidth: 60));
-        session.Render(Draw, Color.Black, TimeSpan.FromMilliseconds(32));
-
-        Assert.Equal(2, session.RasterizedFrameCount);
-        Assert.NotNull(session.LastDamageBounds);
     }
 
     [Theory]

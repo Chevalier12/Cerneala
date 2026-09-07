@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Hosting`
 Assembly/Project: `Cerneala`  
 Source: `UI/Drawing/DrawingContentServices.cs`
 
-Owns the MonoGame-independent font, Skia text rasterization, and backend-provided image resource services used by a UI host.
+Owns the backend-neutral font, Skia text rasterization, and backend-provided image resource services used by a UI host.
 
 ```csharp
 public class DrawingContentServices : IDisposable
@@ -25,7 +25,7 @@ ImageResourceCache cache = services.ImageResourceCache;
 
 The service creates a `SystemFontSource` and `SkiaTextRasterizer` when those dependencies are omitted. `ImageResourceCache` is always created from the optional `IImageLoader`.
 
-The service owns its image resource cache. `Dispose` releases the cache once and is idempotent. The class contains no MonoGame or XNA types and can be supplied to any compatible UI host; text rasterization remains explicitly Skia-based.
+The service owns its image resource cache. `Dispose` releases the cache once and is idempotent. The class is independent of the graphics backend and can be supplied to any compatible UI host; text rasterization remains explicitly Skia-based.
 
 ## Constructors
 
@@ -55,6 +55,6 @@ Cerneala UI hosting that uses the core Skia text pipeline.
 
 ## See also
 
-- `Cerneala.UI.Hosting.MonoGame.MonoGameContentServices`
+- `Cerneala.UI.Hosting.UiHost`
 - `Cerneala.Drawing.Text.SystemFontSource`
 - `Cerneala.UI.Resources.ImageResourceCache`

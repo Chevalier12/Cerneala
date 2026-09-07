@@ -118,17 +118,16 @@ change of layout or input.
 
 ## Diagnostics and budgets
 
-`MonoGameDrawingBackend.RendererDiagnostics` provides immutable snapshots for
-hit/miss/promotion/eviction, bytes, entries, peaks, catches and passes saved.
-Detailed operational diagnostics are internal, deterministic, redact IDs
-Unstable GPUs and activates via `PrismRendererOptions` only when needed.
+The SDL executor's operational diagnostics and resource configuration are internal.
+The removed adapter's public diagnostics accessor and application-supplied options
+are not available through the SDL bootstrap. Creating a `PrismRendererOptions`
+object does not configure an SDL application.
 
-Measured defaults are 512 MiB hard for all Prism surfaces, 256 MiB
-soft cache retained and 256 entries. At pressure the LRU is evacuated
-don't forget If the hard limit still cannot accommodate a transient surface, the backend
-report `PRISM7006`/`SurfaceAllocationFailed`, restore host and continue
-the remaining gross internal orders, without partial output or quality downgrade
-hidden
+The shared options type defaults to a 512 MiB hard surface limit, 256 MiB retained
+soft limit and 256 retained entries; SDL overrides the retained soft limit to
+32 MiB internally. These are configuration values, not measured performance claims.
+See the canonical [options contract](../docs-site/documentation/classes/Cerneala.Drawing.Prism.PrismRendererOptions.md)
+and [diagnostic snapshot contract](../docs-site/documentation/classes/Cerneala.UI.Detective.PrismRendererDiagnostics.md).
 
 Markup errors use diagnostics `PRISM1xxx`-`PRISM6xxx`; failure paths of
 runtime uses accurate, deduplicated diagnostics where the contract requires it.

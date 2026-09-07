@@ -4,16 +4,9 @@ public sealed class NamespaceBoundaryTests
 {
     private static readonly string[] ForbiddenBackendTerms =
     [
-        "MonoGame",
-        "Microsoft.Xna",
         "Skia",
         "SkiaSharp",
         "HarfBuzz",
-        "Texture2D",
-        "Mouse.GetState",
-        "Keyboard.GetState",
-        "GamePad.GetState",
-        "TouchPanel.GetState",
         "System.Windows",
         "Windows.Win32",
         "Microsoft.Win32"
@@ -26,11 +19,7 @@ public sealed class NamespaceBoundaryTests
         string uiRoot = Path.Combine(root, "UI");
         string[] allowedRoots =
         [
-            Path.Combine(uiRoot, "Drawing"),
-            Path.Combine(uiRoot, "Hosting", "MonoGame"),
-            Path.Combine(uiRoot, "Hosting", "Windows"),
-            Path.Combine(uiRoot, "Input", "MonoGame"),
-            Path.Combine(uiRoot, "Resources", "MonoGame")
+            Path.Combine(uiRoot, "Drawing")
         ];
 
         foreach (string file in EnumerateSourceFiles(uiRoot))
@@ -53,13 +42,8 @@ public sealed class NamespaceBoundaryTests
     {
         string[] expectedTerms =
         [
-            "Microsoft.Xna",
             "SkiaSharp",
-            "HarfBuzz",
-            "Texture2D",
-            "Mouse.GetState",
-            "Keyboard.GetState",
-            "TouchPanel.GetState"
+            "HarfBuzz"
         ];
 
         foreach (string term in expectedTerms)
@@ -74,15 +58,15 @@ public sealed class NamespaceBoundaryTests
         const string source =
             "namespace Cerneala.UI.Controls;\n" +
             "\n" +
-            "// MonoGame and Microsoft.Xna are backend examples, not references.\n" +
+            "// Skia and HarfBuzz are backend examples, not references.\n" +
             "/* SkiaSharp is another documentation-only example. */\n" +
             "public sealed class DocumentationOnlyControl\n" +
             "{\n" +
-            "    private const string BackendExample = \"SpriteBatch Texture2D\";\n" +
-            "    private const string VerbatimBackendExample = @\"Mouse.GetState Keyboard.GetState\";\n" +
+            "    private const string BackendExample = \"SkiaSharp HarfBuzz\";\n" +
+            "    private const string VerbatimBackendExample = @\"Windows.Win32 Microsoft.Win32\";\n" +
             "    private const string RawBackendExample =\n" +
             "        \"\"\"\n" +
-            "        TouchPanel.GetState System.Windows\n" +
+            "        Skia System.Windows\n" +
             "        \"\"\";\n" +
             "}\n";
 

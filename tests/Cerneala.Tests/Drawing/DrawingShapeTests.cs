@@ -1,12 +1,10 @@
 using Cerneala.Drawing;
-using Cerneala.Drawing.MonoGame;
 using Cerneala.Drawing.Paths;
 using Cerneala.Drawing.Prism.Graph;
-using Cerneala.Tests.Drawing.MonoGame;
+using Cerneala.Tests.Drawing.SdlGpu;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Media;
 using NumericsMatrix3x2 = System.Numerics.Matrix3x2;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace Cerneala.Tests.Drawing;
 
@@ -269,14 +267,9 @@ public sealed class DrawingShapeTests
     }
 
     [Fact]
-    public void RoundedRectangleFastPathRendersIndependentCornersWithoutStrokeMesh()
+    public void RoundedRectangleRendersIndependentCorners()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
-        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
+        using SdlDrawingFixture fixture = new();
         DrawCommandList commands = new();
         DrawingContext drawing = new(commands);
         drawing.PushTransform(NumericsMatrix3x2.CreateTranslation(4, 0));
@@ -286,25 +279,17 @@ public sealed class DrawingShapeTests
             Color.White);
         drawing.PopTransform();
 
-        XnaColor[] pixels = Render(fixture, commands);
-        MonoGameDrawingBackend backend = Assert.IsType<MonoGameDrawingBackend>(
-            fixture.Session.DrawingBackend);
+        Color[] pixels = fixture.Render(commands);
 
-        Assert.Equal(XnaColor.Black, Sample(pixels, fixture, backend, 13, 9));
-        Assert.Equal(XnaColor.White, Sample(pixels, fixture, backend, 58, 9));
-        Assert.Equal(XnaColor.White, Sample(pixels, fixture, backend, 36, 24));
-        Assert.Equal(0, backend.StrokeMeshCacheCount);
+        Assert.Equal(Color.Black, fixture.Sample(pixels, 13, 9));
+        Assert.Equal(Color.White, fixture.Sample(pixels, 58, 9));
+        Assert.Equal(Color.White, fixture.Sample(pixels, 36, 24));
     }
 
     [Fact]
-    public void RoundedRectangleStrokeReusesCachedNativeGeometry()
+    public void RoundedRectangleStrokeRendersOutlineOnRepeatedFrames()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
-        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
+        using SdlDrawingFixture fixture = new();
         DrawCommandList commands = new();
         DrawingContext drawing = new(commands);
         drawing.DrawRoundedRectangle(
@@ -312,43 +297,11 @@ public sealed class DrawingShapeTests
             new DrawCornerRadius(10),
             new DrawPen(new SolidColorBrush(Color.White), 2));
 
-        _ = Render(fixture, commands);
-        XnaColor[] pixels = Render(fixture, commands);
-        MonoGameDrawingBackend backend = Assert.IsType<MonoGameDrawingBackend>(
-            fixture.Session.DrawingBackend);
+        _ = fixture.Render(commands);
+        Color[] pixels = fixture.Render(commands);
 
-        Assert.Equal(XnaColor.White, Sample(pixels, fixture, backend, 32, 8));
-        Assert.Equal(XnaColor.Black, Sample(pixels, fixture, backend, 32, 24));
-        Assert.Equal(1, backend.StrokeMeshCacheCount);
-    }
-
-    private static XnaColor[] Render(
-        PrismGraphExecutorTests.WindowsDxFixture fixture,
-        DrawCommandList commands)
-    {
-        fixture.Session.BeginFrame(Color.Black);
-        PrismFrameAnalysis prism = new PrismFrameAnalyzer().Analyze(commands);
-        DrawingFrameContext context = new(prism);
-        fixture.Session.DrawingBackend.Render(commands, in context);
-        fixture.Session.Present();
-        Microsoft.Xna.Framework.Graphics.PresentationParameters parameters =
-            fixture.Session.GraphicsDevice.PresentationParameters;
-        XnaColor[] pixels = new XnaColor[parameters.BackBufferWidth * parameters.BackBufferHeight];
-        fixture.Session.GraphicsDevice.GetBackBufferData(pixels);
-        return pixels;
-    }
-
-    private static XnaColor Sample(
-        XnaColor[] pixels,
-        PrismGraphExecutorTests.WindowsDxFixture fixture,
-        MonoGameDrawingBackend backend,
-        float x,
-        float y)
-    {
-        MonoGameDrawMapper mapper = new(backend.CoordinateScale);
-        Microsoft.Xna.Framework.Rectangle sample = mapper.MapRectangle(new DrawRect(x, y, 1, 1));
-        int width = fixture.Session.GraphicsDevice.PresentationParameters.BackBufferWidth;
-        return pixels[(sample.Y * width) + sample.X];
+        Assert.Equal(Color.White, fixture.Sample(pixels, 32, 8));
+        Assert.Equal(Color.Black, fixture.Sample(pixels, 32, 24));
     }
 
     private static void AssertRectNear(DrawRect expected, DrawRect actual)

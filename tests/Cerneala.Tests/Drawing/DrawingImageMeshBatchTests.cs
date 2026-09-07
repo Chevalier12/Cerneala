@@ -1,13 +1,6 @@
 using System.Numerics;
 using Cerneala.Drawing;
-using Cerneala.Drawing.MonoGame;
-using Cerneala.Drawing.Prism;
-using Cerneala.Drawing.Prism.Catalog;
-using Cerneala.Drawing.Prism.Graph;
-using Cerneala.Tests.Drawing.MonoGame;
 using Cerneala.UI.Controls;
-using Microsoft.Xna.Framework.Graphics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace Cerneala.Tests.Drawing;
 
@@ -246,161 +239,8 @@ public sealed class DrawingImageMeshBatchTests
                 .Select(property => property.PropertyType)
                 .Concat(type.GetConstructors().SelectMany(constructor =>
                     constructor.GetParameters().Select(parameter => parameter.ParameterType)));
-            Assert.DoesNotContain(exposed, IsMonoGameType);
+            Assert.DoesNotContain(exposed, IsBackendType);
         }
-    }
-
-    [Fact]
-    public void OnDemandSpriteBatchTracksItsPrismImageAndOnlyRedrawsOnChange()
-    {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
-        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
-        using MonoGameImage source = new(CreateSolidImageTexture(
-            fixture.Session.GraphicsDevice,
-            XnaColor.LimeGreen));
-        BlurFilter blur = new() { Radius = 1 };
-        using PrismImage image = global::Cerneala.Drawing.Prism.Prism.Apply(
-            source,
-            blur);
-        RenderSurface2D surface = new()
-        {
-            RedrawMode = RenderSurface2DRedrawMode.OnDemand
-        };
-        int drawCount = 0;
-        surface.Draw += (_, frame) =>
-        {
-            drawCount++;
-            frame.DrawSpriteBatch(new DrawSpriteBatch(
-                image,
-                [new DrawSprite2D(frame.Bounds)]));
-        };
-
-        _ = RenderSurface(fixture, surface);
-        _ = RenderSurface(fixture, surface);
-        blur.Radius = 3;
-        _ = RenderSurface(fixture, surface);
-        _ = RenderSurface(fixture, surface);
-
-        Assert.Equal(2, drawCount);
-    }
-
-    [Fact]
-    public void RetainedSessionSkipsReusedBatchAndDamagesOnlyChangedVersionBounds()
-    {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
-        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
-        using MonoGameRenderSurface2DSession session = new(
-            fixture.Session.GraphicsDevice,
-            32,
-            16);
-        DrawPointBatch batch = new(
-            [new DrawPoint(4, 4)],
-            Color.White,
-            2);
-
-        void Draw(RenderSurface2DFrame frame) =>
-            frame.DrawPointBatch(batch);
-
-        session.Render(Draw, Color.Black, TimeSpan.Zero);
-        fixture.Session.GraphicsDevice.SetRenderTarget(null);
-        session.Render(Draw, Color.Black, TimeSpan.FromMilliseconds(16));
-        fixture.Session.GraphicsDevice.SetRenderTarget(null);
-        Assert.Equal(1, session.RasterizedFrameCount);
-        Assert.Null(session.LastDamageBounds);
-
-        batch = new DrawPointBatch(
-            [new DrawPoint(12, 4)],
-            Color.White,
-            2);
-        session.Render(Draw, Color.Black, TimeSpan.FromMilliseconds(32));
-
-        Assert.Equal(2, session.RasterizedFrameCount);
-        Assert.Equal(
-            new Microsoft.Xna.Framework.Rectangle(3, 3, 10, 2),
-            session.LastDamageBounds);
-    }
-
-    [Fact]
-    public void AdvancedBatchesRenderThroughOnePrimitiveDrawEachAndRepeatDeterministically()
-    {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
-        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
-        Texture2D texture = new(fixture.Session.GraphicsDevice, 2, 2);
-        texture.SetData(
-        [
-            XnaColor.Red, XnaColor.Green,
-            XnaColor.Blue, XnaColor.White
-        ]);
-        using MonoGameImage image = new(texture);
-        DrawCommandList commands = new();
-        DrawingContext drawing = new(commands);
-        drawing.DrawImageQuad(
-            image,
-            new DrawPoint(2.25f, 2.25f),
-            new DrawPoint(22.25f, 2.25f),
-            new DrawPoint(22.25f, 22.25f),
-            new DrawPoint(2.25f, 22.25f),
-            new DrawImageOptions(sampling: DrawSamplingMode.Point));
-        drawing.DrawNineSlice(
-            image,
-            new DrawRect(26.25f, 2.25f, 20, 20),
-            new DrawInsets(1),
-            new DrawImageOptions(sampling: DrawSamplingMode.Point));
-        drawing.DrawPointBatch(new DrawPointBatch(
-            [new DrawPoint(8, 32), new DrawPoint(16, 32)],
-            Color.White,
-            4));
-        drawing.DrawLineBatch(new DrawLineBatch(
-            [new DrawLineSegment2D(new DrawPoint(26, 32), new DrawPoint(46, 32), Color.White, 3)]));
-        drawing.DrawSpriteBatch(new DrawSpriteBatch(
-            image,
-            [new DrawSprite2D(
-                new DrawRect(52.25f, 2.25f, 20, 20),
-                new DrawImageOptions(sampling: DrawSamplingMode.Point))]));
-
-        XnaColor[] first = Render(fixture, commands);
-        MonoGameDrawingBackend backend = Assert.IsType<MonoGameDrawingBackend>(
-            fixture.Session.DrawingBackend);
-        int firstDrawCalls = backend.LastAdvancedPrimitiveDrawCalls;
-        XnaColor[] second = Render(fixture, commands);
-
-        Assert.Equal(5, firstDrawCalls);
-        Assert.Equal(5, backend.LastAdvancedPrimitiveDrawCalls);
-        Assert.Equal(first, second);
-        Assert.NotEqual(XnaColor.Black, Sample(first, fixture, backend, 8, 8));
-        Assert.NotEqual(XnaColor.Black, Sample(first, fixture, backend, 8, 32));
-        Assert.NotEqual(XnaColor.Black, Sample(first, fixture, backend, 34, 32));
-    }
-
-    [Fact]
-    public void DisposedMeshImageIsRejectedWithoutCreatingOwnedGpuResources()
-    {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
-        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
-        Texture2D texture = new(fixture.Session.GraphicsDevice, 2, 2);
-        MonoGameImage image = new(texture);
-        DrawMesh2D mesh = new(TriangleVertices(), [0, 1, 2], image: image);
-        DrawCommandList commands = new();
-        new DrawingContext(commands).DrawMesh(mesh);
-        image.Dispose();
-
-        Assert.Throws<ObjectDisposedException>(() => Render(fixture, commands));
     }
 
     private static DrawVertex2D[] TriangleVertices() =>
@@ -410,67 +250,15 @@ public sealed class DrawingImageMeshBatchTests
         new DrawVertex2D(new DrawPoint(5, 9), Color.White)
     ];
 
-    private static Texture2D CreateSolidImageTexture(
-        GraphicsDevice graphicsDevice,
-        XnaColor color)
+    private static bool IsBackendType(Type type)
     {
-        Texture2D texture = new(graphicsDevice, 1, 1);
-        texture.SetData([color]);
-        return texture;
-    }
-
-    private static bool IsMonoGameType(Type type)
-    {
-        Type candidate = type.IsGenericType
-            ? type.GetGenericArguments().FirstOrDefault() ?? type
-            : type;
-        return candidate.Namespace?.StartsWith(
-            "Microsoft.Xna.Framework",
-            StringComparison.Ordinal) == true;
-    }
-
-    private static XnaColor[] Render(
-        PrismGraphExecutorTests.WindowsDxFixture fixture,
-        DrawCommandList commands)
-    {
-        fixture.Session.BeginFrame(Color.Black);
-        PrismFrameAnalysis prism = new PrismFrameAnalyzer().Analyze(commands);
-        DrawingFrameContext context = new(prism);
-        fixture.Session.DrawingBackend.Render(commands, in context);
-        fixture.Session.Present();
-        PresentationParameters parameters =
-            fixture.Session.GraphicsDevice.PresentationParameters;
-        XnaColor[] pixels =
-            new XnaColor[parameters.BackBufferWidth * parameters.BackBufferHeight];
-        fixture.Session.GraphicsDevice.GetBackBufferData(pixels);
-        return pixels;
-    }
-
-    private static XnaColor[] RenderSurface(
-        PrismGraphExecutorTests.WindowsDxFixture fixture,
-        RenderSurface2D surface)
-    {
-        DrawCommandList commands = new();
-        commands.Add(DrawCommand.RenderSurface2D(
-            surface,
-            new DrawRect(0, 0, 96, 64),
-            Color.White));
-        return Render(fixture, commands);
-    }
-
-    private static XnaColor Sample(
-        XnaColor[] pixels,
-        PrismGraphExecutorTests.WindowsDxFixture fixture,
-        MonoGameDrawingBackend backend,
-        float x,
-        float y)
-    {
-        MonoGameDrawMapper mapper = new(backend.CoordinateScale);
-        Microsoft.Xna.Framework.Rectangle sample =
-            mapper.MapRectangle(new DrawRect(x, y, 1, 1));
-        int width = fixture.Session.GraphicsDevice
-            .PresentationParameters.BackBufferWidth;
-        return pixels[(sample.Y * width) + sample.X];
+        if (type.Namespace is string ns &&
+            (ns.StartsWith("Cerneala.Backends.", StringComparison.Ordinal) ||
+             ns.StartsWith("Cerneala.Platforms.", StringComparison.Ordinal)))
+        {
+            return true;
+        }
+        return type.IsGenericType && type.GetGenericArguments().Any(IsBackendType);
     }
 
     private static void AssertRectNear(DrawRect expected, DrawRect actual)

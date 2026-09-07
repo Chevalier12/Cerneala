@@ -1,5 +1,5 @@
 using Cerneala.Drawing;
-using Cerneala.Drawing.MonoGame;
+using Cerneala.UI.Hosting;
 using Cerneala.Drawing.Text;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
@@ -48,14 +48,15 @@ public sealed class TextBoxEditingVisualContractTests
         root.VisualChildren.Add(textBox);
         textBox.Measure(new MeasureContext(new LayoutSize(220, 40)));
         textBox.Arrange(new ArrangeContext(new LayoutRect(0, 0, 220, 32)));
-        MonoGameDrawMapper mapper = new(scale);
 
         for (int position = 0; position <= textBox.Text.Length; position++)
         {
             textBox.MoveCaret(position);
             DrawCommand caret = Render(textBox).Single(command => HasSolidFillBrush(command, CaretColor));
 
-            Assert.Equal(1, mapper.MapRectangle(caret.Rect).Width);
+            int left = UiCoordinateMapper.LogicalToPhysicalPixel(caret.Rect.X, scale);
+            int right = UiCoordinateMapper.LogicalToPhysicalPixel(caret.Rect.X + caret.Rect.Width, scale);
+            Assert.Equal(1, right - left);
         }
     }
 

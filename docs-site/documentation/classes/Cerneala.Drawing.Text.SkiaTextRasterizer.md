@@ -66,7 +66,7 @@ The `Color` argument is converted directly to an `SKColor` using its red, green,
 | `InvalidOperationException` | The resolved font data cannot be shaped or the shaped text blob cannot be created. |
 
 ## Applies to
-Cerneala's Skia-backed drawing text pipeline, including `MonoGameDrawingBackend` and `MonoGameContentServices` integrations that use `SkiaTextRasterizer` for text texture generation.
+Cerneala's Skia-backed drawing text pipeline, including the SDL_GPU renderer and `DrawingContentServices`.
 
 ## See also
 - `Cerneala.Drawing.DrawTextRun`

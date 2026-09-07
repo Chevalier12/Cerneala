@@ -17,7 +17,6 @@
     <Project Path="tests/Cerneala.Tests.LanguageServer/Cerneala.Tests.LanguageServer.csproj" />
     <Project Path="tests/Cerneala.Tests.PreviewHost/Cerneala.Tests.PreviewHost.csproj" />
     <Project Path="tests/Cerneala.Tests.VisualStudio/Cerneala.Tests.VisualStudio.csproj" />
-    <Project Path="tests/Cerneala.WindowsDxSmoke/Cerneala.WindowsDxSmoke.csproj" />
     <Project Path="tests/Cerneala.Tests.SourceGen/Cerneala.Tests.SourceGen.csproj" />
     <Project Path="tests/Cerneala.Tests.SdlGpu/Cerneala.Tests.SdlGpu.csproj" />
     <Project Path="tests/Cerneala.SdlGpuSmoke/Cerneala.SdlGpuSmoke.csproj" />
@@ -35,9 +34,7 @@
   </Folder>
   <Project Path="Cerneala.csproj" />
   <Project Path="Cerneala.Scene2D.Importers/Cerneala.Scene2D.Importers.csproj" />
-  <Project Path="Cerneala.Backends.MonoGame/Cerneala.Backends.MonoGame.csproj" />
   <Project Path="Cerneala.Backends.SdlGpu/Cerneala.Backends.SdlGpu.csproj" />
-  <Project Path="Cerneala.Platforms.Win32/Cerneala.Platforms.Win32.csproj" />
   <Project Path="Cerneala.Platforms.Sdl3/Cerneala.Platforms.Sdl3.csproj" />
   <Project Path="Cerneala.Language/Cerneala.Language.csproj" />
   <Project Path="Cerneala.LanguageServer/Cerneala.LanguageServer.csproj" />

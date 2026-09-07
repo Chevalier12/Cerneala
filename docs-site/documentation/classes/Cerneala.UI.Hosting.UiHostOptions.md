@@ -63,4 +63,3 @@ Cerneala retained UI hosting.
 - `Cerneala.UI.Hosting.UiHost`
 - `Cerneala.UI.Hosting.UiViewport`
 - `Cerneala.UI.Input.ElementInputBridge`
-- `Cerneala.UI.Hosting.MonoGame.MonoGameUiHostOptions`

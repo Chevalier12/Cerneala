@@ -23,7 +23,7 @@ drawing.DrawImage(image, destination, options);
 
 ## Remarks
 
-Addressing is platform-neutral. The MonoGame backend maps each value to a cached sampler state and combines it with the selected `DrawSamplingMode`.
+Addressing is platform-neutral. The SDL_GPU backend maps each value to a cached sampler state and combines it with the selected `DrawSamplingMode`.
 
 ## Values
 

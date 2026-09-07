@@ -106,7 +106,7 @@ internal readonly record struct PrismResamplingPlan
 internal static class PrismResamplingPlanner
 {
     private const string ResamplingOwnerPrefix =
-        "PrismKernelRegistry/";
+        "SdlGpuPrismKernelSelector/";
     internal const int MaximumWaveGenerators = 32;
 
     public static bool IsSupported(PrismFilterId filter)

@@ -146,7 +146,7 @@ internal readonly record struct PrismCatalogFilterPlan
 internal static class PrismCatalogFilterPlanner
 {
     private const string KernelOwnerPrefix =
-        "PrismKernelRegistry/";
+        "SdlGpuPrismKernelSelector/";
     private const string TestOwnerPrefix =
         "PrismCatalogFilterTests/";
 

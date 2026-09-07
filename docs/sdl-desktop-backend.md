@@ -1,6 +1,6 @@
 # SDL3 + SDL_GPU Desktop Backend
 
-The SDL desktop backend combines SDL3 windowing with SDL_GPU rendering. It is an explicit alternative to WindowsDX: the source generator stays backend-neutral, and each executable selects exactly one composition at assembly level.
+The SDL desktop backend combines SDL3 windowing with SDL_GPU rendering and is the sole maintained desktop backend. The source generator stays backend-neutral, and each executable selects exactly one composition at assembly level.
 
 ## Select the backend
 
@@ -31,7 +31,7 @@ Then add one assembly declaration:
     typeof(Cerneala.UI.Hosting.Sdl.SdlGpuApplicationBackend))]
 ```
 
-Do not select `WindowsDxApplicationBackend` in the same executable. Repeating the same SDL_GPU registration is harmless, but mixing the two backends in one process is rejected deterministically.
+Repeating the same SDL_GPU registration is harmless. A different windowing backend cannot be registered in the same process. The retired MonoGame and WindowsDX compositions are no longer available.
 
 ## Rendering contract
 
@@ -50,6 +50,44 @@ The backend flushes through one coordination path. Pending resource uploads, inc
 SDL_GPU state caching is local to one flush and its resumed render pass. The first draw binds complete state, and subsequent draws omit only documented-safe redundant binds. A copy pass, target change, geometry upload, or other render-pass restart discards that cache so the resumed pass binds complete state again.
 
 ## Runtime identifiers and native assets
+
+### Graphix native dependency and temporary local feed
+
+The native runtime comes from `Graphix.Native` version `3.4.16-graphix.2`,
+an independently maintained SDL fork. The `SDL3-CS` managed binding remains
+at `3.4.14.1`; the separate ShaderCross packages are build-tool dependencies,
+not part of Graphix. Do not add the old `SDL3-CS.Windows`, `SDL3-CS.Linux` or
+`SDL3-CS.MacOS` native providers alongside Graphix.
+
+Publication is pending. The repository's `NuGet.Config` adds the temporary
+`artifacts/graphix-packages` feed without changing user-wide NuGet settings or
+removing existing sources. Before restoring a fresh checkout, copy the verified
+package into that directory. While the CI artifact remains available, the
+repository helper downloads it using authenticated GitHub CLI and verifies its
+SHA256. The desktop and shader workflows call the same helper before restore.
+An existing matching package is reused; mismatched bytes are rejected, not overwritten:
+
+```powershell
+.\Tools\scripts\Get-GraphixNativePackage.ps1
+dotnet restore Cerneala.slnx
+```
+
+This package records Graphix source commit
+`0c23f43af6884849165ebf21ba1d14fa2d6cdf51`. Its six native CTest suites passed
+25/25 each. A separate real Windows-driver maximize regression passed 400/400
+assertions on x64 and ARM64. These checks do not certify GPU behavior.
+The artifact has a 30-day retention period and is not a permanent feed. The
+package directory is ignored by Git, so other developers and CI must populate
+it before restore. An existing copy can be supplied directly instead of using
+GitHub CLI. Never replace a package's bytes under an already-used version.
+
+This version corrects independent maximum dimensions in native Windows
+maximization, including borderless client sizing. Repository verification and
+remaining blockers are tracked in the
+[migration audit](audits/2026-09-05-monogame-removal.md). Package CI is not a
+substitute for Cerneala's rendering, input, allocation and native-platform gates.
+
+### Published application assets
 
 | Runtime identifier | Required SDL3 asset | Expected SDL_GPU driver |
 | --- | --- | --- |

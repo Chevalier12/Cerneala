@@ -189,9 +189,10 @@ public sealed class TextPipelineTests
         DrawTextRun textRun = new(fonts.LoadFont("Arial", 16), "Motion baseline", 16);
         SkiaTextRasterizer rasterizer = new();
         DrawPoint position = new(20.049f / coordinateScale, 30.049f / coordinateScale);
-        DrawPoint phase = Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.GetCanonicalPixelPhaseForDiagnostics(
-            position,
-            coordinateScale);
+        // The renderer's phase selection is covered by SdlGpuTextCacheContractTests.
+        // This shared rasterizer contract compares the same canonical zero phase
+        // with the unchanged intermediate physical position at every DPI.
+        DrawPoint phase = new(0, 0);
 
         RasterizedText[] exact = rasterizer.RasterizeSubpixel(
             textRun,

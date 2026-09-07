@@ -10,6 +10,43 @@ namespace Cerneala.Tests.SdlGpu;
 
 public sealed class SdlGpuWindowGraphicsSessionTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WindowTargetAccessDoesNotAllocateAndTracksSizeResourceLifetime(bool multisampling)
+    {
+        FakeSdlApi api = new();
+        nint window = api.CreateWindow("target lifetime", 8, 6, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, multisampling);
+        using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window, 8, 6);
+        SdlGpuRenderTarget first = session.WindowRenderTarget;
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        SdlGpuRenderTarget last = first;
+        for (int i = 0; i < 64; i++)
+        {
+            last = session.WindowRenderTarget;
+        }
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.Equal(0, allocated);
+        Assert.Equal(first, last);
+
+        session.Resize(12, 7, 1.5f);
+        SdlGpuRenderTarget resized = session.WindowRenderTarget;
+        Assert.Equal((12, 7), (resized.PixelWidth, resized.PixelHeight));
+        Assert.NotEqual(first.ColorTexture, resized.ColorTexture);
+        Assert.Equal(session.FrameTexture, resized.SampleTexture);
+        Assert.Equal(session.DepthStencilTexture, resized.DepthStencilTexture);
+        Assert.Equal(session.Diagnostics.SampleCount, resized.SampleCount);
+
+        session.Resize(0, 0, 1);
+        Assert.Equal(0, session.WindowRenderTarget.ColorTexture);
+        Assert.Equal(0, session.WindowRenderTarget.DepthStencilTexture);
+        session.Resize(8, 6, 1);
+        Assert.NotEqual(first.ColorTexture, session.WindowRenderTarget.ColorTexture);
+        Assert.NotEqual(resized.ColorTexture, session.WindowRenderTarget.ColorTexture);
+        Assert.Equal(session.FrameTexture, session.WindowRenderTarget.SampleTexture);
+    }
+
     [Fact]
     public void PrismWarmupRunsOnlyAfterTheFirstFrameIsSubmitted()
     {

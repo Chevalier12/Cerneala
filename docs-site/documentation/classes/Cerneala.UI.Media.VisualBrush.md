@@ -18,7 +18,7 @@ targetShape.Fill = brush;
 ```
 
 ## Remarks
-The source visual is not made interactive and does not receive input or focus through the brush. Capture uses a thread-local active-source set and throws a controlled `InvalidOperationException` when a visual brush graph cycles back to an active source. Source-generator markup keeps this type runtime-only because it needs a live element resolver.
+The source visual is not made interactive and does not receive input or focus through the brush. Capture uses a thread-local active-source set; SDL_GPU also tracks sources while rendering nested captures. A cycle back to an active source throws `InvalidOperationException`. Source-generator markup keeps this type runtime-only because it needs a live element resolver.
 
 ## Constructors
 | Name | Description |

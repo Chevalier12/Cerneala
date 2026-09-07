@@ -1,5 +1,7 @@
 using Cerneala.Drawing;
-using Cerneala.Drawing.MonoGame;
+using Cerneala.Backends.SdlGpu;
+using Cerneala.Tests.Drawing.SdlGpu;
+using Cerneala.UI.Hosting;
 using Cerneala.Drawing.Text;
 
 namespace Cerneala.Tests.Drawing;
@@ -7,9 +9,9 @@ namespace Cerneala.Tests.Drawing;
 public sealed class DrawingResourceTests
 {
     [Fact]
-    public void MonoGameImageRejectsNullTexture()
+    public void SdlGpuImageRejectsNullPixels()
     {
-        Assert.Throws<ArgumentNullException>(() => new MonoGameImage(null!));
+        Assert.Throws<ArgumentNullException>(() => new SdlGpuImage(1, 1, null!));
     }
 
     [Fact]
@@ -108,36 +110,39 @@ public sealed class DrawingResourceTests
     }
 
     [Fact]
-    public void MonoGameDrawingBackendImplementsBackendInterface()
+    public void SdlGpuDrawingBackendImplementsBackendInterface()
     {
-        Assert.True(typeof(IDrawingBackend).IsAssignableFrom(typeof(MonoGameDrawingBackend)));
+        Assert.True(typeof(IDrawingBackend).IsAssignableFrom(typeof(SdlGpuDrawingBackend)));
     }
 
     [Fact]
-    public void MonoGameTextTextureKeyDistinguishesFontInstances()
+    public void SdlTextCacheDistinguishesDifferentTypefaces()
     {
-        Type keyType = typeof(MonoGameDrawingBackend).GetNestedType("TextTextureKey", System.Reflection.BindingFlags.NonPublic)!;
-        System.Reflection.MethodInfo fromMethod = keyType.GetMethod("From")!;
+        using SdlDrawingFixture fixture = new(160, 80);
         DrawTextRun firstRun = new(new SkiaFont(SkiaSharp.SKTypeface.Default, "Same", 16), "Cerneala", 16);
         DrawTextRun secondRun = new(new SkiaFont(SkiaSharp.SKTypeface.FromFamilyName("Times New Roman"), "Same", 16), "Cerneala", 16);
 
-        object firstKey = fromMethod.Invoke(null, [firstRun, 1f, default(DrawPoint)])!;
-        object secondKey = fromMethod.Invoke(null, [secondRun, 1f, default(DrawPoint)])!;
-
-        Assert.NotEqual(firstKey, secondKey);
+        RenderText(fixture, firstRun);
+        RenderText(fixture, secondRun);
+        Assert.True(((IDrawingBackendFrameTimingSource)fixture.Backend).LastFrameTiming.TextRequestCount > 0);
     }
 
     [Fact]
-    public void MonoGameTextTextureKeyReusesEquivalentSkiaTypefaceWrappers()
+    public void SdlTextCacheReusesEquivalentSkiaTypefaceWrappers()
     {
-        Type keyType = typeof(MonoGameDrawingBackend).GetNestedType("TextTextureKey", System.Reflection.BindingFlags.NonPublic)!;
-        System.Reflection.MethodInfo fromMethod = keyType.GetMethod("From")!;
+        using SdlDrawingFixture fixture = new(160, 80);
         DrawTextRun firstRun = new(new SkiaFont(SkiaSharp.SKTypeface.Default, "Same", 16), "CONTINUE  ->", 16);
         DrawTextRun secondRun = new(new SkiaFont(SkiaSharp.SKTypeface.Default, "Same", 16), "CONTINUE  ->", 16);
 
-        object firstKey = fromMethod.Invoke(null, [firstRun, 1f, default(DrawPoint)])!;
-        object secondKey = fromMethod.Invoke(null, [secondRun, 1f, default(DrawPoint)])!;
+        RenderText(fixture, firstRun);
+        RenderText(fixture, secondRun);
+        Assert.Equal(0, ((IDrawingBackendFrameTimingSource)fixture.Backend).LastFrameTiming.TextRequestCount);
+    }
 
-        Assert.Equal(firstKey, secondKey);
+    private static void RenderText(SdlDrawingFixture fixture, DrawTextRun run)
+    {
+        DrawCommandList commands = new();
+        commands.Add(DrawCommand.DrawText(run, default, Color.White));
+        fixture.Render(commands);
     }
 }

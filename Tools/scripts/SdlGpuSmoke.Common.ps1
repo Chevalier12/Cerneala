@@ -12,7 +12,7 @@ function Get-SdlGpuNativeAssetContract {
     }
 
     if ($RuntimeIdentifier.StartsWith('linux-', [StringComparison]::Ordinal)) {
-        return @('libSDL3.so', 'libSDL3.so.0', 'libSDL3.so.0.4.14')
+        return @('libSDL3.so', 'libSDL3.so.0', 'libSDL3.so.0.4.16')
     }
 
     return @('libSDL3.0.dylib', 'libSDL3.dylib')

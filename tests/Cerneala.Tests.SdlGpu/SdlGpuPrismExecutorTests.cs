@@ -139,7 +139,7 @@ public sealed class SdlGpuPrismExecutorTests
         Render(session, CreateCommands(PrismCatalog.GetFilter(PrismFilterId.GraphicPen)));
 
         byte[] finalPass = Assert.Single(api.FragmentUniformWrites.Where(bytes =>
-            ReadVector(bytes, 34).Z == 95));
+            bytes.Length == SdlGpuPrismUniforms.ByteCount && ReadVector(bytes, 34).Z == 95));
         Assert.Equal(
             new Vector4(
                 (int)PrismFilterId.GraphicPen,
@@ -173,8 +173,14 @@ public sealed class SdlGpuPrismExecutorTests
             Render(session, CreateCommands(operation));
 
             Assert.True(api.FragmentUniformWrites.Count > uniformStart, operation.Symbol);
-            Assert.All(api.FragmentUniformWrites.Skip(uniformStart), bytes =>
+            byte[][] writes = api.FragmentUniformWrites.Skip(uniformStart).ToArray();
+            Assert.True(writes.Length > 1, operation.Symbol);
+            Assert.All(writes[..^1], bytes =>
                 Assert.Equal(SdlGpuPrismUniforms.ByteCount, bytes.Length));
+            // The final blended draw has a distinct manifest: one float4 selects
+            // the shared working-to-output conversion, not the catalog layout.
+            Assert.Equal(16, writes[^1].Length);
+            Assert.Equal(new Vector4(77, 0, 0, 0), MemoryMarshal.Read<Vector4>(writes[^1]));
             uint[] slots = api.FragmentSamplerBindings
                 .Skip(samplerStart)
                 .Select(static binding => binding.Slot)
@@ -642,6 +648,51 @@ public sealed class SdlGpuPrismExecutorTests
         Assert.True(
             resources.TotalBytes <= 64L * 1024 * 1024,
             $"Returned surface cache retained {resources.TotalBytes} bytes.");
+    }
+
+    [Fact]
+    public void InvalidCatalogIdsAreRejectedAtTheirOwningLookupBoundaries()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            SdlGpuPrismKernelSelector.ForInputColorProfile((PrismColorProfile)int.MaxValue));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            SdlGpuPrismKernelSelector.ForPresentation((PrismColorProfile)int.MaxValue));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            SdlGpuPrismKernelSelector.ResolveBlendMode((PrismBlendMode)int.MaxValue));
+        Assert.Throws<InvalidOperationException>(() => PrismCatalog.GetFilter((PrismFilterId)int.MaxValue));
+        Assert.Throws<InvalidOperationException>(() => PrismCatalog.GetStyle((PrismStyleId)int.MaxValue));
+    }
+
+    [Fact]
+    public void TransformExecutionRequestsMipmappedAnisotropicSampling()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1 };
+        nint window = api.CreateWindow("prism-transform-sampling", 48, 32, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window);
+        PrismInstance instance = new(new PrismCompositionDefinition("Minify",
+            [new PrismLayerDefinition(new(1), "Transform", filters: [new(PrismFilterId.Transform)])]));
+        instance.GetLayerState(new(1)).Filters.Single().SetValue(
+            PrismCatalog.GetFilter(PrismFilterId.Transform).Parameters.Single(parameter => parameter.Name == "Scale"),
+            new Vector4(.25f, .25f, 0, 0));
+        DrawRect bounds = new(0, 0, 48, 32);
+        DrawCommandList commands = new();
+        commands.Add(DrawCommand.BeginPrism(new(instance, new(94101), bounds, Matrix3x2.Identity, 1, 1)));
+        commands.Add(DrawCommand.FillRectangle(bounds, Color.White));
+        commands.Add(DrawCommand.EndPrism());
+
+        Render(session, commands);
+
+        Assert.NotEmpty(api.GeneratedMipmaps);
+        var anisotropic = Assert.Single(api.GpuSamplers.Where(pair => pair.Value.EnableAnisotropy));
+        Assert.Equal(4f, anisotropic.Value.MaxAnisotropy);
+        Assert.Equal(SdlGpuFilter.Linear, anisotropic.Value.Filter);
+        Assert.Equal(SdlGpuSamplerMipmapMode.Linear, anisotropic.Value.MipmapMode);
+        Assert.Equal(SdlGpuSamplerAddressMode.ClampToEdge, anisotropic.Value.AddressMode);
+        var bindings = api.FragmentSamplerBindings.Where(binding => binding.Binding.Sampler == anisotropic.Key).ToArray();
+        Assert.NotEmpty(bindings);
+        Assert.All(bindings, binding => Assert.Equal(0u, binding.Slot));
+        Assert.Equal(0, Diagnostics(session).Count);
     }
 
     [Fact]

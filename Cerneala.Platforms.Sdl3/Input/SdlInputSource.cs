@@ -9,6 +9,7 @@ internal sealed class SdlInputSource : IInputSource
     private KeyboardSnapshot previousKeyboard = KeyboardSnapshot.Empty;
     private readonly HashSet<InputKey> downKeys = [];
     private readonly List<TextInputSnapshotEvent> textInput = [];
+    private bool hasPointerPosition;
 
     public float CoordinateScale { get; set; } = 1;
 
@@ -22,12 +23,25 @@ internal sealed class SdlInputSource : IInputSource
         return frame;
     }
 
-    public void MovePointer(float x, float y) => currentPointer =
-        currentPointer.WithPosition(
-            x / CoordinateScale,
-            y / CoordinateScale);
+    public bool MovePointer(float x, float y)
+    {
+        float logicalX = x / CoordinateScale;
+        float logicalY = y / CoordinateScale;
+        if (hasPointerPosition && currentPointer.X == logicalX && currentPointer.Y == logicalY)
+        {
+            return false;
+        }
 
-    public void LeavePointer() => currentPointer = currentPointer.WithPosition(-1, -1);
+        hasPointerPosition = true;
+        currentPointer = currentPointer.WithPosition(logicalX, logicalY);
+        return true;
+    }
+
+    public void LeavePointer()
+    {
+        hasPointerPosition = false;
+        currentPointer = currentPointer.WithPosition(-1, -1);
+    }
 
     public void SetButton(byte button, bool down)
     {

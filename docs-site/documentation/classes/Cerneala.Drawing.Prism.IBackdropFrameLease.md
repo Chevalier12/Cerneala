@@ -34,13 +34,12 @@ sealed class FrameBackdropLease(BackdropFrameMetadata metadata)
 
 ## Remarks
 
-The interface intentionally exposes no graphics API, texture, or resource-ownership member. A hosting integration attaches a concrete lease to `DrawingFrameContext` without making the generic drawing contract depend on MonoGame or another graphics backend.
+The interface intentionally exposes no graphics API, texture, or resource-ownership member. A hosting integration attaches a concrete lease to `DrawingFrameContext` without making the generic drawing contract depend on a graphics backend.
 
 The application keeps ownership of the rendered scene and its graphics resources. The lease borrows them only until the current drawing submission ends. `UiHost` disposes an acquired lease exactly once after submission, including when the drawing backend throws; consumers must not cache or use the lease in another frame.
 
-Backend adapters may derive a graphics-API-specific lease from this interface.
-For MonoGame, `IMonoGameBackdropFrameLease` exposes the borrowed `Texture2D`
-without changing the backend-neutral host contract or transferring ownership.
+Backend adapters may implement a graphics-API-specific lease behind this
+interface without changing the backend-neutral host contract or transferring ownership.
 
 ## Properties
 
@@ -61,5 +60,4 @@ Cerneala backdrop-aware frame hosting and backend composition.
 ## See also
 
 - `Cerneala.Drawing.DrawingFrameContext`
-- `Cerneala.Drawing.MonoGame.Prism.IMonoGameBackdropFrameLease`
 - `Cerneala.Drawing.Prism.IBackdropFrameSource`

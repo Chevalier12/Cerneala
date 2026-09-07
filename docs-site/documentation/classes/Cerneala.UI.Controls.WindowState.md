@@ -19,7 +19,9 @@ public enum WindowState
 | `Maximized` | Maximized window. |
 
 ## Remarks
-State changes are applied by the native window hosting layer.
+State changes are applied by the native window hosting layer. `Maximized` does not override a window's finite `MaxWidth` or `MaxHeight`: those client-area limits remain in effect, so the maximized window may be smaller than the monitor's work area.
+
+The limits apply independently, including when only one maximum is finite. See [Window](Cerneala.UI.Controls.Window.md).
 
 ## Applies to
 `Window.WindowState`.

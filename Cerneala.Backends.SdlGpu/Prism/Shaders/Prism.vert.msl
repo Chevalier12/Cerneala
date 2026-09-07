@@ -35,4 +35,3 @@ vertex main0_out main0(constant type_PrismVertexUniforms& PrismVertexUniforms [[
     out.out_var_TEXCOORD1 = _43;
     return out;
 }
-

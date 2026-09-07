@@ -1,5 +1,3 @@
-using System.Reflection;
-using Cerneala.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -134,51 +132,6 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.True(registration >= 0 && registration < startup);
     }
 
-    [Fact]
-    public void SourceGeneratorProjectAndOutputHaveNoConcreteWindowsBackendCoupling()
-    {
-        string repositoryRoot = FindRepositoryRoot();
-        string forbiddenNamespace = "Cerneala.UI.Hosting." + "Windows";
-        string forbiddenAssembly = "Cerneala.Backends." + "MonoGame";
-        string sourceGeneratorDirectory = Path.Combine(repositoryRoot, "Cerneala.SourceGen");
-
-        foreach (string path in Directory.EnumerateFiles(
-            sourceGeneratorDirectory,
-            "*.cs",
-            SearchOption.TopDirectoryOnly))
-        {
-            Assert.DoesNotContain(
-                forbiddenNamespace,
-                File.ReadAllText(path),
-                StringComparison.Ordinal);
-        }
-
-        Assert.DoesNotContain(
-            forbiddenAssembly,
-            File.ReadAllText(Path.Combine(sourceGeneratorDirectory, "Cerneala.SourceGen.csproj")),
-            StringComparison.Ordinal);
-        Assert.DoesNotContain(
-            forbiddenAssembly,
-            File.ReadAllText(Path.Combine(
-                repositoryRoot,
-                "tests",
-                "Cerneala.Tests.SourceGen",
-                "Cerneala.Tests.SourceGen.csproj")),
-            StringComparison.Ordinal);
-        Assert.DoesNotContain(
-            typeof(UiMarkupGenerator).Assembly.GetReferencedAssemblies(),
-            reference => reference.Name?.Contains(forbiddenAssembly, StringComparison.Ordinal) == true);
-
-        GeneratorRunResult result = RunLegacyBackendGenerator(
-            "Backend",
-            "public static class Backend { public static void EnsureRegistered() { } }",
-            hosted: false);
-        string generated = string.Join(
-            Environment.NewLine,
-            result.GeneratedSources.Select(source => source.SourceText.ToString()));
-        Assert.DoesNotContain(forbiddenNamespace, generated, StringComparison.Ordinal);
-    }
-
     private static GeneratorRunResult RunApplicationBackendGenerator(string backendName, bool hosted)
     {
         string source = $$"""
@@ -239,19 +192,4 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Empty(result.GeneratedSources);
     }
 
-    private static string FindRepositoryRoot()
-    {
-        DirectoryInfo? directory = new(AppContext.BaseDirectory);
-        while (directory is not null)
-        {
-            if (File.Exists(Path.Combine(directory.FullName, "Cerneala.slnx")))
-            {
-                return directory.FullName;
-            }
-
-            directory = directory.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Could not locate the Cerneala repository root.");
-    }
 }

@@ -13,6 +13,27 @@
   ],
   "shaders": [
     {
+      "logicalName": "prism-presentation-fragment",
+      "source": "../Prism/Shaders/PrismPresentation.frag.hlsl",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [ "working-color-to-output" ],
+      "bindings": {
+        "samplers": 1, "storageTextures": 0, "storageBuffers": 0,
+        "uniformBuffers": 1, "inputs": 2, "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [ { "name": "PresentationUniforms", "slot": 0 } ],
+        "samplers": [ { "name": "DrawingTexture/DrawingSampler", "slot": 0 } ],
+        "storageTextures": [], "storageBuffers": [], "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "../Prism/Shaders/PrismPresentation.frag.spv",
+        "dxil": "../Prism/Shaders/PrismPresentation.frag.dxil",
+        "msl": "../Prism/Shaders/PrismPresentation.frag.msl"
+      }
+    },
+    {
       "logicalName": "drawing-vertex",
       "source": "../Gpu/Shaders/Drawing.vert.hlsl",
       "stage": "Vertex",

@@ -83,23 +83,27 @@ internal sealed class SdlGpuGeometryUploadArena : IDisposable
             api.UnmapGpuTransferBuffer(device, slot.TransferBuffer);
         }
 
-        session.RunCopyPass(copyPass =>
+        session.RunCopyPass(
+            (Arena: this, Slot: slot, TransferOffset: transferOffset,
+                VertexOffset: vertexOffset, IndexOffset: indexOffset,
+                VertexByteCount: vertexByteCount, IndexByteCount: indexByteCount),
+            static (copyPass, upload) =>
         {
-            api.UploadToGpuBuffer(
+            upload.Arena.api.UploadToGpuBuffer(
                 copyPass,
-                slot.TransferBuffer,
-                transferOffset,
-                slot.VertexBuffer,
-                vertexOffset,
-                vertexByteCount,
+                upload.Slot.TransferBuffer,
+                upload.TransferOffset,
+                upload.Slot.VertexBuffer,
+                upload.VertexOffset,
+                upload.VertexByteCount,
                 cycle: false);
-            api.UploadToGpuBuffer(
+            upload.Arena.api.UploadToGpuBuffer(
                 copyPass,
-                slot.TransferBuffer,
-                checked(transferOffset + vertexByteCount),
-                slot.IndexBuffer,
-                indexOffset,
-                indexByteCount,
+                upload.Slot.TransferBuffer,
+                checked(upload.TransferOffset + upload.VertexByteCount),
+                upload.Slot.IndexBuffer,
+                upload.IndexOffset,
+                upload.IndexByteCount,
                 cycle: false);
         });
         return new SdlGpuGeometryBinding(

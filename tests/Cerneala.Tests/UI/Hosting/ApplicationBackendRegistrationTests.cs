@@ -1,6 +1,5 @@
 using Cerneala.UI;
 using Cerneala.UI.Hosting.Sdl;
-using Cerneala.UI.Hosting.Windows;
 using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Controls;
 
@@ -24,12 +23,12 @@ public sealed class ApplicationBackendRegistrationTests : IDisposable
     }
 
     [Fact]
-    public void SdlGpuThenWindowsDxRegistrationFailsDeterministically()
+    public void SdlGpuThenAnotherBackendRegistrationFailsDeterministically()
     {
         SdlGpuApplicationBackend.EnsureRegistered();
 
         InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
-            WindowsDxApplicationBackend.EnsureRegistered);
+            () => WindowingBackendRegistry.Register(new CapturingWindowingBackend()));
 
         Assert.Equal(
             "Windowing backend 'Cerneala.UI.Hosting.Sdl.SdlGpuApplicationBackend+SdlGpuWindowingBackend' is already registered.",
@@ -37,15 +36,15 @@ public sealed class ApplicationBackendRegistrationTests : IDisposable
     }
 
     [Fact]
-    public void WindowsDxThenSdlGpuRegistrationFailsDeterministically()
+    public void AnotherBackendThenSdlGpuRegistrationFailsDeterministically()
     {
-        WindowsDxApplicationBackend.EnsureRegistered();
+        WindowingBackendRegistry.Register(new CapturingWindowingBackend());
 
         InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
             SdlGpuApplicationBackend.EnsureRegistered);
 
         Assert.Equal(
-            "Windowing backend 'Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend+WindowsDxWindowingBackend' is already registered.",
+            $"Windowing backend '{typeof(CapturingWindowingBackend).FullName}' is already registered.",
             exception.Message);
     }
 
@@ -71,7 +70,7 @@ public sealed class ApplicationBackendRegistrationTests : IDisposable
         WindowApplicationRuntime.ResetForTesting();
         Application.ResetForTesting();
         WindowingBackendRegistry.ResetForTesting();
-        WindowsDxApplicationBackend.EnsureRegistered();
+        SdlGpuApplicationBackend.EnsureRegistered();
     }
 
     private sealed class ShutdownOnStartupApplication : Application

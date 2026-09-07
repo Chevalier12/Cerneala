@@ -470,7 +470,7 @@ internal static class PrismCatalogCompiler
             ReadCoverageOwner(coverage, entryId, "kernel", issues),
             ReadCoverageOwner(coverage, entryId, "test", issues),
             entryKind == "filter"
-                ? $"PrismWindowsDxConformanceTests/CatalogGallery/{entryId}"
+                ? $"PrismSdlGpuPixelConformanceTests/{entryId}"
                 : $"PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/{entryId}",
             ReadCoverageOwner(coverage, entryId, "documentation", issues));
     }

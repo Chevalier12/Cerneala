@@ -1,9 +1,7 @@
 using Cerneala.Drawing;
-using Cerneala.Drawing.MonoGame;
 using Cerneala.Drawing.Paths;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Media;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace Cerneala.Tests.Drawing.Paths;
 
@@ -174,13 +172,6 @@ public sealed class DrawStrokeTests
         Assert.NotEqual(first, changed);
         Assert.Same(path, first.Path);
         Assert.Same(pen, first.Pen);
-        Assert.NotEqual(
-            MonoGameDrawingBackend.CreateStrokeMeshKeyForDiagnostics(first, 1),
-            MonoGameDrawingBackend.CreateStrokeMeshKeyForDiagnostics(changed, 1));
-        Assert.NotEqual(
-            MonoGameDrawingBackend.CreateStrokeMeshKeyForDiagnostics(first, 1),
-            MonoGameDrawingBackend.CreateStrokeMeshKeyForDiagnostics(first, 2));
-
         DrawCommandList commands = new();
         RenderSurface2DFrame frame = new(
             commands,
@@ -217,14 +208,15 @@ public sealed class DrawStrokeTests
             new DrawPoint(10, 0),
             pen);
 
-        MonoGameStrokeMesh stroke = MonoGameStrokeMeshBuilder.Build(
+        DrawStrokeRenderMesh stroke = DrawStrokeMeshBuilder.Build(
             command,
-            coordinateScale: 2,
-            _ => XnaColor.White);
-        float minimumX = stroke.Left + stroke.Mesh.Vertices.Min(vertex => vertex.Position.X);
-        float maximumX = stroke.Left + stroke.Mesh.Vertices.Max(vertex => vertex.Position.X);
-        float minimumY = stroke.Top + stroke.Mesh.Vertices.Min(vertex => vertex.Position.Y);
-        float maximumY = stroke.Top + stroke.Mesh.Vertices.Max(vertex => vertex.Position.Y);
+            pen.Thickness,
+            pen.Style,
+            coordinateScale: 2);
+        float minimumX = stroke.Left + stroke.Mesh.Vertices.Min(vertex => vertex.X);
+        float maximumX = stroke.Left + stroke.Mesh.Vertices.Max(vertex => vertex.X);
+        float minimumY = stroke.Top + stroke.Mesh.Vertices.Min(vertex => vertex.Y);
+        float maximumY = stroke.Top + stroke.Mesh.Vertices.Max(vertex => vertex.Y);
 
         Assert.Equal(-2, minimumX, 3);
         Assert.Equal(22, maximumX, 3);
@@ -248,14 +240,15 @@ public sealed class DrawStrokeTests
             new DrawRect(20, 30, 20, 40),
             new DrawPen(Brush, 2));
 
-        MonoGameStrokeMesh stroke = MonoGameStrokeMeshBuilder.Build(
+        DrawStrokeRenderMesh stroke = DrawStrokeMeshBuilder.Build(
             command,
-            coordinateScale: 1,
-            _ => XnaColor.White);
-        float minimumX = stroke.Left + stroke.Mesh.Vertices.Min(vertex => vertex.Position.X);
-        float maximumX = stroke.Left + stroke.Mesh.Vertices.Max(vertex => vertex.Position.X);
-        float minimumY = stroke.Top + stroke.Mesh.Vertices.Min(vertex => vertex.Position.Y);
-        float maximumY = stroke.Top + stroke.Mesh.Vertices.Max(vertex => vertex.Position.Y);
+            command.Pen!.Thickness,
+            command.Pen.Style,
+            coordinateScale: 1);
+        float minimumX = stroke.Left + stroke.Mesh.Vertices.Min(vertex => vertex.X);
+        float maximumX = stroke.Left + stroke.Mesh.Vertices.Max(vertex => vertex.X);
+        float minimumY = stroke.Top + stroke.Mesh.Vertices.Min(vertex => vertex.Y);
+        float maximumY = stroke.Top + stroke.Mesh.Vertices.Max(vertex => vertex.Y);
 
         Assert.Equal(19, minimumX, 3);
         Assert.Equal(41, maximumX, 3);

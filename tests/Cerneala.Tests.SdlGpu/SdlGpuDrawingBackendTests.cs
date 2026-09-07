@@ -758,7 +758,8 @@ public sealed class SdlGpuDrawingBackendTests
 
         Render(session, SurfaceCommands(source, 24, 18));
         Assert.Equal(3, source.RecordCount);
-        Assert.Equal(createdAfterFirst + 2, api.TextureCreationCount);
+        // The independently multisampled surface owns color, resolve and depth/stencil textures.
+        Assert.Equal(createdAfterFirst + 3, api.TextureCreationCount);
     }
 
     [Fact]

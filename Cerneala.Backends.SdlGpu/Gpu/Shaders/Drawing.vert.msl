@@ -32,4 +32,3 @@ vertex main0_out main0(main0_in in [[stage_in]], constant type_FrameUniforms& Fr
     out.out_var_TEXCOORD1 = in.in_var_TEXCOORD2;
     return out;
 }
-

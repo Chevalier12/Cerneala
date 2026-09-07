@@ -106,7 +106,7 @@ float4 FinalizeCatalogFilter(
     bool preserveExtendedRange =
         (filterId == 131 && FilterOptions0.x < 0.5) ||
         (filterId == 132 && FilterOptions1.x < 0.5);
-    if (preserveExtendedRange && blendMode == 145)
+    if (preserveExtendedRange && blendMode == 0)
     {
         float4 extendedResult = lerp(
             source,

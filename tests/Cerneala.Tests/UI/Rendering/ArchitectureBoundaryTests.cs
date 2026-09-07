@@ -8,12 +8,8 @@ public sealed class ArchitectureBoundaryTests
         string renderingRoot = FindRepositoryPath("UI", "Rendering");
         string[] forbiddenTerms =
         [
-            "MonoGame",
             "Skia",
-            "HarfBuzz",
-            "Texture2D",
-            "Microsoft.Xna",
-            "MonoGameDrawingBackend"
+            "HarfBuzz"
         ];
 
         foreach (string file in Directory.EnumerateFiles(renderingRoot, "*.cs", SearchOption.AllDirectories))
@@ -33,11 +29,8 @@ public sealed class ArchitectureBoundaryTests
         string controlsRoot = FindRepositoryPath("UI", "Controls");
         string[] forbiddenTerms =
         [
-            "MonoGame",
             "Skia",
-            "HarfBuzz",
-            "Texture2D",
-            "Microsoft.Xna"
+            "HarfBuzz"
         ];
 
         foreach (string file in Directory.EnumerateFiles(controlsRoot, "*.cs", SearchOption.AllDirectories))
@@ -57,12 +50,8 @@ public sealed class ArchitectureBoundaryTests
         string mediaRoot = FindRepositoryPath("UI", "Media");
         string[] forbiddenTerms =
         [
-            "MonoGame",
             "Skia",
-            "HarfBuzz",
-            "Texture2D",
-            "Microsoft.Xna",
-            "MonoGameDrawingBackend"
+            "HarfBuzz"
         ];
 
         foreach (string file in Directory.EnumerateFiles(mediaRoot, "*.cs", SearchOption.AllDirectories))
@@ -107,11 +96,8 @@ public sealed class ArchitectureBoundaryTests
         ];
         string[] forbiddenTerms =
         [
-            "MonoGame",
             "Skia",
-            "HarfBuzz",
-            "Texture2D",
-            "Microsoft.Xna"
+            "HarfBuzz"
         ];
 
         foreach (string file in section16Files)
@@ -142,11 +128,8 @@ public sealed class ArchitectureBoundaryTests
         ];
         string[] forbiddenTerms =
         [
-            "MonoGame",
             "Skia",
-            "HarfBuzz",
-            "Texture2D",
-            "Microsoft.Xna"
+            "HarfBuzz"
         ];
 
         foreach (string templateFile in templateFiles)
@@ -165,11 +148,8 @@ public sealed class ArchitectureBoundaryTests
         string textRoot = FindRepositoryPath("UI", "Text");
         string[] forbiddenTerms =
         [
-            "MonoGame",
             "Skia",
-            "HarfBuzz",
-            "Texture2D",
-            "Microsoft.Xna"
+            "HarfBuzz"
         ];
 
         foreach (string file in Directory.EnumerateFiles(textRoot, "*.cs", SearchOption.AllDirectories))
@@ -187,23 +167,14 @@ public sealed class ArchitectureBoundaryTests
     public void UiResourcesCoreDoesNotReferenceConcreteBackends()
     {
         string resourcesRoot = FindRepositoryPath("UI", "Resources");
-        string monoGameResourcesRoot = Path.Combine(resourcesRoot, "MonoGame");
         string[] forbiddenTerms =
         [
-            "MonoGame",
             "Skia",
-            "HarfBuzz",
-            "Texture2D",
-            "Microsoft.Xna"
+            "HarfBuzz"
         ];
 
         foreach (string file in Directory.EnumerateFiles(resourcesRoot, "*.cs", SearchOption.AllDirectories))
         {
-            if (file.StartsWith(monoGameResourcesRoot, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
             string text = File.ReadAllText(file);
 
             foreach (string forbiddenTerm in forbiddenTerms)
@@ -219,11 +190,8 @@ public sealed class ArchitectureBoundaryTests
         string themingRoot = FindRepositoryPath("UI", "Theming");
         string[] forbiddenTerms =
         [
-            "MonoGame",
             "Skia",
-            "HarfBuzz",
-            "Texture2D",
-            "Microsoft.Xna"
+            "HarfBuzz"
         ];
 
         foreach (string file in Directory.EnumerateFiles(themingRoot, "*.cs", SearchOption.AllDirectories))
@@ -243,11 +211,8 @@ public sealed class ArchitectureBoundaryTests
         string platformRoot = FindRepositoryPath("UI", "Platform");
         string[] forbiddenTerms =
         [
-            "MonoGame",
             "Skia",
             "HarfBuzz",
-            "Texture2D",
-            "Microsoft.Xna",
             "System.Windows.Forms.Clipboard",
             "System.Windows.Automation",
             "Windows.UI",
@@ -285,11 +250,8 @@ public sealed class ArchitectureBoundaryTests
         string accessibilityRoot = FindRepositoryPath("UI", "Accessibility");
         string[] forbiddenTerms =
         [
-            "MonoGame",
             "Skia",
             "HarfBuzz",
-            "Texture2D",
-            "Microsoft.Xna",
             "System.Windows.Automation",
             "Windows.UI",
             "Microsoft.UI",
@@ -312,12 +274,8 @@ public sealed class ArchitectureBoundaryTests
         string detectiveRoot = FindRepositoryPath("UI", "Detective");
         string[] forbiddenTerms =
         [
-            "MonoGame",
             "Skia",
-            "HarfBuzz",
-            "Texture2D",
-            "SpriteBatch",
-            "MonoGameDrawingBackend"
+            "HarfBuzz"
         ];
 
         foreach (string file in Directory.EnumerateFiles(detectiveRoot, "*.cs", SearchOption.AllDirectories))
@@ -363,8 +321,7 @@ public sealed class ArchitectureBoundaryTests
             string projectPath = Path.GetRelativePath(repositoryRoot, projectFile);
             bool ownsLowLevelScreenshotContract = projectPath.Replace('\\', '/') is
                 "Cerneala.PreviewHost/Cerneala.PreviewHost.csproj" or
-                "tests/Cerneala.SdlGpuSmoke/Cerneala.SdlGpuSmoke.csproj" or
-                "tests/Cerneala.WindowsDxSmoke/Cerneala.WindowsDxSmoke.csproj";
+                "tests/Cerneala.SdlGpuSmoke/Cerneala.SdlGpuSmoke.csproj";
 
             foreach (string sourceFile in Directory.EnumerateFiles(projectRoot, "*.cs", SearchOption.AllDirectories)
                 .Where(file => !HasPathSegment(file, "bin") && !HasPathSegment(file, "obj")))
@@ -384,19 +341,15 @@ public sealed class ArchitectureBoundaryTests
     }
 
     [Fact]
-    public void MonoGameImageLoadingIsAdapterScoped()
+    public void GpuImageLoadingIsExcludedFromCoreResources()
     {
         string resourcesRoot = FindRepositoryPath("UI", "Resources");
-        string monoGameResourcesRoot = Path.Combine(resourcesRoot, "MonoGame");
 
         foreach (string file in Directory.EnumerateFiles(resourcesRoot, "*.cs", SearchOption.AllDirectories))
         {
             string text = File.ReadAllText(file);
-            if (text.Contains("Texture2D", StringComparison.Ordinal) ||
-                text.Contains("Microsoft.Xna", StringComparison.Ordinal))
-            {
-                Assert.StartsWith(monoGameResourcesRoot, file, StringComparison.OrdinalIgnoreCase);
-            }
+            Assert.DoesNotContain("Cerneala.Backends.SdlGpu", text, StringComparison.Ordinal);
+            Assert.DoesNotContain("Cerneala.Platforms.Sdl3", text, StringComparison.Ordinal);
         }
     }
 
@@ -443,11 +396,8 @@ public sealed class ArchitectureBoundaryTests
         ];
         string[] forbiddenTerms =
         [
-            "MonoGame",
             "Skia",
-            "HarfBuzz",
-            "Texture2D",
-            "Microsoft.Xna"
+            "HarfBuzz"
         ];
 
         foreach (string file in files)
@@ -466,11 +416,8 @@ public sealed class ArchitectureBoundaryTests
         string dataRoot = FindRepositoryPath("UI", "Data");
         string[] forbiddenTerms =
         [
-            "MonoGame",
             "Skia",
-            "HarfBuzz",
-            "Texture2D",
-            "Microsoft.Xna"
+            "HarfBuzz"
         ];
 
         foreach (string file in Directory.EnumerateFiles(dataRoot, "*.cs", SearchOption.AllDirectories))
@@ -558,11 +505,8 @@ public sealed class ArchitectureBoundaryTests
         ];
         string[] forbiddenTerms =
         [
-            "MonoGame",
             "Skia",
             "HarfBuzz",
-            "Texture2D",
-            "Microsoft.Xna",
             "System.Windows.Forms.Clipboard",
             "System.Windows.Clipboard",
             "System.Windows.Input.InputMethod",

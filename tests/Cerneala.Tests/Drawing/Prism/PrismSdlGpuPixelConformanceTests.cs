@@ -50,43 +50,34 @@ public sealed class PrismSdlGpuPixelConformanceTests : IDisposable
     [SdlPrismNativeTheory]
     [MemberData(nameof(ResourceFreeCatalogEntries))]
     [Trait("Category", "Native")]
-    public void EveryResourceFreeCatalogEntryMatchesWindowsDxPixelThresholds(
+    public void EveryResourceFreeCatalogEntryMatchesHistoricalPixelThresholds(
         string symbol)
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
         PrismCatalogOperationInfo operation = PrismCatalog.Filters
             .Concat(PrismCatalog.Styles)
             .Single(candidate => candidate.Symbol == symbol);
         string directory = Path.Combine(
             Path.GetTempPath(),
             $"cerneala-sdlgpu-prism-conformance-{symbol}-{Guid.NewGuid():N}");
-        string windowsPath = Path.Combine(directory, "windowsdx.png");
+        string referencePath = Path.Combine(directory, "reference.png");
         string sdlPath = Path.Combine(directory, "sdlgpu.png");
 
         try
         {
             Directory.CreateDirectory(directory);
-            CaptureWindowsDx(
-                windowsPath,
-                [operation],
-                CellWidth,
-                CellHeight);
+            File.Copy(ConformanceBaseline.Resolve(symbol + ".png"), referencePath);
             CaptureSdlGpu(
                 sdlPath,
                 [operation],
                 CellWidth,
                 CellHeight);
 
-            using SKBitmap windows = SKBitmap.Decode(windowsPath);
+            using SKBitmap reference = SKBitmap.Decode(referencePath);
             using SKBitmap sdl = SKBitmap.Decode(sdlPath);
-            Assert.Equal((windows.Width, windows.Height), (sdl.Width, sdl.Height));
+            Assert.Equal((reference.Width, reference.Height), (sdl.Width, sdl.Height));
 
             PixelDiffResult diff = Compare(
-                windows,
+                reference,
                 sdl,
                 0,
                 0,
@@ -94,7 +85,7 @@ public sealed class PrismSdlGpuPixelConformanceTests : IDisposable
                 CellHeight);
             CatalogDiffResult result = new(symbol, diff);
             output.WriteLine($"{symbol}: {diff}");
-            WriteDiffArtifacts(directory, windows, sdl, [result]);
+            WriteDiffArtifacts(directory, reference, sdl, [result]);
             Assert.True(
                 diff.Passes,
                 $"SDL_GPU Prism pixel diff exceeded the canonical RGBA thresholds for " +
@@ -113,24 +104,6 @@ public sealed class PrismSdlGpuPixelConformanceTests : IDisposable
                 Directory.Delete(directory, recursive: true);
             }
         }
-    }
-
-    private static void CaptureWindowsDx(
-        string path,
-        IReadOnlyList<PrismCatalogOperationInfo> operations,
-        int width,
-        int height)
-    {
-        using CatalogScene scene = new(operations, width, height);
-        using DesignPreviewSession session = DesignPreviewSession.Create(
-            new Application(),
-            () => scene,
-            width,
-            height,
-            renderScale: 1);
-        session.Pump(TimeSpan.FromMilliseconds(16));
-        session.Pump(TimeSpan.FromMilliseconds(16));
-        session.SaveScreenshot(path);
     }
 
     private static void CaptureSdlGpu(
@@ -410,7 +383,7 @@ public sealed class PrismSdlGpuPixelConformanceTests : IDisposable
                     "1",
                     StringComparison.Ordinal))
             {
-                Skip = "Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native Windows runner.";
+                Skip = "Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native runner.";
             }
         }
     }

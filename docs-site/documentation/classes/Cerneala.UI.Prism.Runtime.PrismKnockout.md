@@ -32,7 +32,7 @@ channels are restored from the current backdrop after the recurrence.
 
 The CPU reference is implemented by
 `PrismBlendMath.CompositeKnockout`; the GPU implementation is in
-`Drawing/MonoGame/Prism/Shaders/Blends/AdvancedBlending.fx`. Both operate on
+`Drawing/Prism/Shaders/Hlsl/Blends/AdvancedBlending.hlsl`. Both operate on
 premultiplied color and use the same shape/alpha recurrence.
 
 ## Examples

@@ -22,15 +22,15 @@ ImageDrawBrushDescriptor descriptor = (ImageDrawBrushDescriptor)imageBrush.Creat
 ```
 
 ## Remarks
-`Image` must belong to the graphics device rendering the descriptor. A non-null `SourceIdentity` with no resolved image produces an explicit backend diagnostic instead of silently drawing nothing.
+`Image` carries the resolved image consumed by the drawing backend. SDL images retain CPU pixel data and are uploaded into device-owned textures when rendered.
 
 ## Properties
 | Name | Description |
 | --- | --- |
-| `Image` | Device-local image, when resolved. |
+| `Image` | Resolved image, when available. |
 | `SourceIdentity` | Unresolved source identity, when present. |
 | `Stretch`, `AlignmentX`, `AlignmentY`, `Viewport`, `Viewbox`, `TileMode` | Inherited tile settings. |
 | `BrushOpacity` | Source opacity. |
 
 ## Applies to
-MonoGame backend implementation code.
+Drawing backend implementation code.

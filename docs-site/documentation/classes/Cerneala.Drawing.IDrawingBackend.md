@@ -66,5 +66,5 @@ Cerneala drawing backend implementations and retained UI frame submission.
 
 - `Cerneala.Drawing.DrawCommandList`
 - `Cerneala.Drawing.DrawingFrameContext`
-- `Cerneala.Drawing.MonoGame.MonoGameDrawingBackend`
+- `Cerneala.UI.Hosting.Sdl.SdlGpuApplicationBackend`
 - `Cerneala.UI.Rendering.RetainedRenderer`

@@ -196,32 +196,6 @@ public sealed class PrismInstanceTests
         Assert.Equal(0, allocated);
     }
 
-    [Fact]
-    public void RuntimeFoundationDoesNotOwnGpuResources()
-    {
-        Type[] runtimeTypes =
-        [
-            typeof(PrismInstance),
-            typeof(PrismCompositionState),
-            typeof(PrismLayerState),
-            typeof(PrismGroupState),
-            typeof(PrismFilterState),
-            typeof(PrismStyleState),
-            typeof(PrismMaskState)
-        ];
-
-        Assert.All(
-            runtimeTypes.SelectMany(type =>
-                type.GetFields(
-                    System.Reflection.BindingFlags.Instance |
-                    System.Reflection.BindingFlags.Public |
-                    System.Reflection.BindingFlags.NonPublic)),
-            field => Assert.DoesNotContain(
-                "Microsoft.Xna.Framework.Graphics",
-                field.FieldType.FullName ?? string.Empty,
-                StringComparison.Ordinal));
-    }
-
     private static PrismCompositionDefinition CreateComposition(float opacity = 1f)
     {
         return new PrismCompositionDefinition(

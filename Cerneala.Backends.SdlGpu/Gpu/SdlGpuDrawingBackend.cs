@@ -6,6 +6,7 @@ using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Graph;
 using Cerneala.Drawing.Text;
 using Cerneala.Platforms.Sdl3;
+using Cerneala.UI.Hosting;
 
 namespace Cerneala.Backends.SdlGpu;
 
@@ -61,12 +62,16 @@ internal sealed partial class SdlGpuDrawingBackend :
     private readonly Cerberus batches;
     private readonly HashSet<SdlGpuImage> subscribedImages =
         new(ReferenceEqualityComparer.Instance);
+    private readonly HashSet<object> retainedBrushTextureKeys = [];
+    private readonly HashSet<object> activeBrushTextureKeys = [];
+    private readonly List<object> unusedBrushTextureKeys = [];
     private long textAtlasFrameToken;
     private TimeSpan textRequestCollectionTime;
     private TimeSpan textRasterizationTime;
     private TimeSpan textAtlasUploadTime;
     private TimeSpan cleanupTime;
     private int textRequestCount;
+    private int activeCompositingLayerCount;
     private long rasterizedPixelCount;
     private bool frameActive;
     private bool disposed;
@@ -104,13 +109,20 @@ internal sealed partial class SdlGpuDrawingBackend :
             throw new InvalidOperationException(
                 "SDL_GPU drawing requires an active window frame.");
         }
+        frameContext.EnsureCurrent(commands);
+        if (frameContext.PrismAnalysis.Scopes.IsDefaultOrEmpty)
+        {
+            // Owner disposal is frame-lifecycle work, including empty frames
+            // which do not dispatch the Prism graph executor.
+            prismExecutor.ProcessInvalidations(
+                frameContext.PrismAnalysis, frameContext.PrismCacheInvalidations);
+        }
         if (session.IsSuspended || commands.Count == 0)
         {
             return;
         }
 
         long preparationStarted = Stopwatch.GetTimestamp();
-        frameContext.EnsureCurrent(commands);
         DrawCommandStateAnalysis analysis = frameContext.StateAnalysis;
         SdlGpuRenderTarget target = session.WindowRenderTarget;
         RenderState state = RenderState.Create(target, CoordinateScale);
@@ -160,15 +172,19 @@ internal sealed partial class SdlGpuDrawingBackend :
     {
         ObjectDisposedException.ThrowIf(disposed, this);
         textAtlasFrameToken = resources.BeginTextAtlasFrame();
+        activeBrushTextureKeys.Clear();
+        BeginBrushCaptureFrame();
         textRequestCollectionTime = TimeSpan.Zero;
         textRasterizationTime = TimeSpan.Zero;
         textAtlasUploadTime = TimeSpan.Zero;
         cleanupTime = TimeSpan.Zero;
         textRequestCount = 0;
+        activeCompositingLayerCount = 0;
         rasterizedPixelCount = 0;
         LastFrameTiming = default;
         LastFrameCounters = default;
         LastFramePrismCounters = default;
+        prismExecutor.Diagnostics.BeginFrame();
         frameActive = true;
     }
 
@@ -215,6 +231,8 @@ internal sealed partial class SdlGpuDrawingBackend :
     internal void EndFrame()
     {
         frameActive = false;
+        CompleteBrushTextureFrame();
+        CompleteBrushCaptureFrame();
         resources.EndTextAtlasFrame(textAtlasFrameToken);
         textAtlasFrameToken = 0;
     }
@@ -234,6 +252,43 @@ internal sealed partial class SdlGpuDrawingBackend :
             image.ContentChanged -= OnImageContentChanged;
         }
         subscribedImages.Clear();
+        foreach (object key in retainedBrushTextureKeys)
+        {
+            resources.ReleaseTexture(key);
+        }
+        retainedBrushTextureKeys.Clear();
+        activeBrushTextureKeys.Clear();
+        unusedBrushTextureKeys.Clear();
+        DisposeBrushCaptures();
+    }
+
+    private void MarkBrushTextureUsed(object key)
+    {
+        // Device resources are shared. Each backend retains its last frame's
+        // brush textures without evicting another window's live brush entries.
+        if (retainedBrushTextureKeys.Add(key))
+        {
+            resources.RetainTexture(key);
+        }
+        activeBrushTextureKeys.Add(key);
+    }
+
+    private void CompleteBrushTextureFrame()
+    {
+        unusedBrushTextureKeys.Clear();
+        foreach (object key in retainedBrushTextureKeys)
+        {
+            if (!activeBrushTextureKeys.Contains(key))
+            {
+                unusedBrushTextureKeys.Add(key);
+            }
+        }
+        foreach (object key in unusedBrushTextureKeys)
+        {
+            retainedBrushTextureKeys.Remove(key);
+            resources.ReleaseTexture(key);
+        }
+        unusedBrushTextureKeys.Clear();
     }
 
     private void RenderRange(
@@ -377,7 +432,8 @@ internal sealed partial class SdlGpuDrawingBackend :
                             target,
                             child.Clip,
                             destination: null,
-                            state);
+                            state,
+                            child.WorkingColorProfile);
                         // Presenting the child flushes (and ends) its batch. The
                         // enclosing range must resume its target for later siblings.
                         batches.Begin(target);
@@ -408,19 +464,19 @@ internal sealed partial class SdlGpuDrawingBackend :
             QuadIndices,
             CreateBatchKey(
                 DrawPrimitiveTopology.TriangleList,
-                paint.Texture.Handle,
+                paint.Texture,
                 paint.Sampling,
                 paint.AddressMode,
                 state));
         DrawRect rect = command.Rect;
-        DrawPoint topLeft = new(rect.X, rect.Y);
-        DrawPoint topRight = new(rect.Right, rect.Y);
-        DrawPoint bottomRight = new(rect.Right, rect.Bottom);
-        DrawPoint bottomLeft = new(rect.X, rect.Bottom);
-        vertices[0] = CreatePaintedVertex(topLeft, topLeft, paint, state);
-        vertices[1] = CreatePaintedVertex(topRight, topRight, paint, state);
-        vertices[2] = CreatePaintedVertex(bottomRight, bottomRight, paint, state);
-        vertices[3] = CreatePaintedVertex(bottomLeft, bottomLeft, paint, state);
+        float left = UiCoordinateMapper.LogicalToPhysicalPixel(rect.X, CoordinateScale) / CoordinateScale;
+        float top = UiCoordinateMapper.LogicalToPhysicalPixel(rect.Y, CoordinateScale) / CoordinateScale;
+        float right = UiCoordinateMapper.LogicalToPhysicalPixel(rect.Right, CoordinateScale) / CoordinateScale;
+        float bottom = UiCoordinateMapper.LogicalToPhysicalPixel(rect.Bottom, CoordinateScale) / CoordinateScale;
+        vertices[0] = CreatePaintedVertex(new DrawPoint(left, top), new DrawPoint(rect.X, rect.Y), paint, state);
+        vertices[1] = CreatePaintedVertex(new DrawPoint(right, top), new DrawPoint(rect.Right, rect.Y), paint, state);
+        vertices[2] = CreatePaintedVertex(new DrawPoint(right, bottom), new DrawPoint(rect.Right, rect.Bottom), paint, state);
+        vertices[3] = CreatePaintedVertex(new DrawPoint(left, bottom), new DrawPoint(rect.X, rect.Bottom), paint, state);
     }
 
     private void AddPathFill(
@@ -689,7 +745,7 @@ internal sealed partial class SdlGpuDrawingBackend :
             indices,
             CreateBatchKey(
                 topology,
-                paint.Texture.Handle,
+                paint.Texture,
                 paint.Sampling,
                 paint.AddressMode,
                 state));
@@ -954,15 +1010,24 @@ internal sealed partial class SdlGpuDrawingBackend :
                 return;
             }
 
-            SdlGpuTextBrushTextureKey brushKey = new(
+            if (descriptor is TileDrawBrushDescriptor tile)
+            {
+                SdlGpuPaint paint = ResolveTileBrushPaint(
+                    brush!, tile, new DrawRect(0, 0, destination.Width, destination.Height),
+                    commandOpacity, rasterKey, layers);
+                AddQuad(batches, destination, new DrawRect(0, 0, 1, 1), paint.Tint,
+                    state.Transform, state.Opacity,
+                    CreateBatchKey(DrawPrimitiveTopology.TriangleList, paint.Texture,
+                        paint.Sampling, paint.AddressMode, state));
+                return;
+            }
+
+            object brushKey = new SdlGpuTextBrushTextureKey(
                 rasterKey,
-                (object?)brush ?? descriptor,
-                baseline);
+                (object?)brush ?? descriptor);
             byte[] pixels = ColorizeTextLayers(
                 layers,
                 descriptor,
-                baseline,
-                first.OriginOffset,
                 CoordinateScale);
             SdlGpuTextureResource texture = resources.GetOrCreateTexture(
                 session,
@@ -970,6 +1035,7 @@ internal sealed partial class SdlGpuDrawingBackend :
                 first.Width,
                 first.Height,
                 pixels);
+            MarkBrushTextureUsed(brushKey);
             AddQuad(
                 batches,
                 destination,
@@ -1201,8 +1267,10 @@ internal sealed partial class SdlGpuDrawingBackend :
     {
         RenderState parentState = rangeState.State;
         SdlGpuRenderTarget parentTarget = rangeState.Target;
+        // Captures create new command ranges while their parent's layers are
+        // still live. Pool depth follows the entire rendering stack, not one range.
         SdlGpuRenderTarget layer = resources.GetLayerTarget(
-            rangeState.CompositingScopes.Count + 1,
+            activeCompositingLayerCount + 1,
             parentTarget.PixelWidth,
             parentTarget.PixelHeight,
             parentTarget.ColorFormat,
@@ -1220,6 +1288,7 @@ internal sealed partial class SdlGpuDrawingBackend :
             pushKind));
         rangeState.Target = layer;
         rangeState.State = childState;
+        activeCompositingLayerCount++;
     }
 
     private void EndCompositingLayer(
@@ -1249,6 +1318,7 @@ internal sealed partial class SdlGpuDrawingBackend :
 
         FlushBatches();
         rangeState.CompositingScopes.RemoveAt(rangeState.CompositingScopes.Count - 1);
+        activeCompositingLayerCount--;
         rangeState.Target = scope.ParentTarget;
         rangeState.State = scope.ParentState;
         session.BeginRenderTarget(
@@ -1299,7 +1369,9 @@ internal sealed partial class SdlGpuDrawingBackend :
                     width,
                     height,
                     parentTarget.ColorFormat,
-                    parentTarget.SampleCount),
+                    // Surface edge coverage is independent of window MSAA,
+                    // including single-sample design-preview windows.
+                    session.SelectSampleCount(parentTarget.ColorFormat, SdlGpuSampleCount.Eight)),
                 new SdlGpuPrismExecutor(session, this));
             source.SetBackendState(resources, surface);
         }
@@ -1354,13 +1426,42 @@ internal sealed partial class SdlGpuDrawingBackend :
         source.RecordFrame(
             surface.Commands,
             new DrawRect(0, 0, surface.PixelWidth, surface.PixelHeight));
+        RenderRecordedSurfaceFrame(surface, source.ClearColor, surfaceBatches);
+    }
+
+    private bool RenderRecordedSurfaceFrame(
+        SdlGpuRenderSurfaceState surface,
+        Color clearColor,
+        Cerberus surfaceBatches,
+        bool requireFullReplay = false)
+    {
         PrismFrameAnalysis analysis = new PrismFrameAnalyzer().Analyze(surface.Commands);
+        if (analysis.Scopes.IsDefaultOrEmpty)
+        {
+            surface.PrismExecutor.ProcessInvalidations(analysis, surface.PrismCacheInvalidations);
+        }
+        SdlRect? damage = ResolveSurfaceDamage(surface, analysis.StateAnalysis, clearColor);
+        if (damage is null)
+        {
+            surface.RetainedEntries = analysis.StateAnalysis.Entries;
+            return false;
+        }
         DrawingFrameContext frameContext = new(
             analysis,
             backdropLease: null,
             backdropSourceToken: default,
             surface.PrismCacheInvalidations);
-        session.BeginRenderTarget(surface.Target, source.ClearColor, SdlGpuLoadOp.Clear);
+        SdlRect bounds = new(0, 0, surface.PixelWidth, surface.PixelHeight);
+        if (requireFullReplay)
+        {
+            damage = bounds;
+        }
+        bool fullReplay = damage.Value == bounds;
+        // A failed replay must not leave a partially changed texture eligible
+        // for reuse on a later attempt.
+        surface.RetainedEntries = null;
+        session.BeginRenderTarget(surface.Target, clearColor,
+            fullReplay ? SdlGpuLoadOp.Clear : SdlGpuLoadOp.Load);
         if (!analysis.Scopes.IsDefaultOrEmpty)
         {
             surface.PrismExecutor.Execute(surface.Commands, frameContext, surface.Target);
@@ -1371,11 +1472,38 @@ internal sealed partial class SdlGpuDrawingBackend :
             RenderState state = RenderState.Create(surface.Target, CoordinateScale);
             CommandRangeState rangeState = new(surface.Target, state);
             surfaceBatches.Begin(surface.Target);
-            RenderRange(surface.Commands, 0, surface.Commands.Count,
-                analysis.StateAnalysis, rangeState, surfaceBatches);
+            if (fullReplay)
+            {
+                RenderRange(surface.Commands, 0, surface.Commands.Count,
+                    analysis.StateAnalysis, rangeState, surfaceBatches);
+            }
+            else
+            {
+                // Partial replay is restricted to independent commands. A
+                // changed state/Prism scope conservatively replays the target.
+                state.Scissors[0] = damage.Value;
+                state.Blends[0] = DrawBlendMode.Opaque;
+                AddFillRectangle(DrawCommand.FillRectangle(
+                    new DrawRect(damage.Value.X, damage.Value.Y, damage.Value.Width, damage.Value.Height),
+                    clearColor), state, surfaceBatches);
+                state.Blends[0] = DrawBlendMode.Normal;
+                for (int index = 0; index < surface.Commands.Count; index++)
+                {
+                    SdlRect commandBounds = SurfaceCommandBounds(analysis.StateAnalysis.Entries[index], bounds);
+                    SdlRect intersection = IntersectScissor(commandBounds, damage.Value);
+                    if (intersection.Width > 0 && intersection.Height > 0)
+                    {
+                        RenderRange(surface.Commands, index, index + 1,
+                            analysis.StateAnalysis, rangeState, surfaceBatches);
+                    }
+                }
+            }
             FlushBatches();
             EnsureCompositingScopesClosed(rangeState);
         }
+        surface.RetainedEntries = analysis.StateAnalysis.Entries;
+        surface.RetainedClearColor = clearColor;
+        return true;
     }
 
     private void AddTargetComposite(
@@ -1491,7 +1619,8 @@ internal sealed partial class SdlGpuDrawingBackend :
         SdlGpuRenderTarget target,
         SdlRect? clip = null,
         DrawRect? destination = null,
-        CommandRangeState? presentationState = null)
+        CommandRangeState? presentationState = null,
+        Cerneala.Drawing.Prism.Catalog.PrismColorProfile? workingColorProfile = null)
     {
         if (presentationState is not null && presentationState.Target != target)
         {
@@ -1503,7 +1632,8 @@ internal sealed partial class SdlGpuDrawingBackend :
             target,
             clip,
             destination,
-            presentationState?.State ?? RenderState.Create(target, CoordinateScale));
+            presentationState?.State ?? RenderState.Create(target, CoordinateScale),
+            workingColorProfile);
     }
 
     private void DrawPrismTextureCore(
@@ -1511,7 +1641,8 @@ internal sealed partial class SdlGpuDrawingBackend :
         SdlGpuRenderTarget target,
         SdlRect? clip,
         DrawRect? destination,
-        RenderState state)
+        RenderState state,
+        Cerneala.Drawing.Prism.Catalog.PrismColorProfile? workingColorProfile)
     {
         if (texture == 0)
         {
@@ -1547,7 +1678,8 @@ internal sealed partial class SdlGpuDrawingBackend :
                 clip is SdlRect presentationClip
                     ? IntersectScissor(state.Scissor, presentationClip)
                     : state.Scissor,
-                SdlGpuColorWriteMask.All));
+                SdlGpuColorWriteMask.All,
+                PrismWorkingColorProfile: workingColorProfile));
         FlushBatches();
     }
 
@@ -1580,7 +1712,7 @@ internal sealed partial class SdlGpuDrawingBackend :
                         bounds.Width * CoordinateScale)));
                     int height = Math.Max(1, checked((int)MathF.Ceiling(
                         bounds.Height * CoordinateScale)));
-                    SdlGpuBrushTextureKey key = new(
+                    object key = new SdlGpuBrushTextureKey(
                         brush,
                         bounds,
                         width,
@@ -1592,6 +1724,7 @@ internal sealed partial class SdlGpuDrawingBackend :
                         width,
                         height,
                         pixels);
+                    MarkBrushTextureUsed(key);
                     return SdlGpuPaint.BoundsMapped(
                         texture,
                         bounds,
@@ -1611,6 +1744,11 @@ internal sealed partial class SdlGpuDrawingBackend :
                             Color.Transparent);
                     }
                     SdlGpuTextureResource texture = GetImageTexture(imageBrush.Image);
+                    if (imageBrush.Stretch != DrawBrushStretch.Fill ||
+                        imageBrush.TileMode != DrawTileMode.None || imageBrush.Viewport is not null)
+                    {
+                        return ResolveTileBrushPaint(brush, imageBrush, bounds, commandOpacity);
+                    }
                     return SdlGpuPaint.ImageBrush(
                         texture,
                         bounds,
@@ -1619,9 +1757,13 @@ internal sealed partial class SdlGpuDrawingBackend :
                             Color.White,
                             imageBrush.Opacity * commandOpacity));
                 }
+            case DrawingDrawBrushDescriptor drawing:
+                return ResolveTileBrushPaint(brush, drawing, bounds, commandOpacity);
+            case VisualDrawBrushDescriptor visual:
+                return ResolveTileBrushPaint(brush, visual, bounds, commandOpacity);
             default:
                 throw new NotSupportedException(
-                    $"SDL_GPU does not support brush descriptor '{descriptor.GetType().Name}' in Stage 5.");
+                    $"SDL_GPU does not support brush descriptor '{descriptor.GetType().Name}'.");
         }
     }
 
@@ -1689,8 +1831,6 @@ internal sealed partial class SdlGpuDrawingBackend :
     private static byte[] ColorizeTextLayers(
         RasterizedText[] layers,
         DrawBrushDescriptor descriptor,
-        DrawPoint baseline,
-        DrawPoint originOffset,
         float coordinateScale)
     {
         RasterizedText first = layers[0];
@@ -1705,8 +1845,8 @@ internal sealed partial class SdlGpuDrawingBackend :
             int y = pixel / first.Width;
             int coverage = Math.Max(red[offset], Math.Max(green[offset + 1], blue[offset + 2]));
             DrawPoint point = new(
-                baseline.X + ((originOffset.X + x) / coordinateScale),
-                baseline.Y + ((originOffset.Y + y) / coordinateScale));
+                (x + 0.5f) / coordinateScale,
+                (y + 0.5f) / coordinateScale);
             Color sampled = SampleBrush(descriptor, point);
             byte alpha = MultiplyByte(sampled.A, (byte)coverage);
             output[offset] = MultiplyByte(sampled.R, alpha);
@@ -1957,18 +2097,34 @@ internal sealed partial class SdlGpuDrawingBackend :
             float coordinateScale)
         {
             RenderState state = new();
-            state.Scissors.Add(new SdlRect(
+            state.Reset(target, coordinateScale);
+            return state;
+        }
+
+        internal void Reset(SdlGpuRenderTarget target, float coordinateScale)
+        {
+            Transforms.Clear();
+            Transforms.Add(Matrix3x2.Identity);
+            Opacities.Clear();
+            Opacities.Add(1);
+            Blends.Clear();
+            Blends.Add(DrawBlendMode.Normal);
+            Scissors.Clear();
+            Scissors.Add(new SdlRect(
                 0,
                 0,
                 target.PixelWidth,
                 target.PixelHeight));
+            Clips.Clear();
+            StencilDepth = 0;
             threadScale = coordinateScale;
-            return state;
         }
     }
 
     internal sealed class CommandRangeState
     {
+        private readonly RenderState rootState;
+
         internal CommandRangeState(
             SdlGpuRenderTarget target,
             RenderState state)
@@ -1976,15 +2132,27 @@ internal sealed partial class SdlGpuDrawingBackend :
             RootTarget = target;
             Target = target;
             State = state;
+            rootState = state;
         }
 
-        internal SdlGpuRenderTarget RootTarget { get; }
+        internal SdlGpuRenderTarget RootTarget { get; private set; }
 
         internal SdlGpuRenderTarget Target { get; set; }
 
         internal RenderState State { get; set; }
 
         internal List<CompositingScope> CompositingScopes { get; } = [];
+
+        internal void Reset(SdlGpuRenderTarget target, float coordinateScale)
+        {
+            // A failed range may still point at a compositing child. Restore
+            // the owned root, not whichever child happened to execute last.
+            RootTarget = target;
+            Target = target;
+            State = rootState;
+            rootState.Reset(target, coordinateScale);
+            CompositingScopes.Clear();
+        }
     }
 
     internal sealed record CompositingScope(
@@ -2007,7 +2175,7 @@ internal sealed partial class SdlGpuDrawingBackend :
     }
 
     private readonly record struct SdlGpuPaint(
-        SdlGpuTextureResource Texture,
+        nint Texture,
         Color Tint,
         DrawSamplingMode Sampling,
         DrawAddressMode AddressMode,
@@ -2017,7 +2185,7 @@ internal sealed partial class SdlGpuDrawingBackend :
             SdlGpuTextureResource texture,
             Color tint) =>
             new(
-                texture,
+                texture.Handle,
                 tint,
                 DrawSamplingMode.Point,
                 DrawAddressMode.Clamp,
@@ -2025,6 +2193,11 @@ internal sealed partial class SdlGpuDrawingBackend :
 
         public static SdlGpuPaint BoundsMapped(
             SdlGpuTextureResource texture,
+            DrawRect bounds,
+            Color tint) => BoundsMapped(texture.Handle, bounds, tint);
+
+        public static SdlGpuPaint BoundsMapped(
+            nint texture,
             DrawRect bounds,
             Color tint) =>
             new(
@@ -2050,7 +2223,7 @@ internal sealed partial class SdlGpuDrawingBackend :
             DrawRect viewbox = descriptor.Viewbox ??
                 new DrawRect(0, 0, texture.Width, texture.Height);
             return new SdlGpuPaint(
-                texture,
+                texture.Handle,
                 tint,
                 DrawSamplingMode.Linear,
                 descriptor.TileMode == DrawTileMode.None
@@ -2083,6 +2256,8 @@ internal sealed partial class SdlGpuDrawingBackend :
         public DrawCommandList Commands { get; } = new();
         public PrismCacheInvalidationQueue PrismCacheInvalidations { get; } = new();
         public long FrameVersion { get; set; } = long.MinValue;
+        public IReadOnlyList<DrawCommandStateEntry>? RetainedEntries { get; set; }
+        public Color RetainedClearColor { get; set; }
 
         public void Dispose()
         {
@@ -2104,10 +2279,10 @@ internal sealed partial class SdlGpuDrawingBackend :
 
     private readonly record struct SdlGpuTextBrushTextureKey(
         SdlGpuTextRasterKey Raster,
-        object Brush,
-        DrawPoint Position);
+        object Brush);
 }
 
 internal readonly record struct SdlGpuPrismPresentationSurface(
     SdlGpuRenderTarget Target,
-    SdlRect? Clip);
+    SdlRect? Clip,
+    Cerneala.Drawing.Prism.Catalog.PrismColorProfile WorkingColorProfile);

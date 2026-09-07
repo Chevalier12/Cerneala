@@ -55,13 +55,24 @@ internal static class SdlGpuShaderArtifacts
         StorageBufferCount: 0,
         UniformBufferCount: 1);
 
+    public static SdlGpuShaderArtifact PrismPresentationFragment { get; } = new(
+        "prism-presentation-fragment",
+        "Prism.Shaders",
+        "PrismPresentation.frag",
+        SdlGpuShaderStage.Fragment,
+        SamplerCount: 1,
+        StorageTextureCount: 0,
+        StorageBufferCount: 0,
+        UniformBufferCount: 1);
+
     public static IReadOnlyList<SdlGpuShaderArtifact> All { get; } =
     [
         DrawingVertex,
         DrawingFragment,
         PrismVertex,
         PrismCopyFragment,
-        PrismCatalogFragment
+        PrismCatalogFragment,
+        PrismPresentationFragment
     ];
 
     public static nint CreateShader(

@@ -19,12 +19,12 @@ public sealed record DrawingDrawBrushDescriptor(
 
 ## Examples
 ```csharp
-var descriptor = (DrawingDrawBrushDescriptor)drawingBrush.CreateDescriptor();
+var descriptor = (DrawingDrawBrushDescriptor)((IDrawBrush)drawingBrush).CreateDescriptor();
 int commandCount = descriptor.Commands.Count;
 ```
 
 ## Remarks
-The MonoGame backend rasterizes the command list into a device-owned render target before applying tile fitting, clipping, and opacity.
+SDL_GPU rasterizes the command list with its tile fitting and clipping into a device-owned render target, then applies brush and command opacity when painting the destination. Unchanged command snapshots can reuse the completed raster.
 
 ## Properties
 | Name | Description |
@@ -35,4 +35,4 @@ The MonoGame backend rasterizes the command list into a device-owned render targ
 | `BrushOpacity` | Source opacity. |
 
 ## Applies to
-MonoGame backend implementation code.
+Backend-neutral drawing descriptors, implemented by SDL_GPU.

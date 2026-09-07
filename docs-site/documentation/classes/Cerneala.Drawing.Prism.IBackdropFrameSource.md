@@ -47,9 +47,8 @@ The application retains ownership of its scene, render targets, textures, and so
 `UiHost` validates the source against the selected drawing backend when the backend is assigned. It acquires only when its internal analysis of the submitted command list requires a backdrop, and it acquires at most one lease for that drawing frame. A compatible source must return a non-null lease per request. The host disposes the lease exactly once after submission, including exceptional exits; disposing the lease releases the borrow, not the application-owned scene.
 
 Compatibility describes whether the backend can consume the leases, not whether
-the source owns that backend instance. For example, the WindowsDX source accepts
-live MonoGame backends on the same `GraphicsDevice`, including the temporary
-backend used for screenshot rendering.
+the source owns that backend instance. Concrete sources enforce their own
+device and lifetime compatibility requirements.
 
 Providers must keep `BackdropFrameMetadata.ContentVersion` monotonic and update it whenever source pixels or pixel-affecting metadata change.
 

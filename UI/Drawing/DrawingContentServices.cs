@@ -5,7 +5,7 @@ using Cerneala.UI.Resources;
 namespace Cerneala.UI.Hosting;
 
 /// <summary>
-/// Owns the MonoGame-independent font, text rasterization, and image resource services used by a UI host.
+/// Owns the backend-neutral font, text rasterization, and image resource services used by a UI host.
 /// </summary>
 public class DrawingContentServices : IDisposable
 {

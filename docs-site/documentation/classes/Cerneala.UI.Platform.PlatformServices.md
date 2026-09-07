@@ -85,4 +85,3 @@ Cerneala UI hosting and platform integration APIs.
 
 - `Cerneala.UI.Platform.IPlatformServices`
 - `Cerneala.UI.Hosting.UiHostOptions`
-- `Cerneala.UI.Hosting.MonoGame.MonoGameUiHostOptions`

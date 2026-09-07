@@ -2,6 +2,9 @@
 
 Last audited: **2026-08-28**
 
+Desktop-backend status updated: **2026-09-06**. Other maturity statements below
+retain their original audit date.
+
 Cerneala is a retained realtime UI framework for .NET applications and complete
 2D games. The goal is one application model for ordinary controls, windows,
 tools, HUDs, and realtime game rendering.
@@ -104,17 +107,16 @@ conformance requirement, not an assumption.
 
 The repository currently contains:
 
-- a WindowsDX presentation path;
-- a MonoGame and `SpriteBatch` adapter path;
 - SDL3 native desktop platform integration;
 - an SDL3 GPU drawing and Prism backend;
 - native SDL3 smoke coverage on Windows, Linux, and macOS;
-- WindowsDX and SDL3 GPU differential and pixel-conformance coverage.
+- native SDL3 pixel-conformance coverage against frozen historical references.
 
-Maturity: SDL3 GPU has completed its initial end-to-end backend plan and is the
-strategic backend going forward. MonoGame remains available during transition,
-but it will be discontinued gradually. No removal release or date is committed
-yet.
+Maturity: SDL3 + SDL_GPU is now the sole maintained desktop composition.
+MonoGame/WindowsDX APIs and active consumers have been removed without a
+compatibility facade. This source migration is not a claim that every gate is
+green; current verification and failures are recorded in the
+[removal audit](docs/audits/2026-09-05-monogame-removal.md).
 
 ### AI-Native Repository Workflow
 
@@ -128,23 +130,22 @@ requests.
 
 ## Active Direction
 
-### 1. Make SDL3 GPU The Primary Backend
+### 1. Maintain SDL3 GPU As The Sole Desktop Backend
 
-The target direction is SDL3 for native platform ownership and SDL3 GPU for
-rendering.
+SDL3 owns native platform behavior; SDL3 GPU owns rendering. Retained UI and
+source generation remain backend-neutral.
 
 Required outcomes:
 
 - keep native window, input, cursor, clipboard, and lifecycle behavior covered
   across Windows, Linux, and macOS;
 - keep drawing and Prism behavior aligned through deterministic conformance;
-- make SDL3 the documented default once repository defaults and samples are
-  actually changed;
-- retire MonoGame incrementally without breaking an undocumented set of users;
-- document the compatibility and removal policy before deleting the adapter.
+- keep active samples and documentation on the explicit SDL composition;
+- preserve migrated shared-contract tests and historical visual references;
+- report unresolved migration gates rather than concealing them with skips or
+  relaxed tolerances.
 
-The current project files still default some samples to MonoGame. Documentation
-must state that fact until the defaults change.
+The retired adapters are not supported compatibility paths.
 
 ### 2. Cerberus V2
 
@@ -175,7 +176,7 @@ Required invariants:
 - render and upload caches release resources deterministically;
 - warmup and cache behavior are measured before allocation or performance
   claims are made;
-- WindowsDX and SDL3 GPU disagreement is investigated against the semantic
+- disagreement with historical references is investigated against the semantic
   contract before a baseline is updated.
 
 ### 4. Improve The External Developer Experience
@@ -203,8 +204,7 @@ These are known gaps, not hidden promises:
   scenarios have uneven maturity;
 - package distribution and project templates are unfinished;
 - backend maturity and feature parity are uneven;
-- the public compatibility policy for the MonoGame transition is not yet
-  versioned;
+- full verification of the desktop-backend removal remains tracked in its audit;
 - some older planning and scope documents describe superseded architecture and
   must not override current source, tests, completed plans, or this roadmap.
 

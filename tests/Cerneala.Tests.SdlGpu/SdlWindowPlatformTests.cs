@@ -7,6 +7,39 @@ namespace Cerneala.Tests.SdlGpu;
 
 public sealed class SdlWindowPlatformTests
 {
+    [Theory]
+    [InlineData(1f, 0.9f)]
+    [InlineData(2f, 0.9f)]
+    [InlineData(1f, 1.25f)]
+    [InlineData(2f, 1.25f)]
+    public void ExplicitScaleControlsPixelSizeAndInputIndependentlyOfDesktopScale(
+        float pixelDensity, float renderScale)
+    {
+        FakeSdlApi api = new()
+        {
+            WindowPixelDensity = pixelDensity,
+            WindowDisplayScale = 1.5f
+        };
+        RecordingGraphicsFactory graphics = new();
+        using SdlWindowPlatform platform = new(api, graphics, renderScale);
+        SdlPlatformWindow window = Assert.IsType<SdlPlatformWindow>(
+            platform.CreateWindow(new Window { Width = 640, Height = 360 },
+                new RecordingWindowCallbacks()));
+        api.Enqueue(new SdlEvent(SdlEventKind.MouseMotion, window.WindowId,
+            X: 160 * renderScale / pixelDensity,
+            Y: 80 * renderScale / pixelDensity));
+        platform.PumpEvents();
+
+        Assert.Equal((int)MathF.Ceiling(640 * renderScale), graphics.Sessions[0].PixelWidth);
+        Assert.Equal((int)MathF.Ceiling(360 * renderScale), graphics.Sessions[0].PixelHeight);
+        Assert.Equal(renderScale, graphics.Sessions[0].CoordinateScale);
+        Assert.Equal(640, window.Viewport.Width);
+        Assert.Equal(360, window.Viewport.Height);
+        InputFrame frame = window.InputSource.GetFrame();
+        Assert.Equal(160, frame.Pointer.X);
+        Assert.Equal(80, frame.Pointer.Y);
+    }
+
     [Fact]
     public void DisplayScaleControlsLogicalWindowSizeRenderingAndPointerCoordinates()
     {

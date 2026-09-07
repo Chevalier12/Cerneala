@@ -4,17 +4,14 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using Cerneala.Backends.SdlGpu;
 using Cerneala.Drawing;
-using Cerneala.Drawing.MonoGame;
 using Cerneala.Drawing.Prism.Graph;
 using Cerneala.Platforms.Sdl3;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windowing;
-using Cerneala.UI.Hosting.Windows;
 using Cerneala.UI.Resources;
 using SkiaSharp;
-using XnaRectangle = Microsoft.Xna.Framework.Rectangle;
 
 namespace Cerneala.Benchmarks;
 
@@ -30,12 +27,6 @@ internal static class TileMapStage4BackendProfileRunner
 
     internal static void Run(string reportPath)
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            throw new PlatformNotSupportedException(
-                "The TileMap2D WindowsDX/SDL_GPU backend profile requires Windows.");
-        }
-
         string fullPath = Path.GetFullPath(reportPath);
         string artifactDirectory = Path.GetDirectoryName(fullPath)!;
         Directory.CreateDirectory(artifactDirectory);
@@ -43,18 +34,6 @@ internal static class TileMapStage4BackendProfileRunner
         string structuresPath = Path.Combine(artifactDirectory, "profile-structures.png");
         WriteAtlas(terrainPath, tileCount: 12, hueOffset: 0);
         WriteAtlas(structuresPath, tileCount: 8, hueOffset: 96);
-
-        TileMapStage4BackendProfile windowsDx;
-        using (WindowsDxFixture fixture = new((int)SurfaceBounds.Width, (int)SurfaceBounds.Height))
-        {
-            windowsDx = MeasureBackend(
-                "WindowsDX",
-                fixture.Session,
-                fixture.PumpEvents,
-                terrainPath,
-                structuresPath,
-                "Retained command diff computes damage bounds; unchanged surface versions reuse the offscreen surface without rasterization.");
-        }
 
         TileMapStage4BackendProfile sdlGpu;
         using (SdlGpuFixture fixture = new((int)SurfaceBounds.Width, (int)SurfaceBounds.Height))
@@ -65,11 +44,11 @@ internal static class TileMapStage4BackendProfileRunner
                 fixture.PumpEvents,
                 terrainPath,
                 structuresPath,
-                "Frame-version invalidation rerenders the complete offscreen surface; this backend exposes no retained damage rectangle.");
+                "Unchanged command metadata reuses the offscreen raster; changed bounds clear and replay damage, with full replay for compositing or Prism scope changes.");
         }
 
         TileMapStage4BackendReport report = new(
-            Schema: "cerneala-tilemap-stage4-backend-profile-v1",
+            Schema: "cerneala-tilemap-stage4-backend-profile-v2",
             TimestampUtc: DateTimeOffset.UtcNow,
             Commit: ResolveGit("rev-parse HEAD"),
             WorkingTreeDirty: ResolveGit("status --porcelain").Length != 0,
@@ -85,14 +64,12 @@ internal static class TileMapStage4BackendProfileRunner
             SurfaceHeight: (int)SurfaceBounds.Height,
             TerrainAtlas: Path.GetRelativePath(Environment.CurrentDirectory, terrainPath),
             StructuresAtlas: Path.GetRelativePath(Environment.CurrentDirectory, structuresPath),
-            WindowsDx: windowsDx,
             SdlGpu: sdlGpu);
         File.WriteAllText(
             fullPath,
             JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }) + Environment.NewLine);
 
         Console.WriteLine($"Tilemap stage 4 backend profile: {fullPath}");
-        PrintProfile(windowsDx);
         PrintProfile(sdlGpu);
     }
 
@@ -133,10 +110,10 @@ internal static class TileMapStage4BackendProfileRunner
         ];
 
         TileMapStage4BackendScenario warm = scenarios[0];
-        if (backend == "WindowsDX" && warm.WindowsDx!.RasterizedFrameCount != 0)
+        if (warm.SdlGpu.AverageDrawCalls != 1)
         {
             throw new InvalidOperationException(
-                "WindowsDX rerasterized an unchanged TileMap2D surface after warmup.");
+                "SDL_GPU submitted more than the one presentation draw for an unchanged TileMap2D surface after warmup.");
         }
         if (scenarios[1].CoreCounters.BatchesRebuilt != 0)
         {
@@ -186,20 +163,11 @@ internal static class TileMapStage4BackendProfileRunner
         double[] wallSamples = new double[MeasuredFrames];
         double[] commandSamples = new double[MeasuredFrames];
         long allocatedBefore = GC.GetAllocatedBytesForCurrentThread();
-        int rasterizedFrames = 0;
-        long damagePixels = 0;
-        long replayedCommands = 0;
-        string lastMissReason = "Unavailable";
         long sdlDrawCalls = 0;
         long sdlSubmissions = 0;
         long sdlMergedSubmissions = 0;
         long sdlVertexBytes = 0;
         long sdlIndexBytes = 0;
-
-        MonoGameRenderSurface2DSession? monoSurface = backend == "WindowsDX"
-            ? workload.RequireMonoGameSurface((WindowsDxWindowGraphicsSession)session)
-            : null;
-        int previousRasterizedCount = monoSurface?.RasterizedFrameCount ?? 0;
 
         for (int frame = 0; frame < MeasuredFrames; frame++)
         {
@@ -210,19 +178,6 @@ internal static class TileMapStage4BackendProfileRunner
             DrawingBackendFrameTiming timing =
                 ((IDrawingBackendFrameTimingSource)session.DrawingBackend).LastFrameTiming;
             commandSamples[frame] = timing.CommandRendering.TotalMicroseconds;
-
-            if (monoSurface is not null &&
-                monoSurface.RasterizedFrameCount != previousRasterizedCount)
-            {
-                rasterizedFrames += monoSurface.RasterizedFrameCount - previousRasterizedCount;
-                previousRasterizedCount = monoSurface.RasterizedFrameCount;
-                if (monoSurface.LastDamageBounds is XnaRectangle damage)
-                {
-                    damagePixels += (long)damage.Width * damage.Height;
-                }
-                replayedCommands += monoSurface.LastReplayedCommandCount;
-                lastMissReason = monoSurface.LastRetainedMissReason.ToString();
-            }
 
             if (session.DrawingBackend is SdlGpuDrawingBackend sdlBackend)
             {
@@ -248,24 +203,12 @@ internal static class TileMapStage4BackendProfileRunner
             CommandRenderingP95Microseconds: Percentile(commandSamples, 0.95),
             ManagedAllocatedBytesPerFrame: (double)allocated / MeasuredFrames,
             CoreCounters: coreCounters,
-            WindowsDx: monoSurface is null
-                ? null
-                : new TileMapStage4WindowsDxTelemetry(
-                    rasterizedFrames,
-                    DamagedFrameCount: rasterizedFrames,
-                    AverageDamagePixels: rasterizedFrames == 0 ? 0 : (double)damagePixels / rasterizedFrames,
-                    AverageReplayedCommands: rasterizedFrames == 0 ? 0 : (double)replayedCommands / rasterizedFrames,
-                    lastMissReason),
-            SdlGpu: session.DrawingBackend is not SdlGpuDrawingBackend
-                ? null
-                : new TileMapStage4SdlGpuTelemetry(
+            SdlGpu: new TileMapStage4SdlGpuTelemetry(
                     AverageDrawCalls: (double)sdlDrawCalls / MeasuredFrames,
                     AverageSubmissions: (double)sdlSubmissions / MeasuredFrames,
                     AverageMergedSubmissions: (double)sdlMergedSubmissions / MeasuredFrames,
                     AverageVertexBytes: (double)sdlVertexBytes / MeasuredFrames,
-                    AverageIndexBytes: (double)sdlIndexBytes / MeasuredFrames,
-                    RerendersFullOffscreenSurfaceOnFrameVersionChange: scenario != "warm-static",
-                    ExposesDamageRectangle: false));
+                    AverageIndexBytes: (double)sdlIndexBytes / MeasuredFrames));
     }
 
     private static void RenderFrame(
@@ -430,48 +373,7 @@ internal static class TileMapStage4BackendProfileRunner
             Surface.InvalidateFrame();
         }
 
-        internal MonoGameRenderSurface2DSession RequireMonoGameSurface(
-            WindowsDxWindowGraphicsSession session) =>
-            ((IRenderSurface2DFrameSource)Surface).GetBackendState(session.GraphicsDevice)
-                as MonoGameRenderSurface2DSession ??
-            throw new InvalidOperationException("WindowsDX did not create a retained RenderSurface2D session.");
-
         public void Dispose() => root.VisualChildren.Remove(Surface);
-    }
-
-    private sealed class WindowsDxFixture : IDisposable
-    {
-        private readonly Win32WindowPlatform platform;
-        private readonly IPlatformWindow window;
-
-        internal WindowsDxFixture(int width, int height)
-        {
-            platform = new Win32WindowPlatform(
-                new WindowsDxWindowGraphicsSessionFactory(useMultisampling: false),
-                coordinateScaleOverride: 1);
-            window = platform.CreateWindow(
-                new Window
-                {
-                    Title = "Cerneala TileMap2D WindowsDX profile",
-                    Width = width,
-                    Height = height
-                },
-                new CallbackSink());
-            window.Show();
-            platform.PumpEvents();
-            Session = window.GraphicsSession as WindowsDxWindowGraphicsSession ??
-                throw new InvalidOperationException("The profile window did not create a WindowsDX session.");
-        }
-
-        internal WindowsDxWindowGraphicsSession Session { get; }
-
-        internal void PumpEvents() => platform.PumpEvents();
-
-        public void Dispose()
-        {
-            window.Dispose();
-            platform.Dispose();
-        }
     }
 
     private sealed class SdlGpuFixture : IDisposable
@@ -548,7 +450,6 @@ internal sealed record TileMapStage4BackendReport(
     int SurfaceHeight,
     string TerrainAtlas,
     string StructuresAtlas,
-    TileMapStage4BackendProfile WindowsDx,
     TileMapStage4BackendProfile SdlGpu);
 
 internal sealed record TileMapStage4BackendProfile(
@@ -564,21 +465,11 @@ internal sealed record TileMapStage4BackendScenario(
     double CommandRenderingP95Microseconds,
     double ManagedAllocatedBytesPerFrame,
     TileMapStage4Counters CoreCounters,
-    TileMapStage4WindowsDxTelemetry? WindowsDx,
-    TileMapStage4SdlGpuTelemetry? SdlGpu);
-
-internal sealed record TileMapStage4WindowsDxTelemetry(
-    int RasterizedFrameCount,
-    int DamagedFrameCount,
-    double AverageDamagePixels,
-    double AverageReplayedCommands,
-    string LastRetainedMissReason);
+    TileMapStage4SdlGpuTelemetry SdlGpu);
 
 internal sealed record TileMapStage4SdlGpuTelemetry(
     double AverageDrawCalls,
     double AverageSubmissions,
     double AverageMergedSubmissions,
     double AverageVertexBytes,
-    double AverageIndexBytes,
-    bool RerendersFullOffscreenSurfaceOnFrameVersionChange,
-    bool ExposesDamageRectangle);
+    double AverageIndexBytes);

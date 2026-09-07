@@ -24,7 +24,7 @@ var descriptor = new LinearGradientDrawBrushDescriptor(
 ```
 
 ## Remarks
-The MonoGame backend turns this descriptor into a cached device texture and applies the normal clip, transform, opacity, and coordinate-scale pipeline.
+The SDL_GPU backend turns this descriptor into a cached device texture and applies the normal clip, transform, opacity, and coordinate-scale pipeline.
 
 ## Properties
 | Name | Description |

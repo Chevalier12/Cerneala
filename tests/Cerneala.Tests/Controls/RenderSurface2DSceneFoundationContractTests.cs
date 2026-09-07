@@ -1,7 +1,9 @@
 using System.Numerics;
 using System.Reflection;
 using Cerneala.Drawing;
+using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Drawing.Prism.Graph;
+using Cerneala.Drawing.Prism.Styles;
 using Cerneala.Tests.Drawing.Prism;
 using Cerneala.Tests.UI.Motion.Core;
 using Cerneala.UI.Aspect;
@@ -11,6 +13,7 @@ using Cerneala.UI.Data;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Markup;
 using Cerneala.UI.Motion;
+using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
 using Cerneala.UI.Rendering;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
@@ -21,6 +24,66 @@ using Scene2D = global::Cerneala.UI.Controls.Scene2D;
 
 public sealed class RenderSurface2DSceneFoundationContractTests
 {
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(2f)]
+    public void ViewBoxAndGroupTransformsDoNotMagnifySpriteOrGroupStyleSizes(float groupScale)
+    {
+        Sprite2D sprite = new()
+        {
+            Source = new TestImage("styled sprite"),
+            Destination = new DrawRect(1, 1, 2, 2)
+        };
+        Scene2D group = new() { Scale = groupScale };
+        group.Children.Add(sprite);
+        Scene2D scene = new();
+        scene.Children.Add(group);
+        RenderSurface2D surface = new()
+        {
+            Scene = scene,
+            ViewBox = new DrawRect(0, 0, 10, 20),
+            Stretch = DrawBrushStretch.Uniform
+        };
+        UIRoot root = new();
+        using IDisposable groupPrism = AttachStyles(group);
+        using IDisposable spritePrism = AttachStyles(sprite);
+        ElementLifecycle.AttachSubtree(root, surface);
+        try
+        {
+            PrismGraph graph = new PrismGraphBuilder().Build(
+                new PrismFrameAnalyzer().Analyze(
+                    Record(surface, new DrawRect(0, 0, 563, 755))));
+            PrismGraph optimized = new PrismGraphOptimizer().Optimize(graph).OptimizedGraph;
+            Assert.Equal(2, optimized.Scopes.Length);
+            PrismGraphNode[] styles = optimized.Nodes.Where(
+                node => node.Kind == PrismGraphNodeKind.Style).ToArray();
+            Assert.Equal(4, styles.Length);
+            foreach (PrismGraphNode node in styles)
+            {
+                PrismGraphScope scope = optimized.Scopes.Single(
+                    candidate => candidate.AnalysisScopeIndex == node.AnalysisScopeIndex);
+                Assert.Equal(37.75f * groupScale, scope.EffectiveTransform.M11);
+                PrismStylePlan plan = PrismStylePlanner.Create(node, scope);
+                Assert.Equal(5f * scope.PixelScale,
+                    PrismStylePlanner.ResolveSamplingGeometry(plan, scope).Size);
+            }
+        }
+        finally
+        {
+            ElementLifecycle.DetachSubtree(root, surface);
+        }
+
+        static IDisposable AttachStyles(UIElement owner) => GeneratedMarkup.AttachPrism(
+            owner,
+            () => new PrismInstance(PrismTestData.Composition(
+                "Scene style units",
+                new PrismLayerDefinition(new PrismNodeId(1), "Content", styles:
+                [
+                    new PrismStyleDefinition(PrismStyleId.OuterGlow),
+                    new PrismStyleDefinition(PrismStyleId.BevelEmboss)
+                ]))));
+    }
+
     [Fact]
     public void SceneRecordsChildrenInCollectionOrder()
     {

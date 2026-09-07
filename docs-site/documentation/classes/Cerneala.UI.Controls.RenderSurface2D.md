@@ -145,6 +145,8 @@ if (surface.TryRootToScene(new Vector2(pointerX, pointerY), out Vector2 scenePoi
 
 Drawing runs inside the Cerneala frame loop. Cerneala owns the render target, presentation, batch lifetime, and graphics-device state. Application code receives only `RenderSurface2DFrame`, whose operations are limited to 2D primitives and sprites.
 
+The SDL_GPU backend selects multisampling for the surface independently of the hosting window, including single-sample design-preview windows. It requests eight samples and falls back to four, two, or one according to device support for the surface format. The resolved surface is then composited into the window; applications do not manage its multisample target.
+
 `Continuous` redraw mode evaluates the drawing callbacks every Cerneala frame. The backend records the resulting mapped 2D command stream and retains both that stream and the rendered surface. When the stream is visually identical to the previous frame, GPU rasterization is skipped. When commands change, only the affected surface region is cleared and recomposed from the current commands that intersect it, in drawing order. Complex transformed sprites can conservatively invalidate the whole surface.
 
 `OnDemand` redraw mode reuses the last rendered surface without evaluating the callbacks until layout, a relevant property, or `InvalidateFrame()` marks it dirty. Prism images used by the most recently rendered frame are tracked automatically: changing an operation or the live `PrismPipeline` marks the surface dirty without an application-level invalidation call. State used only to calculate manual primitives has no drawable dependency to track and still requires `InvalidateFrame()`.
@@ -160,6 +162,8 @@ Scene input remains UI input. `HitTestService` first tests retained visual child
 Within the scene, picking uses collider geometry when an entity declares direct colliders and otherwise uses exact known visual bounds. The effective scene drawing order is tested in reverse. Visibility, `IsHitTestVisible`, UI `IsEnabled`, transforms, ViewBox mapping, and the surface clip participate; opacity and Prism do not change the hit geometry. Batch-only tile cells are not input elements, while promoted `TileInstance2D` nodes are.
 
 `Scene2D` groups, layers, and `Sprite2D` nodes can own Aspect, Motion, and inline Prism markup. Nodes produced by `SceneItems2D` receive those capabilities from their `@templates` declaration; the materializer does not add a second effect layer. A sprite Prism scope captures only that sprite's image command, while a group scope captures its descendants. Bounds follow the same scene transform used by drawing, including the scene's `ViewBox` mapping. Prism effects change presentation only; they do not change scene ordering, destination coordinates, or layout.
+
+Layer-style spatial parameters, including `OuterGlow.Size` and `BevelEmboss.Size`, keep their catalog DIP units. Scene transforms and `ViewBox` scaling map the captured geometry; they do not multiply those style distances. DPI scaling still applies: at 125% DPI, `OuterGlow.Size = 4` produces a sampling size of 5 pixels regardless of the number of pixels occupied by a scene unit.
 
 When `ViewBox` is non-null, it defines the scene's logical coordinate rectangle. `Stretch` maps that rectangle into the surface bounds and the scene is clipped to those bounds. The transform applies only to `Scene`; imperative `OnDraw` and `Draw` commands continue to use local surface pixels. A view box must have positive width and height.
 
@@ -224,7 +228,7 @@ Detach removes active registrations and preserves playback positions; reattach r
 ## Applies To
 Project: `Cerneala`
 
-Backends: SDL_GPU and MonoGame/WindowsDX retained rendering.
+Backend: SDL_GPU retained rendering.
 
 ## See Also
 - `ContentControl`

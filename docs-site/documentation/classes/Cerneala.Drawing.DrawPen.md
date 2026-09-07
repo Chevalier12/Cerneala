@@ -31,11 +31,11 @@ drawing.DrawPath(path, pen);
 
 ## Remarks
 
-`DrawPen` is retained as part of a stroke command, so changing the brush, thickness, or style changes command equality and the stroke-mesh cache key. `Thickness` is measured in logical drawing units and is mapped to physical pixels by the active surface scale.
+`DrawPen` is retained as part of a stroke command, so changing the brush, thickness, or style changes command equality. `Thickness` is measured in logical drawing units and is mapped to physical pixels by the active surface scale.
 
 The constructor rejects a null brush and a thickness that is zero, negative, non-finite, or outside the supported pixel-size range. Omitting `style` uses `DrawStrokeStyle.Default`.
 
-The MonoGame native-stroke backend supports solid, linear-gradient, and radial-gradient brushes.
+The SDL_GPU native-stroke backend supports solid, linear-gradient, and radial-gradient brushes.
 
 ## Constructors
 

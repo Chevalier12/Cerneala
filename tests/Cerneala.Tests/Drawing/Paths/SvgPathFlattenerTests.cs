@@ -1,8 +1,5 @@
 using Cerneala.Drawing;
-using Cerneala.Drawing.MonoGame;
 using Cerneala.Drawing.Paths;
-using Microsoft.Xna.Framework;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace Cerneala.Tests.Drawing.Paths;
 
@@ -40,16 +37,16 @@ public sealed class SvgPathFlattenerTests
     }
 
     [Fact]
-    public void TessellatesConcaveSvgPathIntoMonoGameTriangles()
+    public void TessellatesConcaveSvgPathIntoTriangles()
     {
-        MonoGamePathMesh mesh = MonoGamePathMeshBuilder.Build(
-            "M0 0L10 0L10 10L5 5L0 10Z",
+        DrawTriangleMesh mesh = DrawPathMeshBuilder.Build(
+            DrawPathParser.ParseSvg("M0 0L10 0L10 10L5 5L0 10Z"),
             new DrawRect(0, 0, 10, 10),
             100,
             100,
             0,
             0,
-            XnaColor.White);
+            DrawFillRule.NonZero);
 
         Assert.False(mesh.IsEmpty);
         Assert.Equal(0, mesh.Indices.Length % 3);

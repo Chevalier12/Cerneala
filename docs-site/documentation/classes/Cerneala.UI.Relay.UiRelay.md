@@ -102,7 +102,7 @@ static Task AddItemAsync<T>(
 
 ## Remarks
 
-`UiRelay` captures its owner thread when `UIRoot` constructs it and is exposed through `UIRoot.Relay`, `UiHost.Relay`, and `MonoGameUiHost.Relay`. The class does not create a thread, block the caller, or run a nested message loop. It does not provide a blocking `Invoke`, priorities, delayed dispatch, or a general-purpose task scheduler.
+`UiRelay` captures its owner thread when `UIRoot` constructs it and is exposed through `UIRoot.Relay` and `UiHost.Relay`. The class does not create a thread, block the caller, or run a nested message loop. It does not provide a blocking `Invoke`, priorities, delayed dispatch, or a general-purpose task scheduler.
 
 `UIRoot.ProcessFrame` and each host update drain one queue snapshot on the owner thread before retained scheduler and input work. The root must keep being pumped for queued callbacks and captured continuations to run. Relay invalidations can therefore participate in the same update, while callbacks posted during the drain or input wait for a later update.
 

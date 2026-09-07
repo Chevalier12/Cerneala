@@ -40,6 +40,8 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
     private readonly PrismExecutionDiagnostics diagnostics = new(detailedDiagnosticsEnabled: true);
     private readonly SdlGpuPrismUniforms uniforms = new();
     private readonly Dictionary<int, SdlGpuPrismSurfaceLease> surfaces = [];
+    private readonly Dictionary<int, SdlGpuPrismSurfaceLease> retainedHits = [];
+    private bool[] requiredNodes = [];
     private readonly List<SdlGpuPrismSurfaceLease> frameLeases = [];
     private readonly HashSet<SdlGpuPrismSurfaceLease> promotedLeases = [];
     private readonly HashSet<PrismGraphNodeId> mipmappedNodes = [];
@@ -48,8 +50,8 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
     private readonly HashSet<PrismCacheOwnerToken> currentOwners = [];
     private readonly List<int> expiredSurfaceIndices = [];
     private readonly Dictionary<int, SdlGpuPrismPresentationSurface> childPresentationSurfaces = [];
-    private readonly List<SdlGpuPrismSurfaceLease> presentationLeases = [];
     private readonly nint[] textures = new nint[15];
+    private SdlGpuDrawingBackend.CommandRangeState? hostCommandRangeState;
     private int executionOriginPixelX;
     private int executionOriginPixelY;
     private int executionPixelWidth;
@@ -82,6 +84,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         ObjectDisposedException.ThrowIf(disposed, this);
         ArgumentNullException.ThrowIfNull(hostTarget);
         frameContext.EnsureCurrent(commands);
+        ProcessInvalidations(frameContext.PrismAnalysis, frameContext.PrismCacheInvalidations);
         PrismGraph sourceGraph = frameContext.BackdropLease is null
             ? graphBuilder.Build(frameContext.PrismAnalysis)
             : graphBuilder.Build(
@@ -92,10 +95,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         PrismGraph graph = plan.OptimizedGraph;
         ResolveExecutionExtent(plan, graph, hostTarget);
         ResolveMipmappedNodes(graph);
-        ReconcileRetainedEntries(
-            plan,
-            graph,
-            frameContext.PrismCacheInvalidations);
+        ReconcileRetainedEntries(plan, graph);
         long started = Stopwatch.GetTimestamp();
         long createdBefore = deviceResources.CreatedSurfaceCount;
         long reusedBefore = deviceResources.ReusedSurfaceCount;
@@ -104,29 +104,37 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             plan,
             checked(plan.ExecutionOrder.Length + graph.Scopes.Length));
 
-        SdlGpuDrawingBackend.CommandRangeState hostState =
-            drawingBackend.CreateCommandRangeState(hostTarget);
-        int hostCommandIndex = RenderHostPrelude(
-            commands,
-            graph,
-            frameContext.StateAnalysis,
-            hostTarget,
-            hostState);
+        if (hostCommandRangeState is null)
+        {
+            hostCommandRangeState = drawingBackend.CreateCommandRangeState(hostTarget);
+        }
+        else
+        {
+            hostCommandRangeState.Reset(hostTarget, drawingBackend.CoordinateScale);
+        }
+        SdlGpuDrawingBackend.CommandRangeState hostState = hostCommandRangeState;
+        int hostCommandIndex = 0;
         try
         {
+            AcquireRequiredRetainedHits(plan);
+            hostCommandIndex = RenderHostPrelude(
+                commands,
+                graph,
+                frameContext.StateAnalysis,
+                hostTarget,
+                hostState);
             for (int step = 0; step < plan.ExecutionOrder.Length; step++)
             {
                 ReleaseExpired(plan, graph, step);
+                if (!requiredNodes[step])
+                {
+                    continue;
+                }
                 PrismGraphNode node = graph.GetNode(plan.ExecutionOrder[step]);
                 PrismRetainedCacheKey? cacheKey = CreateCacheKey(plan, node.Id);
-                if (cacheKey is PrismRetainedCacheKey retainedKey &&
-                    deviceResources.TryAcquireRetained(
-                        retainedKey,
-                        session.WindowIdentity,
-                        out SdlGpuPrismSurfaceLease retainedLease))
+                if (retainedHits.Remove(step, out SdlGpuPrismSurfaceLease retainedLease))
                 {
                     surfaces.Add(step, retainedLease);
-                    frameLeases.Add(retainedLease);
                 }
                 else
                 {
@@ -139,6 +147,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                         mipmapped);
                     surfaces.Add(step, lease);
                     frameLeases.Add(lease);
+                    ObserveTransientSurfaces();
                     RenderNode(
                         commands,
                         frameContext.StateAnalysis,
@@ -170,7 +179,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                     hostTarget,
                     hostState,
                     ref hostCommandIndex);
-                diagnostics.ObserveLiveSurfaces(surfaces.Count);
+                ObserveTransientSurfaces();
             }
 
             drawingBackend.RenderCommandRange(
@@ -209,6 +218,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                 lease.Dispose();
             }
             frameLeases.Clear();
+            retainedHits.Clear();
             promotedLeases.Clear();
             surfaces.Clear();
             styleDistanceFields.Clear();
@@ -235,11 +245,63 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             lease.Dispose();
         }
         frameLeases.Clear();
+        retainedHits.Clear();
         surfaces.Clear();
         styleDistanceFields.Clear();
         mipmappedNodes.Clear();
         currentRetainedKeys.Clear();
         currentOwners.Clear();
+        hostCommandRangeState = null;
+    }
+
+    private void ObserveTransientSurfaces()
+    {
+        int transientCount = 0;
+        foreach (SdlGpuPrismSurfaceLease lease in frameLeases)
+        {
+            if (!lease.IsRetained)
+            {
+                transientCount++;
+            }
+        }
+        // Match the shared execution diagnostic's transient-pool contract.
+        // Retained pins do not become newly live transient surfaces on a hit.
+        diagnostics.ObserveLiveSurfaces(transientCount);
+    }
+
+    private void AcquireRequiredRetainedHits(PrismGraphExecutionPlan plan)
+    {
+        int count = plan.ExecutionOrder.Length;
+        if (requiredNodes.Length < count)
+        {
+            Array.Resize(ref requiredNodes, count);
+        }
+        Array.Clear(requiredNodes, 0, count);
+        foreach (int output in plan.RootOutputExecutionIndices)
+        {
+            requiredNodes[output] = true;
+        }
+
+        // The shared plan includes both explicit inputs and nested capture outputs.
+        // A pinned cached result terminates traversal of precisely its covered inputs.
+        for (int step = count - 1; step >= 0; step--)
+        {
+            if (!requiredNodes[step])
+            {
+                continue;
+            }
+            if (CreateCacheKey(plan, plan.ExecutionOrder[step]) is PrismRetainedCacheKey key &&
+                deviceResources.TryAcquireRetained(key, session.WindowIdentity, out SdlGpuPrismSurfaceLease lease))
+            {
+                retainedHits.Add(step, lease);
+                frameLeases.Add(lease);
+                continue;
+            }
+            foreach (int input in plan.CacheInputExecutionIndices[step])
+            {
+                requiredNodes[input] = true;
+            }
+        }
     }
 
     private int RenderHostPrelude(
@@ -284,7 +346,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                 RenderControlCapture(commands, stateAnalysis, plan, graph, node, target);
                 return;
             case PrismGraphNodeKind.BackdropInput:
-                RenderBackdropInput(node, target, backdropLease);
+                RenderBackdropInput(graph, node, target, backdropLease);
                 return;
             case PrismGraphNodeKind.Filter:
                 RenderFilter(plan, graph, node, target);
@@ -334,7 +396,6 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
     {
         PrismGraphScope scope = FindScope(graph, node.AnalysisScopeIndex);
         childPresentationSurfaces.Clear();
-        presentationLeases.Clear();
         try
         {
             foreach (PrismGraphScope child in graph.Scopes)
@@ -343,23 +404,21 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                     child.Output is PrismGraphNodeId output)
                 {
                     int index = plan.GetExecutionIndex(output);
-                    if (surfaces.TryGetValue(index, out SdlGpuPrismSurfaceLease? childLease))
+                    if (surfaces.TryGetValue(index, out SdlGpuPrismSurfaceLease childLease))
                     {
                         PrismGraphNode childOutput = graph.GetNode(output);
-                        SdlGpuPrismSurfaceLease presentationLease =
-                            ConvertForPresentation(childLease.Target, child, childOutput);
-                        presentationLeases.Add(presentationLease);
                         childPresentationSurfaces.Add(
                             child.BeginCommandIndex,
                             new SdlGpuPrismPresentationSurface(
-                                presentationLease.Target,
+                                childLease.Target,
                                 ResolvePresentationClip(
                                     plan,
                                     child,
                                     childOutput,
-                                    presentationLease.Target,
+                                    childLease.Target,
                                     executionOriginPixelX,
-                                    executionOriginPixelY)));
+                                    executionOriginPixelY),
+                                child.CompositionSettings.WorkingColorProfile));
                         diagnostics.RecordPresentation(
                             PrismExecutionPassKind.NestedPresent,
                             childOutput,
@@ -383,16 +442,12 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         }
         finally
         {
-            foreach (SdlGpuPrismSurfaceLease lease in presentationLeases)
-            {
-                lease.Dispose();
-            }
-            presentationLeases.Clear();
             childPresentationSurfaces.Clear();
         }
     }
 
     private void RenderBackdropInput(
+        PrismGraph graph,
         PrismGraphNode node,
         SdlGpuRenderTarget target,
         IBackdropFrameLease? backdropLease)
@@ -413,12 +468,23 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         {
             nint texture = lease.Texture;
             BackdropFrameMetadata metadata = lease.Metadata;
-            PrepareBaseUniforms(texture, texture, 0, 1);
-            uniforms[1] = new Vector4(
-                target.PixelWidth / (float)Math.Max(metadata.PixelWidth, 1),
-                target.PixelHeight / (float)Math.Max(metadata.PixelHeight, 1),
-                executionOriginPixelX / (float)Math.Max(metadata.PixelWidth, 1),
-                executionOriginPixelY / (float)Math.Max(metadata.PixelHeight, 1));
+            Matrix3x2 transform = metadata.CoordinateTransform;
+            float pixelScale = FindScope(graph, node.AnalysisScopeIndex).PixelScale;
+            // Map the provider raster exactly once into the bounded execution space.
+            // Later graph crops must address this snapshot, not the provider's dimensions.
+            PrepareBaseUniforms(texture, texture, 1, 1);
+            uniforms[0] = new Vector4(1, 1f / metadata.PixelWidth, 1f / metadata.PixelHeight, executionOriginPixelX);
+            uniforms[6] = new Vector4(1, (float)metadata.AlphaMode, 0, 0);
+            uniforms[7] = new Vector4(
+                transform.M11 / (pixelScale * metadata.PixelWidth),
+                transform.M21 / (pixelScale * metadata.PixelWidth),
+                ((executionOriginPixelX * transform.M11 + executionOriginPixelY * transform.M21) / pixelScale +
+                    transform.M31) / metadata.PixelWidth, 0);
+            uniforms[8] = new Vector4(
+                transform.M12 / (pixelScale * metadata.PixelHeight),
+                transform.M22 / (pixelScale * metadata.PixelHeight),
+                ((executionOriginPixelX * transform.M12 + executionOriginPixelY * transform.M22) / pixelScale +
+                    transform.M32) / metadata.PixelHeight, 0);
             RenderPrepared(target, texture, texture);
         }
         catch (Exception exception) when (exception is ObjectDisposedException or InvalidOperationException)
@@ -447,7 +513,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
 
         PrismGraphScope scope = FindScope(graph, node.AnalysisScopeIndex);
         BackdropFrameMetadata? metadata = FindBackdropMetadata(plan, graph, node.Id);
-        if (metadata is not BackdropFrameMetadata backdropMetadata)
+        if (metadata is null)
         {
             Clear(target, Color.Transparent);
             diagnostics.Record(
@@ -473,34 +539,21 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             return;
         }
 
-        Matrix3x2 transform = backdropMetadata.CoordinateTransform;
-        float pixelScale = scope.PixelScale;
-        nint source = GetSurface(sourceIndex).SampleTexture;
+        SdlGpuRenderTarget snapshot = GetSurface(sourceIndex);
+        nint source = snapshot.SampleTexture;
         PrepareBaseUniforms(source, source, 1, 1);
         uniforms[0] = new Vector4(
             1,
-            1f / backdropMetadata.PixelWidth,
-            1f / backdropMetadata.PixelHeight,
+            1f / snapshot.PixelWidth,
+            1f / snapshot.PixelHeight,
             executionOriginPixelX);
         uniforms[6] = new Vector4(
             1,
-            (float)backdropMetadata.AlphaMode,
+            (float)BackdropAlphaMode.Premultiplied,
             0,
             0);
-        uniforms[7] = new Vector4(
-            transform.M11 / (pixelScale * backdropMetadata.PixelWidth),
-            transform.M21 / (pixelScale * backdropMetadata.PixelWidth),
-            ((executionOriginPixelX * transform.M11 +
-                executionOriginPixelY * transform.M21) / pixelScale +
-                transform.M31) / backdropMetadata.PixelWidth,
-            0);
-        uniforms[8] = new Vector4(
-            transform.M12 / (pixelScale * backdropMetadata.PixelHeight),
-            transform.M22 / (pixelScale * backdropMetadata.PixelHeight),
-            ((executionOriginPixelX * transform.M12 +
-                executionOriginPixelY * transform.M22) / pixelScale +
-                transform.M32) / backdropMetadata.PixelHeight,
-            0);
+        uniforms[7] = new Vector4(1f / snapshot.PixelWidth, 0, 0, 0);
+        uniforms[8] = new Vector4(0, 1f / snapshot.PixelHeight, 0, 0);
         RenderPrepared(target, source, source, destination);
     }
 
@@ -1192,6 +1245,27 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                 RenderKernel(target, source, source, 0, 1, node, null);
                 return;
             }
+            if (filter == PrismFilterId.ColorLookup && available &&
+                scope.Resources.TryGetImage(adjustment.Resource, out IDrawImage lookup))
+            {
+                int level = (int)Math.Round(Math.Cbrt(lookup.Width));
+                if (lookup.Width != lookup.Height || level < 2 ||
+                    (long)level * level * level != lookup.Width)
+                {
+                    diagnostics.Record(node.Id, node.AnalysisScopeIndex,
+                        PrismFallbackReason.UnsupportedCapability,
+                        "ColorLookup requires a square Hald LUT whose side is level cubed (level >= 2).");
+                    RenderKernel(target, source, source, 0, 1, node, null);
+                    return;
+                }
+                Vector4 header = uniforms[23];
+                header.W = level * level;
+                uniforms[23] = header;
+                Vector4 control = uniforms[34];
+                control.X = lookup.Width;
+                control.Y = lookup.Height;
+                uniforms[34] = control;
+            }
         }
         else
         {
@@ -1436,6 +1510,12 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
 
     private nint GetSamplerForSlot(int slot) => slot switch
     {
+        0 when uniforms[34].Z == 8 &&
+            uniforms[23].X == (int)PrismResamplingOperation.Transform =>
+            session.DrawingResources.GetSampler(
+                DrawSamplingMode.Linear,
+                DrawAddressMode.Clamp,
+                anisotropic: true),
         4 => session.DrawingResources.GetSampler(
             DrawSamplingMode.Linear,
             DrawAddressMode.Wrap),
@@ -1471,28 +1551,24 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             previousBeginCommandIndex,
             out PrismGraphScope scope))
         {
-            using SdlGpuPrismSurfaceLease presentationLease =
-                ConvertForPresentation(surfaces[step].Target, scope, node);
+            SdlGpuRenderTarget source = surfaces[step].Target;
             SdlGpuRenderTarget presentationTarget = hostState.Target;
             SdlRect? presentationClip = ResolvePresentationClip(
                 plan,
                 scope,
                 node,
                 presentationTarget);
-            session.BeginRenderTarget(
-                presentationTarget,
-                Color.Transparent,
-                SdlGpuLoadOp.Load);
             drawingBackend.DrawPrismTexture(
-                presentationLease.Target.SampleTexture,
+                source.SampleTexture,
                 presentationTarget,
                 presentationClip,
                 new DrawRect(
                     executionOriginPixelX / drawingBackend.CoordinateScale,
                     executionOriginPixelY / drawingBackend.CoordinateScale,
-                    presentationLease.Target.PixelWidth / drawingBackend.CoordinateScale,
-                    presentationLease.Target.PixelHeight / drawingBackend.CoordinateScale),
-                presentationState: hostState);
+                    source.PixelWidth / drawingBackend.CoordinateScale,
+                    source.PixelHeight / drawingBackend.CoordinateScale),
+                presentationState: hostState,
+                workingColorProfile: scope.CompositionSettings.WorkingColorProfile);
             diagnostics.RecordPresentation(
                 PrismExecutionPassKind.RootPresent,
                 node,
@@ -1543,37 +1619,6 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         return found;
     }
 
-    private SdlGpuPrismSurfaceLease ConvertForPresentation(
-        SdlGpuRenderTarget source,
-        PrismGraphScope scope,
-        PrismGraphNode node)
-    {
-        SdlGpuPrismSurfaceLease lease = deviceResources.RentSurface(
-            session.WindowIdentity,
-            source.PixelWidth,
-            source.PixelHeight,
-            source.ColorFormat,
-            mipmapped: false);
-        try
-        {
-            RenderKernel(
-                lease.Target,
-                source.SampleTexture,
-                source.SampleTexture,
-                SdlGpuPrismKernelSelector.ForPresentation(
-                    scope.CompositionSettings.WorkingColorProfile),
-                1,
-                node,
-                null);
-            return lease;
-        }
-        catch
-        {
-            lease.Dispose();
-            throw;
-        }
-    }
-
     private PrismRetainedCacheKey? CreateCacheKey(
         PrismGraphExecutionPlan plan,
         PrismGraphNodeId nodeId)
@@ -1591,15 +1636,15 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             : null;
     }
 
-    private void ReconcileRetainedEntries(
-        PrismGraphExecutionPlan plan,
-        PrismGraph graph,
+    internal void ProcessInvalidations(
+        PrismFrameAnalysis analysis,
         PrismCacheInvalidationQueue? queue)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         currentOwners.Clear();
-        foreach (PrismGraphScope scope in graph.Scopes)
+        foreach (PrismAnalyzedScope scope in analysis.Scopes)
         {
-            currentOwners.Add(scope.CacheOwnerToken);
+            currentOwners.Add(scope.Scope.CacheOwnerToken);
         }
 
         while (queue?.TryDequeue(out PrismCacheInvalidation invalidation) == true)
@@ -1609,6 +1654,17 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             {
                 deviceResources.Invalidate(invalidation);
             }
+        }
+    }
+
+    private void ReconcileRetainedEntries(
+        PrismGraphExecutionPlan plan,
+        PrismGraph graph)
+    {
+        currentOwners.Clear();
+        foreach (PrismGraphScope scope in graph.Scopes)
+        {
+            currentOwners.Add(scope.CacheOwnerToken);
         }
 
         currentRetainedKeys.Clear();
@@ -1735,8 +1791,33 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         bool required,
         nint source,
         out nint texture,
-        out bool available) =>
-        TryResolveImage(scope, node, id, required, source, out texture, out available);
+        out bool available)
+    {
+        if (node.Filter != PrismFilterId.Curves)
+        {
+            return TryResolveImage(scope, node, id, required, source, out texture, out available);
+        }
+        if (id.Value > 0 && scope.Resources.TryGetCurves(id,
+            out PrismCurvesResource resource, out long identity, out long version))
+        {
+            texture = deviceResources.GetCurvesTexture(session, id, resource, identity, version);
+            available = true;
+            Vector4 control = uniforms[34];
+            control.X = PrismCurveLut.SampleCount;
+            control.Y = 1;
+            uniforms[34] = control;
+            return true;
+        }
+        texture = source;
+        available = false;
+        if (required)
+        {
+            diagnostics.Record(node.Id, node.AnalysisScopeIndex,
+                PrismFallbackReason.MissingResource,
+                $"Prism curves resource '{id}' is not available.");
+        }
+        return !required;
+    }
 
     private nint FindOptionalInput(
         PrismGraphExecutionPlan plan,
@@ -1750,7 +1831,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
     }
 
     private SdlGpuRenderTarget GetSurface(int executionIndex) =>
-        surfaces.TryGetValue(executionIndex, out SdlGpuPrismSurfaceLease? lease)
+        surfaces.TryGetValue(executionIndex, out SdlGpuPrismSurfaceLease lease)
             ? lease.Target
             : throw new InvalidOperationException(
                 $"SDL_GPU Prism execution surface {executionIndex} is no longer live.");

@@ -6,7 +6,6 @@ public sealed class InputControlBoundaryTests
     public void UiInputDoesNotReferenceControls()
     {
         string inputRoot = FindRepositoryPath("UI", "Input");
-        string monoGameInputRoot = Path.Combine(inputRoot, "MonoGame");
         string[] forbiddenTerms =
         [
             "Cerneala.UI.Controls",
@@ -16,11 +15,6 @@ public sealed class InputControlBoundaryTests
 
         foreach (string file in Directory.EnumerateFiles(inputRoot, "*.cs", SearchOption.AllDirectories))
         {
-            if (file.StartsWith(monoGameInputRoot, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
             string text = File.ReadAllText(file);
             foreach (string forbiddenTerm in forbiddenTerms)
             {

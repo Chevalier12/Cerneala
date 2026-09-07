@@ -3,20 +3,21 @@ namespace Cerneala.Tests.Architecture;
 public sealed class SdlDependencyBoundaryTests
 {
     [Fact]
-    public void ExistingProjectsRemainFreeOfSdlDependencies()
+    public void CoreAndBuildTimeAuthoringRemainFreeOfSdlDependencies()
     {
         string root = FindRepositoryRoot();
         string[] projects =
         [
             "Cerneala.csproj",
-            Path.Combine("Cerneala.Platforms.Win32", "Cerneala.Platforms.Win32.csproj"),
-            Path.Combine("Cerneala.Backends.MonoGame", "Cerneala.Backends.MonoGame.csproj")
+            Path.Combine("Cerneala.Language", "Cerneala.Language.csproj"),
+            Path.Combine("Cerneala.SourceGen", "Cerneala.SourceGen.csproj")
         ];
 
         foreach (string project in projects)
         {
             string text = File.ReadAllText(Path.Combine(root, project));
             Assert.DoesNotContain("<PackageReference Include=\"SDL3-CS", text, StringComparison.Ordinal);
+            Assert.DoesNotContain("<PackageReference Include=\"Graphix.Native", text, StringComparison.Ordinal);
         }
     }
 
@@ -35,9 +36,10 @@ public sealed class SdlDependencyBoundaryTests
         string coreProject = File.ReadAllText(Path.Combine(root, "Cerneala.csproj"));
 
         Assert.Contains("SDL3-CS\" Version=\"3.4.14.1", platformProject, StringComparison.Ordinal);
-        Assert.Contains("SDL3-CS.Windows\" Version=\"3.4.14.1", platformProject, StringComparison.Ordinal);
-        Assert.Contains("SDL3-CS.Linux\" Version=\"3.4.14.1", platformProject, StringComparison.Ordinal);
-        Assert.Contains("SDL3-CS.MacOS\" Version=\"3.4.14.1", platformProject, StringComparison.Ordinal);
+        Assert.Contains("Graphix.Native\" Version=\"3.4.16-graphix.2", platformProject, StringComparison.Ordinal);
+        Assert.DoesNotContain("SDL3-CS.Windows", platformProject, StringComparison.Ordinal);
+        Assert.DoesNotContain("SDL3-CS.Linux", platformProject, StringComparison.Ordinal);
+        Assert.DoesNotContain("SDL3-CS.MacOS", platformProject, StringComparison.Ordinal);
         Assert.Contains("Cerneala.Platforms.Sdl3.csproj", backendProject, StringComparison.Ordinal);
         Assert.Contains("<Compile Remove=\"Cerneala.Platforms.Sdl3\\**\"", coreProject, StringComparison.Ordinal);
         Assert.Contains("<Compile Remove=\"Cerneala.Backends.SdlGpu\\**\"", coreProject, StringComparison.Ordinal);

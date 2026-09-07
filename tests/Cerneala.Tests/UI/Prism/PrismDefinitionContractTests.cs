@@ -135,26 +135,6 @@ public sealed class PrismDefinitionContractTests
         Assert.True(radial.Slot >= 0);
     }
 
-    [Fact]
-    public void FoundationSurfaceDoesNotExposeMonoGameTypes()
-    {
-        Type[] definitionTypes = typeof(PrismCompositionDefinition).Assembly
-            .GetTypes()
-            .Where(type => type.Namespace == "Cerneala.UI.Prism.Definitions")
-            .ToArray();
-
-        Type[] exposedTypes = definitionTypes
-            .SelectMany(type =>
-                type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
-                    .Select(property => property.PropertyType)
-                    .Concat(type.GetConstructors().SelectMany(constructor => constructor.GetParameters().Select(parameter => parameter.ParameterType))))
-            .ToArray();
-
-        Assert.DoesNotContain(
-            exposedTypes,
-            type => type.FullName?.StartsWith("Microsoft.Xna.Framework.Graphics.", StringComparison.Ordinal) == true);
-    }
-
     [Theory]
     [InlineData((int)PrismFallbackReason.MissingKernel, (int)PrismFallbackAction.BypassOperation)]
     [InlineData((int)PrismFallbackReason.MissingBackdrop, (int)PrismFallbackAction.OmitBackdrop)]

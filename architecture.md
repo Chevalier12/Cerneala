@@ -7,7 +7,9 @@ not a promise that every WPF-shaped type has matching WPF behavior.
 The canonical public API documentation lives under
 [`docs-site/documentation/classes/`](docs-site/documentation/classes/).
 
-![Cerneala retained realtime UI architecture](docs/assets/cerneala-architecture.png)
+The [historical architecture diagram](docs/assets/cerneala-architecture.png)
+predates the MonoGame/WindowsDX removal. Its retired backend branches are not
+current runtime options; the flow and ownership below describe the current source.
 
 ## The Short Version
 
@@ -40,7 +42,7 @@ Application / presentation
     -> layout and retained render cache
     -> DrawingContext and DrawCommandList
     -> IDrawingBackend
-    -> WindowsDX, MonoGame, or SDL3 GPU presentation
+    -> SDL3 GPU presentation
 ```
 
 The build-time language stack and the runtime UI stack are deliberately
@@ -270,7 +272,7 @@ The `Drawing` layer is backend-neutral command recording, not another UI tree.
 - text and image services prepare backend-neutral resources and descriptors.
 
 Drawing does not own layout, input, control state, Aspect, Motion, or tree
-lifecycle. Controls do not call SDL, MonoGame, Skia, HarfBuzz, `SpriteBatch`, or
+lifecycle. Controls do not call SDL, Skia, HarfBuzz, or
 native GPU APIs directly.
 
 ## Prism
@@ -288,15 +290,11 @@ parameters, shader artifacts, runtime state, tests, and documentation aligned.
 
 ## Backend Boundary
 
-The current repository contains three presentation paths:
-
-- WindowsDX;
-- MonoGame and `SpriteBatch`;
-- SDL3 GPU on native desktop platforms.
-
-SDL3 GPU is the strategic backend going forward. MonoGame remains an existing
-compatibility and transition path, but it is planned for gradual retirement.
-No removal version or date is currently committed.
+SDL3 + SDL_GPU is the sole maintained desktop composition. The MonoGame and
+WindowsDX adapters, public APIs and active consumers have been removed without
+a compatibility facade. Historical captures remain visual references, not
+available runtime backends. Migration verification and outstanding failures are
+recorded in the [removal audit](docs/audits/2026-09-05-monogame-removal.md).
 
 The SDL3 path separates native platform ownership from GPU drawing ownership:
 

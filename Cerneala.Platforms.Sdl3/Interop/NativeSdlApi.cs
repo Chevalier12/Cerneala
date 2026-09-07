@@ -246,7 +246,9 @@ internal sealed class NativeSdlApi : ISdlApi
             AddressModeV = (SDL.GPUSamplerAddressMode)createInfo.AddressMode,
             AddressModeW = SDL.GPUSamplerAddressMode.ClampToEdge,
             MinLod = createInfo.MinLod,
-            MaxLod = createInfo.MaxLod
+            MaxLod = createInfo.MaxLod,
+            EnableAnisotropy = createInfo.EnableAnisotropy,
+            MaxAnisotropy = createInfo.MaxAnisotropy
         };
         return SDL.CreateGPUSampler(device, in native);
     }
@@ -580,8 +582,24 @@ internal sealed class NativeSdlApi : ISdlApi
     public void ReleaseGpuFence(nint device, nint fence) =>
         SDL.ReleaseGPUFence(device, fence);
 
-    public nint CreateWindow(string title, int width, int height, SdlWindowOptions options) =>
-        SDL.CreateWindow(title, width, height, (SDL.WindowFlags)(ulong)options);
+    public nint CreateWindow(string title, int width, int height, SdlWindowOptions options)
+    {
+        nint window = SDL.CreateWindow(title, width, height, (SDL.WindowFlags)(ulong)options);
+        if (window != 0 && OperatingSystem.IsWindows())
+        {
+            try
+            {
+                SdlWindowsWindowFeatures.EnsureDefaultIcon(window);
+            }
+            catch
+            {
+                SDL.DestroyWindow(window);
+                throw;
+            }
+        }
+
+        return window;
+    }
 
     public void DestroyWindow(nint window) => SDL.DestroyWindow(window);
 
@@ -602,6 +620,9 @@ internal sealed class NativeSdlApi : ISdlApi
     public bool SetWindowBordered(nint window, bool bordered) => SDL.SetWindowBordered(window, bordered);
 
     public bool SetWindowResizable(nint window, bool resizable) => SDL.SetWindowResizable(window, resizable);
+
+    public bool SetWindowResizeGrip(nint window, bool enabled) =>
+        !OperatingSystem.IsWindows() || SdlWindowsWindowFeatures.SetResizeGrip(window, enabled);
 
     public bool ShowWindow(nint window) => SDL.ShowWindow(window);
 

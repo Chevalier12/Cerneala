@@ -20,4 +20,3 @@ fragment main0_out main0(main0_in in [[stage_in]], texture2d<float> DrawingTextu
     out.out_var_SV_Target0 = DrawingTexture.sample(DrawingSampler, in.in_var_TEXCOORD0) * in.in_var_TEXCOORD1;
     return out;
 }
-

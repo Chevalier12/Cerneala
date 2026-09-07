@@ -8,7 +8,9 @@ Cerneala puts traditional application UI and realtime rendering inside the same 
 
 It is currently in **Developer Preview**. The architecture is real, the repository has a large test and verification surface, and a lot of the framework already works. The public experience is still being built, contracts can change, and some areas are much more mature than others.
 
-![Cerneala retained realtime UI architecture](docs/assets/cerneala-architecture.png)
+See the [current architecture](architecture.md). The
+[historical diagram](docs/assets/cerneala-architecture.png) predates the removal
+of the MonoGame and WindowsDX backend branches.
 
 ## Why I built it
 
@@ -80,17 +82,14 @@ The repository also contains a language server, Visual Studio integration, diagn
 
 UI and application code record drawing intent through `DrawingContext` and `DrawCommandList`. `IDrawingBackend` owns the backend boundary.
 
-The repository currently contains rendering paths for:
-
-- WindowsDX
-- MonoGame and `SpriteBatch` as the existing transition path
-- SDL3 GPU on native desktop platforms
+SDL3 + SDL_GPU is the sole maintained desktop backend. The drawing and source-generator contracts remain backend-neutral.
 
 The SDL3 GPU path uses **Cerberus**, Cerneala's GPU renderer for geometry and state batching, index rebasing, GPU uploads, and indexed draws.
 
-SDL3 GPU is the strategic backend going forward. MonoGame will be discontinued
-gradually. No removal version or date is committed yet, and some checked-in
-projects still default to MonoGame today.
+The MonoGame and WindowsDX adapters have been removed, including their public
+configuration entry points. There is no compatibility facade or fallback.
+Verification results and unresolved blockers are recorded in the
+[migration audit](docs/audits/2026-09-05-monogame-removal.md).
 
 ## Control inventory
 
@@ -158,12 +157,6 @@ dotnet test ./Cerneala.slnx -c Release --no-build --no-restore
 ```
 
 On Windows, run the playground with SDL3 GPU:
-
-```powershell
-dotnet run --project ./Playground/Cerneala.Playground/Cerneala.Playground.csproj -p:CernealaDesktopBackend=SDL3
-```
-
-The project currently defaults to MonoGame when the backend property is omitted:
 
 ```powershell
 dotnet run --project ./Playground/Cerneala.Playground/Cerneala.Playground.csproj

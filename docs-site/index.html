@@ -716,7 +716,7 @@ footer{
         <button class="hero__tab" id="hero-tab-tree" type="button" role="tab" aria-selected="false" aria-controls="hero-tree" data-hero-view="tree" tabindex="-1">UI Tree</button>
         <button class="hero__tab" id="hero-tab-trace" type="button" role="tab" aria-selected="false" aria-controls="hero-trace" data-hero-view="trace" tabindex="-1">Frame Trace</button>
       </div>
-      <div class="hero__titlebar-meta" id="hero-meta">NATIVE WINDOWS · MONOGAME HOST · IDRAWINGBACKEND</div>
+      <div class="hero__titlebar-meta" id="hero-meta">SDL3 WINDOWS · RETAINED UIHOST · IDRAWINGBACKEND</div>
     </div>
 
     <div class="hero__stage">
@@ -1000,7 +1000,7 @@ footer{
         <circle class="icon-solid" cx="29" cy="15" r="1.5"/>
       </svg>
       <h3>Hosts, Backends &amp; Diagnostics</h3>
-      <p><code>UiHost</code>, MonoGame integration, and the native Windows runtime drive the same abstract command stream. Frame stats, traces, cache dumps, screenshots, and platform probes expose what happened.</p>
+      <p><code>UiHost</code> and the SDL3 desktop runtime drive the same backend-neutral command stream. Frame stats, traces, cache dumps, screenshots, and platform probes expose what happened.</p>
       <div class="feature-tile__api">UiHost · IDrawingBackend · FrameDiagnostics</div>
     </div>
   </div>
@@ -1083,7 +1083,7 @@ footer{
         <div class="pipeline__badge">BE</div>
         <div class="pipeline__copy">
           <div class="pipeline__name">Commit &amp; Backend</div>
-          <p class="pipeline__desc">The host commits root commands, then draw submits them to <code>IDrawingBackend</code>; MonoGame consumes the stream.</p>
+          <p class="pipeline__desc">The host commits root commands, then draw submits them to <code>IDrawingBackend</code>; SDL_GPU consumes the stream.</p>
         </div>
       </div>
     </div>
@@ -1303,7 +1303,7 @@ footer{
   <div class="wrap">
     <p class="eyebrow" style="justify-content:center;">Get started</p>
     <h2>Start building game UI that thinks in frames.</h2>
-    <p>Cerneala UI is under active development. Read the docs, browse the source, or drop a retained-mode panel into your next MonoGame project.</p>
+    <p>Cerneala UI is under active development. Read the docs, browse the source, or build a retained realtime UI with the SDL3 desktop backend.</p>
     <div class="hero__ctas">
       <a class="btn btn--solid" href="https://github.com/Chevalier12/Cerneala">View on GitHub</a>
       <a class="btn btn--ghost" href="documentation.html">Read the Docs</a>
@@ -1327,7 +1327,7 @@ footer{
           </svg>
           <span>Cerneala UI</span>
         </div>
-        <p class="footer__note">Cerneala takes cues from WPF's retained-mode mental model — trees, typed properties, templated controls — reworked for MonoGame's frame loop. It is not a drop-in WPF replacement, does not support XAML, and does not yet provide full native accessibility support. Production-hardening is ongoing.</p>
+        <p class="footer__note">Cerneala takes cues from WPF's retained-mode mental model — trees, typed properties, templated controls — reworked for a realtime frame loop. It is not a drop-in WPF replacement, does not support XAML, and does not yet provide full native accessibility support. Production-hardening is ongoing.</p>
       </div>
       <div class="footer__cols">
         <div class="footer__col">
@@ -1346,7 +1346,7 @@ footer{
       </div>
     </div>
     <div class="footer__bottom">
-      <span>© Cerneala UI — WPF-inspired UI for MonoGame.</span>
+      <span>© Cerneala UI — WPF-inspired retained realtime UI.</span>
       <span>Built in C# · Developer preview</span>
     </div>
   </div>
@@ -1360,7 +1360,7 @@ footer{
   var heroMeta = document.getElementById('hero-meta');
   var heroViewCopy = {
     runtime: {
-      meta: 'NATIVE WINDOWS · MONOGAME HOST · IDRAWINGBACKEND',
+      meta: 'SDL3 WINDOWS · RETAINED UIHOST · IDRAWINGBACKEND',
       status: 'relay drained · root committed · command stream ready · backend-neutral draw'
     },
     tree: {

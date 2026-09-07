@@ -5,7 +5,6 @@ on:
     paths:
       - ".gitattributes"
       - ".github/workflows/desktop-backends.yml"
-      - "Cerneala.Backends.MonoGame/**"
       - "Cerneala.Backends.SdlGpu/**"
       - "Cerneala.Platforms.Sdl3/**"
       - "Cerneala.SourceGen/**"
@@ -17,6 +16,8 @@ on:
       - "docs-site/documentation/classes/**"
       - "docs-site/documentation/manifest.json"
       - "Tools/scripts/*SdlGpuSmoke*.ps1"
+      - "Tools/scripts/Get-GraphixNativePackage.ps1"
+      - "NuGet.Config"
       - "UI/Hosting/Windowing/**"
       - "UI/Prism/**"
       - "tests/Cerneala.SdlGpuSmoke/**"
@@ -28,7 +29,6 @@ on:
     paths:
       - ".gitattributes"
       - ".github/workflows/desktop-backends.yml"
-      - "Cerneala.Backends.MonoGame/**"
       - "Cerneala.Backends.SdlGpu/**"
       - "Cerneala.Platforms.Sdl3/**"
       - "Cerneala.SourceGen/**"
@@ -40,6 +40,8 @@ on:
       - "docs-site/documentation/classes/**"
       - "docs-site/documentation/manifest.json"
       - "Tools/scripts/*SdlGpuSmoke*.ps1"
+      - "Tools/scripts/Get-GraphixNativePackage.ps1"
+      - "NuGet.Config"
       - "UI/Hosting/Windowing/**"
       - "UI/Prism/**"
       - "tests/Cerneala.SdlGpuSmoke/**"
@@ -51,6 +53,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   sdlgpu-desktop:
@@ -78,6 +81,12 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
+
+      - name: Fetch and verify temporary Graphix package
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./Tools/scripts/Get-GraphixNativePackage.ps1
 
       - name: Configure Linux virtual display and software Vulkan
         if: runner.os == 'Linux'
@@ -175,8 +184,8 @@ jobs:
             artifacts/ci/test-results/**
             artifacts/ci/smoke/**
 
-  windowsdx-regression:
-    name: WindowsDX full regression
+  full-regression:
+    name: SDL desktop full regression
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -186,6 +195,12 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
+
+      - name: Fetch and verify temporary Graphix package
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./Tools/scripts/Get-GraphixNativePackage.ps1
 
       - name: Restore
         shell: pwsh
@@ -203,28 +218,32 @@ jobs:
 
       - name: Test complete solution
         shell: pwsh
-        run: dotnet test ./Cerneala.slnx -c Release --no-build --no-restore --logger "trx;LogFileName=windowsdx-full.trx" --results-directory artifacts/ci/test-results
+        env:
+          CERNEALA_SDL_NATIVE_TESTS: 1
+        # Native input tests share one interactive desktop across test projects.
+        run: dotnet test ./Cerneala.slnx -c Release --no-build --no-restore -m:1 --logger "trx;LogFileName=desktop-full.trx" --results-directory artifacts/ci/test-results
 
-      - name: WindowsDX runtime smoke
+      - name: SDL runtime smoke
         shell: pwsh
-        run: dotnet run --project ./tests/Cerneala.WindowsDxSmoke/Cerneala.WindowsDxSmoke.csproj -c Release --no-build --no-restore
+        run: dotnet run --project ./tests/Cerneala.SdlGpuSmoke/Cerneala.SdlGpuSmoke.csproj -c Release --no-build --no-restore -- --mode multi-window --artifacts artifacts/ci/smoke/multi-window
 
-      - name: WindowsDX to SDL_GPU pixel-diff report
+      - name: SDL_GPU historical-reference pixel-diff report
         shell: pwsh
         env:
           CERNEALA_SDL_NATIVE_TESTS: 1
         run: |
           New-Item -ItemType Directory -Path artifacts/ci/pixel-diff -Force | Out-Null
-          dotnet test ./tests/Cerneala.Tests/Cerneala.Tests.csproj -c Release --no-build --no-restore --filter "FullyQualifiedName~PrismSdlGpuPixelConformanceTests" --logger "console;verbosity=normal" 2>&1 | Tee-Object -FilePath artifacts/ci/pixel-diff/prism-sdlgpu-pixel-diff.log
+          dotnet test ./tests/Cerneala.Tests/Cerneala.Tests.csproj -c Release --no-build --no-restore --filter "FullyQualifiedName~PrismSdlGpuPixelConformanceTests|FullyQualifiedName~SdlGpuDrawingConformanceTests" --logger "console;verbosity=normal" 2>&1 | Tee-Object -FilePath artifacts/ci/pixel-diff/prism-sdlgpu-pixel-diff.log
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Upload WindowsDX regression and pixel-diff reports
+      - name: Upload desktop regression and pixel-diff reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: windowsdx-regression
+          name: desktop-regression
           if-no-files-found: warn
           path: |
             artifacts/ci/test-results/**
             artifacts/ci/pixel-diff/**
+            artifacts/ci/smoke/**
             tests/Cerneala.Tests/bin/Release/**/TestResults/**

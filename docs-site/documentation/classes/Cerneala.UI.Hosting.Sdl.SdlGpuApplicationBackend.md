@@ -29,9 +29,11 @@ The executable must reference `Cerneala.Backends.SdlGpu`; its published output m
 
 Generated Cerneala startup calls `EnsureRegistered` when this type is selected through `ApplicationBackendAttribute`. The method composes `Cerneala.Platforms.Sdl3` windowing with the SDL_GPU graphics-session factory and registers the composition atomically in the shared windowing registry.
 
-Registration is idempotent for SDL_GPU. A later attempt to register WindowsDX, or to register SDL_GPU after WindowsDX, throws a deterministic conflict exception because one process may own only one windowing backend.
+Registration is idempotent for SDL_GPU. Registering a different windowing backend before or after this registration throws a deterministic conflict exception because one process may own only one windowing backend.
 
 The adapter uses SDL3 for windowing and `SDL_GPU` for rendering over D3D12, Vulkan, or Metal. It does not use `SDL_Renderer`, and no SDL binding type is exposed by the public API. Shaders are precompiled and packaged; ShaderCross is not required at application runtime.
+
+SDL3 + SDL_GPU is the sole maintained desktop backend. The removed MonoGame and WindowsDX adapters have no compatibility facade. Their application-supplied Prism renderer options are also removed: this registration method does not accept renderer budgets, host color-profile overrides, or development-diagnostics options. SDL retains its existing internal renderer configuration.
 
 ## Methods
 
@@ -46,6 +48,5 @@ The adapter uses SDL3 for windowing and `SDL_GPU` for rendering over D3D12, Vulk
 ## See also
 
 - `Cerneala.UI.Hosting.Windowing.ApplicationBackendAttribute`
-- `Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend`
 - `docs/sdl-desktop-backend.md`
 - `docs/application-markup.md`

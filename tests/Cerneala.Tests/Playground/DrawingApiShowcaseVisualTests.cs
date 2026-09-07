@@ -3,7 +3,6 @@ using Cerneala.Playground;
 using Cerneala.Drawing;
 using Cerneala.UI;
 using Cerneala.UI.Controls;
-using Cerneala.UI.Hosting.Windows;
 using Cerneala.UI.Media;
 using Cerneala.Tests.UI.Hosting;
 using SkiaSharp;

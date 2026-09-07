@@ -68,7 +68,7 @@ public sealed class PrismNeighborhoodFilterTests
             Assert.True(
                 PrismNeighborhoodPlanner.IsSupported(filter));
             Assert.Equal(
-                $"PrismKernelRegistry/{entry.Symbol}",
+                $"SdlGpuPrismKernelSelector/{entry.Symbol}",
                 entry.Coverage.Kernel);
             Assert.Equal(
                 $"PrismNeighborhoodFilterTests/{entry.Symbol}",

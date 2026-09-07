@@ -80,7 +80,7 @@ public sealed class PrismDistortionFilterTests
             Assert.True(
                 PrismResamplingPlanner.IsSupported(filter));
             Assert.Equal(
-                $"PrismKernelRegistry/{entry.Symbol}",
+                $"SdlGpuPrismKernelSelector/{entry.Symbol}",
                 entry.Coverage.Kernel);
             Assert.Equal(
                 $"PrismDistortionFilterTests/{entry.Symbol}",

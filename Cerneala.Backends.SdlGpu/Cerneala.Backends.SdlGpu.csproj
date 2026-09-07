@@ -56,6 +56,9 @@
     <EmbeddedResource Include="Prism\Shaders\PrismCatalog.frag.dxil" />
     <EmbeddedResource Include="Prism\Shaders\PrismCatalog.frag.spv" />
     <EmbeddedResource Include="Prism\Shaders\PrismCatalog.frag.msl" />
+    <EmbeddedResource Include="Prism\Shaders\PrismPresentation.frag.dxil" />
+    <EmbeddedResource Include="Prism\Shaders\PrismPresentation.frag.spv" />
+    <EmbeddedResource Include="Prism\Shaders\PrismPresentation.frag.msl" />
   </ItemGroup>
 
   <Target Name="RestoreSdlShaderCompiler"

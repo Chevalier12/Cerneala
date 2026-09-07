@@ -1,10 +1,7 @@
 using Cerneala.Drawing;
-using Cerneala.Drawing.MonoGame;
 using Cerneala.Drawing.Paths;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Media;
-using Microsoft.Xna.Framework.Graphics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace Cerneala.Tests.Drawing.Paths;
 
@@ -161,30 +158,29 @@ public sealed class DrawPathTests
         Assert.Equal(geometry.GetHashCode(), equivalentGeometry.GetHashCode());
     }
 
-    private static MonoGamePathMesh Build(DrawPath path, DrawFillRule fillRule) =>
-        MonoGamePathMeshBuilder.Build(
+    private static DrawTriangleMesh Build(DrawPath path, DrawFillRule fillRule) =>
+        DrawPathMeshBuilder.Build(
             path,
             new DrawRect(0, 0, 10, 10),
             10,
             10,
             0,
             0,
-            XnaColor.White,
             fillRule);
 
-    private static float MeshArea(MonoGamePathMesh mesh)
+    private static float MeshArea(DrawTriangleMesh mesh)
     {
         float area = 0;
         for (int index = 0; index < mesh.Indices.Length; index += 3)
         {
-            VertexPositionColor first = mesh.Vertices[mesh.Indices[index]];
-            VertexPositionColor second = mesh.Vertices[mesh.Indices[index + 1]];
-            VertexPositionColor third = mesh.Vertices[mesh.Indices[index + 2]];
+            DrawPoint first = mesh.Vertices[mesh.Indices[index]];
+            DrawPoint second = mesh.Vertices[mesh.Indices[index + 1]];
+            DrawPoint third = mesh.Vertices[mesh.Indices[index + 2]];
             float twiceArea =
-                ((second.Position.X - first.Position.X) *
-                 (third.Position.Y - first.Position.Y)) -
-                ((second.Position.Y - first.Position.Y) *
-                 (third.Position.X - first.Position.X));
+                ((second.X - first.X) *
+                 (third.Y - first.Y)) -
+                ((second.Y - first.Y) *
+                 (third.X - first.X));
             area += MathF.Abs(twiceArea) / 2;
         }
 

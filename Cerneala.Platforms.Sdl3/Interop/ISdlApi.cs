@@ -303,7 +303,9 @@ internal readonly record struct SdlGpuSamplerCreateInfo(
     SdlGpuSamplerAddressMode AddressMode,
     SdlGpuSamplerMipmapMode MipmapMode = SdlGpuSamplerMipmapMode.Nearest,
     float MinLod = 0,
-    float MaxLod = 1000);
+    float MaxLod = 1000,
+    bool EnableAnisotropy = false,
+    float MaxAnisotropy = 1);
 
 internal readonly record struct SdlGpuBufferBinding(
     nint Buffer,
@@ -553,6 +555,8 @@ internal interface ISdlApi
     bool SetWindowBordered(nint window, bool bordered);
 
     bool SetWindowResizable(nint window, bool resizable);
+
+    bool SetWindowResizeGrip(nint window, bool enabled);
 
     bool ShowWindow(nint window);
 

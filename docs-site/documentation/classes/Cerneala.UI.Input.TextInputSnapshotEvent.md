@@ -42,7 +42,7 @@ string text = frame.TextInputEvents[0].Text;
 
 ## Remarks
 
-`TextInputSnapshotEvent` stores the text value produced by platform text input. `MonoGameInputSource.QueueTextInput` wraps queued text in this record, and `InputFrame` exposes those records through `TextInputEvents`.
+`TextInputSnapshotEvent` stores the text value produced by platform text input. The SDL input source wraps queued text in this record, and `InputFrame` exposes those records through `TextInputEvents`.
 
 `TextInputBridge` dispatches each record to the currently focused element by raising `InputEvents.PreviewTextInputEvent` followed by `InputEvents.TextInputEvent`, both with `TextCompositionEventArgs.Text` set to this record's `Text` value.
 
@@ -77,4 +77,3 @@ Cerneala input snapshots in the `Cerneala.UI.Input` namespace.
 - [`InputFrame`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/InputFrame.cs)
 - [`TextInputBridge`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/TextInputBridge.cs)
 - [`TextCompositionEventArgs`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/TextCompositionEventArgs.cs)
-- [`MonoGameInputSource`](https://github.com/Chevalier12/Cerneala/blob/master/UI/Input/MonoGame/MonoGameInputSource.cs)

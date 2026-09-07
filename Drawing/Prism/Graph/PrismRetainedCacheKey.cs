@@ -567,6 +567,10 @@ internal sealed class PrismRetainedFingerprintBuilder
         AppendNullableFloat(components, node.Amount);
         AppendNullableEnum(components, node.Filter);
         AppendNullableEnum(components, node.Style);
+        if (node.Kind == PrismGraphNodeKind.Style)
+        {
+            AppendMatrix(components, scope.StyleTransform);
+        }
         AppendResource(components, node.Resource, scope);
         AppendNullableEnum(components, node.ColorProfile);
         AppendNullableEnum(components, node.MaskChannel);

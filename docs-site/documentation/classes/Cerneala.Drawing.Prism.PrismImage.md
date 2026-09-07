@@ -40,7 +40,7 @@ frame.DrawSprite(glowImage, destination);
 
 Disposal is idempotent. Drawing a disposed image or adding a new content-change observer throws `ObjectDisposedException`.
 
-`PrismImage` does not own or dispose its `Source`, `Pipeline`, or pipeline operations. Their lifetime remains the caller's responsibility. A source texture managed by a MonoGame `ContentManager`, for example, continues to follow the content manager's lifetime.
+`PrismImage` does not own or dispose its `Source`, `Pipeline`, or pipeline operations. Their lifetime remains the caller's responsibility.
 
 Operation and pipeline mutations increment the recorded visual content version. After a `PrismImage` is drawn by an on-demand `RenderSurface2D`, those mutations also mark that surface dirty automatically. The surface stops observing the image when a later frame no longer draws it.
 

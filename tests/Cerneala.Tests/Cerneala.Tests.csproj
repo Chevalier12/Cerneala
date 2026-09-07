@@ -18,6 +18,9 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Compile Include="..\Shared\SdlDrawingFixture.cs" Link="Fixtures\SdlDrawingFixture.cs" />
+    <Compile Include="..\Shared\PrismStainedGlassTestData.cs" Link="Fixtures\PrismStainedGlassTestData.cs" />
+    <Compile Include="..\Shared\PrismTestData.cs" Link="Fixtures\PrismTestData.cs" />
     <Using Include="Cerneala.UI.Detective" />
     <Using Include="Cerneala.Drawing.Prism.Execution" />
     <Using Include="Cerneala.Drawing.Prism.Kernels" />
@@ -31,13 +34,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Cerneala.csproj" />
-    <ProjectReference Include="..\..\Cerneala.Backends.MonoGame\Cerneala.Backends.MonoGame.csproj" />
     <ProjectReference Include="..\..\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj" />
     <ProjectReference Include="..\..\Cerneala.Platforms.Sdl3\Cerneala.Platforms.Sdl3.csproj" />
-    <ProjectReference Include="..\..\Cerneala.Platforms.Win32\Cerneala.Platforms.Win32.csproj" />
     <ProjectReference Include="..\..\CernealaPresentation\CernealaPresentation.csproj" />
     <ProjectReference Include="..\..\Playground\Cerneala.Playground\Cerneala.Playground.csproj" />
-    <ProjectReference Include="..\Cerneala.WindowsDxSmoke\Cerneala.WindowsDxSmoke.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Cerneala.SdlGpuSmoke\Cerneala.SdlGpuSmoke.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>

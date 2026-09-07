@@ -12,7 +12,7 @@ applications.
 ## Requirements
 
 - Git
-- PowerShell for the repository scripts
+- PowerShell 7 (`pwsh`) for repository scripts and the native-package contract test
 - The .NET SDK pinned by [`global.json`](../global.json)
 - A supported native graphics stack for the backend you select
 
@@ -24,11 +24,22 @@ pins the SDK used to build and test them.
 Clone the repository, then run these commands from its root:
 
 ```powershell
+./Tools/scripts/Get-GraphixNativePackage.ps1
 dotnet tool restore
 dotnet restore ./Cerneala.slnx
 dotnet build ./Cerneala.slnx -c Release --no-restore
-dotnet test ./Cerneala.slnx -c Release --no-build --no-restore
+$env:CERNEALA_SDL_NATIVE_TESTS = '1'
+dotnet test ./Cerneala.slnx -c Release --no-build --no-restore -m:1
 ```
+
+The temporary Graphix package is verified by its pinned hash. Fetching it requires
+`gh` authentication with access to the Graphix Actions artifact, unless the
+verified package is already present. This temporary artifact expires; see the
+[SDL backend guide](sdl-desktop-backend.md) for the current dependency setup.
+
+Native input tests share the interactive desktop, so the full native run
+serializes test projects with `-m:1`. Keep that desktop available to the tests;
+unrelated windows or user input can invalidate their focus preconditions.
 
 That is the full Windows verification path used by CI. SDL3 GPU also has native
 smoke and contract coverage on Windows, Linux, and macOS.
@@ -41,23 +52,17 @@ and backend behavior. It currently targets Windows.
 Run it with SDL3 GPU:
 
 ```powershell
-dotnet run --project ./Playground/Cerneala.Playground/Cerneala.Playground.csproj -p:CernealaDesktopBackend=SDL3
-```
-
-The project still defaults to the MonoGame backend when no property is passed:
-
-```powershell
 dotnet run --project ./Playground/Cerneala.Playground/Cerneala.Playground.csproj
 ```
 
-SDL3 GPU is the strategic backend going forward. MonoGame remains available as
-an existing compatibility and transition path, but it is expected to be phased
-out gradually. There is no removal version or date documented yet.
+SDL3 + SDL_GPU is the sole maintained desktop composition. MonoGame and WindowsDX
+have been removed without a compatibility facade. No backend-selection build
+property is required by these samples.
 
 `CernealaPresentation` is the larger end-to-end showcase:
 
 ```powershell
-dotnet run --project ./CernealaPresentation/CernealaPresentation.csproj -p:CernealaDesktopBackend=SDL3
+dotnet run --project ./CernealaPresentation/CernealaPresentation.csproj
 ```
 
 ## The Current Desktop Application Model
@@ -151,17 +156,11 @@ The generator owns construction.
 ### Select A Backend
 
 Current desktop projects select their backend explicitly through an assembly
-attribute. The checked-in projects use build constants so the same application
-can target either path:
+attribute. The checked-in desktop projects select the SDL composition:
 
 ```csharp
-#if CERNEALA_MONOGAME
-[assembly: Cerneala.UI.Hosting.Windowing.ApplicationBackend(
-    typeof(Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend))]
-#elif CERNEALA_SDL3
 [assembly: Cerneala.UI.Hosting.Windowing.ApplicationBackend(
     typeof(Cerneala.UI.Hosting.Sdl.SdlGpuApplicationBackend))]
-#endif
 ```
 
 The project file must reference the selected backend and include `.crn` files as
@@ -277,7 +276,8 @@ Developer Preview means the project is useful but not stable. In particular:
 - native accessibility is not complete;
 - full IME, multiline editing, and rich text remain incomplete;
 - backend maturity is uneven;
-- MonoGame is on a gradual retirement path while SDL3 GPU becomes primary.
+- outstanding desktop migration verification is recorded in the
+  [removal audit](audits/2026-09-05-monogame-removal.md).
 
 Do not infer support from a familiar type name. Check the implementation,
 canonical API documentation, tests, and working examples.

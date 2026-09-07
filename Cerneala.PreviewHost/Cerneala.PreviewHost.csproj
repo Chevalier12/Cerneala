@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Cerneala.csproj" />
-    <ProjectReference Include="..\Cerneala.Backends.MonoGame\Cerneala.Backends.MonoGame.csproj" />
+    <ProjectReference Include="..\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj" />
   </ItemGroup>
 
   <ItemGroup>

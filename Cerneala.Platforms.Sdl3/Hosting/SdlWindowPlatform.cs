@@ -338,6 +338,8 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
             Handle,
             window.ResizeMode is ResizeMode.CanResize or ResizeMode.CanResizeWithGrip),
             "SDL resize mode update");
+        Require(api.SetWindowResizeGrip(Handle, window.ResizeMode == ResizeMode.CanResizeWithGrip),
+            "SDL resize grip update");
         ApplyPosition(window);
         ApplyState(window.WindowState);
     }
@@ -352,7 +354,8 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
                 $"An SDL window cannot be owned by a '{value.Surface.GetType().FullName}' surface.")
         };
         Require(api.SetWindowParent(Handle, owner?.Handle ?? 0), "SDL window owner update");
-        if (window.WindowStartupLocation == WindowStartupLocation.CenterOwner && owner is not null)
+        if (window.WindowStartupLocation == WindowStartupLocation.CenterOwner && owner is not null &&
+            !(float.IsFinite(window.Left) && float.IsFinite(window.Top)))
         {
             CenterOverOwner(owner);
         }
@@ -455,8 +458,10 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
                 callbacks.RenderRequested();
                 break;
             case SdlEventKind.MouseMotion when enabled:
-                inputSource.MovePointer(@event.X, @event.Y);
-                callbacks.RenderRequested();
+                if (inputSource.MovePointer(@event.X, @event.Y))
+                {
+                    callbacks.RenderRequested();
+                }
                 break;
             case SdlEventKind.MouseButtonDown when enabled:
             case SdlEventKind.MouseButtonUp when enabled:
@@ -497,6 +502,16 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
 
     private void ApplyPosition(Window value)
     {
+        if (float.IsFinite(value.Left) && float.IsFinite(value.Top))
+        {
+            Require(api.SetWindowPosition(
+                Handle,
+                (int)MathF.Round(value.Left * nativeCoordinateScale),
+                (int)MathF.Round(value.Top * nativeCoordinateScale)),
+                "SDL manual window position update");
+            return;
+        }
+
         if (value.WindowStartupLocation == WindowStartupLocation.CenterOwner && owner is not null)
         {
             CenterOverOwner(owner);
@@ -518,14 +533,6 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
             return;
         }
 
-        if (float.IsFinite(value.Left) && float.IsFinite(value.Top))
-        {
-            Require(api.SetWindowPosition(
-                Handle,
-                (int)MathF.Round(value.Left * nativeCoordinateScale),
-                (int)MathF.Round(value.Top * nativeCoordinateScale)),
-                "SDL manual window position update");
-        }
     }
 
     private void CenterOverOwner(SdlPlatformWindow parent)
@@ -573,8 +580,12 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
             throw SdlApiError.Create(api, "SDL window position lookup");
         }
 
-        float logicalX = x / nativeCoordinateScale;
-        float logicalY = y / nativeCoordinateScale;
+        float logicalX = desiredState != WindowState.Normal && float.IsFinite(window.Left)
+            ? window.Left
+            : x / nativeCoordinateScale;
+        float logicalY = desiredState != WindowState.Normal && float.IsFinite(window.Top)
+            ? window.Top
+            : y / nativeCoordinateScale;
         var current = (Viewport, logicalX, logicalY, desiredState);
         if (lastBounds != current)
         {
@@ -639,9 +650,7 @@ internal sealed class SdlPlatformWindow : IPlatformWindow
             displayScale = pixelDensity;
         }
 
-        nativeCoordinateScale = coordinateScaleOverride.HasValue
-            ? 1
-            : displayScale / pixelDensity;
+        nativeCoordinateScale = displayScale / pixelDensity;
         if (!float.IsFinite(nativeCoordinateScale) ||
             nativeCoordinateScale <= 0)
         {

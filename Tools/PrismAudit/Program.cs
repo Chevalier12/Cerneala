@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Cerneala.Drawing.MonoGame;
+using Cerneala.UI.Hosting.Sdl;
 using Cerneala.UI.Prism.Runtime;
 
 namespace Cerneala.Tools.PrismAudit;
@@ -83,7 +83,6 @@ internal static class Program
 
     private static readonly HashSet<string> ExpectedPublicPrismTypes = new(StringComparer.Ordinal)
     {
-        "Cerneala.Drawing.MonoGame.Prism.IMonoGameBackdropFrameLease",
         "Cerneala.Drawing.Prism.BackdropAlphaMode",
         "Cerneala.Drawing.Prism.BackdropFrameMetadata",
         "Cerneala.Drawing.Prism.BackdropFrameRequest",
@@ -168,10 +167,7 @@ internal static class Program
         "Cerneala.Drawing.DrawCommandKind",
         "Cerneala.Drawing.DrawingFrameContext",
         "Cerneala.Drawing.IDrawingBackend",
-        "Cerneala.Drawing.MonoGame.MonoGameDrawingBackend",
         "Cerneala.UI.Hosting.IUiBackend",
-        "Cerneala.UI.Hosting.MonoGame.MonoGameUiHost",
-        "Cerneala.UI.Hosting.MonoGame.MonoGameUiHostOptions",
         "Cerneala.UI.Markup.GeneratedMarkup",
         "Cerneala.UI.Rendering.RetainedRenderer"
     };
@@ -186,10 +182,10 @@ internal static class Program
         "Drawing/Prism/Catalog/PrismCatalog.cs",
         "UI/Prism/Runtime/PrismParameterStore.cs",
         "Drawing/Prism/Graph/PrismGraphBuilder.cs",
-        "Drawing/MonoGame/Prism/Kernels/PrismKernelRegistry.cs",
+        "Cerneala.Backends.SdlGpu/Prism/SdlGpuPrismKernelSelector.cs",
         "tests/Cerneala.Tests.SourceGen/Prism/PrismCatalogCompilerTests.cs",
         "tests/Cerneala.Tests/Drawing/Prism/PrismColorBlendStyleCoverageTests.cs",
-        "tests/Cerneala.Tests/Drawing/MonoGame/PrismWindowsDxConformanceTests.cs",
+        "tests/Cerneala.Tests/Drawing/Prism/PrismSdlGpuPixelConformanceTests.cs",
         "docs/prism-markup-syntax-proposal.md",
         "docs/prism-technical-design.md",
         "docs/prism-filter-reference.generated.md",
@@ -300,7 +296,7 @@ internal static class Program
         Assembly[] assemblies =
         [
             typeof(PrismInstance).Assembly,
-            typeof(MonoGameDrawingBackend).Assembly
+            typeof(SdlGpuApplicationBackend).Assembly
         ];
         Type[] exportedTypes = assemblies
             .SelectMany(static assembly => assembly.GetExportedTypes())
@@ -375,9 +371,9 @@ internal static class Program
             {
                 errors.Add($"Catalog entry '{entry.Id}' runtime owner diverges from generated runtime '{expectedGeneratedPath}'.");
             }
-            if (!entry.Coverage.Kernel.StartsWith("PrismKernelRegistry/", StringComparison.Ordinal))
+            if (!entry.Coverage.Kernel.StartsWith("SdlGpuPrismKernelSelector/", StringComparison.Ordinal))
             {
-                errors.Add($"Catalog entry '{entry.Id}' has no concrete PrismKernelRegistry owner.");
+                errors.Add($"Catalog entry '{entry.Id}' has no concrete SdlGpuPrismKernelSelector owner.");
             }
 
             CheckDuplicates(entry.Properties, property => property.Id, $"property ID in '{entry.Id}'", errors);
@@ -510,20 +506,6 @@ internal static class Program
             "IUiBackend Prism properties",
             errors);
 
-        Type hostOptions = RequiredType(
-            assemblies,
-            "Cerneala.UI.Hosting.MonoGame.MonoGameUiHostOptions",
-            errors);
-        CompareSet(
-            hostOptions.GetProperties()
-                .Where(property =>
-                    NameIsPrismRelated(property.Name) ||
-                    TypeIsPrismRelated(property.PropertyType))
-                .Select(property => property.Name),
-            ["BackdropFrameSource", "PrismRendererOptions"],
-            "MonoGameUiHostOptions Prism properties",
-            errors);
-
         Type frameContext = RequiredType(assemblies, "Cerneala.Drawing.DrawingFrameContext", errors);
         CompareSet(
             frameContext.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)
@@ -618,7 +600,7 @@ internal static class Program
                     $"| {Cell(scope)} | {Cell(property.Id)} | {Cell(property.ValueType)} | " +
                     $"{property.Required.ToString().ToLowerInvariant()} | {Cell(property.DefaultValue)} | " +
                     $"{Cell(property.Domain)} | " +
-                    "syntax/binder -> `PrismParameterStore` -> `PrismGraphBuilder` -> `PrismKernelRegistry` -> `PrismMotionResolver` -> diagnostics/tests/docs |");
+                    "syntax/binder -> `PrismParameterStore` -> `PrismGraphBuilder` -> `SdlGpuPrismKernelSelector` -> `PrismMotionResolver` -> diagnostics/tests/docs |");
             }
         }
 
@@ -632,7 +614,7 @@ internal static class Program
         foreach (CatalogEntry entry in audit.Catalog.Entries.OrderBy(entry => entry.StableId))
         {
             string golden = entry.Kind == "filter"
-                ? $"PrismWindowsDxConformanceTests/CatalogGallery/{entry.Id}"
+                ? $"PrismSdlGpuPixelConformanceTests/{entry.Id}"
                 : $"PrismColorBlendStyleCoverageTests/AnalyticVersionedImages/{entry.Id}";
             report.AppendLine(
                 $"| {entry.StableId} | {Cell(entry.Kind)} | {Cell(entry.Id)} | " +
@@ -862,13 +844,10 @@ internal static class Program
         "Cerneala.Drawing.DrawCommandKind" =>
             "Command-list Prism scope ABI consumed by retained rendering and backends.",
         "Cerneala.Drawing.DrawingFrameContext" or
-        "Cerneala.Drawing.IDrawingBackend" or
-        "Cerneala.Drawing.MonoGame.MonoGameDrawingBackend" =>
+        "Cerneala.Drawing.IDrawingBackend" =>
             "Per-frame Prism analysis and optional backdrop submission contract.",
-        "Cerneala.UI.Hosting.IUiBackend" or
-        "Cerneala.UI.Hosting.MonoGame.MonoGameUiHost" or
-        "Cerneala.UI.Hosting.MonoGame.MonoGameUiHostOptions" =>
-            "Optional host backdrop source and Prism renderer configuration.",
+        "Cerneala.UI.Hosting.IUiBackend" =>
+            "Optional host backdrop source; SDL renderer configuration is internal.",
         "Cerneala.UI.Markup.GeneratedMarkup" =>
             "Generated markup accessors used by typed Prism Motion paths.",
         "Cerneala.UI.Rendering.RetainedRenderer" =>

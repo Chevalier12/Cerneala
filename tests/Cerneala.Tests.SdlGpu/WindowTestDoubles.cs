@@ -57,6 +57,7 @@ internal sealed class RecordingGraphicsSession(
     public float CoordinateScale { get; private set; } = coordinateScale;
     public int ResizeCount { get; private set; }
     public int DisposeCount { get; private set; }
+    public int PresentCount { get; private set; }
 
     public void Resize(int nextPixelWidth, int nextPixelHeight, float nextCoordinateScale)
     {
@@ -68,7 +69,7 @@ internal sealed class RecordingGraphicsSession(
 
     public void BeginFrame(Color clearColor) { }
 
-    public void Present() { }
+    public void Present() => PresentCount++;
 
     public void Dispose() => DisposeCount++;
 

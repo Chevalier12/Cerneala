@@ -8,12 +8,8 @@ public sealed class PlatformBoundaryTests
         string platformRoot = FindRepositoryPath("UI", "Platform");
         string[] forbiddenTerms =
         [
-            "MonoGame",
-            "Microsoft.Xna",
             "Skia",
             "HarfBuzz",
-            "Texture2D",
-            "SpriteBatch",
             "System.Windows.Forms",
             "System.Windows.Automation",
             "Windows.UI",

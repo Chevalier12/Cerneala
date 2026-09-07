@@ -439,15 +439,15 @@ internal static class PrismStylePlanner
         PrismGraphScope scope)
     {
         float horizontal = MathF.Sqrt(
-            (scope.EffectiveTransform.M11 *
-                scope.EffectiveTransform.M11) +
-            (scope.EffectiveTransform.M12 *
-                scope.EffectiveTransform.M12));
+            (scope.StyleTransform.M11 *
+                scope.StyleTransform.M11) +
+            (scope.StyleTransform.M12 *
+                scope.StyleTransform.M12));
         float vertical = MathF.Sqrt(
-            (scope.EffectiveTransform.M21 *
-                scope.EffectiveTransform.M21) +
-            (scope.EffectiveTransform.M22 *
-                scope.EffectiveTransform.M22));
+            (scope.StyleTransform.M21 *
+                scope.StyleTransform.M21) +
+            (scope.StyleTransform.M22 *
+                scope.StyleTransform.M22));
         float scale =
             MathF.Max(horizontal, vertical) * scope.PixelScale;
         if (!float.IsFinite(scale))

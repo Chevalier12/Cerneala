@@ -18,18 +18,21 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
     private static readonly byte[] WhiteTexturePixels = [255, 255, 255, 255];
     private static readonly byte[] GradientDitherPixels = CreateGradientDitherPixels();
     private const int MaximumWaveNoiseEntryCount = 32;
+    private readonly int ownerThreadId = Environment.CurrentManagedThreadId;
     private readonly ISdlApi api;
     private readonly nint device;
     private readonly SdlGpuShaderFormats shaderFormats;
     private readonly SdlGpuDrawingResources drawingResources;
     private readonly PrismRendererOptions options;
     private readonly Dictionary<(SdlGpuTextureFormat, SdlGpuSampleCount), nint> pipelines = [];
-    private readonly Dictionary<SurfaceKey, LinkedList<FreeSurfaceEntry>> freeSurfaces = [];
+    private readonly Dictionary<SurfaceKey, SurfaceBucket> surfaceBuckets = [];
     private readonly Dictionary<PrismRetainedCacheKey, RetainedEntry> retained = [];
+    private readonly Dictionary<long, LeaseState> activeLeases = [];
     private readonly List<PrismRetainedCacheKey> retainedKeysToRemove = [];
-    private readonly HashSet<SdlGpuRenderTarget> allSurfaces = [];
+    private readonly Dictionary<SdlGpuRenderTarget, LinkedListNode<FreeSurfaceEntry>> allSurfaces = [];
     private readonly Dictionary<int, List<WaveNoiseEntry>> waveNoiseEntries = [];
     private readonly Dictionary<GradientOverlayKey, GradientOverlayEntry> gradientOverlays = [];
+    private readonly Dictionary<PrismResourceId, CurvesEntry> curves = [];
     private nint vertexShader;
     private nint fragmentShader;
     private long freeBytes;
@@ -38,6 +41,7 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
     private long createdSurfaceCount;
     private long reusedSurfaceCount;
     private long useSequence;
+    private long leaseSequence;
     private bool disposed;
 
     public SdlGpuPrismDeviceResources(
@@ -60,8 +64,8 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
     internal long FreeBytes => freeBytes;
     internal long CreatedSurfaceCount => createdSurfaceCount;
     internal long ReusedSurfaceCount => reusedSurfaceCount;
-    internal int FreeSurfaceCount => freeSurfaces.Values.Sum(
-        static entries => entries.Count);
+    internal int FreeSurfaceCount => surfaceBuckets.Values.Sum(
+        static bucket => bucket.Free.Count);
     internal int RetainedCount => retained.Count;
 
     public SdlGpuPrismSurfaceLease RentSurface(
@@ -71,20 +75,23 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
         SdlGpuTextureFormat format,
         bool mipmapped)
     {
+        VerifyAccess();
         ObjectDisposedException.ThrowIf(disposed, this);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
+        if (!Enum.IsDefined(format))
+        {
+            throw new ArgumentOutOfRangeException(nameof(format), format, "Unknown SDL_GPU surface format.");
+        }
         uint mipLevelCount = mipmapped
             ? CalculateMipLevelCount(width, height)
             : 1;
         SurfaceKey key = new(width, height, format, mipLevelCount);
-        if (freeSurfaces.TryGetValue(key, out LinkedList<FreeSurfaceEntry>? free) &&
-            free.Last is LinkedListNode<FreeSurfaceEntry> last)
+        if (surfaceBuckets.TryGetValue(key, out SurfaceBucket? bucket) &&
+            bucket.Free.Last is LinkedListNode<FreeSurfaceEntry> last)
         {
             FreeSurfaceEntry entry = last.Value;
-            free.RemoveLast();
-            if (free.Count == 0)
-            {
-                freeSurfaces.Remove(key);
-            }
+            bucket.Free.RemoveLast();
             SdlGpuRenderTarget target = entry.Target;
             freeBytes -= EstimateBytes(
                 target.PixelWidth,
@@ -92,7 +99,7 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
                 target.ColorFormat,
                 target.MipLevelCount);
             reusedSurfaceCount++;
-            return new SdlGpuPrismSurfaceLease(this, target, windowId, retained: false);
+            return CreateLease(target, windowId);
         }
 
         long byteCount = EstimateBytes(width, height, format, mipLevelCount);
@@ -106,11 +113,18 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
                 SdlGpuSampleCount.One,
                 mipLevelCount,
                 useDepthStencil: false);
-            allSurfaces.Add(created);
+            // Budget enforcement may have retired the last surface in this bucket.
+            if (!surfaceBuckets.TryGetValue(key, out bucket))
+            {
+                bucket = new SurfaceBucket();
+                surfaceBuckets.Add(key, bucket);
+            }
+            allSurfaces.Add(created, new LinkedListNode<FreeSurfaceEntry>(new(created, 0)));
+            bucket.SurfaceCount++;
             totalBytes = checked(totalBytes + byteCount);
             peakBytes = Math.Max(peakBytes, totalBytes);
             createdSurfaceCount++;
-            return new SdlGpuPrismSurfaceLease(this, created, windowId, retained: false);
+            return CreateLease(created, windowId);
         }
         catch (Exception exception)
         {
@@ -128,15 +142,16 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
         long windowId,
         out SdlGpuPrismSurfaceLease lease)
     {
+        VerifyAccess();
         ObjectDisposedException.ThrowIf(disposed, this);
-        if (!retained.TryGetValue(key, out RetainedEntry? entry))
+        if (!retained.TryGetValue(key, out RetainedEntry? entry) || entry.Invalidated)
         {
-            lease = null!;
+            lease = default;
             return false;
         }
+        lease = CreateLease(entry.Target, windowId, key);
         entry.PinCount++;
         entry.LastUse = ++useSequence;
-        lease = new SdlGpuPrismSurfaceLease(this, entry.Target, windowId, retained: true, key);
         return true;
     }
 
@@ -144,8 +159,18 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
         in PrismRetainedCacheKey key,
         SdlGpuPrismSurfaceLease lease)
     {
+        VerifyAccess();
         ObjectDisposedException.ThrowIf(disposed, this);
-        ArgumentNullException.ThrowIfNull(lease);
+        RequireActiveLease(lease);
+        long byteCount = EstimateBytes(
+            lease.Target.PixelWidth,
+            lease.Target.PixelHeight,
+            lease.Target.ColorFormat,
+            lease.Target.MipLevelCount);
+        if (options.RetainedCacheEntryLimit == 0 || byteCount > options.RetainedCacheSoftByteLimit)
+        {
+            return;
+        }
         if (retained.TryGetValue(key, out RetainedEntry? existing))
         {
             if (!ReferenceEquals(existing.Target, lease.Target) && existing.PinCount == 0)
@@ -159,13 +184,22 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
             }
         }
 
-        lease.MarkRetained(key);
+        while (retained.Count >= options.RetainedCacheEntryLimit ||
+            RetainedBytes() > options.RetainedCacheSoftByteLimit - byteCount)
+        {
+            if (!EvictOneRetained())
+            {
+                return;
+            }
+        }
+        activeLeases[lease.Id] = new LeaseState(lease.Target, key);
         retained.Add(key, new RetainedEntry(lease.Target, ++useSequence) { PinCount = 1 });
-        TrimRetained();
     }
 
     public void Invalidate(PrismCacheInvalidation invalidation)
     {
+        VerifyAccess();
+        ObjectDisposedException.ThrowIf(disposed, this);
         foreach (PrismRetainedCacheKey key in retained.Keys
             .Where(candidate => invalidation.Kind == PrismCacheInvalidationKind.All ||
                 candidate.StableNodeId.ScopeOwnerToken == invalidation.OwnerToken)
@@ -186,6 +220,8 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
         PrismCacheOwnerToken ownerToken,
         IReadOnlySet<PrismRetainedCacheKey> currentKeys)
     {
+        VerifyAccess();
+        ObjectDisposedException.ThrowIf(disposed, this);
         retainedKeysToRemove.Clear();
         foreach (PrismRetainedCacheKey key in retained.Keys)
         {
@@ -211,6 +247,7 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
 
     public nint GetPipeline(SdlGpuTextureFormat format)
     {
+        VerifyAccess();
         ObjectDisposedException.ThrowIf(disposed, this);
         var key = (format, SdlGpuSampleCount.One);
         if (pipelines.TryGetValue(key, out nint pipeline))
@@ -249,6 +286,7 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
         SdlGpuWindowGraphicsSession session,
         PrismWaveNoiseTable table)
     {
+        VerifyAccess();
         ObjectDisposedException.ThrowIf(disposed, this);
         if (table.PackedSamples.Length != PrismWaveNoise.PackedTableSampleCount)
         {
@@ -299,6 +337,7 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
 
     public nint GetSpatterPointTexture(SdlGpuWindowGraphicsSession session)
     {
+        VerifyAccess();
         ObjectDisposedException.ThrowIf(disposed, this);
         PrismSpatterPointField field = PrismRecursiveWangBlueNoise.PointField;
         return drawingResources.GetOrCreateHalfVector4Texture(
@@ -318,6 +357,7 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
         PrismGradientInterpolation interpolation,
         PrismColorProfile workingProfile)
     {
+        VerifyAccess();
         ObjectDisposedException.ThrowIf(disposed, this);
         GradientOverlayKey key = new(id, interpolation, workingProfile);
         if (gradientOverlays.TryGetValue(key, out GradientOverlayEntry? existing) &&
@@ -357,6 +397,7 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
 
     public nint GetGradientDitherTexture(SdlGpuWindowGraphicsSession session)
     {
+        VerifyAccess();
         ObjectDisposedException.ThrowIf(disposed, this);
         return drawingResources.GetOrCreateTexture(
             session,
@@ -364,6 +405,30 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
             16,
             16,
             GradientDitherPixels).Handle;
+    }
+
+    public nint GetCurvesTexture(
+        SdlGpuWindowGraphicsSession session,
+        PrismResourceId id,
+        PrismCurvesResource resource,
+        long identity,
+        long version)
+    {
+        VerifyAccess();
+        ObjectDisposedException.ThrowIf(disposed, this);
+        if (!curves.TryGetValue(id, out CurvesEntry? entry) ||
+            !ReferenceEquals(entry.Resource, resource) ||
+            entry.Identity != identity || entry.Version != version)
+        {
+            if (entry is not null)
+            {
+                drawingResources.InvalidateTexture(entry.TextureKey);
+            }
+            entry = new CurvesEntry(resource, identity, version, new object(), PrismCurveLut.Create(resource));
+            curves[id] = entry;
+        }
+        return drawingResources.GetOrCreateHalfVector4Texture(
+            session, entry.TextureKey, PrismCurveLut.SampleCount, 1, entry.Lut.Values).Handle;
     }
 
     private static byte[] CreateGradientDitherPixels()
@@ -387,23 +452,34 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
 
     public void Dispose()
     {
+        VerifyAccess();
         if (disposed)
         {
             return;
         }
         disposed = true;
-        retained.Clear();
+        foreach (PrismRetainedCacheKey key in retained.Keys.ToArray())
+        {
+            RetainedEntry entry = retained[key];
+            if (entry.PinCount != 0)
+            {
+                entry.Invalidated = true;
+            }
+            else
+            {
+                retained.Remove(key);
+                RetireSurface(entry.Target);
+            }
+        }
+        foreach (FreeSurfaceEntry entry in surfaceBuckets.Values.SelectMany(static bucket => bucket.Free).ToArray())
+        {
+            RetireSurface(entry.Target);
+        }
         retainedKeysToRemove.Clear();
-        freeSurfaces.Clear();
         waveNoiseEntries.Clear();
         gradientOverlays.Clear();
-        foreach (SdlGpuRenderTarget surface in allSurfaces)
-        {
-            drawingResources.RetireRenderTarget(surface);
-        }
-        allSurfaces.Clear();
+        curves.Clear();
         freeBytes = 0;
-        totalBytes = 0;
         foreach (nint pipeline in pipelines.Values)
         {
             api.ReleaseGpuGraphicsPipeline(device, pipeline);
@@ -421,11 +497,24 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
         }
     }
 
+    internal void VerifyAccess()
+    {
+        if (Environment.CurrentManagedThreadId != ownerThreadId)
+        {
+            throw new InvalidOperationException("SDL_GPU Prism resources must be accessed on their owning thread.");
+        }
+    }
+
     internal void Release(SdlGpuPrismSurfaceLease lease)
     {
-        if (lease.IsRetained && lease.RetainedKey is PrismRetainedCacheKey key &&
+        VerifyAccess();
+        if (!activeLeases.Remove(lease.Id, out LeaseState state))
+        {
+            return;
+        }
+        if (state.RetainedKey is PrismRetainedCacheKey key &&
             retained.TryGetValue(key, out RetainedEntry? entry) &&
-            ReferenceEquals(entry.Target, lease.Target))
+            ReferenceEquals(entry.Target, state.Target))
         {
             entry.PinCount--;
             if (entry.PinCount < 0)
@@ -439,22 +528,50 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
             }
             return;
         }
-        ReturnSurface(lease.Target);
+        ReturnSurface(state.Target);
+    }
+
+    internal PrismRetainedCacheKey? GetRetainedKey(long leaseId)
+    {
+        VerifyAccess();
+        return activeLeases.TryGetValue(leaseId, out LeaseState state) ? state.RetainedKey : null;
+    }
+
+    private SdlGpuPrismSurfaceLease CreateLease(
+        SdlGpuRenderTarget target,
+        long windowId,
+        PrismRetainedCacheKey? retainedKey = null)
+    {
+        // Never recycle an acquisition identity: old value copies must stay inert.
+        long id = checked(++leaseSequence);
+        activeLeases.Add(id, new LeaseState(target, retainedKey));
+        return new SdlGpuPrismSurfaceLease(this, id, target, windowId);
+    }
+
+    private void RequireActiveLease(SdlGpuPrismSurfaceLease lease)
+    {
+        if (!ReferenceEquals(lease.Owner, this))
+        {
+            throw new ArgumentException("The surface lease belongs to another SDL_GPU Prism resource owner.", nameof(lease));
+        }
+        ObjectDisposedException.ThrowIf(!activeLeases.ContainsKey(lease.Id), typeof(SdlGpuPrismSurfaceLease));
     }
 
     private void ReturnSurface(SdlGpuRenderTarget target)
     {
+        if (disposed)
+        {
+            RetireSurface(target);
+            return;
+        }
         SurfaceKey key = new(
             target.PixelWidth,
             target.PixelHeight,
             target.ColorFormat,
             target.MipLevelCount);
-        if (!freeSurfaces.TryGetValue(key, out LinkedList<FreeSurfaceEntry>? free))
-        {
-            free = new LinkedList<FreeSurfaceEntry>();
-            freeSurfaces.Add(key, free);
-        }
-        free.AddLast(new FreeSurfaceEntry(target, ++useSequence));
+        LinkedListNode<FreeSurfaceEntry> node = allSurfaces[target];
+        node.Value = new FreeSurfaceEntry(target, ++useSequence);
+        surfaceBuckets[key].Free.AddLast(node);
         freeBytes += EstimateBytes(
             target.PixelWidth,
             target.PixelHeight,
@@ -476,14 +593,14 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
                 options.SurfaceHardByteLimit,
                 new InvalidOperationException("The requested surface exceeds the hard GPU budget."));
         }
-        while (totalBytes + requestedBytes > options.SurfaceHardByteLimit && TryDestroyFreeSurface())
+        while (requestedBytes > options.SurfaceHardByteLimit - totalBytes)
         {
+            if (!TryDestroyFreeSurface() && !EvictOneRetained())
+            {
+                break;
+            }
         }
-        if (totalBytes + requestedBytes > options.SurfaceHardByteLimit)
-        {
-            EvictOneRetained();
-        }
-        if (totalBytes + requestedBytes > options.SurfaceHardByteLimit)
+        if (requestedBytes > options.SurfaceHardByteLimit - totalBytes)
         {
             throw new PrismSurfaceAllocationException(
                 "SDL_GPU Prism surface",
@@ -499,9 +616,9 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
         SurfaceKey candidateKey = default;
         FreeSurfaceEntry candidate = default;
         bool found = false;
-        foreach ((SurfaceKey key, LinkedList<FreeSurfaceEntry> free) in freeSurfaces)
+        foreach ((SurfaceKey key, SurfaceBucket bucket) in surfaceBuckets)
         {
-            if (free.First is not LinkedListNode<FreeSurfaceEntry> first ||
+            if (bucket.Free.First is not LinkedListNode<FreeSurfaceEntry> first ||
                 (found && first.Value.LastUse >= candidate.LastUse))
             {
                 continue;
@@ -516,34 +633,32 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
             return false;
         }
 
-        LinkedList<FreeSurfaceEntry> candidateList = freeSurfaces[candidateKey];
-        candidateList.RemoveFirst();
-        if (candidateList.Count == 0)
-        {
-            freeSurfaces.Remove(candidateKey);
-        }
+        surfaceBuckets[candidateKey].Free.RemoveFirst();
         SdlGpuRenderTarget target = candidate.Target;
-        allSurfaces.Remove(target);
         long byteCount = EstimateBytes(
             target.PixelWidth,
             target.PixelHeight,
             target.ColorFormat,
             target.MipLevelCount);
         freeBytes -= byteCount;
-        totalBytes -= byteCount;
-        drawingResources.RetireRenderTarget(target);
+        RetireSurface(target);
         return true;
     }
 
-    private void TrimRetained()
+    private void RetireSurface(SdlGpuRenderTarget target)
     {
-        while (retained.Count > options.RetainedCacheEntryLimit ||
-            RetainedBytes() > options.RetainedCacheSoftByteLimit)
+        if (allSurfaces.Remove(target, out LinkedListNode<FreeSurfaceEntry>? node))
         {
-            if (!EvictOneRetained())
+            node.List?.Remove(node);
+            SurfaceKey key = new(target.PixelWidth, target.PixelHeight, target.ColorFormat, target.MipLevelCount);
+            SurfaceBucket bucket = surfaceBuckets[key];
+            if (--bucket.SurfaceCount == 0)
             {
-                break;
+                surfaceBuckets.Remove(key);
             }
+            totalBytes -= EstimateBytes(target.PixelWidth, target.PixelHeight,
+                target.ColorFormat, target.MipLevelCount);
+            drawingResources.RetireRenderTarget(target);
         }
     }
 
@@ -614,8 +729,6 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
 
     private static uint CalculateMipLevelCount(int width, int height)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
         uint levels = 1;
         int dimension = Math.Max(width, height);
         while (dimension > 1)
@@ -668,6 +781,16 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
         SdlGpuRenderTarget Target,
         long LastUse);
 
+    private sealed class SurfaceBucket
+    {
+        public LinkedList<FreeSurfaceEntry> Free { get; } = new();
+        public int SurfaceCount { get; set; }
+    }
+
+    private readonly record struct LeaseState(
+        SdlGpuRenderTarget Target,
+        PrismRetainedCacheKey? RetainedKey);
+
     private sealed class RetainedEntry(SdlGpuRenderTarget target, long lastUse)
     {
         public SdlGpuRenderTarget Target { get; } = target;
@@ -690,37 +813,42 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
         long Identity,
         long Version,
         object TextureKey);
+
+    private sealed record CurvesEntry(
+        PrismCurvesResource Resource,
+        long Identity,
+        long Version,
+        object TextureKey,
+        PrismCurveLut Lut);
 }
 
-internal sealed class SdlGpuPrismSurfaceLease : IDisposable
+internal readonly struct SdlGpuPrismSurfaceLease : IDisposable, IEquatable<SdlGpuPrismSurfaceLease>
 {
-    private SdlGpuPrismDeviceResources? owner;
-
     internal SdlGpuPrismSurfaceLease(
         SdlGpuPrismDeviceResources owner,
+        long id,
         SdlGpuRenderTarget target,
-        long windowId,
-        bool retained,
-        PrismRetainedCacheKey? retainedKey = null)
+        long windowId)
     {
-        this.owner = owner;
+        Owner = owner;
+        Id = id;
         Target = target;
         WindowId = windowId;
-        IsRetained = retained;
-        RetainedKey = retainedKey;
     }
 
+    internal SdlGpuPrismDeviceResources? Owner { get; }
+    internal long Id { get; }
     public SdlGpuRenderTarget Target { get; }
     public long WindowId { get; }
-    public bool IsRetained { get; private set; }
-    public PrismRetainedCacheKey? RetainedKey { get; private set; }
+    public bool IsRetained => RetainedKey.HasValue;
+    public PrismRetainedCacheKey? RetainedKey => Owner?.GetRetainedKey(Id);
 
-    internal void MarkRetained(in PrismRetainedCacheKey key)
-    {
-        IsRetained = true;
-        RetainedKey = key;
-    }
+    public void Dispose() => Owner?.Release(this);
 
-    public void Dispose() =>
-        Interlocked.Exchange(ref owner, null)?.Release(this);
+    public bool Equals(SdlGpuPrismSurfaceLease other) =>
+        ReferenceEquals(Owner, other.Owner) && Id == other.Id;
+
+    public override bool Equals(object? obj) => obj is SdlGpuPrismSurfaceLease other && Equals(other);
+
+    public override int GetHashCode() => HashCode.Combine(Owner, Id);
 }

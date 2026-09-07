@@ -31,12 +31,12 @@ surface.Draw += (_, frame) =>
 ```
 
 ## Remarks
-The callback executes inside the Cerneala-owned render loop after the surface has been cleared. The `frame` argument is valid only for the duration of the callback and does not expose the graphics device, render target, or batch lifecycle.
+The callback records commands inside the Cerneala-owned render loop, before the backend resolves reuse or damage and rasterizes the necessary region. The `frame` argument is valid only for the duration of the callback and does not expose the graphics device, render target, or batch lifecycle.
 
 ## Applies To
 Project: `Cerneala`
 
-Backend: MonoGame/WindowsDX retained rendering.
+Backend: SDL_GPU retained rendering.
 
 ## See Also
 - `RenderSurface2D`

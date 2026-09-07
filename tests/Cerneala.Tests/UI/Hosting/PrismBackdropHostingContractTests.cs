@@ -18,17 +18,12 @@ namespace Cerneala.Tests.UI.Hosting;
 public sealed class PrismBackdropHostingContractTests
 {
     [Fact]
-    public void BackdropContractsAreReadonlyAndBackendNeutral()
+    public void BackdropContractsAreReadonlyAndDefaultBackendHasNoSource()
     {
         Assert.True(typeof(IDisposable).IsAssignableFrom(typeof(IBackdropFrameLease)));
         Assert.All(
             typeof(BackdropFrameMetadata).GetProperties(),
             property => Assert.False(property.SetMethod?.IsPublic == true));
-        Assert.DoesNotContain(
-            typeof(IBackdropFrameLease).GetProperties(),
-            property => property.PropertyType.FullName?.StartsWith(
-                "Microsoft.Xna.Framework",
-                StringComparison.Ordinal) == true);
         IUiBackend backend = new LegacyUiBackend(new RecordingDrawingBackend());
         Assert.Null(backend.BackdropFrameSource);
     }

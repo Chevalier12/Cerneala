@@ -103,7 +103,7 @@ internal readonly record struct PrismNeighborhoodPlan
 internal static class PrismNeighborhoodPlanner
 {
     private const string NeighborhoodOwnerPrefix =
-        "PrismKernelRegistry/";
+        "SdlGpuPrismKernelSelector/";
     private const int DraftSamples = 5;
     private const int GoodSamples = 9;
     private const int BestSamples = 17;

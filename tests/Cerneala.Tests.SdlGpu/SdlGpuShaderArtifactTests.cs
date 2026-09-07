@@ -1,4 +1,6 @@
 using Cerneala.Backends.SdlGpu;
+using Cerneala.Drawing;
+using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Platforms.Sdl3;
 
 namespace Cerneala.Tests.SdlGpu;
@@ -6,6 +8,46 @@ namespace Cerneala.Tests.SdlGpu;
 [Collection(SdlNativeTestCollection.Name)]
 public sealed class SdlGpuShaderArtifactTests
 {
+    [Fact]
+    public void Presentation_profiles_do_not_merge_with_each_other_or_ordinary_drawing()
+    {
+        CerberusBatchKey ordinary = new(
+            DrawPrimitiveTopology.TriangleList, 42,
+            DrawSamplingMode.Linear, DrawAddressMode.Clamp, DrawBlendMode.Normal,
+            SdlGpuStencilMode.Disabled, 0, new SdlRect(0, 0, 16, 16),
+            SdlGpuColorWriteMask.All);
+        Assert.True(ordinary.CanMerge(ordinary));
+        foreach (PrismColorProfile profile in Enum.GetValues<PrismColorProfile>())
+        {
+            CerberusBatchKey presentation = ordinary with { PrismWorkingColorProfile = profile };
+            Assert.False(ordinary.CanMerge(presentation));
+            Assert.False(presentation.CanMerge(ordinary));
+            foreach (PrismColorProfile other in Enum.GetValues<PrismColorProfile>())
+            {
+                Assert.Equal(profile == other, presentation.CanMerge(
+                    ordinary with { PrismWorkingColorProfile = other }));
+            }
+        }
+    }
+
+    [Fact]
+    public void Presentation_and_ordinary_pipelines_are_separately_cached_and_owned()
+    {
+        FakeSdlApi api = new();
+        using SdlGpuDrawingResources resources = new(api, api.DeviceResult, SdlGpuShaderFormats.Dxil);
+        nint Pipeline(bool presentation) => resources.GetPipeline(
+            SdlGpuTextureFormat.R8G8B8A8Unorm, SdlGpuSampleCount.One,
+            DrawPrimitiveTopology.TriangleList, DrawBlendMode.Normal,
+            SdlGpuStencilMode.Disabled, prismPresentation: presentation);
+        nint ordinary = Pipeline(false);
+        nint converted = Pipeline(true);
+        Assert.NotEqual(ordinary, converted);
+        Assert.Equal(ordinary, Pipeline(false));
+        Assert.Equal(converted, Pipeline(true));
+        Assert.Equal(2, resources.PipelineCount);
+        Assert.Equal(3, api.GpuShaders.Count);
+    }
+
     [Theory]
     [InlineData((uint)SdlGpuShaderFormats.Dxil, "main")]
     [InlineData((uint)SdlGpuShaderFormats.SpirV, "main")]
@@ -33,7 +75,13 @@ public sealed class SdlGpuShaderArtifactTests
             {
                 Assert.Equal(format, shader.Format);
                 Assert.Equal(expectedEntryPoint, shader.EntryPoint);
-                Assert.False(shader.Code.IsEmpty);
+                Assert.True(shader.Code.Length > 32,
+                    $"Shader '{shader.Stage}' did not contain compiled {format} code.");
+                if (format == SdlGpuShaderFormats.Msl)
+                {
+                    string source = System.Text.Encoding.UTF8.GetString(shader.Code.Span);
+                    Assert.Equal(source.TrimEnd('\r', '\n') + "\n", source);
+                }
             }
         }
         finally
@@ -94,6 +142,11 @@ public sealed class SdlGpuShaderArtifactTests
                 device,
                 handles["drawing-vertex"],
                 handles["drawing-fragment"]));
+            pipelines.Add(CreatePipeline(
+                api,
+                device,
+                handles["drawing-vertex"],
+                handles["prism-presentation-fragment"]));
             pipelines.Add(CreatePipeline(
                 api,
                 device,

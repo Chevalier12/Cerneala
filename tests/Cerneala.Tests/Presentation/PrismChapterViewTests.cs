@@ -6,7 +6,6 @@ using Cerneala.UI;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
-using Cerneala.UI.Hosting.Windows;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 using Cerneala.UI.Media;

@@ -21,16 +21,19 @@ public readonly struct PrismRendererDiagnostics
 using Cerneala.Drawing.Prism;
 using Cerneala.UI.Detective;
 
-PrismRendererDiagnostics diagnostics = host.PrismDiagnostics;
-
-Console.WriteLine($"Final hits: {diagnostics.FinalHitCount}");
-Console.WriteLine($"Retained bytes: {diagnostics.RetainedByteCount}");
-Console.WriteLine(
-    $"Capacity evictions: " +
-    $"{diagnostics.GetEvictionCount(PrismCacheEvictionReason.Capacity)}");
+static void PrintCacheSummary(PrismRendererDiagnostics diagnostics)
+{
+    Console.WriteLine($"Final hits: {diagnostics.FinalHitCount}");
+    Console.WriteLine($"Retained bytes: {diagnostics.RetainedByteCount}");
+    Console.WriteLine($"Capacity evictions: {diagnostics.GetEvictionCount(PrismCacheEvictionReason.Capacity)}");
+}
 ```
 
 ## Remarks
+
+The snapshot type remains backend-neutral. The removed adapter's snapshot-access
+property is not an SDL public API; this value type does not itself obtain a live
+SDL cache snapshot or enable development diagnostics.
 
 Hit, miss, lookup, promotion, rejection, eviction, peak-byte, and saved-work
 counters are cumulative for the lifetime of the underlying Prism executor.
@@ -91,7 +94,7 @@ Reading it does not pin cache entries or extend GPU resource lifetimes.
 
 ## Applies to
 
-Cerneala MonoGame Prism rendering and UI hosting.
+Cerneala Prism diagnostic snapshot values.
 
 ## See also
 
@@ -99,4 +102,4 @@ Cerneala MonoGame Prism rendering and UI hosting.
 - `Cerneala.Drawing.Prism.PrismCacheMissReason`
 - `Cerneala.Drawing.Prism.PrismCacheEvictionReason`
 - `Cerneala.Drawing.Prism.PrismDependencyChange`
-- `Cerneala.Drawing.MonoGame.MonoGameDrawingBackend`
+- `Cerneala.UI.Hosting.Sdl.SdlGpuApplicationBackend`

@@ -45,7 +45,7 @@ bool frameDidWork = frame.Stats.HasWork;
 
 ## Remarks
 
-`UiFrame` is the frame result type returned by `UiHost.Update` and exposed as `UiHost.LastFrame`. `MonoGameUiHost` also exposes the most recent `UiFrame` through its own `LastFrame` property.
+`UiFrame` is the frame result type returned by `UiHost.Update` and exposed as `UiHost.LastFrame`.
 
 The constructor stores the supplied values. `Input` and `Stats` are required and throw `ArgumentNullException` when `null`; `ElapsedTime` is stored without validation, and `Viewport` is a value type.
 

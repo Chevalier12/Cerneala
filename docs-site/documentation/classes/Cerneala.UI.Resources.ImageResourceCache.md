@@ -123,4 +123,4 @@ The cache requires an `IImageLoader` to resolve path-backed resources. If the ca
 - `Cerneala.UI.Resources.IImageLoader`
 - `Cerneala.UI.Elements.UIRoot`
 - `Cerneala.UI.Controls.Image`
-- `Cerneala.UI.Hosting.MonoGame.MonoGameContentServices`
+- `Cerneala.UI.Drawing.DrawingContentServices`

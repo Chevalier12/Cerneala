@@ -3,7 +3,6 @@ using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Presentation;
 using Cerneala.UI;
 using Cerneala.UI.Elements;
-using Cerneala.UI.Hosting.Windows;
 using Cerneala.Tests.UI.Hosting;
 
 namespace Cerneala.Tests.Presentation;

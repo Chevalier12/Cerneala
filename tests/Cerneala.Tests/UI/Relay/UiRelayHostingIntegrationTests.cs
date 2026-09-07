@@ -2,7 +2,6 @@ using Cerneala.Drawing;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
-using Cerneala.UI.Hosting.MonoGame;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
@@ -239,15 +238,10 @@ public sealed class UiRelayHostingIntegrationTests
 
         Assert.Same(root.Relay, host.Relay);
         Assert.Null(detachedHost.Relay);
-        Assert.Equal(
-            typeof(UiRelay),
-            typeof(MonoGameUiHost).GetProperty(nameof(MonoGameUiHost.Relay))!.PropertyType);
+        Assert.Equal(typeof(UiRelay), typeof(UiHost).GetProperty(nameof(UiHost.Relay))!.PropertyType);
         Assert.Equal(
             NullabilityState.Nullable,
             nullability.Create(typeof(UiHost).GetProperty(nameof(UiHost.Relay))!).ReadState);
-        Assert.Equal(
-            NullabilityState.Nullable,
-            nullability.Create(typeof(MonoGameUiHost).GetProperty(nameof(MonoGameUiHost.Relay))!).ReadState);
     }
 
     [Fact]

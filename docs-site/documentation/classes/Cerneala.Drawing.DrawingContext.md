@@ -194,6 +194,8 @@ surface.Draw += (_, frame) =>
 
 `DrawingContext` is a thin recording facade over `DrawCommandList`. Each public drawing method creates the matching `DrawCommand` and appends it to the list supplied to the constructor. The context does not render directly; backends consume the recorded commands later.
 
+SDL_GPU fills rectangles with each logical edge converted to a physical pixel boundary using `UiCoordinateMapper.LogicalToPhysicalPixel` (`MidpointRounding.AwayFromZero`) before applying the drawing transform. This preserves deterministic rectangle coverage at fractional viewport scales; the recorded `DrawRect` itself retains its floating-point coordinates.
+
 Stroke methods delegate validation to `DrawCommand`. Invalid stroke thickness values throw `ArgumentOutOfRangeException`. `DrawLine` and `DrawText` also validate their points against the supported pixel coordinate range. `DrawText` throws `ArgumentNullException` for a null `DrawTextRun`, and `DrawImage` throws `ArgumentNullException` for a null image.
 
 State commands share one LIFO stack. Rectangular clips remain on the scissor fast path when their accumulated transform is axis-aligned; typed paths provide geometric clips. Opacity and layers isolate their children before compositing, so overlapping children receive group opacity once. `System.Numerics.Matrix3x2` transforms compose by multiplying each newly pushed local matrix on the left of the accumulated parent matrix; points therefore receive the innermost local transform before their parent transforms.

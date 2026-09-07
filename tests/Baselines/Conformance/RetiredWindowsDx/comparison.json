@@ -1,0 +1,667 @@
+[
+  {
+    "Symbol": "BrightnessContrast",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "Levels",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "Exposure",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "Vibrance",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "HueSaturation",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "ColorBalance",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "BlackWhite",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "PhotoFilter",
+    "Passes": true,
+    "Diff": "MAE=0.0044, P99=0, max=1"
+  },
+  {
+    "Symbol": "ChannelMixer",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "Invert",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "Posterize",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "Threshold",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "SelectiveColor",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "Average",
+    "Passes": true,
+    "Diff": "MAE=0.0052, P99=0, max=1"
+  },
+  {
+    "Symbol": "Blur",
+    "Passes": true,
+    "Diff": "MAE=0.0017, P99=0, max=1"
+  },
+  {
+    "Symbol": "BlurMore",
+    "Passes": true,
+    "Diff": "MAE=0.0031, P99=0, max=1"
+  },
+  {
+    "Symbol": "BoxBlur",
+    "Passes": true,
+    "Diff": "MAE=0.0024, P99=0, max=1"
+  },
+  {
+    "Symbol": "GaussianBlur",
+    "Passes": true,
+    "Diff": "MAE=0.0024, P99=0, max=1"
+  },
+  {
+    "Symbol": "LensBlur",
+    "Passes": true,
+    "Diff": "MAE=0.0065, P99=0, max=1"
+  },
+  {
+    "Symbol": "MotionBlur",
+    "Passes": true,
+    "Diff": "MAE=0.0017, P99=0, max=1"
+  },
+  {
+    "Symbol": "RadialBlur",
+    "Passes": true,
+    "Diff": "MAE=0.1880, P99=6, max=39"
+  },
+  {
+    "Symbol": "SmartBlur",
+    "Passes": true,
+    "Diff": "MAE=0.0010, P99=0, max=1"
+  },
+  {
+    "Symbol": "SurfaceBlur",
+    "Passes": true,
+    "Diff": "MAE=0.0017, P99=0, max=1"
+  },
+  {
+    "Symbol": "IrisBlur",
+    "Passes": true,
+    "Diff": "MAE=0.0037, P99=0, max=1"
+  },
+  {
+    "Symbol": "TiltShift",
+    "Passes": true,
+    "Diff": "MAE=0.3710, P99=10, max=41"
+  },
+  {
+    "Symbol": "SpinBlur",
+    "Passes": true,
+    "Diff": "MAE=0.0011, P99=0, max=1"
+  },
+  {
+    "Symbol": "Sharpen",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=1"
+  },
+  {
+    "Symbol": "SharpenMore",
+    "Passes": true,
+    "Diff": "MAE=0.0006, P99=0, max=1"
+  },
+  {
+    "Symbol": "SharpenEdges",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "UnsharpMask",
+    "Passes": true,
+    "Diff": "MAE=0.0003, P99=0, max=1"
+  },
+  {
+    "Symbol": "SmartSharpen",
+    "Passes": true,
+    "Diff": "MAE=0.0042, P99=0, max=1"
+  },
+  {
+    "Symbol": "HighPass",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "Transform",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "AdaptiveWideAngle",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "LensCorrection",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "DiffuseGlow",
+    "Passes": true,
+    "Diff": "MAE=0.0001, P99=0, max=1"
+  },
+  {
+    "Symbol": "Glass",
+    "Passes": true,
+    "Diff": "MAE=0.0027, P99=0, max=2"
+  },
+  {
+    "Symbol": "OceanRipple",
+    "Passes": true,
+    "Diff": "MAE=0.0017, P99=0, max=1"
+  },
+  {
+    "Symbol": "Pinch",
+    "Passes": true,
+    "Diff": "MAE=0.0011, P99=0, max=1"
+  },
+  {
+    "Symbol": "PolarCoordinates",
+    "Passes": true,
+    "Diff": "MAE=0.0007, P99=0, max=1"
+  },
+  {
+    "Symbol": "Ripple",
+    "Passes": true,
+    "Diff": "MAE=0.0009, P99=0, max=1"
+  },
+  {
+    "Symbol": "Shear",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "Spherize",
+    "Passes": true,
+    "Diff": "MAE=0.0045, P99=0, max=4"
+  },
+  {
+    "Symbol": "Twirl",
+    "Passes": true,
+    "Diff": "MAE=0.0018, P99=0, max=1"
+  },
+  {
+    "Symbol": "Wave",
+    "Passes": true,
+    "Diff": "MAE=0.0037, P99=0, max=1"
+  },
+  {
+    "Symbol": "ZigZag",
+    "Passes": true,
+    "Diff": "MAE=0.0012, P99=0, max=1"
+  },
+  {
+    "Symbol": "Maximum",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "Minimum",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "Offset",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "AddNoise",
+    "Passes": true,
+    "Diff": "MAE=0.0042, P99=0, max=1"
+  },
+  {
+    "Symbol": "Despeckle",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "DustScratches",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "Median",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "ReduceNoise",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "ColorHalftone",
+    "Passes": true,
+    "Diff": "MAE=0.0005, P99=0, max=1"
+  },
+  {
+    "Symbol": "Crystallize",
+    "Passes": true,
+    "Diff": "MAE=0.0011, P99=0, max=1"
+  },
+  {
+    "Symbol": "Facet",
+    "Passes": true,
+    "Diff": "MAE=0.0004, P99=0, max=1"
+  },
+  {
+    "Symbol": "Fragment",
+    "Passes": true,
+    "Diff": "MAE=0.0013, P99=0, max=1"
+  },
+  {
+    "Symbol": "Mezzotint",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "Mosaic",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "Pointillize",
+    "Passes": true,
+    "Diff": "MAE=0.0194, P99=0, max=36"
+  },
+  {
+    "Symbol": "Clouds",
+    "Passes": true,
+    "Diff": "MAE=0.0043, P99=0, max=1"
+  },
+  {
+    "Symbol": "DifferenceClouds",
+    "Passes": true,
+    "Diff": "MAE=0.0065, P99=0, max=1"
+  },
+  {
+    "Symbol": "Fibers",
+    "Passes": true,
+    "Diff": "MAE=0.0088, P99=0, max=1"
+  },
+  {
+    "Symbol": "Deinterlace",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=1"
+  },
+  {
+    "Symbol": "NtscColors",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "ColoredPencil",
+    "Passes": true,
+    "Diff": "MAE=0.1242, P99=2, max=6"
+  },
+  {
+    "Symbol": "Cutout",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "DryBrush",
+    "Passes": true,
+    "Diff": "MAE=0.0055, P99=0, max=12"
+  },
+  {
+    "Symbol": "FilmGrain",
+    "Passes": true,
+    "Diff": "MAE=0.0040, P99=0, max=1"
+  },
+  {
+    "Symbol": "Fresco",
+    "Passes": true,
+    "Diff": "MAE=0.0046, P99=0, max=1"
+  },
+  {
+    "Symbol": "NeonGlow",
+    "Passes": true,
+    "Diff": "MAE=0.0031, P99=0, max=1"
+  },
+  {
+    "Symbol": "PaintDaubs",
+    "Passes": true,
+    "Diff": "MAE=0.0003, P99=0, max=1"
+  },
+  {
+    "Symbol": "PaletteKnife",
+    "Passes": true,
+    "Diff": "MAE=0.0013, P99=0, max=1"
+  },
+  {
+    "Symbol": "PlasticWrap",
+    "Passes": true,
+    "Diff": "MAE=0.0034, P99=0, max=1"
+  },
+  {
+    "Symbol": "PosterEdges",
+    "Passes": true,
+    "Diff": "MAE=0.0016, P99=0, max=1"
+  },
+  {
+    "Symbol": "RoughPastels",
+    "Passes": true,
+    "Diff": "MAE=0.0177, P99=1, max=17"
+  },
+  {
+    "Symbol": "SmudgeStick",
+    "Passes": true,
+    "Diff": "MAE=0.0008, P99=0, max=1"
+  },
+  {
+    "Symbol": "Sponge",
+    "Passes": true,
+    "Diff": "MAE=0.0021, P99=0, max=1"
+  },
+  {
+    "Symbol": "Underpainting",
+    "Passes": true,
+    "Diff": "MAE=0.0047, P99=0, max=1"
+  },
+  {
+    "Symbol": "Watercolor",
+    "Passes": true,
+    "Diff": "MAE=0.0047, P99=0, max=1"
+  },
+  {
+    "Symbol": "AccentedEdges",
+    "Passes": true,
+    "Diff": "MAE=0.0004, P99=0, max=1"
+  },
+  {
+    "Symbol": "AngledStrokes",
+    "Passes": true,
+    "Diff": "MAE=0.0010, P99=0, max=1"
+  },
+  {
+    "Symbol": "Crosshatch",
+    "Passes": true,
+    "Diff": "MAE=0.0030, P99=0, max=1"
+  },
+  {
+    "Symbol": "DarkStrokes",
+    "Passes": true,
+    "Diff": "MAE=0.0001, P99=0, max=1"
+  },
+  {
+    "Symbol": "InkOutlines",
+    "Passes": true,
+    "Diff": "MAE=0.0153, P99=1, max=1"
+  },
+  {
+    "Symbol": "Spatter",
+    "Passes": true,
+    "Diff": "MAE=0.0005, P99=0, max=1"
+  },
+  {
+    "Symbol": "SprayedStrokes",
+    "Passes": true,
+    "Diff": "MAE=0.0042, P99=0, max=1"
+  },
+  {
+    "Symbol": "SumiE",
+    "Passes": true,
+    "Diff": "MAE=0.0023, P99=0, max=1"
+  },
+  {
+    "Symbol": "BasRelief",
+    "Passes": true,
+    "Diff": "MAE=0.0029, P99=0, max=1"
+  },
+  {
+    "Symbol": "ChalkCharcoal",
+    "Passes": true,
+    "Diff": "MAE=0.0055, P99=0, max=7"
+  },
+  {
+    "Symbol": "Charcoal",
+    "Passes": true,
+    "Diff": "MAE=0.0102, P99=0, max=23"
+  },
+  {
+    "Symbol": "Chrome",
+    "Passes": true,
+    "Diff": "MAE=0.0025, P99=0, max=1"
+  },
+  {
+    "Symbol": "ConteCrayon",
+    "Passes": true,
+    "Diff": "MAE=0.0097, P99=0, max=7"
+  },
+  {
+    "Symbol": "GraphicPen",
+    "Passes": true,
+    "Diff": "MAE=0.0028, P99=0, max=1"
+  },
+  {
+    "Symbol": "HalftonePattern",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "NotePaper",
+    "Passes": true,
+    "Diff": "MAE=0.0002, P99=0, max=1"
+  },
+  {
+    "Symbol": "Photocopy",
+    "Passes": true,
+    "Diff": "MAE=0.0003, P99=0, max=1"
+  },
+  {
+    "Symbol": "Plaster",
+    "Passes": true,
+    "Diff": "MAE=0.0003, P99=0, max=1"
+  },
+  {
+    "Symbol": "Reticulation",
+    "Passes": true,
+    "Diff": "MAE=0.0011, P99=0, max=1"
+  },
+  {
+    "Symbol": "Stamp",
+    "Passes": true,
+    "Diff": "MAE=0.0001, P99=0, max=1"
+  },
+  {
+    "Symbol": "TornEdges",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "WaterPaper",
+    "Passes": true,
+    "Diff": "MAE=0.0031, P99=0, max=6"
+  },
+  {
+    "Symbol": "Diffuse",
+    "Passes": true,
+    "Diff": "MAE=0.0001, P99=0, max=1"
+  },
+  {
+    "Symbol": "Emboss",
+    "Passes": true,
+    "Diff": "MAE=0.0011, P99=0, max=1"
+  },
+  {
+    "Symbol": "Extrude",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "FindEdges",
+    "Passes": true,
+    "Diff": "MAE=0.0043, P99=0, max=1"
+  },
+  {
+    "Symbol": "GlowingEdges",
+    "Passes": true,
+    "Diff": "MAE=0.0007, P99=0, max=1"
+  },
+  {
+    "Symbol": "Solarize",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "Tiles",
+    "Passes": true,
+    "Diff": "MAE=0.0007, P99=0, max=1"
+  },
+  {
+    "Symbol": "TraceContour",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "Wind",
+    "Passes": true,
+    "Diff": "MAE=0.0291, P99=1, max=4"
+  },
+  {
+    "Symbol": "Craquelure",
+    "Passes": true,
+    "Diff": "MAE=0.0024, P99=0, max=1"
+  },
+  {
+    "Symbol": "Grain",
+    "Passes": true,
+    "Diff": "MAE=0.0011, P99=0, max=1"
+  },
+  {
+    "Symbol": "MosaicTiles",
+    "Passes": true,
+    "Diff": "MAE=0.0020, P99=0, max=1"
+  },
+  {
+    "Symbol": "Patchwork",
+    "Passes": true,
+    "Diff": "MAE=0.0036, P99=0, max=1"
+  },
+  {
+    "Symbol": "StainedGlass",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "Texturizer",
+    "Passes": true,
+    "Diff": "MAE=0.0034, P99=0, max=1"
+  },
+  {
+    "Symbol": "OilPaint",
+    "Passes": true,
+    "Diff": "MAE=0.0115, P99=1, max=2"
+  },
+  {
+    "Symbol": "ColorMatrix",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "Color",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "ChromaticAberration",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "Scanlines",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "DropShadow",
+    "Passes": true,
+    "Diff": "MAE=0.2415, P99=0, max=47"
+  },
+  {
+    "Symbol": "InnerShadow",
+    "Passes": true,
+    "Diff": "MAE=0.0003, P99=0, max=1"
+  },
+  {
+    "Symbol": "OuterGlow",
+    "Passes": true,
+    "Diff": "MAE=0.0404, P99=0, max=26"
+  },
+  {
+    "Symbol": "InnerGlow",
+    "Passes": true,
+    "Diff": "MAE=0.0010, P99=0, max=1"
+  },
+  {
+    "Symbol": "BevelEmboss",
+    "Passes": true,
+    "Diff": "MAE=0.0003, P99=0, max=1"
+  },
+  {
+    "Symbol": "Satin",
+    "Passes": true,
+    "Diff": "MAE=0.0037, P99=0, max=1"
+  },
+  {
+    "Symbol": "ColorOverlay",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "GradientOverlay",
+    "Passes": true,
+    "Diff": "MAE=0.0069, P99=0, max=1"
+  },
+  {
+    "Symbol": "Stroke",
+    "Passes": true,
+    "Diff": "MAE=0.0000, P99=0, max=0"
+  },
+  {
+    "Symbol": "drawing-api",
+    "Passes": true,
+    "Diff": "MAE=0.0019, P99=0, max=17"
+  }
+]

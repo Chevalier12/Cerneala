@@ -16,6 +16,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     private readonly Dictionary<SdlGpuPipelineKey, nint> pipelines = [];
     private readonly Dictionary<SdlGpuSamplerKey, nint> samplers = [];
     private readonly Dictionary<object, SdlGpuTextureResource> textures = [];
+    private readonly Dictionary<object, int> textureReferenceCounts = [];
     private readonly Dictionary<SdlGpuTextLayerTextureKey, SdlGpuTextAtlasEntry> textAtlasEntries = [];
     private readonly List<SdlGpuTextAtlasPage> textAtlasPages = [];
     private readonly Stack<SdlGpuTextAtlasPage> spareTextAtlasPages = [];
@@ -26,6 +27,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     private readonly List<nint> retiredTransferBuffers = [];
     private nint vertexShader;
     private nint fragmentShader;
+    private nint prismPresentationShader;
     private nint uploadTransferBuffer;
     private uint transferCapacity;
     private long nextTextAtlasFrameToken;
@@ -78,7 +80,9 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         DrawPrimitiveTopology topology,
         DrawBlendMode blendMode,
         SdlGpuStencilMode stencilMode,
-        SdlGpuColorWriteMask colorWriteMask = SdlGpuColorWriteMask.All)
+        SdlGpuColorWriteMask colorWriteMask = SdlGpuColorWriteMask.All,
+        bool alphaMask = false,
+        bool prismPresentation = false)
     {
         ThrowIfDisposed();
         EnsureShaders();
@@ -88,22 +92,34 @@ internal sealed class SdlGpuDrawingResources : IDisposable
             topology,
             blendMode,
             stencilMode,
-            colorWriteMask);
+            colorWriteMask,
+            alphaMask,
+            prismPresentation);
         if (pipelines.TryGetValue(key, out nint cached))
         {
             return cached;
         }
 
+        if (prismPresentation && prismPresentationShader == 0)
+        {
+            prismPresentationShader = SdlGpuShaderArtifacts.CreateShader(
+                api, device, supportedShaderFormats,
+                SdlGpuShaderArtifacts.PrismPresentationFragment);
+        }
         SdlGpuGraphicsPipelineCreateInfo createInfo = new(
             vertexShader,
-            fragmentShader,
+            prismPresentation ? prismPresentationShader : fragmentShader,
             colorFormat,
             SdlGpuTextureFormat.D24UnormS8Uint,
             sampleCount,
             topology == DrawPrimitiveTopology.TriangleStrip
                 ? SdlGpuPrimitiveType.TriangleStrip
                 : SdlGpuPrimitiveType.TriangleList,
-            ToBlendState(blendMode),
+            alphaMask
+                ? new SdlGpuBlendState(
+                    SdlGpuBlendFactor.Zero, SdlGpuBlendFactor.SourceAlpha, SdlGpuBlendOperation.Add,
+                    SdlGpuBlendFactor.Zero, SdlGpuBlendFactor.SourceAlpha, SdlGpuBlendOperation.Add)
+                : ToBlendState(blendMode),
             stencilMode,
             colorWriteMask);
         nint pipeline = RequireHandle(
@@ -113,10 +129,10 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         return pipeline;
     }
 
-    public nint GetSampler(DrawSamplingMode sampling, DrawAddressMode addressMode)
+    public nint GetSampler(DrawSamplingMode sampling, DrawAddressMode addressMode, bool anisotropic = false)
     {
         ThrowIfDisposed();
-        SdlGpuSamplerKey key = new(sampling, addressMode);
+        SdlGpuSamplerKey key = new(sampling, addressMode, anisotropic);
         if (samplers.TryGetValue(key, out nint cached))
         {
             return cached;
@@ -131,7 +147,9 @@ internal sealed class SdlGpuDrawingResources : IDisposable
                 : SdlGpuSamplerAddressMode.ClampToEdge,
             sampling == DrawSamplingMode.Point
                 ? SdlGpuSamplerMipmapMode.Nearest
-                : SdlGpuSamplerMipmapMode.Linear);
+                : SdlGpuSamplerMipmapMode.Linear,
+            EnableAnisotropy: anisotropic,
+            MaxAnisotropy: anisotropic ? 4 : 1);
         nint sampler = RequireHandle(
             api.CreateGpuSampler(device, createInfo),
             $"SDL GPU drawing sampler creation ({key})");
@@ -268,11 +286,15 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         bool shouldCompact =
             textAtlasPages.Count > compactedTextAtlasPageCount ||
             ShouldCompactTextAtlas(frameToken);
+        bool hasActiveFrames = false;
         foreach (SdlGpuTextAtlasPage page in textAtlasPages)
         {
             page.EndFrame(frameToken);
+            hasActiveFrames |= page.ActiveFrameCount != 0;
         }
-        if (shouldCompact)
+        // A different window/frame may still hold queued UVs into these pages.
+        // Compaction can move entries only after all active readers finish.
+        if (shouldCompact && !hasActiveFrames)
         {
             CompactTextAtlas(frameToken);
         }
@@ -431,6 +453,33 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         {
             RetireTexture(texture.Handle);
         }
+    }
+
+    public void RetainTexture(object key)
+    {
+        ThrowIfDisposed();
+        if (!textures.ContainsKey(key))
+        {
+            throw new InvalidOperationException("Cannot retain an uncached SDL_GPU texture.");
+        }
+        textureReferenceCounts.TryGetValue(key, out int count);
+        textureReferenceCounts[key] = checked(count + 1);
+    }
+
+    public void ReleaseTexture(object key)
+    {
+        ThrowIfDisposed();
+        if (!textureReferenceCounts.TryGetValue(key, out int count))
+        {
+            throw new InvalidOperationException("Cannot release an unretained SDL_GPU texture.");
+        }
+        if (count > 1)
+        {
+            textureReferenceCounts[key] = count - 1;
+            return;
+        }
+        textureReferenceCounts.Remove(key);
+        InvalidateTexture(key);
     }
 
     public SdlGpuRenderTarget GetLayerTarget(
@@ -618,6 +667,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         }
         ownedTextures.Clear();
         textures.Clear();
+        textureReferenceCounts.Clear();
         textAtlasEntries.Clear();
         textAtlasPages.Clear();
         spareTextAtlasPages.Clear();
@@ -632,6 +682,11 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         {
             api.ReleaseGpuShader(device, fragmentShader);
             fragmentShader = 0;
+        }
+        if (prismPresentationShader != 0)
+        {
+            api.ReleaseGpuShader(device, prismPresentationShader);
+            prismPresentationShader = 0;
         }
         if (vertexShader != 0)
         {
@@ -1321,11 +1376,14 @@ internal readonly record struct SdlGpuPipelineKey(
     DrawPrimitiveTopology Topology,
     DrawBlendMode BlendMode,
     SdlGpuStencilMode StencilMode,
-    SdlGpuColorWriteMask ColorWriteMask);
+    SdlGpuColorWriteMask ColorWriteMask,
+    bool AlphaMask = false,
+    bool PrismPresentation = false);
 
 internal readonly record struct SdlGpuSamplerKey(
     DrawSamplingMode Sampling,
-    DrawAddressMode AddressMode);
+    DrawAddressMode AddressMode,
+    bool Anisotropic = false);
 
 internal readonly record struct SdlGpuLayerTargetKey(
     int Depth,

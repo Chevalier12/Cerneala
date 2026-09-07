@@ -4,7 +4,6 @@ using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Elements;
-using Cerneala.UI.Hosting.Windows;
 using Cerneala.UI.Input;
 using Cerneala.Tests.UI.Hosting;
 

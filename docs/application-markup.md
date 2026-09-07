@@ -68,7 +68,7 @@ public partial class ShellWindow : Window
 
 ```csharp
 [assembly: Cerneala.UI.Hosting.Windowing.ApplicationBackend(
-    typeof(Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend))]
+    typeof(Cerneala.UI.Hosting.Sdl.SdlGpuApplicationBackend))]
 ```
 
 The project includes the generator as an analyzer and the markup as additional
@@ -77,12 +77,12 @@ files:
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cerneala.csproj" />
-    <ProjectReference Include="..\Cerneala.Backends.MonoGame\Cerneala.Backends.MonoGame.csproj" />
+    <ProjectReference Include="..\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj" />
     <ProjectReference Include="..\Cerneala.SourceGen\Cerneala.SourceGen.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
@@ -92,7 +92,7 @@ files:
 ```
 
 `Cerneala.csproj` supplies the backend-neutral UI and drawing contracts. The
-separate `Cerneala.Backends.MonoGame` reference makes WindowsDX/MonoGame
+separate `Cerneala.Backends.SdlGpu` reference makes SDL3 + SDL_GPU
 available; the assembly attribute selects it explicitly for the generated
 desktop entry point.
 

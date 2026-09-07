@@ -29,7 +29,7 @@ IDrawFont font = fontSource.LoadFont("Arial", 16);
 ```
 
 ## Remarks
-`SystemFontSource` is the default `IFontSource` used by `MonoGameContentServices` when no custom font source is supplied.
+`SystemFontSource` is the default `IFontSource` used by `DrawingContentServices` when no custom font source is supplied.
 
 `LoadFont` first resolves the requested family name through `SKFontManager.Default.MatchFamily`. It also accepts common named-weight suffixes such as `SemiBold`, `ExtraBold`, and `Light`; for example, `Cascadia Mono SemiBold` resolves the `Cascadia Mono` family at weight 600. If neither the exact name nor a named-weight form resolves, the implementation falls back to `SKTypeface.Default` and still creates a `SkiaFont` with the requested family name and size.
 
@@ -82,4 +82,4 @@ Project: `Cerneala`
 - `Cerneala.Drawing.IFontSource`
 - `Cerneala.Drawing.IDrawFont`
 - `Cerneala.Drawing.Text.SkiaFont`
-- `Cerneala.UI.Hosting.MonoGame.MonoGameContentServices`
+- `Cerneala.UI.Hosting.DrawingContentServices`

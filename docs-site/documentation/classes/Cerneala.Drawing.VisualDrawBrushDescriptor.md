@@ -20,11 +20,11 @@ public sealed record VisualDrawBrushDescriptor(
 
 ## Examples
 ```csharp
-var descriptor = (VisualDrawBrushDescriptor)visualBrush.CreateDescriptor();
+var descriptor = (VisualDrawBrushDescriptor)((IDrawBrush)visualBrush).CreateDescriptor();
 ```
 
 ## Remarks
-`VisualIdentity` identifies the source visual for resource ownership and diagnostics. The capture path rejects recursive brush graphs before a render pass can recurse indefinitely.
+`VisualIdentity` identifies the source visual. Capture and SDL_GPU brush rendering reject recursive source graphs with `InvalidOperationException`. The renderer compares recorded command snapshots so an unchanged capture can reuse its raster while a changed source is repainted.
 
 ## Properties
 | Name | Description |
@@ -36,4 +36,4 @@ var descriptor = (VisualDrawBrushDescriptor)visualBrush.CreateDescriptor();
 | `BrushOpacity` | Source opacity. |
 
 ## Applies to
-MonoGame backend implementation code.
+Backend-neutral drawing descriptors, implemented by SDL_GPU.

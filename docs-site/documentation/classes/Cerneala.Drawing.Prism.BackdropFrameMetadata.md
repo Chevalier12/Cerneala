@@ -33,7 +33,7 @@ BackdropFrameMetadata metadata = new(
 
 ## Remarks
 
-`CoordinateTransform` maps host logical coordinates to source pixel coordinates. A provider must publish a `ContentVersion` that never decreases and must increment it whenever scene or lower-UI pixels, or pixel-affecting metadata, change. The WindowsDX source advances the version for every begun frame; retained Prism dependency tracking combines it with the UI and raster state used by the composition.
+`CoordinateTransform` maps host logical coordinates to source pixel coordinates. A provider must publish a `ContentVersion` that never decreases and must increment it whenever scene or lower-UI pixels, or pixel-affecting metadata, change. Retained Prism dependency tracking combines it with the UI and raster state used by the composition.
 
 Metadata does not expose a graphics texture and does not imply ownership. It remains a value snapshot even though the corresponding `IBackdropFrameLease` is valid only for the drawing frame that acquired it.
 

@@ -395,41 +395,6 @@
     "source": "Drawing/IDrawBrush.cs"
   },
   {
-    "name": "Cerneala.Drawing.MonoGame.MonoGameClipStack",
-    "file": "documentation/classes/Cerneala.Drawing.MonoGame.MonoGameClipStack.md",
-    "source": "Drawing/MonoGame/MonoGameClipStack.cs"
-  },
-  {
-    "name": "Cerneala.Drawing.MonoGame.MonoGameDrawingBackend",
-    "file": "documentation/classes/Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.md",
-    "source": "Drawing/MonoGame/MonoGameDrawingBackend.cs"
-  },
-  {
-    "name": "Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.TextTexture",
-    "file": "documentation/classes/Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.TextTexture.md",
-    "source": "Drawing/MonoGame/MonoGameDrawingBackend.cs"
-  },
-  {
-    "name": "Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.TextTextureKey",
-    "file": "documentation/classes/Cerneala.Drawing.MonoGame.MonoGameDrawingBackend.TextTextureKey.md",
-    "source": "Drawing/MonoGame/MonoGameDrawingBackend.cs"
-  },
-  {
-    "name": "Cerneala.Drawing.MonoGame.MonoGameDrawMapper",
-    "file": "documentation/classes/Cerneala.Drawing.MonoGame.MonoGameDrawMapper.md",
-    "source": "Drawing/MonoGame/MonoGameDrawMapper.cs"
-  },
-  {
-    "name": "Cerneala.Drawing.MonoGame.MonoGameImage",
-    "file": "documentation/classes/Cerneala.Drawing.MonoGame.MonoGameImage.md",
-    "source": "Drawing/MonoGame/MonoGameImage.cs"
-  },
-  {
-    "name": "Cerneala.Drawing.MonoGame.Prism.IMonoGameBackdropFrameLease",
-    "file": "documentation/classes/Cerneala.Drawing.MonoGame.Prism.IMonoGameBackdropFrameLease.md",
-    "source": "Drawing/MonoGame/Prism/IMonoGameBackdropFrameLease.cs"
-  },
-  {
     "name": "Cerneala.Drawing.Prism.BackdropAlphaMode",
     "file": "documentation/classes/Cerneala.Drawing.Prism.BackdropAlphaMode.md",
     "source": "Drawing/Prism/BackdropAlphaMode.cs"
@@ -2383,26 +2348,6 @@
       "file": "documentation/classes/Cerneala.UI.Hosting.DrawingContentServices.md",
     "source": "UI/Drawing/DrawingContentServices.cs"
     },
-    {
-      "name": "Cerneala.UI.Hosting.MonoGame.MonoGameContentServices",
-    "file": "documentation/classes/Cerneala.UI.Hosting.MonoGame.MonoGameContentServices.md",
-    "source": "UI/Hosting/MonoGame/MonoGameContentServices.cs"
-  },
-  {
-    "name": "Cerneala.UI.Hosting.MonoGame.MonoGameUiHost",
-    "file": "documentation/classes/Cerneala.UI.Hosting.MonoGame.MonoGameUiHost.md",
-    "source": "UI/Hosting/MonoGame/MonoGameUiHost.cs"
-  },
-  {
-    "name": "Cerneala.UI.Hosting.MonoGame.MonoGameUiHost.MonoGameUiBackend",
-    "file": "documentation/classes/Cerneala.UI.Hosting.MonoGame.MonoGameUiHost.MonoGameUiBackend.md",
-    "source": "UI/Hosting/MonoGame/MonoGameUiHost.cs"
-  },
-  {
-    "name": "Cerneala.UI.Hosting.MonoGame.MonoGameUiHostOptions",
-    "file": "documentation/classes/Cerneala.UI.Hosting.MonoGame.MonoGameUiHostOptions.md",
-    "source": "UI/Hosting/MonoGame/MonoGameUiHostOptions.cs"
-  },
   {
     "name": "Cerneala.UI.Hosting.UiCoordinateMapper",
     "file": "documentation/classes/Cerneala.UI.Hosting.UiCoordinateMapper.md",
@@ -2447,11 +2392,6 @@
       "name": "Cerneala.UI.Hosting.Windowing.GeneratedWindowStartupDescriptor",
       "file": "documentation/classes/Cerneala.UI.Hosting.Windowing.GeneratedWindowStartupDescriptor.md",
       "source": "UI/Hosting/Windowing/GeneratedWindowApplication.cs"
-    },
-    {
-      "name": "Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend",
-      "file": "documentation/classes/Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend.md",
-      "source": "UI/Hosting/Windows/WindowsDxApplicationBackend.cs"
     },
     {
       "name": "Cerneala.UI.Ink.Stroke",
@@ -2802,16 +2742,6 @@
     "name": "Cerneala.UI.Input.ManipulationSnapshot",
     "file": "documentation/classes/Cerneala.UI.Input.ManipulationSnapshot.md",
     "source": "UI/Input/ManipulationProcessor.cs"
-  },
-  {
-    "name": "Cerneala.UI.Input.MonoGame.MonoGameInputMapper",
-    "file": "documentation/classes/Cerneala.UI.Input.MonoGame.MonoGameInputMapper.md",
-    "source": "UI/Input/MonoGame/MonoGameInputMapper.cs"
-  },
-  {
-    "name": "Cerneala.UI.Input.MonoGame.MonoGameInputSource",
-    "file": "documentation/classes/Cerneala.UI.Input.MonoGame.MonoGameInputSource.md",
-    "source": "UI/Input/MonoGame/MonoGameInputSource.cs"
   },
   {
     "name": "Cerneala.UI.Input.MouseButtonEventArgs",
@@ -4332,11 +4262,6 @@
     "name": "Cerneala.UI.Resources.IResourceProvider",
     "file": "documentation/classes/Cerneala.UI.Resources.IResourceProvider.md",
     "source": "UI/Resources/IResourceProvider.cs"
-  },
-  {
-    "name": "Cerneala.UI.Resources.MonoGame.MonoGameImageLoader",
-    "file": "documentation/classes/Cerneala.UI.Resources.MonoGame.MonoGameImageLoader.md",
-    "source": "UI/Resources/MonoGame/MonoGameImageLoader.cs"
   },
   {
     "name": "Cerneala.UI.Resources.ResourceChangedEventArgs",

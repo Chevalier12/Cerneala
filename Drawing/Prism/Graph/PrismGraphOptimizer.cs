@@ -370,6 +370,13 @@ internal sealed class PrismGraphOptimizer
             return retainedPlan;
         }
 
+        return OptimizeChangedGraph(graph);
+    }
+
+    private PrismGraphExecutionPlan OptimizeChangedGraph(PrismGraph graph)
+    {
+        // Keep cold-path LINQ captures out of the cached-plan entry point.
+        // C# creates their closure at method entry, even on an early cache hit.
         originalNodes.Clear();
         foreach (PrismGraphNode node in graph.Nodes)
         {
@@ -799,6 +806,7 @@ internal sealed class PrismGraphOptimizer
                     scope.Bounds,
                     scope.ControlBounds,
                     scope.EffectiveTransform,
+                    scope.StyleTransform,
                     scope.PixelScale,
                     scope.DependencyStamp,
                     scope.LowerUiVersion,

@@ -8,9 +8,9 @@ if (args is ["--prism-retained-cache"])
     return;
 }
 
-if (args is ["--prism-sdlgpu-comparison"])
+if (args is ["--prism-sdlgpu"])
 {
-    PrismSdlGpuComparisonBenchmarkRunner.Run();
+    PrismSdlGpuBenchmarkRunner.Run();
     return;
 }
 

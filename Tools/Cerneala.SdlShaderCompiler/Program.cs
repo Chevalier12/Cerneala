@@ -185,7 +185,7 @@ internal static class ShaderCompilerProgram
                 string text = Marshal.PtrToStringUTF8(pointer) ??
                     throw new InvalidDataException(
                         $"Shader '{shader.LogicalName}' returned empty MSL source.");
-                return Encoding.UTF8.GetBytes(text);
+                return Encoding.UTF8.GetBytes(text.TrimEnd('\r', '\n') + "\n");
             }
             finally
             {

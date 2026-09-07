@@ -10,6 +10,15 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Cerneala.Tests.LanguageServer;
 
+[CollectionDefinition(Name, DisableParallelization = true)]
+public sealed class WorkspaceHeapCollection
+{
+    public const string Name = "Workspace heap measurements";
+}
+
+// GC.GetTotalMemory observes the whole process, including in-process protocol
+// servers in other test classes. They must not run during the retention gate.
+[Collection(WorkspaceHeapCollection.Name)]
 public sealed class WorkspaceTests
 {
     private static readonly CancellationToken TestCancellation = CancellationToken.None;

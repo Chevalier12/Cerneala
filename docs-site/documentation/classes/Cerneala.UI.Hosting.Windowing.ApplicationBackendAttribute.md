@@ -23,14 +23,7 @@ Attributes:
 
 ## Examples
 
-Select WindowsDX once for the executable assembly:
-
-```csharp
-[assembly: Cerneala.UI.Hosting.Windowing.ApplicationBackend(
-    typeof(Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend))]
-```
-
-Or select SDL3 + SDL_GPU from an executable that references the SDL backend:
+Select SDL3 + SDL_GPU once for the executable assembly, which must reference the SDL backend:
 
 ```csharp
 [assembly: Cerneala.UI.Hosting.Windowing.ApplicationBackend(
@@ -49,7 +42,7 @@ public static void EnsureRegistered();
 
 The attribute belongs to the backend-neutral core and stores only a `System.Type`; it does not reference a concrete adapter. Referencing a backend package therefore makes that backend available, while this assembly declaration selects it explicitly.
 
-Only one backend composition may be active in a process. Re-registering the same selection is idempotent; attempting to mix WindowsDX and SDL_GPU is rejected by the windowing registry.
+Only one backend composition may be active in a process. Re-registering the same selection is idempotent; attempting to register a different backend is rejected by the windowing registry.
 
 Missing, duplicate, inaccessible, generic, abstract, non-class, or signature-incompatible selections produce `CERNEALAUI015`. The generator does not emit partial startup when this diagnostic is reported. A library that receives no generated startup does not need a backend declaration.
 
@@ -75,5 +68,4 @@ Executable Cerneala projects that use generated `<Application>` or legacy `MainW
 
 - `Cerneala.SourceGen.UiMarkupGenerator`
 - `Cerneala.UI.Hosting.Sdl.SdlGpuApplicationBackend`
-- `Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend`
 - `docs/application-markup.md`

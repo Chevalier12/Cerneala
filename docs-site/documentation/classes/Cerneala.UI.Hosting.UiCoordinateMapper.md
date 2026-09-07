@@ -44,13 +44,13 @@ int pixel = UiCoordinateMapper.LogicalToPhysicalPixel(logical: 10.25f, scale: 2f
 
 ## Remarks
 
-`UiCoordinateMapper` centralizes the scale math used by hosting, input, and MonoGame drawing code. Logical coordinates are multiplied by `scale` when converting to physical units, and physical coordinates are divided by `scale` when converting back to logical units.
+`UiCoordinateMapper` centralizes the scale math used by hosting, input, and drawing code. Logical coordinates are multiplied by `scale` when converting to physical units, and physical coordinates are divided by `scale` when converting back to logical units.
 
 `LogicalToPhysicalPixel` first maps the logical value to physical units, then rounds with `MidpointRounding.AwayFromZero`. This gives deterministic pixel conversion for fractional physical coordinates, including half-pixel results.
 
 All public methods reject non-finite coordinates. The `scale` argument must be finite and greater than zero. Invalid coordinates or scale values throw `ArgumentOutOfRangeException`.
 
-`UiViewport.FromPhysicalPixels` uses this mapper to derive logical viewport dimensions from physical pixel dimensions. MonoGame input uses it to report pointer positions in logical UI space, while MonoGame drawing uses it to map logical rectangles, vectors, thicknesses, and text sizes to physical rendering coordinates.
+`UiViewport.FromPhysicalPixels` uses this mapper to derive logical viewport dimensions from physical pixel dimensions. SDL input and drawing use the same logical-to-physical coordinate contract.
 
 ## Methods
 
@@ -70,11 +70,11 @@ All public methods reject non-finite coordinates. The `scale` argument must be f
 
 ## Applies to
 
-Cerneala UI hosting, MonoGame input mapping, and MonoGame drawing coordinate scaling.
+Cerneala UI hosting, input mapping, and drawing coordinate scaling.
 
 ## See also
 
 - `Cerneala.UI.Hosting.UiViewport`
 - `Cerneala.UI.Hosting.UiHost`
-- `Cerneala.UI.Input.MonoGame.MonoGameInputSource`
-- `Cerneala.Drawing.MonoGame.MonoGameDrawingBackend`
+- `Cerneala.UI.Hosting.Sdl.SdlGpuApplicationBackend`
+- `Cerneala.Drawing.IDrawingBackend`

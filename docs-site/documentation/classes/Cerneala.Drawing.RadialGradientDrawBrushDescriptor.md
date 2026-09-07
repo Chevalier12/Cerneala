@@ -23,7 +23,7 @@ var descriptor = new RadialGradientDrawBrushDescriptor(
 ```
 
 ## Remarks
-The radii are independent, so the gradient can be elliptical. The MonoGame backend caches the generated device resource per graphics device.
+The radii are independent, so the gradient can be elliptical. The SDL_GPU backend caches the generated device resource per graphics device.
 
 ## Properties
 | Name | Description |

@@ -5,7 +5,7 @@ Namespace: `Cerneala.UI.Media`
 Assembly/Project: `Cerneala`  
 Source: `UI/Media/ImageBrush.cs`
 
-Fills geometry with a device image, an image source, or a resolvable source identity.
+Fills geometry with a drawing image, an image source, or a resolvable source identity.
 
 ```csharp
 public sealed record ImageBrush : TileBrush
@@ -18,7 +18,7 @@ rectangle.Fill = brush;
 ```
 
 ## Remarks
-The MonoGame backend verifies that a `MonoGameImage` belongs to the active `GraphicsDevice`. Source identities must be resolved before rendering; unresolved identities report a diagnostic. Equality includes source identity and image reference, so cache keys remain deterministic.
+Source identities must be resolved before rendering. SDL images retain CPU pixel data and are uploaded into device-owned textures when rendered. Equality includes source identity and image reference, so cache keys remain deterministic.
 
 ## Constructors
 | Name | Description |
@@ -37,4 +37,4 @@ The MonoGame backend verifies that a `MonoGameImage` belongs to the active `Grap
 | `Stretch`, `AlignmentX`, `AlignmentY`, `Viewport`, `Viewbox`, `TileMode`, `Opacity` | Inherited brush settings. |
 
 ## Applies to
-MonoGame and other `IDrawingBackend` implementations that support images.
+`IDrawingBackend` implementations that support images, including SDL_GPU.

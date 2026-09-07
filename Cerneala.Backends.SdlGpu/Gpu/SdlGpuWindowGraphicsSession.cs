@@ -118,6 +118,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
     private nint activeCommandBuffer;
     private nint activeRenderPass;
     private SdlGpuRenderTarget? activeTarget;
+    private SdlGpuRenderTarget? windowRenderTarget;
     private IDisposable? activeDebugGroup;
     private int pixelWidth;
     private int pixelHeight;
@@ -226,7 +227,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
 
     internal SdlGpuDrawingResources DrawingResources => deviceLease.DrawingResources;
 
-    internal SdlGpuRenderTarget WindowRenderTarget => new(
+    internal SdlGpuRenderTarget WindowRenderTarget => windowRenderTarget ??= new(
         multisampleTexture != 0 ? multisampleTexture : frameTexture,
         depthStencilTexture,
         pixelWidth,
@@ -725,7 +726,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
             deviceLease.Device,
             windowSurface.WindowHandle);
         SdlGpuTextureFormat textureFormat = SelectTextureFormat(swapchainFormat, fallbacks);
-        SdlGpuSampleCount sampleCount = SelectSampleCount(textureFormat, fallbacks);
+        SdlGpuSampleCount sampleCount = SelectSampleCount(textureFormat, requestedOptions.SampleCount, fallbacks);
         return new SdlGpuPresentationDiagnostics(
             composition,
             presentMode,
@@ -764,11 +765,12 @@ internal sealed class SdlGpuWindowGraphicsSession :
             "SDL GPU supports no RGBA/BGRA color-target and sampler format for the window frame.");
     }
 
-    private SdlGpuSampleCount SelectSampleCount(
+    internal SdlGpuSampleCount SelectSampleCount(
         SdlGpuTextureFormat format,
-        List<string> fallbacks)
+        SdlGpuSampleCount requestedSampleCount,
+        List<string>? fallbacks = null)
     {
-        SdlGpuSampleCount[] candidates = requestedOptions.SampleCount switch
+        SdlGpuSampleCount[] candidates = requestedSampleCount switch
         {
             SdlGpuSampleCount.Eight =>
                 [SdlGpuSampleCount.Eight, SdlGpuSampleCount.Four, SdlGpuSampleCount.Two, SdlGpuSampleCount.One],
@@ -783,10 +785,10 @@ internal sealed class SdlGpuWindowGraphicsSession :
             if (candidate == SdlGpuSampleCount.One ||
                 api.GpuTextureSupportsSampleCount(deviceLease.Device, format, candidate))
             {
-                if (candidate != requestedOptions.SampleCount)
+                if (candidate != requestedSampleCount)
                 {
-                    fallbacks.Add(
-                        $"MSAA '{requestedOptions.SampleCount}' is unavailable for '{format}'; using '{candidate}'.");
+                    fallbacks?.Add(
+                        $"MSAA '{requestedSampleCount}' is unavailable for '{format}'; using '{candidate}'.");
                 }
 
                 return candidate;
@@ -867,6 +869,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
 
     private void ReleaseSizeResources()
     {
+        windowRenderTarget = null;
         if (depthStencilTexture != 0)
         {
             api.ReleaseGpuTexture(deviceLease.Device, depthStencilTexture);
@@ -899,6 +902,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
         {
             SubmitActiveCommandBuffer(ref commandSubmitted);
             Diagnostics = ConfigurePresentation();
+            windowRenderTarget = null;
             activeCommandBuffer = RequireHandle(
                 api.AcquireGpuCommandBuffer(deviceLease.Device),
                 "SDL GPU recovery command-buffer acquisition");
@@ -993,6 +997,12 @@ internal sealed class SdlGpuWindowGraphicsSession :
     internal void RunCopyPass(Action<nint> copy)
     {
         ArgumentNullException.ThrowIfNull(copy);
+        RunCopyPass(copy, static (pass, callback) => callback(pass));
+    }
+
+    internal void RunCopyPass<TState>(TState state, Action<nint, TState> copy)
+    {
+        ArgumentNullException.ThrowIfNull(copy);
         if (!frameActive || activeCommandBuffer == 0)
         {
             throw new InvalidOperationException(
@@ -1007,7 +1017,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
             "SDL GPU drawing copy-pass creation");
         try
         {
-            copy(copyPass);
+            copy(copyPass, state);
         }
         finally
         {

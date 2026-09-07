@@ -94,9 +94,9 @@ const comparisonRows = [
   ['Controls', '`RichTextBox`, documents, navigation', 'No supported equivalents', 'absent', 'Flow documents, navigation journals, document viewers, and rich editing are outside preview scope.'],
   ['Controls', '`MediaElement`, 3D viewport, printing', 'No supported equivalents', 'absent', 'The current scope is retained 2D application/game UI.'],
 
-  ['Platform', 'Windows-only WPF', 'Current `net8.0-windows` snapshot', 'close', 'Both are Windows-targeted today, though Cerneala keeps backend and platform seams explicit.'],
-  ['Platform', 'WPF Window/Application hosting', 'Native Win32/WindowsDX runtime', 'different', 'Cerneala owns its window runtime rather than hosting WPF.'],
-  ['Platform', 'Game-loop embedding is external interop', '`MonoGameUiHost`', 'native', 'A first-class host maps input, content services, viewport, update, and backend drawing.'],
+  ['Platform', 'Windows-only WPF', '`net8.0` core and SDL3 desktop projects', 'different', 'Cerneala keeps platform ownership explicit; some applications and tooling remain Windows-targeted.'],
+  ['Platform', 'WPF Window/Application hosting', 'SDL3 native desktop runtime', 'different', 'Cerneala owns its window runtime rather than hosting WPF.'],
+  ['Platform', 'Game-loop embedding is external interop', '`UiHost` and `RenderSurface2D`', 'different', 'Retained hosting and the realtime game control share the UI runtime. The MonoGame host adapter is removed.'],
   ['Platform', 'Clipboard/cursor/dialog services via WPF', '`IPlatformServices` family', 'different', 'Platform capabilities are explicit injectable seams.'],
   ['Platform', 'UI Automation peers + native integration', 'Semantics tree + automation peers', 'partial', 'Platform-neutral semantics exist; native accessibility adapter completion is deferred.'],
   ['Platform', 'Live Visual Tree / designer diagnostics', 'Frame/tree/cache/Aspect/motion diagnostics', 'different', 'Cerneala diagnostics are runtime/frame-oriented rather than Visual Studio WPF tooling.'],

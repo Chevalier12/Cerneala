@@ -4,7 +4,7 @@ using System.Runtime.Loader;
 using Cerneala.UI;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting.Windowing;
-using Cerneala.UI.Hosting.Windows;
+using Cerneala.UI.Hosting.Sdl;
 using Cerneala.UI.Input;
 using Cerneala.UI.Servo;
 
@@ -34,7 +34,7 @@ internal sealed class PreviewRenderSession : IDisposable
 
     public static PreviewRenderSession Create(PreviewCompilation compilation, int width, int height)
     {
-        WindowsDxApplicationBackend.EnsureRegistered();
+        SdlGpuApplicationBackend.EnsureRegistered();
         Environment.CurrentDirectory = compilation.ProjectDirectory;
         PreviewLoadContext loadContext = new(compilation.ReferencePaths);
         try

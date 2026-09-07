@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using Cerneala.Drawing;
+using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Platforms.Sdl3;
 
 namespace Cerneala.Backends.SdlGpu;
@@ -18,6 +19,9 @@ internal sealed class Cerberus
     private int drawCount;
     private int submissionCount;
     private int mergedSubmissionCount;
+
+    internal SdlGpuRenderTarget Target => target ??
+        throw new InvalidOperationException("SDL_GPU batching requires an active target.");
 
     public void Begin(SdlGpuRenderTarget nextTarget)
     {
@@ -141,6 +145,7 @@ internal sealed class Cerberus
             int samplerBindCount = 0;
             int scissorSetCount = 0;
             int stencilReferenceSetCount = 0;
+            Span<float> presentationUniform = stackalloc float[4];
             for (int drawIndex = 0; drawIndex < drawCount; drawIndex++)
             {
                 CerberusGpuDraw draw = draws[drawIndex];
@@ -151,7 +156,9 @@ internal sealed class Cerberus
                     key.Topology,
                     key.BlendMode,
                     key.StencilMode,
-                    key.ColorWriteMask);
+                    key.ColorWriteMask,
+                    key.AlphaMask,
+                    key.PrismWorkingColorProfile.HasValue);
                 nint sampler = context.Resources.GetSampler(key.Sampling, key.AddressMode);
                 bool pipelineChanged = pipeline != currentPipeline;
                 if (pipelineChanged)
@@ -169,6 +176,15 @@ internal sealed class Cerberus
                     currentTexture = key.Texture;
                     currentSampler = sampler;
                     samplerBindCount = checked(samplerBindCount + 1);
+                }
+                if (key.PrismWorkingColorProfile is PrismColorProfile profile)
+                {
+                    presentationUniform.Clear();
+                    presentationUniform[0] = SdlGpuPrismKernelSelector.ForPresentation(profile);
+                    api.PushGpuFragmentUniformData(
+                        session.ActiveCommandBuffer,
+                        0,
+                        MemoryMarshal.AsBytes(presentationUniform));
                 }
                 if (!hasScissor || key.Scissor != currentScissor)
                 {
@@ -290,7 +306,9 @@ internal readonly record struct CerberusBatchKey(
     SdlGpuStencilMode StencilMode,
     byte StencilReference,
     SdlRect Scissor,
-    SdlGpuColorWriteMask ColorWriteMask)
+    SdlGpuColorWriteMask ColorWriteMask,
+    bool AlphaMask = false,
+    PrismColorProfile? PrismWorkingColorProfile = null)
 {
     public static CerberusBatchKey From(CerberusBatch batch) => new(
         batch.Topology,
@@ -313,7 +331,9 @@ internal readonly record struct CerberusBatchKey(
         StencilMode == other.StencilMode &&
         StencilReference == other.StencilReference &&
         Scissor == other.Scissor &&
-        ColorWriteMask == other.ColorWriteMask;
+        ColorWriteMask == other.ColorWriteMask &&
+        AlphaMask == other.AlphaMask &&
+        PrismWorkingColorProfile == other.PrismWorkingColorProfile;
 }
 
 internal sealed record CerberusBatch(

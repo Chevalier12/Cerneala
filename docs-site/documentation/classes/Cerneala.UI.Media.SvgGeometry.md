@@ -33,7 +33,7 @@ PathShape check = new()
 
 ## Remarks
 
-The constructor parses `Data` once into `Path`. When assigned to `Shape.Geometry`, the cached typed path is stretched from `Bounds` into the shape's arranged bounds, avoiding per-frame SVG parsing. The shared parser supports move, line, cubic and quadratic Bezier, elliptical arc, and close commands. The MonoGame backend tessellates the typed contours and submits triangles directly to `GraphicsDevice`.
+The constructor parses `Data` once into `Path`. When assigned to `Shape.Geometry`, the cached typed path is stretched from `Bounds` into the shape's arranged bounds, avoiding per-frame SVG parsing. The shared parser supports move, line, cubic and quadratic Bezier, elliptical arc, and close commands. The SDL_GPU backend uses the shared path tessellator to submit triangles.
 
 ## Constructors
 
@@ -58,7 +58,7 @@ The constructor parses `Data` once into `Path`. When assigned to `Shape.Geometry
 
 ## Applies To
 
-Cerneala path shapes rendered by the MonoGame drawing backend.
+Cerneala path shapes rendered by the SDL_GPU drawing backend.
 
 ## See Also
 

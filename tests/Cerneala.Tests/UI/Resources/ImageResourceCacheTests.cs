@@ -3,7 +3,8 @@ using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Resources;
-using Cerneala.UI.Resources.MonoGame;
+using Cerneala.Backends.SdlGpu;
+using SkiaSharp;
 
 namespace Cerneala.Tests.UI.Resources;
 
@@ -117,7 +118,7 @@ public sealed class ImageResourceCacheTests
     }
 
     [Fact]
-    public void MonoGameLoaderFallsBackToApplicationBaseForPackagedRelativePaths()
+    public void SdlLoaderFallsBackToApplicationBaseForPackagedRelativePaths()
     {
         string relativePath = Path.Combine(
             "packaged-assets",
@@ -125,11 +126,23 @@ public sealed class ImageResourceCacheTests
         string workingDirectoryPath = Path.GetFullPath(relativePath);
         Assert.False(File.Exists(workingDirectoryPath));
 
-        string resolved = MonoGameImageLoader.ResolvePath(relativePath);
-
-        Assert.Equal(
-            Path.GetFullPath(relativePath, AppContext.BaseDirectory),
-            resolved);
+        string packagedPath = Path.GetFullPath(relativePath, AppContext.BaseDirectory);
+        Directory.CreateDirectory(Path.GetDirectoryName(packagedPath)!);
+        try
+        {
+            using SKBitmap bitmap = new(1, 1);
+            bitmap.Erase(SKColors.Red);
+            using SKData encoded = bitmap.Encode(SKEncodedImageFormat.Png, 100);
+            File.WriteAllBytes(packagedPath, encoded.ToArray());
+            using SdlGpuImage loaded = Assert.IsType<SdlGpuImage>(new SdlGpuImageLoader().Load(relativePath));
+            Assert.Equal(1, loaded.Width);
+            Assert.Equal(1, loaded.Height);
+            Assert.Equal(new byte[] { 255, 0, 0, 255 }, loaded.RgbaPixels.ToArray());
+        }
+        finally
+        {
+            File.Delete(packagedPath);
+        }
     }
 
     private sealed class RecordingImageLoader : IImageLoader

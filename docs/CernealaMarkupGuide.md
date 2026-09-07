@@ -1358,12 +1358,12 @@ dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.
 Build the relevant project:
 
 ```powershell
-dotnet build .\CernealaPresentation\CernealaPresentation.csproj --no-restore -p:CernealaDesktopBackend=SDL3
+dotnet build .\CernealaPresentation\CernealaPresentation.csproj --no-restore
 ```
 
-SDL3 GPU is the strategic backend. The presentation and playground currently
-default to MonoGame when `CernealaDesktopBackend` is omitted, but MonoGame is on
-a gradual retirement path and should not be treated as the long-term target.
+SDL3 + SDL_GPU is the sole maintained desktop composition. Presentation and
+Playground select it explicitly; the MonoGame and WindowsDX adapters have been
+removed without a compatibility facade.
 
 For `CernealaPresentation`, the built-in automation supports:
 

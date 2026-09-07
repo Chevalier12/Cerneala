@@ -13,6 +13,108 @@ namespace Cerneala.Tests.Drawing.Prism;
 
 public sealed class PrismStylePipelineTests
 {
+    [Theory]
+    [InlineData(PrismStyleId.OuterGlow, 4f, 1f, 1f)]
+    [InlineData(PrismStyleId.OuterGlow, 4f, 1.25f, 1f)]
+    [InlineData(PrismStyleId.OuterGlow, 4f, 1.25f, 2f)]
+    [InlineData(PrismStyleId.BevelEmboss, 5f, 1f, 1f)]
+    [InlineData(PrismStyleId.BevelEmboss, 5f, 1.25f, 1f)]
+    [InlineData(PrismStyleId.BevelEmboss, 5f, 1.25f, 2f)]
+    public void CommandTransformMapsStyleBoundsWithoutRescalingDipParameters(
+        PrismStyleId style,
+        float size,
+        float pixelScale,
+        float ownerScale)
+    {
+        PrismLayerDefinition layer = new(
+            new PrismNodeId(1),
+            "Scene style",
+            styles: [new PrismStyleDefinition(style)]);
+        DrawRect bounds = new(3, 1, 4, 4);
+        Matrix3x2 ownerTransform = Matrix3x2.CreateScale(ownerScale);
+        Matrix3x2 sceneTransform = Matrix3x2.CreateScale(37.75f);
+        PrismDrawScope drawScope = PrismTestData.Scope(
+            PrismTestData.Composition("Scene style units", layer),
+            bounds: bounds,
+            transform: ownerTransform,
+            pixelScale: pixelScale);
+        SetStyleNumber(
+            Assert.Single(drawScope.Instance.GetLayerState(layer.Id).Styles),
+            PrismCatalogRuntime.GetEntry((int)style),
+            "Size",
+            size);
+        DrawCommandList commands = PrismTestData.Commands(
+            DrawCommand.PushTransform(sceneTransform),
+            DrawCommand.BeginPrism(drawScope),
+            DrawCommand.FillRectangle(bounds, Color.White),
+            DrawCommand.EndPrism(),
+            DrawCommand.PopTransform());
+        PrismGraph graph = new PrismGraphBuilder().Build(
+            new PrismFrameAnalyzer().Analyze(commands));
+
+        AssertSamplingSize(graph);
+        AssertSamplingSize(new PrismGraphOptimizer().Optimize(graph).OptimizedGraph);
+
+        void AssertSamplingSize(PrismGraph candidate)
+        {
+            PrismGraphScope scope = Assert.Single(candidate.Scopes);
+            PrismGraphNode node = Assert.Single(candidate.Nodes.Where(
+                node => node.Kind == PrismGraphNodeKind.Style));
+            Assert.Equal(ownerTransform * sceneTransform, scope.EffectiveTransform);
+            Assert.Equal(bounds.Width * ownerScale * 37.75f, scope.Bounds.Width);
+            PrismStylePlan plan = PrismStylePlanner.Create(node, scope);
+            PrismStyleSamplingGeometry geometry =
+                PrismStylePlanner.ResolveSamplingGeometry(plan, scope);
+            Assert.Equal(size * ownerScale * pixelScale, geometry.Size);
+        }
+    }
+
+    [Fact]
+    public void StyleScaleChangesInvalidateStyleFingerprintsWithoutInvalidatingIdenticalCapture()
+    {
+        PrismLayerDefinition layer = new(
+            new PrismNodeId(2),
+            "Glow",
+            styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)]);
+        PrismInstance instance = new(PrismTestData.Composition(
+            "Style scale cache",
+            new PrismGroupDefinition(
+                new PrismNodeId(1), "Isolated", [layer],
+                blendMode: PrismBlendMode.Normal)));
+        PrismGraphOptimizer optimizer = new();
+        PrismGraphExecutionPlan first = BuildPlan(1, 2);
+        PrismGraphExecutionPlan second = BuildPlan(2, 1);
+        PrismGraphNode capture = Assert.Single(first.OptimizedGraph.Nodes.Where(
+            node => node.Kind == PrismGraphNodeKind.ControlCapture));
+        PrismGraphNode style = Assert.Single(first.OptimizedGraph.Nodes.Where(
+            node => node.Kind == PrismGraphNodeKind.Style));
+
+        Assert.True(first.GetNodePlan(style.Id).IsCacheable);
+        Assert.Equal(
+            first.GetNodePlan(capture.Id).ValueFingerprint,
+            second.GetNodePlan(capture.Id).ValueFingerprint);
+        Assert.NotEqual(
+            first.GetNodePlan(style.Id).ValueFingerprint,
+            second.GetNodePlan(style.Id).ValueFingerprint);
+
+        PrismGraphExecutionPlan BuildPlan(float ownerScale, float sceneScale)
+        {
+            DrawRect bounds = new(0, 0, 20, 10);
+            PrismDrawScope scope = new(
+                instance, new PrismCacheOwnerToken(1), bounds,
+                Matrix3x2.CreateScale(ownerScale), 1, 1,
+                PrismDrawResources.Empty);
+            DrawCommandList commands = PrismTestData.Commands(
+                DrawCommand.PushTransform(Matrix3x2.CreateScale(sceneScale)),
+                DrawCommand.BeginPrism(scope),
+                DrawCommand.FillRectangle(bounds, Color.White),
+                DrawCommand.EndPrism(),
+                DrawCommand.PopTransform());
+            return optimizer.Optimize(new PrismGraphBuilder().Build(
+                new PrismFrameAnalyzer().Analyze(commands)));
+        }
+    }
+
     [Fact]
     public void StyleBlendModesConsumeTheImplicitLayerBackdrop()
     {

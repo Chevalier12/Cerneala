@@ -3,27 +3,32 @@ name: Prism Shader Build
 on:
   push:
     paths:
-      - ".config/dotnet-tools.json"
       - ".github/workflows/prism-shaders.yml"
-      - "Cerneala.Backends.MonoGame/Cerneala.Backends.MonoGame.csproj"
-      - "Drawing/MonoGame/Prism/**"
-      - "tests/Cerneala.WindowsDxSmoke/**"
-      - "tests/Cerneala.Tests/Drawing/MonoGame/**"
+      - "Tools/scripts/Get-GraphixNativePackage.ps1"
+      - "NuGet.Config"
+      - "Cerneala.Backends.SdlGpu/**"
+      - "Drawing/Prism/Shaders/**"
+      - "Tools/Cerneala.SdlShaderCompiler/**"
+      - "tests/Cerneala.SdlGpuSmoke/**"
+      - "tests/Cerneala.Tests.SdlGpu/**"
   pull_request:
     paths:
-      - ".config/dotnet-tools.json"
       - ".github/workflows/prism-shaders.yml"
-      - "Cerneala.Backends.MonoGame/Cerneala.Backends.MonoGame.csproj"
-      - "Drawing/MonoGame/Prism/**"
-      - "tests/Cerneala.WindowsDxSmoke/**"
-      - "tests/Cerneala.Tests/Drawing/MonoGame/**"
+      - "Tools/scripts/Get-GraphixNativePackage.ps1"
+      - "NuGet.Config"
+      - "Cerneala.Backends.SdlGpu/**"
+      - "Drawing/Prism/Shaders/**"
+      - "Tools/Cerneala.SdlShaderCompiler/**"
+      - "tests/Cerneala.SdlGpuSmoke/**"
+      - "tests/Cerneala.Tests.SdlGpu/**"
   workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
-  windowsdx:
+  sdlgpu:
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -34,18 +39,24 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Fetch and verify temporary Graphix package
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./Tools/scripts/Get-GraphixNativePackage.ps1
+
       - name: Restore
         run: |
-          dotnet tool restore
           dotnet restore .\Cerneala.slnx
 
       - name: Clean shader build
         run: |
-          dotnet clean .\Cerneala.Backends.MonoGame\Cerneala.Backends.MonoGame.csproj -c Release --no-restore
-          dotnet build .\Cerneala.Backends.MonoGame\Cerneala.Backends.MonoGame.csproj -c Release --no-restore
+          dotnet clean .\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj -c Release --no-restore
+          dotnet build .\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj -c Release --no-restore
+          dotnet run --project .\Tools\Cerneala.SdlShaderCompiler\Cerneala.SdlShaderCompiler.csproj -c Release -- --verify
 
       - name: Verify embedded shader contract
-        run: dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj -c Release --no-restore --filter "FullyQualifiedName~PrismShaderResourcesTests"
+        run: dotnet test .\tests\Cerneala.Tests.SdlGpu\Cerneala.Tests.SdlGpu.csproj -c Release --no-restore
 
-      - name: Verify WindowsDX shader
-        run: dotnet run --project .\tests\Cerneala.WindowsDxSmoke\Cerneala.WindowsDxSmoke.csproj -c Release --no-restore
+      - name: Verify SDL_GPU Prism rendering
+        run: dotnet run --project .\tests\Cerneala.SdlGpuSmoke\Cerneala.SdlGpuSmoke.csproj -c Release --no-restore -- --mode prism --artifacts artifacts/ci/smoke/prism

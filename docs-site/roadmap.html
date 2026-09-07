@@ -104,7 +104,7 @@
         <div class="roadmap-node__body">
           <span class="roadmap-node__state">Initial backend complete</span>
           <h3>SDL3 and SDL3 GPU</h3>
-          <p>Native desktop hosting, input, an SDL3 GPU drawing backend, Prism execution, cross-platform native smokes, and WindowsDX differential and pixel-conformance coverage exist in the repository.</p>
+          <p>Native desktop hosting, input, an SDL3 GPU drawing backend, Prism execution, cross-platform native smokes, and pixel-conformance coverage against frozen historical references exist in the repository.</p>
           <div class="node-tags"><span>Windows</span><span>Linux</span><span>macOS</span></div>
         </div>
       </article>
@@ -113,9 +113,9 @@
         <div class="roadmap-node__orb"><span class="orb-pulse" aria-hidden="true"></span><small>05</small></div>
         <div class="roadmap-node__body">
           <span class="roadmap-node__state">Strategic direction</span>
-          <h3>Make SDL3 GPU primary</h3>
-          <p>Move repository defaults, samples, native behavior, drawing, and Prism toward SDL3. MonoGame remains available during the transition, but it will be discontinued gradually after compatibility and removal policy are documented.</p>
-          <div class="node-tags"><span>SDL3 default</span><span>backend conformance</span><span>MonoGame transition</span></div>
+          <h3>Verify the SDL3-only migration</h3>
+          <p>Defaults and active samples now use SDL3. MonoGame and WindowsDX APIs have been removed without a compatibility facade. Migrated shared-contract tests, native conformance, and full-suite gates remain the evidence for completion.</p>
+          <div class="node-tags"><span>SDL3 default</span><span>backend conformance</span><span>migration gates</span></div>
         </div>
       </article>
 
@@ -195,13 +195,13 @@
     <div class="render-modes">
       <article>
         <span class="mode-index">CURRENT</span>
-        <h3>Multiple backends still exist</h3>
-        <p>WindowsDX, MonoGame, and SDL3 GPU paths are present. SDL3 GPU has completed its initial end-to-end backend plan, but some samples still default to MonoGame. Documentation must say that until the defaults actually move.</p>
+        <h3>One maintained desktop backend</h3>
+        <p>SDL3 + SDL_GPU is the sole maintained desktop composition. Core UI and source generation remain backend-neutral. Historical WindowsDX captures remain references, not an available runtime path.</p>
       </article>
       <article class="render-mode--raw">
         <span class="mode-index">NEXT</span>
-        <h3>MonoGame retires gradually</h3>
-        <p>There is no fake removal date. The adapter stays available during transition. Compatibility expectations and the removal policy must be documented before deletion.</p>
+        <h3>Keep verification explicit</h3>
+        <p>Source removal is not an all-green claim. The repository's dated removal audit records migrated coverage, verification results, and unresolved native failures.</p>
       </article>
     </div>
   </section>
@@ -247,15 +247,15 @@
       <article class="control-family" data-control-state="evaluate">
         <header><span>05 / Backends</span><strong>Uneven</strong></header>
         <h3>Feature parity and conformance</h3>
-        <div class="control-tags"><span>WindowsDX</span><span>MonoGame</span><span>SDL3 GPU</span></div>
+        <div class="control-tags"><span>historical references</span><span>native platforms</span><span>SDL3 GPU</span></div>
         <p>Backend disagreement establishes a mismatch, not truth. The semantic contract, deterministic scenes, and platform-specific evidence decide which implementation is wrong.</p>
       </article>
 
       <article class="control-family" data-control-state="planned">
         <header><span>06 / Compatibility</span><strong>Required</strong></header>
-        <h3>MonoGame transition policy</h3>
+        <h3>Desktop migration verification</h3>
         <div class="control-tags"><span>versioning</span><span>deprecation</span><span>removal</span></div>
-        <p>The direction is clear, but the public transition contract is not versioned yet. It must exist before the adapter is removed.</p>
+        <p>The retired adapters have no compatibility facade. Completion requires preserving shared contracts and reporting every unresolved verification gate, not merely deleting their source.</p>
       </article>
     </div>
   </section>

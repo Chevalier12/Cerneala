@@ -70,7 +70,7 @@ The constructor defensively copies the supplied pixel buffer. The `RgbaPixels` p
 | `ArgumentException` | `rgbaPixels.Length` does not equal `width * height * 4`. |
 
 ## Applies to
-Cerneala drawing text rasterization and the MonoGame text texture path.
+Cerneala drawing text rasterization and the SDL_GPU text texture path.
 
 ## See also
 - `Cerneala.Drawing.Text.SkiaTextRasterizer`

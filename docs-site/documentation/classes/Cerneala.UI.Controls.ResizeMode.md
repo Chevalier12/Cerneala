@@ -20,7 +20,7 @@ public enum ResizeMode
 | `CanResizeWithGrip` | Allows native resizing and exposes a lower-right resize grip hit target in the client area. |
 
 ## Remarks
-The Windows hosting backend maps these values to native window styles. `CanResize` supports resizing through the native frame. `CanResizeWithGrip` additionally maps the system-sized lower-right client corner to `HTBOTTOMRIGHT` while the window is in its normal state, giving that area the standard diagonal resize cursor and drag behavior. Maximized and minimized windows do not expose the client grip.
+The SDL host maps these values to native window capabilities. `CanResize` supports resizing through the native frame. On Windows, `CanResizeWithGrip` additionally uses SDL hit-testing to map the system-sized lower-right client corner to `HTBOTTOMRIGHT` while the window is in its normal state, giving that area the standard diagonal resize cursor and drag behavior. Maximized and minimized windows do not expose the client grip. On other platforms, `CanResizeWithGrip` currently has the same behavior as `CanResize`.
 
 ## Applies to
 `Window.ResizeMode`.

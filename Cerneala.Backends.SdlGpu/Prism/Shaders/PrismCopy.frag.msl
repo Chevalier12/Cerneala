@@ -30,4 +30,3 @@ fragment main0_out main0(main0_in in [[stage_in]], constant type_PrismFragmentUn
     out.out_var_SV_Target0 = (SpriteTexture.sample(SpriteTextureSampler, fast::clamp((in.in_var_TEXCOORD1 * PrismFragmentUniforms.UvScale) + PrismFragmentUniforms.UvOffset, _47, float2(1.0) - _47)) * in.in_var_TEXCOORD0) * PrismFragmentUniforms.Opacity;
     return out;
 }
-

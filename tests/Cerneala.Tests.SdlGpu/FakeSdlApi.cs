@@ -148,6 +148,10 @@ internal sealed class FakeSdlApi : ISdlApi
 
     public List<nint> DestroyedCursors { get; } = [];
 
+    public Dictionary<nint, SdlSystemCursor> CreatedCursors { get; } = [];
+
+    public nint SelectedCursor { get; private set; }
+
     public float WindowPixelDensity { get; set; } = 2;
 
     public float WindowDisplayScale { get; set; } = 2;
@@ -764,6 +768,12 @@ internal sealed class FakeSdlApi : ISdlApi
         return true;
     }
 
+    public bool SetWindowResizeGrip(nint window, bool enabled)
+    {
+        Windows[window].ResizeGrip = enabled;
+        return true;
+    }
+
     public bool HideWindow(nint window)
     {
         Windows[window].Visible = false;
@@ -865,9 +875,18 @@ internal sealed class FakeSdlApi : ISdlApi
         }
     }
 
-    public nint CreateSystemCursor(SdlSystemCursor cursor) => (nint)nextCursor++;
+    public nint CreateSystemCursor(SdlSystemCursor cursor)
+    {
+        nint handle = (nint)nextCursor++;
+        CreatedCursors.Add(handle, cursor);
+        return handle;
+    }
 
-    public bool SetCursor(nint cursor) => true;
+    public bool SetCursor(nint cursor)
+    {
+        SelectedCursor = cursor;
+        return true;
+    }
 
     public void DestroyCursor(nint cursor) => DestroyedCursors.Add(cursor);
 
@@ -915,6 +934,7 @@ internal sealed class FakeSdlApi : ISdlApi
         public bool AlwaysOnTop { get; set; }
         public bool Bordered { get; set; }
         public bool Resizable { get; set; }
+        public bool ResizeGrip { get; set; }
         public bool Visible { get; set; }
         public bool Raised { get; set; }
         public nint Parent { get; set; }

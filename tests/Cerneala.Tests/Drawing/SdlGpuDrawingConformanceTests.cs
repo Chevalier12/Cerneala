@@ -33,30 +33,25 @@ public sealed class SdlGpuDrawingConformanceTests : IDisposable
 
     [SdlDrawingNativeFact]
     [Trait("Category", "Native")]
-    public void DrawingApiShowcaseMatchesWindowsDxPixelThresholds()
+    public void DrawingApiShowcaseMatchesHistoricalPixelThresholds()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
         string directory = Path.Combine(
             Path.GetTempPath(),
             $"cerneala-sdlgpu-drawing-conformance-{Guid.NewGuid():N}");
-        string windowsPath = Path.Combine(directory, "windowsdx.png");
+        string referencePath = Path.Combine(directory, "reference.png");
         string sdlPath = Path.Combine(directory, "sdlgpu.png");
 
         try
         {
             Directory.CreateDirectory(directory);
-            CaptureWindowsDx(windowsPath);
+            File.Copy(ConformanceBaseline.Resolve("drawing-api.png"), referencePath);
             CaptureSdlGpu(sdlPath);
 
-            using SKBitmap windows = SKBitmap.Decode(windowsPath);
+            using SKBitmap reference = SKBitmap.Decode(referencePath);
             using SKBitmap sdl = SKBitmap.Decode(sdlPath);
-            PixelDiffResult result = Compare(windows, sdl);
-            WriteDiffArtifacts(directory, windows, sdl, result);
-            output.WriteLine($"Canonical WindowsDX/SDL_GPU RGBA diff: {result}");
+            PixelDiffResult result = Compare(reference, sdl);
+            WriteDiffArtifacts(directory, reference, sdl, result);
+            output.WriteLine($"Historical reference/SDL_GPU RGBA diff: {result}");
 
             Assert.True(
                 result.MeanAbsoluteError <= MaximumMeanAbsoluteError &&
@@ -76,19 +71,6 @@ public sealed class SdlGpuDrawingConformanceTests : IDisposable
                 Directory.Delete(directory, recursive: true);
             }
         }
-    }
-
-    private static void CaptureWindowsDx(string path)
-    {
-        using DesignPreviewSession session = DesignPreviewSession.Create(
-            new Application(),
-            static () => new DrawingApiShowcase(),
-            width: 500,
-            height: 464,
-            renderScale: 1);
-        session.Pump(TimeSpan.FromMilliseconds(16));
-        session.Pump(TimeSpan.FromMilliseconds(16));
-        session.SaveScreenshot(path);
     }
 
     private static void CaptureSdlGpu(string path)
@@ -229,7 +211,7 @@ public sealed class SdlGpuDrawingConformanceTests : IDisposable
                     "1",
                     StringComparison.Ordinal))
             {
-                Skip = "Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native Windows runner.";
+                Skip = "Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native runner.";
             }
         }
     }

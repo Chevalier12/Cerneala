@@ -124,8 +124,6 @@ public sealed class RenderSurface2DTests
         Assert.Null(surfaceType.GetMethod("ClearSurface"));
         Assert.Null(surfaceType.GetMethod("RefreshSurface"));
         Assert.Null(surfaceType.GetMethod("UpdateRenderTime"));
-        Assert.Null(frameType.GetProperty("SpriteBatch"));
-        Assert.Null(frameType.GetProperty("GraphicsDevice"));
         Assert.Null(frameType.GetMethod("Begin"));
         Assert.Null(frameType.GetMethod("End"));
     }

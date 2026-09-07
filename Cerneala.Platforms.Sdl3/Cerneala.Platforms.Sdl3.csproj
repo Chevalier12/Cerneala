@@ -10,9 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="SDL3-CS" Version="3.4.14.1" />
-    <PackageReference Include="SDL3-CS.Windows" Version="3.4.14.1" />
-    <PackageReference Include="SDL3-CS.Linux" Version="3.4.14.1" />
-    <PackageReference Include="SDL3-CS.MacOS" Version="3.4.14.1" />
+    <PackageReference Include="Graphix.Native" Version="3.4.16-graphix.2" />
   </ItemGroup>
 
   <ItemGroup>

@@ -48,7 +48,7 @@ SvgImage logo = new()
 
 If a compiled sidecar named `<source>.svg.cerneala.png` and its `.sha256` signature exist beside the SVG, Cerneala verifies the source hash, reads that artifact directly, and does not parse the SVG at runtime. `Tools/Cerneala.SvgAssetCompiler` creates both files from the same rasterizer used by the runtime. A missing or stale signature makes Cerneala ignore the sidecar and rasterize the current SVG, preventing stale visuals. No temporary runtime image file is created. Repeated uses of an unchanged path reuse cached raster bytes while each control still owns its backend image instance.
 
-The configured image loader must support `IImageLoader.Load(Stream)`. The built-in `MonoGameImageLoader` supports both path-backed and stream-backed images. A loader that only implements `Load(string)` uses the interface default implementation and throws `NotSupportedException` for stream-backed images. Attaching to a root without an image loader is valid and leaves `Source` empty.
+The configured image loader must support `IImageLoader.Load(Stream)`. The built-in `SdlGpuImageLoader` supports both path-backed and stream-backed images. A loader that only implements `Load(string)` uses the interface default implementation and throws `NotSupportedException` for stream-backed images. Attaching to a root without an image loader is valid and leaves `Source` empty.
 
 Changing `SourcePath` while the control is attached and effectively visible reloads the SVG immediately. When the control is not effectively visible, loading is deferred until it becomes renderable. The previous loaded image is disposed when it implements `IDisposable`. Detaching the control also releases its loaded image. An empty or `null` source path clears the image.
 
@@ -82,4 +82,4 @@ Cerneala retained UI controls with an attached image loader.
 
 - `Cerneala.UI.Controls.Image`
 - `Cerneala.UI.Resources.IImageLoader`
-- `Cerneala.UI.Resources.MonoGame.MonoGameImageLoader`
+- `Cerneala.Backends.SdlGpu.SdlGpuImageLoader`

@@ -1,21 +1,17 @@
+using Cerneala.Backends.SdlGpu;
+using Cerneala.Platforms.Sdl3;
+using Cerneala.UI.Hosting.Windowing;
 using System.Diagnostics;
 using System.Globalization;
 using Cerneala.Drawing;
-using Cerneala.Drawing.MonoGame;
-using Cerneala.Drawing.MonoGame.Prism;
-using Cerneala.Drawing.MonoGame.Prism.Execution;
 using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Drawing.Prism.Graph;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Hosting;
-using Cerneala.UI.Hosting.Windows;
 using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using CernealaColor = Cerneala.Drawing.Color;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace Cerneala.Benchmarks;
 
@@ -36,300 +32,144 @@ internal static class PrismRetainedCacheBenchmarkRunner
 
     public static void Run()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            throw new PlatformNotSupportedException(
-                "The Prism retained-cache benchmark requires WindowsDX.");
-        }
-
-        BenchmarkResolution largest = Resolutions[^1];
-        using WindowsDxFixture fixture = new(largest.Width, largest.Height);
-        GraphicsDevice graphicsDevice =
-            fixture.Session.GraphicsDevice;
-        Console.WriteLine(
-            string.Create(
-                CultureInfo.InvariantCulture,
-                $"PRISM_RETAINED_HARDWARE " +
-                $"adapter=\"{graphicsDevice.Adapter.Description}\" " +
-                $"profile={graphicsDevice.GraphicsProfile} " +
-                $"processors={Environment.ProcessorCount} " +
-                $"os=\"{Environment.OSVersion.VersionString}\""));
-
         foreach (BenchmarkResolution resolution in Resolutions)
         {
-            foreach (BenchmarkScenarioKind kind in
-                Enum.GetValues<BenchmarkScenarioKind>())
+            using SdlGpuFixture fixture = new(resolution.Width, resolution.Height);
+            Console.WriteLine($"PRISM_RETAINED_HARDWARE backend=SDL_GPU format={fixture.Session.Diagnostics.TextureFormat} processors={Environment.ProcessorCount} os=\"{Environment.OSVersion.VersionString}\"");
+            foreach (BenchmarkScenarioKind kind in Enum.GetValues<BenchmarkScenarioKind>())
             {
-                using BenchmarkScenario scenario =
-                    CreateScenario(graphicsDevice, kind, resolution);
-                RunScenario(
-                    graphicsDevice,
-                    scenario,
-                    resolution,
-                    retainedCacheEnabled: false);
-                RunScenario(
-                    graphicsDevice,
-                    scenario,
-                    resolution,
-                    retainedCacheEnabled: true);
+                using BenchmarkScenario scenario = CreateScenario(fixture.Session, kind, resolution);
+                RunScenario(fixture.Session, scenario, resolution);
+                fixture.Session.DrawingResources.PrismResources.Invalidate(PrismCacheInvalidation.All);
             }
         }
     }
 
     private static void RunScenario(
-        GraphicsDevice graphicsDevice,
+        SdlGpuWindowGraphicsSession session,
         BenchmarkScenario scenario,
-        BenchmarkResolution resolution,
-        bool retainedCacheEnabled)
+        BenchmarkResolution resolution)
     {
-        using BenchmarkRenderer renderer = new(
-            graphicsDevice,
-            resolution.Width,
-            resolution.Height);
-        PrismExecutionDiagnostics executionDiagnostics = new();
-        using PrismGraphExecutor executor = new(
-            graphicsDevice,
-            executionDiagnostics,
-            scenario.Options,
-            retainedCacheEnabled);
-        Viewport viewport = new(
-            0,
-            0,
-            resolution.Width,
-            resolution.Height);
-
         for (int frame = 0; frame < WarmupFrameCount; frame++)
         {
             GC.KeepAlive(scenario.BuildPlan());
         }
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        GC.Collect();
-        long buildAllocationStart =
-            GC.GetAllocatedBytesForCurrentThread();
+        Collect();
+        long buildAllocationStart = GC.GetAllocatedBytesForCurrentThread();
         long buildStarted = Stopwatch.GetTimestamp();
         for (int frame = 0; frame < MeasuredFrameCount; frame++)
         {
             GC.KeepAlive(scenario.BuildPlan());
         }
-        TimeSpan buildElapsed =
-            Stopwatch.GetElapsedTime(buildStarted);
-        long buildAllocatedBytes =
-            GC.GetAllocatedBytesForCurrentThread() -
-            buildAllocationStart;
+        TimeSpan buildElapsed = Stopwatch.GetElapsedTime(buildStarted);
+        long buildAllocatedBytes = GC.GetAllocatedBytesForCurrentThread() - buildAllocationStart;
 
-        for (int frame = 0;
-            frame < WarmupFrameCount;
-            frame++)
+        for (int frame = 0; frame <= WarmupFrameCount; frame++)
         {
-            ExecuteFrame(
-                renderer,
-                executor,
-                scenario.GetFrame(frame),
-                viewport);
+            ExecuteFrame(session, scenario.GetFrame(frame), scenario.BackdropSourceToken);
         }
-        renderer.Synchronize();
+        Synchronize(session);
+        Collect();
+        long allocationStart = GC.GetAllocatedBytesForCurrentThread();
+        long cpuStarted = Stopwatch.GetTimestamp();
+        long passes = 0, plannedPasses = 0, captures = 0, created = 0, reused = 0, fallbacks = 0;
+        int peakLive = 0, active = 0;
+        long peakBytes = 0;
+        PrismExecutionDiagnostics diagnostics = ((IWindowGraphicsSession)session).PrismExecutionDiagnostics!;
+        for (int frame = 0; frame < MeasuredFrameCount; frame++)
+        {
+            ExecuteFrame(session, scenario.GetFrame(WarmupFrameCount + frame + 1), scenario.BackdropSourceToken);
+            PrismExecutionCounters counters = diagnostics.Counters;
+            passes += counters.PassCount;
+            plannedPasses += counters.PlannedPassCount;
+            captures += counters.CaptureCount;
+            created += counters.CreatedSurfaceCount;
+            reused += counters.ReusedSurfaceCount;
+            fallbacks += counters.FallbackCount;
+            peakLive = Math.Max(peakLive, counters.PeakLiveSurfaceCount);
+            active = Math.Max(active, counters.ActiveSurfaceCount);
+            peakBytes = Math.Max(peakBytes, counters.PeakSurfaceByteCount);
+        }
+        TimeSpan cpuElapsed = Stopwatch.GetElapsedTime(cpuStarted);
+        long allocatedBytes = GC.GetAllocatedBytesForCurrentThread() - allocationStart;
+        long completionStarted = Stopwatch.GetTimestamp();
+        for (int frame = 0; frame < CompletionFrameCount; frame++)
+        {
+            ExecuteFrame(session, scenario.GetFrame(WarmupFrameCount + MeasuredFrameCount + frame + 1),
+                scenario.BackdropSourceToken);
+            Synchronize(session);
+        }
+        TimeSpan completionUpperBound = Stopwatch.GetElapsedTime(completionStarted);
+        Console.WriteLine(string.Create(CultureInfo.InvariantCulture,
+            $"PRISM_RETAINED_BENCHMARK_V2 backend=SDL_GPU scenario={scenario.Name} " +
+            $"resolution={resolution.Name} width={resolution.Width} height={resolution.Height} " +
+            $"configuration=internal frames={MeasuredFrameCount} " +
+            $"cpu-build-us={buildElapsed.TotalMicroseconds / MeasuredFrameCount:F3} " +
+            $"build-allocated-bytes={buildAllocatedBytes} cpu-frame-submit-us={cpuElapsed.TotalMicroseconds / MeasuredFrameCount:F3} " +
+            $"gpu-completion-upper-bound-us={completionUpperBound.TotalMicroseconds / CompletionFrameCount:F3} " +
+            $"frame-allocated-bytes={allocatedBytes} passes={passes} planned-passes={plannedPasses} captures={captures} " +
+            $"peak-live-surfaces={peakLive} created-surfaces={created} reused-surfaces={reused} " +
+            $"peak-surface-bytes={peakBytes} fallbacks={fallbacks} active-surfaces={active} " +
+            $"retained-entries={session.DrawingResources.PrismResources.RetainedCount}"));
+        if (fallbacks != 0 || active != 0)
+        {
+            throw new InvalidOperationException($"Benchmark '{scenario.Name}' left {active} active surfaces and {fallbacks} fallbacks.");
+        }
+        if (scenario.ExpectStaticRetainedHit && passes >= plannedPasses)
+        {
+            throw new InvalidOperationException($"Static benchmark '{scenario.Name}' saved no Prism passes after warmup.");
+        }
+    }
 
+    private static void Collect()
+    {
         GC.Collect();
         GC.WaitForPendingFinalizers();
         GC.Collect();
-        ExecuteFrame(
-            renderer,
-            executor,
-            scenario.GetFrame(WarmupFrameCount),
-            viewport);
-        renderer.Synchronize();
-        PrismRendererDiagnostics before =
-            executor.RendererDiagnostics;
-        long allocationStart =
-            GC.GetAllocatedBytesForCurrentThread();
-        long cpuStarted = Stopwatch.GetTimestamp();
-        long executedPasses = 0;
-        long captures = 0;
-        long createdSurfaces = 0;
-        long reusedSurfaces = 0;
-        long fallbacks = 0;
-        int peakLiveSurfaces = 0;
-        int activeSurfaces = 0;
-        long peakSurfaceBytes = 0;
-        for (int frame = 0;
-            frame < MeasuredFrameCount;
-            frame++)
-        {
-            ExecuteFrame(
-                renderer,
-                executor,
-                scenario.GetFrame(
-                    WarmupFrameCount + frame + 1),
-                viewport);
-            PrismExecutionCounters counters =
-                executionDiagnostics.Counters;
-            executedPasses += counters.PassCount;
-            captures += counters.CaptureCount;
-            createdSurfaces += counters.CreatedSurfaceCount;
-            reusedSurfaces += counters.ReusedSurfaceCount;
-            fallbacks += counters.FallbackCount;
-            peakLiveSurfaces = Math.Max(
-                peakLiveSurfaces,
-                counters.PeakLiveSurfaceCount);
-            activeSurfaces = Math.Max(
-                activeSurfaces,
-                counters.ActiveSurfaceCount);
-            peakSurfaceBytes = Math.Max(
-                peakSurfaceBytes,
-                counters.PeakSurfaceByteCount);
-        }
-        TimeSpan cpuElapsed =
-            Stopwatch.GetElapsedTime(cpuStarted);
-        long allocatedBytes =
-            GC.GetAllocatedBytesForCurrentThread() -
-            allocationStart;
-        PrismRendererDiagnostics after =
-            executor.RendererDiagnostics;
-
-        long completionStarted = Stopwatch.GetTimestamp();
-        for (int frame = 0;
-            frame < CompletionFrameCount;
-            frame++)
-        {
-            ExecuteFrame(
-                renderer,
-                executor,
-                scenario.GetFrame(
-                    WarmupFrameCount +
-                    MeasuredFrameCount +
-                    frame + 1),
-                viewport);
-            renderer.Synchronize();
-        }
-        TimeSpan completionUpperBound =
-            Stopwatch.GetElapsedTime(completionStarted);
-
-        long finalHits =
-            after.FinalHitCount - before.FinalHitCount;
-        long lookups =
-            after.LookupCount - before.LookupCount;
-        long savedCaptures =
-            after.SavedCaptureCount - before.SavedCaptureCount;
-        ValidateScenario(
-            scenario,
-            retainedCacheEnabled,
-            allocatedBytes,
-            finalHits,
-            lookups,
-            savedCaptures,
-            fallbacks,
-            activeSurfaces);
-
-        Console.WriteLine(
-            string.Create(
-                CultureInfo.InvariantCulture,
-                $"PRISM_RETAINED_BENCHMARK " +
-                $"scenario={scenario.Name} " +
-                $"resolution={resolution.Name} " +
-                $"width={resolution.Width} " +
-                $"height={resolution.Height} " +
-                $"cache={(retainedCacheEnabled ? "on" : "off")} " +
-                $"frames={MeasuredFrameCount} " +
-                $"cpu-build-us=" +
-                $"{buildElapsed.TotalMicroseconds / MeasuredFrameCount:F3} " +
-                $"build-allocated-bytes={buildAllocatedBytes} " +
-                $"cpu-submit-us=" +
-                $"{cpuElapsed.TotalMicroseconds / MeasuredFrameCount:F3} " +
-                $"gpu-completion-upper-bound-us=" +
-                $"{completionUpperBound.TotalMicroseconds / CompletionFrameCount:F3} " +
-                $"allocated-bytes={allocatedBytes} " +
-                $"passes={executedPasses} " +
-                $"captures={captures} " +
-                $"peak-live-surfaces={peakLiveSurfaces} " +
-                $"created-surfaces={createdSurfaces} " +
-                $"reused-surfaces={reusedSurfaces} " +
-                $"peak-surface-bytes={peakSurfaceBytes} " +
-                $"fallbacks={fallbacks} " +
-                $"final-hits={finalHits} " +
-                $"intermediate-hits=" +
-                $"{after.IntermediateHitCount - before.IntermediateHitCount} " +
-                $"misses={after.MissCount - before.MissCount} " +
-                $"lookups={lookups} " +
-                $"promotions=" +
-                $"{after.PromotionCount - before.PromotionCount} " +
-                $"rejected-promotions=" +
-                $"{after.RejectedPromotionCount - before.RejectedPromotionCount} " +
-                $"evictions=" +
-                $"{after.EvictionCount - before.EvictionCount} " +
-                $"capacity-evictions=" +
-                $"{after.GetEvictionCount(PrismCacheEvictionReason.Capacity) - before.GetEvictionCount(PrismCacheEvictionReason.Capacity)} " +
-                $"replacement-evictions=" +
-                $"{after.GetEvictionCount(PrismCacheEvictionReason.Replacement) - before.GetEvictionCount(PrismCacheEvictionReason.Replacement)} " +
-                $"transient-pressure-evictions=" +
-                $"{after.GetEvictionCount(PrismCacheEvictionReason.TransientPressure) - before.GetEvictionCount(PrismCacheEvictionReason.TransientPressure)} " +
-                $"retained-entries={after.RetainedEntryCount} " +
-                $"pinned-entries={after.PinnedEntryCount} " +
-                $"retained-bytes={after.RetainedByteCount} " +
-                $"peak-total-bytes={after.PeakTotalByteCount} " +
-                $"saved-captures={savedCaptures} " +
-                $"saved-passes=" +
-                $"{after.SavedPassCount - before.SavedPassCount}"));
     }
 
-    private static void ValidateScenario(
-        BenchmarkScenario scenario,
-        bool retainedCacheEnabled,
-        long allocatedBytes,
-        long finalHits,
-        long lookups,
-        long savedCaptures,
-        long fallbacks,
-        int activeSurfaces)
+    private static void Synchronize(SdlGpuWindowGraphicsSession session)
     {
-        if (fallbacks != 0 || activeSurfaces != 0)
+        nint commandBuffer = session.Api.AcquireGpuCommandBuffer(session.Device);
+        if (commandBuffer == 0)
         {
-            throw new InvalidOperationException(
-                $"Benchmark '{scenario.Name}' left {activeSurfaces} active surfaces " +
-                $"and reported {fallbacks} fallback(s).");
+            throw SdlApiError.Create(session.Api, "Benchmark GPU synchronization command buffer");
         }
-
-        if (!retainedCacheEnabled && lookups != 0)
+        nint fence = session.Api.SubmitGpuCommandBufferAndAcquireFence(commandBuffer);
+        if (fence == 0)
         {
-            throw new InvalidOperationException(
-                $"Cache-off benchmark '{scenario.Name}' performed {lookups} retained lookup(s).");
+            throw SdlApiError.Create(session.Api, "Benchmark GPU synchronization fence");
         }
-
-        if (retainedCacheEnabled && scenario.ExpectStaticRetainedHit &&
-            (finalHits == 0 || savedCaptures == 0 || allocatedBytes != 0))
-        {
-            throw new InvalidOperationException(
-                $"Static benchmark '{scenario.Name}' expected retained hits, saved captures, " +
-                $"and zero managed allocation; observed hits={finalHits}, " +
-                $"savedCaptures={savedCaptures}, allocatedBytes={allocatedBytes}.");
-        }
-    }
-
-    private static void ExecuteFrame(
-        BenchmarkRenderer renderer,
-        PrismGraphExecutor executor,
-        BenchmarkFrame frame,
-        Viewport viewport)
-    {
-        renderer.BeginFrame();
         try
         {
-            executor.Execute(
-                frame.Commands,
-                frame.Analysis,
-                frame.Plan,
-                renderer,
-                viewport,
-                frame.BackdropLease);
+            if (!session.Api.WaitForGpuFence(session.Device, fence))
+            {
+                throw SdlApiError.Create(session.Api, "Benchmark GPU synchronization wait");
+            }
         }
         finally
         {
-            renderer.EndBatch();
+            session.Api.ReleaseGpuFence(session.Device, fence);
         }
     }
 
+    private static void ExecuteFrame(SdlGpuWindowGraphicsSession session, BenchmarkFrame frame,
+        PrismBackdropSourceToken sourceToken)
+    {
+        session.BeginFrame(CernealaColor.Transparent);
+        try
+        {
+            DrawingFrameContext context = new(frame.Analysis, frame.BackdropLease,
+                frame.BackdropLease is null ? default : sourceToken);
+            session.DrawingBackend.Render(frame.Commands, in context);
+        }
+        finally
+        {
+            session.CompleteFrame(present: false);
+        }
+    }
     private static BenchmarkScenario CreateScenario(
-        GraphicsDevice graphicsDevice,
+        SdlGpuWindowGraphicsSession session,
         BenchmarkScenarioKind kind,
         BenchmarkResolution resolution) =>
         kind switch
@@ -338,22 +178,20 @@ internal static class PrismRetainedCacheBenchmarkRunner
                 CreateStaticControlScenario(resolution),
             BenchmarkScenarioKind.StaticBackdrop =>
                 CreateBackdropScenario(
-                    graphicsDevice,
+                    session,
                     resolution,
                     animated: false),
             BenchmarkScenarioKind.AnimatedGameBackdrop =>
                 CreateBackdropScenario(
-                    graphicsDevice,
+                    session,
                     resolution,
                     animated: true),
             BenchmarkScenarioKind.MotionParameter =>
                 CreateMotionParameterScenario(resolution),
             BenchmarkScenarioKind.ChangedResource =>
-                CreateChangedResourceScenario(graphicsDevice, resolution),
+                CreateChangedResourceScenario(session, resolution),
             BenchmarkScenarioKind.ManyCommonInstances =>
                 CreateManyCommonInstancesScenario(resolution),
-            BenchmarkScenarioKind.SmallBudget =>
-                CreateSmallBudgetScenario(resolution),
             BenchmarkScenarioKind.ManyLayers =>
                 CreateManyLayersScenario(resolution),
             BenchmarkScenarioKind.FilterChain =>
@@ -363,7 +201,7 @@ internal static class PrismRetainedCacheBenchmarkRunner
             BenchmarkScenarioKind.NestedGroups =>
                 CreateNestedGroupsScenario(resolution),
             BenchmarkScenarioKind.SharedBackdrop =>
-                CreateSharedBackdropScenario(graphicsDevice, resolution),
+                CreateSharedBackdropScenario(session, resolution),
             _ => throw new ArgumentOutOfRangeException(
                 nameof(kind),
                 kind,
@@ -388,17 +226,16 @@ internal static class PrismRetainedCacheBenchmarkRunner
         return new BenchmarkScenario(
             "static-control",
             [frame],
-            new PrismRendererOptions(),
             () => BuildPlan(frame.Commands),
             expectStaticRetainedHit: true);
     }
 
     private static BenchmarkScenario CreateBackdropScenario(
-        GraphicsDevice graphicsDevice,
+        SdlGpuWindowGraphicsSession session,
         BenchmarkResolution resolution,
         bool animated)
     {
-        Texture2D texture = CreateBackdropTexture(graphicsDevice, resolution);
+        BenchmarkBackdrop texture = CreateBackdropTexture(session, resolution);
         PrismCompositionDefinition definition = new(
             animated
                 ? "Animated game backdrop"
@@ -472,7 +309,6 @@ internal static class PrismRetainedCacheBenchmarkRunner
                 ? "animated-game-backdrop"
                 : "static-backdrop",
             frames,
-            new PrismRendererOptions(),
             () => BuildBackdropPlan(
                 commands,
                 frames[0].BackdropLease!.Metadata,
@@ -511,37 +347,25 @@ internal static class PrismRetainedCacheBenchmarkRunner
         return new BenchmarkScenario(
             "motion-parameter",
             frames,
-            new PrismRendererOptions(),
             () => BuildPlan(frames[0].Commands),
             expectStaticRetainedHit: false);
     }
 
     private static BenchmarkScenario
         CreateChangedResourceScenario(
-            GraphicsDevice graphicsDevice,
+            SdlGpuWindowGraphicsSession session,
             BenchmarkResolution resolution)
     {
-        Texture2D texture = new(
-            graphicsDevice,
-            resolution.Width,
-            resolution.Height,
-            false,
-            SurfaceFormat.Color);
-        XnaColor[] maskPixels =
-            new XnaColor[resolution.Width * resolution.Height];
+        byte[] maskPixels = new byte[resolution.Width * resolution.Height * 4];
         for (int y = 0; y < resolution.Height; y++)
         {
             for (int x = 0; x < resolution.Width; x++)
             {
-                byte alpha = (byte)(48 +
-                    ((x + y) % 176));
-                maskPixels[(y * resolution.Width) + x] =
-                    new XnaColor(alpha, alpha, alpha, alpha);
+                byte alpha = (byte)(48 + ((x + y) % 176));
+                maskPixels.AsSpan(((y * resolution.Width) + x) * 4, 4).Fill(alpha);
             }
         }
-        texture.SetData(maskPixels);
-        MonoGameImage image = new(texture);
-        PrismResourceId maskId = new("BenchmarkMask");
+        SdlGpuImage image = new(resolution.Width, resolution.Height, maskPixels);        PrismResourceId maskId = new("BenchmarkMask");
         PrismCompositionDefinition definition = new(
             "Changed resource",
             [
@@ -589,7 +413,6 @@ internal static class PrismRetainedCacheBenchmarkRunner
         return new BenchmarkScenario(
             "changed-resource",
             frames,
-            new PrismRendererOptions(),
             () => BuildPlan(frames[0].Commands),
             expectStaticRetainedHit: false,
             image);
@@ -640,46 +463,8 @@ internal static class PrismRetainedCacheBenchmarkRunner
                     plan,
                     BackdropLease: null)
             ],
-            new PrismRendererOptions(),
             () => BuildPlan(commands),
             expectStaticRetainedHit: true);
-    }
-
-    private static BenchmarkScenario CreateSmallBudgetScenario(
-        BenchmarkResolution resolution)
-    {
-        PrismCompositionDefinition definition =
-            CreateFilteredControlDefinition(
-                "Small budget churn");
-        BenchmarkFrame[] frames =
-            new BenchmarkFrame[DynamicFrameCount];
-        for (int index = 0;
-            index < frames.Length;
-            index++)
-        {
-            PrismInstance instance = new(definition);
-            PrismDrawScope scope = CreateScope(
-                instance,
-                ownerToken: 7_000 + index + 1,
-                visualContentVersion: 1,
-                resolution);
-            frames[index] = CreateControlFrame(
-                scope,
-                new CernealaColor(184, 116, 236, 224),
-                resolution);
-        }
-
-        return new BenchmarkScenario(
-            "small-budget",
-            frames,
-            new PrismRendererOptions
-            {
-                SurfaceHardByteLimit = 64L * 1024 * 1024,
-                RetainedCacheSoftByteLimit = 16L * 1024 * 1024,
-                RetainedCacheEntryLimit = 4
-            },
-            () => BuildPlan(frames[0].Commands),
-            expectStaticRetainedHit: false);
     }
 
     private static BenchmarkScenario CreateManyLayersScenario(
@@ -705,7 +490,6 @@ internal static class PrismRetainedCacheBenchmarkRunner
         return new BenchmarkScenario(
             "many-layers",
             [frame],
-            new PrismRendererOptions(),
             () => BuildPlan(frame.Commands),
             expectStaticRetainedHit: true);
     }
@@ -739,7 +523,6 @@ internal static class PrismRetainedCacheBenchmarkRunner
         return new BenchmarkScenario(
             "filter-chain",
             [frame],
-            new PrismRendererOptions(),
             () => BuildPlan(frame.Commands),
             expectStaticRetainedHit: true);
     }
@@ -772,7 +555,6 @@ internal static class PrismRetainedCacheBenchmarkRunner
         return new BenchmarkScenario(
             "styles",
             [frame],
-            new PrismRendererOptions(),
             () => BuildPlan(frame.Commands),
             expectStaticRetainedHit: true);
     }
@@ -816,16 +598,15 @@ internal static class PrismRetainedCacheBenchmarkRunner
         return new BenchmarkScenario(
             "nested-groups",
             [frame],
-            new PrismRendererOptions(),
             () => BuildPlan(frame.Commands),
             expectStaticRetainedHit: true);
     }
 
     private static BenchmarkScenario CreateSharedBackdropScenario(
-        GraphicsDevice graphicsDevice,
+        SdlGpuWindowGraphicsSession session,
         BenchmarkResolution resolution)
     {
-        Texture2D texture = CreateBackdropTexture(graphicsDevice, resolution);
+        BenchmarkBackdrop texture = CreateBackdropTexture(session, resolution);
         PrismCompositionDefinition definition = new(
             "Shared backdrop",
             [
@@ -877,7 +658,6 @@ internal static class PrismRetainedCacheBenchmarkRunner
         return new BenchmarkScenario(
             "shared-backdrop",
             [frame],
-            new PrismRendererOptions(),
             () => BuildBackdropPlan(commands, metadata, sourceToken),
             expectStaticRetainedHit: true,
             texture);
@@ -956,34 +736,39 @@ internal static class PrismRetainedCacheBenchmarkRunner
         return commands;
     }
 
-    private static Texture2D CreateBackdropTexture(
-        GraphicsDevice graphicsDevice,
-        BenchmarkResolution resolution)
+    private static BenchmarkBackdrop CreateBackdropTexture(
+        SdlGpuWindowGraphicsSession session, BenchmarkResolution resolution)
     {
-        Texture2D texture = new(
-            graphicsDevice,
-            resolution.Width,
-            resolution.Height,
-            false,
-            SurfaceFormat.Color);
-        XnaColor[] pixels =
-            new XnaColor[resolution.Width * resolution.Height];
+        byte[] pixels = new byte[resolution.Width * resolution.Height * 4];
         for (int y = 0; y < resolution.Height; y++)
         {
             for (int x = 0; x < resolution.Width; x++)
             {
-                pixels[(y * resolution.Width) + x] =
-                    new XnaColor(
-                        (byte)(24 + (x * 128 / resolution.Width)),
-                        (byte)(52 + (y * 144 / resolution.Height)),
-                        (byte)(196 - (x * 96 / resolution.Width)),
-                        byte.MaxValue);
+                int offset = ((y * resolution.Width) + x) * 4;
+                pixels[offset] = (byte)(24 + (x * 128 / resolution.Width));
+                pixels[offset + 1] = (byte)(52 + (y * 144 / resolution.Height));
+                pixels[offset + 2] = (byte)(196 - (x * 96 / resolution.Width));
+                pixels[offset + 3] = 255;
             }
         }
-        texture.SetData(pixels);
-        return texture;
+        SdlGpuImage image = new(resolution.Width, resolution.Height, pixels);
+        session.BeginFrame(CernealaColor.Transparent);
+        try
+        {
+            nint texture = session.DrawingResources.GetOrCreateTexture(session, image,
+                resolution.Width, resolution.Height, image.RgbaPixels.Span).Handle;
+            return new BenchmarkBackdrop(image, texture);
+        }
+        finally
+        {
+            session.CompleteFrame(present: false);
+        }
     }
 
+    private sealed record BenchmarkBackdrop(SdlGpuImage Image, nint Texture) : IDisposable
+    {
+        public void Dispose() => Image.Dispose();
+    }
     private static PrismGraphExecutionPlan BuildPlan(
         DrawCommandList commands) =>
         BuildPlan(new PrismFrameAnalyzer().Analyze(commands));
@@ -1011,7 +796,6 @@ internal static class PrismRetainedCacheBenchmarkRunner
         MotionParameter,
         ChangedResource,
         ManyCommonInstances,
-        SmallBudget,
         ManyLayers,
         FilterChain,
         Styles,
@@ -1037,14 +821,12 @@ internal static class PrismRetainedCacheBenchmarkRunner
         public BenchmarkScenario(
             string name,
             BenchmarkFrame[] frames,
-            PrismRendererOptions options,
             Func<PrismGraphExecutionPlan> buildPlan,
             bool expectStaticRetainedHit,
             IDisposable? ownedResource = null)
         {
             Name = name;
             Frames = frames;
-            Options = options;
             BuildPlan = buildPlan;
             ExpectStaticRetainedHit = expectStaticRetainedHit;
             this.ownedResource = ownedResource;
@@ -1054,7 +836,7 @@ internal static class PrismRetainedCacheBenchmarkRunner
 
         public BenchmarkFrame[] Frames { get; }
 
-        public PrismRendererOptions Options { get; }
+        public PrismBackdropSourceToken BackdropSourceToken { get; } = PrismBackdropSourceToken.CreateUnique();
 
         public Func<PrismGraphExecutionPlan> BuildPlan { get; }
 
@@ -1070,17 +852,17 @@ internal static class PrismRetainedCacheBenchmarkRunner
     }
 
     private sealed class BorrowedBackdropLease :
-        IMonoGameBackdropFrameLease
+        ISdlGpuBackdropFrameLease
     {
         public BorrowedBackdropLease(
-            Texture2D texture,
+            BenchmarkBackdrop texture,
             BackdropFrameMetadata metadata)
         {
-            Texture = texture;
+            Texture = texture.Texture;
             Metadata = metadata;
         }
 
-        public Texture2D Texture { get; }
+        public nint Texture { get; }
 
         public BackdropFrameMetadata Metadata { get; }
 
@@ -1089,209 +871,36 @@ internal static class PrismRetainedCacheBenchmarkRunner
         }
     }
 
-    private sealed class BenchmarkRenderer :
-        IPrismCommandRenderer,
-        IDisposable
+    private sealed class SdlGpuFixture : IDisposable
     {
-        private readonly SpriteBatch spriteBatch;
-        private readonly Texture2D whitePixel;
-        private readonly RenderTarget2D hostTarget;
-        private readonly RasterizerState scissorRasterizerState;
-        private readonly XnaColor[] readback;
-        private bool batchActive;
-
-        public BenchmarkRenderer(
-            GraphicsDevice graphicsDevice,
-            int width,
-            int height)
-        {
-            GraphicsDevice = graphicsDevice;
-            spriteBatch = new SpriteBatch(graphicsDevice);
-            whitePixel = new Texture2D(graphicsDevice, 1, 1);
-            whitePixel.SetData([XnaColor.White]);
-            scissorRasterizerState =
-                MonoGameDrawingBackend.ScissorRasterizerState;
-            hostTarget = new RenderTarget2D(
-                graphicsDevice,
-                width,
-                height,
-                mipMap: false,
-                SurfaceFormat.Color,
-                DepthFormat.None,
-                preferredMultiSampleCount: 0,
-                RenderTargetUsage.PreserveContents);
-            readback = new XnaColor[width * height];
-        }
-
-        public GraphicsDevice GraphicsDevice { get; }
-
-        public void BeginFrame()
-        {
-            EndBatch();
-            GraphicsDevice.SetRenderTarget(hostTarget);
-            GraphicsDevice.Clear(XnaColor.Transparent);
-            BeginCommandBatch();
-        }
-
-        public void Synchronize()
-        {
-            EndBatch();
-            GraphicsDevice.SetRenderTarget(null);
-            hostTarget.GetData(readback);
-        }
-
-        public void BeginCommandBatch()
-        {
-            BeginBatch(effect: null, BlendState.AlphaBlend);
-        }
-
-        public void BeginKernelBatch(
-            Effect effect,
-            BlendState blendState,
-            SamplerState samplerState,
-            Rectangle? scissorRectangle = null)
-        {
-            if (scissorRectangle is Rectangle scissor)
-            {
-                GraphicsDevice.ScissorRectangle = scissor;
-            }
-            BeginBatch(
-                effect,
-                blendState,
-                samplerState,
-                scissorRectangle.HasValue
-                    ? scissorRasterizerState
-                    : RasterizerState.CullNone);
-        }
-
-        public void EndBatch()
-        {
-            if (!batchActive)
-            {
-                return;
-            }
-
-            try
-            {
-                spriteBatch.End();
-            }
-            finally
-            {
-                batchActive = false;
-            }
-        }
-
-        public void RenderCommand(DrawCommand command)
-        {
-            if (command.Kind != DrawCommandKind.FillRectangle ||
-                command.Brush is not null)
-            {
-                throw new InvalidOperationException(
-                    $"Unsupported Prism benchmark command '{command.Kind}'.");
-            }
-
-            Rectangle destination = new(
-                (int)MathF.Round(command.Rect.X),
-                (int)MathF.Round(command.Rect.Y),
-                (int)MathF.Round(command.Rect.Width),
-                (int)MathF.Round(command.Rect.Height));
-            spriteBatch.Draw(
-                whitePixel,
-                destination,
-                new XnaColor(
-                    command.Color.R,
-                    command.Color.G,
-                    command.Color.B,
-                    command.Color.A));
-        }
-
-        public void DrawFullscreen(
-            Texture2D texture,
-            Rectangle destination)
-        {
-            spriteBatch.Draw(
-                texture,
-                destination,
-                XnaColor.White);
-        }
-
-        public void RestoreHostTarget()
-        {
-            GraphicsDevice.SetRenderTarget(hostTarget);
-            GraphicsDevice.Viewport = new Viewport(
-                0,
-                0,
-                hostTarget.Width,
-                hostTarget.Height);
-        }
-
-        public void Dispose()
-        {
-            EndBatch();
-            GraphicsDevice.SetRenderTarget(null);
-            hostTarget.Dispose();
-            whitePixel.Dispose();
-            scissorRasterizerState.Dispose();
-            spriteBatch.Dispose();
-        }
-
-        private void BeginBatch(
-            Effect? effect,
-            BlendState blendState,
-            SamplerState samplerState = null!,
-            RasterizerState? rasterizerState = null)
-        {
-            if (batchActive)
-            {
-                throw new InvalidOperationException(
-                    "The Prism benchmark SpriteBatch is already active.");
-            }
-
-            spriteBatch.Begin(
-                SpriteSortMode.Immediate,
-                blendState,
-                samplerState ?? SamplerState.LinearClamp,
-                DepthStencilState.None,
-                rasterizerState ?? RasterizerState.CullNone,
-                effect);
-            batchActive = true;
-        }
-    }
-
-    private sealed class WindowsDxFixture : IDisposable
-    {
-        private readonly Win32WindowPlatform platform =
-            new(new WindowsDxWindowGraphicsSessionFactory());
+        private readonly NativeSdlApi api = new();
+        private readonly SdlGpuWindowGraphicsSessionFactory graphics;
+        private readonly SdlWindowPlatform platform;
         private readonly IPlatformWindow window;
 
-        public WindowsDxFixture(int width, int height)
+        public SdlGpuFixture(int width, int height)
         {
-            window = platform.CreateWindow(
-                new Window
-                {
-                    Title =
-                        $"Cerneala retained cache benchmark {Guid.NewGuid():N}",
-                    Width = width,
-                    Height = height
-                },
-                new CallbackSink());
+            graphics = new(api, useMultisampling: false);
+            platform = new(api, graphics, coordinateScaleOverride: 1);
+            window = platform.CreateWindow(new Window
+            {
+                Title = "Cerneala retained cache SDL_GPU benchmark", Width = width, Height = height
+            }, new CallbackSink());
             window.Show();
             platform.PumpEvents();
-            Session = window.GraphicsSession as
-                WindowsDxWindowGraphicsSession ??
-                throw new InvalidOperationException(
-                    "The benchmark window did not create a WindowsDX session.");
+            Session = window.GraphicsSession as SdlGpuWindowGraphicsSession ??
+                throw new InvalidOperationException("The benchmark window did not create an SDL_GPU session.");
         }
 
-        public WindowsDxWindowGraphicsSession Session { get; }
+        public SdlGpuWindowGraphicsSession Session { get; }
 
         public void Dispose()
         {
             window.Dispose();
             platform.Dispose();
+            graphics.Dispose();
         }
     }
-
     private sealed class CallbackSink : IWindowPlatformCallbacks
     {
         public void RequestClose()

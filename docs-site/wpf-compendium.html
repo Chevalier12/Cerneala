@@ -314,7 +314,7 @@
         <div><span>Render cache</span><strong>Element commands</strong></div><i></i>
         <div><span>Root stream</span><strong>Ordered DrawCommandList</strong></div><i></i>
         <div><span>Backend</span><strong>IDrawingBackend</strong></div><i></i>
-        <div><span>Host</span><strong>WindowsDX / MonoGame</strong></div>
+        <div><span>Host</span><strong>SDL3 / SDL_GPU</strong></div>
       </div>
       <div class="capability-ledger">
         <article><span>Drawing primitives</span><p>Rectangles, ellipses, lines, paths, text, images, and explicit clip commands.</p></article>
@@ -387,11 +387,11 @@
     <section class="chapter" id="platform">
       <header class="chapter__head">
         <span class="chapter__number">12</span>
-        <div><span class="section-code">Platform, accessibility and tooling</span><h2>Backend-neutral architecture, Windows-targeted snapshot.</h2></div>
+        <div><span class="section-code">Platform, accessibility and tooling</span><h2>Backend-neutral architecture, SDL3 desktop hosting.</h2></div>
       </header>
       <div class="platform-grid">
-        <div><span>Target</span><strong>net8.0-windows</strong><p>The current project and WindowsDX dependency make this snapshot Windows-targeted.</p></div>
-        <div><span>Hosts</span><strong>Native Windows + MonoGame</strong><p><code>WindowApplicationRuntime</code> and <code>MonoGameUiHost</code> converge on the retained root and backend contracts.</p></div>
+        <div><span>Target</span><strong>net8.0 core</strong><p>Core and SDL projects are platform-neutral .NET projects; some applications and tooling remain Windows-targeted.</p></div>
+        <div><span>Hosts</span><strong>SDL3 desktop + retained UiHost</strong><p><code>WindowApplicationRuntime</code> uses the explicit SDL composition. The retired MonoGame host is no longer available.</p></div>
         <div><span>Platform seams</span><strong>Explicit services</strong><p>Clipboard, cursor, file dialogs, DPI, text input, and accessibility are exposed through platform interfaces.</p></div>
         <div><span>Accessibility</span><strong>Semantics first</strong><p>A platform-neutral semantics tree and automation peers exist. Native accessibility adapter completion is still deferred.</p></div>
         <div><span>Diagnostics</span><strong>Frame-native inspection</strong><p>Tree dumpers, invalidation traces, layout/render/input counters, Aspect traces, motion traces, and cache diagnostics.</p></div>
@@ -406,7 +406,7 @@
       </header>
       <ol class="migration-steps">
         <li><span>01</span><div><strong>Inventory the WPF dependency surface.</strong><p>Separate controls, custom properties, bindings, resources, templates, routed events, commands, animations, native interop, documents, media, and design-time dependencies.</p></div></li>
-        <li><span>02</span><div><strong>Choose the host before porting views.</strong><p>Decide between generated native windows and MonoGame integration. That choice owns startup, input collection, viewport/DPI, update, and draw.</p></div></li>
+        <li><span>02</span><div><strong>Establish hosting before porting views.</strong><p>Use the explicit SDL3 desktop composition for native windows. Keep startup, input collection, viewport/DPI, update, and draw ownership clear.</p></div></li>
         <li><span>03</span><div><strong>Rebuild the retained root once.</strong><p>Create the tree once; mutate state afterward. Do not rebuild controls every draw call like an immediate-mode UI.</p></div></li>
         <li><span>04</span><div><strong>Translate dependency properties deliberately.</strong><p>Map invalidation and inheritance to <code>UiPropertyMetadata&lt;T&gt;</code>. Re-evaluate precedence assumptions instead of copying flags mechanically.</p></div></li>
         <li><span>05</span><div><strong>Translate bindings into compiled paths.</strong><p>Use typed <code>$DataContext</code>, named-element, self, and template-part paths in markup; use observable values, lists, adapters, converters, and <code>BindingOperations</code> for programmatic composition.</p></div></li>

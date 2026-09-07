@@ -1,10 +1,7 @@
 using System.Numerics;
 using Cerneala.Drawing;
-using Cerneala.Drawing.MonoGame;
 using Cerneala.Drawing.Prism.Graph;
-using Cerneala.Tests.Drawing.MonoGame;
-using Microsoft.Xna.Framework.Graphics;
-using XnaColor = Microsoft.Xna.Framework.Color;
+using Cerneala.Tests.Drawing.SdlGpu;
 
 namespace Cerneala.Tests.Drawing;
 
@@ -90,15 +87,14 @@ public sealed class DrawingStateTests
             commands.Select(command => command.Kind));
     }
 
-    [Fact]
-    public void TransformGeometricClipAndGroupOpacityRenderAndRestoreState()
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(1.25f)]
+    [InlineData(1.5f)]
+    [InlineData(2f)]
+    public void TransformGeometricClipAndGroupOpacityRenderAndRestoreState(float scale)
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
-        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
+        using SdlDrawingFixture fixture = new((int)(96 * scale), (int)(64 * scale), coordinateScale: scale);
         DrawPath clip = new DrawPathBuilder()
             .MoveTo(new DrawPoint(16, 8))
             .LineTo(new DrawPoint(48, 8))
@@ -116,56 +112,42 @@ public sealed class DrawingStateTests
         drawing.PopClip();
         drawing.PopTransform();
 
-        XnaColor[] pixels = Render(fixture, commands);
-        int width = fixture.Session.GraphicsDevice.PresentationParameters.BackBufferWidth;
-        XnaColor single = pixels[(20 * width) + 55];
-        XnaColor overlap = pixels[(20 * width) + 44];
-        XnaColor clipped = pixels[(36 * width) + 52];
+        Color[] pixels = fixture.Render(commands);
+        // After translation, the triangle's diagonal is x + y = 64.
+        // Sample logical coordinates so DPI cannot move a probe across it.
+        Color single = fixture.Sample(pixels, 44, 16);
+        Color overlap = fixture.Sample(pixels, 32, 16);
+        Color clipped = fixture.Sample(pixels, 44, 28);
 
         Assert.InRange(single.R, 125, 130);
         Assert.InRange(overlap.R, 125, 130);
-        Assert.Equal(XnaColor.Black, clipped);
-        MonoGameDrawingBackend backend = Assert.IsType<MonoGameDrawingBackend>(
-            fixture.Session.DrawingBackend);
-        Assert.Equal(0, backend.ActiveDrawingLayerCount);
-        Assert.InRange(backend.DrawingLayerPoolCount, 1, 8);
-        Assert.Equal(0, backend.ClipStackDepth);
+        Assert.Equal(Color.Black, clipped);
+
+        DrawCommandList unscoped = new();
+        new DrawingContext(unscoped).FillRectangle(new DrawRect(0, 0, 96, 64), Color.White);
+        Assert.All(fixture.Render(unscoped), pixel => Assert.Equal(Color.White, pixel));
     }
 
     [Fact]
-    public void AxisAlignedRectangleClipUsesScissorWithoutAllocatingALayer()
+    public void AxisAlignedRectangleClipRestrictsPixels()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
-        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
+        using SdlDrawingFixture fixture = new();
         DrawCommandList commands = new();
         DrawingContext drawing = new(commands);
         drawing.PushClip(new DrawRect(12, 8, 24, 20));
         drawing.FillRectangle(new DrawRect(0, 0, 64, 48), Color.White);
         drawing.PopClip();
 
-        XnaColor[] pixels = Render(fixture, commands);
-        MonoGameDrawingBackend backend = Assert.IsType<MonoGameDrawingBackend>(
-            fixture.Session.DrawingBackend);
+        Color[] pixels = fixture.Render(commands);
 
-        Assert.Equal(XnaColor.White, Sample(pixels, fixture, backend, 20, 16));
-        Assert.Equal(XnaColor.Black, Sample(pixels, fixture, backend, 8, 16));
-        Assert.Equal(0, backend.DrawingLayerPoolCount);
-        Assert.Equal(0, backend.ClipStackDepth);
+        Assert.Equal(Color.White, fixture.Sample(pixels, 20, 16));
+        Assert.Equal(Color.Black, fixture.Sample(pixels, 8, 16));
     }
 
     [Fact]
     public void NestedGeometricClipsRenderTheirIntersection()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
-        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
+        using SdlDrawingFixture fixture = new();
         DrawPath outer = RectanglePath(8, 8, 40, 32);
         DrawPath inner = RectanglePath(24, 0, 32, 32);
         DrawCommandList commands = new();
@@ -176,26 +158,17 @@ public sealed class DrawingStateTests
         drawing.PopClip();
         drawing.PopClip();
 
-        XnaColor[] pixels = Render(fixture, commands);
-        MonoGameDrawingBackend backend = Assert.IsType<MonoGameDrawingBackend>(
-            fixture.Session.DrawingBackend);
+        Color[] pixels = fixture.Render(commands);
 
-        Assert.Equal(XnaColor.White, Sample(pixels, fixture, backend, 30, 16));
-        Assert.Equal(XnaColor.Black, Sample(pixels, fixture, backend, 16, 16));
-        Assert.Equal(XnaColor.Black, Sample(pixels, fixture, backend, 52, 16));
-        Assert.Equal(0, backend.ActiveDrawingLayerCount);
-        Assert.InRange(backend.DrawingLayerPoolCount, 2, 8);
+        Assert.Equal(Color.White, fixture.Sample(pixels, 30, 16));
+        Assert.Equal(Color.Black, fixture.Sample(pixels, 16, 16));
+        Assert.Equal(Color.Black, fixture.Sample(pixels, 52, 16));
     }
 
     [Fact]
     public void BasicBlendModesUsePremultipliedComposition()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
-        using PrismGraphExecutorTests.WindowsDxFixture fixture = new();
+        using SdlDrawingFixture fixture = new();
         DrawCommandList commands = new();
         DrawingContext drawing = new(commands);
 
@@ -219,44 +192,12 @@ public sealed class DrawingStateTests
         drawing.FillRectangle(new DrawRect(60, 0, 16, 16), new Color(128, 128, 128));
         drawing.PopBlend();
 
-        XnaColor[] pixels = Render(fixture, commands);
-        MonoGameDrawingBackend backend = Assert.IsType<MonoGameDrawingBackend>(
-            fixture.Session.DrawingBackend);
+        Color[] pixels = fixture.Render(commands);
 
-        AssertColorNear(new XnaColor(100, 0, 0, 128), Sample(pixels, fixture, backend, 8, 8));
-        AssertColorNear(new XnaColor(100, 80, 0), Sample(pixels, fixture, backend, 28, 8));
-        AssertColorNear(new XnaColor(100, 50, 25), Sample(pixels, fixture, backend, 48, 8));
-        AssertColorNear(new XnaColor(178, 153, 128), Sample(pixels, fixture, backend, 68, 8));
-    }
-
-    private static XnaColor[] Render(
-        PrismGraphExecutorTests.WindowsDxFixture fixture,
-        DrawCommandList commands)
-    {
-        fixture.Session.BeginFrame(Color.Black);
-        PrismFrameAnalysis prism = new PrismFrameAnalyzer().Analyze(commands);
-        DrawingFrameContext context = new(prism);
-        fixture.Session.DrawingBackend.Render(commands, in context);
-        fixture.Session.Present();
-        PresentationParameters parameters =
-            fixture.Session.GraphicsDevice.PresentationParameters;
-        XnaColor[] pixels =
-            new XnaColor[parameters.BackBufferWidth * parameters.BackBufferHeight];
-        fixture.Session.GraphicsDevice.GetBackBufferData(pixels);
-        return pixels;
-    }
-
-    private static XnaColor Sample(
-        XnaColor[] pixels,
-        PrismGraphExecutorTests.WindowsDxFixture fixture,
-        MonoGameDrawingBackend backend,
-        float x,
-        float y)
-    {
-        MonoGameDrawMapper mapper = new(backend.CoordinateScale);
-        Microsoft.Xna.Framework.Rectangle sample = mapper.MapRectangle(new DrawRect(x, y, 1, 1));
-        int width = fixture.Session.GraphicsDevice.PresentationParameters.BackBufferWidth;
-        return pixels[(sample.Y * width) + sample.X];
+        AssertColorNear(new Color(100, 0, 0, 128), fixture.Sample(pixels, 8, 8));
+        AssertColorNear(new Color(100, 80, 0), fixture.Sample(pixels, 28, 8));
+        AssertColorNear(new Color(100, 50, 25), fixture.Sample(pixels, 48, 8));
+        AssertColorNear(new Color(178, 153, 128), fixture.Sample(pixels, 68, 8));
     }
 
     private static DrawPath RectanglePath(float x, float y, float width, float height) =>
@@ -268,7 +209,7 @@ public sealed class DrawingStateTests
             .Close()
             .Build();
 
-    private static void AssertColorNear(XnaColor expected, XnaColor actual)
+    private static void AssertColorNear(Color expected, Color actual)
     {
         Assert.InRange(Math.Abs(actual.R - expected.R), 0, 3);
         Assert.InRange(Math.Abs(actual.G - expected.G), 0, 3);

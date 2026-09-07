@@ -204,6 +204,7 @@ internal readonly record struct PrismGraphScope
         DrawRect bounds,
         DrawRect controlBounds,
         Matrix3x2 effectiveTransform,
+        Matrix3x2 styleTransform,
         float pixelScale,
         PrismDependencyStamp dependencyStamp,
         long lowerUiVersion,
@@ -258,6 +259,12 @@ internal readonly record struct PrismGraphScope
                 nameof(effectiveTransform),
                 "A graph scope requires a finite effective transform.");
         }
+        if (!IsFinite(styleTransform))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(styleTransform),
+                "A graph scope requires a finite style transform.");
+        }
         if (dependencyStamp.CacheOwnerToken != cacheOwnerToken)
         {
             throw new ArgumentException(
@@ -290,6 +297,7 @@ internal readonly record struct PrismGraphScope
         Bounds = bounds;
         ControlBounds = controlBounds;
         EffectiveTransform = effectiveTransform;
+        StyleTransform = styleTransform;
         PixelScale = pixelScale;
         DependencyStamp = dependencyStamp;
         LowerUiVersion = lowerUiVersion;
@@ -318,6 +326,11 @@ internal readonly record struct PrismGraphScope
     internal DrawRect ControlBounds { get; }
 
     public Matrix3x2 EffectiveTransform { get; }
+
+    // DIP-sized styles follow their owner's transform, not enclosing command
+    // transforms such as a scene ViewBox. Capture geometry still uses the full
+    // EffectiveTransform above.
+    internal Matrix3x2 StyleTransform { get; }
 
     public float PixelScale { get; }
 

@@ -56,7 +56,7 @@ public sealed class PrismAdjustmentFilterTests
             Assert.True(
                 PrismAdjustmentPlanner.IsSupported(filter));
             Assert.Equal(
-                $"PrismKernelRegistry/{entry.Symbol}",
+                $"SdlGpuPrismKernelSelector/{entry.Symbol}",
                 entry.Coverage.Kernel);
             Assert.Equal(
                 $"PrismAdjustmentFilterTests/{entry.Symbol}",

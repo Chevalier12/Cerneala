@@ -71,7 +71,7 @@ An executable that receives generated `<Application>` or legacy `MainWindow` sta
 
 ```csharp
 [assembly: Cerneala.UI.Hosting.Windowing.ApplicationBackend(
-    typeof(Cerneala.UI.Hosting.Windows.WindowsDxApplicationBackend))]
+    typeof(Cerneala.UI.Hosting.Sdl.SdlGpuApplicationBackend))]
 ```
 
 The selected symbol must be a public, non-generic static or concrete class with exactly one compatible `public static void EnsureRegistered()` method without parameters. The generator emits the fully qualified call before `GeneratedWindowApplication.Run` in a generated `Main`, or before `GeneratedWindowApplication.RegisterStartup` in a hosted module initializer.

@@ -21,5 +21,7 @@ public enum WindowStartupLocation
 ## Remarks
 `Manual` leaves placement to the configured position and native host.
 
+When both `Window.Left` and `Window.Top` are finite, the explicit position takes precedence over `CenterScreen` and `CenterOwner`.
+
 ## Applies to
 `Window.WindowStartupLocation`.
