@@ -413,8 +413,10 @@ public sealed class SdlGpuPrismExecutorTests
         });
     }
 
-    [Fact]
-    public void PrismSurfacesExcludeEmptySpaceBeforeKnownGraphBounds()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void PrismSurfacesExcludeEmptySpaceBeforeKnownGraphBounds(bool translated)
     {
         FakeSdlApi api = new() { WindowPixelDensity = 1 };
         nint window = api.CreateWindow("prism-offset-surfaces", 256, 256, SdlWindowOptions.Hidden);
@@ -426,13 +428,23 @@ public sealed class SdlGpuPrismExecutorTests
                 256,
                 coordinateScale: 1));
 
-        Render(
-            session,
-            CreateCommands(
-                PrismCatalog.GetStyle(PrismStyleId.OuterGlow),
-                origin: new Vector2(100, 120)),
-            256,
-            256);
+        DrawCommandList commands = new();
+        if (translated)
+        {
+            commands.Add(DrawCommand.PushTransform(Matrix3x2.CreateTranslation(100, 120)));
+        }
+        foreach (DrawCommand command in CreateCommands(
+            PrismCatalog.GetStyle(PrismStyleId.OuterGlow),
+            origin: translated ? Vector2.Zero : new Vector2(100, 120)))
+        {
+            commands.Add(command);
+        }
+        if (translated)
+        {
+            commands.Add(DrawCommand.PopTransform());
+        }
+
+        Render(session, commands, 256, 256);
 
         var prismTextures = api.GpuTextures.Values
             .Where(texture => texture.CreateInfo.Format is
@@ -684,6 +696,18 @@ public sealed class SdlGpuPrismExecutorTests
             }
 
             Assert.InRange(visiblePixels, 1, 48 * 32);
+
+            DrawCommandList translated = new();
+            translated.Add(DrawCommand.PushTransform(Matrix3x2.CreateTranslation(96, 100)));
+            foreach (DrawCommand command in CreateNestedPrismCommands(Vector2.Zero))
+            {
+                translated.Add(command);
+            }
+            translated.Add(DrawCommand.PopTransform());
+            Render(session, translated, 256, 256);
+            WindowPreviewFrame translatedFrame = session.CapturePresentedFrame();
+
+            Assert.Equal(frame.Pixels, translatedFrame.Pixels);
         }
         finally
         {

@@ -1433,20 +1433,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         PrismCacheInvalidationQueue? queue)
     {
         ObjectDisposedException.ThrowIf(disposed, this);
-        currentOwners.Clear();
-        foreach (PrismAnalyzedScope scope in analysis.Scopes)
-        {
-            currentOwners.Add(scope.Scope.CacheOwnerToken);
-        }
-
-        while (queue?.TryDequeue(out PrismCacheInvalidation invalidation) == true)
-        {
-            if (invalidation.Kind == PrismCacheInvalidationKind.All ||
-                !currentOwners.Contains(invalidation.OwnerToken))
-            {
-                deviceResources.Invalidate(invalidation);
-            }
-        }
+        drawingBackend.ProcessPrismInvalidations(analysis, queue);
     }
 
     private void ReconcileRetainedEntries(
@@ -1768,7 +1755,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             Math.Max(0, bottom - top));
     }
 
-    private static SdlRect? ResolvePresentationClip(
+    private SdlRect? ResolvePresentationClip(
         PrismGraphExecutionPlan plan,
         PrismGraphScope scope,
         PrismGraphNode node,
@@ -1782,8 +1769,11 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             return null;
         }
 
-        DrawRect bounds = UnionBounds(nodePlan.Bounds, scope.ControlBounds);
-        float pixelScale = scope.PixelScale;
+        // Both bounds must be in host coordinates; ControlBounds is local.
+        DrawRect bounds = UnionBounds(nodePlan.Bounds, scope.Bounds);
+        // RenderSurface2D commands already use surface pixels. The owner's
+        // effect DPI must not scale their host-space positions a second time.
+        float pixelScale = drawingBackend.CoordinateScale;
         int left = (int)Math.Clamp(
             MathF.Floor(bounds.X * pixelScale) - PresentationSamplingOutset - originPixelX,
             0,
@@ -1847,18 +1837,19 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                 return;
             }
 
-            DrawRect bounds = UnionBounds(outputPlan.Bounds, scope.ControlBounds);
+            DrawRect bounds = UnionBounds(outputPlan.Bounds, scope.Bounds);
+            float pixelScale = drawingBackend.CoordinateScale;
             int scopeLeft =
-                (int)MathF.Floor(bounds.X * scope.PixelScale) -
+                (int)MathF.Floor(bounds.X * pixelScale) -
                 PresentationSamplingOutset;
             int scopeTop =
-                (int)MathF.Floor(bounds.Y * scope.PixelScale) -
+                (int)MathF.Floor(bounds.Y * pixelScale) -
                 PresentationSamplingOutset;
             int scopeRight =
-                (int)MathF.Ceiling(bounds.Right * scope.PixelScale) +
+                (int)MathF.Ceiling(bounds.Right * pixelScale) +
                 PresentationSamplingOutset;
             int scopeBottom =
-                (int)MathF.Ceiling(bounds.Bottom * scope.PixelScale) +
+                (int)MathF.Ceiling(bounds.Bottom * pixelScale) +
                 PresentationSamplingOutset;
             if (!hasKnownOutput)
             {

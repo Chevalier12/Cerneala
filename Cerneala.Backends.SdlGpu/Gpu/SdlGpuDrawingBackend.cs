@@ -65,6 +65,8 @@ internal sealed partial class SdlGpuDrawingBackend :
     private readonly HashSet<object> retainedBrushTextureKeys = [];
     private readonly HashSet<object> activeBrushTextureKeys = [];
     private readonly List<object> unusedBrushTextureKeys = [];
+    private readonly HashSet<PrismCacheOwnerToken> analyzedPrismOwners = [];
+    private readonly HashSet<PrismCacheOwnerToken> pendingPrismOwnerInvalidations = [];
     private long textAtlasFrameToken;
     private TimeSpan textRequestCollectionTime;
     private TimeSpan textRasterizationTime;
@@ -173,6 +175,8 @@ internal sealed partial class SdlGpuDrawingBackend :
         ObjectDisposedException.ThrowIf(disposed, this);
         textAtlasFrameToken = resources.BeginTextAtlasFrame();
         activeBrushTextureKeys.Clear();
+        analyzedPrismOwners.Clear();
+        pendingPrismOwnerInvalidations.Clear();
         BeginBrushCaptureFrame();
         textRequestCollectionTime = TimeSpan.Zero;
         textRasterizationTime = TimeSpan.Zero;
@@ -231,10 +235,43 @@ internal sealed partial class SdlGpuDrawingBackend :
     internal void EndFrame()
     {
         frameActive = false;
+        foreach (PrismCacheOwnerToken owner in pendingPrismOwnerInvalidations)
+        {
+            if (!analyzedPrismOwners.Contains(owner))
+            {
+                resources.PrismResources.Invalidate(PrismCacheInvalidation.ForOwner(owner));
+            }
+        }
+        analyzedPrismOwners.Clear();
+        pendingPrismOwnerInvalidations.Clear();
         CompleteBrushTextureFrame();
         CompleteBrushCaptureFrame();
         resources.EndTextAtlasFrame(textAtlasFrameToken);
         textAtlasFrameToken = 0;
+    }
+
+    internal void ProcessPrismInvalidations(
+        PrismFrameAnalysis analysis,
+        PrismCacheInvalidationQueue? queue)
+    {
+        // The root command list does not contain scopes recorded by nested
+        // surfaces. Decide owner absence only after every surface has rendered;
+        // live scopes reconcile their exact retained keys in their executor.
+        foreach (PrismAnalyzedScope scope in analysis.Scopes)
+        {
+            analyzedPrismOwners.Add(scope.Scope.CacheOwnerToken);
+        }
+        while (queue?.TryDequeue(out PrismCacheInvalidation invalidation) == true)
+        {
+            if (invalidation.Kind == PrismCacheInvalidationKind.All)
+            {
+                resources.PrismResources.Invalidate(invalidation);
+            }
+            else
+            {
+                pendingPrismOwnerInvalidations.Add(invalidation.OwnerToken);
+            }
+        }
     }
 
     public void Dispose()

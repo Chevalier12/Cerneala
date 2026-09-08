@@ -6,12 +6,200 @@ using Cerneala.Drawing.Prism.Graph;
 using Cerneala.Platforms.Sdl3;
 using Cerneala.Tests.Drawing.SdlGpu;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Prism.Definitions;
+using Cerneala.UI.Prism.Runtime;
+using System.Numerics;
 
 namespace Cerneala.Tests.SdlGpu;
 
 [Collection(SdlNativeTestCollection.Name)]
 public sealed class SdlGpuSurfaceRetainedTests
 {
+    [SdlNativeTheory]
+    [InlineData(1f)]
+    [InlineData(1.25f)]
+    [InlineData(2f)]
+    public void InvalidatedSurfaceEffectsAndContentMatchFreshRendering(float ownerPixelScale)
+    {
+        using SdlDrawingFixture fixture = new(128, 128, useMultisampling: false);
+        PrismLayerDefinition layer = new(new PrismNodeId(1), "Blur",
+            filters: [new PrismFilterDefinition(PrismFilterId.MotionBlur)]);
+        PrismInstance instance = new(new PrismCompositionDefinition("SurfaceBlur", [layer]));
+        PrismFilterState blur = instance.GetLayerState(layer.Id).Filters[0];
+        PrismCatalogParameterInfo distance = PrismCatalog.GetFilter(PrismFilterId.MotionBlur)
+            .Parameters.Single(parameter => parameter.Name == "Distance");
+        PrismCacheOwnerToken owner = new(773);
+        PrismCacheInvalidationQueue invalidations = new();
+        DrawRect bounds = new(32, 32, 48, 32);
+        int contentVersion = 1;
+        Color color = Color.CornflowerBlue;
+        using RecordedSurface surface = new((commands, _) =>
+        {
+            commands.Add(DrawCommand.BeginPrism(new PrismDrawScope(
+                instance, owner, bounds, Matrix3x2.Identity, ownerPixelScale,
+                visualContentVersion: contentVersion)));
+            commands.Add(DrawCommand.FillRectangle(bounds, color));
+            commands.Add(DrawCommand.EndPrism());
+        }, Color.Black);
+        DrawCommandList presentation = new();
+        presentation.Add(DrawCommand.RenderSurface2D(surface, new DrawRect(0, 0, 128, 128), Color.White));
+
+        blur.SetValue(distance, 5f);
+        byte[] initial = Render();
+        blur.SetValue(distance, 16f);
+        surface.FrameVersion++;
+        invalidations.EnqueueOwner(owner);
+        byte[] effectChanged = Render();
+        Assert.Equal(0, fixture.Backend.LastFramePrismCounters.CaptureCount);
+        Assert.False(initial.AsSpan().SequenceEqual(effectChanged));
+        // Drop the retained raster as well: an unchanged recorded surface can
+        // otherwise present its prior pixels without invoking Prism at all.
+        surface.SetBackendState(fixture.Session.DrawingResources, null);
+        invalidations.EnqueueAll();
+        surface.FrameVersion++;
+        Assert.Equal(effectChanged, Render());
+        Assert.Equal(1, fixture.Backend.LastFramePrismCounters.CaptureCount);
+
+        color = Color.White;
+        contentVersion++;
+        surface.FrameVersion++;
+        invalidations.EnqueueOwner(owner);
+        byte[] contentChanged = Render();
+        Assert.Equal(1, fixture.Backend.LastFramePrismCounters.CaptureCount);
+        Assert.False(effectChanged.AsSpan().SequenceEqual(contentChanged));
+        surface.SetBackendState(fixture.Session.DrawingResources, null);
+        invalidations.EnqueueAll();
+        surface.FrameVersion++;
+        Assert.Equal(contentChanged, Render());
+
+        byte[] Render()
+        {
+            fixture.Session.BeginFrame(Color.Black);
+            try
+            {
+                DrawingFrameContext context = new(new PrismFrameAnalyzer().Analyze(presentation),
+                    backdropLease: null, backdropSourceToken: default, invalidations);
+                fixture.Backend.Render(presentation, in context);
+            }
+            finally { fixture.Session.CompleteFrame(present: false); }
+            return fixture.Session.CapturePresentedFrame().Pixels.ToArray();
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SurfaceCaptureRetentionDistinguishesOwnerAndFullInvalidation(bool invalidateAll)
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1 };
+        nint window = api.CreateWindow("surface-owner-invalidation", 128, 128, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = Assert.IsType<SdlGpuWindowGraphicsSession>(
+            factory.Create(new SdlWindowSurface(window, api.GetWindowId(window)), 128, 128, 1));
+        SdlGpuDrawingBackend backend = Assert.IsType<SdlGpuDrawingBackend>(session.DrawingBackend);
+        PrismLayerDefinition layer = new(new PrismNodeId(1), "Blur",
+            filters: [new PrismFilterDefinition(PrismFilterId.MotionBlur)]);
+        PrismInstance instance = new(new PrismCompositionDefinition("SurfaceBlur", [layer]));
+        PrismFilterState blur = instance.GetLayerState(layer.Id).Filters[0];
+        PrismCatalogParameterInfo distance = PrismCatalog.GetFilter(PrismFilterId.MotionBlur)
+            .Parameters.Single(parameter => parameter.Name == "Distance");
+        PrismCacheOwnerToken owner = new(772);
+        PrismCacheInvalidationQueue invalidations = new();
+        DrawRect bounds = new(32, 32, 48, 32);
+        using RecordedSurface surface = new((commands, _) =>
+        {
+            commands.Add(DrawCommand.BeginPrism(new PrismDrawScope(
+                instance, owner, bounds, Matrix3x2.Identity, 1, visualContentVersion: 1)));
+            commands.Add(DrawCommand.FillRectangle(bounds, Color.CornflowerBlue));
+            commands.Add(DrawCommand.EndPrism());
+        }, Color.Black);
+        DrawCommandList presentation = new();
+        presentation.Add(DrawCommand.RenderSurface2D(surface, new DrawRect(0, 0, 128, 128), Color.White));
+
+        blur.SetValue(distance, 5f);
+        Render();
+        Assert.Equal(1, backend.LastFramePrismCounters.CaptureCount);
+        blur.SetValue(distance, 6f);
+        surface.FrameVersion++;
+        if (invalidateAll) { invalidations.EnqueueAll(); }
+        else { invalidations.EnqueueOwner(owner); }
+        Render();
+
+        Assert.Equal(invalidateAll ? 1 : 0, backend.LastFramePrismCounters.CaptureCount);
+        Assert.Equal(0, invalidations.Count);
+        // Removing the owner from the frame must still release its retained entries.
+        presentation.Clear();
+        invalidations.EnqueueOwner(owner);
+        Render();
+        Assert.Equal(0, session.DrawingResources.PrismResources.RetainedCount);
+
+        void Render()
+        {
+            session.BeginFrame(Color.Black);
+            try
+            {
+                DrawingFrameContext context = new(new PrismFrameAnalyzer().Analyze(presentation),
+                    backdropLease: null, backdropSourceToken: default, invalidations);
+                backend.Render(presentation, in context);
+            }
+            finally { session.CompleteFrame(present: false); }
+        }
+    }
+
+    [SdlNativeTheory]
+    [InlineData(1f)]
+    [InlineData(1.25f)]
+    [InlineData(2f)]
+    public void MovingPrismShapePreservesItsPixelsInsideAPixelSpaceSurface(float ownerPixelScale)
+    {
+        using SdlDrawingFixture fixture = new(256, 256, useMultisampling: false);
+        PrismInstance instance = new(new PrismCompositionDefinition("MovingL",
+        [
+            new PrismLayerDefinition(new PrismNodeId(1), "BevelAndGlow", styles:
+            [
+                new PrismStyleDefinition(PrismStyleId.BevelEmboss),
+                new PrismStyleDefinition(PrismStyleId.OuterGlow)
+            ])
+        ]));
+        int positionY = 32;
+        using RecordedSurface surface = new((commands, _) =>
+        {
+            commands.Add(DrawCommand.PushTransform(Matrix3x2.CreateTranslation(96, positionY)));
+            // Scene scopes carry their owner's DPI, but RecordFrame geometry
+            // is already in surface pixels (as in RenderSurface2DFrame.BeginPrism).
+            commands.Add(DrawCommand.BeginPrism(new PrismDrawScope(
+                instance, new PrismCacheOwnerToken(771), new DrawRect(0, 0, 48, 32),
+                Matrix3x2.Identity, ownerPixelScale, visualContentVersion: positionY)));
+            commands.Add(DrawCommand.FillRectangle(new DrawRect(0, 0, 16, 32), Color.CornflowerBlue));
+            commands.Add(DrawCommand.FillRectangle(new DrawRect(16, 16, 32, 16), Color.CornflowerBlue));
+            commands.Add(DrawCommand.EndPrism());
+            commands.Add(DrawCommand.PopTransform());
+        }, Color.Black);
+        DrawCommandList presentation = new();
+        presentation.Add(DrawCommand.RenderSurface2D(
+            surface, new DrawRect(0, 0, 256, 256), Color.White));
+        Color[]? reference = null;
+
+        foreach (int nextY in new[] { 32, 96, 160 })
+        {
+            positionY = nextY;
+            surface.FrameVersion++;
+            Color[] pixels = fixture.Render(presentation);
+            Assert.True(pixels[(nextY + 8) * 256 + 104].B > 100,
+                $"The vertical arm disappeared at y={nextY}, DPI={ownerPixelScale}.");
+            Color[] patch = new Color[80 * 64];
+            for (int y = 0; y < 64; y++)
+            {
+                Array.Copy(pixels, (nextY - 16 + y) * 256 + 80, patch, y * 80, 80);
+            }
+            if (reference is not null)
+            {
+                Assert.Equal(reference, patch);
+            }
+            reference = patch;
+        }
+    }
+
     [Theory]
     [InlineData((int)SdlGpuSampleCount.Eight)]
     [InlineData((int)SdlGpuSampleCount.Four)]
