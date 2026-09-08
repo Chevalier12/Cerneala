@@ -68,7 +68,7 @@ public sealed class PrismInstance
         }
         if (dataChanged)
         {
-            ValueVersion = ValueVersion.Next();
+            MarkValueChanged(generation);
         }
     }
 
@@ -76,7 +76,7 @@ public sealed class PrismInstance
     {
         if (graph.Values.CopyFromIfDifferent(graph.Defaults))
         {
-            ValueVersion = ValueVersion.Next();
+            MarkValueChanged(generation);
         }
     }
 

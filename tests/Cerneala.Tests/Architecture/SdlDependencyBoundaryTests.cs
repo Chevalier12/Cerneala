@@ -38,7 +38,7 @@ public sealed class SdlDependencyBoundaryTests
 
         Assert.Contains("Graphix-CS\" Version=\"3.4.16.1\"", platformProject, StringComparison.Ordinal);
         Assert.DoesNotContain("Include=\"SDL3-CS\"", platformProject, StringComparison.Ordinal);
-        Assert.Contains("Graphix.Native\" Version=\"3.4.16-graphix.3\"", platformProject, StringComparison.Ordinal);
+        Assert.Contains("Graphix.Native\" Version=\"3.4.16-graphix.4\"", platformProject, StringComparison.Ordinal);
         Assert.DoesNotContain("SDL3-CS.Windows", platformProject, StringComparison.Ordinal);
         Assert.DoesNotContain("SDL3-CS.Linux", platformProject, StringComparison.Ordinal);
         Assert.DoesNotContain("SDL3-CS.MacOS", platformProject, StringComparison.Ordinal);
@@ -54,7 +54,7 @@ public sealed class SdlDependencyBoundaryTests
             FindRepositoryRoot(), "Tools", "Cerneala.SdlShaderCompiler", "Cerneala.SdlShaderCompiler.csproj"));
 
         Assert.Contains("Graphix-CS\" Version=\"3.4.16.1\" PrivateAssets=\"all\"", project, StringComparison.Ordinal);
-        Assert.Contains("Graphix.Native\" Version=\"3.4.16-graphix.3\" PrivateAssets=\"all\"", project, StringComparison.Ordinal);
+        Assert.Contains("Graphix.Native\" Version=\"3.4.16-graphix.4\" PrivateAssets=\"all\"", project, StringComparison.Ordinal);
         Assert.DoesNotContain("Include=\"SDL3-CS\"", project, StringComparison.Ordinal);
     }
 
@@ -65,7 +65,7 @@ public sealed class SdlDependencyBoundaryTests
             FindRepositoryRoot(), "benchmarks", "Cerneala.Benchmarks", "Cerneala.Benchmarks.csproj"));
 
         Assert.Contains("Graphix-CS\" Version=\"3.4.16.1\"", project, StringComparison.Ordinal);
-        Assert.Contains("Graphix.Native\" Version=\"3.4.16-graphix.3\"", project, StringComparison.Ordinal);
+        Assert.Contains("Graphix.Native\" Version=\"3.4.16-graphix.4\"", project, StringComparison.Ordinal);
         Assert.DoesNotContain("Include=\"SDL3-CS\"", project, StringComparison.Ordinal);
     }
 

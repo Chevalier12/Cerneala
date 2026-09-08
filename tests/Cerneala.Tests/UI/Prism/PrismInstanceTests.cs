@@ -1,6 +1,9 @@
 using System.Numerics;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Prism.Catalog;
+using Cerneala.UI.Data;
+using Cerneala.UI.Elements;
+using Cerneala.UI.Markup;
 using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
 
@@ -132,6 +135,45 @@ public sealed class PrismInstanceTests
 
         instance.ResetToDefaults();
         Assert.Equal(2, instance.ValueVersion.Value);
+    }
+
+    [Theory]
+    [InlineData(false, 0.8f)]
+    [InlineData(true, 0.6f)]
+    public void WholeInstanceMutationUpdatesTwoWayBindingSource(
+        bool replaceDefinition,
+        float expectedOpacity)
+    {
+        PrismInstance instance = new(CreateComposition(opacity: 0.8f));
+        UIElement source = new() { Opacity = 0.8f };
+        UIElement owner = new();
+        using IDisposable binding = GeneratedMarkup.AttachPrismValueBinding<float>(
+            owner,
+            instance,
+            GeneratedMarkup.ObserveProperty(source, UIElement.OpacityProperty),
+            static target => target.GetLayerState(new PrismNodeId(1)).Opacity,
+            static (target, value) => target.GetLayerState(new PrismNodeId(1)).Opacity = value,
+            BindingMode.TwoWay,
+            static value => (float)value!,
+            "Prism whole-instance mutation");
+
+        // Establish that this binding is live in both directions before mutation.
+        source.Opacity = 0.5f;
+        Assert.Equal(0.5f, instance.GetLayerState(new PrismNodeId(1)).Opacity);
+        instance.GetLayerState(new PrismNodeId(1)).Opacity = 0.4f;
+        Assert.Equal(0.4f, source.Opacity);
+
+        if (replaceDefinition)
+        {
+            instance.ReplaceDefinition(CreateComposition(opacity: expectedOpacity));
+        }
+        else
+        {
+            instance.ResetToDefaults();
+        }
+
+        Assert.Equal(expectedOpacity, instance.GetLayerState(new PrismNodeId(1)).Opacity);
+        Assert.Equal(expectedOpacity, source.Opacity);
     }
 
     [Fact]

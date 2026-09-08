@@ -38,6 +38,8 @@ The instance owns dense CPU-side typed value arrays, not textures, render target
 
 `StructuralVersion` changes only for topology replacement. `ValueVersion` changes only for effective data changes; identical writes are no-ops. `ResetToDefaults()` restores the current definition and catalog defaults.
 
+When `ResetToDefaults()` changes values, active TwoWay Prism bindings write the restored values back to their sources. `ReplaceDefinition()` does the same when the topology is unchanged and the replacement changes the current values. The updated state and value version are available before the bindings are notified. No-op resets and replacements do not trigger value notifications.
+
 ## Constructors
 
 | Name | Description |

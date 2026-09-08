@@ -370,7 +370,7 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
                 existing.TextureKey,
                 PrismCssGradientLut.SampleCount,
                 1,
-                PrismCssGradientLut.Create(resource, interpolation, workingProfile).Values).Handle;
+                existing.Lut.Values).Handle;
         }
 
         if (existing is not null)
@@ -386,7 +386,8 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
             resource,
             identity,
             version,
-            textureKey);
+            textureKey,
+            lut);
         return drawingResources.GetOrCreateHalfVector4Texture(
             session,
             textureKey,
@@ -812,7 +813,8 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
         PrismGradientMapResource Resource,
         long Identity,
         long Version,
-        object TextureKey);
+        object TextureKey,
+        PrismCssGradientLut Lut);
 
     private sealed record CurvesEntry(
         PrismCurvesResource Resource,

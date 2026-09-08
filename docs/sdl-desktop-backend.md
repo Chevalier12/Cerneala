@@ -53,7 +53,7 @@ SDL_GPU state caching is local to one flush and its resumed render pass. The fir
 
 ### Public Graphix managed/native dependencies
 
-The native runtime comes from [Graphix.Native 3.4.16-graphix.3](https://www.nuget.org/packages/Graphix.Native/3.4.16-graphix.3),
+The native runtime comes from [Graphix.Native 3.4.16-graphix.4](https://www.nuget.org/packages/Graphix.Native/3.4.16-graphix.4),
 an independently maintained SDL fork. The managed binding is [Graphix-CS 3.4.16.1](https://www.nuget.org/packages/Graphix-CS/3.4.16.1),
 a packaging fork of upstream `SDL3-CS v3.4.16.0`. It preserves namespace `SDL3`,
 public class `SDL`, assembly name `SDL3-CS.dll`, and the upstream binding/generator source.
@@ -81,10 +81,10 @@ in `global.json` so the compiler can load it; application target frameworks rema
 Older Roslyn 5.6 compilers reject the generator with `CS9057`.
 
 The native package records Graphix source commit
-`df43420eff661b2146fd032692cdbce8ab1ec486`, built by
-[Graphix CI run 34129393720](https://github.com/Chevalier12/Graphix/actions/runs/34129393720).
+`7dcfac5a73007e72bd8fb060861e46fe07f55c46`, built by
+[Graphix CI run 34256929848](https://github.com/Chevalier12/Graphix/actions/runs/34256929848).
 Its downloaded NuGet.org `.nupkg` SHA256 is
-`43B84FD8B2A5A418565CB80FAA97A38AC2D13B7704F2B25EFA78DCC2C774F341`.
+`FEEBE8900AAA2CFDFDE48F2941E9CD2DDAA899D36A90375D11DBB4D38BD0C376`.
 Its six native CTest suites passed
 25/25 each. A separate real Windows-driver maximize regression passed 400/400
 assertions on x64 and ARM64. These checks do not certify GPU behavior.
@@ -94,11 +94,30 @@ artifacts. Every managed/native payload entry was compared byte-for-byte against
 the verified CI package, and both NuGet repository signatures were validated.
 Never replace a package's payload under an already-used version.
 
-This version corrects independent maximum dimensions in native Windows
-maximization, including borderless client sizing. Repository verification and
+This version retains the independent Windows maximum-dimension correction and
+adds D3D12 descriptor-heap and GPU renderer texture corrections. The exact packaged
+Windows x64 DLL also passed 21 descriptor assertions and 162 texture assertions
+on each of D3D12 and Vulkan; this does not certify GPU execution on other RIDs.
+Windows process argument quoting and shell validation also changed: the stricter
+batch/cmd argument-list policy is intentionally restrictive, while an explicit
+raw command line remains the caller's responsibility. The native header documents
+that policy. The independent NVIDIA alpha-occlusion failure is not fixed by this
+release. Repository verification and
 remaining blockers are tracked in the
 [migration audit](audits/2026-09-05-monogame-removal.md). Package CI is not a
 substitute for Cerneala's rendering, input, allocation and native-platform gates.
+
+The September 8, 2026 graphix.4 consumer verification ran with native tests enabled:
+the SDL project passed 534/538 tests, and the full solution passed 4,802/4,806
+executed tests. Both runs retained the same four known NVIDIA alpha-occlusion
+failures (content 1, 7, 6, 3; differences 47, 25, 27, 46/255). Native input passed.
+The solution also hit the documented Visual Studio nested-restore `NETSDK1047`;
+that unchanged test project passed 47/47 in a separate invocation. Neither
+recheck nor package publication makes the original full-solution run green.
+Windows x64/ARM64 smoke publishing, x64 multi-window and Prism execution, six
+shader artifact checks and the Prism public-surface audit passed. Consumer
+execution on Linux, macOS and Windows ARM64, and human validation, were not run.
+Local commands, logs and TRX results are retained under `.artifacts/graphix-native-4/`.
 
 ### Published application assets
 

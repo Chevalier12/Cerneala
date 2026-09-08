@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="Graphix-CS" Version="3.4.16.1" PrivateAssets="all" />
-    <PackageReference Include="Graphix.Native" Version="3.4.16-graphix.3" PrivateAssets="all" />
+    <PackageReference Include="Graphix.Native" Version="3.4.16-graphix.4" PrivateAssets="all" />
     <PackageReference Include="SDL3-CS.Windows.Shadercross" Version="3.0.0.9" PrivateAssets="all" />
     <PackageReference Include="SDL3-CS.Linux.Shadercross" Version="3.0.0.9" PrivateAssets="all" />
     <PackageReference Include="SDL3-CS.MacOS.Shadercross" Version="3.0.0.9" PrivateAssets="all" />

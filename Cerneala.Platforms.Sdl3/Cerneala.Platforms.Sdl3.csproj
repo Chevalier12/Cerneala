@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="Graphix-CS" Version="3.4.16.1" />
-    <PackageReference Include="Graphix.Native" Version="3.4.16-graphix.3" />
+    <PackageReference Include="Graphix.Native" Version="3.4.16-graphix.4" />
   </ItemGroup>
 
   <ItemGroup>
