@@ -3,15 +3,17 @@
 ## Status
 
 This document describes the technical architecture implemented for Prism in Cerneala.
-The markup compiler, lifecycle, composition graph, MonoGame and SDL_GPU executors,
-shared HLSL color pipelines/blending/masks/styles, backdrop, diagnostics and
-cross-frame GPU retained caches are implemented and tested. The two desktop
-executors are covered by native smoke and pixel-difference gates.
-The final results are in
+The shipped desktop implementation is SDL_GPU. MonoGame/WindowsDX was retired;
+its configuration entry points and executor are no longer available. See
+[`2026-09-05-monogame-removal.md`](audits/2026-09-05-monogame-removal.md).
+The markup compiler, lifecycle, composition graph, shared HLSL, backdrop and
+cross-frame GPU retained caches remain backend-neutral above SDL's resource and
+execution boundary. Native tests compare SDL output with retained reference images.
+Historical WindowsDX integration measurements are in
 [`2026-07-21-prism-integration-hardening.md`](../benchmarks/Cerneala.Benchmarks/results/2026-07-21-prism-integration-hardening.md),
 and the user agreement is summarized in [`prism-guide.md`](prism-guide.md).
 
-Prism composers beyond the delivered MonoGame/WindowsDX and SDL_GPU backends, the
+Prism composers beyond the delivered SDL_GPU backend, the
 public SDK for third-party operations, compilation of shaders at runtime, adaptive
 quality, async compute and a generic GPU scheduler are explicitly deferred.
 Formulations about them are design ideas, not delivered behavior or hidden work.
@@ -57,10 +59,10 @@ acceptance without measurable proof and an updated decision in this document.
 
 ## Executive summary
 
-Prism is a declarative visual compositor for an element's local visual
-UI. The control's own commands are captured only once as an image by
-base, processed through a composition of layers and then drawn without changing
-layout or hitbox. Visual descendants are not captured.
+Prism is a declarative visual compositor for an element's retained visual subtree.
+The control and its visual descendants are captured once as a base image, limited
+by `ControlBounds` before effects execute. Layers process that image without
+changing layout or hitboxes.
 
 The implementation is divided into four areas:
 
@@ -70,18 +72,19 @@ The implementation is divided into four areas:
    versioning and lifecycle, but does not own GPU resources.
 3. **Drawing composition**: transport through `DrawCommandList` Prism scopes
    backend-neutral and builds a tidy render graph.
-4. **GPU backend executors**: MonoGame/WindowsDX and SDL_GPU execute the same graph,
+4. **GPU backend executor**: SDL_GPU executes the shared lowered graph,
    own backend-specific shaders, temporary surfaces, retained caches, color
    management and backdrop resources.
 
 The main structural decision is the use of two balanced commands:
 ```text
 BeginPrism
-    comenzile locale ale elementului
+    element's own commands
+    visual descendant commands, including nested Prism scopes
+    retained Presence-exit children
 EndPrism
-comenzile descendenților vizuali
 ```
-The backend can thus capture the local visual of the control without
+The backend can thus capture the retained visual subtree without
 `OnRender` custom, screenshots, recursion in view or knowledge of the UI tree.
 
 ## Objectives
@@ -135,7 +138,7 @@ Cerneala is currently using:
 - `DrawCommandListBuilder` for composing subtrees in a flat list;
 - `RetainedRenderer` for commit and submit;
 - `IDrawingBackend` as backend-neutral boundary;
-- `MonoGameDrawingBackend` and `SdlGpuDrawingBackend` as concrete desktop backends;
+- `SdlGpuDrawingBackend` as the concrete desktop drawing backend;
 - `UiHost.Update` and `UiHost.Draw` as a frame contract;
 - Motion and markup generator for animated properties and static targets.
 
@@ -149,8 +152,9 @@ must keep the same rules, without local interpretations:
 
 - the declared order is front-to-back as in the Photoshop panel, and the evaluation
   normal is bottom-up;
-- the default source is a single immutable capture of the local visual of
-  control, without visual descendants, and node names cannot become sources;
+- the default source is a single immutable capture of the control's retained
+  visual subtree, limited by `ControlBounds` before effects execute; node names
+  cannot become sources;
 - the layer is the leaf, the group is the only container, and the mask is applied
   contribution prepared before opacity and blend;
 - `ClipToBelow`, `PassThrough`, `Visible`, `Fill`, `Opacity` and `BlendIf` keep
@@ -176,8 +180,8 @@ elements that use the same resource. Each element gets its own
 `PrismInstance` and own parameter values.
 ### No recapture per layer
 
-The control's local visual is executed only once in an area of
-basis. Layers process intermediate results, do not redraw the control.
+The control's retained visual subtree is captured only once as the base image.
+Layers process intermediate results; they do not redraw the subtree.
 
 ### GPU-only for pixels
 
@@ -210,7 +214,7 @@ Prism is bypassed and the control is drawn normally.
 ### YAGNI
 
 The mandatory implementation contains only mechanisms required by the confirmed syntax and
-the current MonoGame and SDL_GPU backends. It does not include:
+the current SDL_GPU backend. It does not include:
 
 - public discovery for third-party filters;
 - parallel planning;
@@ -237,7 +241,7 @@ GPU Prism; it does not justify a generic caching or scheduling framework.
 - **ISP**: the backdrop remains a separate contract; `IDrawingBackend` does not receive
   methods for each filter, style, or resource.
 - **DIP**: UI and drawing composition depend on backend-neutral contracts;
-  MonoGame and SDL_GPU implement those contracts and each owns its GPU details.
+  SDL_GPU implements those contracts and owns its GPU details.
 
 Interfaces are introduced only at boundaries with real substitution, different lifecycle or
 clear need for test doubles. Simple inner classes do not get an interface of
@@ -261,7 +265,7 @@ cod generat
 UIElement + PrismAttachment
     |
     v
-BeginPrism / local commands / EndPrism / descendant commands
+BeginPrism / local and descendant commands (nested scopes) / EndPrism
     |
     v
 PrismFrameAnalyzer
@@ -273,9 +277,8 @@ PrismGraphBuilder
 PrismGraphOptimizer
     |
     v
-PrismGraphExecutor
+PrismRasterPlanner (explicit passes, dependencies, formats and lifetimes)
     |
-    +--> MonoGame executor / MGFX artifacts
     +--> SDL_GPU executor / SPIR-V, DXIL or MSL artifacts
     +--> backend-owned transient surface pool and retained cache
     +--> shared diagnostics contract
@@ -300,13 +303,6 @@ Drawing/Prism/
     Color/
     Hosting/
 
-Drawing/MonoGame/Prism/
-    Execution/
-    Kernels/
-    Shaders/
-    Surfaces/
-    Diagnostics/
-
 Cerneala.Backends.SdlGpu/Prism/
     executor and device resources
     Shaders/
@@ -320,19 +316,16 @@ Cerneala.SourceGen/Prism/
 tests/
     Cerneala.Tests/Prism/
     Cerneala.Tests.SourceGen/Prism/
-    Cerneala.Tests.MonoGame/Prism/
     Cerneala.Tests.SdlGpu/Prism/
 ```
 Responsibilities should not be moved between these directories just for convenience.
 In particular, `UI/Prism` cannot reference MonoGame or SDL.
 
 The backend-neutral shader math lives under `Drawing/Prism/Shaders/Hlsl/`.
-MonoGame keeps only its `.fx` wrappers and techniques: `CopyComposite.fx`, the
-independent `Styles.fx` package, and the specialized catalog wrappers. SDL_GPU
-keeps its entry-point wrappers and versioned SPIR-V/DXIL/MSL artifacts under
-`Cerneala.Backends.SdlGpu`. Both build paths consume the shared HLSL modules.
-Their build targets track the precise dependency set of each output so a style
-module rebuilds the style package without forcing an unrelated filter package.
+SDL_GPU keeps its entry-point wrappers and versioned SPIR-V/DXIL/MSL artifacts
+under `Cerneala.Backends.SdlGpu`. Its offline build consumes the shared HLSL modules
+and tracks the dependency set of each output. Retired MGFX wrappers are not part
+of the current build.
 
 ## The definitions model
 
@@ -542,27 +535,27 @@ VisualContentVersion
 ```
 `EndPrism` has no payload. Scopes must be balanced and can be nested.
 
-### Composing the local visual
+### Composing the retained visual subtree
 
 `DrawCommandListBuilder.AppendElement` issues:
 ```text
-clip-uri de ancestor deja active
+ancestor clips already active
  PushClip for the element, if present
  BeginPrism, if the element has Prism
-comenzile locale
+  element's own commands
+  visual children, including nested Prism scopes
+  retained Presence-exit children
  EndPrism, if the element has Prism
-copiii vizuali
-copiii Presence aflați în exit
-PopClip
+ PopClip, if the element pushed a clip
 ```
 Thus:
 
-- Prism captures only local control commands;
-- descendants are normally composed over the Prism result and do not receive default
-  the effects of control;
+- Prism captures the owner's drawing and retained visual descendants together;
+- `ControlBounds` limits source pixels before filters and styles execute;
 - explicit clips limit the final result;
 - the effects can extend the result beyond the arranged bounds if there is no clip;
-- Prism attached to descendants is evaluated independently;
+- descendant Prism scopes are nested; their results contribute to the ancestor's
+  source and can receive its effects within the ancestor's capture boundary;
 - the backend must not know `UIElement`.
 
 A backend without Prism support ignores `BeginPrism` and `EndPrism` but executes the commands
@@ -605,7 +598,7 @@ and analysis are checked to prevent using a stale analysis.
 Owner/resource invalidations are drained only once in the context of the frame
 and consumed by the backend before the lookup.
 
-## SpriteBatch Ownership
+## Historical MonoGame SpriteBatch ownership (retired)
 
 `MonoGameUiHost` no longer opens a single `SpriteBatch.Begin` around the whole
 UI. Prism must be able to:
@@ -638,7 +631,18 @@ The pipeline has separate responsibilities:
    immutable.
 3. `PrismGraphOptimizer` removes no-ops and merges passes without changing
    semantic order.
-4. `PrismGraphExecutor` runs the graph and manages GPU resources exclusively.
+4. `PrismRasterPlanner` lowers multipass operations after the execution extent is
+   known. Otsu analysis, shadow spread/blur, JFA+1 and bevel height/lighting become
+   explicit nodes with typed surface descriptors, edges and last-use lifetimes.
+   Shared distance fields are identified by source node and coverage mode, not
+   backend texture handles. Retained-output hits prune the auxiliary dependencies.
+5. `SdlGpuPrismExecutor` executes the lowered plan and owns GPU resource leases.
+   Auxiliary passes use the same execution loop, accounting and lifetime handling
+   as semantic passes; styles and thresholds do not allocate hidden scratch passes.
+
+Style backdrop requirements come from generated typed blend-mode/opacity pairs
+declared by `blendOpacity` in the catalog. Bevel highlight and shadow have separate
+pairs. The analyzer does not infer these relationships from property-name suffixes.
 
 The semantics of layer styles is translated by `PrismStylePlanner` into a common plane of
 sampling and composition. The generated catalog descriptor provides the slots,
@@ -919,7 +923,7 @@ unpremultiply only applies the transfer or matrix, and produces alpha zero
 mandatory RGB zero. `Fill` scales content before layer styles;
 `Opacity` scales the full result by styles and mask.
 
-### MonoGame formats
+### Historical MonoGame formats (retired)
 
 The order implemented is:
 
@@ -1081,7 +1085,7 @@ The lease contains:
 - screen-to-surface transformation;
 - the color profile.
 
-`MonoGameUiHostOptions` gets a `IBackdropFrameSource?`.
+The host obtains `IBackdropFrameSource` through the backend-neutral hosting contract. The retired `MonoGameUiHostOptions` entry point no longer exists.
 ### Purchase
 
 `UiHost.Draw`:
@@ -1126,19 +1130,20 @@ A surface key includes:
 - usage flags;
 - color profile class.
 
-Surfaces are returned to the pool after the last use in the graph. Reuse se
-do only after the MonoGame backend guarantees that the GPU is no longer using them,
-using the safe recycling policy provided by current MonoGame capabilities.
+Surfaces are returned to the pool after the last use in the lowered graph.
+SDL owns command submission and safe resource recycling; core planning does not
+introduce backend handles or platform synchronization primitives.
 TDD does not introduce a generic abstraction of fences for hypothetical backends.
 
-`PrismRendererOptions` exposes the implemented configuration for:
+Internally consumed `PrismRendererOptions` values describe:
 
 - the total hard budget of all Prism surfaces;
 - the soft budget and the maximum number of entries for the retained cache;
 - activation of development dependency-diff diagnostics.
 
-The reference benchmark fixes 512 MiB hard, 256 MiB retained soft and 256
-entries. Unit tests use injected small bounds. Transient pressure
+The historical WindowsDX benchmark fixed 512 MiB hard, 256 MiB retained soft and
+256 entries. Current SDL uses 32 MiB retained soft and does not expose application
+configuration. Unit tests use injected small bounds. Transient pressure
 first evacuates non-forgotten retained entries; if the hard limit still can't
 admits the necessary area, the executor reports `PRISM7006` with
 `SurfaceAllocationFailed`, restore target and host state, release
@@ -1192,8 +1197,9 @@ UI elements. The stamp includes:
 
 - the structural version of the composition and the stable identity of the node;
 - the version of the Prism values ​​or the fingerprint of the pixel-affecting values;
-- the unique, unused token of the attachment and the version of the visual result
-  local captured;
+- the attachment's unique cache-owner token and the aggregated retained visual
+  generation of the captured subtree;
+- nested Prism dependencies, including descendant typed-value changes;
 - for backdrop, provider identity, `ContentVersion` and all versions
   lower UI nodes;
 - the identities and versions of images, masks, LUTs, patterns and
@@ -1202,9 +1208,11 @@ UI elements. The stamp includes:
 - working/output color profile, surface format and sampling quality;
 - backend capability set and shader-e package version.
 
-The local visual version is maintained incrementally in retainedUI: a property
-render-affecting, Motion, or an element resource increments the local generation.
-Descendant changes do not invalidate the ancestor's Prism capture.
+Retained UI maintains the captured subtree's visual generation incrementally.
+Render-affecting changes in captured descendants invalidate the ancestor's
+capture dependencies. Nested Prism value changes are tracked separately by the
+frame analyzer, so they invalidate dependent results without requiring a rebuild
+of unchanged retained draw commands.
 
 `PrismGraphOptimizer` explicitly marks cacheable nodes. A node is eligible
 only if the operation is deterministic do all its resources have versions and the key
@@ -1230,22 +1238,21 @@ hit-rate, without exceeding the hard cap.
 
 No generic abstraction of cache, task graph or fences is introduced. The cache is
 specialized for GPU Prism surfaces and adheres to the synchronous backend model
-Current MonoGame.
+of the current SDL backend.
 
-### Implementation and budgets confirmed
+### Current SDL configuration and historical measurements
 
-The MonoGame implementation separates `PrismRetainedSurfaceCache` from `PrismSurfacePool` and
-use a common accountant for transient and retained surfaces. The configuration
-public is `PrismRendererOptions`, sent directly to the builder
-`MonoGameDrawingBackend` or via `MonoGameUiHostOptions.PrismRendererOptions`.
-The default measured values are:
+The SDL implementation separates retained-cache ownership from transient pooling
+and accounts for their combined hard limit. SDL creates its configuration internally:
 
 - 512 MiB for `SurfaceHardByteLimit`, applied to all Prism surfaces;
-- 256 MiB for `RetainedCacheSoftByteLimit`;
+- 32 MiB for `RetainedCacheSoftByteLimit`;
 - 256 for `RetainedCacheEntryLimit`;
 - dependency-diff diagnostics turned off by default.
 
-Limits remain configurable and are validated before the executor is created.
+There is no public SDL configuration facade. The public `PrismRendererOptions`
+options object still defaults to 256 MiB retained soft, but creating it does not
+configure the application backend. Internal limits are validated before use.
 The retained limit or entry limit set to zero prevents promotion. The mode
 cache-off exists only internally for conformance, diagnostics and benchmark; no
 add directive, layer property or dialect markup.
@@ -1256,6 +1263,8 @@ peak bytes, missed entries and catches/passes saved. Classification of the diffe
 de dependency stamp is calculated only when development diagnostics are turned on;
 the default path doesn't build diffs and doesn't allocate for them per frame.
 
+The following measurements are historical WindowsDX results, not evidence of
+current SDL performance or of the new raster planner's cost.
 The Release WindowsDX benchmark ran three times on the NVIDIA RTX 2000 Ada la
 256 x 144 and 640 x 360, for 12 scenarios with on/off cache and 96 frames each
 measured after warmup. All work counters, cache, surfaces, allocations and
@@ -1466,7 +1475,7 @@ An architecture test verifies that the analyzer, builder, and optimizer do not
 references MonoGame. A build test verifies that the runtime descriptors,
 the backend registry and documented tables come from the same catalog.
 
-### MonoGame backend
+### Historical MonoGame backend gates (retired)
 
 Integration tests for:
 
@@ -1577,9 +1586,9 @@ JSON; the gate uses p99 and does not hide the spikes through adaptive quality.
 The setup and all values are in the integration hardening benchmark, not in a
 conveniently chosen catch.
 
-### Current proof for layer styles
+### Historical WindowsDX proof for layer styles
 
-The automatic WindowsDX gate uses a 48-pass scene `ColorOverlay`.
+The retired WindowsDX gate used a 48-pass scene `ColorOverlay`.
 After eight warmup frames and one stabilization frame after GC, it measures 16
 consecutive frames and simultaneous requests:
 
@@ -1589,11 +1598,9 @@ consecutive frames and simultaneous requests:
 - zero active leases after each frame;
 - a peak of live surfaces lower than the number of styles.
 
-A separate architecture test scans the production path
-`Drawing/MonoGame/Prism/**/*.cs` and reject calls `GetData` and
-`GetBackBufferData`. Thus, surface reuse measurement and CPU-free contract
-readbacks remain verifiable in CI, not just observations from a session of
-profiling.
+Its architecture test rejected `GetData` and `GetBackBufferData` in the former
+`Drawing/MonoGame/Prism/` production path. Those paths and gates were retired;
+these results must not be reported as a current SDL performance verification.
 
 ## Security and robustness
 
@@ -1606,9 +1613,9 @@ profiling.
   allocation.
 - Backdrop surfaces are read-only for Prism.
 
-## API compatibility result
+## API compatibility history and current inventory
 
-Final comparison with [`prism-public-api-baseline.md`](prism-public-api-baseline.md)
+The original, pre-retirement comparison with [`prism-public-api-baseline.md`](prism-public-api-baseline.md)
 classify the changes as follows:
 
 - `IDrawingBackend.Render(DrawCommandList)` becomes
@@ -1617,8 +1624,9 @@ classify the changes as follows:
   analysis performed only once.
 - `IUiBackend.BackdropFrameSource` is a default interface member that returns
   `null`; existing backends do not receive a new deployment obligation.
-- `MonoGameUiHostOptions.BackdropFrameSource` and `PrismRendererOptions` are
-  optional additions.
+- `MonoGameUiHostOptions.BackdropFrameSource` and its Prism configuration were
+  originally optional additions. The MonoGame retirement removed those entry
+  points without adding a replacement SDL configuration facade.
 - `BeginPrism`/`EndPrism`, authoring/runtime/hosting public types and keys
   Typed motions are additive. Consumers who switch exhaustively on
   `DrawCommandKind` must have a default case for new values.
@@ -1629,15 +1637,15 @@ classify the changes as follows:
   a source/binary rip only for pre-release Prism surface consumers and
   is required for analysis ownership to remain in the host/framework.
 
-The ApiCompat SDK run between the assembly from `HEAD` and the final assembly reports
+The historical ApiCompat SDK run for the Prism integration reported
 exactly 28 `CP0001` for internalized graph/planning types and 5 `CP0002`
 for graph-bearing constructors/properties/method removed. There is no other
 unclassified break; the older signature change `IDrawingBackend` is
 covered separately from the pre-Prism baseline above.
 
 There is no public API for third-party extensions or runtime shader injection.
-The completeness audit currently inventories 217 public Prism types and 10
-existing types extended by Prism across the core and MonoGame assemblies. The
+The completeness audit currently inventories 216 public Prism types and 7
+existing types extended by Prism across the delivered assemblies. The
 public types have pages in `docs-site/documentation/classes/` and manifest entries.
 
 ## Recommended order of implementation
@@ -1647,7 +1655,7 @@ public types have pages in `docs-site/documentation/classes/` and manifest entri
 3. `PrismInstance`, lifecycle, parameter store and Motion targets.
 4. `BeginPrism`/`EndPrism` and retained integration without GPU.
 5. Frame analyzer, graph builder, optimizer, validation and bounds propagation.
-6. Ownership of backend state, surface pools and the MonoGame executor.
+6. Ownership of backend state, surface pools and the executor.
 7. Color pipeline, Normal blend, masks and layer/group structure.
 8. All blend modes and all styles.
 9. The complete catalog of filters and conformance images.
@@ -1677,7 +1685,7 @@ Prism is fully implemented when:
 - no normal path does CPU readback;
 - the backdrop sees the game and the lower UI without feedback;
 - the layout and hitbox remain unchanged;
-- the delivered MonoGame and SDL_GPU backends execute Prism, while a custom
+- the delivered SDL_GPU backend executes Prism, while a custom
   backend without Prism support can bypass scopes safely;
 - structural analysis is unique and reused for backdrop and graph;
 - a static Prism produces hit retained and skips capture/covered passes again
@@ -1686,8 +1694,8 @@ Prism is fully implemented when:
   keep UI elements alive;
 - catalog generates descriptors, backend registry and unlisted documentation
   parallels;
-- MonoGame and SDL_GPU respect their measured budgets, restore backend state and
-  pass the native cross-backend conformance thresholds;
+- SDL_GPU respects its verified budgets, restores backend state and
+  passes the native reference-conformance thresholds;
 - golden, stress, memory and device reset tests are green;
 - diagnostics explains passes, cache and memory;
 - public documentation is synchronized.
@@ -1743,7 +1751,7 @@ Prism is implemented as an extension of the retained pipeline and the backend of
 drawing, not as an attached effect that renders itself.
 
 The markup produces an immutable definition. The element holds only a lightweight instance.
-The command list delimits the local visual of the element. The analyzer produces a
+The command list delimits the retained visual subtree of the element. The analyzer produces a
 single description of the frame, the graph builder turns it into a graph, and
 the optimizer simplifies it.
 Each backend processes pixels on the GPU and owns all of its temporary and retained

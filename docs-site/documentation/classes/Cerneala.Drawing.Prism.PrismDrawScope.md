@@ -37,7 +37,18 @@ DrawCommand end = DrawCommand.EndPrism();
 
 The scope contains only data needed to analyze and compose the current retained frame. `Instance` supplies the immutable definition and current typed Prism values. `StructuralVersion` and `ValueVersion` are read from that instance, while `VisualContentVersion` identifies changes to the captured retained subtree.
 
+Retained recording encloses the owner's drawing, visual descendants and retained
+Presence-exit children between `BeginPrism` and `EndPrism`. Descendant Prism scopes
+are nested inside the ancestor's capture, not rendered afterward.
+
 `EffectiveTransform` remains in logical drawing coordinates. `PixelScale` is carried separately so a backend does not apply viewport scaling twice. `CacheOwnerToken` is numeric and has no reference back to a UI element.
+
+`ControlBounds`, transformed into the capture's drawing space, limits the source
+pixels before filters and styles execute. Commands outside that boundary do not
+contribute pixels to the composition, even without an explicit clip command.
+Effects may expand their output beyond the capture boundary; explicit drawing
+clips still constrain presentation. `BeginPrism` does not itself transform the
+enclosed draw commands.
 
 ## Constructors
 

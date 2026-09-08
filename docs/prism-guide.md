@@ -5,11 +5,12 @@ arrangement, hitbox, focus or input routing.
 
 ## Photoshop model and default source
 
-Prism only captures the local visual of the control once: the commands
-produced by `OnRender`'s own, without the commands of visual descendants. That catch
-is the default normal stack source; children are drawn normally after the result
-Prism, and the layer and group names are addresses for Motion and
-diagnostics, not image sources.
+Prism captures the attached control's retained visual subtree once, including its
+own drawing, visual descendants and retained Presence-exit children. The source
+pixels are limited by `ControlBounds` before effects execute. Descendant Prism
+scopes are nested inside that capture rather than drawn after the ancestor's
+result. The capture is the default normal-stack source; layer and group names are
+addresses for Motion and diagnostics, not image sources.
 
 The declared order is like in the Photoshop panel: the first node is in front,
 the last is at the back, and evaluation runs bottom-up. Every layer and group has

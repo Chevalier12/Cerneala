@@ -37,6 +37,8 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
     private readonly SdlGpuPrismDeviceResources deviceResources;
     private readonly PrismGraphBuilder graphBuilder = new();
     private readonly PrismGraphOptimizer graphOptimizer = new();
+    private readonly PrismRasterPlanner rasterPlanner = new();
+    private PrismRasterExecutionPlan rasterPlan = null!;
     private readonly PrismExecutionDiagnostics diagnostics = new(detailedDiagnosticsEnabled: true);
     private readonly SdlGpuPrismUniforms uniforms = new();
     private readonly Dictionary<int, SdlGpuPrismSurfaceLease> surfaces = [];
@@ -45,7 +47,6 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
     private readonly List<SdlGpuPrismSurfaceLease> frameLeases = [];
     private readonly HashSet<SdlGpuPrismSurfaceLease> promotedLeases = [];
     private readonly HashSet<PrismGraphNodeId> mipmappedNodes = [];
-    private readonly Dictionary<StyleDistanceFieldKey, nint> styleDistanceFields = [];
     private readonly HashSet<PrismRetainedCacheKey> currentRetainedKeys = [];
     private readonly HashSet<PrismCacheOwnerToken> currentOwners = [];
     private readonly List<int> expiredSurfaceIndices = [];
@@ -94,6 +95,9 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         PrismGraphExecutionPlan plan = graphOptimizer.Optimize(sourceGraph);
         PrismGraph graph = plan.OptimizedGraph;
         ResolveExecutionExtent(plan, graph, hostTarget);
+        rasterPlan = rasterPlanner.Prepare(plan, executionPixelWidth, executionPixelHeight);
+        plan = rasterPlan.GraphPlan;
+        graph = plan.OptimizedGraph;
         ResolveMipmappedNodes(graph);
         ReconcileRetainedEntries(plan, graph);
         long started = Stopwatch.GetTimestamp();
@@ -139,11 +143,15 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                 else
                 {
                     bool mipmapped = mipmappedNodes.Contains(node.Id);
+                    PrismRasterSurface surface = rasterPlan.AuxiliaryPasses.TryGetValue(
+                        node.Id, out PrismRasterPass auxiliary)
+                        ? auxiliary.Surface
+                        : new(executionPixelWidth, executionPixelHeight, PrismRasterSurfaceFormat.Rgba16Float);
                     SdlGpuPrismSurfaceLease lease = deviceResources.RentSurface(
                         session.WindowIdentity,
-                        executionPixelWidth,
-                        executionPixelHeight,
-                        SdlGpuTextureFormat.R16G16B16A16Float,
+                        surface.Width,
+                        surface.Height,
+                        ResolveSurfaceFormat(surface.Format),
                         mipmapped);
                     surfaces.Add(step, lease);
                     frameLeases.Add(lease);
@@ -221,7 +229,6 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             retainedHits.Clear();
             promotedLeases.Clear();
             surfaces.Clear();
-            styleDistanceFields.Clear();
             mipmappedNodes.Clear();
             diagnostics.CompleteExecution(
                 deviceResources.CreatedSurfaceCount - createdBefore,
@@ -247,7 +254,6 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         frameLeases.Clear();
         retainedHits.Clear();
         surfaces.Clear();
-        styleDistanceFields.Clear();
         mipmappedNodes.Clear();
         currentRetainedKeys.Clear();
         currentOwners.Clear();
@@ -342,6 +348,9 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
     {
         switch (node.Kind)
         {
+            case PrismGraphNodeKind.RasterAuxiliary:
+                RenderRasterAuxiliary(plan, graph, node, target);
+                return;
             case PrismGraphNodeKind.ControlCapture:
                 RenderControlCapture(commands, stateAnalysis, plan, graph, node, target);
                 return;
@@ -383,6 +392,62 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             default:
                 Clear(target, Color.Transparent);
                 return;
+        }
+    }
+
+    private static SdlGpuTextureFormat ResolveSurfaceFormat(PrismRasterSurfaceFormat format) =>
+        format switch
+        {
+            PrismRasterSurfaceFormat.Rgba16Float => SdlGpuTextureFormat.R16G16B16A16Float,
+            PrismRasterSurfaceFormat.Rgba32Float => SdlGpuTextureFormat.R32G32B32A32Float,
+            PrismRasterSurfaceFormat.R32Float => SdlGpuTextureFormat.R32Float,
+            PrismRasterSurfaceFormat.Rgba8Unorm => SdlGpuTextureFormat.R8G8B8A8Unorm,
+            _ => throw new ArgumentOutOfRangeException(nameof(format))
+        };
+
+    private void RenderRasterAuxiliary(
+        PrismGraphExecutionPlan plan,
+        PrismGraph graph,
+        PrismGraphNode node,
+        SdlGpuRenderTarget target)
+    {
+        PrismRasterPass pass = rasterPlan.AuxiliaryPasses[node.Id];
+        nint source = GetSurface(FindInputIndex(plan, graph, node.Id,
+            PrismGraphEdgeKind.Content)).SampleTexture;
+        switch (pass.Kind)
+        {
+            case PrismRasterPassKind.ThresholdCdf:
+                PrepareBaseUniforms(source, source, 4, 1);
+                uniforms[23] = new Vector4(0,
+                    (int)FindScope(graph, node.AnalysisScopeIndex).CompositionSettings.WorkingColorProfile, 0, 0);
+                RenderPrepared(target, source, source);
+                return;
+            case PrismRasterPassKind.ThresholdSelection:
+                PrepareBaseUniforms(source, source, 6, 1);
+                uniforms[23] = new Vector4(pass.RadiusOrJump, 0, 0, 0);
+                RenderPrepared(target, source, source);
+                return;
+            case PrismRasterPassKind.ShadowSpread:
+            case PrismRasterPassKind.ShadowBlur:
+                RenderStyleMaskPass(target, source,
+                    pass.Kind == PrismRasterPassKind.ShadowSpread ? 83 : 84,
+                    pass.RadiusOrJump, pass.Horizontal);
+                return;
+            case PrismRasterPassKind.DistanceSeed:
+                PrepareBaseUniforms(source, source, 85, 1);
+                textures[12] = source;
+                uniforms[16] = new Vector4(rasterPlan.Styles[pass.Owner].Kind, 0, 0, 0);
+                RenderPrepared(target, source, source);
+                return;
+            case PrismRasterPassKind.DistanceFlood:
+                RenderStyleDistanceFloodPass(target, source, checked((int)pass.RadiusOrJump));
+                return;
+            case PrismRasterPassKind.BevelHeight:
+            case PrismRasterPassKind.BevelLighting:
+                RenderStyle(plan, graph, node, target, pass);
+                return;
+            default:
+                throw new InvalidOperationException($"Unsupported shared raster pass '{pass.Kind}'.");
         }
     }
 
@@ -438,7 +503,8 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                 logicalOrigin: new Vector2(
                     executionOriginPixelX / drawingBackend.CoordinateScale,
                     executionOriginPixelY / drawingBackend.CoordinateScale),
-                isolateCompositingState: true);
+                isolateCompositingState: true,
+                captureClip: (scope.ControlBounds, scope.EffectiveTransform));
         }
         finally
         {
@@ -669,17 +735,19 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         PrismGraphExecutionPlan plan,
         PrismGraph graph,
         PrismGraphNode node,
-        SdlGpuRenderTarget target)
+        SdlGpuRenderTarget target,
+        PrismRasterPass? auxiliary = null)
     {
+        PrismGraphNode owner = auxiliary is PrismRasterPass pass ? graph.GetNode(pass.Owner) : node;
         int contentIndex = FindInputIndex(plan, graph, node.Id, PrismGraphEdgeKind.Content);
         int sourceIndex = FindInputIndex(plan, graph, node.Id, PrismGraphEdgeKind.StyleSource);
-        if (contentIndex < 0 || sourceIndex < 0 || node.Style is not PrismStyleId style)
+        if (contentIndex < 0 || sourceIndex < 0 || owner.Style is not PrismStyleId style)
         {
             RenderSingleInput(plan, graph, node, target, 0, 1);
             return;
         }
         PrismGraphScope scope = FindScope(graph, node.AnalysisScopeIndex);
-        PrismStylePlan stylePlan = PrismStylePlanner.Create(node, scope);
+        PrismStylePlan stylePlan = rasterPlan.Styles[owner.Id];
         nint content = GetSurface(contentIndex).SampleTexture;
         nint source = GetSurface(sourceIndex).SampleTexture;
         int backdropIndex = FindInputIndex(
@@ -754,105 +822,18 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         float gradientAspect = alignGradientWithLayer
             ? scope.ControlBounds.Width / MathF.Max(scope.ControlBounds.Height, 1)
             : target.PixelWidth / (float)Math.Max(target.PixelHeight, 1);
-        nint maskTexture = source;
-
-        if (style == PrismStyleId.DropShadow)
+        nint maskTexture = auxiliary is not null
+            ? content
+            : FindOptionalInput(plan, graph, node, PrismGraphEdgeKind.PreparedInput, source);
+        int kernel = auxiliary?.Kind switch
         {
-            using SdlGpuPrismSurfaceLease scratchA = deviceResources.RentSurface(
-                session.WindowIdentity,
-                target.PixelWidth,
-                target.PixelHeight,
-                SdlGpuTextureFormat.R16G16B16A16Float,
-                mipmapped: false);
-            using SdlGpuPrismSurfaceLease scratchB = deviceResources.RentSurface(
-                session.WindowIdentity,
-                target.PixelWidth,
-                target.PixelHeight,
-                SdlGpuTextureFormat.R16G16B16A16Float,
-                mipmapped: false);
-            maskTexture = PrepareDropShadowMask(
-                source,
-                scratchA.Target,
-                scratchB.Target,
-                geometry.Size,
-                geometry.Spread,
-                stylePlan.Technique);
-        }
-        else if (style is PrismStyleId.OuterGlow or
-            PrismStyleId.BevelEmboss or
-            PrismStyleId.Stroke)
-        {
-            maskTexture = GetOrPrepareStyleDistanceField(
-                source,
-                target,
-                stylePlan,
-                geometry,
-                rowX,
-                rowY,
-                styleTexture,
-                backdrop,
-                resourceAvailable,
-                backdropIndex >= 0,
-                gradientAspect,
-                gradientOffset);
-            if (style == PrismStyleId.BevelEmboss)
-            {
-                using SdlGpuPrismSurfaceLease heightLease = deviceResources.RentSurface(
-                    session.WindowIdentity,
-                    target.PixelWidth,
-                    target.PixelHeight,
-                    SdlGpuTextureFormat.R32G32B32A32Float,
-                    mipmapped: false);
-                using SdlGpuPrismSurfaceLease lightingLease = deviceResources.RentSurface(
-                    session.WindowIdentity,
-                    target.PixelWidth,
-                    target.PixelHeight,
-                    SdlGpuTextureFormat.R32G32B32A32Float,
-                    mipmapped: false);
-                SdlGpuRenderTarget heightTarget = heightLease.Target;
-                SdlGpuRenderTarget lightingTarget = lightingLease.Target;
-
-                PrepareBaseUniforms(source, source, 87, 1);
-                ConfigureStyle(
-                    stylePlan,
-                    gradientOverlay: false,
-                    geometry,
-                    rowX,
-                    rowY,
-                    styleTexture,
-                    maskTexture,
-                    source,
-                    backdrop,
-                    resourceAvailable,
-                    backdropIndex >= 0,
-                    gradientAspect,
-                    gradientOffset);
-                RenderPrepared(heightTarget, source, source);
-
-                PrepareBaseUniforms(heightTarget.SampleTexture, source, 88, 1);
-                ConfigureStyle(
-                    stylePlan,
-                    gradientOverlay: false,
-                    geometry,
-                    rowX,
-                    rowY,
-                    styleTexture,
-                    heightTarget.SampleTexture,
-                    source,
-                    backdrop,
-                    resourceAvailable,
-                    backdropIndex >= 0,
-                    gradientAspect,
-                    gradientOffset);
-                RenderPrepared(
-                    lightingTarget,
-                    heightTarget.SampleTexture,
-                    source);
-                maskTexture = lightingTarget.SampleTexture;
-            }
-        }
-
-        PrepareBaseUniforms(content, source, 82, 1);
+            PrismRasterPassKind.BevelHeight => 87,
+            PrismRasterPassKind.BevelLighting => 88,
+            null => 82,
+            _ => throw new InvalidOperationException("Only bevel auxiliary passes use the style bindings.")
+        };
+        nint rasterSource = auxiliary?.Kind == PrismRasterPassKind.BevelHeight ? source : content;
+        PrepareBaseUniforms(rasterSource, source, kernel, 1);
         ConfigureStyle(
             stylePlan,
             style == PrismStyleId.GradientOverlay,
@@ -867,63 +848,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             backdropIndex >= 0,
             gradientAspect,
             gradientOffset);
-        RenderPrepared(target, content, source);
-    }
-
-    private nint GetOrPrepareStyleDistanceField(
-        nint source,
-        SdlGpuRenderTarget target,
-        PrismStylePlan stylePlan,
-        PrismStyleSamplingGeometry geometry,
-        Vector3 rowX,
-        Vector3 rowY,
-        nint styleTexture,
-        nint backdrop,
-        bool resourceAvailable,
-        bool backdropAvailable,
-        float gradientAspect,
-        Vector2 gradientOffset)
-    {
-        StyleDistanceFieldKey key = new(
-            source,
-            target.PixelWidth,
-            target.PixelHeight,
-            stylePlan.Kind == (int)PrismStyleId.Stroke);
-        if (styleDistanceFields.TryGetValue(key, out nint cached))
-        {
-            return cached;
-        }
-
-        SdlGpuPrismSurfaceLease scratchA = deviceResources.RentSurface(
-            session.WindowIdentity,
-            target.PixelWidth,
-            target.PixelHeight,
-            SdlGpuTextureFormat.R32G32B32A32Float,
-            mipmapped: false);
-        SdlGpuPrismSurfaceLease scratchB = deviceResources.RentSurface(
-            session.WindowIdentity,
-            target.PixelWidth,
-            target.PixelHeight,
-            SdlGpuTextureFormat.R32G32B32A32Float,
-            mipmapped: false);
-        frameLeases.Add(scratchA);
-        frameLeases.Add(scratchB);
-        nint prepared = PrepareStyleDistanceField(
-            source,
-            scratchA.Target,
-            scratchB.Target,
-            stylePlan,
-            geometry,
-            rowX,
-            rowY,
-            styleTexture,
-            backdrop,
-            resourceAvailable,
-            backdropAvailable,
-            gradientAspect,
-            gradientOffset);
-        styleDistanceFields.Add(key, prepared);
-        return prepared;
+        RenderPrepared(target, rasterSource, source);
     }
 
     private void ConfigureStyle(
@@ -990,82 +915,6 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             backdropAvailable ? 1 : 0,
             0,
             0);
-    }
-
-    private nint PrepareDropShadowMask(
-        nint source,
-        SdlGpuRenderTarget scratchA,
-        SdlGpuRenderTarget scratchB,
-        float size,
-        float spread,
-        float technique)
-    {
-        nint prepared = source;
-        if (spread >= 0.5f)
-        {
-            RenderStyleMaskPass(scratchA, prepared, 83, MathF.Ceiling(spread), horizontal: true);
-            RenderStyleMaskPass(scratchB, scratchA.SampleTexture, 83, MathF.Ceiling(spread), horizontal: false);
-            prepared = scratchB.SampleTexture;
-        }
-
-        float techniqueScale = technique < 0.5f
-            ? 1f
-            : technique < 1.5f ? 0.65f : 0.8f;
-        float radius = MathF.Max(MathF.Ceiling(size * techniqueScale * 1.5f), 1f);
-        RenderStyleMaskPass(scratchA, prepared, 84, radius, horizontal: true);
-        RenderStyleMaskPass(scratchB, scratchA.SampleTexture, 84, radius, horizontal: false);
-        return scratchB.SampleTexture;
-    }
-
-    private nint PrepareStyleDistanceField(
-        nint source,
-        SdlGpuRenderTarget scratchA,
-        SdlGpuRenderTarget scratchB,
-        PrismStylePlan stylePlan,
-        PrismStyleSamplingGeometry geometry,
-        Vector3 rowX,
-        Vector3 rowY,
-        nint styleTexture,
-        nint backdrop,
-        bool resourceAvailable,
-        bool backdropAvailable,
-        float gradientAspect,
-        Vector2 gradientOffset)
-    {
-        PrepareBaseUniforms(source, source, 85, 1);
-        ConfigureStyle(
-            stylePlan,
-            gradientOverlay: false,
-            geometry,
-            rowX,
-            rowY,
-            styleTexture,
-            source,
-            source,
-            backdrop,
-            resourceAvailable,
-            backdropAvailable,
-            gradientAspect,
-            gradientOffset);
-        RenderPrepared(scratchA, source, source);
-
-        SdlGpuRenderTarget read = scratchA;
-        SdlGpuRenderTarget write = scratchB;
-        int extent = Math.Max(scratchA.PixelWidth, scratchA.PixelHeight);
-        int jump = 1;
-        while (jump < extent)
-        {
-            jump <<= 1;
-        }
-        jump >>= 1;
-        while (jump >= 1)
-        {
-            RenderStyleDistanceFloodPass(write, read.SampleTexture, jump);
-            (read, write) = (write, read);
-            jump >>= 1;
-        }
-        RenderStyleDistanceFloodPass(write, read.SampleTexture, 1);
-        return write.SampleTexture;
     }
 
     private void RenderStyleDistanceFloodPass(
@@ -1203,32 +1052,13 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         }
         else if (PrismAdjustmentPlanner.IsSupported(filter))
         {
-            PrismAdjustmentPlan adjustment = PrismAdjustmentPlanner.Create(node, scope);
+            PrismAdjustmentPlan adjustment = rasterPlan.Adjustments[node.Id];
             ResolveFilterResource(scope, node, adjustment.Resource,
                 adjustment.ResourceRequired, source, out nint resource, out bool available);
             if (filter == PrismFilterId.Threshold)
             {
-                using SdlGpuPrismSurfaceLease threshold = RenderOtsuThreshold(
-                    source,
-                    adjustment,
-                    scope.CompositionSettings.WorkingColorProfile);
-                PrepareBaseUniforms(
-                    source,
-                    threshold.Target.SampleTexture,
-                    kernelId,
-                    Math.Clamp(node.Amount ?? 1, 0, 1));
-                textures[1] = threshold.Target.SampleTexture;
-                uniforms[23] = new Vector4(
-                    (int)adjustment.Operation,
-                    (int)scope.CompositionSettings.WorkingColorProfile,
-                    SdlGpuPrismKernelSelector.ResolveBlendMode(adjustment.BlendMode),
-                    0);
-                SetFilterOptions(adjustment.Parameters0, adjustment.Parameters1,
-                    adjustment.Parameters2, adjustment.Parameters3, adjustment.Parameters4,
-                    adjustment.Parameters5, adjustment.Parameters6, adjustment.Parameters7,
-                    adjustment.Parameters8, adjustment.Parameters9);
-                RenderPrepared(target, source, textures[1]);
-                return;
+                resource = GetSurface(FindInputIndex(plan, graph, node.Id,
+                    PrismGraphEdgeKind.PreparedInput)).SampleTexture;
             }
             textures[1] = resource;
             uniforms[23] = new Vector4(
@@ -1275,44 +1105,6 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             return;
         }
         RenderPrepared(target, source, textures[1]);
-    }
-
-    private SdlGpuPrismSurfaceLease RenderOtsuThreshold(
-        nint source,
-        PrismAdjustmentPlan plan,
-        PrismColorProfile workingProfile)
-    {
-        using SdlGpuPrismSurfaceLease cdf = deviceResources.RentSurface(
-            session.WindowIdentity,
-            PrismThresholdAnalysis.BinCount,
-            1,
-            SdlGpuTextureFormat.R32Float,
-            mipmapped: false);
-        SdlGpuPrismSurfaceLease threshold = deviceResources.RentSurface(
-            session.WindowIdentity,
-            1,
-            1,
-            SdlGpuTextureFormat.R8G8B8A8Unorm,
-            mipmapped: false);
-        try
-        {
-            PrepareBaseUniforms(source, source, 4, 1);
-            uniforms[23] = new Vector4(0, (int)workingProfile, 0, 0);
-            RenderPrepared(cdf.Target, source, source);
-
-            PrepareBaseUniforms(cdf.Target.SampleTexture, cdf.Target.SampleTexture, 6, 1);
-            uniforms[23] = new Vector4(plan.Parameters0.X, 0, 0, 0);
-            RenderPrepared(
-                threshold.Target,
-                cdf.Target.SampleTexture,
-                cdf.Target.SampleTexture);
-            return threshold;
-        }
-        catch
-        {
-            threshold.Dispose();
-            throw;
-        }
     }
 
     private void RenderComposite(
@@ -1737,11 +1529,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         return false;
     }
 
-    private readonly record struct StyleDistanceFieldKey(
-        nint Source,
-        int PixelWidth,
-        int PixelHeight,
-        bool DirectionalCoverage);
+
 
     private bool TryResolveImage(
         PrismGraphScope scope,

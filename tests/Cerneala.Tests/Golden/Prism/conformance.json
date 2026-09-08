@@ -19,5 +19,21 @@
     "driverPolicy": "WHQL-certified or current vendor production driver"
   },
   "width": 96,
-  "height": 64
+  "height": 64,
+  "sceneRevisions": {
+    "mask-transform": {
+      "platform": "SDL_GPU",
+      "captureApi": "Window.SaveScreenshot",
+      "capturedOn": "2026-09-08",
+      "sha256": "15d42bec9f4f92d30c59040e095f07107465f740909463befa484170501bb5e8",
+      "reason": "ControlBounds limits source capture before filtering. The translated scope starts at x=12; the fixture rectangle is bounded at that edge rather than contributing out-of-bounds pixels."
+    },
+    "style-bevel-emboss": {
+      "platform": "SDL_GPU",
+      "captureApi": "Window.SaveScreenshot",
+      "capturedOn": "2026-09-08",
+      "sha256": "dccc19f8f3c76b84b7d74efd45dd9276069fe807d3acc753982144ec561d3bfb",
+      "reason": "Generated blend-contribution metadata includes Bevel HighlightMode/HighlightOpacity and ShadowMode/ShadowOpacity. The old analyzer omitted the backdrop required by the default Screen and Multiply contributions."
+    }
+  }
 }

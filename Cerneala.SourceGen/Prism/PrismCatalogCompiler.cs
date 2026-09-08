@@ -51,7 +51,8 @@ internal static class PrismCatalogCompiler
         "default",
         "domain",
         "unit",
-        "symbols");
+        "symbols",
+        "blendOpacity");
     private static readonly HashSet<string> DomainFields = Set("kind", "minimum", "maximum");
     private static readonly HashSet<string> CoverageFields = Set("runtime", "kernel", "test", "documentation");
     private static readonly HashSet<string> ExecutionProfileFields = Set(
@@ -343,6 +344,7 @@ internal static class PrismCatalogCompiler
             string valueType = ReadRequiredString(element, "valueType", propertyContext, issues);
             bool required = ReadRequiredBoolean(element, "required", propertyContext, issues);
             string unit = ReadRequiredString(element, "unit", propertyContext, issues);
+            string? blendOpacity = ReadOptionalString(element, "blendOpacity", propertyContext, issues);
             CatalogDomain domain = ParseDomain(element, propertyContext, issues);
             bool hasDefault = element.TryGetProperty("default", out JsonElement defaultValue);
             bool hasSymbols = element.TryGetProperty("symbols", out _);
@@ -419,7 +421,8 @@ internal static class PrismCatalogCompiler
                 hasDefault ? CanonicalValue(defaultValue) : null,
                 domain,
                 unit,
-                symbols));
+                symbols,
+                blendOpacity));
         }
     }
 
@@ -556,6 +559,7 @@ internal static class PrismCatalogCompiler
             }
 
             ValidatePropertySet(entry.Properties, entry.Id, issues);
+            ValidateBlendContributions(entry, entries, issues);
             if (entry.Kind == "filter")
             {
                 ValidateFilterContract(entry, issues);
@@ -608,6 +612,32 @@ internal static class PrismCatalogCompiler
                 issues.Add(Issue(
                     "PRISM3007",
                     $"Execution profile '{profile.Category}' does not classify any filter."));
+            }
+        }
+    }
+
+    private static void ValidateBlendContributions(
+        CatalogEntry entry,
+        List<CatalogEntry> entries,
+        List<PrismCatalogIssue> issues)
+    {
+        CatalogProperty[] contributions = entry.Properties
+            .Where(property => property.BlendOpacity is not null).ToArray();
+        if (entry.Kind == "style" && contributions.Length == 0)
+        {
+            issues.Add(Issue("PRISM3003", $"Style '{entry.Id}' must declare its blend-opacity contributions."));
+        }
+        foreach (CatalogProperty contribution in contributions)
+        {
+            CatalogProperty? opacity = entry.Properties.FirstOrDefault(property =>
+                string.Equals(property.Name, contribution.BlendOpacity, StringComparison.Ordinal));
+            if (entry.Kind != "style" || contribution.ValueType != "symbol" ||
+                opacity is null || opacity.ValueType != "number" ||
+                contribution.Symbols.Any(symbol => !entries.Any(candidate =>
+                    candidate.Kind == "blend-mode" && candidate.Symbol == symbol)))
+            {
+                issues.Add(Issue("PRISM3003",
+                    $"'{entry.Id}.{contribution.Name}' blendOpacity must pair a style blend-mode symbol with a numeric opacity property."));
             }
         }
     }
@@ -859,7 +889,13 @@ internal static class PrismCatalogCompiler
         source.AppendLine("    string? Fusion,");
         source.AppendLine("    PrismCatalogExecutionDescriptor? Execution,");
         source.AppendLine("    long DependencyVersion,");
-        source.AppendLine("    PrismCatalogCoverageDescriptor Coverage);");
+        source.AppendLine("    PrismCatalogCoverageDescriptor Coverage,");
+        source.AppendLine("    PrismCatalogBlendContribution[] BlendContributions);");
+        source.AppendLine();
+        source.AppendLine("internal readonly record struct PrismCatalogBlendContribution(");
+        source.AppendLine("    global::Cerneala.UI.Prism.Definitions.PrismParameterKey<int> BlendMode,");
+        source.AppendLine("    global::Cerneala.UI.Prism.Definitions.PrismParameterKey<float> Opacity,");
+        source.AppendLine("    string DiagnosticName);");
         source.AppendLine();
         source.AppendLine("internal static class PrismCatalogGenerated");
         source.AppendLine("{");
@@ -939,7 +975,9 @@ internal static class PrismCatalogCompiler
                 .Append("\", \"").Append(Escape(entry.Coverage.Test))
                 .Append("\", \"").Append(Escape(entry.Coverage.Golden))
                 .Append("\", \"").Append(Escape(entry.Coverage.Documentation))
-                .AppendLine("\")),");
+                .AppendLine("\"),");
+            AppendBlendContributions(source, entry);
+            source.AppendLine("),");
         }
         source.AppendLine("    ];");
         source.AppendLine();
@@ -986,6 +1024,24 @@ internal static class PrismCatalogCompiler
         }
 
         return string.Join(" | ", dependencies);
+    }
+
+    private static void AppendBlendContributions(StringBuilder source, CatalogEntry entry)
+    {
+        source.Append("            [");
+        bool first = true;
+        foreach (CatalogProperty property in entry.Properties
+            .Where(property => property.BlendOpacity is not null)
+            .OrderBy(property => property.Id, StringComparer.Ordinal))
+        {
+            if (!first) source.Append(", ");
+            first = false;
+            source.Append("new(PrismStyleParameterKeys.").Append(entry.Symbol)
+                .Append('.').Append(property.Name).Append("Key, PrismStyleParameterKeys.")
+                .Append(entry.Symbol).Append('.').Append(property.BlendOpacity)
+                .Append("Key, \"").Append(Escape(property.Name)).Append("\")");
+        }
+        source.Append(']');
     }
 
     private static void AppendExecutionDescriptor(
@@ -1083,6 +1139,11 @@ internal static class PrismCatalogCompiler
             Add(property.DefaultValue);
             Add(property.Domain.Canonical);
             Add(property.Unit);
+            if (property.BlendOpacity is string opacity)
+            {
+                Add("blendOpacity");
+                Add(opacity);
+            }
         }
         foreach (string capability in entry.Capabilities
             .OrderBy(value => value, StringComparer.Ordinal))
@@ -1586,7 +1647,8 @@ internal static class PrismCatalogCompiler
             string? defaultValue,
             CatalogDomain domain,
             string unit,
-            List<string> symbols)
+            List<string> symbols,
+            string? blendOpacity = null)
         {
             Id = id;
             Name = name;
@@ -1596,6 +1658,7 @@ internal static class PrismCatalogCompiler
             Domain = domain;
             Unit = unit;
             Symbols = symbols;
+            BlendOpacity = blendOpacity;
         }
 
         public string Id { get; }
@@ -1606,6 +1669,7 @@ internal static class PrismCatalogCompiler
         public CatalogDomain Domain { get; }
         public string Unit { get; }
         public List<string> Symbols { get; }
+        public string? BlendOpacity { get; }
     }
 
     internal sealed class CatalogDomain

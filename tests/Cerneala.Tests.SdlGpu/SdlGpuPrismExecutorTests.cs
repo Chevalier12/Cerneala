@@ -15,6 +15,62 @@ namespace Cerneala.Tests.SdlGpu;
 [Collection(SdlNativeTestCollection.Name)]
 public sealed class SdlGpuPrismExecutorTests
 {
+    [Theory]
+    [InlineData(PrismFilterId.Invert)]
+    [InlineData(PrismFilterId.Threshold)]
+    public void FilterPlanAccountsForEverySubmittedPass(PrismFilterId filter)
+    {
+        AssertSubmittedPassesArePlanned(PrismCatalog.GetFilter(filter));
+    }
+
+    [Theory]
+    [InlineData(PrismStyleId.DropShadow)]
+    [InlineData(PrismStyleId.OuterGlow)]
+    [InlineData(PrismStyleId.BevelEmboss)]
+    [InlineData(PrismStyleId.Stroke)]
+    public void StylePlanAccountsForEverySubmittedPass(PrismStyleId style)
+    {
+        AssertSubmittedPassesArePlanned(PrismCatalog.GetStyle(style));
+    }
+
+    private static void AssertSubmittedPassesArePlanned(PrismCatalogOperationInfo operation)
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1 };
+        nint window = api.CreateWindow("prism-planned-passes", 48, 32, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window);
+
+        Render(session, CreateCommands(operation));
+
+        PrismExecutionDiagnostics diagnostics = Diagnostics(session);
+        Assert.Equal(0, diagnostics.Count);
+        // Captures use the drawing backend; presentation has its own uniform
+        // layout. Every remaining raster pass submits the Prism manifest.
+        int submitted = api.FragmentUniformWrites.Count(bytes =>
+            bytes.Length == SdlGpuPrismUniforms.ByteCount) +
+            diagnostics.Counters.CaptureCount + 1;
+        Assert.Equal(submitted, diagnostics.Counters.PassCount);
+        Assert.Equal(submitted, diagnostics.Counters.PlannedPassCount);
+    }
+
+    [Fact]
+    public void DistanceSeedUsesThePreparedStrokeModeInsteadOfItsCatalogStableId()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1 };
+        nint window = api.CreateWindow("prism-stroke-seed", 48, 32, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window);
+
+        Render(session, CreateCommands(PrismCatalog.GetStyle(PrismStyleId.Stroke)));
+
+        byte[] seed = Assert.Single(api.FragmentUniformWrites.Where(bytes =>
+            bytes.Length == SdlGpuPrismUniforms.ByteCount &&
+            MemoryMarshal.Read<Vector4>(bytes.AsSpan(SdlGpuPrismUniforms.OffsetOfVector(34), 16)).Z == 85));
+        Assert.Equal(9, MemoryMarshal.Read<Vector4>(
+            seed.AsSpan(SdlGpuPrismUniforms.OffsetOfVector(16), 16)).X);
+        Assert.Equal(0, Diagnostics(session).Count);
+    }
+
     [Fact]
     public void UniformPackingMatchesTheManifestFloat4LayoutByteForByte()
     {
@@ -448,10 +504,19 @@ public sealed class SdlGpuPrismExecutorTests
 
         Render(session, commands);
 
-        int distanceFieldPasses = api.RenderTargets.Count(target =>
-            api.GpuTextures[target.Texture].CreateInfo.Format ==
-                SdlGpuTextureFormat.R32G32B32A32Float);
-        Assert.Equal(10, distanceFieldPasses);
+        // Target reopens around resource uploads are not shader executions.
+        // Count the seed, seven JFA+1 floods, height, and lighting submissions.
+        float[] kernels = api.FragmentUniformWrites
+            .Where(bytes => bytes.Length == SdlGpuPrismUniforms.ByteCount)
+            .Select(bytes => MemoryMarshal.Read<Vector4>(
+                bytes.AsSpan(SdlGpuPrismUniforms.OffsetOfVector(34), 16)).Z)
+            .Where(kernel => kernel is >= 85 and <= 88)
+            .ToArray();
+        Assert.Single(kernels.Where(kernel => kernel == 85));
+        Assert.Equal(7, kernels.Count(kernel => kernel == 86));
+        Assert.Single(kernels.Where(kernel => kernel == 87));
+        Assert.Single(kernels.Where(kernel => kernel == 88));
+        Assert.Equal(10, kernels.Length);
     }
 
     [Fact]

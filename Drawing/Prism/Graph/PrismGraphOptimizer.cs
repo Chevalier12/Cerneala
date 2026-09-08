@@ -1620,7 +1620,7 @@ internal sealed class PrismGraphOptimizer
         return PrismRetainedCacheCandidateKind.None;
     }
 
-    private static ImmutableArray<PrismGraphSurfaceLifetime> BuildSurfaceLifetimes(
+    internal static ImmutableArray<PrismGraphSurfaceLifetime> BuildSurfaceLifetimes(
         PrismGraph graph,
         IReadOnlyDictionary<PrismGraphNodeId, int> executionIndices)
     {
@@ -1682,7 +1682,7 @@ internal sealed class PrismGraphOptimizer
             .ToImmutableArray();
     }
 
-    private static int CalculatePeakLiveSurfaces(
+    internal static int CalculatePeakLiveSurfaces(
         ImmutableArray<PrismGraphSurfaceLifetime> lifetimes)
     {
         if (lifetimes.IsEmpty)

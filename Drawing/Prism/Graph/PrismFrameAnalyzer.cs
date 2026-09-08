@@ -228,42 +228,16 @@ internal sealed class PrismFrameAnalyzer
 
             PrismCatalogEntryDescriptor entry =
                 PrismCatalogRuntime.GetEntry((int)state.Style);
-            foreach (PrismCatalogPropertyDescriptor property in
-                entry.Properties)
+            foreach (PrismCatalogBlendContribution contribution in entry.BlendContributions)
             {
-                if (property.ValueType != PrismCatalogValueType.Symbol ||
-                    !property.Name.EndsWith(
-                        "BlendMode",
-                        StringComparison.Ordinal))
+                if (state.GetValue(contribution.Opacity) <= 0)
                 {
                     continue;
                 }
-
-                string opacityName = property.Name[
-                    ..^"BlendMode".Length] + "Opacity";
-                PrismCatalogPropertyDescriptor? opacityProperty =
-                    entry.Properties.FirstOrDefault(candidate =>
-                        candidate.ValueType == PrismCatalogValueType.Number &&
-                        string.Equals(
-                            candidate.Name,
-                            opacityName,
-                            StringComparison.Ordinal));
-                if (opacityProperty is PrismCatalogPropertyDescriptor visibleOpacity &&
-                    state.GetValue(
-                        new PrismParameterKey<float>(
-                            entry.StableId,
-                            visibleOpacity.TypeSlot)) <= 0)
-                {
-                    continue;
-                }
-
-                int value = state.GetValue(
-                    new PrismParameterKey<int>(
-                        entry.StableId,
-                        property.TypeSlot));
+                int value = state.GetValue(contribution.BlendMode);
                 if (PrismStylePlanner.ResolveBlendMode(
                         value,
-                        property.Name) != PrismBlendMode.Normal)
+                        contribution.DiagnosticName) != PrismBlendMode.Normal)
                 {
                     return true;
                 }

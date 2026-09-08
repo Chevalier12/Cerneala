@@ -5,9 +5,10 @@
 This document remains the normative design proposal for Prism. The first
 implementation is complete for generated markup, typed `PrismInstance`
 attachment, bindings, Motion targets, effective-visibility lifecycle, retained
-command scopes, the WindowsDX/MonoGame compositor, backdrop hosting, the built-in
-catalog, diagnostics, and the retained GPU cache. The implementation is exercised
-by the real Presentation Solar System chapter and measured in the
+command scopes, backdrop hosting, the built-in catalog, diagnostics, and the
+retained GPU cache. SDL_GPU is the shipped desktop compositor; WindowsDX/MonoGame
+and its configuration entry points have been retired. Historical WindowsDX
+Presentation Solar System measurements are recorded in the
 [integration-hardening benchmark](../benchmarks/Cerneala.Benchmarks/results/2026-07-21-prism-integration-hardening.md).
 
 Prism directives, catalog symbols, parameters, values, nesting, Motion interop,
@@ -18,7 +19,7 @@ unaffected markup facts during partial edits, while `Build` mode still rejects
 invalid saved markup. The common layer is editor-agnostic infrastructure and does
 not claim that an LSP or editor extension is available.
 
-Deferred work is deliberately separate: Prism compositors for other graphics
+Deferred work is deliberately separate: Prism compositors beyond SDL_GPU for other graphics
 backends, a public third-party filter/style SDK, runtime shader compilation,
 adaptive quality, async compute, and generic GPU scheduling are not implemented
 claims. Backends without Prism support still render the commands inside Prism
@@ -44,11 +45,13 @@ requires a separate design decision backed by a real use case.
 These scope limits change no markup grammar. Prism has exactly the seven
 directives defined below, and filter/style types still use bare semantic identifiers.
 
-The implemented cache is configured only through `PrismRendererOptions`, either
-on `MonoGameDrawingBackend` or through `MonoGameUiHostOptions`. Its measured
-defaults are a 512 MiB hard limit for all Prism surfaces, a 256 MiB retained soft
-limit, and 256 retained entries. `PrismRendererDiagnostics` reports cache work and
-surface usage. The cache-off conformance path remains internal, so none of these
+SDL configures the cache internally: a 512 MiB hard limit, a 32 MiB retained soft
+limit, and 256 retained entries. There is no public SDL configuration facade.
+Creating the still-public `PrismRendererOptions` value object does not configure
+the application backend; its 256 MiB retained-soft default is not SDL's internal
+setting. `PrismRendererDiagnostics` is the backend-neutral snapshot model, not a
+replacement for the removed adapter's live configuration/diagnostics entry points.
+The cache-off conformance path remains internal, so none of these
 implementation controls adds a directive, layer property, or alternate markup
 dialect.
 
@@ -61,9 +64,11 @@ every drawing backend:
   front and the last normal node is in back. Evaluation walks the normal stack
   bottom-up, from the last declared node toward the first, without reordering or
   duplicating nodes.
-- Every layer uses one immutable capture of the attached control's local visual as
-  its source. The separately accumulated result directly below that layer is its
-  compositing backdrop. Visual descendants render normally after the Prism result.
+- Every layer uses one immutable capture of the attached control's retained visual
+  subtree as its source, including visual descendants and retained Presence-exit
+  children. `ControlBounds` limits source pixels before effects execute. Descendant
+  Prism scopes are nested inside the ancestor's capture. The separately accumulated
+  result directly below each layer is its compositing backdrop.
   A node name is an address for Motion and diagnostics, never an image source.
 - `@layer` is a leaf. It may own filters, styles and at most one mask, but never a
   layer or group child. `@group` is the only normal-stack container and must contain
@@ -173,9 +178,10 @@ styling system beside Cerneala Aspect.
 
 Imagine several transparent sheets placed on a table.
 
-Prism first takes one picture containing only what the control itself draws. Its
-visual children are not in that picture; they render normally after the processed
-control image. That local picture sits beneath the entire Prism stack.
+Prism first takes one picture of the control's retained visual subtree, including
+its visual children and their nested Prism results. `ControlBounds` limits what
+enters that picture before effects execute. That captured picture sits beneath
+the entire Prism stack; children are not redrawn after the processed image.
 
 Prism starts at the bottom of the layer panel. Every layer receives the same
 captured control picture as source. Filters transform only that source. Styles and

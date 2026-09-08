@@ -24,7 +24,8 @@ internal enum PrismGraphNodeKind
     ClipToBelow,
     Composite,
     PassThroughComposite,
-    BackdropCrop
+    BackdropCrop,
+    RasterAuxiliary
 }
 
 internal enum PrismGraphEdgeKind
@@ -40,7 +41,8 @@ internal enum PrismGraphEdgeKind
     CompositeForeground,
     KnockoutBackdrop,
     KnockoutShape,
-    FilterOriginal
+    FilterOriginal,
+    PreparedInput
 }
 
 internal enum PrismGraphDependencyKind

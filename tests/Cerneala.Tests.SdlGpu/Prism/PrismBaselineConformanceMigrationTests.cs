@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Security.Cryptography;
 using System.Text.Json;
 using Cerneala.Backends.SdlGpu;
 using Cerneala.Drawing;
@@ -43,9 +44,10 @@ public sealed class PrismBaselineConformanceMigrationTests
             Color[] fresh = fixture.Render(scene.Commands, ClearColor);
             Assert.Equal(0, fixture.Backend.PrismDiagnostics.Count);
             Assert.Equal(scene.Analysis.Scopes.Length, fixture.Backend.PrismDiagnostics.Counters.CaptureCount);
-            Assert.Equal(scene.Plan.ExecutionOrder.Length + scene.Analysis.Scopes.Length,
+            PrismGraphExecutionPlan rasterPlan = new PrismRasterPlanner().Prepare(scene.Plan, Width, Height).GraphPlan;
+            Assert.Equal(rasterPlan.ExecutionOrder.Length + scene.Analysis.Scopes.Length,
                 fixture.Backend.PrismDiagnostics.Counters.PassCount);
-            AssertFrozen(scene, fresh);
+            AssertFrozen(scene, fresh, fixture.Backend.PrismDiagnostics.DumpExecutedGraph());
             AssertSemanticImage(scene, fresh, 2);
 
             Color[] cached = fixture.Render(scene.Commands, ClearColor);
@@ -59,6 +61,54 @@ public sealed class PrismBaselineConformanceMigrationTests
         {
             foreach (PrismScene scene in scenes) { scene.Dispose(); }
         }
+    }
+
+    [SdlNativeFact]
+    public void TransformedControlBoundsLimitCaptureBeforeFiltering()
+    {
+        PrismCompositionDefinition composition = new("Capture bounds", [Layer(1, "Blur")]);
+        PrismDrawScope scope = PrismTestData.Scope(composition, ownerToken: 1901,
+            bounds: new DrawRect(0, 0, 32, 24), transform: Matrix3x2.CreateTranslation(20, 20));
+        using SdlDrawingFixture fixture = new(Width, Height);
+        Color[] overflow = fixture.Render(Commands(DrawCommand.BeginPrism(scope),
+            DrawCommand.FillRectangle(new DrawRect(10, 20, 20, 20), Color.White),
+            DrawCommand.EndPrism()), ClearColor);
+        fixture.Session.DrawingResources.PrismResources.Invalidate(PrismCacheInvalidation.All);
+        Color[] bounded = fixture.Render(Commands(DrawCommand.BeginPrism(scope),
+            DrawCommand.FillRectangle(new DrawRect(20, 20, 10, 20), Color.White),
+            DrawCommand.EndPrism()), ClearColor);
+
+        Assert.Equal(bounded, overflow);
+    }
+
+    [SdlNativeTheory]
+    [InlineData(0, 1)]
+    [InlineData(45, 1)]
+    [InlineData(0, 1.5f)]
+    [InlineData(45, 1.5f)]
+    public void CaptureBoundsMatchAnExplicitClipAtTheSameTransform(float degrees, float scale)
+    {
+        DrawRect bounds = new(0, 0, 32, 24);
+        Matrix3x2 transform = Matrix3x2.CreateRotation(degrees * MathF.PI / 180, new Vector2(16, 12)) *
+            Matrix3x2.CreateTranslation(30, 20);
+        PrismCompositionDefinition composition = new("Capture clip equivalence", [Layer(1, "Blur")]);
+        PrismDrawScope scope = PrismTestData.Scope(composition, ownerToken: 1902,
+            bounds: bounds, transform: transform, pixelScale: scale);
+        using SdlDrawingFixture fixture = new(144, 96, coordinateScale: scale);
+        DrawCommand fill = DrawCommand.FillRectangle(new DrawRect(0, 0, 96, 64), Color.White);
+        Color[] implicitClip = fixture.Render(Commands(DrawCommand.BeginPrism(scope), fill,
+            DrawCommand.EndPrism()), ClearColor);
+        fixture.Session.DrawingResources.PrismResources.Invalidate(PrismCacheInvalidation.All);
+        Assert.True(Matrix3x2.Invert(transform, out Matrix3x2 inverse));
+        Color[] explicitClip = fixture.Render(Commands(DrawCommand.BeginPrism(scope),
+            DrawCommand.PushTransform(transform), DrawCommand.PushClip(bounds), DrawCommand.PushTransform(inverse),
+            fill, DrawCommand.PopTransform(), DrawCommand.PopClip(), DrawCommand.PopTransform(),
+            DrawCommand.EndPrism()), ClearColor);
+
+        Assert.Equal(explicitClip, implicitClip);
+        Assert.Contains(implicitClip, pixel => pixel != ClearColor);
+        Assert.Equal(0, fixture.Backend.PrismDiagnostics.Count);
+        Assert.Equal(0, fixture.Backend.PrismDiagnostics.Counters.ActiveSurfaceCount);
     }
 
     [SdlNativeFact]
@@ -144,15 +194,13 @@ public sealed class PrismBaselineConformanceMigrationTests
         string root = FindRepositoryRoot();
         string shader = File.ReadAllText(Path.Combine(root, "Drawing", "Prism", "Shaders", "Hlsl", "Styles", "DistanceField.hlsl"));
         string contour = File.ReadAllText(Path.Combine(root, "Drawing", "Prism", "Shaders", "Hlsl", "Styles", "Common.hlsl"));
-        string executor = File.ReadAllText(Path.Combine(root, "Cerneala.Backends.SdlGpu", "Prism", "SdlGpuPrismExecutor.cs"));
         Assert.Contains("StyleAntiAliasedEdgeDistance", shader);
         Assert.Contains("SelectNearestStyleDistanceSeed", shader);
         Assert.Contains("StyleDistanceSeedPixelShader", shader);
         Assert.Contains("StyleDistanceFloodPixelShader", shader);
         Assert.Contains("SampleStyleContourLut", contour);
-        Assert.Contains("PrepareStyleDistanceField", executor);
-        Assert.Contains("while (jump >= 1)", executor);
-        Assert.Matches(@"RenderStyleDistanceFloodPass\(write, read.SampleTexture, 1\);", executor);
+        // The shared planner's typed topology tests own the JFA+1 sequence;
+        // this check only verifies the versioned shader source contract.
     }
 
     [Fact]
@@ -160,46 +208,55 @@ public sealed class PrismBaselineConformanceMigrationTests
     {
         string root = FindRepositoryRoot();
         string shader = File.ReadAllText(Path.Combine(root, "Drawing", "Prism", "Shaders", "Hlsl", "Styles", "BevelEmboss.hlsl"));
-        string executor = File.ReadAllText(Path.Combine(root, "Cerneala.Backends.SdlGpu", "Prism", "SdlGpuPrismExecutor.cs"));
-        Assert.Contains("PrismStyleId.BevelEmboss", executor);
-        Assert.Contains("PrepareStyleDistanceField", executor);
         Assert.Contains("StyleSignedEuclideanDistance", shader);
         Assert.Contains("BevelHeightPixelShader", shader);
         Assert.Contains("SobelBevelNormal", shader);
         Assert.Contains("SampleBevelTextureHeight", shader);
     }
 
-    private static void AssertFrozen(PrismScene scene, Color[] pixels)
+    private static void AssertFrozen(PrismScene scene, Color[] pixels, string executionDump)
     {
         string directory = Path.Combine(FindRepositoryRoot(), "tests", "Cerneala.Tests", "Golden", "Prism");
         using JsonDocument manifest = JsonDocument.Parse(File.ReadAllText(Path.Combine(directory, "conformance.json")));
         JsonElement metadata = manifest.RootElement;
-        Assert.Equal("WindowsDX", metadata.GetProperty("platform").GetString());
-        Assert.Equal("IWindowScreenshotSource.RenderPng", metadata.GetProperty("captureApi").GetString());
+        string imagePath = Path.Combine(directory, scene.Name + ".png");
+        if (metadata.GetProperty("sceneRevisions").TryGetProperty(scene.Name, out JsonElement revision))
+        {
+            Assert.Equal("SDL_GPU", revision.GetProperty("platform").GetString());
+            Assert.Equal("Window.SaveScreenshot", revision.GetProperty("captureApi").GetString());
+            Assert.False(string.IsNullOrWhiteSpace(revision.GetProperty("reason").GetString()));
+            Assert.Equal(revision.GetProperty("sha256").GetString(),
+                Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(imagePath))).ToLowerInvariant());
+        }
+        else
+        {
+            Assert.Equal("WindowsDX", metadata.GetProperty("platform").GetString());
+            Assert.Equal("IWindowScreenshotSource.RenderPng", metadata.GetProperty("captureApi").GetString());
+            JsonElement hardware = metadata.GetProperty("supportedHardware");
+            Assert.Equal("Direct3D 11", hardware.GetProperty("graphicsApi").GetString());
+            Assert.Equal("10_0", hardware.GetProperty("minimumFeatureLevel").GetString());
+            Assert.Equal("ps_4_0", hardware.GetProperty("shaderProfile").GetString());
+            Assert.Equal("WHQL-certified or current vendor production driver", hardware.GetProperty("driverPolicy").GetString());
+        }
         Assert.Equal("R8G8B8A8_UNorm", metadata.GetProperty("pixelFormat").GetString());
         Assert.Equal("sRGB IEC61966-2.1", metadata.GetProperty("colorProfile").GetString());
         Assert.Equal("LinearSrgb", metadata.GetProperty("workingColorProfile").GetString());
         Assert.Equal("straight RGBA PNG output; premultiplied linear-light compositor inputs",
             metadata.GetProperty("alphaConvention").GetString());
         Assert.Equal(12648430, metadata.GetProperty("seed").GetInt32());
-        JsonElement hardware = metadata.GetProperty("supportedHardware");
-        Assert.Equal("Direct3D 11", hardware.GetProperty("graphicsApi").GetString());
-        Assert.Equal("10_0", hardware.GetProperty("minimumFeatureLevel").GetString());
-        Assert.Equal("ps_4_0", hardware.GetProperty("shaderProfile").GetString());
-        Assert.Equal("WHQL-certified or current vendor production driver", hardware.GetProperty("driverPolicy").GetString());
         Assert.Equal(Width, metadata.GetProperty("width").GetInt32());
         Assert.Equal(Height, metadata.GetProperty("height").GetInt32());
         foreach (JsonProperty channel in metadata.GetProperty("channelTolerance").EnumerateObject())
             Assert.Equal(2, channel.Value.GetInt32());
 
-        using SKBitmap expected = SKBitmap.Decode(Path.Combine(directory, scene.Name + ".png"));
+        using SKBitmap expected = SKBitmap.Decode(imagePath);
         Assert.NotNull(expected);
         Assert.Equal((Width, Height), (expected.Width, expected.Height));
         using SKBitmap actual = Decode(pixels);
         for (int y = 0; y < Height; y++)
         for (int x = 0; x < Width; x++)
             Assert.True(IsWithinTolerance(expected.GetPixel(x, y), actual.GetPixel(x, y), 2),
-                $"{scene.Name} differs at ({x},{y}): expected={expected.GetPixel(x, y)}, actual={actual.GetPixel(x, y)}, tolerance=2.");
+                $"{scene.Name} differs at ({x},{y}): expected={expected.GetPixel(x, y)}, actual={actual.GetPixel(x, y)}, tolerance=2.\n{executionDump}");
     }
 
     private static void AssertSemanticImage(
@@ -579,7 +636,9 @@ public sealed class PrismBaselineConformanceMigrationTests
             Commands(
                 DrawCommand.BeginPrism(scope),
                 DrawCommand.FillRectangle(
-                    new DrawRect(10, 10, 66, 38),
+                    // The source is already in host drawing coordinates. Its
+                    // left edge must respect the translated capture boundary.
+                    new DrawRect(12, 10, 64, 38),
                     new CernealaColor(230, 72, 96)),
                 DrawCommand.FillRectangle(
                     new DrawRect(38, 28, 46, 26),

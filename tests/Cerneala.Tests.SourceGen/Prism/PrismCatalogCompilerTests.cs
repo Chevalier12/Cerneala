@@ -459,6 +459,72 @@ public sealed class PrismCatalogCompilerTests
         Assert.Equal(first.GeneratedSource, second.GeneratedSource);
     }
 
+    [Fact]
+    public void StyleBlendContributionsGenerateTypedModeAndOpacityKeys()
+    {
+        PrismCatalogCompilation compilation = PrismCatalogCompiler.Compile(ReadRepositoryCatalog());
+
+        Assert.Empty(compilation.Issues);
+        var styles = compilation.Model!.Entries.Where(entry => entry.Kind == "style").ToArray();
+        Assert.All(styles, style => Assert.Contains(style.Properties, property => property.BlendOpacity is not null));
+        Assert.Equal(11, styles.Sum(style => style.Properties.Count(property => property.BlendOpacity is not null)));
+        Assert.Contains("PrismStyleParameterKeys.BevelEmboss.HighlightModeKey", compilation.GeneratedSource, StringComparison.Ordinal);
+        Assert.Contains("PrismStyleParameterKeys.BevelEmboss.HighlightOpacityKey", compilation.GeneratedSource, StringComparison.Ordinal);
+        Assert.Contains("PrismStyleParameterKeys.BevelEmboss.ShadowModeKey", compilation.GeneratedSource, StringComparison.Ordinal);
+        Assert.Contains("PrismStyleParameterKeys.BevelEmboss.ShadowOpacityKey", compilation.GeneratedSource, StringComparison.Ordinal);
+        Assert.Contains("PrismParameterKey<int> BlendMode", compilation.GeneratedSource, StringComparison.Ordinal);
+        Assert.Contains("PrismParameterKey<float> Opacity", compilation.GeneratedSource, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("MissingOpacity")]
+    [InlineData("Color")]
+    [InlineData("BlendMode")]
+    public void BlendContributionRequiresExistingNumericOpacity(string opacity)
+    {
+        JsonObject catalog = ParseCatalog(ReadRepositoryCatalog());
+        FindProperty(catalog, "style:color-overlay", "blend-mode")["blendOpacity"] = opacity;
+
+        Assert.Contains(PrismCatalogCompiler.Compile(Serialize(catalog)).Issues,
+            issue => issue.Id == "PRISM3003" && issue.Message.Contains("blendOpacity", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void StyleWithoutExplicitBlendContributionsIsRejected()
+    {
+        JsonObject catalog = ParseCatalog(ReadRepositoryCatalog());
+        FindProperty(catalog, "style:color-overlay", "blend-mode").Remove("blendOpacity");
+
+        Assert.Contains(PrismCatalogCompiler.Compile(Serialize(catalog)).Issues,
+            issue => issue.Id == "PRISM3003" && issue.Message.Contains("blend", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void BlendContributionCannotUseNonBlendSymbols()
+    {
+        JsonObject catalog = ParseCatalog(ReadRepositoryCatalog());
+        FindProperty(catalog, "style:bevel-emboss", "technique")["blendOpacity"] = "HighlightOpacity";
+
+        Assert.Contains(PrismCatalogCompiler.Compile(Serialize(catalog)).Issues,
+            issue => issue.Id == "PRISM3003" && issue.Message.Contains("blendOpacity", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void BlendContributionsDoNotDependOnParameterNamingConvention()
+    {
+        JsonObject catalog = ParseCatalog(ReadRepositoryCatalog());
+        JsonObject mode = FindProperty(catalog, "style:color-overlay", "blend-mode");
+        mode["name"] = "Contribution";
+        mode["blendOpacity"] = "Strength";
+        FindProperty(catalog, "style:color-overlay", "opacity")["name"] = "Strength";
+
+        PrismCatalogCompilation compilation = PrismCatalogCompiler.Compile(Serialize(catalog));
+
+        Assert.Empty(compilation.Issues);
+        Assert.Contains("PrismStyleParameterKeys.ColorOverlay.ContributionKey", compilation.GeneratedSource, StringComparison.Ordinal);
+        Assert.Contains("PrismStyleParameterKeys.ColorOverlay.StrengthKey", compilation.GeneratedSource, StringComparison.Ordinal);
+    }
+
     private static string ReadRepositoryCatalog()
     {
         return File.ReadAllText(RepositoryCatalogPath());

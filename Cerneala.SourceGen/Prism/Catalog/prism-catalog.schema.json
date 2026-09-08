@@ -242,6 +242,11 @@
             "type": "string",
             "pattern": "^[A-Z][A-Za-z0-9]*$"
           }
+        },
+        "blendOpacity": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$",
+          "description": "For a style blend contribution, names its numeric opacity property. Resolved to typed keys during generation."
         }
       }
     },

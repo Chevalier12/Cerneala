@@ -1545,7 +1545,8 @@ internal sealed partial class SdlGpuDrawingBackend :
         IReadOnlyDictionary<int, SdlGpuPrismPresentationSurface>? childSurfaces,
         CommandRangeState? continuedState = null,
         Vector2 logicalOrigin = default,
-        bool isolateCompositingState = false)
+        bool isolateCompositingState = false,
+        (DrawRect Bounds, Matrix3x2 Transform)? captureClip = null)
     {
         ArgumentNullException.ThrowIfNull(commands);
         ArgumentNullException.ThrowIfNull(analysis);
@@ -1595,6 +1596,18 @@ internal sealed partial class SdlGpuDrawingBackend :
             rangeState = new CommandRangeState(target, state);
         }
         batches.Begin(rangeState.Target);
+        if (captureClip is { } capture)
+        {
+            // Capture bounds constrain source pixels before effects run. Use the
+            // existing rectangle/stencil path so rotated bounds are not widened
+            // to an axis-aligned scissor. Command transforms stay unchanged.
+            RenderState state = rangeState.State;
+            Matrix3x2 commandTransform = state.Transforms[0];
+            state.Transforms[0] = Matrix3x2.Multiply(
+                capture.Transform, Matrix3x2.CreateTranslation(-logicalOrigin));
+            PushRectangleClip(DrawCommand.PushClip(capture.Bounds), state, batches);
+            state.Transforms[0] = commandTransform;
+        }
         RenderRange(
             commands,
             start,
@@ -1603,6 +1616,10 @@ internal sealed partial class SdlGpuDrawingBackend :
             rangeState,
             batches,
             childSurfaces);
+        if (captureClip is not null)
+        {
+            PopClip(rangeState.State, batches);
+        }
         FlushBatches();
         if (continuedState is null || end == commands.Count)
         {

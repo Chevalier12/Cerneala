@@ -57,6 +57,11 @@ public sealed class BevelEmbossStyle : PrismStyle
 
 Parameter assignments are validated against the `BevelEmboss` catalog entry. Add the operation to a `PrismPipeline` or pass it directly to `Prism.Apply`.
 
+Highlight and shadow contributions are analyzed independently. A visible contribution
+with positive opacity and a non-`Normal` blend mode requires the backdrop; a zero-opacity
+contribution does not. Changing either contribution's opacity or mode updates the frame
+requirement through the instance's value version.
+
 ## See Also
 
 - `PrismStyle`

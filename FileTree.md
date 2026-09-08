@@ -690,6 +690,7 @@ Generated from `.`.
 |   |   |-- 2026-08-26-sdlgpu-stage-5-drawing-conformance.md
 |   |   |-- 2026-08-26-sdlgpu-stage-6-shader-toolchain.md
 |   |   |-- 2026-09-05-monogame-removal.md
+|   |   |-- 2026-09-08-prism-architecture-remediation.md
 |   |   |-- prism-visual-algorithm-checklist-2026-07-25.md
 |   |   +-- prism-visual-style-algorithm-checklist-2026-08-02.md
 |   |-- diagrams/
@@ -2564,6 +2565,7 @@ Generated from `.`.
 |   |   |   |-- PrismGraphCapabilities.cs
 |   |   |   |-- PrismGraphDiagnostic.cs
 |   |   |   |-- PrismGraphOptimizer.cs
+|   |   |   |-- PrismRasterPlanner.cs
 |   |   |   +-- PrismRetainedCacheKey.cs
 |   |   |-- Kernels/
 |   |   |   +-- PrismKernelKind.cs
@@ -3239,6 +3241,7 @@ Generated from `.`.
 |   |   |   |   |-- PrismPhotocopyFilterTests.cs
 |   |   |   |   |-- PrismPlasterFilterTests.cs
 |   |   |   |   |-- PrismPosterEdgesFilterTests.cs
+|   |   |   |   |-- PrismRasterPlannerTests.cs
 |   |   |   |   |-- PrismRendererOptionsTests.cs
 |   |   |   |   |-- PrismRetainedCommandContractTests.cs
 |   |   |   |   |-- PrismReticulationFilterTests.cs
@@ -3253,6 +3256,7 @@ Generated from `.`.
 |   |   |   |   |-- PrismSprayedStrokesFilterTests.cs
 |   |   |   |   |-- PrismStainedGlassFilterTests.cs
 |   |   |   |   |-- PrismStampFilterTests.cs
+|   |   |   |   |-- PrismStyleBackdropAnalysisTests.cs
 |   |   |   |   |-- PrismStylePipelineTests.cs
 |   |   |   |   |-- PrismSumiEFilterTests.cs
 |   |   |   |   |-- PrismTexturizerFilterTests.cs
