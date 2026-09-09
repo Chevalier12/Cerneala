@@ -33,7 +33,7 @@ public sealed class RenderLayerMotionTests
 
         new DrawCommandListBuilder().Build(element, cache, new RenderCounters());
 
-        Assert.Equal(new DrawRect(10, 20, 1, 1), cache.RootCommands[0].Rect);
+        Assert.Equal(new DrawRect(10, 20, 1, 1), RenderedRectangleBounds(cache.RootCommands));
     }
 
     [Fact]
@@ -48,7 +48,7 @@ public sealed class RenderLayerMotionTests
 
         new DrawCommandListBuilder().Build(element, cache, new RenderCounters());
 
-        Assert.Equal(new DrawRect(-5, -5, 2, 2), cache.RootCommands[0].Rect);
+        Assert.Equal(new DrawRect(-5, -5, 2, 2), RenderedRectangleBounds(cache.RootCommands));
     }
 
     [Fact]
@@ -68,6 +68,13 @@ public sealed class RenderLayerMotionTests
 
         Assert.Equal(renderCount, element.RenderCount);
         Assert.Equal(128, commands[0].Color.A);
+    }
+
+    private static DrawRect? RenderedRectangleBounds(DrawCommandList commands)
+    {
+        int index = Assert.Single(Enumerable.Range(0, commands.Count)
+            .Where(index => commands[index].Kind == DrawCommandKind.FillRectangle));
+        return new DrawCommandStateAnalyzer().Analyze(commands).Entries[index].Bounds;
     }
 
     private static RetainedRenderCache PreparedCache(UIElement root)

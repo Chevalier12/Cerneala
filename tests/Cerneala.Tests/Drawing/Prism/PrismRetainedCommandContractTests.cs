@@ -97,29 +97,36 @@ public sealed class PrismRetainedCommandContractTests
 
         Assert.Equal(
             [
+                DrawCommandKind.PushTransform,
                 DrawCommandKind.BeginPrism,
                 DrawCommandKind.FillRectangle,
+                DrawCommandKind.PushTransform,
                 DrawCommandKind.BeginPrism,
                 DrawCommandKind.FillRectangle,
                 DrawCommandKind.EndPrism,
-                DrawCommandKind.EndPrism
+                DrawCommandKind.PopTransform,
+                DrawCommandKind.EndPrism,
+                DrawCommandKind.PopTransform
             ],
             cache.RootCommands.Select(command => command.Kind));
 
-        PrismDrawScope parentScope = cache.RootCommands[0].PrismScope!.Value;
-        PrismDrawScope childScope = cache.RootCommands[2].PrismScope!.Value;
+        PrismFrameAnalysis analysis = new PrismFrameAnalyzer().Analyze(cache.RootCommands);
+        PrismDrawScope parentScope = analysis.Scopes[0].Scope;
+        PrismDrawScope childScope = analysis.Scopes[1].Scope;
         Assert.Equal(new DrawRect(0, 0, 10, 10), parentScope.ControlBounds);
         Assert.Equal(2, parentScope.PixelScale);
-        Assert.Equal(4, parentScope.EffectiveTransform.M31);
-        Assert.Equal(5, parentScope.EffectiveTransform.M32);
-        Assert.Equal(6, childScope.EffectiveTransform.M31);
-        Assert.Equal(8, childScope.EffectiveTransform.M32);
+        Assert.Equal(4, analysis.Scopes[0].EffectiveTransform.M31);
+        Assert.Equal(5, analysis.Scopes[0].EffectiveTransform.M32);
+        Assert.Equal(6, analysis.Scopes[1].EffectiveTransform.M31);
+        Assert.Equal(8, analysis.Scopes[1].EffectiveTransform.M32);
+        Assert.Equal(new DrawRect(4, 5, 10, 10), analysis.Scopes[0].Bounds);
+        Assert.Equal(new DrawRect(6, 8, 10, 10), analysis.Scopes[1].Bounds);
         Assert.Equal(parentScope.Instance.StructuralVersion, parentScope.StructuralVersion);
         Assert.Equal(parentScope.Instance.ValueVersion, parentScope.ValueVersion);
         Assert.True(parentScope.VisualContentVersion > 0);
         Assert.True(parentScope.CacheOwnerToken.Value > 0);
-        Assert.Equal(128, cache.RootCommands[1].Color.A);
-        Assert.Equal(64, cache.RootCommands[3].Color.A);
+        Assert.Equal(128, cache.RootCommands[2].Color.A);
+        Assert.Equal(64, cache.RootCommands[5].Color.A);
     }
 
     [Fact]

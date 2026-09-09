@@ -33,6 +33,8 @@ Inheritance:
 
 The inherited `Shape` renderer scales the SVG geometry from `ViewBox` into the arranged bounds of the control. A visible `Fill` brush and positive arranged width and height are required for a fill command to be emitted. Empty or whitespace-only `Data` produces no geometry and no drawing command.
 
+`FillRule` selects non-zero winding (the default) or even-odd filling. A visible `Stroke` with positive `StrokeThickness` draws the same native path. After view-box mapping, the inherited `UIElement` affine transform, transform origin, ancestor transforms, and opacity apply through retained drawing state.
+
 ## Constructors
 
 | Name | Description |
@@ -58,6 +60,9 @@ The inherited `Shape` renderer scales the SVG geometry from `ViewBox` into the a
 | Name | Type | Default | Description |
 | --- | --- | --- | --- |
 | `Fill` | `Brush?` | `null` | Provides the brush used to fill the SVG path. |
+| `FillRule` | `DrawFillRule` | `NonZero` | Selects non-zero winding or even-odd filling. |
+| `Stroke` | `Brush?` | `null` | Provides the brush used to stroke the SVG path. |
+| `StrokeThickness` | `float` | `1` | Sets the non-negative stroke thickness. |
 | `Opacity` | `float` | `1` | Controls the rendered opacity. |
 | `RenderTransform` | `Transform` | `Transform.Identity` | Applies a render transform inherited from `Shape`. |
 

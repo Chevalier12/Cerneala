@@ -12,15 +12,18 @@ namespace Cerneala.Tests.Drawing.SdlGpu;
 [Collection(SdlNativeTestCollection.Name)]
 public sealed class AlphaBlendRenderingTests
 {
+    private const string NvidiaOcclusionSkip =
+        "Disabled by user request: reported NVIDIA driver issue; also fails on clean d1e4e3ef. Driver root cause not independently established.";
+
     [SdlNativeTheory]
     [InlineData(0)]
-    [InlineData(1)]
+    [InlineData(1, Skip = NvidiaOcclusionSkip)]
     [InlineData(2)]
-    [InlineData(3)]
+    [InlineData(3, Skip = NvidiaOcclusionSkip)]
     [InlineData(4)]
     [InlineData(5)]
-    [InlineData(6)]
-    [InlineData(7)]
+    [InlineData(6, Skip = NvidiaOcclusionSkip)]
+    [InlineData(7, Skip = NvidiaOcclusionSkip)]
     public void OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(int content)
     {
         using SdlDrawingFixture fixture = new(180, 90, useMultisampling: true);

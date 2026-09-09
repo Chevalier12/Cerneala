@@ -54,13 +54,15 @@ DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
 Composition walks the visible visual tree depth-first. An element's own local commands are emitted before its visual children, and siblings are emitted in `VisualChildren` order. Elements that do not participate in rendering, according to `UIElementVisibility.ParticipatesInRendering`, are skipped with their subtree.
 
-The builder applies render-scope state while composing commands. It combines ancestor and element transforms, applies `Opacity` and `PresenceOpacity` to command colors, and includes presence scale in the element transform. Rectangular commands are transformed to the axis-aligned bounds of their transformed corners.
+The builder emits balanced affine `PushTransform` / `PopTransform` scopes around transformed element subtrees. Local drawing transforms compose before element and ancestor transforms. Rotation, skew, reflection, and scale preserve the geometry rather than replacing it with its axis-aligned bounding box. Presence scale is included in the element transform. `Opacity` and `PresenceOpacity` multiply command paint opacity.
 
 Clips are emitted as balanced `PushClip` and `PopClip` commands. A clip comes from `ClipNode` when one is attached to the element, otherwise from `ArrangedBounds` when `ClipToBounds` is true. Clip commands wrap the element's local commands, visual children, and exiting visual children.
 
 When the element belongs to a `UIRoot`, exiting presence children returned by `root.Motion.Presence.GetExitingVisualChildren(element)` are also composed so exit animations can continue rendering after normal visual removal.
 
-`Build` expects local element render caches to already be valid. If a required local cache is stale, `ElementRenderCache.GetValidCommands` throws `InvalidOperationException`. The builder can reuse valid cached commands by translating them when only the element's arranged position changed and its cached size and render dependencies still match.
+`Build` expects local element render caches to already be valid. If a required local cache is stale, `ElementRenderCache.GetValidCommands` throws `InvalidOperationException`. The builder can translate valid cached command coordinates when only the element's arranged position changed and its cached size and render dependencies still match. This preserves layout-position pixel snapping. Local affine scope matrices are conjugated into the relocated coordinate space, while immutable native paths are reused.
+
+Command coordinates are not necessarily world coordinates. Consumers inspecting rendered positions must include the active drawing state, for example through `DrawCommandStateAnalyzer`. UI-attached Prism scopes inherit their element transform from that state rather than embedding it a second time in the scope payload.
 
 ## Constructors
 

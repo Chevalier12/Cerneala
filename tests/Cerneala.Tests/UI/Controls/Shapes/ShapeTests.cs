@@ -76,9 +76,10 @@ public sealed class ShapeTests
 
         DrawCommandList commands = root.RetainedRenderer.Commit(root);
 
-        DrawCommand command = Assert.Single(commands);
-        Assert.Equal(DrawCommandKind.FillRectangle, command.Kind);
-        Assert.Equal(new DrawRect(11, 22, 30, 20), command.Rect);
+        int index = Assert.Single(Enumerable.Range(0, commands.Count)
+            .Where(index => commands[index].Kind == DrawCommandKind.FillRectangle));
+        DrawCommandStateAnalysis state = new DrawCommandStateAnalyzer().Analyze(commands);
+        Assert.Equal(new DrawRect(11, 22, 30, 20), state.Entries[index].Bounds);
     }
 
     [Fact]
@@ -131,13 +132,23 @@ public sealed class ShapeTests
             "test");
         root.ProcessFrame();
 
-        DrawCommand command = Assert.Single(
-            root.RetainedRenderer.Commit(root));
+        DrawCommandList commands = root.RetainedRenderer.Commit(root);
+        int index = Assert.Single(Enumerable.Range(0, commands.Count)
+            .Where(index => commands[index].Kind == DrawCommandKind.DrawPath));
+        DrawCommand command = commands[index];
         DrawPathContour contour = Assert.Single(command.Path!.Contours);
+        var transform = new DrawCommandStateAnalyzer().Analyze(commands).Entries[index].Transform;
 
-        Assert.Equal(new DrawPoint(10, 20), contour.StartPoint);
-        Assert.Equal(new DrawPoint(20, 20), contour.Segments[1].EndPoint);
-        Assert.Equal(new DrawPoint(20, 30), contour.Segments[2].EndPoint);
+        Assert.Same(path.Data!.Path, command.Path);
+        Assert.Equal(new DrawPoint(10, 20), WorldPoint(contour.StartPoint));
+        Assert.Equal(new DrawPoint(20, 20), WorldPoint(contour.Segments[1].EndPoint));
+        Assert.Equal(new DrawPoint(20, 30), WorldPoint(contour.Segments[2].EndPoint));
+
+        DrawPoint WorldPoint(DrawPoint point)
+        {
+            var world = System.Numerics.Vector2.Transform(new(point.X, point.Y), transform);
+            return new DrawPoint(world.X, world.Y);
+        }
     }
 
     [Fact]

@@ -7,7 +7,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Media/PathGeometry.cs`
 
-Represents an immutable path geometry made from one or more drawing points.
+Represents immutable typed path geometry, constructed from connected points, a `DrawPath`, or SVG path data.
 
 ```csharp
 public sealed record PathGeometry : Geometry
@@ -61,13 +61,17 @@ PathShape path = new()
 
 ## Remarks
 
+`FromPath(DrawPath)` retains the supplied immutable path without flattening or rebuilding it. `Parse(string)` delegates to `DrawPathParser.ParseSvg`, preserving lines, quadratic and cubic curves, elliptical arcs, multiple contours, and explicit closure. The supported SVG commands are absolute and relative `M`, `L`, `H`, `V`, `C`, `S`, `Q`, `T`, `A`, and `Z`.
+
 `PathGeometry` stores the supplied `IEnumerable<DrawPoint>` as a read-only point list. The constructor copies the sequence into an array before exposing it through `Points`, so later changes to the original collection do not change the geometry.
 
 At least one point is required. Passing `null` throws `ArgumentNullException`; passing an empty sequence throws `ArgumentException`.
 
-`Bounds` is calculated from the minimum and maximum X and Y coordinates in `Points`. A geometry with one point has a zero-width, zero-height bounds rectangle at that point.
+For the point-sequence constructor, `Bounds` is calculated from the minimum and maximum X and Y coordinates. A geometry with one point has a zero-width, zero-height bounds rectangle at that point and `Path` is `null`. For `FromPath` and `Parse`, `Bounds` is the typed path's conservative bound, including curve controls and arc extrema.
 
-When rendered through `Shape`, `PathGeometry` is converted once to a reusable open `DrawPath` and emitted as one native stroke command. This preserves joins and endpoint caps across consecutive segments instead of treating every segment as an independent line. The renderer uses `Stroke`, `StrokeThickness`, `Opacity`, and `RenderTransform`; `Fill` is not used for `PathGeometry` rendering. A path with one point has no segment to draw, although it still has valid bounds.
+`Path` is the authoritative rich geometry. For rich paths, `Points` is a read-only list of contour start points and segment endpoints, excluding explicit close segments. It is not a flattened curve or a lossless representation of contour boundaries and controls. The legacy constructor preserves its supplied point sequence exactly.
+
+`Shape` uses the same native `Path` for fill and stroke, without flattening curves into point chains. Coordinates are local to the control's arranged position; retained affine scopes apply its transform and ancestor transforms. `FillRule` on the shape selects non-zero or even-odd filling. A single-point geometry emits no drawing commands.
 
 Because `PathGeometry` is a sealed record, instances use record equality. The `Points` property is a read-only wrapper around the copied array, so equality compares that wrapper reference rather than performing point-by-point sequence equality.
 
@@ -81,13 +85,16 @@ Because `PathGeometry` is a sealed record, instances use record equality. The `P
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Points` | `IReadOnlyList<DrawPoint>` | Gets the copied, read-only point list that defines the path. |
-| `Bounds` | `DrawRect` | Gets the bounding rectangle calculated from the minimum and maximum point coordinates. |
+| `Points` | `IReadOnlyList<DrawPoint>` | Gets the original point snapshot or the rich path's ordered start points and endpoints. |
+| `Path` | `DrawPath?` | Gets the reusable immutable typed path; `null` only for a legacy single-point geometry. |
+| `Bounds` | `DrawRect` | Gets the point bounds or the rich path's conservative bounds. |
 
 ## Methods
 
 | Name | Description |
 | --- | --- |
+| `FromPath(DrawPath)` | Creates a geometry retaining the supplied immutable typed path. Rejects `null`. |
+| `Parse(string)` | Creates a geometry using the shared SVG path-data parser. |
 | `Equals(PathGeometry?)` | Determines whether another `PathGeometry` has equal record state. |
 | `Equals(object?)` | Determines whether an object is an equal `PathGeometry` record instance. |
 | `GetHashCode()` | Returns a hash code based on the record state. |
@@ -100,15 +107,20 @@ Because `PathGeometry` is a sealed record, instances use record equality. The `P
 | `PathGeometry(IEnumerable<DrawPoint> points)` | `ArgumentNullException` | `points` is `null`. |
 | `PathGeometry(IEnumerable<DrawPoint> points)` | `ArgumentException` | `points` contains no elements. |
 | `PathGeometry(IEnumerable<DrawPoint> points)` | `ArgumentOutOfRangeException` | The calculated `DrawRect` bounds fail drawing-coordinate validation. |
+| `FromPath(DrawPath)` | `ArgumentNullException` | `path` is `null`. |
+| `Parse(string)` | `ArgumentException` | Data is null, empty, or whitespace. |
+| `Parse(string)` | `FormatException` | SVG syntax is malformed or unsupported. |
 
 ## Rendering Behavior
 
 | Condition | Result |
 | --- | --- |
-| `Stroke` resolves to a visible brush and `StrokeThickness > 0` | `Shape` emits one native typed-path stroke command. |
-| `Stroke` is transparent, missing, or `StrokeThickness` is `0` | No path line commands are emitted. |
+| `Fill` resolves to a visible brush, `Path` exists, and both bounds dimensions are positive | `Shape` emits a native typed-path fill command. |
+| Bounds have zero width or height | Filling is skipped; stroke rendering remains available. |
+| `Stroke` resolves to a visible brush, `StrokeThickness > 0`, and `Path` exists | `Shape` emits one native typed-path stroke command. |
+| `Stroke` is transparent, missing, or `StrokeThickness` is `0` | No stroke command is emitted; filling is independent. |
 | The path contains exactly one point | Bounds are valid, but no line commands are emitted because there are no consecutive point pairs. |
-| `RenderTransform` is set on the shape | Each path point is transformed before the native stroke command is recorded. |
+| `RenderTransform` is set on the shape | Retained affine drawing state transforms the complete path without changing its identity. |
 
 ## Applies To
 

@@ -24,16 +24,19 @@ using PathShape = Cerneala.UI.Controls.Shapes.Path;
 
 PathShape path = new()
 {
-    Data = new PathGeometry(
-    [
-        new DrawPoint(0, 0),
-        new DrawPoint(40, 0),
-        new DrawPoint(40, 24)
-    ]),
+    Data = PathGeometry.Parse("M0 0 Q20 0 40 24 L0 24 Z"),
+    Fill = new SolidColorBrush(Color.White),
     Stroke = new SolidColorBrush(Color.Black),
     StrokeThickness = 2
 };
 ```
+
+```xml
+<Path Data="M0 0 Q20 0 40 24 L0 24 Z" Fill="White" Stroke="Black"
+      StrokeThickness="2" FillRule="EvenOdd" />
+```
+
+For C# construction, pass an immutable `DrawPath` built with `DrawPathBuilder` to `PathGeometry.FromPath`.
 
 ## Remarks
 
@@ -41,9 +44,13 @@ PathShape path = new()
 
 `Data` is a `UiProperty<PathGeometry?>` with a default value of `null`. Changing it affects both measure and render. When no geometry is resolved, measuring returns `LayoutSize.Zero` through the inherited `Shape` measurement behavior, and rendering emits no drawing commands.
 
-The inherited `Shape` renderer draws `PathGeometry` instances as connected line segments between consecutive points. It uses `Stroke`, `StrokeThickness`, `Opacity`, and `RenderTransform`; the inherited `Fill` brush is not used for `PathGeometry` rendering. A visible stroke color and a positive stroke thickness are required for line commands to be emitted.
+The inherited `Shape` renderer supports lines, quadratic and cubic Bézier curves, elliptical arcs, multiple contours, and explicit open/closed contour state. Fill and stroke reuse the complete immutable native path. `FillRule` selects `NonZero` or `EvenOdd`; filling an open contour implicitly closes it without closing its stroke.
 
-`PathGeometry` requires at least one point and exposes immutable point data. Its bounds are calculated from the point set and are used by shape measurement, with stroke thickness added when the stroke has a solid color.
+Path coordinates are local to the arranged position and are not automatically stretched. The inherited `UIElement` transform and opacity apply through retained drawing state. Explicit `SvgGeometry` retains its view-box-to-arranged-bounds mapping.
+
+The existing point-sequence `PathGeometry` constructor remains supported. It snapshots an open polyline and requires at least one point; a single point measures but has no drawable path. Rich paths use the existing `Drawing` builder or SVG parser. Their conservative bounds are used by shape measurement, with stroke padding when `Stroke` is set.
+
+In generated `.crn`, a `Data` string is lowered to `PathGeometry.Parse`. SVG syntax is validated by the shared runtime parser when the factory creates the control. Typed `PathGeometry` property bindings are also supported; the public `Data` type has not changed.
 
 ## Constructors
 
@@ -68,11 +75,12 @@ The inherited `Shape` renderer draws `PathGeometry` instances as connected line 
 | Name | Type | Default | Description |
 | --- | --- | --- | --- |
 | `Geometry` | `Geometry?` | `null` | Overrides `Data` as the resolved geometry when assigned. |
-| `Stroke` | `Brush?` | `null` | Provides the stroke brush used to draw `PathGeometry` line segments. |
-| `StrokeThickness` | `float` | `1` | Controls rendered line thickness and contributes to measured size when the stroke has a solid color. |
-| `Fill` | `Brush?` | `null` | Inherited from `Shape`, but not used when rendering a `PathGeometry`. |
-| `RenderTransform` | `Transform` | `Transform.Identity` | Applies to rendered path segment endpoints. |
-| `Opacity` | `float` | `1` | Multiplies rendered stroke alpha; rendering is skipped when opacity is less than or equal to `0`. |
+| `Stroke` | `Brush?` | `null` | Provides the brush for the complete native path stroke. |
+| `StrokeThickness` | `float` | `1` | Controls stroke thickness and contributes to measured size when a stroke is set. |
+| `Fill` | `Brush?` | `null` | Provides the brush for filling the path interior. |
+| `FillRule` | `DrawFillRule` | `NonZero` | Selects non-zero winding or even-odd filling. |
+| `RenderTransform` | `Transform` | `Transform.Identity` | Applies an affine transform to the complete path through retained drawing state. |
+| `Opacity` | `float` | `1` | Multiplies fill and stroke paint opacity; rendering is skipped when opacity is `0`. |
 
 ## Methods
 

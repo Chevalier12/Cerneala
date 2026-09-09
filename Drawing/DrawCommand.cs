@@ -541,13 +541,23 @@ public readonly partial record struct DrawCommand
         DrawFillRule fillRule = DrawFillRule.NonZero)
     {
         ArgumentNullException.ThrowIfNull(path);
+        return PushClip(path, path.Bounds, path.Bounds, fillRule);
+    }
+
+    internal static DrawCommand PushClip(
+        DrawPath path,
+        DrawRect sourceBounds,
+        DrawRect destination,
+        DrawFillRule fillRule)
+    {
+        ArgumentNullException.ThrowIfNull(path);
         if (!Enum.IsDefined(fillRule))
         {
             throw new ArgumentOutOfRangeException(nameof(fillRule));
         }
         return new DrawCommand(
             DrawCommandKind.PushPathClip,
-            path.Bounds,
+            destination,
             default,
             0,
             null,
@@ -558,7 +568,7 @@ public readonly partial record struct DrawCommand
             null,
             null,
             1,
-            sourceRect: path.Bounds,
+            sourceRect: sourceBounds,
             path: path,
             fillRule: fillRule);
     }

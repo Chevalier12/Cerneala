@@ -1590,6 +1590,21 @@
     "source": "UI/Controls/Shapes/Ellipse.cs"
   },
   {
+    "name": "Cerneala.UI.Controls.Shapes.Line",
+    "file": "documentation/classes/Cerneala.UI.Controls.Shapes.Line.md",
+    "source": "UI/Controls/Shapes/Line.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Shapes.Polyline",
+    "file": "documentation/classes/Cerneala.UI.Controls.Shapes.Polyline.md",
+    "source": "UI/Controls/Shapes/Polyline.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.Shapes.Polygon",
+    "file": "documentation/classes/Cerneala.UI.Controls.Shapes.Polygon.md",
+    "source": "UI/Controls/Shapes/Polygon.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.Shapes.Path",
     "file": "documentation/classes/Cerneala.UI.Controls.Shapes.Path.md",
     "source": "UI/Controls/Shapes/Path.cs"

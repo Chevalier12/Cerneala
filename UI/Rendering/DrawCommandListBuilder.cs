@@ -28,7 +28,6 @@ public sealed class DrawCommandListBuilder
             renderCache,
             counters,
             rootCommands,
-            Matrix3x2.Identity,
             1,
             ref lowerUiVersion);
         renderCache.MarkRootBuilt();
@@ -39,7 +38,6 @@ public sealed class DrawCommandListBuilder
         RetainedRenderCache renderCache,
         RenderCounters counters,
         DrawCommandList rootCommands,
-        Matrix3x2 ancestorTransform,
         float ancestorOpacity,
         ref long lowerUiVersion)
     {
@@ -48,9 +46,7 @@ public sealed class DrawCommandListBuilder
             return;
         }
 
-        Matrix3x2 elementTransform = Matrix3x2.Multiply(
-            ElementVisualTransform.GetElementTransform(element),
-            ancestorTransform);
+        Matrix3x2 elementTransform = ElementVisualTransform.GetElementTransform(element);
         float elementOpacity = ancestorOpacity * element.Opacity * element.PresenceOpacity;
         if (elementOpacity <= 0)
         {
@@ -58,10 +54,16 @@ public sealed class DrawCommandListBuilder
         }
 
         counters.CountComposedElement();
+        bool hasTransform = elementTransform != Matrix3x2.Identity;
+        if (hasTransform)
+        {
+            rootCommands.Add(DrawCommand.PushTransform(ToNumerics(elementTransform)));
+            counters.CountEmittedCommands(1);
+        }
         bool hasClip = TryGetClip(element, out LayoutRect clipBounds);
         if (hasClip)
         {
-            rootCommands.Add(ApplyRenderScope(DrawCommand.PushClip(ToDrawRect(clipBounds)), elementTransform, 1));
+            rootCommands.Add(DrawCommand.PushClip(ToDrawRect(clipBounds)));
             counters.CountEmittedCommands(1);
         }
 
@@ -79,7 +81,7 @@ public sealed class DrawCommandListBuilder
                 prismInstance!,
                 cacheOwnerToken,
                 ToDrawRect(element.ArrangedBounds),
-                elementTransform,
+                Matrix3x2.Identity,
                 visualContentVersion: 0,
                 prismLowerUiVersion,
                 PrismDrawResources.Empty)));
@@ -97,10 +99,9 @@ public sealed class DrawCommandListBuilder
         for (int index = 0; index < localCommands.Count; index++)
         {
             DrawCommand command = localCommands[index];
-            DrawCommand composed = ApplyRenderScope(
-                Translate(command, offsetX, offsetY),
-                elementTransform,
-                elementOpacity);
+            // Layout relocation changes drawing coordinates before backend pixel snapping.
+            // Local affine scopes are conjugated into that relocated coordinate space.
+            DrawCommand composed = ApplyOpacity(Translate(command, offsetX, offsetY), elementOpacity);
             rootCommands.Add(composed);
             counters.CountEmittedCommands(1);
         }
@@ -112,7 +113,7 @@ public sealed class DrawCommandListBuilder
                 prismInstance!,
                 cacheOwnerToken,
                 ToDrawRect(element.ArrangedBounds),
-                elementTransform,
+                Matrix3x2.Identity,
                 element.PrismVisualVersion,
                 prismLowerUiVersion,
                 ResolvePrismResources(
@@ -129,7 +130,6 @@ public sealed class DrawCommandListBuilder
                 renderCache,
                 counters,
                 rootCommands,
-                elementTransform,
                 elementOpacity,
                 ref lowerUiVersion);
         }
@@ -145,7 +145,6 @@ public sealed class DrawCommandListBuilder
                     renderCache,
                     counters,
                     rootCommands,
-                    elementTransform,
                     elementOpacity,
                     ref lowerUiVersion);
             }
@@ -169,6 +168,11 @@ public sealed class DrawCommandListBuilder
         if (hasClip)
         {
             rootCommands.Add(DrawCommand.PopClip());
+            counters.CountEmittedCommands(1);
+        }
+        if (hasTransform)
+        {
+            rootCommands.Add(DrawCommand.PopTransform());
             counters.CountEmittedCommands(1);
         }
     }
@@ -617,7 +621,7 @@ public sealed class DrawCommandListBuilder
         {
             DrawCommandKind.FillRectangle when command.Brush is not null => DrawCommand.FillRectangle(Translate(command.Rect, offsetX, offsetY), command.Brush, command.BrushOpacity),
             DrawCommandKind.FillRectangle => DrawCommand.FillRectangle(Translate(command.Rect, offsetX, offsetY), command.Color),
-            DrawCommandKind.DrawRectangle when command.Pen is not null => DrawCommand.DrawRectangle(Translate(command.Rect, offsetX, offsetY), command.Pen),
+            DrawCommandKind.DrawRectangle when command.Pen is not null => DrawCommand.DrawRectangle(Translate(command.Rect, offsetX, offsetY), command.Pen, command.BrushOpacity),
             DrawCommandKind.DrawRectangle when command.Brush is not null => DrawCommand.DrawRectangle(Translate(command.Rect, offsetX, offsetY), command.Brush, command.Thickness, command.BrushOpacity),
             DrawCommandKind.DrawRectangle => DrawCommand.DrawRectangle(Translate(command.Rect, offsetX, offsetY), command.Color, command.Thickness),
             DrawCommandKind.FillRoundedRectangle when command.Brush is not null => DrawCommand.FillRoundedRectangle(Translate(command.Rect, offsetX, offsetY), command.CornerRadius, command.Brush, command.BrushOpacity),
@@ -632,7 +636,8 @@ public sealed class DrawCommandListBuilder
             DrawCommandKind.DrawLine when command.Pen is not null => DrawCommand.DrawLine(
                 Translate(command.Position, offsetX, offsetY),
                 Translate(command.EndPoint, offsetX, offsetY),
-                command.Pen),
+                command.Pen,
+                command.BrushOpacity),
             DrawCommandKind.DrawLine when command.Brush is not null => DrawCommand.DrawLine(
                 Translate(command.Position, offsetX, offsetY),
                 Translate(command.EndPoint, offsetX, offsetY),
@@ -661,7 +666,8 @@ public sealed class DrawCommandListBuilder
                 command.Path!,
                 command.SourceRect,
                 Translate(command.Rect, offsetX, offsetY),
-                command.Pen!),
+                command.Pen!,
+                command.BrushOpacity),
             DrawCommandKind.DrawText when command.Brush is not null => DrawCommand.DrawText(
                 command.TextRun!,
                 Translate(command.Position, offsetX, offsetY),
@@ -686,6 +692,15 @@ public sealed class DrawCommandListBuilder
                 point => Translate(point, offsetX, offsetY),
                 opacity: 1),
             DrawCommandKind.RenderSurface2D => DrawCommand.RenderSurface2D(command.RenderSurface!, Translate(command.Rect, offsetX, offsetY), command.Color),
+            DrawCommandKind.PushTransform => DrawCommand.PushTransform(
+                NumericsMatrix3x2.CreateTranslation(-offsetX, -offsetY) *
+                command.Transform *
+                NumericsMatrix3x2.CreateTranslation(offsetX, offsetY)),
+            DrawCommandKind.PushPathClip => DrawCommand.PushClip(
+                command.Path!,
+                command.SourceRect,
+                Translate(command.Rect, offsetX, offsetY),
+                command.FillRule),
             DrawCommandKind.PushClip => DrawCommand.PushClip(Translate(command.Rect, offsetX, offsetY)),
             DrawCommandKind.PopClip => command,
             DrawCommandKind.BeginPrism
@@ -708,72 +723,77 @@ public sealed class DrawCommandListBuilder
         return new DrawPoint(point.X + offsetX, point.Y + offsetY);
     }
 
-    private static DrawCommand ApplyRenderScope(DrawCommand command, Matrix3x2 transform, float opacity)
+    private static DrawCommand ApplyOpacity(DrawCommand command, float opacity)
     {
+        if (opacity >= 1)
+        {
+            return command;
+        }
+
         return command.Kind switch
         {
-            DrawCommandKind.FillRectangle when command.Brush is not null => DrawCommand.FillRectangle(Transform(command.Rect, transform), command.Brush, command.BrushOpacity * opacity),
-            DrawCommandKind.FillRectangle => DrawCommand.FillRectangle(Transform(command.Rect, transform), ApplyOpacity(command.Color, opacity)),
-            DrawCommandKind.DrawRectangle when command.Pen is not null => DrawCommand.DrawRectangle(Transform(command.Rect, transform), command.Pen, command.BrushOpacity * opacity),
-            DrawCommandKind.DrawRectangle when command.Brush is not null => DrawCommand.DrawRectangle(Transform(command.Rect, transform), command.Brush, command.Thickness, command.BrushOpacity * opacity),
-            DrawCommandKind.DrawRectangle => DrawCommand.DrawRectangle(Transform(command.Rect, transform), ApplyOpacity(command.Color, opacity), command.Thickness),
-            DrawCommandKind.FillRoundedRectangle when command.Brush is not null => DrawCommand.FillRoundedRectangle(Transform(command.Rect, transform), Scale(command.CornerRadius, transform), command.Brush, command.BrushOpacity * opacity),
-            DrawCommandKind.FillRoundedRectangle => DrawCommand.FillRoundedRectangle(Transform(command.Rect, transform), Scale(command.CornerRadius, transform), ApplyOpacity(command.Color, opacity)),
-            DrawCommandKind.DrawRoundedRectangle when command.Pen is not null => DrawCommand.DrawRoundedRectangle(Transform(command.Rect, transform), Scale(command.CornerRadius, transform), command.Pen, command.BrushOpacity * opacity),
-            DrawCommandKind.DrawRoundedRectangle => DrawCommand.DrawRoundedRectangle(Transform(command.Rect, transform), Scale(command.CornerRadius, transform), ApplyOpacity(command.Color, opacity), command.Thickness),
-            DrawCommandKind.FillEllipse when command.Brush is not null => DrawCommand.FillEllipse(Transform(command.Rect, transform), command.Brush, command.BrushOpacity * opacity),
-            DrawCommandKind.FillEllipse => DrawCommand.FillEllipse(Transform(command.Rect, transform), ApplyOpacity(command.Color, opacity)),
-            DrawCommandKind.DrawEllipse when command.Pen is not null => DrawCommand.DrawEllipse(Transform(command.Rect, transform), command.Pen, command.BrushOpacity * opacity),
-            DrawCommandKind.DrawEllipse when command.Brush is not null => DrawCommand.DrawEllipse(Transform(command.Rect, transform), command.Brush, command.Thickness, command.BrushOpacity * opacity),
-            DrawCommandKind.DrawEllipse => DrawCommand.DrawEllipse(Transform(command.Rect, transform), ApplyOpacity(command.Color, opacity), command.Thickness),
+            DrawCommandKind.FillRectangle when command.Brush is not null => DrawCommand.FillRectangle(command.Rect, command.Brush, command.BrushOpacity * opacity),
+            DrawCommandKind.FillRectangle => DrawCommand.FillRectangle(command.Rect, ApplyOpacity(command.Color, opacity)),
+            DrawCommandKind.DrawRectangle when command.Pen is not null => DrawCommand.DrawRectangle(command.Rect, command.Pen, command.BrushOpacity * opacity),
+            DrawCommandKind.DrawRectangle when command.Brush is not null => DrawCommand.DrawRectangle(command.Rect, command.Brush, command.Thickness, command.BrushOpacity * opacity),
+            DrawCommandKind.DrawRectangle => DrawCommand.DrawRectangle(command.Rect, ApplyOpacity(command.Color, opacity), command.Thickness),
+            DrawCommandKind.FillRoundedRectangle when command.Brush is not null => DrawCommand.FillRoundedRectangle(command.Rect, command.CornerRadius, command.Brush, command.BrushOpacity * opacity),
+            DrawCommandKind.FillRoundedRectangle => DrawCommand.FillRoundedRectangle(command.Rect, command.CornerRadius, ApplyOpacity(command.Color, opacity)),
+            DrawCommandKind.DrawRoundedRectangle when command.Pen is not null => DrawCommand.DrawRoundedRectangle(command.Rect, command.CornerRadius, command.Pen, command.BrushOpacity * opacity),
+            DrawCommandKind.DrawRoundedRectangle => DrawCommand.DrawRoundedRectangle(command.Rect, command.CornerRadius, ApplyOpacity(command.Color, opacity), command.Thickness),
+            DrawCommandKind.FillEllipse when command.Brush is not null => DrawCommand.FillEllipse(command.Rect, command.Brush, command.BrushOpacity * opacity),
+            DrawCommandKind.FillEllipse => DrawCommand.FillEllipse(command.Rect, ApplyOpacity(command.Color, opacity)),
+            DrawCommandKind.DrawEllipse when command.Pen is not null => DrawCommand.DrawEllipse(command.Rect, command.Pen, command.BrushOpacity * opacity),
+            DrawCommandKind.DrawEllipse when command.Brush is not null => DrawCommand.DrawEllipse(command.Rect, command.Brush, command.Thickness, command.BrushOpacity * opacity),
+            DrawCommandKind.DrawEllipse => DrawCommand.DrawEllipse(command.Rect, ApplyOpacity(command.Color, opacity), command.Thickness),
             DrawCommandKind.DrawLine when command.Pen is not null => DrawCommand.DrawLine(
-                transform.Transform(command.Position),
-                transform.Transform(command.EndPoint),
+                command.Position,
+                command.EndPoint,
                 command.Pen,
                 command.BrushOpacity * opacity),
             DrawCommandKind.DrawLine when command.Brush is not null => DrawCommand.DrawLine(
-                transform.Transform(command.Position),
-                transform.Transform(command.EndPoint),
+                command.Position,
+                command.EndPoint,
                 command.Brush,
                 command.Thickness,
                 command.BrushOpacity * opacity),
             DrawCommandKind.DrawLine => DrawCommand.DrawLine(
-                transform.Transform(command.Position),
-                transform.Transform(command.EndPoint),
+                command.Position,
+                command.EndPoint,
                 ApplyOpacity(command.Color, opacity),
                 command.Thickness),
             DrawCommandKind.FillPath when command.Brush is not null => DrawCommand.FillPath(
                 command.Path!,
                 command.SourceRect,
-                Transform(command.Rect, transform),
+                command.Rect,
                 command.Brush,
                 command.FillRule,
                 command.BrushOpacity * opacity),
             DrawCommandKind.FillPath => DrawCommand.FillPath(
                 command.Path!,
                 command.SourceRect,
-                Transform(command.Rect, transform),
+                command.Rect,
                 ApplyOpacity(command.Color, opacity),
                 command.FillRule),
             DrawCommandKind.DrawPath => DrawCommand.DrawPath(
                 command.Path!,
                 command.SourceRect,
-                Transform(command.Rect, transform),
+                command.Rect,
                 command.Pen!,
                 command.BrushOpacity * opacity),
             DrawCommandKind.DrawText when command.Brush is not null => DrawCommand.DrawText(
                 command.TextRun!,
-                transform.Transform(command.Position),
+                command.Position,
                 command.Brush,
                 command.BrushOpacity * opacity),
-            DrawCommandKind.DrawText => DrawCommand.DrawText(command.TextRun!, transform.Transform(command.Position), ApplyOpacity(command.Color, opacity)),
+            DrawCommandKind.DrawText => DrawCommand.DrawText(command.TextRun!, command.Position, ApplyOpacity(command.Color, opacity)),
             DrawCommandKind.DrawTextLayout => DrawCommand.DrawTextLayout(
                 command.TextLayout!,
-                transform.Transform(command.Position),
+                command.Position,
                 command.BrushOpacity * opacity),
             DrawCommandKind.DrawImage => DrawCommand.DrawImage(
                 command.Image!,
-                Transform(command.Rect, transform),
+                command.Rect,
                 ApplyOpacity(command.ImageOptions!, opacity)),
             DrawCommandKind.DrawImageQuad or
             DrawCommandKind.DrawNineSlice or
@@ -782,35 +802,11 @@ public sealed class DrawCommandListBuilder
             DrawCommandKind.DrawLineBatch or
             DrawCommandKind.DrawSpriteBatch => TransformMeshCommand(
                 command,
-                transform.Transform,
+                static point => point,
                 opacity),
-            DrawCommandKind.RenderSurface2D => DrawCommand.RenderSurface2D(command.RenderSurface!, Transform(command.Rect, transform), ApplyOpacity(command.Color, opacity)),
-            DrawCommandKind.PushClip => DrawCommand.PushClip(Transform(command.Rect, transform)),
-            DrawCommandKind.PopClip => command,
-            DrawCommandKind.BeginPrism
-                when command.PrismScope is PrismDrawScope scope &&
-                    scope.IsLocalDrawingScope =>
-                DrawCommand.BeginPrism(
-                    scope.ApplyLocalTransform(ToNumerics(transform))),
-            DrawCommandKind.BeginPrism => command,
-            DrawCommandKind.EndPrism => command,
+            DrawCommandKind.RenderSurface2D => DrawCommand.RenderSurface2D(command.RenderSurface!, command.Rect, ApplyOpacity(command.Color, opacity)),
             _ => command
         };
-    }
-
-    private static DrawRect Transform(DrawRect rect, Matrix3x2 transform)
-    {
-        DrawPoint topLeft = transform.Transform(new DrawPoint(rect.X, rect.Y));
-        DrawPoint topRight = transform.Transform(new DrawPoint(rect.Right, rect.Y));
-        DrawPoint bottomLeft = transform.Transform(new DrawPoint(rect.X, rect.Bottom));
-        DrawPoint bottomRight = transform.Transform(new DrawPoint(rect.Right, rect.Bottom));
-
-        float minX = MathF.Min(MathF.Min(topLeft.X, topRight.X), MathF.Min(bottomLeft.X, bottomRight.X));
-        float minY = MathF.Min(MathF.Min(topLeft.Y, topRight.Y), MathF.Min(bottomLeft.Y, bottomRight.Y));
-        float maxX = MathF.Max(MathF.Max(topLeft.X, topRight.X), MathF.Max(bottomLeft.X, bottomRight.X));
-        float maxY = MathF.Max(MathF.Max(topLeft.Y, topRight.Y), MathF.Max(bottomLeft.Y, bottomRight.Y));
-
-        return new DrawRect(minX, minY, maxX - minX, maxY - minY);
     }
 
     private static Color ApplyOpacity(Color color, float opacity)
@@ -876,24 +872,6 @@ public sealed class DrawCommandListBuilder
         return DrawCommand.WithMesh(
             command,
             command.Mesh!.Transform(transform, opacity));
-    }
-
-    private static DrawCornerRadius Scale(
-        DrawCornerRadius radius,
-        Matrix3x2 transform)
-    {
-        float scaleX = MathF.Sqrt(
-            (transform.M11 * transform.M11) +
-            (transform.M12 * transform.M12));
-        float scaleY = MathF.Sqrt(
-            (transform.M21 * transform.M21) +
-            (transform.M22 * transform.M22));
-        float scale = MathF.Min(scaleX, scaleY);
-        return new DrawCornerRadius(
-            radius.TopLeft * scale,
-            radius.TopRight * scale,
-            radius.BottomRight * scale,
-            radius.BottomLeft * scale);
     }
 
 }

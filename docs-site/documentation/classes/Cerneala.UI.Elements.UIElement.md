@@ -69,6 +69,8 @@ Layout uses `Measure` and `Arrange`. `Measure` caches the last available size an
 
 Rendering calls `Render`, which null-checks the `RenderContext` and delegates to `OnRender`. Render-scope properties such as `RenderTransform`, `Opacity`, translation, scale, rotation, skew, and `ClipToBounds` update `RenderScopeVersion`; render content dependencies can be updated by derived classes with `SetRenderDependencies`.
 
+Retained composition surrounds a transformed subtree with affine drawing scopes. Local drawing transforms run before the element and ancestor transforms. Rectangle, ellipse, path, text, image, and clip geometry therefore retain rotation and skew rather than being reduced to axis-aligned bounds. Inspectors of the composed command stream must include its active drawing state to obtain final coordinates. `Shape` uses these same transform and opacity properties.
+
 Invalidation is routed to the attached `UIRoot` when available. Detached elements mark their local `DirtyState`; measure invalidation also propagates to visual ancestors until a layout boundary is reached.
 
 Value validation is enforced by property metadata. `Width` and `Height` accept `float.NaN` for automatic sizing or a finite non-negative value; `RenderTransform` cannot be `null`; `RenderTransformOrigin` must be normalized from `0` to `1`; `Opacity` must be finite and between `0` and `1`; transform scalar values must be finite; `TabIndex` must be non-negative; and `LayoutMotionId` must be either `null` or non-blank.

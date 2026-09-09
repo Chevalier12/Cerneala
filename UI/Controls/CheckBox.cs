@@ -85,8 +85,11 @@ public class CheckBox : ToggleButton
             availableHeight / geometry.Bounds.Height);
         float scaledWidth = geometry.Bounds.Width * scale;
         float scaledHeight = geometry.Bounds.Height * scale;
-        float x = bounds.X + ((bounds.Width - scaledWidth) / 2) - (geometry.Bounds.X * scale);
-        float y = bounds.Y + ((bounds.Height - scaledHeight) / 2) - (geometry.Bounds.Y * scale);
+        // Path data is arranged-local; retained composition applies the element origin.
+        float x = ((bounds.Width - scaledWidth) / 2) - (geometry.Bounds.X * scale) +
+            (bounds.Width * path.RenderTransformOrigin.X * (scale - 1));
+        float y = ((bounds.Height - scaledHeight) / 2) - (geometry.Bounds.Y * scale) +
+            (bounds.Height * path.RenderTransformOrigin.Y * (scale - 1));
         path.RenderTransform = new Transform(new Matrix3x2(scale, 0, 0, scale, x, y));
     }
 

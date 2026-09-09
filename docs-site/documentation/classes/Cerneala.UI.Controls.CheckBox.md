@@ -45,6 +45,8 @@ The default template contains a bordered indicator, the required `PART_CheckMark
 
 `PART_CheckMark` may be any `UIElement`. The control changes its visibility to `Visible` when `IsChecked` is `true` and to `Hidden` otherwise. When the part is a `Cerneala.UI.Controls.Shapes.Path`, a custom geometry assigned through `Data` is scaled uniformly to fit its arranged bounds with a 1.5-pixel inset and is centered on both axes. The default indicator measures to a square and is vertically centered beside the content.
 
+Custom `Path.Data` fitting uses arranged-local path coordinates and accounts for the part's inherited `RenderTransformOrigin`; relocating the checkbox does not add its position twice.
+
 The default path uses a black-filled `SvgGeometry` with a `0,0,100,100` source view box. Its `Fill` is owned by the template and is not bound to `Foreground`, so a custom template can choose the check-mark brush independently from the text color.
 
 A custom component template must provide `PART_CheckMark` as a `UIElement`. This permits path, text, border, and composed check-mark visuals. Named elements declared inside generated `@template` markup are registered as template parts.

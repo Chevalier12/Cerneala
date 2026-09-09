@@ -918,6 +918,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             NonNegativeThickness,
             LayoutPoint,
             DrawPoint,
+            DrawPointList,
+            PathGeometry,
             Color,
             Brush,
             ImageResourceId,
@@ -5390,6 +5392,17 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return MarkupValueKind.DrawPoint;
             }
 
+            if (typeName == "System.Collections.Generic.IReadOnlyList<Cerneala.Drawing.DrawPoint>")
+            {
+                return MarkupValueKind.DrawPointList;
+            }
+
+            if (valueType.Name == "PathGeometry" &&
+                valueType.ContainingNamespace.ToDisplayString() == "Cerneala.UI.Media")
+            {
+                return MarkupValueKind.PathGeometry;
+            }
+
             if (typeName == "Cerneala.Drawing.Color")
             {
                 return MarkupValueKind.Color;
@@ -5459,6 +5472,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 MarkupValueKind.NonNegativeThickness => NonNegativeThickness(elementName, propertyName, attribute),
                 MarkupValueKind.LayoutPoint => LayoutPoint(elementName, propertyName, attribute),
                 MarkupValueKind.DrawPoint => DrawPoint(elementName, propertyName, attribute),
+                MarkupValueKind.DrawPointList => DrawPointList(elementName, propertyName, attribute),
+                MarkupValueKind.PathGeometry => "global::Cerneala.UI.Media.PathGeometry.Parse(" + Literal(value) + ")",
                 MarkupValueKind.Color => Color(elementName, propertyName, attribute),
                 MarkupValueKind.Brush => Brush(elementName, propertyName, attribute),
                 MarkupValueKind.Enum => EnumValue(elementName, propertyName, attribute, spec.LiteralType),
@@ -5770,6 +5785,28 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 propertyName,
                 attribute,
                 "global::Cerneala.Drawing.DrawPoint");
+        }
+
+        private string? DrawPointList(string elementName, string propertyName, MarkupAttribute attribute)
+        {
+            string[] parts = attribute.Value.Split(new[] { ',', ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length % 2 != 0)
+            {
+                return Invalid(attribute, elementName, propertyName, attribute.Value);
+            }
+
+            List<string> points = new();
+            for (int index = 0; index < parts.Length; index += 2)
+            {
+                string? x = FloatPart(elementName, propertyName, attribute, parts[index]);
+                string? y = FloatPart(elementName, propertyName, attribute, parts[index + 1]);
+                if (x is null || y is null)
+                {
+                    return null;
+                }
+                points.Add("new global::Cerneala.Drawing.DrawPoint(" + x + ", " + y + ")");
+            }
+            return "new global::Cerneala.Drawing.DrawPoint[] { " + string.Join(", ", points) + " }";
         }
 
         private string? Point(

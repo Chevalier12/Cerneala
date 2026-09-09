@@ -240,11 +240,14 @@ Supported generated value categories include:
 | Scalar literals | `bool`, integer, `float`, `double`, `decimal`, enum, and finite positive values where the target property requires them |
 | Layout values | `Thickness` and `LayoutPoint`, including comma-separated forms |
 | Drawing values | Named or hexadecimal colors, byte color components, and brush resources/property elements |
+| Shape geometry | `DrawPoint` endpoints (`"0,0"`), `IReadOnlyList<DrawPoint>` literals (`"0,0 40,20 80,0"`), and `PathGeometry` SVG data |
 | Sprite animation | Immutable `SpriteAnimationSet` resources containing named `SpriteAnimationClip` and duration-based `SpriteAnimationFrame` declarations; references on `Sprite2D` and promoted `TileInstance2D` |
 | Generated content | Direct text for content-bearing controls and `ContentTemplate` declarations |
 | Reactive values | Typed `$DataContext`, `$element`, `$self`, `$root`, `$control.parts.$part`, and `$owner` paths, including `OneWay` and `TwoWay` modes where the endpoint is writable |
 
 Color values accept the named colors known by the generator, ignoring case. They also accept hexadecimal colors and comma-separated byte components in `R, G, B` or `R, G, B, A` form.
+
+`Line`, `Polyline`, `Polygon`, `Rectangle`, and `Path` are available as built-in elements. Point-list literals accept finite invariant-culture coordinate pairs separated by commas or whitespace; invalid counts and numbers report `CERNEALAUI004`. `Path.Data` literals emit a call to the shared `PathGeometry.Parse` runtime parser, so malformed SVG data throws when the generated factory creates the control. `Rectangle.RadiusX` and `RadiusY` use non-negative float literals. `FillRule` accepts the existing `DrawFillRule` enum names.
 
 Direct text content is assigned to the target's supported text or content property. Direct text on an element without such a property is reported as an unsupported `#text` property.
 

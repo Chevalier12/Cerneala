@@ -7,6 +7,7 @@ using Cerneala.UI.Invalidation;
 using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Media;
+using Cerneala.UI.Rendering;
 using CheckMarkPath = Cerneala.UI.Controls.Shapes.Path;
 
 namespace Cerneala.Tests.Controls;
@@ -107,14 +108,18 @@ public sealed class CheckBoxTests
         Assert.Equal(Visibility.Visible, checkMark.Visibility);
     }
 
-    [Fact]
-    public void CheckMarkStretchesUniformlyAndStaysCenteredInLargerTemplateBox()
+    [Theory]
+    [InlineData(0, 0, 0.5f)]
+    [InlineData(30, 40, 0f)]
+    [InlineData(30, 40, 1f)]
+    public void CheckMarkStretchesUniformlyAndStaysCenteredInLargerTemplateBox(float x, float y, float origin)
     {
         CheckMarkPath? checkMark = null;
         ComponentTemplate<CheckBox> template = new("CheckBox.LargeIndicator", context =>
         {
             checkMark = new CheckMarkPath
             {
+                RenderTransformOrigin = new LayoutPoint(origin, origin),
                 Data = new PathGeometry(
                 [
                     new DrawPoint(0, 4),
@@ -130,7 +135,7 @@ public sealed class CheckBoxTests
         CheckBox checkBox = new() { ComponentTemplate = template, IsChecked = true };
 
         checkBox.Measure(new MeasureContext(new LayoutSize(40, 40)));
-        checkBox.Arrange(new ArrangeContext(new LayoutRect(0, 0, 40, 40)));
+        checkBox.Arrange(new ArrangeContext(new LayoutRect(x, y, 40, 40)));
 
         CheckMarkPath part = Assert.IsType<CheckMarkPath>(checkMark);
         PathGeometry geometry = Assert.IsType<PathGeometry>(part.Data);
@@ -138,7 +143,16 @@ public sealed class CheckBoxTests
         DrawPoint geometryCenter = new(
             geometry.Bounds.X + (geometry.Bounds.Width / 2),
             geometry.Bounds.Y + (geometry.Bounds.Height / 2));
-        DrawPoint renderedCenter = matrix.Transform(geometryCenter);
+        RetainedRenderCache cache = new();
+        cache.GetElementCache(part).Ensure(part, new RenderCounters(), forceRebuild: true);
+        new DrawCommandListBuilder().Build(part, cache, new RenderCounters());
+        DrawCommandList commands = cache.RootCommands;
+        int strokeIndex = Assert.Single(Enumerable.Range(0, commands.Count)
+            .Where(index => commands[index].Kind == DrawCommandKind.DrawPath));
+        DrawCommandStateAnalysis state = new DrawCommandStateAnalyzer().Analyze(commands);
+        System.Numerics.Vector2 renderedCenter = System.Numerics.Vector2.Transform(
+            new System.Numerics.Vector2(geometryCenter.X, geometryCenter.Y),
+            state.Entries[strokeIndex].Transform);
         LayoutRect bounds = part.ArrangedBounds;
 
         Assert.True(matrix.M11 > 1);
