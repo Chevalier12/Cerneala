@@ -1,5 +1,6 @@
 using Cerneala.Drawing;
 using Cerneala.Drawing.Text;
+using SkiaSharp;
 
 namespace Cerneala.Tests.Drawing;
 
@@ -39,6 +40,146 @@ public sealed class TextPipelineTests
         shaper.Shape(textRun);
 
         Assert.Equal(entriesBefore, SkiaTextBlobCache.GetCachedEntryCount(font));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(4_096)]
+    public void TextBlobCacheAdmitsRecurringTextWithoutExceedingCapacity(int initialEntries)
+    {
+        const int capacity = 4_096;
+        const int requests = 256;
+        using SKTypeface typeface = CreateIsolatedTextTypeface();
+        SkiaFont font = new(typeface, typeface.FamilyName, 16);
+        Assert.Equal(0, SkiaTextBlobCache.GetCachedEntryCount(font));
+        SkiaTextShaper shaper = new();
+
+        for (int index = 0; index < initialEntries; index++)
+        {
+            TextShapeResult shape = shaper.Shape(new DrawTextRun(font, $"earlier-{index:D4}", 16));
+            using SkiaTextBlobCache.Lease lease = SkiaTextBlobCache.Rent(font, 16, shape);
+            Assert.InRange(SkiaTextBlobCache.GetCachedEntryCount(font), 0, capacity);
+        }
+
+        Assert.Equal(initialEntries, SkiaTextBlobCache.GetCachedEntryCount(font));
+        TextShapeResult recurring = shaper.Shape(new DrawTextRun(font, "later-recurring-label", 16));
+        Assert.True(recurring.GlyphCount > 0);
+        SKTextBlob? previous = null;
+        int reused = 0;
+        // A bounded admission window, not an immediate-admission or LRU requirement.
+        for (int index = 0; index < requests; index++)
+        {
+            using SkiaTextBlobCache.Lease lease = SkiaTextBlobCache.Rent(font, 16, recurring);
+            if (ReferenceEquals(previous, lease.Value))
+            {
+                reused++;
+            }
+
+            // Compare managed identity only; released native handles can be recycled.
+            previous = lease.Value;
+            Assert.InRange(SkiaTextBlobCache.GetCachedEntryCount(font), 0, capacity);
+        }
+
+        Assert.True(reused > 0,
+            $"Recurring text reused a cached blob on {reused}/{requests - 1} repeat requests " +
+            $"after {initialEntries} earlier entries; cached count: {SkiaTextBlobCache.GetCachedEntryCount(font)}.");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TextBlobCacheEvictionDisposesOnlyAfterTheLastLease(bool keepLeasesActive)
+    {
+        using SKTypeface typeface = CreateIsolatedTextTypeface();
+        SkiaFont font = new(typeface, typeface.FamilyName, 16);
+        SkiaTextShaper shaper = new();
+        TextShapeResult firstShape = shaper.Shape(new DrawTextRun(font, "first-label", 16));
+        using SkiaTextBlobCache.Lease first = SkiaTextBlobCache.Rent(font, 16, firstShape);
+        using SkiaTextBlobCache.Lease second = SkiaTextBlobCache.Rent(font, 16, firstShape);
+        SKTextBlob blob = first.Value;
+        Assert.Same(blob, second.Value);
+        SKRect bounds = blob.Bounds;
+        if (!keepLeasesActive)
+        {
+            first.Dispose();
+            second.Dispose();
+        }
+
+        for (int index = 0; index < 4_096; index++)
+        {
+            TextShapeResult shape = shaper.Shape(new DrawTextRun(font, $"replacement-{index:D4}", 16));
+            using SkiaTextBlobCache.Lease lease = SkiaTextBlobCache.Rent(font, 16, shape);
+            Assert.InRange(SkiaTextBlobCache.GetCachedEntryCount(font), 0, 4_096);
+        }
+
+        if (keepLeasesActive)
+        {
+            Assert.NotEqual(IntPtr.Zero, blob.Handle);
+            Assert.Equal(bounds, blob.Bounds);
+            first.Dispose();
+            first.Dispose(); // Returning one lease twice must not release the other lease.
+            Assert.NotEqual(IntPtr.Zero, blob.Handle);
+            Assert.Equal(bounds, second.Value.Bounds);
+            second.Dispose();
+        }
+
+        Assert.Equal(IntPtr.Zero, blob.Handle);
+        using SkiaTextBlobCache.Lease recreated = SkiaTextBlobCache.Rent(font, 16, firstShape);
+        Assert.NotSame(blob, recreated.Value);
+        Assert.Equal(bounds, recreated.Value.Bounds);
+    }
+
+    [Fact]
+    public void TextBlobCacheConcurrentAdmissionsRespectCapacityAndActiveLease()
+    {
+        using SKTypeface typeface = CreateIsolatedTextTypeface();
+        SkiaFont font = new(typeface, typeface.FamilyName, 16);
+        SkiaTextShaper shaper = new();
+        TextShapeResult firstShape = shaper.Shape(new DrawTextRun(font, "held-label", 16));
+        using SkiaTextBlobCache.Lease held = SkiaTextBlobCache.Rent(font, 16, firstShape);
+        SKTextBlob heldBlob = held.Value;
+        SKRect bounds = heldBlob.Bounds;
+        TextShapeResult[] shapes = Enumerable.Range(0, 8_192)
+            .Select(index => shaper.Shape(new DrawTextRun(font, $"parallel-{index:D4}", 16)))
+            .ToArray();
+
+        Parallel.ForEach(shapes, new ParallelOptions { MaxDegreeOfParallelism = 8 }, shape =>
+        {
+            using SkiaTextBlobCache.Lease lease = SkiaTextBlobCache.Rent(font, 16, shape);
+            Assert.NotEqual(IntPtr.Zero, lease.Value.Handle);
+            Assert.InRange(SkiaTextBlobCache.GetCachedEntryCount(font), 0, 4_096);
+        });
+
+        Assert.Equal(4_096, SkiaTextBlobCache.GetCachedEntryCount(font));
+        Assert.NotEqual(IntPtr.Zero, heldBlob.Handle);
+        Assert.Equal(bounds, heldBlob.Bounds);
+        held.Dispose();
+        Assert.Equal(IntPtr.Zero, heldBlob.Handle);
+    }
+
+    [Fact]
+    public void TextBlobCacheConcurrentRentalsOfTheSameTextShareOneBlob()
+    {
+        using SKTypeface typeface = CreateIsolatedTextTypeface();
+        SkiaFont font = new(typeface, typeface.FamilyName, 16);
+        TextShapeResult shape = new SkiaTextShaper().Shape(new DrawTextRun(font, "shared-label", 16));
+        System.Collections.Concurrent.ConcurrentBag<SkiaTextBlobCache.Lease> leases = [];
+        try
+        {
+            Parallel.For(0, 256, new ParallelOptions { MaxDegreeOfParallelism = 8 }, _ =>
+                leases.Add(SkiaTextBlobCache.Rent(font, 16, shape)));
+
+            SKTextBlob blob = leases.First().Value;
+            Assert.All(leases, lease => Assert.Same(blob, lease.Value));
+            Assert.Equal(1, SkiaTextBlobCache.GetCachedEntryCount(font));
+        }
+        finally
+        {
+            foreach (SkiaTextBlobCache.Lease lease in leases)
+            {
+                lease.Dispose();
+            }
+        }
     }
 
     [Fact]
@@ -432,6 +573,18 @@ public sealed class TextPipelineTests
         result.RgbaPixels[0] = 99;
 
         Assert.Equal(1, result.RgbaPixels[0]);
+    }
+
+    private static SKTypeface CreateIsolatedTextTypeface()
+    {
+        SkiaFont systemFont = Assert.IsType<SkiaFont>(new SystemFontSource().LoadFont("Arial", 16));
+        OpenTypeFontData fontData = OpenTypeFontData.Read(systemFont);
+        using SKData data = SKData.CreateCopy(fontData.Bytes);
+        SKTypeface typeface = SKTypeface.FromData(data, checked((int)fontData.FaceIndex));
+        Assert.NotNull(typeface);
+        // Separate font identity prevents saturation from contaminating shared caches.
+        Assert.Equal(0, SkiaTextBlobCache.GetCachedEntryCount(new SkiaFont(typeface, typeface.FamilyName, 16)));
+        return typeface;
     }
 
     private static int FirstInkX(RasterizedText text)

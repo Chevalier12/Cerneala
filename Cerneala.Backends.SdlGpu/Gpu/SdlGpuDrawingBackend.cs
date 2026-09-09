@@ -910,6 +910,11 @@ internal sealed partial class SdlGpuDrawingBackend :
                 blueKey,
                 textAtlasFrameToken,
                 out cachedEntries);
+        object? brushTextureKey = cachedSolid is not null ? null :
+            descriptor is TileDrawBrushDescriptor ? new TextCoverageKey(rasterKey) :
+            new SdlGpuTextBrushTextureKey(rasterKey, (object?)brush ?? descriptor);
+        SdlGpuTextureResource? cachedBrushTexture = brushTextureKey is null
+            ? null : resources.FindTexture(brushTextureKey);
         textRequestCollectionTime += Stopwatch.GetElapsedTime(requestCollectionStarted);
         if (atlasHit)
         {
@@ -925,6 +930,13 @@ internal sealed partial class SdlGpuDrawingBackend :
                     cachedSolid.Opacity * commandOpacity),
                 state,
                 batches);
+            return;
+        }
+
+        if (cachedBrushTexture is not null)
+        {
+            AddBrushTextTexture(cachedBrushTexture, brushTextureKey!, rasterKey,
+                baseline, brush, descriptor, commandOpacity, state, batches);
             return;
         }
 
@@ -1007,45 +1019,18 @@ internal sealed partial class SdlGpuDrawingBackend :
                 return;
             }
 
-            if (descriptor is TileDrawBrushDescriptor tile)
-            {
-                SdlGpuPaint paint = ResolveTileBrushPaint(
-                    brush!, tile, new DrawRect(0, 0, destination.Width, destination.Height),
-                    commandOpacity, rasterKey, layers);
-                AddQuad(batches, destination, new DrawRect(0, 0, 1, 1), paint.Tint,
-                    state.Transform, state.Opacity,
-                    CreateBatchKey(DrawPrimitiveTopology.TriangleList, paint.Texture,
-                        paint.Sampling, paint.AddressMode, state));
-                return;
-            }
-
-            object brushKey = new SdlGpuTextBrushTextureKey(
-                rasterKey,
-                (object?)brush ?? descriptor);
-            byte[] pixels = ColorizeTextLayers(
-                layers,
-                descriptor,
-                CoordinateScale);
+            byte[] pixels = descriptor is TileDrawBrushDescriptor
+                ? CreateTextCoveragePixels(layers)
+                : ColorizeTextLayers(layers, descriptor, CoordinateScale);
             SdlGpuTextureResource texture = resources.GetOrCreateTexture(
                 session,
-                brushKey,
+                brushTextureKey!,
                 first.Width,
                 first.Height,
-                pixels);
-            MarkBrushTextureUsed(brushKey);
-            AddQuad(
-                batches,
-                destination,
-                new DrawRect(0, 0, 1, 1),
-                ApplyOpacity(Color.White, commandOpacity),
-                state.Transform,
-                state.Opacity,
-                CreateBatchKey(
-                    DrawPrimitiveTopology.TriangleList,
-                    texture.Handle,
-                    DrawSamplingMode.Linear,
-                    DrawAddressMode.Clamp,
-                    state));
+                pixels,
+                first.OriginOffset);
+            AddBrushTextTexture(texture, brushTextureKey!, rasterKey,
+                baseline, brush, descriptor, commandOpacity, state, batches);
         }
         finally
         {
@@ -1054,6 +1039,40 @@ internal sealed partial class SdlGpuDrawingBackend :
                 layer.ReturnPixelBuffer();
             }
         }
+    }
+
+    private void AddBrushTextTexture(
+        SdlGpuTextureResource texture,
+        object textureKey,
+        SdlGpuTextRasterKey rasterKey,
+        DrawPoint baseline,
+        IDrawBrush? brush,
+        DrawBrushDescriptor descriptor,
+        float commandOpacity,
+        RenderState state,
+        Cerberus batches)
+    {
+        MarkBrushTextureUsed(textureKey);
+        DrawRect destination = CreateTextDestination(
+            baseline, texture.OriginOffset, texture.Width, texture.Height);
+        nint handle = texture.Handle;
+        Color tint = ApplyOpacity(Color.White, commandOpacity);
+        DrawSamplingMode sampling = DrawSamplingMode.Linear;
+        DrawAddressMode addressMode = DrawAddressMode.Clamp;
+        if (descriptor is TileDrawBrushDescriptor tile)
+        {
+            SdlGpuPaint paint = ResolveTileBrushPaint(brush!, tile,
+                new DrawRect(0, 0, destination.Width, destination.Height),
+                commandOpacity, rasterKey, texture);
+            handle = paint.Texture;
+            tint = paint.Tint;
+            sampling = paint.Sampling;
+            addressMode = paint.AddressMode;
+        }
+        AddQuad(batches, destination, new DrawRect(0, 0, 1, 1), tint,
+            state.Transform, state.Opacity,
+            CreateBatchKey(DrawPrimitiveTopology.TriangleList, handle,
+                sampling, addressMode, state));
     }
 
     private void FlushPendingTextAtlasUploads()

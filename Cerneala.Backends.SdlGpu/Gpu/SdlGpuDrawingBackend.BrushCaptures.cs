@@ -17,7 +17,7 @@ internal sealed partial class SdlGpuDrawingBackend
         DrawRect bounds,
         float commandOpacity,
         SdlGpuTextRasterKey? textKey = null,
-        RasterizedText[]? textLayers = null)
+        SdlGpuTextureResource? textCoverage = null)
     {
         object identity = descriptor is VisualDrawBrushDescriptor visual ? visual.VisualIdentity : brush;
         if (!activeBrushCaptures.Add(identity))
@@ -52,10 +52,10 @@ internal sealed partial class SdlGpuDrawingBackend
             try
             {
                 bool rendered = RenderRecordedSurfaceFrame(surface, Color.Transparent, batches,
-                    requireFullReplay: textLayers is not null);
-                if (rendered && textLayers is not null)
+                    requireFullReplay: textCoverage is not null);
+                if (rendered && textCoverage is not null)
                 {
-                    ApplyTextCoverage(surface.Target, textKey!.Value, textLayers);
+                    ApplyTextCoverage(surface.Target, textCoverage);
                 }
             }
             catch
@@ -209,7 +209,7 @@ internal sealed partial class SdlGpuDrawingBackend
         return new DrawRect(x, y, width, height);
     }
 
-    private void ApplyTextCoverage(SdlGpuRenderTarget target, SdlGpuTextRasterKey raster, RasterizedText[] layers)
+    private static byte[] CreateTextCoveragePixels(RasterizedText[] layers)
     {
         RasterizedText first = layers[0];
         byte[] pixels = new byte[first.PixelLength];
@@ -221,9 +221,11 @@ internal sealed partial class SdlGpuDrawingBackend
             byte coverage = Math.Max(red[offset], Math.Max(green[offset + 1], blue[offset + 2]));
             pixels[offset] = pixels[offset + 1] = pixels[offset + 2] = pixels[offset + 3] = coverage;
         }
-        object key = new TextCoverageKey(raster);
-        SdlGpuTextureResource texture = resources.GetOrCreateTexture(session, key, first.Width, first.Height, pixels);
-        MarkBrushTextureUsed(key);
+        return pixels;
+    }
+
+    private void ApplyTextCoverage(SdlGpuRenderTarget target, SdlGpuTextureResource texture)
+    {
         session.BeginRenderTarget(target, Color.Transparent, SdlGpuLoadOp.Load);
         batches.Begin(target);
         AddQuad(batches, new DrawRect(0, 0, target.PixelWidth, target.PixelHeight),

@@ -186,6 +186,12 @@ Generated from `.`.
 |   |   |   |   |-- benchmark-loaded-attempt.json
 |   |   |   |   |-- comparison.json
 |   |   |   |   +-- README.md
+|   |   |   |-- 2026-09-09-text-characterization/
+|   |   |   |   |-- blob-fix-summary.json
+|   |   |   |   |-- blob-fix.md
+|   |   |   |   |-- README.md
+|   |   |   |   |-- remaining-text-fixes.md
+|   |   |   |   +-- summary.json
 |   |   |   |-- 2026-07-13-queue-engine-2.md
 |   |   |   |-- 2026-07-20-prism-filter-catalog.md
 |   |   |   |-- 2026-07-20-prism-retained-cache-off-baseline.md
@@ -208,6 +214,7 @@ Generated from `.`.
 |   |   |-- DrawingStateBenchmarks.cs
 |   |   |-- DrawingStrokeBenchmarks.cs
 |   |   |-- DrawingTextLayoutBenchmarks.cs
+|   |   |-- Measure-TextCharacterization.ps1
 |   |   |-- PrismInstanceBenchmarks.cs
 |   |   |-- PrismRetainedCacheBenchmarkRunner.cs
 |   |   |-- PrismSdlGpuBenchmarkRunner.cs
@@ -216,6 +223,7 @@ Generated from `.`.
 |   |   |-- README.md
 |   |   |-- SceneDebugOverlayBenchmarks.cs
 |   |   |-- SpriteAnimationBenchmarks.cs
+|   |   |-- TextCharacterizationRunner.cs
 |   |   |-- TileMapBaselineBenchmarks.cs
 |   |   |-- TileMapStage4BackendProfileRunner.cs
 |   |   |-- TileMapStage4Benchmarks.cs

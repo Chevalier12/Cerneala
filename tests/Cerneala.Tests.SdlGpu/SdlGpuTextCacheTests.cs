@@ -5,6 +5,8 @@ using Cerneala.Drawing.Text;
 using Cerneala.Platforms.Sdl3;
 using Cerneala.Tests.Drawing.SdlGpu;
 using Cerneala.UI.Hosting;
+using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 using SkiaSharp;
 
 namespace Cerneala.Tests.SdlGpu;
@@ -12,6 +14,74 @@ namespace Cerneala.Tests.SdlGpu;
 [Collection(SdlNativeTestCollection.Name)]
 public sealed class SdlGpuTextCacheTests
 {
+    [SdlNativeTheory]
+    [InlineData(false, 1f)]
+    [InlineData(false, 1.25f)]
+    [InlineData(false, 1.5f)]
+    [InlineData(false, 2f)]
+    [InlineData(true, 1f)]
+    [InlineData(true, 1.25f)]
+    [InlineData(true, 1.5f)]
+    [InlineData(true, 2f)]
+    public void CachedBrushTextPreservesPixelsAndBaselineAcrossTranslationAndRetirement(bool imageBrush, float scale)
+    {
+        using SdlDrawingFixture fixture = new(320, 120, coordinateScale: scale);
+        using SdlGpuImage image = SdlDrawingFixture.SolidImage(new Color(100, 50, 25, 128));
+        IDrawBrush brush = imageBrush
+            ? new ImageBrush(image, opacity: 0.5f)
+            : new LinearGradientBrush(new DrawPoint(0, 0), new DrawPoint(80, 0),
+                [new GradientStop(0, Color.Red), new GradientStop(1, Color.Blue)], 0.5f);
+        IDrawFont font = new SystemFontSource().LoadFont("Arial", 24);
+        DrawCommandList first = Commands(new DrawPoint(12.125f / scale, 48.375f / scale));
+        Color[] cold = fixture.Render(first, Color.Transparent);
+        Assert.Contains(cold, pixel => pixel.A > 32);
+        Assert.Equal(1, fixture.Backend.LastFrameTiming.TextRequestCount);
+        Assert.Equal(cold, fixture.Render(first, Color.Transparent));
+        Assert.Equal(0, fixture.Backend.LastFrameTiming.TextRequestCount);
+
+        // Whole physical-pixel translation preserves the canonical phase, but
+        // must use the current baseline with the cached tight-raster origin.
+        DrawCommandList moved = Commands(new DrawPoint(20.125f / scale, 56.375f / scale));
+        Color[] translated = fixture.Render(moved, Color.Transparent);
+        Assert.Equal(0, fixture.Backend.LastFrameTiming.TextRequestCount);
+        Assert.False(cold.AsSpan().SequenceEqual(translated));
+        fixture.Render(new DrawCommandList());
+        fixture.Render(new DrawCommandList());
+        Assert.Equal(translated, fixture.Render(moved, Color.Transparent));
+        Assert.Equal(1, fixture.Backend.LastFrameTiming.TextRequestCount);
+
+        DrawCommandList Commands(DrawPoint baseline)
+        {
+            DrawCommandList commands = new();
+            commands.Add(DrawCommand.DrawText(new DrawTextRun(font, "jÁg text", 24), baseline, brush));
+            return commands;
+        }
+    }
+
+    [SdlNativeFact]
+    public void CachedTextCoverageDoesNotFreezeVisualBrushContent()
+    {
+        using SdlDrawingFixture fixture = new(260, 100);
+        Cerneala.UI.Controls.Shapes.Rectangle source = new() { Fill = new SolidColorBrush(Color.Red) };
+        source.Arrange(new ArrangeContext(new LayoutRect(0, 0, 16, 16)));
+        VisualBrush brush = new(source);
+        IDrawFont font = new SystemFontSource().LoadFont("Arial", 24);
+        DrawCommandList commands = new();
+        commands.Add(DrawCommand.DrawText(new DrawTextRun(font, "MMMM", 24), new DrawPoint(12, 40), brush));
+        Color[] red = fixture.Render(commands, Color.Transparent);
+        Assert.Contains(red, pixel => pixel.R > 128 && pixel.B == 0);
+        Assert.Equal(red, fixture.Render(commands, Color.Transparent));
+        Assert.Equal(0, fixture.Backend.LastFrameTiming.TextRequestCount);
+
+        source.Fill = new SolidColorBrush(Color.Blue);
+        Color[] blue = fixture.Render(commands, Color.Transparent);
+        Assert.Equal(0, fixture.Backend.LastFrameTiming.TextRequestCount);
+        Assert.Contains(blue, pixel => pixel.B > 128 && pixel.R == 0);
+        Assert.DoesNotContain(blue, pixel => pixel.R > 0);
+        Assert.Equal(blue, fixture.Render(commands, Color.Transparent));
+        Assert.Equal(0, fixture.Backend.LastFrameTiming.TextRequestCount);
+    }
+
     [SdlNativeTheory]
     [InlineData(1f)]
     [InlineData(1.25f)]

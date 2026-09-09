@@ -8,6 +8,9 @@ using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.SdlGpu;
 
+// The allocation probe briefly reserves a process-wide no-GC region. Share
+// SDL's serialized collection instead of perturbing concurrently running tests.
+[Collection(SdlNativeTestCollection.Name)]
 public sealed class SdlGpuTextCacheContractTests
 {
     // Exercise the renderer's existing functions, not a recreated diagnostic facade.
@@ -97,6 +100,51 @@ public sealed class SdlGpuTextCacheContractTests
         Assert.Equal(0, fixture.Backend.LastFrameTiming.TextRequestCount);
     }
 
+    [Theory]
+    [InlineData("solid")]
+    [InlineData("gradient")]
+    [InlineData("image")]
+    public void UnchangedCachedTextDoesNotRepeatCpuRasterization(string brushKind)
+    {
+        using Fixture fixture = new();
+        using SdlGpuImage image = new(1, 1, [100, 50, 25, 255]);
+        IDrawBrush brush = brushKind switch
+        {
+            "solid" => new SolidColorBrush(Color.White),
+            "gradient" => new LinearGradientBrush(new DrawPoint(0, 0), new DrawPoint(80, 0),
+                [new GradientStop(0, Color.Red), new GradientStop(1, Color.Blue)]),
+            "image" => new ImageBrush(image),
+            _ => throw new ArgumentOutOfRangeException(nameof(brushKind))
+        };
+        DrawCommandList commands = new();
+        commands.Add(DrawCommand.DrawText(
+            new DrawTextRun(new SystemFontSource().LoadFont("Arial", 16), "cached text", 16),
+            new DrawPoint(4.125f, 28.375f), brush));
+
+        // Warm the exact command, font, brush, scale and phase. No mutations,
+        // eviction pressure or view switches occur during the measured replay.
+        for (int frame = 0; frame < 3; frame++)
+        {
+            fixture.Render(commands);
+        }
+        int createdTextures = fixture.Api.TextureCreationCount;
+        long rasterRequests = 0;
+        long rasterizedPixels = 0;
+        for (int frame = 0; frame < 16; frame++)
+        {
+            fixture.Render(commands);
+            rasterRequests += fixture.Backend.LastFrameTiming.TextRequestCount;
+            rasterizedPixels += fixture.Backend.LastFrameTiming.RasterizedPixelCount;
+        }
+
+        // Texture reuse alone is insufficient: the existing canonical-phase
+        // test checks this but does not detect repeated CPU coverage generation.
+        Assert.Equal(createdTextures, fixture.Api.TextureCreationCount);
+        Assert.True(rasterRequests == 0 && rasterizedPixels == 0,
+            $"Unchanged {brushKind} text reused its textures but performed {rasterRequests} " +
+            $"rasterizations ({rasterizedPixels} layer pixels) across 16 warm frames; expected zero.");
+    }
+
     [Fact]
     public void CacheRetainsLargeVariantsAcrossABASwitchesWithinItsPageBudget()
     {
@@ -184,15 +232,44 @@ public sealed class SdlGpuTextCacheContractTests
         }
         int[] sequence = variantCount == 2 ? [0, 1, 0] : Enumerable.Range(0, variantCount).ToArray();
         int misses = 0;
-        long before = GC.GetAllocatedBytesForCurrentThread();
-        for (int iteration = 0; iteration < 1_000; iteration++)
+        long allocated = MeasureAllocatedBytes(() =>
         {
-            if (!fixture.TryGet(variants[sequence[iteration % sequence.Length]], token, out _)) { misses++; }
-        }
-        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+            for (int iteration = 0; iteration < 1_000; iteration++)
+            {
+                if (!fixture.TryGet(variants[sequence[iteration % sequence.Length]], token, out _)) { misses++; }
+            }
+        });
         Assert.Equal(0, misses);
         Assert.InRange(allocated, 0, 1_024);
         fixture.Resources.EndTextAtlasFrame(token);
+    }
+
+    [Fact]
+    public void AllocationMeasurementStillDetectsRealAllocations()
+    {
+        Assert.Equal(0, MeasureAllocatedBytes(static () => { }));
+        long allocated = MeasureAllocatedBytes(static () => GC.KeepAlive(new byte[2_048]));
+        Assert.InRange(allocated, 2_048, 4_096);
+    }
+
+    private static long MeasureAllocatedBytes(Action action)
+    {
+        // .NET 8 background GC can void a thread's unused allocation context
+        // without subtracting it from this counter. A no-allocation spin loop
+        // reproduced the same false positives as the atlas lookup test.
+        // Isolate only the measured interval; keep its real allocation limit
+        // and fail if isolation cannot be established or the region is broken.
+        Assert.True(GC.TryStartNoGCRegion(1_048_576), "Could not isolate the allocation measurement from GC.");
+        try
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            action();
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+        finally
+        {
+            GC.EndNoGCRegion();
+        }
     }
 
     [Fact]

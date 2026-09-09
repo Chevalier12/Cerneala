@@ -155,12 +155,19 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         return sampler;
     }
 
+    public SdlGpuTextureResource? FindTexture(object key)
+    {
+        ThrowIfDisposed();
+        return textures.GetValueOrDefault(key);
+    }
+
     public SdlGpuTextureResource GetOrCreateTexture(
         SdlGpuWindowGraphicsSession session,
         object key,
         int width,
         int height,
-        ReadOnlySpan<byte> rgbaPixels)
+        ReadOnlySpan<byte> rgbaPixels,
+        DrawPoint originOffset = default)
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(session);
@@ -185,7 +192,8 @@ internal sealed class SdlGpuDrawingResources : IDisposable
             width,
             height,
             SdlGpuTextureFormat.R8G8B8A8Unorm,
-            rgbaPixels);
+            rgbaPixels,
+            originOffset);
     }
 
     public SdlGpuTextureResource GetOrCreateHalfVector4Texture(
@@ -237,7 +245,8 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         int width,
         int height,
         SdlGpuTextureFormat format,
-        ReadOnlySpan<byte> pixels)
+        ReadOnlySpan<byte> pixels,
+        DrawPoint originOffset = default)
     {
         if (textures.TryGetValue(key, out SdlGpuTextureResource? cached))
         {
@@ -256,7 +265,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         try
         {
             UploadTexture(session, texture, width, height, pixels);
-            SdlGpuTextureResource created = new(texture, width, height);
+            SdlGpuTextureResource created = new(texture, width, height, originOffset);
             textures.Add(key, created);
             return created;
         }
@@ -968,7 +977,8 @@ internal readonly record struct SdlGpuVertex(
     System.Numerics.Vector2 TextureCoordinate,
     System.Numerics.Vector4 Color);
 
-internal sealed record SdlGpuTextureResource(nint Handle, int Width, int Height);
+internal sealed record SdlGpuTextureResource(
+    nint Handle, int Width, int Height, DrawPoint OriginOffset = default);
 
 internal sealed class SdlGpuTextAtlasEntry(
     SdlGpuTextureResource texture,

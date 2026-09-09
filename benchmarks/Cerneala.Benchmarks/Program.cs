@@ -2,6 +2,12 @@ using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
 using Cerneala.Benchmarks;
 
+if (args is ["--text-characterization", string textCase, string textReportPath])
+{
+    TextCharacterizationRunner.Run(textCase, textReportPath);
+    return;
+}
+
 if (args is ["--prism-retained-cache"])
 {
     PrismRetainedCacheBenchmarkRunner.Run();

@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using SkiaSharp;
 
@@ -36,9 +35,7 @@ internal static class SkiaTextBlobCache
     {
         TypefaceCache cache = Caches.GetValue(font.Typeface, _ => new TypefaceCache());
         CacheKey key = new(text, size);
-        return cache.Rent(
-            key,
-            () => Create(font, size, glyphIds, glyphPositions));
+        return cache.Rent(key, font, glyphIds, glyphPositions);
     }
 
     private static SKTextBlob Create(
@@ -64,13 +61,37 @@ internal static class SkiaTextBlobCache
         return points;
     }
 
-    internal readonly struct Lease(SKTextBlob value, bool ownsValue) : IDisposable
+    internal sealed class Lease : IDisposable
     {
-        public SKTextBlob Value { get; } = value;
+        private CacheEntry? entry;
+
+        internal Lease(CacheEntry entry)
+        {
+            this.entry = entry;
+            entry.AddReference();
+        }
+
+        public SKTextBlob Value => entry?.Value ?? throw new ObjectDisposedException(nameof(Lease));
 
         public void Dispose()
         {
-            if (ownsValue)
+            // Copies of a lease reference still return the rental only once.
+            Interlocked.Exchange(ref entry, null)?.Release();
+        }
+    }
+
+    internal sealed class CacheEntry(SKTextBlob value)
+    {
+        // One reference belongs to the cache; each active lease adds another.
+        private int references = 1;
+
+        public SKTextBlob Value { get; } = value;
+
+        public void AddReference() => Interlocked.Increment(ref references);
+
+        public void Release()
+        {
+            if (Interlocked.Decrement(ref references) == 0)
             {
                 Value.Dispose();
             }
@@ -79,27 +100,46 @@ internal static class SkiaTextBlobCache
 
     private sealed class TypefaceCache
     {
-        private readonly ConcurrentDictionary<CacheKey, Lazy<SKTextBlob>> entries = new();
+        private readonly object gate = new();
+        private readonly Dictionary<CacheKey, CacheEntry> entries = new();
+        private readonly Queue<CacheKey> insertionOrder = new();
 
-        public int Count => entries.Count;
-
-        public Lease Rent(CacheKey key, Func<SKTextBlob> create)
+        public int Count
         {
-            if (entries.TryGetValue(key, out Lazy<SKTextBlob>? existing))
+            get
             {
-                return new Lease(existing.Value, ownsValue: false);
+                lock (gate)
+                {
+                    return entries.Count;
+                }
             }
+        }
 
-            if (entries.Count >= MaximumEntriesPerTypeface)
+        public Lease Rent(CacheKey key, SkiaFont font, ushort[] glyphIds, DrawPoint[] glyphPositions)
+        {
+            // Admission, eviction and acquiring a lease are one atomic operation.
+            lock (gate)
             {
-                return new Lease(create(), ownsValue: true);
-            }
+                if (entries.TryGetValue(key, out CacheEntry? existing))
+                {
+                    return new Lease(existing);
+                }
 
-            Lazy<SKTextBlob> candidate = new(
-                create,
-                LazyThreadSafetyMode.ExecutionAndPublication);
-            Lazy<SKTextBlob> cached = entries.GetOrAdd(key, candidate);
-            return new Lease(cached.Value, ownsValue: false);
+                CacheEntry candidate = new(Create(font, key.Size, glyphIds, glyphPositions));
+                if (entries.Count == MaximumEntriesPerTypeface)
+                {
+                    // Match the shaping cache's FIFO policy, but release native blobs
+                    // only once the evicted entry has no outstanding leases.
+                    CacheKey oldestKey = insertionOrder.Dequeue();
+                    CacheEntry oldest = entries[oldestKey];
+                    entries.Remove(oldestKey);
+                    oldest.Release();
+                }
+
+                entries.Add(key, candidate);
+                insertionOrder.Enqueue(key);
+                return new Lease(candidate);
+            }
         }
     }
 
