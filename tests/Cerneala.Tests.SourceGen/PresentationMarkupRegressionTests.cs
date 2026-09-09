@@ -10,6 +10,22 @@ namespace Cerneala.Tests.SourceGen;
 public sealed class PresentationMarkupRegressionTests
 {
     [Fact]
+    public void OpeningServoIsOptInAndAllowsTheLoadingSequenceToFinish()
+    {
+        string code = File.ReadAllText(Path.Combine(
+            FindRepositoryRoot(), "CernealaPresentation", "OpeningView.crn.cs"));
+        int guard = code.IndexOf(
+            "if (!automationRequested && string.IsNullOrWhiteSpace(capturePath))",
+            StringComparison.Ordinal);
+        int createServo = code.IndexOf("ServoApi servo = new(", StringComparison.Ordinal);
+
+        Assert.True(guard >= 0 && guard < createServo,
+            "Normal startup must return before creating Servo when neither automation nor a loading capture was requested.");
+        Assert.Contains("return;", code[guard..createServo], StringComparison.Ordinal);
+        Assert.Contains("DefaultTimeout = TimeSpan.FromSeconds(30)", code, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void NavigationTemplateAnimatesItsHoverLineAndOverlayText()
     {
         string repositoryRoot = FindRepositoryRoot();

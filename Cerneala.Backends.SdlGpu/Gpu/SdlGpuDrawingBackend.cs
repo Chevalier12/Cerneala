@@ -60,6 +60,7 @@ internal sealed partial class SdlGpuDrawingBackend :
     private readonly SkiaTextRasterizer textRasterizer = new();
     private readonly SdlGpuPrismExecutor prismExecutor;
     private readonly Cerberus batches;
+    private readonly SdlGpuGeometryCache geometry = new();
     private readonly HashSet<SdlGpuImage> subscribedImages =
         new(ReferenceEqualityComparer.Instance);
     private readonly HashSet<object> retainedBrushTextureKeys = [];
@@ -173,6 +174,7 @@ internal sealed partial class SdlGpuDrawingBackend :
     internal void BeginFrame()
     {
         ObjectDisposedException.ThrowIf(disposed, this);
+        geometry.BeginFrame();
         textAtlasFrameToken = resources.BeginTextAtlasFrame();
         activeBrushTextureKeys.Clear();
         analyzedPrismOwners.Clear();
@@ -235,6 +237,7 @@ internal sealed partial class SdlGpuDrawingBackend :
     internal void EndFrame()
     {
         frameActive = false;
+        geometry.EndFrame();
         foreach (PrismCacheOwnerToken owner in pendingPrismOwnerInvalidations)
         {
             if (!analyzedPrismOwners.Contains(owner))
@@ -281,6 +284,7 @@ internal sealed partial class SdlGpuDrawingBackend :
             return;
         }
         disposed = true;
+        geometry.Clear();
         prismExecutor.Dispose();
         resources.EndTextAtlasFrame(textAtlasFrameToken);
         textAtlasFrameToken = 0;
@@ -349,10 +353,8 @@ internal sealed partial class SdlGpuDrawingBackend :
                     break;
                 case DrawCommandKind.FillRoundedRectangle:
                 case DrawCommandKind.FillPath:
-                    AddPathFill(command, state, batches);
-                    break;
                 case DrawCommandKind.FillEllipse:
-                    AddEllipseFill(command, state, batches);
+                    AddPathFill(command, state, batches);
                     break;
                 case DrawCommandKind.DrawRectangle:
                 case DrawCommandKind.DrawRoundedRectangle:
@@ -519,35 +521,17 @@ internal sealed partial class SdlGpuDrawingBackend :
     private void AddPathFill(
         DrawCommand command,
         RenderState state,
-        Cerberus batches,
-        DrawRect? destinationOverride = null)
+        Cerberus batches)
     {
-        DrawPath path = command.Path ??
-            throw new InvalidOperationException($"{command.Kind} requires path geometry.");
-        DrawRect destination = destinationOverride ?? command.Rect;
-        DrawTriangleMesh mesh = DrawPathMeshBuilder.Build(
-            path,
-            command.SourceRect,
-            destination.Width * CoordinateScale,
-            destination.Height * CoordinateScale,
-            destination.X * CoordinateScale,
-            destination.Y * CoordinateScale,
-            command.FillRule);
+        SdlGpuGeometry mesh = geometry.GetFill(command, CoordinateScale);
         if (mesh.IsEmpty)
         {
             return;
         }
 
-        DrawPoint[] logical = new DrawPoint[mesh.Vertices.Length];
-        for (int i = 0; i < logical.Length; i++)
-        {
-            logical[i] = new DrawPoint(
-                mesh.Vertices[i].X / CoordinateScale,
-                mesh.Vertices[i].Y / CoordinateScale);
-        }
         AddPaintedGeometry(
-            logical,
-            logical,
+            mesh.Positions,
+            mesh.BrushPoints,
             mesh.Indices,
             DrawPrimitiveTopology.TriangleList,
             command.Rect,
@@ -558,51 +542,23 @@ internal sealed partial class SdlGpuDrawingBackend :
             batches);
     }
 
-    private void AddEllipseFill(
-        DrawCommand command,
-        RenderState state,
-        Cerberus batches)
-    {
-        AddPathFill(
-            command,
-            state,
-            batches,
-            DrawEllipseCoverage.AdjustBounds(
-                command.Rect,
-                CoordinateScale));
-    }
-
     private void AddStroke(
         DrawCommand command,
         RenderState state,
         Cerberus batches)
     {
-        DrawStrokeRenderMesh stroke = DrawStrokeMeshBuilder.Build(
-            command,
-            command.Pen?.Thickness ?? command.Thickness,
-            command.Pen?.Style ?? DrawStrokeStyle.Default,
-            CoordinateScale);
-        if (stroke.Mesh.IsEmpty)
+        SdlGpuGeometry stroke = geometry.GetStroke(command, CoordinateScale);
+        if (stroke.IsEmpty)
         {
             return;
         }
 
-        DrawPoint[] logical = new DrawPoint[stroke.Mesh.Vertices.Length];
-        for (int i = 0; i < logical.Length; i++)
-        {
-            logical[i] = new DrawPoint(
-                (stroke.Mesh.Vertices[i].X + stroke.Left) / CoordinateScale,
-                (stroke.Mesh.Vertices[i].Y + stroke.Top) / CoordinateScale);
-        }
-        DrawRect bounds = command.Kind == DrawCommandKind.DrawLine
-            ? BoundsOf(stroke.BrushPoints)
-            : command.Rect;
         AddPaintedGeometry(
-            logical,
+            stroke.Positions,
             stroke.BrushPoints,
-            stroke.Mesh.Indices,
+            stroke.Indices,
             DrawPrimitiveTopology.TriangleList,
-            bounds,
+            stroke.BrushBounds,
             command.Pen?.Brush ?? command.Brush,
             command.BrushOpacity,
             command.Color,
@@ -786,13 +742,17 @@ internal sealed partial class SdlGpuDrawingBackend :
                 paint.Sampling,
                 paint.AddressMode,
                 state));
+        Matrix3x2 transform = state.Transform;
+        float coordinateScale = CurrentScale.Value;
+        Vector4 vertexColor = PremultiplyVertexColor(paint.Tint, state.Opacity);
         for (int i = 0; i < vertices.Length; i++)
         {
-            vertices[i] = CreatePaintedVertex(
+            vertices[i] = CreateVertex(
                 positions[i],
-                brushPoints[Math.Min(i, brushPoints.Length - 1)],
-                paint,
-                state);
+                paint.MapTextureCoordinate(brushPoints[Math.Min(i, brushPoints.Length - 1)]),
+                vertexColor,
+                transform,
+                coordinateScale);
         }
     }
 
@@ -1226,24 +1186,8 @@ internal sealed partial class SdlGpuDrawingBackend :
         RenderState state,
         Cerberus batches)
     {
-        DrawPath path = command.Path ??
-            throw new InvalidOperationException("PushPathClip requires a path.");
-        DrawTriangleMesh mesh = DrawPathMeshBuilder.Build(
-            path,
-            command.SourceRect,
-            command.Rect.Width * CoordinateScale,
-            command.Rect.Height * CoordinateScale,
-            command.Rect.X * CoordinateScale,
-            command.Rect.Y * CoordinateScale,
-            command.FillRule);
-        DrawPoint[] logical = new DrawPoint[mesh.Vertices.Length];
-        for (int i = 0; i < logical.Length; i++)
-        {
-            logical[i] = new DrawPoint(
-                mesh.Vertices[i].X / CoordinateScale,
-                mesh.Vertices[i].Y / CoordinateScale);
-        }
-        PushStencilClip(logical, mesh.Indices, state, batches);
+        SdlGpuGeometry mesh = geometry.GetFill(command, CoordinateScale);
+        PushStencilClip(mesh.Positions, mesh.Indices, state, batches);
     }
 
     private void PushStencilClip(
@@ -2005,21 +1949,34 @@ internal sealed partial class SdlGpuDrawingBackend :
         DrawPoint textureCoordinate,
         Color color,
         Matrix3x2 transform,
-        float opacity)
+        float opacity) =>
+        CreateVertex(position, textureCoordinate, PremultiplyVertexColor(color, opacity), transform, CurrentScale.Value);
+
+    private static SdlGpuVertex CreateVertex(
+        DrawPoint position,
+        DrawPoint textureCoordinate,
+        Vector4 premultipliedColor,
+        Matrix3x2 transform,
+        float coordinateScale)
     {
         Vector2 transformed = Vector2.Transform(
             new Vector2(position.X, position.Y),
             transform);
+        return new SdlGpuVertex(
+            transformed * coordinateScale,
+            new Vector2(textureCoordinate.X, textureCoordinate.Y),
+            premultipliedColor);
+    }
+
+    private static Vector4 PremultiplyVertexColor(Color color, float opacity)
+    {
         Color effective = ApplyOpacity(color, opacity);
         float alpha = effective.A / 255f;
-        return new SdlGpuVertex(
-            transformed * CurrentScale.Value,
-            new Vector2(textureCoordinate.X, textureCoordinate.Y),
-            new Vector4(
-                (effective.R / 255f) * alpha,
-                (effective.G / 255f) * alpha,
-                (effective.B / 255f) * alpha,
-                alpha));
+        return new Vector4(
+            (effective.R / 255f) * alpha,
+            (effective.G / 255f) * alpha,
+            (effective.B / 255f) * alpha,
+            alpha);
     }
 
     [ThreadStatic]
@@ -2037,26 +1994,6 @@ internal sealed partial class SdlGpuDrawingBackend :
         new DrawPoint(rect.Right, rect.Bottom),
         new DrawPoint(rect.X, rect.Bottom)
     ];
-
-    private static DrawRect BoundsOf(IReadOnlyList<DrawPoint> points)
-    {
-        if (points.Count == 0)
-        {
-            return default;
-        }
-        float left = points[0].X;
-        float top = points[0].Y;
-        float right = left;
-        float bottom = top;
-        for (int i = 1; i < points.Count; i++)
-        {
-            left = MathF.Min(left, points[i].X);
-            top = MathF.Min(top, points[i].Y);
-            right = MathF.Max(right, points[i].X);
-            bottom = MathF.Max(bottom, points[i].Y);
-        }
-        return new DrawRect(left, top, right - left, bottom - top);
-    }
 
     private static DrawPoint CanonicalPhase(DrawPoint point, float scale)
         => new(

@@ -412,6 +412,7 @@ Generated from `.`.
 |   |   |-- SdlGpuDrawingBackend.SurfaceDamage.cs
 |   |   |-- SdlGpuDrawingFrameCounters.cs
 |   |   |-- SdlGpuDrawingResources.cs
+|   |   |-- SdlGpuGeometryCache.cs
 |   |   |-- SdlGpuGeometryUploadArena.cs
 |   |   |-- SdlGpuImageLoader.cs
 |   |   |-- SdlGpuPresentationOptions.cs
@@ -3727,6 +3728,7 @@ Generated from `.`.
 |   |   |-- SdlGpuDrawingBackendTests.cs
 |   |   |-- SdlGpuDrawingFrameCountersTests.cs
 |   |   |-- SdlGpuGeometryAllocationTests.cs
+|   |   |-- SdlGpuGeometryCacheTests.cs
 |   |   |-- SdlGpuPrismBuiltinTextureAllocationTests.cs
 |   |   |-- SdlGpuPrismExecutorTests.cs
 |   |   |-- SdlGpuPrismUniformAllocationTests.cs

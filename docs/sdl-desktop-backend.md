@@ -47,6 +47,8 @@ Cerberus is an implementation detail of `Cerneala.Backends.SdlGpu`, not a public
 
 The backend flushes through one coordination path. Pending resource uploads, including the text atlas, are completed before Cerberus uploads and emits queued geometry. Flush barriers cover copy passes, Prism execution, layer and `RenderSurface2D` target changes, child-target composition, clip/stencil transitions, and the end of a command range or frame. Cerberus preserves painter order and merges only immediately adjacent compatible triangle lists; it never sorts commands by texture or depth.
 
+The device-level text atlas retains raster variants across frames within eight 1024 x 1024 RGBA pages. It grows lazily to that limit before reusing the least-recently-used inactive page; pages referenced by an unfinished frame cannot be evicted. Closing a frame releases its page references without compacting, copying, or relocating cached pixels. The maximum page payload is 32 MiB of CPU pixels plus 32 MiB of GPU pixels, excluding cache metadata and driver overhead. Pages are reused under budget pressure and released with their device-level resource owner. This policy trades bounded retention for fewer repeated rasterizations; it does not change text coverage, subpixel phases, or the fallback for requests that cannot fit in the atlas.
+
 SDL_GPU state caching is local to one flush and its resumed render pass. The first draw binds complete state, and subsequent draws omit only documented-safe redundant binds. A copy pass, target change, geometry upload, or other render-pass restart discards that cache so the resumed pass binds complete state again.
 
 ## Runtime identifiers and native assets

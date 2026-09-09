@@ -30,9 +30,20 @@ internal partial class OpeningView : UserControl
 
     private async Task RunLoadingServoAsync()
     {
-        ServoApi servo = new(FindHostWindow());
+        bool automationRequested = IsPresentationServoRequested();
+        string? capturePath = Environment.GetEnvironmentVariable("CERNEALA_PRESENTATION_LOADING_CAPTURE");
+        if (!automationRequested && string.IsNullOrWhiteSpace(capturePath))
+        {
+            return;
+        }
+
+        // The loading sequence itself takes more than Servo's default five seconds.
+        ServoApi servo = new(FindHostWindow(), new ServoOptions
+        {
+            DefaultTimeout = TimeSpan.FromSeconds(30)
+        });
         ServoTarget continueButton = ServoTarget.ById("presentation-continue");
-        if (IsPresentationServoRequested())
+        if (automationRequested)
         {
             ContinueButton.IsEnabled = true;
             await servo.ClickAsync(continueButton);

@@ -3,13 +3,58 @@ using Cerneala.Drawing;
 using Cerneala.Drawing.Prism.Graph;
 using Cerneala.Drawing.Text;
 using Cerneala.Platforms.Sdl3;
+using Cerneala.Tests.Drawing.SdlGpu;
 using Cerneala.UI.Hosting;
 using SkiaSharp;
 
 namespace Cerneala.Tests.SdlGpu;
 
+[Collection(SdlNativeTestCollection.Name)]
 public sealed class SdlGpuTextCacheTests
 {
+    [SdlNativeTheory]
+    [InlineData(1f)]
+    [InlineData(1.25f)]
+    [InlineData(1.5f)]
+    [InlineData(2f)]
+    public void RetentionAndBudgetEvictionPreserveNativeTextPixels(float scale)
+    {
+        using SdlDrawingFixture fixture = new(1120, 760, coordinateScale: scale);
+        IDrawFont font = new SystemFontSource().LoadFont("Arial", 96);
+        DrawCommandList first = Commands("MM");
+        DrawCommandList second = Commands("HH");
+        Color[] expectedFirst = fixture.Render(first);
+        Assert.Equal(3, fixture.Session.DrawingResources.TextAtlasEntryCount);
+        Color[] expectedSecond = fixture.Render(second);
+        Assert.Equal(6, fixture.Session.DrawingResources.TextAtlasEntryCount);
+        Assert.Contains(expectedFirst, pixel => pixel.R > 128);
+        Assert.Contains(expectedSecond, pixel => pixel.G > 128);
+
+        Color[] retainedFirst = fixture.Render(first);
+        Assert.Equal(0, fixture.Backend.LastFrameTiming.TextRequestCount);
+        Assert.Equal(expectedFirst, retainedFirst);
+        Assert.Equal(expectedSecond, fixture.Render(second));
+        Assert.Equal(0, fixture.Backend.LastFrameTiming.TextRequestCount);
+
+        for (int frame = 0; frame < 240; frame++)
+        {
+            Render(fixture.Session, Commands($"{frame:D2}"));
+            Assert.InRange(fixture.Session.DrawingResources.TextAtlasPageCount, 1, 8);
+        }
+        Assert.Equal(8, fixture.Session.DrawingResources.TextAtlasPageCount);
+        Assert.Equal(expectedFirst, fixture.Render(first));
+        Assert.True(fixture.Backend.LastFrameTiming.TextRequestCount > 0);
+        Assert.Equal(expectedSecond, fixture.Render(second));
+
+        DrawCommandList Commands(string text)
+        {
+            DrawCommandList commands = new();
+            commands.Add(DrawCommand.DrawText(
+                new DrawTextRun(font, text, 96), new DrawPoint(4.125f, 330.375f), Color.White));
+            return commands;
+        }
+    }
+
     [Fact]
     public void EquivalentSkiaFontWrappersReuseTheRasterizedTextEntry()
     {

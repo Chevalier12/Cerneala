@@ -98,6 +98,65 @@ public sealed class SdlGpuTextCacheContractTests
     }
 
     [Fact]
+    public void CacheRetainsLargeVariantsAcrossABASwitchesWithinItsPageBudget()
+    {
+        using Fixture fixture = new();
+        KeySet first = new("large A"), second = new("large B");
+        long firstFrame = fixture.Resources.BeginTextAtlasFrame();
+        Assert.NotNull(fixture.Add(first, firstFrame, 400));
+        fixture.Resources.EndTextAtlasFrame(firstFrame);
+
+        long secondFrame = fixture.Resources.BeginTextAtlasFrame();
+        Assert.NotNull(fixture.Add(second, secondFrame, 400));
+        fixture.Resources.EndTextAtlasFrame(secondFrame);
+
+        long thirdFrame = fixture.Resources.BeginTextAtlasFrame();
+        Assert.True(fixture.TryGet(first, thirdFrame, out _),
+            "Closing a frame must not discard a fitting cached variant just because it was not used in that frame.");
+        Assert.True(fixture.TryGet(second, thirdFrame, out _));
+        Assert.InRange(fixture.Resources.TextAtlasPageCount, 1, 2);
+        fixture.Resources.EndTextAtlasFrame(thirdFrame);
+    }
+
+    [Fact]
+    public void AtlasUsesAvailablePageBudgetBeforeEvictingInactiveVariants()
+    {
+        using Fixture fixture = new();
+        KeySet first = new("first"), second = new("second");
+        long firstFrame = fixture.Resources.BeginTextAtlasFrame();
+        Assert.NotNull(fixture.Add(first, firstFrame, 600));
+        fixture.Resources.EndTextAtlasFrame(firstFrame);
+
+        long secondFrame = fixture.Resources.BeginTextAtlasFrame();
+        Assert.NotNull(fixture.Add(second, secondFrame, 600));
+        Assert.Equal(6, fixture.Resources.TextAtlasPageCount);
+        Assert.True(fixture.TryGet(first, secondFrame, out _),
+            "Inactive variants must not be evicted while the eight-page budget still has room.");
+        fixture.Resources.EndTextAtlasFrame(secondFrame);
+    }
+
+    [Fact]
+    public void CompletingAnAtlasFrameDoesNotAllocatePixelSnapshots()
+    {
+        using Fixture fixture = new();
+        KeySet first = new("first"), second = new("second");
+        long firstFrame = fixture.Resources.BeginTextAtlasFrame();
+        Assert.NotNull(fixture.Add(first, firstFrame, 400));
+        fixture.Resources.EndTextAtlasFrame(firstFrame);
+
+        long secondFrame = fixture.Resources.BeginTextAtlasFrame();
+        Assert.NotNull(fixture.Add(second, secondFrame, 400));
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        fixture.Resources.EndTextAtlasFrame(secondFrame);
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        Assert.InRange(allocated, 0, 4_096);
+        long thirdFrame = fixture.Resources.BeginTextAtlasFrame();
+        Assert.True(fixture.TryGet(second, thirdFrame, out _));
+        fixture.Resources.EndTextAtlasFrame(thirdFrame);
+    }
+
+    [Fact]
     public void TextRasterKeySeparatesGeometryAndExcludesForegroundColor()
     {
         object firstFont = new(), secondFont = new();

@@ -657,7 +657,7 @@ public sealed class SdlGpuDrawingBackendTests
     }
 
     [Fact]
-    public void DynamicTextReusesInactiveAtlasPagesInsteadOfRetainingHistoricalRuns()
+    public void DynamicTextRetainsBoundedHistoryAndReusesPagesAtCapacity()
     {
         FakeSdlApi api = new() { WindowPixelDensity = 1 };
         nint window = api.CreateWindow("dynamic-text-atlas", 640, 160, SdlWindowOptions.Hidden);
@@ -665,12 +665,28 @@ public sealed class SdlGpuDrawingBackendTests
         using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window, 640, 160);
         IDrawFont font = new SystemFontSource().LoadFont("Arial", 48);
 
-        for (int frame = 0; frame < 80; frame++)
+        // The approved retention policy uses the existing eight-page budget
+        // before evicting history, rather than compacting to the current frame.
+        for (int frame = 0; frame < 240; frame++)
         {
             RenderDynamicTextFrame(session, font, frame);
+            Assert.InRange(session.DrawingResources.TextAtlasPageCount, 1, 8);
+        }
+        Assert.Equal(8, session.DrawingResources.TextAtlasPageCount);
+        int createdAtCapacity = api.TextureCreationCount;
+        for (int frame = 240; frame < 480; frame++)
+        {
+            RenderDynamicTextFrame(session, font, frame);
+            Assert.Equal(8, session.DrawingResources.TextAtlasPageCount);
+            Assert.Equal(createdAtCapacity, api.TextureCreationCount);
         }
 
-        Assert.InRange(session.DrawingResources.TextAtlasPageCount, 1, 2);
+        SdlGpuDrawingResources resources = session.DrawingResources;
+        session.Dispose();
+        factory.Dispose();
+        Assert.Equal(0, resources.TextAtlasEntryCount);
+        Assert.Equal(0, resources.CachedTextureCount);
+        Assert.Empty(api.GpuTextures);
 
         static void RenderDynamicTextFrame(
             SdlGpuWindowGraphicsSession session,
@@ -692,7 +708,7 @@ public sealed class SdlGpuDrawingBackendTests
     }
 
     [Fact]
-    public void DynamicTextReusesAtlasPageStorageAcrossCompactionCycles()
+    public void DynamicTextBoundsPageGrowthAllocationsAndReusesStorageAtCapacity()
     {
         FakeSdlApi api = new() { WindowPixelDensity = 1 };
         nint window = api.CreateWindow("dynamic-text-atlas-allocation", 640, 160, SdlWindowOptions.Hidden);
@@ -705,19 +721,38 @@ public sealed class SdlGpuDrawingBackendTests
             RenderDynamicTextFrame(frame);
         }
 
-        long maximumFrameAllocation = 0;
+        long maximumWarmAllocation = 0;
+        long maximumGrowthAllocation = 0;
+        int growthFrames = 0;
         for (int frame = 5; frame < 240; frame++)
         {
+            int pagesBefore = session.DrawingResources.TextAtlasPageCount;
             long before = GC.GetAllocatedBytesForCurrentThread();
             RenderDynamicTextFrame(frame);
-            maximumFrameAllocation = Math.Max(
-                maximumFrameAllocation,
-                GC.GetAllocatedBytesForCurrentThread() - before);
+            long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+            int addedPages = session.DrawingResources.TextAtlasPageCount - pagesBefore;
+            Assert.InRange(session.DrawingResources.TextAtlasPageCount, 1, 8);
+            Assert.InRange(addedPages, 0, 8 - pagesBefore);
+            // Each new page owns a 4 MiB CPU pixel array. FakeSdlApi also
+            // models its GPU texture with a second managed array of that size.
+            // Measure growth too; do not mislabel those bytes as warm churn.
+            long pagePixelBytes = addedPages * 2L * 1024 * 1024 * 4;
+            Assert.True(allocated - pagePixelBytes < 3_000_000,
+                $"Dynamic-text frame {frame} allocated {allocated:N0} bytes with {addedPages} new atlas pages.");
+            if (addedPages == 0)
+            {
+                maximumWarmAllocation = Math.Max(maximumWarmAllocation, allocated);
+            }
+            else
+            {
+                growthFrames++;
+                maximumGrowthAllocation = Math.Max(maximumGrowthAllocation, allocated);
+            }
         }
-
-        Assert.True(
-            maximumFrameAllocation < 3_000_000,
-            $"A warm dynamic-text frame allocated {maximumFrameAllocation:N0} bytes.");
+        Assert.Equal(8, session.DrawingResources.TextAtlasPageCount);
+        Assert.InRange(growthFrames, 1, 7);
+        output.WriteLine($"Maximum warm frame: {maximumWarmAllocation:N0} bytes; " +
+            $"maximum growth frame: {maximumGrowthAllocation:N0} bytes; growth frames: {growthFrames}.");
 
         void RenderDynamicTextFrame(int frame)
         {
