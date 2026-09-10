@@ -1,6 +1,7 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
+using Cerneala.UI.Media;
 
 namespace Cerneala.UI.Rendering;
 
@@ -8,6 +9,11 @@ public sealed class ElementRenderCache
 {
     private readonly DrawCommandList commands = new();
     private UIElement? cachedElement;
+    private UIElement? transformElement;
+    private long transformPropertyVersion;
+    private int transformScopeVersion;
+    private LayoutRect transformBounds;
+    private Matrix3x2 elementTransform;
 
     public DrawCommandList Commands => commands;
 
@@ -18,6 +24,26 @@ public sealed class ElementRenderCache
     public RenderDependency Dependencies { get; private set; }
 
     public LayoutRect ContentBounds { get; private set; }
+
+    internal Matrix3x2 GetElementTransform(UIElement element)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+        // Property writes precede PropertyChanged callbacks, whereas scope
+        // invalidation follows them. Include the store version so composition
+        // inside a callback also observes the new effective values.
+        if (!ReferenceEquals(transformElement, element) ||
+            transformPropertyVersion != element.PropertyValueVersion ||
+            transformScopeVersion != element.RenderScopeVersion ||
+            transformBounds != element.ArrangedBounds)
+        {
+            elementTransform = ElementVisualTransform.GetElementTransform(element);
+            transformElement = element;
+            transformPropertyVersion = element.PropertyValueVersion;
+            transformScopeVersion = element.RenderScopeVersion;
+            transformBounds = element.ArrangedBounds;
+        }
+        return elementTransform;
+    }
 
     public bool IsStale(UIElement element)
     {
@@ -54,6 +80,7 @@ public sealed class ElementRenderCache
 
         counters.CountCacheMiss();
         counters.CountLocalRebuild();
+        transformElement = null;
         IsValid = false;
         cachedElement = null;
         commands.Clear();
@@ -77,5 +104,6 @@ public sealed class ElementRenderCache
     {
         IsValid = false;
         cachedElement = null;
+        transformElement = null;
     }
 }

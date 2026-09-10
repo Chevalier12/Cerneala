@@ -46,12 +46,14 @@ public sealed class DrawCommandListBuilder
             return;
         }
 
-        Matrix3x2 elementTransform = ElementVisualTransform.GetElementTransform(element);
         float elementOpacity = ancestorOpacity * element.Opacity * element.PresenceOpacity;
         if (elementOpacity <= 0)
         {
             return;
         }
+
+        ElementRenderCache localCache = renderCache.GetElementCache(element);
+        Matrix3x2 elementTransform = localCache.GetElementTransform(element);
 
         counters.CountComposedElement();
         bool hasTransform = elementTransform != Matrix3x2.Identity;
@@ -94,7 +96,6 @@ public sealed class DrawCommandListBuilder
         lowerUiVersion = MixVisualVersion(
             lowerUiVersion,
             element.PrismLocalVisualVersion);
-        ElementRenderCache localCache = renderCache.GetElementCache(element);
         DrawCommandList localCommands = GetLocalCommands(element, localCache, out float offsetX, out float offsetY);
         for (int index = 0; index < localCommands.Count; index++)
         {

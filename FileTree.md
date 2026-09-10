@@ -3737,9 +3737,11 @@ Generated from `.`.
 |   |   |-- SdlGpuDrawingFrameCountersTests.cs
 |   |   |-- SdlGpuGeometryAllocationTests.cs
 |   |   |-- SdlGpuGeometryCacheTests.cs
+|   |   |-- SdlGpuGradientCacheTests.cs
 |   |   |-- SdlGpuPrismBuiltinTextureAllocationTests.cs
 |   |   |-- SdlGpuPrismExecutorTests.cs
 |   |   |-- SdlGpuPrismUniformAllocationTests.cs
+|   |   |-- SdlGpuSampledTextureReuseTests.cs
 |   |   |-- SdlGpuScreenshotRegionTests.cs
 |   |   |-- SdlGpuShaderArtifactTests.cs
 |   |   |-- SdlGpuSurfaceRetainedTests.cs

@@ -10,6 +10,63 @@ namespace Cerneala.Tests.Drawing;
 
 public sealed class DrawingIntegrationLifecycleTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void MetadataDoesNotAllocateGeneralPurposeCollectionsForZeroOrOneResource(bool hasResource)
+    {
+        DrawMesh2D mesh = Triangle(0, 0);
+        DrawCommand command = hasResource
+            ? DrawCommand.DrawMesh(mesh)
+            : DrawCommand.FillRectangle(new DrawRect(0, 0, 16, 16), Color.White);
+        for (int i = 0; i < 256; i++)
+        {
+            GC.KeepAlive(DrawCommandMetadata.Create(command));
+        }
+
+        const int iterations = 4096;
+        long started = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < iterations; i++)
+        {
+            GC.KeepAlive(DrawCommandMetadata.Create(command));
+        }
+        long bytesPerCommand = (GC.GetAllocatedBytesForCurrentThread() - started) / iterations;
+        // The eager identity snapshot remains; resource discovery needs no list/hash set
+        // for zero or one resource, only a read-only singleton in the latter case.
+        int budget = System.Runtime.CompilerServices.Unsafe.SizeOf<DrawCommand>() + (hasResource ? 224 : 160);
+        Assert.True(bytesPerCommand <= budget, $"Metadata allocated {bytesPerCommand} bytes; budget {budget}.");
+    }
+
+    [Fact]
+    public void MetadataResourcesRemainReadOnlyAndDeduplicateByReference()
+    {
+        TestImage first = new(16, 16);
+        TestImage second = new(16, 16);
+        TestFont font = new();
+        ImageTestBrush firstBrush = new(first);
+        ImageTestBrush secondBrush = new(second);
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan("first", font, 10, firstBrush)
+            .AddSpan("repeat", font, 10, firstBrush)
+            .AddSpan("equal but distinct", font, 10, secondBrush)
+            .Build();
+        DrawCommandMetadata metadata = DrawCommandMetadata.Create(
+            DrawCommand.DrawTextLayout(layout, new DrawPoint(0, 0)));
+        object[] expected = [layout, font, firstBrush, first, secondBrush, second];
+        Assert.Equal(expected.Length, metadata.Resources.Count);
+        for (int i = 0; i < expected.Length; i++)
+        {
+            Assert.Same(expected[i], metadata.Resources[i]);
+        }
+        Assert.Throws<NotSupportedException>(() => ((IList<object>)metadata.Resources)[0] = second);
+
+        DrawMesh2D mesh = Triangle(0, 0);
+        DrawCommandMetadata singleton = DrawCommandMetadata.Create(DrawCommand.DrawMesh(mesh));
+        Assert.Same(mesh, Assert.Single(singleton.Resources));
+        Assert.Throws<NotSupportedException>(() => ((IList<object>)singleton.Resources)[0] = second);
+        Assert.Same(mesh, Assert.Single(singleton.Resources));
+    }
+
     [Fact]
     [Trait("PlanStage", "7")]
     public void EveryCommandKindUsesCentralMetadataInsidePrismAndNestedSurfaces()

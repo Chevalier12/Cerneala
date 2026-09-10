@@ -1,4 +1,5 @@
 using Cerneala.Drawing;
+using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Media;
@@ -13,6 +14,7 @@ public sealed class LayoutMotionCoordinator
     private readonly Dictionary<LayoutMotionId, LayoutSnapshot> previousSnapshotsById = [];
     private readonly Dictionary<UIElement, LayoutMotionBinding> bindings = [];
     private readonly HashSet<UIElement> pendingDetached = new(ReferenceEqualityComparer.Instance);
+    private readonly HashSet<UIElement> participants = new(ReferenceEqualityComparer.Instance);
 
     public LayoutMotionCoordinator(MotionSystem motion)
     {
@@ -33,13 +35,39 @@ public sealed class LayoutMotionCoordinator
     {
         motion.VerifyAccess();
         pendingDetached.Remove(element);
+        UpdateParticipation(element);
     }
 
     internal void MarkDetached(UIElement element)
     {
         motion.VerifyAccess();
         firstSnapshots.Remove(element);
+        participants.Remove(element);
         pendingDetached.Add(element);
+    }
+
+    internal void OnPropertyMutated(UiPropertyMutation mutation)
+    {
+        if ((ReferenceEquals(mutation.Property, UIElement.LayoutMotionIdProperty) ||
+            ReferenceEquals(mutation.Property, UIElement.LayoutMotionOptionsProperty)) &&
+            mutation.Target is UIElement element)
+        {
+            motion.VerifyAccess();
+            UpdateParticipation(element);
+        }
+    }
+
+    private void UpdateParticipation(UIElement element)
+    {
+        if (ReferenceEquals(element.Root, motion.Root) &&
+            !pendingDetached.Contains(element) && IsParticipating(element))
+        {
+            participants.Add(element);
+        }
+        else
+        {
+            participants.Remove(element);
+        }
     }
 
     internal void CaptureFirstSnapshots()
@@ -47,7 +75,7 @@ public sealed class LayoutMotionCoordinator
         motion.VerifyAccess();
         CleanupDetached();
         firstSnapshots.Clear();
-        if (!motion.Root.LayoutQueue.HasWork ||
+        if (participants.Count == 0 || !motion.Root.LayoutQueue.HasWork ||
             motion.ReducedMotion.Mode == ReducedMotionMode.DisableNonEssential)
         {
             return;

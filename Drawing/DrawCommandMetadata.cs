@@ -27,14 +27,19 @@ internal sealed class DrawCommandMetadata
 
     internal static DrawCommandMetadata Create(DrawCommand command)
     {
-        List<object> resources = [];
-        HashSet<object> seen = new(ReferenceEqualityComparer.Instance);
+        object? firstResource = null;
+        List<object>? resources = null;
+        HashSet<object>? seen = null;
 
         AddCommandResources(command);
 
         return new DrawCommandMetadata(
             ResolveBounds(command),
-            new ReadOnlyCollection<object>(resources),
+            resources is not null
+                ? new ReadOnlyCollection<object>(resources)
+                : firstResource is not null
+                    ? Array.AsReadOnly(new[] { firstResource })
+                    : Array.Empty<object>(),
             IsContextSensitiveKind(command.Kind),
             command);
 
@@ -66,12 +71,31 @@ internal sealed class DrawCommandMetadata
 
         void Add(object? resource)
         {
-            if (resource is null || !seen.Add(resource))
+            if (resource is null || ReferenceEquals(resource, firstResource))
             {
                 return;
             }
 
-            resources.Add(resource);
+            if (firstResource is null)
+            {
+                firstResource = resource;
+            }
+            else
+            {
+                // Most commands have zero or one resource. Keep the same eager,
+                // reference-deduplicated traversal without allocating collections
+                // until a second distinct dependency is actually encountered.
+                if (seen is null)
+                {
+                    seen = new HashSet<object>(ReferenceEqualityComparer.Instance) { firstResource };
+                    resources = [firstResource];
+                }
+                if (!seen.Add(resource))
+                {
+                    return;
+                }
+                resources!.Add(resource);
+            }
             switch (resource)
             {
                 case DrawPen pen:

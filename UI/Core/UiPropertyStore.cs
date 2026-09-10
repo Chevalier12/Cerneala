@@ -18,6 +18,8 @@ public sealed class UiPropertyStore
     private readonly Dictionary<UiProperty, Dictionary<UiPropertyValueSource, object?>> values = new();
     private readonly Dictionary<UiProperty, object?> frameworkDefaults = new();
 
+    internal long ValueVersion { get; private set; }
+
     public object? GetValue(UiProperty property)
     {
         return GetEffectiveValue(property).Value;
@@ -50,6 +52,7 @@ public sealed class UiPropertyStore
         }
 
         propertyValues[source] = value;
+        ValueVersion++;
     }
 
     public void ClearValue(UiProperty property, UiPropertyValueSource source)
@@ -62,7 +65,11 @@ public sealed class UiPropertyStore
             return;
         }
 
-        propertyValues.Remove(source);
+        if (!propertyValues.Remove(source))
+        {
+            return;
+        }
+        ValueVersion++;
         if (propertyValues.Count == 0)
         {
             values.Remove(property);
@@ -73,6 +80,7 @@ public sealed class UiPropertyStore
     {
         ArgumentNullException.ThrowIfNull(property);
         frameworkDefaults[property] = value;
+        ValueVersion++;
     }
 
     internal bool HasFrameworkDefault(UiProperty property)

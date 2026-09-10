@@ -10,6 +10,8 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     private const uint InitialTransferCapacity = 64 * 1024;
     private const int TextAtlasDimension = 1024;
     private const int MaximumTextAtlasPages = 8;
+    private const int MaximumIdleSampledTextures = 16;
+    private const long MaximumIdleSampledTextureBytes = 1024 * 1024;
     private readonly ISdlApi api;
     private readonly nint device;
     private readonly SdlGpuShaderFormats supportedShaderFormats;
@@ -17,6 +19,8 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     private readonly Dictionary<SdlGpuSamplerKey, nint> samplers = [];
     private readonly Dictionary<object, SdlGpuTextureResource> textures = [];
     private readonly Dictionary<object, int> textureReferenceCounts = [];
+    private readonly List<SdlGpuTextureResource> idleSampledTextures = [];
+    private long idleSampledTextureBytes;
     private readonly Dictionary<SdlGpuTextLayerTextureKey, SdlGpuTextAtlasEntry> textAtlasEntries = [];
     private readonly List<SdlGpuTextAtlasPage> textAtlasPages = [];
     private readonly HashSet<SdlGpuTextAtlasPage> dirtyTextAtlasPages = [];
@@ -167,7 +171,8 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         int width,
         int height,
         ReadOnlySpan<byte> rgbaPixels,
-        DrawPoint originOffset = default)
+        DrawPoint originOffset = default,
+        bool recycleStorage = false)
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(session);
@@ -193,7 +198,8 @@ internal sealed class SdlGpuDrawingResources : IDisposable
             height,
             SdlGpuTextureFormat.R8G8B8A8Unorm,
             rgbaPixels,
-            originOffset);
+            originOffset,
+            recycleStorage);
     }
 
     public SdlGpuTextureResource GetOrCreateHalfVector4Texture(
@@ -246,7 +252,8 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         int height,
         SdlGpuTextureFormat format,
         ReadOnlySpan<byte> pixels,
-        DrawPoint originOffset = default)
+        DrawPoint originOffset = default,
+        bool recycleStorage = false)
     {
         if (textures.TryGetValue(key, out SdlGpuTextureResource? cached))
         {
@@ -258,14 +265,21 @@ internal sealed class SdlGpuDrawingResources : IDisposable
             SdlGpuTextureUsage.Sampler,
             checked((uint)width),
             checked((uint)height));
-        nint texture = RequireHandle(
-            api.CreateGpuTexture(device, createInfo),
-            "SDL GPU sampled-texture creation");
+        nint texture = recycleStorage ? TakeIdleSampledTexture(width, height) : 0;
+        if (texture == 0)
+        {
+            texture = RequireHandle(
+                api.CreateGpuTexture(device, createInfo),
+                "SDL GPU sampled-texture creation");
+        }
         ownedTextures.Add(texture);
         try
         {
             UploadTexture(session, texture, width, height, pixels);
-            SdlGpuTextureResource created = new(texture, width, height, originOffset);
+            SdlGpuTextureResource created = new(texture, width, height, originOffset)
+            {
+                CanRecycleStorage = recycleStorage
+            };
             textures.Add(key, created);
             return created;
         }
@@ -442,8 +456,73 @@ internal sealed class SdlGpuDrawingResources : IDisposable
             return;
         }
         textureReferenceCounts.Remove(key);
-        InvalidateTexture(key);
+        if (textures.Remove(key, out SdlGpuTextureResource? texture))
+        {
+            if (textureReferenceCounts.Count == 0 || !texture.CanRecycleStorage)
+            {
+                RetireTexture(texture.Handle);
+            }
+            else
+            {
+                ReturnIdleSampledTexture(texture);
+            }
+        }
+        if (textureReferenceCounts.Count == 0)
+        {
+            foreach (SdlGpuTextureResource idle in idleSampledTextures)
+            {
+                RetireTexture(idle.Handle);
+            }
+            idleSampledTextures.Clear();
+            idleSampledTextureBytes = 0;
+        }
     }
+
+    private nint TakeIdleSampledTexture(int width, int height)
+    {
+        for (int index = idleSampledTextures.Count - 1; index >= 0; index--)
+        {
+            SdlGpuTextureResource candidate = idleSampledTextures[index];
+            if (candidate.Width != width || candidate.Height != height)
+            {
+                continue;
+            }
+            idleSampledTextures.RemoveAt(index);
+            idleSampledTextureBytes -= SampledTextureBytes(candidate);
+            return candidate.Handle;
+        }
+        return 0;
+    }
+
+    private void ReturnIdleSampledTexture(SdlGpuTextureResource texture)
+    {
+        // Only explicitly recyclable RGBA storage reaches this path after its
+        // last retained brush lease ends. Other textures keep their own lifetime
+        // policies, including the bounded histories of text masks and captures.
+        // The releasing backend has recorded all draws. Reuse rewrites the whole texture with
+        // SDL cycling, preserving data bound by pending/in-flight GPU commands.
+        // General image invalidation must not enter this pool: it can occur
+        // while a backend still has unrecorded batches referencing the handle.
+        long bytes = SampledTextureBytes(texture);
+        if (bytes > MaximumIdleSampledTextureBytes)
+        {
+            RetireTexture(texture.Handle);
+            return;
+        }
+        while (idleSampledTextures.Count >= MaximumIdleSampledTextures ||
+            idleSampledTextureBytes + bytes > MaximumIdleSampledTextureBytes)
+        {
+            SdlGpuTextureResource oldest = idleSampledTextures[0];
+            idleSampledTextures.RemoveAt(0);
+            idleSampledTextureBytes -= SampledTextureBytes(oldest);
+            RetireTexture(oldest.Handle);
+        }
+        idleSampledTextures.Add(texture);
+        idleSampledTextureBytes += bytes;
+    }
+
+    private static long SampledTextureBytes(SdlGpuTextureResource texture) =>
+        (long)texture.Width * texture.Height * 4;
 
     public SdlGpuRenderTarget GetLayerTarget(
         int depth,
@@ -631,6 +710,8 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         ownedTextures.Clear();
         textures.Clear();
         textureReferenceCounts.Clear();
+        idleSampledTextures.Clear();
+        idleSampledTextureBytes = 0;
         textAtlasEntries.Clear();
         textAtlasPages.Clear();
         dirtyTextAtlasPages.Clear();
@@ -978,7 +1059,10 @@ internal readonly record struct SdlGpuVertex(
     System.Numerics.Vector4 Color);
 
 internal sealed record SdlGpuTextureResource(
-    nint Handle, int Width, int Height, DrawPoint OriginOffset = default);
+    nint Handle, int Width, int Height, DrawPoint OriginOffset = default)
+{
+    internal bool CanRecycleStorage { get; init; }
+}
 
 internal sealed class SdlGpuTextAtlasEntry(
     SdlGpuTextureResource texture,

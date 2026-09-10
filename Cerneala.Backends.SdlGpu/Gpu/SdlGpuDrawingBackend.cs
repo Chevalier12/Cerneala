@@ -1729,18 +1729,32 @@ internal sealed partial class SdlGpuDrawingBackend :
                         bounds.Width * CoordinateScale)));
                     int height = Math.Max(1, checked((int)MathF.Ceiling(
                         bounds.Height * CoordinateScale)));
+                    if (descriptor is LinearGradientDrawBrushDescriptor linear)
+                    {
+                        // Keep every sample on the varying axis. The other axis
+                        // is constant, so one texel has identical clamped sampling.
+                        if (linear.StartPoint.X == linear.EndPoint.X) width = 1;
+                        if (linear.StartPoint.Y == linear.EndPoint.Y) height = 1;
+                    }
                     object key = new SdlGpuBrushTextureKey(
                         brush,
                         bounds,
                         width,
                         height);
-                    byte[] pixels = RasterizeBrush(descriptor, bounds, width, height);
-                    SdlGpuTextureResource texture = resources.GetOrCreateTexture(
-                        session,
-                        key,
-                        width,
-                        height,
-                        pixels);
+                    SdlGpuTextureResource? texture = resources.FindTexture(key);
+                    if (texture is null)
+                    {
+                        // A valid retained texture already owns these pixels.
+                        // Do not rasterize a replacement before checking for it.
+                        byte[] pixels = RasterizeBrush(descriptor, bounds, width, height);
+                        texture = resources.GetOrCreateTexture(
+                            session,
+                            key,
+                            width,
+                            height,
+                            pixels,
+                            recycleStorage: true);
+                    }
                     MarkBrushTextureUsed(key);
                     return SdlGpuPaint.BoundsMapped(
                         texture,

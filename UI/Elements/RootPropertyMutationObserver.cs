@@ -6,6 +6,7 @@ internal sealed class RootPropertyMutationObserver(UIRoot root) : UiPropertyMuta
 {
     internal override void OnPropertyMutated(UiPropertyMutation mutation)
     {
+        root.Motion.Layout.OnPropertyMutated(mutation);
         root.Motion.Transactions.OnPropertyMutated(mutation);
         root.AspectProcessor.OnPropertyMutated(mutation);
     }

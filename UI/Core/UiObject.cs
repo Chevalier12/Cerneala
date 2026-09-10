@@ -4,6 +4,8 @@ public class UiObject
 {
     private readonly UiPropertyStore propertyStore = new();
 
+    internal long PropertyValueVersion => propertyStore.ValueVersion;
+
     public event EventHandler<UiPropertyChangedEventArgs>? PropertyChanged;
 
     protected virtual UiPropertyMutationObserver? MutationObserver => null;

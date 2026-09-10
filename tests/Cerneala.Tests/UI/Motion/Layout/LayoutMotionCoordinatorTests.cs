@@ -12,6 +12,132 @@ namespace Cerneala.Tests.UI.Motion.Layout;
 public sealed class LayoutMotionCoordinatorTests
 {
     [Fact]
+    public void SnapshotCaptureWithoutParticipantsDoesNotAllocateWithTreeSize()
+    {
+        UIRoot root = new(100, 100);
+        Canvas canvas = new();
+        root.VisualChildren.Add(canvas);
+        for (int i = 0; i < 500; i++)
+        {
+            canvas.VisualChildren.Add(new UIElement());
+        }
+
+        root.ProcessFrame();
+        canvas.Width = 80;
+        Assert.True(root.LayoutQueue.HasWork);
+        AssertEmptyCaptureAllocation(root);
+    }
+
+    [Fact]
+    public void EffectiveParticipationChangesAfterAttachAreObserved()
+    {
+        ManualMotionClock clock = new();
+        (UIRoot root, UIElement child) = CreateCanvasScenario(clock);
+        child.ClearValue(UIElement.LayoutMotionOptionsProperty);
+        child.ClearValue(UIElement.LayoutMotionIdProperty);
+        root.ProcessFrame();
+
+        child.SetValue(UIElement.LayoutMotionOptionsProperty,
+            LayoutMotionOptions.Spring(MotionFactory.Tween<Cerneala.UI.Media.Transform>(TimeSpan.FromMilliseconds(100))),
+            Cerneala.UI.Core.UiPropertyValueSource.AspectBase);
+        child.SetValue<LayoutMotionId?>(UIElement.LayoutMotionIdProperty, "dynamic",
+            Cerneala.UI.Core.UiPropertyValueSource.AspectBase);
+        Canvas.SetLeft(child, 40);
+        root.ProcessFrame();
+        Assert.Equal(-40, Assert.IsType<LayoutMotionBinding>(root.Motion.Layout.GetBinding(child)).CurrentCorrection.Matrix.M31);
+
+        clock.Advance(TimeSpan.FromMilliseconds(120));
+        root.ProcessFrame();
+        child.LayoutMotion = null;
+        Canvas.SetLeft(child, 60);
+        root.ProcessFrame();
+        Assert.Equal(Cerneala.UI.Media.Transform.Identity, child.LayoutCorrectionTransform);
+
+        child.ClearValue(UIElement.LayoutMotionOptionsProperty);
+        Canvas.SetLeft(child, 80);
+        root.ProcessFrame();
+        Assert.Equal(-20, Assert.IsType<LayoutMotionBinding>(root.Motion.Layout.GetBinding(child)).CurrentCorrection.Matrix.M31);
+    }
+
+    [Fact]
+    public void RemovingLastParticipantRestoresEmptyCaptureCost()
+    {
+        (UIRoot root, UIElement child) = CreateCanvasScenario(new ManualMotionClock());
+        UIElement canvas = root.VisualChildren[0];
+        for (int i = 0; i < 500; i++)
+        {
+            canvas.VisualChildren.Add(new UIElement());
+        }
+
+        root.ProcessFrame();
+        canvas.VisualChildren.Remove(child);
+        root.ProcessFrame();
+        canvas.Width = 80;
+        AssertEmptyCaptureAllocation(root);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ClearingEitherParticipationPropertyRestoresEmptyCaptureCost(bool clearId)
+    {
+        (UIRoot root, UIElement child) = CreateCanvasScenario(new ManualMotionClock());
+        UIElement canvas = root.VisualChildren[0];
+        for (int i = 0; i < 500; i++) canvas.VisualChildren.Add(new UIElement());
+        root.ProcessFrame();
+
+        if (clearId) child.ClearValue(UIElement.LayoutMotionIdProperty);
+        else child.ClearValue(UIElement.LayoutMotionOptionsProperty);
+        canvas.Width = 80;
+        AssertEmptyCaptureAllocation(root);
+    }
+
+    [Fact]
+    public void DetachedPropertyChangesAndCrossRootAttachDoNotKeepOldRootParticipating()
+    {
+        UIRoot first = new(100, 100);
+        UIRoot second = new(100, 100);
+        Canvas firstCanvas = new();
+        Canvas secondCanvas = new();
+        first.VisualChildren.Add(firstCanvas);
+        second.VisualChildren.Add(secondCanvas);
+        for (int i = 0; i < 500; i++) firstCanvas.VisualChildren.Add(new UIElement());
+        DetachMutationElement child = new() { Width = 20, Height = 10 };
+        firstCanvas.VisualChildren.Add(child);
+        first.ProcessFrame();
+
+        firstCanvas.VisualChildren.Remove(child);
+        secondCanvas.VisualChildren.Add(child);
+        second.ProcessFrame();
+        Canvas.SetLeft(child, 40);
+        second.ProcessFrame();
+
+        Assert.Equal(-40, Assert.IsType<LayoutMotionBinding>(second.Motion.Layout.GetBinding(child)).CurrentCorrection.Matrix.M31);
+        firstCanvas.Width = 80;
+        AssertEmptyCaptureAllocation(first);
+    }
+
+    private sealed class DetachMutationElement : UIElement
+    {
+        protected override void OnDetached()
+        {
+            base.OnDetached();
+            LayoutMotionId = "assigned-during-detach";
+            LayoutMotion = LayoutMotionOptions.Spring(
+                MotionFactory.Tween<Cerneala.UI.Media.Transform>(TimeSpan.FromMilliseconds(100)));
+        }
+    }
+
+    private static void AssertEmptyCaptureAllocation(UIRoot root)
+    {
+        for (int i = 0; i < 32; i++) root.Motion.Layout.CaptureFirstSnapshots();
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 16; i++) root.Motion.Layout.CaptureFirstSnapshots();
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.True(allocated <= 4096, $"Empty layout-motion capture allocated {allocated} bytes for 16 captures.");
+    }
+
+    [Fact]
     public void ChangingArrangedRectCreatesRenderOnlyInverseCorrection()
     {
         ManualMotionClock clock = new();
