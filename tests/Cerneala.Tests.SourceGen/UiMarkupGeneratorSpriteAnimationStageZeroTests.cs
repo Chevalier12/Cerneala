@@ -40,8 +40,8 @@ public sealed partial class UiMarkupGeneratorTests
         SpriteAnimationMarkupState state = new();
         RenderSurface2D surface = Assert.IsType<RenderSurface2D>(InvokeCreate(stream, "Cerneala.GeneratedUi.AnimatedBindingFactory", state));
         Sprite2D sprite = Assert.IsType<Sprite2D>(Assert.Single(surface.Scene!.Children));
-        sprite.Source = new AnimationMarkupImage();
-        sprite.Destination = new DrawRect(0, 0, 16, 16);
+        sprite.Image = new(new AnimationMarkupImage());
+        sprite.X = 0; sprite.Y = 0; sprite.Width = 16; sprite.Height = 16;
         // Exercise the real recorder without widening the core assembly's friend API.
         MethodInfo record = typeof(RenderSurface2D).GetInterface("IRenderSurface2DFrameSource")!.GetMethod("RecordFrame")!;
         foreach ((string name, float sourceX) in new[] { ("Idle", 0f), ("Walk", 16f), ("Attack", 32f) })
@@ -88,7 +88,7 @@ public sealed partial class UiMarkupGeneratorTests
               </RenderSurface2D.Resources>
               <RenderSurface2D.Scene>
                 <Scene2D>
-                  <Sprite2D SourceResourceId="$HeroAtlas"
+                  <Sprite2D Image="$HeroAtlas"
                             Animations="$HeroAnimations"
                             AnimationState="$DataContext.AnimationState:OneWay"
                             AnimationPlaybackRate="$DataContext.PlaybackRate:OneWay"

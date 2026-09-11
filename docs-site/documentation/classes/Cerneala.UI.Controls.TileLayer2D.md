@@ -40,6 +40,8 @@ Inheritance:
 </TileLayer2D>
 ```
 
+Place this presentation inside a `TileMap2D` whose imported model contains the `Buildings` layer and addressed cell. Free image authoring uses direct `Tile` placements instead; do not mix those placements with imported layer presentations in one map.
+
 ## Remarks
 
 `LayerId` must match exactly one layer in the owning map model. When a model is assigned, `TileMap2D` creates presentation nodes for model layers that have no explicit declaration. An explicit declaration with an empty or unknown ID is rejected during layer synchronization, as are duplicate presentation IDs.

@@ -48,8 +48,8 @@ public sealed partial class UiMarkupGeneratorTests
               </RenderSurface2D.Resources>
               <RenderSurface2D.Scene>
                 <Scene2D>
-                  <Sprite2D SourceResourceId="$WorldAtlas" />
-                  <Sprite2D SourceResourceId="$WorldAtlas" />
+                  <Sprite2D Image="$WorldAtlas" />
+                  <Sprite2D Image="$WorldAtlas" />
                 </Scene2D>
               </RenderSurface2D.Scene>
             </RenderSurface2D>
@@ -76,8 +76,8 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal("Assets/world.png", atlas.Path);
         Sprite2D first = Assert.IsType<Sprite2D>(surface.Scene.Children[0]);
         Sprite2D second = Assert.IsType<Sprite2D>(surface.Scene.Children[1]);
-        Assert.Equal(expectedId, first.SourceResourceId);
-        Assert.Equal(expectedId, second.SourceResourceId);
+        Assert.Equal(expectedId, first.Image!.ResourceId);
+        Assert.Equal(expectedId, second.Image!.ResourceId);
     }
 
     [Fact]
@@ -155,7 +155,7 @@ public sealed partial class UiMarkupGeneratorTests
                       @templates
                       {
                         <ContentTemplate DataType="System.String">
-                          <Sprite2D SourceResourceId="$WorldAtlas">
+                          <Sprite2D Image="$WorldAtlas">
                             <Sprite2D.Aspect>
                               @on Loaded
                               {

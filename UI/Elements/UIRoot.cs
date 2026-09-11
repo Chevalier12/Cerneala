@@ -22,6 +22,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
     private ThemeChangedSubscription? themeChangedSubscription;
     private ResourceChangedSubscription? resourceChangedSubscription;
     private FrameStats? activeFrameStats;
+    private readonly Action<UIElement> beginInheritedDescendantPropagation;
     private readonly SemanticsProvider semanticsProvider = new();
     private SemanticsTree? cachedSemanticsTree;
     private int cachedSemanticsTreeVersion = -1;
@@ -100,6 +101,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         AspectRegistry.Register(DefaultAspectPackage.Create(), notify: false);
         AspectProcessor = new AspectProcessor(this);
         Scheduler = new UiFrameScheduler(LayoutQueue, InheritedPropertyQueue, CommandStateQueue, AspectQueue, RenderQueue, HitTestQueue, Trace);
+        beginInheritedDescendantPropagation = Scheduler.BeginInheritedDescendantPropagation;
         Motion = new MotionSystem(this, motionClock ?? new SystemMotionClock(), reducedMotion ?? ReducedMotionPolicy.Default);
         PropertyMutations = new RootPropertyMutationObserver(this);
         IsLayoutBoundary = true;
@@ -462,7 +464,7 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
         ElementInputRouteMap? commandStateRouteMap = null;
         return new FramePhaseProcessors
         {
-            InheritedProperties = element => InheritedPropertyPropagator.PropagateFrom(element),
+            InheritedProperties = element => InheritedPropertyPropagator.PropagateFrom(element, beginInheritedDescendantPropagation),
             CommandState = element =>
             {
                 commandStateRouteMap ??= CreateCommandStateRouteMap();

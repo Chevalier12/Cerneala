@@ -18,61 +18,40 @@ Inheritance:
 ## Examples
 
 ```xml
-<RenderSurface2D DataType="Cerneala.UI.Controls.TileMap2DModel">
+<RenderSurface2D xmlns:r="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
+  <RenderSurface2D.Resources>
+    <r:ImageResource Name="Grass" Source="grass.png" />
+    <r:ImageResource Name="House" Source="house.png" />
+  </RenderSurface2D.Resources>
   <RenderSurface2D.Scene>
     <Scene2D>
-      <TileMap2D Model="$DataContext:OneWay">
-        <TileMap2D.Aspect>
-          @on Loaded
-          {
-            @animate with Tween(100ms)
-            {
-              @to { Opacity = 0.9; }
-            }
-          }
-        </TileMap2D.Aspect>
-        @prism
-        {
-          @layer MapContent
-          {
-            Opacity = 1;
-            @filter Blur { Radius = 1; }
-          }
-        }
-        <TileLayer2D LayerId="Buildings">
-          <TileInstance2D X="18" Y="11">
-            <TileInstance2D.Aspect>
-              @on Loaded
-              {
-                @animate with Tween(100ms)
-                {
-                  @to { Tint = #FFFFCC; }
-                }
-              }
-            </TileInstance2D.Aspect>
-            @prism
-            {
-              @layer DoorEffect
-              {
-                Opacity = 1;
-                @filter Blur { Radius = 2; }
-              }
-            }
-          </TileInstance2D>
-        </TileLayer2D>
+      <TileMap2D>
+        <Tile Image="$Grass" X="0" Y="0" />
+        <Tile Image="$House" X="210" Y="125" Width="24" Height="20" />
       </TileMap2D>
     </Scene2D>
   </RenderSurface2D.Scene>
 </RenderSurface2D>
 ```
 
-This is Cerneala `.crn` syntax, not XAML syntax inferred from another framework. The root element must declare a compatible `DataType` when `$DataContext` binding is used. The bound model is normally created by application code or an importer; bulk tile data is not expanded into one markup element per cell.
+This is the supported `.crn` authoring form: direct `Tile` declarations with `Image`, `X`, `Y`, and optional independent `Width` and `Height`. Positions are pixels, not grid cells. Each omitted dimension comes from the corresponding image dimension. Images may have different sizes, and placements may overlap; declaration order is painter order.
+
+Tiled/LDtk imports remain available through the C# model API:
+
+```csharp
+var result = TiledScene2DImporter.Import("village.tmj");
+if (!result.Success)
+    throw new InvalidOperationException(string.Join(Environment.NewLine, result.Diagnostics));
+map.Model = result.Document!.Levels.Single().TileMap;
+```
+
+Declare the imported model's image resources in the map's enclosing scope. Bind the imported `Model` in markup and declare `TileLayer2D` presentations with sparse `TileInstance2D` children when a layer or promoted cell needs its own Aspect, Motion, Prism, binding, or input behavior. These declarations address existing imported data; they do not author a grid or matrix. Do not combine free `Tile` placements with a `Model` binding or layer presentations in the same map. `Model`/`Layers` property-element wrappers are not supported.
 
 ## Remarks
 
-`Model` supplies immutable/versioned tilesets, layers, and chunks. Static cells remain compact data. Recording first derives a conservative visible region from the surface ViewBox and the composed scene transforms, queries the sparse chunk index, and emits only intersecting chunks. Cached static batches survive an unchanged frame and a camera transform change.
+`Model` supplies immutable image placements or imported/versioned grid data. Static tiles remain compact data. Free placements are grouped automatically into bounded retained draw chunks; applications do not author those chunks. Recording first derives a conservative visible region from the surface ViewBox and the composed scene transforms, queries the sparse chunk index, and emits only intersecting chunks. Cached static batches survive an unchanged frame and a camera transform change.
 
-`Layers` contains one high-level `TileLayer2D` presentation node per model layer, not one node per tile. A matching node is generated when markup does not declare one. Declaring a layer is necessary only when the application needs to address that layer or add promoted cells. Model `Order`, followed by model source order for ties, controls ordering inside the map.
+`Layers` contains one high-level `TileLayer2D` presentation node per model layer, not one node per tile. Matching layer nodes are generated from the model. Applications may address those nodes from C# or declare layer presentations in markup for imported maps. Free-placement maps have one generated layer. Model `Order`, followed by model source order for ties, controls ordering inside the map.
 
 Map, layer, and promoted-tile nodes use the normal Aspect, Motion, Prism, transform, opacity, visibility, and attachment paths inherited from the scene/UI tree. Static cells do not have independent Aspect, Motion, Prism, event, or lifecycle state.
 
@@ -86,7 +65,7 @@ Adjacent horizontal full-cell box descriptors may share one internal collider on
 
 ### Promotion and demotion
 
-`Promote` extracts one addressed cell from its static batch and returns its unique `TileInstance2D`. A non-empty cell inherits its tile ID, atlas source rectangle, and flip. An explicit `tileId` can replace that visual; it is required when ID `0`, the empty value, is promoted. The promoted node is recorded in the same row-major semantic slot, so promotion does not draw the cell twice or move it above unrelated content.
+For imported grid models, `Promote` extracts one addressed cell from its static batch and returns its unique `TileInstance2D`. A non-empty cell inherits its tile ID, atlas source rectangle, and flip. An explicit `tileId` can replace that visual; it is required when ID `0`, the empty value, is promoted. The promoted node is recorded in the same row-major semantic slot, so promotion does not draw the cell twice or move it above unrelated content.
 
 Calling `Promote` again for an already promoted key returns the existing instance. It does not replace that instance or apply a new `tileId`. Use the returned node's public properties for visual overrides. `Demote` detaches and removes the instance, returns the model cell to the static batch, and returns `false` when the key is not currently promoted. `TryGetPromoted` performs a non-mutating lookup.
 
@@ -96,16 +75,16 @@ Explicit colliders on a promoted tile compose with imported descriptors by defau
 
 ### Mutation and versioning
 
-Model objects copy their collection inputs and expose read-only views. To change tile content, construct replacement `TileChunk2D`, `TileLayer2DModel`, and `TileMap2DModel` objects, increment the positive version of changed data, and assign the replacement model to `Model`. Reusing a version for changed tile or atlas data is unsupported because the retained cache uses chunk, tileset, and resource versions to decide whether a batch is current.
+Model objects copy their collection inputs and expose read-only views. For free placements, construct a replacement `TileMap2DModel(IEnumerable<Tile>)` and assign it to `Model`; changed placement lists are detected even when the default publication version is reused. For imported grids, the version contract below remains unchanged. To change tile content, construct replacement `TileChunk2D`, `TileLayer2DModel`, and `TileMap2DModel` objects, increment the positive version of changed data, and assign the replacement model to `Model`. Reusing a version for changed tile or atlas data is unsupported because the retained cache uses chunk, tileset, and resource versions to decide whether a batch is current.
 
 Changing only scene presentation properties such as map/layer transforms, opacity, or offsets does not rebuild static tile geometry. A changed chunk rebuilds its dependent cached segments; a changed tileset/resource invalidates only batches that reference it.
 
 ### Limits
 
-- Every map has one uniform destination `TileSize`; individual definitions vary their atlas source rectangle, not their destination cell size.
-- Tile IDs are global across all tilesets in one model. ID `0` is reserved for an empty cell.
-- Static tile flips are horizontal and vertical only. Unknown flag bits are rejected.
-- Chunks within one layer may not overlap. A finite map rejects chunks outside its bounds; a null bounds value represents a sparse map, not an eagerly allocated infinite rectangle.
+- Free placements have individual pixel destinations and no uniform `TileSize`. Imported grid models retain their uniform destination cell size.
+- For imported grids, tile IDs are global across all tilesets in one model. ID `0` is reserved for an empty cell.
+- Free placements draw complete images without per-tile flips or cropping. Imported grid cells retain their existing flip metadata.
+- Imported grid chunks within one layer may not overlap. A finite map rejects chunks outside its bounds; a null bounds value represents a sparse map, not an eagerly allocated infinite rectangle.
 - Atlas resources must be resolvable through the normal `ImageResource` system. The tile map does not own or dispose shared atlas images.
 - Tiled/LDtk parsing, sprite-frame animation, navigation, and geometric pointer picking are separate facilities. Tile collision descriptors and promoted colliders use this map's scene-owned collision adapter; importers remain responsible for translating external metadata into those public descriptors.
 
@@ -120,7 +99,7 @@ Changing only scene presentation properties such as map/layer transforms, opacit
 | Name | Description |
 | --- | --- |
 | `Model` | Gets or sets the immutable/versioned tile map model. |
-| `Layers` | Gets the high-level layer presentation nodes. |
+| `Layers` | Gets the high-level layer presentation nodes; imported layer presentations can also be declared as direct markup children. |
 | `TransformOrigin` | Gets or sets the scene-space origin used by inherited transform properties. |
 
 ## Methods

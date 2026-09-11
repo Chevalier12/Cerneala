@@ -353,6 +353,27 @@ public sealed class SemanticScopesTests
         return Assert.IsType<CernealaSemanticSymbol>(model.GetSymbolAt(offset));
     }
 
+    [Fact]
+    public void SpriteImageReferenceAcceptsOnlyImageResourcesAndPreservesSemanticNavigation()
+    {
+        const string markup = """
+            <RenderSurface2D xmlns:r="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
+              <RenderSurface2D.Resources>
+                <r:ImageResource Name="Atlas" Source="atlas.png" />
+                <SolidColorBrush Name="Ink" Color="Black" />
+              </RenderSurface2D.Resources>
+              <RenderSurface2D.Scene>
+                <Scene2D><Sprite2D Image="$Atlas" X="2" Y="3" SourceWidth="16" SourceHeight="12" /></Scene2D>
+              </RenderSurface2D.Scene>
+            </RenderSurface2D>
+            """;
+        CernealaSemanticModel model = Model("SpriteImage.crn", markup, string.Empty);
+        Assert.Empty(model.Diagnostics);
+        Assert.Equal(CernealaSemanticSymbolKind.ResourceReference, SymbolAt(model, markup, "$Atlas").Kind);
+        Assert.Contains(Model("InvalidSpriteImage.crn", markup.Replace("Image=\"$Atlas\"", "Image=\"$Ink\""), string.Empty).Diagnostics,
+            d => d.Id == "CERNEALAUI004");
+    }
+
     private static CernealaSemanticModel Model(
         string path,
         string markup,

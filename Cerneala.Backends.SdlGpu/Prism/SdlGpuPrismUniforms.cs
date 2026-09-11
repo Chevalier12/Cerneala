@@ -5,7 +5,7 @@ namespace Cerneala.Backends.SdlGpu;
 
 internal sealed class SdlGpuPrismUniforms
 {
-    internal const int VectorCount = 59;
+    internal const int VectorCount = 60;
     internal const int ByteCount = VectorCount * 16;
 
     private readonly Vector4[] values = new Vector4[VectorCount];
@@ -39,6 +39,7 @@ internal sealed class SdlGpuPrismUniforms
         values[20] = new Vector4(1, 0, 0, 0);
         values[21] = new Vector4(0, 1, 0, 0);
         values[34] = new Vector4(1, 1, 0, 0);
+        values[59] = new Vector4(0, 0, 1, 1);
     }
 
     internal static int OffsetOfVector(int vectorIndex)

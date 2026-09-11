@@ -75,7 +75,7 @@ public sealed class GraphixNativeDependencyTests
     {
         // Query the loaded native library, not the managed binding's version.
         Assert.Contains(
-            "Graphix 3.4.16-graphix.4 commit 7dcfac5a73007e72bd8fb060861e46fe07f55c46",
+            "Graphix 3.4.16-graphix.6 commit e912da037a59e33affc6ecd69be326265cdc748b",
             SDL.GetRevision(),
             StringComparison.Ordinal);
     }

@@ -42,8 +42,8 @@ public sealed class SpriteAnimationIntegrationTests
     {
         Sprite2D sprite = new()
         {
-            Source = new TestImage(),
-            Destination = new DrawRect(0, 0, 16, 16),
+            Image = new(new TestImage()),
+            X = 0, Y = 0, Width = 16, Height = 16,
             Animations = Set(Clip("Walk", true, Frame(0, 100), Frame(16, 100))),
             Aspect = new ElementAspect([
                 new ElementAspectValue(Sprite2D.AnimationStateProperty, "Walk"),
@@ -78,7 +78,7 @@ public sealed class SpriteAnimationIntegrationTests
         Assert.True(registry.TryGet(TileInstance2D.AnimationPlaybackRateProperty, out _));
         Assert.False(registry.TryGet(Sprite2D.AnimationsProperty, out _));
         Assert.False(registry.TryGet(Sprite2D.AnimationStateProperty, out _));
-        Assert.False(registry.TryGet(Sprite2D.SourceRectProperty, out _));
+        Assert.False(registry.TryGet(Sprite2D.SourceXProperty, out _));
         Assert.False(registry.TryGet(Sprite2D.FlipProperty, out _));
         root.VisualChildren.Remove(surface);
     }
@@ -90,9 +90,9 @@ public sealed class SpriteAnimationIntegrationTests
         SpriteAnimationSet animations = Set(Clip("Walk", true, Frame(0, 100), Frame(16, 100, RenderSurface2DSpriteFlip.Horizontal)));
         Sprite2D sprite = new()
         {
-            Source = new TestImage(),
-            SourceRect = new DrawRect(48, 0, 16, 16),
-            Destination = new DrawRect(4, 5, 16, 16),
+            Image = new(new TestImage()),
+            SourceX = 48, SourceY = 0, SourceWidth = 16, SourceHeight = 16,
+            X = 4, Y = 5, Width = 16, Height = 16,
             Flip = RenderSurface2DSpriteFlip.Horizontal,
             Animations = animations,
             AnimationState = "Walk"
@@ -103,7 +103,7 @@ public sealed class SpriteAnimationIntegrationTests
 
         Assert.Equal(new DrawRect(16, 0, 16, 16), draw.ImageSource);
         Assert.Equal(DrawImageFlip.None, draw.ImageFlip);
-        Assert.Equal(new DrawRect(48, 0, 16, 16), sprite.SourceRect);
+        Assert.Equal(new DrawRect(48, 0, 16, 16), new DrawRect(sprite.SourceX, sprite.SourceY, sprite.SourceWidth, sprite.SourceHeight));
         Assert.Equal(RenderSurface2DSpriteFlip.Horizontal, sprite.Flip);
     }
 
@@ -146,7 +146,7 @@ public sealed class SpriteAnimationIntegrationTests
         Sprite2D sprite = Animated(original, "Walk");
         sprite.AdvanceAnimation(TimeSpan.FromMilliseconds(100));
 
-        sprite.Source = new TestImage();
+        sprite.Image = new(new TestImage());
         sprite.DataContext = new object();
         Assert.Equal(new DrawRect(16, 0, 16, 16), Draw(sprite).ImageSource);
 
@@ -204,7 +204,7 @@ public sealed class SpriteAnimationIntegrationTests
         Sprite2D sprite = Animated(
             Set(Clip("Walk", true, Frame(0, 100), new SpriteAnimationFrame(new DrawRect(32, 32, 8, 24), TimeSpan.FromMilliseconds(100)))),
             "Walk");
-        sprite.Destination = new DrawRect(10, 20, 30, 40);
+        sprite.X = 10; sprite.Y = 20; sprite.Width = 30; sprite.Height = 40;
         SceneBounds2D before = sprite.GetHitTestLocalBounds();
 
         sprite.AdvanceAnimation(TimeSpan.FromMilliseconds(100));
@@ -216,8 +216,8 @@ public sealed class SpriteAnimationIntegrationTests
 
     private static Sprite2D Animated(SpriteAnimationSet animations, string state) => new()
     {
-        Source = new TestImage(),
-        Destination = new DrawRect(0, 0, 16, 16),
+        Image = new(new TestImage()),
+        X = 0, Y = 0, Width = 16, Height = 16,
         Animations = animations,
         AnimationState = state
     };

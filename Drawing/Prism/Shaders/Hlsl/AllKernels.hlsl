@@ -1,3 +1,4 @@
+#include "Composition/RasterCoordinates.hlsl"
 #include "Composition/Copy.hlsl"
 #include "Composition/Mask.hlsl"
 #include "Composition/Clipping.hlsl"

@@ -119,6 +119,17 @@ internal sealed class TileMapStage5ConformanceFixture : IDisposable
 
         Scene2D scene = new();
         scene.Children.Add(map);
+        ResourceId<ImageResource> freeRed = new("FreeRed");
+        ResourceId<ImageResource> freeBlue = new("FreeBlue");
+        scene.Children.Add(new TileMap2D
+        {
+            TranslateX = 2,
+            TranslateY = 3,
+            Model = new TileMap2DModel([
+                new Tile(new ImageReference(freeRed), 5, 5),
+                new Tile(new ImageReference(freeBlue), 10, 8),
+                new Tile(new ImageReference(freeRed), 12, 9, 4, 5)])
+        });
         RenderSurface2D surface = new()
         {
             Scene = scene,
@@ -126,6 +137,12 @@ internal sealed class TileMapStage5ConformanceFixture : IDisposable
         };
         surface.Resources.SetResource(terrainId, new ImageResource(terrainPath));
         surface.Resources.SetResource(structuresId, new ImageResource(structuresPath));
+        string redPath = Path.Combine(fullDirectory, "free-red.png");
+        string bluePath = Path.Combine(fullDirectory, "free-blue.png");
+        WriteSolidImage(redPath, 13, 9, new SKColor(231, 45, 60));
+        WriteSolidImage(bluePath, 7, 15, new SKColor(35, 85, 221));
+        surface.Resources.SetResource(freeRed, new ImageResource(redPath));
+        surface.Resources.SetResource(freeBlue, new ImageResource(bluePath));
         return new TileMapStage5ConformanceFixture(surface, promoted, prism);
     }
 
@@ -159,6 +176,8 @@ internal sealed class TileMapStage5ConformanceFixture : IDisposable
         using SKBitmap panZoom = Decode(panZoomPath, backend);
         RequireSameSize(initial, motion, backend);
         RequireSameSize(initial, panZoom, backend);
+        VerifyFreePlacements(initial, backend);
+        VerifyFreePlacements(motion, backend);
         if (initial.Width < 320 || initial.Height < 200)
         {
             throw new InvalidOperationException(
@@ -372,6 +391,33 @@ internal sealed class TileMapStage5ConformanceFixture : IDisposable
         return cells;
     }
 
+    private static void VerifyFreePlacements(SKBitmap capture, string backend)
+    {
+        foreach ((int x, int y, SKColor expected) in new[]
+        {
+            (9, 10, new SKColor(231, 45, 60)),
+            (13, 13, new SKColor(35, 85, 221)),
+            (15, 14, new SKColor(231, 45, 60)),
+            (15, 24, new SKColor(35, 85, 221))
+        })
+        {
+            SKColor actual = capture.GetPixel(x * capture.Width / 128, y * capture.Height / 84);
+            if (MaximumChannelDelta(actual, expected) > ChannelTolerance)
+            {
+                throw new InvalidOperationException($"{backend} free placement pixel ({x},{y}) is {actual}, expected {expected}; natural sizes, transform, or painter order violated.");
+            }
+        }
+    }
+
+    private static void WriteSolidImage(string path, int width, int height, SKColor color)
+    {
+        using SKBitmap bitmap = new(width, height);
+        bitmap.Erase(color);
+        using SKImage image = SKImage.FromBitmap(bitmap);
+        using SKData encoded = image.Encode(SKEncodedImageFormat.Png, 100);
+        File.WriteAllBytes(path, encoded.ToArray());
+    }
+
     private static void WriteAtlas(string path, bool terrain)
     {
         using SKBitmap bitmap = new(new SKImageInfo(
@@ -535,6 +581,7 @@ internal sealed class TileMapStage5ConformanceFixture : IDisposable
                     Features = new[]
                     {
                         "multiple atlases",
+                        "free placements: natural mixed sizes, explicit dimensions, A-B-A overlap order, map transform, exact interior pixels",
                         "opacity and tint",
                         "horizontal and vertical flips",
                         "map, layer, and promoted-tile transforms",

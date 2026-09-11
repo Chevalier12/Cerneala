@@ -157,18 +157,7 @@ public sealed class TileLayer2D : SceneNode2D
             return SceneBounds2D.Empty;
         }
 
-        SceneBounds2D result = SceneBounds2D.Empty;
-        foreach (TileChunk2D chunk in layer.Chunks)
-        {
-            result = SceneGeometry2D.Union(
-                result,
-                SceneBounds2D.Known(new DrawRect(
-                    chunk.Origin.X * model.TileSize.Width,
-                    chunk.Origin.Y * model.TileSize.Height,
-                    chunk.Width * model.TileSize.Width,
-                    chunk.Height * model.TileSize.Height)));
-        }
-        return result;
+        return map.GetLayerBounds(layer);
     }
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)

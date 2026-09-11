@@ -8,6 +8,46 @@ namespace Cerneala.Tests.Drawing;
 public sealed class DrawingStateTests
 {
     [Fact]
+    public void AnalyzerAllocatesOneOwnedEntrySnapshotAndKeepsItImmutable()
+    {
+        const int commandCount = 1024;
+        DrawCommand command = DrawCommand.FillRectangle(new DrawRect(1, 2, 3, 4), Color.White);
+        DrawCommandList commands = new();
+        for (int index = 0; index < commandCount; index++)
+        {
+            commands.Add(command);
+        }
+        DrawCommandStateAnalyzer analyzer = new();
+        for (int warmup = 0; warmup < 8; warmup++)
+        {
+            GC.KeepAlive(analyzer.Analyze(commands));
+        }
+
+        long metadataBefore = GC.GetAllocatedBytesForCurrentThread();
+        for (int index = 0; index < commandCount; index++)
+        {
+            GC.KeepAlive(DrawCommandMetadata.Create(command));
+        }
+        long metadataBytes = GC.GetAllocatedBytesForCurrentThread() - metadataBefore;
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        DrawCommandStateAnalysis first = analyzer.Analyze(commands);
+        long allocatedBytes = GC.GetAllocatedBytesForCurrentThread() - before;
+        long budget = metadataBytes +
+            commandCount * System.Runtime.CompilerServices.Unsafe.SizeOf<DrawCommandStateEntry>() + 8192;
+        Assert.True(allocatedBytes <= budget,
+            $"State analysis allocated {allocatedBytes:N0} bytes; one entry snapshot plus metadata allows {budget:N0}.");
+
+        commands.Clear();
+        commands.Add(DrawCommand.FillRectangle(new DrawRect(20, 30, 40, 50), Color.Black));
+        DrawCommandStateAnalysis second = analyzer.Analyze(commands);
+        Assert.Equal(commandCount, first.Entries.Count);
+        Assert.Equal(new DrawRect(1, 2, 3, 4), first.Entries[0].Bounds);
+        Assert.Equal(new DrawRect(20, 30, 40, 50), second.Entries[0].Bounds);
+        Assert.Throws<NotSupportedException>(() =>
+            ((IList<DrawCommandStateEntry>)first.Entries)[0] = default);
+    }
+
+    [Fact]
     public void AnalyzerComposesParentThenChildAndReportsWorldBounds()
     {
         DrawCommandList commands = new();

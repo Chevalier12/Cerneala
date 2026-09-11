@@ -60,7 +60,9 @@
               <TileLayer2D.Aspect>
                 @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.7; } @to { Opacity = 1; } } }
               </TileLayer2D.Aspect>
-              @prism { @layer BuildingInk { @filter Blur { Radius = 0.25; } } }
+              @prism { @layer BuildingInk { @filter Blur { Radius = 2; } } }
+            </TileLayer2D>
+            <TileLayer2D LayerId="4">
               <TileInstance2D Name="Door" X="14" Y="9"
                               Servo.Id="world-door" MouseDown="OnDoor" ReplacesImportedColliders="true"
                               Animations="$DoorAnimations" AnimationState="$DataContext.DoorState:OneWay">
@@ -73,7 +75,7 @@
                 <TileInstance2D.Aspect>
                   @on MouseDown { @animate with Tween(180ms) { @from { Opacity = 0.65; } @to { Opacity = 1; } } }
                 </TileInstance2D.Aspect>
-                @prism { @layer DoorGlow { @style OuterGlow { Size = 1; Opacity = 0.3; Color = #FFEAC777; } } }
+                @prism { @layer DoorGlow { @style OuterGlow { Size = 4; Opacity = 0.8; Color = #FFEAC777; } } }
               </TileInstance2D>
             </TileLayer2D>
           </TileMap2D>
@@ -91,7 +93,7 @@
               @templates {
                 <ContentTemplate DataType="local:SceneWorldNpc">
                   <Scene2D TranslateX="$DataContext.X" TranslateY="$DataContext.Y">
-                    <Sprite2D SourceResourceId="$WorldAtlas" SourceRect="$DataContext.SourceRect" Destination="$DataContext.Destination">
+                    <Sprite2D Image="$WorldAtlas" SourceX="$DataContext.SourceX" SourceY="$DataContext.SourceY" SourceWidth="$DataContext.SourceWidth" SourceHeight="$DataContext.SourceHeight" X="$DataContext.Destination.X" Y="$DataContext.Destination.Y" Width="$DataContext.Destination.Width" Height="$DataContext.Destination.Height">
                       <Sprite2D.Aspect>
                         @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.4; } @to { Opacity = 1; } } }
                       </Sprite2D.Aspect>
@@ -108,7 +110,7 @@
                 @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.5; } @to { Opacity = 1; } } }
               </Scene2D.Aspect>
               @prism { @layer PlayerInk { @filter Blur { Radius = 0.25; } } }
-              <Sprite2D Name="PlayerSprite" SourceResourceId="$WorldAtlas" Destination="$DataContext.PlayerDestination:OneWay"
+              <Sprite2D Name="PlayerSprite" Image="$WorldAtlas" Width="$DataContext.PlayerWidth:OneWay" Height="$DataContext.PlayerHeight:OneWay"
                         Animations="$PlayerAnimations" AnimationState="$DataContext.PlayerState:OneWay">
                 <Sprite2D.Aspect>
                   @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.5; } @to { Opacity = 1; } } }

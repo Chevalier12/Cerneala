@@ -94,7 +94,7 @@ Declare one retained scene root, then nest as many transformed `Scene2D` groups 
                     @templates
                     {
                         <ContentTemplate DataType="System.String">
-                            <Sprite2D SourceResourceId="$WorldAtlas">
+                            <Sprite2D Image="$WorldAtlas">
                                 <Sprite2D.Aspect>
                                     @on Loaded
                                     {
@@ -148,6 +148,8 @@ Drawing runs inside the Cerneala frame loop. Cerneala owns the render target, pr
 The SDL_GPU backend selects multisampling for the surface independently of the hosting window, including single-sample design-preview windows. It requests eight samples and falls back to four, two, or one according to device support for the surface format. The resolved surface is then composited into the window; applications do not manage its multisample target.
 
 `Continuous` redraw mode evaluates the drawing callbacks every Cerneala frame. The backend records the resulting mapped 2D command stream and retains both that stream and the rendered surface. When the stream is visually identical to the previous frame, GPU rasterization is skipped. When commands change, only the affected surface region is cleared and recomposed from the current commands that intersect it, in drawing order. Complex transformed sprites can conservatively invalidate the whole surface.
+
+For a scene without imperative drawing callbacks or an `OnDraw` override, a continuous tick alone does not change its Prism content version. Scene mutations, effective animation changes, and explicit invalidation still change that version; continuous recording remains enabled.
 
 `OnDemand` redraw mode reuses the last rendered surface without evaluating the callbacks until layout, a relevant property, or `InvalidateFrame()` marks it dirty. Prism images used by the most recently rendered frame are tracked automatically: changing an operation or the live `PrismPipeline` marks the surface dirty without an application-level invalidation call. State used only to calculate manual primitives has no drawable dependency to track and still requires `InvalidateFrame()`.
 

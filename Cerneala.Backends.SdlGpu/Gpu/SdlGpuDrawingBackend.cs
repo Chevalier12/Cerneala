@@ -470,7 +470,7 @@ internal sealed partial class SdlGpuDrawingBackend :
                             child.Target.SampleTexture,
                             target,
                             child.Clip,
-                            destination: null,
+                            child.Destination,
                             state,
                             child.WorkingColorProfile);
                         // Presenting the child flushes (and ends) its batch. The
@@ -940,6 +940,20 @@ internal sealed partial class SdlGpuDrawingBackend :
             return;
         }
 
+        if (cachedSolid is not null &&
+            resources.FindTexture(redKey) is { } redTexture &&
+            resources.FindTexture(greenKey) is { } greenTexture &&
+            resources.FindTexture(blueKey) is { } blueTexture)
+        {
+            DrawRect destination = CreateTextDestination(
+                baseline, redTexture.OriginOffset, redTexture.Width, redTexture.Height);
+            Color tint = ApplyOpacity(cachedSolid.Color, cachedSolid.Opacity * commandOpacity);
+            AddTextLayer(redTexture, redKey, destination, tint, SdlGpuColorWriteMask.Red, state, batches);
+            AddTextLayer(greenTexture, greenKey, destination, tint, SdlGpuColorWriteMask.Green, state, batches);
+            AddTextLayer(blueTexture, blueKey, destination, tint, SdlGpuColorWriteMask.Blue, state, batches);
+            return;
+        }
+
         textRequestCount++;
         long rasterizationStarted = Stopwatch.GetTimestamp();
         RasterizedText[] layers;
@@ -1159,7 +1173,23 @@ internal sealed partial class SdlGpuDrawingBackend :
             textureKey,
             layer.Width,
             layer.Height,
-            layer.PixelSpan);
+            layer.PixelSpan,
+            layer.OriginOffset);
+        AddTextLayer(texture, textureKey, destination, tint, colorWriteMask, state, batches);
+    }
+
+    private void AddTextLayer(
+        SdlGpuTextureResource texture,
+        object textureKey,
+        DrawRect destination,
+        Color tint,
+        SdlGpuColorWriteMask colorWriteMask,
+        RenderState state,
+        Cerberus batches)
+    {
+        // Standalone coverage follows the same shared-device, per-backend
+        // leases as brush text; it must not live until device disposal.
+        MarkBrushTextureUsed(textureKey);
         AddQuad(
             batches,
             destination,
@@ -1435,7 +1465,7 @@ internal sealed partial class SdlGpuDrawingBackend :
         Cerberus surfaceBatches,
         bool requireFullReplay = false)
     {
-        PrismFrameAnalysis analysis = new PrismFrameAnalyzer().Analyze(surface.Commands);
+        PrismFrameAnalysis analysis = new PrismFrameAnalyzer().Analyze(surface.Commands, surface.RetainedEntries);
         if (analysis.Scopes.IsDefaultOrEmpty)
         {
             surface.PrismExecutor.ProcessInvalidations(analysis, surface.PrismCacheInvalidations);
@@ -2309,4 +2339,5 @@ internal sealed partial class SdlGpuDrawingBackend :
 internal readonly record struct SdlGpuPrismPresentationSurface(
     SdlGpuRenderTarget Target,
     SdlRect? Clip,
-    Cerneala.Drawing.Prism.Catalog.PrismColorProfile WorkingColorProfile);
+    Cerneala.Drawing.Prism.Catalog.PrismColorProfile WorkingColorProfile,
+    DrawRect Destination);

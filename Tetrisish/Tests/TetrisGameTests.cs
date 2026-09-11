@@ -379,7 +379,7 @@ public sealed class TetrisGameTests
             .Cast<TetrisSpriteModel>()
             .ToArray();
         Assert.Equal(2, sprites.Length);
-        Assert.All(sprites, sprite => Assert.Same(atlas, sprite.Source));
+        Assert.All(sprites, sprite => Assert.Same(atlas, sprite.Image.DirectImage));
         Assert.Equal(
             [new Cerneala.Drawing.DrawRect(1, 19, 1, 1),
              new Cerneala.Drawing.DrawRect(2, 19, 1, 1)],
@@ -779,7 +779,7 @@ public sealed class TetrisGameTests
         Sprite2D sprite = DescendantsAndSelf(window)
             .OfType<Sprite2D>()
             .Single(candidate =>
-                candidate.Source is not null &&
+                candidate.Image is not null &&
                 candidate.Tint.A > 55);
         Assert.True(sprite.IsVisible);
         Assert.True(GeneratedMarkup.TryGetPrismInstance(sprite, out _));

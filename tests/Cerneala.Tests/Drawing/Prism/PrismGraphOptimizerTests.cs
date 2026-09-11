@@ -835,6 +835,26 @@ public sealed class PrismGraphOptimizerTests
     }
 
     [Fact]
+    public void SurfaceLifetimesIncludeNestedCaptureConsumers()
+    {
+        PrismDrawScope outer = PrismTestData.Scope(
+            PrismTestData.Composition("OuterLifetime", Layer(1, "Outer")), ownerToken: 401);
+        PrismDrawScope inner = PrismTestData.Scope(
+            PrismTestData.Composition("InnerLifetime", Layer(2, "Inner")), ownerToken: 402);
+        PrismGraphExecutionPlan plan = new PrismGraphOptimizer().Optimize(BuildNestedGraph(outer, inner));
+
+        for (int consumer = 0; consumer < plan.ExecutionOrder.Length; consumer++)
+        {
+            foreach (int input in plan.CacheInputExecutionIndices[consumer])
+            {
+                Assert.True(plan.SurfaceLifetimes[input].LastStep >= consumer,
+                    $"Input {plan.ExecutionOrder[input]} expires at step {plan.SurfaceLifetimes[input].LastStep}, " +
+                    $"before consuming node {plan.ExecutionOrder[consumer]} at step {consumer}.");
+            }
+        }
+    }
+
+    [Fact]
     public void OptimizationAndLifetimeAreIndependentOfCollectionOrder()
     {
         PrismCompositionDefinition firstDefinition = PrismTestData.Composition(

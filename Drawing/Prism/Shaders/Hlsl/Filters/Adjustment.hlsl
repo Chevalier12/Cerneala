@@ -459,8 +459,9 @@ float4 LevelsCdfPixelShader(
         float2 uv = float2(
             (fmod(index, sampleSide) + 0.5) / sampleSide,
             (floor(index / sampleSide) + 0.5) / sampleSide);
+        uv = PrismReferenceUvToSource(uv);
         float4 source = tex2D(SpriteTextureSampler, uv);
-        if (source.a > 0.0)
+        if (source.a > 0.0 && all(uv >= 0.0) && all(uv <= 1.0))
         {
             float4 linearSample = WorkingAssociatedToLinearSrgb(
                 source,

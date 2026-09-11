@@ -39,6 +39,8 @@ Inheritance:
 </TileInstance2D>
 ```
 
+Place this promoted-cell presentation inside the matching imported `TileLayer2D`. This does not author a free-position image; use `Tile` for static pixel placements or `Sprite2D` for independent interactive images.
+
 ## Remarks
 
 `X` and `Y` are tile coordinates in the owning layer. They identify a real cell, not an arbitrary scene position. Coordinates must remain unique among the layer's promoted instances and must resolve to an existing chunk. Invalid runtime changes are rejected when the map validates the promoted collection for recording.

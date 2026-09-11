@@ -31,6 +31,8 @@ internal readonly record struct PrismRasterSurface(
     int Height,
     PrismRasterSurfaceFormat Format);
 
+internal readonly record struct PrismRasterExtent(int X, int Y, int Width, int Height);
+
 internal readonly record struct PrismRasterPass(
     PrismGraphNodeId Owner,
     PrismRasterPassKind Kind,
@@ -54,33 +56,69 @@ internal sealed class PrismRasterPlanner
     private PrismRasterExecutionPlan? previousResult;
     private int previousWidth;
     private int previousHeight;
+    private readonly Dictionary<int, PrismRasterExtent> previousScopeExtents = [];
 
     internal PrismRasterExecutionPlan Prepare(
         PrismGraphExecutionPlan source,
         int width,
-        int height)
+        int height,
+        IReadOnlyDictionary<int, PrismRasterExtent>? scopeExtents = null)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
         if (ReferenceEquals(source, previousSource) &&
-            width == previousWidth && height == previousHeight)
+            width == previousWidth && height == previousHeight &&
+            HasSameScopeExtents(scopeExtents))
         {
             return previousResult!;
         }
 
-        PrismRasterExecutionPlan result = Build(source, width, height);
+        if (scopeExtents is not null)
+        {
+            foreach (PrismRasterExtent extent in scopeExtents.Values)
+            {
+                ArgumentOutOfRangeException.ThrowIfNegativeOrZero(extent.Width);
+                ArgumentOutOfRangeException.ThrowIfNegativeOrZero(extent.Height);
+            }
+        }
+        PrismRasterExecutionPlan result = Build(source, width, height, scopeExtents);
         previousSource = source;
         previousWidth = width;
         previousHeight = height;
         previousResult = result;
+        previousScopeExtents.Clear();
+        if (scopeExtents is not null)
+        {
+            foreach ((int scope, PrismRasterExtent extent) in scopeExtents)
+            {
+                previousScopeExtents.Add(scope, extent);
+            }
+        }
         return result;
+    }
+
+    private bool HasSameScopeExtents(IReadOnlyDictionary<int, PrismRasterExtent>? current)
+    {
+        if (previousScopeExtents.Count != (current?.Count ?? 0))
+        {
+            return false;
+        }
+        foreach ((int scope, PrismRasterExtent extent) in previousScopeExtents)
+        {
+            if (!current!.TryGetValue(scope, out PrismRasterExtent other) || other != extent)
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static PrismRasterExecutionPlan Build(
         PrismGraphExecutionPlan source,
         int width,
-        int height)
+        int height,
+        IReadOnlyDictionary<int, PrismRasterExtent>? scopeExtents)
     {
         PrismGraph graph = source.OptimizedGraph;
         Dictionary<int, PrismGraphScope> scopes = graph.Scopes
@@ -101,6 +139,9 @@ internal sealed class PrismRasterPlanner
         {
             PrismGraphNode node = graph.GetNode(id);
             PrismGraphScope scope = scopes[node.AnalysisScopeIndex];
+            PrismRasterExtent rasterExtent = scopeExtents is not null &&
+                scopeExtents.TryGetValue(node.AnalysisScopeIndex, out PrismRasterExtent local)
+                    ? local : new(0, 0, width, height);
             if (node.Kind == PrismGraphNodeKind.Filter &&
                 node.Filter is PrismFilterId filter &&
                 PrismAdjustmentPlanner.IsSupported(filter))
@@ -126,8 +167,8 @@ internal sealed class PrismRasterPlanner
                 styles.Add(id, style);
                 PrismGraphNodeId input = Input(node, PrismGraphEdgeKind.StyleSource);
                 PrismGraphNodeId prepared = input;
-                PrismRasterSurface maskSurface = new(width, height, PrismRasterSurfaceFormat.Rgba16Float);
-                PrismRasterSurface fieldSurface = new(width, height, PrismRasterSurfaceFormat.Rgba32Float);
+                PrismRasterSurface maskSurface = new(rasterExtent.Width, rasterExtent.Height, PrismRasterSurfaceFormat.Rgba16Float);
+                PrismRasterSurface fieldSurface = new(rasterExtent.Width, rasterExtent.Height, PrismRasterSurfaceFormat.Rgba32Float);
                 if (style.Style == PrismStyleId.DropShadow)
                 {
                     PrismStyleSamplingGeometry geometry = PrismStylePlanner.ResolveSamplingGeometry(style, scope);
@@ -150,7 +191,7 @@ internal sealed class PrismRasterPlanner
                     {
                         prepared = Add(node, input, PrismRasterPassKind.DistanceSeed,
                             fieldSurface, directional: directional);
-                        int extent = Math.Max(width, height);
+                        int extent = Math.Max(rasterExtent.Width, rasterExtent.Height);
                         // Largest power of two below extent, without overflowing
                         // at the upper end of the positive integer domain.
                         int jump = 1;

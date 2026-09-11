@@ -1,5 +1,6 @@
 float DissolveValue(float2 position)
 {
+    position = PrismReferencePosition(position);
     float2 seedOffset = float2(
         fmod(DissolveSeed, 256.0),
         floor(DissolveSeed / 256.0));

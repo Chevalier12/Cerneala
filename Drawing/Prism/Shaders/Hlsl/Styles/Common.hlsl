@@ -82,6 +82,7 @@ float StyleFlag(float bit)
 
 float StyleRandom(float2 position)
 {
+    position = PrismReferencePosition(position);
     float value = dot(
         floor(position),
         float2(12.9898, 78.233));
@@ -135,6 +136,7 @@ float GradientCoordinate(
 
 float GradientBlueNoise(float2 position)
 {
+    position = PrismReferencePosition(position);
     float2 uv = (fmod(floor(position), 16.0) + 0.5) / 16.0;
     return tex2D(GradientDitherSampler, uv).r - 0.5;
 }
@@ -151,7 +153,7 @@ float4 SampleStylePaint(
         dot(StyleBoundsUvRowX, position),
         dot(StyleBoundsUvRowY, position));
     float2 paintUv = lerp(
-        input.Position.xy * PixelSize,
+        PrismReferenceUv(input.Position.xy),
         layerUv,
         linked);
     float paintKind = StyleModes0.w;

@@ -103,6 +103,41 @@ public sealed class PrismRasterPlannerTests
         AssertCompleteDependencies(resized);
     }
 
+    [Fact]
+    public void ScopeExtentsControlDistanceWorkAndMutableExtentInputsCannotStaleThePlan()
+    {
+        PrismGraphExecutionPlan semantic = SemanticPlan(new(new(1), "Glow", styles: [new(PrismStyleId.OuterGlow)]));
+        int scope = Assert.Single(semantic.OptimizedGraph.Scopes).AnalysisScopeIndex;
+        Dictionary<int, PrismRasterExtent> extents = new() { [scope] = new(96, 80, 32, 16) };
+        PrismRasterPlanner planner = new();
+        PrismRasterExecutionPlan first = planner.Prepare(semantic, 256, 256, extents);
+
+        Assert.All(first.AuxiliaryPasses.Values, pass =>
+            Assert.Equal(new(32, 16, PrismRasterSurfaceFormat.Rgba32Float), pass.Surface));
+        Assert.Equal(new[] { 16, 8, 4, 2, 1, 1 }, OrderedPasses(first)
+            .Where(pass => pass.Kind == PrismRasterPassKind.DistanceFlood)
+            .Select(pass => (int)pass.RadiusOrJump));
+        Assert.Same(first, planner.Prepare(semantic, 256, 256, new Dictionary<int, PrismRasterExtent>(extents)));
+
+        extents[scope] = new(96, 80, 64, 32);
+        PrismRasterExecutionPlan resized = planner.Prepare(semantic, 256, 256, extents);
+        Assert.NotSame(first, resized);
+        Assert.All(resized.AuxiliaryPasses.Values, pass =>
+            Assert.Equal(new(64, 32, PrismRasterSurfaceFormat.Rgba32Float), pass.Surface));
+        Assert.Equal(first.AuxiliaryPasses.Count + 1, resized.AuxiliaryPasses.Count);
+        AssertCompleteDependencies(resized);
+        Assert.NotSame(resized, planner.Prepare(semantic, 256, 256));
+    }
+
+    [Fact]
+    public void ScopeExtentsRejectEmptyRasterDimensions()
+    {
+        PrismGraphExecutionPlan semantic = SemanticPlan(new(new(1), "Glow", styles: [new(PrismStyleId.OuterGlow)]));
+        int scope = Assert.Single(semantic.OptimizedGraph.Scopes).AnalysisScopeIndex;
+        Assert.Throws<ArgumentOutOfRangeException>(() => new PrismRasterPlanner().Prepare(semantic, 256, 256,
+            new Dictionary<int, PrismRasterExtent> { [scope] = new(0, 0, 0, 32) }));
+    }
+
     private static IEnumerable<PrismRasterPass> OrderedPasses(PrismRasterExecutionPlan raster) =>
         raster.GraphPlan.ExecutionOrder.Where(raster.AuxiliaryPasses.ContainsKey)
             .Select(id => raster.AuxiliaryPasses[id]);

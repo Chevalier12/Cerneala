@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Globalization;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Prism;
 using Cerneala.Tests.Drawing.Prism;
@@ -19,6 +20,161 @@ using Scene2D = global::Cerneala.UI.Controls.Scene2D;
 
 public sealed class SceneDebugOverlayTests
 {
+    [Fact]
+    public void CachedTileLabelsFollowCellValuesFlagsAndMutableCultureFormatting()
+    {
+        TileMap2DModel Model(int tileId) => new(new DrawSize(16, 16),
+            [new TileSet2D("atlas", new ResourceId<ImageResource>("atlas"),
+                [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16)),
+                 new TileDefinition2D(2, new DrawRect(0, 0, 16, 16))])],
+            [new TileLayer2DModel("ground", [new TileChunk2D(new TileCoordinate2D(-1, -1), 1, 1, [new TileCell2D(tileId)])])]);
+        TileMap2D map = new() { Model = Model(1), TranslateX = 16, TranslateY = 16 };
+        map.Resources.SetResource(new ResourceId<ImageResource>("atlas"), new ImageResource(new TestImage()));
+        Scene2DDebugOverlay overlay = new() { Flags = Scene2DDebugFlags.TileCoordinates | Scene2DDebugFlags.TileIds };
+        Scene2D scene = new();
+        scene.Children.Add(map);
+        scene.Children.Add(overlay);
+        RenderSurface2D surface = new() { Scene = scene };
+        DrawCommand Label()
+        {
+            DrawCommandList commands = new();
+            ((IRenderSurface2DFrameSource)surface).RecordFrame(commands, new DrawRect(0, 0, 64, 64));
+            return Assert.Single(commands.Where(command => command.Kind == DrawCommandKind.DrawText));
+        }
+        CultureInfo previous = CultureInfo.CurrentCulture;
+        CultureInfo culture = (CultureInfo)CultureInfo.InvariantCulture.Clone();
+        try
+        {
+            CultureInfo.CurrentCulture = culture;
+            culture.NumberFormat.NegativeSign = "~";
+            DrawCommand first = Label();
+            Assert.Equal("~1,~1 #1", first.Text);
+            Assert.Same(first.TextRun, Label().TextRun);
+            overlay.Flags |= Scene2DDebugFlags.ChunkBounds;
+            Assert.Same(first.TextRun, Label().TextRun);
+
+            // The same CultureInfo can change in place; identity is not a sufficient cache key.
+            culture.NumberFormat.NegativeSign = "minus";
+            DrawCommand reformatted = Label();
+            Assert.Equal("minus1,minus1 #1", reformatted.Text);
+            Assert.NotSame(first.TextRun, reformatted.TextRun);
+            overlay.Flags = Scene2DDebugFlags.TileCoordinates;
+            Assert.Equal("minus1,minus1", Label().Text);
+            overlay.Flags = Scene2DDebugFlags.TileIds;
+            Assert.Equal(" #1", Label().Text);
+            map.Model = Model(2);
+            Assert.Equal(" #2", Label().Text);
+            overlay.Flags = Scene2DDebugFlags.TileCoordinates | Scene2DDebugFlags.TileIds;
+            Assert.Equal("minus1,minus1 #2", Label().Text);
+        }
+        finally { CultureInfo.CurrentCulture = previous; }
+    }
+
+    [Theory]
+    [InlineData(Scene2DDebugFlags.TileCoordinates)]
+    [InlineData(Scene2DDebugFlags.TileIds)]
+    [InlineData(Scene2DDebugFlags.TileCoordinates | Scene2DDebugFlags.TileIds)]
+    public void UnchangedTileLabelsDoNotAllocateTheirTextAgain(Scene2DDebugFlags flags)
+    {
+        (Scene2D scene, Scene2DDebugOverlay overlay, _) = Fixture();
+        RenderSurface2D surface = new() { Scene = scene };
+        DrawCommandList commands = new();
+        long BytesPerFrame(Scene2DDebugFlags selected)
+        {
+            overlay.Flags = selected;
+            void RecordFrame()
+            {
+                commands.Clear();
+                ((IRenderSurface2DFrameSource)surface).RecordFrame(commands, new DrawRect(0, 0, 64, 64));
+            }
+            for (int warmup = 0; warmup < 64; warmup++) { RecordFrame(); }
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int index = 0; index < 64; index++) { RecordFrame(); }
+            return (GC.GetAllocatedBytesForCurrentThread() - before) / 64;
+        }
+
+        long outlines = BytesPerFrame(Scene2DDebugFlags.ChunkBounds);
+        long labels = BytesPerFrame(Scene2DDebugFlags.ChunkBounds | flags);
+        Assert.Equal(16, commands.Count(command => command.Kind == DrawCommandKind.DrawText));
+        Assert.True(labels - outlines <= 128,
+            $"Unchanged labels allocated {labels - outlines:N0} extra bytes/frame for 16 tiles.");
+    }
+
+    [Fact]
+    public void CombinedTileLabelsDoNotAllocateIntermediateFormattedStrings()
+    {
+        (Scene2D scene, Scene2DDebugOverlay overlay, _) = Fixture();
+        RenderSurface2D surface = new() { Scene = scene };
+        DrawCommandList commands = new();
+        long BytesPerFrame(Scene2DDebugFlags flags)
+        {
+            overlay.Flags = flags;
+            void RecordFrame()
+            {
+                commands.Clear();
+                ((IRenderSurface2DFrameSource)surface).RecordFrame(commands, new DrawRect(0, 0, 64, 64));
+            }
+            for (int warmup = 0; warmup < 64; warmup++) { RecordFrame(); }
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int index = 0; index < 64; index++) { RecordFrame(); }
+            return (GC.GetAllocatedBytesForCurrentThread() - before) / 64;
+        }
+
+        long coordinates = BytesPerFrame(Scene2DDebugFlags.TileCoordinates);
+        long combined = BytesPerFrame(Scene2DDebugFlags.TileCoordinates | Scene2DDebugFlags.TileIds);
+        // Six-character labels may occupy a larger string allocation than
+        // three-character labels, but do not need separate ID/coordinate strings.
+        Assert.True(combined - coordinates <= 16 * 16 + 128,
+            $"Adding IDs allocated {combined - coordinates:N0} extra bytes/frame for 16 labels.");
+        Assert.Equal("0,0 #1", commands.First(command => command.Kind == DrawCommandKind.DrawText).Text);
+        BytesPerFrame(Scene2DDebugFlags.TileIds);
+        Assert.All(commands.Where(command => command.Kind == DrawCommandKind.DrawText),
+            command => Assert.Equal(" #1", command.Text));
+    }
+
+    [Fact]
+    public void ConsecutiveFramesRetainOnlyUnchangedVisibleLabelPayloads()
+    {
+        (Scene2D scene, Scene2DDebugOverlay overlay, _) = Fixture();
+        const Scene2DDebugFlags labels = Scene2DDebugFlags.TileCoordinates | Scene2DDebugFlags.TileIds;
+        overlay.Flags = labels;
+        RenderSurface2D surface = new() { Scene = scene };
+        DrawCommand[] RecordLabels()
+        {
+            DrawCommandList commands = new();
+            ((IRenderSurface2DFrameSource)surface).RecordFrame(commands, new DrawRect(0, 0, 64, 64));
+            return commands.Where(command => command.Kind == DrawCommandKind.DrawText).ToArray();
+        }
+
+        DrawCommand[] first = RecordLabels();
+        DrawCommand[] second = RecordLabels();
+        Assert.Equal(16, first.Length);
+        Assert.Equal(first.Length, second.Length);
+        for (int index = 0; index < first.Length; index++)
+        {
+            Assert.Same(first[index].TextRun, second[index].TextRun);
+            Assert.Equal(first[index], second[index]);
+        }
+
+        overlay.FontSize = 12;
+        DrawCommand[] resized = RecordLabels();
+        Assert.NotSame(first[0].TextRun, resized[0].TextRun);
+        Assert.Equal(12, resized[0].TextRun!.Size);
+        Assert.Equal(first[0].Text, resized[0].Text);
+
+        // A label absent for one complete frame must not remain in a history cache.
+        overlay.Flags = Scene2DDebugFlags.ChunkBounds;
+        Assert.Empty(RecordLabels());
+        overlay.Flags = labels;
+        DrawCommand[] returned = RecordLabels();
+        Assert.NotSame(resized[0].TextRun, returned[0].TextRun);
+
+        overlay.Flags = Scene2DDebugFlags.None;
+        Assert.Empty(RecordLabels());
+        overlay.Flags = labels;
+        Assert.NotSame(returned[0].TextRun, RecordLabels()[0].TextRun);
+    }
+
     [Fact]
     public void DebugOutlinesUseExplicitCenteredVectorStrokesWithoutIdentityOpacityLayers()
     {

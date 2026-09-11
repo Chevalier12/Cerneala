@@ -24,6 +24,21 @@
       {
         "__type": "Tiles",
         "type": "Tiles",
+        "uid": 4,
+        "identifier": "Doors",
+        "gridSize": 16,
+        "pxOffsetX": 0,
+        "pxOffsetY": 0,
+        "parallaxFactorX": 0,
+        "parallaxFactorY": 0,
+        "tilesetDefUid": 10,
+        "intGridValues": [],
+        "intGridValuesGroups": [],
+        "autoRuleGroups": []
+      },
+      {
+        "__type": "Tiles",
+        "type": "Tiles",
         "uid": 2,
         "identifier": "Buildings",
         "gridSize": 16,
@@ -345,7 +360,7 @@
                 {
                   "__identifier": "TileLayer",
                   "__type": "String",
-                  "__value": "2",
+                  "__value": "4",
                   "defUid": 206,
                   "realEditorValues": []
                 },
@@ -895,6 +910,45 @@
             }
           ],
           "gridTiles": [],
+          "intGridCsv": []
+        },
+        {
+          "__cHei": 32,
+          "__cWid": 64,
+          "__gridSize": 16,
+          "__identifier": "Doors",
+          "__opacity": 1,
+          "__pxTotalOffsetX": 0,
+          "__pxTotalOffsetY": 0,
+          "__type": "Tiles",
+          "__tilesetDefUid": 10,
+          "__tilesetRelPath": "world-atlas.png",
+          "iid": "00000004-1234-4234-8234-123456789abc",
+          "layerDefUid": 4,
+          "levelId": 20,
+          "pxOffsetX": 0,
+          "pxOffsetY": 0,
+          "visible": true,
+          "autoLayerTiles": [],
+          "entityInstances": [],
+          "gridTiles": [
+            {
+              "a": 1,
+              "f": 0,
+              "px": [
+                224,
+                144
+              ],
+              "src": [
+                96,
+                0
+              ],
+              "t": 6,
+              "d": [
+                590
+              ]
+            }
+          ],
           "intGridCsv": []
         },
         {
@@ -2707,22 +2761,6 @@
               "t": 3,
               "d": [
                 589
-              ]
-            },
-            {
-              "a": 1,
-              "f": 0,
-              "px": [
-                224,
-                144
-              ],
-              "src": [
-                96,
-                0
-              ],
-              "t": 6,
-              "d": [
-                590
               ]
             },
             {

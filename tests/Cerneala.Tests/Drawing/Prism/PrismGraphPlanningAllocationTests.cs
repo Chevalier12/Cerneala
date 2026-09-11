@@ -10,6 +10,94 @@ namespace Cerneala.Tests.Drawing.Prism;
 public sealed class PrismGraphPlanningAllocationTests
 {
     [Fact]
+    public void RerecordedEquivalentScopesReuseGraphAndPlanWithoutRebuilding()
+    {
+        PrismDrawScope scope = PrismTestData.Scope(
+            PrismTestData.Composition("RerecordedPlanning", PrismTestData.Layer(1, "Content")));
+        DrawCommandList commands = new();
+        PrismFrameAnalyzer analyzer = new();
+        PrismGraphBuilder builder = new();
+        PrismGraphOptimizer optimizer = new();
+        PrismGraph? firstGraph = null;
+        PrismGraphExecutionPlan? firstPlan = null;
+        long allocatedBytes = 0;
+        const int warmupFrames = 8;
+        const int measuredFrames = 64;
+
+        for (int frame = 0; frame < warmupFrames + measuredFrames; frame++)
+        {
+            commands.Clear();
+            commands.Add(DrawCommand.BeginPrism(scope));
+            commands.Add(DrawCommand.FillRectangle(new DrawRect(0, 0, 10, 10), Color.White));
+            commands.Add(DrawCommand.EndPrism());
+            // Work outside the scope may change without changing the graph's inputs.
+            commands.Add(DrawCommand.FillRectangle(new DrawRect(30, 0, frame + 1, 10), Color.White));
+            PrismFrameAnalysis analysis = analyzer.Analyze(commands);
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            PrismGraph graph = builder.Build(analysis);
+            PrismGraphExecutionPlan plan = optimizer.Optimize(graph);
+            if (frame >= warmupFrames)
+            {
+                allocatedBytes += GC.GetAllocatedBytesForCurrentThread() - before;
+            }
+            firstGraph ??= graph;
+            firstPlan ??= plan;
+            if (frame == warmupFrames + measuredFrames - 1)
+            {
+                Assert.True(allocatedBytes <= measuredFrames * 32,
+                    $"Equivalent scope planning allocated {allocatedBytes:N0} bytes across {measuredFrames} rerecorded frames.");
+                Assert.Same(firstGraph, graph);
+                Assert.Same(firstPlan, plan);
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData("instance")]
+    [InlineData("owner")]
+    [InlineData("bounds")]
+    [InlineData("transform")]
+    [InlineData("scale")]
+    [InlineData("visual")]
+    [InlineData("draw")]
+    [InlineData("lower-ui")]
+    [InlineData("values")]
+    [InlineData("command-indices")]
+    public void RerecordedChangedScopeInputsInvalidateTheGraph(string change)
+    {
+        PrismDrawScope scope = PrismTestData.Scope(
+            PrismTestData.Composition("ChangedPlanning", PrismTestData.Layer(1, "Content")));
+        DrawCommandList commands = PrismTestData.Commands(
+            DrawCommand.BeginPrism(scope), DrawCommand.EndPrism());
+        PrismFrameAnalyzer analyzer = new();
+        PrismGraphBuilder builder = new();
+        PrismGraph firstGraph = builder.Build(analyzer.Analyze(commands));
+        if (change == "values")
+        {
+            scope.Instance.GetLayerState(new PrismNodeId(1)).Opacity = 0.4f;
+        }
+        PrismDrawScope changed = new(
+            change == "instance" ? new PrismInstance(scope.Definition) : scope.Instance,
+            change == "owner" ? new PrismCacheOwnerToken(2) : scope.CacheOwnerToken,
+            change == "bounds" ? new DrawRect(1, 2, 30, 40) : scope.ControlBounds,
+            change == "transform" ? System.Numerics.Matrix3x2.CreateTranslation(1, 2) : scope.EffectiveTransform,
+            change == "scale" ? 2 : scope.PixelScale,
+            change == "visual" ? 2 : scope.VisualContentVersion,
+            scope.Resources,
+            lowerUiVersion: change == "lower-ui" ? 1 : scope.LowerUiVersion,
+            drawContentVersion: change == "draw" ? 1 : scope.DrawContentVersion);
+        commands.Clear();
+        if (change == "command-indices")
+        {
+            commands.Add(DrawCommand.FillRectangle(new DrawRect(30, 0, 10, 10), Color.White));
+        }
+        commands.Add(DrawCommand.BeginPrism(changed));
+        commands.Add(DrawCommand.EndPrism());
+
+        Assert.NotSame(firstGraph, builder.Build(analyzer.Analyze(commands)));
+    }
+
+    [Fact]
     public void RepeatedCurrentFramePlanningAllocatesAtMost32BytesPerFrame()
     {
         PrismDrawScope scope = PrismTestData.Scope(

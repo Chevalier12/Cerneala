@@ -48,7 +48,7 @@ For each parent-child pair, the propagator reads the parent's effective value. I
 
 The class does not make inherited values stronger than local or other higher-priority value sources. Effective value precedence is handled by the UI property store, so a local child value continues to win over an inherited value.
 
-`UIRoot` owns an `InheritedPropertyPropagator` instance and invokes it during the inherited-property frame phase. `ItemsPresenter` also uses it when processing realized subtrees, then clears inherited and aspect dirty state for the processed elements.
+`UIRoot` owns an `InheritedPropertyPropagator` instance and invokes it during the inherited-property frame phase. The root's frame processor coordinates recursive propagation with the scheduler so that pending descendant work already covered by the traversal is not processed again. New inherited invalidations raised after a descendant's propagation begins remain queued for processing. Calling the public `PropagateFrom` method directly does not consume pending scheduler work. `ItemsPresenter` also uses that method when processing realized subtrees, then clears inherited and aspect dirty state for the processed elements.
 
 ## Constructors
 

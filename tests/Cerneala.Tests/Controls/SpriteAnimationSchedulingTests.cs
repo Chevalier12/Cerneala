@@ -66,10 +66,10 @@ public sealed class SpriteAnimationSchedulingTests
         sprite.IsVisible = true;
         Assert.Equal(16f, Record(surface).Single(IsImage).ImageSource!.Value.X);
 
-        sprite.Destination = new DrawRect(1000, 1000, 16, 16);
+        sprite.X = 1000; sprite.Y = 1000; sprite.Width = 16; sprite.Height = 16;
         TimeSensitiveRenderInvalidator.Invalidate(root, TimeSpan.FromMilliseconds(100));
         Assert.DoesNotContain(Record(surface), IsImage);
-        sprite.Destination = new DrawRect(0, 0, 16, 16);
+        sprite.X = 0; sprite.Y = 0; sprite.Width = 16; sprite.Height = 16;
         Assert.Equal(32f, Record(surface).Single(IsImage).ImageSource!.Value.X);
 
         scene.Children.Remove(sprite);
@@ -159,7 +159,7 @@ public sealed class SpriteAnimationSchedulingTests
     public void OffscreenPrismInputIsNotCulledAndFrameChangesInvalidateItsContent(bool groupPrism)
     {
         Sprite2D sprite = Sprite(Animations());
-        sprite.Destination = new DrawRect(65, 0, 16, 16);
+        sprite.X = 65; sprite.Y = 0; sprite.Width = 16; sprite.Height = 16;
         Scene2D scene = new();
         scene.Children.Add(sprite);
         RenderSurface2D surface = new() { Scene = scene, RedrawMode = RenderSurface2DRedrawMode.OnDemand };
@@ -190,7 +190,7 @@ public sealed class SpriteAnimationSchedulingTests
 
     private static Sprite2D Sprite(SpriteAnimationSet clips) => new()
     {
-        Source = new Image(), Destination = new DrawRect(0, 0, 16, 16),
+        Image = new(new Image()), X = 0, Y = 0, Width = 16, Height = 16,
         Animations = clips, AnimationState = "Walk"
     };
 

@@ -6,22 +6,33 @@ public sealed class InheritedPropertyPropagator
 {
     public int PropagateFrom(UIElement root)
     {
+        return PropagateFrom(root, null);
+    }
+
+    internal int PropagateFrom(UIElement root, Action<UIElement>? beginDescendantPropagation)
+    {
         ArgumentNullException.ThrowIfNull(root);
         int changed = 0;
         foreach (UIElement child in root.VisualChildren)
         {
-            changed += PropagateToSubtree(root, child);
+            changed += PropagateToSubtree(root, child, beginDescendantPropagation);
         }
 
         return changed;
     }
 
-    private static int PropagateToSubtree(UIElement parent, UIElement child)
+    private static int PropagateToSubtree(
+        UIElement parent,
+        UIElement child,
+        Action<UIElement>? beginDescendantPropagation)
     {
         int changed = ApplyInheritedValues(parent, child);
+        // Consume work covered by this traversal before descending. A later
+        // callback can still requeue this element with genuinely new work.
+        beginDescendantPropagation?.Invoke(child);
         foreach (UIElement grandchild in child.VisualChildren)
         {
-            changed += PropagateToSubtree(child, grandchild);
+            changed += PropagateToSubtree(child, grandchild, beginDescendantPropagation);
         }
 
         return changed;

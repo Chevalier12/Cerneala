@@ -57,7 +57,7 @@ SDL_GPU state caching is local to one flush and its resumed render pass. The fir
 
 ### Public Graphix managed/native dependencies
 
-The native runtime comes from [Graphix.Native 3.4.16-graphix.4](https://www.nuget.org/packages/Graphix.Native/3.4.16-graphix.4),
+The native runtime comes from [Graphix.Native 3.4.16-graphix.6](https://www.nuget.org/packages/Graphix.Native/3.4.16-graphix.6),
 an independently maintained SDL fork. The managed binding is [Graphix-CS 3.4.16.1](https://www.nuget.org/packages/Graphix-CS/3.4.16.1),
 a packaging fork of upstream `SDL3-CS v3.4.16.0`. It preserves namespace `SDL3`,
 public class `SDL`, assembly name `SDL3-CS.dll`, and the upstream binding/generator source.
@@ -84,7 +84,108 @@ The inherited callback generator references Roslyn 5.9. Cerneala pins SDK `10.0.
 in `global.json` so the compiler can load it; application target frameworks remain unchanged.
 Older Roslyn 5.6 compilers reject the generator with `CS9057`.
 
-The native package records Graphix source commit
+The current native package records Graphix source commit
+`e912da037a59e33affc6ecd69be326265cdc748b`, built by
+[Graphix CI run 34618709538](https://github.com/Chevalier12/Graphix/actions/runs/34618709538).
+All six native build/test jobs and package assembly succeeded: 162 CTest entries
+passed, with zero failures or skipped entries. Both separate Windows native
+maximum-size gates passed 400/400 assertions. These are not cross-platform GPU
+certification results.
+
+The downloaded NuGet.org `.nupkg` SHA256 is
+`3F07C5A2D32A72C05A6FE9BF05C19A2F429C2DB8B3AA3014B932537031ED7A35`.
+Its NuGet repository signature is valid; all 25 entries from the verified CI
+archive match byte-for-byte, with only the repository signature added. The
+packaged Windows x64 DLL SHA256 is
+`2958F3D36859AD71ED5CA5D16B89768212FFE31F5C87CA48212EF6C5FD45A51F`.
+
+Graphix.6 retains compatible D3D12 graphics root bindings when pipeline objects
+share the same native root signature. First-pass binding, resource changes and
+descriptor-heap rotation retain their existing invalidation rules. There is no
+managed binding or public SDL API/ABI change. The exact packaged Windows x64
+DLL passed the nine-case descriptor matrix (30/30 assertions, three iterations),
+including zero SDL allocation requests over 8,193 warmed compatible-pipeline
+draws per iteration. The GPU texture matrix passed 162/162 assertions on each
+of D3D12 and Vulkan; all 1,271 exported names and ordinals match graphix.5.
+These native results do not establish Cerneala consumer or performance gates.
+
+#### Graphix.6 Windows x64 consumer verification
+
+On September 11, 2026, all three native package references were advanced to
+graphix.6; Graphix-CS remains 3.4.16.1. Restored, test-output, Playground and
+published smoke DLL hashes match the verified public Windows x64 payload.
+The loaded-runtime revision assertion and six-RID restored-asset validator
+passed, as did all five dependency-boundary tests.
+
+The complete Release solution build passed with zero warnings and errors.
+The first build encountered the previously recorded Visual Studio nested-restore
+`NETSDK1047` for LanguageServer's `net10.0/win-x64` assets. The unchanged Visual
+Studio test project passed 47/47 independently and regenerated those assets;
+the repeated complete build then passed without a source workaround.
+
+The native-enabled solution run passed 5,133 tests across nine projects with
+zero failures and four existing NVIDIA alpha-occlusion skips. This includes
+641 passing SDL backend tests and all 133 historical Drawing/Prism pixel cases.
+The two Windows tests that move the pointer or inject foreground input remained
+excluded at the maintainer's request: cursor publication and native
+input/graphics ownership. Those input gates remain unverified, not passed.
+
+All six shader artifact checks and the Prism public-surface/completeness audit
+passed. Windows x64 and ARM64 smoke publishing and native asset validation
+passed; the published Windows x64 multi-window and Prism smoke modes both
+completed successfully. ARM64 was published, not executed. Consumer execution
+on other RIDs and human runtime validation were not performed. These results
+do not establish the separate Scene World performance thresholds.
+Commands' output, package checks, TRX results and smoke artifacts are retained
+under `.artifacts/graphix-native-6/`.
+
+#### Historical graphix.5 verification
+
+The previous native package records Graphix source commit
+`b8784d6580e6c9a7dca1c2c8f9fcfd0ceec4b6eb`, built by
+[Graphix CI run 34579034687](https://github.com/Chevalier12/Graphix/actions/runs/34579034687).
+All six build/test jobs and package assembly succeeded. Its downloaded NuGet.org
+`.nupkg` SHA256 is
+`5151837CE8ABB79A22885B9B281E8FAC42BB6E18BE6D0C308B24FCF25F85B433`.
+The repository signature and all six RID payloads, provenance records, license
+and documentation bytes were verified against Graphix's staged release assets
+and committed source. The packaged Windows x64 DLL SHA256 is
+`61355686BA270E26B70C1D7E9C298660AF22F97CF03A449855A3C7F5E6B05FB1`.
+
+Graphix.5 adds a Windows input-shutdown phase before generic input state is
+released. It stops and joins device hotplug and raw-input producers, including
+when joystick keeps a shared notification reference alive. This corrects the
+input-lifetime race found during Cerneala test teardown; no managed binding or
+public SDL API change is required. Package verification alone does not establish
+Cerneala consumer correctness; downstream verification is recorded separately.
+
+#### Graphix.5 Windows x64 consumer verification
+
+On September 11, 2026, the exact public Windows x64 DLL passed all 18 lifetimes
+in Graphix's deterministic input-shutdown regression: mouse, keyboard and raw
+input, each with full SDL shutdown and video-subsystem shutdown, three iterations
+per case. Cerneala's package identity tests passed 3/3, and ten fresh-process
+Prism chapter test runs passed 160/160 without a native teardown crash.
+
+The complete Release solution build passed with zero warnings and errors. An
+initial build encountered the existing Visual Studio nested-restore
+`NETSDK1047`; the unchanged Visual Studio project passed independently and
+regenerated the RID assets, after which the full build passed. Three architecture
+test expectations still pinned to graphix.4 were updated to graphix.5 without
+changing the dependency-boundary assertions; all five boundary tests passed.
+
+The subsequent native-enabled solution run passed 5,107 tests across nine
+projects, with zero failures and four existing NVIDIA alpha-occlusion skips.
+This includes 632 passing SDL backend tests and all 133 historical Drawing/Prism
+pixel-conformance cases. Two Windows tests were excluded to avoid moving the
+user's pointer or injecting foreground input: cursor publication and native
+input/graphics ownership. Those input gates remain unverified, not passed.
+Consumer execution on other RIDs and human validation were not performed.
+These correctness results do not establish the separate performance thresholds.
+
+#### Historical graphix.4 verification
+
+The previous native package records Graphix source commit
 `7dcfac5a73007e72bd8fb060861e46fe07f55c46`, built by
 [Graphix CI run 34256929848](https://github.com/Chevalier12/Graphix/actions/runs/34256929848).
 Its downloaded NuGet.org `.nupkg` SHA256 is

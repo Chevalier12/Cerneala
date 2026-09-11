@@ -47,7 +47,7 @@ internal sealed class SpriteAnimationConformanceFixture : IDisposable
             new SpriteAnimationFrame(new DrawRect(32, 0, 16, 16), TimeSpan.FromMilliseconds(100), RenderSurface2DSpriteFlip.Vertical)])]);
         Sprite2D CreateSprite(DrawRect destination) => new()
         {
-            SourceResourceId = atlas, Destination = destination, IsAnimationPaused = true,
+            Image = new(atlas), X = destination.X, Y = destination.Y, Width = destination.Width, Height = destination.Height, IsAnimationPaused = true,
             Aspect = new ElementAspect([
                 new ElementAspectValue(Sprite2D.AnimationsProperty, clips),
                 new ElementAspectValue(Sprite2D.AnimationStateProperty, "Walk"),

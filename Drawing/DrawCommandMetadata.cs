@@ -25,23 +25,86 @@ internal sealed class DrawCommandMetadata
 
     internal DrawCommand RetainedIdentity { get; }
 
-    internal static DrawCommandMetadata Create(DrawCommand command)
+    internal static DrawCommandMetadata Create(DrawCommand command, DrawCommandMetadata? previous = null)
+    {
+        IReadOnlyList<object> resources = VisitResources(command, trackImage: null, previous?.Resources);
+        DrawRect? bounds = ResolveBounds(command);
+        bool isContextSensitive = IsContextSensitiveKind(command.Kind);
+        // Commands may reference mutable brushes and images. Rediscover their
+        // dependencies and bounds before sharing an immutable metadata snapshot.
+        if (previous is not null && previous.Bounds == bounds &&
+            previous.IsContextSensitive == isContextSensitive &&
+            previous.RetainedIdentity.Equals(command) &&
+            SameResources(previous.Resources, resources))
+        {
+            return previous;
+        }
+        return new DrawCommandMetadata(
+            bounds,
+            resources,
+            isContextSensitive,
+            command);
+    }
+
+    private static bool SameResources(IReadOnlyList<object> previous, IReadOnlyList<object> current)
+    {
+        if (ReferenceEquals(previous, current)) { return true; }
+        if (previous.Count != current.Count) { return false; }
+        for (int index = 0; index < current.Count; index++)
+        {
+            if (!ReferenceEquals(previous[index], current[index])) { return false; }
+        }
+        return true;
+    }
+
+    private static IReadOnlyList<object> VisitResources(
+        DrawCommand command,
+        Action<IDrawImage>? trackImage,
+        IReadOnlyList<object>? previousResources = null)
     {
         object? firstResource = null;
+        object? secondResource = null;
         List<object>? resources = null;
         HashSet<object>? seen = null;
 
         AddCommandResources(command);
 
-        return new DrawCommandMetadata(
-            ResolveBounds(command),
-            resources is not null
+        if (trackImage is not null)
+        {
+            // Keep discovery eager: a tracking callback must not change which
+            // dependencies are discovered later in this same command.
+            if (resources is not null)
+            {
+                foreach (object resource in resources)
+                {
+                    if (resource is IDrawImage image) { trackImage(image); }
+                }
+            }
+            else
+            {
+                if (firstResource is IDrawImage firstImage) { trackImage(firstImage); }
+                if (secondResource is IDrawImage secondImage) { trackImage(secondImage); }
+            }
+            return Array.Empty<object>();
+        }
+
+        if (previousResources is not null)
+        {
+            bool same = resources is not null
+                ? SameResources(previousResources, resources)
+                : previousResources.Count == (secondResource is not null ? 2 : firstResource is not null ? 1 : 0) &&
+                  (firstResource is null || ReferenceEquals(previousResources[0], firstResource)) &&
+                  (secondResource is null || ReferenceEquals(previousResources[1], secondResource));
+            if (same) { return previousResources; }
+        }
+
+        return resources is not null
                 ? new ReadOnlyCollection<object>(resources)
-                : firstResource is not null
-                    ? Array.AsReadOnly(new[] { firstResource })
-                    : Array.Empty<object>(),
-            IsContextSensitiveKind(command.Kind),
-            command);
+                : secondResource is not null
+                    ? Array.AsReadOnly(new[] { firstResource!, secondResource })
+                    : firstResource is not null
+                        ? Array.AsReadOnly(new[] { firstResource })
+                        : Array.Empty<object>();
 
         void AddCommandResources(DrawCommand current)
         {
@@ -71,7 +134,7 @@ internal sealed class DrawCommandMetadata
 
         void Add(object? resource)
         {
-            if (resource is null || ReferenceEquals(resource, firstResource))
+            if (resource is null || ReferenceEquals(resource, firstResource) || ReferenceEquals(resource, secondResource))
             {
                 return;
             }
@@ -80,15 +143,19 @@ internal sealed class DrawCommandMetadata
             {
                 firstResource = resource;
             }
+            else if (secondResource is null)
+            {
+                secondResource = resource;
+            }
             else
             {
-                // Most commands have zero or one resource. Keep the same eager,
+                // Most commands have at most two resources. Keep the same eager,
                 // reference-deduplicated traversal without allocating collections
-                // until a second distinct dependency is actually encountered.
+                // until a third distinct dependency is actually encountered.
                 if (seen is null)
                 {
-                    seen = new HashSet<object>(ReferenceEqualityComparer.Instance) { firstResource };
-                    resources = [firstResource];
+                    seen = new HashSet<object>(ReferenceEqualityComparer.Instance) { firstResource, secondResource };
+                    resources = new List<object>(4) { firstResource, secondResource };
                 }
                 if (!seen.Add(resource))
                 {
@@ -146,16 +213,12 @@ internal sealed class DrawCommandMetadata
         }
     }
 
-    internal void TrackImageDependencies(Action<IDrawImage> track)
+    internal static void TrackImageDependencies(DrawCommand command, Action<IDrawImage> track)
     {
         ArgumentNullException.ThrowIfNull(track);
-        foreach (object resource in Resources)
-        {
-            if (resource is IDrawImage image)
-            {
-                track(image);
-            }
-        }
+        // Dependency tracking shares resource discovery with state analysis,
+        // without materializing an unused resource snapshot or retained identity.
+        VisitResources(command, track);
     }
 
     internal static bool IsContextSensitiveKind(DrawCommandKind kind) =>
@@ -293,7 +356,15 @@ internal sealed class DrawCommandMetadata
     {
         DrawTextRun run = command.TextRun ??
             throw new InvalidOperationException("DrawText has no text run payload.");
-        int elements = System.Globalization.StringInfo.ParseCombiningCharacters(run.Text).Length;
+        // Only the count is needed, not an allocated array of every boundary.
+        // Use the same runtime grapheme segmentation, including malformed UTF-16.
+        ReadOnlySpan<char> remaining = run.Text.AsSpan();
+        int elements = 0;
+        while (!remaining.IsEmpty)
+        {
+            remaining = remaining[System.Globalization.StringInfo.GetNextTextElementLength(remaining)..];
+            elements++;
+        }
         float width = elements * run.Size;
         return new DrawRect(command.Position.X, command.Position.Y, width, run.Size * 1.5f);
     }

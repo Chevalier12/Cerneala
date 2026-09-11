@@ -25,11 +25,7 @@ public sealed record DrawImageOptions
         DrawSamplingMode sampling = DrawSamplingMode.Linear,
         DrawAddressMode addressMode = DrawAddressMode.Clamp)
     {
-        if (source is DrawRect sourceRect &&
-            (sourceRect.Width <= 0 || sourceRect.Height <= 0))
-        {
-            throw new ArgumentOutOfRangeException(nameof(source));
-        }
+        DrawImageGeometry.ValidateSourceSize(source);
         if (!float.IsFinite(opacity) || opacity < 0 || opacity > 1)
         {
             throw new ArgumentOutOfRangeException(nameof(opacity));
@@ -124,6 +120,15 @@ public readonly record struct DrawInsets
 
 internal static class DrawImageGeometry
 {
+    public static void ValidateSourceSize(DrawRect? source)
+    {
+        if (source is DrawRect sourceRect &&
+            (sourceRect.Width <= 0 || sourceRect.Height <= 0))
+        {
+            throw new ArgumentOutOfRangeException(nameof(source));
+        }
+    }
+
     public static void ValidateImage(IDrawImage image)
     {
         ArgumentNullException.ThrowIfNull(image);
@@ -141,7 +146,21 @@ internal static class DrawImageGeometry
     {
         ValidateImage(image);
         ArgumentNullException.ThrowIfNull(options);
-        DrawRect source = options.Source ??
+        return ResolveSourceBounds(image, options.Source);
+    }
+
+    public static DrawRect ResolveSourceRect(IDrawImage image, DrawRect? source)
+    {
+        // Match source-only DrawImageOptions validation without allocating the
+        // options payload when the caller only needs source geometry.
+        ValidateSourceSize(source);
+        ValidateImage(image);
+        return ResolveSourceBounds(image, source);
+    }
+
+    private static DrawRect ResolveSourceBounds(IDrawImage image, DrawRect? requestedSource)
+    {
+        DrawRect source = requestedSource ??
             new DrawRect(0, 0, image.Width, image.Height);
         if (source.X < 0 ||
             source.Y < 0 ||
@@ -149,7 +168,7 @@ internal static class DrawImageGeometry
             source.Bottom > image.Height)
         {
             throw new ArgumentOutOfRangeException(
-                nameof(options),
+                "options", // Preserve the existing source-bounds diagnostic.
                 "The source rectangle must stay within the image.");
         }
 

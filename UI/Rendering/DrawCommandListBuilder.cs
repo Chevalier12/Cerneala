@@ -206,16 +206,16 @@ public sealed class DrawCommandListBuilder
         UIElement element,
         PrismInstance instance)
     {
-        List<PrismDrawImageResource> imageResources = [];
-        List<PrismDrawCurvesResource> curveResources = [];
-        List<PrismDrawLensProfileResource> lensProfileResources = [];
-        List<PrismDrawLightingResource> lightingResources = [];
-        List<PrismDrawColorMatrixResource> colorMatrixResources = [];
-        HashSet<PrismResourceId> resolvedImageIds = [];
-        HashSet<PrismResourceId> resolvedCurveIds = [];
-        HashSet<PrismResourceId> resolvedLensProfileIds = [];
-        HashSet<PrismResourceId> resolvedLightingIds = [];
-        HashSet<PrismResourceId> resolvedColorMatrixIds = [];
+        List<PrismDrawImageResource>? imageResources = null;
+        List<PrismDrawCurvesResource>? curveResources = null;
+        List<PrismDrawLensProfileResource>? lensProfileResources = null;
+        List<PrismDrawLightingResource>? lightingResources = null;
+        List<PrismDrawColorMatrixResource>? colorMatrixResources = null;
+        HashSet<PrismResourceId>? resolvedImageIds = null;
+        HashSet<PrismResourceId>? resolvedCurveIds = null;
+        HashSet<PrismResourceId>? resolvedLensProfileIds = null;
+        HashSet<PrismResourceId>? resolvedLightingIds = null;
+        HashSet<PrismResourceId>? resolvedColorMatrixIds = null;
         foreach (PrismNodeDefinition definition in
             instance.Definition.Nodes)
         {
@@ -223,13 +223,22 @@ public sealed class DrawCommandListBuilder
                 instance.GetNodeState(definition.Id));
         }
 
+        // Resolve the current state before reusing Empty: missing resources and
+        // runtime visibility/parameter changes must be reconsidered each frame.
+        if (imageResources is null && curveResources is null &&
+            lensProfileResources is null && lightingResources is null &&
+            colorMatrixResources is null)
+        {
+            return PrismDrawResources.Empty;
+        }
+
         return PrismDrawResources.Create(
-            imageResources,
-            curveResources,
+            imageResources ?? Enumerable.Empty<PrismDrawImageResource>(),
+            curveResources ?? Enumerable.Empty<PrismDrawCurvesResource>(),
             [],
-            lensProfileResources,
-            lightingResources,
-            colorMatrixResources);
+            lensProfileResources ?? Enumerable.Empty<PrismDrawLensProfileResource>(),
+            lightingResources ?? Enumerable.Empty<PrismDrawLightingResource>(),
+            colorMatrixResources ?? Enumerable.Empty<PrismDrawColorMatrixResource>());
 
         void ResolveNodeState(PrismNodeState state)
         {
@@ -246,9 +255,9 @@ public sealed class DrawCommandListBuilder
                     ResolveMask(group.Mask);
                     ResolveFilters(group.Filters);
                     ResolveStyles(group.Styles);
-                    foreach (PrismNodeState child in group.Children)
+                    for (int index = 0; index < group.Children.Count; index++)
                     {
-                        ResolveNodeState(child);
+                        ResolveNodeState(group.Children[index]);
                     }
                     break;
             }
@@ -257,8 +266,9 @@ public sealed class DrawCommandListBuilder
         void ResolveFilters(
             IReadOnlyList<PrismFilterState> filters)
         {
-            foreach (PrismFilterState filter in filters)
+            for (int index = 0; index < filters.Count; index++)
             {
+                PrismFilterState filter = filters[index];
                 if (!filter.Visible)
                 {
                     continue;
@@ -328,8 +338,9 @@ public sealed class DrawCommandListBuilder
         void ResolveStyles(
             IReadOnlyList<PrismStyleState> styles)
         {
-            foreach (PrismStyleState style in styles)
+            for (int index = 0; index < styles.Count; index++)
             {
+                PrismStyleState style = styles[index];
                 if (!style.Visible)
                 {
                     continue;
@@ -362,7 +373,7 @@ public sealed class DrawCommandListBuilder
         void ResolveImage(PrismResourceId id)
         {
             if (id.Key is not string key ||
-                !resolvedImageIds.Add(id))
+                !(resolvedImageIds ??= []).Add(id))
             {
                 return;
             }
@@ -417,7 +428,7 @@ public sealed class DrawCommandListBuilder
             {
                 if (image is not null)
                 {
-                    imageResources.Add(
+                    (imageResources ??= []).Add(
                         new PrismDrawImageResource(
                             id,
                             image,
@@ -431,7 +442,7 @@ public sealed class DrawCommandListBuilder
         void ResolveCurves(PrismResourceId id)
         {
             if (id.Key is not string key ||
-                !resolvedCurveIds.Add(id) ||
+                !(resolvedCurveIds ??= []).Add(id) ||
                 !element.TryFindResource<PrismCurvesResource>(
                     key,
                     out PrismCurvesResource? resource))
@@ -439,7 +450,7 @@ public sealed class DrawCommandListBuilder
                 return;
             }
 
-            curveResources.Add(
+            (curveResources ??= []).Add(
                 new PrismDrawCurvesResource(
                     id,
                     resource,
@@ -451,7 +462,7 @@ public sealed class DrawCommandListBuilder
         void ResolveLensProfile(PrismResourceId id)
         {
             if (id.Key is not string key ||
-                !resolvedLensProfileIds.Add(id) ||
+                !(resolvedLensProfileIds ??= []).Add(id) ||
                 !element.TryFindResource<PrismLensProfileResource>(
                     key,
                     out PrismLensProfileResource? resource))
@@ -459,7 +470,7 @@ public sealed class DrawCommandListBuilder
                 return;
             }
 
-            lensProfileResources.Add(
+            (lensProfileResources ??= []).Add(
                 new PrismDrawLensProfileResource(
                     id,
                     resource,
@@ -471,7 +482,7 @@ public sealed class DrawCommandListBuilder
         void ResolveLighting(PrismResourceId id)
         {
             if (id.Key is not string key ||
-                !resolvedLightingIds.Add(id) ||
+                !(resolvedLightingIds ??= []).Add(id) ||
                 !element.TryFindResource<PrismLightingResource>(
                     key,
                     out PrismLightingResource? resource))
@@ -479,7 +490,7 @@ public sealed class DrawCommandListBuilder
                 return;
             }
 
-            lightingResources.Add(
+            (lightingResources ??= []).Add(
                 new PrismDrawLightingResource(
                     id,
                     resource,
@@ -491,7 +502,7 @@ public sealed class DrawCommandListBuilder
         void ResolveColorMatrix(PrismResourceId id)
         {
             if (id.Key is not string key ||
-                !resolvedColorMatrixIds.Add(id) ||
+                !(resolvedColorMatrixIds ??= []).Add(id) ||
                 !element.TryFindResource<PrismColorMatrixResource>(
                     key,
                     out PrismColorMatrixResource? resource))
@@ -499,7 +510,7 @@ public sealed class DrawCommandListBuilder
                 return;
             }
 
-            colorMatrixResources.Add(
+            (colorMatrixResources ??= []).Add(
                 new PrismDrawColorMatrixResource(
                     id,
                     resource,

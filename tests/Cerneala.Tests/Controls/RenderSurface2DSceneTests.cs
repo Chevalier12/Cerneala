@@ -33,8 +33,8 @@ public sealed class RenderSurface2DSceneTests
         Scene2D scene = new();
         scene.Children.Add(new Sprite2D
         {
-            Source = image,
-            Destination = new DrawRect(2, 3, 4, 5)
+            Image = new(image),
+            X = 2, Y = 3, Width = 4, Height = 5
         });
         surface.Scene = scene;
 
@@ -59,8 +59,8 @@ public sealed class RenderSurface2DSceneTests
         };
         surface.Scene.Children.Add(new Sprite2D
         {
-            Source = new TestImage(),
-            Destination = new DrawRect(0, 0, 1, 1)
+            Image = new(new TestImage()),
+            X = 0, Y = 0, Width = 1, Height = 1
         });
 
         DrawCommandList commands = Record(surface, new DrawRect(0, 0, 200, 200));
@@ -77,8 +77,8 @@ public sealed class RenderSurface2DSceneTests
     {
         Sprite2D sprite = new()
         {
-            Source = new TestImage(),
-            Destination = new DrawRect(0, 0, 1, 1)
+            Image = new(new TestImage()),
+            X = 0, Y = 0, Width = 1, Height = 1
         };
         Scene2D scene = new();
         scene.Children.Add(sprite);
@@ -89,7 +89,7 @@ public sealed class RenderSurface2DSceneTests
         };
         long frameVersion = ((IRenderSurface2DFrameSource)surface).FrameVersion;
 
-        sprite.Destination = new DrawRect(1, 2, 3, 4);
+        sprite.X = 1; sprite.Y = 2; sprite.Width = 3; sprite.Height = 4;
 
         Assert.True(((IRenderSurface2DFrameSource)surface).FrameVersion > frameVersion);
     }
@@ -100,8 +100,8 @@ public sealed class RenderSurface2DSceneTests
         Scene2D scene = new();
         scene.Children.Add(new Sprite2D
         {
-            Source = new TestImage(),
-            Destination = new DrawRect(0, 0, 1, 1),
+            Image = new(new TestImage()),
+            X = 0, Y = 0, Width = 1, Height = 1,
             Visibility = Visibility.Hidden
         });
         RenderSurface2D surface = new() { Scene = scene };
@@ -119,8 +119,8 @@ public sealed class RenderSurface2DSceneTests
         DrawRect destination = new(2, 3, 4, 5);
         Sprite2D sprite = new()
         {
-            Source = new TestImage(),
-            Destination = destination
+            Image = new(new TestImage()),
+            X = destination.X, Y = destination.Y, Width = destination.Width, Height = destination.Height
         };
         Scene2D scene = new();
         scene.Children.Add(sprite);
@@ -157,12 +157,80 @@ public sealed class RenderSurface2DSceneTests
     }
 
     [Fact]
+    public void ContinuousStaticSceneKeepsItsPrismContentIdentityAcrossFrameTicks()
+    {
+        Sprite2D sprite = new() { Image = new(new TestImage()), Width = 4, Height = 5 };
+        Scene2D scene = new();
+        scene.Children.Add(sprite);
+        RenderSurface2D surface = new() { Scene = scene };
+        UIRoot root = new();
+        using IDisposable prism = GeneratedMarkup.AttachPrism(sprite,
+            () => new PrismInstance(PrismTestData.Composition("Static", PrismTestData.Layer(1, "Content"))));
+        ElementLifecycle.AttachSubtree(root, surface);
+        try
+        {
+            IRenderSurface2DFrameSource source = surface;
+            DrawRect bounds = new(0, 0, 10, 10);
+            DrawCommandList first = Record(surface, bounds);
+            PrismDrawScope before = first[0].PrismScope!.Value;
+            long frameVersion = source.FrameVersion;
+
+            Assert.True(((ITimeSensitiveRenderElement)surface).UpdateRenderTime(TimeSpan.FromMilliseconds(16)));
+            DrawCommandList second = Record(surface, bounds);
+            PrismDrawScope after = second[0].PrismScope!.Value;
+
+            Assert.True(source.FrameVersion > frameVersion); // Continuous still records every frame.
+            Assert.Equal(before.VisualContentVersion, after.VisualContentVersion);
+            Assert.Equal(before.LowerUiVersion, after.LowerUiVersion);
+            Assert.Equal(first.ToArray(), second.ToArray());
+
+            sprite.Tint = Color.Black;
+            PrismDrawScope changed = Record(surface, bounds)[0].PrismScope!.Value;
+            Assert.NotEqual(after.LowerUiVersion, changed.LowerUiVersion);
+            surface.ClearColor = Color.White;
+            PrismDrawScope cleared = Record(surface, bounds)[0].PrismScope!.Value;
+            Assert.NotEqual(changed.LowerUiVersion, cleared.LowerUiVersion);
+            surface.InvalidateFrame();
+            Assert.NotEqual(cleared.LowerUiVersion, Record(surface, bounds)[0].PrismScope!.Value.LowerUiVersion);
+        }
+        finally { ElementLifecycle.DetachSubtree(root, surface); }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ContinuousSceneWithImperativeDrawingDoesNotAssumeItsContentIsUnchanged(bool useOverride)
+    {
+        Sprite2D sprite = new() { Image = new(new TestImage()), Width = 4, Height = 5 };
+        Scene2D scene = new();
+        scene.Children.Add(sprite);
+        RenderSurface2D surface = useOverride ? new ImperativeSurface() : new RenderSurface2D();
+        int callbacks = 0;
+        if (!useOverride) surface.Draw += (_, _) => callbacks++;
+        surface.Scene = scene;
+        UIRoot root = new();
+        using IDisposable prism = GeneratedMarkup.AttachPrism(sprite,
+            () => new PrismInstance(PrismTestData.Composition("Mixed", PrismTestData.Layer(1, "Content"))));
+        ElementLifecycle.AttachSubtree(root, surface);
+        try
+        {
+            DrawRect bounds = new(0, 0, 10, 10);
+            PrismDrawScope before = Record(surface, bounds)[0].PrismScope!.Value;
+            Assert.True(((ITimeSensitiveRenderElement)surface).UpdateRenderTime(TimeSpan.FromMilliseconds(16)));
+            PrismDrawScope after = Record(surface, bounds)[0].PrismScope!.Value;
+            Assert.NotEqual(before.LowerUiVersion, after.LowerUiVersion);
+            Assert.Equal(2, useOverride ? ((ImperativeSurface)surface).DrawCount : callbacks);
+        }
+        finally { ElementLifecycle.DetachSubtree(root, surface); }
+    }
+
+    [Fact]
     public void SpritePrismBoundsApplyTheSceneViewBoxTransformExactlyOnce()
     {
         Sprite2D sprite = new()
         {
-            Source = new TestImage(),
-            Destination = new DrawRect(1, 2, 3, 4)
+            Image = new(new TestImage()),
+            X = 1, Y = 2, Width = 3, Height = 4
         };
         Scene2D scene = new();
         scene.Children.Add(sprite);
@@ -239,17 +307,19 @@ public sealed class RenderSurface2DSceneTests
         Assert.True(sprite.IsVisible);
 
         Cerneala.UI.Motion.Core.MotionHandle handle = sprite.Motion()
-            .Animate(Sprite2D.DestinationProperty)
-            .To(new DrawRect(10, 20, 3, 4))
-            .With(MotionFactory.Tween<DrawRect>(
+            .Animate(Sprite2D.XProperty)
+            .To(10f)
+            .With(MotionFactory.Tween<float>(
                 TimeSpan.FromMilliseconds(100)));
+        using var yMotion = sprite.Motion().Animate(Sprite2D.YProperty).To(20f)
+            .With(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)));
         Assert.True(handle.IsActive);
         root.ProcessFrame();
         clock.Advance(TimeSpan.FromMilliseconds(50));
         root.ProcessFrame();
 
-        Assert.InRange(sprite.Destination.X, 0.01f, 9.99f);
-        Assert.InRange(sprite.Destination.Y, 0.01f, 19.99f);
+        Assert.InRange(sprite.X, 0.01f, 9.99f);
+        Assert.InRange(sprite.Y, 0.01f, 19.99f);
     }
 
     [Fact]
@@ -268,8 +338,8 @@ public sealed class RenderSurface2DSceneTests
             priority: 0,
             context => new Sprite2D
             {
-                Source = image,
-                Destination = context.Data!.Destination
+                Image = new(image),
+                X = context.Data!.Destination.X, Y = context.Data!.Destination.Y, Width = context.Data!.Destination.Width, Height = context.Data!.Destination.Height
             }));
         sceneItems.ItemsSource = items;
         Scene2D scene = new();
@@ -303,6 +373,12 @@ public sealed class RenderSurface2DSceneTests
     }
 
     private sealed record TestSprite(DrawRect Destination);
+
+    private sealed class ImperativeSurface : RenderSurface2D
+    {
+        public int DrawCount { get; private set; }
+        protected override void OnDraw(RenderSurface2DFrame frame) => DrawCount++;
+    }
 
     private sealed class TestImage : IDrawImage
     {

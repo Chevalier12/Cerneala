@@ -51,7 +51,7 @@ FrameStats stats = root.ProcessFrame(new FramePhaseProcessors
 
 `UIRoot.ProcessFrame` normally creates framework processors that wire inherited property propagation, command state refresh, aspect processing, layout, render-cache processing, and hit-test cache updates. Supplying a custom `FramePhaseProcessors` instance replaces those callbacks for that frame and is useful for tests or specialized frame processing.
 
-`UiFrameScheduler` processes phases in this order when work is queued: inherited properties, command state, aspect, inherited properties again, measure, arrange, render cache, and hit test. Same-phase work queued while a phase is processing is deferred to a later frame; downstream work may run in the same frame if its snapshot has not been taken yet.
+`UiFrameScheduler` processes phases in this order when work is queued: inherited properties, command state, aspect, inherited properties again, measure, arrange, render cache, and hit test. The inherited-property phase repeatedly drains its queue, including inherited work queued by callbacks during that phase. Other phases do not repeatedly drain newly queued same-phase work; downstream work may run in the same frame if its snapshot has not been taken yet.
 
 If a phase callback throws, the scheduler requeues the affected element for that phase and preserves the relevant dirty state before rethrowing.
 

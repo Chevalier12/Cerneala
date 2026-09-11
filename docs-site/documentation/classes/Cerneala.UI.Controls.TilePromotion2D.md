@@ -32,7 +32,10 @@ This is data, not TileInstance2D. Composition calls `TileMap2D.Promote` or decla
 
 The compiled [Scene World sample](../../../Playground/Cerneala.Playground/SceneWorldShowcase.crn)
 imports the same village from Tiled and LDtk at load time. Its composition checks
-the promotion address `(layer "2", x 14, y 9)` before binding the imported map.
+the promotion address `(layer "4", x 14, y 9)` before binding the imported map.
+Both assets place the door in a separate layer above the building facade, so
+neighboring wall cells do not cover its outer glow. Promotion itself preserves
+the cell's ordinary painter-order slot; it does not raise the cell above its layer.
 `InitialState` initializes the sample's `DoorClosed`/`DoorState` view-model
 properties; the importer does not interpret those values as UI instructions.
 
@@ -41,7 +44,7 @@ This fragment is from that composition. It requires the sample's typed
 handler; it is not a standalone map or a generic entity factory.
 
 ```xml
-<TileLayer2D LayerId="2">
+<TileLayer2D LayerId="4">
   <TileInstance2D X="14" Y="9" MouseDown="OnDoor"
                   ReplacesImportedColliders="true"
                   Animations="$DoorAnimations"
@@ -59,7 +62,7 @@ handler; it is not a standalone map or a generic entity factory.
     </TileInstance2D.Aspect>
     @prism {
       @layer DoorGlow {
-        @style OuterGlow { Size = 1; Opacity = 0.3; Color = #FFEAC777; }
+        @style OuterGlow { Size = 4; Opacity = 0.8; Color = #FFEAC777; }
       }
     }
   </TileInstance2D>

@@ -16,6 +16,51 @@ namespace Cerneala.Tests.SdlGpu;
 public sealed class SdlGpuPrismExecutorTests
 {
     [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void FallbackOnlyPreventsRetentionOfItsOwnDependentWork(bool nested)
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1 };
+        nint window = api.CreateWindow("prism-fallback-retention", 48, 32, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window);
+        DrawCommandList commands = new();
+        if (nested)
+        {
+            PrismInstance parent = new(new PrismCompositionDefinition("Parent of fallback",
+                [new PrismLayerDefinition(new(1), "Parent", filters: [new(PrismFilterId.Invert)])]));
+            commands.Add(DrawCommand.BeginPrism(new(parent, new(95200), new(0, 0, 48, 32),
+                Matrix3x2.Identity, 1, 1)));
+        }
+        foreach (DrawCommand command in CreateCommands(PrismCatalog.GetFilter(PrismFilterId.Invert),
+            ownerToken: 95201, blendMode: PrismBlendMode.Multiply))
+            commands.Add(command);
+        foreach (DrawCommand command in CreateCommands(PrismCatalog.GetFilter(PrismFilterId.Invert),
+            ownerToken: 95202, color: Color.Coral))
+            commands.Add(command);
+        if (nested) commands.Add(DrawCommand.EndPrism());
+
+        PrismCacheInvalidationQueue invalidations = new();
+        Render(session, commands, invalidations, 48, 32); // Deliberately no backdrop lease.
+        Assert.Contains(Enumerable.Range(0, Diagnostics(session).DetailedCount),
+            index => Diagnostics(session).Get(index).Reason == PrismFallbackReason.MissingBackdrop);
+
+        Render(session, commands, invalidations, 48, 32);
+
+        PrismExecutionDiagnostics diagnostics = Diagnostics(session);
+        string graph = diagnostics.DumpExecutedGraph();
+        int independentScope = nested ? 2 : 1;
+        Assert.DoesNotContain($"GraphNode scope={independentScope} ", graph);
+        Assert.True(diagnostics.Count > 0, "A fallback result must not be promoted and hide future diagnostics.");
+        if (nested)
+        {
+            Assert.Contains("GraphNode scope=0 ", graph);
+            Assert.True(diagnostics.Counters.CaptureCount > 0,
+                "The parent capture depends on the failed child and must not be cached.");
+        }
+    }
+
+    [Theory]
     [InlineData(PrismFilterId.Invert)]
     [InlineData(PrismFilterId.Threshold)]
     public void FilterPlanAccountsForEverySubmittedPass(PrismFilterId filter)
@@ -82,7 +127,7 @@ public sealed class SdlGpuPrismExecutorTests
 
         byte[] packed = uniforms.Pack();
 
-        Assert.Equal(944, SdlGpuPrismUniforms.ByteCount);
+        Assert.Equal(960, SdlGpuPrismUniforms.ByteCount);
         Assert.Equal(SdlGpuPrismUniforms.ByteCount, packed.Length);
         for (int index = 0; index < SdlGpuPrismUniforms.VectorCount; index++)
         {
@@ -94,6 +139,7 @@ public sealed class SdlGpuPrismExecutorTests
         uniforms.Reset();
         Assert.Equal(new Vector4(1, 1, 0, 0), uniforms[34]);
         Assert.Equal(Vector4.Zero, uniforms[35]);
+        Assert.Equal(new Vector4(0, 0, 1, 1), uniforms[59]);
     }
 
     [Fact]
@@ -371,6 +417,53 @@ public sealed class SdlGpuPrismExecutorTests
         {
             Assert.InRange(texture.CreateInfo.Width, 1u, 255u);
             Assert.InRange(texture.CreateInfo.Height, 1u, 255u);
+        });
+    }
+
+    [Fact]
+    public void NestedGlowDistanceFieldUsesItsOwnBoundsInsteadOfItsParentExtent()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1 };
+        nint window = api.CreateWindow("prism-nested-local-extent", 256, 256, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = Assert.IsType<SdlGpuWindowGraphicsSession>(
+            factory.Create(new SdlWindowSurface(window, api.GetWindowId(window)), 256, 256, coordinateScale: 1));
+        PrismInstance parent = new(new PrismCompositionDefinition("Parent",
+            [new PrismLayerDefinition(new(1), "Blur", filters: [new(PrismFilterId.Blur)])]));
+        DrawRect parentBounds = new(0, 0, 256, 256);
+        DrawCommandList commands = new();
+        commands.Add(DrawCommand.BeginPrism(new(parent, new(70401), parentBounds, Matrix3x2.Identity, 1, 1)));
+        commands.Add(DrawCommand.FillRectangle(parentBounds, Color.Coral));
+        foreach (DrawCommand command in CreateCommands(
+            PrismCatalog.GetStyle(PrismStyleId.OuterGlow), ownerToken: 70402, origin: new Vector2(96, 100)))
+        {
+            commands.Add(command);
+        }
+        commands.Add(DrawCommand.EndPrism());
+
+        Render(session, commands, 256, 256);
+
+        var distanceTextures = api.GpuTextures.Values
+            .Where(texture => texture.CreateInfo.Format == SdlGpuTextureFormat.R32G32B32A32Float)
+            .ToArray();
+        Assert.NotEmpty(distanceTextures);
+        Assert.All(distanceTextures, texture =>
+        {
+            Assert.InRange(texture.CreateInfo.Width, 1u, 96u);
+            Assert.InRange(texture.CreateInfo.Height, 1u, 96u);
+        });
+        byte[][] floods = api.FragmentUniformWrites.Where(bytes =>
+            bytes.Length == SdlGpuPrismUniforms.ByteCount &&
+            MemoryMarshal.Read<Vector4>(bytes.AsSpan(SdlGpuPrismUniforms.OffsetOfVector(34), 16)).Z == 86)
+            .ToArray();
+        Assert.NotEmpty(floods);
+        Assert.All(floods, bytes =>
+        {
+            Vector4 raster = MemoryMarshal.Read<Vector4>(bytes.AsSpan(SdlGpuPrismUniforms.OffsetOfVector(34), 16));
+            Assert.InRange(raster.X, 1, 96);
+            Assert.InRange(raster.Y, 1, 96);
+            Assert.Equal(new Vector4(0, 0, 256, 256), MemoryMarshal.Read<Vector4>(
+                bytes.AsSpan(SdlGpuPrismUniforms.OffsetOfVector(59), 16)));
         });
     }
 

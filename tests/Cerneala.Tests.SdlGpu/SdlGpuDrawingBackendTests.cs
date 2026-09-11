@@ -87,6 +87,41 @@ public sealed class SdlGpuDrawingBackendTests
     }
 
     [Fact]
+    public void TextureUploadsDoNotCycleLargestHistoricalTransferBufferForSmallPayloads()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1 };
+        nint window = api.CreateWindow("texture-upload-capacity", 64, 48, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window);
+        byte[] largePixels = new byte[1024 * 1024 * 4];
+        byte[] smallPixels = [10, 20, 30, 255];
+        session.BeginFrame(Color.Transparent);
+        try
+        {
+            session.DrawingResources.GetOrCreateTexture(session, new object(), 1024, 1024, largePixels);
+            nint largeTransfer = api.GpuTextureUploads[^1].Source.TransferBuffer;
+            for (int index = 0; index < 32; index++)
+            {
+                session.DrawingResources.GetOrCreateTexture(session, new object(), 1, 1, smallPixels);
+                nint transfer = api.GpuTextureUploads[^1].Source.TransferBuffer;
+                Assert.InRange(api.TransferBuffers[transfer].Size, smallPixels.Length, 64 * 1024);
+            }
+            session.DrawingResources.GetOrCreateTexture(session, new object(), 1024, 1024, largePixels);
+            Assert.Equal(largeTransfer, api.GpuTextureUploads[^1].Source.TransferBuffer);
+            Assert.Equal(2, api.GpuTextureUploads.Select(upload => upload.Source.TransferBuffer).Distinct().Count());
+            Assert.All(api.GpuActions.Where(action => action.StartsWith("map-transfer:", StringComparison.Ordinal)),
+                action => Assert.EndsWith(":True", action, StringComparison.Ordinal));
+        }
+        finally
+        {
+            session.CompleteFrame(present: false);
+        }
+        session.Dispose();
+        factory.Dispose();
+        Assert.Empty(api.TransferBuffers);
+    }
+
+    [Fact]
     public void AdjacentGeometryBatchingHasLinearManagedAllocation()
     {
         FakeSdlApi api = new() { WindowPixelDensity = 1 };

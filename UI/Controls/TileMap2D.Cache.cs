@@ -4,6 +4,7 @@ namespace Cerneala.UI.Controls;
 
 public sealed partial class TileMap2D
 {
+    private const int PlacementChunkSize = 256;
     private readonly Dictionary<TileChunkCacheKey, TileChunkCacheEntry> chunkCache = [];
     private readonly Dictionary<string, TileLayerSpatialIndex> layerSpatialIndexes = new(StringComparer.Ordinal);
     private readonly List<string> staleLayerSpatialIndexIds = [];
@@ -11,10 +12,18 @@ public sealed partial class TileMap2D
     private readonly List<TileChunkCacheKey> staleChunkCacheKeys = [];
     private TileMap2DModel? indexedModel;
 
-    internal IReadOnlyList<TileChunk2D> GetDebugChunks(TileLayer2DModel layer, SceneBounds2D visibleBounds)
+    internal IReadOnlyList<TileRenderChunk> GetDebugChunks(TileLayer2DModel layer, SceneBounds2D visibleBounds)
     {
+        ResolveAtlases(Model!);
         EnsureSpatialIndexes();
-        return layerSpatialIndexes[layer.Id].Query(visibleBounds, Model!.TileSize);
+        return layerSpatialIndexes[layer.Id].Query(visibleBounds);
+    }
+
+    internal SceneBounds2D GetLayerBounds(TileLayer2DModel layer)
+    {
+        ResolveAtlases(Model!);
+        EnsureSpatialIndexes();
+        return layerSpatialIndexes[layer.Id].Bounds;
     }
 
     private void BeginCacheFrame()
@@ -81,35 +90,29 @@ public sealed partial class TileMap2D
 
         SceneBounds2D visibleBounds = context.GetConservativeVisibleLocalBounds();
         TileLayerSpatialIndex spatialIndex = layerSpatialIndexes[layer.Id];
-        IReadOnlyList<TileChunk2D> candidates = spatialIndex.Query(
-            visibleBounds,
-            Model!.TileSize);
+        IReadOnlyList<TileRenderChunk> candidates = spatialIndex.Query(visibleBounds);
         int encounteredPromotedCount = 0;
-        foreach (TileChunk2D chunk in candidates)
+        foreach (TileRenderChunk chunk in candidates)
         {
             diagnostics = diagnostics with
             {
                 CandidateChunks = diagnostics.CandidateChunks + 1
             };
-            if (!IntersectsChunk(visibleBounds, chunk, Model.TileSize))
+            if (!IntersectsChunk(visibleBounds, chunk))
             {
-                encounteredPromotedCount += RecordPromotedFromCulledChunk(
+                encounteredPromotedCount += chunk.Grid is TileChunk2D grid ? RecordPromotedFromCulledChunk(
                     presentation,
-                    chunk,
+                    grid,
                     promoted,
-                    context);
+                    context) : 0;
                 continue;
             }
             diagnostics = diagnostics with
             {
                 VisibleChunks = diagnostics.VisibleChunks + 1,
-                CandidateTiles = diagnostics.CandidateTiles + chunk.Tiles.Count
+                CandidateTiles = diagnostics.CandidateTiles + chunk.Count
             };
-            TileChunkCacheKey key = new(
-                layer.Id,
-                chunk.Origin,
-                chunk.Width,
-                chunk.Height);
+            TileChunkCacheKey key = chunk.GetKey(layer.Id);
             bool reused = chunkCache.TryGetValue(key, out TileChunkCacheEntry? entry) &&
                 entry.IsCurrent(this, chunk, tint, promoted);
             if (!reused)
@@ -202,22 +205,18 @@ public sealed partial class TileMap2D
         foreach (TileLayer2DModel layer in model.Layers)
         {
             if (layerSpatialIndexes.TryGetValue(layer.Id, out TileLayerSpatialIndex? existing) &&
-                existing.IsCompatible(layer))
+                !model.IsFreePlacement && existing.IsCompatible(layer, model.TileSize))
             {
                 existing.UpdateChunks(layer);
             }
             else
             {
-                layerSpatialIndexes[layer.Id] = new TileLayerSpatialIndex(layer);
+                layerSpatialIndexes[layer.Id] = new TileLayerSpatialIndex(CreateRenderChunks(model, layer), model.TileSize);
             }
             staleLayerSpatialIndexIds.Remove(layer.Id);
-            foreach (TileChunk2D chunk in layer.Chunks)
+            foreach (TileRenderChunk chunk in layerSpatialIndexes[layer.Id].Chunks)
             {
-                currentModelChunkKeys.Add(new TileChunkCacheKey(
-                    layer.Id,
-                    chunk.Origin,
-                    chunk.Width,
-                    chunk.Height));
+                currentModelChunkKeys.Add(chunk.GetKey(layer.Id));
             }
         }
         foreach (string layerId in staleLayerSpatialIndexIds)
@@ -230,8 +229,7 @@ public sealed partial class TileMap2D
 
     private static bool IntersectsChunk(
         SceneBounds2D visibleBounds,
-        TileChunk2D chunk,
-        DrawSize tileSize)
+        TileRenderChunk chunk)
     {
         if (visibleBounds.Kind == SceneBoundsKind.Empty)
         {
@@ -242,25 +240,16 @@ public sealed partial class TileMap2D
             return true;
         }
 
-        double left = (double)chunk.Origin.X * tileSize.Width;
-        double top = (double)chunk.Origin.Y * tileSize.Height;
-        double right = (double)((long)chunk.Origin.X + chunk.Width) * tileSize.Width;
-        double bottom = (double)((long)chunk.Origin.Y + chunk.Height) * tileSize.Height;
-        if (!double.IsFinite(left) || !double.IsFinite(top) ||
-            !double.IsFinite(right) || !double.IsFinite(bottom))
-        {
-            return true;
-        }
-
+        if (chunk.Bounds.Kind == SceneBoundsKind.Empty) { return false; }
+        if (chunk.Bounds.Kind == SceneBoundsKind.Unknown) { return true; }
+        DrawRect rect = chunk.Bounds.Bounds;
         DrawRect viewport = visibleBounds.Bounds;
-        return left < viewport.Right &&
-            right > viewport.X &&
-            top < viewport.Bottom &&
-            bottom > viewport.Y;
+        return rect.X < viewport.Right && rect.Right > viewport.X &&
+            rect.Y < viewport.Bottom && rect.Bottom > viewport.Y;
     }
 
     private TileChunkCacheEntry BuildChunkEntry(
-        TileChunk2D chunk,
+        TileRenderChunk chunk,
         Color tint,
         IReadOnlyDictionary<TileCoordinate2D, TileInstance2D> promoted)
     {
@@ -273,15 +262,13 @@ public sealed partial class TileMap2D
         int batchSplits = 0;
         bool pendingPromotionSplit = false;
 
-        for (int index = 0; index < chunk.Tiles.Count; index++)
+        for (int index = 0; index < chunk.Count; index++)
         {
-            int localX = index % chunk.Width;
-            int localY = index / chunk.Width;
-            TileCoordinate2D coordinate = new(
-                chunk.Origin.X + localX,
-                chunk.Origin.Y + localY);
-            TileCell2D cell = chunk.Tiles[index];
-            if (promoted.ContainsKey(coordinate))
+            TileChunk2D? grid = chunk.Grid;
+            TileCoordinate2D coordinate = grid is null ? default : new(
+                grid.Origin.X + index % grid.Width,
+                grid.Origin.Y + index / grid.Width);
+            if (grid is not null && promoted.ContainsKey(coordinate))
             {
                 bool hadStaticContent = segmentBatches.Count > 0;
                 FlushOrderSegment();
@@ -290,16 +277,33 @@ public sealed partial class TileMap2D
                 items.Add(TileChunkDrawItem.Promoted(coordinate));
                 continue;
             }
-            if (cell.TileId == 0 ||
-                !model.TryResolveTile(cell.TileId, out TileSet2D? tileSet, out TileDefinition2D? definition) ||
-                tileSet is null ||
-                definition is null)
+            TileImageKey imageKey;
+            DrawRect destination;
+            DrawRect source;
+            TileFlip2D flip;
+            if (grid is not null)
             {
-                continue;
+                TileCell2D cell = grid.Tiles[index];
+                if (cell.TileId == 0 || !model.TryResolveTile(cell.TileId, out TileSet2D? tileSet, out TileDefinition2D? definition) ||
+                    tileSet is null || definition is null) { continue; }
+                imageKey = new TileImageKey(tileSet.Id, null);
+                destination = new DrawRect(coordinate.X * model.TileSize.Width, coordinate.Y * model.TileSize.Height,
+                    model.TileSize.Width, model.TileSize.Height);
+                source = definition.SourceRect;
+                flip = cell.Flip;
+            }
+            else
+            {
+                Tile tile = chunk.Placements![chunk.Start + index];
+                imageKey = new TileImageKey(null, tile.Image);
+                DrawSize size = resolvedAtlases[imageKey].Size;
+                destination = tile.GetDestination(size);
+                source = new DrawRect(0, 0, size.Width, size.Height);
+                flip = TileFlip2D.None;
             }
 
-            ResolvedAtlas atlas = resolvedAtlases[tileSet.Id];
-            AddDependency(tileSet, atlas);
+            ResolvedAtlas atlas = resolvedAtlases[imageKey];
+            AddDependency(imageKey, atlas);
             if (atlas.Image is null)
             {
                 continue;
@@ -310,20 +314,19 @@ public sealed partial class TileMap2D
                 pendingPromotionSplit = false;
             }
 
-            TileAtlasBatchBuilder? batch = segmentBatches.FirstOrDefault(candidate =>
-                ReferenceEquals(candidate.Image, atlas.Image));
+            // Grid cells cannot overlap. Free placements can, so only adjacent
+            // equal-image runs may be coalesced without changing painter order.
+            TileAtlasBatchBuilder? batch = grid is not null
+                ? segmentBatches.FirstOrDefault(candidate => ReferenceEquals(candidate.Image, atlas.Image))
+                : segmentBatches.LastOrDefault();
+            if (batch is not null && !ReferenceEquals(batch.Image, atlas.Image)) { batch = null; }
             if (batch is null)
             {
                 batch = new TileAtlasBatchBuilder(atlas.Image);
                 segmentBatches.Add(batch);
             }
             batch.Sprites.Add(TileFlipGeometry2D.Sprite(
-                new DrawRect(
-                    coordinate.X * model.TileSize.Width,
-                    coordinate.Y * model.TileSize.Height,
-                    model.TileSize.Width,
-                    model.TileSize.Height),
-                definition.SourceRect, tint, cell.Flip));
+                destination, source, tint, flip));
             staticTileCount++;
         }
         FlushOrderSegment();
@@ -339,6 +342,7 @@ public sealed partial class TileMap2D
         int retainedObjects = 4 + copiedItems.Length + staticTileCount;
         return new TileChunkCacheEntry(
             chunk.Version,
+            chunk.Placements,
             model.TileSize,
             tint,
             copiedSuppressed,
@@ -360,18 +364,18 @@ public sealed partial class TileMap2D
             segmentBatches.Clear();
         }
 
-        void AddDependency(TileSet2D tileSet, ResolvedAtlas atlas)
+        void AddDependency(TileImageKey key, ResolvedAtlas atlas)
         {
-            if (dependencies.Any(candidate =>
-                string.Equals(candidate.TileSetId, tileSet.Id, StringComparison.Ordinal)))
+            if (dependencies.Any(candidate => candidate.Key == key))
             {
                 return;
             }
             dependencies.Add(new TileAtlasDependencyStamp(
-                tileSet.Id,
-                tileSet.Version,
+                key,
+                atlas.DefinitionVersion,
                 atlas.Version,
-                atlas.Image));
+                atlas.Image,
+                atlas.Size));
         }
     }
 
@@ -379,6 +383,7 @@ public sealed partial class TileMap2D
     {
         internal TileChunkCacheEntry(
             long chunkVersion,
+            IReadOnlyList<Tile>? placements,
             DrawSize tileSize,
             Color tint,
             TileCoordinate2D[] suppressedCoordinates,
@@ -391,6 +396,7 @@ public sealed partial class TileMap2D
             int retainedObjects)
         {
             ChunkVersion = chunkVersion;
+            Placements = placements;
             TileSize = tileSize;
             Tint = tint;
             SuppressedCoordinates = suppressedCoordinates;
@@ -404,6 +410,8 @@ public sealed partial class TileMap2D
         }
 
         internal long ChunkVersion { get; }
+
+        private IReadOnlyList<Tile>? Placements { get; }
 
         internal DrawSize TileSize { get; }
 
@@ -427,11 +435,12 @@ public sealed partial class TileMap2D
 
         internal bool IsCurrent(
             TileMap2D owner,
-            TileChunk2D chunk,
+            TileRenderChunk chunk,
             Color tint,
             IReadOnlyDictionary<TileCoordinate2D, TileInstance2D> promoted)
         {
             if (ChunkVersion != chunk.Version ||
+                !ReferenceEquals(Placements, chunk.Placements) ||
                 TileSize != owner.Model!.TileSize ||
                 Tint != tint ||
                 !SuppressionMatches(chunk, promoted))
@@ -441,12 +450,10 @@ public sealed partial class TileMap2D
 
             foreach (TileAtlasDependencyStamp dependency in AtlasDependencies)
             {
-                TileSet2D? tileSet = owner.Model.TileSets.FirstOrDefault(candidate =>
-                    string.Equals(candidate.Id, dependency.TileSetId, StringComparison.Ordinal));
-                if (tileSet is null ||
-                    tileSet.Version != dependency.TileSetVersion ||
-                    !owner.resolvedAtlases.TryGetValue(dependency.TileSetId, out ResolvedAtlas atlas) ||
+                if (!owner.resolvedAtlases.TryGetValue(dependency.Key, out ResolvedAtlas atlas) ||
+                    atlas.DefinitionVersion != dependency.TileSetVersion ||
                     atlas.Version != dependency.AtlasResourceVersion ||
+                    atlas.Size != dependency.Size ||
                     !ReferenceEquals(atlas.Image, dependency.Image))
                 {
                     return false;
@@ -457,13 +464,13 @@ public sealed partial class TileMap2D
         }
 
         private bool SuppressionMatches(
-            TileChunk2D chunk,
+            TileRenderChunk chunk,
             IReadOnlyDictionary<TileCoordinate2D, TileInstance2D> promoted)
         {
             int count = 0;
             foreach (TileCoordinate2D coordinate in promoted.Keys)
             {
-                if (!chunk.Contains(coordinate))
+                if (chunk.Grid is null || !chunk.Grid.Contains(coordinate))
                 {
                     continue;
                 }
@@ -477,17 +484,19 @@ public sealed partial class TileMap2D
         }
     }
 
-    private readonly record struct TileChunkCacheKey(
+    internal readonly record struct TileChunkCacheKey(
         string LayerId,
-        TileCoordinate2D Origin,
+        TileCoordinate2D? Origin,
         int Width,
-        int Height);
+        int Height,
+        int Start = 0);
 
     private readonly record struct TileAtlasDependencyStamp(
-        string TileSetId,
+        TileImageKey Key,
         long TileSetVersion,
         long AtlasResourceVersion,
-        IDrawImage? Image);
+        IDrawImage? Image,
+        DrawSize Size);
 
     private sealed class TileAtlasBatchBuilder(IDrawImage image)
     {
@@ -498,29 +507,96 @@ public sealed partial class TileMap2D
 
     private readonly record struct TileSpatialBucket(long X, long Y);
 
+    internal sealed class TileRenderChunk
+    {
+        internal TileRenderChunk(TileChunk2D grid, DrawSize tileSize)
+        {
+            Grid = grid;
+            Count = grid.Tiles.Count;
+            Bounds = SceneBounds2D.Known(new DrawRect(grid.Origin.X * tileSize.Width, grid.Origin.Y * tileSize.Height,
+                grid.Width * tileSize.Width, grid.Height * tileSize.Height));
+        }
+
+        internal TileRenderChunk(IReadOnlyList<Tile> placements, int start, int count, long version, SceneBounds2D bounds)
+        {
+            Placements = placements;
+            Start = start;
+            Count = count;
+            PlacementVersion = version;
+            Bounds = bounds;
+        }
+
+        internal TileChunk2D? Grid { get; set; }
+        internal IReadOnlyList<Tile>? Placements { get; }
+        internal int Start { get; }
+        internal int Count { get; }
+        internal SceneBounds2D Bounds { get; }
+        private long PlacementVersion { get; }
+        internal long Version => Grid?.Version ?? PlacementVersion;
+        internal TileChunkCacheKey GetKey(string layerId) =>
+            new(layerId, Grid?.Origin, Grid?.Width ?? 0, Grid?.Height ?? 0, Start);
+    }
+
+    private TileRenderChunk[] CreateRenderChunks(TileMap2DModel model, TileLayer2DModel layer)
+    {
+        if (!model.IsFreePlacement)
+        {
+            return layer.Chunks.Select(chunk => new TileRenderChunk(chunk, model.TileSize)).ToArray();
+        }
+        TileRenderChunk[] chunks = new TileRenderChunk[(model.Tiles.Count + PlacementChunkSize - 1) / PlacementChunkSize];
+        for (int index = 0; index < chunks.Length; index++)
+        {
+            int start = index * PlacementChunkSize;
+            int count = Math.Min(PlacementChunkSize, model.Tiles.Count - start);
+            SceneBounds2D bounds = SceneBounds2D.Empty;
+            for (int offset = 0; offset < count; offset++)
+            {
+                Tile tile = model.Tiles[start + offset];
+                ResolvedAtlas atlas = resolvedAtlases[new TileImageKey(null, tile.Image)];
+                if (atlas.Image is null) { continue; }
+                DrawRect rect = tile.GetDestination(atlas.Size);
+                if (rect.Width == 0 || rect.Height == 0) { continue; }
+                bounds = SceneGeometry2D.Union(bounds, SceneBounds2D.Known(rect));
+            }
+            chunks[index] = new TileRenderChunk(model.Tiles, start, count, model.Version, bounds);
+        }
+        return chunks;
+    }
+
     private sealed class TileLayerSpatialIndex
     {
-        private readonly TileChunk2D[] chunks;
+        private readonly TileRenderChunk[] chunks;
         private readonly Dictionary<TileSpatialBucket, int[]> buckets;
         private readonly HashSet<int> candidateIndices = [];
         private readonly List<int> orderedCandidateIndices = [];
-        private readonly List<TileChunk2D> queryResult = [];
-        private readonly int bucketWidth;
-        private readonly int bucketHeight;
+        private readonly List<TileRenderChunk> queryResult = [];
+        private readonly double bucketWidth;
+        private readonly double bucketHeight;
+        private readonly DrawSize tileSize;
+        private readonly bool hasUnknownBounds;
 
-        internal TileLayerSpatialIndex(TileLayer2DModel layer)
+        internal IReadOnlyList<TileRenderChunk> Chunks => chunks;
+        internal SceneBounds2D Bounds { get; }
+
+        internal TileLayerSpatialIndex(TileRenderChunk[] chunks, DrawSize tileSize)
         {
-            chunks = layer.Chunks.ToArray();
-            bucketWidth = chunks.Length == 0 ? 1 : chunks.Max(static chunk => chunk.Width);
-            bucketHeight = chunks.Length == 0 ? 1 : chunks.Max(static chunk => chunk.Height);
+            this.chunks = chunks;
+            this.tileSize = tileSize;
+            bucketWidth = chunks.Length == 0 ? 1 : Math.Max(1, chunks.Max(static chunk => chunk.Bounds.Bounds.Width));
+            bucketHeight = chunks.Length == 0 ? 1 : Math.Max(1, chunks.Max(static chunk => chunk.Bounds.Bounds.Height));
+            Bounds = SceneBounds2D.Empty;
             Dictionary<TileSpatialBucket, List<int>> mutableBuckets = [];
             for (int index = 0; index < chunks.Length; index++)
             {
-                TileChunk2D chunk = chunks[index];
-                long minBucketX = FloorDivide(chunk.Origin.X, bucketWidth);
-                long maxBucketX = FloorDivide((long)chunk.Origin.X + chunk.Width - 1, bucketWidth);
-                long minBucketY = FloorDivide(chunk.Origin.Y, bucketHeight);
-                long maxBucketY = FloorDivide((long)chunk.Origin.Y + chunk.Height - 1, bucketHeight);
+                TileRenderChunk chunk = chunks[index];
+                Bounds = SceneGeometry2D.Union(Bounds, chunk.Bounds);
+                if (chunk.Bounds.Kind == SceneBoundsKind.Unknown) { hasUnknownBounds = true; continue; }
+                if (chunk.Bounds.Kind == SceneBoundsKind.Empty) { continue; }
+                DrawRect bounds = chunk.Bounds.Bounds;
+                long minBucketX = FloorToLong(bounds.X / bucketWidth);
+                long maxBucketX = FloorToLong(Math.Ceiling(bounds.Right / bucketWidth) - 1);
+                long minBucketY = FloorToLong(bounds.Y / bucketHeight);
+                long maxBucketY = FloorToLong(Math.Ceiling(bounds.Bottom / bucketHeight) - 1);
                 for (long y = minBucketY; y <= maxBucketY; y++)
                 {
                     for (long x = minBucketX; x <= maxBucketX; x++)
@@ -540,18 +616,18 @@ public sealed partial class TileMap2D
                 static pair => pair.Value.ToArray());
         }
 
-        internal bool IsCompatible(TileLayer2DModel layer)
+        internal bool IsCompatible(TileLayer2DModel layer, DrawSize tileSize)
         {
-            if (layer.Chunks.Count != chunks.Length)
+            if (this.tileSize != tileSize || layer.Chunks.Count != chunks.Length)
             {
                 return false;
             }
 
             for (int index = 0; index < chunks.Length; index++)
             {
-                TileChunk2D current = chunks[index];
+                TileChunk2D? current = chunks[index].Grid;
                 TileChunk2D candidate = layer.Chunks[index];
-                if (current.Origin != candidate.Origin ||
+                if (current is null || current.Origin != candidate.Origin ||
                     current.Width != candidate.Width ||
                     current.Height != candidate.Height)
                 {
@@ -565,34 +641,28 @@ public sealed partial class TileMap2D
         {
             for (int index = 0; index < chunks.Length; index++)
             {
-                chunks[index] = layer.Chunks[index];
+                chunks[index].Grid = layer.Chunks[index];
             }
         }
 
-        internal IReadOnlyList<TileChunk2D> Query(
-            SceneBounds2D visibleBounds,
-            DrawSize tileSize)
+        internal IReadOnlyList<TileRenderChunk> Query(SceneBounds2D visibleBounds)
         {
             queryResult.Clear();
             if (visibleBounds.Kind == SceneBoundsKind.Empty || chunks.Length == 0)
             {
                 return queryResult;
             }
-            if (visibleBounds.Kind == SceneBoundsKind.Unknown)
+            if (visibleBounds.Kind == SceneBoundsKind.Unknown || hasUnknownBounds)
             {
                 queryResult.AddRange(chunks);
                 return queryResult;
             }
 
             DrawRect bounds = visibleBounds.Bounds;
-            long minTileX = FloorToLong(((double)bounds.X / tileSize.Width) - 1);
-            long maxTileX = FloorToLong((double)bounds.Right / tileSize.Width);
-            long minTileY = FloorToLong(((double)bounds.Y / tileSize.Height) - 1);
-            long maxTileY = FloorToLong((double)bounds.Bottom / tileSize.Height);
-            long minBucketX = FloorDivide(minTileX, bucketWidth);
-            long maxBucketX = FloorDivide(maxTileX, bucketWidth);
-            long minBucketY = FloorDivide(minTileY, bucketHeight);
-            long maxBucketY = FloorDivide(maxTileY, bucketHeight);
+            long minBucketX = FloorToLong(((double)bounds.X - tileSize.Width) / bucketWidth);
+            long maxBucketX = FloorToLong(bounds.Right / bucketWidth);
+            long minBucketY = FloorToLong(((double)bounds.Y - tileSize.Height) / bucketHeight);
+            long maxBucketY = FloorToLong(bounds.Bottom / bucketHeight);
             if (ShouldScanExistingChunks(
                 minBucketX,
                 maxBucketX,
@@ -678,12 +748,6 @@ public sealed partial class TileMap2D
             return (long)Math.Floor(value);
         }
 
-        private static long FloorDivide(long value, int divisor)
-        {
-            long quotient = value / divisor;
-            long remainder = value % divisor;
-            return remainder < 0 ? quotient - 1 : quotient;
-        }
     }
 
     private readonly record struct TileChunkDrawItem(

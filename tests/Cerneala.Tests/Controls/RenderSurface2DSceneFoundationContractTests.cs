@@ -31,8 +31,8 @@ public sealed class RenderSurface2DSceneFoundationContractTests
     {
         Sprite2D sprite = new()
         {
-            Source = new TestImage("styled sprite"),
-            Destination = new DrawRect(1, 1, 2, 2)
+            Image = new(new TestImage("styled sprite")),
+            X = 1, Y = 1, Width = 2, Height = 2
         };
         Scene2D group = new() { Scale = groupScale };
         group.Children.Add(sprite);
@@ -139,7 +139,7 @@ public sealed class RenderSurface2DSceneFoundationContractTests
     {
         DrawRect destination = new(2, 3, 4, 5);
         Sprite2D sprite = Sprite(new TestImage("sprite"), y: destination.Y);
-        sprite.Destination = destination;
+        sprite.X = destination.X; sprite.Y = destination.Y; sprite.Width = destination.Width; sprite.Height = destination.Height;
         sprite.TranslateX = 17;
         sprite.TranslateY = 23;
         sprite.Scale = 2;
@@ -337,8 +337,8 @@ public sealed class RenderSurface2DSceneFoundationContractTests
     {
         Sprite2D sprite = new()
         {
-            Source = new TestImage("sprite"),
-            Destination = new DrawRect(2, 3, 4, 5)
+            Image = new(new TestImage("sprite")),
+            X = 2, Y = 3, Width = 4, Height = 5
         };
         Scene2D group = new() { TranslateX = 10 };
         group.Children.Add(sprite);
@@ -474,8 +474,8 @@ public sealed class RenderSurface2DSceneFoundationContractTests
         scene.Children.Add(Sprite(first, y: 20));
         scene.Children.Add(new Sprite2D
         {
-            Source = hidden,
-            Destination = new DrawRect(0, -100, 1, 1),
+            Image = new(hidden),
+            X = 0, Y = -100, Width = 1, Height = 1,
             Visibility = Cerneala.UI.Layout.Visibility.Hidden
         });
         scene.Children.Add(Sprite(second, y: 10));
@@ -529,22 +529,22 @@ public sealed class RenderSurface2DSceneFoundationContractTests
         };
         nested.Children.Add(new Sprite2D
         {
-            Source = first,
-            Destination = new DrawRect(0, 0, 1, 1),
+            Image = new(first),
+            X = 0, Y = 0, Width = 1, Height = 1,
             Layer = 1
         });
         nested.Children.Add(new Sprite2D
         {
-            Source = second,
-            Destination = new DrawRect(0, 0, 1, 1),
+            Image = new(second),
+            X = 0, Y = 0, Width = 1, Height = 1,
             Layer = 0
         });
         Scene2D scene = new() { OrderMode = SceneOrderMode.Layer };
         scene.Children.Add(nested);
         scene.Children.Add(new Sprite2D
         {
-            Source = sibling,
-            Destination = new DrawRect(0, 0, 1, 1),
+            Image = new(sibling),
+            X = 0, Y = 0, Width = 1, Height = 1,
             Layer = 0
         });
         RenderSurface2D surface = new() { Scene = scene };
@@ -599,7 +599,7 @@ public sealed class RenderSurface2DSceneFoundationContractTests
         UIRoot root = new(motionClock: clock);
         TestImage moving = new("moving");
         TestImage fixedImage = new("fixed");
-        Sprite2D movingSprite = new() { Source = moving };
+        Sprite2D movingSprite = new() { Image = new(moving) };
         Sprite2D fixedSprite = Sprite(fixedImage, y: 10);
         Scene2D scene = new() { OrderMode = SceneOrderMode.LayerThenY };
         scene.Children.Add(movingSprite);
@@ -609,15 +609,15 @@ public sealed class RenderSurface2DSceneFoundationContractTests
         root.ProcessFrame();
 
         Cerneala.UI.Motion.Core.MotionHandle handle = movingSprite.Motion()
-            .Animate(Sprite2D.DestinationProperty)
-            .To(new DrawRect(10, 20, 1, 1))
-            .With(MotionFactory.Tween<DrawRect>(TimeSpan.FromMilliseconds(100)));
+            .Animate(Sprite2D.YProperty)
+            .To(20f)
+            .With(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)));
         Assert.True(handle.IsActive);
         root.ProcessFrame();
         clock.Advance(TimeSpan.FromMilliseconds(75));
         root.ProcessFrame();
 
-        Assert.InRange(movingSprite.Destination.Y, 10.01f, 19.99f);
+        Assert.InRange(movingSprite.Y, 10.01f, 19.99f);
         Assert.Equal(
             [fixedImage, moving],
             Images(Record(surface, new DrawRect(0, 0, 100, 100))));
@@ -740,7 +740,7 @@ public sealed class RenderSurface2DSceneFoundationContractTests
             {
                 Sprite2D sprite = new()
                 {
-                    Source = new TestImage(context.Data!)
+                    Image = new(new TestImage(context.Data!))
                 };
                 sprite.Aspect = new ElementAspect(
                     [new ElementAspectValue(Sprite2D.TintProperty, Color.Black)]);
@@ -761,13 +761,13 @@ public sealed class RenderSurface2DSceneFoundationContractTests
             Assert.Equal(Color.Black, sprite.Tint);
 
             Cerneala.UI.Motion.Core.MotionHandle handle = sprite.Motion()
-                .Animate(Sprite2D.DestinationProperty)
-                .To(new DrawRect(10, 0, 1, 1))
-                .With(MotionFactory.Tween<DrawRect>(TimeSpan.FromMilliseconds(100)));
+                .Animate(Sprite2D.XProperty)
+                .To(10f)
+                .With(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100)));
             root.ProcessFrame();
             clock.Advance(TimeSpan.FromMilliseconds(50));
             root.ProcessFrame();
-            Assert.InRange(sprite.Destination.X, 0.01f, 9.99f);
+            Assert.InRange(sprite.X, 0.01f, 9.99f);
             Assert.Equal(
                 [
                     DrawCommandKind.BeginPrism,
@@ -842,8 +842,8 @@ public sealed class RenderSurface2DSceneFoundationContractTests
     {
         return new Sprite2D
         {
-            Source = image,
-            Destination = new DrawRect(0, y, 1, 1)
+            Image = new(image),
+            X = 0, Y = y, Width = 1, Height = 1
         };
     }
 

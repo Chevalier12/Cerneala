@@ -19,7 +19,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
 {
     private const int PresentationSamplingOutset = 1;
     private const int ExecutionSurfaceTileSize = 16;
-    private const long ShaderPackageVersion = 57;
+    private const long ShaderPackageVersion = 58;
     private static readonly PrismGraphCapabilities Capabilities =
         PrismGraphCapabilities.ControlCapture |
         PrismGraphCapabilities.FilterProcessing |
@@ -44,6 +44,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
     private readonly Dictionary<int, SdlGpuPrismSurfaceLease> surfaces = [];
     private readonly Dictionary<int, SdlGpuPrismSurfaceLease> retainedHits = [];
     private bool[] requiredNodes = [];
+    private bool[] fallbackDependentNodes = [];
     private readonly List<SdlGpuPrismSurfaceLease> frameLeases = [];
     private readonly HashSet<SdlGpuPrismSurfaceLease> promotedLeases = [];
     private readonly HashSet<PrismGraphNodeId> mipmappedNodes = [];
@@ -51,6 +52,9 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
     private readonly HashSet<PrismCacheOwnerToken> currentOwners = [];
     private readonly List<int> expiredSurfaceIndices = [];
     private readonly Dictionary<int, SdlGpuPrismPresentationSurface> childPresentationSurfaces = [];
+    private readonly Dictionary<int, PrismRasterExtent> scopeExecutionExtents = [];
+    private readonly HashSet<int> hostCoordinateScopes = [];
+    private PrismRasterExtent referenceExtent;
     private readonly nint[] textures = new nint[15];
     private SdlGpuDrawingBackend.CommandRangeState? hostCommandRangeState;
     private int executionOriginPixelX;
@@ -95,7 +99,11 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         PrismGraphExecutionPlan plan = graphOptimizer.Optimize(sourceGraph);
         PrismGraph graph = plan.OptimizedGraph;
         ResolveExecutionExtent(plan, graph, hostTarget);
-        rasterPlan = rasterPlanner.Prepare(plan, executionPixelWidth, executionPixelHeight);
+        referenceExtent = new(executionOriginPixelX, executionOriginPixelY,
+            executionPixelWidth, executionPixelHeight);
+        ResolveScopeExecutionExtents(plan, graph, hostTarget);
+        rasterPlan = rasterPlanner.Prepare(plan, referenceExtent.Width, referenceExtent.Height,
+            scopeExecutionExtents);
         plan = rasterPlan.GraphPlan;
         graph = plan.OptimizedGraph;
         ResolveMipmappedNodes(graph);
@@ -129,12 +137,13 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                 hostState);
             for (int step = 0; step < plan.ExecutionOrder.Length; step++)
             {
-                ReleaseExpired(plan, graph, step);
+                ReleaseExpired(plan, step);
                 if (!requiredNodes[step])
                 {
                     continue;
                 }
                 PrismGraphNode node = graph.GetNode(plan.ExecutionOrder[step]);
+                SetExecutionExtent(scopeExecutionExtents[node.AnalysisScopeIndex]);
                 PrismRetainedCacheKey? cacheKey = CreateCacheKey(plan, node.Id);
                 if (retainedHits.Remove(step, out SdlGpuPrismSurfaceLease retainedLease))
                 {
@@ -156,6 +165,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                     surfaces.Add(step, lease);
                     frameLeases.Add(lease);
                     ObserveTransientSurfaces();
+                    int fallbacksBeforeNode = diagnostics.Count;
                     RenderNode(
                         commands,
                         frameContext.StateAnalysis,
@@ -170,7 +180,16 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                         session.GenerateMipmaps(lease.Target);
                     }
                     diagnostics.RecordGraphPass(node);
-                    if (cacheKey is PrismRetainedCacheKey key && diagnostics.Count == 0)
+                    // A fallback taints its output and all consumers, including
+                    // parent captures of nested children. Independent branches
+                    // must remain retainable regardless of execution order.
+                    bool fallbackDependent = diagnostics.Count != fallbacksBeforeNode;
+                    foreach (int input in plan.CacheInputExecutionIndices[step])
+                    {
+                        fallbackDependent |= fallbackDependentNodes[input];
+                    }
+                    fallbackDependentNodes[step] = fallbackDependent;
+                    if (cacheKey is PrismRetainedCacheKey key && !fallbackDependent)
                     {
                         deviceResources.Promote(key, lease);
                         promotedLeases.Add(lease);
@@ -257,6 +276,8 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         mipmappedNodes.Clear();
         currentRetainedKeys.Clear();
         currentOwners.Clear();
+        scopeExecutionExtents.Clear();
+        hostCoordinateScopes.Clear();
         hostCommandRangeState = null;
     }
 
@@ -281,8 +302,10 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         if (requiredNodes.Length < count)
         {
             Array.Resize(ref requiredNodes, count);
+            Array.Resize(ref fallbackDependentNodes, count);
         }
         Array.Clear(requiredNodes, 0, count);
+        Array.Clear(fallbackDependentNodes, 0, count);
         foreach (int output in plan.RootOutputExecutionIndices)
         {
             requiredNodes[output] = true;
@@ -472,6 +495,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                     if (surfaces.TryGetValue(index, out SdlGpuPrismSurfaceLease childLease))
                     {
                         PrismGraphNode childOutput = graph.GetNode(output);
+                        PrismRasterExtent childExtent = scopeExecutionExtents[child.AnalysisScopeIndex];
                         childPresentationSurfaces.Add(
                             child.BeginCommandIndex,
                             new SdlGpuPrismPresentationSurface(
@@ -480,10 +504,15 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                                     plan,
                                     child,
                                     childOutput,
-                                    childLease.Target,
+                                    target,
                                     executionOriginPixelX,
                                     executionOriginPixelY),
-                                child.CompositionSettings.WorkingColorProfile));
+                                child.CompositionSettings.WorkingColorProfile,
+                                new DrawRect(
+                                    (childExtent.X - executionOriginPixelX) / drawingBackend.CoordinateScale,
+                                    (childExtent.Y - executionOriginPixelY) / drawingBackend.CoordinateScale,
+                                    childLease.Target.PixelWidth / drawingBackend.CoordinateScale,
+                                    childLease.Target.PixelHeight / drawingBackend.CoordinateScale)));
                         diagnostics.RecordPresentation(
                             PrismExecutionPassKind.NestedPresent,
                             childOutput,
@@ -817,11 +846,11 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                 stylePlan.Offset.X / MathF.Max(scope.ControlBounds.Width, 1),
                 stylePlan.Offset.Y / MathF.Max(scope.ControlBounds.Height, 1))
             : new Vector2(
-                (stylePlan.Offset.X * scope.PixelScale) / Math.Max(target.PixelWidth, 1),
-                (stylePlan.Offset.Y * scope.PixelScale) / Math.Max(target.PixelHeight, 1));
+                (stylePlan.Offset.X * scope.PixelScale) / referenceExtent.Width,
+                (stylePlan.Offset.Y * scope.PixelScale) / referenceExtent.Height);
         float gradientAspect = alignGradientWithLayer
             ? scope.ControlBounds.Width / MathF.Max(scope.ControlBounds.Height, 1)
-            : target.PixelWidth / (float)Math.Max(target.PixelHeight, 1);
+            : referenceExtent.Width / (float)referenceExtent.Height;
         nint maskTexture = auxiliary is not null
             ? content
             : FindOptionalInput(plan, graph, node, PrismGraphEdgeKind.PreparedInput, source);
@@ -1251,6 +1280,8 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             executionPixelHeight,
             kernelId,
             executionOriginPixelY);
+        uniforms[59] = new Vector4(referenceExtent.X, referenceExtent.Y,
+            referenceExtent.Width, referenceExtent.Height);
     }
 
     private void RenderPrepared(
@@ -1415,14 +1446,19 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         PrismGraphExecutionPlan plan,
         PrismGraphNodeId nodeId)
     {
+        PrismRasterExtent extent = scopeExecutionExtents[
+            plan.OptimizedGraph.GetNode(nodeId).AnalysisScopeIndex];
         PrismRetainedRasterContext context = new(
-            executionPixelWidth,
-            executionPixelHeight,
+            extent.Width,
+            extent.Height,
             PrismColorProfile.Srgb,
             ToBackdropFormat(session.Diagnostics.TextureFormat),
             PrismSampling.Linear,
             Capabilities,
-            ShaderPackageVersion);
+            ShaderPackageVersion,
+            extent.X,
+            extent.Y,
+            referenceExtent);
         return PrismRetainedCacheKey.TryCreate(plan, nodeId, context, out PrismRetainedCacheKey key)
             ? key
             : null;
@@ -1465,14 +1501,12 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
 
     private void ReleaseExpired(
         PrismGraphExecutionPlan plan,
-        PrismGraph graph,
         int step)
     {
         expiredSurfaceIndices.Clear();
         foreach ((int index, SdlGpuPrismSurfaceLease _) in surfaces)
         {
-            if (plan.SurfaceLifetimes[index].LastStep < step &&
-                !IsPendingNestedPresentation(plan, graph, index, step))
+            if (plan.SurfaceLifetimes[index].LastStep < step)
             {
                 expiredSurfaceIndices.Add(index);
             }
@@ -1485,38 +1519,6 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             surfaces.Remove(index);
         }
     }
-
-    private static bool IsPendingNestedPresentation(
-        PrismGraphExecutionPlan plan,
-        PrismGraph graph,
-        int executionIndex,
-        int step)
-    {
-        PrismGraphNodeId nodeId = plan.ExecutionOrder[executionIndex];
-        foreach (PrismGraphScope scope in graph.Scopes)
-        {
-            if (scope.Output != nodeId ||
-                scope.ParentScopeIndex is not int parentScopeIndex)
-            {
-                continue;
-            }
-
-            foreach (PrismGraphNode parentCapture in graph.Nodes)
-            {
-                if (parentCapture.AnalysisScopeIndex == parentScopeIndex &&
-                    parentCapture.Kind == PrismGraphNodeKind.ControlCapture)
-                {
-                    return plan.GetExecutionIndex(parentCapture.Id) >= step;
-                }
-            }
-            throw new InvalidOperationException(
-                $"Prism scope '{parentScopeIndex}' has no control-capture node.");
-        }
-
-        return false;
-    }
-
-
 
     private bool TryResolveImage(
         PrismGraphScope scope,
@@ -1802,11 +1804,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         PrismGraph graph,
         SdlGpuRenderTarget hostTarget)
     {
-        if (graph.Nodes.Any(static node =>
-                node.Filter is PrismFilterId filter &&
-                (PrismNeighborhoodPlanner.RequiresStableHostCoordinates(filter) ||
-                    PrismResamplingPlanner.RequiresStableHostCoordinates(filter) ||
-                    PrismCatalogFilterPlanner.RequiresStableHostCoordinates(filter))))
+        if (graph.Nodes.Any(RequiresHostCoordinates))
         {
             executionOriginPixelX = 0;
             executionOriginPixelY = 0;
@@ -1877,6 +1875,63 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             return;
         }
 
+        SetExecutionExtent(AlignExecutionExtent(left, top, right, bottom, hostTarget));
+    }
+
+    private void ResolveScopeExecutionExtents(
+        PrismGraphExecutionPlan plan,
+        PrismGraph graph,
+        SdlGpuRenderTarget hostTarget)
+    {
+        scopeExecutionExtents.Clear();
+        hostCoordinateScopes.Clear();
+        foreach (PrismGraphNode node in graph.Nodes)
+        {
+            if (RequiresHostCoordinates(node))
+            {
+                hostCoordinateScopes.Add(node.AnalysisScopeIndex);
+            }
+        }
+        foreach (PrismGraphScope scope in graph.Scopes)
+        {
+            PrismRasterExtent extent = new(0, 0, hostTarget.PixelWidth, hostTarget.PixelHeight);
+            if (!hostCoordinateScopes.Contains(scope.AnalysisScopeIndex) &&
+                scope.Output is PrismGraphNodeId output)
+            {
+                PrismGraphNodePlan outputPlan = plan.GetNodePlan(output);
+                if (outputPlan.BoundsStatus != PrismGraphBoundsStatus.Unknown)
+                {
+                    DrawRect bounds = UnionBounds(outputPlan.Bounds, scope.Bounds);
+                    float scale = drawingBackend.CoordinateScale;
+                    extent = AlignExecutionExtent(
+                        (int)MathF.Floor(bounds.X * scale) - PresentationSamplingOutset,
+                        (int)MathF.Floor(bounds.Y * scale) - PresentationSamplingOutset,
+                        (int)MathF.Ceiling(bounds.Right * scale) + PresentationSamplingOutset,
+                        (int)MathF.Ceiling(bounds.Bottom * scale) + PresentationSamplingOutset,
+                        hostTarget);
+                }
+            }
+            scopeExecutionExtents.Add(scope.AnalysisScopeIndex, extent);
+        }
+    }
+
+    private static bool RequiresHostCoordinates(PrismGraphNode node) =>
+        node.Filter is PrismFilterId filter &&
+        (PrismNeighborhoodPlanner.RequiresStableHostCoordinates(filter) ||
+            PrismResamplingPlanner.RequiresStableHostCoordinates(filter) ||
+            PrismCatalogFilterPlanner.RequiresStableHostCoordinates(filter));
+
+    private void SetExecutionExtent(PrismRasterExtent extent)
+    {
+        executionOriginPixelX = extent.X;
+        executionOriginPixelY = extent.Y;
+        executionPixelWidth = extent.Width;
+        executionPixelHeight = extent.Height;
+    }
+
+    private static PrismRasterExtent AlignExecutionExtent(
+        int left, int top, int right, int bottom, SdlGpuRenderTarget hostTarget)
+    {
         int clampedLeft = Math.Clamp(left, 0, hostTarget.PixelWidth - 1);
         int clampedTop = Math.Clamp(top, 0, hostTarget.PixelHeight - 1);
         int clampedRight = Math.Clamp(
@@ -1887,8 +1942,8 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             bottom,
             clampedTop + 1,
             hostTarget.PixelHeight);
-        executionOriginPixelX = AlignDown(clampedLeft, ExecutionSurfaceTileSize);
-        executionOriginPixelY = AlignDown(clampedTop, ExecutionSurfaceTileSize);
+        int originX = AlignDown(clampedLeft, ExecutionSurfaceTileSize);
+        int originY = AlignDown(clampedTop, ExecutionSurfaceTileSize);
         int alignedRight = AlignUp(
             clampedRight,
             ExecutionSurfaceTileSize,
@@ -1897,8 +1952,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             clampedBottom,
             ExecutionSurfaceTileSize,
             hostTarget.PixelHeight);
-        executionPixelWidth = alignedRight - executionOriginPixelX;
-        executionPixelHeight = alignedBottom - executionOriginPixelY;
+        return new(originX, originY, alignedRight - originX, alignedBottom - originY);
     }
 
     private void ResolveMipmappedNodes(PrismGraph graph)

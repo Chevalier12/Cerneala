@@ -9,26 +9,35 @@ namespace Cerneala.UI.Controls;
 
 public sealed class Sprite2D : SceneNode2D
 {
-    private ResourceId<ImageResource>? sourceResourceId;
     private readonly SpriteAnimationPlayback animationPlayback = new();
 
-    public static readonly UiProperty<IDrawImage?> SourceProperty =
-        UiProperty<IDrawImage?>.Register(
-            nameof(Source),
+    public static readonly UiProperty<ImageReference?> ImageProperty =
+        UiProperty<ImageReference?>.Register(
+            nameof(Image),
             typeof(Sprite2D),
-            new UiPropertyMetadata<IDrawImage?>(null, UiPropertyOptions.AffectsRender));
+            new UiPropertyMetadata<ImageReference?>(null, UiPropertyOptions.AffectsRender));
 
-    public static readonly UiProperty<DrawRect> DestinationProperty =
-        UiProperty<DrawRect>.Register(
-            nameof(Destination),
-            typeof(Sprite2D),
-            new UiPropertyMetadata<DrawRect>(default, UiPropertyOptions.AffectsRender));
+    public static readonly UiProperty<float> XProperty = RegisterCoordinate(nameof(X));
+    public static readonly UiProperty<float> YProperty = RegisterCoordinate(nameof(Y));
+    public static readonly UiProperty<float> SourceXProperty = RegisterSourceCoordinate(nameof(SourceX));
+    public static readonly UiProperty<float> SourceYProperty = RegisterSourceCoordinate(nameof(SourceY));
+    public static readonly UiProperty<float> SourceWidthProperty = RegisterSourceSize(nameof(SourceWidth));
+    public static readonly UiProperty<float> SourceHeightProperty = RegisterSourceSize(nameof(SourceHeight));
 
-    public static readonly UiProperty<DrawRect?> SourceRectProperty =
-        UiProperty<DrawRect?>.Register(
-            nameof(SourceRect),
-            typeof(Sprite2D),
-            new UiPropertyMetadata<DrawRect?>(null, UiPropertyOptions.AffectsRender));
+    private static UiProperty<float> RegisterCoordinate(string name) =>
+        UiProperty<float>.Register(name, typeof(Sprite2D),
+            new UiPropertyMetadata<float>(0, UiPropertyOptions.AffectsRender,
+                validateValue: float.IsFinite));
+
+    private static UiProperty<float> RegisterSourceCoordinate(string name) =>
+        UiProperty<float>.Register(name, typeof(Sprite2D),
+            new UiPropertyMetadata<float>(0, UiPropertyOptions.AffectsRender,
+                validateValue: static value => float.IsFinite(value) && value >= 0));
+
+    private static UiProperty<float> RegisterSourceSize(string name) =>
+        UiProperty<float>.Register(name, typeof(Sprite2D),
+            new UiPropertyMetadata<float>(float.NaN, UiPropertyOptions.AffectsRender,
+                validateValue: static value => float.IsNaN(value) || float.IsFinite(value) && value > 0));
 
     public static readonly UiProperty<Color> TintProperty =
         UiProperty<Color>.Register(
@@ -92,38 +101,46 @@ public sealed class Sprite2D : SceneNode2D
                 UiPropertyOptions.AffectsRender,
                 validateValue: static value => value is SpriteAnimationStateChangeMode.Restart or SpriteAnimationStateChangeMode.Resume));
 
-    public IDrawImage? Source
+    public ImageReference? Image
     {
-        get => GetValue(SourceProperty);
-        set => SetValue(SourceProperty, value);
+        get => GetValue(ImageProperty);
+        set => SetValue(ImageProperty, value);
     }
 
-    public ResourceId<ImageResource>? SourceResourceId
+    public float X
     {
-        get => sourceResourceId;
-        set
-        {
-            if (sourceResourceId == value)
-            {
-                return;
-            }
-
-            sourceResourceId = value;
-            IncrementRenderVersion();
-            Invalidate(InvalidationFlags.Render, "Sprite image resource id changed");
-        }
+        get => GetValue(XProperty);
+        set => SetValue(XProperty, value);
     }
 
-    public DrawRect Destination
+    public float Y
     {
-        get => GetValue(DestinationProperty);
-        set => SetValue(DestinationProperty, value);
+        get => GetValue(YProperty);
+        set => SetValue(YProperty, value);
     }
 
-    public DrawRect? SourceRect
+    public float SourceX
     {
-        get => GetValue(SourceRectProperty);
-        set => SetValue(SourceRectProperty, value);
+        get => GetValue(SourceXProperty);
+        set => SetValue(SourceXProperty, value);
+    }
+
+    public float SourceY
+    {
+        get => GetValue(SourceYProperty);
+        set => SetValue(SourceYProperty, value);
+    }
+
+    public float SourceWidth
+    {
+        get => GetValue(SourceWidthProperty);
+        set => SetValue(SourceWidthProperty, value);
+    }
+
+    public float SourceHeight
+    {
+        get => GetValue(SourceHeightProperty);
+        set => SetValue(SourceHeightProperty, value);
     }
 
     public Color Tint
@@ -215,11 +232,10 @@ public sealed class Sprite2D : SceneNode2D
             };
         }
 
-        DrawRect destination = Destination;
+        ResolveGeometry(source, out DrawRect destination, out DrawRect? effectiveSourceRect, out DrawRect resolvedSourceRect);
         SpriteAnimationFrame? animationFrame = animationPlayback.CurrentFrame;
-        DrawRect? effectiveSourceRect = animationFrame?.SourceRect ?? SourceRect;
         RenderSurface2DSpriteFlip effectiveFlip = ComposeFlip(Flip, animationFrame?.Flip ?? RenderSurface2DSpriteFlip.None);
-        SceneBounds2D bounds = SceneBounds2D.Known(GetDrawBounds(source, effectiveSourceRect));
+        SceneBounds2D bounds = SceneBounds2D.Known(GetDrawBounds(destination, resolvedSourceRect));
         if (!context.IntersectsVisibleLocalBounds(bounds) && !HasPrismInSceneAncestry(context))
         {
             return;
@@ -250,24 +266,25 @@ public sealed class Sprite2D : SceneNode2D
 
     internal override SceneBounds2D GetHitTestLocalBounds()
     {
-
-        IDrawImage? source = SourceResourceId is null ? Source : null;
+        IDrawImage? source = ResolveSource();
         if (source is not null)
         {
-            return SceneBounds2D.Known(GetDrawBounds(source, animationPlayback.CurrentFrame?.SourceRect ?? SourceRect));
+            ResolveGeometry(source, out DrawRect destination, out _, out DrawRect resolvedSourceRect);
+            return SceneBounds2D.Known(GetDrawBounds(destination, resolvedSourceRect));
         }
 
-        return Rotation == 0 && Origin == default
-            ? SceneBounds2D.Known(Destination)
+        return Rotation == 0 && Origin == default && !float.IsNaN(Width) && !float.IsNaN(Height)
+            ? SceneBounds2D.Known(new DrawRect(X, Y, Width, Height))
             : SceneBounds2D.Unknown;
     }
 
     private IDrawImage? ResolveSource()
     {
-        if (SourceResourceId is not ResourceId<ImageResource> id)
+        ImageReference? reference = Image;
+        if (reference?.ResourceId is not ResourceId<ImageResource> id)
         {
             SetRenderDependencies(RenderDependency.None);
-            return Source;
+            return reference?.DirectImage;
         }
 
         ImageResourceResolution resolution = ImageResourceResolver.Resolve(
@@ -278,7 +295,7 @@ public sealed class Sprite2D : SceneNode2D
             InvalidationFlags.Render,
             affectsIntrinsicSize: false);
         SetRenderDependencies(RenderDependencies
-            .WithResourceIdentity(id.ToString())
+            .WithResourceIdentity(reference.ResourceIdentity)
             .WithResourceVersion(resolution.Version));
         return resolution.Image;
     }
@@ -302,18 +319,28 @@ public sealed class Sprite2D : SceneNode2D
         }
     }
 
-    private DrawRect GetDrawBounds(IDrawImage source, DrawRect? sourceRect)
+    private void ResolveGeometry(
+        IDrawImage source,
+        out DrawRect destination,
+        out DrawRect? sourceRect,
+        out DrawRect resolvedSourceRect)
     {
-        DrawImageOptions options = new(
-            sourceRect,
-            Tint,
-            opacity: 1,
-            Rotation,
-            Origin,
-            (DrawImageFlip)Flip,
-            LayerDepth);
-        DrawRect resolvedSourceRect = DrawImageGeometry.ResolveSource(source, options);
-        DrawRect destination = Destination;
+        sourceRect = animationPlayback.CurrentFrame?.SourceRect;
+        if (sourceRect is null &&
+            (SourceX != 0 || SourceY != 0 || !float.IsNaN(SourceWidth) || !float.IsNaN(SourceHeight)))
+        {
+            sourceRect = new DrawRect(SourceX, SourceY,
+                float.IsNaN(SourceWidth) ? source.Width - SourceX : SourceWidth,
+                float.IsNaN(SourceHeight) ? source.Height - SourceY : SourceHeight);
+        }
+        resolvedSourceRect = DrawImageGeometry.ResolveSourceRect(source, sourceRect);
+        destination = new DrawRect(X, Y,
+            float.IsNaN(Width) ? resolvedSourceRect.Width : Width,
+            float.IsNaN(Height) ? resolvedSourceRect.Height : Height);
+    }
+
+    private DrawRect GetDrawBounds(DrawRect destination, DrawRect resolvedSourceRect)
+    {
         float originX = Origin.X * destination.Width / resolvedSourceRect.Width;
         float originY = Origin.Y * destination.Height / resolvedSourceRect.Height;
         System.Numerics.Matrix3x2 transform =
@@ -325,7 +352,7 @@ public sealed class Sprite2D : SceneNode2D
             transform,
             out DrawRect bounds)
             ? bounds
-            : Destination;
+            : destination;
     }
 
     private static RenderSurface2DSpriteFlip ComposeFlip(

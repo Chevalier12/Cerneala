@@ -13,7 +13,9 @@ internal sealed class PrismFrameAnalyzer
     private const ulong DependencyPrime = 1099511628211UL;
     private PrismFrameAnalysis? previousAnalysis;
 
-    public PrismFrameAnalysis Analyze(DrawCommandList commands)
+    public PrismFrameAnalysis Analyze(
+        DrawCommandList commands,
+        IReadOnlyList<DrawCommandStateEntry>? previousStateEntries = null)
     {
         ArgumentNullException.ThrowIfNull(commands);
         if (previousAnalysis is PrismFrameAnalysis retainedAnalysis &&
@@ -25,7 +27,8 @@ internal sealed class PrismFrameAnalyzer
         long commandListVersion = commands.Version;
         int commandCount = commands.Count;
         DrawCommandStateAnalysis stateAnalysis =
-            new DrawCommandStateAnalyzer().Analyze(commands);
+            new DrawCommandStateAnalyzer().Analyze(
+                commands, previousStateEntries ?? previousAnalysis?.StateAnalysis.Entries);
         List<ScopeBuilder> scopes = [];
         List<OpenScope> openScopes = [];
         ImmutableArray<int>.Builder backdropScopeIndices = ImmutableArray.CreateBuilder<int>();

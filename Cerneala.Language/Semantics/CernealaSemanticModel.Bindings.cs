@@ -117,7 +117,7 @@ internal sealed partial class CernealaSemanticModel
             referenceSpan,
             resourceType,
             definitionLocation: resource.Location));
-        bool resourceIdReference = IsResourceIdCompatible(resourceType, target);
+        bool resourceIdReference = IsResourceReferenceCompatible(resourceType, target);
         resultType = resourceIdReference ? target.ValueType : resourceType;
         if (resource.Kind == ResourceKind.Aspect ||
             (!resourceIdReference && !IsTypeCompatible(resourceType, target)))
@@ -568,6 +568,11 @@ internal sealed partial class CernealaSemanticModel
             string propertyName = assignment.Name.Contains('.')
                 ? assignment.Name.Substring(assignment.Name.LastIndexOf('.') + 1)
                 : assignment.Name;
+            if (IsLegacyTileMapMember(aspect.TargetType, propertyName))
+            {
+                AddShapeDiagnostic(assignment.NameSpan, "TileMap2D markup uses direct Tile declarations, not Model or Layers.");
+                continue;
+            }
             ILanguageMemberSymbol? member = FindProperty(aspect.TargetType, propertyName);
             if (member is null)
             {
@@ -901,7 +906,7 @@ internal sealed partial class CernealaSemanticModel
             source.IsOrImplements(targetName);
     }
 
-    private static bool IsResourceIdCompatible(ILanguageTypeSymbol? resourceType, ILanguageMemberSymbol target)
+    private static bool IsResourceReferenceCompatible(ILanguageTypeSymbol? resourceType, ILanguageMemberSymbol target)
     {
         ILanguageTypeSymbol? targetType = target.ValueType;
         if (targetType?.Name == "Nullable" &&
@@ -909,6 +914,11 @@ internal sealed partial class CernealaSemanticModel
             targetType.TypeArguments.Count == 1)
         {
             targetType = targetType.TypeArguments[0];
+        }
+
+        if (targetType?.Name == "ImageReference" && targetType.Namespace == "Cerneala.UI.Resources")
+        {
+            return resourceType?.MetadataName.TrimEnd('?') == "Cerneala.UI.Resources.ImageResource";
         }
 
         if (resourceType is null || targetType is null ||

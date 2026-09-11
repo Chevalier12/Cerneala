@@ -7,6 +7,69 @@ namespace Cerneala.Tests.Drawing;
 public sealed class TextPipelineTests
 {
     [Fact]
+    public void ShapeCacheAdmissionDoesNotAcquireGlobalDictionaryLocksPerMiss()
+    {
+        using SKTypeface typeface = CreateIsolatedTextTypeface();
+        SkiaFont font = new(typeface, typeface.FamilyName, 16);
+        SkiaTextShaper shaper = new();
+        for (int index = 0; index < 4_352; index++)
+        {
+            shaper.Shape(new DrawTextRun(font, $"warm-admission-{index:D4}", 16));
+        }
+
+        using DictionaryLockListener listener = new();
+        System.Collections.Concurrent.ConcurrentDictionary<int, int> control = new();
+        control.TryAdd(1, 1);
+        listener.StartCapture();
+        _ = control.Count;
+        Assert.True(listener.StopCapture() > 0, "The runtime must expose the global dictionary-lock event used by this regression.");
+
+        const int admissions = 256;
+        listener.StartCapture();
+        for (int index = 0; index < admissions; index++)
+        {
+            shaper.Shape(new DrawTextRun(font, $"new-admission-{index:D4}", 16));
+        }
+        int globalLocks = listener.StopCapture();
+
+        // Occasional dictionary growth can lock all stripes; cache-size checks
+        // must not do so once (or twice) for every admitted text run.
+        Assert.True(globalLocks <= 16, $"{admissions} text admissions acquired all dictionary locks {globalLocks} times.");
+    }
+
+    [Fact]
+    public void ShapeCacheConcurrentAdmissionsRemainBoundedAndPreserveHeldResults()
+    {
+        using SKTypeface typeface = CreateIsolatedTextTypeface();
+        SkiaFont font = new(typeface, typeface.FamilyName, 16);
+        SkiaTextShaper shaper = new();
+        DrawTextRun recurring = new(font, "held shaped result", 16);
+        TextShapeResult held = shaper.Shape(recurring);
+        ushort[] glyphs = held.GlyphIds;
+        DrawPoint[] positions = held.GlyphPositions;
+
+        Parallel.For(0, 8_192, new ParallelOptions { MaxDegreeOfParallelism = 8 }, index =>
+            shaper.Shape(new DrawTextRun(font, $"concurrent-shape-{index:D4}", 16)));
+
+        const System.Reflection.BindingFlags fields = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+        object caches = typeof(SkiaTextShaper).GetField("ShapesByTypeface",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!.GetValue(null)!;
+        object?[] arguments = [typeface, null];
+        Assert.True((bool)caches.GetType().GetMethod("TryGetValue")!.Invoke(caches, arguments)!);
+        object cache = arguments[1]!;
+        object entries = cache.GetType().GetField("entries", fields)!.GetValue(cache)!;
+        int count = (int)entries.GetType().GetProperty("Count")!.GetValue(entries)!;
+        Assert.InRange(count, 1, 4_096);
+
+        Assert.Equal(glyphs, held.GlyphIds);
+        Assert.Equal(positions, held.GlyphPositions);
+        TextShapeResult reshaped = shaper.Shape(recurring);
+        Assert.Equal(glyphs, reshaped.GlyphIds);
+        Assert.Equal(positions, reshaped.GlyphPositions);
+        Assert.Equal(held.AdvanceWidth, reshaped.AdvanceWidth);
+    }
+
+    [Fact]
     public void TextShaperRejectsNullTextRun()
     {
         SkiaTextShaper shaper = new();
@@ -647,4 +710,40 @@ public sealed class TextPipelineTests
     }
 
     private sealed record ContractFont(string FamilyName, float Size) : IDrawFont;
+
+    private sealed class DictionaryLockListener : System.Diagnostics.Tracing.EventListener
+    {
+        private int capturedThread;
+        private int globalLocks;
+
+        public void StartCapture()
+        {
+            globalLocks = 0;
+            capturedThread = Environment.CurrentManagedThreadId;
+        }
+
+        public int StopCapture()
+        {
+            capturedThread = 0;
+            return globalLocks;
+        }
+
+        protected override void OnEventSourceCreated(System.Diagnostics.Tracing.EventSource source)
+        {
+            if (source.Name == "System.Collections.Concurrent.ConcurrentCollectionsEventSource")
+            {
+                EnableEvents(source, System.Diagnostics.Tracing.EventLevel.Verbose,
+                    System.Diagnostics.Tracing.EventKeywords.All);
+            }
+        }
+
+        protected override void OnEventWritten(System.Diagnostics.Tracing.EventWrittenEventArgs data)
+        {
+            if (capturedThread == Environment.CurrentManagedThreadId &&
+                data.EventName == "ConcurrentDictionary_AcquiringAllLocks")
+            {
+                globalLocks++;
+            }
+        }
+    }
 }

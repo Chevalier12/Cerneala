@@ -9,6 +9,148 @@ namespace Cerneala.Tests.UI.Core;
 
 public sealed class InheritedPropertyTreePropagationTests
 {
+    [Theory]
+    [InlineData(8)]
+    [InlineData(16)]
+    public void SingleInheritedChangeAppliesEachDescendantOnce(int depth)
+    {
+        UIRoot root = new();
+        InheritanceCountingElement parent = new();
+        parent.SetValue(InheritanceCountingElement.ValueProperty, 1);
+        root.VisualChildren.Add(parent);
+        List<InheritanceCountingElement> descendants = [];
+        UIElement current = parent;
+        for (int index = 0; index < depth; index++)
+        {
+            InheritanceCountingElement child = new();
+            current.VisualChildren.Add(child);
+            descendants.Add(child);
+            current = child;
+        }
+
+        root.ProcessFrame();
+        foreach (InheritanceCountingElement child in descendants)
+        {
+            child.ApplicationCount = 0;
+        }
+
+        parent.SetValue(InheritanceCountingElement.ValueProperty, 2);
+        root.ProcessFrame();
+
+        Assert.All(descendants, child => Assert.Equal(2, child.GetValue(InheritanceCountingElement.ValueProperty)));
+        Assert.Equal(depth, descendants.Sum(child => child.ApplicationCount));
+        Assert.All(descendants, child => Assert.Equal(1, child.ApplicationCount));
+        Assert.False(root.InheritedPropertyQueue.HasWork);
+    }
+
+    [Fact]
+    public void DescendantCallbackCanRequeueAnAncestorDuringPropagation()
+    {
+        UIRoot root = new();
+        Control parent = new() { FontSize = 20 };
+        Control child = new();
+        Control grandchild = new();
+        root.VisualChildren.Add(parent);
+        parent.VisualChildren.Add(child);
+        child.VisualChildren.Add(grandchild);
+        root.ProcessFrame();
+        grandchild.PropertyChanged += (_, args) =>
+        {
+            if (args.Property == Control.FontSizeProperty && grandchild.FontSize == 30)
+            {
+                parent.FontSize = 40;
+            }
+        };
+
+        parent.FontSize = 30;
+        root.ProcessFrame();
+
+        Assert.Equal(40, child.FontSize);
+        Assert.Equal(40, grandchild.FontSize);
+        Assert.False(root.InheritedPropertyQueue.HasWork);
+    }
+
+    [Fact]
+    public void LaterSiblingCallbackCanRequeueAnAlreadyPropagatedSubtree()
+    {
+        UIRoot root = new();
+        Control parent = new() { FontSize = 20 };
+        Control first = new();
+        Control firstChild = new();
+        Control second = new();
+        root.VisualChildren.Add(parent);
+        parent.VisualChildren.Add(first);
+        first.VisualChildren.Add(firstChild);
+        parent.VisualChildren.Add(second);
+        root.ProcessFrame();
+        second.PropertyChanged += (_, args) =>
+        {
+            if (args.Property == Control.FontSizeProperty && second.FontSize == 30)
+            {
+                first.FontSize = 40;
+            }
+        };
+
+        parent.Invalidate(InvalidationFlags.Inherited | InvalidationFlags.Subtree, "queued subtree");
+        parent.FontSize = 30;
+        root.ProcessFrame();
+
+        Assert.Equal(40, firstChild.FontSize);
+        Assert.Equal(30, second.FontSize);
+        Assert.False(root.InheritedPropertyQueue.HasWork);
+    }
+
+    [Fact]
+    public void PropagationFailureKeepsSubtreeRetryable()
+    {
+        UIRoot root = new();
+        Control parent = new() { FontSize = 20 };
+        Control child = new();
+        Control grandchild = new();
+        root.VisualChildren.Add(parent);
+        parent.VisualChildren.Add(child);
+        child.VisualChildren.Add(grandchild);
+        root.ProcessFrame();
+        bool shouldThrow = true;
+        grandchild.PropertyChanged += (_, args) =>
+        {
+            if (args.Property == Control.FontSizeProperty && shouldThrow)
+            {
+                shouldThrow = false;
+                throw new InvalidOperationException("propagation callback failure");
+            }
+        };
+
+        parent.FontSize = 30;
+        Assert.Throws<InvalidOperationException>(() => root.ProcessFrame());
+        Assert.Contains(parent, root.InheritedPropertyQueue.Snapshot());
+        root.ProcessFrame();
+
+        Assert.Equal(30, child.FontSize);
+        Assert.Equal(30, grandchild.FontSize);
+        Assert.False(root.InheritedPropertyQueue.HasWork);
+        Assert.False(child.DirtyState.Flags.HasFlag(InvalidationFlags.Inherited));
+        Assert.False(grandchild.DirtyState.Flags.HasFlag(InvalidationFlags.Inherited));
+    }
+
+    [Fact]
+    public void DirectPropagationPreservesPendingSchedulerWork()
+    {
+        UIRoot root = new();
+        Control parent = new() { FontSize = 20 };
+        Control child = new();
+        root.VisualChildren.Add(parent);
+        parent.VisualChildren.Add(child);
+        root.ProcessFrame();
+        parent.FontSize = 30;
+
+        root.InheritedPropertyPropagator.PropagateFrom(parent);
+
+        Assert.Equal(30, child.FontSize);
+        Assert.Contains(parent, root.InheritedPropertyQueue.Snapshot());
+        Assert.Contains(child, root.InheritedPropertyQueue.Snapshot());
+    }
+
     [Fact]
     public void ParentForegroundPropagatesToDescendantDuringFrame()
     {
@@ -128,5 +270,23 @@ public sealed class InheritedPropertyTreePropagationTests
 
         Assert.Null(child.Background);
         Assert.Equal(UiPropertyValueSource.Default, child.GetValueSource(Control.BackgroundProperty));
+    }
+
+    private sealed class InheritanceCountingElement : UIElement
+    {
+        public static readonly UiProperty<int> ValueProperty = UiProperty<int>.Register(
+            nameof(ValueProperty),
+            typeof(InheritanceCountingElement),
+            new UiPropertyMetadata<int>(0, UiPropertyOptions.Inherits, coerceValue: (owner, value) =>
+            {
+                if (owner is InheritanceCountingElement element)
+                {
+                    element.ApplicationCount++;
+                }
+
+                return value;
+            }));
+
+        public int ApplicationCount { get; set; }
     }
 }

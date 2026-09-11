@@ -1,5 +1,15 @@
 [
   {
+    "name": "Cerneala.UI.Controls.Tile",
+    "file": "documentation/classes/Cerneala.UI.Controls.Tile.md",
+    "source": "UI/Controls/Tile.cs"
+  },
+  {
+    "name": "Cerneala.UI.Resources.ImageReference",
+    "file": "documentation/classes/Cerneala.UI.Resources.ImageReference.md",
+    "source": "UI/Resources/ImageReference.cs"
+  },
+  {
     "name": "Cerneala.Scene2D.Importers.LdtkScene2DImporter",
     "file": "documentation/classes/Cerneala.Scene2D.Importers.LdtkScene2DImporter.md",
     "source": "Cerneala.Scene2D.Importers/LdtkScene2DImporter.cs"

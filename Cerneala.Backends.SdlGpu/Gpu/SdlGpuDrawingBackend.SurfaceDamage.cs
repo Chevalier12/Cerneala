@@ -77,7 +77,9 @@ internal sealed partial class SdlGpuDrawingBackend
     }
 
     private static bool SurfaceEntryEquals(DrawCommandStateEntry left, DrawCommandStateEntry right) =>
-        left.Metadata?.RetainedIdentity.Equals(right.Metadata?.RetainedIdentity) == true;
+        left.Metadata is { } leftMetadata &&
+        right.Metadata is { } rightMetadata &&
+        leftMetadata.RetainedIdentity.Equals(rightMetadata.RetainedIdentity);
 
     private static SdlRect SurfaceCommandBounds(DrawCommandStateEntry entry, SdlRect surfaceBounds) =>
         entry.Bounds is DrawRect bounds ? ToScissor(bounds, 1) : surfaceBounds;

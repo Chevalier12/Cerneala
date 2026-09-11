@@ -187,13 +187,13 @@ public sealed partial class UiMarkupGeneratorTests
             public sealed class SceneModel
             {
                 public IEnumerable Items { get; } = new SpriteModel[0];
-                public IDrawImage? CurrentImage { get; set; }
+                public Cerneala.UI.Resources.ImageReference? CurrentImage { get; set; }
                 public DrawRect CurrentDestination { get; set; }
             }
 
             public sealed class SpriteModel
             {
-                public IDrawImage? Image { get; set; }
+                public Cerneala.UI.Resources.ImageReference? Image { get; set; }
                 public DrawRect Destination { get; set; }
             }
             """;
@@ -209,11 +209,11 @@ public sealed partial class UiMarkupGeneratorTests
                     @templates
                     {
                       <ContentTemplate DataType="models:SpriteModel">
-                        <Sprite2D Source="$DataContext.Image" Destination="$DataContext.Destination" />
+                        <Sprite2D Image="$DataContext.Image" X="$DataContext.Destination.X" Y="$DataContext.Destination.Y" Width="$DataContext.Destination.Width" Height="$DataContext.Destination.Height" />
                       </ContentTemplate>
                     }
                   </SceneItems2D>
-                  <Sprite2D Name="CurrentPiece" Source="$DataContext.CurrentImage" Destination="$DataContext.CurrentDestination" />
+                  <Sprite2D Name="CurrentPiece" Image="$DataContext.CurrentImage" X="$DataContext.CurrentDestination.X" Y="$DataContext.CurrentDestination.Y" Width="$DataContext.CurrentDestination.Width" Height="$DataContext.CurrentDestination.Height" />
                 </Scene2D>
               </RenderSurface2D.Scene>
             </RenderSurface2D>

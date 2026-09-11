@@ -22,19 +22,19 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     private readonly List<SdlGpuTextureResource> idleSampledTextures = [];
     private long idleSampledTextureBytes;
     private readonly Dictionary<SdlGpuTextLayerTextureKey, SdlGpuTextAtlasEntry> textAtlasEntries = [];
+    private readonly LinkedList<SdlGpuTextAtlasEntry> textAtlasRecency = new();
+    private readonly Dictionary<long, HashSet<SdlGpuTextAtlasEntry>> activeTextAtlasFrames = [];
+    private readonly Stack<HashSet<SdlGpuTextAtlasEntry>> unusedTextAtlasFrames = new();
     private readonly List<SdlGpuTextAtlasPage> textAtlasPages = [];
     private readonly HashSet<SdlGpuTextAtlasPage> dirtyTextAtlasPages = [];
     private readonly Dictionary<SdlGpuLayerTargetKey, SdlGpuRenderTarget> layerTargets = [];
     private readonly HashSet<nint> ownedTextures = [];
     private readonly List<nint> retiredTextures = [];
-    private readonly List<nint> retiredTransferBuffers = [];
+    private readonly Dictionary<uint, nint> uploadTransferBuffers = [];
     private nint vertexShader;
     private nint fragmentShader;
     private nint prismPresentationShader;
-    private nint uploadTransferBuffer;
-    private uint transferCapacity;
     private long nextTextAtlasFrameToken;
-    private long textAtlasUsageSequence;
     private SdlGpuPrismDeviceResources? prismResources;
     private bool disposed;
 
@@ -294,7 +294,9 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     public long BeginTextAtlasFrame()
     {
         ThrowIfDisposed();
-        return checked(++nextTextAtlasFrameToken);
+        long token = checked(++nextTextAtlasFrameToken);
+        activeTextAtlasFrames.Add(token, unusedTextAtlasFrames.TryPop(out var entries) ? entries : []);
+        return token;
     }
 
     public void EndTextAtlasFrame(long frameToken)
@@ -304,11 +306,16 @@ internal sealed class SdlGpuDrawingResources : IDisposable
             return;
         }
 
-        // Entries remain stable between frames. Only budget pressure may evict
-        // an inactive page; another window can still hold queued UVs into it.
-        foreach (SdlGpuTextAtlasPage page in textAtlasPages)
+        // Ending one frame releases only its pins. Another window may still
+        // hold queued UVs into the same entry, not just the same page.
+        if (activeTextAtlasFrames.Remove(frameToken, out var entries))
         {
-            page.EndFrame(frameToken);
+            foreach (SdlGpuTextAtlasEntry entry in entries)
+            {
+                entry.ActiveFrameCount--;
+            }
+            entries.Clear();
+            unusedTextAtlasFrames.Push(entries);
         }
     }
 
@@ -328,10 +335,9 @@ internal sealed class SdlGpuDrawingResources : IDisposable
             return false;
         }
 
-        long usage = checked(++textAtlasUsageSequence);
-        red.Page.MarkUsed(frameToken, usage);
-        green.Page.MarkUsed(frameToken, usage);
-        blue.Page.MarkUsed(frameToken, usage);
+        MarkTextAtlasEntryUsed(red, frameToken);
+        MarkTextAtlasEntryUsed(green, frameToken);
+        MarkTextAtlasEntryUsed(blue, frameToken);
         entries = new SdlGpuTextAtlasEntries(red, green, blue);
         return true;
     }
@@ -381,9 +387,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     {
         if (textAtlasEntries.TryGetValue(key, out SdlGpuTextAtlasEntry? existing))
         {
-            existing.Page.MarkUsed(
-                frameToken,
-                checked(++textAtlasUsageSequence));
+            MarkTextAtlasEntryUsed(existing, frameToken);
             entry = existing;
             return true;
         }
@@ -393,6 +397,16 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         }
         dirtyTextAtlasPages.Add(entry.Page);
         return true;
+    }
+
+    private void MarkTextAtlasEntryUsed(SdlGpuTextAtlasEntry entry, long frameToken)
+    {
+        if (frameToken != 0 && activeTextAtlasFrames[frameToken].Add(entry))
+        {
+            entry.ActiveFrameCount++;
+        }
+        textAtlasRecency.Remove(entry.RecencyNode);
+        textAtlasRecency.AddLast(entry.RecencyNode);
     }
 
     public void FlushTextAtlasUploads(SdlGpuWindowGraphicsSession session)
@@ -674,12 +688,6 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         }
         retiredTextures.Clear();
 
-        foreach (nint transfer in retiredTransferBuffers)
-        {
-            api.ReleaseGpuTransferBuffer(device, transfer);
-        }
-        retiredTransferBuffers.Clear();
-
     }
 
     public void Dispose()
@@ -713,14 +721,17 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         idleSampledTextures.Clear();
         idleSampledTextureBytes = 0;
         textAtlasEntries.Clear();
+        textAtlasRecency.Clear();
+        activeTextAtlasFrames.Clear();
+        unusedTextAtlasFrames.Clear();
         textAtlasPages.Clear();
         dirtyTextAtlasPages.Clear();
         layerTargets.Clear();
-        if (uploadTransferBuffer != 0)
+        foreach (nint transfer in uploadTransferBuffers.Values)
         {
-            api.ReleaseGpuTransferBuffer(device, uploadTransferBuffer);
-            uploadTransferBuffer = 0;
+            api.ReleaseGpuTransferBuffer(device, transfer);
         }
+        uploadTransferBuffers.Clear();
         if (fragmentShader != 0)
         {
             api.ReleaseGpuShader(device, fragmentShader);
@@ -790,7 +801,8 @@ internal sealed class SdlGpuDrawingResources : IDisposable
 
         int rowByteCount = checked(region.Width * bytesPerPixel);
         uint size = checked((uint)(rowByteCount * region.Height));
-        EnsureTransferCapacity(size);
+        uint transferCapacity = GrowTransferCapacity(0, size);
+        nint uploadTransferBuffer = GetUploadTransferBuffer(transferCapacity);
         nint mapped = RequireHandle(
             api.MapGpuTransferBuffer(device, uploadTransferBuffer, cycle: true),
             "SDL GPU texture upload-buffer mapping");
@@ -867,38 +879,41 @@ internal sealed class SdlGpuDrawingResources : IDisposable
             {
                 page = CreateTextAtlasPage();
                 textAtlasPages.Add(page);
+                if (!page.TryAllocate(layer.Width, layer.Height, out x, out y))
+                {
+                    throw new InvalidOperationException(
+                        "A fresh SDL_GPU text atlas page rejected a fitting raster layer.");
+                }
             }
             else
             {
-                foreach (SdlGpuTextAtlasPage candidate in textAtlasPages)
+                LinkedListNode<SdlGpuTextAtlasEntry>? node = textAtlasRecency.First;
+                while (node is not null)
                 {
-                    if (candidate.ActiveFrameCount == 0 &&
-                        (page is null || candidate.LastUsedSequence < page.LastUsedSequence))
+                    LinkedListNode<SdlGpuTextAtlasEntry>? next = node.Next;
+                    SdlGpuTextAtlasEntry stale = node.Value;
+                    if (stale.ActiveFrameCount == 0)
                     {
-                        page = candidate;
+                        SdlGpuTextAtlasPage candidate = stale.Page;
+                        candidate.Free(stale);
+                        textAtlasEntries.Remove(stale.Key);
+                        textAtlasRecency.Remove(node);
+                        if (candidate.TryAllocate(layer.Width, layer.Height, out x, out y))
+                        {
+                            page = candidate;
+                            break;
+                        }
                     }
+                    node = next;
                 }
                 if (page is null)
                 {
                     return false;
                 }
-
-                foreach (SdlGpuTextLayerTextureKey staleKey in page.Keys)
-                {
-                    textAtlasEntries.Remove(staleKey);
-                }
-                page.Reset();
-            }
-
-            if (!page.TryAllocate(layer.Width, layer.Height, out x, out y))
-            {
-                throw new InvalidOperationException(
-                    "A fresh SDL_GPU text atlas page rejected a fitting raster layer.");
             }
         }
 
         page.CopyPixels(x, y, layer);
-        page.MarkUsed(frameToken, checked(++textAtlasUsageSequence));
         DrawRect textureCoordinates = new(
             x / (float)TextAtlasDimension,
             y / (float)TextAtlasDimension,
@@ -910,9 +925,11 @@ internal sealed class SdlGpuDrawingResources : IDisposable
             layer.Width,
             layer.Height,
             layer.OriginOffset,
-            page);
-        page.Keys.Add(key);
+            page,
+            key);
         textAtlasEntries.Add(key, entry);
+        textAtlasRecency.AddLast(entry.RecencyNode);
+        MarkTextAtlasEntryUsed(entry, frameToken);
         return true;
     }
 
@@ -972,27 +989,26 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         }
     }
 
-    private void EnsureTransferCapacity(uint requiredBytes)
+    private nint GetUploadTransferBuffer(uint capacity)
     {
-        if (requiredBytes <= transferCapacity)
+        if (uploadTransferBuffers.TryGetValue(capacity, out nint cached))
         {
-            return;
+            return cached;
         }
 
-        uint next = GrowTransferCapacity(transferCapacity, requiredBytes);
+        // Cycling preserves queued uploads, but cycles the entire allocation.
+        // A large atlas upload must not make every later tiny texture cycle
+        // that large buffer. Power-of-two capacities retain less than twice
+        // the largest capacity while reusing storage for each upload size.
         nint created = RequireHandle(
             api.CreateGpuTransferBuffer(
                 device,
                 new SdlGpuTransferBufferCreateInfo(
                     SdlGpuTransferBufferUsage.Upload,
-                    next)),
+                    capacity)),
             "SDL GPU drawing transfer-buffer creation");
-        if (uploadTransferBuffer != 0)
-        {
-            retiredTransferBuffers.Add(uploadTransferBuffer);
-        }
-        uploadTransferBuffer = created;
-        transferCapacity = next;
+        uploadTransferBuffers.Add(capacity, created);
+        return created;
     }
 
     private static uint GrowTransferCapacity(uint current, uint required)
@@ -1064,25 +1080,44 @@ internal sealed record SdlGpuTextureResource(
     internal bool CanRecycleStorage { get; init; }
 }
 
-internal sealed class SdlGpuTextAtlasEntry(
-    SdlGpuTextureResource texture,
-    DrawRect textureCoordinates,
-    int width,
-    int height,
-    DrawPoint originOffset,
-    SdlGpuTextAtlasPage page)
+internal sealed class SdlGpuTextAtlasEntry
 {
-    public SdlGpuTextureResource Texture { get; } = texture;
+    public SdlGpuTextAtlasEntry(
+        SdlGpuTextureResource texture,
+        DrawRect textureCoordinates,
+        int width,
+        int height,
+        DrawPoint originOffset,
+        SdlGpuTextAtlasPage page,
+        SdlGpuTextLayerTextureKey key)
+    {
+        Texture = texture;
+        TextureCoordinates = textureCoordinates;
+        Width = width;
+        Height = height;
+        OriginOffset = originOffset;
+        Page = page;
+        Key = key;
+        RecencyNode = new(this);
+    }
 
-    public DrawRect TextureCoordinates { get; } = textureCoordinates;
+    public SdlGpuTextLayerTextureKey Key { get; }
 
-    public int Width { get; } = width;
+    public LinkedListNode<SdlGpuTextAtlasEntry> RecencyNode { get; }
 
-    public int Height { get; } = height;
+    public int ActiveFrameCount { get; set; }
 
-    public DrawPoint OriginOffset { get; } = originOffset;
+    public SdlGpuTextureResource Texture { get; }
 
-    public SdlGpuTextAtlasPage Page { get; } = page;
+    public DrawRect TextureCoordinates { get; }
+
+    public int Width { get; }
+
+    public int Height { get; }
+
+    public DrawPoint OriginOffset { get; }
+
+    public SdlGpuTextAtlasPage Page { get; }
 }
 
 internal readonly record struct SdlGpuTextAtlasEntries(
@@ -1115,10 +1150,7 @@ internal sealed class SdlGpuTextAtlasPage(
     int dimension)
 {
     private const int Padding = 1;
-    private readonly HashSet<long> activeFrames = [];
-    private int nextX;
-    private int nextY;
-    private int rowHeight;
+    private readonly SdlGpuTextAtlasAllocator allocator = new(dimension);
     private int dirtyLeft = int.MaxValue;
     private int dirtyTop = int.MaxValue;
     private int dirtyRight;
@@ -1128,42 +1160,27 @@ internal sealed class SdlGpuTextAtlasPage(
 
     public byte[] Pixels { get; } = new byte[checked(dimension * dimension * 4)];
 
-    public HashSet<SdlGpuTextLayerTextureKey> Keys { get; } = [];
-
-    public int ActiveFrameCount => activeFrames.Count;
-
-    public long LastUsedSequence { get; private set; }
-
     public bool TryAllocate(int width, int height, out int x, out int y)
     {
         int paddedWidth = checked(width + (Padding * 2));
         int paddedHeight = checked(height + (Padding * 2));
-        if (paddedWidth > dimension || paddedHeight > dimension)
+        if (!allocator.TryAllocate(paddedWidth, paddedHeight, out SdlRect allocation))
         {
             x = 0;
             y = 0;
             return false;
         }
 
-        if (nextX + paddedWidth > dimension)
-        {
-            nextX = 0;
-            nextY += rowHeight;
-            rowHeight = 0;
-        }
-        if (nextY + paddedHeight > dimension)
-        {
-            x = 0;
-            y = 0;
-            return false;
-        }
-
-        x = nextX + Padding;
-        y = nextY + Padding;
-        nextX += paddedWidth;
-        rowHeight = Math.Max(rowHeight, paddedHeight);
+        x = allocation.X + Padding;
+        y = allocation.Y + Padding;
         return true;
     }
+
+    public void Free(SdlGpuTextAtlasEntry entry) => allocator.Free(new SdlRect(
+        (int)(entry.TextureCoordinates.X * dimension) - Padding,
+        (int)(entry.TextureCoordinates.Y * dimension) - Padding,
+        entry.Width + Padding * 2,
+        entry.Height + Padding * 2));
 
     public void CopyPixels(int x, int y, RasterizedText layer)
     {
@@ -1179,6 +1196,13 @@ internal sealed class SdlGpuTextAtlasPage(
     {
         int sourceStride = checked(width * 4);
         int destinationStride = checked(dimension * 4);
+        // A reclaimed slot can contain a larger old raster. Clear the complete
+        // new gutter before copying so bilinear sampling cannot see old pixels.
+        for (int row = -Padding; row < height + Padding; row++)
+        {
+            Pixels.AsSpan(((y + row) * dimension + x - Padding) * 4,
+                (width + Padding * 2) * 4).Clear();
+        }
         for (int row = 0; row < height; row++)
         {
             pixels.Slice(row * sourceStride, sourceStride).CopyTo(
@@ -1217,28 +1241,6 @@ internal sealed class SdlGpuTextAtlasPage(
         dirtyBottom = 0;
     }
 
-    public void MarkUsed(long frameToken, long usageSequence)
-    {
-        if (frameToken != 0)
-        {
-            activeFrames.Add(frameToken);
-        }
-        LastUsedSequence = usageSequence;
-    }
-
-    public void EndFrame(long frameToken) => activeFrames.Remove(frameToken);
-
-    public void Reset()
-    {
-        Array.Clear(Pixels);
-        Keys.Clear();
-        activeFrames.Clear();
-        nextX = 0;
-        nextY = 0;
-        rowHeight = 0;
-        LastUsedSequence = 0;
-        MarkUploaded();
-    }
 }
 
 internal sealed record SdlGpuRenderTarget(

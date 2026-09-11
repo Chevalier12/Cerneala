@@ -85,7 +85,10 @@ public sealed record SceneWorldBox(float X, float Y, float Width, float Height, 
 public sealed record SceneWorldNpc(float X, float Y)
 {
     public DrawRect Destination => new(0, 0, 16, 16);
-    public DrawRect? SourceRect => new DrawRect(64, 16, 16, 16);
+    public float SourceX => 64;
+    public float SourceY => 16;
+    public float SourceWidth => 16;
+    public float SourceHeight => 16;
 }
 
 public sealed class SceneWorldState : INotifyPropertyChanged
@@ -112,7 +115,8 @@ public sealed class SceneWorldState : INotifyPropertyChanged
     public IReadOnlyList<SceneWorldBox> Colliders { get; private set; } = [];
     public ObservableCollection<SceneWorldNpc> Npcs { get; } = [];
     public IScene2DDebugNavigationGrid Navigation { get; } = new VillageNavigation();
-    public DrawRect PlayerDestination => new(0, 0, 16, 16);
+    public float PlayerWidth => 16;
+    public float PlayerHeight => 16;
 
     public void Load(bool ldtk)
     {
@@ -120,8 +124,8 @@ public sealed class SceneWorldState : INotifyPropertyChanged
         Scene2DImportResult result = ldtk ? LdtkScene2DImporter.Import(path) : TiledScene2DImporter.Import(path);
         if (!result.Success) throw new InvalidOperationException(string.Join(Environment.NewLine, result.Diagnostics));
         level = result.Document!.Levels.Single();
-        if (level.Promotions.Single().Cell != new TileCellKey2D("2", 14, 9))
-            throw new InvalidOperationException("The authored door declaration requires promotion (2,14,9).");
+        if (level.Promotions.Single().Cell != new TileCellKey2D("4", 14, 9))
+            throw new InvalidOperationException("The authored door declaration requires promotion (4,14,9).");
         IsLdtk = ldtk;
         Colliders = level.Entities.Where(e => e.Role == "Collider").Select(e =>
         {

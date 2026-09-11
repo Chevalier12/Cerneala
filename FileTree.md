@@ -426,6 +426,7 @@ Generated from `.`.
 |   |   |-- SdlGpuPresentationOptions.cs
 |   |   |-- SdlGpuPrismFrameCounters.cs
 |   |   |-- SdlGpuShaderArtifacts.cs
+|   |   |-- SdlGpuTextAtlasAllocator.cs
 |   |   +-- SdlGpuWindowGraphicsSession.cs
 |   |-- Hosting/
 |   |   +-- SdlGpuApplicationBackend.cs
@@ -495,6 +496,7 @@ Generated from `.`.
 |   |   |-- CernealaSemanticModel.MotionPrism.cs
 |   |   |-- CernealaSemanticModel.Navigation.cs
 |   |   |-- CernealaSemanticModel.Scopes.cs
+|   |   |-- CernealaSemanticModel.Tiles.cs
 |   |   +-- SemanticSymbols.cs
 |   |-- Syntax/
 |   |   |-- Embedded/
@@ -1694,6 +1696,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.TextBox.md
 |   |   |   |-- Cerneala.UI.Controls.TextChangedEventArgs.md
 |   |   |   |-- Cerneala.UI.Controls.TextSearch.md
+|   |   |   |-- Cerneala.UI.Controls.Tile.md
 |   |   |   |-- Cerneala.UI.Controls.TileCell2D.md
 |   |   |   |-- Cerneala.UI.Controls.TileCellKey2D.md
 |   |   |   |-- Cerneala.UI.Controls.TileChunk2D.md
@@ -2237,6 +2240,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Rendering.TimeSensitiveRenderInvalidator.md
 |   |   |   |-- Cerneala.UI.Resources.FontResource.md
 |   |   |   |-- Cerneala.UI.Resources.IImageLoader.md
+|   |   |   |-- Cerneala.UI.Resources.ImageReference.md
 |   |   |   |-- Cerneala.UI.Resources.ImageResource.md
 |   |   |   |-- Cerneala.UI.Resources.ImageResourceCache.md
 |   |   |   |-- Cerneala.UI.Resources.IObservableResourceProvider.md
@@ -2630,7 +2634,8 @@ Generated from `.`.
 |   |   |       |-- Composition/
 |   |   |       |   |-- Clipping.hlsl
 |   |   |       |   |-- Copy.hlsl
-|   |   |       |   +-- Mask.hlsl
+|   |   |       |   |-- Mask.hlsl
+|   |   |       |   +-- RasterCoordinates.hlsl
 |   |   |       |-- Filters/
 |   |   |       |   |-- Catalog/
 |   |   |       |   |   |-- AccentedEdges.hlsl
@@ -3164,6 +3169,7 @@ Generated from `.`.
 |   |   |   |-- ScrollViewerTests.cs
 |   |   |   |-- SelectionModelTests.cs
 |   |   |   |-- SliderTests.cs
+|   |   |   |-- Sprite2DAuthoringTests.cs
 |   |   |   |-- Sprite2DImageResourceTests.cs
 |   |   |   |-- SpriteAnimationIntegrationTests.cs
 |   |   |   |-- SpriteAnimationSamplerTests.cs
@@ -3188,6 +3194,7 @@ Generated from `.`.
 |   |   |   |-- TileMap2DCacheContractTests.cs
 |   |   |   |-- TileMap2DContractTests.cs
 |   |   |   |-- TileMap2DStageZeroContractTests.cs
+|   |   |   |-- TilePlacementContractTests.cs
 |   |   |   |-- ToggleButtonTests.cs
 |   |   |   |-- ToolTipTests.cs
 |   |   |   |-- UserControlTests.cs
@@ -3744,7 +3751,9 @@ Generated from `.`.
 |   |   |-- SdlGpuSampledTextureReuseTests.cs
 |   |   |-- SdlGpuScreenshotRegionTests.cs
 |   |   |-- SdlGpuShaderArtifactTests.cs
+|   |   |-- SdlGpuSurfaceDamageAllocationTests.cs
 |   |   |-- SdlGpuSurfaceRetainedTests.cs
+|   |   |-- SdlGpuTextAtlasAllocatorTests.cs
 |   |   |-- SdlGpuTextCacheContractTests.cs
 |   |   |-- SdlGpuTextCacheTests.cs
 |   |   |-- SdlGpuWindowGraphicsSessionTests.cs
@@ -3788,7 +3797,9 @@ Generated from `.`.
 |   |   |-- UiMarkupGeneratorSceneImportStageZeroTests.cs
 |   |   |-- UiMarkupGeneratorSceneWorldBindingTests.cs
 |   |   |-- UiMarkupGeneratorSpriteAnimationStageZeroTests.cs
+|   |   |-- UiMarkupGeneratorSpriteAuthoringTests.cs
 |   |   |-- UiMarkupGeneratorTests.cs
+|   |   |-- UiMarkupGeneratorTileAuthoringTests.cs
 |   |   +-- UiMarkupGeneratorTileMap2DStageZeroTests.cs
 |   |-- Cerneala.Tests.VisualStudio/
 |   |   |-- Golden/
@@ -4215,6 +4226,7 @@ Generated from `.`.
 |   |   |-- TextInputPolicy.cs
 |   |   |-- TextInputViewport.cs
 |   |   |-- TextSearch.cs
+|   |   |-- Tile.cs
 |   |   |-- TileColliderDescriptor2D.cs
 |   |   |-- TileFlipGeometry2D.cs
 |   |   |-- TileInstance2D.cs
@@ -4715,6 +4727,7 @@ Generated from `.`.
 |   |   |-- MonoGame/
 |   |   |-- FontResource.cs
 |   |   |-- IImageLoader.cs
+|   |   |-- ImageReference.cs
 |   |   |-- ImageResource.cs
 |   |   |-- ImageResourceCache.cs
 |   |   |-- ImageResourceResolver.cs

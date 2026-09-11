@@ -61,7 +61,7 @@ public sealed class ServoSceneTests
         Scene2D entity = new() { TranslateX = 20, TranslateY = 10, Focusable = true };
         entity.Children.Add(colliderOnly
             ? new BoxCollider2D { Width = 16, Height = 12 }
-            : new Sprite2D { Destination = new DrawRect(0, 0, 16, 12) });
+            : new Sprite2D { X = 0, Y = 0, Width = 16, Height = 12 });
         world.Children.Add(entity);
         ServoApi.SetId(world, "world");
         ServoApi.SetId(entity, "player");

@@ -8,11 +8,97 @@ using Cerneala.UI.Media;
 using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
 using Cerneala.UI.Rendering;
+using Cerneala.UI.Resources;
 
 namespace Cerneala.Tests.UI.Rendering;
 
 public sealed class DrawCommandListBuilderTests
 {
+    [Theory]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    [InlineData(true, false)]
+    public void ResourceFreePrismResolutionDoesNotAllocateUnusedCollections(
+        bool grouped,
+        bool visible)
+    {
+        UIElement element = new();
+        PrismLayerDefinition layer = new(
+            new PrismNodeId(1),
+            "Content",
+            filters: [new PrismFilterDefinition(PrismFilterId.Blur)],
+            styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)],
+            mask: visible ? null : new PrismMaskDefinition(new PrismResourceId("Hidden")));
+        PrismInstance instance = new(new PrismCompositionDefinition(
+            "resource-free",
+            [grouped
+                ? new PrismGroupDefinition(new PrismNodeId(2), "Group", [layer], visible: visible)
+                : layer]));
+        for (int index = 0; index < 128; index++)
+        {
+            Assert.Same(PrismDrawResources.Empty,
+                DrawCommandListBuilder.ResolvePrismResources(element, instance));
+        }
+
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int index = 0; index < 256; index++)
+        {
+            DrawCommandListBuilder.ResolvePrismResources(element, instance);
+        }
+        long bytesPerResolution = (GC.GetAllocatedBytesForCurrentThread() - before) / 256;
+
+        Assert.True(bytesPerResolution <= 128,
+            $"Resource-free resolution allocated {bytesPerResolution} bytes/call after warmup.");
+    }
+
+    [Fact]
+    public void PrismResolutionRechecksMissingReplacedAndHiddenResources()
+    {
+        UIElement element = new();
+        UIRoot root = new();
+        root.VisualChildren.Add(element);
+        ElementLifecycle.AttachSubtree(root, element);
+        root.ResourceDependencyTracker.Track(element.Resources);
+        PrismResourceId id = new("Mask");
+        ResourceId<ImageResource> resourceId = new("Mask");
+        PrismLayerDefinition layer = new(new PrismNodeId(1), "Content",
+            filters: [new PrismFilterDefinition(PrismFilterId.Blur)],
+            mask: new PrismMaskDefinition(id));
+        PrismInstance instance = new(new PrismCompositionDefinition("resources",
+            [new PrismGroupDefinition(new PrismNodeId(2), "Group", [layer],
+                mask: new PrismMaskDefinition(id))]));
+        PrismGroupState group = (PrismGroupState)instance.GetNodeState(new PrismNodeId(2));
+
+        Assert.Same(PrismDrawResources.Empty, Resolve());
+        TestImage first = new();
+        element.Resources.SetResource(resourceId, new ImageResource(first));
+        PrismDrawResources firstSnapshot = Resolve();
+        Assert.Same(first, Assert.Single(firstSnapshot.Images));
+        Assert.True(firstSnapshot.TryGetDependency(id, out long firstIdentity, out long firstVersion));
+        Assert.True(firstSnapshot.HasStableVersions);
+
+        TestImage replacement = new();
+        element.Resources.SetResource(resourceId, new ImageResource(replacement));
+        PrismDrawResources secondSnapshot = Resolve();
+        Assert.Same(replacement, Assert.Single(secondSnapshot.Images));
+        Assert.True(secondSnapshot.TryGetDependency(id, out long secondIdentity, out long secondVersion));
+        Assert.NotEqual(firstIdentity, secondIdentity);
+        Assert.True(secondVersion > firstVersion);
+        Assert.Same(first, Assert.Single(firstSnapshot.Images));
+
+        group.Visible = false;
+        Assert.Same(PrismDrawResources.Empty, Resolve());
+        group.Visible = true;
+        group.Opacity = 0;
+        Assert.Same(PrismDrawResources.Empty, Resolve());
+        group.Opacity = 1;
+        Assert.Same(replacement, Assert.Single(Resolve().Images));
+        element.Resources.Remove(resourceId.Key);
+        Assert.Same(PrismDrawResources.Empty, Resolve());
+
+        PrismDrawResources Resolve() => DrawCommandListBuilder.ResolvePrismResources(element, instance);
+    }
+
     [Fact]
     public void ParentLocalCommandsAppearBeforeChildCommands()
     {
@@ -173,5 +259,12 @@ public sealed class DrawCommandListBuilderTests
         public string FamilyName => "Test";
 
         public float Size => 12;
+    }
+
+    private sealed class TestImage : IDrawImage
+    {
+        public int Width => 1;
+
+        public int Height => 1;
     }
 }

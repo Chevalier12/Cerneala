@@ -239,6 +239,18 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             return;
         }
 
+        if (type.MetadataName == "Cerneala.UI.Controls.Tile")
+        {
+            BindTileDeclaration(element, type);
+            return;
+        }
+        if (parentType?.MetadataName == "Cerneala.UI.Controls.TileMap2D" &&
+            type.MetadataName != "Cerneala.UI.Controls.TileLayer2D")
+        {
+            AddShapeDiagnostic(element.NameToken.Span, "TileMap2D content accepts Tile placements or imported TileLayer2D presentations, not other scene nodes.");
+            return;
+        }
+
         AddContentOwner(element);
         symbols.Add(new CernealaSemanticSymbol(
             isRoot ? CernealaSemanticSymbolKind.RootType : CernealaSemanticSymbolKind.Element,
@@ -270,6 +282,11 @@ internal sealed partial class CernealaSemanticModel : IDisposable
     {
         int separator = element.Name.LastIndexOf('.');
         string propertyName = separator < 0 ? element.Name : element.Name.Substring(separator + 1);
+        if (IsLegacyTileMapMember(parentType, propertyName))
+        {
+            AddShapeDiagnostic(element.NameToken.Span, "TileMap2D markup uses direct Tile declarations, not Model or Layers.");
+            return null;
+        }
         ILanguageMemberSymbol? member = FindProperty(parentType, propertyName);
         if (member is null)
         {
@@ -299,6 +316,11 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         ILanguageTypeSymbol? dataType)
     {
         string name = attribute.NameToken.Text;
+        if (IsLegacyTileMapMember(type, name) && name != "Model")
+        {
+            AddShapeDiagnostic(attribute.NameToken.Span, "TileMap2D markup uses direct Tile declarations, not Model or Layers.");
+            return null;
+        }
         if (name == "xmlns" || name.StartsWith("xmlns:", StringComparison.Ordinal) || name is "Name" or "DataType")
         {
             return null;
@@ -513,7 +535,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
                 ILanguageTypeSymbol? aliased = compilation.FindType(alias.Namespace + "." + localName);
                 return aliased is not null &&
                     (alias.Assembly.Length == 0 || string.Equals(alias.Assembly, aliased.AssemblyName, StringComparison.Ordinal)) &&
-                    IsUsableElementType(aliased)
+                    (IsUsableElementType(aliased) || aliased.MetadataName == "Cerneala.UI.Controls.Tile")
                     ? aliased
                     : null;
             }

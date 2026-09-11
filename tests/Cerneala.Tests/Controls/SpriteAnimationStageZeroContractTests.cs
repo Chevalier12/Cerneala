@@ -92,9 +92,9 @@ public sealed class SpriteAnimationStageZeroContractTests
             (new DrawRect(16, 0, 16, 16), TimeSpan.FromMilliseconds(100), RenderSurface2DSpriteFlip.Horizontal)));
         Sprite2D sprite = new()
         {
-            Source = new TestImage(64, 64),
-            SourceRect = new DrawRect(48, 48, 8, 8),
-            Destination = new DrawRect(2, 3, 16, 16),
+            Image = new(new TestImage(64, 64)),
+            SourceX = 48, SourceY = 48, SourceWidth = 8, SourceHeight = 8,
+            X = 2, Y = 3, Width = 16, Height = 16,
             Flip = RenderSurface2DSpriteFlip.Horizontal
         };
         SetAnimation(sprite, animations, "Walk");
@@ -126,7 +126,7 @@ public sealed class SpriteAnimationStageZeroContractTests
             isLooping: false,
             (new DrawRect(0, 0, 16, 16), TimeSpan.FromMilliseconds(100), RenderSurface2DSpriteFlip.None),
             (new DrawRect(16, 0, 16, 16), TimeSpan.FromMilliseconds(100), RenderSurface2DSpriteFlip.None)));
-        Sprite2D sprite = new() { Source = new TestImage(32, 16), Destination = new DrawRect(0, 0, 16, 16) };
+        Sprite2D sprite = new() { Image = new(new TestImage(32, 16)), X = 0, Y = 0, Width = 16, Height = 16 };
         SetAnimation(sprite, animations, "Attack");
         RenderSurface2D surface = SurfaceWith(sprite, RenderSurface2DRedrawMode.OnDemand);
         UIRoot root = Attach(surface);
@@ -182,7 +182,7 @@ public sealed class SpriteAnimationStageZeroContractTests
             DrawRect[] sourceRects = Record(surface).Where(IsImage).Select(static command => command.ImageSource!.Value).ToArray();
             Assert.Equal([new DrawRect(16, 0, 16, 16), new DrawRect(0, 0, 16, 16)], sourceRects);
 
-            first.Source = new TestImage(32, 32);
+            first.Image = new(new TestImage(32, 32));
             Assert.Equal(new DrawRect(16, 0, 16, 16), Assert.Single(Record(surface).Where(IsImage).Take(1)).ImageSource);
             first.DataContext = new object();
             Assert.Equal(new DrawRect(16, 0, 16, 16), Record(surface).First(IsImage).ImageSource);
@@ -262,7 +262,7 @@ public sealed class SpriteAnimationStageZeroContractTests
             Assert.True(registry.TryGet(GetUiProperty(typeof(Sprite2D), "AnimationPlaybackRate"), out _));
             Assert.False(registry.TryGet(GetUiProperty(typeof(Sprite2D), "Animations"), out _));
             Assert.False(registry.TryGet(animationStateProperty, out _));
-            Assert.False(registry.TryGet(Sprite2D.SourceRectProperty, out _));
+            Assert.False(registry.TryGet(Sprite2D.SourceXProperty, out _));
             Assert.False(registry.TryGet(Sprite2D.FlipProperty, out _));
         }
         finally
@@ -387,8 +387,8 @@ public sealed class SpriteAnimationStageZeroContractTests
     {
         Sprite2D sprite = new()
         {
-            Source = new TestImage(32, 32),
-            Destination = new DrawRect(0, 0, 16, 16)
+            Image = new(new TestImage(32, 32)),
+            X = 0, Y = 0, Width = 16, Height = 16
         };
         SetAnimation(sprite, animations, state);
         return sprite;

@@ -116,6 +116,7 @@ public static class Scene2DModelValidator
             if (level is null) { diagnostics.Error("SCN2D005", "Levels cannot contain null.", path); continue; }
             if (!ids.Add(level.Id)) { diagnostics.Error("SCN2D015", $"Level ID '{level.Id}' is duplicated.", path); }
             layers += level.TileMap.Layers.Count;
+            cells += level.TileMap.Tiles.Count;
             entities += level.Entities.Count + (long)level.Promotions.Count;
             foreach (TileLayer2DModel layer in level.TileMap.Layers)
             {
@@ -128,7 +129,7 @@ public static class Scene2DModelValidator
                 diagnostics.Error("SCN2D013", "The document exceeds its aggregate layer, chunk, cell or entity budget.", path);
                 break;
             }
-            ValidateMap(level.TileMap, atlases, diagnostics, path + ".tileMap");
+            ValidateMap(level.TileMap, atlases, diagnostics, path + ".tileMap", worldOffset: level.WorldOffset);
             // Level construction already validates its immutable associations
             // and placed geometry. Do not rescan them when only asset/budget
             // information is added by the enclosing document.
@@ -138,6 +139,13 @@ public static class Scene2DModelValidator
 
     internal static void ValidateLevel(Scene2DLevel level, Scene2DDiagnosticCollector diagnostics, string path)
     {
+        foreach (Tile tile in level.TileMap.Tiles)
+        {
+            if (diagnostics.StopIfFull()) { return; }
+            DrawSize knownSize = tile.Image.DirectImage is IDrawImage direct ? new(direct.Width, direct.Height) : default;
+            try { ValidatePlacementGeometry(tile, knownSize, level.WorldOffset); }
+            catch (ArgumentException error) { diagnostics.Error("SCN2D014", error.Message, path + ".worldOffset"); }
+        }
         Dictionary<string, TileLayer2DModel> layersById = level.TileMap.Layers.ToDictionary(layer => layer.Id, StringComparer.Ordinal);
         foreach (TileLayer2DModel layer in level.TileMap.Layers)
         {
@@ -247,10 +255,10 @@ public static class Scene2DModelValidator
     }
 
     internal static void ValidateMap(TileMap2DModel model, IReadOnlyDictionary<string, DrawSize> atlasSizes,
-        Scene2DDiagnosticCollector diagnostics, string path, bool requireAllAtlases = true)
+        Scene2DDiagnosticCollector diagnostics, string path, bool requireAllAtlases = true, DrawPoint worldOffset = default)
     {
         long chunks = 0;
-        long cells = 0;
+        long cells = model.Tiles.Count;
         foreach (TileLayer2DModel layer in model.Layers)
         {
             chunks += layer.Chunks.Count;
@@ -260,6 +268,29 @@ public static class Scene2DModelValidator
         {
             diagnostics.Error("SCN2D013", "The model exceeds the configured layer, chunk or cell budget.", path);
             return;
+        }
+        for (int index = 0; index < model.Tiles.Count; index++)
+        {
+            if (diagnostics.StopIfFull()) { return; }
+            Tile tile = model.Tiles[index];
+            string tilePath = $"{path}.tiles[{index}]";
+            DrawSize size;
+            if (tile.Image.DirectImage is IDrawImage direct)
+            {
+                size = new DrawSize(direct.Width, direct.Height);
+            }
+            else if (!atlasSizes.TryGetValue(tile.Image.ResourceId!.Value.Key, out size))
+            {
+                if (requireAllAtlases) { diagnostics.Error("SCN2D010", $"Image '{tile.Image.ResourceId.Value.Key}' is not declared.", tilePath + ".image"); }
+                continue;
+            }
+            if (!float.IsFinite(size.Width) || !float.IsFinite(size.Height) || size.Width <= 0 || size.Height <= 0)
+            {
+                diagnostics.Error("SCN2D007", "Image dimensions must be finite and positive.", tilePath);
+                continue;
+            }
+            try { ValidatePlacementGeometry(tile, size, worldOffset); }
+            catch (ArgumentException error) { diagnostics.Error("SCN2D014", error.Message, tilePath); }
         }
         for (int setIndex = 0; setIndex < model.TileSets.Count; setIndex++)
         {
@@ -291,6 +322,15 @@ public static class Scene2DModelValidator
                 }
             }
         }
+    }
+
+    private static void ValidatePlacementGeometry(Tile tile, DrawSize size, DrawPoint worldOffset)
+    {
+        DrawRect destination = tile.GetDestination(size);
+        DrawArgument.ThrowIfNotValidPixelCoordinate((float)((double)destination.X + worldOffset.X), nameof(tile));
+        DrawArgument.ThrowIfNotValidPixelCoordinate((float)((double)destination.Y + worldOffset.Y), nameof(tile));
+        DrawArgument.ThrowIfNotValidPixelCoordinate((float)((double)destination.X + destination.Width + worldOffset.X), nameof(tile));
+        DrawArgument.ThrowIfNotValidPixelCoordinate((float)((double)destination.Y + destination.Height + worldOffset.Y), nameof(tile));
     }
 
     internal static T Diagnostic<T>(T exception, string code) where T : Exception

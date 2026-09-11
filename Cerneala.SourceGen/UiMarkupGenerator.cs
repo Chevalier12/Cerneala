@@ -791,10 +791,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             ValidateTileMapDeclarations();
-            if (HasErrors)
-            {
-                return;
-            }
+            if (HasErrors) { return; }
 
             ReadResources();
             ReadInlineAspects();
@@ -923,6 +920,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             Color,
             Brush,
             ImageResourceId,
+            ImageReference,
             SpriteAnimationSet,
             ContentTemplate,
             Enum,
@@ -3113,7 +3111,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 }
                 EmitItemsControlItemsPanelElement(element, variable);
 
-                if (parsedContent.HasDirectives)
+                if (ResolveElementTypeSymbol(element.Name.LocalName)?.ToDisplayString() == "Cerneala.UI.Controls.TileMap2D" &&
+                    !element.Elements().Any(static child => child.Name.LocalName == "TileLayer2D"))
+                {
+                    EmitTileMapContent(element, variable, parsedContent);
+                }
+                else if (parsedContent.HasDirectives)
                 {
                     EmitReactiveContent(element, variable, parsedContent);
                 }
@@ -3159,6 +3162,37 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
 
             return variable;
+        }
+
+        private void EmitTileMapContent(MarkupElement map, string variable, DirectiveParseResult content)
+        {
+            List<string> placements = new();
+            foreach (DirectiveNode node in content.Nodes)
+            {
+                if (node is DirectiveElementNode child)
+                {
+                    if (IsNonContentPropertyElement(map, child.Element)) { continue; }
+                    MarkupElement tile = child.Element;
+                    MarkupAttribute? image = tile.Attribute("Image");
+                    if (image is null || !image.Value.StartsWith("$", StringComparison.Ordinal)) { continue; }
+                    GeneratedExpression? reference = ResolveReferenceValue("Tile", "Image", image.Value.Substring(1), MarkupValueKind.ImageReference, image);
+                    if (reference is null) { continue; }
+                    string[] values = new[] { "X", "Y", "Width", "Height" }.Select(name =>
+                        tile.Attribute(name) is MarkupAttribute attribute
+                            ? float.Parse(attribute.Value, CultureInfo.InvariantCulture).ToString("R", CultureInfo.InvariantCulture) + "f"
+                            : name is "X" or "Y" ? "0f" : "float.NaN").ToArray();
+                    placements.Add("new global::Cerneala.UI.Controls.Tile(" + reference.Code + ", " + string.Join(", ", values) + ")");
+                }
+                else if (node is DirectiveTextNode text && !string.IsNullOrWhiteSpace(text.Text) ||
+                    node is not DirectiveTextNode && node is not DirectiveTemplateNode && node is not DirectiveTemplatesNode && node is not DirectivePrismNode)
+                {
+                    Report(InvalidDocumentShape, map, Path.GetFileName(file.Path), "TileMap2D content accepts static Tile declarations only.");
+                }
+            }
+            if (placements.Count > 0)
+            {
+                currentLines.Add(variable + ".Model = new global::Cerneala.UI.Controls.TileMap2DModel(new global::Cerneala.UI.Controls.Tile[] { " + string.Join(", ", placements) + " });");
+            }
         }
 
         private ITypeSymbol? ResolveLocalDataContextType(
@@ -4872,6 +4906,15 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return new GeneratedExpression(brush.ColorExpression, MarkupValueKind.Color);
             }
 
+            if (targetKind == MarkupValueKind.ImageReference &&
+                symbol.Source is ImageResourceDeclaration)
+            {
+                return new GeneratedExpression(
+                    "new global::Cerneala.UI.Resources.ImageReference(new global::Cerneala.UI.Resources.ResourceId<global::Cerneala.UI.Resources.ImageResource>(" +
+                    Literal(referenceName) + "))",
+                    MarkupValueKind.ImageReference);
+            }
+
             if (targetKind == MarkupValueKind.ImageResourceId &&
                 symbol.Source is ImageResourceDeclaration)
             {
@@ -5426,6 +5469,12 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 namedType.TypeArguments[0].ToDisplayString() == "Cerneala.UI.Resources.ImageResource")
             {
                 return MarkupValueKind.ImageResourceId;
+            }
+
+            if (valueType.Name == "ImageReference" &&
+                valueType.ContainingNamespace.ToDisplayString() == "Cerneala.UI.Resources")
+            {
+                return MarkupValueKind.ImageReference;
             }
 
             if (valueType.Name == "SpriteAnimationSet" &&

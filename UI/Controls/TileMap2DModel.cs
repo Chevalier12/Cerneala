@@ -419,6 +419,31 @@ public sealed class TileMap2DModel
     private readonly ReadOnlyCollection<TileLayer2DModel> layers;
     private readonly Dictionary<int, ResolvedTile> tileLookup;
 
+    public TileMap2DModel(IEnumerable<Tile> tiles, long version = 1)
+    {
+        ArgumentNullException.ThrowIfNull(tiles);
+        if (version <= 0) { throw Diagnostic(new ArgumentOutOfRangeException(nameof(version)), "SCN2D003"); }
+        Tile[] copied = CopyBounded(tiles, MaximumCells, nameof(tiles));
+        if (copied.Any(static tile => tile is null))
+        {
+            throw new ArgumentException("Tile placements cannot contain null.", nameof(tiles));
+        }
+        Tiles = Array.AsReadOnly(copied);
+        PlacementImages = copied.Select(static tile => tile.Image).Distinct().ToArray();
+        this.tileSets = Array.AsReadOnly(Array.Empty<TileSet2D>());
+        layers = Array.AsReadOnly(new[] { new TileLayer2DModel("Tiles", [], version: version) });
+        tileLookup = [];
+        Version = version;
+        Properties = TileMapModelCopy.CopyProperties(null);
+        IsFreePlacement = true;
+    }
+
+    public IReadOnlyList<Tile> Tiles { get; } = Array.Empty<Tile>();
+
+    internal IReadOnlyList<ImageReference> PlacementImages { get; } = Array.Empty<ImageReference>();
+
+    internal bool IsFreePlacement { get; }
+
     public TileMap2DModel(
         DrawSize tileSize,
         IEnumerable<TileSet2D> tileSets,

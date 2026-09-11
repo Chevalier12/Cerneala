@@ -25,6 +25,52 @@ public sealed class CompletionTests
     private static readonly CSharpCompilation Project = CreateProject();
     private static readonly RoslynCompilationSymbols ProjectSymbols = new(Project);
 
+    [Fact]
+    public void TileCompletionOffersOnlyTheCanonicalPlacementSurface()
+    {
+        using CompletionFixture children = CompletionFixture.Create("<TileMap2D><Tile Image=\"$Grass\" /><Ti|caret| /></TileMap2D>");
+        Assert.Equal("Tile", Assert.Single(children.Complete()).Label);
+        using CompletionFixture attributes = CompletionFixture.Create("<TileMap2D><Tile |caret| /></TileMap2D>");
+        Assert.Equal(new[] { "Height", "Image", "Width", "X", "Y" }, attributes.Complete().Select(item => item.Label).OrderBy(label => label));
+        using CompletionFixture map = CompletionFixture.Create("<TileMap2D |caret| ><Tile Image=\"$Grass\" /></TileMap2D>");
+        Assert.DoesNotContain(map.Complete(), item => item.Label is "Model" or "Layers");
+        using CompletionFixture properties = CompletionFixture.Create("<TileMap2D><TileMap2D.|caret| /></TileMap2D>");
+        Assert.DoesNotContain(properties.Complete(), item => item.Label is "TileMap2D.Model" or "TileMap2D.Layers");
+        using CompletionFixture directives = CompletionFixture.Create("<TileMap2D><Tile>@|caret|</Tile></TileMap2D>");
+        Assert.Empty(directives.Complete());
+    }
+
+    [Fact]
+    public void ImportedTileCompletionOffersModelLayersAndPromotedCells()
+    {
+        using CompletionFixture map = CompletionFixture.Create("<TileMap2D |caret| />");
+        Assert.Contains(map.Complete(), item => item.Label == "Model");
+        using CompletionFixture layers = CompletionFixture.Create("<TileMap2D Model=\"$DataContext\"><Ti|caret| /></TileMap2D>");
+        Assert.Equal("TileLayer2D", Assert.Single(layers.Complete()).Label);
+        using CompletionFixture tiles = CompletionFixture.Create("<TileMap2D><TileLayer2D LayerId=\"Buildings\"><Ti|caret| /></TileLayer2D></TileMap2D>");
+        Assert.Equal("TileInstance2D", Assert.Single(tiles.Complete()).Label);
+    }
+
+    [Fact]
+    public void TileImageCompletionOffersOnlyImageResourcesWithoutBindingModes()
+    {
+        const string markup = """
+            <TileMap2D xmlns:r="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
+              <TileMap2D.Resources>
+                <r:ImageResource Name="Grass" Source="grass.png" />
+                <SolidColorBrush Name="Brush" Color="Green" />
+              </TileMap2D.Resources>
+              <Tile Image="$|caret|" />
+            </TileMap2D>
+            """;
+        using CompletionFixture image = CompletionFixture.Create(markup);
+        Assert.Equal("$Grass", Assert.Single(image.Complete()).Label);
+        using CompletionFixture mode = CompletionFixture.Create(markup.Replace("$|caret|", "$Grass:|caret|", StringComparison.Ordinal));
+        Assert.Empty(mode.Complete());
+        using CompletionFixture number = CompletionFixture.Create(markup.Replace("Image=", "X=", StringComparison.Ordinal));
+        Assert.Empty(number.Complete());
+    }
+
     [DllImport("kernel32.dll")]
     private static extern IntPtr GetCurrentThread();
 

@@ -6,6 +6,27 @@ namespace Cerneala.Tests.Scene2DImporters;
 
 public sealed class SceneWorldAssetTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void DoorIsAuthoredAboveTheFacadeWithoutDuplicatingItsCell(bool useLdtk)
+    {
+        Scene2DImportResult result = useLdtk
+            ? LdtkScene2DImporter.Import(Path.Combine(Assets(), "village.ldtk"))
+            : TiledScene2DImporter.Import(Path.Combine(Assets(), "village.tmj"));
+        Assert.True(result.Success, string.Join(Environment.NewLine, result.Diagnostics));
+        Scene2DLevel level = Assert.Single(result.Document!.Levels);
+        TileCellKey2D door = Assert.Single(level.Promotions).Cell;
+        Assert.NotEqual("2", door.LayerId);
+        Assert.True(level.TileMap.TryGetLayer("2", out TileLayer2DModel? facade));
+        Assert.True(level.TileMap.TryGetLayer(door.LayerId, out TileLayer2DModel? foreground));
+        Assert.True(foreground!.Order > facade!.Order);
+        Assert.True(facade.TryGetCell(new(14, 9), out TileCell2D oldCell));
+        Assert.Equal(0, oldCell.TileId);
+        Assert.True(foreground.TryGetCell(new(14, 9), out TileCell2D doorCell));
+        Assert.Equal(7, doorCell.TileId);
+    }
+
     [Fact]
     public void OriginalVillageFilesDescribeEquivalentCellsCollidersSpawnAndDoor()
     {
@@ -18,8 +39,8 @@ public sealed class SceneWorldAssetTests
         Scene2DLevel right = Assert.Single(ldtk.Document!.Levels);
         Assert.Equal(new DrawSize(16, 16), left.TileMap.TileSize);
         Assert.Equal(left.TileMap.TileSize, right.TileMap.TileSize);
-        Assert.Equal(3, left.TileMap.Layers.Count);
-        Assert.Equal(3, right.TileMap.Layers.Count);
+        Assert.Equal(4, left.TileMap.Layers.Count);
+        Assert.Equal(4, right.TileMap.Layers.Count);
         foreach (string layerId in new[] { "1", "2" })
         {
             Assert.True(left.TileMap.TryGetLayer(layerId, out TileLayer2DModel? a));
@@ -53,7 +74,7 @@ public sealed class SceneWorldAssetTests
             }
         }
         Assert.Equal(new DrawPoint(226, 192), Assert.Single(left.Entities.Where(e => e.Role == "Spawn")).Position);
-        Assert.Equal(new TileCellKey2D("2", 14, 9), Assert.Single(left.Promotions).Cell);
+        Assert.Equal(new TileCellKey2D("4", 14, 9), Assert.Single(left.Promotions).Cell);
         Assert.Equal(Assert.Single(left.Promotions).Cell, Assert.Single(right.Promotions).Cell);
         Assert.Equal("Closed", Assert.Single(left.Promotions).Properties["InitialState"]);
         Assert.Equal("world-atlas.png", Assert.Single(tiled.Document.Assets).ResourceId.Key);

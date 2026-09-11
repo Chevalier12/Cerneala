@@ -178,6 +178,13 @@ public sealed class UiFrameScheduler
         return stats;
     }
 
+    internal void BeginInheritedDescendantPropagation(Elements.UIElement element)
+    {
+        inheritedPropertyQueue.Remove(element);
+        InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Inherited);
+        trace.RecordClear(element, cleared);
+    }
+
     private void ProcessInheritedProperties(FramePhaseProcessors processors, FrameStats stats)
     {
         int processed = 0;
@@ -192,6 +199,11 @@ public sealed class UiFrameScheduler
             for (int index = 0; index < snapshot.Count; index++)
             {
                 Elements.UIElement element = snapshot[index];
+                if (!inheritedPropertyQueue.Contains(element))
+                {
+                    continue;
+                }
+
                 inheritedPropertyQueue.Remove(element);
                 InvalidationFlags cleared = ClearProcessedFlags(element, InvalidationFlags.Inherited);
                 try

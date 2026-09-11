@@ -27,7 +27,7 @@ float SampleBevelTextureHeight(
 
     float2 delta = sampleUv - baseUv;
     float2 screenUv =
-        (input.Position.xy * PixelSize) + delta;
+        PrismReferenceUv(input.Position.xy) + PrismSourceUvDeltaToReference(delta);
     float2 textureUv = lerp(
         screenUv,
         sampleUv,

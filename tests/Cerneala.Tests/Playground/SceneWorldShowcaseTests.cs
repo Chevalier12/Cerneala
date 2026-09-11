@@ -1,4 +1,5 @@
 using Cerneala.Drawing;
+using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Playground;
 using Cerneala.Tests.UI.Motion.Core;
 using Cerneala.UI.Controls;
@@ -40,6 +41,7 @@ public sealed class SceneWorldShowcaseTests
         TileMap2D map = nodes.OfType<TileMap2D>().Single();
         TileLayer2D layer = nodes.OfType<TileLayer2D>().Single(l => l.LayerId == "2");
         TileInstance2D door = nodes.OfType<TileInstance2D>().Single();
+        Assert.Contains(door, nodes.OfType<TileLayer2D>().Single(l => l.LayerId == "4").LogicalChildren);
         BoxCollider2D doorCollider = door.LogicalChildren.OfType<BoxCollider2D>().Single();
         Scene2D player = nodes.OfType<Scene2D>().Single(n => ServoApi.GetId(n) == "world-player");
         Sprite2D playerSprite = player.Children.OfType<Sprite2D>().Single();
@@ -59,6 +61,14 @@ public sealed class SceneWorldShowcaseTests
         });
         Assert.NotNull(doorCollider.Aspect);
         Assert.False(PrismAttachment.TryGetInstance(doorCollider, out _));
+        Assert.True(PrismAttachment.TryGetInstance(layer, out PrismInstance? buildingPrism));
+        PrismFilterState buildingBlur = buildingPrism!.GetLayerState(buildingPrism.Definition.Nodes.Single().Id).Filters.Single();
+        Assert.Equal(2f, buildingBlur.GetValue<float>(PrismCatalog.GetFilter(PrismFilterId.Blur).Parameters.Single(p => p.Name == "Radius")));
+        Assert.True(PrismAttachment.TryGetInstance(door, out PrismInstance? doorPrism));
+        PrismStyleState doorGlow = doorPrism!.GetLayerState(doorPrism.Definition.Nodes.Single().Id).Styles.Single();
+        var glowParameters = PrismCatalog.GetStyle(PrismStyleId.OuterGlow).Parameters;
+        Assert.Equal(4f, doorGlow.GetValue<float>(glowParameters.Single(p => p.Name == "Size")));
+        Assert.Equal(0.8f, doorGlow.GetValue<float>(glowParameters.Single(p => p.Name == "Opacity")));
         UIElement[] loadedFades = [world, map, layer, player, playerSprite, npcSprite, overlay];
         float[] starts = loadedFades.Select(n => n.Opacity).ToArray();
         Assert.All(starts, value => Assert.InRange(value, 0.39f, 0.71f));
@@ -86,7 +96,7 @@ public sealed class SceneWorldShowcaseTests
         Assert.Equal(1, root.ImageResourceCache!.LoadCount);
         Record(); // The first recording builds the retained tile batches.
         Assert.True(map.GetDiagnosticsSnapshot().BatchesReused > 0);
-        Assert.Equal(64, map.Model!.Layers.Sum(l => l.Chunks.Count));
+        Assert.Equal(65, map.Model!.Layers.Sum(l => l.Chunks.Count));
 
         await servo.ClickAsync(ServoTarget.ById("world-player"));
         await servo.PressKeyAsync(InputKey.Up);

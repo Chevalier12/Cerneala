@@ -130,8 +130,8 @@ internal static class SpriteAnimationBenchmarkRunner
             {
                 IDrawImage image = new Image();
                 for (int i = 0; i < count; i++)
-                    scene.Children.Add(new Sprite2D { Source = image,
-                        Destination = new DrawRect(i % 100 * 16, i / 100 * 16, 16, 16),
+                    scene.Children.Add(new Sprite2D { Image = new(image),
+                        X = i % 100 * 16, Y = i / 100 * 16, Width = 16, Height = 16,
                         Animations = clips, AnimationState = "Walk", IsAnimationPaused = i >= active });
             }
             root.VisualChildren.Add(Surface);

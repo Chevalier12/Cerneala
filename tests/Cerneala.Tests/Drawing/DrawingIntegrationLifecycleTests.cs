@@ -10,6 +10,212 @@ namespace Cerneala.Tests.Drawing;
 
 public sealed class DrawingIntegrationLifecycleTests
 {
+    [Fact]
+    public void FullyRevalidatedEquivalentCommandsShareTheImmutableStateSnapshot()
+    {
+        const int labels = 1_024;
+        DrawCommandList commands = new();
+        DrawTextRun run = new(new TestFont(), "unchanged", 10);
+        PrismFrameAnalyzer analyzer = new();
+        PrismFrameAnalysis Record()
+        {
+            commands.Clear();
+            commands.Add(DrawCommand.PushClip(new DrawRect(0, 0, 100, 100)));
+            commands.Add(DrawCommand.PushOpacity(0.5f));
+            for (int index = 0; index < labels; index++)
+            {
+                commands.Add(DrawCommand.DrawText(run, new DrawPoint(index, 0), Color.White));
+            }
+            commands.Add(DrawCommand.PopOpacity());
+            commands.Add(DrawCommand.PopClip());
+            return analyzer.Analyze(commands);
+        }
+
+        PrismFrameAnalysis original = Record();
+        for (int warmup = 0; warmup < 64; warmup++) { Record(); }
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        PrismFrameAnalysis current = original;
+        for (int index = 0; index < 64; index++) { current = Record(); }
+        long bytesPerFrame = (GC.GetAllocatedBytesForCurrentThread() - before) / 64;
+        Assert.True(bytesPerFrame <= 4_096, $"Equivalent state analysis allocated {bytesPerFrame:N0} bytes/frame.");
+        Assert.Same(original.StateAnalysis.Entries, current.StateAnalysis.Entries);
+        Assert.NotEqual(original.StateAnalysis.CommandListVersion, current.StateAnalysis.CommandListVersion);
+        current.StateAnalysis.EnsureCurrent(commands);
+        Assert.Throws<InvalidOperationException>(() => original.StateAnalysis.EnsureCurrent(commands));
+        Assert.Throws<NotSupportedException>(() => ((IList<DrawCommandStateEntry>)current.StateAnalysis.Entries)[0] = default);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(3)]
+    public void StateSnapshotRevalidationVisitsEveryBrushOnceWhenACommandChanges(int changedIndex)
+    {
+        int descriptions = 0;
+        ImageTestBrush brush = new(new TestImage(16, 16), () => descriptions++);
+        DrawTextRun run = new(new TestFont(), "unchanged", 10);
+        DrawCommandList commands = new();
+        PrismFrameAnalyzer analyzer = new();
+        PrismFrameAnalysis Record(bool change)
+        {
+            commands.Clear();
+            commands.Add(DrawCommand.PushClip(new DrawRect(0, 0, 100, 100)));
+            commands.Add(DrawCommand.PushOpacity(0.5f));
+            for (int index = 0; index < 4; index++)
+            {
+                commands.Add(DrawCommand.DrawText(run,
+                    new DrawPoint(index + (change && index == changedIndex ? 10 : 0), 0), brush));
+            }
+            commands.Add(DrawCommand.PopOpacity());
+            commands.Add(DrawCommand.PopClip());
+            descriptions = 0;
+            return analyzer.Analyze(commands);
+        }
+
+        PrismFrameAnalysis original = Record(false);
+        DrawCommandStateEntry[] snapshot = original.StateAnalysis.Entries.ToArray();
+        Assert.Equal(4, descriptions);
+        PrismFrameAnalysis equivalent = Record(false);
+        Assert.Equal(4, descriptions);
+        PrismFrameAnalysis changed = Record(true);
+        Assert.Equal(4, descriptions);
+        Assert.Same(original.StateAnalysis.Entries, equivalent.StateAnalysis.Entries);
+        Assert.NotSame(original.StateAnalysis.Entries, changed.StateAnalysis.Entries);
+        Assert.Equal(snapshot, original.StateAnalysis.Entries);
+
+        DrawCommandStateAnalysis fresh = new DrawCommandStateAnalyzer().Analyze(commands);
+        for (int index = 0; index < commands.Count; index++)
+        {
+            DrawCommandStateEntry expected = fresh.Entries[index], actual = changed.StateAnalysis.Entries[index];
+            Assert.Equal(expected with { Metadata = null }, actual with { Metadata = null });
+        }
+    }
+
+    [Fact]
+    public void MetadataRevalidationDoesNotAllocateUnusedDependencyOrGraphemeSnapshots()
+    {
+        DrawCommand command = DrawCommand.DrawText(
+            new DrawTextRun(new TestFont(), "debug e\u0301 \U0001F469\u200D\U0001F4BB", 10), default, Color.White);
+        DrawCommandMetadata original = DrawCommandMetadata.Create(command);
+        for (int warmup = 0; warmup < 64; warmup++) { DrawCommandMetadata.Create(command, original); }
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int index = 0; index < 4_096; index++) { DrawCommandMetadata.Create(command, original); }
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.True(allocated <= 4_096, $"Equivalent metadata revalidation allocated {allocated:N0} bytes of unused snapshots.");
+        Assert.Same(original, DrawCommandMetadata.Create(command, original));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("plain debug label")]
+    [InlineData("e\u0301\u0308 A\r\nB")]
+    [InlineData("\U0001F469\u200D\U0001F4BB \U0001F1F7\U0001F1F4 \U0001F44D\U0001F3FD")]
+    [InlineData("\u0915\u094D\u0937\u093F")]
+    public void TextMetadataBoundsPreserveRuntimeGraphemeSegmentation(string text)
+    {
+        DrawCommand command = DrawCommand.DrawText(new DrawTextRun(new TestFont(), text, 10), new DrawPoint(3, 5), Color.White);
+        int elements = System.Globalization.StringInfo.ParseCombiningCharacters(text).Length;
+        Assert.Equal(new DrawRect(3, 5, elements * 10, 15), DrawCommandMetadata.Create(command).Bounds);
+        // Include malformed UTF-16 without depending on test-runner serialization.
+        string malformed = string.Concat(text, '\uD800', 'x', '\uDC00');
+        command = DrawCommand.DrawText(new DrawTextRun(new TestFont(), malformed, 10), new DrawPoint(3, 5), Color.White);
+        elements = System.Globalization.StringInfo.ParseCombiningCharacters(malformed).Length;
+        Assert.Equal(new DrawRect(3, 5, elements * 10, 15), DrawCommandMetadata.Create(command).Bounds);
+    }
+
+    [Fact]
+    public void RerecordedCommandsReuseRevalidatedMetadataWithoutRetainingScopedState()
+    {
+        const int labels = 1_024;
+        DrawTextRun run = new(new TestFont(), "unchanged label", 10);
+        DrawCommandList commands = new();
+        PrismFrameAnalyzer analyzer = new();
+        PrismFrameAnalysis Record(int translation)
+        {
+            commands.Clear();
+            commands.Add(DrawCommand.PushTransform(System.Numerics.Matrix3x2.CreateTranslation(translation, 0)));
+            for (int index = 0; index < labels; index++)
+            {
+                commands.Add(DrawCommand.DrawText(run, new DrawPoint(index, 0), Color.White));
+            }
+            commands.Add(DrawCommand.PopTransform());
+            return analyzer.Analyze(commands);
+        }
+
+        PrismFrameAnalysis original = Record(0);
+        for (int warmup = 0; warmup < 8; warmup++) { Record(warmup); }
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        PrismFrameAnalysis current = original;
+        for (int index = 0; index < 16; index++) { current = Record(100 + index); }
+        long bytesPerFrame = (GC.GetAllocatedBytesForCurrentThread() - before) / 16;
+        long budget = (labels + 2L) * (System.Runtime.CompilerServices.Unsafe.SizeOf<DrawCommandStateEntry>() + 160) + 32_768;
+        Assert.True(bytesPerFrame <= budget, $"Repeated analysis allocated {bytesPerFrame:N0} bytes/frame; budget {budget:N0}.");
+        Assert.Same(original.StateAnalysis.Entries[1].Metadata, current.StateAnalysis.Entries[1].Metadata);
+        Assert.NotSame(original.StateAnalysis.Entries[0].Metadata, current.StateAnalysis.Entries[0].Metadata);
+        Assert.Equal(0, original.StateAnalysis.Entries[1].Transform.M31);
+        Assert.Equal(115, current.StateAnalysis.Entries[1].Transform.M31);
+        Assert.NotEqual(original.StateAnalysis.Entries[1].Bounds, current.StateAnalysis.Entries[1].Bounds);
+    }
+
+    [Fact]
+    public void MetadataReuseRediscoversMutableResourcesAndPreservesPayloadIdentity()
+    {
+        TestImage first = new(16, 16);
+        TestImage second = new(16, 16);
+        int descriptions = 0;
+        ImageTestBrush brush = new(first, () => descriptions++);
+        DrawTextRun run = new(new TestFont(), "label", 10);
+        DrawCommandList commands = new();
+        PrismFrameAnalyzer analyzer = new();
+        DrawCommandMetadata Record()
+        {
+            commands.Clear();
+            commands.Add(DrawCommand.DrawText(run, default, brush));
+            return analyzer.Analyze(commands).StateAnalysis.Entries[0].Metadata!;
+        }
+
+        DrawCommandMetadata original = Record();
+        int previousDescriptions = descriptions;
+        Assert.Same(original, Record());
+        Assert.True(descriptions > previousDescriptions);
+        brush.Image = second;
+        DrawCommandMetadata replaced = Record();
+        Assert.NotSame(original, replaced);
+        Assert.Contains(original.Resources, resource => ReferenceEquals(resource, first));
+        Assert.DoesNotContain(original.Resources, resource => ReferenceEquals(resource, second));
+        Assert.Contains(replaced.Resources, resource => ReferenceEquals(resource, second));
+        run = new DrawTextRun(run.Font, run.Text, run.Size);
+        Assert.NotSame(replaced, Record());
+    }
+
+    [Fact]
+    public void MetadataDoesNotAllocateGeneralPurposeCollectionsForTwoResources()
+    {
+        TestImage image = new(16, 16);
+        DrawMesh2D mesh = Triangle(0, 0, image);
+        DrawCommand command = DrawCommand.DrawMesh(mesh);
+        for (int i = 0; i < 256; i++)
+        {
+            GC.KeepAlive(DrawCommandMetadata.Create(command));
+        }
+
+        const int iterations = 4096;
+        long started = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < iterations; i++)
+        {
+            GC.KeepAlive(DrawCommandMetadata.Create(command));
+        }
+        long bytesPerCommand = (GC.GetAllocatedBytesForCurrentThread() - started) / iterations;
+        int budget = System.Runtime.CompilerServices.Unsafe.SizeOf<DrawCommand>() + 224;
+        Assert.True(bytesPerCommand <= budget, $"Metadata allocated {bytesPerCommand} bytes; budget {budget}.");
+
+        DrawCommandMetadata metadata = DrawCommandMetadata.Create(command);
+        Assert.Equal(2, metadata.Resources.Count);
+        Assert.Same(image, metadata.Resources[0]);
+        Assert.Same(mesh, metadata.Resources[1]);
+        Assert.Throws<NotSupportedException>(() => ((IList<object>)metadata.Resources)[1] = image);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -200,6 +406,80 @@ public sealed class DrawingIntegrationLifecycleTests
     }
 
     [Fact]
+    public void FrameImageDependencyTrackingDoesNotAllocateDrawingIdentitySnapshots()
+    {
+        const int commandCount = 1000;
+        DrawTextRun text = new(new TestFont(), "debug label", 10);
+        DrawCommandList commands = new();
+        for (int index = 0; index < commandCount; index++)
+        {
+            commands.Add(DrawCommand.DrawText(text, new DrawPoint(index, 20), Color.White));
+        }
+        Action<IDrawImage> track = static _ => throw new InvalidOperationException("Plain text has no image dependency.");
+        for (int warmup = 0; warmup < 16; warmup++)
+        {
+            new RenderSurface2DFrame(commands, new DrawRect(0, 0, 1000, 40), TimeSpan.Zero, track).Complete();
+        }
+        RenderSurface2DFrame frame = new(commands, new DrawRect(0, 0, 1000, 40), TimeSpan.Zero, track);
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        frame.Complete();
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        // Resource discovery may retain a read-only singleton for each font;
+        // it does not need bounds or a copied drawing identity for each label.
+        const long budget = commandCount * 128L + 4096;
+        Assert.True(allocated <= budget, $"Image dependency tracking allocated {allocated:N0} bytes; budget {budget:N0}.");
+    }
+
+    [Fact]
+    public void ImageDependencyTrackingDoesNotAllocateUnusedResourceSnapshots()
+    {
+        DrawCommand command = DrawCommand.DrawText(
+            new DrawTextRun(new TestFont(), "unchanged debug label", 10),
+            new DrawPoint(0, 0), Color.White);
+        Action<IDrawImage> track = static _ => throw new InvalidOperationException("Plain text has no image dependency.");
+        for (int warmup = 0; warmup < 64; warmup++)
+        {
+            DrawCommandMetadata.TrackImageDependencies(command, track);
+        }
+
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int index = 0; index < 2_048; index++)
+        {
+            DrawCommandMetadata.TrackImageDependencies(command, track);
+        }
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        Assert.True(allocated <= 4_096, $"Image-only dependency visits allocated {allocated:N0} bytes of unused resource snapshots.");
+    }
+
+    [Fact]
+    public void ImageTrackingCompletesDiscoveryBeforeInvokingCallbacks()
+    {
+        TestImage first = new(16, 16);
+        TestImage second = new(16, 16);
+        int descriptions = 0;
+        TestFont font = new();
+        DrawTextLayout layout = new DrawTextLayoutBuilder()
+            .AddSpan("first", font, 10, new ImageTestBrush(first, () => descriptions++))
+            .AddSpan("second", font, 10, new ImageTestBrush(second, () => descriptions++))
+            .Build();
+        DrawCommand command = DrawCommand.DrawTextLayout(layout, new DrawPoint(0, 0));
+        descriptions = 0;
+        List<IDrawImage> tracked = [];
+
+        DrawCommandMetadata.TrackImageDependencies(command, image =>
+        {
+            Assert.Equal(2, descriptions);
+            tracked.Add(image);
+        });
+
+        Assert.Equal(2, tracked.Count);
+        Assert.Same(first, tracked[0]);
+        Assert.Same(second, tracked[1]);
+    }
+
+    [Fact]
     [Trait("PlanStage", "7")]
     public void DiagnosticsNameInvalidGeometryAndUnbalancedState()
     {
@@ -239,17 +519,21 @@ public sealed class DrawingIntegrationLifecycleTests
         public float Size => 10;
     }
 
-    private sealed class ImageTestBrush(IDrawImage image) : IDrawBrush
+    private sealed class ImageTestBrush(IDrawImage image, Action? describe = null) : IDrawBrush
     {
+        public IDrawImage Image { get; set; } = image;
+
         public DrawBrushKind Kind => DrawBrushKind.Image;
 
         public float Opacity => 1;
 
         public Color? SolidColor => null;
 
-        public DrawBrushDescriptor CreateDescriptor() =>
-            new ImageDrawBrushDescriptor(
-                image,
+        public DrawBrushDescriptor CreateDescriptor()
+        {
+            describe?.Invoke();
+            return new ImageDrawBrushDescriptor(
+                Image,
                 SourceIdentity: null,
                 DrawBrushStretch.Fill,
                 DrawBrushAlignmentX.Center,
@@ -258,6 +542,7 @@ public sealed class DrawingIntegrationLifecycleTests
                 Viewbox: null,
                 DrawTileMode.None,
                 BrushOpacity: 1);
+        }
     }
 
     private sealed class TestSurface : IRenderSurface2DSource;

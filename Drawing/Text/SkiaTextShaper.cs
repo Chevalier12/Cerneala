@@ -115,6 +115,7 @@ public sealed class SkiaTextShaper
     {
         private readonly ConcurrentDictionary<ShapeCacheKey, Lazy<TextShapeResult>> entries = new();
         private readonly ConcurrentQueue<ShapeCacheKey> insertionOrder = new();
+        private int entryCount;
 
         public TextShapeResult GetOrAdd(ShapeCacheKey key, Func<TextShapeResult> create)
         {
@@ -129,6 +130,9 @@ public sealed class SkiaTextShaper
             Lazy<TextShapeResult> cached = entries.GetOrAdd(key, candidate);
             if (ReferenceEquals(cached, candidate))
             {
+                // Publish the count before the queue entry can be removed by
+                // another admission. ConcurrentDictionary.Count locks every stripe.
+                Interlocked.Increment(ref entryCount);
                 insertionOrder.Enqueue(key);
                 Trim();
             }
@@ -138,10 +142,13 @@ public sealed class SkiaTextShaper
 
         private void Trim()
         {
-            while (entries.Count > MaximumCachedShapesPerTypeface &&
+            while (Volatile.Read(ref entryCount) > MaximumCachedShapesPerTypeface &&
                 insertionOrder.TryDequeue(out ShapeCacheKey oldest))
             {
-                entries.TryRemove(oldest, out _);
+                if (entries.TryRemove(oldest, out _))
+                {
+                    Interlocked.Decrement(ref entryCount);
+                }
             }
         }
     }

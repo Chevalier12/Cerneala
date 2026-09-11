@@ -6,6 +6,7 @@ using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Drawing.Prism.Graph;
 using Cerneala.Tests.Drawing.Prism;
 using Cerneala.Tests.SdlGpu;
+using Cerneala.UI.Markup;
 using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
 
@@ -14,6 +15,66 @@ namespace Cerneala.Tests.Drawing.SdlGpu;
 [Collection(SdlNativeTestCollection.Name)]
 public sealed class PrismRetainedExecutionTests
 {
+    [SdlNativeFact]
+    public void CroppedNestedScopesPreserveReferenceCoordinatesAndCachedPixels()
+    {
+        using SdlDrawingFixture fixture = new(256, 256);
+        for (int scenario = 0; scenario < 4; scenario++)
+        {
+            DrawCommandList reference = Commands(cropped: false);
+            DrawCommandList cropped = Commands(cropped: true);
+            Color[] expected = fixture.Render(reference, Color.Transparent);
+            Color[] actual = fixture.Render(cropped, Color.Transparent);
+            Assert.Equal(0, fixture.Backend.PrismDiagnostics.Count);
+            Assert.True(expected.SequenceEqual(actual), $"Cropped scenario {scenario} changed pixels.");
+            Assert.Equal(actual, fixture.Render(cropped, Color.Transparent));
+
+            DrawCommandList Commands(bool cropped)
+            {
+                DrawRect canvas = new(0, 0, 256, 256);
+                DrawRect content = new(96, 100, 48, 32);
+                PrismDrawScope parent = PrismTestData.Scope(new PrismCompositionDefinition("Reference canvas",
+                    [new PrismLayerDefinition(new(1), "Blur", filters: [new(PrismFilterId.Blur)])]),
+                    ownerToken: 94000 + scenario * 4 + (cropped ? 2 : 0), bounds: canvas);
+                PrismLayerDefinition layer = scenario switch
+                {
+                    0 => new(new(2), "Noisy glow", styles: [new(PrismStyleId.OuterGlow)]),
+                    1 => new(new(2), "Unaligned gradient", styles: [new(PrismStyleId.GradientOverlay)]),
+                    2 => new(new(2), "Threshold", filters: [new(PrismFilterId.Threshold)]),
+                    _ => new(new(2), "Dissolve", filters: [new(PrismFilterId.Invert)],
+                        opacity: .6f, blendMode: PrismBlendMode.Dissolve)
+                };
+                PrismDrawScope child = PrismTestData.Scope(new PrismCompositionDefinition("Cropped child", [layer]),
+                    ownerToken: 94001 + scenario * 4 + (cropped ? 2 : 0), bounds: cropped ? content : canvas);
+                if (scenario is 0 or 1)
+                {
+                    PrismStyleState style = Assert.Single(child.Instance.GetLayerState(layer.Id).Styles);
+                    PrismCatalogEntryDescriptor entry = PrismCatalogRuntime.GetEntry((int)(scenario == 0
+                        ? PrismStyleId.OuterGlow : PrismStyleId.GradientOverlay));
+                    if (scenario == 0)
+                    {
+                        SetNumber("Size", 8);
+                        SetNumber("Noise", .5f);
+                        SetNumber("Jitter", .4f);
+                    }
+                    else
+                    {
+                        GeneratedMarkup.SetPrismStyleBoolean(style, entry.StableId,
+                            entry.Properties.Single(property => property.Name == "AlignWithLayer").TypeSlot, false);
+                    }
+
+                    void SetNumber(string name, float value) => GeneratedMarkup.SetPrismStyleNumber(style,
+                        entry.StableId, entry.Properties.Single(property => property.Name == name).TypeSlot, value);
+                }
+                return PrismTestData.Commands(DrawCommand.BeginPrism(parent),
+                    DrawCommand.FillRectangle(canvas, Color.Coral), DrawCommand.BeginPrism(child),
+                    DrawCommand.FillRectangle(new(96, 100, 24, 32), new(42, 188, 126, 190)),
+                    DrawCommand.FillRectangle(new(120, 100, 24, 32), new(224, 58, 92, 220)),
+                    DrawCommand.EndPrism(), DrawCommand.EndPrism());
+            }
+        }
+    }
+
     [SdlNativeTheory]
     [InlineData(0)]
     [InlineData(1)]

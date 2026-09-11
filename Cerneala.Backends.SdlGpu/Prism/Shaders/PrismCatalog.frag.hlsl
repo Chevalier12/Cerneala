@@ -46,6 +46,7 @@ cbuffer PrismFragmentUniforms : register(b0, space3)
     float4 FilterOptions9;
     float4 PrismFilterControl;
     float4 FilterLights[24];
+    float4 PrismReferenceRaster;
 };
 
 #define Opacity PrismFrame.x

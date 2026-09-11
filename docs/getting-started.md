@@ -31,7 +31,7 @@ $env:CERNEALA_SDL_NATIVE_TESTS = '1'
 dotnet test ./Cerneala.slnx -c Release --no-build --no-restore -m:1
 ```
 
-`Graphix.Native 3.4.16-graphix.4` and `Graphix-CS 3.4.16.1` restore directly from
+`Graphix.Native 3.4.16-graphix.6` and `Graphix-CS 3.4.16.1` restore directly from
 NuGet.org. No GitHub authentication, temporary Actions artifact or local package
 feed is required. See the [SDL backend guide](sdl-desktop-backend.md) for package
 provenance and the unchanged managed/native ownership boundaries.

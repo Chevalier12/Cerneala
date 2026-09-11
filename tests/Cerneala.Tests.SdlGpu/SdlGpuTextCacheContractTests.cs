@@ -146,6 +146,68 @@ public sealed class SdlGpuTextCacheContractTests
     }
 
     [Fact]
+    public void UnchangedSolidTextBeyondAtlasBudgetDoesNotRepeatCpuRasterization()
+    {
+        using Fixture fixture = new();
+        long activeFrame = fixture.Resources.BeginTextAtlasFrame();
+        try
+        {
+            // Keep eight full pages live, as queued draws in a large frame or
+            // another window may do. The next label must use standalone layers.
+            Assert.NotNull(fixture.Add(new KeySet("page group A"), activeFrame, 1022));
+            Assert.NotNull(fixture.Add(new KeySet("page group B"), activeFrame, 1022));
+            Assert.Null(fixture.Add(new KeySet("page group C"), activeFrame, 1022));
+            Assert.Equal(8, fixture.Resources.TextAtlasPageCount);
+
+            IDrawBrush brush = new SolidColorBrush(Color.White);
+            int beforeFallback = fixture.Api.TextureCreationCount;
+            fixture.Render("stable overflow label", new DrawPoint(4, 28), brush);
+            Assert.Equal(1, fixture.Backend.LastFrameTiming.TextRequestCount);
+            int createdTextures = fixture.Api.TextureCreationCount;
+            Assert.Equal(beforeFallback + 3, createdTextures);
+
+            fixture.Render("stable overflow label", new DrawPoint(4, 28), brush);
+
+            Assert.Equal(createdTextures, fixture.Api.TextureCreationCount);
+            Assert.True(fixture.Backend.LastFrameTiming.TextRequestCount == 0,
+                $"An unchanged label reused its standalone textures but repeated " +
+                $"{fixture.Backend.LastFrameTiming.TextRequestCount} CPU rasterizations " +
+                $"({fixture.Backend.LastFrameTiming.RasterizedPixelCount} layer pixels).");
+        }
+        finally
+        {
+            fixture.Resources.EndTextAtlasFrame(activeFrame);
+        }
+    }
+
+    [Fact]
+    public void StandaloneSolidTextIsBoundedAndRetiredWhenNoLongerDrawn()
+    {
+        using Fixture fixture = new();
+        long activeFrame = fixture.Resources.BeginTextAtlasFrame();
+        try
+        {
+            Assert.NotNull(fixture.Add(new KeySet("page group A"), activeFrame, 1022));
+            Assert.NotNull(fixture.Add(new KeySet("page group B"), activeFrame, 1022));
+            Assert.Null(fixture.Add(new KeySet("page group C"), activeFrame, 1022));
+            int baseline = fixture.Api.GpuTextures.Count;
+            for (int frame = 0; frame < 16; frame++)
+            {
+                fixture.Render($"overflow label {frame}", new DrawPoint(4, 28), new SolidColorBrush(Color.White));
+                // One current RGB set and at most one pending retirement set.
+                Assert.InRange(fixture.Api.GpuTextures.Count, baseline, baseline + 6);
+            }
+            fixture.Render(new DrawCommandList());
+            fixture.Render(new DrawCommandList());
+            Assert.Equal(baseline, fixture.Api.GpuTextures.Count);
+        }
+        finally
+        {
+            fixture.Resources.EndTextAtlasFrame(activeFrame);
+        }
+    }
+
+    [Fact]
     public void CacheRetainsLargeVariantsAcrossABASwitchesWithinItsPageBudget()
     {
         using Fixture fixture = new();
@@ -324,6 +386,146 @@ public sealed class SdlGpuTextCacheContractTests
     }
 
     [Fact]
+    public void EvictionPressureDoesNotRehashPinnedEntries()
+    {
+        using Fixture fixture = new();
+        CountingIdentity residentIdentity = new();
+        long token = fixture.Resources.BeginTextAtlasFrame();
+        Assert.NotNull(fixture.Add(new KeySet("resident A", residentIdentity), token, 600));
+        Assert.NotNull(fixture.Add(new KeySet("resident B", residentIdentity), token, 600));
+        Assert.Null(fixture.Add(new KeySet("resident C", residentIdentity), token, 600));
+        Assert.Equal(8, fixture.Resources.TextAtlasEntryCount);
+        int before = residentIdentity.HashCalls;
+
+        Assert.Null(fixture.Add(new KeySet("overflow"), token, 600));
+
+        Assert.Equal(0, residentIdentity.HashCalls - before);
+        fixture.Resources.EndTextAtlasFrame(token);
+    }
+
+    [Fact]
+    public void SharedEntryRemainsPinnedUntilBothFramesFinishUnderEvictionPressure()
+    {
+        using Fixture fixture = new();
+        KeySet shared = new("shared"), filler = new("filler"), overflow = new("overflow");
+        long first = fixture.Resources.BeginTextAtlasFrame();
+        SdlGpuTextAtlasEntries original = fixture.Add(shared, first, 600)!.Value;
+        long second = fixture.Resources.BeginTextAtlasFrame();
+        Assert.True(fixture.TryGet(shared, second, out _));
+        Assert.NotNull(fixture.Add(filler, first, 600));
+        Assert.Null(fixture.Add(overflow, first, 600));
+        fixture.Resources.EndTextAtlasFrame(first);
+        long third = fixture.Resources.BeginTextAtlasFrame();
+        Assert.NotNull(fixture.Add(new KeySet("replacement"), third, 600));
+        fixture.Resources.EndTextAtlasFrame(third);
+        Assert.True(fixture.TryGet(shared, second, out SdlGpuTextAtlasEntries retained));
+        for (int channel = 0; channel < 3; channel++)
+        {
+            Assert.Same(original[channel], retained[channel]);
+        }
+        fixture.Resources.EndTextAtlasFrame(second);
+    }
+
+    [Fact]
+    public void WarmEntryPinsAcrossFrameLifetimesDoNotAllocate()
+    {
+        using Fixture fixture = new();
+        KeySet[] keys = Enumerable.Range(0, 64).Select(i => new KeySet($"warm-{i}")).ToArray();
+        long token = fixture.Resources.BeginTextAtlasFrame();
+        foreach (KeySet key in keys) Assert.NotNull(fixture.Add(key, token, 8));
+        fixture.Resources.EndTextAtlasFrame(token);
+        Replay();
+        Replay();
+        long allocated = MeasureAllocatedBytes(() =>
+        {
+            for (int frame = 0; frame < 128; frame++) Replay();
+        });
+        Assert.InRange(allocated, 0, 1_024);
+
+        void Replay()
+        {
+            long frame = fixture.Resources.BeginTextAtlasFrame();
+            foreach (KeySet key in keys) Assert.True(fixture.TryGet(key, frame, out _));
+            fixture.Resources.EndTextAtlasFrame(frame);
+        }
+    }
+
+    [Fact]
+    public void AtlasReclaimsInactiveEntriesBesideActivePixelsWithoutGrowingItsBudget()
+    {
+        using Fixture fixture = new();
+        KeySet[] keys = Enumerable.Range(0, 11).Select(i => new KeySet($"resident-{i}")).ToArray();
+        long oldFrame = fixture.Resources.BeginTextAtlasFrame();
+        for (int index = 0; index < 10; index++)
+        {
+            Assert.NotNull(fixture.Add(keys[index], oldFrame, 510, (byte)(index + 1)));
+        }
+        // Each padded layer occupies one quarter-page. The last RGB request
+        // fills the final two slots before taking the existing fallback.
+        Assert.Null(fixture.Add(keys[10], oldFrame, 510, 11));
+        fixture.Resources.EndTextAtlasFrame(oldFrame);
+        Assert.Equal(8, fixture.Resources.TextAtlasPageCount);
+        int created = fixture.Api.TextureCreationCount;
+
+        long activeFrame = fixture.Resources.BeginTextAtlasFrame();
+        List<(KeySet Key, SdlGpuTextAtlasEntries Entries, byte[][] Pixels)> active = [];
+        foreach (int index in new[] { 0, 2, 3, 4, 6, 7, 9 })
+        {
+            Assert.True(fixture.TryGet(keys[index], activeFrame, out SdlGpuTextAtlasEntries entries));
+            active.Add((keys[index], entries,
+                Enumerable.Range(0, 3).Select(channel => ReadPaddedPixels(entries[channel])).ToArray()));
+        }
+        Assert.Equal(8, active.SelectMany(item => Enumerable.Range(0, 3)
+            .Select(channel => item.Entries[channel].Page)).Distinct().Count());
+
+        long replacementFrame = fixture.Resources.BeginTextAtlasFrame();
+        SdlGpuTextAtlasEntries? replacement = fixture.Add(new KeySet("replacement"), replacementFrame, 300, 99);
+        Assert.True(replacement.HasValue,
+            "Inactive rectangles must be reusable even when every atlas page contains another frame's active pixels.");
+        fixture.Resources.EndTextAtlasFrame(replacementFrame);
+        foreach (var item in active)
+        {
+            Assert.True(fixture.TryGet(item.Key, activeFrame, out SdlGpuTextAtlasEntries retained));
+            for (int channel = 0; channel < 3; channel++)
+            {
+                Assert.Same(item.Entries[channel], retained[channel]);
+                Assert.Equal(item.Pixels[channel], ReadPaddedPixels(retained[channel]));
+            }
+        }
+        for (int channel = 0; channel < 3; channel++)
+        {
+            byte[] pixels = ReadPaddedPixels(replacement!.Value[channel]);
+            int stride = 302 * 4;
+            Assert.All(pixels.Take(stride), value => Assert.Equal(0, value));
+            Assert.All(pixels.TakeLast(stride), value => Assert.Equal(0, value));
+            for (int row = 1; row <= 300; row++)
+            {
+                Assert.All(pixels.Skip(row * stride).Take(4), value => Assert.Equal(0, value));
+                Assert.All(pixels.Skip(row * stride + 301 * 4).Take(4), value => Assert.Equal(0, value));
+                Assert.Equal(99, pixels[row * stride + 4]);
+            }
+        }
+        Assert.Equal(8, fixture.Resources.TextAtlasPageCount);
+        Assert.Equal(created, fixture.Api.TextureCreationCount);
+        fixture.Resources.EndTextAtlasFrame(activeFrame);
+    }
+
+    private static byte[] ReadPaddedPixels(SdlGpuTextAtlasEntry entry)
+    {
+        int dimension = entry.Texture.Width;
+        int x = (int)(entry.TextureCoordinates.X * dimension) - 1;
+        int y = (int)(entry.TextureCoordinates.Y * dimension) - 1;
+        int rowBytes = (entry.Width + 2) * 4;
+        byte[] result = new byte[rowBytes * (entry.Height + 2)];
+        for (int row = 0; row < entry.Height + 2; row++)
+        {
+            entry.Page.Pixels.AsSpan(((y + row) * dimension + x) * 4, rowBytes)
+                .CopyTo(result.AsSpan(row * rowBytes));
+        }
+        return result;
+    }
+
+    [Fact]
     public void CoordinateScaleChangeCannotReuseCoverageAtTheOldScale()
     {
         using Fixture fixture = new();
@@ -388,9 +590,9 @@ public sealed class SdlGpuTextCacheContractTests
 
     private sealed class KeySet
     {
-        internal KeySet(string text)
+        internal KeySet(string text, object? fontIdentity = null)
         {
-            SdlGpuTextRasterKey raster = new(this, text, 16, 1, default);
+            SdlGpuTextRasterKey raster = new(fontIdentity ?? this, text, 16, 1, default);
             Red = new(raster, SdlGpuColorWriteMask.Red);
             Green = new(raster, SdlGpuColorWriteMask.Green);
             Blue = new(raster, SdlGpuColorWriteMask.Blue);
@@ -398,6 +600,17 @@ public sealed class SdlGpuTextCacheContractTests
         internal SdlGpuTextLayerTextureKey Red { get; }
         internal SdlGpuTextLayerTextureKey Green { get; }
         internal SdlGpuTextLayerTextureKey Blue { get; }
+    }
+
+    private sealed class CountingIdentity
+    {
+        internal int HashCalls { get; private set; }
+
+        public override int GetHashCode()
+        {
+            HashCalls++;
+            return base.GetHashCode();
+        }
     }
 
     private sealed class Fixture : IDisposable
@@ -432,9 +645,11 @@ public sealed class SdlGpuTextCacheContractTests
             finally { Session.CompleteFrame(present: false); }
         }
 
-        internal SdlGpuTextAtlasEntries? Add(KeySet key, long token, int size)
+        internal SdlGpuTextAtlasEntries? Add(KeySet key, long token, int size, byte value = 0)
         {
-            RasterizedText raster = new(size, size, new byte[size * size * 4], new TextShapeResult("x", 1));
+            byte[] pixels = new byte[size * size * 4];
+            Array.Fill(pixels, value);
+            RasterizedText raster = new(size, size, pixels, new TextShapeResult("x", 1));
             return Resources.GetOrCreateTextAtlasEntries(Session, key.Red, key.Green, key.Blue,
                 [raster, raster, raster], token);
         }

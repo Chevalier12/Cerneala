@@ -58,9 +58,9 @@
                                     {
                                         <ContentTemplate DataType="Cerneala.Tetris.TetrisSpriteModel">
                                             <Sprite2D
-                                                Source="$DataContext.Source:OneWay"
-                                                SourceRect="$DataContext.SourceRect:OneWay"
-                                                Destination="$DataContext.Destination:OneWay"
+                                                Image="$DataContext.Image:OneWay"
+                                                SourceX="$DataContext.SourceX:OneWay" SourceY="$DataContext.SourceY:OneWay" SourceWidth="$DataContext.SourceWidth:OneWay" SourceHeight="$DataContext.SourceHeight:OneWay"
+                                                X="$DataContext.X:OneWay" Y="$DataContext.Y:OneWay" Width="$DataContext.Width:OneWay" Height="$DataContext.Height:OneWay"
                                                 Tint="$DataContext.Tint:OneWay" />
                                         </ContentTemplate>
                                     }
@@ -68,17 +68,17 @@
 
                                 <Sprite2D
                                     Name="GhostPiece"
-                                    Source="$DataContext.GhostImage:OneWay"
-                                    SourceRect="$DataContext.GhostSource:OneWay"
-                                    Destination="$DataContext.GhostDestination:OneWay"
+                                    Image="$DataContext.GhostImage:OneWay"
+                                    SourceX="$DataContext.GhostSourceX:OneWay" SourceY="$DataContext.GhostSourceY:OneWay" SourceWidth="$DataContext.GhostSourceWidth:OneWay" SourceHeight="$DataContext.GhostSourceHeight:OneWay"
+                                    X="$DataContext.GhostX:OneWay" Y="$DataContext.GhostY:OneWay" Width="$DataContext.GhostWidth:OneWay" Height="$DataContext.GhostHeight:OneWay"
                                     Tint="$DataContext.GhostTint:OneWay"
                                     IsVisible="$DataContext.GhostVisible:OneWay" />
 
                                 <Sprite2D
                                     Name="CurrentPiece"
-                                    Source="$DataContext.CurrentImage:OneWay"
-                                    SourceRect="$DataContext.CurrentSource:OneWay"
-                                    Destination="$DataContext.CurrentDestination:OneWay"
+                                    Image="$DataContext.CurrentImage:OneWay"
+                                    SourceX="$DataContext.CurrentSourceX:OneWay" SourceY="$DataContext.CurrentSourceY:OneWay" SourceWidth="$DataContext.CurrentSourceWidth:OneWay" SourceHeight="$DataContext.CurrentSourceHeight:OneWay"
+                                    X="$DataContext.CurrentX:OneWay" Y="$DataContext.CurrentY:OneWay" Width="$DataContext.CurrentWidth:OneWay" Height="$DataContext.CurrentHeight:OneWay"
                                     Tint="$DataContext.CurrentTint:OneWay"
                                     IsVisible="$DataContext.CurrentVisible:OneWay">
                                     <Sprite2D.Aspect>

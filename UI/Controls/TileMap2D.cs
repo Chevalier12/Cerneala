@@ -10,7 +10,7 @@ using Cerneala.UI.Resources;
 
 namespace Cerneala.UI.Controls;
 
-[ContentProperty(nameof(Layers))]
+[ContentProperty(nameof(Model))]
 public sealed partial class TileMap2D : SceneNode2D
 {
     public static readonly UiProperty<TileMap2DModel?> ModelProperty =
@@ -25,9 +25,10 @@ public sealed partial class TileMap2D : SceneNode2D
             typeof(TileMap2D),
             new UiPropertyMetadata<DrawPoint>(default, UiPropertyOptions.AffectsRender));
 
-    private readonly Dictionary<string, ResolvedAtlas> resolvedAtlases = new(StringComparer.Ordinal);
+    private readonly Dictionary<TileImageKey, ResolvedAtlas> resolvedAtlases = [];
     private readonly Dictionary<string, DrawSize> resolvedAtlasSizes = new(StringComparer.Ordinal);
     private readonly Dictionary<string, DrawSize> validatedAtlasSizes = new(StringComparer.Ordinal);
+    private readonly Dictionary<ImageReference, DrawSize> placementImageSizes = [];
     private TileMap2DModel? validatedAtlasModel;
     private bool synchronizingLayers;
     private int promotions;
@@ -198,7 +199,7 @@ public sealed partial class TileMap2D : SceneNode2D
         }
 
         diagnostics = new TileMap2DDiagnosticsSnapshot(
-            TotalChunks: model.Layers.Sum(static layer => layer.Chunks.Count),
+            TotalChunks: model.IsFreePlacement ? (model.Tiles.Count + PlacementChunkSize - 1) / PlacementChunkSize : model.Layers.Sum(static layer => layer.Chunks.Count),
             CandidateChunks: 0,
             VisibleChunks: 0,
             CandidateTiles: 0,
@@ -373,6 +374,7 @@ public sealed partial class TileMap2D : SceneNode2D
         resolvedAtlases.Clear();
         resolvedAtlasSizes.Clear();
         validatedAtlasSizes.Clear();
+        placementImageSizes.Clear();
         validatedAtlasModel = null;
         diagnostics = diagnostics with { RetainedBytes = 0, RetainedObjects = 0 };
     }
@@ -455,6 +457,7 @@ public sealed partial class TileMap2D : SceneNode2D
     {
         resolvedAtlases.Clear();
         resolvedAtlasSizes.Clear();
+        if (!ReferenceEquals(validatedAtlasModel, model)) { placementImageSizes.Clear(); }
         long combinedVersion = model.Version;
         foreach (TileSet2D tileSet in model.TileSets)
         {
@@ -465,12 +468,32 @@ public sealed partial class TileMap2D : SceneNode2D
                 explicitTracker: null,
                 InvalidationFlags.Render,
                 affectsIntrinsicSize: false);
-            resolvedAtlases.Add(tileSet.Id, new ResolvedAtlas(resolution.Image, resolution.Version));
+            resolvedAtlases.Add(new TileImageKey(tileSet.Id, null), new ResolvedAtlas(resolution.Image, resolution.Version, tileSet.Version));
             if (resolution.Image is IDrawImage image)
             {
                 resolvedAtlasSizes[tileSet.AtlasResourceId.Key] = new DrawSize(image.Width, image.Height);
             }
             combinedVersion = unchecked((combinedVersion * 397) ^ tileSet.Version ^ resolution.Version);
+        }
+
+        foreach (ImageReference reference in model.PlacementImages)
+        {
+            ImageResourceResolution resolution = reference.ResourceId is ResourceId<ImageResource> resourceId
+                ? ImageResourceResolver.Resolve(this, resourceId, null, null, InvalidationFlags.Render, affectsIntrinsicSize: false)
+                : default;
+            IDrawImage? image = reference.DirectImage ?? resolution.Image;
+            resolvedAtlases.Add(new TileImageKey(null, reference), new ResolvedAtlas(image, resolution.Version, 1));
+            DrawSize currentSize = image is null ? default : new DrawSize(image.Width, image.Height);
+            if (!placementImageSizes.TryGetValue(reference, out DrawSize previousSize) || previousSize != currentSize)
+            {
+                indexedModel = null;
+                placementImageSizes[reference] = currentSize;
+            }
+            if (image is not null && reference.ResourceId is ResourceId<ImageResource> id)
+            {
+                resolvedAtlasSizes[id.Key] = new DrawSize(image.Width, image.Height);
+            }
+            combinedVersion = unchecked((combinedVersion * 397) ^ resolution.Version ^ reference.GetHashCode());
         }
 
         bool needsValidation = !ReferenceEquals(validatedAtlasModel, model) ||
@@ -488,6 +511,7 @@ public sealed partial class TileMap2D : SceneNode2D
         }
         if (needsValidation)
         {
+            if (model.IsFreePlacement) { indexedModel = null; }
             // Validate every resolved definition before any chunk can publish
             // commands. Missing runtime resources retain deferred resolution;
             // import documents instead require all atlas declarations.
@@ -500,7 +524,8 @@ public sealed partial class TileMap2D : SceneNode2D
         }
 
         SetRenderDependencies(RenderDependency.None
-            .WithResourceIdentity(string.Join("|", model.TileSets.Select(static tileSet => tileSet.AtlasResourceId.ToString())))
+            .WithResourceIdentity(string.Join("|", model.TileSets.Select(static tileSet => tileSet.AtlasResourceId.ToString())
+                .Concat(model.PlacementImages.Select(static image => image.ResourceId?.ToString() ?? "direct"))))
             .WithResourceVersion(combinedVersion));
     }
 
@@ -511,7 +536,7 @@ public sealed partial class TileMap2D : SceneNode2D
     {
         if (Model!.TryResolveTile(tileId, out TileSet2D? tileSet, out definition) &&
             tileSet is not null &&
-            resolvedAtlases.TryGetValue(tileSet.Id, out ResolvedAtlas atlas) &&
+            resolvedAtlases.TryGetValue(new TileImageKey(tileSet.Id, null), out ResolvedAtlas atlas) &&
             atlas.Image is not null)
         {
             image = atlas.Image;
@@ -556,7 +581,12 @@ public sealed partial class TileMap2D : SceneNode2D
         Surface?.InvalidateFrame();
     }
 
-    private readonly record struct ResolvedAtlas(IDrawImage? Image, long Version);
+    private readonly record struct TileImageKey(string? TileSetId, ImageReference? PlacementImage);
+
+    private readonly record struct ResolvedAtlas(IDrawImage? Image, long Version, long DefinitionVersion)
+    {
+        internal DrawSize Size => Image is null ? default : new DrawSize(Image.Width, Image.Height);
+    }
 
     private sealed class LayerCollection(TileMap2D owner) : Collection<TileLayer2D>
     {

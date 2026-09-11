@@ -189,6 +189,12 @@ public sealed class PrismRetainedCacheKeyTests
             },
             key with { SurfaceWidth = key.SurfaceWidth + 1 },
             key with { SurfaceHeight = key.SurfaceHeight + 1 },
+            key with { SurfaceOriginX = key.SurfaceOriginX + 1 },
+            key with { SurfaceOriginY = key.SurfaceOriginY + 1 },
+            key with { ReferenceExtent = key.ReferenceExtent with { X = key.ReferenceExtent.X + 1 } },
+            key with { ReferenceExtent = key.ReferenceExtent with { Y = key.ReferenceExtent.Y + 1 } },
+            key with { ReferenceExtent = key.ReferenceExtent with { Width = key.ReferenceExtent.Width + 1 } },
+            key with { ReferenceExtent = key.ReferenceExtent with { Height = key.ReferenceExtent.Height + 1 } },
             key with { LowerUiVersion = key.LowerUiVersion + 1 },
             key with { PixelScaleBits = key.PixelScaleBits + 1 },
             key with
@@ -231,6 +237,24 @@ public sealed class PrismRetainedCacheKeyTests
         Assert.All(
             nearKeys,
             nearKey => Assert.NotEqual(key, nearKey));
+    }
+
+    [Fact]
+    public void RasterOriginsAndReferenceCanvasAreCopiedIntoRetainedKeys()
+    {
+        PrismGraphExecutionPlan plan = BuildPlan(PrismTestData.Composition("RasterOrigins",
+            PrismTestData.Layer(1, "Layer")), ownerToken: 87);
+        PrismGraphNodeId output = Assert.Single(plan.OptimizedGraph.Scopes).Output!.Value;
+        PrismRetainedRasterContext context = new(20, 10,
+            RasterContext.OutputColorProfile, RasterContext.SurfaceFormat, RasterContext.Sampling,
+            RasterContext.CapabilitySet, RasterContext.ShaderPackageVersion,
+            surfaceOriginX: 96, surfaceOriginY: 80, referenceExtent: new(16, 32, 256, 128));
+
+        Assert.True(PrismRetainedCacheKey.TryCreate(plan, output, context, out PrismRetainedCacheKey key));
+        Assert.Equal(96, key.SurfaceOriginX);
+        Assert.Equal(80, key.SurfaceOriginY);
+        Assert.Equal(new(16, 32, 256, 128), key.ReferenceExtent);
+        Assert.NotEqual(FinalKey(plan), key);
     }
 
     [Fact]

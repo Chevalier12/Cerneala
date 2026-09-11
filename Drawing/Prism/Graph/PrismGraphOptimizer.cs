@@ -1658,6 +1658,9 @@ internal sealed class PrismGraphOptimizer
                 lastUses[edge.Source],
                 executionIndices[edge.Target]);
         }
+        Dictionary<int, int> captureSteps = graph.Nodes
+            .Where(node => node.Kind == PrismGraphNodeKind.ControlCapture)
+            .ToDictionary(node => node.AnalysisScopeIndex, node => executionIndices[node.Id]);
         foreach (PrismGraphScope scope in graph.Scopes)
         {
             if (scope.Output is not PrismGraphNodeId output)
@@ -1671,6 +1674,18 @@ internal sealed class PrismGraphOptimizer
                 .DefaultIfEmpty(executionIndices[output])
                 .Max();
             lastUses[output] = Math.Max(lastUses[output], finalScopeStep);
+            if (scope.ParentScopeIndex is int parentScopeIndex)
+            {
+                // Nested presentation is an implicit pixel dependency: the
+                // parent capture consumes this output after the child finishes.
+                // Every executor must receive the same complete lifetime.
+                if (!captureSteps.TryGetValue(parentScopeIndex, out int captureStep))
+                {
+                    throw new InvalidOperationException(
+                        $"Prism scope '{parentScopeIndex}' has no control-capture node.");
+                }
+                lastUses[output] = Math.Max(lastUses[output], captureStep);
+            }
         }
 
         return graph.Nodes

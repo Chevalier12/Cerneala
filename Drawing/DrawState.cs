@@ -162,12 +162,22 @@ public sealed class DrawCommandStateAnalysis
     internal DrawCommandStateAnalysis(
         DrawCommandList commands,
         long commandListVersion,
-        IReadOnlyList<DrawCommandStateEntry> entries)
+        DrawCommandStateEntry[] ownedEntries)
+        : this(commands, commandListVersion, new ReadOnlyCollection<DrawCommandStateEntry>(ownedEntries))
+    {
+        // The analyzer transfers its fresh array after completing every entry.
+    }
+
+    internal DrawCommandStateAnalysis(
+        DrawCommandList commands,
+        long commandListVersion,
+        IReadOnlyList<DrawCommandStateEntry> immutableEntries)
     {
         Commands = commands;
         CommandListVersion = commandListVersion;
-        Entries = new ReadOnlyCollection<DrawCommandStateEntry>(
-            entries.ToArray());
+        // Rebinding a fully revalidated snapshot changes only its list/version
+        // association. No consumer can modify the shared entries.
+        Entries = immutableEntries;
     }
 
     public IReadOnlyList<DrawCommandStateEntry> Entries { get; }
@@ -190,11 +200,37 @@ public sealed class DrawCommandStateAnalysis
 
 public sealed class DrawCommandStateAnalyzer
 {
-    public DrawCommandStateAnalysis Analyze(DrawCommandList commands)
+    public DrawCommandStateAnalysis Analyze(DrawCommandList commands) => Analyze(commands, previousEntries: null);
+
+    internal DrawCommandStateAnalysis Analyze(
+        DrawCommandList commands,
+        IReadOnlyList<DrawCommandStateEntry>? previousEntries)
     {
         ArgumentNullException.ThrowIfNull(commands);
         long version = commands.Version;
-        DrawCommandStateEntry[] entries = new DrawCommandStateEntry[commands.Count];
+        int commandCount = commands.Count;
+        int revalidatedCount = 0;
+        DrawCommandMetadata? firstChangedMetadata = null;
+        if (previousEntries is not null && previousEntries.Count == commandCount)
+        {
+            for (; revalidatedCount < commandCount; revalidatedCount++)
+            {
+                DrawCommandMetadata? previous = previousEntries[revalidatedCount].Metadata;
+                DrawCommandMetadata current = DrawCommandMetadata.Create(commands[revalidatedCount], previous);
+                EnsureUnchanged(commands, version, commandCount);
+                if (!ReferenceEquals(current, previous))
+                {
+                    firstChangedMetadata = current;
+                    break;
+                }
+            }
+            if (revalidatedCount == commandCount)
+            {
+                return new DrawCommandStateAnalysis(commands, version, previousEntries);
+            }
+        }
+
+        DrawCommandStateEntry[] entries = new DrawCommandStateEntry[commandCount];
         List<OpenState> stack = [];
         List<Matrix3x2> transforms = [Matrix3x2.Identity];
         List<DrawRect?> clips = [null];
@@ -204,7 +240,15 @@ public sealed class DrawCommandStateAnalyzer
         for (int index = 0; index < commands.Count; index++)
         {
             DrawCommand command = commands[index];
-            DrawCommandMetadata metadata = DrawCommandMetadata.Create(command);
+            DrawCommandMetadata? previous = previousEntries is not null && index < previousEntries.Count
+                ? previousEntries[index].Metadata : null;
+            // The equivalent prefix and first changed command were already
+            // visited above. Do not invoke mutable resource descriptors twice.
+            DrawCommandMetadata metadata = index < revalidatedCount
+                ? previous!
+                : index == revalidatedCount && firstChangedMetadata is not null
+                    ? firstChangedMetadata
+                    : DrawCommandMetadata.Create(command, previous);
             Matrix3x2 transform = transforms[^1];
             DrawRect? clip = clips[^1];
             DrawRect? bounds = metadata.Bounds is DrawRect localBounds
@@ -365,13 +409,18 @@ public sealed class DrawCommandStateAnalyzer
             throw new InvalidOperationException(
                 $"{opened.Kind} at command index {opened.CommandIndex} has no matching pop command.");
         }
-        if (commands.Version != version || commands.Count != entries.Length)
+        EnsureUnchanged(commands, version, commandCount);
+
+        return new DrawCommandStateAnalysis(commands, version, entries);
+    }
+
+    private static void EnsureUnchanged(DrawCommandList commands, long version, int count)
+    {
+        if (commands.Version != version || commands.Count != count)
         {
             throw new InvalidOperationException(
                 "The draw command list changed while its state analysis was being built.");
         }
-
-        return new DrawCommandStateAnalysis(commands, version, entries);
     }
 
     private static Exception Mismatch(

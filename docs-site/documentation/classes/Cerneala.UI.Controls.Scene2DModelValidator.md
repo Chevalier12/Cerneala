@@ -33,6 +33,8 @@ Model constructors enforce structural invariants before publication. They retain
 
 Validation is deterministic in collection order. Retention stops at `MaxDiagnostics`, but omitted errors still make `Success` false. After a known failure fills the retained budget, validation may stop inspecting remaining data and report truncation. Message, file and JSON-path strings are limited to 4,096 UTF-16 characters. Validation does not mutate a model, allocate GPU resources, install collision adapters, or inspect the filesystem.
 
+Free `Tile` placements count toward the cell budget. Their required image references and independent natural dimensions are validated against supplied image sizes (or a direct image's dimensions). Level construction checks known placement extents plus `WorldOffset`; document validation checks the remaining natural extents once asset sizes are available. Out-of-range placements produce `SCN2D014`, not clamped geometry.
+
 ### Construction limits
 
 Each chunk/tileset is limited to 1,048,576 cells/definitions; a layer has at most 65,536 chunks; a map has at most 4,096 layers/tilesets. A level has at most 65,536 entities and 65,536 promotion references. A document has at most 4,096 levels/assets. A shape or descriptor collection has at most 4,096 points/descriptors. Point text is limited to 393,216 UTF-16 characters before tokenization.

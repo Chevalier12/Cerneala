@@ -82,16 +82,16 @@ public sealed partial class UiMarkupGeneratorTests
               <RenderSurface2D.Scene>
                 <Scene2D OrderMode="LayerThenY">
                   <Scene2D Name="House" TranslateX="40" TranslateY="16" Layer="1">
-                    <Sprite2D SourceResourceId="$WorldAtlas"
-                              Destination="$DataContext.HouseDestination:OneWay" />
+                    <Sprite2D Image="$WorldAtlas"
+                              X="$DataContext.HouseX:OneWay" Y="$DataContext.HouseY:OneWay" Width="$DataContext.HouseWidth:OneWay" Height="$DataContext.HouseHeight:OneWay" />
                     <BoxCollider2D Width="80" Height="8" />
                     <BoxCollider2D Width="8" Height="56" OffsetY="8" />
                     <BoxCollider2D Width="8" Height="56" OffsetX="72" OffsetY="8" />
                     <BoxCollider2D Width="28" Height="8" OffsetY="56" />
                     <BoxCollider2D Width="28" Height="8" OffsetX="52" OffsetY="56" />
                     <Scene2D Name="Door" TranslateX="28" TranslateY="56" Layer="2">
-                      <Sprite2D SourceResourceId="$WorldAtlas"
-                                Destination="$DataContext.DoorDestination:OneWay" />
+                      <Sprite2D Image="$WorldAtlas"
+                                X="$DataContext.DoorX:OneWay" Y="$DataContext.DoorY:OneWay" Width="$DataContext.DoorWidth:OneWay" Height="$DataContext.DoorHeight:OneWay" />
                       <BoxCollider2D Width="24"
                                      Height="8"
                                      Enabled="$DataContext.IsClosed:OneWay"
@@ -100,8 +100,8 @@ public sealed partial class UiMarkupGeneratorTests
                     </Scene2D>
                   </Scene2D>
                   <Scene2D Name="Player" TranslateX="72" TranslateY="84" Layer="3">
-                    <Sprite2D SourceResourceId="$WorldAtlas"
-                              Destination="$DataContext.PlayerDestination:OneWay" />
+                    <Sprite2D Image="$WorldAtlas"
+                              X="$DataContext.PlayerX:OneWay" Y="$DataContext.PlayerY:OneWay" Width="$DataContext.PlayerWidth:OneWay" Height="$DataContext.PlayerHeight:OneWay" />
                     <CircleCollider2D Radius="4"
                                       OffsetX="4"
                                       OffsetY="4"
@@ -202,10 +202,22 @@ public sealed class CollisionDoorState : INotifyPropertyChanged
     public DrawRect? WorldView { get; } = new DrawRect(0, 0, 160, 96);
 
     public DrawRect HouseDestination { get; } = new(0, 0, 80, 64);
+    public float HouseX => HouseDestination.X;
+    public float HouseY => HouseDestination.Y;
+    public float HouseWidth => HouseDestination.Width;
+    public float HouseHeight => HouseDestination.Height;
 
     public DrawRect DoorDestination { get; } = new(0, 0, 24, 8);
+    public float DoorX => DoorDestination.X;
+    public float DoorY => DoorDestination.Y;
+    public float DoorWidth => DoorDestination.Width;
+    public float DoorHeight => DoorDestination.Height;
 
     public DrawRect PlayerDestination { get; } = new(0, 0, 8, 8);
+    public float PlayerX => PlayerDestination.X;
+    public float PlayerY => PlayerDestination.Y;
+    public float PlayerWidth => PlayerDestination.Width;
+    public float PlayerHeight => PlayerDestination.Height;
 
     public bool IsClosed
     {

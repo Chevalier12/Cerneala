@@ -254,9 +254,9 @@ internal sealed class CollisionStageFiveFixture
         DrawRect destination) =>
         new()
         {
-            SourceResourceId = atlasId,
-            SourceRect = new DrawRect(sourceX, 0, 1, 1),
-            Destination = destination
+            Image = new(atlasId),
+            SourceX = sourceX, SourceY = 0, SourceWidth = 1, SourceHeight = 1,
+            X = destination.X, Y = destination.Y, Width = destination.Width, Height = destination.Height
         };
 
     private static void WriteAtlas(string path)

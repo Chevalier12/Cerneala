@@ -2,18 +2,19 @@ using System.Collections;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Cerneala.Drawing;
+using Cerneala.UI.Resources;
 
 namespace Cerneala.Tetris;
 
 public sealed class TetrisSceneModel : INotifyPropertyChanged
 {
     private IEnumerable lockedPieces = Array.Empty<TetrisSpriteModel>();
-    private IDrawImage? currentImage;
+    private ImageReference? currentImage;
     private DrawRect? currentSource;
     private DrawRect currentDestination;
     private Color currentTint = Color.White;
     private bool currentVisible;
-    private IDrawImage? ghostImage;
+    private ImageReference? ghostImage;
     private DrawRect? ghostSource;
     private DrawRect ghostDestination;
     private Color ghostTint = Color.White;
@@ -29,7 +30,7 @@ public sealed class TetrisSceneModel : INotifyPropertyChanged
         private set => Set(ref lockedPieces, value);
     }
 
-    public IDrawImage? CurrentImage
+    public ImageReference? CurrentImage
     {
         get => currentImage;
         private set => Set(ref currentImage, value);
@@ -38,14 +39,38 @@ public sealed class TetrisSceneModel : INotifyPropertyChanged
     public DrawRect? CurrentSource
     {
         get => currentSource;
-        private set => Set(ref currentSource, value);
+        private set
+        {
+            if (!Set(ref currentSource, value)) return;
+            Notify(nameof(CurrentSourceX));
+            Notify(nameof(CurrentSourceY));
+            Notify(nameof(CurrentSourceWidth));
+            Notify(nameof(CurrentSourceHeight));
+        }
     }
+
+    public float CurrentSourceX => currentSource?.X ?? 0;
+    public float CurrentSourceY => currentSource?.Y ?? 0;
+    public float CurrentSourceWidth => currentSource?.Width ?? float.NaN;
+    public float CurrentSourceHeight => currentSource?.Height ?? float.NaN;
 
     public DrawRect CurrentDestination
     {
         get => currentDestination;
-        private set => Set(ref currentDestination, value);
+        private set
+        {
+            if (!Set(ref currentDestination, value)) return;
+            Notify(nameof(CurrentX));
+            Notify(nameof(CurrentY));
+            Notify(nameof(CurrentWidth));
+            Notify(nameof(CurrentHeight));
+        }
     }
+
+    public float CurrentX => currentDestination.X;
+    public float CurrentY => currentDestination.Y;
+    public float CurrentWidth => currentDestination.Width;
+    public float CurrentHeight => currentDestination.Height;
 
     public Color CurrentTint
     {
@@ -59,7 +84,7 @@ public sealed class TetrisSceneModel : INotifyPropertyChanged
         private set => Set(ref currentVisible, value);
     }
 
-    public IDrawImage? GhostImage
+    public ImageReference? GhostImage
     {
         get => ghostImage;
         private set => Set(ref ghostImage, value);
@@ -68,14 +93,38 @@ public sealed class TetrisSceneModel : INotifyPropertyChanged
     public DrawRect? GhostSource
     {
         get => ghostSource;
-        private set => Set(ref ghostSource, value);
+        private set
+        {
+            if (!Set(ref ghostSource, value)) return;
+            Notify(nameof(GhostSourceX));
+            Notify(nameof(GhostSourceY));
+            Notify(nameof(GhostSourceWidth));
+            Notify(nameof(GhostSourceHeight));
+        }
     }
+
+    public float GhostSourceX => ghostSource?.X ?? 0;
+    public float GhostSourceY => ghostSource?.Y ?? 0;
+    public float GhostSourceWidth => ghostSource?.Width ?? float.NaN;
+    public float GhostSourceHeight => ghostSource?.Height ?? float.NaN;
 
     public DrawRect GhostDestination
     {
         get => ghostDestination;
-        private set => Set(ref ghostDestination, value);
+        private set
+        {
+            if (!Set(ref ghostDestination, value)) return;
+            Notify(nameof(GhostX));
+            Notify(nameof(GhostY));
+            Notify(nameof(GhostWidth));
+            Notify(nameof(GhostHeight));
+        }
     }
+
+    public float GhostX => ghostDestination.X;
+    public float GhostY => ghostDestination.Y;
+    public float GhostWidth => ghostDestination.Width;
+    public float GhostHeight => ghostDestination.Height;
 
     public Color GhostTint
     {
@@ -103,13 +152,13 @@ public sealed class TetrisSceneModel : INotifyPropertyChanged
         DrawRect ghostDestinationValue,
         bool visible)
     {
-        CurrentImage = currentImageValue;
+        CurrentImage = ReferenceImage(currentImageValue, CurrentImage);
         CurrentSource = source;
         CurrentDestination = currentDestinationValue;
         CurrentTint = tint;
         CurrentVisible = visible && currentImageValue is not null;
 
-        GhostImage = ghostImageValue;
+        GhostImage = ReferenceImage(ghostImageValue, GhostImage);
         GhostSource = source;
         GhostDestination = ghostDestinationValue;
         GhostTint = new Color(tint.R, tint.G, tint.B, 55);
@@ -125,15 +174,22 @@ public sealed class TetrisSceneModel : INotifyPropertyChanged
         GhostVisible = false;
     }
 
-    private void Set<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    private static ImageReference? ReferenceImage(IDrawImage? image, ImageReference? previous) =>
+        image is null ? null : ReferenceEquals(image, previous?.DirectImage) ? previous : new(image);
+
+    private void Notify(string? propertyName) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
+    private bool Set<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
         if (EqualityComparer<T>.Default.Equals(field, value))
         {
-            return;
+            return false;
         }
 
         field = value;
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        Notify(propertyName);
+        return true;
     }
 }
 
@@ -145,7 +201,7 @@ public sealed class TetrisSpriteModel : INotifyPropertyChanged
         DrawRect destination,
         Color tint)
     {
-        Source = source;
+        Image = new(source);
         SourceRect = sourceRect;
         Destination = destination;
         Tint = tint;
@@ -157,11 +213,21 @@ public sealed class TetrisSpriteModel : INotifyPropertyChanged
         remove { }
     }
 
-    public IDrawImage Source { get; }
+    public ImageReference Image { get; }
 
     public DrawRect? SourceRect { get; }
 
+    public float SourceX => SourceRect?.X ?? 0;
+    public float SourceY => SourceRect?.Y ?? 0;
+    public float SourceWidth => SourceRect?.Width ?? float.NaN;
+    public float SourceHeight => SourceRect?.Height ?? float.NaN;
+
     public DrawRect Destination { get; }
+
+    public float X => Destination.X;
+    public float Y => Destination.Y;
+    public float Width => Destination.Width;
+    public float Height => Destination.Height;
 
     public Color Tint { get; }
 }

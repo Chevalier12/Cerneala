@@ -157,7 +157,10 @@ internal readonly record struct PrismRetainedRasterContext
         BackdropPixelFormat surfaceFormat,
         PrismSampling sampling,
         PrismGraphCapabilities capabilitySet,
-        long shaderPackageVersion)
+        long shaderPackageVersion,
+        int surfaceOriginX = 0,
+        int surfaceOriginY = 0,
+        PrismRasterExtent referenceExtent = default)
     {
         SurfaceWidth = surfaceWidth;
         SurfaceHeight = surfaceHeight;
@@ -166,12 +169,22 @@ internal readonly record struct PrismRetainedRasterContext
         Sampling = sampling;
         CapabilitySet = capabilitySet;
         ShaderPackageVersion = shaderPackageVersion;
+        SurfaceOriginX = surfaceOriginX;
+        SurfaceOriginY = surfaceOriginY;
+        ReferenceExtent = referenceExtent == default
+            ? new(0, 0, surfaceWidth, surfaceHeight) : referenceExtent;
         EnsureValid();
     }
 
     public int SurfaceWidth { get; }
 
     public int SurfaceHeight { get; }
+
+    public int SurfaceOriginX { get; }
+
+    public int SurfaceOriginY { get; }
+
+    public PrismRasterExtent ReferenceExtent { get; }
 
     public PrismColorProfile OutputColorProfile { get; }
 
@@ -205,6 +218,11 @@ internal readonly record struct PrismRetainedRasterContext
                 nameof(OutputColorProfile),
                 OutputColorProfile,
                 "Unknown Prism output color profile.");
+        }
+        if (ReferenceExtent.Width <= 0 || ReferenceExtent.Height <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(ReferenceExtent),
+                "A retained reference raster must have positive dimensions.");
         }
         if (!Enum.IsDefined(SurfaceFormat))
         {
@@ -255,7 +273,10 @@ internal readonly record struct PrismRetainedCacheKey(
     BackdropPixelFormat SurfaceFormat,
     PrismSampling Sampling,
     PrismGraphCapabilities CapabilitySet,
-    long ShaderPackageVersion)
+    long ShaderPackageVersion,
+    int SurfaceOriginX = 0,
+    int SurfaceOriginY = 0,
+    PrismRasterExtent ReferenceExtent = default)
 {
     public static bool TryCreate(
         PrismGraphExecutionPlan executionPlan,
@@ -339,7 +360,10 @@ internal readonly record struct PrismRetainedCacheKey(
             rasterContext.SurfaceFormat,
             rasterContext.Sampling,
             rasterContext.CapabilitySet,
-            rasterContext.ShaderPackageVersion);
+            rasterContext.ShaderPackageVersion,
+            rasterContext.SurfaceOriginX,
+            rasterContext.SurfaceOriginY,
+            rasterContext.ReferenceExtent);
         return true;
     }
 }

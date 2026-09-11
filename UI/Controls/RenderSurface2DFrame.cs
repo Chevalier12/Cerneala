@@ -404,8 +404,7 @@ public sealed partial class RenderSurface2DFrame
 
         foreach (DrawCommand command in commands)
         {
-            DrawCommandMetadata.Create(command).TrackImageDependencies(
-                trackImageDependency);
+            DrawCommandMetadata.TrackImageDependencies(command, trackImageDependency);
         }
     }
 

@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Globalization;
 using Cerneala.Drawing;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
@@ -58,6 +59,8 @@ public sealed class Scene2DDebugOverlay : SceneNode2D
     private static readonly Color TriggerColor = new(255, 180, 40);
     private readonly List<ColliderGeometry2D> colliders = [];
     private readonly Dictionary<Color, DrawPen> pens = [];
+    private Dictionary<LabelKey, DrawTextRun> previousLabels = [];
+    private Dictionary<LabelKey, DrawTextRun> currentLabels = [];
     private IDrawFont? font;
     private Scene2DDebugOverlayDiagnostics diagnostics;
 
@@ -80,6 +83,8 @@ public sealed class Scene2DDebugOverlay : SceneNode2D
         if (Flags == Scene2DDebugFlags.None || Opacity <= 0 ||
             !UIElementVisibility.ParticipatesInRendering(this) || LogicalParent is not Scene2D owner)
         {
+            previousLabels.Clear();
+            currentLabels.Clear();
             return;
         }
 
@@ -87,7 +92,12 @@ public sealed class Scene2DDebugOverlay : SceneNode2D
         Scene2DRecordContext debugContext = context.WithLocalTransform(transform);
         SceneBounds2D visible = debugContext.GetConservativeVisibleLocalBounds();
         // Singular presentation transforms have no finite viewport to inspect.
-        if (visible.Kind != SceneBoundsKind.Known) { return; }
+        if (visible.Kind != SceneBoundsKind.Known)
+        {
+            previousLabels.Clear();
+            currentLabels.Clear();
+            return;
+        }
         using DrawTransformScope transformed = context.Frame.Transform(transform);
         bool hasOpacity = Opacity < 1;
         if (hasOpacity) { context.Frame.PushOpacity(Opacity); }
@@ -97,6 +107,10 @@ public sealed class Scene2DDebugOverlay : SceneNode2D
         }
         finally
         {
+            // Retain only the just-recorded label set, not an unbounded history
+            // of coordinates or model values visited while navigating the scene.
+            (previousLabels, currentLabels) = (currentLabels, previousLabels);
+            currentLabels.Clear();
             if (hasOpacity) { context.Frame.PopOpacity(); }
         }
     }
@@ -222,13 +236,28 @@ public sealed class Scene2DDebugOverlay : SceneNode2D
             SceneBounds2D visible = childContext.GetConservativeVisibleLocalBounds();
             if (visible.Kind != SceneBoundsKind.Known) { continue; }
             DrawSize size = model.TileSize;
-            IReadOnlyList<TileChunk2D> chunks = map.GetDebugChunks(layer, visible);
+            IReadOnlyList<TileMap2D.TileRenderChunk> chunks = map.GetDebugChunks(layer, visible);
             diagnostics = diagnostics with { CandidateChunks = diagnostics.CandidateChunks + chunks.Count };
-            foreach (TileChunk2D chunk in chunks)
+            foreach (TileMap2D.TileRenderChunk renderChunk in chunks)
             {
-                DrawRect bounds = new(chunk.Origin.X * size.Width, chunk.Origin.Y * size.Height, chunk.Width * size.Width, chunk.Height * size.Height);
+                if (renderChunk.Bounds.Kind != SceneBoundsKind.Known) { continue; }
+                DrawRect bounds = renderChunk.Bounds.Bounds;
                 if (!childContext.IntersectsVisibleLocalBounds(SceneBounds2D.Known(bounds))) { continue; }
                 if (Has(Scene2DDebugFlags.ChunkBounds)) { Rectangle(context.Frame, bounds, ChunkColor); }
+                if (renderChunk.Grid is not TileChunk2D chunk)
+                {
+                    if (Has(Scene2DDebugFlags.Order)) { Label(context.Frame, $"{layer.Id}: placements {renderChunk.Start}..{renderChunk.Start + renderChunk.Count - 1}", new DrawPoint(bounds.X, bounds.Y), ChunkColor); }
+                    if (Has(Scene2DDebugFlags.TileCoordinates))
+                    {
+                        for (int index = 0; index < renderChunk.Count; index++)
+                        {
+                            Tile tile = renderChunk.Placements![renderChunk.Start + index];
+                            Label(context.Frame, $"{tile.X},{tile.Y}", new DrawPoint(tile.X, tile.Y), Color.White);
+                            diagnostics = diagnostics with { VisitedTiles = diagnostics.VisitedTiles + 1 };
+                        }
+                    }
+                    continue;
+                }
                 if (Has(Scene2DDebugFlags.Order)) { Label(context.Frame, $"{layer.Id}: order {layer.Order} chunk {chunk.Origin.X},{chunk.Origin.Y}", new DrawPoint(bounds.X, bounds.Y), ChunkColor); }
                 if (!Has(Scene2DDebugFlags.TileCoordinates | Scene2DDebugFlags.TileIds)) { continue; }
                 TileRange(visible.Bounds, default, size, new TileMapBounds2D(chunk.Origin.X, chunk.Origin.Y, chunk.Width, chunk.Height), out int minX, out int minY, out int maxX, out int maxY);
@@ -237,9 +266,13 @@ public sealed class Scene2DDebugOverlay : SceneNode2D
                 {
                     TileCell2D cell = chunk.GetCell(new TileCoordinate2D(x, y));
                     diagnostics = diagnostics with { VisitedTiles = diagnostics.VisitedTiles + 1 };
-                    string text = Has(Scene2DDebugFlags.TileCoordinates) ? $"{x},{y}" : string.Empty;
-                    if (Has(Scene2DDebugFlags.TileIds)) { text += $" #{cell.TileId}"; }
-                    Label(context.Frame, text, new DrawPoint(x * size.Width, y * size.Height), Color.White);
+                    Scene2DDebugFlags labelFlags = Flags & (Scene2DDebugFlags.TileCoordinates | Scene2DDebugFlags.TileIds);
+                    int labelX = Has(Scene2DDebugFlags.TileCoordinates) ? x : 0;
+                    int labelY = Has(Scene2DDebugFlags.TileCoordinates) ? y : 0;
+                    LabelKey key = new(null, labelX, labelY,
+                        Has(Scene2DDebugFlags.TileIds) ? cell.TileId : 0, labelFlags,
+                        labelX < 0 || labelY < 0 ? NumberFormatInfo.CurrentInfo.NegativeSign : null);
+                    Label(context.Frame, key, new DrawPoint(x * size.Width, y * size.Height), Color.White);
                 }
             }
             if (!Has(Scene2DDebugFlags.PromotedTiles)) { continue; }
@@ -302,10 +335,31 @@ public sealed class Scene2DDebugOverlay : SceneNode2D
     private void Rectangle(RenderSurface2DFrame frame, DrawRect bounds, Color color) { frame.DrawRectangle(bounds, Pen(color)); CountPrimitive(); }
     private void Line(RenderSurface2DFrame frame, DrawPoint a, DrawPoint b, Color color) { frame.DrawLine(a, b, Pen(color)); CountPrimitive(); }
     private void Label(RenderSurface2DFrame frame, string text, DrawPoint point, Color color)
+        => Label(frame, new LabelKey(text), point, color);
+
+    private void Label(RenderSurface2DFrame frame, LabelKey key, DrawPoint point, Color color)
     {
         font ??= FontResolver.Default.Resolve("Consolas", 10).Font;
-        frame.DrawText(new DrawTextRun(font, text, FontSize), point, color);
+        if ((!currentLabels.TryGetValue(key, out DrawTextRun? run) &&
+             !previousLabels.TryGetValue(key, out run)) ||
+            !ReferenceEquals(run.Font, font) || run.Size != FontSize)
+        {
+            run = new DrawTextRun(font, key.Format(), FontSize);
+        }
+        currentLabels[key] = run;
+        frame.DrawText(run, point, color);
         CountPrimitive();
+    }
+
+    // Numeric labels are keyed before formatting. Default integer formatting is
+    // culture-independent except for the negative sign; capture that value, not
+    // the mutable CultureInfo identity. Unprinted coordinates/IDs are normalized.
+    private readonly record struct LabelKey(string? Text, int X = 0, int Y = 0, int TileId = 0,
+        Scene2DDebugFlags Flags = Scene2DDebugFlags.None, string? NegativeSign = null)
+    {
+        public string Format() => Text ?? ((Flags & Scene2DDebugFlags.TileCoordinates) != 0
+            ? (Flags & Scene2DDebugFlags.TileIds) != 0 ? $"{X},{Y} #{TileId}" : $"{X},{Y}"
+            : $" #{TileId}");
     }
     private void CountPrimitive() => diagnostics = diagnostics with { Primitives = diagnostics.Primitives + 1 };
     private static DrawPoint Center(DrawRect rect) => new(rect.X + rect.Width / 2, rect.Y + rect.Height / 2);

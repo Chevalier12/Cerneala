@@ -9,7 +9,7 @@ namespace Cerneala.Drawing.Prism.Graph;
 
 internal sealed class PrismGraphBuilder
 {
-    private PrismFrameAnalysis? previousAnalysis;
+    private ImmutableArray<PrismAnalyzedScope> previousScopes;
     private PrismBackdropFrameDescriptor? previousBackdropFrame;
     private PrismGraph? previousGraph;
 
@@ -46,9 +46,13 @@ internal sealed class PrismGraphBuilder
     {
         ArgumentNullException.ThrowIfNull(analysis);
         EnsureCurrent(analysis);
-        if (ReferenceEquals(previousAnalysis, analysis) &&
+        // Graph construction depends on the analyzed scopes, not on the
+        // identity/version of the command list that produced them. Compare
+        // the complete scope snapshots, including captured dependency stamps,
+        // so rerecording does not discard an otherwise current graph and plan.
+        if (previousGraph is PrismGraph retainedGraph &&
             previousBackdropFrame == backdropFrame &&
-            previousGraph is PrismGraph retainedGraph)
+            previousScopes.AsSpan().SequenceEqual(analysis.Scopes.AsSpan()))
         {
             return retainedGraph;
         }
@@ -77,7 +81,7 @@ internal sealed class PrismGraphBuilder
             nodes.ToImmutable(),
             edges.ToImmutable(),
             scopes.MoveToImmutable());
-        previousAnalysis = analysis;
+        previousScopes = analysis.Scopes;
         previousBackdropFrame = backdropFrame;
         previousGraph = graph;
         return graph;

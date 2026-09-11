@@ -71,6 +71,7 @@ public class RenderSurface2D : ContentControl,
         new(ReferenceEqualityComparer.Instance);
     private RenderSurface2DDrawEventHandler? draw;
     private long frameVersion = 1;
+    private long contentVersion = 1;
     private TimeSpan currentFrameTime;
     private readonly List<SceneNode2D> activeAnimations = [];
     private readonly HashSet<Collider2D> hitTestColliders =
@@ -127,9 +128,11 @@ public class RenderSurface2D : ContentControl,
         }
     }
 
-    public void InvalidateFrame()
+    public void InvalidateFrame() => InvalidateFrame(contentChanged: true);
+
+    private void InvalidateFrame(bool contentChanged)
     {
-        AdvanceFrameVersion();
+        AdvanceFrameVersion(contentChanged);
         IncrementRenderVersion();
         Invalidate(InvalidationFlags.Render, "RenderSurface2D frame changed");
     }
@@ -200,7 +203,9 @@ public class RenderSurface2D : ContentControl,
             return false;
         }
 
-        InvalidateFrame();
+        // Continuous scene recording is not itself a content mutation. Imperative
+        // callbacks may depend on time or external state, so remain conservative.
+        InvalidateFrame(animationChanged || draw is not null || hasOnDrawOverride);
         return true;
     }
 
@@ -361,7 +366,7 @@ public class RenderSurface2D : ContentControl,
             commands,
             bounds,
             currentFrameTime,
-            frameVersion,
+            contentVersion,
             TrackImageDependency);
         try
         {
@@ -548,11 +553,15 @@ public class RenderSurface2D : ContentControl,
         }
     }
 
-    private void AdvanceFrameVersion()
+    private void AdvanceFrameVersion(bool contentChanged = true)
     {
         frameVersion = frameVersion == long.MaxValue
             ? 1
             : frameVersion + 1;
+        if (contentChanged)
+        {
+            contentVersion = contentVersion == long.MaxValue ? 1 : contentVersion + 1;
+        }
     }
 
     private static bool DetectOnDrawOverride(Type type)
