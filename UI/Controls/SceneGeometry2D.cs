@@ -51,7 +51,12 @@ internal static class SceneGeometry2D
         }
         else
         {
-            result = TransformBounds(node.GetHitTestLocalBounds(), nodeToRoot);
+            SceneBounds2D local = node.GetHitTestLocalBounds();
+            // Unknown local visuals cannot be picked, but must not erase the
+            // known input geometry of a collider child or a sibling subtree.
+            result = local.Kind == SceneBoundsKind.Unknown
+                ? SceneBounds2D.Empty
+                : TransformBounds(local, nodeToRoot);
         }
 
         foreach (UIElement child in ((Cerneala.UI.Input.IInputSubtreeHost)node).GetInputSubtreeChildren())

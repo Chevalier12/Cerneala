@@ -1,28 +1,23 @@
 using System.Numerics;
-using Cerneala.Drawing;
+using Cerneala.UI.Elements;
 
 namespace Cerneala.UI.Controls;
 
 internal sealed class TileStaticCollider2D : Collider2D
 {
     private readonly ColliderLocalShape2D shape;
-    private readonly TileCoordinate2D coordinate;
-    private readonly DrawSize tileSize;
-    private readonly TileFlip2D flip;
+    private readonly TileLayer2D collisionHost;
     private readonly Matrix3x2 localTransform;
 
     internal TileStaticCollider2D(
         TileColliderDescriptor2D descriptor,
-        TileCoordinate2D coordinate,
-        DrawSize tileSize,
-        TileFlip2D flip,
+        TileLayer2D collisionHost,
+        Matrix3x2 placement,
         float? boxWidth = null,
         float? boxHeight = null)
     {
-        this.coordinate = coordinate;
-        this.tileSize = tileSize;
-        this.flip = flip;
-        localTransform = descriptor.LocalTransform;
+        this.collisionHost = collisionHost;
+        localTransform = descriptor.LocalTransform * placement;
         shape = descriptor.CreateLocalShape(boxWidth, boxHeight);
         OffsetX = descriptor.OffsetX;
         OffsetY = descriptor.OffsetY;
@@ -37,15 +32,10 @@ internal sealed class TileStaticCollider2D : Collider2D
 
     internal override bool ParticipatesInInputRoute => false;
 
+    // Immutable tile data owns this adapter; its layer is only a transform host.
+    internal override bool AllowsCollisionParent(UIElement parent) => ReferenceEquals(parent, collisionHost);
+
     internal override ColliderLocalShape2D GetLocalShape() => shape;
 
-    internal override Matrix3x2 GetLocalTransform()
-    {
-        Matrix3x2 transform = localTransform * TileFlipGeometry2D.Transform(flip, tileSize);
-
-        transform *= Matrix3x2.CreateTranslation(
-            coordinate.X * tileSize.Width,
-            coordinate.Y * tileSize.Height);
-        return transform;
-    }
+    internal override Matrix3x2 GetLocalTransform() => localTransform;
 }

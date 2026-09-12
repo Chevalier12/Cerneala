@@ -54,7 +54,7 @@ public sealed class CollisionStageOneContractTests
             TranslateX = 5
         };
         Scene2D inner = new() { TranslateY = 7, Scale = 2 };
-        inner.Children.Add(collider);
+        inner.Children.Add(new Sprite2D { Colliders = { collider } });
         Scene2D root = new() { TranslateX = 10 };
         root.Children.Add(inner);
 
@@ -71,7 +71,8 @@ public sealed class CollisionStageOneContractTests
         Scene2D group = new();
         BoxCollider2D collider = new();
         root.Children.Add(group);
-        group.Children.Add(collider);
+        Sprite2D sprite = new() { Colliders = { collider } };
+        group.Children.Add(sprite);
         List<SceneCollisionMutation2D> mutations = [];
         root.CollisionMutation += mutations.Add;
         long versionBeforeMutations = root.CollisionMutationVersion;
@@ -84,9 +85,9 @@ public sealed class CollisionStageOneContractTests
         Assert.Equal(3, mutations.Count);
         group.TranslateX = 8;
         Assert.Equal(4, mutations.Count);
-        group.Children.Remove(collider);
+        sprite.Colliders.Remove(collider);
         Assert.Equal(5, mutations.Count);
-        group.Children.Add(collider);
+        sprite.Colliders.Add(collider);
         Assert.Equal(6, mutations.Count);
 
         Assert.Equal(
@@ -110,7 +111,7 @@ public sealed class CollisionStageOneContractTests
         UIRoot uiRoot = new(motionClock: clock);
         Scene2D scene = new();
         BoxCollider2D collider = new();
-        scene.Children.Add(collider);
+        scene.Children.Add(new Sprite2D { Colliders = { collider } });
         RenderSurface2D surface = new() { Scene = scene };
         uiRoot.VisualChildren.Add(surface);
         List<SceneCollisionMutation2D> mutations = [];
@@ -168,7 +169,7 @@ public sealed class CollisionStageOneContractTests
         Sprite2D doorVisual = new();
         BoxCollider2D doorCollider = new() { Width = 16, Height = 4 };
         house.Children.Add(doorVisual);
-        house.Children.Add(doorCollider);
+        doorVisual.Colliders.Add(doorCollider);
         ObservableValue<bool> isClosed = new(true);
         using IDisposable visualBinding = BindingOperations.BindOneWay(
             doorVisual,
@@ -186,6 +187,6 @@ public sealed class CollisionStageOneContractTests
         Assert.False(doorVisual.IsVisible);
         Assert.False(doorCollider.TryGetActiveSceneGeometry(out _));
         Assert.Same(house, doorVisual.LogicalParent);
-        Assert.Same(house, doorCollider.LogicalParent);
+        Assert.Same(doorVisual, doorCollider.LogicalParent);
     }
 }

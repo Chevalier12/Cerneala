@@ -109,7 +109,7 @@ public sealed class TileInstance2D : SceneNode2D
 
     public TileInstance2D()
     {
-        Colliders = new ColliderCollection(this);
+        Colliders = new ColliderCollection2D(this);
     }
 
     internal TileLayer2D? OwnerLayer { get; set; }
@@ -311,52 +311,4 @@ public sealed class TileInstance2D : SceneNode2D
         }
     }
 
-    private sealed class ColliderCollection(TileInstance2D owner) : Collection<Collider2D>
-    {
-        protected override void InsertItem(int index, Collider2D item)
-        {
-            ArgumentNullException.ThrowIfNull(item);
-            owner.LogicalChildren.Insert(index, item);
-            base.InsertItem(index, item);
-            item.AttachSurface(owner.Surface);
-            owner.OwnerLayer?.OwnerMap?.SynchronizeCollisionAdaptersAndNotify();
-            owner.Surface?.InvalidateFrame();
-        }
-
-        protected override void SetItem(int index, Collider2D item)
-        {
-            ArgumentNullException.ThrowIfNull(item);
-            Collider2D previous = this[index];
-            previous.AttachSurface(null);
-            owner.LogicalChildren.Remove(previous);
-            owner.LogicalChildren.Insert(index, item);
-            base.SetItem(index, item);
-            item.AttachSurface(owner.Surface);
-            owner.OwnerLayer?.OwnerMap?.SynchronizeCollisionAdaptersAndNotify();
-            owner.Surface?.InvalidateFrame();
-        }
-
-        protected override void RemoveItem(int index)
-        {
-            Collider2D previous = this[index];
-            previous.AttachSurface(null);
-            owner.LogicalChildren.Remove(previous);
-            base.RemoveItem(index);
-            owner.OwnerLayer?.OwnerMap?.SynchronizeCollisionAdaptersAndNotify();
-            owner.Surface?.InvalidateFrame();
-        }
-
-        protected override void ClearItems()
-        {
-            foreach (Collider2D collider in this)
-            {
-                collider.AttachSurface(null);
-                owner.LogicalChildren.Remove(collider);
-            }
-
-            base.ClearItems();
-            owner.OwnerLayer?.OwnerMap?.SynchronizeCollisionAdaptersAndNotify();
-            owner.Surface?.InvalidateFrame();
-        }
-    }
 }

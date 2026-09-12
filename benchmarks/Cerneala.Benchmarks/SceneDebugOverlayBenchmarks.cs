@@ -120,9 +120,9 @@ internal static class SceneDebugOverlayBenchmarkRunner
             Map.Promote(new TileCellKey2D("ground", 1, 1)).TranslateX = 3;
             Scene.Children.Add(Map);
             for (int i = 0; i < 8; i++)
-                Scene.Children.Add(new BoxCollider2D { Width = 8, Height = 8, TranslateX = i * 24, TranslateY = 32 });
+                Scene.Children.Add(new Sprite2D { X = i * 24, Y = 32, Colliders = { new BoxCollider2D { Width = 8, Height = 8 } } });
             for (int i = 0; i < 32; i++)
-                Scene.Children.Add(new BoxCollider2D { Width = 8, Height = 8, TranslateX = 10000 + i * 24 });
+                Scene.Children.Add(new Sprite2D { X = 10000 + i * 24, Colliders = { new BoxCollider2D { Width = 8, Height = 8 } } });
             surface = new RenderSurface2D { Scene = Scene, ViewBox = Bounds };
             RenderSurface2DFrame frame = new(Commands, Bounds, TimeSpan.Zero);
             disabledContext = new Scene2DRecordContext(surface, frame, Matrix3x2.Identity, Bounds);

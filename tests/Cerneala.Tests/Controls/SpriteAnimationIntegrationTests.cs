@@ -210,7 +210,8 @@ public sealed class SpriteAnimationIntegrationTests
         sprite.AdvanceAnimation(TimeSpan.FromMilliseconds(100));
 
         Assert.Equal(before, sprite.GetHitTestLocalBounds());
-        Assert.Equal(new DrawRect(10, 20, 30, 40), sprite.GetHitTestLocalBounds().Bounds);
+        Assert.Equal(new DrawRect(10, 20, 30, 40),
+            SceneGeometry2D.TransformBounds(sprite.GetHitTestLocalBounds(), sprite.GetLocalTransform()).Bounds);
         Assert.Equal(new DrawRect(32, 32, 8, 24), Draw(sprite).ImageSource);
     }
 

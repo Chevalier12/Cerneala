@@ -12,7 +12,7 @@ Groups retained 2D scene nodes in deterministic drawing order.
 
 ```csharp
 [ContentProperty(nameof(Children))]
-public sealed class Scene2D : SceneNode2D
+public class Scene2D : SceneNode2D
 ```
 
 Inheritance:
@@ -33,7 +33,79 @@ Inheritance:
 </RenderSurface2D.Scene>
 ```
 
+### Reusable scene components
+
+Pair `HouseView.crn` with `HouseView.crn.cs` to define a reusable scene group.
+The markup root initializes the component itself, not an extra nested group.
+
+`HouseView.crn`:
+
+```xml
+<Scene2D xmlns:resources="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
+    <Scene2D.Resources>
+        <resources:ImageResource Name="HouseArt" Source="Assets/house.png" />
+    </Scene2D.Resources>
+    <Sprite2D Image="$HouseArt" Width="32" Height="24" />
+    <Sprite2D Name="Door" X="4" Y="16" Width="8" Height="8" />
+</Scene2D>
+```
+
+`HouseView.crn.cs`:
+
+```csharp
+using Cerneala.UI.Controls;
+
+namespace Game;
+
+public partial class HouseView : Scene2D
+{
+}
+```
+
+Import its CLR namespace in the consuming document:
+
+```xml
+<RenderSurface2D xmlns:local="clr-namespace:Game" RedrawMode="OnDemand">
+    <RenderSurface2D.Scene>
+        <Scene2D OrderMode="Layer">
+            <local:HouseView TranslateX="30" TranslateY="20" Scale="2" Layer="10" />
+            <local:HouseView TranslateX="90" TranslateY="40" Layer="20" />
+        </Scene2D>
+    </RenderSurface2D.Scene>
+</RenderSurface2D>
+```
+
+A component can also be the single direct child of `RenderSurface2D.Scene`.
+Position and transform channels affect the entire instance; `Layer` is interpreted
+by its containing scene's `OrderMode`, just like an ordinary `Scene2D` group.
+
 ## Remarks
+
+### Component construction and scope
+
+The paired class must match the file name, derive from `Scene2D`, and be a
+concrete, non-nested, non-generic, non-file-local `partial` class. Do not declare
+instance constructors: the generator supplies a public parameterless constructor
+that initializes the instance's properties, resources, handlers, and logical
+children. A paired root cannot declare `Name`; it represents `this`.
+
+Named descendants become private generated members in the paired class. They
+must not conflict with members declared in code-behind. Each new component has
+its own child instances, local resource declarations, and name scope. `$root`
+inside its markup refers to that component, including custom UI properties
+declared in its companion class. To type `$DataContext` bindings, declare a root
+`DataType`. Generated `$DataContext` bindings resolve the nearest context through
+the logical ancestors and rebind when that context changes. This lookup does not
+require copying the ancestor's `DataContext` value onto every logical node.
+
+The component uses the existing scene attachment, binding, Aspect, Motion, Prism,
+template, collision, and invalidation paths. Detaching and reattaching does not
+rerun its constructor or rebuild its permanent children. Deriving from `Scene2D`
+does not expose a new custom recording API; applications compose the provided
+scene nodes. A paired document emits the partial component, not a standalone
+`HouseViewFactory`. An unpaired `.crn` file retains the ordinary factory behavior.
+
+### Scene behavior
 
 Direct markup children are added to `Children`. `OrderMode="Source"`, the default, records them from first to last, so later children draw after earlier children. Adding, replacing, removing, or clearing children invalidates the owning surface.
 
@@ -44,6 +116,8 @@ Picking uses that same effective order in reverse, so the last visible eligible 
 Children belong to the logical tree and inherit data context and attachment state. Setting either `IsVisible` to `false` or `Visibility` to a non-visible value skips the group and all of its descendants.
 
 The root group owns a `CollisionWorld2D`. `CollisionWorld` on any nested group resolves to the same root-owned world. Structural and collider-property mutations update that world incrementally; removing a subtree removes its indexed colliders before the next query.
+
+The scene owns the query world, not the collision shapes themselves. Live colliders belong only to a `Sprite2D` or `TileInstance2D` through its `Colliders` collection. `Scene2D.Children` rejects collider nodes, including in derived markup components. Static tile collision geometry belongs to `Tile.Colliders` or `TileDefinition2D.Colliders` as immutable descriptors.
 
 `Scene2D` applies the inherited `Scale`, `ScaleX`, `ScaleY`, `SkewX`, `SkewY`, `Rotation`, `TranslateX`, `TranslateY`, and `RenderTransform` channels to the entire descendant group. `TransformOrigin` is an absolute point in the group's local scene coordinates, not a normalized layout point. The local transform is composed in this order: translate away from the origin, scale, skew, rotate, translate, apply `RenderTransform`, and translate back to the origin. Nested groups compose their transforms from child to parent.
 

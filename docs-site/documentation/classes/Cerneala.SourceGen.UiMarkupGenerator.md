@@ -8,7 +8,7 @@ Assembly/Project: `Cerneala.SourceGen`
 
 Source: `Cerneala.SourceGen/UiMarkupGenerator.cs`
 
-Implements an incremental Roslyn source generator that converts `.crn` UI markup additional files into typed Cerneala UI factory classes.
+Implements an incremental Roslyn source generator that converts `.crn` UI markup additional files into typed Cerneala factories and paired application, window, control, or scene classes.
 
 ```csharp
 [Generator]
@@ -63,7 +63,37 @@ An ordinary markup file produces a static partial factory under the `Cerneala.Ge
 | `Create()` | Builds and returns the root `global::Cerneala.UI.Elements.UIElement`. |
 | `AsGeneratedFactory()` | Returns a `global::Cerneala.UI.Markup.GeneratedUiFactory` that wraps `Create`. |
 
-The generated factory class name is based on the markup file name without the `.crn` suffix, converted to a valid identifier and suffixed with `Factory`. Duplicate base names are disambiguated with the parent directory name, then with a stable FNV-1a hash if needed. Files paired with compatible `Application`, `Window`, or `UserControl` partial declarations follow their corresponding generated startup or control path instead of the ordinary standalone factory path.
+The generated factory class name is based on the markup file name without the `.crn` suffix, converted to a valid identifier and suffixed with `Factory`. Duplicate base names are disambiguated with the parent directory name, then with a stable FNV-1a hash if needed. Files paired with compatible `Application`, `Window`, `UserControl`, or `Scene2D` partial declarations follow their corresponding generated startup or component path instead of the ordinary standalone factory path.
+
+### Paired Scene Components
+
+A `HouseView.crn` document rooted in `<Scene2D>` can pair with a concrete
+`partial class HouseView : Scene2D` in `HouseView.crn.cs`. The generated public
+parameterless constructor initializes `this` and adds scene nodes to its existing
+`Children` collection. It does not create a `UserControl`, template host, extra
+scene wrapper, or standalone factory. The class must be non-nested, non-generic,
+non-file-local, and have no user-declared instance constructors.
+
+The root cannot declare `Name`; named descendants generate private members on
+the component. `$root` resolves to the paired type, and an explicit root
+`DataType` types data-context bindings. Imported references such as
+`<local:HouseView />` are ordinary typed element construction and can appear as
+scene children or as the single `RenderSurface2D.Scene` root. Each construction
+owns its local descendants, resources, handlers, and bindings. See
+[Scene2D](Cerneala.UI.Controls.Scene2D.md) for a complete paired-file example.
+
+### Collider ownership in markup
+
+The shared language layer rejects a live collider unless its direct owner is a
+`Sprite2D` or `TileInstance2D`. Generation adds those nodes through the owner's
+typed `Colliders` collection; a collider root or direct scene-group child reports
+`CERNEALAUI005`. Editor completion follows the same owner restriction.
+
+A shape directly inside a static `Tile` instead lowers to an immutable
+`TileColliderDescriptor2D` constructor. That context accepts literal geometry
+and filtering attributes only, not live UI bindings, names, handlers, Aspect,
+Motion, or Prism. See [Tile](Cerneala.UI.Controls.Tile.md) for accepted attributes
+and [Collider2D](Cerneala.UI.Controls.Collider2D.md) for live-node ownership.
 
 ### Explicit Backend Selection
 
@@ -151,7 +181,7 @@ at runtime.
 
 `$root.Property` reads a UI property declared by the document root. It keeps
 view dataflow in markup without requiring a `Name` on a paired `UserControl` or
-`Window` wrapper. Add `:OneWay` when subsequent root-property changes must flow
+`Window` wrapper or a paired `Scene2D` root. Add `:OneWay` when subsequent root-property changes must flow
 to the target:
 
 ```xml
@@ -271,6 +301,7 @@ The generator reports diagnostics instead of emitting source when markup cannot 
 | `CERNEALAUI014` | Application startup is invalid. |
 | `CERNEALAUI015` | The executable backend selection is missing, duplicate, inaccessible, generic, non-concrete, or lacks the exact `public static void EnsureRegistered()` contract. |
 | `CERNEALAUI016` | A sprite-animation declaration has invalid attributes, duplicate clip names, an invalid source rectangle or duration, or a statically selected missing clip. |
+| `CERNEALAUI017` | A paired `Scene2D` component declaration, root name, or generated named member is invalid. |
 | `CERNEALAUI020`-`CERNEALAUI026` | Motion syntax, target, event, type, composition, lifecycle, or runtime capability is invalid. |
 
 Diagnostics use exact source spans from the shared syntax and semantic model and

@@ -14,20 +14,22 @@ namespace Cerneala.SourceGen;
 
 public sealed partial class UiMarkupGenerator
 {
-    private sealed class UserControlPair
+    private sealed class MarkupComponentPair
     {
-        public UserControlPair(
+        public MarkupComponentPair(
             INamedTypeSymbol typeSymbol,
             SyntaxTree syntaxTree,
             int lookupPosition,
             INamedTypeSymbol? viewModelType,
-            bool isWindow = false)
+            bool isWindow = false,
+            bool isScene = false)
         {
             TypeSymbol = typeSymbol;
             SyntaxTree = syntaxTree;
             LookupPosition = lookupPosition;
             ViewModelType = viewModelType;
             IsWindow = isWindow;
+            IsScene = isScene;
         }
 
         public INamedTypeSymbol TypeSymbol { get; }
@@ -39,11 +41,13 @@ public sealed partial class UiMarkupGenerator
         public INamedTypeSymbol? ViewModelType { get; }
 
         public bool IsWindow { get; }
+
+        public bool IsScene { get; }
     }
 
-    private readonly struct UserControlPairResolution
+    private readonly struct MarkupComponentPairResolution
     {
-        public UserControlPairResolution(bool hasCompanion, UserControlPair? pair)
+        public MarkupComponentPairResolution(bool hasCompanion, MarkupComponentPair? pair)
         {
             HasCompanion = hasCompanion;
             Pair = pair;
@@ -51,10 +55,10 @@ public sealed partial class UiMarkupGenerator
 
         public bool HasCompanion { get; }
 
-        public UserControlPair? Pair { get; }
+        public MarkupComponentPair? Pair { get; }
     }
 
-    private static UserControlPairResolution ResolveUserControlPair(
+    private static MarkupComponentPairResolution ResolveMarkupComponentPair(
         SourceProductionContext context,
         MarkupSource file,
         Compilation compilation)
@@ -65,13 +69,13 @@ public sealed partial class UiMarkupGenerator
             .ToArray();
         if (matchingTrees.Length == 0)
         {
-            return new UserControlPairResolution(false, null);
+            return new MarkupComponentPairResolution(false, null);
         }
 
         if (matchingTrees.Length != 1)
         {
-            ReportUserControlDiagnostic(context, file, "More than one companion C# syntax tree has the expected path.");
-            return new UserControlPairResolution(true, null);
+            ReportMarkupComponentDiagnostic(context, file, "More than one companion C# syntax tree has the expected path.");
+            return new MarkupComponentPairResolution(true, null);
         }
 
         SyntaxTree tree = matchingTrees[0];
@@ -83,77 +87,86 @@ public sealed partial class UiMarkupGenerator
             .ToArray();
         if (declarations.Length != 1)
         {
-            ReportUserControlDiagnostic(context, file, $"The companion file must declare exactly one class named '{expectedName}'.");
-            return new UserControlPairResolution(true, null);
+            ReportMarkupComponentDiagnostic(context, file, $"The companion file must declare exactly one class named '{expectedName}'.");
+            return new MarkupComponentPairResolution(true, null);
         }
 
         ClassDeclarationSyntax declaration = declarations[0];
         SemanticModel semanticModel = compilation.GetSemanticModel(tree);
         if (semanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol typeSymbol)
         {
-            ReportUserControlDiagnostic(context, file, $"Class '{expectedName}' could not be resolved by Roslyn.");
-            return new UserControlPairResolution(true, null);
+            ReportMarkupComponentDiagnostic(context, file, $"Class '{expectedName}' could not be resolved by Roslyn.");
+            return new MarkupComponentPairResolution(true, null);
         }
 
         if (typeSymbol.ContainingType is not null || typeSymbol.Arity != 0)
         {
-            ReportUserControlDiagnostic(context, file, "The companion class must be non-nested and non-generic.");
-            return new UserControlPairResolution(true, null);
+            ReportMarkupComponentDiagnostic(context, file, "The companion class must be non-nested and non-generic.");
+            return new MarkupComponentPairResolution(true, null);
         }
 
         if (!declaration.Modifiers.Any(SyntaxKind.PartialKeyword) || declaration.Modifiers.Any(SyntaxKind.FileKeyword))
         {
-            ReportUserControlDiagnostic(context, file, "The companion class must be a non-file-local partial class.");
-            return new UserControlPairResolution(true, null);
+            ReportMarkupComponentDiagnostic(context, file, "The companion class must be a non-file-local partial class.");
+            return new MarkupComponentPairResolution(true, null);
         }
 
         if (typeSymbol.IsAbstract)
         {
-            ReportUserControlDiagnostic(context, file, "The companion class must be concrete.");
-            return new UserControlPairResolution(true, null);
+            ReportMarkupComponentDiagnostic(context, file, "The companion class must be concrete.");
+            return new MarkupComponentPairResolution(true, null);
         }
 
-        INamedTypeSymbol? userControlType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.UserControl");
-        INamedTypeSymbol? genericUserControlType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.UserControl`1");
-        if (userControlType is null || genericUserControlType is null)
+        bool isScene = file.Document?.Root.Name.LocalName == "Scene2D";
+        INamedTypeSymbol? baseType = compilation.GetTypeByMetadataName(isScene
+            ? "Cerneala.UI.Controls.Scene2D"
+            : "Cerneala.UI.Controls.UserControl");
+        INamedTypeSymbol? genericBaseType = isScene
+            ? null
+            : compilation.GetTypeByMetadataName("Cerneala.UI.Controls.UserControl`1");
+        if (baseType is null || (!isScene && genericBaseType is null))
         {
-            ReportUserControlDiagnostic(context, file, "The Cerneala UserControl runtime types are unavailable.");
-            return new UserControlPairResolution(true, null);
+            ReportMarkupComponentDiagnostic(context, file, isScene
+                ? "The Cerneala Scene2D runtime type is unavailable."
+                : "The Cerneala UserControl runtime types are unavailable.");
+            return new MarkupComponentPairResolution(true, null);
         }
 
         INamedTypeSymbol? viewModelType = null;
-        bool derivesFromUserControl = false;
+        bool derivesFromBase = false;
         for (INamedTypeSymbol? current = typeSymbol.BaseType; current is not null; current = current.BaseType)
         {
-            if (SymbolEqualityComparer.Default.Equals(current.OriginalDefinition, genericUserControlType))
+            if (genericBaseType is not null && SymbolEqualityComparer.Default.Equals(current.OriginalDefinition, genericBaseType))
             {
-                derivesFromUserControl = true;
+                derivesFromBase = true;
                 viewModelType = current.TypeArguments[0] as INamedTypeSymbol;
                 break;
             }
 
-            if (SymbolEqualityComparer.Default.Equals(current, userControlType))
+            if (SymbolEqualityComparer.Default.Equals(current, baseType))
             {
-                derivesFromUserControl = true;
+                derivesFromBase = true;
                 break;
             }
         }
 
-        if (!derivesFromUserControl)
+        if (!derivesFromBase)
         {
-            ReportUserControlDiagnostic(context, file, $"Class '{expectedName}' must derive from UserControl or UserControl<TViewModel>.");
-            return new UserControlPairResolution(true, null);
+            ReportMarkupComponentDiagnostic(context, file, isScene
+                ? $"Class '{expectedName}' must derive from Scene2D."
+                : $"Class '{expectedName}' must derive from UserControl or UserControl<TViewModel>.");
+            return new MarkupComponentPairResolution(true, null);
         }
 
         if (typeSymbol.InstanceConstructors.Any(constructor => !constructor.IsImplicitlyDeclared))
         {
-            ReportUserControlDiagnostic(context, file, "User-declared constructors are not supported; the markup generator owns construction in this version.");
-            return new UserControlPairResolution(true, null);
+            ReportMarkupComponentDiagnostic(context, file, "User-declared constructors are not supported; the markup generator owns construction in this version.");
+            return new MarkupComponentPairResolution(true, null);
         }
 
-        return new UserControlPairResolution(
+        return new MarkupComponentPairResolution(
             true,
-            new UserControlPair(typeSymbol, tree, declaration.SpanStart, viewModelType));
+            new MarkupComponentPair(typeSymbol, tree, declaration.SpanStart, viewModelType, isScene: isScene));
     }
 
     private static void GenerateUserControlFile(
@@ -161,7 +174,7 @@ public sealed partial class UiMarkupGenerator
         MarkupSource file,
         string className,
         Compilation compilation,
-        UserControlPair pair,
+        MarkupComponentPair pair,
         GenerationScope.ApplicationResourceCatalog? applicationResources,
         SourceGeneratorSemanticModel semanticModel)
     {
@@ -176,7 +189,7 @@ public sealed partial class UiMarkupGenerator
         }
         if (!string.Equals(document.Root.Name.LocalName, "UserControl", StringComparison.Ordinal))
         {
-            ReportUserControlDiagnostic(context, file, "A paired markup document must use <UserControl> as its root wrapper.", document.Root);
+            ReportMarkupComponentDiagnostic(context, file, "A paired markup document must use <UserControl> as its root wrapper.", document.Root);
             return;
         }
 
@@ -345,14 +358,14 @@ public sealed partial class UiMarkupGenerator
         return string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static void ReportUserControlDiagnostic(
+    private static void ReportMarkupComponentDiagnostic(
         SourceProductionContext context,
         MarkupSource file,
         string message,
         object? locationSource = null)
     {
         context.ReportDiagnostic(Diagnostic.Create(
-            InvalidUserControl,
+            file.Document?.Root.Name.LocalName == "Scene2D" ? InvalidSceneComponent : InvalidUserControl,
             CreateLocation(file, locationSource ?? new object()),
             Path.GetFileName(file.Path),
             message));
@@ -643,7 +656,8 @@ public sealed partial class UiMarkupGenerator
         {
             if (userControlPair!.TypeSymbol.GetMembers(memberName).Length > 0)
             {
-                Report(InvalidUserControl, source, Path.GetFileName(file.Path), $"Generated member '{memberName}' conflicts with a member declared in code-behind.");
+                Report(userControlPair.IsScene ? InvalidSceneComponent : InvalidUserControl,
+                    source, Path.GetFileName(file.Path), $"Generated member '{memberName}' conflicts with a member declared in code-behind.");
                 return;
             }
 

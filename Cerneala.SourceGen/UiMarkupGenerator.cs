@@ -174,6 +174,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
     private static readonly DiagnosticDescriptor InvalidDirective = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI006");
     private static readonly DiagnosticDescriptor InvalidBindingSource = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI007");
     private static readonly DiagnosticDescriptor InvalidUserControl = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI008");
+    private static readonly DiagnosticDescriptor InvalidSceneComponent = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI017");
     private static readonly DiagnosticDescriptor InvalidEventHandler = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI009");
     private static readonly DiagnosticDescriptor InvalidWindow = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI010");
     private static readonly DiagnosticDescriptor InvalidWindowStartup = SourceGeneratorDiagnosticAdapter.GetDescriptor("CERNEALAUI011");
@@ -390,19 +391,28 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 continue;
             }
 
-            UserControlPairResolution pair = ResolveUserControlPair(context, files[i], compilation);
+            MarkupComponentPairResolution pair = ResolveMarkupComponentPair(context, files[i], compilation);
             if (pair.HasCompanion)
             {
                 if (pair.Pair is not null)
                 {
-                    GenerateUserControlFile(
-                        context,
-                        files[i],
-                        classNames[i],
-                        compilation,
-                        pair.Pair,
-                        applicationResources,
-                        semanticModels[files[i].Path]);
+                    if (pair.Pair.IsScene)
+                    {
+                        GenerateSceneComponentFile(
+                            context, files[i], classNames[i], compilation, pair.Pair,
+                            applicationResources, semanticModels[files[i].Path]);
+                    }
+                    else
+                    {
+                        GenerateUserControlFile(
+                            context,
+                            files[i],
+                            classNames[i],
+                            compilation,
+                            pair.Pair,
+                            applicationResources,
+                            semanticModels[files[i].Path]);
+                    }
                 }
 
                 continue;
@@ -756,7 +766,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private readonly Compilation compilation;
         private readonly SourceGeneratorSemanticModel semanticModel;
         private readonly INamedTypeSymbol? dataType;
-        private readonly UserControlPair? userControlPair;
+        private readonly MarkupComponentPair? userControlPair;
         private readonly ApplicationResourceCatalog? applicationResources;
         private readonly HashSet<string> reportedDiagnostics = new(StringComparer.Ordinal);
         private readonly bool reactiveDocument;
@@ -770,7 +780,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             Compilation compilation,
             INamedTypeSymbol? dataType,
             SourceGeneratorSemanticModel semanticModel,
-            UserControlPair? userControlPair = null,
+            MarkupComponentPair? userControlPair = null,
             ApplicationResourceCatalog? applicationResources = null)
         {
             this.context = context;
@@ -2932,14 +2942,18 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return type is not null && controlType is not null && IsOrDerivesFrom(type, controlType);
         }
 
-        public string EmitElement(MarkupElement element)
+        public string EmitElement(MarkupElement element, bool initializeComponentRoot = false)
         {
             string? requestedName = element.Attribute("Name")?.Value;
             string variable;
             TemplateEmissionContext? templateContext = templateEmissionContexts.Count == 0
                 ? null
                 : templateEmissionContexts.Peek();
-            if (string.IsNullOrWhiteSpace(requestedName) || templateContext?.RegisterParts == true)
+            if (initializeComponentRoot)
+            {
+                variable = "this";
+            }
+            else if (string.IsNullOrWhiteSpace(requestedName) || templateContext?.RegisterParts == true)
             {
                 variable = "element" + nextId.ToString(CultureInfo.InvariantCulture);
                 nextId++;
@@ -2971,7 +2985,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             ValidateStaticAnimationState(element);
 
-            currentLines.Add(typeName + " " + variable + " = new();");
+            if (!initializeComponentRoot)
+            {
+                currentLines.Add(typeName + " " + variable + " = new();");
+            }
             EmitRuntimeResources(element, variable);
             if (!string.IsNullOrWhiteSpace(requestedName) && templateContext?.RegisterParts == true)
             {
@@ -3181,7 +3198,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         tile.Attribute(name) is MarkupAttribute attribute
                             ? float.Parse(attribute.Value, CultureInfo.InvariantCulture).ToString("R", CultureInfo.InvariantCulture) + "f"
                             : name is "X" or "Y" ? "0f" : "float.NaN").ToArray();
-                    placements.Add("new global::Cerneala.UI.Controls.Tile(" + reference.Code + ", " + string.Join(", ", values) + ")");
+                    string[] colliders = tile.Elements().Select(EmitTileColliderDescriptor).ToArray();
+                    string colliderArgument = colliders.Length == 0 ? string.Empty :
+                        "new global::Cerneala.UI.Controls.TileColliderDescriptor2D[] { " + string.Join(", ", colliders) + " }, ";
+                    placements.Add("new global::Cerneala.UI.Controls.Tile(" + reference.Code + ", " + colliderArgument + string.Join(", ", values) + ")");
                 }
                 else if (node is DirectiveTextNode text && !string.IsNullOrWhiteSpace(text.Text) ||
                     node is not DirectiveTextNode && node is not DirectiveTemplateNode && node is not DirectiveTemplatesNode && node is not DirectivePrismNode)
@@ -3193,6 +3213,35 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             {
                 currentLines.Add(variable + ".Model = new global::Cerneala.UI.Controls.TileMap2DModel(new global::Cerneala.UI.Controls.Tile[] { " + string.Join(", ", placements) + " });");
             }
+        }
+
+        private string EmitTileColliderDescriptor(MarkupElement element)
+        {
+            string typeName = ResolveElementTypeSymbol(element.Name.LocalName)!.Name;
+            string shape = typeName.Substring(0, typeName.Length - "Collider2D".Length);
+            List<string> arguments = new() { "global::Cerneala.UI.Controls.TileColliderShape2D." + shape };
+            foreach (MarkupAttribute attribute in element.Attributes())
+            {
+                string name = attribute.Name.LocalName;
+                if (attribute.IsNamespaceDeclaration || name is "EndX" or "EndY") { continue; }
+                string value = name switch
+                {
+                    "Points" => Literal(attribute.Value),
+                    "IsTrigger" => bool.Parse(attribute.Value) ? "true" : "false",
+                    "CollisionLayer" or "CollisionMask" => uint.Parse(attribute.Value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture) + "u",
+                    _ => float.Parse(attribute.Value, CultureInfo.InvariantCulture).ToString("R", CultureInfo.InvariantCulture) + "f"
+                };
+                arguments.Add(char.ToLowerInvariant(name[0]) + name.Substring(1) + ": " + value);
+            }
+            if (shape == "Segment")
+            {
+                string endX = float.Parse(element.Attribute("EndX")?.Value ?? "1", CultureInfo.InvariantCulture)
+                    .ToString("R", CultureInfo.InvariantCulture);
+                string endY = float.Parse(element.Attribute("EndY")?.Value ?? "0", CultureInfo.InvariantCulture)
+                    .ToString("R", CultureInfo.InvariantCulture);
+                arguments.Add("points: " + Literal("0,0 " + endX + "," + endY));
+            }
+            return "new global::Cerneala.UI.Controls.TileColliderDescriptor2D(" + string.Join(", ", arguments) + ")";
         }
 
         private ITypeSymbol? ResolveLocalDataContextType(
@@ -3539,10 +3588,13 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             MarkupElement propertyElement = propertyElements[0];
             MarkupElement[] children = propertyElement.Elements().ToArray();
+            string? sceneTypeName = children.Length == 1 ? ResolveElementType(children[0]) : null;
+            INamedTypeSymbol? childType = sceneTypeName is null ? null : resolvedElementTypes[children[0].Name.Value];
+            INamedTypeSymbol? sceneType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Scene2D");
             if (propertyElement.Attributes().Any(attribute => !attribute.IsNamespaceDeclaration) ||
                 propertyElement.Nodes().OfType<MarkupText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)) ||
                 children.Length != 1 ||
-                children[0].Name.LocalName != "Scene2D")
+                childType is null || sceneType is null || !IsOrDerivesFrom(childType, sceneType))
             {
                 Report(
                     InvalidDocumentShape,
@@ -5576,6 +5628,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             INamedTypeSymbol? tileMapType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.TileMap2D");
             INamedTypeSymbol? tileLayerType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.TileLayer2D");
             INamedTypeSymbol? tileInstanceType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.TileInstance2D");
+            INamedTypeSymbol? spriteType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Sprite2D");
 
             if (parentType is not null && tileMapType is not null && IsOrDerivesFrom(parentType, tileMapType))
             {
@@ -5589,7 +5642,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
-            if (parentType is not null && tileInstanceType is not null && IsOrDerivesFrom(parentType, tileInstanceType))
+            if (parentType is not null &&
+                (tileInstanceType is not null && IsOrDerivesFrom(parentType, tileInstanceType) ||
+                 spriteType is not null && IsOrDerivesFrom(parentType, spriteType)))
             {
                 currentLines.Add(parentVariable + ".Colliders.Add(" + childVariable + ");");
                 return;

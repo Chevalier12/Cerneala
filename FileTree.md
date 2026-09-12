@@ -623,6 +623,7 @@ Generated from `.`.
 |   |-- UiMarkupMotionResolver.cs
 |   |-- UiMarkupMotionSyntax.cs
 |   |-- UiMarkupReactiveEmitter.cs
+|   |-- UiMarkupSceneComponentGenerator.cs
 |   |-- UiMarkupUserControlGenerator.cs
 |   +-- UiMarkupWindowGenerator.cs
 |-- Cerneala.VisualStudio/
@@ -3124,6 +3125,7 @@ Generated from `.`.
 |   |   |   |-- ButtonTests.cs
 |   |   |   |-- CanvasTests.cs
 |   |   |   |-- CheckBoxTests.cs
+|   |   |   |-- ColliderOwnershipTests.cs
 |   |   |   |-- CollisionStageFourInputTests.cs
 |   |   |   |-- CollisionStageOneContractTests.cs
 |   |   |   |-- CollisionStageThreeTileMapTests.cs
@@ -3159,6 +3161,7 @@ Generated from `.`.
 |   |   |   |-- RenderSurface2DSceneFoundationContractTests.cs
 |   |   |   |-- RenderSurface2DSceneTests.cs
 |   |   |   |-- RenderSurface2DTests.cs
+|   |   |   |-- SceneComponentRuntimeTests.cs
 |   |   |   |-- SceneDebugOverlayTests.cs
 |   |   |   |-- SceneDocumentContractTests.cs
 |   |   |   |-- SceneImportGeometryTests.cs
@@ -3633,6 +3636,7 @@ Generated from `.`.
 |   |   |   +-- sourcegen-diagnostics.json
 |   |   |-- Cerneala.Tests.Language.csproj
 |   |   |-- CernealaDocumentPathTests.cs
+|   |   |-- ColliderOwnershipLanguageTests.cs
 |   |   |-- CompletionTests.cs
 |   |   |-- CorpusCase.cs
 |   |   |-- CorpusCoverageTests.cs
@@ -3644,6 +3648,7 @@ Generated from `.`.
 |   |   |-- MotionPrismSemanticTests.cs
 |   |   |-- NavigationTests.cs
 |   |   |-- RecoveryBaselineTests.cs
+|   |   |-- SceneComponentLanguageTests.cs
 |   |   |-- SEMANTIC-INVENTORY.md
 |   |   |-- SemanticScopesTests.cs
 |   |   |-- SemanticWorkspaceTests.cs
@@ -3780,6 +3785,7 @@ Generated from `.`.
 |   |   |-- UiMarkupGeneratorBindingStageFourTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageThreeTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageZeroTests.cs
+|   |   |-- UiMarkupGeneratorColliderOwnershipTests.cs
 |   |   |-- UiMarkupGeneratorCollisionStageZeroTests.cs
 |   |   |-- UiMarkupGeneratorFileExtensionTests.cs
 |   |   |-- UiMarkupGeneratorMenuTests.cs
@@ -3794,6 +3800,7 @@ Generated from `.`.
 |   |   |-- UiMarkupGeneratorMotionTimelineTests.cs
 |   |   |-- UiMarkupGeneratorRenderSurface2DTests.cs
 |   |   |-- UiMarkupGeneratorResourceBindingModeTests.cs
+|   |   |-- UiMarkupGeneratorSceneComponentTests.cs
 |   |   |-- UiMarkupGeneratorSceneImportStageZeroTests.cs
 |   |   |-- UiMarkupGeneratorSceneWorldBindingTests.cs
 |   |   |-- UiMarkupGeneratorSpriteAnimationStageZeroTests.cs
@@ -4139,6 +4146,7 @@ Generated from `.`.
 |   |   |-- CheckBoxTemplates.cs
 |   |   |-- CircleCollider2D.cs
 |   |   |-- Collider2D.cs
+|   |   |-- ColliderCollection2D.cs
 |   |   |-- ColliderGeometry2D.cs
 |   |   |-- CollisionHit2D.cs
 |   |   |-- CollisionNarrowPhase2D.cs

@@ -80,7 +80,7 @@ public partial class SceneWorldShowcase : UserControl
     private void OnFormat(UiElementId sender, RoutedEventArgs args) { State.Load(!State.IsLdtk); }
 }
 
-// Immutable template data uses initial-value references, not live bindings.
+// Authored collision regions are compiled into the tiles that draw the walls.
 public sealed record SceneWorldBox(float X, float Y, float Width, float Height, uint Layer, uint Mask);
 public sealed record SceneWorldNpc(float X, float Y)
 {
@@ -134,7 +134,7 @@ public sealed class SceneWorldState : INotifyPropertyChanged
             TileColliderDescriptor2D collider = e.Colliders[0];
             return new SceneWorldBox(e.Position.X, e.Position.Y, e.Size.Width, e.Size.Height, collider.CollisionLayer, collider.CollisionMask);
         }).ToArray();
-        Model = level.TileMap;
+        Model = AttachWallColliders(level.TileMap, Colliders);
         Changed(nameof(Colliders));
         DoorClosed = Equals(level.Promotions.Single().Properties["InitialState"], "Closed");
         CameraX = 8;
@@ -147,6 +147,58 @@ public sealed class SceneWorldState : INotifyPropertyChanged
         Scene2DEntity spawn = level.Entities.Single(e => e.Role == "Spawn");
         PlayerX = spawn.Position.X; PlayerY = spawn.Position.Y;
         PlayerState = (string)spawn.Properties["InitialState"]!;
+    }
+
+    private static TileMap2DModel AttachWallColliders(TileMap2DModel source, IReadOnlyList<SceneWorldBox> walls)
+    {
+        TileLayer2DModel buildings = source.Layers.Single(l => l.Id == "2");
+        Dictionary<TileSet2D, List<TileDefinition2D>> definitions = source.TileSets.ToDictionary(s => s, s => s.Tiles.ToList());
+        int nextId = source.TileSets.SelectMany(s => s.Tiles).Max(t => t.Id) + 1;
+        float[] coveredAreas = new float[walls.Count];
+        TileChunk2D[] chunks = buildings.Chunks.Select(chunk =>
+        {
+            TileCell2D[] cells = chunk.Tiles.ToArray();
+            bool changed = false;
+            for (int index = 0; index < cells.Length; index++)
+            {
+                TileCell2D cell = cells[index];
+                if (cell.TileId == 0) continue;
+                float x = (chunk.Origin.X + index % chunk.Width) * source.TileSize.Width + buildings.Offset.X;
+                float y = (chunk.Origin.Y + index / chunk.Width) * source.TileSize.Height + buildings.Offset.Y;
+                List<TileColliderDescriptor2D> colliders = [];
+                for (int wallIndex = 0; wallIndex < walls.Count; wallIndex++)
+                {
+                    SceneWorldBox wall = walls[wallIndex];
+                    float left = Math.Max(x, wall.X), top = Math.Max(y, wall.Y);
+                    float right = Math.Min(x + source.TileSize.Width, wall.X + wall.Width);
+                    float bottom = Math.Min(y + source.TileSize.Height, wall.Y + wall.Height);
+                    if (right <= left || bottom <= top) continue;
+                    if (cell.Flip != TileFlip2D.None)
+                        throw new InvalidOperationException("This sample's authored walls require unflipped building tiles.");
+                    colliders.Add(new(TileColliderShape2D.Box, width: right - left, height: bottom - top,
+                        offsetX: left - x, offsetY: top - y, collisionLayer: wall.Layer, collisionMask: wall.Mask));
+                    coveredAreas[wallIndex] += (right - left) * (bottom - top);
+                }
+                if (colliders.Count == 0) continue;
+                if (!source.TryResolveTile(cell.TileId, out TileSet2D? set, out TileDefinition2D? tile))
+                    throw new InvalidOperationException("The building tile definition is missing.");
+                // A per-cell variant preserves the shared atlas tile's appearance without
+                // making other uses of that atlas tile (for example the second house) solid.
+                TileDefinition2D variant = new(nextId++, tile!.SourceRect, tile.Properties, tile.Colliders.Concat(colliders));
+                definitions[set!].Add(variant);
+                cells[index] = new(variant.Id, cell.Flip);
+                changed = true;
+            }
+            return changed ? new TileChunk2D(chunk.Origin, chunk.Width, chunk.Height, cells, chunk.Version + 1, chunk.Properties) : chunk;
+        }).ToArray();
+        for (int index = 0; index < walls.Count; index++)
+            if (coveredAreas[index] != walls[index].Width * walls[index].Height)
+                throw new InvalidOperationException("Every authored wall region must be covered exactly by its building tiles.");
+        TileLayer2DModel updated = new(buildings.Id, chunks, buildings.Order, buildings.IsVisible, buildings.Offset,
+            buildings.Opacity, buildings.Tint, buildings.Version + 1, buildings.Properties);
+        return new(source.TileSize, source.TileSets.Select(s => definitions[s].Count == s.Tiles.Count ? s :
+                new TileSet2D(s.Id, s.AtlasResourceId, definitions[s], s.Version + 1, s.Properties)),
+            source.Layers.Select(l => ReferenceEquals(l, buildings) ? updated : l), source.Bounds, source.Version + 1, source.Properties);
     }
 
     public void Plant()

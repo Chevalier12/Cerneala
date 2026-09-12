@@ -1,15 +1,37 @@
+using System.Collections.ObjectModel;
+using System.Numerics;
 using Cerneala.Drawing;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
+using Cerneala.UI.Markup;
 using Cerneala.UI.Rendering;
 using Cerneala.UI.Resources;
 
 namespace Cerneala.UI.Controls;
 
+[ContentProperty(nameof(Colliders))]
 public sealed class Sprite2D : SceneNode2D
 {
     private readonly SpriteAnimationPlayback animationPlayback = new();
+
+    public Sprite2D()
+    {
+        Colliders = new ColliderCollection2D(this);
+    }
+
+    public Collection<Collider2D> Colliders { get; }
+
+    internal override void AttachSurface(RenderSurface2D? surface)
+    {
+        base.AttachSurface(surface);
+        foreach (Collider2D collider in Colliders) { collider.AttachSurface(surface); }
+    }
+
+    // Shapes use destination units relative to the sprite anchor. Image sizing,
+    // crop, Origin and Flip change presentation, not collision geometry.
+    internal override Matrix3x2 GetLocalTransform() =>
+        Matrix3x2.CreateRotation(Rotation) * Matrix3x2.CreateTranslation(X, Y);
 
     public static readonly UiProperty<ImageReference?> ImageProperty =
         UiProperty<ImageReference?>.Register(
@@ -270,11 +292,11 @@ public sealed class Sprite2D : SceneNode2D
         if (source is not null)
         {
             ResolveGeometry(source, out DrawRect destination, out _, out DrawRect resolvedSourceRect);
-            return SceneBounds2D.Known(GetDrawBounds(destination, resolvedSourceRect));
+            return SceneBounds2D.Known(GetImageLocalBounds(destination, resolvedSourceRect));
         }
 
-        return Rotation == 0 && Origin == default && !float.IsNaN(Width) && !float.IsNaN(Height)
-            ? SceneBounds2D.Known(new DrawRect(X, Y, Width, Height))
+        return Origin == default && !float.IsNaN(Width) && !float.IsNaN(Height)
+            ? SceneBounds2D.Known(new DrawRect(0, 0, Width, Height))
             : SceneBounds2D.Unknown;
     }
 
@@ -303,6 +325,16 @@ public sealed class Sprite2D : SceneNode2D
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
         base.OnPropertyChanged(args);
+        if (ReferenceEquals(args.Property, XProperty) || ReferenceEquals(args.Property, YProperty) ||
+            ReferenceEquals(args.Property, UIElement.RotationProperty))
+        {
+            SceneGeometry2D.FindRootScene(this)?.NotifyCollisionMutation(this, SceneCollisionMutationKind.Geometry);
+        }
+        else if (ReferenceEquals(args.Property, UIElement.IsVisibleProperty) ||
+                 ReferenceEquals(args.Property, UIElement.VisibilityProperty))
+        {
+            SceneGeometry2D.FindRootScene(this)?.NotifyCollisionMutation(this, SceneCollisionMutationKind.Participation);
+        }
         if (ReferenceEquals(args.Property, AnimationsProperty) ||
             ReferenceEquals(args.Property, AnimationStateProperty) ||
             ReferenceEquals(args.Property, AnimationStateChangeModeProperty))
@@ -339,17 +371,18 @@ public sealed class Sprite2D : SceneNode2D
             float.IsNaN(Height) ? resolvedSourceRect.Height : Height);
     }
 
-    private DrawRect GetDrawBounds(DrawRect destination, DrawRect resolvedSourceRect)
+    private DrawRect GetImageLocalBounds(DrawRect destination, DrawRect resolvedSourceRect)
     {
         float originX = Origin.X * destination.Width / resolvedSourceRect.Width;
         float originY = Origin.Y * destination.Height / resolvedSourceRect.Height;
-        System.Numerics.Matrix3x2 transform =
-            System.Numerics.Matrix3x2.CreateTranslation(-originX, -originY) *
-            System.Numerics.Matrix3x2.CreateRotation(Rotation) *
-            System.Numerics.Matrix3x2.CreateTranslation(destination.X, destination.Y);
+        return new DrawRect(-originX, -originY, destination.Width, destination.Height);
+    }
+
+    private DrawRect GetDrawBounds(DrawRect destination, DrawRect resolvedSourceRect)
+    {
         return SceneGeometry2D.TryTransformBounds(
-            new DrawRect(0, 0, destination.Width, destination.Height),
-            transform,
+            GetImageLocalBounds(destination, resolvedSourceRect),
+            GetLocalTransform(),
             out DrawRect bounds)
             ? bounds
             : destination;

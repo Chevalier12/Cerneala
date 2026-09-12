@@ -74,7 +74,7 @@ public partial class DashboardView : UserControl
 Important companion-class constraints:
 
 - It must be a non-nested, non-generic `partial` class.
-- It must derive from `UserControl`, `UserControl<TViewModel>`, or `Window` as
+- It must derive from `UserControl`, `UserControl<TViewModel>`, `Window`, or `Scene2D` as
   appropriate.
 - Do not add a user-declared constructor. The markup generator owns
   construction.
@@ -105,6 +105,14 @@ Use `UserControl` for reusable views and pages:
     </Border>
 </UserControl>
 ```
+
+### Scene2D components
+
+For reusable retained scene groups, pair a `<Scene2D>` document with a
+`partial class HouseView : Scene2D` companion and import its namespace to use
+`<local:HouseView />`. The component remains in the logical scene tree, not the
+visual layout tree. See the canonical [Scene2D component documentation](../docs-site/documentation/classes/Cerneala.UI.Controls.Scene2D.md)
+for the complete two-file example and construction constraints.
 
 ### Window
 
@@ -510,103 +518,21 @@ template are needed.
 
 ### Collision and routed input in a retained scene
 
-Colliders are nonvisual `SceneNode2D` elements. Put a sprite and its colliders
-under the same `Scene2D` entity so they inherit the same data context and group
-transform. The root `Scene2D` owns the shared `CollisionWorld`; do not add a
-second physics or input tree.
+Live colliders belong only to a `Sprite2D` or `TileInstance2D`, not directly to
+a scene group. Declare shape children inside that owner or use its typed
+`Colliders` collection. Static `Tile` placements and imported tile definitions
+instead own immutable collision descriptors. Shape dimensions and offsets are
+managed separately from image dimensions, crop, origin, flip, and animation.
 
-`CollisionLayer` and `CollisionMask` are bit fields. Two colliders interact only
-when each mask accepts the other collider's layer. `CollisionLayer="0"` disables
-collision and picking participation; `CollisionMask="0"` disables collision
-pairs but does not by itself disable UI picking. Triggers appear in overlap,
-raycast, and `MoveAndCollide.TriggerHits`, but never block movement. Edge contact
-is included.
+The root scene still owns the shared collision query world, and input still
+uses Cerneala's routed UI events. The canonical contracts and compilable
+authoring examples are maintained on these API pages:
 
-This house is made from separate wall colliders. The door is a normal scene
-entity: clicking its collider raises the inherited routed `MouseDown` event,
-and the same `IsClosed` state controls the visible door and its blocking
-collider. `WorldView` and the sprite destinations below are typed `DrawRect?` or
-`DrawRect` properties on the view model; Cerneala markup does not invent a
-string rectangle syntax for them. The structure and bindings in this example
-are covered by the collision source-generator tests.
-
-```xml
-<UserControl>
-    <RenderSurface2D
-        DataType="Game.WorldState"
-        ViewBox="$DataContext.WorldView:OneWay"
-        xmlns:resources="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
-        <RenderSurface2D.Resources>
-            <resources:ImageResource Name="WorldAtlas" Source="Assets/world.png" />
-        </RenderSurface2D.Resources>
-        <RenderSurface2D.Scene>
-            <Scene2D OrderMode="LayerThenY">
-                <Scene2D Name="House" TranslateX="40" TranslateY="16" Layer="1">
-                    <Sprite2D SourceResourceId="$WorldAtlas"
-                              Destination="$DataContext.HouseDestination:OneWay" />
-
-                    <BoxCollider2D Width="80" Height="8" />
-                    <BoxCollider2D Width="8" Height="56" OffsetY="8" />
-                    <BoxCollider2D Width="8" Height="56" OffsetX="72" OffsetY="8" />
-                    <BoxCollider2D Width="28" Height="8" OffsetY="56" />
-                    <BoxCollider2D Width="28" Height="8" OffsetX="52" OffsetY="56" />
-
-                    <Scene2D Name="Door"
-                             TranslateX="28"
-                             TranslateY="56"
-                             Layer="2"
-                             MouseDown="OnDoorMouseDown">
-                        <Sprite2D SourceResourceId="$WorldAtlas"
-                                  Destination="$DataContext.DoorDestination:OneWay"
-                                  IsVisible="$DataContext.IsClosed:OneWay" />
-                        <BoxCollider2D Width="24"
-                                       Height="8"
-                                       Enabled="$DataContext.IsClosed:OneWay"
-                                       CollisionLayer="2"
-                                       CollisionMask="1" />
-                    </Scene2D>
-                </Scene2D>
-
-                <Scene2D Name="Player" TranslateX="72" TranslateY="84" Layer="3">
-                    <Sprite2D SourceResourceId="$WorldAtlas"
-                              Destination="$DataContext.PlayerDestination:OneWay" />
-                    <CircleCollider2D Radius="4"
-                                      OffsetX="4"
-                                      OffsetY="4"
-                                      CollisionLayer="1"
-                                      CollisionMask="2" />
-                </Scene2D>
-            </Scene2D>
-        </RenderSurface2D.Scene>
-    </RenderSurface2D>
-</UserControl>
-```
-
-The owning `.crn.cs` uses the standard routed-event signature. Opening the door
-changes application state; Cerneala then updates rendering, picking, and the
-collision index through the same binding mutation.
-
-```csharp
-private void OnDoorMouseDown(UiElementId sender, RoutedEventArgs args)
-{
-    ViewModel.IsClosed = false;
-    args.Handled = true;
-}
-```
-
-Use `scene.CollisionWorld.Overlap`, `Raycast`, or `MoveAndCollide` for gameplay
-queries. `MoveAndCollide` returns the permitted travel and contacts; it does not
-move the player, slide it, or run a hidden simulation. In a mouse handler, use
-`args.GetPosition(surface)`, `args.GetPosition(scene)`, or
-`args.GetPosition(routedNode)` to retain subpixel precision. The legacy `X` and
-`Y` properties are rounded root coordinates.
-
-Collider shape, offsets, enabled/trigger state, and layer/mask can be assigned
-by Aspect. Motion can animate float geometry and scene transforms with their
-registered mixers; discrete values use bindings, Aspect, or `@set`. A collider
-draws no pixels, so Prism on the collider has nothing to process and never
-changes a collision or picking result. Apply Prism to the associated sprite,
-entity, or a visual debug overlay instead.
+- [Collider ownership, bindings, and routed input](../docs-site/documentation/classes/Cerneala.UI.Controls.Collider2D.md)
+- [Sprite2D pose and independent collider geometry](../docs-site/documentation/classes/Cerneala.UI.Controls.Sprite2D.md)
+- [Static Tile collision descriptors](../docs-site/documentation/classes/Cerneala.UI.Controls.Tile.md)
+- [Promoted TileInstance2D live colliders](../docs-site/documentation/classes/Cerneala.UI.Controls.TileInstance2D.md)
+- [CollisionWorld2D queries](../docs-site/documentation/classes/Cerneala.UI.Controls.CollisionWorld2D.md)
 
 ## 7. Text
 

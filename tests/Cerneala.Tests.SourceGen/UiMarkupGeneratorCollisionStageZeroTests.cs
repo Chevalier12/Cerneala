@@ -15,7 +15,7 @@ public sealed partial class UiMarkupGeneratorTests
               <RenderSurface2D.Scene>
                 <Scene2D>
                   <Scene2D TranslateX="64" TranslateY="32">
-                    <Sprite2D />
+                    <Sprite2D>
                     <BoxCollider2D Width="32" Height="8" OffsetY="24" CollisionLayer="2" CollisionMask="4294967295">
                       <BoxCollider2D.Aspect>
                         @on Loaded
@@ -33,6 +33,7 @@ public sealed partial class UiMarkupGeneratorTests
                     </BoxCollider2D>
                     <CircleCollider2D Radius="6" OffsetX="16" OffsetY="16" />
                     <PolygonCollider2D Points="0,0 10,0 12,8 0,8" />
+                    </Sprite2D>
                   </Scene2D>
                 </Scene2D>
               </RenderSurface2D.Scene>
@@ -54,8 +55,9 @@ public sealed partial class UiMarkupGeneratorTests
               <RenderSurface2D.Scene>
                 <Scene2D>
                   <Scene2D>
-                    <Sprite2D IsVisible="$DataContext.IsClosed:OneWay" />
-                    <BoxCollider2D Enabled="$DataContext.IsClosed:OneWay" Width="16" Height="4" />
+                    <Sprite2D IsVisible="$DataContext.IsClosed:OneWay">
+                      <BoxCollider2D Enabled="$DataContext.IsClosed:OneWay" Width="16" Height="4" />
+                    </Sprite2D>
                   </Scene2D>
                 </Scene2D>
               </RenderSurface2D.Scene>
@@ -83,30 +85,33 @@ public sealed partial class UiMarkupGeneratorTests
                 <Scene2D OrderMode="LayerThenY">
                   <Scene2D Name="House" TranslateX="40" TranslateY="16" Layer="1">
                     <Sprite2D Image="$WorldAtlas"
-                              X="$DataContext.HouseX:OneWay" Y="$DataContext.HouseY:OneWay" Width="$DataContext.HouseWidth:OneWay" Height="$DataContext.HouseHeight:OneWay" />
+                              X="$DataContext.HouseX:OneWay" Y="$DataContext.HouseY:OneWay" Width="$DataContext.HouseWidth:OneWay" Height="$DataContext.HouseHeight:OneWay">
                     <BoxCollider2D Width="80" Height="8" />
                     <BoxCollider2D Width="8" Height="56" OffsetY="8" />
                     <BoxCollider2D Width="8" Height="56" OffsetX="72" OffsetY="8" />
                     <BoxCollider2D Width="28" Height="8" OffsetY="56" />
                     <BoxCollider2D Width="28" Height="8" OffsetX="52" OffsetY="56" />
+                    </Sprite2D>
                     <Scene2D Name="Door" TranslateX="28" TranslateY="56" Layer="2">
                       <Sprite2D Image="$WorldAtlas"
-                                X="$DataContext.DoorX:OneWay" Y="$DataContext.DoorY:OneWay" Width="$DataContext.DoorWidth:OneWay" Height="$DataContext.DoorHeight:OneWay" />
+                                X="$DataContext.DoorX:OneWay" Y="$DataContext.DoorY:OneWay" Width="$DataContext.DoorWidth:OneWay" Height="$DataContext.DoorHeight:OneWay">
                       <BoxCollider2D Width="24"
                                      Height="8"
                                      Enabled="$DataContext.IsClosed:OneWay"
                                      CollisionLayer="2"
                                      CollisionMask="1" />
+                      </Sprite2D>
                     </Scene2D>
                   </Scene2D>
                   <Scene2D Name="Player" TranslateX="72" TranslateY="84" Layer="3">
                     <Sprite2D Image="$WorldAtlas"
-                              X="$DataContext.PlayerX:OneWay" Y="$DataContext.PlayerY:OneWay" Width="$DataContext.PlayerWidth:OneWay" Height="$DataContext.PlayerHeight:OneWay" />
+                              X="$DataContext.PlayerX:OneWay" Y="$DataContext.PlayerY:OneWay" Width="$DataContext.PlayerWidth:OneWay" Height="$DataContext.PlayerHeight:OneWay">
                     <CircleCollider2D Radius="4"
                                       OffsetX="4"
                                       OffsetY="4"
                                       CollisionLayer="1"
                                       CollisionMask="2" />
+                    </Sprite2D>
                   </Scene2D>
                 </Scene2D>
               </RenderSurface2D.Scene>
@@ -147,9 +152,9 @@ public sealed partial class UiMarkupGeneratorTests
               <RenderSurface2D>
                 <RenderSurface2D.Scene>
                   <Scene2D>
-                    <Scene2D Name="Door" MouseDown="OnDoorMouseDown">
+                    <Sprite2D Name="Door" MouseDown="OnDoorMouseDown">
                       <BoxCollider2D Width="24" Height="8" />
-                    </Scene2D>
+                    </Sprite2D>
                   </Scene2D>
                 </RenderSurface2D.Scene>
               </RenderSurface2D>

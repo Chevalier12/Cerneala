@@ -213,7 +213,7 @@ internal sealed class CernealaCompletionService
         if (propertyOwnerPrefix is not null)
         {
             ILanguageTypeSymbol? ownerType = model?.GetCompletionElementType(parent);
-            if (ownerType?.MetadataName == "Cerneala.UI.Controls.Tile") { return; }
+            if (ownerType?.MetadataName == "Cerneala.UI.Controls.Tile" || IsStaticTileCollider(model, parent)) { return; }
             foreach (ILanguageMemberSymbol member in ownerType?.GetMembers() ?? Array.Empty<ILanguageMemberSymbol>())
             {
                 if (member.Kind != LanguageMemberKind.Property || !member.CanRead || IsLegacyTileMapMember(ownerType, member.Name))
@@ -242,7 +242,10 @@ internal sealed class CernealaCompletionService
         }
 
         ILanguageTypeSymbol? parentType = model.GetCompletionElementType(parent);
-        if (parentType?.MetadataName == "Cerneala.UI.Controls.Tile") { return; }
+        bool staticTileOwner = parentType?.MetadataName == "Cerneala.UI.Controls.Tile";
+        ElementSyntax? colliderOwner = parent?.Kind == SyntaxKind.PropertyElement && parent.Name.Split('.').Last() == "Colliders"
+            ? model.GetCompletionParent(parent) : parent;
+        bool acceptsColliders = staticTileOwner || CernealaSemanticModel.IsLiveColliderOwner(model.GetCompletionElementType(colliderOwner));
         if (parentType?.MetadataName == "Cerneala.UI.Controls.TileMap2D" && parent?.Kind != SyntaxKind.PropertyElement)
         {
             bool placements = parent!.Children.OfType<ElementSyntax>().Any(child =>
@@ -282,7 +285,9 @@ internal sealed class CernealaCompletionService
         foreach (ILanguageTypeSymbol type in model.CompletionCompilation.GetTypes())
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (!IsElementType(type) || !IsExpectedType(type, expected, expectedItem))
+            bool collider = type.IsOrDerivesFrom("Cerneala.UI.Controls.Collider2D");
+            if (!IsElementType(type) || !IsExpectedType(type, expected, expectedItem) ||
+                collider && !acceptsColliders || staticTileOwner && !collider)
             {
                 continue;
             }
@@ -332,6 +337,17 @@ internal sealed class CernealaCompletionService
         {
             foreach (ILanguageMemberSymbol member in type.GetMembers().Where(member =>
                 member.Kind == LanguageMemberKind.Property && member.Name is "Image" or "X" or "Y" or "Width" or "Height"))
+            {
+                if (used.Contains(member.Name)) { continue; }
+                Add(result, member.Name, member.Name + "=\"\"", site.WordSpan, CernealaCompletionItemKind.Property,
+                    member.ValueTypeMetadataName, "00", type.MetadataName, member.Name);
+            }
+            return;
+        }
+        if (IsStaticTileCollider(model, element))
+        {
+            foreach (ILanguageMemberSymbol member in type!.GetMembers().Where(member =>
+                member.Kind == LanguageMemberKind.Property && CernealaSemanticModel.IsTileColliderAttribute(type, member.Name)))
             {
                 if (used.Contains(member.Name)) { continue; }
                 Add(result, member.Name, member.Name + "=\"\"", site.WordSpan, CernealaCompletionItemKind.Property,
@@ -424,6 +440,14 @@ internal sealed class CernealaCompletionService
         CancellationToken cancellationToken)
     {
         string attributeName = site.AttributeName ?? string.Empty;
+        if (IsStaticTileCollider(model, element))
+        {
+            foreach (string value in GetMemberValues(FindTargetMember(model!, element, attributeName)))
+            {
+                Add(result, value, value, site.ValueWordSpan, CernealaCompletionItemKind.Value, "literal collider value", "00");
+            }
+            return;
+        }
         if (model?.GetCompletionElementType(element)?.MetadataName == "Cerneala.UI.Controls.Tile")
         {
             if (attributeName == "Image")
@@ -581,6 +605,7 @@ internal sealed class CernealaCompletionService
         }
 
         BindingSite binding = site.Binding;
+        if (IsStaticTileCollider(model, element)) { return; }
         if (model.GetCompletionElementType(element)?.MetadataName == "Cerneala.UI.Controls.Tile")
         {
             if (site.AttributeName == "Image" && !binding.IsMode && binding.Segments.Count == 1)
@@ -680,7 +705,7 @@ internal sealed class CernealaCompletionService
         CernealaSemanticModel? model,
         ElementSyntax? element)
     {
-        if (model?.GetCompletionElementType(element)?.MetadataName == "Cerneala.UI.Controls.Tile") { return; }
+        if (model?.GetCompletionElementType(element)?.MetadataName == "Cerneala.UI.Controls.Tile" || IsStaticTileCollider(model, element)) { return; }
         string statement = GetEmbeddedStatementPrefix(site.Source, site.Offset);
         if (IsMotionHandleCompletionSite(statement) && model is not null)
         {
@@ -1395,6 +1420,10 @@ internal sealed class CernealaCompletionService
 
     private static bool IsLegacyTileMapMember(ILanguageTypeSymbol? type, string name) =>
         type?.MetadataName == "Cerneala.UI.Controls.TileMap2D" && name is "Model" or "Layers";
+
+    private static bool IsStaticTileCollider(CernealaSemanticModel? model, ElementSyntax? element) =>
+        model?.GetCompletionElementType(element)?.IsOrDerivesFrom("Cerneala.UI.Controls.Collider2D") == true &&
+        model.GetCompletionElementType(model.GetCompletionParent(element!))?.MetadataName == "Cerneala.UI.Controls.Tile";
 
     private static void AddTileImageCompletions(ICollection<CernealaCompletionItem> result,
         CernealaSemanticModel model, ElementSyntax? element, TextSpan span)

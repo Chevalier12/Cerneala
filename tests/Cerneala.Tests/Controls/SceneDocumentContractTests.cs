@@ -134,8 +134,8 @@ public sealed class SceneDocumentContractTests(ITestOutputHelper output)
         Collider2D mover = box ? new BoxCollider2D { Width = 2, Height = 2, OffsetX = -1, OffsetY = -1 } : new CircleCollider2D { Radius = 1 };
         mover.TranslateX = -20 * direction;
         Scene2D scene = new();
-        scene.Children.Add(segment);
-        scene.Children.Add(mover);
+        scene.Children.Add(new Sprite2D { Colliders = { segment } });
+        scene.Children.Add(new Sprite2D { Colliders = { mover } });
         MoveCollisionResult2D move = scene.CollisionWorld.MoveAndCollide(mover, new Vector2(1000 * direction, 0));
         Assert.NotNull(move.Collision);
         Assert.InRange(MathF.Abs(move.Travel.X), 18.98f, 19.02f);

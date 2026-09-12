@@ -26,7 +26,8 @@ public sealed class CollisionStageFourInputTests
             TranslateY = 10,
             Focusable = true
         };
-        scene.Children.Add(collider);
+        Sprite2D sprite = new() { Focusable = true, Colliders = { collider } };
+        scene.Children.Add(sprite);
         int clicks = 0;
         int commandExecutions = 0;
         string text = string.Empty;
@@ -35,7 +36,7 @@ public sealed class CollisionStageFourInputTests
         Vector2 colliderPosition = default;
         int legacyX = 0;
         int legacyY = 0;
-        collider.AddHandler(InputEvents.MouseDownEvent, (_, args) =>
+        sprite.AddHandler(InputEvents.MouseDownEvent, (_, args) =>
         {
             MouseEventArgs mouse = Assert.IsAssignableFrom<MouseEventArgs>(args);
             clicks++;
@@ -45,7 +46,7 @@ public sealed class CollisionStageFourInputTests
             legacyX = mouse.X;
             legacyY = mouse.Y;
         });
-        collider.AddHandler(
+        sprite.AddHandler(
             InputEvents.TextInputEvent,
             (_, args) => text += Assert.IsType<TextCompositionEventArgs>(args).Text);
         scene.InputBindings.Add(new KeyBinding(
@@ -59,7 +60,7 @@ public sealed class CollisionStageFourInputTests
         input.SendText("door");
 
         Assert.Equal(1, clicks);
-        Assert.Same(collider, host.InputBridge.FocusManager.FocusedElement);
+        Assert.Same(sprite, host.InputBridge.FocusManager.FocusedElement);
         Assert.Equal(1, commandExecutions);
         Assert.Equal("door", text);
         Assert.Equal(new Vector2(20.25f, 20.75f), surfacePosition);
@@ -88,15 +89,17 @@ public sealed class CollisionStageFourInputTests
             Layer = 2
         };
         scene.OrderMode = SceneOrderMode.Layer;
-        scene.Children.Add(lower);
-        scene.Children.Add(upperCircle);
+        Sprite2D lowerSprite = new() { Layer = 1, Colliders = { lower } };
+        Sprite2D upperSprite = new() { Layer = 2, Colliders = { upperCircle } };
+        scene.Children.Add(lowerSprite);
+        scene.Children.Add(upperSprite);
 
         HitTestService hitTest = new();
         HitTestResult? center = hitTest.HitTest(root, 20, 20);
         HitTestResult? outsideCircleInsideBounds = hitTest.HitTest(root, 2, 2);
 
-        Assert.Same(upperCircle, center?.Element);
-        Assert.Same(lower, outsideCircleInsideBounds?.Element);
+        Assert.Same(upperSprite, center?.Element);
+        Assert.Same(lowerSprite, outsideCircleInsideBounds?.Element);
     }
 
     [Fact]
@@ -105,18 +108,19 @@ public sealed class CollisionStageFourInputTests
     {
         UIRoot root = CreateRoot(out _, out Scene2D scene);
         Scene2D house = new() { TranslateX = 30, TranslateY = 20 };
-        house.Children.Add(new BoxCollider2D { Width = 40, Height = 30 });
+        Sprite2D sprite = new() { Colliders = { new BoxCollider2D { Width = 40, Height = 30 } } };
+        house.Children.Add(sprite);
         scene.Children.Add(house);
 
         HitTestResult? hit = new HitTestService().HitTest(root, 35, 25);
         ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
 
-        Assert.Same(house, hit?.Element);
-        Assert.True(routeMap.TryGetId(house, out UiElementId houseId));
-        Assert.Equal(houseId, hit?.ElementId);
+        Assert.Same(sprite, hit?.Element);
+        Assert.True(routeMap.TryGetId(sprite, out UiElementId spriteId));
+        Assert.Equal(spriteId, hit?.ElementId);
         Assert.Equal(
-            [house, scene, scene.Surface!, root],
-            routeMap.GetRouteToRoot(house));
+            [sprite, house, scene, scene.Surface!, root],
+            routeMap.GetRouteToRoot(sprite));
     }
 
     [Fact]
@@ -133,18 +137,19 @@ public sealed class CollisionStageFourInputTests
             TranslateX = 110,
             TranslateY = 60
         };
-        scene.Children.Add(collider);
+        Sprite2D sprite = new() { Colliders = { collider } };
+        scene.Children.Add(sprite);
         Vector2 rootPoint = new(50.5f, 50.25f);
 
         Assert.True(surface.TryRootToScene(rootPoint, out Vector2 scenePoint));
         AssertVector(new Vector2(112.625f, 62.5625f), scenePoint);
         AssertVector(rootPoint, surface.SceneToRoot(scenePoint));
-        Assert.Same(collider, new HitTestService().HitTest(root, 50.5f, 50.25f)?.Element);
+        Assert.Same(sprite, new HitTestService().HitTest(root, 50.5f, 50.25f)?.Element);
 
         surface.ScaleX = 0;
 
         Assert.False(surface.TryRootToScene(rootPoint, out _));
-        Assert.NotSame(collider, new HitTestService().HitTest(root, 50.5f, 50.25f)?.Element);
+        Assert.NotSame(sprite, new HitTestService().HitTest(root, 50.5f, 50.25f)?.Element);
     }
 
     [Fact]
@@ -153,7 +158,7 @@ public sealed class CollisionStageFourInputTests
     {
         UIRoot root = CreateRoot(out _, out Scene2D scene);
         BoxCollider2D first = new() { Width = 20, Height = 20 };
-        scene.Children.Add(first);
+        scene.Children.Add(new Sprite2D { Colliders = { first } });
         root.InputCache.EnsureCurrent(root);
         int baseline = root.InputCache.RebuildCount;
 
@@ -164,7 +169,7 @@ public sealed class CollisionStageFourInputTests
         Assert.Equal(baseline, root.InputCache.RebuildCount);
 
         BoxCollider2D second = new() { Width = 10, Height = 10 };
-        scene.Children.Add(second);
+        scene.Children.Add(new Sprite2D { Colliders = { second } });
         root.InputCache.EnsureCurrent(root);
 
         Assert.Equal(baseline + 1, root.InputCache.RebuildCount);
@@ -188,17 +193,18 @@ public sealed class CollisionStageFourInputTests
             Height = 20,
             Opacity = 0
         };
-        scene.Children.Add(collider);
+        Sprite2D sprite = new() { Colliders = { collider } };
+        scene.Children.Add(sprite);
         HitTestService hitTest = new();
 
-        Assert.Same(collider, hitTest.HitTest(root, 10, 10)?.Element);
+        Assert.Same(sprite, hitTest.HitTest(root, 10, 10)?.Element);
 
         collider.IsHitTestVisible = false;
-        Assert.NotSame(collider, hitTest.HitTest(root, 10, 10)?.Element);
+        Assert.NotSame(sprite, hitTest.HitTest(root, 10, 10)?.Element);
 
         collider.IsHitTestVisible = true;
         collider.Visibility = Visibility.Hidden;
-        Assert.NotSame(collider, hitTest.HitTest(root, 10, 10)?.Element);
+        Assert.NotSame(sprite, hitTest.HitTest(root, 10, 10)?.Element);
     }
 
     private static UIRoot CreateRoot(

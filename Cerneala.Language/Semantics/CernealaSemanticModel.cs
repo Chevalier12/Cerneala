@@ -244,6 +244,16 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             BindTileDeclaration(element, type);
             return;
         }
+        if (type.IsOrDerivesFrom("Cerneala.UI.Controls.Collider2D") && !HasLiveColliderOwner(element))
+        {
+            AddShapeDiagnostic(element.NameToken.Span, "Colliders can only be owned by Sprite2D or tiles; they cannot be scene roots or children of other UI elements.");
+            return;
+        }
+        if (IsLiveColliderOwner(parentType) && !type.IsOrDerivesFrom("Cerneala.UI.Controls.Collider2D"))
+        {
+            AddShapeDiagnostic(element.NameToken.Span, "Sprite2D and TileInstance2D content accepts colliders only.");
+            return;
+        }
         if (parentType?.MetadataName == "Cerneala.UI.Controls.TileMap2D" &&
             type.MetadataName != "Cerneala.UI.Controls.TileLayer2D")
         {
@@ -505,7 +515,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             return valueType;
         }
 
-        if (isRoot && element.Name is "Application" or "Window" or "UserControl")
+        if (isRoot && element.Name is "Application" or "Window" or "UserControl" or "Scene2D")
         {
             string pairPath = CernealaDocumentPath.GetCompanionPath(document.Path);
             string expectedName = CernealaDocumentPath.GetLogicalName(document.Path);
@@ -515,6 +525,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             {
                 "Application" => "Cerneala.UI.Application",
                 "Window" => "Cerneala.UI.Controls.Window",
+                "Scene2D" => "Cerneala.UI.Controls.Scene2D",
                 _ => "Cerneala.UI.Controls.UserControl"
             };
             if (pair is not null && pair.IsOrDerivesFrom(expectedBase))

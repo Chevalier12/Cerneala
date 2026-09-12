@@ -24,6 +24,7 @@ internal static class CernealaDiagnosticCatalog
         Ui("CERNEALAUI014", "Invalid Application startup", "Application startup in '{0}' is invalid: {1}"),
         Ui("CERNEALAUI015", "Invalid application backend selection", "Application backend selection is invalid: {0}"),
         Ui("CERNEALAUI016", "Invalid sprite animation declaration", "Sprite animation declaration in '{0}' is invalid: {1}"),
+        Ui("CERNEALAUI017", "Invalid Scene2D component declaration", "Scene2D component markup file '{0}' is invalid: {1}"),
         Motion("CERNEALAUI020", "Invalid Motion markup syntax", "Motion syntax in '{0}' is invalid: {1}"),
         Motion("CERNEALAUI021", "Invalid Motion target", "Motion target resolution in '{0}' failed: {1}"),
         Motion("CERNEALAUI022", "Invalid Motion event", "Motion event resolution in '{0}' failed: {1}"),

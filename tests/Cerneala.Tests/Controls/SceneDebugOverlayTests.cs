@@ -312,8 +312,8 @@ public sealed class SceneDebugOverlayTests
         Scene2DDebugOverlay overlay = new() { NavigationGrid = new Grid() };
         Scene2D scene = new();
         scene.Children.Add(map);
-        scene.Children.Add(new BoxCollider2D { Width = 16, Height = 16 });
-        scene.Children.Add(new BoxCollider2D { Width = 16, Height = 16, TranslateX = 10000 });
+        scene.Children.Add(new Sprite2D { Colliders = { new BoxCollider2D { Width = 16, Height = 16 } } });
+        scene.Children.Add(new Sprite2D { X = 10000, Colliders = { new BoxCollider2D { Width = 16, Height = 16 } } });
         scene.Children.Add(overlay);
         return (scene, overlay, map);
     }

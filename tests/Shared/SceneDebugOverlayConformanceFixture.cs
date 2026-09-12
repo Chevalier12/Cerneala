@@ -27,7 +27,7 @@ internal sealed class SceneDebugOverlayConformanceFixture : IDisposable
         "debug-all.png", "debug-effects.png", "debug-zoom.png", "debug-off-restored.png"
     ];
     private readonly Scene2DDebugOverlay overlay;
-    private readonly BoxCollider2D pickTarget;
+    private readonly Sprite2D pickTarget;
     private readonly TileMap2D map;
     private readonly TileMap2DModel model;
     private readonly List<object> samples = [];
@@ -68,12 +68,12 @@ internal sealed class SceneDebugOverlayConformanceFixture : IDisposable
         tile.Colliders.Add(new BoxCollider2D { Width = 24, Height = 24 });
         Scene2D scene = new() { OrderMode = SceneOrderMode.LayerThenY };
         scene.Children.Add(map);
-        pickTarget = new BoxCollider2D { Width = 40, Height = 24, TranslateX = 12, TranslateY = 20, CollisionLayer = 1 };
+        pickTarget = new Sprite2D { X = 12, Y = 20, Colliders = { new BoxCollider2D { Width = 40, Height = 24, CollisionLayer = 1 } } };
         scene.Children.Add(pickTarget);
-        scene.Children.Add(new CircleCollider2D { Radius = 14, TranslateX = 96, TranslateY = 36, ScaleX = 1.5f, IsTrigger = true });
-        scene.Children.Add(new PolygonCollider2D { Points = "0,0 35,8 20,32", TranslateX = 164, TranslateY = 20, CollisionLayer = 4 });
-        scene.Children.Add(new SegmentCollider2D { EndX = 40, EndY = 22, TranslateX = 244, TranslateY = 24, CollisionMask = 0 });
-        scene.Children.Add(new BoxCollider2D { Width = 100, Height = 100, TranslateX = 10000 });
+        scene.Children.Add(new Sprite2D { X = 96, Y = 36, Colliders = { new CircleCollider2D { Radius = 14, ScaleX = 1.5f, IsTrigger = true } } });
+        scene.Children.Add(new Sprite2D { X = 164, Y = 20, Colliders = { new PolygonCollider2D { Points = "0,0 35,8 20,32", CollisionLayer = 4 } } });
+        scene.Children.Add(new Sprite2D { X = 244, Y = 24, Colliders = { new SegmentCollider2D { EndX = 40, EndY = 22, CollisionMask = 0 } } });
+        scene.Children.Add(new Sprite2D { X = 10000, Colliders = { new BoxCollider2D { Width = 100, Height = 100 } } });
         overlay = new Scene2DDebugOverlay { FontSize = 5, NavigationGrid = new Navigation() };
         overlay.Aspect = new ElementAspect([new ElementAspectValue(Scene2DDebugOverlay.LineThicknessProperty, 0.75f)]);
         scene.Children.Add(overlay);

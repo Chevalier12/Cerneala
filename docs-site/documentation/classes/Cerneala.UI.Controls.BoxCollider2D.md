@@ -20,8 +20,7 @@ Inheritance:
 ## Examples
 
 ```xml
-<Scene2D TranslateX="96" TranslateY="48">
-    <Sprite2D />
+<Sprite2D X="96" Y="48">
     <BoxCollider2D Width="32" Height="8" OffsetY="24">
         <BoxCollider2D.Aspect>
             @on Loaded
@@ -33,12 +32,14 @@ Inheritance:
             }
         </BoxCollider2D.Aspect>
     </BoxCollider2D>
-</Scene2D>
+</Sprite2D>
 ```
 
 ## Remarks
 
 The box starts at `(OffsetX, OffsetY)` and extends by `Width` and `Height` before inherited collider and group transforms are applied. Both dimensions must remain finite and greater than zero.
+
+Live boxes must belong to `Sprite2D.Colliders` or `TileInstance2D.Colliders`; they cannot attach directly to a scene group. The sprite example above demonstrates collision geometry without an image; assign `Image` separately to draw it. A box declared under a static `Tile` instead creates an immutable tile descriptor with literal attributes, not a live UI node. See [Collider2D](Cerneala.UI.Controls.Collider2D.md) and [Tile](Cerneala.UI.Controls.Tile.md).
 
 `Width` and `Height` are collision dimensions, not UI layout dimensions. Both properties have float mixers and can be controlled by Aspect, bindings, direct assignment, or Motion. Each accepted change follows the same collision-geometry invalidation path.
 

@@ -62,12 +62,13 @@ public sealed class SceneImportStageZeroContractTests
         surface.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
         Scene2D scene = new();
         BoxCollider2D box = new() { Width = 20, Height = 20, TranslateX = 10, TranslateY = 10 };
-        scene.Children.Add(box);
+        Sprite2D sprite = new() { Colliders = { box } };
+        scene.Children.Add(sprite);
         scene.Children.Add(overlay);
         surface.Scene = scene;
         root.VisualChildren.Add(surface);
         int presses = 0;
-        box.AddHandler(InputEvents.MouseDownEvent, (_, _) => presses++);
+        sprite.AddHandler(InputEvents.MouseDownEvent, (_, _) => presses++);
         ElementInputBridge bridge = new();
         CollisionHit2D[] before = scene.CollisionWorld.Raycast(new Vector2(0, 20), Vector2.UnitX, 50);
         // Hits are immutable reference objects, not value-equality records.
@@ -98,8 +99,8 @@ public sealed class SceneImportStageZeroContractTests
         segment.TranslateY = -10;
         CircleCollider2D mover = new() { Radius = 1, TranslateX = -20 * direction };
         Scene2D scene = new();
-        scene.Children.Add(segment);
-        scene.Children.Add(mover);
+        scene.Children.Add(new Sprite2D { Colliders = { segment } });
+        scene.Children.Add(new Sprite2D { Colliders = { mover } });
         MoveCollisionResult2D movement = scene.CollisionWorld.MoveAndCollide(mover, new Vector2(40 * direction, 0));
         Assert.NotNull(movement.Collision);
         Assert.Same(segment, movement.Collision.Collider);

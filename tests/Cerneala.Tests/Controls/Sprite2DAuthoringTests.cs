@@ -37,8 +37,8 @@ public sealed class Sprite2DAuthoringTests
         DrawRect expected = new(10, 20, width, height);
         for (int index = 0; index < 128; index++)
         {
-            Assert.Equal(expected, sprite.GetVisibleLocalBounds().Bounds);
-            Assert.Equal(expected, sprite.GetHitTestLocalBounds().Bounds);
+            Assert.Equal(expected, SceneGeometry2D.TransformBounds(sprite.GetVisibleLocalBounds(), sprite.GetLocalTransform()).Bounds);
+            Assert.Equal(expected, SceneGeometry2D.TransformBounds(sprite.GetHitTestLocalBounds(), sprite.GetLocalTransform()).Bounds);
         }
 
         long before = GC.GetAllocatedBytesForCurrentThread();
@@ -51,11 +51,11 @@ public sealed class Sprite2DAuthoringTests
 
         Assert.True(allocatedBytes == 0,
             $"Visible/hit-test bounds allocated {allocatedBytes / 512} bytes/query after warmup.");
-        Assert.Equal(expected, sprite.GetVisibleLocalBounds().Bounds);
+        Assert.Equal(expected, SceneGeometry2D.TransformBounds(sprite.GetVisibleLocalBounds(), sprite.GetLocalTransform()).Bounds);
         if (sourceMode == 2)
         {
             sprite.AdvanceAnimation(TimeSpan.FromMilliseconds(100));
-            Assert.Equal(new DrawRect(10, 20, 24, 20), sprite.GetHitTestLocalBounds().Bounds);
+            Assert.Equal(new DrawRect(10, 20, 24, 20), SceneGeometry2D.TransformBounds(sprite.GetHitTestLocalBounds(), sprite.GetLocalTransform()).Bounds);
         }
     }
 
@@ -116,7 +116,7 @@ public sealed class Sprite2DAuthoringTests
         Assert.Same(image, draw.Image);
         Assert.Equal(new DrawRect(12, 7, 52, 25), draw.ImageSource);
         Assert.Equal(new DrawRect(100, 80, 52, 25), draw.Rect);
-        Assert.Equal(draw.Rect, sprite.GetHitTestLocalBounds().Bounds);
+        Assert.Equal(draw.Rect, SceneGeometry2D.TransformBounds(sprite.GetHitTestLocalBounds(), sprite.GetLocalTransform()).Bounds);
         Assert.True(float.IsNaN(sprite.Width));
         Assert.True(float.IsNaN(sprite.SourceWidth));
         root.VisualChildren.Remove(surface);
@@ -152,7 +152,7 @@ public sealed class Sprite2DAuthoringTests
         DrawCommand draw = Draw(Surface(sprite));
         Assert.Equal(new DrawRect(100, 80, 40, 30), draw.Rect);
         Assert.Equal(new DrawRect(10, 4, 20, 10), draw.ImageSource);
-        Assert.Equal(new DrawRect(90, 74, 40, 30), sprite.GetHitTestLocalBounds().Bounds);
+        Assert.Equal(new DrawRect(90, 74, 40, 30), SceneGeometry2D.TransformBounds(sprite.GetHitTestLocalBounds(), sprite.GetLocalTransform()).Bounds);
     }
 
     [Fact]

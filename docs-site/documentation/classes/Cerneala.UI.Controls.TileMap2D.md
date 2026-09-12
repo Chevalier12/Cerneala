@@ -57,9 +57,11 @@ Map, layer, and promoted-tile nodes use the normal Aspect, Motion, Prism, transf
 
 ### Static tile colliders
 
+Free placements use `Tile.Colliders`. Their markup shape children construct immutable descriptors, not live `Collider2D` nodes. Adapters use the tile's pixel position and explicit shape dimensions; natural or explicit image dimensions do not rescale collision geometry. Unchanged free-placement models retain their adapters, while replacing the model rebuilds that placement geometry. See [Tile](Cerneala.UI.Controls.Tile.md) for literal authoring and limits.
+
 Each `TileDefinition2D.Colliders` entry is adapted into scene-owned collision geometry for every matching non-empty cell. Static cells remain compact model data; the adapter does not promote them into public per-cell UI elements and does not send collider forms to a graphics backend.
 
-Collision synchronization is chunk-local. Replacing one chunk or a collider definition rebuilds only dependent chunk adapters, while unchanged chunk objects retain their collision entries. Removing a chunk removes its entries. Visual ViewBox culling affects drawing only and does not unload active colliders from the collision world.
+For imported grids, collision synchronization is chunk-local. Replacing one chunk or a collider definition rebuilds only dependent chunk adapters, while unchanged chunk objects retain their collision entries. Removing a chunk removes its entries. Visual ViewBox culling affects drawing only and does not unload active colliders from the collision world. Internal adapters are owned by their originating tile data and exact presentation layer; application child-collection mutation cannot reparent them.
 
 Adjacent horizontal full-cell box descriptors may share one internal collider only when geometry, offsets, layer, mask, trigger state, importer properties, and debug identity are semantically identical. Chunk boundaries and differing metadata remain boundaries.
 

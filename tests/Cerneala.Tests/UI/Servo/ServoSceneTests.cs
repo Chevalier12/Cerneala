@@ -14,6 +14,23 @@ using Scene2D = global::Cerneala.UI.Controls.Scene2D;
 
 public sealed class ServoSceneTests
 {
+    [Fact]
+    public async Task UnknownSpriteBoundsDoNotHideKnownSiblingInputGeometry()
+    {
+        Scene2D world = new();
+        Sprite2D target = new() { X = 14, Y = 8, Width = 20, Height = 12 };
+        world.Children.Add(target);
+        world.Children.Add(new Sprite2D());
+        ServoApi.SetId(world, "world");
+        ServoApi servo = new(CreateHost(world, useViewBox: false));
+        int clicks = 0;
+        target.MouseDown += (_, _) => clicks++;
+
+        Assert.Equal(new LayoutRect(14, 8, 20, 12), (await servo.FindAsync(ServoTarget.ById("world"))).Bounds);
+        await servo.ClickAsync(ServoTarget.ById("world"));
+        Assert.Equal(1, clicks);
+    }
+
     [Theory]
     [InlineData(false, 1f)]
     [InlineData(true, 1f)]
@@ -22,7 +39,7 @@ public sealed class ServoSceneTests
     public async Task SurfaceLayoutOriginIsIncludedWithAndWithoutViewBox(bool useViewBox, float dpi)
     {
         Scene2D world = new();
-        BoxCollider2D targetNode = new() { Width = 16, Height = 12, TranslateX = 30, TranslateY = 15 };
+        Sprite2D targetNode = new() { X = 30, Y = 15, Colliders = { new BoxCollider2D { Width = 16, Height = 12 } } };
         world.Children.Add(targetNode);
         ServoApi.SetId(targetNode, "target");
         UiHost host = CreateHost(world, useViewBox, new Thickness(20, 32, 0, 0), dpi);
@@ -59,9 +76,10 @@ public sealed class ServoSceneTests
     {
         Scene2D world = new() { TranslateX = 10, TranslateY = 5 };
         Scene2D entity = new() { TranslateX = 20, TranslateY = 10, Focusable = true };
-        entity.Children.Add(colliderOnly
-            ? new BoxCollider2D { Width = 16, Height = 12 }
-            : new Sprite2D { X = 0, Y = 0, Width = 16, Height = 12 });
+        Sprite2D sprite = new();
+        if (colliderOnly) { sprite.Colliders.Add(new BoxCollider2D { Width = 16, Height = 12 }); }
+        else { sprite.Width = 16; sprite.Height = 12; }
+        entity.Children.Add(sprite);
         world.Children.Add(entity);
         ServoApi.SetId(world, "world");
         ServoApi.SetId(entity, "player");
@@ -92,11 +110,14 @@ public sealed class ServoSceneTests
     {
         Scene2D world = new();
         BoxCollider2D collider = new() { Width = 20, Height = 10, TranslateX = 10, OffsetX = 2 };
-        world.Children.Add(collider);
+        Sprite2D sprite = new() { Colliders = { collider } };
+        world.Children.Add(sprite);
+        ServoApi.SetId(sprite, "sprite");
         ServoApi.SetId(collider, "collider");
         UiHost host = CreateHost(world);
         ServoApi servo = new(host);
-        ServoTarget target = ServoTarget.ById("collider");
+        ServoTarget target = ServoTarget.ById("sprite");
+        Assert.True(await servo.ExistsAsync(ServoTarget.ById("collider")));
         Assert.Equal(new LayoutRect(24, 0, 40, 20), (await servo.FindAsync(target)).Bounds);
         await servo.ClickAsync(target);
         collider.Enabled = false;
@@ -107,7 +128,7 @@ public sealed class ServoSceneTests
         world.Visibility = Visibility.Hidden;
         Assert.False((await servo.FindAsync(target)).IsVisible);
         await Assert.ThrowsAsync<ServoTargetNotActionableException>(() => servo.ClickAsync(target));
-        world.Children.Remove(collider);
+        world.Children.Remove(sprite);
         Assert.False(await servo.ExistsAsync(target));
     }
 

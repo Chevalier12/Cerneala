@@ -1,3 +1,4 @@
+using System.Numerics;
 using Cerneala.Drawing;
 
 namespace Cerneala.UI.Controls;
@@ -6,6 +7,9 @@ public sealed partial class TileMap2D
 {
     private readonly Dictionary<TileCollisionChunkKey, TileCollisionChunkState>
         collisionChunks = [];
+    private TileMap2DModel? collisionPlacementModel;
+    private TileLayer2D? collisionPlacementHost;
+    private readonly List<TileStaticCollider2D> placementColliders = [];
 
     internal void SynchronizeCollisionAdaptersAndNotify()
     {
@@ -19,6 +23,7 @@ public sealed partial class TileMap2D
     {
         HashSet<TileCollisionChunkKey> current = [];
         TileMap2DModel? model = Model;
+        SynchronizePlacementColliders(model);
         if (model is not null)
         {
             foreach (TileLayer2DModel layer in model.Layers)
@@ -119,9 +124,8 @@ public sealed partial class TileMap2D
 
                     AddCollider(new TileStaticCollider2D(
                         coalescible,
-                        coordinate,
-                        model.TileSize,
-                        TileFlip2D.None,
+                        presentation,
+                        Matrix3x2.CreateTranslation(coordinate.X * model.TileSize.Width, coordinate.Y * model.TileSize.Height),
                         boxWidth: model.TileSize.Width * run,
                         boxHeight: model.TileSize.Height));
                     localX += run;
@@ -132,9 +136,9 @@ public sealed partial class TileMap2D
                 {
                     AddCollider(new TileStaticCollider2D(
                         descriptor,
-                        coordinate,
-                        model.TileSize,
-                        cell.Flip));
+                        presentation,
+                        TileFlipGeometry2D.Transform(cell.Flip, model.TileSize) *
+                            Matrix3x2.CreateTranslation(coordinate.X * model.TileSize.Width, coordinate.Y * model.TileSize.Height)));
                 }
                 localX++;
             }
@@ -152,7 +156,7 @@ public sealed partial class TileMap2D
         void AddCollider(TileStaticCollider2D collider)
         {
             collider.Enabled = layer.IsVisible;
-            presentation.LogicalChildren.Add(collider);
+            presentation.LogicalChildren.InsertOwned(presentation.LogicalChildren.Count, collider);
             collider.AttachSurface(Surface);
             colliders.Add(collider);
         }
@@ -233,12 +237,44 @@ public sealed partial class TileMap2D
         return true;
     }
 
+    private void SynchronizePlacementColliders(TileMap2DModel? model)
+    {
+        TileLayer2D? host = model?.IsFreePlacement == true
+            ? Layers.Single(layer => string.Equals(layer.LayerId, model.Layers[0].Id, StringComparison.Ordinal))
+            : null;
+        if (ReferenceEquals(collisionPlacementModel, model) && ReferenceEquals(collisionPlacementHost, host)) { return; }
+        if (collisionPlacementHost is not null)
+        {
+            foreach (TileStaticCollider2D collider in placementColliders)
+            {
+                collider.AttachSurface(null);
+                collisionPlacementHost.LogicalChildren.RemoveOwned(collider);
+            }
+        }
+        placementColliders.Clear();
+        collisionPlacementModel = model;
+        collisionPlacementHost = host;
+        if (host is null || model is null) { return; }
+
+        foreach (Tile tile in model.Tiles)
+        {
+            Matrix3x2 placement = Matrix3x2.CreateTranslation(tile.X, tile.Y);
+            foreach (TileColliderDescriptor2D descriptor in tile.Colliders)
+            {
+                TileStaticCollider2D collider = new(descriptor, host, placement);
+                host.LogicalChildren.InsertOwned(host.LogicalChildren.Count, collider);
+                collider.AttachSurface(Surface);
+                placementColliders.Add(collider);
+            }
+        }
+    }
+
     private static void RemoveCollisionChunk(TileCollisionChunkState state)
     {
         foreach (TileStaticCollider2D collider in state.Colliders)
         {
             collider.AttachSurface(null);
-            state.Presentation.LogicalChildren.Remove(collider);
+            state.Presentation.LogicalChildren.RemoveOwned(collider);
         }
     }
 

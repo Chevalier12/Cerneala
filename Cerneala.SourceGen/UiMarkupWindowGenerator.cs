@@ -15,7 +15,7 @@ public sealed partial class UiMarkupGenerator
 {
     private readonly struct WindowPairResolution
     {
-        public WindowPairResolution(bool hasCompanion, UserControlPair? pair)
+        public WindowPairResolution(bool hasCompanion, MarkupComponentPair? pair)
         {
             HasCompanion = hasCompanion;
             Pair = pair;
@@ -23,7 +23,7 @@ public sealed partial class UiMarkupGenerator
 
         public bool HasCompanion { get; }
 
-        public UserControlPair? Pair { get; }
+        public MarkupComponentPair? Pair { get; }
     }
 
     private static WindowPairResolution ResolveWindowPair(
@@ -140,7 +140,7 @@ public sealed partial class UiMarkupGenerator
 
         return new WindowPairResolution(
             true,
-            new UserControlPair(typeSymbol, tree, declaration.SpanStart, viewModelType, isWindow: true));
+            new MarkupComponentPair(typeSymbol, tree, declaration.SpanStart, viewModelType, isWindow: true));
     }
 
     private static void GenerateWindowFile(
@@ -148,7 +148,7 @@ public sealed partial class UiMarkupGenerator
         MarkupSource file,
         string className,
         Compilation compilation,
-        UserControlPair pair,
+        MarkupComponentPair pair,
         bool generateStartup,
         ApplicationBackendSelection? backendSelection,
         GenerationScope.ApplicationResourceCatalog? applicationResources,
@@ -318,7 +318,7 @@ public sealed partial class UiMarkupGenerator
         SourceProductionContext context,
         StringBuilder source,
         Compilation compilation,
-        UserControlPair pair,
+        MarkupComponentPair pair,
         string namespaceName,
         ApplicationBackendSelection backendSelection)
     {
@@ -395,7 +395,7 @@ public sealed partial class UiMarkupGenerator
     private static IMethodSymbol? ResolveAppHook(
         SourceProductionContext context,
         Compilation compilation,
-        UserControlPair pair,
+        MarkupComponentPair pair,
         string namespaceName)
     {
         string metadataName = namespaceName.Length == 0 ? "App" : namespaceName + ".App";

@@ -58,7 +58,7 @@ internal sealed class SpriteAnimationConformanceFixture : IDisposable
         entity = new Scene2D { TranslateX = 8, TranslateY = 8, Layer = 2 };
         collider = new BoxCollider2D { Width = 16, Height = 16 };
         entity.Children.Add(sprite);
-        entity.Children.Add(collider);
+        sprite.Colliders.Add(collider);
         reference = CreateSprite(new DrawRect(8, 48, 16, 16));
         grouped = CreateSprite(new DrawRect(0, 0, 16, 16));
         prismGroup = new Scene2D { TranslateX = 36, TranslateY = 8, Scale = 1.25f };
@@ -141,7 +141,7 @@ internal sealed class SpriteAnimationConformanceFixture : IDisposable
             .Any(hit => ReferenceEquals(hit.Collider, collider) && Math.Abs(hit.Distance - 8) < 0.001f))
             throw new InvalidOperationException("Sprite Prism changed its entity collider.");
         Vector2 point = Surface.SceneToRoot(new Vector2(12, 12));
-        if (!ReferenceEquals(new HitTestService().HitTest(Surface.Root!, point.X, point.Y)?.Element, entity))
+        if (!ReferenceEquals(new HitTestService().HitTest(Surface.Root!, point.X, point.Y)?.Element, sprite))
             throw new InvalidOperationException("Sprite Prism changed the UI geometric picking target.");
         point = Surface.SceneToRoot(new Vector2(75, 51));
         if (!ReferenceEquals(new HitTestService().HitTest(Surface.Root!, point.X, point.Y)?.Element, tile))

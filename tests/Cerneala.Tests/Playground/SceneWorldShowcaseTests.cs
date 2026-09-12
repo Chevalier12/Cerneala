@@ -1,6 +1,7 @@
 using Cerneala.Drawing;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Playground;
+using Cerneala.Scene2D.Importers;
 using Cerneala.Tests.UI.Motion.Core;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
@@ -18,6 +19,82 @@ using Scene2D = global::Cerneala.UI.Controls.Scene2D;
 
 public sealed class SceneWorldShowcaseTests
 {
+    [Fact]
+    public async Task ShowcaseNavigationSelectsSceneWorldThroughServoClick()
+    {
+        UIRoot root = new(300, 400);
+        ShowcaseNavigation navigation = new();
+        root.VisualChildren.Add(navigation);
+        string? selected = null;
+        navigation.ShowcaseSelected += (_, args) => selected = args.ShowcaseName;
+        UiHost host = new(new UiHostOptions { Root = root, Viewport = new UiViewport(300, 400) });
+        host.Update(new InputFrame(PointerSnapshot.Empty, PointerSnapshot.Empty,
+            KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []), host.Viewport, TimeSpan.Zero);
+
+        await new ServoApi(host).ClickAsync(ServoTarget.ById("showcase-scene-world"));
+
+        Assert.Equal("Scene World", selected);
+        root.VisualChildren.Remove(navigation);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WallMigrationPreservesTileDrawingAndTheSixAuthoredCollisionRegions(bool ldtk)
+    {
+        SceneWorldState state = new();
+        state.Load(ldtk);
+        string path = Path.Combine(AppContext.BaseDirectory, "SceneWorldAssets", ldtk ? "village.ldtk" : "village.tmj");
+        Scene2DImportResult imported = ldtk ? LdtkScene2DImporter.Import(path) : TiledScene2DImporter.Import(path);
+        Assert.True(imported.Success);
+        TileMap2DModel original = imported.Document!.Levels.Single().TileMap;
+        if (ldtk)
+        {
+            Assert.Equal(3, original.Layers.Sum(l => l.Chunks.Count));
+            Assert.Equal(["1", "2", "4"], original.Layers.Where(l => l.Chunks.Count > 0).Select(l => l.Id).Order());
+        }
+        List<DrawRect> collisionRegions = [];
+        Assert.Equal(6, state.Colliders.Count);
+        Assert.Equal(original.Layers.Count, state.Model.Layers.Count);
+        foreach (TileLayer2DModel before in original.Layers)
+        {
+            TileLayer2DModel after = state.Model.Layers.Single(l => l.Id == before.Id);
+            Assert.Equal((before.Offset, before.Opacity, before.Tint, before.Order, before.IsVisible),
+                (after.Offset, after.Opacity, after.Tint, after.Order, after.IsVisible));
+            Assert.Equal(before.Chunks.Count, after.Chunks.Count);
+            for (int chunkIndex = 0; chunkIndex < before.Chunks.Count; chunkIndex++)
+            {
+                TileChunk2D oldChunk = before.Chunks[chunkIndex], chunk = after.Chunks[chunkIndex];
+                Assert.Equal((oldChunk.Origin, oldChunk.Width, oldChunk.Height), (chunk.Origin, chunk.Width, chunk.Height));
+                for (int index = 0; index < chunk.Tiles.Count; index++)
+                {
+                    TileCell2D oldCell = oldChunk.Tiles[index], cell = chunk.Tiles[index];
+                    Assert.Equal(oldCell.Flip, cell.Flip);
+                    if (oldCell.TileId == 0) { Assert.Equal(0, cell.TileId); continue; }
+                    Assert.True(original.TryResolveTile(oldCell.TileId, out TileSet2D? oldSet, out TileDefinition2D? oldTile));
+                    Assert.True(state.Model.TryResolveTile(cell.TileId, out TileSet2D? set, out TileDefinition2D? tile));
+                    Assert.Equal(oldSet!.AtlasResourceId, set!.AtlasResourceId);
+                    Assert.Equal(oldTile!.SourceRect, tile!.SourceRect);
+                    foreach (TileColliderDescriptor2D collider in tile.Colliders)
+                    {
+                        Assert.Equal("2", after.Id);
+                        Assert.Equal(TileColliderShape2D.Box, collider.Shape);
+                        Assert.Equal((2u, 1u), (collider.CollisionLayer, collider.CollisionMask));
+                        float x = (chunk.Origin.X + index % chunk.Width) * original.TileSize.Width + after.Offset.X + collider.OffsetX;
+                        float y = (chunk.Origin.Y + index / chunk.Width) * original.TileSize.Height + after.Offset.Y + collider.OffsetY;
+                        collisionRegions.Add(new(x, y, collider.Width, collider.Height));
+                    }
+                }
+            }
+        }
+        Assert.NotEmpty(collisionRegions);
+        // Half-pixel samples cover every unit cell, including the uncollidable second house.
+        for (float y = 0.5f; y < 288; y++)
+        for (float x = 0.5f; x < 512; x++)
+            Assert.Equal(state.Colliders.Any(r => x >= r.X && x < r.X + r.Width && y >= r.Y && y < r.Y + r.Height),
+                collisionRegions.Any(r => x >= r.X && x < r.X + r.Width && y >= r.Y && y < r.Y + r.Height));
+    }
+
     [Fact]
     public async Task CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts()
     {

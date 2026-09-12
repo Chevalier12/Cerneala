@@ -33,7 +33,7 @@ if (first is not null && !first.IsTrigger)
 
 For overlap and movement, the normal points from the returned collider toward the queried or moving collider. A raycast normal is the hit surface normal opposing the ray. Edge contact is included with an internal comparison epsilon of `1e-5` scene units.
 
-`Entity` is the closest non-collider `SceneNode2D` ancestor of `Collider`; when no such ancestor exists it is the collider itself.
+`Entity` is the closest non-collider `SceneNode2D` ancestor of `Collider`. For live colliders this is the owning `Sprite2D` or `TileInstance2D`; static tile adapters identify their containing `TileLayer2D`. A static tile placement is immutable model data, not a per-tile UI entity.
 
 ## Properties
 

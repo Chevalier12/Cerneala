@@ -28,6 +28,32 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
 
     public void Insert(int index, UIElement child)
     {
+        InsertCore(index, child, ownerManaged: false);
+    }
+
+    internal void InsertOwned(int index, UIElement child)
+    {
+        InsertCore(index, child, ownerManaged: true);
+    }
+
+    private void InsertCore(int index, UIElement child, bool ownerManaged)
+    {
+        ValidateInsertion(index, child, ownerManaged);
+        owner.Root?.Motion.Presence.TryCancelExitForAdd(owner, child);
+        children.Insert(index, child);
+        SetParent(child, owner);
+        UIRoot? root = owner.Root;
+        if (root is not null)
+        {
+            ElementLifecycle.AttachSubtree(root, child);
+            root.IncrementTreeVersion();
+        }
+        InvalidateForVisualChildMutation(child, ElementTreeChangeKind.Added);
+        Changed?.Invoke(this, new ElementTreeChange(owner, child, role, ElementTreeChangeKind.Added));
+    }
+
+    internal void ValidateInsertion(int index, UIElement child, bool ownerManaged = false)
+    {
         ArgumentNullException.ThrowIfNull(child);
         owner.Root?.Relay.VerifyAccess();
         child.Root?.Relay.VerifyAccess();
@@ -35,6 +61,8 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
         {
             throw new ArgumentOutOfRangeException(nameof(index));
         }
+
+        child.ValidateParentChange(owner, role, ownerManaged);
 
         if (ReferenceEquals(owner, child))
         {
@@ -72,20 +100,6 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
             ElementLifecycle.ValidateSubtreeAttachment(owner.Root, child);
         }
 
-        owner.Root?.Motion.Presence.TryCancelExitForAdd(owner, child);
-
-        children.Insert(index, child);
-        SetParent(child, owner);
-
-        UIRoot? root = owner.Root;
-        if (root is not null)
-        {
-            ElementLifecycle.AttachSubtree(root, child);
-            root.IncrementTreeVersion();
-        }
-
-        InvalidateForVisualChildMutation(child, ElementTreeChangeKind.Added);
-        Changed?.Invoke(this, new ElementTreeChange(owner, child, role, ElementTreeChangeKind.Added));
     }
 
     public void Move(int oldIndex, int newIndex)
@@ -107,6 +121,7 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
         }
 
         UIElement child = children[oldIndex];
+        child.ValidateParentChange(owner, role, ownerManaged: false);
         children.RemoveAt(oldIndex);
         children.Insert(newIndex, child);
         owner.Root?.IncrementTreeVersion();
@@ -114,6 +129,16 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
     }
 
     public bool Remove(UIElement child)
+    {
+        return RemoveCore(child, ownerManaged: false);
+    }
+
+    internal bool RemoveOwned(UIElement child)
+    {
+        return RemoveCore(child, ownerManaged: true);
+    }
+
+    private bool RemoveCore(UIElement child, bool ownerManaged)
     {
         ArgumentNullException.ThrowIfNull(child);
         owner.Root?.Relay.VerifyAccess();
@@ -124,6 +149,8 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
         {
             return false;
         }
+
+        child.ValidateParentChange(null, role, ownerManaged);
 
         if (role == ElementChildRole.Visual && owner.Root?.Motion.Presence.TryBeginExit(owner, child) == true)
         {

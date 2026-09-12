@@ -51,6 +51,8 @@ While the node is promoted, the owning map suppresses the same static cell so it
 
 A promoted instance can be the target for application behavior without turning every map cell into a `UIElement`. `Colliders` is its content property, so collider elements can be written directly inside the instance with Cerneala `.crn` syntax. These are real `Collider2D` scene nodes: they inherit the promoted tile's data context and transform, enter the owning scene's collision world, and use the same mutation path as other colliders.
 
+`Sprite2D` and `TileInstance2D` are the only valid owners for live collider nodes. Use the typed `Colliders` collection for C# attachment, replacement, removal, and clearing; generic `LogicalChildren` or `VisualChildren` edits cannot bypass it. Remove a collider from its current owner before transferring it. Shape dimensions and offsets are managed separately from image overrides and sprite-sheet animation.
+
 The promoted instance and its explicit colliders participate in the common scene input route and geometric picking rules. A batch-only cell remains data and cannot be a routed-event target; promote only cells that need per-instance input, state, Motion, or Prism behavior.
 
 `ReplacesImportedColliders="false"`, the default, composes explicit colliders with descriptors imported by the tile definition. Set it to `true` when the explicit collection is the complete collision representation for that promoted cell. Replacement suppresses only the imported colliders for that cell; demotion restores them. This explicit policy prevents an interactive door or other promoted tile from accidentally receiving the same collider twice.

@@ -21,7 +21,7 @@ public sealed class CollisionStageTwoContractTests
         {
             Collider2D collider = CreateRandomCollider(random, index);
             colliders.Add(collider);
-            scene.Children.Add(collider);
+            scene.Children.Add(new Sprite2D { Colliders = { collider } });
         }
 
         CollisionWorld2D world = scene.CollisionWorld;
@@ -62,9 +62,9 @@ public sealed class CollisionStageTwoContractTests
             TranslateY = 1
         };
         Scene2D scene = new();
-        scene.Children.Add(ellipse);
-        scene.Children.Add(corner);
-        scene.Children.Add(inside);
+        scene.Children.Add(new Sprite2D { Colliders = { ellipse } });
+        scene.Children.Add(new Sprite2D { Colliders = { corner } });
+        scene.Children.Add(new Sprite2D { Colliders = { inside } });
 
         Assert.False(scene.CollisionWorld.Intersects(ellipse, corner));
         Assert.True(scene.CollisionWorld.Intersects(ellipse, inside));
@@ -84,8 +84,8 @@ public sealed class CollisionStageTwoContractTests
         };
         BoxCollider2D wall = new() { Width = 1, Height = 20, TranslateY = -10 };
         Scene2D scene = new();
-        scene.Children.Add(actor);
-        scene.Children.Add(wall);
+        scene.Children.Add(new Sprite2D { Colliders = { actor } });
+        scene.Children.Add(new Sprite2D { Colliders = { wall } });
 
         MoveCollisionResult2D result = scene.CollisionWorld.MoveAndCollide(actor, new Vector2(200, 0));
 
@@ -105,9 +105,9 @@ public sealed class CollisionStageTwoContractTests
         CircleCollider2D touching = new() { Radius = 1, TranslateY = 8 };
         CircleCollider2D separated = new() { Radius = 1, TranslateX = 2, TranslateY = 8 };
         Scene2D scene = new();
-        scene.Children.Add(segment);
-        scene.Children.Add(touching);
-        scene.Children.Add(separated);
+        scene.Children.Add(new Sprite2D { Colliders = { segment } });
+        scene.Children.Add(new Sprite2D { Colliders = { touching } });
+        scene.Children.Add(new Sprite2D { Colliders = { separated } });
 
         Assert.True(scene.CollisionWorld.Intersects(segment, touching));
         Assert.False(scene.CollisionWorld.Intersects(segment, separated));
@@ -127,10 +127,10 @@ public sealed class CollisionStageTwoContractTests
         BoxCollider2D trigger = Box(layer: 2, mask: 1);
         trigger.IsTrigger = true;
         Scene2D scene = new();
-        scene.Children.Add(source);
-        scene.Children.Add(accepted);
-        scene.Children.Add(rejected);
-        scene.Children.Add(trigger);
+        scene.Children.Add(new Sprite2D { Colliders = { source } });
+        scene.Children.Add(new Sprite2D { Colliders = { accepted } });
+        scene.Children.Add(new Sprite2D { Colliders = { rejected } });
+        scene.Children.Add(new Sprite2D { Colliders = { trigger } });
         CollisionWorld2D world = scene.CollisionWorld;
         CollisionWorld2DDiagnosticsSnapshot before = world.GetDiagnosticsSnapshot();
 
@@ -153,9 +153,9 @@ public sealed class CollisionStageTwoContractTests
         Scene2D village = new();
         BoxCollider2D house = Box();
         CircleCollider2D actor = new() { Radius = 3, TranslateX = 50 };
-        village.Children.Add(house);
+        village.Children.Add(new Sprite2D { Colliders = { house } });
         root.Children.Add(village);
-        root.Children.Add(actor);
+        root.Children.Add(new Sprite2D { Colliders = { actor } });
 
         Assert.Same(root.CollisionWorld, village.CollisionWorld);
         CollisionWorld2DDiagnosticsSnapshot initial = root.CollisionWorld.GetDiagnosticsSnapshot();
@@ -221,11 +221,12 @@ public sealed class CollisionStageTwoContractTests
         BoxCollider2D collider = Box();
         object dataContext = new();
         collider.DataContext = dataContext;
-        scene.Children.Add(collider);
+        Sprite2D sprite = new() { Colliders = { collider } };
+        scene.Children.Add(sprite);
         Assert.Equal(1, scene.CollisionWorld.GetDiagnosticsSnapshot().EntryCount);
         WeakReference node = new(collider);
         WeakReference context = new(dataContext);
-        scene.Children.Remove(collider);
+        scene.Children.Remove(sprite);
         return (scene, node, context);
     }
 

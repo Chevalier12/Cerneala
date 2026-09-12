@@ -65,7 +65,9 @@ public partial class SceneWorldShowcase
         Require(backend == "Cerneala.UI.Hosting.Sdl.SdlGpuApplicationBackend", $"This conformance scenario requires the SDL GPU backend; selected: {backend}.");
         await Frames(30);
         await Snap("01-closed");
-        Require(Map.Model is not null && ImportedColliders.RealizedItemCount == 6, "Imported world and six collider entities must attach.");
+        Require(Map.Model is not null && State.Colliders.Count == 6 &&
+            Map.Model.TileSets.SelectMany(s => s.Tiles).Any(t => t.Colliders.Count > 0),
+            "Imported world must attach the six authored wall regions through tile-owned collision geometry.");
         Require(Door.X == 14 && Door.Y == 9 && DoorCollider.Enabled, "Door promotion binding must address (14,9), closed.");
         await Click("world-player");
         Require(PlayerSelections == 1, "Player selection must use routed pointer input.");
@@ -132,7 +134,9 @@ public partial class SceneWorldShowcase
         Require(DebugOverlay.GetDiagnosticsSnapshot().Primitives == 0, "Disabled overlay must emit no debug commands.");
         await Click("world-format");
         await Frames(30);
-        Require(State.IsLdtk && Map.Model!.Layers.Sum(l => l.Chunks.Count) == 2, "LDtk must load its two finite tile-layer chunks.");
+        Require(State.IsLdtk && Map.Model!.Layers.Sum(l => l.Chunks.Count) == 3 &&
+            Map.Model.Layers.Where(l => l.Chunks.Count > 0).Select(l => l.Id).Order().SequenceEqual(["1", "2", "4"]),
+            $"LDtk must load one chunk each for Terrain (1), Buildings (2), and Doors (4). IsLdtk={State.IsLdtk}; layers={string.Join(",", Map.Model!.Layers.Select(l => $"{l.Id}:{l.Chunks.Count}"))}; status={State.Status}");
         await Snap("09-ldtk");
         File.WriteAllText(Path.Combine(directory, "results.json"), JsonSerializer.Serialize(new
         {

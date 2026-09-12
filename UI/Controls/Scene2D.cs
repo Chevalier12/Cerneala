@@ -8,7 +8,7 @@ using Cerneala.UI.Markup;
 namespace Cerneala.UI.Controls;
 
 [ContentProperty(nameof(Children))]
-public sealed class Scene2D : SceneNode2D
+public class Scene2D : SceneNode2D
 {
     public static readonly UiProperty<SceneOrderMode> OrderModeProperty =
         UiProperty<SceneOrderMode>.Register(
@@ -292,6 +292,8 @@ public sealed class Scene2D : SceneNode2D
         {
             ArgumentNullException.ThrowIfNull(item);
             SceneNode2D previous = this[index];
+            if (ReferenceEquals(previous, item)) { return; }
+            owner.LogicalChildren.ValidateInsertion(index, item);
             previous.AttachSurface(null);
             owner.LogicalChildren.Remove(previous);
             owner.LogicalChildren.Insert(index, item);

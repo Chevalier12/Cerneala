@@ -66,8 +66,10 @@ The language layer owns:
 
 The source generator owns lowering validated markup into typed C#. Generated
 applications can select a startup window, initialize resources, and emit the
-process entry point. Generated `Window` and `UserControl` types pair with normal
-C# partial classes.
+process entry point. Generated `Window`, `UserControl`, and `Scene2D` types pair
+with normal C# partial classes. Paired scenes initialize the component itself
+and compose logical scene nodes through the existing `Scene2D.Children` owner;
+they introduce no visual control host or separate recording path.
 
 Code-first construction remains valid. Markup is an authoring layer over the
 same runtime controls and typed properties.
@@ -260,6 +262,13 @@ property, or `InvalidateFrame()` marks it dirty.
 
 Graphics-device resources and surface sessions belong to the backend and are
 disposed when the control detaches.
+
+The scene root owns collision queries, while collision geometry belongs to the
+object it represents. Live collider nodes attach only through `Sprite2D` or
+`TileInstance2D` collider collections. Static `Tile` placements and imported tile
+definitions own immutable descriptors adapted by the tile map. Generic UI tree
+mutations cannot bypass collider ownership. Image resizing and animation do not
+manage collision dimensions; applications own that geometry explicitly.
 
 ## Drawing Boundary
 

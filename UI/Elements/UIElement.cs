@@ -619,6 +619,10 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         LogicalParent = parent;
     }
 
+    internal virtual void ValidateParentChange(UIElement? parent, ElementChildRole role, bool ownerManaged)
+    {
+    }
+
     internal void SetVisualParent(UIElement? parent)
     {
         VisualParent = parent;

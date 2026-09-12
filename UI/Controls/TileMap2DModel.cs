@@ -428,6 +428,15 @@ public sealed class TileMap2DModel
         {
             throw new ArgumentException("Tile placements cannot contain null.", nameof(tiles));
         }
+        long colliderCount = 0;
+        foreach (Tile tile in copied)
+        {
+            colliderCount += tile.Colliders.Count;
+            if (colliderCount > MaximumExpandedTileColliders)
+            {
+                throw Diagnostic(new ArgumentException($"A tilemap is limited to {MaximumExpandedTileColliders} expanded tile collider descriptors.", nameof(tiles)), "SCN2D013");
+            }
+        }
         Tiles = Array.AsReadOnly(copied);
         PlacementImages = copied.Select(static tile => tile.Image).Distinct().ToArray();
         this.tileSets = Array.AsReadOnly(Array.Empty<TileSet2D>());

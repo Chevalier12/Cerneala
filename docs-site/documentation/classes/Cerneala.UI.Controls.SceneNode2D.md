@@ -35,11 +35,11 @@ Owned scene nodes also participate in the same retained input route as visual UI
 
 Changing or animating a UI property on an owned node invalidates the surface. A node's local Aspect is processed when the node attaches and when the Aspect is invalidated. `IsVisible` and `Visibility` control participation in scene recording. The built-in concrete nodes are `Scene2D`, `SceneItems2D`, and `Sprite2D`.
 
-`SceneNode2D` is a framework base for the built-in scene node types. Its recording contract is internal, so applications compose the provided nodes rather than implement new node types outside the Cerneala assembly.
+`SceneNode2D` is a framework base for the built-in scene node types. Its recording contract is internal, so applications compose the provided nodes rather than implement new recording primitives outside the Cerneala assembly. Applications can derive from `Scene2D` to package that composition, including a paired `.crn` + `.crn.cs` component used as `<local:HouseView />`; see [Scene2D](Cerneala.UI.Controls.Scene2D.md).
 
 `Layer` is an integer scene-order key interpreted by the containing `Scene2D`. It has no effect while that parent uses `SceneOrderMode.Source`. In `Layer` and `LayerThenY` modes, smaller values are recorded first. Equal keys retain the source collection order. `Layer` is distinct from `Sprite2D.LayerDepth`, which is only forwarded to the drawing backend.
 
-Geometric picking walks the effective draw order in reverse. A node with direct collider children uses their union; otherwise a visual node can use its known exact local bounds. Unknown bounds are not replaced with an invented rectangle. `IsHitTestVisible`, UI `IsEnabled`, visibility, transforms, and the owning surface clip apply before the node can become a target. Opacity and Prism remain presentation-only for hit testing.
+Geometric picking walks the effective draw order in reverse. A `Sprite2D` or `TileInstance2D` can own collider children whose enabled geometry targets that owner. Known visual bounds can also participate in picking; attaching colliders does not remove the visual-bounds fallback. Unknown bounds are not replaced with an invented rectangle. `IsHitTestVisible`, UI `IsEnabled`, visibility, transforms, and the owning surface clip apply before the node can become a target. Opacity and Prism remain presentation-only for hit testing. Scene groups cannot own live collider nodes directly.
 
 Aspect can assign `Layer` as structural state. Motion cannot animate it because Cerneala has no interpolation contract for structural scene order; generated markup reports a diagnostic instead of silently applying a fallback.
 

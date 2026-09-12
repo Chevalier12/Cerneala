@@ -79,15 +79,6 @@
               </TileInstance2D>
             </TileLayer2D>
           </TileMap2D>
-          <SceneItems2D Name="ImportedColliders" ItemsSource="$DataContext.Colliders:OneWay">
-            @templates {
-              <ContentTemplate DataType="local:SceneWorldBox">
-                <BoxCollider2D TranslateX="$DataContext.X" TranslateY="$DataContext.Y"
-                               Width="$DataContext.Width" Height="$DataContext.Height"
-                               CollisionLayer="$DataContext.Layer" CollisionMask="$DataContext.Mask" />
-              </ContentTemplate>
-            }
-          </SceneItems2D>
           <Scene2D Name="Actors" OrderMode="LayerThenY">
             <SceneItems2D Name="Npcs" ItemsSource="$DataContext.Npcs:OneWay">
               @templates {
@@ -98,8 +89,8 @@
                         @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.4; } @to { Opacity = 1; } } }
                       </Sprite2D.Aspect>
                       @prism { @layer NpcGlow { @style OuterGlow { Size = 1; Opacity = 0.2; Color = #FFFFC777; } } }
+                      <BoxCollider2D Width="12" Height="14" CollisionLayer="2" CollisionMask="1" />
                     </Sprite2D>
-                    <BoxCollider2D Width="12" Height="14" CollisionLayer="2" CollisionMask="1" />
                   </Scene2D>
                 </ContentTemplate>
               }
@@ -116,8 +107,8 @@
                   @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.5; } @to { Opacity = 1; } } }
                 </Sprite2D.Aspect>
                 @prism { @layer PlayerGlow { @style OuterGlow { Size = 1; Opacity = 0.25; Color = #FF55C5D1; } } }
+                <BoxCollider2D Name="PlayerCollider" Width="12" Height="14" CollisionLayer="1" CollisionMask="2" />
               </Sprite2D>
-              <BoxCollider2D Name="PlayerCollider" Width="12" Height="14" CollisionLayer="1" CollisionMask="2" />
             </Scene2D>
           </Scene2D>
           <Scene2DDebugOverlay Name="DebugOverlay" Flags="$DataContext.DebugFlags:OneWay" NavigationGrid="$DataContext.Navigation:OneWay" FontSize="8">

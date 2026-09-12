@@ -85,7 +85,7 @@ internal sealed class CollisionStageFiveFixture
         };
         door.Children.Add(closedDoor);
         door.Children.Add(openDoor);
-        door.Children.Add(doorCollider);
+        closedDoor.Colliders.Add(doorCollider);
         house.Children.Add(door);
         scene.Children.Add(house);
 
@@ -95,7 +95,8 @@ internal sealed class CollisionStageFiveFixture
             TranslateX = 60,
             TranslateY = 68
         };
-        player.Children.Add(CreateSprite(atlasId, 3, new DrawRect(0, 0, 8, 8)));
+        Sprite2D playerSprite = CreateSprite(atlasId, 3, new DrawRect(0, 0, 8, 8));
+        player.Children.Add(playerSprite);
         CircleCollider2D playerCollider = new()
         {
             Radius = 4,
@@ -104,7 +105,7 @@ internal sealed class CollisionStageFiveFixture
             CollisionLayer = 1,
             CollisionMask = 2
         };
-        player.Children.Add(playerCollider);
+        playerSprite.Colliders.Add(playerCollider);
         scene.Children.Add(player);
 
         RenderSurface2D surface = new()
@@ -236,13 +237,12 @@ internal sealed class CollisionStageFiveFixture
         ResourceId<ImageResource> atlasId,
         DrawRect bounds)
     {
-        house.Children.Add(CreateSprite(atlasId, 1, bounds));
-        house.Children.Add(new BoxCollider2D
+        Sprite2D wall = CreateSprite(atlasId, 1, bounds);
+        house.Children.Add(wall);
+        wall.Colliders.Add(new BoxCollider2D
         {
             Width = bounds.Width,
             Height = bounds.Height,
-            OffsetX = bounds.X,
-            OffsetY = bounds.Y,
             CollisionLayer = 2,
             CollisionMask = 1
         });

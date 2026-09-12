@@ -127,7 +127,8 @@ public sealed class CollisionStageZeroContractTests
     {
         Scene2D group = new() { TranslateX = 20, TranslateY = -10, ScaleX = 2, ScaleY = 2 };
         UIElement collider = CreateCollider("BoxCollider2D", ("Width", 5f), ("Height", 6f), ("OffsetX", 3f));
-        group.Children.Add((SceneNode2D)collider);
+        Sprite2D sprite = new() { Colliders = { (Collider2D)collider } };
+        group.Children.Add(sprite);
         Scene2D scene = SceneWith(group);
         object world = GetWorld(scene);
 
@@ -137,9 +138,9 @@ public sealed class CollisionStageZeroContractTests
 
         Set(collider, "OffsetX", 10f);
         Assert.True(Convert.ToInt64(world.GetType().GetProperty("Version", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)!.GetValue(world)) > version);
-        group.Children.Remove((SceneNode2D)collider);
+        sprite.Colliders.Remove((Collider2D)collider);
         Assert.Empty(Assert.IsAssignableFrom<Array>(Invoke(world, "Raycast", new Vector2(25, -4), Vector2.UnitX, 30f)!).Cast<object>());
-        group.Children.Add((SceneNode2D)collider);
+        sprite.Colliders.Add((Collider2D)collider);
         Assert.NotEmpty(Assert.IsAssignableFrom<Array>(Invoke(world, "Raycast", new Vector2(25, -4), Vector2.UnitX, 60f)!).Cast<object>());
     }
 
@@ -189,16 +190,16 @@ public sealed class CollisionStageZeroContractTests
         RenderSurface2D surface = new();
         surface.Arrange(new ArrangeContext(new LayoutRect(0, 0, 200, 200)));
         Scene2D scene = new();
-        UIElement collider = CreateCollider("BoxCollider2D", ("Width", 30f), ("Height", 30f), ("TranslateX", 10f), ("TranslateY", 10f));
-        scene.Children.Add((SceneNode2D)collider);
+        UIElement sprite = new Sprite2D { Colliders = { (Collider2D)CreateCollider("BoxCollider2D", ("Width", 30f), ("Height", 30f), ("TranslateX", 10f), ("TranslateY", 10f)) } };
+        scene.Children.Add((SceneNode2D)sprite);
         surface.Scene = scene;
         root.VisualChildren.Add(surface);
         List<string> route = [];
         root.AddHandler(InputEvents.PreviewMouseDownEvent, (_, _) => route.Add("preview-root"));
         surface.AddHandler(InputEvents.PreviewMouseDownEvent, (_, _) => route.Add("preview-surface"));
         scene.AddHandler(InputEvents.PreviewMouseDownEvent, (_, _) => route.Add("preview-scene"));
-        collider.AddHandler(InputEvents.PreviewMouseDownEvent, (_, _) => route.Add("preview-node"));
-        collider.AddHandler(InputEvents.MouseDownEvent, (_, _) => route.Add("bubble-node"));
+        sprite.AddHandler(InputEvents.PreviewMouseDownEvent, (_, _) => route.Add("preview-node"));
+        sprite.AddHandler(InputEvents.MouseDownEvent, (_, _) => route.Add("bubble-node"));
         scene.AddHandler(InputEvents.MouseDownEvent, (_, _) => route.Add("bubble-scene"));
         surface.AddHandler(InputEvents.MouseDownEvent, (_, _) => route.Add("bubble-surface"));
         root.AddHandler(InputEvents.MouseDownEvent, (_, _) => route.Add("bubble-root"));
@@ -209,32 +210,32 @@ public sealed class CollisionStageZeroContractTests
         Assert.Equal(
             ["preview-root", "preview-surface", "preview-scene", "preview-node", "bubble-node", "bubble-scene", "bubble-surface", "bubble-root"],
             route);
-        Assert.True(collider.IsPointerOver);
+        Assert.True(sprite.IsPointerOver);
         ElementInputRouteMap map = root.InputCache.EnsureCurrent(root);
-        Assert.True(map.TryGetId(collider, out UiElementId id));
+        Assert.True(map.TryGetId(sprite, out UiElementId id));
         Assert.False(string.IsNullOrEmpty(id.Value));
-        bridge.PointerCaptureManager.Capture(collider, map);
-        scene.Children.Remove((SceneNode2D)collider);
+        bridge.PointerCaptureManager.Capture(sprite, map);
+        scene.Children.Remove((SceneNode2D)sprite);
         bridge.Dispatch(root, PointerFrame(20, 20));
         Assert.Null(bridge.PointerCaptureManager.CapturedElement);
-        Assert.False(collider.IsPointerOver);
+        Assert.False(sprite.IsPointerOver);
     }
 
     [Fact]
     [Trait("CollisionStage", "0")]
     public void SceneNodeUsesExistingWheelHandledEnterLeaveAndCursorServices()
     {
-        UIRoot root = SceneRootWithCollider(out _, out Scene2D scene, out UIElement collider);
+        UIRoot root = SceneRootWithSprite(out _, out Scene2D scene, out UIElement sprite);
         bool sceneWheel = false;
         bool rootHandledToo = false;
         int enters = 0;
         int leaves = 0;
-        collider.Cursor = Cursor.Crosshair;
-        collider.AddHandler(InputEvents.MouseWheelEvent, (_, args) => args.Handled = true);
+        sprite.Cursor = Cursor.Crosshair;
+        sprite.AddHandler(InputEvents.MouseWheelEvent, (_, args) => args.Handled = true);
         scene.AddHandler(InputEvents.MouseWheelEvent, (_, _) => sceneWheel = true);
         root.AddHandler(InputEvents.MouseWheelEvent, (_, _) => rootHandledToo = true, handledEventsToo: true);
-        collider.AddHandler(InputEvents.MouseEnterEvent, (_, _) => enters++);
-        collider.AddHandler(InputEvents.MouseLeaveEvent, (_, _) => leaves++);
+        sprite.AddHandler(InputEvents.MouseEnterEvent, (_, _) => enters++);
+        sprite.AddHandler(InputEvents.MouseLeaveEvent, (_, _) => leaves++);
         ElementInputBridge bridge = new();
 
         bridge.Dispatch(root, PointerFrame(20, 20));
@@ -252,19 +253,19 @@ public sealed class CollisionStageZeroContractTests
     [Trait("CollisionStage", "0")]
     public void FocusKeyboardTextAndAncestorCommandUseTheSameSceneRoute()
     {
-        UIRoot root = SceneRootWithCollider(out _, out Scene2D scene, out UIElement collider);
-        collider.Focusable = true;
+        UIRoot root = SceneRootWithSprite(out _, out Scene2D scene, out UIElement sprite);
+        sprite.Focusable = true;
         int commandExecutions = 0;
         string? text = null;
         scene.InputBindings.Add(new KeyBinding(new ActionCommand(_ => commandExecutions++), InputKey.Enter));
-        collider.AddHandler(InputEvents.TextInputEvent, (_, args) => text = ((TextCompositionEventArgs)args).Text);
+        sprite.AddHandler(InputEvents.TextInputEvent, (_, args) => text = ((TextCompositionEventArgs)args).Text);
         ElementInputBridge bridge = new();
 
         bridge.Dispatch(root, PointerFrame(20, 20, down: true));
         bridge.Dispatch(root, KeyPressFrame(InputKey.Enter));
         bridge.Dispatch(root, TextFrame("door"));
 
-        Assert.Same(collider, bridge.FocusManager.FocusedElement);
+        Assert.Same(sprite, bridge.FocusManager.FocusedElement);
         Assert.Equal(1, commandExecutions);
         Assert.Equal("door", text);
     }
@@ -306,22 +307,22 @@ public sealed class CollisionStageZeroContractTests
         Scene2D scene = new();
         foreach (UIElement node in nodes)
         {
-            scene.Children.Add((SceneNode2D)node);
+            scene.Children.Add(node is Collider2D collider ? new Sprite2D { Colliders = { collider } } : (SceneNode2D)node);
         }
         return scene;
     }
 
-    private static UIRoot SceneRootWithCollider(
+    private static UIRoot SceneRootWithSprite(
         out RenderSurface2D surface,
         out Scene2D scene,
-        out UIElement collider)
+        out UIElement sprite)
     {
         UIRoot root = new(200, 200);
         surface = new RenderSurface2D();
         surface.Arrange(new ArrangeContext(new LayoutRect(0, 0, 200, 200)));
         scene = new Scene2D();
-        collider = CreateCollider("BoxCollider2D", ("Width", 30f), ("Height", 30f), ("TranslateX", 10f), ("TranslateY", 10f));
-        scene.Children.Add((SceneNode2D)collider);
+        sprite = new Sprite2D { Colliders = { (Collider2D)CreateCollider("BoxCollider2D", ("Width", 30f), ("Height", 30f), ("TranslateX", 10f), ("TranslateY", 10f)) } };
+        scene.Children.Add((SceneNode2D)sprite);
         surface.Scene = scene;
         root.VisualChildren.Add(surface);
         return root;

@@ -28,7 +28,7 @@ var model = new TileMap2DModel(
 
 ## Remarks
 
-The `IEnumerable<Tile>` constructor stores free pixel placements without manufacturing a grid. It copies the placement collection, exposes it through `Tiles`, and uses one generated presentation layer. `TileSets` and grid `Chunks` are empty, `TileSize` is zero/default (no uniform cell size), and `Bounds` is null. Each placement retains its image reference and optional independent dimensions. This constructor accepts up to 1,048,576 placements and requires a positive version. Replacing the placement list is detected independently of the publication version.
+The `IEnumerable<Tile>` constructor stores free pixel placements without manufacturing a grid. It copies the placement collection, exposes it through `Tiles`, and uses one generated presentation layer. `TileSets` and grid `Chunks` are empty, `TileSize` is zero/default (no uniform cell size), and `Bounds` is null. Each placement retains its image reference, optional independent dimensions, and immutable collision descriptors. This constructor accepts up to 1,048,576 placements, at most 65,536 expanded collider descriptors across them, and a positive version. Replacing the placement list is detected independently of the publication version.
 
 The grid constructor remains available for Tiled/LDtk imports and C# grid composition. Its coordinates, atlas resource IDs, source rectangles, layers, and chunks are backend-neutral; `Tiles` is empty. Constructor collections and property dictionaries are copied into read-only views. Values stored inside an opaque `Properties` dictionary are not interpreted or deep-cloned by the renderer. Neither constructor transfers image ownership to the map.
 

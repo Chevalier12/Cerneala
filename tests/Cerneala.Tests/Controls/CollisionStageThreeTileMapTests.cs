@@ -22,7 +22,7 @@ public sealed class CollisionStageThreeTileMapTests
         CircleCollider2D player = new() { Radius = 2, TranslateX = -50, TranslateY = 8 };
         Scene2D scene = new();
         scene.Children.Add(map);
-        scene.Children.Add(player);
+        scene.Children.Add(new Sprite2D { Colliders = { player } });
         RenderSurface2D surface = new() { Scene = scene };
         DrawCommandList commands = [];
 
