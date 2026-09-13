@@ -37,9 +37,9 @@ Free `Tile` placements count toward the cell budget. Their required image refere
 
 ### Construction limits
 
-Each chunk/tileset is limited to 1,048,576 cells/definitions; a layer has at most 65,536 chunks; a map has at most 4,096 layers/tilesets. A level has at most 65,536 entities and 65,536 promotion references. A document has at most 4,096 levels/assets. A shape or descriptor collection has at most 4,096 points/descriptors. Point text is limited to 393,216 UTF-16 characters before tokenization.
+Each chunk/tileset is limited to 1,048,576 cells/definitions. A map has at most 65,536 chunks and 4,096 tilesets; a level has at most 4,096 independent maps and source tilesets. A level has at most 65,536 entities and 65,536 promotion references. A document has at most 4,096 levels/assets. Each tile, tile definition, and entity owns at most one collider descriptor. A shape has at most 4,096 points, and point text is limited to 393,216 UTF-16 characters before tokenization.
 
-A map additionally caps aggregate definitions and cells at 1,048,576 each and aggregate chunks at 65,536, including repeated references to shared components. A map permits at most 65,536 expanded tile collider descriptors, counted before horizontal box coalescing. A level permits at most 65,536 entity collider descriptors in total. This prevents small repeated input from materializing an unbounded collision tree. Collection enumeration is bounded; chunk dimensions are checked before enumeration and excess cell enumeration stops at the first extra cell.
+A map additionally caps aggregate definitions and cells at 1,048,576 each and chunks at 65,536. A level enforces those aggregate bounds across its maps, counting shared tileset objects once but repeated chunk/cell references per map. It also validates its optional source catalog, including when no maps exist. Maps and levels permit at most 65,536 expanded tile colliders, counted before horizontal box coalescing. A level permits at most 65,536 entity colliders in total. This prevents small repeated input from materializing an unbounded collision tree. Collection enumeration is bounded; chunk dimensions are checked before enumeration and excess cell enumeration stops at the first extra cell.
 
 Geometry must fit the existing drawing coordinate range (±2,000,000,000 scene units, sizes at most 2,000,000,000), in addition to finite-number checks. Polygon cross products must remain finite and nondegenerate. The collider epsilon is 0.00001 scene units. These are rejection rules, not clamping or approximation.
 
@@ -54,7 +54,7 @@ These per-component construction caps are independent of the configurable aggreg
 | `SCN2D005` | Invalid dimensions, chunk size/count, or bounds. |
 | `SCN2D006` | Invalid/unresolved tile ID. |
 | `SCN2D007` | Invalid atlas dimensions or source rectangle. |
-| `SCN2D008` | Invalid collider geometry. |
+| `SCN2D008` | Invalid collider geometry or more than one collider for an owner. |
 | `SCN2D009` | Invalid collision bitset. |
 | `SCN2D010` | Invalid/unresolved asset reference. |
 | `SCN2D011` | Chunk overlap. |

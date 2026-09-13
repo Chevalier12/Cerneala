@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using Cerneala.Drawing;
 using Cerneala.UI.Resources;
 using static Cerneala.UI.Controls.Scene2DModelValidator;
@@ -19,29 +20,29 @@ public readonly record struct TileCoordinate2D(int X, int Y);
 
 public readonly record struct TileCellKey2D
 {
-    public TileCellKey2D(string layerId, TileCoordinate2D coordinate)
+    public TileCellKey2D(string mapId, TileCoordinate2D coordinate)
     {
-        LayerId = ValidateLayerId(layerId);
+        MapId = ValidateMapId(mapId);
         Coordinate = coordinate;
     }
 
-    public TileCellKey2D(string layerId, int x, int y)
-        : this(ValidateLayerId(layerId), new TileCoordinate2D(x, y))
+    public TileCellKey2D(string mapId, int x, int y)
+        : this(ValidateMapId(mapId), new TileCoordinate2D(x, y))
     {
     }
 
-    public string LayerId { get; }
+    public string MapId { get; }
 
     public TileCoordinate2D Coordinate { get; }
 
-    private static string ValidateLayerId(string layerId)
+    private static string ValidateMapId(string mapId)
     {
-        if (string.IsNullOrWhiteSpace(layerId))
+        if (string.IsNullOrWhiteSpace(mapId))
         {
-            throw Diagnostic(new ArgumentException("Layer id cannot be empty.", nameof(layerId)), "SCN2D015");
+            throw Diagnostic(new ArgumentException("Map id cannot be empty.", nameof(mapId)), "SCN2D015");
         }
 
-        return layerId;
+        return mapId;
     }
 }
 
@@ -110,13 +111,11 @@ public readonly record struct TileCell2D
 
 public sealed class TileDefinition2D
 {
-    private readonly ReadOnlyCollection<TileColliderDescriptor2D> colliders;
-
     public TileDefinition2D(
         int id,
         DrawRect sourceRect,
         IReadOnlyDictionary<string, object?>? properties = null,
-        IEnumerable<TileColliderDescriptor2D>? colliders = null)
+        TileColliderDescriptor2D? collider = null)
     {
         if (id <= 0)
         {
@@ -130,12 +129,7 @@ public sealed class TileDefinition2D
         Id = id;
         SourceRect = sourceRect;
         Properties = TileMapModelCopy.CopyProperties(properties);
-        TileColliderDescriptor2D[] copiedColliders = colliders is null ? [] : CopyBounded(colliders, MaximumShapePoints, nameof(colliders));
-        if (copiedColliders.Any(static collider => collider is null))
-        {
-            throw Diagnostic(new ArgumentException("Tile colliders cannot contain null descriptors.", nameof(colliders)), "SCN2D008");
-        }
-        this.colliders = Array.AsReadOnly(copiedColliders);
+        Collider = collider;
     }
 
     public int Id { get; }
@@ -144,7 +138,7 @@ public sealed class TileDefinition2D
 
     public IReadOnlyDictionary<string, object?> Properties { get; }
 
-    public IReadOnlyList<TileColliderDescriptor2D> Colliders => colliders;
+    public TileColliderDescriptor2D? Collider { get; }
 }
 
 public sealed class TileSet2D
@@ -210,7 +204,7 @@ public sealed class TileSet2D
 
 public sealed class TileChunk2D
 {
-    private readonly ReadOnlyCollection<TileCell2D> tiles;
+    private readonly TileCell2D[] tiles;
 
     public TileChunk2D(
         TileCoordinate2D origin,
@@ -251,7 +245,8 @@ public sealed class TileChunk2D
         Origin = origin;
         Width = width;
         Height = height;
-        this.tiles = Array.AsReadOnly(copied);
+        this.tiles = copied;
+        Tiles = Array.AsReadOnly(copied);
         Version = version;
         Properties = TileMapModelCopy.CopyProperties(properties);
     }
@@ -262,7 +257,13 @@ public sealed class TileChunk2D
 
     public int Height { get; }
 
-    public IReadOnlyList<TileCell2D> Tiles => tiles;
+    public IReadOnlyList<TileCell2D> Tiles { get; }
+
+    // TileCell2D is exactly two Int32 fields, without padding or references.
+    // The guarded layout permits exact byte comparison, not a hash/version shortcut.
+    internal bool HasSameCells(TileChunk2D other) =>
+        MemoryMarshal.AsBytes(tiles.AsSpan()).SequenceEqual(
+            MemoryMarshal.AsBytes(other.tiles.AsSpan()));
 
     public long Version { get; }
 
@@ -285,13 +286,48 @@ public sealed class TileChunk2D
     }
 }
 
-public sealed class TileLayer2DModel
+public sealed class TileMap2DModel
 {
+    private readonly ReadOnlyCollection<TileSet2D> tileSets;
     private readonly ReadOnlyCollection<TileChunk2D> chunks;
+    private readonly Dictionary<int, ResolvedTile> tileLookup;
 
-    public TileLayer2DModel(
+    public TileMap2DModel(IEnumerable<Tile> tiles, long version = 1, string id = "Tiles")
+    {
+        ArgumentNullException.ThrowIfNull(tiles);
+        Id = ValidateId(id);
+        if (version <= 0) { throw Diagnostic(new ArgumentOutOfRangeException(nameof(version)), "SCN2D003"); }
+        Tile[] copied = CopyBounded(tiles, MaximumCells, nameof(tiles));
+        if (copied.Any(static tile => tile is null))
+        {
+            throw new ArgumentException("Tile placements cannot contain null.", nameof(tiles));
+        }
+        long colliderCount = 0;
+        foreach (Tile tile in copied)
+        {
+            colliderCount += tile.Collider is null ? 0 : 1;
+            if (colliderCount > MaximumExpandedTileColliders)
+            {
+                throw Diagnostic(new ArgumentException($"A tilemap is limited to {MaximumExpandedTileColliders} expanded tile collider descriptors.", nameof(tiles)), "SCN2D013");
+            }
+        }
+        Tiles = Array.AsReadOnly(copied);
+        PlacementImages = copied.Select(static tile => tile.Image).Distinct().ToArray();
+        tileSets = Array.AsReadOnly(Array.Empty<TileSet2D>());
+        chunks = Array.AsReadOnly(Array.Empty<TileChunk2D>());
+        tileLookup = [];
+        Version = version;
+        Properties = TileMapModelCopy.CopyProperties(null);
+        ExpandedColliderCount = colliderCount;
+        IsFreePlacement = true;
+    }
+
+    public TileMap2DModel(
         string id,
+        DrawSize tileSize,
+        IEnumerable<TileSet2D> tileSets,
         IEnumerable<TileChunk2D> chunks,
+        TileMapBounds2D? bounds = null,
         int order = 0,
         bool isVisible = true,
         DrawPoint offset = default,
@@ -300,9 +336,11 @@ public sealed class TileLayer2DModel
         long version = 1,
         IReadOnlyDictionary<string, object?>? properties = null)
     {
-        if (string.IsNullOrWhiteSpace(id))
+        Id = ValidateId(id);
+        if (!float.IsFinite(tileSize.Width) || tileSize.Width <= 0 ||
+            !float.IsFinite(tileSize.Height) || tileSize.Height <= 0)
         {
-            throw Diagnostic(new ArgumentException("Layer id cannot be empty.", nameof(id)), "SCN2D015");
+            throw Diagnostic(new ArgumentOutOfRangeException(nameof(tileSize)), "SCN2D005");
         }
         if (!float.IsFinite(offset.X) || !float.IsFinite(offset.Y))
         {
@@ -316,16 +354,37 @@ public sealed class TileLayer2DModel
         {
             throw Diagnostic(new ArgumentOutOfRangeException(nameof(version)), "SCN2D003");
         }
+        ArgumentNullException.ThrowIfNull(tileSets);
         ArgumentNullException.ThrowIfNull(chunks);
-        TileChunk2D[] copied = CopyBounded(chunks, MaximumChunks, nameof(chunks));
-        if (copied.Any(static chunk => chunk is null))
+        if (bounds is TileMapBounds2D finite && (finite.Width <= 0 || finite.Height <= 0))
         {
-            throw Diagnostic(new ArgumentException("A tile layer cannot contain null chunks.", nameof(chunks)), "SCN2D005");
+            throw Diagnostic(new ArgumentException("Finite bounds must have positive dimensions.", nameof(bounds)), "SCN2D005");
         }
-        ValidateNoOverlaps(copied);
+        TileSet2D[] copiedTileSets = CopyBounded(tileSets, MaximumLayers, nameof(tileSets));
+        TileChunk2D[] copiedChunks = CopyBounded(chunks, MaximumChunks, nameof(chunks));
+        if (copiedTileSets.Any(static tileSet => tileSet is null))
+        {
+            throw Diagnostic(new ArgumentException("A tilemap cannot contain null tilesets.", nameof(tileSets)), "SCN2D010");
+        }
+        if (copiedChunks.Any(static chunk => chunk is null))
+        {
+            throw Diagnostic(new ArgumentException("A tilemap cannot contain null chunks.", nameof(chunks)), "SCN2D005");
+        }
+        ValidateAggregateBudgets(copiedTileSets, copiedChunks);
+        ValidateNoOverlaps(copiedChunks);
+        ValidateUniqueIds(copiedTileSets);
+        ExpandedColliderCount = ValidateCells(id, tileSize, copiedTileSets, copiedChunks, bounds, offset);
 
-        Id = id;
-        this.chunks = Array.AsReadOnly(copied);
+        TileSize = tileSize;
+        this.tileSets = Array.AsReadOnly(copiedTileSets);
+        this.chunks = Array.AsReadOnly(copiedChunks);
+        tileLookup = copiedTileSets
+            .SelectMany(static tileSet => tileSet.Tiles.Select(tile =>
+                new KeyValuePair<int, ResolvedTile>(
+                    tile.Id,
+                    new ResolvedTile(tileSet, tile))))
+            .ToDictionary(static pair => pair.Key, static pair => pair.Value);
+        Bounds = bounds;
         Order = order;
         IsVisible = isVisible;
         Offset = offset;
@@ -337,21 +396,37 @@ public sealed class TileLayer2DModel
 
     public string Id { get; }
 
-    public bool IsVisible { get; }
+    public DrawSize TileSize { get; }
 
-    public DrawPoint Offset { get; }
+    public TileMapBounds2D? Bounds { get; }
 
-    public float Opacity { get; }
+    public IReadOnlyList<TileSet2D> TileSets => tileSets;
 
-    public Color Tint { get; }
+    public IReadOnlyList<TileChunk2D> Chunks => chunks;
+
+    public IReadOnlyList<Tile> Tiles { get; } = Array.Empty<Tile>();
 
     public int Order { get; }
 
-    public IReadOnlyList<TileChunk2D> Chunks => chunks;
+    public bool IsVisible { get; } = true;
+
+    public DrawPoint Offset { get; }
+
+    public float Opacity { get; } = 1;
+
+    public Color Tint { get; } = Color.White;
 
     public long Version { get; }
 
     public IReadOnlyDictionary<string, object?> Properties { get; }
+
+    internal IReadOnlyList<ImageReference> PlacementImages { get; } = Array.Empty<ImageReference>();
+
+    internal bool IsFreePlacement { get; }
+
+    internal long ExpandedColliderCount { get; }
+
+    internal int TileDefinitionCount => tileLookup.Count;
 
     public bool TryGetCell(TileCoordinate2D coordinate, out TileCell2D cell)
     {
@@ -366,6 +441,142 @@ public sealed class TileLayer2DModel
 
         cell = default;
         return false;
+    }
+
+    public bool TryResolveTile(
+        int tileId,
+        out TileSet2D? tileSet,
+        out TileDefinition2D? definition)
+    {
+        if (tileId == 0)
+        {
+            tileSet = null;
+            definition = null;
+            return false;
+        }
+
+        if (tileLookup.TryGetValue(tileId, out ResolvedTile resolved))
+        {
+            tileSet = resolved.TileSet;
+            definition = resolved.Definition;
+            return true;
+        }
+
+        tileSet = null;
+        definition = null;
+        return false;
+    }
+
+    private readonly record struct ResolvedTile(
+        TileSet2D TileSet,
+        TileDefinition2D Definition);
+
+    internal static void ValidateUniqueIds(
+        IReadOnlyList<TileSet2D> tileSets)
+    {
+        string? duplicateTileset = tileSets
+            .GroupBy(static tileSet => tileSet.Id, StringComparer.Ordinal)
+            .Where(static group => group.Count() > 1)
+            .Select(static group => group.Key)
+            .FirstOrDefault();
+        if (duplicateTileset is not null)
+        {
+            throw Diagnostic(new ArgumentException($"Tileset id '{duplicateTileset}' is duplicated.", nameof(tileSets)), "SCN2D015");
+        }
+
+        int duplicateTile = tileSets
+            .SelectMany(static tileSet => tileSet.Tiles)
+            .GroupBy(static tile => tile.Id)
+            .Where(static group => group.Count() > 1)
+            .Select(static group => group.Key)
+            .FirstOrDefault();
+        if (duplicateTile != 0)
+        {
+            throw Diagnostic(new ArgumentException($"Tile id {duplicateTile} is defined by multiple tilesets.", nameof(tileSets)), "SCN2D015");
+        }
+
+    }
+
+    private static string ValidateId(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            throw Diagnostic(new ArgumentException("Map id cannot be empty.", nameof(id)), "SCN2D015");
+        }
+        return id;
+    }
+
+    private static void ValidateAggregateBudgets(IReadOnlyList<TileSet2D> tileSets, IReadOnlyList<TileChunk2D> chunks)
+    {
+        long definitions = 0, cells = 0;
+        foreach (TileSet2D set in tileSets)
+        {
+            definitions += set.Tiles.Count;
+            if (definitions > MaximumCells)
+            {
+                throw Diagnostic(new ArgumentException("A tilemap exceeds its total tile definition budget.", nameof(tileSets)), "SCN2D013");
+            }
+        }
+        foreach (TileChunk2D chunk in chunks)
+        {
+            cells += chunk.Tiles.Count;
+            if (cells > MaximumCells)
+            {
+                throw Diagnostic(new ArgumentException("A tilemap exceeds its total cell budget.", nameof(chunks)), "SCN2D013");
+            }
+        }
+    }
+
+    private static long ValidateCells(
+        string id,
+        DrawSize tileSize,
+        IReadOnlyList<TileSet2D> tileSets,
+        IReadOnlyList<TileChunk2D> chunks,
+        TileMapBounds2D? bounds,
+        DrawPoint offset)
+    {
+        Dictionary<int, TileDefinition2D> definitions = tileSets
+            .SelectMany(static tileSet => tileSet.Tiles)
+            .ToDictionary(static tile => tile.Id);
+        long colliderInstances = 0;
+        foreach (TileChunk2D chunk in chunks)
+        {
+            ValidateChunkGeometry(tileSize, chunk, offset);
+            if (bounds is TileMapBounds2D finite &&
+                (!finite.Contains(chunk.Origin) ||
+                 checked(chunk.Origin.X + chunk.Width) > finite.Right ||
+                 checked(chunk.Origin.Y + chunk.Height) > finite.Bottom))
+            {
+                throw Diagnostic(new ArgumentException(
+                    $"Chunk ({chunk.Origin.X},{chunk.Origin.Y}) in map '{id}' exceeds finite map bounds.",
+                    nameof(chunks)), "SCN2D005");
+            }
+
+            for (int index = 0; index < chunk.Tiles.Count; index++)
+            {
+                TileCell2D cell = chunk.Tiles[index];
+                if (cell.TileId == 0) { continue; }
+                if (!definitions.TryGetValue(cell.TileId, out TileDefinition2D? definition))
+                {
+                    throw Diagnostic(new ArgumentException(
+                        $"Tile id {cell.TileId} in map '{id}' has no tileset definition.",
+                        nameof(chunks)), "SCN2D006");
+                }
+                colliderInstances += definition.Collider is null ? 0 : 1;
+                if (colliderInstances > MaximumExpandedTileColliders)
+                {
+                    throw Diagnostic(new ArgumentException($"A tilemap is limited to {MaximumExpandedTileColliders} expanded tile collider descriptors before coalescing.", nameof(chunks)), "SCN2D013");
+                }
+                if (definition.Collider is TileColliderDescriptor2D collider)
+                {
+                    Matrix3x2 placement = TileFlipGeometry2D.Transform(cell.Flip, tileSize) * Matrix3x2.CreateTranslation(
+                        (chunk.Origin.X + index % chunk.Width) * tileSize.Width + offset.X,
+                        (chunk.Origin.Y + index / chunk.Width) * tileSize.Height + offset.Y);
+                    collider.ValidateGeometry(placement);
+                }
+            }
+        }
+        return colliderInstances;
     }
 
     private static void ValidateNoOverlaps(IReadOnlyList<TileChunk2D> chunks)
@@ -411,262 +622,6 @@ public sealed class TileLayer2DModel
     }
 
     private sealed record ChunkInterval(int Top, int Index, int Bottom);
-}
-
-public sealed class TileMap2DModel
-{
-    private readonly ReadOnlyCollection<TileSet2D> tileSets;
-    private readonly ReadOnlyCollection<TileLayer2DModel> layers;
-    private readonly Dictionary<int, ResolvedTile> tileLookup;
-
-    public TileMap2DModel(IEnumerable<Tile> tiles, long version = 1)
-    {
-        ArgumentNullException.ThrowIfNull(tiles);
-        if (version <= 0) { throw Diagnostic(new ArgumentOutOfRangeException(nameof(version)), "SCN2D003"); }
-        Tile[] copied = CopyBounded(tiles, MaximumCells, nameof(tiles));
-        if (copied.Any(static tile => tile is null))
-        {
-            throw new ArgumentException("Tile placements cannot contain null.", nameof(tiles));
-        }
-        long colliderCount = 0;
-        foreach (Tile tile in copied)
-        {
-            colliderCount += tile.Colliders.Count;
-            if (colliderCount > MaximumExpandedTileColliders)
-            {
-                throw Diagnostic(new ArgumentException($"A tilemap is limited to {MaximumExpandedTileColliders} expanded tile collider descriptors.", nameof(tiles)), "SCN2D013");
-            }
-        }
-        Tiles = Array.AsReadOnly(copied);
-        PlacementImages = copied.Select(static tile => tile.Image).Distinct().ToArray();
-        this.tileSets = Array.AsReadOnly(Array.Empty<TileSet2D>());
-        layers = Array.AsReadOnly(new[] { new TileLayer2DModel("Tiles", [], version: version) });
-        tileLookup = [];
-        Version = version;
-        Properties = TileMapModelCopy.CopyProperties(null);
-        IsFreePlacement = true;
-    }
-
-    public IReadOnlyList<Tile> Tiles { get; } = Array.Empty<Tile>();
-
-    internal IReadOnlyList<ImageReference> PlacementImages { get; } = Array.Empty<ImageReference>();
-
-    internal bool IsFreePlacement { get; }
-
-    public TileMap2DModel(
-        DrawSize tileSize,
-        IEnumerable<TileSet2D> tileSets,
-        IEnumerable<TileLayer2DModel> layers,
-        TileMapBounds2D? bounds = null,
-        long version = 1,
-        IReadOnlyDictionary<string, object?>? properties = null)
-    {
-        if (!float.IsFinite(tileSize.Width) || tileSize.Width <= 0 ||
-            !float.IsFinite(tileSize.Height) || tileSize.Height <= 0)
-        {
-            throw Diagnostic(new ArgumentOutOfRangeException(nameof(tileSize)), "SCN2D005");
-        }
-        if (version <= 0)
-        {
-            throw Diagnostic(new ArgumentOutOfRangeException(nameof(version)), "SCN2D003");
-        }
-        ArgumentNullException.ThrowIfNull(tileSets);
-        ArgumentNullException.ThrowIfNull(layers);
-        if (bounds is TileMapBounds2D finite && (finite.Width <= 0 || finite.Height <= 0))
-        {
-            throw Diagnostic(new ArgumentException("Finite bounds must have positive dimensions.", nameof(bounds)), "SCN2D005");
-        }
-        TileSet2D[] copiedTileSets = CopyBounded(tileSets, MaximumLayers, nameof(tileSets));
-        TileLayer2DModel[] copiedLayers = CopyBounded(layers, MaximumLayers, nameof(layers));
-        if (copiedTileSets.Any(static tileSet => tileSet is null))
-        {
-            throw Diagnostic(new ArgumentException("A tilemap cannot contain null tilesets.", nameof(tileSets)), "SCN2D010");
-        }
-        if (copiedLayers.Any(static layer => layer is null))
-        {
-            throw Diagnostic(new ArgumentException("A tilemap cannot contain null layers.", nameof(layers)), "SCN2D005");
-        }
-        ValidateAggregateBudgets(copiedTileSets, copiedLayers);
-        ValidateUniqueIds(copiedTileSets, copiedLayers);
-        ValidateCells(tileSize, copiedTileSets, copiedLayers, bounds);
-
-        TileSize = tileSize;
-        this.tileSets = Array.AsReadOnly(copiedTileSets);
-        this.layers = Array.AsReadOnly(copiedLayers);
-        tileLookup = copiedTileSets
-            .SelectMany(static tileSet => tileSet.Tiles.Select(tile =>
-                new KeyValuePair<int, ResolvedTile>(
-                    tile.Id,
-                    new ResolvedTile(tileSet, tile))))
-            .ToDictionary(static pair => pair.Key, static pair => pair.Value);
-        Bounds = bounds;
-        Version = version;
-        Properties = TileMapModelCopy.CopyProperties(properties);
-    }
-
-    public DrawSize TileSize { get; }
-
-    public TileMapBounds2D? Bounds { get; }
-
-    public IReadOnlyList<TileSet2D> TileSets => tileSets;
-
-    public IReadOnlyList<TileLayer2DModel> Layers => layers;
-
-    public long Version { get; }
-
-    public IReadOnlyDictionary<string, object?> Properties { get; }
-
-    public bool TryResolveTile(
-        int tileId,
-        out TileSet2D? tileSet,
-        out TileDefinition2D? definition)
-    {
-        if (tileId == 0)
-        {
-            tileSet = null;
-            definition = null;
-            return false;
-        }
-
-        if (tileLookup.TryGetValue(tileId, out ResolvedTile resolved))
-        {
-            tileSet = resolved.TileSet;
-            definition = resolved.Definition;
-            return true;
-        }
-
-        tileSet = null;
-        definition = null;
-        return false;
-    }
-
-    private readonly record struct ResolvedTile(
-        TileSet2D TileSet,
-        TileDefinition2D Definition);
-
-    public bool TryGetLayer(string layerId, out TileLayer2DModel? layer)
-    {
-        layer = layers.FirstOrDefault(candidate =>
-            string.Equals(candidate.Id, layerId, StringComparison.Ordinal));
-        return layer is not null;
-    }
-
-    private static void ValidateUniqueIds(
-        IReadOnlyList<TileSet2D> tileSets,
-        IReadOnlyList<TileLayer2DModel> layers)
-    {
-        string? duplicateTileset = tileSets
-            .GroupBy(static tileSet => tileSet.Id, StringComparer.Ordinal)
-            .Where(static group => group.Count() > 1)
-            .Select(static group => group.Key)
-            .FirstOrDefault();
-        if (duplicateTileset is not null)
-        {
-            throw Diagnostic(new ArgumentException($"Tileset id '{duplicateTileset}' is duplicated.", nameof(tileSets)), "SCN2D015");
-        }
-
-        int duplicateTile = tileSets
-            .SelectMany(static tileSet => tileSet.Tiles)
-            .GroupBy(static tile => tile.Id)
-            .Where(static group => group.Count() > 1)
-            .Select(static group => group.Key)
-            .FirstOrDefault();
-        if (duplicateTile != 0)
-        {
-            throw Diagnostic(new ArgumentException($"Tile id {duplicateTile} is defined by multiple tilesets.", nameof(tileSets)), "SCN2D015");
-        }
-
-        string? duplicateLayer = layers
-            .GroupBy(static layer => layer.Id, StringComparer.Ordinal)
-            .Where(static group => group.Count() > 1)
-            .Select(static group => group.Key)
-            .FirstOrDefault();
-        if (duplicateLayer is not null)
-        {
-            throw Diagnostic(new ArgumentException($"Layer id '{duplicateLayer}' is duplicated.", nameof(layers)), "SCN2D015");
-        }
-    }
-
-    private static void ValidateAggregateBudgets(IReadOnlyList<TileSet2D> tileSets, IReadOnlyList<TileLayer2DModel> layers)
-    {
-        long definitions = 0, chunks = 0, cells = 0;
-        foreach (TileSet2D set in tileSets)
-        {
-            definitions += set.Tiles.Count;
-            if (definitions > MaximumCells)
-            {
-                throw Diagnostic(new ArgumentException("A tilemap exceeds its total tile definition budget.", nameof(tileSets)), "SCN2D013");
-            }
-        }
-        foreach (TileLayer2DModel layer in layers)
-        {
-            chunks += layer.Chunks.Count;
-            if (chunks > MaximumChunks)
-            {
-                throw Diagnostic(new ArgumentException("A tilemap exceeds its total chunk budget.", nameof(layers)), "SCN2D013");
-            }
-            foreach (TileChunk2D chunk in layer.Chunks)
-            {
-                cells += chunk.Tiles.Count;
-                if (cells > MaximumCells)
-                {
-                    throw Diagnostic(new ArgumentException("A tilemap exceeds its total cell budget.", nameof(layers)), "SCN2D013");
-                }
-            }
-        }
-    }
-
-    private static void ValidateCells(
-        DrawSize tileSize,
-        IReadOnlyList<TileSet2D> tileSets,
-        IReadOnlyList<TileLayer2DModel> layers,
-        TileMapBounds2D? bounds)
-    {
-        Dictionary<int, TileDefinition2D> definitions = tileSets
-            .SelectMany(static tileSet => tileSet.Tiles)
-            .ToDictionary(static tile => tile.Id);
-        long colliderInstances = 0;
-        foreach (TileLayer2DModel layer in layers)
-        {
-            foreach (TileChunk2D chunk in layer.Chunks)
-            {
-                ValidateChunkGeometry(tileSize, chunk, layer.Offset);
-                if (bounds is TileMapBounds2D finite &&
-                    (!finite.Contains(chunk.Origin) ||
-                     checked(chunk.Origin.X + chunk.Width) > finite.Right ||
-                     checked(chunk.Origin.Y + chunk.Height) > finite.Bottom))
-                {
-                    throw Diagnostic(new ArgumentException(
-                        $"Chunk ({chunk.Origin.X},{chunk.Origin.Y}) in layer '{layer.Id}' exceeds finite map bounds.",
-                        nameof(layers)), "SCN2D005");
-                }
-
-                for (int index = 0; index < chunk.Tiles.Count; index++)
-                {
-                    TileCell2D cell = chunk.Tiles[index];
-                    if (cell.TileId == 0) { continue; }
-                    if (!definitions.TryGetValue(cell.TileId, out TileDefinition2D? definition))
-                    {
-                        throw Diagnostic(new ArgumentException(
-                            $"Tile id {cell.TileId} in layer '{layer.Id}' has no tileset definition.",
-                            nameof(layers)), "SCN2D006");
-                    }
-                    colliderInstances += definition.Colliders.Count;
-                    if (colliderInstances > MaximumExpandedTileColliders)
-                    {
-                        throw Diagnostic(new ArgumentException($"A tilemap is limited to {MaximumExpandedTileColliders} expanded tile collider descriptors before coalescing.", nameof(layers)), "SCN2D013");
-                    }
-                    if (definition.Colliders.Count > 0)
-                    {
-                        Matrix3x2 placement = TileFlipGeometry2D.Transform(cell.Flip, tileSize) * Matrix3x2.CreateTranslation(
-                            (chunk.Origin.X + index % chunk.Width) * tileSize.Width + layer.Offset.X,
-                            (chunk.Origin.Y + index / chunk.Width) * tileSize.Height + layer.Offset.Y);
-                        foreach (TileColliderDescriptor2D collider in definition.Colliders) { collider.ValidateGeometry(placement); }
-                    }
-                }
-            }
-        }
-    }
 }
 
 internal static class TileMapModelCopy

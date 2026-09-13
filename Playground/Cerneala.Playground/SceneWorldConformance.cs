@@ -45,14 +45,26 @@ public partial class MainWindow
 public partial class SceneWorldShowcase
 {
     private int observedFrames;
-    private readonly List<TileMapDiagnosticsSnapshot> recordingWindow = [];
+    private readonly List<WorldTileMapMetrics> recordingWindow = [];
     private bool collectRecordings;
+
+    private TileMapDiagnosticsSnapshot[] CaptureTileMaps() =>
+        [Root!.Detective.CaptureTileMap(Map), Root.Detective.CaptureTileMap(BuildingsMap), Root.Detective.CaptureTileMap(DoorsMap)];
+
+    private WorldTileMapMetrics CaptureTileMapMetrics()
+    {
+        TileMapDiagnosticsSnapshot[] maps = CaptureTileMaps();
+        return new(maps.Sum(map => map.TotalChunks), maps.Sum(map => map.VisibleChunks),
+            maps.Sum(map => map.BatchesBuilt), maps.Sum(map => map.BatchesRebuilt), maps.Sum(map => map.BatchesReused));
+    }
+
+    private sealed record WorldTileMapMetrics(int TotalChunks, int VisibleChunks, int BatchesBuilt, int BatchesRebuilt, int BatchesReused);
 
     internal void ObserveFrame()
     {
         observedFrames++;
         if (Root is null || Map.Root is null) return;
-        TileMapDiagnosticsSnapshot snapshot = Root.Detective.CaptureTileMap(Map);
+        WorldTileMapMetrics snapshot = CaptureTileMapMetrics();
         string metrics = $"Chunks {snapshot.VisibleChunks}/{snapshot.TotalChunks} | built {snapshot.BatchesBuilt} rebuilt {snapshot.BatchesRebuilt} reused {snapshot.BatchesReused}";
         if (MetricsText.Text != metrics) MetricsText.Text = metrics;
         if (collectRecordings && recordingWindow.Count < 256) recordingWindow.Add(snapshot);
@@ -66,9 +78,9 @@ public partial class SceneWorldShowcase
         await Frames(30);
         await Snap("01-closed");
         Require(Map.Model is not null && State.Colliders.Count == 6 &&
-            Map.Model.TileSets.SelectMany(s => s.Tiles).Any(t => t.Colliders.Count > 0),
-            "Imported world must attach the six authored wall regions through tile-owned collision geometry.");
-        Require(Door.X == 14 && Door.Y == 9 && DoorCollider.Enabled, "Door promotion binding must address (14,9), closed.");
+            ImportedColliders.RealizedItemCount == 6,
+            "Imported world must realize the six authored wall regions through singular Sprite2D collider owners.");
+        Require(Door.X == 224 && Door.Y == 144 && DoorCollider.Enabled, "The closed door sprite must occupy source cell (14,9) in world pixels.");
         await Click("world-player");
         Require(PlayerSelections == 1, "Player selection must use routed pointer input.");
         await servo.PressKeyAsync(InputKey.Up);
@@ -102,7 +114,7 @@ public partial class SceneWorldShowcase
         Require(Npcs.RealizedItemCount == 2 && ReferenceEquals(existingNpc, Npcs.LogicalChildren[0]), "Appending NPC must preserve the first realized node.");
         measurements.Add(new { scenario = "append-npc", count = Npcs.RealizedItemCount, firstIdentityRetained = true });
 
-        TileMapDiagnosticsSnapshot warm = Root!.Detective.CaptureTileMap(Map);
+        WorldTileMapMetrics warm = CaptureTileMapMetrics();
         Require(warm.VisibleChunks < warm.TotalChunks && warm.BatchesReused > 0, "Warm viewport must cull chunks and reuse static batches.");
         await RecordCommand("pan", "world-pan");
         Require(recordingWindow.Any(s => s.VisibleChunks != warm.VisibleChunks && s.BatchesReused > 0), "Pan must change the culled viewport while reusing retained batches.");
@@ -134,9 +146,9 @@ public partial class SceneWorldShowcase
         Require(DebugOverlay.GetDiagnosticsSnapshot().Primitives == 0, "Disabled overlay must emit no debug commands.");
         await Click("world-format");
         await Frames(30);
-        Require(State.IsLdtk && Map.Model!.Layers.Sum(l => l.Chunks.Count) == 3 &&
-            Map.Model.Layers.Where(l => l.Chunks.Count > 0).Select(l => l.Id).Order().SequenceEqual(["1", "2", "4"]),
-            $"LDtk must load one chunk each for Terrain (1), Buildings (2), and Doors (4). IsLdtk={State.IsLdtk}; layers={string.Join(",", Map.Model!.Layers.Select(l => $"{l.Id}:{l.Chunks.Count}"))}; status={State.Status}");
+        Require(State.IsLdtk && State.TileMaps.Sum(map => map.Chunks.Count) == 3 &&
+            State.TileMaps.Where(map => map.Chunks.Count > 0).Select(map => map.Id).Order().SequenceEqual(["1", "2", "4"]),
+            $"LDtk must load one chunk each for Terrain (1), Buildings (2), and Doors (4). IsLdtk={State.IsLdtk}; maps={string.Join(",", State.TileMaps.Select(map => $"{map.Id}:{map.Chunks.Count}"))}; status={State.Status}");
         await Snap("09-ldtk");
         File.WriteAllText(Path.Combine(directory, "results.json"), JsonSerializer.Serialize(new
         {
@@ -157,7 +169,7 @@ public partial class SceneWorldShowcase
             File.WriteAllText(Path.Combine(directory, name + ".json"), JsonSerializer.Serialize(new
             {
                 player, door, surface = Root!.Detective.CaptureLayout(Surface),
-                tilemap = Root.Detective.CaptureTileMap(Map),
+                tileMaps = CaptureTileMaps(),
                 overlay = DebugOverlay.GetDiagnosticsSnapshot(),
                 State.PlayerX, State.PlayerY, State.DoorClosed, State.PlayerState
             }, new JsonSerializerOptions { WriteIndented = true }));

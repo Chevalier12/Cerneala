@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using System.Numerics;
 using Cerneala.Drawing;
 using Cerneala.UI.Core;
@@ -19,6 +18,18 @@ public sealed partial class TileMap2D : SceneNode2D
             typeof(TileMap2D),
             new UiPropertyMetadata<TileMap2DModel?>(null, UiPropertyOptions.AffectsRender));
 
+    public static readonly UiProperty<DrawPoint> OffsetProperty =
+        UiProperty<DrawPoint>.Register(
+            nameof(Offset),
+            typeof(TileMap2D),
+            new UiPropertyMetadata<DrawPoint>(default, UiPropertyOptions.AffectsRender));
+
+    public static readonly UiProperty<Color> TintProperty =
+        UiProperty<Color>.Register(
+            nameof(Tint),
+            typeof(TileMap2D),
+            new UiPropertyMetadata<Color>(Color.White, UiPropertyOptions.AffectsRender));
+
     public static readonly UiProperty<DrawPoint> TransformOriginProperty =
         UiProperty<DrawPoint>.Register(
             nameof(TransformOrigin),
@@ -30,16 +41,8 @@ public sealed partial class TileMap2D : SceneNode2D
     private readonly Dictionary<string, DrawSize> validatedAtlasSizes = new(StringComparer.Ordinal);
     private readonly Dictionary<ImageReference, DrawSize> placementImageSizes = [];
     private TileMap2DModel? validatedAtlasModel;
-    private bool synchronizingLayers;
-    private int promotions;
-    private int demotions;
     private int tileInvalidations;
     private TileMap2DDiagnosticsSnapshot diagnostics;
-
-    public TileMap2D()
-    {
-        Layers = new LayerCollection(this);
-    }
 
     public TileMap2DModel? Model
     {
@@ -53,77 +56,16 @@ public sealed partial class TileMap2D : SceneNode2D
         set => SetValue(TransformOriginProperty, value);
     }
 
-    public Collection<TileLayer2D> Layers { get; }
-
-    public TileInstance2D Promote(TileCellKey2D key, int? tileId = null)
+    public DrawPoint Offset
     {
-        TileMap2DModel model = Model ??
-            throw new InvalidOperationException("A tilemap model is required before promoting a cell.");
-        if (!model.TryGetLayer(key.LayerId, out TileLayer2DModel? layer) || layer is null)
-        {
-            throw new ArgumentException($"Layer '{key.LayerId}' does not exist.", nameof(key));
-        }
-        TileLayer2D presentation = Layers.Single(candidate =>
-            string.Equals(candidate.LayerId, key.LayerId, StringComparison.Ordinal));
-        TileInstance2D? existing = presentation.PromotedTiles.FirstOrDefault(candidate =>
-            candidate.X == key.Coordinate.X && candidate.Y == key.Coordinate.Y);
-        if (existing is not null)
-        {
-            return existing;
-        }
-
-        if (!layer.TryGetCell(key.Coordinate, out TileCell2D cell))
-        {
-            throw new ArgumentOutOfRangeException(nameof(key), "The coordinate is not present in the target layer.");
-        }
-        if (cell.TileId == 0 && tileId is null)
-        {
-            throw new InvalidOperationException("Promoting an empty tile requires an explicit positive tile id.");
-        }
-        if (tileId is int overrideId && !model.TryResolveTile(overrideId, out _, out _))
-        {
-            throw new ArgumentOutOfRangeException(nameof(tileId), $"Tile id {overrideId} has no tileset definition.");
-        }
-
-        TileInstance2D promoted = new()
-        {
-            X = key.Coordinate.X,
-            Y = key.Coordinate.Y,
-            TileId = tileId
-        };
-        presentation.PromotedTiles.Add(promoted);
-        promotions++;
-        InvalidateFrame("Tile promoted");
-        return promoted;
+        get => GetValue(OffsetProperty);
+        set => SetValue(OffsetProperty, value);
     }
 
-    public bool Demote(TileCellKey2D key)
+    public Color Tint
     {
-        TileLayer2D? layer = Layers.FirstOrDefault(candidate =>
-            string.Equals(candidate.LayerId, key.LayerId, StringComparison.Ordinal));
-        TileInstance2D? promoted = layer?.PromotedTiles.FirstOrDefault(candidate =>
-            candidate.X == key.Coordinate.X && candidate.Y == key.Coordinate.Y);
-        if (layer is null || promoted is null)
-        {
-            return false;
-        }
-
-        bool removed = layer.PromotedTiles.Remove(promoted);
-        if (removed)
-        {
-            demotions++;
-            InvalidateFrame("Tile demoted");
-        }
-        return removed;
-    }
-
-    public bool TryGetPromoted(TileCellKey2D key, out TileInstance2D? tile)
-    {
-        tile = Layers
-            .FirstOrDefault(candidate => string.Equals(candidate.LayerId, key.LayerId, StringComparison.Ordinal))?
-            .PromotedTiles
-            .FirstOrDefault(candidate => candidate.X == key.Coordinate.X && candidate.Y == key.Coordinate.Y);
-        return tile is not null;
+        get => GetValue(TintProperty);
+        set => SetValue(TintProperty, value);
     }
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
@@ -136,11 +78,11 @@ public sealed partial class TileMap2D : SceneNode2D
             {
                 tileInvalidations++;
             }
-            SynchronizeLayers();
             SynchronizeCollisionAdaptersAndNotify();
         }
         else if (SceneGeometry2D.IsSceneTransformProperty(args.Property) ||
-                 ReferenceEquals(args.Property, TransformOriginProperty))
+                 ReferenceEquals(args.Property, TransformOriginProperty) ||
+                 ReferenceEquals(args.Property, OffsetProperty))
         {
             SceneGeometry2D.FindRootScene(this)?.NotifyCollisionMutation(
                 this,
@@ -162,9 +104,9 @@ public sealed partial class TileMap2D : SceneNode2D
             ReleaseRenderCaches();
         }
         base.AttachSurface(surface);
-        foreach (TileLayer2D layer in Layers)
+        foreach (TileStaticCollider2D collider in LogicalChildren.OfType<TileStaticCollider2D>())
         {
-            layer.AttachSurface(surface);
+            collider.AttachSurface(surface);
         }
     }
 
@@ -178,28 +120,28 @@ public sealed partial class TileMap2D : SceneNode2D
             return;
         }
         if (!UIElementVisibility.ParticipatesInRendering(this) ||
-            Opacity <= 0)
+            !model.IsVisible || Opacity <= 0 || model.Opacity <= 0)
         {
             diagnostics = default;
             return;
         }
 
-        SynchronizeLayers();
         ResolveAtlases(model);
         Matrix3x2 localTransform = GetLocalTransform();
         bool hasTransform = localTransform != Matrix3x2.Identity;
-        bool hasOpacity = Opacity < 1;
+        float opacity = Opacity * model.Opacity;
+        bool hasOpacity = opacity < 1;
         if (hasTransform)
         {
             context.Frame.PushTransform(localTransform);
         }
         if (hasOpacity)
         {
-            context.Frame.PushOpacity(Opacity);
+            context.Frame.PushOpacity(opacity);
         }
 
         diagnostics = new TileMap2DDiagnosticsSnapshot(
-            TotalChunks: model.IsFreePlacement ? (model.Tiles.Count + PlacementChunkSize - 1) / PlacementChunkSize : model.Layers.Sum(static layer => layer.Chunks.Count),
+            TotalChunks: model.IsFreePlacement ? (model.Tiles.Count + PlacementChunkSize - 1) / PlacementChunkSize : model.Chunks.Count,
             CandidateChunks: 0,
             VisibleChunks: 0,
             CandidateTiles: 0,
@@ -210,12 +152,7 @@ public sealed partial class TileMap2D : SceneNode2D
             DrawCommands: 0,
             RetainedBytes: 0,
             RetainedObjects: 0,
-            TileInvalidations: tileInvalidations,
-            PromotedInstancesVisible: 0,
-            PromotedInstancesCulled: 0,
-            Promotions: promotions,
-            Demotions: demotions,
-            BatchSplits: 0);
+            TileInvalidations: tileInvalidations);
         tileInvalidations = 0;
         BeginCacheFrame();
         Scene2DRecordContext childContext = context.WithLocalTransform(localTransform);
@@ -224,16 +161,7 @@ public sealed partial class TileMap2D : SceneNode2D
             using ScenePrismScope prism = childContext.HasPrism(this)
                 ? childContext.BeginPrism(this, GetVisibleLocalBounds())
                 : default;
-            foreach (TileLayer2DModel layerModel in model.Layers
-                .Select((layer, sourceIndex) => (layer, sourceIndex))
-                .OrderBy(static entry => entry.layer.Order)
-                .ThenBy(static entry => entry.sourceIndex)
-                .Select(static entry => entry.layer))
-            {
-                TileLayer2D layer = Layers.Single(candidate =>
-                    string.Equals(candidate.LayerId, layerModel.Id, StringComparison.Ordinal));
-                layer.Record(childContext);
-            }
+            RecordCachedMap(Multiply(model.Tint, Tint), childContext);
             CompleteCacheFrame();
         }
         finally
@@ -249,121 +177,21 @@ public sealed partial class TileMap2D : SceneNode2D
         }
     }
 
-    internal override Matrix3x2 GetLocalTransform() =>
-        SceneGeometry2D.CreateLocalTransform(this, TransformOrigin);
+    internal override Matrix3x2 GetLocalTransform()
+    {
+        DrawPoint modelOffset = Model?.Offset ?? default;
+        return SceneGeometry2D.CreateLocalTransform(this, TransformOrigin) *
+            Matrix3x2.CreateTranslation(Offset.X + modelOffset.X, Offset.Y + modelOffset.Y);
+    }
 
     internal override SceneBounds2D GetVisibleLocalBounds()
     {
         TileMap2DModel? model = Model;
-        if (model is null || Opacity <= 0)
+        if (model is null || !model.IsVisible || Opacity <= 0 || model.Opacity <= 0)
         {
             return SceneBounds2D.Empty;
         }
-
-        SceneBounds2D result = SceneBounds2D.Empty;
-        foreach (TileLayer2DModel layerModel in model.Layers)
-        {
-            TileLayer2D? layer = Layers.FirstOrDefault(candidate =>
-                string.Equals(candidate.LayerId, layerModel.Id, StringComparison.Ordinal));
-            if (layer is null)
-            {
-                continue;
-            }
-
-            Matrix3x2 transform = layer.GetLocalTransform() *
-                Matrix3x2.CreateTranslation(
-                    layerModel.Offset.X + layer.Offset.X,
-                    layerModel.Offset.Y + layer.Offset.Y);
-            result = SceneGeometry2D.Union(
-                result,
-                SceneGeometry2D.TransformBounds(layer.GetVisibleLocalBounds(), transform));
-        }
-        return result;
-    }
-
-    internal void RecordLayer(
-        TileLayer2D presentation,
-        TileLayer2DModel layer,
-        Color tint,
-        Scene2DRecordContext context)
-        => RecordCachedLayer(presentation, layer, tint, context);
-
-    internal void RecordPromotedTile(
-        TileLayer2D layerPresentation,
-        TileInstance2D instance,
-        Scene2DRecordContext context)
-    {
-        TileMap2DModel model = Model!;
-        if (!model.TryGetLayer(layerPresentation.LayerId, out TileLayer2DModel? layer) || layer is null)
-        {
-            return;
-        }
-        TileCoordinate2D coordinate = new(instance.X, instance.Y);
-        TileCell2D cell = ValidatePromotedInstance(layer, coordinate, instance);
-        if (!UIElementVisibility.ParticipatesInRendering(instance) || instance.Opacity <= 0)
-        {
-            return;
-        }
-
-        int tileId = instance.TileId ?? cell.TileId;
-        if (!TryResolveVisual(tileId, out IDrawImage? image, out TileDefinition2D? definition))
-        {
-            throw new InvalidOperationException(
-                $"Tile id {tileId} at ({coordinate.X},{coordinate.Y}) in layer '{layer.Id}' has no resolvable atlas visual.");
-        }
-
-        TileFlip2D flip = instance.Flip ?? cell.Flip;
-        DrawRect source = instance.SourceRect ?? definition!.SourceRect;
-        instance.ResolveAnimatedVisual(source, flip, out source, out TileFlip2D effectiveFlip);
-        Matrix3x2 localTransform = instance.GetLocalTransform();
-        Scene2DRecordContext tileContext = context.WithLocalTransform(localTransform);
-        if (!tileContext.IntersectsVisibleLocalBounds(instance.GetVisibleLocalBounds()))
-        {
-            diagnostics = diagnostics with
-            {
-                PromotedInstancesCulled = diagnostics.PromotedInstancesCulled + 1
-            };
-            return;
-        }
-        bool hasTransform = localTransform != Matrix3x2.Identity;
-        if (hasTransform)
-        {
-            context.Frame.PushTransform(localTransform);
-        }
-        bool hasOpacity = instance.Opacity < 1;
-        if (hasOpacity)
-        {
-            context.Frame.PushOpacity(instance.Opacity);
-        }
-
-        try
-        {
-            using ScenePrismScope prism = tileContext.HasPrism(instance)
-                ? tileContext.BeginPrism(instance, instance.GetVisibleLocalBounds())
-                : default;
-            DrawSprite2D sprite = TileFlipGeometry2D.Sprite(
-                new DrawRect(0, 0, model.TileSize.Width, model.TileSize.Height), source,
-                Multiply(Multiply(layer.Tint, layerPresentation.Tint), instance.Tint), effectiveFlip);
-            context.Frame.DrawSprite(image!, sprite.Destination, source, sprite.Options.Tint,
-                sprite.Options.Rotation, sprite.Options.Origin, (RenderSurface2DSpriteFlip)sprite.Options.Flip, layerDepth: 0);
-            diagnostics = diagnostics with
-            {
-                DrawnTiles = diagnostics.DrawnTiles + 1,
-                DrawCommands = diagnostics.DrawCommands + 1,
-                PromotedInstancesVisible = diagnostics.PromotedInstancesVisible + 1
-            };
-        }
-        finally
-        {
-            if (hasOpacity)
-            {
-                context.Frame.PopOpacity();
-            }
-            if (hasTransform)
-            {
-                context.Frame.PopTransform();
-            }
-        }
+        return GetMapBounds();
     }
 
     internal TileMap2DDiagnosticsSnapshot GetDiagnosticsSnapshot() => diagnostics;
@@ -385,73 +213,6 @@ public sealed partial class TileMap2D : SceneNode2D
             (byte)((left.G * right.G + 127) / 255),
             (byte)((left.B * right.B + 127) / 255),
             (byte)((left.A * right.A + 127) / 255));
-
-    private void SynchronizeLayers()
-    {
-        if (synchronizingLayers)
-        {
-            return;
-        }
-
-        synchronizingLayers = true;
-        try
-        {
-            TileMap2DModel? model = Model;
-            for (int index = Layers.Count - 1; index >= 0; index--)
-            {
-                TileLayer2D existing = Layers[index];
-                if (existing.IsGenerated &&
-                    (model is null || !model.Layers.Any(layer =>
-                        string.Equals(layer.Id, existing.LayerId, StringComparison.Ordinal))))
-                {
-                    Layers.RemoveAt(index);
-                }
-            }
-
-            if (model is null)
-            {
-                return;
-            }
-
-            string? duplicate = Layers
-                .Where(static layer => !string.IsNullOrWhiteSpace(layer.LayerId))
-                .GroupBy(static layer => layer.LayerId, StringComparer.Ordinal)
-                .Where(static group => group.Count() > 1)
-                .Select(static group => group.Key)
-                .FirstOrDefault();
-            if (duplicate is not null)
-            {
-                throw new InvalidOperationException($"Tile layer presentation '{duplicate}' is declared more than once.");
-            }
-
-            foreach (TileLayer2D existing in Layers.Where(static layer => !layer.IsGenerated))
-            {
-                if (string.IsNullOrWhiteSpace(existing.LayerId) ||
-                    !model.Layers.Any(layer => string.Equals(layer.Id, existing.LayerId, StringComparison.Ordinal)))
-                {
-                    throw new InvalidOperationException(
-                        $"Tile layer presentation '{existing.LayerId}' does not match a model layer.");
-                }
-            }
-
-            foreach (TileLayer2DModel layer in model.Layers)
-            {
-                if (Layers.Any(existing => string.Equals(existing.LayerId, layer.Id, StringComparison.Ordinal)))
-                {
-                    continue;
-                }
-                Layers.Add(new TileLayer2D
-                {
-                    LayerId = layer.Id,
-                    IsGenerated = true
-                });
-            }
-        }
-        finally
-        {
-            synchronizingLayers = false;
-        }
-    }
 
     private void ResolveAtlases(TileMap2DModel model)
     {
@@ -529,129 +290,10 @@ public sealed partial class TileMap2D : SceneNode2D
             .WithResourceVersion(combinedVersion));
     }
 
-    private bool TryResolveVisual(
-        int tileId,
-        out IDrawImage? image,
-        out TileDefinition2D? definition)
-    {
-        if (Model!.TryResolveTile(tileId, out TileSet2D? tileSet, out definition) &&
-            tileSet is not null &&
-            resolvedAtlases.TryGetValue(new TileImageKey(tileSet.Id, null), out ResolvedAtlas atlas) &&
-            atlas.Image is not null)
-        {
-            image = atlas.Image;
-            return true;
-        }
-
-        image = null;
-        definition = null;
-        return false;
-    }
-
-    private TileCell2D ValidatePromotedInstance(
-        TileLayer2DModel layer,
-        TileCoordinate2D coordinate,
-        TileInstance2D instance)
-    {
-        if (!layer.TryGetCell(coordinate, out TileCell2D cell))
-        {
-            throw new InvalidOperationException(
-                $"Promoted tile ({coordinate.X},{coordinate.Y}) does not exist in layer '{layer.Id}'.");
-        }
-
-        int tileId = instance.TileId ?? cell.TileId;
-        if (tileId == 0)
-        {
-            throw new InvalidOperationException(
-                $"Promoting empty tile ({coordinate.X},{coordinate.Y}) in layer '{layer.Id}' requires an explicit positive tile id.");
-        }
-        if (!Model!.TryResolveTile(tileId, out _, out _))
-        {
-            throw new InvalidOperationException(
-                $"Promoted tile id {tileId} at ({coordinate.X},{coordinate.Y}) in layer '{layer.Id}' has no tileset definition.");
-        }
-
-        return cell;
-    }
-
-    private void InvalidateFrame(string reason)
-    {
-        IncrementRenderVersion();
-        Invalidate(InvalidationFlags.Render, reason);
-        Surface?.InvalidateFrame();
-    }
-
     private readonly record struct TileImageKey(string? TileSetId, ImageReference? PlacementImage);
 
     private readonly record struct ResolvedAtlas(IDrawImage? Image, long Version, long DefinitionVersion)
     {
         internal DrawSize Size => Image is null ? default : new DrawSize(Image.Width, Image.Height);
-    }
-
-    private sealed class LayerCollection(TileMap2D owner) : Collection<TileLayer2D>
-    {
-        protected override void InsertItem(int index, TileLayer2D item)
-        {
-            ArgumentNullException.ThrowIfNull(item);
-            owner.LogicalChildren.Insert(index, item);
-            base.InsertItem(index, item);
-            item.OwnerMap = owner;
-            item.AttachSurface(owner.Surface);
-            if (!owner.synchronizingLayers)
-            {
-                owner.SynchronizeLayers();
-                owner.SynchronizeCollisionAdaptersAndNotify();
-            }
-            owner.Surface?.InvalidateFrame();
-        }
-
-        protected override void SetItem(int index, TileLayer2D item)
-        {
-            ArgumentNullException.ThrowIfNull(item);
-            TileLayer2D previous = this[index];
-            previous.OwnerMap = null;
-            previous.AttachSurface(null);
-            owner.LogicalChildren.Remove(previous);
-            owner.LogicalChildren.Insert(index, item);
-            base.SetItem(index, item);
-            item.OwnerMap = owner;
-            item.AttachSurface(owner.Surface);
-            if (!owner.synchronizingLayers)
-            {
-                owner.SynchronizeLayers();
-                owner.SynchronizeCollisionAdaptersAndNotify();
-            }
-            owner.Surface?.InvalidateFrame();
-        }
-
-        protected override void RemoveItem(int index)
-        {
-            TileLayer2D previous = this[index];
-            previous.OwnerMap = null;
-            previous.AttachSurface(null);
-            owner.LogicalChildren.Remove(previous);
-            base.RemoveItem(index);
-            if (!owner.synchronizingLayers)
-            {
-                owner.SynchronizeCollisionAdaptersAndNotify();
-            }
-            owner.Surface?.InvalidateFrame();
-        }
-
-        protected override void ClearItems()
-        {
-            foreach (TileLayer2D layer in this)
-            {
-                layer.OwnerMap = null;
-                layer.AttachSurface(null);
-                owner.LogicalChildren.Remove(layer);
-            }
-            base.ClearItems();
-            if (!owner.synchronizingLayers)
-            {
-                owner.SynchronizeCollisionAdaptersAndNotify();
-            }
-            owner.Surface?.InvalidateFrame();
-        }
     }
 }

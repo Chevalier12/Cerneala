@@ -21,7 +21,7 @@ public sealed class SceneDocumentContractTests(ITestOutputHelper output)
         Scene2DEntity entity = new("Spawn", "Layer", new DrawPoint(2, 3), default, role: "Spawn");
         TilePromotion2D[] promotions = [promotion];
         Scene2DEntity[] entities = [entity];
-        Scene2DLevel level = new("Level", Model(), entities: entities, promotions: promotions);
+        Scene2DLevel level = new("Level", [Model()], entities: entities, promotions: promotions);
         Scene2DAsset asset = new(new ResourceId<ImageResource>("Atlas"), "not-loaded\\atlas.png", new DrawSize(2, 1));
         Scene2DDocument document = new([level], [asset]);
         properties["InitialState"] = "Open";
@@ -57,16 +57,16 @@ public sealed class SceneDocumentContractTests(ITestOutputHelper output)
     [Trait("SceneImportStage", "1")]
     public void IdentityAndSchemaFailuresStayControlled()
     {
-        Scene2DLevel level = new("Level", Model());
+        Scene2DLevel level = new("Level", [Model()]);
         Scene2DAsset asset = new(new ResourceId<ImageResource>("Atlas"), "atlas.png", new DrawSize(2, 1));
         AssertCode("SCN2D015", () => new Scene2DDocument([level, level], [asset]));
         AssertCode("SCN2D015", () => new Scene2DDocument([level], [asset, asset]));
         AssertCode("SCN2D003", () => new Scene2DDocument([level], [asset], schemaVersion: 0));
         Scene2DEntity missingLayer = new("Entity", "Missing", default, default);
-        AssertCode("SCN2D015", () => new Scene2DLevel("Level", Model(), entities: [missingLayer]));
+        AssertCode("SCN2D015", () => new Scene2DLevel("Level", [Model()], entities: [missingLayer]));
         Scene2DEntity entity = new("Entity", "Layer", default, default);
-        AssertCode("SCN2D015", () => new Scene2DLevel("Level", Model(), entities: [entity, entity]));
-        AssertCode("SCN2D008", () => new Scene2DLevel("Level", Model(), entities: [null!]));
+        AssertCode("SCN2D015", () => new Scene2DLevel("Level", [Model()], entities: [entity, entity]));
+        AssertCode("SCN2D008", () => new Scene2DLevel("Level", [Model()], entities: [null!]));
     }
 
     [Fact]
@@ -111,15 +111,15 @@ public sealed class SceneDocumentContractTests(ITestOutputHelper output)
         TileChunk2D[] chunks = Enumerable.Range(0, 65_536)
             .Select(index => new TileChunk2D(new TileCoordinate2D(index * 2, 0), 1, 1, [default])).ToArray();
         Stopwatch watch = Stopwatch.StartNew();
-        TileLayer2DModel layer = new("Sparse", chunks);
-        output.WriteLine($"chunks={layer.Chunks.Count} constructionMs={watch.Elapsed.TotalMilliseconds:F3}");
+        TileMap2DModel map = new("Sparse", new DrawSize(1, 1), [], chunks);
+        output.WriteLine($"chunks={map.Chunks.Count} constructionMs={watch.Elapsed.TotalMilliseconds:F3}");
         IEnumerable<TileChunk2D> Hostile()
         {
             foreach (TileChunk2D chunk in chunks) { yield return chunk; }
             yield return chunks[0];
             throw new InvalidOperationException("The unbounded tail must not be visited.");
         }
-        AssertCode("SCN2D013", () => new TileLayer2DModel("Sparse", Hostile()));
+        AssertCode("SCN2D013", () => new TileMap2DModel("Sparse", new DrawSize(1, 1), [], Hostile()));
     }
 
     [Theory]
@@ -134,8 +134,8 @@ public sealed class SceneDocumentContractTests(ITestOutputHelper output)
         Collider2D mover = box ? new BoxCollider2D { Width = 2, Height = 2, OffsetX = -1, OffsetY = -1 } : new CircleCollider2D { Radius = 1 };
         mover.TranslateX = -20 * direction;
         Scene2D scene = new();
-        scene.Children.Add(new Sprite2D { Colliders = { segment } });
-        scene.Children.Add(new Sprite2D { Colliders = { mover } });
+        scene.Children.Add(new Sprite2D { Collider = segment });
+        scene.Children.Add(new Sprite2D { Collider = mover });
         MoveCollisionResult2D move = scene.CollisionWorld.MoveAndCollide(mover, new Vector2(1000 * direction, 0));
         Assert.NotNull(move.Collision);
         Assert.InRange(MathF.Abs(move.Travel.X), 18.98f, 19.02f);
@@ -143,9 +143,9 @@ public sealed class SceneDocumentContractTests(ITestOutputHelper output)
         Assert.InRange(MathF.Abs(move.Collision.Normal.Y), 0, 0.01f);
     }
 
-    private static TileMap2DModel Model() => new(new DrawSize(1, 1),
+    private static TileMap2DModel Model() => new("Layer", new DrawSize(1, 1),
         [new TileSet2D("Atlas", new ResourceId<ImageResource>("Atlas"), [new TileDefinition2D(1, new DrawRect(0, 0, 1, 1))])],
-        [new TileLayer2DModel("Layer", [new TileChunk2D(default, 2, 1, [new TileCell2D(1), default])])]);
+        [new TileChunk2D(default, 2, 1, [new TileCell2D(1), default])]);
 
     [Fact]
     [Trait("SceneImportStage", "1")]
@@ -185,7 +185,7 @@ public sealed class SceneDocumentContractTests(ITestOutputHelper output)
                         Math.Max(a.Origin.Y, b.Origin.Y) < Math.Min(a.Origin.Y + a.Height, b.Origin.Y + b.Height);
                 }
             }
-            Exception? error = Record.Exception(() => new TileLayer2DModel("Layer", chunks));
+            Exception? error = Record.Exception(() => new TileMap2DModel("Layer", new DrawSize(1, 1), [], chunks));
             Assert.Equal(overlaps, error is not null);
             if (error is not null) { Assert.Equal("SCN2D011", Scene2DModelValidator.GetDiagnostic(error)!.Code); }
         }
@@ -199,10 +199,10 @@ public sealed class SceneDocumentContractTests(ITestOutputHelper output)
         TileChunk2D[] chunks = Enumerable.Range(0, 65_536).Select(index =>
             new TileChunk2D(new TileCoordinate2D(0, index * 2), 1, 1, [default])).Reverse().ToArray();
         Stopwatch watch = Stopwatch.StartNew();
-        TileLayer2DModel layer = new("Vertical", chunks);
-        Assert.Equal(chunks, layer.Chunks);
+        TileMap2DModel map = new("Vertical", new DrawSize(1, 1), [], chunks);
+        Assert.Equal(chunks, map.Chunks);
         output.WriteLine($"denseActiveChunks=65536 constructionMs={watch.Elapsed.TotalMilliseconds:F3}");
-        AssertCode("SCN2D011", () => new TileLayer2DModel("Overlap", chunks.Take(65_535).Append(chunks[0])));
+        AssertCode("SCN2D011", () => new TileMap2DModel("Overlap", new DrawSize(1, 1), [], chunks.Take(65_535).Append(chunks[0])));
     }
 
     private static void AssertCode(string code, Action action)
@@ -219,24 +219,25 @@ public sealed class SceneDocumentContractTests(ITestOutputHelper output)
         const int count = 16_384;
         TileChunk2D[] chunks = Enumerable.Range(0, count).Select(index =>
             new TileChunk2D(new TileCoordinate2D(index * 2, 0), 1, 1, [new TileCell2D(1)])).ToArray();
-        TileMap2DModel map = new(new DrawSize(1, 1),
+        TileMap2DModel map = new("Sparse", new DrawSize(1, 1),
             [new TileSet2D("Atlas", new ResourceId<ImageResource>("Atlas"), [new TileDefinition2D(1, new DrawRect(0, 0, 1, 1))])],
-            [new TileLayer2DModel("Sparse", chunks)]);
+            chunks);
         TilePromotion2D[] promotions = Enumerable.Range(0, count).Reverse()
             .Select(index => new TilePromotion2D(new TileCellKey2D("Sparse", index * 2, 0))).ToArray();
         Stopwatch watch = Stopwatch.StartNew();
-        Scene2DLevel level = new("Level", map, promotions: promotions);
+        Scene2DLevel level = new("Level", [map], promotions: promotions);
         Assert.Equal(count, level.Promotions.Count);
         output.WriteLine($"sparsePromotions={count} chunks={count} validationMs={watch.Elapsed.TotalMilliseconds:F3}");
     }
 
     [Fact]
     [Trait("SceneImportStage", "1")]
-    public void ProgrammaticGraphCannotAmplifySharedChunksPastTheMapBudget()
+    public void ProgrammaticGraphCannotAmplifySharedChunksPastTheLevelBudget()
     {
         TileChunk2D chunk = new(default, 524_288, 1, Enumerable.Repeat(default(TileCell2D), 524_288));
-        TileLayer2DModel[] layers = Enumerable.Range(0, 3).Select(index => new TileLayer2DModel(index.ToString(), [chunk])).ToArray();
-        AssertCode("SCN2D013", () => new TileMap2DModel(new DrawSize(1, 1), [], layers));
+        TileMap2DModel[] maps = Enumerable.Range(0, 3)
+            .Select(index => new TileMap2DModel(index.ToString(), new DrawSize(1, 1), [], [chunk])).ToArray();
+        AssertCode("SCN2D013", () => new Scene2DLevel("Level", maps));
     }
 
     [Fact]
@@ -258,9 +259,9 @@ public sealed class SceneDocumentContractTests(ITestOutputHelper output)
         ResourceId<ImageResource> resourceId = new("Atlas");
         TileSet2D set = new("Atlas", resourceId,
             [new TileDefinition2D(1, new DrawRect(0, 0, 1, 1)), new TileDefinition2D(2, new DrawRect(1, 0, 2, 1))]);
-        TileMap2D map = new() { Model = new(new DrawSize(1, 1), [set],
-            [new TileLayer2DModel("Layer", [new TileChunk2D(default, 1, 1, [new TileCell2D(1)]),
-                new TileChunk2D(new TileCoordinate2D(1, 0), 1, 1, [new TileCell2D(2)])])]) };
+        TileMap2D map = new() { Model = new("Layer", new DrawSize(1, 1), [set],
+            [new TileChunk2D(default, 1, 1, [new TileCell2D(1)]),
+                new TileChunk2D(new TileCoordinate2D(1, 0), 1, 1, [new TileCell2D(2)])]) };
         Scene2D scene = new();
         scene.Children.Add(map);
         RenderSurface2D surface = new() { Scene = scene };

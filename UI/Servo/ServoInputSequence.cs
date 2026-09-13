@@ -4,12 +4,22 @@ namespace Cerneala.UI.Servo;
 
 internal sealed class ServoInputSequence
 {
+    private IReadOnlyList<ServoInputStep>? steps;
+    private readonly Func<IReadOnlyList<ServoInputStep>>? createSteps;
+
     internal ServoInputSequence(IReadOnlyList<ServoInputStep> steps)
     {
-        Steps = steps ?? throw new ArgumentNullException(nameof(steps));
+        this.steps = steps ?? throw new ArgumentNullException(nameof(steps));
     }
 
-    internal IReadOnlyList<ServoInputStep> Steps { get; }
+    internal ServoInputSequence(Func<IReadOnlyList<ServoInputStep>> createSteps)
+    {
+        this.createSteps = createSteps ?? throw new ArgumentNullException(nameof(createSteps));
+    }
+
+    // Target-dependent steps are materialized by the input owner after scheduled layout,
+    // not when an action is queued from a relay or a presented-frame callback.
+    internal IReadOnlyList<ServoInputStep> Steps => steps ??= createSteps!();
 
     internal static ServoInputStep CreateResetStep(
         PointerSnapshot pointer,

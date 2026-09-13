@@ -26,7 +26,7 @@ public sealed class CollisionStageFourInputTests
             TranslateY = 10,
             Focusable = true
         };
-        Sprite2D sprite = new() { Focusable = true, Colliders = { collider } };
+        Sprite2D sprite = new() { Focusable = true, Collider = collider };
         scene.Children.Add(sprite);
         int clicks = 0;
         int commandExecutions = 0;
@@ -89,8 +89,8 @@ public sealed class CollisionStageFourInputTests
             Layer = 2
         };
         scene.OrderMode = SceneOrderMode.Layer;
-        Sprite2D lowerSprite = new() { Layer = 1, Colliders = { lower } };
-        Sprite2D upperSprite = new() { Layer = 2, Colliders = { upperCircle } };
+        Sprite2D lowerSprite = new() { Layer = 1, Collider = lower };
+        Sprite2D upperSprite = new() { Layer = 2, Collider = upperCircle };
         scene.Children.Add(lowerSprite);
         scene.Children.Add(upperSprite);
 
@@ -108,7 +108,7 @@ public sealed class CollisionStageFourInputTests
     {
         UIRoot root = CreateRoot(out _, out Scene2D scene);
         Scene2D house = new() { TranslateX = 30, TranslateY = 20 };
-        Sprite2D sprite = new() { Colliders = { new BoxCollider2D { Width = 40, Height = 30 } } };
+        Sprite2D sprite = new() { Collider = new BoxCollider2D { Width = 40, Height = 30 } };
         house.Children.Add(sprite);
         scene.Children.Add(house);
 
@@ -137,7 +137,7 @@ public sealed class CollisionStageFourInputTests
             TranslateX = 110,
             TranslateY = 60
         };
-        Sprite2D sprite = new() { Colliders = { collider } };
+        Sprite2D sprite = new() { Collider = collider };
         scene.Children.Add(sprite);
         Vector2 rootPoint = new(50.5f, 50.25f);
 
@@ -158,7 +158,7 @@ public sealed class CollisionStageFourInputTests
     {
         UIRoot root = CreateRoot(out _, out Scene2D scene);
         BoxCollider2D first = new() { Width = 20, Height = 20 };
-        scene.Children.Add(new Sprite2D { Colliders = { first } });
+        scene.Children.Add(new Sprite2D { Collider = first });
         root.InputCache.EnsureCurrent(root);
         int baseline = root.InputCache.RebuildCount;
 
@@ -169,7 +169,7 @@ public sealed class CollisionStageFourInputTests
         Assert.Equal(baseline, root.InputCache.RebuildCount);
 
         BoxCollider2D second = new() { Width = 10, Height = 10 };
-        scene.Children.Add(new Sprite2D { Colliders = { second } });
+        scene.Children.Add(new Sprite2D { Collider = second });
         root.InputCache.EnsureCurrent(root);
 
         Assert.Equal(baseline + 1, root.InputCache.RebuildCount);
@@ -193,7 +193,7 @@ public sealed class CollisionStageFourInputTests
             Height = 20,
             Opacity = 0
         };
-        Sprite2D sprite = new() { Colliders = { collider } };
+        Sprite2D sprite = new() { Collider = collider };
         scene.Children.Add(sprite);
         HitTestService hitTest = new();
 

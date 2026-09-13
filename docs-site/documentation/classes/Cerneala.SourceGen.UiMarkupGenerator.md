@@ -85,15 +85,17 @@ owns its local descendants, resources, handlers, and bindings. See
 ### Collider ownership in markup
 
 The shared language layer rejects a live collider unless its direct owner is a
-`Sprite2D` or `TileInstance2D`. Generation adds those nodes through the owner's
-typed `Colliders` collection; a collider root or direct scene-group child reports
-`CERNEALAUI005`. Editor completion follows the same owner restriction.
+`Sprite2D`, and rejects a second collider on the same owner.
+Generation assigns the node through the owner's singular `Collider` property; a
+collider root, direct scene-group child, or second collider child reports
+`CERNEALAUI005`. Editor completion follows both the owner and cardinality rules.
 
 A shape directly inside a static `Tile` instead lowers to an immutable
-`TileColliderDescriptor2D` constructor. That context accepts literal geometry
-and filtering attributes only, not live UI bindings, names, handlers, Aspect,
-Motion, or Prism. See [Tile](Cerneala.UI.Controls.Tile.md) for accepted attributes
-and [Collider2D](Cerneala.UI.Controls.Collider2D.md) for live-node ownership.
+`TileColliderDescriptor2D` constructor. A static tile also accepts at most one
+shape child. That context accepts literal geometry and filtering attributes only,
+not live UI bindings, names, handlers, Aspect, Motion, or Prism. See
+[Tile](Cerneala.UI.Controls.Tile.md) for accepted attributes and
+[Collider2D](Cerneala.UI.Controls.Collider2D.md) for live-node ownership.
 
 ### Explicit Backend Selection
 
@@ -271,7 +273,7 @@ Supported generated value categories include:
 | Layout values | `Thickness` and `LayoutPoint`, including comma-separated forms |
 | Drawing values | Named or hexadecimal colors, byte color components, and brush resources/property elements |
 | Shape geometry | `DrawPoint` endpoints (`"0,0"`), `IReadOnlyList<DrawPoint>` literals (`"0,0 40,20 80,0"`), and `PathGeometry` SVG data |
-| Sprite animation | Immutable `SpriteAnimationSet` resources containing named `SpriteAnimationClip` and duration-based `SpriteAnimationFrame` declarations; references on `Sprite2D` and promoted `TileInstance2D` |
+| Sprite animation | Immutable `SpriteAnimationSet` resources containing named `SpriteAnimationClip` and duration-based `SpriteAnimationFrame` declarations; references on `Sprite2D` |
 | Generated content | Direct text for content-bearing controls and `ContentTemplate` declarations |
 | Reactive values | Typed `$DataContext`, `$element`, `$self`, `$root`, `$control.parts.$part`, and `$owner` paths, including `OneWay` and `TwoWay` modes where the endpoint is writable |
 

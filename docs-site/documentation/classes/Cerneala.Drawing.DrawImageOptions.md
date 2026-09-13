@@ -37,6 +37,8 @@ drawing.DrawImage(image, new DrawRect(40, 24, 64, 64), options);
 
 The source region must have positive dimensions and remain inside the image when the command is created. Sampling and addressing select cached backend states; they do not expose platform graphics types.
 
+Sampling accepts only `Point` or `Linear`, and addressing accepts only `Clamp` or `Wrap`. Other numeric enum values throw `ArgumentOutOfRangeException`. These value-domain checks do not rebuild runtime enum metadata after garbage collection; constructing options still creates the immutable options object.
+
 ## Constructors
 
 | Name | Description |

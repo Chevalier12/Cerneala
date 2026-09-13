@@ -263,12 +263,21 @@ property, or `InvalidateFrame()` marks it dirty.
 Graphics-device resources and surface sessions belong to the backend and are
 disposed when the control detaches.
 
+Ordinary world composition has four roles: `Scene2D` groups, `TileMap2D` static
+strata, individual `Sprite2D` nodes, and dynamic `SceneItems2D` collections.
+`Tile` remains immutable data inside a map. Imported source strata become
+independent map models; scene composition owns their ordering and shared effects.
+A sprite is a scene peer, not a promoted child of a static map. Replacing a static
+cell with a sprite requires an explicit immutable-model update by composition.
+
 The scene root owns collision queries, while collision geometry belongs to the
-object it represents. Live collider nodes attach only through `Sprite2D` or
-`TileInstance2D` collider collections. Static `Tile` placements and imported tile
-definitions own immutable descriptors adapted by the tile map. Generic UI tree
-mutations cannot bypass collider ownership. Image resizing and animation do not
-manage collision dimensions; applications own that geometry explicitly.
+object it represents. Each `Sprite2D` owns zero or one live
+collider through its singular `Collider` property. Each static `Tile` placement,
+imported tile definition, and imported entity likewise owns at most one immutable
+descriptor, adapted by the tile map or composition layer. Generic UI tree
+mutations cannot bypass collider ownership, and import/markup paths reject a
+second shape instead of truncating it. Image resizing and animation do not manage
+collision dimensions; applications own that geometry explicitly.
 
 ## Drawing Boundary
 

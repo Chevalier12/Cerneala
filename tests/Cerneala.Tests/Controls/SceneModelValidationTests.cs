@@ -55,7 +55,7 @@ public sealed class SceneModelValidationTests
     [Trait("SceneImportStage", "1")]
     public void DefaultBoundsCannotEscapeTheMapConstructor()
     {
-        ArgumentException error = Assert.Throws<ArgumentException>(() => new TileMap2DModel(new DrawSize(16, 16), [], [], default(TileMapBounds2D)));
+        ArgumentException error = Assert.Throws<ArgumentException>(() => new TileMap2DModel("Layer", new DrawSize(16, 16), [], [], default(TileMapBounds2D)));
         AssertDiagnostic(error, "SCN2D005");
     }
 
@@ -84,12 +84,12 @@ public sealed class SceneModelValidationTests
     {
         AssertDiagnostic(Assert.Throws<ArgumentOutOfRangeException>(() => new TileCell2D(-1)), "SCN2D006");
         AssertDiagnostic(Assert.Throws<ArgumentOutOfRangeException>(() => new TileColliderDescriptor2D(TileColliderShape2D.Circle, radius: 0)), "SCN2D008");
-        AssertDiagnostic(Assert.Throws<ArgumentOutOfRangeException>(() => new TileLayer2DModel("Layer", [], opacity: float.NaN)), "SCN2D014");
-        AssertDiagnostic(Assert.Throws<ArgumentOutOfRangeException>(() => new TileMap2DModel(new DrawSize(1, 1), [], [], version: 0)), "SCN2D003");
+        AssertDiagnostic(Assert.Throws<ArgumentOutOfRangeException>(() => new TileMap2DModel("Layer", new DrawSize(1, 1), [], [], opacity: float.NaN)), "SCN2D014");
+        AssertDiagnostic(Assert.Throws<ArgumentOutOfRangeException>(() => new TileMap2DModel("Layer", new DrawSize(1, 1), [], [], version: 0)), "SCN2D003");
         AssertDiagnostic(Assert.Throws<ArgumentException>(() => new TileSet2D("Atlas", default, [new TileDefinition2D(1, new DrawRect(0, 0, 1, 1))])), "SCN2D010");
         TileChunk2D chunk = new(default, 1, 1, [new TileCell2D(99)]);
-        AssertDiagnostic(Assert.Throws<ArgumentException>(() => new TileMap2DModel(new DrawSize(1, 1), [], [new TileLayer2DModel("Layer", [chunk])])), "SCN2D006");
-        AssertDiagnostic(Assert.Throws<ArgumentException>(() => new TileLayer2DModel("Layer", [chunk, chunk])), "SCN2D011");
+        AssertDiagnostic(Assert.Throws<ArgumentException>(() => new TileMap2DModel("Layer", new DrawSize(1, 1), [], [chunk])), "SCN2D006");
+        AssertDiagnostic(Assert.Throws<ArgumentException>(() => new TileMap2DModel("Layer", new DrawSize(1, 1), [], [chunk, chunk])), "SCN2D011");
     }
 
     [Fact]
@@ -101,7 +101,7 @@ public sealed class SceneModelValidationTests
         options.GetType().GetProperty("MaxDiagnostics")!.SetValue(options, 2);
         TileDefinition2D[] definitions = Enumerable.Range(1, 8).Select(id => new TileDefinition2D(id, new DrawRect(id, 0, 2, 2))).ToArray();
         TileSet2D set = new("Atlas", new ResourceId<ImageResource>("Atlas"), definitions);
-        TileMap2DModel model = new(new DrawSize(1, 1), [set], []);
+        TileMap2DModel model = new("Layer", new DrawSize(1, 1), [set], []);
         Dictionary<string, DrawSize> sizes = new() { ["Atlas"] = new DrawSize(1, 1) };
         MethodInfo method = validator.GetMethods().Single(candidate => candidate.Name == "Validate" && candidate.GetParameters()[0].ParameterType == typeof(TileMap2DModel));
         object first = method.Invoke(null, [model, sizes, options])!;
@@ -162,10 +162,10 @@ public sealed class SceneModelValidationTests
             ("tileId", scenario == 0 ? null : 1));
         Array promotions = Array.CreateInstance(CoreType("TilePromotion2D"), scenario == 2 ? 2 : 1);
         for (int index = 0; index < promotions.Length; index++) { promotions.SetValue(promotion, index); }
-        TileMap2DModel map = new(new DrawSize(1, 1),
+        TileMap2DModel map = new("Layer", new DrawSize(1, 1),
             [new TileSet2D("Atlas", new ResourceId<ImageResource>("Atlas"), [new TileDefinition2D(1, new DrawRect(0, 0, 1, 1))])],
-            [new TileLayer2DModel("Layer", [new TileChunk2D(default, 1, 1, [default])])]);
-        ArgumentException error = Assert.Throws<ArgumentException>(() => Construct("Scene2DLevel", ("id", "Level"), ("tileMap", map), ("promotions", promotions)));
+            [new TileChunk2D(default, 1, 1, [default])]);
+        ArgumentException error = Assert.Throws<ArgumentException>(() => Construct("Scene2DLevel", ("id", "Level"), ("tileMaps", new[] { map }), ("promotions", promotions)));
         AssertDiagnostic(error, code);
     }
 
@@ -173,9 +173,9 @@ public sealed class SceneModelValidationTests
     [Trait("SceneImportStage", "1")]
     public void DocumentDoesNotPublishWithUnresolvedAtlas()
     {
-        TileMap2DModel map = new(new DrawSize(1, 1),
+        TileMap2DModel map = new("Layer", new DrawSize(1, 1),
             [new TileSet2D("Atlas", new ResourceId<ImageResource>("Atlas"), [new TileDefinition2D(1, new DrawRect(0, 0, 1, 1))])], []);
-        object level = Construct("Scene2DLevel", ("id", "Level"), ("tileMap", map));
+        object level = Construct("Scene2DLevel", ("id", "Level"), ("tileMaps", new[] { map }));
         Array levels = Array.CreateInstance(CoreType("Scene2DLevel"), 1);
         levels.SetValue(level, 0);
         Array assets = Array.CreateInstance(CoreType("Scene2DAsset"), 0);
@@ -198,21 +198,21 @@ public sealed class SceneModelValidationTests
     [Trait("SceneImportStage", "1")]
     public void ModelRejectsSceneCoordinateOverflowBeforePresentationCanPublish()
     {
-        TileLayer2DModel layer = new("Layer", [new TileChunk2D(new TileCoordinate2D(3000, 0), 1, 1, [default])]);
-        Exception? error = Record.Exception(() => new TileMap2DModel(new DrawSize(1_000_000, 1), [], [layer]));
+        TileChunk2D chunk = new(new TileCoordinate2D(3000, 0), 1, 1, [default]);
+        Exception? error = Record.Exception(() => new TileMap2DModel("Layer", new DrawSize(1_000_000, 1), [], [chunk]));
         Assert.IsAssignableFrom<ArgumentException>(error);
         AssertDiagnostic(error!, "SCN2D014");
     }
 
     [Fact]
     [Trait("SceneImportStage", "1")]
-    public void RepeatedTileCollidersCannotExpandIntoAnUnboundedSceneIndex()
+    public void RepeatedTileColliderCannotExpandIntoAnUnboundedSceneIndex()
     {
         TileColliderDescriptor2D descriptor = new(TileColliderShape2D.Circle);
-        TileDefinition2D tile = new(1, new DrawRect(0, 0, 1, 1), colliders: Enumerable.Repeat(descriptor, 4096));
+        TileDefinition2D tile = new(1, new DrawRect(0, 0, 1, 1), collider: descriptor);
         TileSet2D set = new("Atlas", new ResourceId<ImageResource>("Atlas"), [tile]);
-        TileLayer2DModel layer = new("Layer", [new TileChunk2D(default, 17, 1, Enumerable.Repeat(new TileCell2D(1), 17))]);
-        Exception? error = Record.Exception(() => new TileMap2DModel(new DrawSize(1, 1), [set], [layer]));
+        TileChunk2D chunk = new(default, 65_537, 1, Enumerable.Repeat(new TileCell2D(1), 65_537));
+        Exception? error = Record.Exception(() => new TileMap2DModel("Layer", new DrawSize(1, 1), [set], [chunk]));
         Assert.IsAssignableFrom<ArgumentException>(error);
         AssertDiagnostic(error!, "SCN2D013");
     }

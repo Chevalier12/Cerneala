@@ -75,7 +75,6 @@ public sealed class SpriteAnimationIntegrationTests
         Assert.Equal(new DrawRect(16, 0, 16, 16), Record(surface).Single(IsImage).ImageSource);
         AnimatablePropertyRegistry registry = new();
         Assert.True(registry.TryGet(Sprite2D.AnimationPlaybackRateProperty, out _));
-        Assert.True(registry.TryGet(TileInstance2D.AnimationPlaybackRateProperty, out _));
         Assert.False(registry.TryGet(Sprite2D.AnimationsProperty, out _));
         Assert.False(registry.TryGet(Sprite2D.AnimationStateProperty, out _));
         Assert.False(registry.TryGet(Sprite2D.SourceXProperty, out _));
@@ -156,22 +155,24 @@ public sealed class SpriteAnimationIntegrationTests
 
     [Fact]
     [Trait("SpriteAnimationStage", "2")]
-    public void PromotedAnimatedPrismTileKeepsOrdinaryTilesBatched()
+    public void AnimatedPrismSpriteKeepsPeerTileMapBatched()
     {
         ResourceId<ImageResource> atlasId = new("Atlas");
         TileMap2D map = new()
         {
             Model = new TileMap2DModel(
+                "Ground",
                 new DrawSize(16, 16),
                 [new TileSet2D("World", atlasId, [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16))])],
-                [new TileLayer2DModel("Ground", [new TileChunk2D(new TileCoordinate2D(0, 0), 3, 1, [new TileCell2D(1), new TileCell2D(1), new TileCell2D(1)])])],
+                [new TileChunk2D(new TileCoordinate2D(0, 0), 3, 1, [new TileCell2D(1), default, new TileCell2D(1)])],
                 new TileMapBounds2D(0, 0, 3, 1))
         };
-        TileInstance2D promoted = map.Promote(new TileCellKey2D("Ground", 1, 0));
+        Sprite2D promoted = new() { X = 16, Width = 16, Height = 16, Image = new ImageReference(atlasId) };
         promoted.Animations = Set(Clip("Walk", true, Frame(0, 100), Frame(16, 100, RenderSurface2DSpriteFlip.Horizontal)));
         promoted.AnimationState = "Walk";
         promoted.AdvanceAnimation(TimeSpan.FromMilliseconds(100));
         RenderSurface2D surface = Surface(map);
+        surface.Scene!.Children.Add(promoted);
         surface.Resources.SetResource(atlasId, new ImageResource("atlas.png"));
         UIRoot root = new();
         root.SetImageLoader(new TestImageLoader());
@@ -186,10 +187,11 @@ public sealed class SpriteAnimationIntegrationTests
         Assert.Equal(DrawImageFlip.Horizontal, promotedDraw.ImageFlip);
         Assert.Contains(commands, static command => command.Kind == DrawCommandKind.DrawSpriteBatch);
         Assert.Equal(
-            [DrawCommandKind.DrawSpriteBatch, DrawCommandKind.BeginPrism, DrawCommandKind.DrawImage, DrawCommandKind.EndPrism, DrawCommandKind.DrawSpriteBatch],
+            [DrawCommandKind.DrawSpriteBatch, DrawCommandKind.BeginPrism, DrawCommandKind.DrawImage, DrawCommandKind.EndPrism],
             commands.Where(static command => command.Kind is DrawCommandKind.DrawSpriteBatch or DrawCommandKind.BeginPrism or DrawCommandKind.DrawImage or DrawCommandKind.EndPrism)
                 .Select(static command => command.Kind));
-        Assert.Equal(1, map.GetDiagnosticsSnapshot().PromotedInstancesVisible);
+        Assert.Equal(2, map.GetDiagnosticsSnapshot().DrawnTiles);
+        Assert.Equal(1, map.GetDiagnosticsSnapshot().BatchesBuilt);
         Assert.True(promoted.AdvanceAnimation(TimeSpan.FromMilliseconds(100)));
         Record(surface);
         Assert.Equal(0, map.GetDiagnosticsSnapshot().BatchesRebuilt);

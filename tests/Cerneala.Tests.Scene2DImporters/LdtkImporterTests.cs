@@ -41,6 +41,7 @@ public sealed class LdtkImporterTests
     [InlineData("mask", "SCN2D009")]
     [InlineData("promotion", "SCN2D012")]
     [InlineData("degenerate", "SCN2D008")]
+    [InlineData("multiSegmentPolyline", "SCN2D008")]
     public void InvalidSourcesAreLocatedAndNeverPublishPartially(string mutation, string code)
     {
         using Fixture fixture = new();
@@ -80,6 +81,7 @@ public sealed class LdtkImporterTests
             case "mask": Entity(root, "Collider", "Box", mask: "-1"); break;
             case "promotion": Entity(root, "Promote", "Box", x: 99); break;
             case "degenerate": Entity(root, "Collider", "Polyline", points: "0,0 0,0"); break;
+            case "multiSegmentPolyline": Entity(root, "Collider", "Polyline", points: "0,0 16,0 16,8"); break;
         }
         Scene2DImportResult result = fixture.Import();
         Assert.False(result.Success);
@@ -96,13 +98,13 @@ public sealed class LdtkImporterTests
         layer["autoLayerTiles"] = layer["gridTiles"]!.DeepClone(); layer["gridTiles"] = new JsonArray();
         layer["intGridCsv"] = new JsonArray(1, 0, 0, 1);
         Scene2DLevel level = Assert.Single(Success(fixture.Import()).Levels);
-        TileLayer2DModel result = level.TileMap.Layers[0];
+        TileMap2DModel result = level.TileMaps[0];
         Assert.Equal(new DrawPoint(2, 3), result.Offset);
         Assert.Equal(new[] { 1, 0, 0, 1 }, Assert.IsAssignableFrom<IReadOnlyList<int>>(result.Properties["$IntGrid"]));
         Assert.True(result.TryGetCell(new(1, 0), out TileCell2D cell));
         Assert.Equal(TileFlip2D.Horizontal, cell.Flip);
         Assert.Empty(level.Entities);
-        Assert.All(level.TileMap.TileSets.SelectMany(set => set.Tiles), definition => Assert.Empty(definition.Colliders));
+        Assert.All(level.TileSets.SelectMany(set => set.Tiles), definition => Assert.Null(definition.Collider));
     }
 
     [Theory]
@@ -126,7 +128,7 @@ public sealed class LdtkImporterTests
     [InlineData("Box", "", 1)]
     [InlineData("Ellipse", "", 1)]
     [InlineData("Polygon", "0,0 16,0 0,8", 1)]
-    [InlineData("Polyline", "0,0 16,0 16,8", 2)]
+    [InlineData("Polyline", "0,0 16,0", 1)]
     public void EntityGeometryPreservesPivotAndCollisionFields(string shape, string points, int count)
     {
         using Fixture fixture = new();
@@ -135,8 +137,11 @@ public sealed class LdtkImporterTests
         Assert.Equal(new DrawPoint(8, 12), entity.Position);
         Assert.Equal(new DrawPoint(0.5f, 0.5f), entity.Pivot);
         Assert.Equal(new DrawSize(16, 8), entity.Size);
-        Assert.Equal(count, entity.Colliders.Count);
-        Assert.All(entity.Colliders, collider => { Assert.Equal(0u, collider.CollisionLayer); Assert.Equal(0xffffffffu, collider.CollisionMask); Assert.True(collider.IsTrigger); });
+        Assert.Equal(count, entity.Collider is null ? 0 : 1);
+        TileColliderDescriptor2D collider = Assert.IsType<TileColliderDescriptor2D>(entity.Collider);
+        Assert.Equal(0u, collider.CollisionLayer);
+        Assert.Equal(0xffffffffu, collider.CollisionMask);
+        Assert.True(collider.IsTrigger);
         Assert.Equal("Closed", entity.Properties["InitialState"]);
     }
 
@@ -262,7 +267,7 @@ public sealed class LdtkImporterTests
         root["levels"] = new JsonArray(); root["worldLayout"] = null;
         Scene2DLevel level = Assert.Single(Success(fixture.Import()).Levels);
         Assert.Equal(iid, Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(level.Properties["$World"])["$WorldIid"]);
-        Assert.True(level.TileMap.Layers[0].TryGetCell(new(1, 0), out TileCell2D cell)); Assert.Equal(2, cell.TileId);
+        Assert.True(level.TileMaps[0].TryGetCell(new(1, 0), out TileCell2D cell)); Assert.Equal(2, cell.TileId);
     }
 
     [Theory]
@@ -286,7 +291,14 @@ public sealed class LdtkImporterTests
         else { Level(fixture.Root)["layerInstances"] = new JsonArray(); }
         Scene2DImportResult result = fixture.Import();
         if (unaligned) { Assert.Null(result.Document); Assert.Contains(result.Diagnostics, item => item.Code == "SCN2D004"); }
-        else { Assert.Equal(new DrawSize(1, 1), Assert.Single(Success(result).Levels).TileMap.TileSize); }
+        else
+        {
+            Scene2DLevel level = Assert.Single(Success(result).Levels);
+            Assert.Empty(level.TileMaps);
+            Assert.Equal(new DrawSize(1, 1), level.TileSize);
+            Assert.Equal(new TileMapBounds2D(0, 0, 32, 32), level.Bounds);
+            Assert.Equal(2, Assert.Single(level.TileSets).Tiles.Count);
+        }
     }
 
     private static Scene2DDocument Success(Scene2DImportResult result)

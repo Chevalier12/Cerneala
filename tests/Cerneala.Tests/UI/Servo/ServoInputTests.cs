@@ -11,6 +11,36 @@ namespace Cerneala.Tests.UI.Servo;
 
 public sealed class ServoInputTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task TargetActionResolvesAfterPendingLayoutMovesTheTarget(bool click)
+    {
+        Border header = new() { Height = 16 };
+        Button button = new() { Content = "Target", Width = 160, Height = 32 };
+        ServoApi.SetId(button, "target");
+        StackPanel panel = new();
+        panel.VisualChildren.Add(header);
+        panel.VisualChildren.Add(button);
+        UiHost host = CreateHost(panel);
+        ServoApi servo = new(host);
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        float initialY = button.ArrangedBounds.Y;
+
+        header.Height = 80;
+        Assert.Equal(initialY, button.ArrangedBounds.Y);
+        Assert.True(host.Root!.Scheduler.HasWork);
+
+        if (click) await servo.ClickAsync(ServoTarget.ById("target"));
+        else await servo.HoverAsync(ServoTarget.ById("target"));
+
+        Assert.True(button.ArrangedBounds.Y > initialY + button.ArrangedBounds.Height);
+        Assert.True(button.IsMouseOver);
+        Assert.Equal(click ? 1 : 0, clicks);
+        Assert.False(host.LastFrame!.Input.Pointer.IsDown(InputMouseButton.Left));
+    }
+
     [Fact]
     public async Task HoverAndClickUseHitTestingRoutedInputAndRetainedCommit()
     {

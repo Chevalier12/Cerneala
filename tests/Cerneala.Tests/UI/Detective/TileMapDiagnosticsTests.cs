@@ -20,9 +20,9 @@ public sealed class TileMapDiagnosticsTests
         ResourceId<ImageResource> atlas = new("atlas");
         TileMap2D map = new()
         {
-            Model = new TileMap2DModel(new DrawSize(16, 16),
+            Model = new TileMap2DModel("ground", new DrawSize(16, 16),
                 [new TileSet2D("atlas", atlas, [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16))])],
-                [new TileLayer2DModel("ground", [new TileChunk2D(default, 2, 1, [new TileCell2D(1), new TileCell2D(1)])])])
+                [new TileChunk2D(default, 2, 1, [new TileCell2D(1), new TileCell2D(1)])])
         };
         map.Resources.SetResource(atlas, new ImageResource(new TestImage()));
         Scene2D scene = new();

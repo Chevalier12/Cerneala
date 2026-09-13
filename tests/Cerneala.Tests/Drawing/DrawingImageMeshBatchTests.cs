@@ -163,6 +163,116 @@ public sealed class DrawingImageMeshBatchTests
             DrawCommand.DrawPointBatch(replacement));
     }
 
+    [Theory]
+    [InlineData(DrawSamplingMode.Point, DrawAddressMode.Clamp)]
+    [InlineData(DrawSamplingMode.Point, DrawAddressMode.Wrap)]
+    [InlineData(DrawSamplingMode.Linear, DrawAddressMode.Clamp)]
+    [InlineData(DrawSamplingMode.Linear, DrawAddressMode.Wrap)]
+    public void SpriteBatchRecordingRetainsImmutableOptionsAcrossCollection(
+        DrawSamplingMode sampling,
+        DrawAddressMode addressMode)
+    {
+        TestImage image = new(16, 16);
+        DrawSpriteBatch batch = new(image,
+            [new DrawSprite2D(new DrawRect(2, 3, 8, 8), new DrawImageOptions(
+                source: new DrawRect(1, 2, 4, 4), tint: Color.HotPink, opacity: 0.5f,
+                rotation: 0.25f, origin: new DrawPoint(1, 2),
+                flip: DrawImageFlip.Horizontal, layerDepth: 0.75f,
+                sampling: sampling, addressMode: addressMode))]);
+        DrawCommand first = DrawCommand.DrawSpriteBatch(batch);
+        DrawImageOptions expected = new(sampling: sampling, addressMode: addressMode);
+        for (int index = 0; index < 128; index++) { _ = DrawCommand.DrawSpriteBatch(batch); }
+
+        GC.Collect(0, GCCollectionMode.Forced, blocking: true);
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        DrawCommand second = DrawCommand.DrawSpriteBatch(batch);
+        long allocatedBytes = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        Assert.Equal(0, allocatedBytes);
+        Assert.Same(first.ImageOptions, second.ImageOptions);
+        Assert.Equal(expected, second.ImageOptions);
+        Assert.Same(batch.Mesh, second.Mesh);
+        Assert.Same(image, second.Image);
+        Assert.Equal(first, second);
+
+        DrawSpriteBatch transformed = batch.Transform(point => new DrawPoint(point.X + 1, point.Y + 2));
+        DrawSpriteBatch rebound = batch.WithImage(new TestImage(16, 16));
+        Assert.Same(first.ImageOptions, DrawCommand.DrawSpriteBatch(transformed).ImageOptions);
+        Assert.Same(first.ImageOptions, DrawCommand.DrawSpriteBatch(rebound).ImageOptions);
+    }
+
+    [Fact]
+    public void ImageOptionValidationDoesNotReplenishEnumMetadataAfterCollection()
+    {
+        for (int index = 0; index < 128; index++)
+        {
+            _ = new DrawImageOptions(sampling: DrawSamplingMode.Point, addressMode: DrawAddressMode.Wrap);
+        }
+
+        GC.Collect(0, GCCollectionMode.Forced, blocking: true);
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        DrawImageOptions afterCollection = new(sampling: DrawSamplingMode.Point, addressMode: DrawAddressMode.Wrap);
+        long collectionBytes = GC.GetAllocatedBytesForCurrentThread() - before;
+        before = GC.GetAllocatedBytesForCurrentThread();
+        DrawImageOptions steady = new(sampling: DrawSamplingMode.Point, addressMode: DrawAddressMode.Wrap);
+        long steadyBytes = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        Assert.Equal(steady, afterCollection);
+        Assert.Equal(steadyBytes, collectionBytes);
+    }
+
+    [Theory]
+    [InlineData(int.MinValue)]
+    [InlineData(-1)]
+    [InlineData(2)]
+    [InlineData(int.MaxValue)]
+    public void ImageOptionsRejectEveryOutOfDomainSamplingAndAddressValue(int invalid)
+    {
+        Assert.Equal("sampling", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new DrawImageOptions(sampling: (DrawSamplingMode)invalid)).ParamName);
+        Assert.Equal("addressMode", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new DrawImageOptions(addressMode: (DrawAddressMode)invalid)).ParamName);
+    }
+
+    [Fact]
+    public void SpriteMeshPreservesFractionalOriginRotationFlipAndTintGeometry()
+    {
+        TestImage image = new(64, 48);
+        DrawRect destination = new(2.25f, 3.5f, 9.5f, 6.25f);
+        DrawRect source = new(3, 4, 5, 7);
+        DrawPoint origin = new(1.25f, 2.5f);
+        foreach (float rotation in new[] { 0f, -0.7f, MathF.PI / 2 })
+        {
+            for (int bits = 0; bits < 4; bits++)
+            {
+                DrawImageFlip flip = (DrawImageFlip)bits;
+                DrawSpriteBatch batch = new(image, [new DrawSprite2D(destination,
+                    new DrawImageOptions(source, new Color(101, 53, 211, 129), opacity: 0.4f,
+                        rotation: rotation, origin: origin, flip: flip,
+                        sampling: DrawSamplingMode.Point, addressMode: DrawAddressMode.Wrap))]);
+
+                Assert.Equal([0, 1, 2, 0, 2, 3], batch.Mesh.Indices);
+                for (int corner = 0; corner < 4; corner++)
+                {
+                    bool right = corner is 1 or 2;
+                    bool bottom = corner is 2 or 3;
+                    float x = (right ? destination.Width : 0) - origin.X * destination.Width / source.Width;
+                    float y = (bottom ? destination.Height : 0) - origin.Y * destination.Height / source.Height;
+                    float expectedX = destination.X + x * MathF.Cos(rotation) - y * MathF.Sin(rotation);
+                    float expectedY = destination.Y + x * MathF.Sin(rotation) + y * MathF.Cos(rotation);
+                    float u = (right ^ flip.HasFlag(DrawImageFlip.Horizontal) ? source.Right : source.X) / image.Width;
+                    float v = (bottom ^ flip.HasFlag(DrawImageFlip.Vertical) ? source.Bottom : source.Y) / image.Height;
+                    DrawVertex2D vertex = batch.Mesh.Vertices[corner];
+
+                    Assert.InRange(MathF.Abs(expectedX - vertex.Position.X), 0, 0.0001f);
+                    Assert.InRange(MathF.Abs(expectedY - vertex.Position.Y), 0, 0.0001f);
+                    Assert.Equal(new DrawPoint(u, v), vertex.TextureCoordinate);
+                    Assert.Equal(new Color(101, 53, 211, 52), vertex.Color);
+                }
+            }
+        }
+    }
+
     [Fact]
     public void AdvancedBoundsIncludeRotationMeshBatchesAndWorldTransform()
     {

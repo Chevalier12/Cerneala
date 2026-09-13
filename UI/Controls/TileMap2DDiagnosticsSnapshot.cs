@@ -12,9 +12,4 @@ internal readonly record struct TileMap2DDiagnosticsSnapshot(
     int DrawCommands,
     long RetainedBytes,
     int RetainedObjects,
-    int TileInvalidations,
-    int PromotedInstancesVisible,
-    int PromotedInstancesCulled,
-    int Promotions,
-    int Demotions,
-    int BatchSplits);
+    int TileInvalidations);

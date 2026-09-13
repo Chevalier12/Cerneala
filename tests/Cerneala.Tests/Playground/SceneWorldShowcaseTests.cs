@@ -40,25 +40,38 @@ public sealed class SceneWorldShowcaseTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void WallMigrationPreservesTileDrawingAndTheSixAuthoredCollisionRegions(bool ldtk)
+    public void ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(bool ldtk)
     {
         SceneWorldState state = new();
         state.Load(ldtk);
         string path = Path.Combine(AppContext.BaseDirectory, "SceneWorldAssets", ldtk ? "village.ldtk" : "village.tmj");
         Scene2DImportResult imported = ldtk ? LdtkScene2DImporter.Import(path) : TiledScene2DImporter.Import(path);
         Assert.True(imported.Success);
-        TileMap2DModel original = imported.Document!.Levels.Single().TileMap;
+        Scene2DLevel level = imported.Document!.Levels.Single();
+        IReadOnlyList<TileMap2DModel> original = level.TileMaps;
         if (ldtk)
         {
-            Assert.Equal(3, original.Layers.Sum(l => l.Chunks.Count));
-            Assert.Equal(["1", "2", "4"], original.Layers.Where(l => l.Chunks.Count > 0).Select(l => l.Id).Order());
+            Assert.Equal(3, original.Sum(map => map.Chunks.Count));
+            Assert.Equal(["1", "2", "4"], original.Where(map => map.Chunks.Count > 0).Select(map => map.Id).Order());
         }
-        List<DrawRect> collisionRegions = [];
-        Assert.Equal(6, state.Colliders.Count);
-        Assert.Equal(original.Layers.Count, state.Model.Layers.Count);
-        foreach (TileLayer2DModel before in original.Layers)
+        Scene2DEntity[] importedWalls = level.Entities.Where(e => e.Role == "Collider").ToArray();
+        Assert.Equal(6, importedWalls.Length);
+        Assert.All(importedWalls, wall =>
         {
-            TileLayer2DModel after = state.Model.Layers.Single(l => l.Id == before.Id);
+            Assert.Equal("Box", wall.Shape);
+            Assert.Equal(0f, wall.Rotation);
+            Assert.NotNull(wall.Collider);
+            Assert.Equal(TileColliderShape2D.Box, wall.Collider!.Shape);
+        });
+        Assert.Equal(6, state.Colliders.Count);
+        Assert.Equal(
+            importedWalls.Select(wall => (wall.Position.X, wall.Position.Y, wall.Size.Width, wall.Size.Height,
+                wall.Collider!.CollisionLayer, wall.Collider.CollisionMask)).ToArray(),
+            state.Colliders.Select(wall => (wall.X, wall.Y, wall.Width, wall.Height, wall.Layer, wall.Mask)).ToArray());
+        Assert.Equal(original.Count, state.TileMaps.Count);
+        foreach (TileMap2DModel before in original)
+        {
+            TileMap2DModel after = state.TileMaps.Single(map => map.Id == before.Id);
             Assert.Equal((before.Offset, before.Opacity, before.Tint, before.Order, before.IsVisible),
                 (after.Offset, after.Opacity, after.Tint, after.Order, after.IsVisible));
             Assert.Equal(before.Chunks.Count, after.Chunks.Count);
@@ -69,30 +82,25 @@ public sealed class SceneWorldShowcaseTests
                 for (int index = 0; index < chunk.Tiles.Count; index++)
                 {
                     TileCell2D oldCell = oldChunk.Tiles[index], cell = chunk.Tiles[index];
-                    Assert.Equal(oldCell.Flip, cell.Flip);
-                    if (oldCell.TileId == 0) { Assert.Equal(0, cell.TileId); continue; }
-                    Assert.True(original.TryResolveTile(oldCell.TileId, out TileSet2D? oldSet, out TileDefinition2D? oldTile));
-                    Assert.True(state.Model.TryResolveTile(cell.TileId, out TileSet2D? set, out TileDefinition2D? tile));
+                    TileCoordinate2D coordinate = new(chunk.Origin.X + index % chunk.Width, chunk.Origin.Y + index / chunk.Width);
+                    if (before.Id == "4" && coordinate == new TileCoordinate2D(14, 9))
+                    {
+                        Assert.Equal(7, oldCell.TileId);
+                        Assert.Equal(0, cell.TileId);
+                        Assert.Equal((224f, 144f), (state.DoorX, state.DoorY));
+                        continue;
+                    }
+                    Assert.Equal(oldCell, cell);
+                    if (oldCell.TileId == 0) continue;
+                    Assert.True(before.TryResolveTile(oldCell.TileId, out TileSet2D? oldSet, out TileDefinition2D? oldTile));
+                    Assert.True(after.TryResolveTile(cell.TileId, out TileSet2D? set, out TileDefinition2D? tile));
                     Assert.Equal(oldSet!.AtlasResourceId, set!.AtlasResourceId);
                     Assert.Equal(oldTile!.SourceRect, tile!.SourceRect);
-                    foreach (TileColliderDescriptor2D collider in tile.Colliders)
-                    {
-                        Assert.Equal("2", after.Id);
-                        Assert.Equal(TileColliderShape2D.Box, collider.Shape);
-                        Assert.Equal((2u, 1u), (collider.CollisionLayer, collider.CollisionMask));
-                        float x = (chunk.Origin.X + index % chunk.Width) * original.TileSize.Width + after.Offset.X + collider.OffsetX;
-                        float y = (chunk.Origin.Y + index / chunk.Width) * original.TileSize.Height + after.Offset.Y + collider.OffsetY;
-                        collisionRegions.Add(new(x, y, collider.Width, collider.Height));
-                    }
+                    Assert.Null(oldTile.Collider);
+                    Assert.Null(tile.Collider);
                 }
             }
         }
-        Assert.NotEmpty(collisionRegions);
-        // Half-pixel samples cover every unit cell, including the uncollidable second house.
-        for (float y = 0.5f; y < 288; y++)
-        for (float x = 0.5f; x < 512; x++)
-            Assert.Equal(state.Colliders.Any(r => x >= r.X && x < r.X + r.Width && y >= r.Y && y < r.Y + r.Height),
-                collisionRegions.Any(r => x >= r.X && x < r.X + r.Width && y >= r.Y && y < r.Y + r.Height));
     }
 
     [Fact]
@@ -115,17 +123,33 @@ public sealed class SceneWorldShowcaseTests
         RenderSurface2D surface = Descendants(view).OfType<RenderSurface2D>().Single();
         Scene2D world = surface.Scene!;
         UIElement[] nodes = Descendants(world).Prepend(world).ToArray();
-        TileMap2D map = nodes.OfType<TileMap2D>().Single();
-        TileLayer2D layer = nodes.OfType<TileLayer2D>().Single(l => l.LayerId == "2");
-        TileInstance2D door = nodes.OfType<TileInstance2D>().Single();
-        Assert.Contains(door, nodes.OfType<TileLayer2D>().Single(l => l.LayerId == "4").LogicalChildren);
+        TileMap2D map = nodes.OfType<TileMap2D>().Single(map => map.Model!.Id == "1");
+        TileMap2D layer = nodes.OfType<TileMap2D>().Single(map => map.Model!.Id == "2");
+        Sprite2D door = nodes.OfType<Sprite2D>().Single(sprite => ServoApi.GetId(sprite) == "world-door");
+        Scene2D mapGroup = Assert.IsType<Scene2D>(door.LogicalParent);
+        Assert.Contains(map, mapGroup.Children);
+        Assert.Contains(layer, mapGroup.Children);
+        Assert.Equal(3, nodes.OfType<TileMap2D>().Count());
         BoxCollider2D doorCollider = door.LogicalChildren.OfType<BoxCollider2D>().Single();
+        SceneItems2D importedColliders = nodes.OfType<SceneItems2D>()
+            .Single(n => ReferenceEquals(n.ItemsSource, view.State.Colliders));
+        Sprite2D[] wallOwners = Descendants(importedColliders).OfType<Sprite2D>().ToArray();
+        Assert.Equal(6, importedColliders.RealizedItemCount);
+        Assert.Equal(6, wallOwners.Length);
+        Assert.Equal(view.State.Colliders.Select(wall => (wall.X, wall.Y, wall.Width, wall.Height, wall.Layer, wall.Mask)).ToArray(),
+            wallOwners.Select(owner =>
+            {
+                BoxCollider2D collider = Assert.IsType<BoxCollider2D>(owner.Collider);
+                Assert.Single(owner.LogicalChildren);
+                Assert.Same(collider, owner.LogicalChildren.Single());
+                return (owner.X, owner.Y, collider.Width, collider.Height, collider.CollisionLayer, collider.CollisionMask);
+            }).ToArray());
         Scene2D player = nodes.OfType<Scene2D>().Single(n => ServoApi.GetId(n) == "world-player");
         Sprite2D playerSprite = player.Children.OfType<Sprite2D>().Single();
         SceneItems2D npcs = nodes.OfType<SceneItems2D>().Single(n => ReferenceEquals(n.ItemsSource, view.State.Npcs));
         Sprite2D npcSprite = Descendants(npcs).OfType<Sprite2D>().Single();
         Scene2DDebugOverlay overlay = nodes.OfType<Scene2DDebugOverlay>().Single();
-        UIElement[] visualMatrix = [world, map, layer, door, player, playerSprite, npcSprite, overlay];
+        UIElement[] visualMatrix = [world, mapGroup, layer, door, player, playerSprite, npcSprite, overlay];
         Assert.All(visualMatrix, node =>
         {
             Assert.NotNull(node.Aspect);
@@ -146,7 +170,7 @@ public sealed class SceneWorldShowcaseTests
         var glowParameters = PrismCatalog.GetStyle(PrismStyleId.OuterGlow).Parameters;
         Assert.Equal(4f, doorGlow.GetValue<float>(glowParameters.Single(p => p.Name == "Size")));
         Assert.Equal(0.8f, doorGlow.GetValue<float>(glowParameters.Single(p => p.Name == "Opacity")));
-        UIElement[] loadedFades = [world, map, layer, player, playerSprite, npcSprite, overlay];
+        UIElement[] loadedFades = [world, mapGroup, layer, player, playerSprite, npcSprite, overlay];
         float[] starts = loadedFades.Select(n => n.Opacity).ToArray();
         Assert.All(starts, value => Assert.InRange(value, 0.39f, 0.71f));
         Assert.InRange(doorCollider.OffsetX, 0.99f, 1.01f);
@@ -173,7 +197,7 @@ public sealed class SceneWorldShowcaseTests
         Assert.Equal(1, root.ImageResourceCache!.LoadCount);
         Record(); // The first recording builds the retained tile batches.
         Assert.True(map.GetDiagnosticsSnapshot().BatchesReused > 0);
-        Assert.Equal(65, map.Model!.Layers.Sum(l => l.Chunks.Count));
+        Assert.Equal(65, nodes.OfType<TileMap2D>().Sum(map => map.Model!.Chunks.Count));
 
         await servo.ClickAsync(ServoTarget.ById("world-player"));
         await servo.PressKeyAsync(InputKey.Up);
@@ -196,7 +220,7 @@ public sealed class SceneWorldShowcaseTests
         Assert.Equal(1, door.Opacity);
         Assert.Contains(Record(), c => c.Kind == DrawCommandKind.DrawImage && c.ImageSource == new DrawRect(112, 0, 16, 16));
 
-        TileMap2DModel original = map.Model;
+        TileMap2DModel original = map.Model!;
         var collisionBefore = world.CollisionWorld.GetDiagnosticsSnapshot();
         ServoElement pickingBefore = await servo.FindAsync(ServoTarget.ById("world-player"));
         await servo.ClickAsync(ServoTarget.ById("world-debug"));

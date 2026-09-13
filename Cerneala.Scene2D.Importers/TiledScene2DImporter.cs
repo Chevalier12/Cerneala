@@ -28,7 +28,7 @@ public static class TiledScene2DImporter
     private sealed class Parser(ImportContext context)
     {
         private readonly List<TileSet2D> sets = new();
-        private readonly List<TileLayer2DModel> layers = new();
+        private readonly List<TileMap2DModel> maps = new();
         private readonly List<Scene2DEntity> entities = new();
         private readonly List<TilePromotion2D> promotions = new();
         private readonly Dictionary<string, Scene2DAsset> assets = new(StringComparer.Ordinal);
@@ -37,6 +37,7 @@ public static class TiledScene2DImporter
         private long definitions;
         private readonly ImportConventions conventions = new(context);
         private bool infinite;
+        private TileMapBounds2D? bounds;
 
         internal Scene2DDocument Parse(JsonElement map)
         {
@@ -53,7 +54,7 @@ public static class TiledScene2DImporter
             tileWidth = Positive(map, "tilewidth");
             tileHeight = Positive(map, "tileheight");
             infinite = context.Boolean(map, "infinite");
-            TileMapBounds2D? bounds = infinite ? null : new(0, 0, Positive(map, "width"), Positive(map, "height"));
+            bounds = infinite ? null : new(0, 0, Positive(map, "width"), Positive(map, "height"));
             int index = 0;
             foreach (JsonElement set in context.Array(context.Required(map, "tilesets")))
             {
@@ -64,8 +65,8 @@ public static class TiledScene2DImporter
             context.Path = "$.layers";
             ParseLayers(context.Required(map, "layers"), default, 1, Color.White, true, Array.Empty<object>());
             context.Path = "$";
-            TileMap2DModel model = new(new(tileWidth, tileHeight), sets, layers, bounds, properties: properties);
-            Scene2DLevel level = new(context.Relative(context.File), model, entities: entities, promotions: promotions, properties: properties);
+            Scene2DLevel level = new(context.Relative(context.File), maps, entities: entities, promotions: promotions,
+                properties: properties, tileSets: sets, tileSize: new(tileWidth, tileHeight), bounds: bounds);
             return new([level], assets.Values, properties: new Dictionary<string, object?>
             { ["$Format"] = "Tiled", ["$Version"] = "1.11" }, validationOptions: context.ValidationOptions);
         }
@@ -137,7 +138,7 @@ public static class TiledScene2DImporter
             if (assets.TryGetValue(atlasPath, out Scene2DAsset? existing) && existing.Size != size)
             { context.Fail("SCN2D007", "The same atlas has conflicting declared dimensions."); }
             assets.TryAdd(atlasPath, new(resource, atlasPath, size));
-            Dictionary<int, (Dictionary<string, object?> Properties, List<TileColliderDescriptor2D> Colliders)> overrides = new();
+            Dictionary<int, (Dictionary<string, object?> Properties, TileColliderDescriptor2D? Collider)> overrides = new();
             string setPath = context.Path;
             if (set.TryGetProperty("tiles", out JsonElement tiles))
             {
@@ -150,7 +151,7 @@ public static class TiledScene2DImporter
                     int id = context.Int(context.Required(tile, "id"), "SCN2D006");
                     if (id < 0 || id >= count) { context.Fail("SCN2D006", "Local tile ID is outside the atlas tile count."); }
                     if (overrides.ContainsKey(id)) { context.Fail("SCN2D015", "Duplicate local tile ID."); }
-                    List<TileColliderDescriptor2D> colliders = new();
+                    TileColliderDescriptor2D? tileCollider = null;
                     if (tile.TryGetProperty("objectgroup", out JsonElement group))
                     {
                         Dictionary<string, object?> groupProperties = Properties(group);
@@ -162,21 +163,23 @@ public static class TiledScene2DImporter
                         foreach (JsonElement item in context.Array(context.Required(group, "objects")))
                         {
                             context.Path = $"{setPath}.tiles[{index - 1}].objectgroup.objects[{objectIndex++}]";
-                            Scene2DEntity entity = ParseObject(item, "tile", objectIndex - 1, "Collider", 4096 - colliders.Count);
+                            Scene2DEntity entity = ParseObject(item, "tile", objectIndex - 1, "Collider");
                             if (!objectIds.Add(entity.Id)) { context.Fail("SCN2D015", "Tile collision object IDs must be unique within their object group."); }
                             Matrix3x2 placement = Matrix3x2.CreateRotation(entity.Rotation) * Matrix3x2.CreateTranslation(
                                 entity.Position.X + groupOffset.X, entity.Position.Y + groupOffset.Y);
-                            foreach (TileColliderDescriptor2D descriptor in entity.Colliders)
+                            if (entity.Collider is TileColliderDescriptor2D descriptor)
                             {
-                                colliders.Add(new(descriptor.Shape, descriptor.LocalTransform * placement, descriptor.Width,
+                                if (tileCollider is not null)
+                                { context.Fail("SCN2D008", "A tile definition accepts at most one collision object."); }
+                                tileCollider = new(descriptor.Shape, descriptor.LocalTransform * placement, descriptor.Width,
                                     descriptor.Height, descriptor.Radius, descriptor.Points, descriptor.OffsetX, descriptor.OffsetY,
-                                    descriptor.CollisionLayer, descriptor.CollisionMask, descriptor.IsTrigger, descriptor.DebugIdentity, descriptor.Properties));
+                                    descriptor.CollisionLayer, descriptor.CollisionMask, descriptor.IsTrigger, descriptor.DebugIdentity, descriptor.Properties);
                             }
                             tileProperties["$Object" + entity.Id] = entity;
                         }
                         tileProperties["$ObjectGroup"] = groupProperties;
                     }
-                    overrides.Add(id, (tileProperties, colliders));
+                    overrides.Add(id, (tileProperties, tileCollider));
                 }
             }
             context.Path = setPath;
@@ -186,7 +189,7 @@ public static class TiledScene2DImporter
                 float x = checked(margin + (long)(local % columns) * (tileWidth + (long)spacing));
                 float y = checked(margin + (long)(local / columns) * (tileHeight + (long)spacing));
                 overrides.TryGetValue(local, out var data);
-                result[local] = new(first + local, new(x, y, tileWidth, tileHeight), data.Properties, data.Colliders);
+                result[local] = new(first + local, new(x, y, tileWidth, tileHeight), data.Properties, data.Collider);
             }
             properties["$SourceName"] = context.Text(set, "name");
             properties["$SourceFile"] = context.Relative(context.File);
@@ -275,14 +278,15 @@ public static class TiledScene2DImporter
                     int order = 0;
                     foreach (Scene2DEntity item in ordered)
                     {
-                        entities.Add(new(item.Id, item.LayerId, item.Position, item.Size, item.Shape, item.Points, item.Rotation,
-                            item.Pivot, item.Role, item.Colliders, order++, item.IsVisible, item.Opacity, item.Properties));
+                        entities.Add(new(item.Id, item.MapId, item.Position, item.Size, item.Shape, item.Points, item.Rotation,
+                            item.Pivot, item.Role, item.Collider, order++, item.IsVisible, item.Opacity, item.Properties));
                         if (item.Role == "Promote") { promotions.Add(conventions.Promotion(item.Properties)); }
                     }
                 }
                 else { context.Fail("SCN2D004", $"Layer type '{type}' is outside v1."); }
                 context.Path = layerPath;
-                layers.Add(new(id, chunks, layers.Count, visible, offset, opacity, tint, properties: properties));
+                maps.Add(new(id, new(tileWidth, tileHeight), sets, chunks, bounds, maps.Count,
+                    visible, offset, opacity, tint, properties: properties));
             }
             context.Path = path;
         }
@@ -323,7 +327,7 @@ public static class TiledScene2DImporter
         private static TileCell2D Cell(uint gid) => new((int)(gid & 0x0fffffff),
             (TileFlip2D)((gid >> 31) | ((gid >> 29) & 2) | ((gid >> 27) & 4)));
 
-        private Scene2DEntity ParseObject(JsonElement value, string layerId, int order, string defaultRole, int maxColliders = 4096)
+        private Scene2DEntity ParseObject(JsonElement value, string layerId, int order, string defaultRole)
         {
             context.CountEntity();
             Dictionary<string, object?> properties = Properties(value);
@@ -357,8 +361,8 @@ public static class TiledScene2DImporter
                 points = tokens.ToArray();
             }
             string pointText = string.Join(' ', points);
-            List<TileColliderDescriptor2D> colliders = conventions.Colliders(id, role, shape, size, pointText, properties, maxColliders);
-            return new(id, layerId, position, size, shape, pointText, rotation, role: role, colliders: colliders,
+            TileColliderDescriptor2D? collider = conventions.Collider(id, role, shape, size, pointText, properties);
+            return new(id, layerId, position, size, shape, pointText, rotation, role: role, collider: collider,
                 order: order, isVisible: context.Boolean(value, "visible", true), opacity: Opacity(value), properties: properties);
         }
 

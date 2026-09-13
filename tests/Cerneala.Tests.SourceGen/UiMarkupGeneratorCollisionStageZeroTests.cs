@@ -16,23 +16,27 @@ public sealed partial class UiMarkupGeneratorTests
                 <Scene2D>
                   <Scene2D TranslateX="64" TranslateY="32">
                     <Sprite2D>
-                    <BoxCollider2D Width="32" Height="8" OffsetY="24" CollisionLayer="2" CollisionMask="4294967295">
-                      <BoxCollider2D.Aspect>
-                        @on Loaded
-                        {
-                          @parallel
+                      <BoxCollider2D Width="32" Height="8" OffsetY="24" CollisionLayer="2" CollisionMask="4294967295">
+                        <BoxCollider2D.Aspect>
+                          @on Loaded
                           {
-                            @set { Enabled = true; IsTrigger = false; CollisionLayer = 2; CollisionMask = 4294967295; }
-                            @animate with Tween(100ms)
+                            @parallel
                             {
-                              @to { OffsetX = 2; OffsetY = 24; Width = 30; Height = 8; }
+                              @set { Enabled = true; IsTrigger = false; CollisionLayer = 2; CollisionMask = 4294967295; }
+                              @animate with Tween(100ms)
+                              {
+                                @to { OffsetX = 2; OffsetY = 24; Width = 30; Height = 8; }
+                              }
                             }
                           }
-                        }
-                      </BoxCollider2D.Aspect>
-                    </BoxCollider2D>
-                    <CircleCollider2D Radius="6" OffsetX="16" OffsetY="16" />
-                    <PolygonCollider2D Points="0,0 10,0 12,8 0,8" />
+                        </BoxCollider2D.Aspect>
+                      </BoxCollider2D>
+                    </Sprite2D>
+                    <Sprite2D>
+                      <CircleCollider2D Radius="6" OffsetX="16" OffsetY="16" />
+                    </Sprite2D>
+                    <Sprite2D>
+                      <PolygonCollider2D Points="0,0 10,0 12,8 0,8" />
                     </Sprite2D>
                   </Scene2D>
                 </Scene2D>
@@ -85,12 +89,21 @@ public sealed partial class UiMarkupGeneratorTests
                 <Scene2D OrderMode="LayerThenY">
                   <Scene2D Name="House" TranslateX="40" TranslateY="16" Layer="1">
                     <Sprite2D Image="$WorldAtlas"
-                              X="$DataContext.HouseX:OneWay" Y="$DataContext.HouseY:OneWay" Width="$DataContext.HouseWidth:OneWay" Height="$DataContext.HouseHeight:OneWay">
-                    <BoxCollider2D Width="80" Height="8" />
-                    <BoxCollider2D Width="8" Height="56" OffsetY="8" />
-                    <BoxCollider2D Width="8" Height="56" OffsetX="72" OffsetY="8" />
-                    <BoxCollider2D Width="28" Height="8" OffsetY="56" />
-                    <BoxCollider2D Width="28" Height="8" OffsetX="52" OffsetY="56" />
+                              X="$DataContext.HouseX:OneWay" Y="$DataContext.HouseY:OneWay" Width="$DataContext.HouseWidth:OneWay" Height="$DataContext.HouseHeight:OneWay" />
+                    <Sprite2D X="$DataContext.HouseX:OneWay" Y="$DataContext.HouseY:OneWay">
+                      <BoxCollider2D Width="80" Height="8" />
+                    </Sprite2D>
+                    <Sprite2D X="$DataContext.HouseX:OneWay" Y="$DataContext.HouseY:OneWay">
+                      <BoxCollider2D Width="8" Height="56" OffsetY="8" />
+                    </Sprite2D>
+                    <Sprite2D X="$DataContext.HouseX:OneWay" Y="$DataContext.HouseY:OneWay">
+                      <BoxCollider2D Width="8" Height="56" OffsetX="72" OffsetY="8" />
+                    </Sprite2D>
+                    <Sprite2D X="$DataContext.HouseX:OneWay" Y="$DataContext.HouseY:OneWay">
+                      <BoxCollider2D Width="28" Height="8" OffsetY="56" />
+                    </Sprite2D>
+                    <Sprite2D X="$DataContext.HouseX:OneWay" Y="$DataContext.HouseY:OneWay">
+                      <BoxCollider2D Width="28" Height="8" OffsetX="52" OffsetY="56" />
                     </Sprite2D>
                     <Scene2D Name="Door" TranslateX="28" TranslateY="56" Layer="2">
                       <Sprite2D Image="$WorldAtlas"
@@ -173,25 +186,21 @@ public sealed partial class UiMarkupGeneratorTests
 
     [Fact]
     [Trait("CollisionStage", "3")]
-    public void PromotedTileOwnsDeclarativeCollidersThroughItsContentProperty()
+    public void SpriteOwnsOneDeclarativeColliderThroughItsContentProperty()
     {
         const string markup = """
             <RenderSurface2D>
               <RenderSurface2D.Scene>
                 <Scene2D>
-                  <TileMap2D>
-                    <TileLayer2D LayerId="Structures">
-                      <TileInstance2D X="2" Y="3" ReplacesImportedColliders="true">
+                      <Sprite2D X="32" Y="48" Width="16" Height="16">
                         <BoxCollider2D Width="16" Height="4" OffsetY="12" CollisionLayer="2" CollisionMask="1" />
-                      </TileInstance2D>
-                    </TileLayer2D>
-                  </TileMap2D>
+                      </Sprite2D>
                 </Scene2D>
               </RenderSurface2D.Scene>
             </RenderSurface2D>
             """;
 
-        GeneratorRunResult result = RunGenerator("PromotedTileCollider.crn", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGenerator("SpriteCollider.crn", markup, out Compilation compilation);
 
         Assert.DoesNotContain(result.Diagnostics, static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         Assert.DoesNotContain(compilation.GetDiagnostics(), static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);

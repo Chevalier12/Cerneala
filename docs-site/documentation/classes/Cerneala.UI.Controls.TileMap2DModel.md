@@ -6,75 +6,82 @@ Namespace: `Cerneala.UI.Controls`
 Assembly/Project: `Cerneala`
 Source: `UI/Controls/TileMap2DModel.cs`
 
-Defines an immutable/versioned tile map of free image placements or imported grid data.
+Defines one immutable/versioned stratum of free image placements or grid tile data.
 
 ```csharp
 public sealed class TileMap2DModel
 ```
 
-Inheritance:
-`object` -> `TileMap2DModel`
-
 ## Examples
 
 ```csharp
 var model = new TileMap2DModel(
+    "Ground",
     new DrawSize(16, 16),
-    tileSets,
-    layers,
-    new TileMapBounds2D(0, 0, 128, 96),
-    version: 1);
+    [new TileSet2D("Terrain", new ResourceId<ImageResource>("TerrainAtlas"),
+        [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16))])],
+    [new TileChunk2D(new TileCoordinate2D(0, 0), 2, 1,
+        [new TileCell2D(1), default])],
+    new TileMapBounds2D(0, 0, 2, 1));
+var map = new TileMap2D { Model = model, Layer = model.Order };
 ```
 
 ## Remarks
 
-The `IEnumerable<Tile>` constructor stores free pixel placements without manufacturing a grid. It copies the placement collection, exposes it through `Tiles`, and uses one generated presentation layer. `TileSets` and grid `Chunks` are empty, `TileSize` is zero/default (no uniform cell size), and `Bounds` is null. Each placement retains its image reference, optional independent dimensions, and immutable collision descriptors. This constructor accepts up to 1,048,576 placements, at most 65,536 expanded collider descriptors across them, and a positive version. Replacing the placement list is detected independently of the publication version.
+The free-placement constructor copies `Tile` data without manufacturing a grid. `TileSets` and `Chunks` are empty, `TileSize` is zero/default, and `Bounds` is null. Each placement retains its image reference, independent optional dimensions, and zero or one immutable collider descriptor. Its default stable ID is `"Tiles"`. Supply distinct IDs when placing multiple models in a level.
 
-The grid constructor remains available for Tiled/LDtk imports and C# grid composition. Its coordinates, atlas resource IDs, source rectangles, layers, and chunks are backend-neutral; `Tiles` is empty. Constructor collections and property dictionaries are copied into read-only views. Values stored inside an opaque `Properties` dictionary are not interpreted or deep-cloned by the renderer. Neither constructor transfers image ownership to the map.
+The grid constructor stores `Chunks` directly, not nested layer models; `Tiles` is empty. Coordinates, atlas resource IDs, source rectangles, and metadata are backend-neutral. Positive tile IDs must resolve to exactly one definition across the model's tilesets; ID `0` is empty. Chunks cannot overlap. Null bounds permit sparse negative/remote coordinates without enumerating the gaps; finite bounds must contain every chunk.
 
-For grid models, positive tile IDs are global to the map and must resolve to exactly one definition; ID `0` is empty. A null `Bounds` value permits negative or remote chunk coordinates. It does not cause the runtime to enumerate the rectangle between remote chunks. Finite grid maps reject chunks outside their declared bounds.
+Collections and property dictionaries are copied into read-only views. Opaque property values are not interpreted or deep-cloned. Neither constructor transfers image ownership. `Order` is metadata for composition: assign it to the map node's `Layer` under a scene with a corresponding order mode. The map applies model visibility, offset, opacity, and tint in addition to its own presentation state.
 
-`Version` is a positive publication stamp, not an automatically incremented mutable counter. Model components are immutable after construction. Publish changed content by constructing replacement objects with changed versions and assigning the replacement map to `TileMap2D.Model`. In particular, a changed chunk must receive a new `TileChunk2D.Version`, and changed tile definitions or atlas identity must receive a new `TileSet2D.Version` or resource version. Mutating data behind an unchanged cache-visible version is unsupported.
+### Versions and retained caches
 
-Layer `Version` and map `Version` let importers and application state identify publications. The retained drawing cache additionally compares chunk versions, tileset versions, tile size, composed tint, promoted-cell suppression, atlas resource version, and resolved image identity.
+`Version` is a positive publication stamp, not an automatically incremented counter. For grid changes, publish replacement objects with changed versions and assign the replacement model to `TileMap2D.Model`. A changed chunk must receive a changed `TileChunk2D.Version`; changed definitions or atlas identity must receive a changed tileset or resource version. Reusing a cache-visible version for different grid data is unsupported.
 
-Construction bounds tileset/layer enumeration to 4,096 entries each, validates chunk placement against the drawing coordinate range, and limits expanded tile collider descriptors to 65,536 before coalescing. Invalid data is rejected before a presentation node can materialize collision adapters. Atlas sizes are external information: validate source rectangles and resource references using [Scene2DModelValidator](Cerneala.UI.Controls.Scene2DModelValidator.md), or construct a [Scene2DDocument](Cerneala.UI.Controls.Scene2DDocument.md), which performs that validation before returning.
+The drawing cache compares chunk versions, tileset/resource versions, tile size, composed tint, and resolved image identity. Free-placement list replacement is detected independently of the publication version. Model objects never mutate themselves or instantiate live sprites.
 
-Aggregate definitions and cells are each capped at 1,048,576; aggregate chunks at 65,536. Reusing immutable component references does not bypass aggregate caps. At recording time, `TileMap2D` validates all resolved atlas dimensions/source rectangles before building any chunk commands. Missing runtime resources keep their existing deferred-resolution behavior; a document instead requires complete atlas declarations.
+### Validation
+
+A grid model accepts at most 4,096 tilesets, 65,536 chunks, and 1,048,576 aggregate definitions and cells each. A free model accepts at most 1,048,576 placements. Expanded tile colliders are capped at 65,536 before coalescing. Every tile or definition carries at most one descriptor.
+
+Construction checks IDs, versions, bounds, overlaps, cell references, and placed geometry. Atlas dimensions are external information: use [Scene2DModelValidator](Cerneala.UI.Controls.Scene2DModelValidator.md) or [Scene2DDocument](Cerneala.UI.Controls.Scene2DDocument.md) to validate resource references and source rectangles. Runtime recording validates resolved dimensions before building chunk commands; unresolved runtime resources remain deferred, whereas documents require complete declarations.
 
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `TileMap2DModel(IEnumerable<Tile>, long version = 1)` | Copies freely positioned image placements. |
-| `TileMap2DModel(DrawSize, IEnumerable<TileSet2D>, IEnumerable<TileLayer2DModel>, TileMapBounds2D?, long, IReadOnlyDictionary<string, object?>?)` | Copies and validates imported/grid-model components. |
+| `TileMap2DModel(IEnumerable<Tile> tiles, long version = 1, string id = "Tiles")` | Copies free pixel placements. |
+| `TileMap2DModel(string id, DrawSize tileSize, IEnumerable<TileSet2D> tileSets, IEnumerable<TileChunk2D> chunks, TileMapBounds2D? bounds = null, int order = 0, bool isVisible = true, DrawPoint offset = default, float opacity = 1, Color? tint = null, long version = 1, IReadOnlyDictionary<string, object?>? properties = null)` | Copies and validates one grid stratum. Null tint means white. |
 
 ## Properties
 
 | Name | Description |
 | --- | --- |
+| `Id` | Nonempty stable map identity; unique within a level. |
 | `TileSize` | Grid destination cell size, or zero/default for free placements. |
-| `Tiles` | Immutable free-placement view; empty for grid models. |
-| `Bounds` | Finite grid-coordinate bounds, or null for a sparse grid or free placements. |
-| `TileSets` | Immutable tileset view. |
-| `Layers` | Immutable layer-model view. |
-| `Version` | Positive cache-visible model version. |
-| `Properties` | Copied opaque importer metadata. |
+| `Tiles` | Immutable free placements; empty for grids. |
+| `Chunks` | Immutable grid chunks; empty for free placements. |
+| `Bounds` | Finite grid-coordinate extent, or null for sparse/free data. |
+| `TileSets` | Immutable grid palette. |
+| `Order` | Source composition order metadata; default 0. |
+| `IsVisible` | Model visibility; default true. |
+| `Offset` | Model translation; default zero. |
+| `Opacity` | Finite model opacity in [0,1]; default 1. |
+| `Tint` | Model tint; default white. |
+| `Version` | Positive publication version. |
+| `Properties` | Copied opaque source metadata. |
 
 ## Methods
 
 | Name | Description |
 | --- | --- |
-| `TryResolveTile` | Resolves a positive global tile ID to its tileset and definition. |
-| `TryGetLayer` | Resolves a layer by its ordinal stable ID. |
-
-## Applies to
-
-Project: `Cerneala`
+| `TryGetCell(TileCoordinate2D, out TileCell2D)` | Finds a coordinate in the supplied chunks, including an explicitly empty cell. Returns false outside them and for free placements. |
+| `TryResolveTile(int, out TileSet2D?, out TileDefinition2D?)` | Resolves a positive tile ID; returns false for ID 0 or an undefined ID. |
 
 ## See also
 
 - [TileMap2D](Cerneala.UI.Controls.TileMap2D.md)
+- [Tile](Cerneala.UI.Controls.Tile.md)
 - [TileSet2D](Cerneala.UI.Controls.TileSet2D.md)
-- [TileLayer2DModel](Cerneala.UI.Controls.TileLayer2DModel.md)
 - [TileChunk2D](Cerneala.UI.Controls.TileChunk2D.md)
+- [Scene2DLevel](Cerneala.UI.Controls.Scene2DLevel.md)

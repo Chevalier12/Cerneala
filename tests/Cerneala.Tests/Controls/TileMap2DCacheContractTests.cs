@@ -83,54 +83,42 @@ public sealed class TileMap2DCacheContractTests
 
     [Fact]
     [Trait("TileMapStage", "2")]
-    public void PromotionAndDemotionRebuildOnlyTheOwningChunkAndReleaseSparseLifecycle()
+    public void PeerSpriteDetachReleasesItsLifecycleWithoutRebuildingStaticBatches()
     {
-        CacheFixture fixture = CacheFixture.Create();
-        Record(fixture.Surface);
-        Record(fixture.Surface);
 
-        TileCellKey2D key = new("Ground", 0, 0);
-        TileInstance2D promoted = fixture.Map.Promote(key);
-        using IDisposable prism = AttachPrism(promoted, "PromotedTile");
-        using IDisposable motionSession = GeneratedMarkup.AttachMotionSession(promoted);
-        int triggerAttachCount = 0;
-        int triggerDetachCount = 0;
-        GeneratedMarkup.AddMotionTrigger(
-            motionSession,
-            () => triggerAttachCount++,
-            () => triggerDetachCount++);
+        CacheFixture fixture = CacheFixture.Create(CreateModel(terrainFirstTile: 0));
+        Record(fixture.Surface);
+        Record(fixture.Surface);
+        Sprite2D sprite = new()
+        {
+            Image = new(new ResourceId<ImageResource>("VillageTerrain")), Width = 16, Height = 16
+        };
+        fixture.Surface.Scene!.Children.Add(sprite);
+        using IDisposable prism = AttachPrism(sprite, "Sprite");
+        using IDisposable motionSession = GeneratedMarkup.AttachMotionSession(sprite);
+        int triggerAttachCount = 0, triggerDetachCount = 0;
+        GeneratedMarkup.AddMotionTrigger(motionSession, () => triggerAttachCount++, () => triggerDetachCount++);
         MotionHandle motion = GeneratedMarkup.StartMotionProperty(
-            motionSession,
-            promoted,
-            UIElement.ScaleProperty,
-            hasFrom: false,
-            from: default,
-            toCurrent: false,
-            to: 1.25f,
-            MotionFactory.Tween<float>(TimeSpan.FromSeconds(10)),
-            new MotionPropertyStartOptions());
-        DrawCommandList promotedCommands = Record(fixture.Surface);
-        TileMap2DDiagnosticsSnapshot promotedSnapshot = fixture.Map.GetDiagnosticsSnapshot();
-        Assert.Equal(1, promotedSnapshot.BatchesRebuilt);
-        Assert.Equal(1, promotedSnapshot.BatchesReused);
-        Assert.Equal(0, promotedSnapshot.BatchSplits);
-        Assert.Single(promotedCommands, static command => command.Kind == DrawCommandKind.DrawImage);
-        Assert.Same(fixture.Root, promoted.Root);
+            motionSession, sprite, UIElement.OpacityProperty, hasFrom: false, from: default,
+            toCurrent: false, to: 0.5f, MotionFactory.Tween<float>(TimeSpan.FromSeconds(10)), new MotionPropertyStartOptions());
+        DrawCommandList attached = Record(fixture.Surface);
+        Assert.Equal(0, fixture.Map.GetDiagnosticsSnapshot().BatchesRebuilt);
+        Assert.Equal(2, fixture.Map.GetDiagnosticsSnapshot().BatchesReused);
+        Assert.Single(attached, static command => command.Kind == DrawCommandKind.DrawImage);
+        Assert.Same(fixture.Root, sprite.Root);
         Assert.True(motion.IsActive);
-        Assert.True(PrismAttachment.TryGetInstance(promoted, out _));
+        Assert.True(PrismAttachment.TryGetInstance(sprite, out _));
         Assert.Equal(1, triggerAttachCount);
 
-        Assert.True(fixture.Map.Demote(key));
-        DrawCommandList demotedCommands = Record(fixture.Surface);
-        TileMap2DDiagnosticsSnapshot demotedSnapshot = fixture.Map.GetDiagnosticsSnapshot();
-        Assert.Equal(1, demotedSnapshot.BatchesRebuilt);
-        Assert.Equal(1, demotedSnapshot.BatchesReused);
-        Assert.DoesNotContain(demotedCommands, static command => command.Kind == DrawCommandKind.DrawImage);
-        Assert.Null(promoted.Root);
-        Assert.Null(promoted.OwnerLayer);
-        Assert.False(fixture.Map.TryGetPromoted(key, out _));
+        fixture.Surface.Scene.Children.Remove(sprite);
+        DrawCommandList detached = Record(fixture.Surface);
+        Assert.Equal(0, fixture.Map.GetDiagnosticsSnapshot().BatchesRebuilt);
+        Assert.Equal(2, fixture.Map.GetDiagnosticsSnapshot().BatchesReused);
+        Assert.DoesNotContain(detached, static command => command.Kind == DrawCommandKind.DrawImage);
+        Assert.Null(sprite.Root);
+        Assert.Null(sprite.LogicalParent);
         Assert.True(motion.IsCanceled);
-        Assert.False(PrismAttachment.TryGetInstance(promoted, out _));
+        Assert.False(PrismAttachment.TryGetInstance(sprite, out _));
         Assert.Equal(1, triggerDetachCount);
         Assert.Equal(0, fixture.Root.Motion.Properties.BindingCount);
         fixture.Root.ProcessFrame();
@@ -169,23 +157,62 @@ public sealed class TileMap2DCacheContractTests
     }
 
     [Fact]
-    [Trait("TileMapStage", "2")]
-    public void PartialNegativeBoundaryAndEmptyChunksHaveStableCacheKeys()
+    public void RepeatedTopologyReplacementKeepsCacheBoundedAndReleasesRetiredBatches()
     {
-        TileMap2DModel sparse = new(
-            new DrawSize(16, 16),
-            [TerrainSet()],
-            [
-                new TileLayer2DModel(
-                    "Sparse",
-                    [
-                        new TileChunk2D(new TileCoordinate2D(-2, -1), 2, 1, [new TileCell2D(1), new TileCell2D(0)]),
-                        new TileChunk2D(new TileCoordinate2D(4, 3), 1, 2, [new TileCell2D(0), new TileCell2D(1)])
-                    ]),
-                new TileLayer2DModel("Empty", [])
-            ]);
-        CacheFixture fixture = CacheFixture.Create(sparse);
+        CacheFixture fixture = CacheFixture.Create();
+        WeakReference[] retired = ReplaceAndClearCachedModels(fixture);
 
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
+        GC.WaitForPendingFinalizers();
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
+
+        Assert.All(retired, reference => Assert.False(reference.IsAlive));
+        Assert.Equal(0, fixture.Map.GetDiagnosticsSnapshot().RetainedObjects);
+        Assert.False(fixture.Terrain.IsDisposed);
+        GC.KeepAlive(fixture);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static WeakReference[] ReplaceAndClearCachedModels(CacheFixture fixture)
+    {
+        List<WeakReference> retired = [];
+        long? retainedAtEightChunks = null;
+        // Grow, shrink, then replace a fixed-size working set at fresh coordinates.
+        for (int iteration = 0; iteration < 64; iteration++)
+        {
+            int count = iteration < 16 ? iteration + 1 : iteration < 32 ? 32 - iteration : 8;
+            int origin = iteration * 32;
+            TileMap2DModel model = new("Lifetime", new DrawSize(16, 16), [TerrainSet()],
+                Enumerable.Range(0, count).Select(x => FilledChunk(origin + x, 0, 1, 1)));
+            fixture.Map.Model = model;
+            fixture.Surface.ViewBox = new DrawRect(origin * 16, 0, count * 16, 16);
+            DrawSpriteBatch[] batches = Batches(Record(fixture.Surface));
+            Assert.Equal(count, batches.Length);
+            Assert.Equal(count, fixture.Map.GetDiagnosticsSnapshot().BatchesRebuilt);
+            if (iteration >= 32)
+            {
+                retainedAtEightChunks ??= fixture.Map.GetDiagnosticsSnapshot().RetainedBytes;
+                Assert.Equal(retainedAtEightChunks.Value, fixture.Map.GetDiagnosticsSnapshot().RetainedBytes);
+            }
+            retired.Add(new WeakReference(model));
+            retired.AddRange(batches.Select(static batch => new WeakReference(batch)));
+        }
+        fixture.Map.Model = null;
+        fixture.Surface.Scene!.Children.Remove(fixture.Map);
+        Record(fixture.Surface);
+        return retired.ToArray();
+    }
+
+    [Fact]
+    [Trait("TileMapStage", "2")]
+    public void PartialNegativeBoundaryAndEmptyMapsHaveStableCacheKeys()
+    {
+
+        TileMap2DModel sparse = new("Sparse", new DrawSize(16, 16), [TerrainSet()],
+            [new TileChunk2D(new(-2, -1), 2, 1, [new TileCell2D(1), default]),
+             new TileChunk2D(new(4, 3), 1, 2, [default, new TileCell2D(1)])]);
+        CacheFixture fixture = CacheFixture.Create(sparse);
+        fixture.Surface.Scene!.Children.Add(new TileMap2D { Model = new TileMap2DModel("Empty", new DrawSize(16, 16), [], []) });
         DrawCommandList cold = Record(fixture.Surface);
         Assert.Single(Batches(cold));
         Assert.Equal(1, fixture.Map.GetDiagnosticsSnapshot().BatchesRebuilt);
@@ -219,27 +246,20 @@ public sealed class TileMap2DCacheContractTests
 
     [Fact]
     [Trait("TileMapStage", "2")]
-    public void PromotedNodeCountIsLinearInPromotionsRatherThanStaticTiles()
+    public void LiveNodeCountIsLinearInExplicitSpritesRatherThanStaticTiles()
     {
+
         CacheFixture fixture = CacheFixture.Create(SingleChunkModel(64, 64));
-        TileCellKey2D[] keys = Enumerable.Range(0, 32)
-            .Select(static x => new TileCellKey2D("Ground", x, 0))
-            .ToArray();
-
-        foreach (TileCellKey2D key in keys)
-        {
-            fixture.Map.Promote(key);
-        }
-
-        TileLayer2D layer = Assert.Single(fixture.Map.Layers);
-        Assert.Equal(4_096, fixture.Map.Model!.Layers[0].Chunks[0].Tiles.Count);
-        Assert.Equal(keys.Length, layer.PromotedTiles.Count);
-        Assert.Equal(keys.Length, layer.LogicalChildren.Count);
-        Assert.Single(fixture.Map.LogicalChildren);
-
-        Assert.All(keys, key => Assert.True(fixture.Map.Demote(key)));
-        Assert.Empty(layer.PromotedTiles);
-        Assert.Empty(layer.LogicalChildren);
+        Sprite2D[] sprites = Enumerable.Range(0, 32).Select(static x => new Sprite2D { X = x * 16 }).ToArray();
+        Scene2D scene = fixture.Surface.Scene!;
+        foreach (Sprite2D sprite in sprites) { scene.Children.Add(sprite); }
+        Assert.Equal(4_096, fixture.Map.Model!.Chunks[0].Tiles.Count);
+        Assert.Equal(sprites.Length + 1, scene.Children.Count);
+        Assert.Empty(fixture.Map.LogicalChildren);
+        Assert.All(sprites, sprite => Assert.Same(scene, sprite.LogicalParent));
+        foreach (Sprite2D sprite in sprites) { scene.Children.Remove(sprite); }
+        Assert.Same(fixture.Map, Assert.Single(scene.Children));
+        Assert.Empty(fixture.Map.LogicalChildren);
     }
 
     [Fact]
@@ -325,52 +345,34 @@ public sealed class TileMap2DCacheContractTests
 
     [Fact]
     [Trait("TileMapStage", "3")]
-    public void PromotedMotionPrismTileIsCulledIndividuallyWithoutDoubleDrawOrStateLoss()
+    public void PeerSpriteCullsIndependentlyWhileStaticCellsStayBatched()
     {
-        CacheFixture fixture = CacheFixture.Create(SingleChunkModel(4, 1));
-        TileInstance2D promoted = fixture.Map.Promote(new TileCellKey2D("Ground", 3, 0));
-        using IDisposable prism = AttachPrism(promoted, "CulledPromotedTile");
-        using IDisposable motionSession = GeneratedMarkup.AttachMotionSession(promoted);
-        MotionHandle motion = GeneratedMarkup.StartMotionProperty(
-            motionSession,
-            promoted,
-            UIElement.ScaleProperty,
-            hasFrom: false,
-            from: default,
-            toCurrent: false,
-            to: 1.25f,
-            MotionFactory.Tween<float>(TimeSpan.FromSeconds(10)),
-            new MotionPropertyStartOptions());
 
+        CacheFixture fixture = CacheFixture.Create(SingleChunkModel(4, 1, emptyCell: 3));
+        Sprite2D sprite = new()
+        {
+            Image = new(new ResourceId<ImageResource>("VillageTerrain")), X = 48, Width = 16, Height = 16
+        };
+        fixture.Surface.Scene!.Children.Add(sprite);
+        using IDisposable motionSession = GeneratedMarkup.AttachMotionSession(sprite);
+        MotionHandle motion = GeneratedMarkup.StartMotionProperty(
+            motionSession, sprite, UIElement.OpacityProperty, hasFrom: false, from: default,
+            toCurrent: false, to: 0.5f, MotionFactory.Tween<float>(TimeSpan.FromSeconds(10)), new MotionPropertyStartOptions());
         fixture.Surface.ViewBox = new DrawRect(0, 0, 16, 16);
         DrawCommandList outside = Record(fixture.Surface, new DrawRect(0, 0, 16, 16));
         Assert.DoesNotContain(outside, static command => command.Kind == DrawCommandKind.DrawImage);
-        Assert.Equal(0, fixture.Map.GetDiagnosticsSnapshot().PromotedInstancesVisible);
-        Assert.Equal(1, fixture.Map.GetDiagnosticsSnapshot().PromotedInstancesCulled);
-
+        Assert.DoesNotContain(StaticDestinations(outside), static destination => destination.X == 48);
         fixture.Surface.ViewBox = new DrawRect(48, 0, 16, 16);
         DrawCommandList inside = Record(fixture.Surface, new DrawRect(0, 0, 16, 16));
         Assert.Single(inside, static command => command.Kind == DrawCommandKind.DrawImage);
-        DrawCommand prismBegin = Assert.Single(
-            inside,
-            static command => command.Kind == DrawCommandKind.BeginPrism);
-        Assert.Equal(new DrawRect(0, 0, 16, 16), prismBegin.PrismScope!.Value.ControlBounds);
-        Assert.Equal(1, fixture.Map.GetDiagnosticsSnapshot().PromotedInstancesVisible);
-        Assert.Equal(0, fixture.Map.GetDiagnosticsSnapshot().PromotedInstancesCulled);
-
-        fixture.Surface.ViewBox = new DrawRect(64, 0, 16, 16);
-        DrawCommandList edge = Record(fixture.Surface, new DrawRect(0, 0, 16, 16));
-        Assert.Single(edge, static command => command.Kind == DrawCommandKind.DrawImage);
-
+        Assert.Equal(0, fixture.Map.GetDiagnosticsSnapshot().BatchesRebuilt);
+        Assert.Equal(1, fixture.Map.GetDiagnosticsSnapshot().BatchesReused);
         fixture.Surface.ViewBox = new DrawRect(80, 0, 16, 16);
         DrawCommandList outsideAgain = Record(fixture.Surface, new DrawRect(0, 0, 16, 16));
         Assert.DoesNotContain(outsideAgain, static command => command.Kind == DrawCommandKind.DrawImage);
         Assert.True(motion.IsActive);
-        Assert.True(PrismAttachment.TryGetInstance(promoted, out _));
-        Assert.Equal(1, fixture.Map.GetDiagnosticsSnapshot().PromotedInstancesCulled);
-        Assert.DoesNotContain(
-            StaticDestinations(outsideAgain),
-            static destination => destination.X == 48);
+        Assert.Same(fixture.Root, sprite.Root);
+        Assert.DoesNotContain(StaticDestinations(outsideAgain), static destination => destination.X == 48);
     }
 
     private static TileMap2DModel CreateModel(
@@ -378,43 +380,18 @@ public sealed class TileMap2DCacheContractTests
         long structureChunkVersion = 1,
         long terrainSetVersion = 1,
         TileFlip2D terrainFirstFlip = TileFlip2D.None,
-        float terrainSourceX = 0) =>
-        new(
-            new DrawSize(16, 16),
-            [TerrainSet(terrainSetVersion, terrainSourceX), StructureSet()],
-            [
-                new TileLayer2DModel(
-                    "Ground",
-                    [
-                        new TileChunk2D(
-                            new TileCoordinate2D(0, 0),
-                            2,
-                            1,
-                            [new TileCell2D(1, terrainFirstFlip), new TileCell2D(1)],
-                            terrainChunkVersion),
-                        new TileChunk2D(
-                            new TileCoordinate2D(2, 0),
-                            2,
-                            1,
-                            [new TileCell2D(100), new TileCell2D(100)],
-                            structureChunkVersion)
-                    ],
-                    version: Math.Max(terrainChunkVersion, structureChunkVersion))
-            ],
+        float terrainSourceX = 0,
+        int terrainFirstTile = 1) =>
+        new("Ground", new DrawSize(16, 16), [TerrainSet(terrainSetVersion, terrainSourceX), StructureSet()],
+            [new TileChunk2D(default, 2, 1, [new TileCell2D(terrainFirstTile, terrainFirstFlip), new TileCell2D(1)], terrainChunkVersion),
+             new TileChunk2D(new(2, 0), 2, 1, [new TileCell2D(100), new TileCell2D(100)], structureChunkVersion)],
             new TileMapBounds2D(0, 0, 4, 1),
             version: Math.Max(Math.Max(terrainChunkVersion, structureChunkVersion), terrainSetVersion));
 
-    private static TileMap2DModel SingleChunkModel(int width, int height) =>
-        new(
-            new DrawSize(16, 16),
-            [TerrainSet()],
-            [new TileLayer2DModel(
-                "Ground",
-                [new TileChunk2D(
-                    new TileCoordinate2D(0, 0),
-                    width,
-                    height,
-                    Enumerable.Repeat(new TileCell2D(1), checked(width * height)))])],
+    private static TileMap2DModel SingleChunkModel(int width, int height, int? emptyCell = null) =>
+        new("Ground", new DrawSize(16, 16), [TerrainSet()],
+            [new TileChunk2D(default, width, height,
+                Enumerable.Range(0, checked(width * height)).Select(index => index == emptyCell ? default : new TileCell2D(1)))],
             new TileMapBounds2D(0, 0, width, height));
 
     private static TileMap2DModel LargeSparseModel()
@@ -429,20 +406,12 @@ public sealed class TileMap2DCacheContractTests
         }
         chunks.Add(FilledChunk(-1_000_000, -1_000_000, 8, 8));
         chunks.Add(FilledChunk(1_000_000, 1_000_000, 8, 8));
-        return new TileMap2DModel(
-            new DrawSize(16, 16),
-            [TerrainSet()],
-            [new TileLayer2DModel("Ground", chunks)]);
+        return new TileMap2DModel("Ground", new DrawSize(16, 16), [TerrainSet()], chunks);
     }
 
     private static TileMap2DModel BoundaryStripModel() =>
-        new(
-            new DrawSize(16, 16),
-            [TerrainSet()],
-            [new TileLayer2DModel(
-                "Ground",
-                Enumerable.Range(-1, 5)
-                    .Select(static x => FilledChunk(x, 0, 1, 1)))],
+        new("Ground", new DrawSize(16, 16), [TerrainSet()],
+            Enumerable.Range(-1, 5).Select(static x => FilledChunk(x, 0, 1, 1)),
             new TileMapBounds2D(-1, 0, 5, 1));
 
     private static TileChunk2D FilledChunk(int x, int y, int width, int height) =>

@@ -23,10 +23,12 @@ using Cerneala.UI.Controls;
 var imported = TiledScene2DImporter.Import("Content/village.tmj");
 if (imported.Success)
 {
-    TileMap2DModel model = imported.Document!.Levels[0].TileMap;
-    var tileMap = new TileMap2D { Model = model };
-    // Composition separately registers the declared image resources and adds
-    // dynamic entities/promoted tiles to the scene.
+    Scene2DLevel level = imported.Document!.Levels[0];
+    var scene = new Scene2D { OrderMode = SceneOrderMode.Layer,
+        TranslateX = level.WorldOffset.X, TranslateY = level.WorldOffset.Y };
+    foreach (TileMap2DModel model in level.TileMaps)
+        scene.Children.Add(new TileMap2D { Model = model, Layer = model.Order });
+    // Composition also registers images and creates ordinary sprites/templates.
 }
 ```
 
@@ -46,11 +48,11 @@ Numeric tile arrays and base64 little-endian UInt32 data are supported. Base64 m
 
 ### Layers, objects and promotion
 
-Layer IDs are stable numeric IDs represented as strings; `$SourceName` retains names. Source traversal becomes bottom-first core order. Groups flatten into their children while offsets, opacity, tint and visibility compose. `$GroupAncestors` preserves group identity/properties. Object layers remain empty-cell core layers so entity layer references remain valid. `index` and stable `topdown` object ordering are represented by entity `Order`; `$SourceOrder` retains original order.
+Each leaf tile layer or object group produces one independent `TileMap2DModel`; IDs are stable source numeric IDs represented as strings and `$SourceName` retains names. Source traversal becomes bottom-first map order. Groups flatten into their children while offsets, opacity, tint and visibility compose. `$GroupAncestors` preserves group identity/properties. Object groups produce maps without cell chunks so entity `MapId` references remain valid. A source with no layers has zero maps; its catalog, grid and finite bounds remain on `Scene2DLevel`. `index` and stable `topdown` object ordering are represented by entity `Order`; `$SourceOrder` retains original order.
 
-Rectangles become boxes, ellipses remain exact affine circles, convex polygons retain their points, open polylines retain their path, and points remain metadata/spawn data. Collider-role polylines become consecutive zero-thickness two-sided segments, not closed polygons. Tiled degrees become clockwise scene radians. Entity position/rotation remain separate from layer offset; tile collision objects fold their own placement into descriptor-local transforms. Core constructors and the shared validator own geometry validation.
+Rectangles become boxes, ellipses remain exact affine circles, convex polygons retain their points, open polylines retain their path, and points remain metadata/spawn data. A collider-role polyline must contain exactly two points and becomes one zero-thickness two-sided segment; a longer path is rejected with `SCN2D008` because an entity owns at most one collider. Tiled degrees become clockwise scene radians. Entity position/rotation remain separate from layer offset; tile collision objects fold their own placement into descriptor-local transforms. Core constructors and the shared validator own geometry validation.
 
-Ordinary objects default to `Metadata`; tile collision-editor objects default to `Collider`. Primitive properties preserve their names and values: string/file as strings, int as Int64, float as finite Double, bool as Boolean and color as `Color`. `$` names are reserved. Supported conventions are `CernealaRole` (`Metadata`, `Spawn`, `Collider`, `Promote`), unsigned `CollisionLayer`/`CollisionMask`, Boolean `IsTrigger`, and primitive `InitialState`. Promotion requires explicit `TileLayer`, `TileX`, `TileY`, with optional positive `TileId` override. Empty-cell promotion needs that override. Missing/duplicate addresses fail core validation. Promotion stays sparse data; only composition calls `TileMap2D.Promote` and applies effects to the resulting node.
+Ordinary objects default to `Metadata`; tile collision-editor objects default to `Collider`. One tile definition can import at most one collider-producing object; a second collider in its object group reports `SCN2D008` rather than being merged or truncated. Primitive properties preserve their names and values: string/file as strings, int as Int64, float as finite Double, bool as Boolean and color as `Color`. `$` names are reserved. Supported conventions are `CernealaRole` (`Metadata`, `Spawn`, `Collider`, `Promote`), unsigned `CollisionLayer`/`CollisionMask`, Boolean `IsTrigger`, and primitive `InitialState`. Promotion requires explicit `TileLayer`, `TileX`, `TileY`, with optional positive `TileId` override. Empty-cell promotion needs that override. Missing/duplicate addresses fail core validation. The source `TileLayer` identifies the resulting map. Promotion stays sparse metadata: composition can explicitly clear a replaced static cell and create an ordinary peer sprite, as described by [TilePromotion2D](Cerneala.UI.Controls.TilePromotion2D.md).
 
 ### Field dispositions
 

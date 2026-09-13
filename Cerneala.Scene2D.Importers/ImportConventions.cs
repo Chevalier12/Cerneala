@@ -41,36 +41,37 @@ internal sealed class ImportConventions(ImportContext context)
         return new(new(layer, Coordinate("TileX"), Coordinate("TileY")), tile, properties);
     }
 
-    internal List<TileColliderDescriptor2D> Colliders(string id, string role, string shape, DrawSize size,
-        string points, IReadOnlyDictionary<string, object?> properties, int maxColliders = 4096)
+    internal TileColliderDescriptor2D? Collider(string id, string role, string shape, DrawSize size,
+        string points, IReadOnlyDictionary<string, object?> properties)
     {
         Validate(properties);
-        List<TileColliderDescriptor2D> result = new();
-        if (role != "Collider") { return result; }
+        if (role != "Collider") { return null; }
         if (points.Length > 393_216) { context.Fail("SCN2D013", "Shape point text exceeds the core limit."); }
         string[] vertices = shape == "Polyline" ? points.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries) : [];
-        int count = shape == "Polyline" ? Math.Max(0, vertices.Length - 1) : shape == "Point" ? 0 : 1;
-        if (count > maxColliders || count > 65_536 - colliderCount)
-        { context.Fail("SCN2D013", "Collider descriptors exceed the per-owner or aggregate import budget."); }
-        colliderCount += count;
+        if (shape == "Polyline" && vertices.Length != 2)
+        { context.Fail("SCN2D008", "A collider polyline must contain exactly two points because an owner accepts one collider."); }
+        if (shape == "Point") { context.Fail("SCN2D008", "A collider requires supported non-point geometry."); }
+        if (colliderCount == 65_536) { context.Fail("SCN2D013", "Collider descriptors exceed the aggregate import budget."); }
+        colliderCount++;
         uint layer = properties.TryGetValue("CollisionLayer", out object? layerValue) ? Scene2DModelValidator.ParseCollisionBits(layerValue!) : 1;
         uint mask = properties.TryGetValue("CollisionMask", out object? maskValue) ? Scene2DModelValidator.ParseCollisionBits(maskValue!) : uint.MaxValue;
         bool trigger = properties.TryGetValue("IsTrigger", out object? triggerValue) && (bool)triggerValue!;
         TileColliderDescriptor2D Descriptor(TileColliderShape2D kind, Matrix3x2 transform, string text = "0,0 1,0 0,1") =>
             new(kind, transform, width: size.Width, height: size.Height, radius: 1, points: text,
                 collisionLayer: layer, collisionMask: mask, isTrigger: trigger, debugIdentity: id, properties: properties);
-        switch (shape)
+        TileColliderDescriptor2D Unsupported()
         {
-            case "Box": result.Add(Descriptor(TileColliderShape2D.Box, Matrix3x2.Identity)); break;
-            case "Ellipse": result.Add(Descriptor(TileColliderShape2D.Circle,
-                Matrix3x2.CreateScale(size.Width / 2, size.Height / 2) * Matrix3x2.CreateTranslation(size.Width / 2, size.Height / 2))); break;
-            case "Polygon": result.Add(Descriptor(TileColliderShape2D.Polygon, Matrix3x2.Identity, points)); break;
-            case "Polyline":
-                for (int index = 1; index < vertices.Length; index++)
-                { result.Add(Descriptor(TileColliderShape2D.Segment, Matrix3x2.Identity, vertices[index - 1] + " " + vertices[index])); }
-                break;
-            default: context.Fail("SCN2D008", "A collider requires supported non-point geometry."); break;
+            context.Fail("SCN2D008", "A collider requires supported non-point geometry.");
+            return null!;
         }
-        return result;
+        return shape switch
+        {
+            "Box" => Descriptor(TileColliderShape2D.Box, Matrix3x2.Identity),
+            "Ellipse" => Descriptor(TileColliderShape2D.Circle,
+                Matrix3x2.CreateScale(size.Width / 2, size.Height / 2) * Matrix3x2.CreateTranslation(size.Width / 2, size.Height / 2)),
+            "Polygon" => Descriptor(TileColliderShape2D.Polygon, Matrix3x2.Identity, points),
+            "Polyline" => Descriptor(TileColliderShape2D.Segment, Matrix3x2.Identity, vertices[0] + " " + vertices[1]),
+            _ => Unsupported()
+        };
     }
 }

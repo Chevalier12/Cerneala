@@ -11,7 +11,7 @@ Source: `UI/Controls/Sprite2D.cs`
 Records one retained image sprite into an owning `RenderSurface2D`.
 
 ```csharp
-[ContentProperty(nameof(Colliders))]
+[ContentProperty(nameof(Collider))]
 public sealed class Sprite2D : SceneNode2D
 ```
 
@@ -85,7 +85,7 @@ An inline `@prism` block wraps only this sprite's image command. Sibling sprites
 
 ## Collider ownership
 
-`Colliders` is the mutable `Collection<Collider2D>` content property. It owns logical attachment, surface invalidation, and registration in the containing scene's collision world; it does not add visual layout children. Add, remove, replace, or clear colliders through this collection, not through generic UI child collections. A collider must be removed from its current owner before moving to another sprite or promoted tile.
+`Collider` is the nullable `Collider2D` content property. A sprite owns zero or one live collider. Assigning the property owns logical attachment, surface invalidation, and registration in the containing scene's collision world; it does not add a visual layout child. Assign a replacement or `null` through this property, not through generic UI child collections. A collider must be cleared from its current owner before moving to another sprite. Assigning a collider that already has an owner is rejected before the current collider is removed.
 
 ```xml
 <Sprite2D Image="$WorldAtlas" X="64" Y="32" Width="32" Height="32">
@@ -93,13 +93,13 @@ An inline `@prism` block wraps only this sprite's image command. Sibling sprites
 </Sprite2D>
 ```
 
-Collider coordinates are destination units relative to the sprite anchor. `X`, `Y`, `Rotation`, and ancestor scene transforms place both the image and its colliders. Image `Width`/`Height`, natural dimensions, crop, source-pixel `Origin`, `Flip`, and animation frames affect drawing only. A `32 × 32` collider stays `32 × 32` when the sprite is drawn at `64 × 64`; applications explicitly update or bind the collider geometry when needed. Colliders can exist on a sprite without a resolved image and do not cause an image to be synthesized.
+Collider coordinates are destination units relative to the sprite anchor. `X`, `Y`, `Rotation`, and ancestor scene transforms place both the image and its collider. Image `Width`/`Height`, natural dimensions, crop, source-pixel `Origin`, `Flip`, and animation frames affect drawing only. A `32 × 32` collider stays `32 × 32` when the sprite is drawn at `64 × 64`; applications explicitly update or bind the collider geometry when needed. A collider can exist on a sprite without a resolved image and does not cause an image to be synthesized.
 
 ## Sprite-sheet animation
 
 `Animations` selects a shared immutable [SpriteAnimationSet](Cerneala.UI.Controls.SpriteAnimationSet.md); `AnimationState` selects a case-sensitive clip name. Each sprite owns its playback progress. Null definitions, a null state, or an unresolved runtime state use the static source-coordinate properties and `Flip` instead. Replacing the set resets progress and saved state positions; replacing the image or data context alone does not.
 
-The selected frame supplies the effective source rectangle without changing the static source-coordinate properties. Automatic destination dimensions follow that selected frame. Frame flip and sprite `Flip` compose by XOR on each axis. The destination stays in scene coordinates; the full atlas does not become the sprite's bounds. Prism wraps the selected frame and does not alter colliders.
+The selected frame supplies the effective source rectangle without changing the static source-coordinate properties. Automatic destination dimensions follow that selected frame. Frame flip and sprite `Flip` compose by XOR on each axis. The destination stays in scene coordinates; the full atlas does not become the sprite's bounds. Prism wraps the selected frame and does not alter the collider.
 
 `AnimationStateChangeMode.Restart` starts a newly selected state at frame zero. `Resume` saves the outgoing state's position and restores a previously saved incoming position. `RestartAnimation()` resets the current state without changing the selected state. Pause and a zero playback rate preserve progress; negative or non-finite rates are rejected.
 
@@ -164,7 +164,7 @@ All five properties have matching public `<Name>Property` identifier fields and 
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Colliders` | `Collection<Collider2D>` | Gets the owner-managed collection of live collision shapes. This is the markup content property. |
+| `Collider` | `Collider2D?` | Gets or sets the single owner-managed live collision shape. This is the markup content property. |
 | `Image` | `ImageReference?` | Gets or sets a direct image or typed resource reference. |
 | `X`, `Y` | `float` | Scene position; source-relative `Origin` remains the anchor. |
 | `Width`, `Height` | `float` | Draw size; inherited from `UIElement`. Omitted dimensions use natural selected-region size. |
@@ -200,11 +200,11 @@ Project: `Cerneala`
 
 | Name | Description |
 | --- | --- |
-| `Sprite2D()` | Creates a sprite with an empty collider collection and independent animation state. |
+| `Sprite2D()` | Creates a sprite with no collider and independent animation state. |
 
 ## Breaking-change migration
 
-Move colliders formerly declared beside a sprite under a scene group into that sprite's `Colliders`. Keep geometry in destination units relative to the sprite anchor; subtract any position previously duplicated in collider offsets. Scene groups no longer accept colliders directly. Use a tile's immutable descriptors for static tile collision geometry, not an unrelated scene-level collider.
+Move a collider formerly declared beside a sprite under a scene group into that sprite's `Collider`. If an old owner had multiple shapes, split the represented objects into separate `Sprite2D` owners; a second collider child is invalid markup and is not silently dropped. Keep geometry in destination units relative to the sprite anchor; subtract any position previously duplicated in collider offsets. Scene groups no longer accept colliders directly. Use a tile's immutable descriptor for static tile collision geometry, not an unrelated scene-level collider.
 
 `Source`, `SourceResourceId`, `Destination`, and `SourceRect` have been removed without deprecated aliases. Replace a direct `Source` with `Image = new ImageReference(image)` and a resource ID with `Image = new ImageReference(id)` (markup: `Image="$Atlas"`). Split `Destination` into `X`, `Y`, `Width`, and `Height`; split a static `SourceRect` into `SourceX`, `SourceY`, `SourceWidth`, and `SourceHeight`. Rectangle-valued bindings become bindings to scalar properties exposed by the view model. Live `OneWay` paths cannot traverse `DrawRect` members: each CLR path owner must implement `INotifyPropertyChanged`. Notify changes for the exposed scalar properties. To restore the full-image static crop, set source offsets to zero and source dimensions to `float.NaN`, or clear their local UI values.
 

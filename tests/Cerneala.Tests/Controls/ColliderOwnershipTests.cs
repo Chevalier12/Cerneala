@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using System.Numerics;
 using System.Reflection;
 using Cerneala.Drawing;
@@ -12,6 +11,19 @@ using Scene2D = global::Cerneala.UI.Controls.Scene2D;
 
 public sealed class ColliderOwnershipTests
 {
+    [Theory]
+    [InlineData(typeof(Sprite2D), typeof(Collider2D))]
+    [InlineData(typeof(Tile), typeof(TileColliderDescriptor2D))]
+    [InlineData(typeof(TileDefinition2D), typeof(TileColliderDescriptor2D))]
+    [InlineData(typeof(Scene2DEntity), typeof(TileColliderDescriptor2D))]
+    public void EveryPublicColliderOwnerExposesOneSingularSlot(Type ownerType, Type colliderType)
+    {
+        PropertyInfo? collider = ownerType.GetProperty("Collider");
+        Assert.NotNull(collider);
+        Assert.Equal(colliderType, collider.PropertyType);
+        Assert.Null(ownerType.GetProperty("Colliders"));
+    }
+
     [Theory]
     [InlineData("Box")]
     [InlineData("Circle")]
@@ -29,7 +41,7 @@ public sealed class ColliderOwnershipTests
         foreach (UIElement owner in new UIElement[]
         {
             new UIElement(), scene, new RenderSurface2D(), new Border(),
-            new BoxCollider2D(), new Sprite2D(), new TileInstance2D()
+            new BoxCollider2D(), new Sprite2D()
         })
         {
             Assert.Throws<InvalidOperationException>(() => owner.LogicalChildren.Add(collider));
@@ -46,11 +58,11 @@ public sealed class ColliderOwnershipTests
     [InlineData("Circle")]
     [InlineData("Polygon")]
     [InlineData("Segment")]
-    public void SpriteOwnsEveryColliderKindThroughItsTypedCollection(string shape)
+    public void SpriteOwnsEveryColliderKindThroughItsSingularSlot(string shape)
     {
         Sprite2D sprite = CreateSprite(8, 9);
         Collider2D collider = CreateCollider(shape);
-        GetColliders(sprite).Add(collider);
+        sprite.Collider = collider;
         Scene2D scene = new() { TranslateX = 20, Scale = 2 };
         scene.Children.Add(sprite);
         RenderSurface2D surface = new() { Scene = scene };
@@ -69,7 +81,7 @@ public sealed class ColliderOwnershipTests
     {
         Sprite2D sprite = CreateSprite(10, 20);
         BoxCollider2D collider = new() { Width = 32, Height = 32 };
-        GetColliders(sprite).Add(collider);
+        sprite.Collider = collider;
         Scene2D scene = new();
         scene.Children.Add(sprite);
         AssertBounds(collider, new DrawRect(10, 20, 32, 32));
@@ -107,30 +119,29 @@ public sealed class ColliderOwnershipTests
     }
 
     [Fact]
-    public void OwnedColliderCollectionRejectsDuplicateAndGenericRemovalWithoutCorruptingOwnership()
+    public void ColliderReplacementIsAtomicAndGenericRemovalCannotCorruptOwnership()
     {
         Sprite2D first = CreateSprite();
         Sprite2D second = CreateSprite();
         BoxCollider2D firstCollider = new();
         BoxCollider2D secondCollider = new();
-        Collection<Collider2D> firstColliders = GetColliders(first);
-        Collection<Collider2D> secondColliders = GetColliders(second);
-        firstColliders.Add(firstCollider);
-        secondColliders.Add(secondCollider);
+        first.Collider = firstCollider;
+        second.Collider = secondCollider;
 
-        Assert.Throws<InvalidOperationException>(() => firstColliders.Add(firstCollider));
-        Assert.Throws<InvalidOperationException>(() => secondColliders[0] = firstCollider);
+        first.Collider = firstCollider;
+        Assert.Throws<InvalidOperationException>(() => second.Collider = firstCollider);
         Assert.Throws<InvalidOperationException>(() => first.LogicalChildren.Remove(firstCollider));
-        Assert.Same(firstCollider, Assert.Single(firstColliders));
+        Assert.Same(firstCollider, first.Collider);
         Assert.Same(first, firstCollider.LogicalParent);
-        Assert.Same(secondCollider, Assert.Single(secondColliders));
+        Assert.Same(secondCollider, second.Collider);
         Assert.Same(second, secondCollider.LogicalParent);
 
-        firstColliders.Remove(firstCollider);
-        secondColliders.Add(firstCollider);
-        Assert.Empty(firstColliders);
-        Assert.Equal(2, secondColliders.Count);
+        first.Collider = null;
+        second.Collider = firstCollider;
+        Assert.Null(first.Collider);
+        Assert.Same(firstCollider, second.Collider);
         Assert.Same(second, firstCollider.LogicalParent);
+        Assert.Null(secondCollider.LogicalParent);
     }
 
     [Fact]
@@ -140,7 +151,7 @@ public sealed class ColliderOwnershipTests
         Scene2D second = new();
         Sprite2D sprite = CreateSprite(10, 0);
         BoxCollider2D collider = new() { Width = 4, Height = 4 };
-        GetColliders(sprite).Add(collider);
+        sprite.Collider = collider;
         first.Children.Add(sprite);
         RenderSurface2D surface = new() { Scene = first };
         UIRoot root = new();
@@ -167,23 +178,20 @@ public sealed class ColliderOwnershipTests
         Assert.Same(root, collider.Root);
         Assert.Same(surface, collider.Surface);
         Assert.Single(first.CollisionWorld.Raycast(new Vector2(0, 2), Vector2.UnitX, 40));
-        GetColliders(sprite).Clear();
+        sprite.Collider = null;
         Assert.Null(collider.LogicalParent);
         Assert.Empty(first.CollisionWorld.Raycast(new Vector2(0, 2), Vector2.UnitX, 40));
         root.VisualChildren.Remove(surface);
     }
 
     [Fact]
-    public void FreePlacementTileCopiesItsDescriptorsAndKeepsCollisionIndependentOfDrawSize()
+    public void FreePlacementTileStoresOneImmutableDescriptorAndKeepsCollisionIndependentOfDrawSize()
     {
         TileColliderDescriptor2D descriptor = new(TileColliderShape2D.Box, width: 32, height: 32);
-        TileColliderDescriptor2D[] input = [descriptor];
-        Tile tile = CreateTile(input, 10, 20, 64, 96);
-        input[0] = new TileColliderDescriptor2D(TileColliderShape2D.Circle);
-        IReadOnlyList<TileColliderDescriptor2D> stored = GetTileColliders(tile);
-        Assert.Same(descriptor, Assert.Single(stored));
+        Tile tile = new(new ImageReference(new TestImage()), descriptor, 10, 20, 64, 96);
+        Assert.Same(descriptor, tile.Collider);
         Assert.False(typeof(UIElement).IsAssignableFrom(typeof(Tile)));
-        Assert.Throws<NotSupportedException>(() => ((IList<TileColliderDescriptor2D>)stored).Clear());
+        Assert.Null(typeof(Tile).GetProperty(nameof(Tile.Collider))!.SetMethod);
 
         TileMap2D map = new() { Model = new TileMap2DModel([tile]), TranslateX = 5 };
         Scene2D scene = new();
@@ -192,7 +200,7 @@ public sealed class ColliderOwnershipTests
         AssertBounds(hit.Collider, new DrawRect(15, 20, 32, 32));
         Assert.Empty(scene.CollisionWorld.Raycast(new Vector2(0, 80), Vector2.UnitX, 100));
         Assert.Throws<InvalidOperationException>(() => scene.Children.Add(hit.Collider));
-        Assert.Throws<InvalidOperationException>(() => GetColliders(CreateSprite()).Add(hit.Collider));
+        Assert.Throws<InvalidOperationException>(() => CreateSprite().Collider = hit.Collider);
         map.Model = new TileMap2DModel([new Tile(tile.Image, 10, 20, 64, 96)]);
         Assert.Empty(scene.CollisionWorld.Raycast(new Vector2(0, 30), Vector2.UnitX, 100));
     }
@@ -210,28 +218,6 @@ public sealed class ColliderOwnershipTests
     {
         Image = new ImageReference(new TestImage()), X = x, Y = y, Width = 32, Height = 32
     };
-
-    private static Collection<Collider2D> GetColliders(Sprite2D sprite)
-    {
-        PropertyInfo? property = typeof(Sprite2D).GetProperty("Colliders");
-        Assert.NotNull(property);
-        return Assert.IsAssignableFrom<Collection<Collider2D>>(property.GetValue(sprite));
-    }
-
-    private static Tile CreateTile(IEnumerable<TileColliderDescriptor2D> colliders, float x, float y, float width, float height)
-    {
-        ConstructorInfo? constructor = typeof(Tile).GetConstructor(
-            [typeof(ImageReference), typeof(IEnumerable<TileColliderDescriptor2D>), typeof(float), typeof(float), typeof(float), typeof(float)]);
-        Assert.NotNull(constructor);
-        return (Tile)constructor.Invoke([new ImageReference(new TestImage()), colliders, x, y, width, height]);
-    }
-
-    private static IReadOnlyList<TileColliderDescriptor2D> GetTileColliders(Tile tile)
-    {
-        PropertyInfo? property = typeof(Tile).GetProperty("Colliders");
-        Assert.NotNull(property);
-        return Assert.IsAssignableFrom<IReadOnlyList<TileColliderDescriptor2D>>(property.GetValue(tile));
-    }
 
     private static void AssertBounds(Collider2D collider, DrawRect expected)
     {

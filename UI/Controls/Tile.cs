@@ -9,15 +9,14 @@ namespace Cerneala.UI.Controls;
 public sealed class Tile
 {
     public Tile(ImageReference image, float x = 0, float y = 0, float width = float.NaN, float height = float.NaN)
-        : this(image, Array.Empty<TileColliderDescriptor2D>(), x, y, width, height)
+        : this(image, null, x, y, width, height)
     {
     }
 
-    public Tile(ImageReference image, IEnumerable<TileColliderDescriptor2D> colliders,
+    public Tile(ImageReference image, TileColliderDescriptor2D? collider,
         float x = 0, float y = 0, float width = float.NaN, float height = float.NaN)
     {
         ArgumentNullException.ThrowIfNull(image);
-        ArgumentNullException.ThrowIfNull(colliders);
         DrawArgument.ThrowIfNotValidPixelCoordinate(x, nameof(x));
         DrawArgument.ThrowIfNotValidPixelCoordinate(y, nameof(y));
         if (!float.IsNaN(width)) { DrawArgument.ThrowIfNegativeOrNotValidPixelSize(width, nameof(width)); }
@@ -27,14 +26,9 @@ public sealed class Tile
         Y = y;
         Width = width;
         Height = height;
-        TileColliderDescriptor2D[] copied = CopyBounded(colliders, MaximumShapePoints, nameof(colliders));
-        if (copied.Any(static collider => collider is null))
-        {
-            throw Diagnostic(new ArgumentException("Tile colliders cannot contain null descriptors.", nameof(colliders)), "SCN2D008");
-        }
         Matrix3x2 placement = Matrix3x2.CreateTranslation(x, y);
-        foreach (TileColliderDescriptor2D collider in copied) { collider.ValidateGeometry(placement); }
-        Colliders = Array.AsReadOnly(copied);
+        collider?.ValidateGeometry(placement);
+        Collider = collider;
         _ = GetDestination(default);
         if (image.DirectImage is IDrawImage direct) { _ = GetDestination(new DrawSize(direct.Width, direct.Height)); }
     }
@@ -44,7 +38,7 @@ public sealed class Tile
     public float Y { get; }
     public float Width { get; }
     public float Height { get; }
-    public IReadOnlyList<TileColliderDescriptor2D> Colliders { get; }
+    public TileColliderDescriptor2D? Collider { get; }
 
     internal DrawRect GetDestination(DrawSize imageSize)
     {

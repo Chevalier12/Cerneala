@@ -2,6 +2,8 @@ namespace Cerneala.UI.Resources;
 
 public readonly record struct ResourceId<T>
 {
+    private static readonly string? TypeFullName = typeof(T).FullName;
+
     public ResourceId(string key)
     {
         if (string.IsNullOrWhiteSpace(key))
@@ -18,6 +20,6 @@ public readonly record struct ResourceId<T>
 
     public override string ToString()
     {
-        return $"{typeof(T).FullName}:{Key}";
+        return $"{TypeFullName}:{Key}";
     }
 }

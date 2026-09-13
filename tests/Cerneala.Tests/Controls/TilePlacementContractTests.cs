@@ -21,9 +21,9 @@ public sealed class TilePlacementContractTests
         Assert.Empty(model.TileSets);
         Assert.Equal(default, model.TileSize);
         Assert.Null(model.Bounds);
-        Assert.Empty(Assert.Single(model.Layers).Chunks);
+        Assert.Empty(model.Chunks);
         Assert.False(model.TryResolveTile(1, out _, out _));
-        Assert.False(Assert.Single(model.Layers).TryGetCell(default, out _));
+        Assert.False(model.TryGetCell(default, out _));
         Assert.Throws<ArgumentNullException>(() => new Tile(null!));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Tile(image, float.PositiveInfinity));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Tile(image, width: -1));
@@ -51,8 +51,7 @@ public sealed class TilePlacementContractTests
         DrawSpriteBatch[] second = Batches(Record(fixture.Surface));
         for (int index = 0; index < first.Length; index++) { Assert.Same(first[index], second[index]); }
         Assert.Equal(3, fixture.Map.GetDiagnosticsSnapshot().BatchesReused);
-        Assert.Single(fixture.Map.LogicalChildren);
-        Assert.Empty(Assert.Single(fixture.Map.Layers).LogicalChildren);
+        Assert.Empty(fixture.Map.LogicalChildren);
     }
 
     [Fact]
@@ -105,8 +104,7 @@ public sealed class TilePlacementContractTests
         Assert.Equal(513, batches.Length);
         Assert.Equal(placements.Select(tile => tile.Image.DirectImage), batches.Select(batch => batch.Image));
         Assert.Equal(3, fixture.Map.GetDiagnosticsSnapshot().VisibleChunks);
-        Assert.Single(fixture.Map.LogicalChildren);
-        Assert.Empty(Assert.Single(fixture.Map.Layers).LogicalChildren);
+        Assert.Empty(fixture.Map.LogicalChildren);
     }
 
     [Fact]
@@ -141,11 +139,11 @@ public sealed class TilePlacementContractTests
         ImageReference resource = new(id);
         TileMap2DModel explicitSize = new([new Tile(resource, width: 256, height: 16)]);
         ArgumentException explicitError = Assert.Throws<ArgumentException>(() =>
-            new Scene2DLevel("World", explicitSize, new DrawPoint(1_999_999_872, 0)));
+            new Scene2DLevel("World", [explicitSize], new DrawPoint(1_999_999_872, 0)));
         Assert.Equal("SCN2D014", Scene2DModelValidator.GetDiagnostic(explicitError)?.Code);
 
         TileMap2DModel naturalSize = new([new Tile(resource)]);
-        Scene2DLevel level = new("World", naturalSize, new DrawPoint(1_999_999_872, 0));
+        Scene2DLevel level = new("World", [naturalSize], new DrawPoint(1_999_999_872, 0));
         ArgumentException naturalError = Assert.Throws<ArgumentException>(() =>
             new Scene2DDocument([level], [new Scene2DAsset(id, "art.png", new DrawSize(256, 16))]));
         Assert.Equal("SCN2D014", Scene2DModelValidator.GetDiagnostic(naturalError)?.Code);

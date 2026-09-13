@@ -516,13 +516,21 @@ template are needed.
 </RenderSurface2D>
 ```
 
+Scene composition uses `Scene2D` groups, `TileMap2D` static strata, individual
+`Sprite2D` nodes, and dynamic `SceneItems2D` collections. Static `Tile` declarations
+remain data inside a map. Compose independent maps and sprites as scene peers;
+bind an imported map model or declare direct tiles, not both. See the canonical
+[TileMap2D API](../docs-site/documentation/classes/Cerneala.UI.Controls.TileMap2D.md).
+
 ### Collision and routed input in a retained scene
 
-Live colliders belong only to a `Sprite2D` or `TileInstance2D`, not directly to
-a scene group. Declare shape children inside that owner or use its typed
-`Colliders` collection. Static `Tile` placements and imported tile definitions
-instead own immutable collision descriptors. Shape dimensions and offsets are
-managed separately from image dimensions, crop, origin, flip, and animation.
+A `Sprite2D` owns zero or one live collider, never a
+collection, and scene groups cannot own one directly. Declare at most one shape
+child inside that owner or assign its typed `Collider` property. A static `Tile`
+or imported tile definition likewise owns zero or one immutable descriptor.
+A second shape is a diagnostic, not a shape that is merged or ignored. Shape
+dimensions and offsets are managed separately from image dimensions, crop,
+origin, flip, and animation.
 
 The root scene still owns the shared collision query world, and input still
 uses Cerneala's routed UI events. The canonical contracts and compilable
@@ -530,8 +538,7 @@ authoring examples are maintained on these API pages:
 
 - [Collider ownership, bindings, and routed input](../docs-site/documentation/classes/Cerneala.UI.Controls.Collider2D.md)
 - [Sprite2D pose and independent collider geometry](../docs-site/documentation/classes/Cerneala.UI.Controls.Sprite2D.md)
-- [Static Tile collision descriptors](../docs-site/documentation/classes/Cerneala.UI.Controls.Tile.md)
-- [Promoted TileInstance2D live colliders](../docs-site/documentation/classes/Cerneala.UI.Controls.TileInstance2D.md)
+- [Static Tile collision descriptor](../docs-site/documentation/classes/Cerneala.UI.Controls.Tile.md)
 - [CollisionWorld2D queries](../docs-site/documentation/classes/Cerneala.UI.Controls.CollisionWorld2D.md)
 
 ## 7. Text

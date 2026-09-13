@@ -49,7 +49,7 @@ internal static class TileMapStage4BenchmarkRunner
         string commit = ResolveGit("rev-parse HEAD");
         bool workingTreeDirty = ResolveGit("status --porcelain").Length != 0;
         TileMapStage4Report report = new(
-            Schema: "cerneala-tilemap-stage4-v1",
+            Schema: "cerneala-tilemap-stage4-v2",
             TimestampUtc: DateTimeOffset.UtcNow,
             Commit: commit.Length == 0 ? "unknown" : commit,
             WorkingTreeDirty: workingTreeDirty,
@@ -242,19 +242,19 @@ internal sealed class TileMapStage4Workload : IDisposable
     private readonly UIRoot root = new();
     private readonly RenderSurface2D surface;
     private readonly Scene2D scene;
-    private readonly TileMap2D map;
-    private readonly TileMap2DModel originalModel;
-    private readonly TileMap2DModel mutatedModel;
+    private readonly TileMap2D[] maps;
+    private readonly TileMap2DModel[] originalModels;
+    private readonly TileMap2DModel[] mutatedModels;
     private readonly DrawCommandList commands = new();
     private bool useMutatedModel;
 
     internal TileMapStage4Workload()
     {
-        originalModel = TileMapStage4ModelFactory.Create(mutated: false);
-        mutatedModel = TileMapStage4ModelFactory.Create(mutated: true);
-        map = new TileMap2D { Model = originalModel };
-        scene = new Scene2D();
-        scene.Children.Add(map);
+        originalModels = TileMapStage4ModelFactory.Create(mutated: false);
+        mutatedModels = TileMapStage4ModelFactory.Create(mutated: true);
+        maps = originalModels.Select(model => new TileMap2D { Model = model, Layer = model.Order }).ToArray();
+        scene = new Scene2D { OrderMode = SceneOrderMode.Layer };
+        foreach (TileMap2D map in maps) { scene.Children.Add(map); }
         surface = new RenderSurface2D
         {
             Scene = scene,
@@ -289,7 +289,7 @@ internal sealed class TileMapStage4Workload : IDisposable
     internal TileMapStage4Counters RecordChunkMutation()
     {
         useMutatedModel = !useMutatedModel;
-        map.Model = useMutatedModel ? mutatedModel : originalModel;
+        maps[1].Model = useMutatedModel ? mutatedModels[1] : originalModels[1];
         return Record(TileMapStage4ModelFactory.CameraView(32), FrameBounds);
     }
 
@@ -326,7 +326,7 @@ internal sealed class TileMapStage4Workload : IDisposable
             frame.PopClip();
             frame.Complete();
         }
-        return TileMapStage4Counters.From(map.GetDiagnosticsSnapshot());
+        return TileMapStage4Counters.From(maps);
     }
 
     private sealed record InlineImage(int Width, int Height, string Name) : IDrawImage;
@@ -352,7 +352,7 @@ internal static class TileMapStage4ModelFactory
     internal static readonly ResourceId<ImageResource> TerrainResourceId = new("VillageTerrain");
     internal static readonly ResourceId<ImageResource> StructuresResourceId = new("VillageStructures");
 
-    internal static TileMap2DModel Create(bool mutated)
+    internal static TileMap2DModel[] Create(bool mutated)
     {
         TileSet2D[] tileSets =
         [
@@ -367,15 +367,9 @@ internal static class TileMapStage4ModelFactory
                 Enumerable.Range(100, 8).Select(static id =>
                     new TileDefinition2D(id, new DrawRect((id - 100) * TileSize, 0, TileSize, TileSize))))
         ];
-        TileLayer2DModel[] layers = Enumerable.Range(0, LayerCount)
-            .Select(layer => CreateLayer(layer, mutated))
+        return Enumerable.Range(0, LayerCount)
+            .Select(layer => CreateMap(layer, mutated, tileSets))
             .ToArray();
-        return new TileMap2DModel(
-            new DrawSize(TileSize, TileSize),
-            tileSets,
-            layers,
-            new TileMapBounds2D(0, 0, WidthInTiles, HeightInTiles),
-            version: mutated ? 2 : 1);
     }
 
     internal static DrawRect CameraView(int cameraTileX) =>
@@ -385,7 +379,7 @@ internal static class TileMapStage4ModelFactory
             ViewWidthInTiles * TileSize,
             ViewHeightInTiles * TileSize);
 
-    private static TileLayer2DModel CreateLayer(int layer, bool mutated)
+    private static TileMap2DModel CreateMap(int layer, bool mutated, IReadOnlyList<TileSet2D> tileSets)
     {
         List<TileChunk2D> chunks = [];
         for (int chunkY = 0; chunkY < HeightInTiles / ChunkSize; chunkY++)
@@ -409,9 +403,12 @@ internal static class TileMapStage4ModelFactory
                     version: changed ? 2 : 1));
             }
         }
-        return new TileLayer2DModel(
+        return new TileMap2DModel(
             $"Layer{layer}",
+            new DrawSize(TileSize, TileSize),
+            tileSets,
             chunks,
+            new TileMapBounds2D(0, 0, WidthInTiles, HeightInTiles),
             order: layer,
             version: mutated && layer == 1 ? 2 : 1);
     }
@@ -467,32 +464,30 @@ internal readonly record struct TileMapStage4Counters(
     int DrawCommands,
     long RetainedBytes,
     int RetainedObjects,
-    int TileInvalidations,
-    int PromotedInstancesVisible,
-    int PromotedInstancesCulled,
-    int Promotions,
-    int Demotions,
-    int BatchSplits)
+    int TileInvalidations)
 {
-    internal static TileMapStage4Counters From(TileMap2DDiagnosticsSnapshot snapshot) =>
-        new(
-            snapshot.TotalChunks,
-            snapshot.CandidateChunks,
-            snapshot.VisibleChunks,
-            snapshot.CandidateTiles,
-            snapshot.DrawnTiles,
-            snapshot.BatchesBuilt,
-            snapshot.BatchesRebuilt,
-            snapshot.BatchesReused,
-            snapshot.DrawCommands,
-            snapshot.RetainedBytes,
-            snapshot.RetainedObjects,
-            snapshot.TileInvalidations,
-            snapshot.PromotedInstancesVisible,
-            snapshot.PromotedInstancesCulled,
-            snapshot.Promotions,
-            snapshot.Demotions,
-            snapshot.BatchSplits);
+    internal static TileMapStage4Counters From(IReadOnlyList<TileMap2D> maps)
+    {
+        TileMapStage4Counters total = default;
+        for (int index = 0; index < maps.Count; index++)
+        {
+            TileMap2DDiagnosticsSnapshot snapshot = maps[index].GetDiagnosticsSnapshot();
+            total = new(
+                total.TotalChunks + snapshot.TotalChunks,
+                total.CandidateChunks + snapshot.CandidateChunks,
+                total.VisibleChunks + snapshot.VisibleChunks,
+                total.CandidateTiles + snapshot.CandidateTiles,
+                total.DrawnTiles + snapshot.DrawnTiles,
+                total.BatchesBuilt + snapshot.BatchesBuilt,
+                total.BatchesRebuilt + snapshot.BatchesRebuilt,
+                total.BatchesReused + snapshot.BatchesReused,
+                total.DrawCommands + snapshot.DrawCommands,
+                total.RetainedBytes + snapshot.RetainedBytes,
+                total.RetainedObjects + snapshot.RetainedObjects,
+                total.TileInvalidations + snapshot.TileInvalidations);
+        }
+        return total;
+    }
 }
 
 internal sealed record TileMapStage4Scenario(

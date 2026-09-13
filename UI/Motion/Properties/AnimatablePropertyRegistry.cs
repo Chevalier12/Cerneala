@@ -72,7 +72,6 @@ public sealed class AnimatablePropertyRegistry
         Register(BoxCollider2D.HeightProperty, Options<float, FloatMixer>(BoxCollider2D.HeightProperty, colliderGeometrySpec, isSafeForImplicitAnimation: false));
         Register(CircleCollider2D.RadiusProperty, Options<float, FloatMixer>(CircleCollider2D.RadiusProperty, colliderGeometrySpec, isSafeForImplicitAnimation: false));
         Register(Sprite2D.AnimationPlaybackRateProperty, Options<double, DoubleMixer>(Sprite2D.AnimationPlaybackRateProperty, MotionFactory.Tween(TimeSpan.FromMilliseconds(120)), isSafeForImplicitAnimation: false));
-        Register(TileInstance2D.AnimationPlaybackRateProperty, Options<double, DoubleMixer>(TileInstance2D.AnimationPlaybackRateProperty, MotionFactory.Tween(TimeSpan.FromMilliseconds(120)), isSafeForImplicitAnimation: false));
     }
 
     private static MotionPropertyOptions Options<TValue, TMixer>(

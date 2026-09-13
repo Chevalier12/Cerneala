@@ -81,6 +81,20 @@ public sealed class DrawMesh2D
 
     internal int[] IndexArray { get; }
 
+    // Only for buffers created exclusively for this mesh. Callers relinquish
+    // ownership and must not mutate them after this call. Public inputs are copied.
+    internal static DrawMesh2D FromOwnedBuffers(
+        DrawVertex2D[] vertices,
+        int[] indices,
+        DrawPrimitiveTopology topology = DrawPrimitiveTopology.TriangleList,
+        IDrawImage? image = null)
+    {
+        ArgumentNullException.ThrowIfNull(vertices);
+        ArgumentNullException.ThrowIfNull(indices);
+        return new DrawMesh2D(vertices, indices, topology, image,
+            Interlocked.Increment(ref nextVersion));
+    }
+
     internal DrawMesh2D Transform(
         Func<DrawPoint, DrawPoint> transform,
         float opacity = 1)

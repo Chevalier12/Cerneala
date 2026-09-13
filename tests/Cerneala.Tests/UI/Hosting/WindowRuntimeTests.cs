@@ -347,6 +347,66 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
+    public async Task ServoFirstFrameClickResolvesAfterLayoutQueuedByTheSameFrameCallback()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Border header = new() { Height = 16 };
+        Button button = new() { Content = "Target", Width = 160, Height = 32 };
+        ServoApi.SetId(button, "target");
+        StackPanel panel = new();
+        panel.VisualChildren.Add(header);
+        panel.VisualChildren.Add(button);
+        Window window = new() { Content = panel };
+        ServoApi servo = new(window);
+        Task? action = null;
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+        window.FrameRendered += (_, _) =>
+        {
+            if (action is not null) return;
+            action = servo.ClickAsync(ServoTarget.ById("target"));
+            header.Height = 80;
+        };
+
+        window.Show();
+        Assert.NotNull(action);
+        PumpUntilCompleted(runtime, action);
+        await action;
+
+        Assert.Equal(1, clicks);
+        Assert.Equal(4, Assert.Single(platform.Windows).Session.PresentCount);
+        Assert.False(window.LastFrame!.Input.Pointer.IsDown(InputMouseButton.Left));
+    }
+
+    [Fact]
+    public async Task ServoQueuedTargetActionRejectsADisabledTargetBeforeDispatchAndRemainsUsable()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Button button = new() { Content = "Target", Width = 160, Height = 32 };
+        ServoApi.SetId(button, "target");
+        Window window = new() { Content = button };
+        window.Show();
+        ServoApi servo = new(window);
+        int clicks = 0;
+        button.Click += (_, _) => clicks++;
+
+        Task rejected = servo.ClickAsync(ServoTarget.ById("target"));
+        button.IsEnabled = false;
+        PumpUntilCompleted(runtime, rejected);
+        await Assert.ThrowsAsync<ServoTargetNotActionableException>(() => rejected);
+        Assert.Equal(0, clicks);
+        Assert.False(window.LastFrame!.Input.Pointer.IsDown(InputMouseButton.Left));
+
+        button.IsEnabled = true;
+        Task next = servo.ClickAsync(ServoTarget.ById("target"));
+        PumpUntilCompleted(runtime, next);
+        await next;
+        Assert.Equal(1, clicks);
+    }
+
+    [Fact]
     public async Task ServoWindowActionCompletesOnlyAfterItsInputFrameWasPresented()
     {
         FakeWindowPlatform platform = new();

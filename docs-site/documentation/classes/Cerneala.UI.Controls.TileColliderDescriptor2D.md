@@ -33,14 +33,14 @@ var fence = new TileColliderDescriptor2D(
 var fenceTile = new TileDefinition2D(
     42,
     new DrawRect(0, 0, 16, 16),
-    colliders: [fence]);
+    collider: fence);
 ```
 
 ## Remarks
 
 Descriptors are model data, not `SceneNode2D` instances and not backend drawing primitives. `TileMap2D` adapts them into the scene collision world while the corresponding cells remain batched tile data.
 
-A free [Tile](Cerneala.UI.Controls.Tile.md) placement copies descriptors through its collider constructor. For that path, the adapter applies the shape offset, `LocalTransform`, pixel placement, and ancestor presentation transforms; there are no cell flips or uniform cell dimensions. Image resizing does not resize the collider. Internal adapters retain their immutable tile/layer ownership and cannot be attached to an arbitrary UI element or scene group.
+A free [Tile](Cerneala.UI.Controls.Tile.md) placement accepts one optional descriptor through its collider constructor. For that path, the adapter applies the shape offset, `LocalTransform`, pixel placement, and ancestor presentation transforms; there are no cell flips or uniform cell dimensions. Image resizing does not resize the collider. Internal adapters retain their immutable tile/layer ownership and cannot be attached to an arbitrary UI element or scene group.
 
 Offsets and shape coordinates use tile-local destination units. The adapter applies the shape offset, `LocalTransform`, diagonal/horizontal/vertical cell flips, cell placement, layer offset, and inherited scene transforms in that order. Rendering culling does not unload these active collision shapes.
 

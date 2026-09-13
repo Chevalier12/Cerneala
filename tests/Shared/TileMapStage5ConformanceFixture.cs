@@ -30,17 +30,17 @@ internal sealed class TileMapStage5ConformanceFixture : IDisposable
 
     private TileMapStage5ConformanceFixture(
         RenderSurface2D surface,
-        TileInstance2D promotedTile,
+        Sprite2D animatedSprite,
         IDisposable prismLifetime)
     {
         Surface = surface;
-        PromotedTile = promotedTile;
+        AnimatedSprite = animatedSprite;
         this.prismLifetime = prismLifetime;
     }
 
     internal RenderSurface2D Surface { get; }
 
-    internal TileInstance2D PromotedTile { get; }
+    internal Sprite2D AnimatedSprite { get; }
 
     internal static TileMapStage5ConformanceFixture Create(string artifactDirectory)
     {
@@ -53,59 +53,49 @@ internal sealed class TileMapStage5ConformanceFixture : IDisposable
 
         ResourceId<ImageResource> terrainId = new("TileMapStage5Terrain");
         ResourceId<ImageResource> structuresId = new("TileMapStage5Structures");
-        TileMap2D map = new()
+        TileSet2D[] sets =
+        [
+            new("Terrain", terrainId,
+                [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16)), new TileDefinition2D(2, new DrawRect(16, 0, 16, 16))]),
+            new("Structures", structuresId,
+                [new TileDefinition2D(100, new DrawRect(0, 0, 16, 16)), new TileDefinition2D(101, new DrawRect(16, 0, 16, 16))])
+        ];
+        TileMapBounds2D bounds = new(0, 0, 16, 10);
+        Scene2D mapGroup = new() { TranslateX = 4, TranslateY = 2 };
+        mapGroup.Children.Add(new TileMap2D
         {
-            Model = new TileMap2DModel(
-                new DrawSize(8, 8),
-                [
-                    new TileSet2D(
-                        "Terrain",
-                        terrainId,
-                        [
-                            new TileDefinition2D(1, new DrawRect(0, 0, 16, 16)),
-                            new TileDefinition2D(2, new DrawRect(16, 0, 16, 16))
-                        ]),
-                    new TileSet2D(
-                        "Structures",
-                        structuresId,
-                        [
-                            new TileDefinition2D(100, new DrawRect(0, 0, 16, 16)),
-                            new TileDefinition2D(101, new DrawRect(16, 0, 16, 16))
-                        ])
-                ],
-                [
-                    new TileLayer2DModel(
-                        "Ground",
-                        CreateGroundChunks(),
-                        order: 0,
-                        tint: new Color(226, 245, 232)),
-                    new TileLayer2DModel(
-                        "Structures",
-                        CreateStructureChunks(),
-                        order: 10,
-                        offset: new DrawPoint(1, 1),
-                        opacity: 0.72f,
-                        tint: new Color(235, 224, 255))
-                ],
-                new TileMapBounds2D(0, 0, 16, 10))
+            Model = new TileMap2DModel("Ground", new DrawSize(8, 8), sets, CreateGroundChunks(), bounds,
+                tint: new Color(226, 245, 232))
+        });
+        Scene2D structures = new()
+        {
+            TranslateX = 2, TranslateY = 1, ScaleX = 1.05f,
+            TransformOrigin = new DrawPoint(64, 40), Opacity = 0.72f
         };
-        map.TranslateX = 4;
-        map.TranslateY = 2;
-
-        TileLayer2D structureLayer = map.Layers.Single(static layer =>
-            string.Equals(layer.LayerId, "Structures", StringComparison.Ordinal));
-        structureLayer.Offset = new DrawPoint(1, 0);
-        structureLayer.Tint = new Color(255, 232, 220);
-        structureLayer.ScaleX = 1.05f;
-        structureLayer.TransformOrigin = new DrawPoint(64, 40);
-
-        TileInstance2D promoted = map.Promote(new TileCellKey2D("Structures", 7, 4));
+        structures.Children.Add(new TileMap2D
+        {
+            Tint = new Color(255, 232, 220),
+            Model = new TileMap2DModel("Structures", new DrawSize(8, 8), sets, CreateStructureChunks(), bounds,
+                order: 10, tint: new Color(235, 224, 255))
+        });
+        Sprite2D promoted = new()
+        {
+            Image = new ImageReference(structuresId), Width = 8, Height = 8,
+            SourceX = 16, SourceY = 0, SourceWidth = 16, SourceHeight = 16,
+            Flip = RenderSurface2DSpriteFlip.Horizontal
+        };
+        // Ordinary sprites carry their own tint. These colors are the former
+        // layer tint (235,224,255) * node tint (255,232,220) * sprite tint,
+        // with byte-channel rounding at each multiplication.
         promoted.Aspect = new ElementAspect(
-            [new ElementAspectValue(TileInstance2D.TintProperty, new Color(255, 150, 64))]);
-        promoted.Scale = 1.12f;
-        promoted.TranslateX = 1;
-        promoted.TranslateY = -1;
-        promoted.TransformOrigin = new DrawPoint(4, 4);
+            [new ElementAspectValue(Sprite2D.TintProperty, new Color(235, 120, 55))]);
+        Scene2D animatedNode = new()
+        {
+            TranslateX = 57, TranslateY = 31, Scale = 1.12f, TransformOrigin = new DrawPoint(4, 4)
+        };
+        animatedNode.Children.Add(promoted);
+        structures.Children.Add(animatedNode);
+        mapGroup.Children.Add(structures);
 
         IDisposable prism = GeneratedMarkup.AttachPrism(
             promoted,
@@ -114,11 +104,11 @@ internal sealed class TileMapStage5ConformanceFixture : IDisposable
                     "TileMapStage5Promoted",
                     [new PrismLayerDefinition(
                         new PrismNodeId(1),
-                        "PromotedTile",
+                        "AnimatedSprite",
                         filters: [new PrismFilterDefinition(PrismFilterId.Invert)])])));
 
         Scene2D scene = new();
-        scene.Children.Add(map);
+        scene.Children.Add(mapGroup);
         ResourceId<ImageResource> freeRed = new("FreeRed");
         ResourceId<ImageResource> freeBlue = new("FreeBlue");
         scene.Children.Add(new TileMap2D
@@ -154,9 +144,9 @@ internal sealed class TileMapStage5ConformanceFixture : IDisposable
         }
 
         motionStarted = true;
-        _ = PromotedTile.Motion()
-            .Animate(TileInstance2D.TintProperty)
-            .To(new Color(96, 220, 255))
+        _ = AnimatedSprite.Motion()
+            .Animate(Sprite2D.TintProperty)
+            .To(new Color(88, 176, 220))
             .With(MotionFactory.Tween<Color>(TimeSpan.FromMilliseconds(1)));
     }
 
@@ -195,7 +185,7 @@ internal sealed class TileMapStage5ConformanceFixture : IDisposable
         if (motionDifference < 64)
         {
             throw new InvalidOperationException(
-                $"{backend} promoted-tile Motion/Prism capture changed only {motionDifference} pixels.");
+                $"{backend} sprite Motion/Prism capture changed only {motionDifference} pixels.");
         }
 
         long panZoomDifference = CountDifferentPixels(motion, panZoom, 4);
@@ -371,6 +361,8 @@ internal sealed class TileMapStage5ConformanceFixture : IDisposable
                     cells[index] = new TileCell2D(tileId, flip);
                     continue;
                 }
+
+                if (x == 7 && y == 4) { continue; } // The animated sprite owns this visual.
 
                 bool occupied = (x + (y * 3)) % 7 == 0 ||
                     (x is 7 or 8 && y is 3 or 4 or 5);
@@ -584,11 +576,11 @@ internal sealed class TileMapStage5ConformanceFixture : IDisposable
                         "free placements: natural mixed sizes, explicit dimensions, A-B-A overlap order, map transform, exact interior pixels",
                         "opacity and tint",
                         "horizontal and vertical flips",
-                        "map, layer, and promoted-tile transforms",
-                        "semantic layers",
-                        "chunk edge x=8 and promoted edge tile x=7",
+                        "scene, map, and sprite transforms",
+                        "ordered peer maps",
+                        "chunk edge x=8 and sprite at the chunk edge x=7",
                         "pan and zoom",
-                        "promoted tile with Aspect, Motion, and Prism Invert"
+                        "sprite with Aspect, Motion, and Prism Invert"
                     },
                     DistinctColors = distinctColors,
                     MotionChangedPixels = motionDifference,

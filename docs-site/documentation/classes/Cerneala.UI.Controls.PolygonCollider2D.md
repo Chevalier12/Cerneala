@@ -27,7 +27,7 @@ Inheritance:
 
 ## Remarks
 
-Live polygons attach only through `Sprite2D.Colliders` or `TileInstance2D.Colliders`; scene groups and generic UI child collections cannot own them. The sprite example has collision geometry but no image. A polygon directly under a static `Tile` constructs an immutable descriptor, with no live binding or Aspect state. See [Collider2D](Cerneala.UI.Controls.Collider2D.md) and [Tile](Cerneala.UI.Controls.Tile.md).
+A live polygon must be the single `Sprite2D.Collider`; scene groups, generic UI child collections, and an already occupied owner cannot accept it. The sprite example has collision geometry but no image. A polygon directly under a static `Tile` constructs its one optional immutable descriptor, with no live binding or Aspect state. See [Collider2D](Cerneala.UI.Controls.Collider2D.md) and [Tile](Cerneala.UI.Controls.Tile.md).
 
 `Points` uses invariant `x,y x,y ...` syntax. Clockwise and counterclockwise input are accepted, but the polygon must be simple and strictly convex: every nonincident vertex lies on the interior side of every edge. Consistent local turn signs alone are insufficient because self-intersecting stars can satisfy them. Concave, self-intersecting, collinear, empty, malformed, and nonfinite shapes are rejected instead of being approximated.
 

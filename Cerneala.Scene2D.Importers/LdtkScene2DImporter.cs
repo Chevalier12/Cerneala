@@ -304,19 +304,20 @@ public static class LdtkScene2DImporter
                 if (layout == "LinearVertical") { linearY += height; }
                 properties["$DefinitionUid"] = uid; properties["$Iid"] = iid; properties["$SourceName"] = RequiredText(level, "identifier");
                 properties["$World"] = world; Preserve(level, properties, "worldDepth");
-                List<TileLayer2DModel> layers = new(); List<Scene2DEntity> entities = new(); List<TilePromotion2D> promotions = new();
+                List<TileMap2DModel> maps = new(); List<Scene2DEntity> entities = new(); List<TilePromotion2D> promotions = new();
                 JsonElement sourceLayers = context.Required(level, "layerInstances"); _ = context.Array(sourceLayers);
                 int grid = sourceLayers.GetArrayLength() == 0 ? 1 : Positive(sourceLayers[0], "__gridSize");
                 if (width % grid != 0 || height % grid != 0) { context.Fail("SCN2D004", "Level dimensions must align to its uniform grid."); }
+                TileMapBounds2D bounds = new(0, 0, width / grid, height / grid);
                 HashSet<int> layerIds = new();
                 for (int layerIndex = sourceLayers.GetArrayLength() - 1; layerIndex >= 0; layerIndex--)
                 {
                     context.Path = $"{levelPath}.layerInstances[{layerIndex}]";
-                    layers.Add(ParseLayer(sourceLayers[layerIndex], uid, grid, layers.Count, layerIds, entities, promotions));
+                    maps.Add(ParseLayer(sourceLayers[layerIndex], uid, grid, maps.Count, bounds, layerIds, entities, promotions));
                 }
                 context.Path = levelPath;
-                TileMap2DModel map = new(new(grid, grid), atlases.Values.Select(atlas => atlas.Set), layers, new(0, 0, width / grid, height / grid), properties: properties);
-                levels.Add(new(iid, map, placement, entities, promotions, properties));
+                levels.Add(new(iid, maps, placement, entities, promotions, properties,
+                    atlases.Values.Select(atlas => atlas.Set), new(grid, grid), bounds));
                 context.File = projectFile; context.Path = referencePath;
             }
         }
@@ -330,7 +331,7 @@ public static class LdtkScene2DImporter
             return properties;
         }
 
-        private TileLayer2DModel ParseLayer(JsonElement value, int levelUid, int grid, int order, HashSet<int> ids,
+        private TileMap2DModel ParseLayer(JsonElement value, int levelUid, int grid, int order, TileMapBounds2D bounds, HashSet<int> ids,
             List<Scene2DEntity> entities, List<TilePromotion2D> promotions)
         {
             context.CountLayer(); Dictionary<string, object?> properties = new(StringComparer.Ordinal);
@@ -412,7 +413,8 @@ public static class LdtkScene2DImporter
                 if (mapped.Role == "Promote") { promotions.Add(conventions.Promotion(mapped.Properties)); }
             }
             context.Path = layerPath;
-            return new(Id(uid), chunks, order, context.Boolean(context.Required(value, "visible")), offset, opacity, properties: properties);
+            return new(Id(uid), new(grid, grid), atlases.Values.Select(atlas => atlas.Set), chunks, bounds, order,
+                context.Boolean(context.Required(value, "visible")), offset, opacity, properties: properties);
         }
 
         private Scene2DEntity ParseEntity(JsonElement value, string layer, int order)
@@ -439,7 +441,7 @@ public static class LdtkScene2DImporter
             properties["$DefinitionUid"] = uid; properties["$SourceName"] = definition.Name; properties["$Definition"] = definition.Properties;
             properties["$SourcePx"] = new DrawPoint(x, y);
             return new(iid, layer, new(x - size.Width * px, y - size.Height * py), size, shape, points,
-                pivot: new(px, py), role: role, colliders: conventions.Colliders(iid, role, shape, size, points, properties), order: order, properties: properties);
+                pivot: new(px, py), role: role, collider: conventions.Collider(iid, role, shape, size, points, properties), order: order, properties: properties);
         }
 
         private void OptionalRect(JsonElement owner, string name)

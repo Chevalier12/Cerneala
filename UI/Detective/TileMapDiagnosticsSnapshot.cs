@@ -13,9 +13,4 @@ public readonly record struct TileMapDiagnosticsSnapshot(
     int DrawCommands,
     long RetainedBytes,
     int RetainedObjects,
-    int TileInvalidations,
-    int PromotedInstancesVisible,
-    int PromotedInstancesCulled,
-    int Promotions,
-    int Demotions,
-    int BatchSplits);
+    int TileInvalidations);

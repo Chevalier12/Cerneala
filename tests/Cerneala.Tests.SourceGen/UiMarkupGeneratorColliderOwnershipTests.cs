@@ -12,23 +12,57 @@ namespace Cerneala.Tests.SourceGen;
 public sealed partial class UiMarkupGeneratorTests
 {
     [Fact]
-    public void SpriteMarkupOwnsAllFourColliderShapesAsLogicalChildren()
+    public void LiveColliderOwnerMarkupRejectsASecondCollider()
+    {
+        const string markup = "<Scene2D><Sprite2D><BoxCollider2D /><CircleCollider2D /></Sprite2D></Scene2D>";
+        GeneratorRunResult result = RunGenerator([new MarkupFile("Ownership.crn", markup)], out _, "");
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI005" &&
+            diagnostic.GetMessage().Contains("one collider", StringComparison.OrdinalIgnoreCase));
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void FreePlacementTileMarkupRejectsASecondCollider()
     {
         const string markup = """
+            <Scene2D xmlns:resources="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
+                <Scene2D.Resources>
+                    <resources:ImageResource Name="Wall" Source="Assets/wall-32.png" />
+                </Scene2D.Resources>
+                <TileMap2D>
+                    <Tile Image="$Wall">
+                        <BoxCollider2D />
+                        <CircleCollider2D />
+                    </Tile>
+                </TileMap2D>
+            </Scene2D>
+            """;
+        GeneratorRunResult result = RunGenerator([new MarkupFile("Ownership.crn", markup)], out _, "");
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI005" &&
+            diagnostic.GetMessage().Contains("one collider", StringComparison.OrdinalIgnoreCase));
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Theory]
+    [InlineData("BoxCollider2D")]
+    [InlineData("CircleCollider2D")]
+    [InlineData("PolygonCollider2D")]
+    [InlineData("SegmentCollider2D")]
+    public void SpriteMarkupOwnsEachColliderShapeThroughItsSingularSlot(string shape)
+    {
+        string markup = $$"""
             <Scene2D>
                 <Sprite2D X="32" Y="64" Width="32" Height="32">
-                    <BoxCollider2D Width="32" Height="32" />
-                    <CircleCollider2D Radius="8" OffsetX="16" OffsetY="16" />
-                    <PolygonCollider2D Points="0,0 32,0 0,32" />
-                    <SegmentCollider2D EndX="32" />
+                    <{{shape}} />
                 </Sprite2D>
             </Scene2D>
             """;
         Scene2D scene = (Scene2D)CompileColliderMarkup(markup);
         Sprite2D sprite = Assert.IsType<Sprite2D>(Assert.Single(scene.Children));
-        Assert.Equal(new[] { typeof(BoxCollider2D), typeof(CircleCollider2D), typeof(PolygonCollider2D), typeof(SegmentCollider2D) },
-            sprite.LogicalChildren.Select(child => child.GetType()));
-        Assert.All(sprite.LogicalChildren, child => Assert.Same(sprite, child.LogicalParent));
+        Collider2D collider = Assert.IsAssignableFrom<Collider2D>(Assert.Single(sprite.LogicalChildren));
+        Assert.Equal(shape, collider.GetType().Name);
+        Assert.Same(collider, sprite.Collider);
+        Assert.Same(sprite, collider.LogicalParent);
         Assert.Empty(sprite.VisualChildren);
     }
 
@@ -65,7 +99,7 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public void FreePlacementTileMarkupLowersAllColliderShapesToImmutableDescriptors()
+    public void FreePlacementTileMarkupLowersOneColliderToAnImmutableDescriptor()
     {
         const string markup = """
             <Scene2D xmlns:resources="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
@@ -75,9 +109,6 @@ public sealed partial class UiMarkupGeneratorTests
                 <TileMap2D>
                     <Tile Image="$Wall" X="32" Y="64" Width="64" Height="64">
                         <BoxCollider2D Width="32" Height="32" CollisionLayer="2" CollisionMask="1" />
-                        <CircleCollider2D Radius="8" OffsetX="16" OffsetY="16" IsTrigger="true" />
-                        <PolygonCollider2D Points="0,0 32,0 0,32" />
-                        <SegmentCollider2D EndX="32" EndY="8" />
                     </Tile>
                 </TileMap2D>
             </Scene2D>
@@ -85,16 +116,11 @@ public sealed partial class UiMarkupGeneratorTests
         Scene2D scene = (Scene2D)CompileColliderMarkup(markup);
         TileMap2D map = (TileMap2D)Assert.Single(scene.Children);
         Tile tile = Assert.Single(map.Model!.Tiles);
-        PropertyInfo? property = typeof(Tile).GetProperty("Colliders");
-        Assert.NotNull(property);
-        var descriptors = Assert.IsAssignableFrom<System.Collections.Generic.IReadOnlyList<TileColliderDescriptor2D>>(property.GetValue(tile));
-        Assert.Equal(new[] { TileColliderShape2D.Box, TileColliderShape2D.Circle, TileColliderShape2D.Polygon, TileColliderShape2D.Segment },
-            descriptors.Select(item => item.Shape));
-        Assert.Equal(32, descriptors[0].Width);
-        Assert.Equal(2u, descriptors[0].CollisionLayer);
-        Assert.Equal(1u, descriptors[0].CollisionMask);
-        Assert.True(descriptors[1].IsTrigger);
-        Assert.Equal(new System.Numerics.Vector2(32, 8), descriptors[3].Vertices[1]);
+        TileColliderDescriptor2D descriptor = Assert.IsType<TileColliderDescriptor2D>(tile.Collider);
+        Assert.Equal(TileColliderShape2D.Box, descriptor.Shape);
+        Assert.Equal(32, descriptor.Width);
+        Assert.Equal(2u, descriptor.CollisionLayer);
+        Assert.Equal(1u, descriptor.CollisionMask);
     }
 
     [Theory]
@@ -116,7 +142,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
         Scene2D scene = (Scene2D)CompileColliderMarkup(markup);
         TileMap2D map = (TileMap2D)Assert.Single(scene.Children);
-        TileColliderDescriptor2D descriptor = Assert.Single(Assert.Single(map.Model!.Tiles).Colliders);
+        TileColliderDescriptor2D descriptor = Assert.IsType<TileColliderDescriptor2D>(Assert.Single(map.Model!.Tiles).Collider);
         Assert.Equal(new System.Numerics.Vector2(x, y), descriptor.Vertices[1]);
     }
 

@@ -33,22 +33,29 @@ public sealed class CompletionTests
         using CompletionFixture attributes = CompletionFixture.Create("<TileMap2D><Tile |caret| /></TileMap2D>");
         Assert.Equal(new[] { "Height", "Image", "Width", "X", "Y" }, attributes.Complete().Select(item => item.Label).OrderBy(label => label));
         using CompletionFixture map = CompletionFixture.Create("<TileMap2D |caret| ><Tile Image=\"$Grass\" /></TileMap2D>");
-        Assert.DoesNotContain(map.Complete(), item => item.Label is "Model" or "Layers");
+        Assert.DoesNotContain(map.Complete(), item => item.Label is "Model" or "PromotedTiles" or "Layers");
         using CompletionFixture properties = CompletionFixture.Create("<TileMap2D><TileMap2D.|caret| /></TileMap2D>");
-        Assert.DoesNotContain(properties.Complete(), item => item.Label is "TileMap2D.Model" or "TileMap2D.Layers");
+        Assert.DoesNotContain(properties.Complete(), item => item.Label is "TileMap2D.Model" or "TileMap2D.PromotedTiles" or "TileMap2D.Layers");
         using CompletionFixture directives = CompletionFixture.Create("<TileMap2D><Tile>@|caret|</Tile></TileMap2D>");
         Assert.Empty(directives.Complete());
     }
 
     [Fact]
-    public void ImportedTileCompletionOffersModelLayersAndPromotedCells()
+    public void BoundTileMapOffersItsModelButNoInlineTileContent()
     {
         using CompletionFixture map = CompletionFixture.Create("<TileMap2D |caret| />");
         Assert.Contains(map.Complete(), item => item.Label == "Model");
-        using CompletionFixture layers = CompletionFixture.Create("<TileMap2D Model=\"$DataContext\"><Ti|caret| /></TileMap2D>");
-        Assert.Equal("TileLayer2D", Assert.Single(layers.Complete()).Label);
-        using CompletionFixture tiles = CompletionFixture.Create("<TileMap2D><TileLayer2D LayerId=\"Buildings\"><Ti|caret| /></TileLayer2D></TileMap2D>");
-        Assert.Equal("TileInstance2D", Assert.Single(tiles.Complete()).Label);
+        using CompletionFixture bound = CompletionFixture.Create("<TileMap2D Model=\"$DataContext\"><Ti|caret| /></TileMap2D>");
+        Assert.Empty(bound.Complete());
+    }
+
+    [Fact]
+    public void EmptyMapCompletionOffersOnlyStaticTileDeclarations()
+    {
+        using CompletionFixture map = CompletionFixture.Create("<TileMap2D><Ti|caret| /></TileMap2D>");
+        Assert.Equal("Tile", Assert.Single(map.Complete()).Label);
+        using CompletionFixture removed = CompletionFixture.Create("<Scene2D><TileIn|caret| /></Scene2D>");
+        Assert.DoesNotContain(removed.Complete(), item => item.Label is "TileInstance2D" or "TileLayer2D");
     }
 
     [Fact]

@@ -49,19 +49,16 @@ public sealed partial class UiMarkupGeneratorTests
             <RenderSurface2D DataType="Cerneala.UI.Controls.TileMap2DModel">
               <RenderSurface2D.Scene>
                 <Scene2D>
-                  <TileMap2D Model="$DataContext:OneWay">
-                    <TileLayer2D LayerId="1">
-                      <TileInstance2D X="1" Y="0">
-                        <TileInstance2D.Aspect>
+                  <TileMap2D Model="$DataContext:OneWay" />
+                      <Sprite2D X="16" Y="0" Width="16" Height="16">
+                        <Sprite2D.Aspect>
                           @on Loaded
                           {
                             @animate with Tween(100ms) { @to { Opacity = 0.9; } }
                           }
-                        </TileInstance2D.Aspect>
+                        </Sprite2D.Aspect>
                         @prism { @layer Door { @filter Blur { Radius = 1; } } }
-                      </TileInstance2D>
-                    </TileLayer2D>
-                  </TileMap2D>
+                      </Sprite2D>
                 </Scene2D>
               </RenderSurface2D.Scene>
             </RenderSurface2D>

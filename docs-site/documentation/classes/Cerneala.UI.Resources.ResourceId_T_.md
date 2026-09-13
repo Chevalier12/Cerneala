@@ -34,7 +34,7 @@ string display = logo.ToString();
 
 `ResourceId<T>` pairs a non-empty string key with the resource type represented by `T`. The constructor throws `ArgumentException` when `key` is `null`, empty, or whitespace.
 
-`ResourceType` returns `typeof(T)`. `ToString` formats the id as the full type name followed by the key.
+`ResourceType` returns `typeof(T)`. `ToString` formats the id as the full type name followed by a colon and the key. The immutable full type name is retained once per `T`; formatting still creates the returned string but does not rebuild type-name metadata after garbage collection.
 
 ## Constructors
 

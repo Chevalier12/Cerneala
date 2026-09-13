@@ -251,13 +251,12 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         }
         if (IsLiveColliderOwner(parentType) && !type.IsOrDerivesFrom("Cerneala.UI.Controls.Collider2D"))
         {
-            AddShapeDiagnostic(element.NameToken.Span, "Sprite2D and TileInstance2D content accepts colliders only.");
+            AddShapeDiagnostic(element.NameToken.Span, "Sprite2D content accepts colliders only.");
             return;
         }
-        if (parentType?.MetadataName == "Cerneala.UI.Controls.TileMap2D" &&
-            type.MetadataName != "Cerneala.UI.Controls.TileLayer2D")
+        if (parentType?.MetadataName == "Cerneala.UI.Controls.TileMap2D")
         {
-            AddShapeDiagnostic(element.NameToken.Span, "TileMap2D content accepts Tile placements or imported TileLayer2D presentations, not other scene nodes.");
+            AddShapeDiagnostic(element.NameToken.Span, "TileMap2D content accepts static Tile declarations only; place Sprite2D alongside the map in Scene2D.");
             return;
         }
 
@@ -269,6 +268,21 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             element.NameToken.Span,
             type,
             contentPropertyName: ResolveContentPropertyName(type)));
+
+        if (IsLiveColliderOwner(type))
+        {
+            ElementSyntax[] colliderDeclarations = element.Children.OfType<ElementSyntax>()
+                .SelectMany(child => child.Kind == SyntaxKind.PropertyElement && child.Name.Split('.').Last() == "Collider"
+                    ? child.Children.OfType<ElementSyntax>()
+                    : new[] { child })
+                .Where(child => GetElementType(child, isRoot: false)?.IsOrDerivesFrom("Cerneala.UI.Controls.Collider2D") == true)
+                .ToArray();
+            if (colliderDeclarations.Length > 1)
+            {
+                AddShapeDiagnostic(colliderDeclarations[1].NameToken.Span,
+                    "Sprite2D accepts at most one collider.");
+            }
+        }
 
         ILanguageTypeSymbol? childDataType = dataType;
         foreach (AttributeSyntax attribute in element.Attributes)
@@ -292,9 +306,9 @@ internal sealed partial class CernealaSemanticModel : IDisposable
     {
         int separator = element.Name.LastIndexOf('.');
         string propertyName = separator < 0 ? element.Name : element.Name.Substring(separator + 1);
-        if (IsLegacyTileMapMember(parentType, propertyName))
+        if (IsTileMapContentMember(parentType, propertyName))
         {
-            AddShapeDiagnostic(element.NameToken.Span, "TileMap2D markup uses direct Tile declarations, not Model or Layers.");
+            AddShapeDiagnostic(element.NameToken.Span, "TileMap2D markup uses direct Tile declarations or a Model binding; Model property elements are not supported.");
             return null;
         }
         ILanguageMemberSymbol? member = FindProperty(parentType, propertyName);
@@ -326,11 +340,6 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         ILanguageTypeSymbol? dataType)
     {
         string name = attribute.NameToken.Text;
-        if (IsLegacyTileMapMember(type, name) && name != "Model")
-        {
-            AddShapeDiagnostic(attribute.NameToken.Span, "TileMap2D markup uses direct Tile declarations, not Model or Layers.");
-            return null;
-        }
         if (name == "xmlns" || name.StartsWith("xmlns:", StringComparison.Ordinal) || name is "Name" or "DataType")
         {
             return null;

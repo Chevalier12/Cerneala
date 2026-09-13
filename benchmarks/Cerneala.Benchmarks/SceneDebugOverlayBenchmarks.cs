@@ -54,7 +54,7 @@ internal static class SceneDebugOverlayBenchmarkRunner
             WarmupIterations,
             MeasurementIterations,
             Scope = "CPU command recording only; no backend submission, GPU timing, or manual interaction.",
-            Fixture = "256x192 viewport, 16x12 visible 16px tiles in twelve 4x4 chunks, one promoted tile, 8 visible and 32 remote colliders, 192 visible navigation cells.",
+            Fixture = "256x192 viewport, 16x12 visible 16px tiles in twelve 4x4 chunks, 8 visible and 32 remote sprite colliders, 192 visible navigation cells.",
             Results = results
         }, new JsonSerializerOptions { WriteIndented = true }) + Environment.NewLine);
         foreach (Result result in results)
@@ -113,16 +113,15 @@ internal static class SceneDebugOverlayBenchmarkRunner
                 chunks.Add(Chunk(x * 4, y * 4));
             for (int i = 0; i < remoteChunks; i++) { chunks.Add(Chunk(10000 + i * 4, 10000)); }
             ResourceId<ImageResource> atlas = new("DebugBenchmarkAtlas");
-            Map = new TileMap2D { Model = new TileMap2DModel(new DrawSize(16, 16),
+            Map = new TileMap2D { Model = new TileMap2DModel("ground", new DrawSize(16, 16),
                 [new TileSet2D("atlas", atlas, [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16))])],
-                [new TileLayer2DModel("ground", chunks)]) };
+                chunks) };
             Map.Resources.SetResource(atlas, new ImageResource(new InlineImage()));
-            Map.Promote(new TileCellKey2D("ground", 1, 1)).TranslateX = 3;
             Scene.Children.Add(Map);
             for (int i = 0; i < 8; i++)
-                Scene.Children.Add(new Sprite2D { X = i * 24, Y = 32, Colliders = { new BoxCollider2D { Width = 8, Height = 8 } } });
+                Scene.Children.Add(new Sprite2D { X = i * 24, Y = 32, Collider = new BoxCollider2D { Width = 8, Height = 8 } });
             for (int i = 0; i < 32; i++)
-                Scene.Children.Add(new Sprite2D { X = 10000 + i * 24, Colliders = { new BoxCollider2D { Width = 8, Height = 8 } } });
+                Scene.Children.Add(new Sprite2D { X = 10000 + i * 24, Collider = new BoxCollider2D { Width = 8, Height = 8 } });
             surface = new RenderSurface2D { Scene = Scene, ViewBox = Bounds };
             RenderSurface2DFrame frame = new(Commands, Bounds, TimeSpan.Zero);
             disabledContext = new Scene2DRecordContext(surface, frame, Matrix3x2.Identity, Bounds);

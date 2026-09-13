@@ -6,11 +6,11 @@ namespace Cerneala.Language.Semantics;
 
 internal sealed partial class CernealaSemanticModel
 {
-    private static bool IsLegacyTileMapMember(ILanguageTypeSymbol? type, string name) =>
-        type?.MetadataName == "Cerneala.UI.Controls.TileMap2D" && name is "Model" or "Layers";
+    internal static bool IsTileMapContentMember(ILanguageTypeSymbol? type, string name) =>
+        type?.MetadataName == "Cerneala.UI.Controls.TileMap2D" && name == "Model";
 
     internal static bool IsLiveColliderOwner(ILanguageTypeSymbol? type) =>
-        type?.MetadataName is "Cerneala.UI.Controls.Sprite2D" or "Cerneala.UI.Controls.TileInstance2D";
+        type?.MetadataName == "Cerneala.UI.Controls.Sprite2D";
 
     internal static bool IsTileColliderAttribute(ILanguageTypeSymbol type, string name) =>
         name is "OffsetX" or "OffsetY" or "CollisionLayer" or "CollisionMask" or "IsTrigger" ||
@@ -24,7 +24,7 @@ internal sealed partial class CernealaSemanticModel
         if (!parents.TryGetValue(element, out ElementSyntax? parent) || parent is null) { return false; }
         if (parent.Kind == SyntaxKind.PropertyElement)
         {
-            if (parent.Name.Split('.').Last() != "Colliders" ||
+            if (parent.Name.Split('.').Last() != "Collider" ||
                 !parents.TryGetValue(parent, out parent) || parent is null) { return false; }
         }
         return IsLiveColliderOwner(GetElementType(parent, ReferenceEquals(parent, root)));
@@ -40,11 +40,9 @@ internal sealed partial class CernealaSemanticModel
             return;
         }
 
-        if (parent.Attributes.Any(static attribute => attribute.NameToken.Text == "Model") ||
-            parent.Children.OfType<ElementSyntax>().Any(child =>
-                GetElementType(child, isRoot: false)?.MetadataName == "Cerneala.UI.Controls.TileLayer2D"))
+        if (parent.Attributes.Any(static attribute => attribute.NameToken.Text == "Model"))
         {
-            AddShapeDiagnostic(element.NameToken.Span, "Free Tile placements cannot be combined with a Model binding or imported layer presentations in one TileMap2D.");
+            AddShapeDiagnostic(element.NameToken.Span, "Free Tile placements cannot be combined with a Model binding in one TileMap2D.");
             return;
         }
 
@@ -89,7 +87,12 @@ internal sealed partial class CernealaSemanticModel
                 member.ValueTypeMetadataName, attribute.NameToken.Span, member.ValueType, member, value, isWritable: false));
         }
 
-        foreach (ElementSyntax child in element.Children.OfType<ElementSyntax>())
+        ElementSyntax[] colliderDeclarations = element.Children.OfType<ElementSyntax>().ToArray();
+        if (colliderDeclarations.Length > 1)
+        {
+            AddShapeDiagnostic(colliderDeclarations[1].NameToken.Span, "Tile accepts at most one collider.");
+        }
+        foreach (ElementSyntax child in colliderDeclarations)
         {
             BindTileColliderDeclaration(child);
         }

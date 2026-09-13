@@ -1,22 +1,22 @@
 using Cerneala.UI.Input;
+using Cerneala.UI.Elements;
 
 namespace Cerneala.UI.Servo;
 
 internal interface IServoInputDriver
 {
-    Task HoverAsync(float x, float y, CancellationToken cancellationToken);
+    Task HoverAsync(Func<UIRoot, ServoActionTarget> resolveTarget, CancellationToken cancellationToken);
 
-    Task ClickAsync(float x, float y, CancellationToken cancellationToken);
+    Task ClickAsync(Func<UIRoot, ServoActionTarget> resolveTarget, CancellationToken cancellationToken);
 
     Task DragAsync(
-        float startX,
-        float startY,
+        Func<UIRoot, ServoActionTarget> resolveTarget,
         float endX,
         float endY,
         int steps,
         CancellationToken cancellationToken);
 
-    Task ScrollAsync(float x, float y, int wheelDelta, CancellationToken cancellationToken);
+    Task ScrollAsync(Func<UIRoot, ServoActionTarget> resolveTarget, int wheelDelta, CancellationToken cancellationToken);
 
     Task PressKeyAsync(InputKey key, ServoModifiers modifiers, CancellationToken cancellationToken);
 

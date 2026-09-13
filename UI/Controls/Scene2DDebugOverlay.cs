@@ -18,8 +18,7 @@ public enum Scene2DDebugFlags
     TileIds = 8,
     Order = 16,
     Navigation = 32,
-    PromotedTiles = 64,
-    All = Colliders | ChunkBounds | TileCoordinates | TileIds | Order | Navigation | PromotedTiles
+    All = Colliders | ChunkBounds | TileCoordinates | TileIds | Order | Navigation
 }
 
 /// <summary>A read-only, scene-parent-space grid supplied by the application.</summary>
@@ -32,7 +31,7 @@ public interface IScene2DDebugNavigationGrid
 }
 
 public readonly record struct Scene2DDebugOverlayDiagnostics(
-    int CandidateChunks, int VisitedTiles, int Colliders, int PromotedTiles,
+    int CandidateChunks, int VisitedTiles, int Colliders,
     int NavigationCells, int Primitives);
 
 /// <summary>Presentation-only diagnostics for the containing scene subtree.</summary>
@@ -55,7 +54,6 @@ public sealed class Scene2DDebugOverlay : SceneNode2D
             new UiPropertyMetadata<IScene2DDebugNavigationGrid?>(null, UiPropertyOptions.AffectsRender));
 
     private static readonly Color ChunkColor = new(40, 210, 255);
-    private static readonly Color PromotionColor = new(255, 80, 220);
     private static readonly Color TriggerColor = new(255, 180, 40);
     private readonly List<ColliderGeometry2D> colliders = [];
     private readonly Dictionary<Color, DrawPen> pens = [];
@@ -133,7 +131,7 @@ public sealed class Scene2DDebugOverlay : SceneNode2D
             }
         }
         if ((Flags & (Scene2DDebugFlags.ChunkBounds | Scene2DDebugFlags.TileCoordinates |
-            Scene2DDebugFlags.TileIds | Scene2DDebugFlags.Order | Scene2DDebugFlags.PromotedTiles)) != 0)
+            Scene2DDebugFlags.TileIds | Scene2DDebugFlags.Order)) != 0)
         {
             DrawChildren(owner, debugContext);
         }
@@ -224,71 +222,47 @@ public sealed class Scene2DDebugOverlay : SceneNode2D
 
     private void DrawMap(TileMap2D map, Scene2DRecordContext context)
     {
-        if (map.Model is not TileMap2DModel model) { return; }
-        foreach (TileLayer2D presentation in map.Layers)
+        if (map.Model is not TileMap2DModel model || !model.IsVisible || model.Opacity <= 0) { return; }
+        SceneBounds2D visible = context.GetConservativeVisibleLocalBounds();
+        if (visible.Kind != SceneBoundsKind.Known) { return; }
+        DrawSize size = model.TileSize;
+        IReadOnlyList<TileMap2D.TileRenderChunk> chunks = map.GetDebugChunks(visible);
+        diagnostics = diagnostics with { CandidateChunks = diagnostics.CandidateChunks + chunks.Count };
+        foreach (TileMap2D.TileRenderChunk renderChunk in chunks)
         {
-            if (!model.TryGetLayer(presentation.LayerId, out TileLayer2DModel? layer) || layer is null ||
-                !layer.IsVisible || layer.Opacity <= 0 || presentation.Opacity <= 0 ||
-                !UIElementVisibility.ParticipatesInRendering(presentation)) { continue; }
-            Matrix3x2 transform = presentation.GetLocalTransform();
-            using DrawTransformScope scope = context.Frame.Transform(transform);
-            Scene2DRecordContext childContext = context.WithLocalTransform(transform);
-            SceneBounds2D visible = childContext.GetConservativeVisibleLocalBounds();
-            if (visible.Kind != SceneBoundsKind.Known) { continue; }
-            DrawSize size = model.TileSize;
-            IReadOnlyList<TileMap2D.TileRenderChunk> chunks = map.GetDebugChunks(layer, visible);
-            diagnostics = diagnostics with { CandidateChunks = diagnostics.CandidateChunks + chunks.Count };
-            foreach (TileMap2D.TileRenderChunk renderChunk in chunks)
+            if (renderChunk.Bounds.Kind != SceneBoundsKind.Known) { continue; }
+            DrawRect bounds = renderChunk.Bounds.Bounds;
+            if (!context.IntersectsVisibleLocalBounds(SceneBounds2D.Known(bounds))) { continue; }
+            if (Has(Scene2DDebugFlags.ChunkBounds)) { Rectangle(context.Frame, bounds, ChunkColor); }
+            if (renderChunk.Grid is not TileChunk2D chunk)
             {
-                if (renderChunk.Bounds.Kind != SceneBoundsKind.Known) { continue; }
-                DrawRect bounds = renderChunk.Bounds.Bounds;
-                if (!childContext.IntersectsVisibleLocalBounds(SceneBounds2D.Known(bounds))) { continue; }
-                if (Has(Scene2DDebugFlags.ChunkBounds)) { Rectangle(context.Frame, bounds, ChunkColor); }
-                if (renderChunk.Grid is not TileChunk2D chunk)
+                if (Has(Scene2DDebugFlags.Order)) { Label(context.Frame, $"{model.Id}: placements {renderChunk.Start}..{renderChunk.Start + renderChunk.Count - 1}", new DrawPoint(bounds.X, bounds.Y), ChunkColor); }
+                if (Has(Scene2DDebugFlags.TileCoordinates))
                 {
-                    if (Has(Scene2DDebugFlags.Order)) { Label(context.Frame, $"{layer.Id}: placements {renderChunk.Start}..{renderChunk.Start + renderChunk.Count - 1}", new DrawPoint(bounds.X, bounds.Y), ChunkColor); }
-                    if (Has(Scene2DDebugFlags.TileCoordinates))
+                    for (int index = 0; index < renderChunk.Count; index++)
                     {
-                        for (int index = 0; index < renderChunk.Count; index++)
-                        {
-                            Tile tile = renderChunk.Placements![renderChunk.Start + index];
-                            Label(context.Frame, $"{tile.X},{tile.Y}", new DrawPoint(tile.X, tile.Y), Color.White);
-                            diagnostics = diagnostics with { VisitedTiles = diagnostics.VisitedTiles + 1 };
-                        }
+                        Tile tile = renderChunk.Placements![renderChunk.Start + index];
+                        Label(context.Frame, $"{tile.X},{tile.Y}", new DrawPoint(tile.X, tile.Y), Color.White);
+                        diagnostics = diagnostics with { VisitedTiles = diagnostics.VisitedTiles + 1 };
                     }
-                    continue;
                 }
-                if (Has(Scene2DDebugFlags.Order)) { Label(context.Frame, $"{layer.Id}: order {layer.Order} chunk {chunk.Origin.X},{chunk.Origin.Y}", new DrawPoint(bounds.X, bounds.Y), ChunkColor); }
-                if (!Has(Scene2DDebugFlags.TileCoordinates | Scene2DDebugFlags.TileIds)) { continue; }
-                TileRange(visible.Bounds, default, size, new TileMapBounds2D(chunk.Origin.X, chunk.Origin.Y, chunk.Width, chunk.Height), out int minX, out int minY, out int maxX, out int maxY);
-                for (int y = minY; y < maxY; y++)
-                for (int x = minX; x < maxX; x++)
-                {
-                    TileCell2D cell = chunk.GetCell(new TileCoordinate2D(x, y));
-                    diagnostics = diagnostics with { VisitedTiles = diagnostics.VisitedTiles + 1 };
-                    Scene2DDebugFlags labelFlags = Flags & (Scene2DDebugFlags.TileCoordinates | Scene2DDebugFlags.TileIds);
-                    int labelX = Has(Scene2DDebugFlags.TileCoordinates) ? x : 0;
-                    int labelY = Has(Scene2DDebugFlags.TileCoordinates) ? y : 0;
-                    LabelKey key = new(null, labelX, labelY,
-                        Has(Scene2DDebugFlags.TileIds) ? cell.TileId : 0, labelFlags,
-                        labelX < 0 || labelY < 0 ? NumberFormatInfo.CurrentInfo.NegativeSign : null);
-                    Label(context.Frame, key, new DrawPoint(x * size.Width, y * size.Height), Color.White);
-                }
+                continue;
             }
-            if (!Has(Scene2DDebugFlags.PromotedTiles)) { continue; }
-            foreach (TileInstance2D tile in presentation.PromotedTiles)
+            if (Has(Scene2DDebugFlags.Order)) { Label(context.Frame, $"{model.Id}: order {map.Layer} chunk {chunk.Origin.X},{chunk.Origin.Y}", new DrawPoint(bounds.X, bounds.Y), ChunkColor); }
+            if (!Has(Scene2DDebugFlags.TileCoordinates | Scene2DDebugFlags.TileIds)) { continue; }
+            TileRange(visible.Bounds, default, size, new TileMapBounds2D(chunk.Origin.X, chunk.Origin.Y, chunk.Width, chunk.Height), out int minX, out int minY, out int maxX, out int maxY);
+            for (int y = minY; y < maxY; y++)
+            for (int x = minX; x < maxX; x++)
             {
-                DrawRect slot = new(tile.X * size.Width, tile.Y * size.Height, size.Width, size.Height);
-                SceneBounds2D actual = SceneGeometry2D.TransformBounds(tile.GetLocalBounds(), tile.GetLocalTransform());
-                if (!childContext.IntersectsVisibleLocalBounds(SceneBounds2D.Known(slot)) && !childContext.IntersectsVisibleLocalBounds(actual)) { continue; }
-                Rectangle(context.Frame, slot, PromotionColor);
-                if (actual.Kind == SceneBoundsKind.Known)
-                {
-                    using (context.Frame.Transform(tile.GetLocalTransform())) { Rectangle(context.Frame, new DrawRect(0, 0, size.Width, size.Height), PromotionColor); }
-                    Line(context.Frame, Center(slot), Center(actual.Bounds), PromotionColor);
-                }
-                Label(context.Frame, $"P {layer.Id}:{tile.X},{tile.Y}", new DrawPoint(slot.X, slot.Y), PromotionColor);
-                diagnostics = diagnostics with { PromotedTiles = diagnostics.PromotedTiles + 1 };
+                TileCell2D cell = chunk.GetCell(new TileCoordinate2D(x, y));
+                diagnostics = diagnostics with { VisitedTiles = diagnostics.VisitedTiles + 1 };
+                Scene2DDebugFlags labelFlags = Flags & (Scene2DDebugFlags.TileCoordinates | Scene2DDebugFlags.TileIds);
+                int labelX = Has(Scene2DDebugFlags.TileCoordinates) ? x : 0;
+                int labelY = Has(Scene2DDebugFlags.TileCoordinates) ? y : 0;
+                LabelKey key = new(null, labelX, labelY,
+                    Has(Scene2DDebugFlags.TileIds) ? cell.TileId : 0, labelFlags,
+                    labelX < 0 || labelY < 0 ? NumberFormatInfo.CurrentInfo.NegativeSign : null);
+                Label(context.Frame, key, new DrawPoint(x * size.Width, y * size.Height), Color.White);
             }
         }
     }
@@ -362,7 +336,6 @@ public sealed class Scene2DDebugOverlay : SceneNode2D
             : $" #{TileId}");
     }
     private void CountPrimitive() => diagnostics = diagnostics with { Primitives = diagnostics.Primitives + 1 };
-    private static DrawPoint Center(DrawRect rect) => new(rect.X + rect.Width / 2, rect.Y + rect.Height / 2);
     private static Color LayerColor(uint layer)
     {
         uint hash = unchecked(layer * 2654435761u);

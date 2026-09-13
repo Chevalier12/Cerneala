@@ -53,8 +53,7 @@ public sealed partial class UiMarkupGeneratorTests
         root.ProcessFrame();
 
         TileMap2D map = Assert.IsType<TileMap2D>(Assert.Single(Assert.IsType<Scene2D>(surface.Scene).Children));
-        Assert.DoesNotContain(map.LogicalChildren, child => child is Sprite2D or TileInstance2D);
-        Assert.All(map.Layers, layer => Assert.Empty(layer.PromotedTiles));
+        Assert.Empty(map.LogicalChildren);
 
         DrawSpriteBatch[] batches = RecordSurface(surface)
             .Where(command => command.Kind == DrawCommandKind.DrawSpriteBatch)
@@ -75,8 +74,8 @@ public sealed partial class UiMarkupGeneratorTests
 
     [Theory]
     [InlineData("<TileMap2D><TileMap2D.Model /></TileMap2D>")]
-    [InlineData("<TileMap2D><TileInstance2D X=\"0\" Y=\"0\" /></TileMap2D>")]
-    [InlineData("<TileMap2D><TileMap2D.Layers><TileLayer2D LayerId=\"Ground\" /></TileMap2D.Layers></TileMap2D>")]
+    [InlineData("<TileMap2D><TileMap2D.PromotedTiles /></TileMap2D>")]
+    [InlineData("<TileMap2D><TileMap2D.Layers /></TileMap2D>")]
     [InlineData("<TileMap2D><Sprite2D /></TileMap2D>")]
     [InlineData("<TileMap2D>1,2,3;4,5,6</TileMap2D>")]
     [InlineData("<TileMap2D TileSize=\"16,16\" />")]
@@ -93,9 +92,7 @@ public sealed partial class UiMarkupGeneratorTests
 
     [Theory]
     [InlineData("<TileMap2D Model=\"$DataContext\"><Tile Image=\"$Grass\" /></TileMap2D>")]
-    [InlineData("<TileMap2D><TileLayer2D LayerId=\"Ground\" /><Tile Image=\"$Grass\" /></TileMap2D>")]
-    [InlineData("<TileMap2D><Tile Image=\"$Grass\" /><TileLayer2D LayerId=\"Ground\" /></TileMap2D>")]
-    public void TileAuthoringRejectsMixingPlacementsWithImportedModelPresentation(string mapMarkup)
+    public void TileAuthoringRejectsMixingPlacementsWithBoundModel(string mapMarkup)
     {
         string markup = """
             <RenderSurface2D DataType="Cerneala.UI.Controls.TileMap2DModel"
@@ -119,7 +116,7 @@ public sealed partial class UiMarkupGeneratorTests
             """;
         GeneratorRunResult result = RunGenerator("TileAspectModel.crn", markup, out _);
         Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI005" &&
-            diagnostic.GetMessage().Contains("not Model or Layers", StringComparison.Ordinal));
+            diagnostic.GetMessage().Contains("cannot be assigned through Aspect", StringComparison.Ordinal));
         Assert.Empty(result.GeneratedSources);
     }
 

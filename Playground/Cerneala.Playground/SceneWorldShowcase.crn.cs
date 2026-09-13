@@ -80,7 +80,7 @@ public partial class SceneWorldShowcase : UserControl
     private void OnFormat(UiElementId sender, RoutedEventArgs args) { State.Load(!State.IsLdtk); }
 }
 
-// Authored collision regions are compiled into the tiles that draw the walls.
+// Authored collision regions are realized as collision-only Sprite2D items.
 public sealed record SceneWorldBox(float X, float Y, float Width, float Height, uint Layer, uint Mask);
 public sealed record SceneWorldNpc(float X, float Y)
 {
@@ -93,7 +93,6 @@ public sealed record SceneWorldNpc(float X, float Y)
 
 public sealed class SceneWorldState : INotifyPropertyChanged
 {
-    private TileMap2DModel model = null!;
     private float playerX, playerY, cameraX = 8;
     private bool doorClosed = true;
     private string playerState = "Idle", status = "";
@@ -102,7 +101,16 @@ public sealed class SceneWorldState : INotifyPropertyChanged
 
     public SceneWorldState() { Load(false); Npcs.Add(new(310, 190)); }
     public event PropertyChangedEventHandler? PropertyChanged;
-    public TileMap2DModel Model { get => model; private set { model = value; Changed(); } }
+    public IReadOnlyList<TileMap2DModel> TileMaps { get; private set; } = [];
+    public TileMap2DModel GroundModel => TileMaps.Single(map => map.Id == "1");
+    public TileMap2DModel BuildingModel => TileMaps.Single(map => map.Id == "2");
+    public TileMap2DModel DoorModel => TileMaps.Single(map => map.Id == "4");
+    public float DoorX => DoorModel.Offset.X + 14 * DoorModel.TileSize.Width;
+    public float DoorY => DoorModel.Offset.Y + 9 * DoorModel.TileSize.Height;
+    public float DoorWidth => DoorModel.TileSize.Width;
+    public float DoorHeight => DoorModel.TileSize.Height;
+    public Color DoorTint => DoorModel.Tint;
+    public float DoorOpacity => DoorModel.Opacity;
     public float PlayerX { get => playerX; set { playerX = value; Changed(); } }
     public float PlayerY { get => playerY; set { playerY = value; Changed(); } }
     public float CameraX { get => cameraX; set { cameraX = value; Changed(); } }
@@ -125,21 +133,23 @@ public sealed class SceneWorldState : INotifyPropertyChanged
         if (!result.Success) throw new InvalidOperationException(string.Join(Environment.NewLine, result.Diagnostics));
         level = result.Document!.Levels.Single();
         if (level.Promotions.Single().Cell != new TileCellKey2D("4", 14, 9))
-            throw new InvalidOperationException("The authored door declaration requires promotion (4,14,9).");
+            throw new InvalidOperationException("The authored door declaration requires cell (4,14,9).");
         IsLdtk = ldtk;
         Colliders = level.Entities.Where(e => e.Role == "Collider").Select(e =>
         {
-            if (e.Shape != "Box" || e.Rotation != 0 || e.Colliders.Count != 1)
+            if (e.Shape != "Box" || e.Rotation != 0 || e.Collider is null)
                 throw new InvalidOperationException("This sample composes the six declared axis-aligned boxes only.");
-            TileColliderDescriptor2D collider = e.Colliders[0];
+            TileColliderDescriptor2D collider = e.Collider;
             return new SceneWorldBox(e.Position.X, e.Position.Y, e.Size.Width, e.Size.Height, collider.CollisionLayer, collider.CollisionMask);
         }).ToArray();
-        Model = AttachWallColliders(level.TileMap, Colliders);
+        // The door is an ordinary Sprite2D. Its source cell remains in the
+        // imported document, but not in the immutable map used for rendering.
+        SetTileMaps(level.TileMaps.Select(map => map.Id == "4" ? ReplaceCell(map, new(14, 9), default) : map));
         Changed(nameof(Colliders));
         DoorClosed = Equals(level.Promotions.Single().Properties["InitialState"], "Closed");
         CameraX = 8;
         ResetPlayer();
-        Status = $"{(ldtk ? "LDtk" : "Tiled")} | {Model.Layers.Sum(l => l.Chunks.Count)} chunks | 1 promoted door | {result.Diagnostics.Count} diagnostics";
+        Status = $"{(ldtk ? "LDtk" : "Tiled")} | {TileMaps.Sum(map => map.Chunks.Count)} chunks | 1 door sprite | {result.Diagnostics.Count} diagnostics";
     }
 
     public void ResetPlayer()
@@ -149,72 +159,41 @@ public sealed class SceneWorldState : INotifyPropertyChanged
         PlayerState = (string)spawn.Properties["InitialState"]!;
     }
 
-    private static TileMap2DModel AttachWallColliders(TileMap2DModel source, IReadOnlyList<SceneWorldBox> walls)
-    {
-        TileLayer2DModel buildings = source.Layers.Single(l => l.Id == "2");
-        Dictionary<TileSet2D, List<TileDefinition2D>> definitions = source.TileSets.ToDictionary(s => s, s => s.Tiles.ToList());
-        int nextId = source.TileSets.SelectMany(s => s.Tiles).Max(t => t.Id) + 1;
-        float[] coveredAreas = new float[walls.Count];
-        TileChunk2D[] chunks = buildings.Chunks.Select(chunk =>
-        {
-            TileCell2D[] cells = chunk.Tiles.ToArray();
-            bool changed = false;
-            for (int index = 0; index < cells.Length; index++)
-            {
-                TileCell2D cell = cells[index];
-                if (cell.TileId == 0) continue;
-                float x = (chunk.Origin.X + index % chunk.Width) * source.TileSize.Width + buildings.Offset.X;
-                float y = (chunk.Origin.Y + index / chunk.Width) * source.TileSize.Height + buildings.Offset.Y;
-                List<TileColliderDescriptor2D> colliders = [];
-                for (int wallIndex = 0; wallIndex < walls.Count; wallIndex++)
-                {
-                    SceneWorldBox wall = walls[wallIndex];
-                    float left = Math.Max(x, wall.X), top = Math.Max(y, wall.Y);
-                    float right = Math.Min(x + source.TileSize.Width, wall.X + wall.Width);
-                    float bottom = Math.Min(y + source.TileSize.Height, wall.Y + wall.Height);
-                    if (right <= left || bottom <= top) continue;
-                    if (cell.Flip != TileFlip2D.None)
-                        throw new InvalidOperationException("This sample's authored walls require unflipped building tiles.");
-                    colliders.Add(new(TileColliderShape2D.Box, width: right - left, height: bottom - top,
-                        offsetX: left - x, offsetY: top - y, collisionLayer: wall.Layer, collisionMask: wall.Mask));
-                    coveredAreas[wallIndex] += (right - left) * (bottom - top);
-                }
-                if (colliders.Count == 0) continue;
-                if (!source.TryResolveTile(cell.TileId, out TileSet2D? set, out TileDefinition2D? tile))
-                    throw new InvalidOperationException("The building tile definition is missing.");
-                // A per-cell variant preserves the shared atlas tile's appearance without
-                // making other uses of that atlas tile (for example the second house) solid.
-                TileDefinition2D variant = new(nextId++, tile!.SourceRect, tile.Properties, tile.Colliders.Concat(colliders));
-                definitions[set!].Add(variant);
-                cells[index] = new(variant.Id, cell.Flip);
-                changed = true;
-            }
-            return changed ? new TileChunk2D(chunk.Origin, chunk.Width, chunk.Height, cells, chunk.Version + 1, chunk.Properties) : chunk;
-        }).ToArray();
-        for (int index = 0; index < walls.Count; index++)
-            if (coveredAreas[index] != walls[index].Width * walls[index].Height)
-                throw new InvalidOperationException("Every authored wall region must be covered exactly by its building tiles.");
-        TileLayer2DModel updated = new(buildings.Id, chunks, buildings.Order, buildings.IsVisible, buildings.Offset,
-            buildings.Opacity, buildings.Tint, buildings.Version + 1, buildings.Properties);
-        return new(source.TileSize, source.TileSets.Select(s => definitions[s].Count == s.Tiles.Count ? s :
-                new TileSet2D(s.Id, s.AtlasResourceId, definitions[s], s.Version + 1, s.Properties)),
-            source.Layers.Select(l => ReferenceEquals(l, buildings) ? updated : l), source.Bounds, source.Version + 1, source.Properties);
-    }
-
     public void Plant()
     {
         TileCoordinate2D location = new(10, 10);
-        TileLayer2DModel layer = Model.Layers.Single(l => l.Id == "1");
-        TileChunk2D changed = layer.Chunks.Single(c => c.Contains(location));
+        TileMap2DModel map = GroundModel;
+        if (!map.TryGetCell(location, out TileCell2D current))
+            throw new InvalidOperationException("The plant location must address an existing cell.");
+        TileMap2DModel updated = ReplaceCell(map, location, new(current.TileId == 15 ? 1 : 15));
+        SetTileMaps(TileMaps.Select(item => ReferenceEquals(item, map) ? updated : item));
+        Status = "Plant: one immutable chunk replaced; all other chunk objects retained.";
+    }
+
+    private void SetTileMaps(IEnumerable<TileMap2DModel> maps)
+    {
+        TileMaps = Array.AsReadOnly(maps.ToArray());
+        Changed(nameof(TileMaps));
+        Changed(nameof(GroundModel));
+        Changed(nameof(BuildingModel));
+        Changed(nameof(DoorModel));
+        Changed(nameof(DoorX));
+        Changed(nameof(DoorY));
+        Changed(nameof(DoorWidth));
+        Changed(nameof(DoorHeight));
+        Changed(nameof(DoorTint));
+        Changed(nameof(DoorOpacity));
+    }
+
+    private static TileMap2DModel ReplaceCell(TileMap2DModel map, TileCoordinate2D location, TileCell2D cell)
+    {
+        TileChunk2D changed = map.Chunks.Single(chunk => chunk.Contains(location));
         TileCell2D[] cells = changed.Tiles.ToArray();
         int index = (location.Y - changed.Origin.Y) * changed.Width + location.X - changed.Origin.X;
-        cells[index] = new(cells[index].TileId == 15 ? 1 : 15);
+        cells[index] = cell;
         TileChunk2D replacement = new(changed.Origin, changed.Width, changed.Height, cells, changed.Version + 1, changed.Properties);
-        TileLayer2DModel updated = new(layer.Id, layer.Chunks.Select(c => ReferenceEquals(c, changed) ? replacement : c),
-            layer.Order, layer.IsVisible, layer.Offset, layer.Opacity, layer.Tint, layer.Version, layer.Properties);
-        Model = new(Model.TileSize, Model.TileSets, Model.Layers.Select(l => ReferenceEquals(l, layer) ? updated : l),
-            Model.Bounds, Model.Version + 1, Model.Properties);
-        Status = "Plant: one immutable chunk replaced; all other chunk objects retained.";
+        return new(map.Id, map.TileSize, map.TileSets, map.Chunks.Select(chunk => ReferenceEquals(chunk, changed) ? replacement : chunk),
+            map.Bounds, map.Order, map.IsVisible, map.Offset, map.Opacity, map.Tint, map.Version + 1, map.Properties);
     }
 
     private void Changed([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));

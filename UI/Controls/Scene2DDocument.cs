@@ -37,9 +37,9 @@ public sealed class TilePromotion2D
 {
     public TilePromotion2D(TileCellKey2D cell, int? tileId = null, IReadOnlyDictionary<string, object?>? properties = null)
     {
-        if (string.IsNullOrWhiteSpace(cell.LayerId) || tileId is <= 0)
+        if (string.IsNullOrWhiteSpace(cell.MapId) || tileId is <= 0)
         {
-            throw Diagnostic(new ArgumentException("A promotion requires a layer identity and an optional positive tile ID."), "SCN2D012");
+            throw Diagnostic(new ArgumentException("A promotion requires a map identity and an optional positive tile ID."), "SCN2D012");
         }
         Cell = cell;
         TileId = tileId;
@@ -55,7 +55,7 @@ public sealed class Scene2DEntity
 {
     public Scene2DEntity(
         string id,
-        string layerId,
+        string mapId,
         DrawPoint position,
         DrawSize size,
         string shape = "Point",
@@ -63,15 +63,15 @@ public sealed class Scene2DEntity
         float rotation = 0,
         DrawPoint pivot = default,
         string role = "Metadata",
-        IEnumerable<TileColliderDescriptor2D>? colliders = null,
+        TileColliderDescriptor2D? collider = null,
         int order = 0,
         bool isVisible = true,
         float opacity = 1,
         IReadOnlyDictionary<string, object?>? properties = null)
     {
-        if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(layerId))
+        if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(mapId))
         {
-            throw Diagnostic(new ArgumentException("An entity requires stable entity and layer identities."), "SCN2D015");
+            throw Diagnostic(new ArgumentException("An entity requires stable entity and map identities."), "SCN2D015");
         }
         if (!float.IsFinite(rotation) || !float.IsFinite(opacity) || opacity < 0 || opacity > 1)
         {
@@ -108,13 +108,12 @@ public sealed class Scene2DEntity
             default:
                 throw Diagnostic(new ArgumentException("Unsupported entity geometry.", nameof(shape)), "SCN2D004");
         }
-        TileColliderDescriptor2D[] copied = colliders is null ? [] : CopyBounded(colliders, MaximumShapePoints, nameof(colliders));
-        if (copied.Any(item => item is null) || (role == "Collider" && (copied.Length == 0 || shape == "Point")))
+        if (role == "Collider" && (collider is null || shape == "Point"))
         {
-            throw Diagnostic(new ArgumentException("Collider entities require non-point geometry and valid collider descriptors.", nameof(colliders)), "SCN2D008");
+            throw Diagnostic(new ArgumentException("Collider entities require non-point geometry and one valid collider descriptor.", nameof(collider)), "SCN2D008");
         }
         Id = id;
-        LayerId = layerId;
+        MapId = mapId;
         Position = position;
         Size = size;
         Shape = shape;
@@ -123,7 +122,7 @@ public sealed class Scene2DEntity
         Rotation = rotation;
         Pivot = pivot;
         Role = role;
-        Colliders = Array.AsReadOnly(copied);
+        Collider = collider;
         Order = order;
         IsVisible = isVisible;
         Opacity = opacity;
@@ -131,7 +130,7 @@ public sealed class Scene2DEntity
     }
 
     public string Id { get; }
-    public string LayerId { get; }
+    public string MapId { get; }
     public DrawPoint Position { get; }
     public DrawSize Size { get; }
     public string Shape { get; }
@@ -140,7 +139,7 @@ public sealed class Scene2DEntity
     public float Rotation { get; }
     public DrawPoint Pivot { get; }
     public string Role { get; }
-    public IReadOnlyList<TileColliderDescriptor2D> Colliders { get; }
+    public TileColliderDescriptor2D? Collider { get; }
     public int Order { get; }
     public bool IsVisible { get; }
     public float Opacity { get; }
@@ -151,30 +150,53 @@ public sealed class Scene2DLevel
 {
     public Scene2DLevel(
         string id,
-        TileMap2DModel tileMap,
+        IEnumerable<TileMap2DModel> tileMaps,
         DrawPoint worldOffset = default,
         IEnumerable<Scene2DEntity>? entities = null,
         IEnumerable<TilePromotion2D>? promotions = null,
-        IReadOnlyDictionary<string, object?>? properties = null)
+        IReadOnlyDictionary<string, object?>? properties = null,
+        IEnumerable<TileSet2D>? tileSets = null,
+        DrawSize? tileSize = null,
+        TileMapBounds2D? bounds = null)
     {
         if (string.IsNullOrWhiteSpace(id))
         {
             throw Diagnostic(new ArgumentException("A level requires a stable identity.", nameof(id)), "SCN2D015");
         }
-        ArgumentNullException.ThrowIfNull(tileMap);
+        ArgumentNullException.ThrowIfNull(tileMaps);
+        if (tileSize is DrawSize grid && (grid.Width <= 0 || grid.Height <= 0))
+        {
+            throw Diagnostic(new ArgumentOutOfRangeException(nameof(tileSize), "The source grid must be positive."), "SCN2D005");
+        }
+        if (bounds is TileMapBounds2D finite && (tileSize is null || finite.Width <= 0 || finite.Height <= 0))
+        {
+            throw Diagnostic(new ArgumentException("Source bounds require a grid and positive dimensions.", nameof(bounds)), "SCN2D005");
+        }
+        TileSet2D[] copiedTileSets = tileSets is null ? [] : CopyBounded(tileSets, MaximumLayers, nameof(tileSets));
+        if (copiedTileSets.Any(static set => set is null))
+        {
+            throw Diagnostic(new ArgumentException("Source tilesets cannot contain null.", nameof(tileSets)), "SCN2D010");
+        }
+        TileMap2DModel.ValidateUniqueIds(copiedTileSets);
         Id = id;
-        TileMap = tileMap;
+        TileMaps = Array.AsReadOnly(CopyBounded(tileMaps, MaximumLayers, nameof(tileMaps)));
+        TileSets = Array.AsReadOnly(copiedTileSets);
+        TileSize = tileSize;
+        Bounds = bounds;
         WorldOffset = worldOffset;
         Entities = Array.AsReadOnly(entities is null ? [] : CopyBounded(entities, MaximumEntities, nameof(entities)));
         Promotions = Array.AsReadOnly(promotions is null ? [] : CopyBounded(promotions, MaximumEntities, nameof(promotions)));
         Properties = TileMapModelCopy.CopyProperties(properties);
         Scene2DDiagnosticCollector diagnostics = new(null);
         ValidateLevel(this, diagnostics, "$");
-        ThrowIfInvalid(diagnostics.Complete(), nameof(tileMap));
+        ThrowIfInvalid(diagnostics.Complete(), nameof(tileMaps));
     }
 
     public string Id { get; }
-    public TileMap2DModel TileMap { get; }
+    public IReadOnlyList<TileMap2DModel> TileMaps { get; }
+    public IReadOnlyList<TileSet2D> TileSets { get; }
+    public DrawSize? TileSize { get; }
+    public TileMapBounds2D? Bounds { get; }
     public DrawPoint WorldOffset { get; }
     public IReadOnlyList<Scene2DEntity> Entities { get; }
     public IReadOnlyList<TilePromotion2D> Promotions { get; }
@@ -183,7 +205,7 @@ public sealed class Scene2DLevel
 
 public sealed class Scene2DDocument
 {
-    public const int CurrentSchemaVersion = 1;
+    public const int CurrentSchemaVersion = 2;
 
     public Scene2DDocument(
         IEnumerable<Scene2DLevel> levels,

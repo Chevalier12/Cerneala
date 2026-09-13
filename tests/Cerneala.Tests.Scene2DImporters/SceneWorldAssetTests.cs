@@ -17,9 +17,9 @@ public sealed class SceneWorldAssetTests
         Assert.True(result.Success, string.Join(Environment.NewLine, result.Diagnostics));
         Scene2DLevel level = Assert.Single(result.Document!.Levels);
         TileCellKey2D door = Assert.Single(level.Promotions).Cell;
-        Assert.NotEqual("2", door.LayerId);
-        Assert.True(level.TileMap.TryGetLayer("2", out TileLayer2DModel? facade));
-        Assert.True(level.TileMap.TryGetLayer(door.LayerId, out TileLayer2DModel? foreground));
+        Assert.NotEqual("2", door.MapId);
+        TileMap2DModel facade = Assert.Single(level.TileMaps.Where(map => map.Id == "2"));
+        TileMap2DModel foreground = Assert.Single(level.TileMaps.Where(map => map.Id == door.MapId));
         Assert.True(foreground!.Order > facade!.Order);
         Assert.True(facade.TryGetCell(new(14, 9), out TileCell2D oldCell));
         Assert.Equal(0, oldCell.TileId);
@@ -37,14 +37,14 @@ public sealed class SceneWorldAssetTests
         Assert.True(ldtk.Success, string.Join(Environment.NewLine, ldtk.Diagnostics));
         Scene2DLevel left = Assert.Single(tiled.Document!.Levels);
         Scene2DLevel right = Assert.Single(ldtk.Document!.Levels);
-        Assert.Equal(new DrawSize(16, 16), left.TileMap.TileSize);
-        Assert.Equal(left.TileMap.TileSize, right.TileMap.TileSize);
-        Assert.Equal(4, left.TileMap.Layers.Count);
-        Assert.Equal(4, right.TileMap.Layers.Count);
+        Assert.Equal(new DrawSize(16, 16), left.TileSize);
+        Assert.Equal(left.TileSize, right.TileSize);
+        Assert.Equal(4, left.TileMaps.Count);
+        Assert.Equal(4, right.TileMaps.Count);
         foreach (string layerId in new[] { "1", "2" })
         {
-            Assert.True(left.TileMap.TryGetLayer(layerId, out TileLayer2DModel? a));
-            Assert.True(right.TileMap.TryGetLayer(layerId, out TileLayer2DModel? b));
+            TileMap2DModel a = Assert.Single(left.TileMaps.Where(map => map.Id == layerId));
+            TileMap2DModel b = Assert.Single(right.TileMaps.Where(map => map.Id == layerId));
             Assert.Equal(a!.Order, b!.Order);
             Assert.Equal(a.Offset, b.Offset);
             // Tiled preserves its 8x8 chunks; LDtk exports one finite grid per layer.
@@ -66,7 +66,7 @@ public sealed class SceneWorldAssetTests
             Assert.Equal(entity.Role, other.Role);
             Assert.Equal(entity.Position, other.Position);
             Assert.Equal(entity.Size, other.Size);
-            Assert.Equal(entity.Colliders.Count, other.Colliders.Count);
+            Assert.Equal(entity.Collider is not null, other.Collider is not null);
             if (entity.Role == "Collider")
             {
                 Assert.Equal("Box", entity.Shape);

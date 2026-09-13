@@ -85,7 +85,7 @@ internal sealed class CollisionStageFiveFixture
         };
         door.Children.Add(closedDoor);
         door.Children.Add(openDoor);
-        closedDoor.Colliders.Add(doorCollider);
+        closedDoor.Collider = doorCollider;
         house.Children.Add(door);
         scene.Children.Add(house);
 
@@ -105,7 +105,7 @@ internal sealed class CollisionStageFiveFixture
             CollisionLayer = 1,
             CollisionMask = 2
         };
-        playerSprite.Colliders.Add(playerCollider);
+        playerSprite.Collider = playerCollider;
         scene.Children.Add(player);
 
         RenderSurface2D surface = new()
@@ -239,13 +239,13 @@ internal sealed class CollisionStageFiveFixture
     {
         Sprite2D wall = CreateSprite(atlasId, 1, bounds);
         house.Children.Add(wall);
-        wall.Colliders.Add(new BoxCollider2D
+        wall.Collider = new BoxCollider2D
         {
             Width = bounds.Width,
             Height = bounds.Height,
             CollisionLayer = 2,
             CollisionMask = 1
-        });
+        };
     }
 
     private static Sprite2D CreateSprite(

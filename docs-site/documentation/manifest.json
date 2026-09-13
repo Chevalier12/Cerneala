@@ -1865,21 +1865,6 @@
     "source": "UI/Controls/TileMap2DModel.cs"
   },
   {
-    "name": "Cerneala.UI.Controls.TileInstance2D",
-    "file": "documentation/classes/Cerneala.UI.Controls.TileInstance2D.md",
-    "source": "UI/Controls/TileInstance2D.cs"
-  },
-  {
-    "name": "Cerneala.UI.Controls.TileLayer2D",
-    "file": "documentation/classes/Cerneala.UI.Controls.TileLayer2D.md",
-    "source": "UI/Controls/TileLayer2D.cs"
-  },
-  {
-    "name": "Cerneala.UI.Controls.TileLayer2DModel",
-    "file": "documentation/classes/Cerneala.UI.Controls.TileLayer2DModel.md",
-    "source": "UI/Controls/TileMap2DModel.cs"
-  },
-  {
     "name": "Cerneala.UI.Controls.TileMap2D",
     "file": "documentation/classes/Cerneala.UI.Controls.TileMap2D.md",
     "source": "UI/Controls/TileMap2D.cs"

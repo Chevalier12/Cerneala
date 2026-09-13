@@ -39,7 +39,7 @@ public sealed class ServoSceneTests
     public async Task SurfaceLayoutOriginIsIncludedWithAndWithoutViewBox(bool useViewBox, float dpi)
     {
         Scene2D world = new();
-        Sprite2D targetNode = new() { X = 30, Y = 15, Colliders = { new BoxCollider2D { Width = 16, Height = 12 } } };
+        Sprite2D targetNode = new() { X = 30, Y = 15, Collider = new BoxCollider2D { Width = 16, Height = 12 } };
         world.Children.Add(targetNode);
         ServoApi.SetId(targetNode, "target");
         UiHost host = CreateHost(world, useViewBox, new Thickness(20, 32, 0, 0), dpi);
@@ -77,7 +77,7 @@ public sealed class ServoSceneTests
         Scene2D world = new() { TranslateX = 10, TranslateY = 5 };
         Scene2D entity = new() { TranslateX = 20, TranslateY = 10, Focusable = true };
         Sprite2D sprite = new();
-        if (colliderOnly) { sprite.Colliders.Add(new BoxCollider2D { Width = 16, Height = 12 }); }
+        if (colliderOnly) { sprite.Collider = new BoxCollider2D { Width = 16, Height = 12 }; }
         else { sprite.Width = 16; sprite.Height = 12; }
         entity.Children.Add(sprite);
         world.Children.Add(entity);
@@ -110,7 +110,7 @@ public sealed class ServoSceneTests
     {
         Scene2D world = new();
         BoxCollider2D collider = new() { Width = 20, Height = 10, TranslateX = 10, OffsetX = 2 };
-        Sprite2D sprite = new() { Colliders = { collider } };
+        Sprite2D sprite = new() { Collider = collider };
         world.Children.Add(sprite);
         ServoApi.SetId(sprite, "sprite");
         ServoApi.SetId(collider, "collider");

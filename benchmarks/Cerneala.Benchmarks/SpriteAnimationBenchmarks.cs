@@ -32,13 +32,13 @@ internal static class SpriteAnimationBenchmarkRunner
                 results.Add(Measure(workload, $"sprites-{count}-active-{active}", record: true));
             }
         }
-        foreach (int promoted in new[] { 0, 1, 100 })
+        foreach (int sprites in new[] { 0, 1, 100 })
         {
-            foreach (bool prism in promoted == 0 ? new[] { false } : new[] { false, true })
+            foreach (bool prism in sprites == 0 ? new[] { false } : new[] { false, true })
             {
-                using Workload workload = new(1024, promoted, tiles: true, prism);
-                results.Add(Measure(workload, $"tiles-1024-promoted-{promoted}-prism-{prism}", record: false));
-                results.Add(Measure(workload, $"tiles-1024-promoted-{promoted}-prism-{prism}", record: true));
+                using Workload workload = new(1024, sprites, tiles: true, prism);
+                results.Add(Measure(workload, $"tiles-1024-sprites-{sprites}-prism-{prism}", record: false));
+                results.Add(Measure(workload, $"tiles-1024-sprites-{sprites}-prism-{prism}", record: true));
             }
         }
         string path = Path.GetFullPath(reportPath);
@@ -107,19 +107,23 @@ internal static class SpriteAnimationBenchmarkRunner
             if (tiles)
             {
                 ResourceId<ImageResource> atlas = new("AnimationAtlas");
-                Map = new TileMap2D { Model = new TileMap2DModel(new DrawSize(16, 16),
+                TileCell2D[] cells = Enumerable.Repeat(new TileCell2D(1), count).ToArray();
+                for (int i = 0; i < active; i++) { cells[1 + i * 3] = default; }
+                Map = new TileMap2D { Model = new TileMap2DModel("Ground", new DrawSize(16, 16),
                     [new TileSet2D("World", atlas, [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16))])],
-                    [new TileLayer2DModel("Ground", [new TileChunk2D(new TileCoordinate2D(0, 0), 32, 32,
-                        Enumerable.Repeat(new TileCell2D(1), count))])], new TileMapBounds2D(0, 0, 32, 32)) };
+                    [new TileChunk2D(new TileCoordinate2D(0, 0), 32, 32, cells)],
+                    new TileMapBounds2D(0, 0, 32, 32)) };
                 scene.Children.Add(Map);
                 Surface.Resources.SetResource(atlas, new ImageResource("animation-atlas.png"));
                 root.SetImageLoader(new ImageLoader());
                 for (int i = 0; i < active; i++)
                 {
                     int cell = 1 + i * 3;
-                    TileInstance2D tile = Map.Promote(new TileCellKey2D("Ground", cell % 32, cell / 32));
+                    Sprite2D tile = new() { Image = new ImageReference(atlas),
+                        X = cell % 32 * 16, Y = cell / 32 * 16, Width = 16, Height = 16 };
                     tile.Animations = clips;
                     tile.AnimationState = "Walk";
+                    scene.Children.Add(tile);
                     if (prism)
                         effects.Add(GeneratedMarkup.AttachPrism(tile, () => new PrismInstance(
                             new PrismCompositionDefinition("AnimatedTile", [new PrismLayerDefinition(

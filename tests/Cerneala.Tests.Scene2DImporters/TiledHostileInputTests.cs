@@ -147,7 +147,7 @@ public sealed class TiledHostileInputTests : IDisposable
         Assert.True(Property<bool>(result, "Success"));
         Scene2DDocument document = Property<Scene2DDocument>(result, "Document");
         Assert.Equal("atlas.svg", Assert.Single(document.Assets).Path);
-        TileCell2D cell = document.Levels[0].TileMap.Layers[0].Chunks[0].Tiles[0];
+        TileCell2D cell = document.Levels[0].TileMaps[0].Chunks[0].Tiles[0];
         Assert.Equal(1, cell.TileId);
         Assert.Equal(TileFlip2D.None, cell.Flip);
     }

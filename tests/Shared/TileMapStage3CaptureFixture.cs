@@ -41,9 +41,9 @@ internal static class TileMapStage3CaptureFixture
         TileMap2D map = new()
         {
             Model = new TileMap2DModel(
-                new DrawSize(16, 16),
+                "Boundary", new DrawSize(16, 16),
                 [tileSet],
-                [new TileLayer2DModel("Boundary", chunks)])
+                chunks)
         };
         Scene2D scene = new();
         scene.Children.Add(map);

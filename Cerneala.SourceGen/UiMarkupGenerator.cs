@@ -800,9 +800,6 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 return;
             }
 
-            ValidateTileMapDeclarations();
-            if (HasErrors) { return; }
-
             ReadResources();
             ReadInlineAspects();
             ImportApplicationAspects();
@@ -847,69 +844,6 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         public bool HasErrors { get; private set; }
 
         public IReadOnlyList<NamedElementMember> NamedElementMembers => namedElementMembers;
-
-        private void ValidateTileMapDeclarations()
-        {
-            foreach (MarkupElement map in document.Root.DescendantsAndSelf()
-                .Where(static element => element.Name.LocalName == "TileMap2D"))
-            {
-                HashSet<string> layerIds = new(StringComparer.Ordinal);
-                foreach (MarkupElement layer in map.Elements()
-                    .Where(static element => element.Name.LocalName == "TileLayer2D"))
-                {
-                    MarkupAttribute? layerIdAttribute = layer.Attribute("LayerId");
-                    string layerId = layerIdAttribute?.Value.Trim() ?? string.Empty;
-                    if (layerId.Length == 0)
-                    {
-                        Report(
-                            InvalidDocumentShape,
-                            layerIdAttribute is null ? (object)layer : layerIdAttribute,
-                            Path.GetFileName(file.Path),
-                            "TileLayer2D requires a non-empty LayerId.");
-                        continue;
-                    }
-                    if (!layerIds.Add(layerId))
-                    {
-                        Report(
-                            InvalidDocumentShape,
-                            layerIdAttribute!,
-                            Path.GetFileName(file.Path),
-                            $"Tile layer '{layerId}' is declared more than once in one TileMap2D.");
-                    }
-
-                    HashSet<(int X, int Y)> coordinates = new();
-                    foreach (MarkupElement tile in layer.Elements()
-                        .Where(static element => element.Name.LocalName == "TileInstance2D"))
-                    {
-                        MarkupAttribute? xAttribute = tile.Attribute("X");
-                        MarkupAttribute? yAttribute = tile.Attribute("Y");
-                        if (xAttribute is null || yAttribute is null ||
-                            !int.TryParse(xAttribute.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int x) ||
-                            !int.TryParse(yAttribute.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int y))
-                        {
-                            Report(
-                                InvalidDocumentShape,
-                                xAttribute is not null
-                                    ? (object)xAttribute
-                                    : yAttribute is not null
-                                        ? yAttribute
-                                        : tile,
-                                Path.GetFileName(file.Path),
-                                "TileInstance2D requires explicit integer X and Y coordinates.");
-                            continue;
-                        }
-                        if (!coordinates.Add((x, y)))
-                        {
-                            Report(
-                                InvalidDocumentShape,
-                                xAttribute,
-                                Path.GetFileName(file.Path),
-                                $"Promoted tile coordinate {x},{y} is declared more than once in layer '{layerId}'.");
-                        }
-                    }
-                }
-            }
-        }
 
         private enum MarkupValueKind
         {
@@ -2003,7 +1937,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
         private void ValidateStaticAnimationState(MarkupElement element)
         {
-            if (element.Name.LocalName is not ("Sprite2D" or "TileInstance2D"))
+            if (element.Name.LocalName != "Sprite2D")
             {
                 return;
             }
@@ -3128,8 +3062,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 }
                 EmitItemsControlItemsPanelElement(element, variable);
 
-                if (ResolveElementTypeSymbol(element.Name.LocalName)?.ToDisplayString() == "Cerneala.UI.Controls.TileMap2D" &&
-                    !element.Elements().Any(static child => child.Name.LocalName == "TileLayer2D"))
+                if (ResolveElementTypeSymbol(element.Name.LocalName)?.ToDisplayString() == "Cerneala.UI.Controls.TileMap2D")
                 {
                     EmitTileMapContent(element, variable, parsedContent);
                 }
@@ -3198,9 +3131,8 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                         tile.Attribute(name) is MarkupAttribute attribute
                             ? float.Parse(attribute.Value, CultureInfo.InvariantCulture).ToString("R", CultureInfo.InvariantCulture) + "f"
                             : name is "X" or "Y" ? "0f" : "float.NaN").ToArray();
-                    string[] colliders = tile.Elements().Select(EmitTileColliderDescriptor).ToArray();
-                    string colliderArgument = colliders.Length == 0 ? string.Empty :
-                        "new global::Cerneala.UI.Controls.TileColliderDescriptor2D[] { " + string.Join(", ", colliders) + " }, ";
+                    string? collider = tile.Elements().Select(EmitTileColliderDescriptor).SingleOrDefault();
+                    string colliderArgument = collider is null ? string.Empty : collider + ", ";
                     placements.Add("new global::Cerneala.UI.Controls.Tile(" + reference.Code + ", " + colliderArgument + string.Join(", ", values) + ")");
                 }
                 else if (node is DirectiveTextNode text && !string.IsNullOrWhiteSpace(text.Text) ||
@@ -5625,28 +5557,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             INamedTypeSymbol? contentControlType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.ContentControl");
             INamedTypeSymbol? scrollViewerType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.ScrollViewer");
             INamedTypeSymbol? sceneType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Scene2D");
-            INamedTypeSymbol? tileMapType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.TileMap2D");
-            INamedTypeSymbol? tileLayerType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.TileLayer2D");
-            INamedTypeSymbol? tileInstanceType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.TileInstance2D");
             INamedTypeSymbol? spriteType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Sprite2D");
 
-            if (parentType is not null && tileMapType is not null && IsOrDerivesFrom(parentType, tileMapType))
+            if (parentType is not null && spriteType is not null && IsOrDerivesFrom(parentType, spriteType))
             {
-                currentLines.Add(parentVariable + ".Layers.Add(" + childVariable + ");");
-                return;
-            }
-
-            if (parentType is not null && tileLayerType is not null && IsOrDerivesFrom(parentType, tileLayerType))
-            {
-                currentLines.Add(parentVariable + ".PromotedTiles.Add(" + childVariable + ");");
-                return;
-            }
-
-            if (parentType is not null &&
-                (tileInstanceType is not null && IsOrDerivesFrom(parentType, tileInstanceType) ||
-                 spriteType is not null && IsOrDerivesFrom(parentType, spriteType)))
-            {
-                currentLines.Add(parentVariable + ".Colliders.Add(" + childVariable + ");");
+                currentLines.Add(parentVariable + ".Collider = " + childVariable + ";");
                 return;
             }
 

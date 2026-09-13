@@ -8,7 +8,6 @@ public sealed partial class TileMap2D
     private readonly Dictionary<TileCollisionChunkKey, TileCollisionChunkState>
         collisionChunks = [];
     private TileMap2DModel? collisionPlacementModel;
-    private TileLayer2D? collisionPlacementHost;
     private readonly List<TileStaticCollider2D> placementColliders = [];
 
     internal void SynchronizeCollisionAdaptersAndNotify()
@@ -21,47 +20,27 @@ public sealed partial class TileMap2D
 
     private void SynchronizeCollisionAdapters()
     {
-        HashSet<TileCollisionChunkKey> current = [];
         TileMap2DModel? model = Model;
+        HashSet<TileCollisionChunkKey> current = new(model?.Chunks.Count ?? 0);
         SynchronizePlacementColliders(model);
         if (model is not null)
         {
-            foreach (TileLayer2DModel layer in model.Layers)
+            foreach (TileChunk2D chunk in model.Chunks)
             {
-                TileLayer2D presentation = Layers.Single(candidate =>
-                    string.Equals(candidate.LayerId, layer.Id, StringComparison.Ordinal));
-                foreach (TileChunk2D chunk in layer.Chunks)
+                TileCollisionChunkKey key = new(chunk.Origin, chunk.Width, chunk.Height);
+                current.Add(key);
+                if (collisionChunks.TryGetValue(key, out TileCollisionChunkState? existing) &&
+                    existing.IsCurrent(model, chunk))
                 {
-                    TileCollisionChunkKey key = new(
-                        layer.Id,
-                        chunk.Origin,
-                        chunk.Width,
-                        chunk.Height);
-                    current.Add(key);
-                    HashSet<TileCoordinate2D> suppressed = presentation.PromotedTiles
-                        .Where(static tile => tile.ReplacesImportedColliders)
-                        .Select(static tile => new TileCoordinate2D(tile.X, tile.Y))
-                        .Where(chunk.Contains)
-                        .ToHashSet();
-                    if (collisionChunks.TryGetValue(key, out TileCollisionChunkState? existing) &&
-                        existing.IsCurrent(model, layer, presentation, chunk, suppressed))
-                    {
-                        continue;
-                    }
-
-                    if (existing is not null)
-                    {
-                        RemoveCollisionChunk(existing);
-                    }
-
-                    TileCollisionChunkState rebuilt = BuildCollisionChunk(
-                        model,
-                        layer,
-                        presentation,
-                        chunk,
-                        suppressed);
-                    collisionChunks[key] = rebuilt;
+                    continue;
                 }
+
+                if (existing is not null)
+                {
+                    RemoveCollisionChunk(existing);
+                }
+
+                collisionChunks[key] = BuildCollisionChunk(model, chunk);
             }
         }
 
@@ -77,13 +56,11 @@ public sealed partial class TileMap2D
 
     private TileCollisionChunkState BuildCollisionChunk(
         TileMap2DModel model,
-        TileLayer2DModel layer,
-        TileLayer2D presentation,
-        TileChunk2D chunk,
-        HashSet<TileCoordinate2D> suppressed)
+        TileChunk2D chunk)
     {
         List<TileStaticCollider2D> colliders = [];
-        HashSet<TileDefinition2D> dependencies = new(ReferenceEqualityComparer.Instance);
+        Dictionary<int, TileColliderDescriptor2D?> dependencies = new(
+            Math.Min(chunk.Tiles.Count, model.TileDefinitionCount));
         for (int localY = 0; localY < chunk.Height; localY++)
         {
             for (int localX = 0; localX < chunk.Width;)
@@ -92,18 +69,25 @@ public sealed partial class TileMap2D
                     chunk.Origin.X + localX,
                     chunk.Origin.Y + localY);
                 TileCell2D cell = chunk.Tiles[(localY * chunk.Width) + localX];
-                if (cell.TileId == 0 || suppressed.Contains(coordinate) ||
-                    !model.TryResolveTile(cell.TileId, out _, out TileDefinition2D? definition) ||
-                    definition is null || definition.Colliders.Count == 0)
+                if (cell.TileId == 0)
                 {
                     localX++;
                     continue;
                 }
 
-                dependencies.Add(definition);
-                TileColliderDescriptor2D? coalescible = definition.Colliders.Count == 1 &&
-                    IsFullCellBox(definition.Colliders[0], model.TileSize)
-                        ? definition.Colliders[0]
+                model.TryResolveTile(cell.TileId, out _, out TileDefinition2D? definition);
+                TileColliderDescriptor2D? descriptor = definition?.Collider;
+                // Absence is a dependency too: adding a descriptor must invalidate
+                // chunks that previously contributed no collider for this tile id.
+                dependencies.TryAdd(cell.TileId, descriptor);
+                if (descriptor is null)
+                {
+                    localX++;
+                    continue;
+                }
+
+                TileColliderDescriptor2D? coalescible = IsFullCellBox(descriptor, model.TileSize)
+                        ? descriptor
                         : null;
                 if (coalescible is not null)
                 {
@@ -114,17 +98,16 @@ public sealed partial class TileMap2D
                             chunk,
                             localX + run,
                             localY,
-                            suppressed,
                             coalescible,
                             out TileDefinition2D? runDefinition))
                     {
-                        dependencies.Add(runDefinition!);
+                        dependencies.TryAdd(runDefinition!.Id, runDefinition.Collider);
                         run++;
                     }
 
                     AddCollider(new TileStaticCollider2D(
                         coalescible,
-                        presentation,
+                        this,
                         Matrix3x2.CreateTranslation(coordinate.X * model.TileSize.Width, coordinate.Y * model.TileSize.Height),
                         boxWidth: model.TileSize.Width * run,
                         boxHeight: model.TileSize.Height));
@@ -132,31 +115,26 @@ public sealed partial class TileMap2D
                     continue;
                 }
 
-                foreach (TileColliderDescriptor2D descriptor in definition.Colliders)
-                {
-                    AddCollider(new TileStaticCollider2D(
-                        descriptor,
-                        presentation,
-                        TileFlipGeometry2D.Transform(cell.Flip, model.TileSize) *
-                            Matrix3x2.CreateTranslation(coordinate.X * model.TileSize.Width, coordinate.Y * model.TileSize.Height)));
-                }
+                AddCollider(new TileStaticCollider2D(
+                    descriptor,
+                    this,
+                    TileFlipGeometry2D.Transform(cell.Flip, model.TileSize) *
+                        Matrix3x2.CreateTranslation(coordinate.X * model.TileSize.Width, coordinate.Y * model.TileSize.Height)));
                 localX++;
             }
         }
 
         return new TileCollisionChunkState(
             model.TileSize,
-            layer.IsVisible,
-            presentation,
+            model.IsVisible,
             chunk,
-            suppressed,
             dependencies.ToArray(),
             colliders.ToArray());
 
         void AddCollider(TileStaticCollider2D collider)
         {
-            collider.Enabled = layer.IsVisible;
-            presentation.LogicalChildren.InsertOwned(presentation.LogicalChildren.Count, collider);
+            collider.Enabled = model.IsVisible;
+            LogicalChildren.InsertOwned(LogicalChildren.Count, collider);
             collider.AttachSurface(Surface);
             colliders.Add(collider);
         }
@@ -167,21 +145,16 @@ public sealed partial class TileMap2D
         TileChunk2D chunk,
         int localX,
         int localY,
-        IReadOnlySet<TileCoordinate2D> suppressed,
         TileColliderDescriptor2D expected,
         out TileDefinition2D? definition)
     {
-        TileCoordinate2D coordinate = new(
-            chunk.Origin.X + localX,
-            chunk.Origin.Y + localY);
         TileCell2D cell = chunk.Tiles[(localY * chunk.Width) + localX];
         if (cell.TileId != 0 &&
-            !suppressed.Contains(coordinate) &&
             model.TryResolveTile(cell.TileId, out _, out definition) &&
             definition is not null &&
-            definition.Colliders.Count == 1 &&
-            IsFullCellBox(definition.Colliders[0], model.TileSize) &&
-            AreSemanticallyEqual(expected, definition.Colliders[0]))
+            definition.Collider is TileColliderDescriptor2D collider &&
+            IsFullCellBox(collider, model.TileSize) &&
+            AreSemanticallyEqual(expected, collider))
         {
             return true;
         }
@@ -239,84 +212,68 @@ public sealed partial class TileMap2D
 
     private void SynchronizePlacementColliders(TileMap2DModel? model)
     {
-        TileLayer2D? host = model?.IsFreePlacement == true
-            ? Layers.Single(layer => string.Equals(layer.LayerId, model.Layers[0].Id, StringComparison.Ordinal))
-            : null;
-        if (ReferenceEquals(collisionPlacementModel, model) && ReferenceEquals(collisionPlacementHost, host)) { return; }
-        if (collisionPlacementHost is not null)
+        if (ReferenceEquals(collisionPlacementModel, model)) { return; }
+        foreach (TileStaticCollider2D collider in placementColliders)
         {
-            foreach (TileStaticCollider2D collider in placementColliders)
-            {
-                collider.AttachSurface(null);
-                collisionPlacementHost.LogicalChildren.RemoveOwned(collider);
-            }
+            collider.AttachSurface(null);
+            LogicalChildren.RemoveOwned(collider);
         }
         placementColliders.Clear();
         collisionPlacementModel = model;
-        collisionPlacementHost = host;
-        if (host is null || model is null) { return; }
+        if (model?.IsFreePlacement != true) { return; }
 
         foreach (Tile tile in model.Tiles)
         {
             Matrix3x2 placement = Matrix3x2.CreateTranslation(tile.X, tile.Y);
-            foreach (TileColliderDescriptor2D descriptor in tile.Colliders)
+            if (tile.Collider is TileColliderDescriptor2D descriptor)
             {
-                TileStaticCollider2D collider = new(descriptor, host, placement);
-                host.LogicalChildren.InsertOwned(host.LogicalChildren.Count, collider);
+                TileStaticCollider2D collider = new(descriptor, this, placement);
+                LogicalChildren.InsertOwned(LogicalChildren.Count, collider);
                 collider.AttachSurface(Surface);
                 placementColliders.Add(collider);
             }
         }
     }
 
-    private static void RemoveCollisionChunk(TileCollisionChunkState state)
+    private void RemoveCollisionChunk(TileCollisionChunkState state)
     {
         foreach (TileStaticCollider2D collider in state.Colliders)
         {
             collider.AttachSurface(null);
-            state.Presentation.LogicalChildren.RemoveOwned(collider);
+            LogicalChildren.RemoveOwned(collider);
         }
     }
 
     private readonly record struct TileCollisionChunkKey(
-        string LayerId,
         TileCoordinate2D Origin,
         int Width,
         int Height);
 
     private sealed class TileCollisionChunkState(
         DrawSize tileSize,
-        bool layerIsVisible,
-        TileLayer2D presentation,
+        bool mapIsVisible,
         TileChunk2D chunk,
-        HashSet<TileCoordinate2D> suppressed,
-        TileDefinition2D[] dependencies,
+        KeyValuePair<int, TileColliderDescriptor2D?>[] dependencies,
         TileStaticCollider2D[] colliders)
     {
-        internal TileLayer2D Presentation { get; } = presentation;
-
         internal TileStaticCollider2D[] Colliders { get; } = colliders;
 
         internal bool IsCurrent(
             TileMap2DModel currentModel,
-            TileLayer2DModel currentLayer,
-            TileLayer2D currentPresentation,
-            TileChunk2D currentChunk,
-            HashSet<TileCoordinate2D> currentSuppressed)
+            TileChunk2D currentChunk)
         {
             if (tileSize != currentModel.TileSize ||
-                layerIsVisible != currentLayer.IsVisible ||
-                !ReferenceEquals(Presentation, currentPresentation) ||
-                !ReferenceEquals(chunk, currentChunk) ||
-                !suppressed.SetEquals(currentSuppressed))
+                mapIsVisible != currentModel.IsVisible ||
+                (!ReferenceEquals(chunk, currentChunk) &&
+                 !chunk.HasSameCells(currentChunk)))
             {
                 return false;
             }
 
-            foreach (TileDefinition2D dependency in dependencies)
+            foreach ((int tileId, TileColliderDescriptor2D? descriptor) in dependencies)
             {
-                if (!currentModel.TryResolveTile(dependency.Id, out _, out TileDefinition2D? current) ||
-                    !ReferenceEquals(dependency, current))
+                if (!currentModel.TryResolveTile(tileId, out _, out TileDefinition2D? current) ||
+                    !ReferenceEquals(descriptor, current?.Collider))
                 {
                     return false;
                 }

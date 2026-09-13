@@ -43,7 +43,7 @@ public sealed class SceneImportStageZeroContractTests
         Type validator = CoreType("Scene2DModelValidator");
         TileDefinition2D tile = new(1, new DrawRect(16, 0, 32, 16));
         TileSet2D tileset = new("Atlas", new ResourceId<ImageResource>("Atlas"), [tile]);
-        TileMap2DModel model = new(new DrawSize(16, 16), [tileset], []);
+        TileMap2DModel model = new("Atlas", new DrawSize(16, 16), [tileset], []);
         IReadOnlyDictionary<string, DrawSize> atlases = missingAtlas
             ? new Dictionary<string, DrawSize>()
             : new Dictionary<string, DrawSize> { ["Atlas"] = new DrawSize(32, 16) };
@@ -62,7 +62,7 @@ public sealed class SceneImportStageZeroContractTests
         surface.Arrange(new ArrangeContext(new LayoutRect(0, 0, 100, 100)));
         Scene2D scene = new();
         BoxCollider2D box = new() { Width = 20, Height = 20, TranslateX = 10, TranslateY = 10 };
-        Sprite2D sprite = new() { Colliders = { box } };
+        Sprite2D sprite = new() { Collider = box };
         scene.Children.Add(sprite);
         scene.Children.Add(overlay);
         surface.Scene = scene;
@@ -99,8 +99,8 @@ public sealed class SceneImportStageZeroContractTests
         segment.TranslateY = -10;
         CircleCollider2D mover = new() { Radius = 1, TranslateX = -20 * direction };
         Scene2D scene = new();
-        scene.Children.Add(new Sprite2D { Colliders = { segment } });
-        scene.Children.Add(new Sprite2D { Colliders = { mover } });
+        scene.Children.Add(new Sprite2D { Collider = segment });
+        scene.Children.Add(new Sprite2D { Collider = mover });
         MoveCollisionResult2D movement = scene.CollisionWorld.MoveAndCollide(mover, new Vector2(40 * direction, 0));
         Assert.NotNull(movement.Collision);
         Assert.Same(segment, movement.Collision.Collider);

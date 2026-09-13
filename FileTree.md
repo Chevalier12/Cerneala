@@ -1706,9 +1706,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.TileCoordinate2D.md
 |   |   |   |-- Cerneala.UI.Controls.TileDefinition2D.md
 |   |   |   |-- Cerneala.UI.Controls.TileFlip2D.md
-|   |   |   |-- Cerneala.UI.Controls.TileInstance2D.md
-|   |   |   |-- Cerneala.UI.Controls.TileLayer2D.md
-|   |   |   |-- Cerneala.UI.Controls.TileLayer2DModel.md
 |   |   |   |-- Cerneala.UI.Controls.TileMap2D.md
 |   |   |   |-- Cerneala.UI.Controls.TileMap2DModel.md
 |   |   |   |-- Cerneala.UI.Controls.TileMapBounds2D.md
@@ -3197,6 +3194,7 @@ Generated from `.`.
 |   |   |   |-- TileMap2DCacheContractTests.cs
 |   |   |   |-- TileMap2DContractTests.cs
 |   |   |   |-- TileMap2DStageZeroContractTests.cs
+|   |   |   |-- TileMapSingleLayerContractTests.cs
 |   |   |   |-- TilePlacementContractTests.cs
 |   |   |   |-- ToggleButtonTests.cs
 |   |   |   |-- ToolTipTests.cs
@@ -3803,6 +3801,7 @@ Generated from `.`.
 |   |   |-- UiMarkupGeneratorSceneComponentTests.cs
 |   |   |-- UiMarkupGeneratorSceneImportStageZeroTests.cs
 |   |   |-- UiMarkupGeneratorSceneWorldBindingTests.cs
+|   |   |-- UiMarkupGeneratorSingleLayerTileMapTests.cs
 |   |   |-- UiMarkupGeneratorSpriteAnimationStageZeroTests.cs
 |   |   |-- UiMarkupGeneratorSpriteAuthoringTests.cs
 |   |   |-- UiMarkupGeneratorTests.cs
@@ -4146,8 +4145,8 @@ Generated from `.`.
 |   |   |-- CheckBoxTemplates.cs
 |   |   |-- CircleCollider2D.cs
 |   |   |-- Collider2D.cs
-|   |   |-- ColliderCollection2D.cs
 |   |   |-- ColliderGeometry2D.cs
+|   |   |-- ColliderSlot2D.cs
 |   |   |-- CollisionHit2D.cs
 |   |   |-- CollisionNarrowPhase2D.cs
 |   |   |-- CollisionQuery2D.cs
@@ -4237,8 +4236,6 @@ Generated from `.`.
 |   |   |-- Tile.cs
 |   |   |-- TileColliderDescriptor2D.cs
 |   |   |-- TileFlipGeometry2D.cs
-|   |   |-- TileInstance2D.cs
-|   |   |-- TileLayer2D.cs
 |   |   |-- TileMap2D.Cache.cs
 |   |   |-- TileMap2D.Collision.cs
 |   |   |-- TileMap2D.cs

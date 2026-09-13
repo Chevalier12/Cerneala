@@ -191,9 +191,6 @@ public readonly partial record struct DrawCommand
     public static DrawCommand DrawSpriteBatch(DrawSpriteBatch batch)
     {
         ArgumentNullException.ThrowIfNull(batch);
-        DrawImageOptions options = new(
-            sampling: batch.Sampling,
-            addressMode: batch.AddressMode);
         return new DrawCommand(
             DrawCommandKind.DrawSpriteBatch,
             batch.Bounds,
@@ -207,7 +204,7 @@ public readonly partial record struct DrawCommand
             null,
             null,
             1,
-            imageOptions: options,
+            imageOptions: batch.CommandOptions,
             mesh: batch.Mesh,
             spriteBatch: batch);
     }

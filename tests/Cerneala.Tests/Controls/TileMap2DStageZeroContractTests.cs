@@ -35,7 +35,6 @@ public sealed class TileMap2DStageZeroContractTests
             "TileMap2DModel",
             "TileSet2D",
             "TileDefinition2D",
-            "TileLayer2DModel",
             "TileChunk2D",
             "TileCell2D",
             "TileCoordinate2D",
@@ -43,8 +42,7 @@ public sealed class TileMap2DStageZeroContractTests
             "TileMapBounds2D",
             "TileFlip2D",
             "TileMap2D",
-            "TileLayer2D",
-            "TileInstance2D"
+            "Tile"
         ];
 
         IReadOnlyDictionary<string, Type?> resolved = expectedTypes.ToDictionary(
@@ -60,20 +58,19 @@ public sealed class TileMap2DStageZeroContractTests
             "RED: the approved backend-neutral tilemap API is absent: " + string.Join(", ", missing));
 
         Assert.True(typeof(SceneNode2D).IsAssignableFrom(resolved["TileMap2D"]));
-        Assert.True(typeof(SceneNode2D).IsAssignableFrom(resolved["TileLayer2D"]));
-        Assert.True(typeof(SceneNode2D).IsAssignableFrom(resolved["TileInstance2D"]));
-        RequireProperties(resolved["TileMap2DModel"]!, "TileSize", "Bounds", "TileSets", "Layers", "Version", "Properties");
+        Assert.False(typeof(SceneNode2D).IsAssignableFrom(resolved["Tile"]));
+        Assert.Null(Resolve("TileLayer2D"));
+        Assert.Null(Resolve("TileLayer2DModel"));
+        Assert.Null(Resolve("TileInstance2D"));
+        RequireProperties(resolved["TileMap2DModel"]!, "Id", "TileSize", "Bounds", "TileSets", "Chunks", "Tiles", "Order", "Offset", "Tint", "Opacity", "Version", "Properties");
         RequireProperties(resolved["TileSet2D"]!, "Id", "AtlasResourceId", "Tiles", "Version", "Properties");
         RequireProperties(resolved["TileDefinition2D"]!, "Id", "SourceRect", "Properties");
-        RequireProperties(resolved["TileLayer2DModel"]!, "Id", "IsVisible", "Offset", "Opacity", "Tint", "Order", "Chunks", "Version", "Properties");
         RequireProperties(resolved["TileChunk2D"]!, "Origin", "Width", "Height", "Tiles", "Version", "Properties");
         RequireProperties(resolved["TileCell2D"]!, "TileId", "Flip");
-        RequireProperties(resolved["TileMap2D"]!, "Model", "Layers");
-        RequireProperties(resolved["TileLayer2D"]!, "LayerId", "PromotedTiles");
-        RequireProperties(resolved["TileInstance2D"]!, "X", "Y", "TileId", "SourceRect", "Tint", "Flip");
-        Assert.NotNull(resolved["TileMap2D"]!.GetMethod("Promote", BindingFlags.Instance | BindingFlags.Public));
-        Assert.NotNull(resolved["TileMap2D"]!.GetMethod("Demote", BindingFlags.Instance | BindingFlags.Public));
-        Assert.NotNull(resolved["TileMap2D"]!.GetMethod("TryGetPromoted", BindingFlags.Instance | BindingFlags.Public));
+        RequireProperties(resolved["TileMap2D"]!, "Model", "Offset", "Tint");
+        RequireProperties(resolved["Tile"]!, "Image", "X", "Y", "Width", "Height", "Collider");
+        Assert.Null(resolved["TileMap2D"]!.GetMethod("Promote", BindingFlags.Instance | BindingFlags.Public));
+        Assert.Null(resolved["TileMap2D"]!.GetProperty("Layers", BindingFlags.Instance | BindingFlags.Public));
     }
 
     [Fact]
@@ -87,28 +84,12 @@ public sealed class TileMap2DStageZeroContractTests
 
     [Fact]
     [Trait("TileMapStage", "0")]
-    public void PromotionAndDemotionHaveStableCoordinatesOneSemanticSlotAndNoDoubleDraw()
+    public void WorldCompositionUsesScenesMapsSpritesAndItemsWithoutLiveTileNodes()
     {
-        Type? mapType = Resolve("TileMap2D");
-        Assert.True(mapType is not null, "RED: TileMap2D is missing, so promotion/demotion lifecycle cannot run.");
-        RequireMethods(mapType, "Promote", "Demote", "TryGetPromoted");
-        Type? snapshot = Resolve("TileMap2DDiagnosticsSnapshot");
-        Assert.True(snapshot is not null, "RED: promoted/demoted draw ownership has no diagnostics snapshot.");
-        RequireProperties(snapshot, "PromotedInstancesVisible", "PromotedInstancesCulled", "Promotions", "Demotions", "BatchSplits");
-    }
-
-    [Theory]
-    [InlineData("MonoGame")]
-    [InlineData("SDL_GPU")]
-    [Trait("TileMapStage", "0")]
-    public void NestedPrismMapLayerPromotedTileHasABackendConformancePath(string backend)
-    {
-        Type? mapType = Resolve("TileMap2D");
-        Type? layerType = Resolve("TileLayer2D");
-        Type? tileType = Resolve("TileInstance2D");
-        Assert.True(
-            mapType is not null && layerType is not null && tileType is not null,
-            $"RED: {backend} cannot exercise map -> layer -> promoted tile Prism scopes before the three scene nodes exist.");
+        foreach (string name in new[] { "Scene2D", "TileMap2D", "Sprite2D", "SceneItems2D" })
+            Assert.True(typeof(SceneNode2D).IsAssignableFrom(Resolve(name)), name);
+        Assert.Null(Resolve("TileLayer2D"));
+        Assert.Null(Resolve("TileInstance2D"));
     }
 
     [Fact]
@@ -140,13 +121,7 @@ public sealed class TileMap2DStageZeroContractTests
         Assert.True(missing.Length == 0, $"{type.Name} is missing properties: {string.Join(", ", missing)}");
     }
 
-    private static void RequireMethods(Type type, params string[] names)
-    {
-        string[] missing = names
-            .Where(name => type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(method => method.Name != name))
-            .ToArray();
-        Assert.True(missing.Length == 0, $"{type.Name} is missing methods: {string.Join(", ", missing)}");
-    }
+
 }
 
 internal sealed record TileMapVillageFixture(

@@ -24,9 +24,11 @@ var imported = LdtkScene2DImporter.Import("Content/village.ldtk");
 if (imported.Success)
 {
     Scene2DLevel level = imported.Document!.Levels[0];
-    var tiles = new TileMap2D { Model = level.TileMap };
-    // Composition registers the declared images, applies level placement,
-    // and creates dynamic entities or sparse promotions separately.
+    var scene = new Scene2D { OrderMode = SceneOrderMode.Layer,
+        TranslateX = level.WorldOffset.X, TranslateY = level.WorldOffset.Y };
+    foreach (TileMap2DModel model in level.TileMaps)
+        scene.Children.Add(new TileMap2D { Model = model, Layer = model.Order });
+    // Composition also registers images and creates ordinary sprites/templates.
 }
 ```
 
@@ -46,11 +48,11 @@ All atlas and nonempty FilePath fields resolve relative to the project, includin
 
 Legacy root levels and multi-world containers are supported, but cannot both be nonempty. Returned levels follow world-array then level-array order. `Free` and `GridVania` preserve exported world coordinates; `LinearHorizontal` and `LinearVertical` accumulate level pixel dimensions in source order. World identity/layout/grid metadata and level world depth are retained.
 
-Each level has one uniform grid; different levels may differ. Level dimensions must align to that grid. An empty level with no layer instances uses a one-pixel grid and its declared finite pixel bounds. Layer order reverses LDtk's top-first instance array into bottom-first core order; tile arrays are not reversed. Core layer IDs are definition UIDs as invariant strings; instance IIDs and names remain metadata. Total layer pixel offsets are used once; raw definition/instance offsets are retained, not added again.
+Each level has one uniform grid; different levels may differ. Level dimensions must align to that grid. An empty level with no layer instances has zero maps and preserves a one-pixel source grid, its finite pixel bounds, and the project tileset catalog on `Scene2DLevel`. Each layer instance produces one independent `TileMap2DModel`. Map order reverses LDtk's top-first instance array into bottom-first core order; tile arrays are not reversed. Core map IDs are definition UIDs as invariant strings; instance IIDs and names remain metadata. Total layer pixel offsets are used once; raw definition/instance offsets are retained, not added again.
 
 Each tileset declares one atlas with grid, dimensions, padding and spacing. Core global IDs start at one and are assigned in project tileset order, then local tile order. `$LocalTileId` and `$DefinitionUid` retain source identity. Tile source coordinates must match the declared local ID. Horizontal/vertical flips, layer visibility and opacity are preserved.
 
-`Tiles` reads `gridTiles`; `AutoLayer` and `IntGrid` read baked `autoLayerTiles`. IntGrid's exact CSV and definitions remain `$IntGrid` and `$IntGridDefinitions` metadata. Values must be zero or defined positive values. Entity layers become empty-cell core layers with valid entity references. There is no implicit collider, rule execution or pathfinding.
+`Tiles` reads `gridTiles`; `AutoLayer` and `IntGrid` read baked `autoLayerTiles`. IntGrid's exact CSV and definitions remain `$IntGrid` and `$IntGridDefinitions` metadata. Values must be zero or defined positive values. Entity layers become independent maps without cell chunks, preserving valid entity `MapId` references. There is no implicit collider, rule execution or pathfinding.
 
 Unsupported representations produce `SCN2D004`: mixed grids within a level, atlas/destination grid mismatch, non-grid-aligned level dimensions, unsnapped tile positions, stacked tiles, per-tile alpha other than one, nonzero parallax, embedded atlases, background images and unknown layouts/types/extensions. These are not rescaled, flattened or silently discarded.
 
@@ -60,9 +62,9 @@ Entities retain instance/definition identity, size, pivot and source position. C
 
 Supported primitive fields are `Int` (Int64), `Float` (finite Double), `String`, `Multilines`, `Bool`, `Color` (`#RRGGBB` mapped to `Color`) and `FilePath` (root-relative string). Null is accepted only when the definition permits it. Instance name/type/UID must match its owning definition. Arrays, enums, points, entity references and tile-valued fields are unsupported. Names beginning with `$` are reserved.
 
-`CernealaRole` is `Metadata` by default, or explicit `Spawn`, `Collider`, `Promote`. Collision fields share the [Tiled conventions](Cerneala.Scene2D.Importers.TiledScene2DImporter.md): unsigned layer/mask, Boolean trigger and preserved initial state. LDtk collider geometry uses `ColliderShape` (`Box`, `Ellipse`, `Polygon`, `Polyline`) and invariant-culture `ColliderPoints`. Ellipses remain affine circles; open polylines become consecutive zero-thickness two-sided segments. Core constructors and the shared validator own geometry validity.
+`CernealaRole` is `Metadata` by default, or explicit `Spawn`, `Collider`, `Promote`. Collision fields share the [Tiled conventions](Cerneala.Scene2D.Importers.TiledScene2DImporter.md): unsigned layer/mask, Boolean trigger and preserved initial state. LDtk collider geometry uses `ColliderShape` (`Box`, `Ellipse`, `Polygon`, `Polyline`) and invariant-culture `ColliderPoints`. Ellipses remain affine circles. A collider polyline must contain exactly two points and becomes one zero-thickness two-sided segment; longer collider paths report `SCN2D008` because each entity owns at most one collider. Core constructors and the shared validator own geometry validity.
 
-Promotion requires explicit `TileLayer`, `TileX`, `TileY`; an optional `TileId` uses core/global identity and is required over an empty cell. Duplicate or unresolved addresses fail. The parser returns sparse promotion data; composition alone calls `TileMap2D.Promote` and configures the resulting node.
+Promotion requires explicit `TileLayer`, `TileX`, `TileY`; an optional `TileId` uses core/global identity and is required over an empty cell. Duplicate or unresolved addresses fail. The source `TileLayer` identifies the resulting map. The parser returns sparse metadata only; composition can explicitly clear a replaced static cell and create an ordinary peer sprite. See [TilePromotion2D](Cerneala.UI.Controls.TilePromotion2D.md).
 
 ### Field disposition and provenance
 

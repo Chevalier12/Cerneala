@@ -32,7 +32,7 @@ internal sealed class ImportContext : IDisposable
     internal string Path { get; set; } = "$";
     internal Scene2DValidationOptions ValidationOptions => new()
     {
-        MaxCells = Options.MaxCells, MaxChunks = Options.MaxChunks, MaxLayers = Options.MaxLayers,
+        MaxCells = Options.MaxCells, MaxChunks = Options.MaxChunks, MaxMaps = Options.MaxLayers,
         MaxEntities = Options.MaxEntities, MaxDiagnostics = Options.MaxDiagnostics
     };
 

@@ -21,7 +21,7 @@ Add the overlay directly to `Scene2D.Children`:
 ```csharp
 Scene2DDebugOverlay debug = new()
 {
-    Flags = Scene2DDebugFlags.Colliders | Scene2DDebugFlags.PromotedTiles,
+    Flags = Scene2DDebugFlags.Colliders | Scene2DDebugFlags.ChunkBounds,
     LineThickness = 1
 };
 scene.Children.Add(debug);
@@ -61,7 +61,7 @@ Flags default off. An off overlay records no commands and does not query maps, c
 
 Collider diagnostics query the existing collision broadphase without running contact resolution or adding gameplay-query counters. Only active indexed colliders are shown. Solid collider colors are deterministically derived from collision-layer bits; triggers are orange and zero-mask colliders gray. Labels contain exact hexadecimal layer/mask values and `solid`, `trigger`, or `masked`. These are participation/filter states, not a claim that two shapes currently touch: collision queries are stateless and the overlay does not invent a contact history.
 
-Map diagnostics reuse the chunk spatial index and inspect only viewport-intersecting cell ranges. Sparse promoted instances are inspected independently so a moved instance can be related to its original batch slot. Cyan outlines identify chunks; magenta outlines identify a promoted slot and current transformed quad, joined at their centers. Order labels observe the recorded gameplay order instead of re-sorting with the debug transform.
+Map diagnostics reuse each map's chunk spatial index and inspect only viewport-intersecting cell ranges. Cyan outlines identify chunks. Order labels observe the recorded gameplay order instead of re-sorting with the debug transform. Static maps and ordinary sprites keep separate scene identities; the overlay does not invent a relationship between a sprite and an imported cell.
 
 The external navigation grid is queried only for viewport-intersecting coordinates. Green means traversable, red blocked, and a missing cell has no outline. No pathfinding or implied collision is performed. If the provider changes internally, request another frame through the existing `RenderSurface2D.InvalidateFrame()` API; assigning a new provider invalidates rendering automatically.
 

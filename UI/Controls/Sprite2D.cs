@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using System.Numerics;
 using Cerneala.Drawing;
 using Cerneala.UI.Core;
@@ -10,22 +9,27 @@ using Cerneala.UI.Resources;
 
 namespace Cerneala.UI.Controls;
 
-[ContentProperty(nameof(Colliders))]
+[ContentProperty(nameof(Collider))]
 public sealed class Sprite2D : SceneNode2D
 {
     private readonly SpriteAnimationPlayback animationPlayback = new();
+    private readonly ColliderSlot2D colliderSlot;
 
     public Sprite2D()
     {
-        Colliders = new ColliderCollection2D(this);
+        colliderSlot = new ColliderSlot2D(this);
     }
 
-    public Collection<Collider2D> Colliders { get; }
+    public Collider2D? Collider
+    {
+        get => colliderSlot.Value;
+        set => colliderSlot.Value = value;
+    }
 
     internal override void AttachSurface(RenderSurface2D? surface)
     {
         base.AttachSurface(surface);
-        foreach (Collider2D collider in Colliders) { collider.AttachSurface(surface); }
+        colliderSlot.AttachSurface(surface);
     }
 
     // Shapes use destination units relative to the sprite anchor. Image sizing,

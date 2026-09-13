@@ -12,15 +12,15 @@ public abstract class Collider2D : SceneNode2D
         UIElement? candidate = parent ?? LogicalParent;
         if (role != ElementChildRole.Logical || candidate is null || !AllowsCollisionParent(candidate))
         {
-            throw new InvalidOperationException("Colliders can only be owned by Sprite2D or tiles, never by a scene or another UI element.");
+            throw new InvalidOperationException("Live colliders can only be owned by Sprite2D; static Tile colliders are immutable data, never standalone scene nodes.");
         }
         if (!ownerManaged)
         {
-            throw new InvalidOperationException("Change collider ownership through the owner's Colliders collection, not LogicalChildren or VisualChildren.");
+            throw new InvalidOperationException("Change collider ownership through the owner's Collider property, not LogicalChildren or VisualChildren.");
         }
     }
 
-    internal virtual bool AllowsCollisionParent(UIElement parent) => parent is Sprite2D or TileInstance2D;
+    internal virtual bool AllowsCollisionParent(UIElement parent) => parent is Sprite2D;
 
     public static readonly UiProperty<bool> EnabledProperty =
         UiProperty<bool>.Register(

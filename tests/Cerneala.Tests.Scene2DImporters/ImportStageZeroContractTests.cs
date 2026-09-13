@@ -30,18 +30,20 @@ public sealed class ImportStageZeroContractTests
         object result = Import(format, file);
         Assert.True(Value<bool>(result, "Success"), DiagnosticsText(result));
         object document = RequiredValue(result, "Document");
-        TileMap2DModel model = Assert.IsType<TileMap2DModel>(RequiredValue(Assert.Single(Items(document, "Levels")), "TileMap"));
+        Scene2DLevel level = Assert.IsType<Scene2DLevel>(Assert.Single(Items(document, "Levels")));
         using JsonDocument golden = JsonDocument.Parse(File.ReadAllText(Fixture("common.golden.json")));
         JsonElement expected = golden.RootElement;
-        Assert.Equal(new DrawSize(16, 16), model.TileSize);
-        Assert.Equal(new TileMapBounds2D(0, 0, 2, 2), model.Bounds);
-        Assert.Equal(2, model.Layers.Count);
-        Assert.Equal(2, Assert.Single(model.TileSets).Tiles.Count);
+        Assert.Equal(new DrawSize(16, 16), level.TileSize);
+        Assert.Equal(new TileMapBounds2D(0, 0, 2, 2), level.Bounds);
+        Assert.Equal(2, level.TileMaps.Count);
+        Assert.Equal(2, Assert.Single(level.TileSets).Tiles.Count);
         JsonElement.ArrayEnumerator layers = expected.GetProperty("layers").EnumerateArray();
         foreach (JsonElement expectedLayer in layers)
         {
             int order = expectedLayer.GetProperty("order").GetInt32();
-            TileLayer2DModel layer = model.Layers[order];
+            TileMap2DModel layer = level.TileMaps[order];
+            Assert.Equal(level.TileSize, layer.TileSize);
+            Assert.Equal(level.Bounds, layer.Bounds);
             Assert.Equal(order, layer.Order);
             Assert.Equal(expectedLayer.GetProperty("name").GetString(), Assert.IsType<string>(layer.Properties["$SourceName"]));
             Assert.Equal(new DrawPoint(2, 3), layer.Offset);
@@ -53,7 +55,7 @@ public sealed class ImportStageZeroContractTests
                 JsonElement coordinate = expectedCell.GetProperty("coordinate");
                 Assert.True(layer.TryGetCell(new TileCoordinate2D(coordinate[0].GetInt32(), coordinate[1].GetInt32()), out TileCell2D cell));
                 Assert.Equal(expectedCell.GetProperty("flip").GetInt32(), (int)cell.Flip);
-                Assert.True(model.TryResolveTile(cell.TileId, out _, out TileDefinition2D? definition));
+                Assert.True(layer.TryResolveTile(cell.TileId, out _, out TileDefinition2D? definition));
                 JsonElement rect = expectedCell.GetProperty("sourceRect");
                 Assert.Equal(new DrawRect(rect[0].GetSingle(), rect[1].GetSingle(), rect[2].GetSingle(), rect[3].GetSingle()), definition!.SourceRect);
             }
@@ -69,9 +71,9 @@ public sealed class ImportStageZeroContractTests
     {
         object result = Import("Tiled", "tiled-infinite.tmj");
         Assert.True(Value<bool>(result, "Success"), DiagnosticsText(result));
-        TileMap2DModel model = ImportedMap(result);
-        Assert.Null(model.Bounds);
-        TileLayer2DModel layer = Assert.Single(model.Layers);
+        Scene2DLevel level = ImportedLevel(result);
+        Assert.Null(level.Bounds);
+        TileMap2DModel layer = Assert.Single(level.TileMaps);
         Assert.Equal(2, layer.Chunks.Count);
         Assert.Equal([new TileCoordinate2D(-2, -1), new TileCoordinate2D(14, -1)], layer.Chunks.Select(static chunk => chunk.Origin));
         Assert.Equal(8, layer.Chunks.Sum(static chunk => chunk.Tiles.Count));
@@ -83,7 +85,7 @@ public sealed class ImportStageZeroContractTests
     {
         object result = Import("Tiled", "tiled-flips.tmj");
         Assert.True(Value<bool>(result, "Success"), DiagnosticsText(result));
-        TileCell2D[] cells = Assert.Single(ImportedMap(result).Layers).Chunks.SelectMany(static chunk => chunk.Tiles).ToArray();
+        TileCell2D[] cells = Assert.Single(ImportedLevel(result).TileMaps).Chunks.SelectMany(static chunk => chunk.Tiles).ToArray();
         Assert.Equal(Enumerable.Range(0, 8), cells.Select(static cell => (int)cell.Flip));
         Assert.All(cells, static cell => Assert.Equal(1, cell.TileId));
     }
@@ -94,12 +96,12 @@ public sealed class ImportStageZeroContractTests
     {
         object result = Import("Tiled", "tiled-group.tmj");
         Assert.True(Value<bool>(result, "Success"), DiagnosticsText(result));
-        TileMap2DModel model = ImportedMap(result);
-        Assert.Equal(["1", "2"], model.Layers.Select(static layer => layer.Id));
-        Assert.All(model.Layers, static layer => Assert.Equal(new DrawPoint(12, -1), layer.Offset));
-        Assert.Equal(0.5f, model.Layers[0].Opacity);
-        Assert.Equal(0.25f, model.Layers[1].Opacity);
-        Assert.Equal((byte)128, model.Layers[0].Tint.A);
+        Scene2DLevel level = ImportedLevel(result);
+        Assert.Equal(["1", "2"], level.TileMaps.Select(static map => map.Id));
+        Assert.All(level.TileMaps, static map => Assert.Equal(new DrawPoint(12, -1), map.Offset));
+        Assert.Equal(0.5f, level.TileMaps[0].Opacity);
+        Assert.Equal(0.25f, level.TileMaps[1].Opacity);
+        Assert.Equal((byte)128, level.TileMaps[0].Tint.A);
     }
 
     [Theory]
@@ -134,14 +136,10 @@ public sealed class ImportStageZeroContractTests
         Assert.Equal("Closed", properties["InitialState"]);
         Assert.False(promotion is UIElement);
         Assert.False(document is UIElement);
-        TileMap2DModel model = Assert.IsType<TileMap2DModel>(RequiredValue(level, "TileMap"));
-        TileMap2D map = new() { Model = model };
-        Assert.Empty(map.Layers.SelectMany(layer => layer.PromotedTiles));
+        TileMap2DModel model = Assert.Single(Assert.IsType<Scene2DLevel>(level).TileMaps.Where(map => map.Id == "1"));
+        Assert.True(model.TryGetCell(new(x, y), out TileCell2D cell));
         int? tileId = Property(promotion, "TileId") is int overrideId ? overrideId : null;
-        TileInstance2D node = map.Promote(Value<TileCellKey2D>(promotion, "Cell"), tileId);
-        Assert.Same(node, map.Promote(Value<TileCellKey2D>(promotion, "Cell")));
-        Assert.Single(map.Layers.SelectMany(layer => layer.PromotedTiles));
-        Assert.True(map.Demote(Value<TileCellKey2D>(promotion, "Cell")));
+        Assert.True(model.TryResolveTile(tileId ?? cell.TileId, out _, out _));
     }
 
     [Theory]
@@ -189,8 +187,8 @@ public sealed class ImportStageZeroContractTests
         return InvokeStatic(importerType, "Import", Fixture(file), options);
     }
 
-    private static TileMap2DModel ImportedMap(object result) => Assert.IsType<TileMap2DModel>(
-        RequiredValue(Assert.Single(Items(RequiredValue(result, "Document"), "Levels")), "TileMap"));
+    private static Scene2DLevel ImportedLevel(object result) => Assert.IsType<Scene2DLevel>(
+        Assert.Single(Items(RequiredValue(result, "Document"), "Levels")));
 
     private static object InvokeStatic(Type type, string name, params object[] arguments)
     {

@@ -511,11 +511,6 @@ internal sealed class WindowApplicationRuntime : IDisposable
         {
             throw new ServoException("Servo input requires a visible, open Window.");
         }
-        if (sequence.Steps.Count == 0)
-        {
-            return Task.CompletedTask;
-        }
-
         ServoInputOperation operation = new(sequence, cancellationToken);
         context.ServoInputOperations.Enqueue(operation);
         context.RenderRequested = true;
@@ -720,24 +715,28 @@ internal sealed class WindowApplicationRuntime : IDisposable
         try
         {
             long processingStarted = Stopwatch.GetTimestamp();
-            long inputCollectionStarted = Stopwatch.GetTimestamp();
-            servoRequest = context.TryBeginServoInputFrame();
-            InputFrame inputFrame = servoRequest?.Step.Frame ??
-                (context.IsPreview
-                    ? context.PreviewInputDriver.GetCurrentFrame()
-                    : context.PlatformWindow.InputSource.GetFrame());
-            TimeSpan inputCollectionTime = Stopwatch.GetElapsedTime(inputCollectionStarted);
-            long retainedUpdateStarted = Stopwatch.GetTimestamp();
+            TimeSpan inputCollectionTime;
+            TimeSpan retainedUpdateTime;
             UiFrame frame;
-            if (renderTimeAlreadyAdvanced)
+            if (context.ServoInputOperations.Count > 0)
             {
-                frame = context.Host.UpdateAfterRenderTimeAdvance(inputFrame, context.PlatformWindow.Viewport, elapsedTime);
+                long retainedUpdateStarted = Stopwatch.GetTimestamp();
+                frame = UpdateServoInput(
+                    context, elapsedTime, renderTimeAlreadyAdvanced,
+                    out servoRequest, out inputCollectionTime);
+                retainedUpdateTime = Stopwatch.GetElapsedTime(retainedUpdateStarted) - inputCollectionTime;
             }
             else
             {
-                frame = context.Host.Update(inputFrame, context.PlatformWindow.Viewport, elapsedTime);
+                long inputCollectionStarted = Stopwatch.GetTimestamp();
+                InputFrame inputFrame = CollectPlatformInput(context);
+                inputCollectionTime = Stopwatch.GetElapsedTime(inputCollectionStarted);
+                long retainedUpdateStarted = Stopwatch.GetTimestamp();
+                frame = renderTimeAlreadyAdvanced
+                    ? context.Host.UpdateAfterRenderTimeAdvance(inputFrame, context.PlatformWindow.Viewport, elapsedTime)
+                    : context.Host.Update(inputFrame, context.PlatformWindow.Viewport, elapsedTime);
+                retainedUpdateTime = Stopwatch.GetElapsedTime(retainedUpdateStarted);
             }
-            TimeSpan retainedUpdateTime = Stopwatch.GetElapsedTime(retainedUpdateStarted);
 
             if (!IsLiveContext(context))
             {
@@ -809,8 +808,11 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
             return true;
         }
-        catch (Exception exception) when (servoRequest is not null)
+        catch (Exception exception)
         {
+            // UpdateServoInput publishes the attempted request while unwinding. An
+            // exception filter runs before that finally block, so inspect it here.
+            if (servoRequest is null) throw;
             context.FailServoInputFrame(servoRequest, exception);
             return false;
         }
@@ -825,6 +827,44 @@ internal sealed class WindowApplicationRuntime : IDisposable
             }
         }
     }
+
+    private static UiFrame UpdateServoInput(
+        WindowContext context,
+        TimeSpan elapsedTime,
+        bool renderTimeAlreadyAdvanced,
+        out ServoInputFrameRequest? request,
+        out TimeSpan inputCollectionTime)
+    {
+        ServoInputFrameRequest? resolvedRequest = null;
+        TimeSpan collectionTime = default;
+        try
+        {
+            return context.Host.Update(
+                () =>
+                {
+                    long started = Stopwatch.GetTimestamp();
+                    try
+                    {
+                        resolvedRequest = context.TryBeginServoInputFrame();
+                        return resolvedRequest?.Step.Frame ?? CollectPlatformInput(context);
+                    }
+                    finally { collectionTime = Stopwatch.GetElapsedTime(started); }
+                },
+                context.PlatformWindow.Viewport,
+                elapsedTime,
+                advanceRenderTime: !renderTimeAlreadyAdvanced);
+        }
+        finally
+        {
+            request = resolvedRequest;
+            inputCollectionTime = collectionTime;
+        }
+    }
+
+    private static InputFrame CollectPlatformInput(WindowContext context) =>
+        context.IsPreview
+            ? context.PreviewInputDriver.GetCurrentFrame()
+            : context.PlatformWindow.InputSource.GetFrame();
 
     private WindowContext RequireContext(Window window)
     {
@@ -1020,7 +1060,13 @@ internal sealed class WindowApplicationRuntime : IDisposable
         {
             while (ServoInputOperations.TryPeek(out ServoInputOperation? operation))
             {
-                ServoInputFrameRequest? request = operation.GetNextFrame();
+                ServoInputFrameRequest? request;
+                try { request = operation.GetNextFrame(); }
+                catch (Exception exception)
+                {
+                    operation.Fail(exception);
+                    request = null;
+                }
                 if (request is not null)
                 {
                     return request;
@@ -1124,6 +1170,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
             if (nextIndex >= sequence.Steps.Count)
             {
+                Complete();
                 return null;
             }
 

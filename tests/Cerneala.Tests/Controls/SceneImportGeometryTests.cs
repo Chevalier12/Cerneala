@@ -21,14 +21,14 @@ public sealed class SceneImportGeometryTests
     [InlineData(6)]
     [InlineData(7)]
     [Trait("SceneImportStage", "1")]
-    public void RectangularTileFlipPreservesUvCornersAndCollisionBeforeAndAfterPromotion(int flags)
+    public void RectangularTileFlipPreservesUvCornersAndCollision(int flags)
     {
         DrawSize size = new(20, 10);
         TileColliderDescriptor2D descriptor = new(TileColliderShape2D.Box, width: 4, height: 2, offsetX: 2, offsetY: 1);
         TileSet2D tileset = new("Atlas", new ResourceId<ImageResource>("Atlas"),
-            [new TileDefinition2D(1, new DrawRect(0, 0, 20, 10), colliders: [descriptor])]);
-        TileMap2D map = new() { Model = new(size, [tileset],
-            [new TileLayer2DModel("Tiles", [new TileChunk2D(default, 1, 1, [new TileCell2D(1, (TileFlip2D)flags)])])]) };
+            [new TileDefinition2D(1, new DrawRect(0, 0, 20, 10), collider: descriptor)]);
+        TileMap2D map = new() { Model = new("Tiles", size, [tileset],
+            [new TileChunk2D(default, 1, 1, [new TileCell2D(1, (TileFlip2D)flags)])]) };
         Scene2D scene = new();
         scene.Children.Add(map);
         RenderSurface2D surface = new() { Scene = scene };
@@ -45,13 +45,6 @@ public sealed class SceneImportGeometryTests
         Assert.Single(OverlapCircle(scene, interior, 0.1f));
         Assert.Empty(OverlapCircle(scene, exterior, 0.1f));
 
-        TileInstance2D promoted = map.Promote(new TileCellKey2D("Tiles", 0, 0));
-        promoted.Flip = (TileFlip2D)flags;
-        DrawCommand draw = Assert.Single(Record(surface).Where(command => command.Kind == DrawCommandKind.DrawImage));
-        AssertCorners(draw.Rect, new DrawImageOptions(draw.ImageSource, rotation: draw.ImageRotation, origin: draw.ImageOrigin, flip: draw.ImageFlip), flags);
-        Assert.Single(OverlapCircle(scene, interior, 0.1f));
-        Assert.True(map.Demote(new TileCellKey2D("Tiles", 0, 0)));
-        Assert.Single(Record(surface).Where(command => command.Kind == DrawCommandKind.DrawSpriteBatch));
     }
 
     [Theory]
@@ -64,7 +57,7 @@ public sealed class SceneImportGeometryTests
         segment.GetType().GetProperty("EndX")!.SetValue(segment, 10f);
         if (rotated) { segment.Rotation = MathF.PI / 2; }
         Scene2D scene = new();
-        scene.Children.Add(new Sprite2D { Image = new ImageReference(new Image()), Colliders = { segment } });
+        scene.Children.Add(new Sprite2D { Image = new ImageReference(new Image()), Collider = segment });
         Matrix3x2 transform = rotated ? Matrix3x2.CreateRotation(MathF.PI / 2) : Matrix3x2.Identity;
         Vector2 Point(float x, float y) => Vector2.Transform(new Vector2(x, y), transform);
         Vector2 Direction(float x, float y) => Vector2.TransformNormal(new Vector2(x, y), transform);
@@ -101,7 +94,7 @@ public sealed class SceneImportGeometryTests
         arguments[0] = TileColliderShape2D.Circle;
         arguments[Array.FindIndex(constructor.GetParameters(), parameter => parameter.Name == "localTransform")] = Matrix3x2.CreateScale(10, 2) * Matrix3x2.CreateTranslation(12, 3);
         TileColliderDescriptor2D descriptor = (TileColliderDescriptor2D)constructor.Invoke(arguments);
-        Tile tile = new(new ImageReference(new Image()), [descriptor]);
+        Tile tile = new(new ImageReference(new Image()), descriptor);
         Scene2D scene = new();
         scene.Children.Add(new TileMap2D { Model = new TileMap2DModel([tile]) });
         CollisionHit2D horizontal = Assert.Single(scene.CollisionWorld.Raycast(new Vector2(0, 3), Vector2.UnitX, 32));
@@ -114,7 +107,7 @@ public sealed class SceneImportGeometryTests
     private static CollisionHit2D[] OverlapCircle(Scene2D scene, Vector2 center, float radius)
     {
         CircleCollider2D probe = new() { Radius = radius, TranslateX = center.X, TranslateY = center.Y };
-        Sprite2D probeSprite = new() { Image = new ImageReference(new Image()), Colliders = { probe } };
+        Sprite2D probeSprite = new() { Image = new ImageReference(new Image()), Collider = probe };
         scene.Children.Add(probeSprite);
         try { return scene.CollisionWorld.Overlap(probe); }
         finally { scene.Children.Remove(probeSprite); }

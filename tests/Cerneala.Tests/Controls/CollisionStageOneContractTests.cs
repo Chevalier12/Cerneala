@@ -54,7 +54,7 @@ public sealed class CollisionStageOneContractTests
             TranslateX = 5
         };
         Scene2D inner = new() { TranslateY = 7, Scale = 2 };
-        inner.Children.Add(new Sprite2D { Colliders = { collider } });
+        inner.Children.Add(new Sprite2D { Collider = collider });
         Scene2D root = new() { TranslateX = 10 };
         root.Children.Add(inner);
 
@@ -71,7 +71,7 @@ public sealed class CollisionStageOneContractTests
         Scene2D group = new();
         BoxCollider2D collider = new();
         root.Children.Add(group);
-        Sprite2D sprite = new() { Colliders = { collider } };
+        Sprite2D sprite = new() { Collider = collider };
         group.Children.Add(sprite);
         List<SceneCollisionMutation2D> mutations = [];
         root.CollisionMutation += mutations.Add;
@@ -85,9 +85,9 @@ public sealed class CollisionStageOneContractTests
         Assert.Equal(3, mutations.Count);
         group.TranslateX = 8;
         Assert.Equal(4, mutations.Count);
-        sprite.Colliders.Remove(collider);
+        sprite.Collider = null;
         Assert.Equal(5, mutations.Count);
-        sprite.Colliders.Add(collider);
+        sprite.Collider = collider;
         Assert.Equal(6, mutations.Count);
 
         Assert.Equal(
@@ -111,7 +111,7 @@ public sealed class CollisionStageOneContractTests
         UIRoot uiRoot = new(motionClock: clock);
         Scene2D scene = new();
         BoxCollider2D collider = new();
-        scene.Children.Add(new Sprite2D { Colliders = { collider } });
+        scene.Children.Add(new Sprite2D { Collider = collider });
         RenderSurface2D surface = new() { Scene = scene };
         uiRoot.VisualChildren.Add(surface);
         List<SceneCollisionMutation2D> mutations = [];
@@ -169,7 +169,7 @@ public sealed class CollisionStageOneContractTests
         Sprite2D doorVisual = new();
         BoxCollider2D doorCollider = new() { Width = 16, Height = 4 };
         house.Children.Add(doorVisual);
-        doorVisual.Colliders.Add(doorCollider);
+        doorVisual.Collider = doorCollider;
         ObservableValue<bool> isClosed = new(true);
         using IDisposable visualBinding = BindingOperations.BindOneWay(
             doorVisual,

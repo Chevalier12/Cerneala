@@ -3,12 +3,10 @@
 ## Definition
 
 Namespace: `Cerneala.UI.Controls`
-
 Assembly/Project: `Cerneala`
-
 Source: `UI/Controls/Scene2DDocument.cs`
 
-Identifies a sparse candidate for explicit tile promotion while retaining template/gameplay metadata.
+Preserves a sparse imported cell address and application metadata for individual scene composition.
 
 ```csharp
 public sealed class TilePromotion2D
@@ -24,78 +22,31 @@ var candidate = new TilePromotion2D(
 
 ## Remarks
 
-Construction requires a nonempty layer identity and an optional positive override ID. Scene2DLevel validates that the cell exists, the resolved tile ID is defined, and no address is duplicated. An existing empty cell needs an explicit override.
+Construction requires a nonempty map identity and an optional positive override ID. `Scene2DLevel` validates that the map and cell exist, that the resolved tile ID is defined, and that no address is duplicated. An existing empty cell needs an explicit override.
 
-This is data, not TileInstance2D. Composition calls `TileMap2D.Promote` or declares a `TileInstance2D` under the matching `TileLayer2D`, and supplies any input/collider/Aspect/Motion/Prism behavior. No automatic promotion occurs during validation or import.
+This class is metadata, not a UI node or an automatic extraction operation. Tiled/LDtk keep the external `CernealaRole="Promote"`, `TileLayer`, `TileX`, and `TileY` conventions; the source layer identity becomes `Cell.MapId`.
 
-### Imported interactive door
+Application composition decides whether to represent a candidate as an ordinary [Sprite2D](Cerneala.UI.Controls.Sprite2D.md). It must explicitly remove any replaced static cell from the published map, select the image/source rectangle, convert the grid coordinate to pixels, and preserve any required source offsets, tint, opacity, and scene order. Adding a sprite does not automatically suppress a static cell or inherit its collider. Restore static content by publishing the original immutable model and removing the sprite. Changed grid content must follow the chunk version contract.
 
-The compiled [Scene World sample](../../../Playground/Cerneala.Playground/SceneWorldShowcase.crn)
-imports the same village from Tiled and LDtk at load time. Its composition checks
-the promotion address `(layer "4", x 14, y 9)` before binding the imported map.
-Both assets place the door in a separate layer above the building facade, so
-neighboring wall cells do not cover its outer glow. Promotion itself preserves
-the cell's ordinary painter-order slot; it does not raise the cell above its layer.
-`InitialState` initializes the sample's `DoorClosed`/`DoorState` view-model
-properties; the importer does not interpret those values as UI instructions.
-
-This fragment is from that composition. It requires the sample's typed
-`SceneWorldState` data context, declared `DoorAnimations` resource and `OnDoor`
-handler; it is not a standalone map or a generic entity factory.
-
-```xml
-<TileLayer2D LayerId="4">
-  <TileInstance2D X="14" Y="9" MouseDown="OnDoor"
-                  ReplacesImportedColliders="true"
-                  Animations="$DoorAnimations"
-                  AnimationState="$DataContext.DoorState:OneWay">
-    <BoxCollider2D Width="16" Height="16"
-                   CollisionLayer="2" CollisionMask="1"
-                   Enabled="$DataContext.DoorClosed:OneWay" />
-    <TileInstance2D.Aspect>
-      @on MouseDown {
-        @animate with Tween(180ms) {
-          @from { Opacity = 0.65; }
-          @to { Opacity = 1; }
-        }
-      }
-    </TileInstance2D.Aspect>
-    @prism {
-      @layer DoorGlow {
-        @style OuterGlow { Size = 4; Opacity = 0.8; Color = #FFEAC777; }
-      }
-    }
-  </TileInstance2D>
-</TileLayer2D>
-```
-
-The handler toggles the sample state. The binding enables the collider only
-while closed; opening the door does not disable the node's own input. The
-handler leaves MouseDown unhandled so the declared Motion trigger can receive
-the same routed event. Ordinary cells stay in static batches, while the one
-promoted cell is removed from its static slot and drawn once as a node.
-
-Dynamic NPCs use `SceneItems2D` in the same sample. Their Aspect/Motion/Prism
-declarations belong on the sprite inside `@templates`, not on the items
-container. Image resources are registered by composition through the existing
-resource cache; the importer never decodes or uploads an atlas.
+The Scene World sample retains its imported document, publishes a runtime door map with cell `("4", 14, 9)` cleared, and declares a peer door sprite at pixel position `(224, 144)`. The sprite owns its live collider, animation state, routed input, Motion trigger, and Prism. `InitialState` initializes application state; the importer does not execute it. Other dynamic entities use [SceneItems2D](Cerneala.UI.Controls.SceneItems2D.md) templates.
 
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `TilePromotion2D(TileCellKey2D cell, int? tileId = null, IReadOnlyDictionary<string, object?>? properties = null)` | Copies the optional metadata and validates the address identity/override; owning-level validation resolves the cell. |
+| `TilePromotion2D(TileCellKey2D cell, int? tileId = null, IReadOnlyDictionary<string, object?>? properties = null)` | Copies metadata and validates address identity/override; the owning level resolves the cell. |
 
 ## Properties
 
 | Name | Description |
 | --- | --- |
-| `Cell` | Stable layer/coordinate address. |
+| `Cell` | Stable map/coordinate address. |
 | `TileId` | Optional positive replacement tile ID. |
-| `Properties` | Shallow copied source properties for composition/templates. |
+| `Properties` | Shallow copied application/source metadata. |
 
 ## See also
 
-- [TileInstance2D](Cerneala.UI.Controls.TileInstance2D.md)
-- [SceneItems2D](Cerneala.UI.Controls.SceneItems2D.md)
+- [Sprite2D](Cerneala.UI.Controls.Sprite2D.md)
+- [TileMap2D](Cerneala.UI.Controls.TileMap2D.md)
+- [TileCellKey2D](Cerneala.UI.Controls.TileCellKey2D.md)
 - [Scene2DDocument](Cerneala.UI.Controls.Scene2DDocument.md)

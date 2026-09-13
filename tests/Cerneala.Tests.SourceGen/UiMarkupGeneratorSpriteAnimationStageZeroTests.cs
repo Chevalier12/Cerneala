@@ -63,7 +63,7 @@ public sealed partial class UiMarkupGeneratorTests
 
     [Fact]
     [Trait("SpriteAnimationStage", "0")]
-    public void SpriteAndPromotedTileMarkupCompileWithIdleWalkAttackAspectMotionAndPrism()
+    public void SpritesCompileWithIdleWalkAttackAspectMotionAndPrism()
     {
         const string markup = """
             <RenderSurface2D DataType="Cerneala.Tests.SourceGen.SpriteAnimationMarkupState"
@@ -112,14 +112,11 @@ public sealed partial class UiMarkupGeneratorTests
                       @layer HeroContent { Opacity = 1; @filter Blur { Radius = 1; } }
                     }
                   </Sprite2D>
-                  <TileMap2D>
-                    <TileLayer2D LayerId="Actors">
-                      <TileInstance2D X="2"
-                                      Y="3"
-                                      TileId="1"
+                      <Sprite2D Image="$HeroAtlas" X="32"
+                                      Y="48" Width="16" Height="16"
                                       Animations="$HeroAnimations"
                                       AnimationState="Idle">
-                        <TileInstance2D.Aspect>
+                        <Sprite2D.Aspect>
                           @on Loaded
                           {
                             @animate with Tween(100ms)
@@ -127,14 +124,12 @@ public sealed partial class UiMarkupGeneratorTests
                               @to { Opacity = 0.8; TranslateY = 2; }
                             }
                           }
-                        </TileInstance2D.Aspect>
+                        </Sprite2D.Aspect>
                         @prism
                         {
                           @layer TileContent { Opacity = 1; @filter Blur { Radius = 1; } }
                         }
-                      </TileInstance2D>
-                    </TileLayer2D>
-                  </TileMap2D>
+                      </Sprite2D>
                 </Scene2D>
               </RenderSurface2D.Scene>
             </RenderSurface2D>

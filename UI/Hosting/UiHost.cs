@@ -118,13 +118,24 @@ public sealed class UiHost
         return UpdateCore(inputFrame, viewport, elapsedTime, advanceRenderTime: false);
     }
 
-    private UiFrame UpdateCore(
-        InputFrame inputFrame,
-        UiViewport? viewport,
-        TimeSpan? elapsedTime,
+    internal UiFrame Update(
+        Func<InputFrame> resolveInput,
+        UiViewport viewport,
+        TimeSpan elapsedTime,
         bool advanceRenderTime)
     {
-        ArgumentNullException.ThrowIfNull(inputFrame);
+        ArgumentNullException.ThrowIfNull(resolveInput);
+        return UpdateCore(null, viewport, elapsedTime, advanceRenderTime, resolveInput);
+    }
+
+    private UiFrame UpdateCore(
+        InputFrame? inputFrame,
+        UiViewport? viewport,
+        TimeSpan? elapsedTime,
+        bool advanceRenderTime,
+        Func<InputFrame>? resolveInput = null)
+    {
+        if (resolveInput is null) ArgumentNullException.ThrowIfNull(inputFrame);
 
         UIRoot currentRoot = RequireRoot();
         currentRoot.Relay.VerifyAccess();
@@ -153,6 +164,10 @@ public sealed class UiHost
             }
             TimeSpan scheduledProcessingTime = Stopwatch.GetElapsedTime(updatePhaseStarted);
 
+            // Semantic input must see layout committed by this frame's scheduled work.
+            // Native coordinate input remains the already-collected immutable snapshot.
+            inputFrame ??= resolveInput!();
+            ArgumentNullException.ThrowIfNull(inputFrame);
             updatePhaseStarted = Stopwatch.GetTimestamp();
             InputBridge.Dispatch(currentRoot, inputFrame, frameTime);
             TimeSpan inputDispatchTime = Stopwatch.GetElapsedTime(updatePhaseStarted);

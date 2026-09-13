@@ -29,7 +29,7 @@ Inheritance:
 
 The local center is `(OffsetX, OffsetY)`. The radius and center are transformed through the collider and every ancestor `Scene2D` when scene-space geometry is requested.
 
-Live circles attach only through `Sprite2D.Colliders` or `TileInstance2D.Colliders`, following the owner's pose. The example supplies collision geometry; assign the sprite's `Image` separately for drawing. Under a static `Tile`, the same shape name authors an immutable descriptor with literal values. See [Collider2D](Cerneala.UI.Controls.Collider2D.md) for ownership and independent shape sizing.
+A live circle must be the single `Sprite2D.Collider`, following the owner's pose. The example supplies collision geometry; assign the sprite's `Image` separately for drawing. Under a static `Tile`, the same shape name authors its one optional immutable descriptor with literal values. See [Collider2D](Cerneala.UI.Controls.Collider2D.md) for ownership and independent shape sizing.
 
 `Radius` must remain finite and greater than zero. It has a float mixer and can be controlled by Aspect, bindings, direct assignment, or Motion. Each accepted change follows the same collision-geometry invalidation path.
 

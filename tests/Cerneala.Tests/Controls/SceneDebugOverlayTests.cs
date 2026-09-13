@@ -23,11 +23,11 @@ public sealed class SceneDebugOverlayTests
     [Fact]
     public void CachedTileLabelsFollowCellValuesFlagsAndMutableCultureFormatting()
     {
-        TileMap2DModel Model(int tileId) => new(new DrawSize(16, 16),
+        TileMap2DModel Model(int tileId) => new("ground", new DrawSize(16, 16),
             [new TileSet2D("atlas", new ResourceId<ImageResource>("atlas"),
                 [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16)),
                  new TileDefinition2D(2, new DrawRect(0, 0, 16, 16))])],
-            [new TileLayer2DModel("ground", [new TileChunk2D(new TileCoordinate2D(-1, -1), 1, 1, [new TileCell2D(tileId)])])]);
+            [new TileChunk2D(new TileCoordinate2D(-1, -1), 1, 1, [new TileCell2D(tileId)])]);
         TileMap2D map = new() { Model = Model(1), TranslateX = 16, TranslateY = 16 };
         map.Resources.SetResource(new ResourceId<ImageResource>("atlas"), new ImageResource(new TestImage()));
         Scene2DDebugOverlay overlay = new() { Flags = Scene2DDebugFlags.TileCoordinates | Scene2DDebugFlags.TileIds };
@@ -215,7 +215,6 @@ public sealed class SceneDebugOverlayTests
     [InlineData(Scene2DDebugFlags.TileIds)]
     [InlineData(Scene2DDebugFlags.Order)]
     [InlineData(Scene2DDebugFlags.Navigation)]
-    [InlineData(Scene2DDebugFlags.PromotedTiles)]
     public void EveryFlagEmitsOnlyItsOwnCategory(Scene2DDebugFlags flag)
     {
         (Scene2D scene, Scene2DDebugOverlay overlay, _) = Fixture();
@@ -225,7 +224,6 @@ public sealed class SceneDebugOverlayTests
         Assert.True(d.Primitives > 0);
         Assert.Equal(flag == Scene2DDebugFlags.Colliders, d.Colliders > 0);
         Assert.Equal(flag == Scene2DDebugFlags.Navigation, d.NavigationCells > 0);
-        Assert.Equal(flag == Scene2DDebugFlags.PromotedTiles, d.PromotedTiles > 0);
         Assert.Equal(flag is Scene2DDebugFlags.TileCoordinates or Scene2DDebugFlags.TileIds, d.VisitedTiles > 0);
         Assert.Contains(commands, c => c.Kind is DrawCommandKind.DrawRectangle or DrawCommandKind.DrawText);
     }
@@ -304,16 +302,15 @@ public sealed class SceneDebugOverlayTests
     {
         List<TileChunk2D> chunks = [new(new TileCoordinate2D(0, 0), 4, 4, Enumerable.Repeat(new TileCell2D(1), 16))];
         for (int i = 0; i < remoteChunks; i++) { chunks.Add(new TileChunk2D(new TileCoordinate2D(1000 + i * 4, 1000), 4, 4, Enumerable.Repeat(new TileCell2D(1), 16))); }
-        TileMap2D map = new() { Model = new TileMap2DModel(new DrawSize(16, 16),
+        TileMap2D map = new() { Model = new TileMap2DModel("ground", new DrawSize(16, 16),
             [new TileSet2D("atlas", new ResourceId<ImageResource>("atlas"), [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16))])],
-            [new TileLayer2DModel("ground", chunks)]) };
+            chunks) };
         map.Resources.SetResource(new ResourceId<ImageResource>("atlas"), new ImageResource(new TestImage()));
-        map.Promote(new TileCellKey2D("ground", 1, 1)).TranslateX = 8;
         Scene2DDebugOverlay overlay = new() { NavigationGrid = new Grid() };
         Scene2D scene = new();
         scene.Children.Add(map);
-        scene.Children.Add(new Sprite2D { Colliders = { new BoxCollider2D { Width = 16, Height = 16 } } });
-        scene.Children.Add(new Sprite2D { X = 10000, Colliders = { new BoxCollider2D { Width = 16, Height = 16 } } });
+        scene.Children.Add(new Sprite2D { Collider = new BoxCollider2D { Width = 16, Height = 16 } });
+        scene.Children.Add(new Sprite2D { X = 10000, Collider = new BoxCollider2D { Width = 16, Height = 16 } });
         scene.Children.Add(overlay);
         return (scene, overlay, map);
     }

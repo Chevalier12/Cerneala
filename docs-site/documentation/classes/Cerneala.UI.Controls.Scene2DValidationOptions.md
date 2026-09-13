@@ -31,10 +31,9 @@ All values are init-only and must be positive when validation starts. Defaults a
 | `MaxDiagnostics` | 128 | Maximum retained diagnostics; failure state survives truncation. |
 | `MaxCells` | 1,048,576 | Total decoded cells across the validated map/document. |
 | `MaxChunks` | 65,536 | Total chunks. |
-| `MaxLayers` | 4,096 | Total tile/layer models, including data-only layers. |
+| `MaxMaps` | 4,096 | Total independent tile maps in the validated document, including data-only maps. |
 | `MaxEntities` | 65,536 | Total entities plus promotion references in a document. |
 
 ## See also
 
 - [Scene2DModelValidator](Cerneala.UI.Controls.Scene2DModelValidator.md)
-

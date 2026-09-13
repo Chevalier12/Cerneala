@@ -65,7 +65,7 @@ This fragment defines animation, not the image or destination: supply those thro
 
 For binding, declare the actual application data type on the markup root and use `AnimationState="$DataContext.AnimationState:OneWay"`; the application owns that notifying string property. Static unknown states and invalid definitions produce `CERNEALAUI016`; an unresolved runtime-bound state uses the target's static visual fallback.
 
-The same resource can be referenced by [TileInstance2D](Cerneala.UI.Controls.TileInstance2D.md) within a real map/layer. Each promoted cell keeps independent playback. Select and style the individual sprite/tile with its normal Aspect, Motion, and Prism syntax; the resource set itself is not an animated UI target.
+The same immutable resource can be shared by multiple sprites; each sprite keeps independent playback. Select and style the sprite with normal Aspect, Motion, and Prism syntax. Static `Tile` data has no animation state, and the resource set itself is not an animated UI target.
 
 ## Constructors
 

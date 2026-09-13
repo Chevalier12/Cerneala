@@ -18,14 +18,14 @@ public sealed class Scene2DDocument
 
 ```csharp
 var document = new Scene2DDocument(
-    [new Scene2DLevel("Level", model)],
+    [new Scene2DLevel("Level", [model])],
     [new Scene2DAsset(new ResourceId<ImageResource>("Atlas"),
         "atlas.png", new DrawSize(32, 16))]);
 ```
 
 ## Remarks
 
-The constructor copies collections, checks the core schema version, and runs the shared document validator. Invalid identities, references, atlas rectangles, and budgets throw an annotated argument exception before the document can be returned. The core schema version is independent of Tiled/LDtk format versions.
+The constructor copies collections, checks the core schema version, and runs the shared document validator. Invalid identities, references, atlas rectangles, and budgets throw an annotated argument exception before the document can be returned. The core schema version is 2, independent of Tiled/LDtk format versions. Each level exposes an ordered `TileMaps` sequence instead of a single multilayer model; schema 1 is not accepted. Source catalog/grid/extent metadata stays on the level even when it has no maps.
 
 No file is parsed or opened, no image is decoded, and no UI node, resource registration, promotion, or collision world is created. Composition owns publication. Metadata dictionaries are shallow snapshots, like existing tile model dictionaries; opaque values are not deep-cloned.
 
@@ -38,29 +38,29 @@ operations, not source-generator parsers. Their canonical pages specify the
 closed format/version matrices, supported fields and explicit non-goals.
 
 The [Scene World Playground composition](../../../Playground/Cerneala.Playground/SceneWorldShowcase.crn)
-binds the imported tile model to `TileMap2D`, declares its atlas resource,
-promoted door, colliders, animation sets and dynamic templates in markup.
+binds independent imported models to peer `TileMap2D` nodes and declares atlas
+resources, an ordinary door sprite, colliders, animation sets, and dynamic templates in markup.
 Its [code-behind](../../../Playground/Cerneala.Playground/SceneWorldShowcase.crn.cs)
 loads/validates the document, maps the sample's six box entities to template
 data, and handles gameplay through routed input and `MoveAndCollide`. It does
 not rebuild the declared scene in C# or create one UI node per static tile.
 
-The separate original Tiled and LDtk fixtures represent 4,096 equal tile cells
-and equivalent gameplay entities. Tiled retains 64 sparse chunks; LDtk retains
-two finite tile-layer chunks. Chunk representation and source provenance are
-not asserted identical. See [sparse promotion and the interactive door](Cerneala.UI.Controls.TilePromotion2D.md).
+The separate Tiled and LDtk fixtures preserve equivalent tile content and gameplay
+entities while retaining their different chunk representations and source provenance.
+The published runtime door map clears the cell drawn by the peer door sprite; the
+imported document remains unchanged. See [sparse composition metadata](Cerneala.UI.Controls.TilePromotion2D.md).
 
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `Scene2DDocument(levels, assets, schemaVersion = 1, properties = null, validationOptions = null)` | Constructs and validates one complete core document. |
+| `Scene2DDocument(levels, assets, schemaVersion = 2, properties = null, validationOptions = null)` | Constructs and validates one complete core document. |
 
 ## Fields
 
 | Name | Value | Description |
 | --- | ---: | --- |
-| `CurrentSchemaVersion` | 1 | Exact accepted core document schema. |
+| `CurrentSchemaVersion` | 2 | Exact accepted core document schema. |
 
 ## Properties
 

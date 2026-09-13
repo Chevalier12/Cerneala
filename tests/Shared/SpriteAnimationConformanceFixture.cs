@@ -28,7 +28,7 @@ internal sealed class SpriteAnimationConformanceFixture : IDisposable
     private readonly Sprite2D grouped;
     private readonly Scene2D entity;
     private readonly Scene2D prismGroup;
-    private readonly TileInstance2D tile;
+    private readonly Sprite2D tile;
     private readonly BoxCollider2D collider;
     private readonly TileMap2D map;
     private bool prepared;
@@ -58,29 +58,31 @@ internal sealed class SpriteAnimationConformanceFixture : IDisposable
         entity = new Scene2D { TranslateX = 8, TranslateY = 8, Layer = 2 };
         collider = new BoxCollider2D { Width = 16, Height = 16 };
         entity.Children.Add(sprite);
-        sprite.Colliders.Add(collider);
+        sprite.Collider = collider;
         reference = CreateSprite(new DrawRect(8, 48, 16, 16));
         grouped = CreateSprite(new DrawRect(0, 0, 16, 16));
         prismGroup = new Scene2D { TranslateX = 36, TranslateY = 8, Scale = 1.25f };
         prismGroup.Children.Add(grouped);
         map = new TileMap2D
         {
-            TranslateX = 48, TranslateY = 40,
-            Model = new TileMap2DModel(new DrawSize(8, 8),
+            Model = new TileMap2DModel("Ground", new DrawSize(8, 8),
                 [new TileSet2D("Atlas", atlas, [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16))])],
-                [new TileLayer2DModel("Ground", [new TileChunk2D(new TileCoordinate2D(0, 0), 8, 4,
-                    Enumerable.Repeat(new TileCell2D(1), 32))])], new TileMapBounds2D(0, 0, 8, 4))
+                [new TileChunk2D(new TileCoordinate2D(0, 0), 8, 4,
+                    Enumerable.Range(0, 32).Select(index => index == 11 ? default : new TileCell2D(1)))], new TileMapBounds2D(0, 0, 8, 4))
         };
-        tile = map.Promote(new TileCellKey2D("Ground", 3, 1));
+        tile = new Sprite2D { Image = new(atlas), X = 24, Y = 8, Width = 8, Height = 8 };
         tile.IsAnimationPaused = true;
-        tile.Flip = TileFlip2D.Horizontal;
+        tile.Flip = RenderSurface2DSpriteFlip.Horizontal;
         tile.Aspect = new ElementAspect([
-            new ElementAspectValue(TileInstance2D.AnimationsProperty, clips),
-            new ElementAspectValue(TileInstance2D.AnimationStateProperty, "Walk"),
-            new ElementAspectValue(TileInstance2D.TintProperty, new Color(180, 240, 200))]);
-        tile.Colliders.Add(new BoxCollider2D { Width = 8, Height = 8 });
+            new ElementAspectValue(Sprite2D.AnimationsProperty, clips),
+            new ElementAspectValue(Sprite2D.AnimationStateProperty, "Walk"),
+            new ElementAspectValue(Sprite2D.TintProperty, new Color(180, 240, 200))]);
+        tile.Collider = new BoxCollider2D { Width = 8, Height = 8 };
         Scene2D scene = new() { OrderMode = SceneOrderMode.Layer };
-        scene.Children.Add(map);
+        Scene2D mapGroup = new() { TranslateX = 48, TranslateY = 40 };
+        mapGroup.Children.Add(map);
+        mapGroup.Children.Add(tile);
+        scene.Children.Add(mapGroup);
         scene.Children.Add(prismGroup);
         scene.Children.Add(reference);
         scene.Children.Add(entity);
@@ -145,7 +147,7 @@ internal sealed class SpriteAnimationConformanceFixture : IDisposable
             throw new InvalidOperationException("Sprite Prism changed the UI geometric picking target.");
         point = Surface.SceneToRoot(new Vector2(75, 51));
         if (!ReferenceEquals(new HitTestService().HitTest(Surface.Root!, point.X, point.Y)?.Element, tile))
-            throw new InvalidOperationException("Promoted-tile Prism changed UI geometric picking.");
+            throw new InvalidOperationException("The map-adjacent sprite's Prism changed UI geometric picking.");
     }
 
     internal static void VerifyCaptures(string directory, string backend)

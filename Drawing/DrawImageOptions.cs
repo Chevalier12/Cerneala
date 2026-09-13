@@ -42,11 +42,11 @@ public sealed record DrawImageOptions
         {
             throw new ArgumentOutOfRangeException(nameof(layerDepth));
         }
-        if (!Enum.IsDefined(sampling))
+        if (sampling is not (DrawSamplingMode.Point or DrawSamplingMode.Linear))
         {
             throw new ArgumentOutOfRangeException(nameof(sampling));
         }
-        if (!Enum.IsDefined(addressMode))
+        if (addressMode is not (DrawAddressMode.Clamp or DrawAddressMode.Wrap))
         {
             throw new ArgumentOutOfRangeException(nameof(addressMode));
         }
@@ -180,14 +180,27 @@ internal static class DrawImageGeometry
         DrawRect destination,
         DrawImageOptions options)
     {
-        DrawPoint[] corners =
-        [
-            TransformDestinationPoint(image, destination, options, 0, 0),
-            TransformDestinationPoint(image, destination, options, destination.Width, 0),
-            TransformDestinationPoint(image, destination, options, destination.Width, destination.Height),
-            TransformDestinationPoint(image, destination, options, 0, destination.Height)
-        ];
+        DrawPoint[] corners = new DrawPoint[4];
+        WriteDestinationCorners(image, destination, options, corners);
         return corners;
+    }
+
+    internal static void WriteDestinationCorners(
+        IDrawImage image,
+        DrawRect destination,
+        DrawImageOptions options,
+        Span<DrawPoint> corners)
+    {
+        if (corners.Length < 4) { throw new ArgumentException("Four corners are required.", nameof(corners)); }
+        DrawRect source = ResolveSource(image, options);
+        float originX = options.Origin.X * destination.Width / source.Width;
+        float originY = options.Origin.Y * destination.Height / source.Height;
+        float cosine = MathF.Cos(options.Rotation);
+        float sine = MathF.Sin(options.Rotation);
+        corners[0] = TransformDestinationPoint(destination, originX, originY, cosine, sine, 0, 0);
+        corners[1] = TransformDestinationPoint(destination, originX, originY, cosine, sine, destination.Width, 0);
+        corners[2] = TransformDestinationPoint(destination, originX, originY, cosine, sine, destination.Width, destination.Height);
+        corners[3] = TransformDestinationPoint(destination, originX, originY, cosine, sine, 0, destination.Height);
     }
 
     public static DrawPoint TransformDestinationPoint(
@@ -198,10 +211,23 @@ internal static class DrawImageGeometry
         float y)
     {
         DrawRect source = ResolveSource(image, options);
-        float localX = x - (options.Origin.X * destination.Width / source.Width);
-        float localY = y - (options.Origin.Y * destination.Height / source.Height);
-        float cosine = MathF.Cos(options.Rotation);
-        float sine = MathF.Sin(options.Rotation);
+        return TransformDestinationPoint(destination,
+            options.Origin.X * destination.Width / source.Width,
+            options.Origin.Y * destination.Height / source.Height,
+            MathF.Cos(options.Rotation), MathF.Sin(options.Rotation), x, y);
+    }
+
+    private static DrawPoint TransformDestinationPoint(
+        DrawRect destination,
+        float originX,
+        float originY,
+        float cosine,
+        float sine,
+        float x,
+        float y)
+    {
+        float localX = x - originX;
+        float localY = y - originY;
         return new DrawPoint(
             destination.X + (localX * cosine) - (localY * sine),
             destination.Y + (localX * sine) + (localY * cosine));
@@ -211,6 +237,17 @@ internal static class DrawImageGeometry
         IDrawImage image,
         DrawImageOptions options)
     {
+        DrawPoint[] coordinates = new DrawPoint[4];
+        WriteTextureCoordinates(image, options, coordinates);
+        return coordinates;
+    }
+
+    internal static void WriteTextureCoordinates(
+        IDrawImage image,
+        DrawImageOptions options,
+        Span<DrawPoint> coordinates)
+    {
+        if (coordinates.Length < 4) { throw new ArgumentException("Four texture coordinates are required.", nameof(coordinates)); }
         DrawRect source = ResolveSource(image, options);
         float left = source.X / image.Width;
         float top = source.Y / image.Height;
@@ -225,13 +262,10 @@ internal static class DrawImageGeometry
             (top, bottom) = (bottom, top);
         }
 
-        return
-        [
-            new DrawPoint(left, top),
-            new DrawPoint(right, top),
-            new DrawPoint(right, bottom),
-            new DrawPoint(left, bottom)
-        ];
+        coordinates[0] = new DrawPoint(left, top);
+        coordinates[1] = new DrawPoint(right, top);
+        coordinates[2] = new DrawPoint(right, bottom);
+        coordinates[3] = new DrawPoint(left, bottom);
     }
 
     public static Color EffectiveTint(DrawImageOptions options) =>

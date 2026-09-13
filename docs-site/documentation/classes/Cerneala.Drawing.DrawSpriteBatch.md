@@ -33,6 +33,8 @@ One batch uses exactly one platform-neutral image. Construction copies the sprit
 
 The batch does not own or dispose `Image`. Image changes participate in frame dependency tracking, while a new batch version changes retained identity and damage bounds.
 
+Recording a retained batch reuses its immutable command options, including after garbage collection. The command options contain the shared sampling and address modes; each sprite's tint, opacity, source rectangle, and geometry are already represented by the batch mesh. Recording does not reapply those per-sprite values.
+
 ## Constructors
 
 | Name | Description |

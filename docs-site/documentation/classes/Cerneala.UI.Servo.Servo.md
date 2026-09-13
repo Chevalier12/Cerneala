@@ -37,7 +37,9 @@ The Servo projection includes the logical scene input subtree of `RenderSurface2
 
 `Servo.IdProperty` is the attached identifier property used by `ById`. Values are trimmed; blank values become `null`.
 
-Target actions resolve the target immediately before input and reject hidden, disabled, detached, zero-bounds, or non-hit-testable elements. Pointer and keyboard actions use Cerneala `InputFrame` routing. A window action completes after its final input frame is presented; a retained-host action completes after `UiHost.Update` commits that frame.
+Target actions resolve the target immediately before input, after the owning frame has processed scheduled layout, and reject hidden, disabled, detached, zero-bounds, or non-hit-testable elements. A target's coordinates and actionable state are not frozen when the action enters the queue. Pointer and keyboard actions use Cerneala `InputFrame` routing. A window action completes after its final input frame is presented; a retained-host action completes after `UiHost.Update` commits that frame.
+
+Target resolution does not wait for global idleness or add a settling frame. The resolved coordinates define the gesture; Servo does not continuously follow a target that moves after the gesture starts.
 
 The bounds center must hit the target or a descendant on the current input route. A union with a gap at its center can therefore be queryable but not actionable; Servo does not search for a substitute point. Disabled colliders remain queryable, but cannot supply a hit. Scene target screenshots use the same geometric bounds and capture the rendered window pixels there, not a separate rendering of the node.
 

@@ -161,6 +161,7 @@ public sealed class DrawSpriteBatch
         this.sprites = Array.AsReadOnly(copied);
         Sampling = copied[0].Options.Sampling;
         AddressMode = copied[0].Options.AddressMode;
+        CommandOptions = new DrawImageOptions(sampling: Sampling, addressMode: AddressMode);
         Mesh = DrawBatchMeshBuilder.BuildSprites(image, copied);
     }
 
@@ -183,6 +184,8 @@ public sealed class DrawSpriteBatch
         float opacity = 1) =>
         new(this, Mesh.Transform(transform, opacity));
 
+    internal DrawImageOptions CommandOptions { get; }
+
     internal DrawSpriteBatch WithImage(IDrawImage image) =>
         new(this, image, Mesh.WithImage(image));
 
@@ -192,6 +195,7 @@ public sealed class DrawSpriteBatch
         sprites = source.sprites;
         Sampling = source.Sampling;
         AddressMode = source.AddressMode;
+        CommandOptions = source.CommandOptions;
         Mesh = mesh;
     }
 
@@ -204,6 +208,7 @@ public sealed class DrawSpriteBatch
         sprites = source.sprites;
         Sampling = source.Sampling;
         AddressMode = source.AddressMode;
+        CommandOptions = source.CommandOptions;
         Mesh = mesh;
     }
 }
@@ -277,16 +282,20 @@ internal static class DrawBatchMeshBuilder
     {
         DrawVertex2D[] vertices = new DrawVertex2D[sprites.Count * 4];
         int[] indices = new int[sprites.Count * 6];
+        Span<DrawPoint> positions = stackalloc DrawPoint[4];
+        Span<DrawPoint> textureCoordinates = stackalloc DrawPoint[4];
         for (int index = 0; index < sprites.Count; index++)
         {
             DrawSprite2D sprite = sprites[index];
-            DrawPoint[] positions = DrawImageGeometry.GetDestinationCorners(
+            DrawImageGeometry.WriteDestinationCorners(
                 image,
                 sprite.Destination,
-                sprite.Options);
-            DrawPoint[] textureCoordinates = DrawImageGeometry.GetTextureCoordinates(
+                sprite.Options,
+                positions);
+            DrawImageGeometry.WriteTextureCoordinates(
                 image,
-                sprite.Options);
+                sprite.Options,
+                textureCoordinates);
             Color tint = DrawImageGeometry.EffectiveTint(sprite.Options);
             int vertex = index * 4;
             for (int corner = 0; corner < 4; corner++)
@@ -299,7 +308,7 @@ internal static class DrawBatchMeshBuilder
             CopyQuadIndices(indices, index * 6, vertex);
         }
 
-        return new DrawMesh2D(vertices, indices, image: image);
+        return DrawMesh2D.FromOwnedBuffers(vertices, indices, image: image);
     }
 
     private static void CopyQuadIndices(

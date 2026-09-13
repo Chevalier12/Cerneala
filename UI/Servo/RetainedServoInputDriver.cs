@@ -1,6 +1,7 @@
 using System.Globalization;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
+using Cerneala.UI.Elements;
 
 namespace Cerneala.UI.Servo;
 
@@ -28,63 +29,77 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
             throw new ArgumentNullException(nameof(dispatchSequence));
     }
 
-    public Task HoverAsync(float x, float y, CancellationToken cancellationToken)
+    public Task HoverAsync(Func<UIRoot, ServoActionTarget> resolveTarget, CancellationToken cancellationToken)
     {
-        ValidatePointerPosition(x, y);
-        List<ServoInputStep> steps = [];
-        AppendPointerMove(steps, x, y);
-        return DispatchAsync(steps, cancellationToken);
+        ArgumentNullException.ThrowIfNull(resolveTarget);
+        return DispatchAsync(new ServoInputSequence(() =>
+        {
+            ServoActionTarget target = ResolveTarget(resolveTarget);
+            List<ServoInputStep> steps = [];
+            AppendPointerMove(steps, target.X, target.Y);
+            return steps;
+        }), cancellationToken);
     }
 
-    public Task ClickAsync(float x, float y, CancellationToken cancellationToken)
+    public Task ClickAsync(Func<UIRoot, ServoActionTarget> resolveTarget, CancellationToken cancellationToken)
     {
-        ValidatePointerPosition(x, y);
-        List<ServoInputStep> steps = [];
-        AppendPointerMove(steps, x, y);
-        AppendPointerButton(steps, InputMouseButton.Left, isDown: true);
-        AppendPointerButton(steps, InputMouseButton.Left, isDown: false);
-        return DispatchAsync(steps, cancellationToken);
+        ArgumentNullException.ThrowIfNull(resolveTarget);
+        return DispatchAsync(new ServoInputSequence(() =>
+        {
+            ServoActionTarget target = ResolveTarget(resolveTarget);
+            List<ServoInputStep> steps = [];
+            AppendPointerMove(steps, target.X, target.Y);
+            AppendPointerButton(steps, InputMouseButton.Left, isDown: true);
+            AppendPointerButton(steps, InputMouseButton.Left, isDown: false);
+            return steps;
+        }), cancellationToken);
     }
 
     public Task DragAsync(
-        float startX,
-        float startY,
+        Func<UIRoot, ServoActionTarget> resolveTarget,
         float endX,
         float endY,
         int steps,
         CancellationToken cancellationToken)
     {
-        ValidatePointerPosition(startX, startY);
+        ArgumentNullException.ThrowIfNull(resolveTarget);
         ValidatePointerPosition(endX, endY);
         ArgumentOutOfRangeException.ThrowIfLessThan(steps, 1);
-        List<ServoInputStep> frames = new(steps + 3);
-        AppendPointerMove(frames, startX, startY);
-        AppendPointerButton(frames, InputMouseButton.Left, isDown: true);
-        for (int step = 1; step <= steps; step++)
+        return DispatchAsync(new ServoInputSequence(() =>
         {
-            float progress = step / (float)steps;
-            AppendPointerMove(
-                frames,
-                Lerp(startX, endX, progress),
-                Lerp(startY, endY, progress));
-        }
+            ServoActionTarget target = ResolveTarget(resolveTarget);
+            List<ServoInputStep> frames = new(steps + 3);
+            AppendPointerMove(frames, target.X, target.Y);
+            AppendPointerButton(frames, InputMouseButton.Left, isDown: true);
+            for (int step = 1; step <= steps; step++)
+            {
+                float progress = step / (float)steps;
+                AppendPointerMove(
+                    frames,
+                    Lerp(target.X, endX, progress),
+                    Lerp(target.Y, endY, progress));
+            }
 
-        AppendPointerButton(frames, InputMouseButton.Left, isDown: false);
-        return DispatchAsync(frames, cancellationToken);
+            AppendPointerButton(frames, InputMouseButton.Left, isDown: false);
+            return frames;
+        }), cancellationToken);
     }
 
     public Task ScrollAsync(
-        float x,
-        float y,
+        Func<UIRoot, ServoActionTarget> resolveTarget,
         int wheelDelta,
         CancellationToken cancellationToken)
     {
-        ValidatePointerPosition(x, y);
-        List<ServoInputStep> steps = [];
-        AppendPointerMove(steps, x, y);
-        PointerSnapshot next = pointer.WithWheelValue(checked(pointer.WheelValue + wheelDelta));
-        AppendStep(steps, next, keyboard, []);
-        return DispatchAsync(steps, cancellationToken);
+        ArgumentNullException.ThrowIfNull(resolveTarget);
+        return DispatchAsync(new ServoInputSequence(() =>
+        {
+            ServoActionTarget target = ResolveTarget(resolveTarget);
+            List<ServoInputStep> steps = [];
+            AppendPointerMove(steps, target.X, target.Y);
+            PointerSnapshot next = pointer.WithWheelValue(checked(pointer.WheelValue + wheelDelta));
+            AppendStep(steps, next, keyboard, []);
+            return steps;
+        }), cancellationToken);
     }
 
     public Task PressKeyAsync(
@@ -216,39 +231,64 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
 
     internal bool HasActivePointerRepeat => host.InputBridge.HasActivePointerRepeat;
 
-    private async Task DispatchAsync(
+    private Task DispatchAsync(
         IReadOnlyList<ServoInputStep> steps,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (steps.Count == 0)
         {
-            return;
+            return Task.CompletedTask;
         }
 
-        ServoInputSequence sequence = new(steps);
+        return DispatchAsync(new ServoInputSequence(steps), cancellationToken);
+    }
+
+    private async Task DispatchAsync(
+        ServoInputSequence sequence,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
         if (dispatchSequence is not null)
         {
             await dispatchSequence(sequence, cancellationToken).ConfigureAwait(false);
             return;
         }
 
-        DispatchImmediately(steps, cancellationToken);
+        DispatchImmediately(sequence, cancellationToken);
     }
 
     private void DispatchImmediately(
         IReadOnlyList<ServoInputStep> steps,
         CancellationToken cancellationToken = default)
     {
+        if (steps.Count > 0) DispatchImmediately(new ServoInputSequence(steps), cancellationToken);
+    }
+
+    private void DispatchImmediately(
+        ServoInputSequence sequence,
+        CancellationToken cancellationToken)
+    {
         ServoInputStep? attempted = null;
         try
         {
-            foreach (ServoInputStep step in steps)
+            int nextIndex = 0;
+            do
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                attempted = step;
-                host.Update(step.Frame, host.Viewport, TimeSpan.Zero);
+                host.Update(
+                    () =>
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        ServoInputStep step = sequence.Steps[nextIndex++];
+                        attempted = step;
+                        return step.Frame;
+                    },
+                    host.Viewport,
+                    TimeSpan.Zero,
+                    advanceRenderTime: true);
             }
+            while (nextIndex < sequence.Steps.Count);
 
             cancellationToken.ThrowIfCancellationRequested();
         }
@@ -273,6 +313,14 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
 
             throw;
         }
+    }
+
+    private ServoActionTarget ResolveTarget(Func<UIRoot, ServoActionTarget> resolveTarget)
+    {
+        ServoActionTarget target = resolveTarget(host.Root ?? throw new ServoException(
+            "The Servo UiHost does not currently have a root."));
+        ValidatePointerPosition(target.X, target.Y);
+        return target;
     }
 
     private void AppendPointerMove(List<ServoInputStep> steps, float x, float y)

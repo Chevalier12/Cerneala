@@ -51,20 +51,23 @@
             @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.7; } @to { Opacity = 1; } } }
           </Scene2D.Aspect>
           @prism { @layer WorldInk { @filter Blur { Radius = 0.25; } } }
-          <TileMap2D Name="Map" Model="$DataContext.Model:OneWay">
-            <TileMap2D.Aspect>
+          <Scene2D Name="MapGroup">
+            <Scene2D.Aspect>
               @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.7; } @to { Opacity = 1; } } }
-            </TileMap2D.Aspect>
+            </Scene2D.Aspect>
             @prism { @layer MapInk { @filter Blur { Radius = 0.25; } } }
-            <TileLayer2D LayerId="2">
-              <TileLayer2D.Aspect>
+            <TileMap2D Name="Map" Model="$DataContext.GroundModel:OneWay" />
+            <TileMap2D Name="BuildingsMap" Model="$DataContext.BuildingModel:OneWay">
+              <TileMap2D.Aspect>
                 @on Loaded { @animate with Tween(150ms) { @from { Opacity = 0.7; } @to { Opacity = 1; } } }
-              </TileLayer2D.Aspect>
+              </TileMap2D.Aspect>
               @prism { @layer BuildingInk { @filter Blur { Radius = 2; } } }
-            </TileLayer2D>
-            <TileLayer2D LayerId="4">
-              <TileInstance2D Name="Door" X="14" Y="9"
-                              Servo.Id="world-door" MouseDown="OnDoor" ReplacesImportedColliders="true"
+            </TileMap2D>
+            <TileMap2D Name="DoorsMap" Model="$DataContext.DoorModel:OneWay" />
+              <Sprite2D Name="Door" Image="$WorldAtlas" X="$DataContext.DoorX:OneWay" Y="$DataContext.DoorY:OneWay"
+                              Width="$DataContext.DoorWidth:OneWay" Height="$DataContext.DoorHeight:OneWay"
+                              Tint="$DataContext.DoorTint:OneWay" Opacity="$DataContext.DoorOpacity:OneWay"
+                              Servo.Id="world-door" MouseDown="OnDoor"
                               Animations="$DoorAnimations" AnimationState="$DataContext.DoorState:OneWay">
                 <BoxCollider2D Name="DoorCollider" Width="16" Height="16" CollisionLayer="2" CollisionMask="1"
                                Enabled="$DataContext.DoorClosed:OneWay">
@@ -72,13 +75,22 @@
                     @on Loaded { @animate with Tween(150ms) { @from { OffsetX = 1; } @to { OffsetX = 0; } } }
                   </BoxCollider2D.Aspect>
                 </BoxCollider2D>
-                <TileInstance2D.Aspect>
+                <Sprite2D.Aspect>
                   @on MouseDown { @animate with Tween(180ms) { @from { Opacity = 0.65; } @to { Opacity = 1; } } }
-                </TileInstance2D.Aspect>
+                </Sprite2D.Aspect>
                 @prism { @layer DoorGlow { @style OuterGlow { Size = 4; Opacity = 0.8; Color = #FFEAC777; } } }
-              </TileInstance2D>
-            </TileLayer2D>
-          </TileMap2D>
+              </Sprite2D>
+          </Scene2D>
+          <SceneItems2D Name="ImportedColliders" ItemsSource="$DataContext.Colliders:OneWay">
+            @templates {
+              <ContentTemplate DataType="local:SceneWorldBox">
+                <Sprite2D X="$DataContext.X" Y="$DataContext.Y">
+                  <BoxCollider2D Width="$DataContext.Width" Height="$DataContext.Height"
+                                 CollisionLayer="$DataContext.Layer" CollisionMask="$DataContext.Mask" />
+                </Sprite2D>
+              </ContentTemplate>
+            }
+          </SceneItems2D>
           <Scene2D Name="Actors" OrderMode="LayerThenY">
             <SceneItems2D Name="Npcs" ItemsSource="$DataContext.Npcs:OneWay">
               @templates {

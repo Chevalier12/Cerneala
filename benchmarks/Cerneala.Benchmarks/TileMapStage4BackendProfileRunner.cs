@@ -194,7 +194,7 @@ internal static class TileMapStage4BackendProfileRunner
         Array.Sort(wallSamples);
         Array.Sort(commandSamples);
         TileMapStage4Counters coreCounters =
-            TileMapStage4Counters.From(workload.Map.GetDiagnosticsSnapshot());
+            TileMapStage4Counters.From(workload.Maps);
         return new TileMapStage4BackendScenario(
             scenario,
             WallP50Microseconds: Percentile(wallSamples, 0.50),
@@ -317,8 +317,8 @@ internal static class TileMapStage4BackendProfileRunner
     private sealed class TileMapStage4BackendWorkload : IDisposable
     {
         private readonly UIRoot root = new();
-        private readonly TileMap2DModel originalModel = TileMapStage4ModelFactory.Create(mutated: false);
-        private readonly TileMap2DModel mutatedModel = TileMapStage4ModelFactory.Create(mutated: true);
+        private readonly TileMap2DModel[] originalModels = TileMapStage4ModelFactory.Create(mutated: false);
+        private readonly TileMap2DModel[] mutatedModels = TileMapStage4ModelFactory.Create(mutated: true);
         private bool useMutatedModel;
 
         internal TileMapStage4BackendWorkload(
@@ -327,9 +327,9 @@ internal static class TileMapStage4BackendProfileRunner
             string structuresPath,
             DrawRect bounds)
         {
-            Map = new TileMap2D { Model = originalModel };
-            Scene2D scene = new();
-            scene.Children.Add(Map);
+            Maps = originalModels.Select(model => new TileMap2D { Model = model, Layer = model.Order }).ToArray();
+            Scene2D scene = new() { OrderMode = SceneOrderMode.Layer };
+            foreach (TileMap2D map in Maps) { scene.Children.Add(map); }
             Surface = new RenderSurface2D
             {
                 Scene = scene,
@@ -351,7 +351,7 @@ internal static class TileMapStage4BackendProfileRunner
 
         internal RenderSurface2D Surface { get; }
 
-        internal TileMap2D Map { get; }
+        internal TileMap2D[] Maps { get; }
 
         internal void PrepareWarmStatic(int frame)
         {
@@ -369,7 +369,7 @@ internal static class TileMapStage4BackendProfileRunner
         internal void PrepareChunkMutation()
         {
             useMutatedModel = !useMutatedModel;
-            Map.Model = useMutatedModel ? mutatedModel : originalModel;
+            Maps[1].Model = useMutatedModel ? mutatedModels[1] : originalModels[1];
             Surface.InvalidateFrame();
         }
 

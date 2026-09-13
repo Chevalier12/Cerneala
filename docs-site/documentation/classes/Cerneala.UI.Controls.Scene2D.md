@@ -117,7 +117,7 @@ Children belong to the logical tree and inherit data context and attachment stat
 
 The root group owns a `CollisionWorld2D`. `CollisionWorld` on any nested group resolves to the same root-owned world. Structural and collider-property mutations update that world incrementally; removing a subtree removes its indexed colliders before the next query.
 
-The scene owns the query world, not the collision shapes themselves. Live colliders belong only to a `Sprite2D` or `TileInstance2D` through its `Colliders` collection. `Scene2D.Children` rejects collider nodes, including in derived markup components. Static tile collision geometry belongs to `Tile.Colliders` or `TileDefinition2D.Colliders` as immutable descriptors.
+The scene owns the query world, not the collision shapes themselves. A `Sprite2D` owns zero or one live collider through its `Collider` property. `Scene2D.Children` rejects collider nodes, including in derived markup components. A static `Tile` or `TileDefinition2D` likewise owns zero or one immutable descriptor through `Collider`.
 
 `Scene2D` applies the inherited `Scale`, `ScaleX`, `ScaleY`, `SkewX`, `SkewY`, `Rotation`, `TranslateX`, `TranslateY`, and `RenderTransform` channels to the entire descendant group. `TransformOrigin` is an absolute point in the group's local scene coordinates, not a normalized layout point. The local transform is composed in this order: translate away from the origin, scale, skew, rotate, translate, apply `RenderTransform`, and translate back to the origin. Nested groups compose their transforms from child to parent.
 

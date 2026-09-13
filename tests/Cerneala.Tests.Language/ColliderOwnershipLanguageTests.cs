@@ -20,7 +20,6 @@ public sealed class ColliderOwnershipLanguageTests
     [InlineData("<StackPanel><| /></StackPanel>", false)]
     [InlineData("<Border><| /></Border>", false)]
     [InlineData("<Scene2D><Sprite2D><| /></Sprite2D></Scene2D>", true)]
-    [InlineData("<Scene2D><TileMap2D><TileLayer2D><TileInstance2D><| /></TileInstance2D></TileLayer2D></TileMap2D></Scene2D>", true)]
     [InlineData("<Scene2D><TileMap2D><Tile Image=\"$Wall\"><| /></Tile></TileMap2D></Scene2D>", true)]
     public void CompletionOffersColliderShapesOnlyAtValidOwners(string marked, bool expected)
     {
@@ -31,6 +30,26 @@ public sealed class ColliderOwnershipLanguageTests
             Assert.DoesNotContain("Sprite2D", labels);
             Assert.DoesNotContain("Scene2D", labels);
         }
+    }
+
+    [Theory]
+    [InlineData("<Scene2D><Sprite2D><BoxCollider2D /><| /></Sprite2D></Scene2D>")]
+    [InlineData("<Scene2D><TileMap2D><Tile Image=\"$Wall\"><BoxCollider2D /><| /></Tile></TileMap2D></Scene2D>")]
+    public void CompletionDoesNotOfferASecondCollider(string marked)
+    {
+        string[] labels = Complete(marked);
+        foreach (string shape in Shapes) { Assert.DoesNotContain(shape, labels); }
+    }
+
+    [Theory]
+    [InlineData("<Scene2D><Sprite2D><BoxCollider2D /><CircleCollider2D /></Sprite2D></Scene2D>")]
+    [InlineData("<Scene2D><TileMap2D><Tile Image=\"$Wall\"><BoxCollider2D /><CircleCollider2D /></Tile></TileMap2D></Scene2D>")]
+    public void DiagnosticsRejectASecondCollider(string markup)
+    {
+        using CernealaCompilation compilation = Compile(markup);
+        Assert.Contains(compilation.GetSemanticModel(MarkupPath).Diagnostics,
+            diagnostic => diagnostic.Id == "CERNEALAUI005" &&
+                diagnostic.Message.Contains("one collider", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

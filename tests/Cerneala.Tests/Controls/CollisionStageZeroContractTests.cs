@@ -127,7 +127,7 @@ public sealed class CollisionStageZeroContractTests
     {
         Scene2D group = new() { TranslateX = 20, TranslateY = -10, ScaleX = 2, ScaleY = 2 };
         UIElement collider = CreateCollider("BoxCollider2D", ("Width", 5f), ("Height", 6f), ("OffsetX", 3f));
-        Sprite2D sprite = new() { Colliders = { (Collider2D)collider } };
+        Sprite2D sprite = new() { Collider = (Collider2D)collider };
         group.Children.Add(sprite);
         Scene2D scene = SceneWith(group);
         object world = GetWorld(scene);
@@ -138,9 +138,9 @@ public sealed class CollisionStageZeroContractTests
 
         Set(collider, "OffsetX", 10f);
         Assert.True(Convert.ToInt64(world.GetType().GetProperty("Version", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)!.GetValue(world)) > version);
-        sprite.Colliders.Remove((Collider2D)collider);
+        sprite.Collider = null;
         Assert.Empty(Assert.IsAssignableFrom<Array>(Invoke(world, "Raycast", new Vector2(25, -4), Vector2.UnitX, 30f)!).Cast<object>());
-        sprite.Colliders.Add((Collider2D)collider);
+        sprite.Collider = (Collider2D)collider;
         Assert.NotEmpty(Assert.IsAssignableFrom<Array>(Invoke(world, "Raycast", new Vector2(25, -4), Vector2.UnitX, 60f)!).Cast<object>());
     }
 
@@ -169,11 +169,11 @@ public sealed class CollisionStageZeroContractTests
 
     [Fact]
     [Trait("CollisionStage", "0")]
-    public void PromotedTileColliderHasReplacementLifecycleAndDoorStateContract()
+    public void SpriteOwnsLiveColliderAndDoorStateContract()
     {
-        Type tile = typeof(TileInstance2D);
-        RequireProperties(tile, "Colliders", "ReplacesImportedColliders");
-        RequireMethods(typeof(TileMap2D), "Promote", "Demote");
+        RequireProperties(typeof(Sprite2D), "Collider");
+        Assert.Null(typeof(TileMap2D).GetMethod("Promote"));
+        Assert.Null(typeof(TileMap2D).GetMethod("Demote"));
         Type descriptor = RequireType("TileColliderDescriptor2D");
         RequireProperties(descriptor, "Shape", "OffsetX", "OffsetY", "CollisionLayer", "CollisionMask", "IsTrigger");
 
@@ -190,7 +190,7 @@ public sealed class CollisionStageZeroContractTests
         RenderSurface2D surface = new();
         surface.Arrange(new ArrangeContext(new LayoutRect(0, 0, 200, 200)));
         Scene2D scene = new();
-        UIElement sprite = new Sprite2D { Colliders = { (Collider2D)CreateCollider("BoxCollider2D", ("Width", 30f), ("Height", 30f), ("TranslateX", 10f), ("TranslateY", 10f)) } };
+        UIElement sprite = new Sprite2D { Collider = (Collider2D)CreateCollider("BoxCollider2D", ("Width", 30f), ("Height", 30f), ("TranslateX", 10f), ("TranslateY", 10f)) };
         scene.Children.Add((SceneNode2D)sprite);
         surface.Scene = scene;
         root.VisualChildren.Add(surface);
@@ -307,7 +307,7 @@ public sealed class CollisionStageZeroContractTests
         Scene2D scene = new();
         foreach (UIElement node in nodes)
         {
-            scene.Children.Add(node is Collider2D collider ? new Sprite2D { Colliders = { collider } } : (SceneNode2D)node);
+            scene.Children.Add(node is Collider2D collider ? new Sprite2D { Collider = collider } : (SceneNode2D)node);
         }
         return scene;
     }
@@ -321,7 +321,7 @@ public sealed class CollisionStageZeroContractTests
         surface = new RenderSurface2D();
         surface.Arrange(new ArrangeContext(new LayoutRect(0, 0, 200, 200)));
         scene = new Scene2D();
-        sprite = new Sprite2D { Colliders = { (Collider2D)CreateCollider("BoxCollider2D", ("Width", 30f), ("Height", 30f), ("TranslateX", 10f), ("TranslateY", 10f)) } };
+        sprite = new Sprite2D { Collider = (Collider2D)CreateCollider("BoxCollider2D", ("Width", 30f), ("Height", 30f), ("TranslateX", 10f), ("TranslateY", 10f)) };
         scene.Children.Add((SceneNode2D)sprite);
         surface.Scene = scene;
         root.VisualChildren.Add(surface);

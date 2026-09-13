@@ -23,7 +23,7 @@ internal sealed class SceneDebugOverlayConformanceFixture : IDisposable
     internal static readonly string[] CaptureNames =
     [
         "debug-off.png", "debug-colliders.png", "debug-chunks.png", "debug-coordinates.png",
-        "debug-ids.png", "debug-order.png", "debug-navigation.png", "debug-promoted.png",
+        "debug-ids.png", "debug-order.png", "debug-navigation.png",
         "debug-all.png", "debug-effects.png", "debug-zoom.png", "debug-off-restored.png"
     ];
     private readonly Scene2DDebugOverlay overlay;
@@ -49,31 +49,36 @@ internal sealed class SceneDebugOverlayConformanceFixture : IDisposable
         for (int x = 0; x < 3; x++)
         {
             chunks.Add(new TileChunk2D(new TileCoordinate2D(x * 4, 0), 4, 3,
-                Enumerable.Range(0, 12).Select(index => new TileCell2D(index % 2 + 1))));
+                Enumerable.Range(0, 12).Select(index => x == 1 && index == 6 ? default : new TileCell2D(index % 2 + 1))));
         }
         for (int x = 0; x < 1024; x++)
         {
             chunks.Add(new TileChunk2D(new TileCoordinate2D(10000 + x * 4, 10000), 4, 3,
                 Enumerable.Repeat(new TileCell2D(1), 12)));
         }
-        model = new TileMap2DModel(new DrawSize(24, 24),
+        model = new TileMap2DModel("Ground", new DrawSize(24, 24),
             [new TileSet2D("Atlas", atlas, [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16)), new TileDefinition2D(2, new DrawRect(16, 0, 16, 16))])],
-            [new TileLayer2DModel("Ground", chunks, order: 2, offset: new DrawPoint(8, 108))]);
+            chunks, order: 2, offset: new DrawPoint(8, 108));
         map = new TileMap2D { Model = model };
-        TileInstance2D tile = map.Promote(new TileCellKey2D("Ground", 6, 1));
-        tile.TranslateX = 9;
-        tile.TranslateY = -5;
-        tile.Rotation = 0.2f;
-        tile.TransformOrigin = new DrawPoint(12, 12);
-        tile.Colliders.Add(new BoxCollider2D { Width = 24, Height = 24 });
+        Sprite2D tile = new() { Image = new(atlas), SourceX = 0, SourceY = 0, SourceWidth = 16, SourceHeight = 16,
+            Width = 24, Height = 24 };
+        Scene2D tilePose = new()
+        {
+            TranslateX = 161, TranslateY = 127, Rotation = 0.2f, TransformOrigin = new DrawPoint(12, 12)
+        };
+        tilePose.Children.Add(tile);
+        tile.Collider = new BoxCollider2D { Width = 24, Height = 24 };
         Scene2D scene = new() { OrderMode = SceneOrderMode.LayerThenY };
-        scene.Children.Add(map);
-        pickTarget = new Sprite2D { X = 12, Y = 20, Colliders = { new BoxCollider2D { Width = 40, Height = 24, CollisionLayer = 1 } } };
+        Scene2D mapGroup = new();
+        mapGroup.Children.Add(map);
+        mapGroup.Children.Add(tilePose);
+        scene.Children.Add(mapGroup);
+        pickTarget = new Sprite2D { X = 12, Y = 20, Collider = new BoxCollider2D { Width = 40, Height = 24, CollisionLayer = 1 } };
         scene.Children.Add(pickTarget);
-        scene.Children.Add(new Sprite2D { X = 96, Y = 36, Colliders = { new CircleCollider2D { Radius = 14, ScaleX = 1.5f, IsTrigger = true } } });
-        scene.Children.Add(new Sprite2D { X = 164, Y = 20, Colliders = { new PolygonCollider2D { Points = "0,0 35,8 20,32", CollisionLayer = 4 } } });
-        scene.Children.Add(new Sprite2D { X = 244, Y = 24, Colliders = { new SegmentCollider2D { EndX = 40, EndY = 22, CollisionMask = 0 } } });
-        scene.Children.Add(new Sprite2D { X = 10000, Colliders = { new BoxCollider2D { Width = 100, Height = 100 } } });
+        scene.Children.Add(new Sprite2D { X = 96, Y = 36, Collider = new CircleCollider2D { Radius = 14, ScaleX = 1.5f, IsTrigger = true } });
+        scene.Children.Add(new Sprite2D { X = 164, Y = 20, Collider = new PolygonCollider2D { Points = "0,0 35,8 20,32", CollisionLayer = 4 } });
+        scene.Children.Add(new Sprite2D { X = 244, Y = 24, Collider = new SegmentCollider2D { EndX = 40, EndY = 22, CollisionMask = 0 } });
+        scene.Children.Add(new Sprite2D { X = 10000, Collider = new BoxCollider2D { Width = 100, Height = 100 } });
         overlay = new Scene2DDebugOverlay { FontSize = 5, NavigationGrid = new Navigation() };
         overlay.Aspect = new ElementAspect([new ElementAspectValue(Scene2DDebugOverlay.LineThicknessProperty, 0.75f)]);
         scene.Children.Add(overlay);
@@ -90,17 +95,16 @@ internal sealed class SceneDebugOverlayConformanceFixture : IDisposable
     {
         overlay.Flags = sample switch
         {
-            0 or 11 => Scene2DDebugFlags.None,
+            0 or 10 => Scene2DDebugFlags.None,
             1 => Scene2DDebugFlags.Colliders,
             2 => Scene2DDebugFlags.ChunkBounds,
             3 => Scene2DDebugFlags.TileCoordinates,
             4 => Scene2DDebugFlags.TileIds,
             5 => Scene2DDebugFlags.Order,
             6 => Scene2DDebugFlags.Navigation,
-            7 => Scene2DDebugFlags.PromotedTiles,
             _ => Scene2DDebugFlags.All
         };
-        if (sample == 9)
+        if (sample == 8)
         {
             prism = GeneratedMarkup.AttachPrism(overlay, () => new PrismInstance(
                 new PrismCompositionDefinition("DebugOnly", [new PrismLayerDefinition(new PrismNodeId(1), "Ink",
@@ -110,8 +114,8 @@ internal sealed class SceneDebugOverlayConformanceFixture : IDisposable
             overlay.Motion().Animate(UIElement.OpacityProperty).To(0.7f)
                 .With(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100))).Complete();
         }
-        if (sample == 10) { Surface.ViewBox = new DrawRect(16, 8, 240, 157.5f); }
-        if (sample == 11)
+        if (sample == 9) { Surface.ViewBox = new DrawRect(16, 8, 240, 157.5f); }
+        if (sample == 10)
         {
             prism?.Dispose();
             prism = null;
@@ -138,11 +142,11 @@ internal sealed class SceneDebugOverlayConformanceFixture : IDisposable
         if (!ReferenceEquals(new HitTestService().HitTest(Surface.Root!, rootPoint.X, rootPoint.Y)?.Element, pickTarget))
             throw new InvalidOperationException("Debug presentation changed geometric picking.");
         Scene2DDebugOverlayDiagnostics debug = overlay.GetDiagnosticsSnapshot();
-        if ((sample is 0 or 11) != (debug.Primitives == 0))
+        if ((sample is 0 or 10) != (debug.Primitives == 0))
             throw new InvalidOperationException("The selected debug flag did not produce its expected ink state.");
         if (debug.CandidateChunks > 4 || debug.VisitedTiles > 36 || debug.Colliders > 5 || debug.NavigationCells > 24)
             throw new InvalidOperationException("Overlay diagnostic work escaped the bounded viewport fixture.");
-        if (sample is 9 or 10 && (Math.Abs(overlay.LineThickness - 1.25f) > 0.001f || Math.Abs(overlay.Opacity - 0.7f) > 0.001f))
+        if (sample is 8 or 9 && (Math.Abs(overlay.LineThickness - 1.25f) > 0.001f || Math.Abs(overlay.Opacity - 0.7f) > 0.001f))
             throw new InvalidOperationException("Overlay Motion did not commit the deterministic endpoint.");
         samples.Add(new { Sample = sample, File = CaptureNames[sample], Flags = overlay.Flags.ToString(), Debug = debug,
             world.EntryCount, world.RebuildCount, world.IncrementalUpdateCount, Picking = "PASS", Collision = "PASS" });
@@ -162,9 +166,9 @@ internal sealed class SceneDebugOverlayConformanceFixture : IDisposable
             for (int y = 0; y < image.Height; y++)
             for (int x = 0; x < image.Width; x++)
                 if (image.GetPixel(x, y) != off.GetPixel(x, y)) { changed++; }
-            if (sample is > 0 and < 11 && changed < 64)
+            if (sample is > 0 and < 10 && changed < 64)
                 throw new InvalidOperationException($"{CaptureNames[sample]} did not show its flag (only {changed} changed pixels).");
-            if (sample == 11 && changed != 0)
+            if (sample == 10 && changed != 0)
                 throw new InvalidOperationException("Turning debug off did not restore the exact initial gameplay pixels.");
             captures.Add(new { File = CaptureNames[sample], image.Width, image.Height, ChangedFromOff = changed,
                 Sha256 = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))) });

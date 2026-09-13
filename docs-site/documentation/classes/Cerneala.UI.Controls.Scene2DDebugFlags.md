@@ -26,7 +26,6 @@ Combine independent bits on [Scene2DDebugOverlay.Flags](Cerneala.UI.Controls.Sce
 | `ChunkBounds` | `2` | Visible map chunk outlines. |
 | `TileCoordinates` | `4` | Visible cell coordinates, including empty cells. |
 | `TileIds` | `8` | Visible core tile IDs; zero identifies an empty cell. |
-| `Order` | `16` | Recorded scene order/Y anchors and map layer/chunk labels. |
+| `Order` | `16` | Recorded scene order/Y anchors and map/chunk labels. |
 | `Navigation` | `32` | Viewport-bounded external navigation grid. |
-| `PromotedTiles` | `64` | Original static slot, current quad, connector, and stable promotion identity. |
-| `All` | `127` | Every defined diagnostic category. |
+| `All` | `63` | Every defined diagnostic category. |

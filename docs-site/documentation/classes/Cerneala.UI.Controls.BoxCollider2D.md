@@ -39,7 +39,7 @@ Inheritance:
 
 The box starts at `(OffsetX, OffsetY)` and extends by `Width` and `Height` before inherited collider and group transforms are applied. Both dimensions must remain finite and greater than zero.
 
-Live boxes must belong to `Sprite2D.Colliders` or `TileInstance2D.Colliders`; they cannot attach directly to a scene group. The sprite example above demonstrates collision geometry without an image; assign `Image` separately to draw it. A box declared under a static `Tile` instead creates an immutable tile descriptor with literal attributes, not a live UI node. See [Collider2D](Cerneala.UI.Controls.Collider2D.md) and [Tile](Cerneala.UI.Controls.Tile.md).
+Each live box must be the single `Sprite2D.Collider`; it cannot attach directly to a scene group or beside another collider on the same owner. The sprite example above demonstrates collision geometry without an image; assign `Image` separately to draw it. A box declared under a static `Tile` instead creates its one optional immutable tile descriptor with literal attributes, not a live UI node. See [Collider2D](Cerneala.UI.Controls.Collider2D.md) and [Tile](Cerneala.UI.Controls.Tile.md).
 
 `Width` and `Height` are collision dimensions, not UI layout dimensions. Both properties have float mixers and can be controlled by Aspect, bindings, direct assignment, or Motion. Each accepted change follows the same collision-geometry invalidation path.
 

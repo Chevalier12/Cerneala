@@ -24,7 +24,7 @@ public sealed class Scene2DValidationOptions
     public int MaxDiagnostics { get; init; } = 128;
     public int MaxCells { get; init; } = 1_048_576;
     public int MaxChunks { get; init; } = 65_536;
-    public int MaxLayers { get; init; } = 4_096;
+    public int MaxMaps { get; init; } = 4_096;
     public int MaxEntities { get; init; } = 65_536;
 }
 
@@ -107,7 +107,7 @@ public static class Scene2DModelValidator
             }
         }
         HashSet<string> ids = new(StringComparer.Ordinal);
-        long cells = 0, chunks = 0, layers = 0, entities = 0;
+        long cells = 0, chunks = 0, maps = 0, entities = 0;
         for (int index = 0; index < document.Levels.Count; index++)
         {
             if (diagnostics.StopIfFull()) { break; }
@@ -115,21 +115,26 @@ public static class Scene2DModelValidator
             string path = $"$.levels[{index}]";
             if (level is null) { diagnostics.Error("SCN2D005", "Levels cannot contain null.", path); continue; }
             if (!ids.Add(level.Id)) { diagnostics.Error("SCN2D015", $"Level ID '{level.Id}' is duplicated.", path); }
-            layers += level.TileMap.Layers.Count;
-            cells += level.TileMap.Tiles.Count;
+            maps += level.TileMaps.Count;
             entities += level.Entities.Count + (long)level.Promotions.Count;
-            foreach (TileLayer2DModel layer in level.TileMap.Layers)
+            foreach (TileMap2DModel map in level.TileMaps)
             {
-                chunks += layer.Chunks.Count;
-                foreach (TileChunk2D chunk in layer.Chunks) { cells += chunk.Tiles.Count; }
+                cells += map.Tiles.Count;
+                chunks += map.Chunks.Count;
+                foreach (TileChunk2D chunk in map.Chunks) { cells += chunk.Tiles.Count; }
             }
-            if (layers > diagnostics.Options.MaxLayers || chunks > diagnostics.Options.MaxChunks ||
+            if (maps > diagnostics.Options.MaxMaps || chunks > diagnostics.Options.MaxChunks ||
                 cells > diagnostics.Options.MaxCells || entities > diagnostics.Options.MaxEntities)
             {
-                diagnostics.Error("SCN2D013", "The document exceeds its aggregate layer, chunk, cell or entity budget.", path);
+                diagnostics.Error("SCN2D013", "The document exceeds its aggregate map, chunk, cell or entity budget.", path);
                 break;
             }
-            ValidateMap(level.TileMap, atlases, diagnostics, path + ".tileMap", worldOffset: level.WorldOffset);
+            ValidateTileSets(level.TileSets, atlases, diagnostics, path);
+            for (int mapIndex = 0; mapIndex < level.TileMaps.Count; mapIndex++)
+            {
+                if (diagnostics.StopIfFull()) { break; }
+                ValidateMap(level.TileMaps[mapIndex], atlases, diagnostics, $"{path}.tileMaps[{mapIndex}]", worldOffset: level.WorldOffset);
+            }
             // Level construction already validates its immutable associations
             // and placed geometry. Do not rescan them when only asset/budget
             // information is added by the enclosing document.
@@ -139,20 +144,55 @@ public static class Scene2DModelValidator
 
     internal static void ValidateLevel(Scene2DLevel level, Scene2DDiagnosticCollector diagnostics, string path)
     {
-        foreach (Tile tile in level.TileMap.Tiles)
+        Dictionary<string, TileMap2DModel> mapsById = new(StringComparer.Ordinal);
+        HashSet<TileSet2D> countedTileSets = new(ReferenceEqualityComparer.Instance);
+        long totalChunks = 0, totalCells = 0, totalDefinitions = 0, totalColliders = 0;
+        foreach (TileSet2D set in level.TileSets)
+        {
+            if (countedTileSets.Add(set)) { totalDefinitions += set.Tiles.Count; }
+        }
+        if (totalDefinitions > MaximumCells)
+        {
+            diagnostics.Error("SCN2D013", "The level exceeds its source tile definition budget.", path + ".tileSets");
+            return;
+        }
+        foreach (TileMap2DModel map in level.TileMaps)
         {
             if (diagnostics.StopIfFull()) { return; }
-            DrawSize knownSize = tile.Image.DirectImage is IDrawImage direct ? new(direct.Width, direct.Height) : default;
-            try { ValidatePlacementGeometry(tile, knownSize, level.WorldOffset); }
-            catch (ArgumentException error) { diagnostics.Error("SCN2D014", error.Message, path + ".worldOffset"); }
-        }
-        Dictionary<string, TileLayer2DModel> layersById = level.TileMap.Layers.ToDictionary(layer => layer.Id, StringComparer.Ordinal);
-        foreach (TileLayer2DModel layer in level.TileMap.Layers)
-        {
-            foreach (TileChunk2D chunk in layer.Chunks)
+            if (map is null)
+            {
+                diagnostics.Error("SCN2D005", "Tile maps cannot contain null.", path + ".tileMaps");
+                continue;
+            }
+            if (!mapsById.TryAdd(map.Id, map))
+            {
+                diagnostics.Error("SCN2D015", $"Map ID '{map.Id}' is duplicated.", path + ".tileMaps");
+            }
+            totalChunks += map.Chunks.Count;
+            totalCells += map.Tiles.Count;
+            totalColliders += map.ExpandedColliderCount;
+            foreach (TileChunk2D chunk in map.Chunks) { totalCells += chunk.Tiles.Count; }
+            foreach (TileSet2D set in map.TileSets)
+            {
+                if (countedTileSets.Add(set)) { totalDefinitions += set.Tiles.Count; }
+            }
+            if (totalChunks > MaximumChunks || totalCells > MaximumCells ||
+                totalDefinitions > MaximumCells || totalColliders > MaximumExpandedTileColliders)
+            {
+                diagnostics.Error("SCN2D013", "The level exceeds its aggregate chunk, cell, tile definition or expanded collider budget.", path + ".tileMaps");
+                return;
+            }
+            foreach (Tile tile in map.Tiles)
             {
                 if (diagnostics.StopIfFull()) { return; }
-                try { ValidateChunkGeometry(level.TileMap.TileSize, chunk, layer.Offset, level.WorldOffset); }
+                DrawSize knownSize = tile.Image.DirectImage is IDrawImage direct ? new(direct.Width, direct.Height) : default;
+                try { ValidatePlacementGeometry(tile, knownSize, level.WorldOffset); }
+                catch (ArgumentException error) { diagnostics.Error("SCN2D014", error.Message, path + ".worldOffset"); }
+            }
+            foreach (TileChunk2D chunk in map.Chunks)
+            {
+                if (diagnostics.StopIfFull()) { return; }
+                try { ValidateChunkGeometry(map.TileSize, chunk, map.Offset, level.WorldOffset); }
                 catch (ArgumentException error) { diagnostics.Add(GetDiagnostic(error)! with { JsonPath = path + ".worldOffset" }); }
             }
         }
@@ -164,27 +204,27 @@ public static class Scene2DModelValidator
             Scene2DEntity entity = level.Entities[index];
             string entityPath = $"{path}.entities[{index}]";
             if (entity is null) { diagnostics.Error("SCN2D008", "Entities cannot contain null.", entityPath); continue; }
-            entityColliders += entity.Colliders.Count;
+            entityColliders += entity.Collider is null ? 0 : 1;
             if (entityColliders > MaximumExpandedTileColliders)
             {
                 diagnostics.Error("SCN2D013", "The level exceeds its entity collider descriptor budget.", entityPath);
                 return;
             }
             if (!entities.Add(entity.Id)) { diagnostics.Error("SCN2D015", $"Entity ID '{entity.Id}' is duplicated.", entityPath); }
-            if (!layersById.TryGetValue(entity.LayerId, out TileLayer2DModel? entityLayer))
+            if (!mapsById.TryGetValue(entity.MapId, out TileMap2DModel? entityMap))
             {
-                diagnostics.Error("SCN2D015", $"Entity layer '{entity.LayerId}' does not exist.", entityPath + ".layerId");
+                diagnostics.Error("SCN2D015", $"Entity map '{entity.MapId}' does not exist.", entityPath + ".mapId");
             }
             else
             {
                 Matrix3x2 placement = Matrix3x2.CreateRotation(entity.Rotation) * Matrix3x2.CreateTranslation(
-                    entity.Position.X + entityLayer!.Offset.X + level.WorldOffset.X,
-                    entity.Position.Y + entityLayer.Offset.Y + level.WorldOffset.Y);
-                foreach (TileColliderDescriptor2D collider in entity.Colliders)
+                    entity.Position.X + entityMap!.Offset.X + level.WorldOffset.X,
+                    entity.Position.Y + entityMap.Offset.Y + level.WorldOffset.Y);
+                if (entity.Collider is TileColliderDescriptor2D collider)
                 {
                     if (diagnostics.StopIfFull()) { return; }
                     try { collider.ValidateGeometry(placement); }
-                    catch (ArgumentException error) { diagnostics.Add(GetDiagnostic(error)! with { JsonPath = entityPath + ".colliders" }); }
+                    catch (ArgumentException error) { diagnostics.Add(GetDiagnostic(error)! with { JsonPath = entityPath + ".collider" }); }
                 }
             }
         }
@@ -192,18 +232,18 @@ public static class Scene2DModelValidator
         foreach (TilePromotion2D promotion in level.Promotions)
         {
             if (promotion is null) { continue; }
-            if (!requested.TryGetValue(promotion.Cell.LayerId, out Dictionary<TileCoordinate2D, TileCell2D?>? cells))
+            if (!requested.TryGetValue(promotion.Cell.MapId, out Dictionary<TileCoordinate2D, TileCell2D?>? cells))
             {
-                requested.Add(promotion.Cell.LayerId, cells = new());
+                requested.Add(promotion.Cell.MapId, cells = new());
             }
             cells.TryAdd(promotion.Cell.Coordinate, null);
         }
-        // Scan requested layers once, retaining only the sparse requested cells.
+        // Scan requested maps once, retaining only the sparse requested cells.
         // This bounds validation by map cells + promotions, not their product.
-        foreach ((string layerId, Dictionary<TileCoordinate2D, TileCell2D?> cells) in requested)
+        foreach ((string mapId, Dictionary<TileCoordinate2D, TileCell2D?> cells) in requested)
         {
-            if (!layersById.TryGetValue(layerId, out TileLayer2DModel? layer)) { continue; }
-            foreach (TileChunk2D chunk in layer.Chunks)
+            if (!mapsById.TryGetValue(mapId, out TileMap2DModel? map)) { continue; }
+            foreach (TileChunk2D chunk in map.Chunks)
             {
                 for (int index = 0; index < chunk.Tiles.Count; index++)
                 {
@@ -223,8 +263,9 @@ public static class Scene2DModelValidator
                 diagnostics.Error("SCN2D012", "Promotion is null or its address is duplicated.", promotionPath);
                 continue;
             }
-            if (requested[promotion.Cell.LayerId][promotion.Cell.Coordinate] is not TileCell2D cell ||
-                !level.TileMap.TryResolveTile(promotion.TileId ?? cell.TileId, out _, out _))
+            if (!mapsById.TryGetValue(promotion.Cell.MapId, out TileMap2DModel? map) ||
+                requested[promotion.Cell.MapId][promotion.Cell.Coordinate] is not TileCell2D cell ||
+                !map.TryResolveTile(promotion.TileId ?? cell.TileId, out _, out _))
             {
                 diagnostics.Error("SCN2D012", "Promotion must address an existing cell and resolve a positive tile ID (an empty cell requires an override).", promotionPath);
             }
@@ -240,14 +281,14 @@ public static class Scene2DModelValidator
         }
     }
 
-    internal static void ValidateChunkGeometry(DrawSize tileSize, TileChunk2D chunk, DrawPoint layerOffset, DrawPoint worldOffset = default)
+    internal static void ValidateChunkGeometry(DrawSize tileSize, TileChunk2D chunk, DrawPoint mapOffset, DrawPoint worldOffset = default)
     {
         try
         {
-            DrawArgument.ThrowIfNotValidPixelCoordinate((float)((double)chunk.Origin.X * tileSize.Width + layerOffset.X + worldOffset.X), nameof(chunk));
-            DrawArgument.ThrowIfNotValidPixelCoordinate((float)((double)chunk.Origin.Y * tileSize.Height + layerOffset.Y + worldOffset.Y), nameof(chunk));
-            DrawArgument.ThrowIfNotValidPixelCoordinate((float)(((long)chunk.Origin.X + chunk.Width) * (double)tileSize.Width + layerOffset.X + worldOffset.X), nameof(chunk));
-            DrawArgument.ThrowIfNotValidPixelCoordinate((float)(((long)chunk.Origin.Y + chunk.Height) * (double)tileSize.Height + layerOffset.Y + worldOffset.Y), nameof(chunk));
+            DrawArgument.ThrowIfNotValidPixelCoordinate((float)((double)chunk.Origin.X * tileSize.Width + mapOffset.X + worldOffset.X), nameof(chunk));
+            DrawArgument.ThrowIfNotValidPixelCoordinate((float)((double)chunk.Origin.Y * tileSize.Height + mapOffset.Y + worldOffset.Y), nameof(chunk));
+            DrawArgument.ThrowIfNotValidPixelCoordinate((float)(((long)chunk.Origin.X + chunk.Width) * (double)tileSize.Width + mapOffset.X + worldOffset.X), nameof(chunk));
+            DrawArgument.ThrowIfNotValidPixelCoordinate((float)(((long)chunk.Origin.Y + chunk.Height) * (double)tileSize.Height + mapOffset.Y + worldOffset.Y), nameof(chunk));
             DrawArgument.ThrowIfNegativeOrNotValidPixelSize(chunk.Width * tileSize.Width, nameof(chunk));
             DrawArgument.ThrowIfNegativeOrNotValidPixelSize(chunk.Height * tileSize.Height, nameof(chunk));
         }
@@ -257,16 +298,11 @@ public static class Scene2DModelValidator
     internal static void ValidateMap(TileMap2DModel model, IReadOnlyDictionary<string, DrawSize> atlasSizes,
         Scene2DDiagnosticCollector diagnostics, string path, bool requireAllAtlases = true, DrawPoint worldOffset = default)
     {
-        long chunks = 0;
         long cells = model.Tiles.Count;
-        foreach (TileLayer2DModel layer in model.Layers)
+        foreach (TileChunk2D chunk in model.Chunks) { cells += chunk.Tiles.Count; }
+        if (model.Chunks.Count > diagnostics.Options.MaxChunks || cells > diagnostics.Options.MaxCells)
         {
-            chunks += layer.Chunks.Count;
-            foreach (TileChunk2D chunk in layer.Chunks) { cells += chunk.Tiles.Count; }
-        }
-        if (model.Layers.Count > diagnostics.Options.MaxLayers || chunks > diagnostics.Options.MaxChunks || cells > diagnostics.Options.MaxCells)
-        {
-            diagnostics.Error("SCN2D013", "The model exceeds the configured layer, chunk or cell budget.", path);
+            diagnostics.Error("SCN2D013", "The model exceeds the configured chunk or cell budget.", path);
             return;
         }
         for (int index = 0; index < model.Tiles.Count; index++)
@@ -292,10 +328,16 @@ public static class Scene2DModelValidator
             try { ValidatePlacementGeometry(tile, size, worldOffset); }
             catch (ArgumentException error) { diagnostics.Error("SCN2D014", error.Message, tilePath); }
         }
-        for (int setIndex = 0; setIndex < model.TileSets.Count; setIndex++)
+        ValidateTileSets(model.TileSets, atlasSizes, diagnostics, path, requireAllAtlases);
+    }
+
+    private static void ValidateTileSets(IReadOnlyList<TileSet2D> tileSets, IReadOnlyDictionary<string, DrawSize> atlasSizes,
+        Scene2DDiagnosticCollector diagnostics, string path, bool requireAllAtlases = true)
+    {
+        for (int setIndex = 0; setIndex < tileSets.Count; setIndex++)
         {
             if (diagnostics.StopIfFull()) { return; }
-            TileSet2D set = model.TileSets[setIndex];
+            TileSet2D set = tileSets[setIndex];
             string setPath = $"{path}.tileSets[{setIndex}]";
             if (!atlasSizes.TryGetValue(set.AtlasResourceId.Key, out DrawSize size))
             {
@@ -419,7 +461,7 @@ public sealed class Scene2DDiagnosticCollector
     {
         Options = options ?? new();
         if (Options.MaxDiagnostics <= 0 || Options.MaxCells <= 0 || Options.MaxChunks <= 0 ||
-            Options.MaxLayers <= 0 || Options.MaxEntities <= 0)
+            Options.MaxMaps <= 0 || Options.MaxEntities <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(options), "Validation budgets must be positive.");
         }
