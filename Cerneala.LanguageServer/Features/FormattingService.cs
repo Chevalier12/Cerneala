@@ -31,7 +31,7 @@ internal sealed class FormattingService(CernealaWorkspace workspace)
                 snapshot.Document.Text,
                 formatter.FormatRange(
                     snapshot.Document,
-                    ToSpan(snapshot.Document.Text, range),
+                    LspTextCoordinates.ToSpan(snapshot.Document.Text, range),
                     ToOptions(options),
                     requestCancellation))),
             cancellationToken);
@@ -46,7 +46,7 @@ internal sealed class FormattingService(CernealaWorkspace workspace)
                 snapshot.Document.Text,
                 formatter.FormatOnType(
                     snapshot.Document,
-                    ToOffset(snapshot.Document.Text, position),
+                    LspTextCoordinates.ToOffset(snapshot.Document.Text, position),
                     ToOptions(options),
                     requestCancellation))),
             cancellationToken);
@@ -63,9 +63,11 @@ internal sealed class FormattingService(CernealaWorkspace workspace)
         CodeActionParams request,
         CancellationToken cancellationToken)
     {
-        TextSpan range = ToSpan(snapshot.Document.Text, request.Range);
+        TextSpan range = LspTextCoordinates.ToSpan(snapshot.Document.Text, request.Range);
         CernealaCodeActionDiagnostic[] diagnostics = request.Context.Diagnostics.Select(diagnostic =>
-            new CernealaCodeActionDiagnostic(diagnostic.Code, ToSpan(snapshot.Document.Text, diagnostic.Range)))
+            new CernealaCodeActionDiagnostic(
+                diagnostic.Code,
+                LspTextCoordinates.ToSpan(snapshot.Document.Text, diagnostic.Range)))
             .ToArray();
         IReadOnlyList<CernealaSemanticModel> models = snapshot.GetSemanticModels(cancellationToken);
         CernealaAdditionalDocument[] companions = await GetCompanionsAsync(models, cancellationToken)
@@ -147,7 +149,7 @@ internal sealed class FormattingService(CernealaWorkspace workspace)
             changes[new Uri(group.Key).AbsoluteUri] = group.OrderByDescending(edit => edit.Span.Start)
                 .Select(edit => new LspTextEdit
                 {
-                    Range = ToRange(source, edit.Span),
+                    Range = LspTextCoordinates.ToRange(source, edit.Span),
                     NewText = edit.NewText
                 })
                 .ToArray();
@@ -169,33 +171,12 @@ internal sealed class FormattingService(CernealaWorkspace workspace)
         SourceText source,
         IReadOnlyList<CernealaFormattingEdit> edits) => edits.Select(edit => new LspTextEdit
     {
-        Range = ToRange(source, edit.Span),
+        Range = LspTextCoordinates.ToRange(source, edit.Span),
         NewText = edit.NewText
     }).ToArray();
 
     private static CernealaFormattingOptions ToOptions(FormattingOptions options) =>
         new(options.TabSize, options.InsertSpaces);
-
-    private static int ToOffset(SourceText source, LspPosition position) =>
-        source.GetOffset(new LinePosition(position.Line, position.Character));
-
-    private static TextSpan ToSpan(SourceText source, LspRange range)
-    {
-        int start = ToOffset(source, range.Start);
-        int end = ToOffset(source, range.End);
-        return new TextSpan(start, end - start);
-    }
-
-    private static LspRange ToRange(SourceText source, TextSpan span)
-    {
-        LinePosition start = source.GetLinePosition(span.Start);
-        LinePosition end = source.GetLinePosition(span.End);
-        return new LspRange
-        {
-            Start = new LspPosition { Line = start.Line, Character = start.Character },
-            End = new LspPosition { Line = end.Line, Character = end.Character }
-        };
-    }
 
     private static string Normalize(string path) => Path.GetFullPath(path)
         .Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);

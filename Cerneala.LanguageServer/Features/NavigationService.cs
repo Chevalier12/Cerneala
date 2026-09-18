@@ -76,7 +76,7 @@ internal sealed class NavigationService(CernealaWorkspace workspace)
         LspPosition position,
         CancellationToken cancellationToken)
     {
-        int offset = GetOffset(snapshot.Document.Text, position);
+        int offset = LspTextCoordinates.ToOffset(snapshot.Document.Text, position);
         CernealaHoverInfo? hover = snapshot.GetSemanticModels(cancellationToken)
             .Select(model => service.GetHover(model, offset))
             .FirstOrDefault(candidate => candidate is not null);
@@ -96,7 +96,7 @@ internal sealed class NavigationService(CernealaWorkspace workspace)
         LspPosition position,
         CancellationToken cancellationToken)
     {
-        int offset = GetOffset(snapshot.Document.Text, position);
+        int offset = LspTextCoordinates.ToOffset(snapshot.Document.Text, position);
         IReadOnlyList<CernealaSemanticModel> models = snapshot.GetSemanticModels(cancellationToken);
         CernealaLocation[] locations = models
             .SelectMany(model => service.GetDefinitions(model, offset))
@@ -112,7 +112,7 @@ internal sealed class NavigationService(CernealaWorkspace workspace)
         bool includeDeclaration,
         CancellationToken cancellationToken)
     {
-        int offset = GetOffset(snapshot.Document.Text, position);
+        int offset = LspTextCoordinates.ToOffset(snapshot.Document.Text, position);
         IReadOnlyList<CernealaSemanticModel> currentModels = snapshot.GetSemanticModels(cancellationToken);
         IReadOnlyList<CernealaSemanticModel> workspaceModels = snapshot.GetWorkspaceSemanticModels(cancellationToken);
         CernealaLocation[] locations = currentModels
@@ -133,7 +133,7 @@ internal sealed class NavigationService(CernealaWorkspace workspace)
         LspPosition position,
         CancellationToken cancellationToken)
     {
-        int offset = GetOffset(snapshot.Document.Text, position);
+        int offset = LspTextCoordinates.ToOffset(snapshot.Document.Text, position);
         IReadOnlyList<CernealaSemanticModel> currentModels = snapshot.GetSemanticModels(cancellationToken);
         IReadOnlyList<CernealaSemanticModel> workspaceModels = snapshot.GetWorkspaceSemanticModels(cancellationToken);
         return currentModels
@@ -143,7 +143,7 @@ internal sealed class NavigationService(CernealaWorkspace workspace)
             .OrderBy(highlight => highlight.Span.Start)
             .Select(highlight => new LspDocumentHighlight
             {
-                Range = ToRange(snapshot.Document.Text, highlight.Span),
+                Range = LspTextCoordinates.ToRange(snapshot.Document.Text, highlight.Span),
                 Kind = highlight.Kind switch
                 {
                     CernealaDocumentHighlightKind.Read => 2,
@@ -159,7 +159,7 @@ internal sealed class NavigationService(CernealaWorkspace workspace)
         LspPosition position,
         CancellationToken cancellationToken)
     {
-        int offset = GetOffset(snapshot.Document.Text, position);
+        int offset = LspTextCoordinates.ToOffset(snapshot.Document.Text, position);
         IReadOnlyList<CernealaSemanticModel> currentModels = snapshot.GetSemanticModels(cancellationToken);
         IReadOnlyList<CernealaSemanticModel> workspaceModels = snapshot.GetWorkspaceSemanticModels(cancellationToken);
         CernealaPrepareRenameResult[] results = currentModels
@@ -176,7 +176,7 @@ internal sealed class NavigationService(CernealaWorkspace workspace)
 
         return new LspPrepareRenameResult
         {
-            Range = ToRange(snapshot.Document.Text, span),
+            Range = LspTextCoordinates.ToRange(snapshot.Document.Text, span),
             Placeholder = accepted.Placeholder!
         };
     }
@@ -187,7 +187,7 @@ internal sealed class NavigationService(CernealaWorkspace workspace)
         string newName,
         CancellationToken cancellationToken)
     {
-        int offset = GetOffset(snapshot.Document.Text, position);
+        int offset = LspTextCoordinates.ToOffset(snapshot.Document.Text, position);
         IReadOnlyList<CernealaSemanticModel> currentModels = snapshot.GetSemanticModels(cancellationToken);
         IReadOnlyList<CernealaSemanticModel> workspaceModels = snapshot.GetWorkspaceSemanticModels(cancellationToken);
         CernealaRenameResult[] results = currentModels
@@ -217,7 +217,7 @@ internal sealed class NavigationService(CernealaWorkspace workspace)
                 .OrderByDescending(edit => edit.Span.Start)
                 .Select(edit => new LspTextEdit
                 {
-                    Range = ToRange(source, edit.Span),
+                    Range = LspTextCoordinates.ToRange(source, edit.Span),
                     NewText = edit.NewText
                 })
                 .ToArray();
@@ -246,7 +246,7 @@ internal sealed class NavigationService(CernealaWorkspace workspace)
             result.Add(new LspLocation
             {
                 Uri = ToUri(location.Path),
-                Range = ToRange(source, location.Span)
+                Range = LspTextCoordinates.ToRange(source, location.Span)
             });
         }
 
@@ -308,20 +308,6 @@ internal sealed class NavigationService(CernealaWorkspace workspace)
         }
 
         return builder.ToString();
-    }
-
-    private static int GetOffset(SourceText source, LspPosition position) =>
-        source.GetOffset(new LinePosition(position.Line, position.Character));
-
-    private static LspRange ToRange(SourceText source, TextSpan span)
-    {
-        LinePosition start = source.GetLinePosition(span.Start);
-        LinePosition end = source.GetLinePosition(span.End);
-        return new LspRange
-        {
-            Start = new LspPosition { Line = start.Line, Character = start.Character },
-            End = new LspPosition { Line = end.Line, Character = end.Character }
-        };
     }
 
     private static string ToUri(string path) => new Uri(Path.GetFullPath(path)).AbsoluteUri;

@@ -207,7 +207,7 @@ internal sealed class StructureService(CernealaWorkspace workspace) : IDisposabl
                 Location = new LspLocation
                 {
                     Uri = new Uri(Path.GetFullPath(symbol.Path)).AbsoluteUri,
-                    Range = ToRange(sources[Path.GetFullPath(symbol.Path)], symbol.Span)
+                    Range = LspTextCoordinates.ToRange(sources[Path.GetFullPath(symbol.Path)], symbol.Span)
                 }
             })
             .ToArray();
@@ -240,7 +240,7 @@ internal sealed class StructureService(CernealaWorkspace workspace) : IDisposabl
         return positions.Select(position =>
         {
             cancellationToken.ThrowIfCancellationRequested();
-            int offset = snapshot.Document.Text.GetOffset(new LinePosition(position.Line, position.Character));
+            int offset = LspTextCoordinates.ToOffset(snapshot.Document.Text, position);
             return ToSelectionRange(
                 snapshot.Document.Text,
                 service.GetSelectionRange(snapshot.Document, model, offset));
@@ -366,27 +366,16 @@ internal sealed class StructureService(CernealaWorkspace workspace) : IDisposabl
         Name = symbol.Name,
         Detail = symbol.Detail,
         Kind = ToSymbolKind(symbol.Kind),
-        Range = ToRange(source, symbol.Range),
-        SelectionRange = ToRange(source, symbol.SelectionRange),
+        Range = LspTextCoordinates.ToRange(source, symbol.Range),
+        SelectionRange = LspTextCoordinates.ToRange(source, symbol.SelectionRange),
         Children = symbol.Children.Select(child => ToDocumentSymbol(source, child)).ToArray()
     };
 
     private static LspSelectionRange ToSelectionRange(SourceText source, CernealaSelectionRange selection) => new()
     {
-        Range = ToRange(source, selection.Span),
+        Range = LspTextCoordinates.ToRange(source, selection.Span),
         Parent = selection.Parent is null ? null : ToSelectionRange(source, selection.Parent)
     };
-
-    private static LspRange ToRange(SourceText source, TextSpan span)
-    {
-        LinePosition start = source.GetLinePosition(span.Start);
-        LinePosition end = source.GetLinePosition(span.End);
-        return new LspRange
-        {
-            Start = new LspPosition { Line = start.Line, Character = start.Character },
-            End = new LspPosition { Line = end.Line, Character = end.Character }
-        };
-    }
 
     private static int ToSymbolKind(CernealaOutlineSymbolKind kind) => kind switch
     {

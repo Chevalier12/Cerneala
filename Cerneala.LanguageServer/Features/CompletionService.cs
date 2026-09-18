@@ -38,7 +38,7 @@ internal sealed class CompletionService(CernealaWorkspace workspace)
             (snapshot, requestCancellation) =>
             {
                 requestCancellation.ThrowIfCancellationRequested();
-                int offset = GetOffset(snapshot.Document.Text, position);
+                int offset = LspTextCoordinates.ToOffset(snapshot.Document.Text, position);
                 CernealaSemanticModel? model = snapshot.IsStandalone
                     ? null
                     : snapshot.GetSemanticModels(requestCancellation).FirstOrDefault();
@@ -53,7 +53,7 @@ internal sealed class CompletionService(CernealaWorkspace workspace)
         LspPosition position,
         CancellationToken cancellationToken)
     {
-        int offset = GetOffset(snapshot.Document.Text, position);
+        int offset = LspTextCoordinates.ToOffset(snapshot.Document.Text, position);
         IReadOnlyList<CernealaSemanticModel> models = snapshot.IsStandalone
             ? Array.Empty<CernealaSemanticModel>()
             : snapshot.GetSemanticModels(cancellationToken);
@@ -133,7 +133,7 @@ internal sealed class CompletionService(CernealaWorkspace workspace)
             FilterText = item.Label,
             TextEdit = new LspTextEdit
             {
-                Range = ToRange(source, item.ReplacementSpan),
+                Range = LspTextCoordinates.ToRange(source, item.ReplacementSpan),
                 NewText = item.InsertText
             },
             Data = item.TypeMetadataName is null
@@ -166,20 +166,6 @@ internal sealed class CompletionService(CernealaWorkspace workspace)
             }).ToArray()
         }).ToArray()
     };
-
-    private static int GetOffset(SourceText source, LspPosition position) =>
-        source.GetOffset(new LinePosition(position.Line, position.Character));
-
-    private static LspRange ToRange(SourceText source, TextSpan span)
-    {
-        LinePosition start = source.GetLinePosition(span.Start);
-        LinePosition end = source.GetLinePosition(span.End);
-        return new LspRange
-        {
-            Start = new LspPosition { Line = start.Line, Character = start.Character },
-            End = new LspPosition { Line = end.Line, Character = end.Character }
-        };
-    }
 
     private static int ToLspKind(CernealaCompletionItemKind kind) => kind switch
     {

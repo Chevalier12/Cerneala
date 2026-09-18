@@ -22,18 +22,12 @@ internal sealed class DiagnosticService(CernealaWorkspace workspace, BuildDiagno
     {
         int startOffset = Math.Clamp(diagnostic.Span.Start, 0, source.Length);
         int endOffset = Math.Clamp(diagnostic.Span.End, startOffset, source.Length);
-        LinePosition start = source.GetLinePosition(startOffset);
-        LinePosition end = source.GetLinePosition(endOffset);
         return new LspDiagnostic
         {
             Code = diagnostic.Id,
             Message = diagnostic.Message,
             Severity = ToLspSeverity(diagnostic.Severity),
-            Range = new LspRange
-            {
-                Start = new LspPosition { Line = start.Line, Character = start.Character },
-                End = new LspPosition { Line = end.Line, Character = end.Character }
-            }
+            Range = LspTextCoordinates.ToRange(source, new TextSpan(startOffset, endOffset - startOffset))
         };
     }
 
