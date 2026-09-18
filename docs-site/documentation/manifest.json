@@ -1,5 +1,130 @@
 [
   {
+    "name": "Cerneala.Scene2D.Packages.Scene2DPackage",
+    "file": "documentation/classes/Cerneala.Scene2D.Packages.Scene2DPackage.md",
+    "source": "Cerneala.Scene2D.Packages/Scene2DPackage.cs"
+  },
+  {
+    "name": "Cerneala.Scene2D.Packages.Scene2DPackageEntityInfo",
+    "file": "documentation/classes/Cerneala.Scene2D.Packages.Scene2DPackageEntityInfo.md",
+    "source": "Cerneala.Scene2D.Packages/Scene2DPackageEntityInfo.cs"
+  },
+  {
+    "name": "Cerneala.Scene2D.Packages.Scene2DPackageGridChunkMetadata",
+    "file": "documentation/classes/Cerneala.Scene2D.Packages.Scene2DPackageGridChunkMetadata.md",
+    "source": "Cerneala.Scene2D.Packages/Scene2DPackageGridChunkMetadata.cs"
+  },
+  {
+    "name": "Cerneala.Scene2D.Packages.Scene2DPackageLevel",
+    "file": "documentation/classes/Cerneala.Scene2D.Packages.Scene2DPackageLevel.md",
+    "source": "Cerneala.Scene2D.Packages/Scene2DPackageLevel.cs"
+  },
+  {
+    "name": "Cerneala.Scene2D.Packages.Scene2DPackageMetadata",
+    "file": "documentation/classes/Cerneala.Scene2D.Packages.Scene2DPackageMetadata.md",
+    "source": "Cerneala.Scene2D.Packages/Scene2DPackageMetadata.cs"
+  },
+  {
+    "name": "Cerneala.Scene2D.Packages.Scene2DPackageReadOptions",
+    "file": "documentation/classes/Cerneala.Scene2D.Packages.Scene2DPackageReadOptions.md",
+    "source": "Cerneala.Scene2D.Packages/Scene2DPackageMetadata.cs"
+  },
+  {
+    "name": "Cerneala.Scene2D.Packages.Scene2DPackageWriter",
+    "file": "documentation/classes/Cerneala.Scene2D.Packages.Scene2DPackageWriter.md",
+    "source": "Cerneala.Scene2D.Packages/Scene2DPackageWriter.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.SceneJsonValue2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.SceneJsonValue2D.md",
+    "source": "UI/Controls/SceneJsonValue2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.SceneSimulationContext2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.SceneSimulationContext2D.md",
+    "source": "UI/Controls/SceneSimulationContext2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.ImageLoadingState",
+    "file": "documentation/classes/Cerneala.UI.Controls.ImageLoadingState.md",
+    "source": "UI/Controls/Image.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.RenderSurface2DPresentationState",
+    "file": "documentation/classes/Cerneala.UI.Controls.RenderSurface2DPresentationState.md",
+    "source": "UI/Controls/RenderSurface2D.Presentation.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.TileMapSource2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.TileMapSource2D.md",
+    "source": "UI/Controls/TileMapSource2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.TileMapCatalog2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.TileMapCatalog2D.md",
+    "source": "UI/Controls/TileMapCatalog2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.TileMapChunkInfo2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.TileMapChunkInfo2D.md",
+    "source": "UI/Controls/TileMapCatalog2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.TileMapChunkData2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.TileMapChunkData2D.md",
+    "source": "UI/Controls/TileMapSource2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.SceneCollisionRegion2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.SceneCollisionRegion2D.md",
+    "source": "UI/Controls/CollisionWorld2D.Streaming.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.SceneCollisionRegionNotReadyException",
+    "file": "documentation/classes/Cerneala.UI.Controls.SceneCollisionRegionNotReadyException.md",
+    "source": "UI/Controls/CollisionWorld2D.Streaming.cs"
+  },
+  {
+    "name": "Cerneala.UI.Resources.IAsyncImageLoader",
+    "file": "documentation/classes/Cerneala.UI.Resources.IAsyncImageLoader.md",
+    "source": "UI/Resources/IAsyncImageLoader.cs"
+  },
+  {
+    "name": "Cerneala.UI.Resources.ImageResourceLease",
+    "file": "documentation/classes/Cerneala.UI.Resources.ImageResourceLease.md",
+    "source": "UI/Resources/ImageResourceLease.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.SceneSpatialEntry2D",
+    "file": "documentation/classes/Cerneala.UI.Controls.SceneSpatialEntry2D.md",
+    "source": "UI/Controls/SceneSpatialSource2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.SceneSpatialLease2D_T_",
+    "file": "documentation/classes/Cerneala.UI.Controls.SceneSpatialLease2D_T_.md",
+    "source": "UI/Controls/SceneSpatialSource2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.ISceneSpatialSource2D_T_",
+    "file": "documentation/classes/Cerneala.UI.Controls.ISceneSpatialSource2D_T_.md",
+    "source": "UI/Controls/SceneSpatialSource2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.SceneSpatialSource2D_T_",
+    "file": "documentation/classes/Cerneala.UI.Controls.SceneSpatialSource2D_T_.md",
+    "source": "UI/Controls/SceneSpatialSource2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.SceneSpatialResidency2D_T_",
+    "file": "documentation/classes/Cerneala.UI.Controls.SceneSpatialResidency2D_T_.md",
+    "source": "UI/Controls/SceneSpatialResidency2D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.SceneSpatialRegion2D_T_",
+    "file": "documentation/classes/Cerneala.UI.Controls.SceneSpatialRegion2D_T_.md",
+    "source": "UI/Controls/SceneSpatialResidency2D.cs"
+  },
+  {
     "name": "Cerneala.UI.Controls.Tile",
     "file": "documentation/classes/Cerneala.UI.Controls.Tile.md",
     "source": "UI/Controls/Tile.cs"

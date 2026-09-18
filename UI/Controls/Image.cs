@@ -7,12 +7,28 @@ using Cerneala.UI.Resources;
 
 namespace Cerneala.UI.Controls;
 
+public enum ImageLoadingState { Loading, Ready, Error }
+
 public class Image : Control
 {
     private IResourceProvider? resourceProvider;
     private ResourceDependencyTracker? resourceDependencyTracker;
     private ResourceId<ImageResource>? sourceResourceId;
     private bool useIntrinsicSize = true;
+    private static readonly Action<Elements.UIElement> imagePrepared =
+        static owner => ((Image)owner).InvalidateResolvedSource("Image preparation completed");
+
+    private static readonly UiPropertyKey<ImageLoadingState> LoadingStatePropertyKey =
+        UiProperty<ImageLoadingState>.RegisterReadOnly(nameof(LoadingState), typeof(Image),
+            new UiPropertyMetadata<ImageLoadingState>(ImageLoadingState.Ready));
+    public static readonly UiProperty<ImageLoadingState> LoadingStateProperty = LoadingStatePropertyKey.Property;
+
+    private static readonly UiPropertyKey<Exception?> LoadingErrorPropertyKey =
+        UiProperty<Exception?>.RegisterReadOnly(nameof(LoadingError), typeof(Image), new UiPropertyMetadata<Exception?>(null));
+    public static readonly UiProperty<Exception?> LoadingErrorProperty = LoadingErrorPropertyKey.Property;
+
+    public ImageLoadingState LoadingState => GetValue(LoadingStateProperty);
+    public Exception? LoadingError => GetValue(LoadingErrorProperty);
 
     public static readonly UiProperty<IDrawImage?> SourceProperty = UiProperty<IDrawImage?>.Register(
         nameof(Source),
@@ -39,6 +55,7 @@ public class Image : Control
             }
 
             sourceResourceId = value;
+            SourceImageLeases.Clear();
             InvalidateResolvedSource("Image resource id changed");
         }
     }
@@ -71,6 +88,7 @@ public class Image : Control
             }
 
             resourceProvider = value;
+            SourceImageLeases.Clear();
             IncrementLayoutVersion();
             IncrementRenderVersion();
             Invalidate(InvalidationFlags.Measure | InvalidationFlags.Render, "Image resource provider changed");
@@ -102,26 +120,48 @@ public class Image : Control
 
     private IDrawImage? ResolveSource()
     {
-        if (SourceResourceId is ResourceId<ImageResource> id)
+        var sourceRoot = Root;
+        ImageResourceCache? sourceCache = sourceRoot?.ImageResourceCache;
+        ResourceId<ImageResource>? sourceId = SourceResourceId;
+        IResourceProvider? provider = ResourceProvider;
+        IDrawImage? direct = Source;
+        ImageResourceResolution resolution;
+        using (ImageResourceLeaseSet.Scope usage = SourceImageLeases.Begin())
         {
-            InvalidationFlags effects = UseIntrinsicSize
-                ? InvalidationFlags.Measure | InvalidationFlags.Render
-                : InvalidationFlags.Render;
-            ImageResourceResolution resolution = ImageResourceResolver.Resolve(
-                this,
-                id,
-                ResourceProvider,
-                ResourceDependencyTracker,
-                effects,
-                affectsIntrinsicSize: UseIntrinsicSize);
-            SetRenderDependencies(RenderDependencies
-                .WithResourceIdentity(id.ToString())
-                .WithResourceVersion(resolution.Version));
-            return resolution.Image;
+            if (sourceId is ResourceId<ImageResource> id)
+            {
+                InvalidationFlags effects = UseIntrinsicSize
+                    ? InvalidationFlags.Measure | InvalidationFlags.Render
+                    : InvalidationFlags.Render;
+                resolution = ImageResourceResolver.Resolve(
+                    this, id, provider, ResourceDependencyTracker, effects,
+                    affectsIntrinsicSize: UseIntrinsicSize, access: ImageResourceAccess.Prepare,
+                    onPrepared: imagePrepared);
+                SetRenderDependencies(RenderDependencies
+                    .WithResourceIdentity(id.ToString())
+                    .WithResourceVersion(resolution.Version));
+            }
+            else
+            {
+                SetRenderDependencies(RenderDependency.None);
+                resolution = new(direct, 0);
+            }
         }
 
-        SetRenderDependencies(RenderDependency.None);
-        return Source;
+        // End the acquisition scope before notifying application bindings.
+        // A loader or a state observer can synchronously replace/detach this
+        // source and release its image. Never return that superseded image.
+        if (!HasCurrentSource()) { return null; }
+        int version = RenderVersion;
+        SetValue(LoadingErrorPropertyKey, resolution.Error);
+        if (RenderVersion != version || !HasCurrentSource()) { return null; }
+        SetValue(LoadingStatePropertyKey, resolution.Error is not null ? ImageLoadingState.Error :
+            resolution.IsPending ? ImageLoadingState.Loading : ImageLoadingState.Ready);
+        return RenderVersion == version && HasCurrentSource() ? resolution.Image : null;
+
+        bool HasCurrentSource() => ReferenceEquals(Root, sourceRoot) &&
+            ReferenceEquals(Root?.ImageResourceCache, sourceCache) && sourceId == SourceResourceId &&
+            ReferenceEquals(provider, ResourceProvider) && ReferenceEquals(direct, Source);
     }
 
     private static DrawRect CalculateDestinationRect(IDrawImage source, LayoutRect bounds)

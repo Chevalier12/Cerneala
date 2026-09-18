@@ -53,7 +53,8 @@ public sealed class TileColliderDescriptor2D
         {
             throw Diagnostic(new ArgumentOutOfRangeException(nameof(localTransform), "Collider local transform must be finite and invertible."), "SCN2D008");
         }
-        if (!Enum.IsDefined(shape))
+        if (shape is not (TileColliderShape2D.Box or TileColliderShape2D.Circle or
+            TileColliderShape2D.Polygon or TileColliderShape2D.Segment))
         {
             throw Diagnostic(new ArgumentOutOfRangeException(nameof(shape)), "SCN2D008");
         }

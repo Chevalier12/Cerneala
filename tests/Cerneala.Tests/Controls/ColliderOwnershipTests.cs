@@ -185,7 +185,7 @@ public sealed class ColliderOwnershipTests
     }
 
     [Fact]
-    public void FreePlacementTileStoresOneImmutableDescriptorAndKeepsCollisionIndependentOfDrawSize()
+    public async Task FreePlacementTileStoresOneImmutableDescriptorAndKeepsCollisionIndependentOfDrawSize()
     {
         TileColliderDescriptor2D descriptor = new(TileColliderShape2D.Box, width: 32, height: 32);
         Tile tile = new(new ImageReference(new TestImage()), descriptor, 10, 20, 64, 96);
@@ -193,15 +193,17 @@ public sealed class ColliderOwnershipTests
         Assert.False(typeof(UIElement).IsAssignableFrom(typeof(Tile)));
         Assert.Null(typeof(Tile).GetProperty(nameof(Tile.Collider))!.SetMethod);
 
-        TileMap2D map = new() { Model = new TileMap2DModel([tile]), TranslateX = 5 };
+        TileMap2D map = new() { Source = TileMapTestSource.Create(new TileMap2DModel([tile])), TranslateX = 5 };
         Scene2D scene = new();
         scene.Children.Add(map);
+        using SceneSimulationContext2D context = new(scene);
+        using SceneCollisionRegion2D prepared = await scene.CollisionWorld.PrepareRegionAsync(new(0, 0, 100, 100));
         CollisionHit2D hit = Assert.Single(scene.CollisionWorld.Raycast(new Vector2(0, 30), Vector2.UnitX, 100));
         AssertBounds(hit.Collider, new DrawRect(15, 20, 32, 32));
         Assert.Empty(scene.CollisionWorld.Raycast(new Vector2(0, 80), Vector2.UnitX, 100));
         Assert.Throws<InvalidOperationException>(() => scene.Children.Add(hit.Collider));
         Assert.Throws<InvalidOperationException>(() => CreateSprite().Collider = hit.Collider);
-        map.Model = new TileMap2DModel([new Tile(tile.Image, 10, 20, 64, 96)]);
+        map.Source = TileMapTestSource.Create(new TileMap2DModel([new Tile(tile.Image, 10, 20, 64, 96)]));
         Assert.Empty(scene.CollisionWorld.Raycast(new Vector2(0, 30), Vector2.UnitX, 100));
     }
 

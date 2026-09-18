@@ -22,7 +22,7 @@ public static class TiledScene2DImporter
         }
         catch (Exception error) when (error is ImportFailure or JsonException or IOException or UnauthorizedAccessException or ArgumentException or OverflowException)
         { context.Record(error); }
-        return new(document, context.Diagnostics.Complete());
+        return new(document, context.Diagnostics.Complete(), context.Root, context.ReferencedFiles);
     }
 
     private sealed class Parser(ImportContext context)
@@ -418,6 +418,6 @@ public static class TiledScene2DImporter
             (byte)((left.R * right.R + 127) / 255), (byte)((left.G * right.G + 127) / 255),
             (byte)((left.B * right.B + 127) / 255), (byte)((left.A * right.A + 127) / 255));
         private static void Preserve(JsonElement owner, Dictionary<string, object?> properties, params string[] names)
-        { foreach (string name in names) { if (owner.TryGetProperty(name, out JsonElement value)) { properties["$" + name] = value.Clone(); } } }
+        { foreach (string name in names) { if (owner.TryGetProperty(name, out JsonElement value)) { properties["$" + name] = new SceneJsonValue2D(value); } } }
     }
 }

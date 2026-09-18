@@ -40,7 +40,8 @@ internal readonly record struct PrismGraphNodePlan
         PrismVerifiedFingerprint valueFingerprint,
         PrismVerifiedFingerprint dependencyFingerprint)
     {
-        if (!Enum.IsDefined(boundsStatus))
+        if (boundsStatus is not (PrismGraphBoundsStatus.Unknown or
+            PrismGraphBoundsStatus.Exact or PrismGraphBoundsStatus.Conservative))
         {
             throw new ArgumentOutOfRangeException(
                 nameof(boundsStatus),

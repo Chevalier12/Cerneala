@@ -201,7 +201,9 @@ public sealed partial class UiMarkupGeneratorTests
         Assembly assembly = CompileSceneComponent(markup, "<Scene2D />");
         Scene2D house = (Scene2D)Activator.CreateInstance(assembly.GetType("Game.HouseView")!)!;
         SceneItems2D items = (SceneItems2D)house.Children[1];
-        items.ItemsSource = new[] { "first", "second" };
+        items.ItemsSource = new SceneSpatialSource2D<object>(
+            new[] { "first", "second" }.Select(id => new SceneSpatialEntry2D(id, new(0, 0, 4, 4), isSimulated: true)),
+            (entry, _) => System.Threading.Tasks.ValueTask.FromResult(new SceneSpatialLease2D<object>(entry.Id)));
         RenderSurface2D surface = new() { Scene = house };
         UIRoot root = new();
         root.VisualChildren.Add(surface);

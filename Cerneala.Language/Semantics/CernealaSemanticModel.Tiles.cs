@@ -6,8 +6,12 @@ namespace Cerneala.Language.Semantics;
 
 internal sealed partial class CernealaSemanticModel
 {
+    private readonly Dictionary<ElementSyntax, Dictionary<string, (float Width, float Height)>> tileImageSizes = new();
+
+    internal static bool IsTileImageSizeAttribute(string name) => name is "ImageWidth" or "ImageHeight";
+
     internal static bool IsTileMapContentMember(ILanguageTypeSymbol? type, string name) =>
-        type?.MetadataName == "Cerneala.UI.Controls.TileMap2D" && name == "Model";
+        type?.MetadataName == "Cerneala.UI.Controls.TileMap2D" && name == "Source";
 
     internal static bool IsLiveColliderOwner(ILanguageTypeSymbol? type) =>
         type?.MetadataName == "Cerneala.UI.Controls.Sprite2D";
@@ -40,10 +44,20 @@ internal sealed partial class CernealaSemanticModel
             return;
         }
 
-        if (parent.Attributes.Any(static attribute => attribute.NameToken.Text == "Model"))
+        if (parent.Attributes.Any(static attribute => attribute.NameToken.Text == "Source"))
         {
-            AddShapeDiagnostic(element.NameToken.Span, "Free Tile placements cannot be combined with a Model binding in one TileMap2D.");
+            AddShapeDiagnostic(element.NameToken.Span, "Free Tile placements cannot be combined with a Source binding in one TileMap2D.");
             return;
+        }
+
+        Dictionary<string, (float Width, float Height)> imageSizes = GetTileImageSizes(parent);
+        AttributeSyntax? imageAttribute = FindAttribute(element, "Image");
+        if (imageAttribute is not null &&
+            (FindAttribute(element, "Width") is null || FindAttribute(element, "Height") is null) &&
+            !imageSizes.ContainsKey(Unquote(imageAttribute.ValueToken.Text)))
+        {
+            AddShapeDiagnostic(imageAttribute.ValueToken.Span,
+                "Natural-size Tile dimensions require ImageWidth and ImageHeight metadata for that image in this TileMap2D.");
         }
 
         symbols.Add(new CernealaSemanticSymbol(CernealaSemanticSymbolKind.Element, element.Name,
@@ -62,12 +76,15 @@ internal sealed partial class CernealaSemanticModel
         {
             string name = attribute.NameToken.Text;
             if (name == "xmlns" || name.StartsWith("xmlns:", StringComparison.Ordinal)) { continue; }
-            if (name is not ("Image" or "X" or "Y" or "Width" or "Height"))
+            bool imageSize = IsTileImageSizeAttribute(name);
+            if (name is not ("Image" or "X" or "Y" or "Width" or "Height") && !imageSize)
             {
                 AddDiagnostic("CERNEALAUI003", attribute.NameToken.Span, type.Name, name);
                 continue;
             }
-            ILanguageMemberSymbol? member = FindProperty(type, name);
+            // Intrinsic image metadata belongs to the source catalog. Reuse the
+            // numeric type, not Tile.Width's CLR member/definition identity.
+            ILanguageMemberSymbol? member = FindProperty(type, imageSize ? "Width" : name);
             if (member is null) { AddDiagnostic("CERNEALAUI003", attribute.NameToken.Span, type.Name, name); continue; }
             string value = Unquote(attribute.ValueToken.Text);
             if (name == "Image")
@@ -79,12 +96,12 @@ internal sealed partial class CernealaSemanticModel
             }
             else if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out float number) ||
                 float.IsNaN(number) || float.IsInfinity(number) || Math.Abs(number) > 2_000_000_000f ||
-                (name is "Width" or "Height") && number < 0)
+                (name is "Width" or "Height") && number < 0 || imageSize && number <= 0)
             {
                 AddDiagnostic("CERNEALAUI004", attribute.ValueToken.Span, type.Name, name, value);
             }
             symbols.Add(new CernealaSemanticSymbol(CernealaSemanticSymbolKind.Property, name,
-                member.ValueTypeMetadataName, attribute.NameToken.Span, member.ValueType, member, value, isWritable: false));
+                member.ValueTypeMetadataName, attribute.NameToken.Span, member.ValueType, imageSize ? null : member, value, isWritable: false));
         }
 
         ElementSyntax[] colliderDeclarations = element.Children.OfType<ElementSyntax>().ToArray();
@@ -96,6 +113,38 @@ internal sealed partial class CernealaSemanticModel
         {
             BindTileColliderDeclaration(child);
         }
+    }
+
+    private Dictionary<string, (float Width, float Height)> GetTileImageSizes(ElementSyntax map)
+    {
+        if (tileImageSizes.TryGetValue(map, out var existing)) { return existing; }
+        Dictionary<string, (float Width, float Height)> sizes = new(StringComparer.Ordinal);
+        tileImageSizes.Add(map, sizes);
+        foreach (ElementSyntax tile in map.Children.OfType<ElementSyntax>())
+        {
+            if (GetElementType(tile, isRoot: false)?.MetadataName != "Cerneala.UI.Controls.Tile") { continue; }
+            AttributeSyntax? width = FindAttribute(tile, "ImageWidth");
+            AttributeSyntax? height = FindAttribute(tile, "ImageHeight");
+            if (width is null && height is null) { continue; }
+            if (width is null || height is null)
+            {
+                AddShapeDiagnostic((width ?? height)!.NameToken.Span, "Tile image metadata requires both ImageWidth and ImageHeight.");
+                continue;
+            }
+            if (!float.TryParse(Unquote(width.ValueToken.Text), NumberStyles.Float, CultureInfo.InvariantCulture, out float w) ||
+                !float.TryParse(Unquote(height.ValueToken.Text), NumberStyles.Float, CultureInfo.InvariantCulture, out float h) ||
+                float.IsNaN(w) || float.IsInfinity(w) || w <= 0 || w > 2_000_000_000f ||
+                float.IsNaN(h) || float.IsInfinity(h) || h <= 0 || h > 2_000_000_000f) { continue; }
+            AttributeSyntax? image = FindAttribute(tile, "Image");
+            if (image is null) { continue; }
+            string reference = Unquote(image.ValueToken.Text);
+            if (sizes.TryGetValue(reference, out var before) && before != (w, h))
+            {
+                AddShapeDiagnostic(image.ValueToken.Span, "Tile image metadata cannot declare conflicting dimensions for the same image in one TileMap2D.");
+            }
+            else { sizes[reference] = (w, h); }
+        }
+        return sizes;
     }
 
     private void BindTileColliderDeclaration(ElementSyntax element)

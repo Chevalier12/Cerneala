@@ -14,3 +14,10 @@ internal interface IElementLifecycleBehavior
     {
     }
 }
+
+// Data observation can be owned without loading a visual element. Rendering,
+// resource decoding, Aspect and Motion behaviors deliberately do not opt in.
+internal interface IElementDataLifecycleBehavior : IElementLifecycleBehavior
+{
+    void ValidateRelay(Cerneala.UI.Relay.UiRelay relay) { }
+}

@@ -79,6 +79,7 @@
                                     Image="$DataContext.CurrentImage:OneWay"
                                     SourceX="$DataContext.CurrentSourceX:OneWay" SourceY="$DataContext.CurrentSourceY:OneWay" SourceWidth="$DataContext.CurrentSourceWidth:OneWay" SourceHeight="$DataContext.CurrentSourceHeight:OneWay"
                                     X="$DataContext.CurrentX:OneWay" Y="$DataContext.CurrentY:OneWay" Width="$DataContext.CurrentWidth:OneWay" Height="$DataContext.CurrentHeight:OneWay"
+                                    PrismInputDomain="$DataContext.CurrentPrismInputDomain:OneWay"
                                     Tint="$DataContext.CurrentTint:OneWay"
                                     IsVisible="$DataContext.CurrentVisible:OneWay">
                                     <Sprite2D.Aspect>

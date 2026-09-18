@@ -61,7 +61,7 @@ public sealed class RenderSurface2DTests
     }
 
     [Fact]
-    public void EventAndOverrideActivateDrawing()
+    public void EventAndSubclassSubscriptionActivateDrawing()
     {
         RenderSurface2D eventSurface = new();
         RenderSurface2DDrawEventHandler handler = (_, _) => { };
@@ -71,7 +71,25 @@ public sealed class RenderSurface2DTests
         Assert.True(eventSurface.IsDrawingActiveForTests);
         eventSurface.Draw -= handler;
         Assert.False(eventSurface.IsDrawingActiveForTests);
-        Assert.True(new OverriddenSurface().IsDrawingActiveForTests);
+        Assert.True(new SubscribedSurface().IsDrawingActiveForTests);
+    }
+
+    [Fact]
+    public void SubclassSubscriptionDrawsBeforeLaterSubscribersAndEndsItsFrameLifetime()
+    {
+        SubscribedSurface surface = new();
+        RenderSurface2DFrame? captured = null;
+        surface.Draw += (_, frame) =>
+        {
+            captured = frame;
+            frame.FillRectangle(new DrawRect(1, 1, 2, 2), Color.White);
+        };
+        DrawCommandList commands = new();
+        ((IRenderSurface2DFrameSource)surface).RecordFrame(commands, new DrawRect(0, 0, 10, 10));
+
+        Assert.Equal([Color.Black, Color.White], commands.Select(command => command.Color));
+        Assert.NotNull(captured);
+        Assert.Throws<ObjectDisposedException>(() => captured.FillRectangle(new DrawRect(0, 0, 1, 1), Color.Black));
     }
 
     [Fact]
@@ -124,6 +142,7 @@ public sealed class RenderSurface2DTests
         Assert.Null(surfaceType.GetMethod("ClearSurface"));
         Assert.Null(surfaceType.GetMethod("RefreshSurface"));
         Assert.Null(surfaceType.GetMethod("UpdateRenderTime"));
+        Assert.Null(surfaceType.GetMethod("OnDraw", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic));
         Assert.Null(frameType.GetMethod("Begin"));
         Assert.Null(frameType.GetMethod("End"));
     }
@@ -226,11 +245,10 @@ public sealed class RenderSurface2DTests
         }
     }
 
-    private sealed class OverriddenSurface : RenderSurface2D
+    private sealed class SubscribedSurface : RenderSurface2D
     {
-        protected override void OnDraw(RenderSurface2DFrame frame)
-        {
-        }
+        public SubscribedSurface() => Draw += static (_, frame) =>
+            frame.FillRectangle(new DrawRect(0, 0, 1, 1), Color.Black);
     }
 
     private sealed class TestFont : IDrawFont

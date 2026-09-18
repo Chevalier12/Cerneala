@@ -23,6 +23,8 @@ Implementations must provide `Load(string)`. `Load(Stream)` has a default implem
 
 Implementations that support streams consume image bytes from the stream's current position and do not own the supplied stream unless their own documentation states otherwise.
 
+Asynchronous cache loading is an explicit capability: implement [IAsyncImageLoader](Cerneala.UI.Resources.IAsyncImageLoader.md) to support a new `ImageResourceCache.AcquireAsync` load. The cache does not assume that a synchronous loader is safe to call on a worker. Images transferred to a cache become acquisition-owned and must not already belong to another live entry in that cache.
+
 ## Methods
 
 | Name | Return Type | Description |

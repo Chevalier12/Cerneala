@@ -18,6 +18,36 @@ public sealed class PrismSurfaceOwnershipTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
+    public void WarmLeaseAcquisitionAndReleaseAfterFullCollectionDoNotAllocate(bool retained)
+    {
+        using Fixture fixture = new();
+        PrismRetainedCacheKey key = Key(1);
+        if (retained) fixture.Promote(key);
+        for (int i = 0; i < 8; i++) AcquireAndRelease();
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 64; i++) AcquireAndRelease();
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.Equal(0, allocated);
+        Assert.Equal(1, fixture.Resources.CreatedSurfaceCount);
+
+        void AcquireAndRelease()
+        {
+            if (retained)
+            {
+                if (!fixture.Resources.TryAcquireRetained(key, fixture.Session.WindowIdentity, out var lease))
+                    throw new InvalidOperationException("The retained entry disappeared.");
+                lease.Dispose();
+            }
+            else fixture.Rent().Dispose();
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
     public void WarmLeaseAcquisitionAndReleaseDoNotAllocate(bool retained)
     {
         using Fixture fixture = new();
@@ -128,6 +158,55 @@ public sealed class PrismSurfaceOwnershipTests
         Assert.Throws<ArgumentOutOfRangeException>(() => fixture.Rent(format: (SdlGpuTextureFormat)int.MaxValue));
         Assert.Equal(0, fixture.Resources.TotalBytes);
         Assert.Equal(0, fixture.Resources.FreeBytes);
+    }
+
+    [Fact]
+    public void SurfaceFormatAdmissionPreservesDefinedUnsupportedValuesAndNumericHoles()
+    {
+        using Fixture fixture = new();
+        IEnumerable<int> ids = Enumerable.Range(-1, 65)
+            .Concat(Enum.GetValues<SdlGpuTextureFormat>().Select(value => (int)value))
+            .Append(int.MinValue).Append(int.MaxValue).Distinct();
+        foreach (int id in ids)
+        {
+            SdlGpuTextureFormat format = (SdlGpuTextureFormat)id;
+            if (Enum.IsDefined(format) && format is not
+                (SdlGpuTextureFormat.Invalid or SdlGpuTextureFormat.D24UnormS8Uint))
+            {
+                using SdlGpuPrismSurfaceLease lease = fixture.Rent(format: format);
+                Assert.Equal(format, lease.Target.ColorFormat);
+                continue;
+            }
+
+            int created = fixture.Api.TextureCreationCount;
+            long bytes = fixture.Resources.TotalBytes;
+            if (Enum.IsDefined(format))
+                Assert.Throws<NotSupportedException>(() => fixture.Rent(format: format));
+            else
+                Assert.Throws<ArgumentOutOfRangeException>(() => fixture.Rent(format: format));
+            Assert.Equal(created, fixture.Api.TextureCreationCount);
+            Assert.Equal(bytes, fixture.Resources.TotalBytes);
+            Assert.Equal(bytes, fixture.Resources.FreeBytes);
+        }
+        Assert.Equal(7, fixture.Resources.CreatedSurfaceCount);
+        Assert.Equal(fixture.Resources.TotalBytes, fixture.Resources.FreeBytes);
+    }
+
+    [Fact]
+    public void InvalidFormatCannotConsumeAnAlreadyPooledSurface()
+    {
+        using Fixture fixture = new();
+        SdlGpuRenderTarget target;
+        using (SdlGpuPrismSurfaceLease lease = fixture.Rent()) target = lease.Target;
+        int created = fixture.Api.TextureCreationCount;
+        long bytes = fixture.Resources.TotalBytes;
+        Assert.Throws<ArgumentOutOfRangeException>(() => fixture.Rent(format: (SdlGpuTextureFormat)int.MaxValue));
+        Assert.Equal(created, fixture.Api.TextureCreationCount);
+        Assert.Equal(bytes, fixture.Resources.TotalBytes);
+        Assert.Equal(bytes, fixture.Resources.FreeBytes);
+        using SdlGpuPrismSurfaceLease reused = fixture.Rent();
+        Assert.Same(target, reused.Target);
+        Assert.Equal(1, fixture.Resources.CreatedSurfaceCount);
     }
 
     [Fact]

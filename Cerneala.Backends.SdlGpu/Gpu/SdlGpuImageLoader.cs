@@ -4,8 +4,21 @@ using SkiaSharp;
 
 namespace Cerneala.Backends.SdlGpu;
 
-internal sealed class SdlGpuImageLoader : IImageLoader
+internal sealed class SdlGpuImageLoader : IAsyncImageLoader
 {
+    public async ValueTask<IDrawImage> LoadAsync(string path, CancellationToken cancellationToken = default)
+    {
+        // This loader creates CPU pixels only. GPU upload remains owned by the
+        // device thread. The cache bounds concurrent decode work.
+        IDrawImage image = await Task.Run(() => Load(path), cancellationToken).ConfigureAwait(false);
+        if (cancellationToken.IsCancellationRequested)
+        {
+            (image as IDisposable)?.Dispose();
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        return image;
+    }
+
     public IDrawImage Load(string path)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -16,7 +29,8 @@ internal sealed class SdlGpuImageLoader : IImageLoader
         string resolved = ResolvePath(path);
         if (string.Equals(Path.GetExtension(resolved), ".svg", StringComparison.OrdinalIgnoreCase))
         {
-            using MemoryStream raster = new(SvgRasterizer.Rasterize(resolved), writable: false);
+            using SvgRasterizer.RasterLease acquisition = SvgRasterizer.Acquire(resolved);
+            using MemoryStream raster = new(acquisition.PngBytes, writable: false);
             return Load(raster);
         }
 

@@ -125,7 +125,7 @@ internal interface IMarkupConditionalValueProvider : IDisposable
     void Deactivate();
 }
 
-internal sealed class MarkupPropertyBindingController<T> : Binding, IElementLifecycleBehavior, IMarkupConditionalValueProvider
+internal sealed class MarkupPropertyBindingController<T> : Binding, IElementDataLifecycleBehavior, IMarkupConditionalValueProvider
 {
     private UIElement? lifecycleOwner;
     private readonly UiObject target;
@@ -408,12 +408,12 @@ internal sealed class MarkupPropertyBindingController<T> : Binding, IElementLife
 
     private UiRelay? ResolveRelay()
     {
-        UiRelay? ownerRelay = lifecycleOwner?.Root?.Relay;
-        UiRelay? targetRelay = (target as UIElement)?.Root?.Relay;
+        UiRelay? ownerRelay = lifecycleOwner?.OwnerRelay;
+        UiRelay? targetRelay = (target as UIElement)?.OwnerRelay;
         if (ownerRelay is not null && targetRelay is not null && !ReferenceEquals(ownerRelay, targetRelay))
         {
             throw new InvalidOperationException(
-                $"Markup binding '{description}' cannot span UI roots with different Relay instances.");
+                $"Markup binding '{description}' cannot span owners with different Relay instances.");
         }
 
         return ownerRelay ?? targetRelay;

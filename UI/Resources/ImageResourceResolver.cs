@@ -12,7 +12,10 @@ internal static class ImageResourceResolver
         IResourceProvider? explicitProvider,
         ResourceDependencyTracker? explicitTracker,
         InvalidationFlags effects,
-        bool affectsIntrinsicSize)
+        bool affectsIntrinsicSize,
+        ImageResourceLeaseSet? acquisitions = null,
+        ImageResourceAccess access = ImageResourceAccess.Synchronous,
+        Action<UIElement>? onPrepared = null)
     {
         ArgumentNullException.ThrowIfNull(owner);
 
@@ -22,7 +25,7 @@ internal static class ImageResourceResolver
             tracker?.RecordDependency(owner, id, effects, affectsIntrinsicSize);
             long version = tracker?.GetDependencyVersion(owner) ?? GetProviderVersion(explicitProvider, id);
             return explicitProvider.TryGetResource(id, out ImageResource? resource)
-                ? new ImageResourceResolution(ResolveImage(owner, resource), version)
+                ? ResolveImage(owner, resource, acquisitions, access, version, effects, onPrepared)
                 : new ImageResourceResolution(null, version);
         }
 
@@ -32,9 +35,8 @@ internal static class ImageResourceResolver
         {
             if (current.Resources.TryGetResource(id, out ImageResource? resource))
             {
-                return new ImageResourceResolution(
-                    ResolveImage(owner, resource),
-                    current.Resources.Version);
+                return ResolveImage(owner, resource, acquisitions, access,
+                    current.Resources.Version, effects, onPrepared);
             }
 
             if (current.Resources.ContainsKey(id.Key))
@@ -49,14 +51,53 @@ internal static class ImageResourceResolver
         long rootVersion = rootTracker?.GetDependencyVersion(owner) ??
             GetProviderVersion(rootProvider, id);
         return rootProvider?.TryGetResource(id, out ImageResource? rootResource) == true
-            ? new ImageResourceResolution(ResolveImage(owner, rootResource), rootVersion)
+            ? ResolveImage(owner, rootResource, acquisitions, access, rootVersion, effects, onPrepared)
             : new ImageResourceResolution(null, rootVersion);
     }
 
-    private static IDrawImage ResolveImage(UIElement owner, ImageResource resource)
+    internal static ImageResourceResolution ResolveImage(UIElement owner, ImageResource resource,
+        ImageResourceLeaseSet? acquisitions, ImageResourceAccess access, long version,
+        InvalidationFlags effects, Action<UIElement>? onPrepared)
     {
         ImageResourceCache? cache = owner.Root?.ImageResourceCache;
-        return cache is null ? resource.Resolve() : cache.Resolve(resource);
+        ImageResourceLeaseSet leases = acquisitions ?? owner.SourceImageLeases;
+        if (access == ImageResourceAccess.Prepare)
+        {
+            ImageResourceLoadResult result = leases.Prepare(resource, cache, out ImageResourceLeaseSet.Acquisition? started);
+            // Use the readiness snapshot that is returned to the consumer. The
+            // task may finish between that snapshot and observer installation.
+            if (result.IsPending && started?.Completion is Task completion && owner.Root is UIRoot root)
+            {
+                _ = RefreshOnCompletionAsync(completion, new(owner), new(root), started, effects, onPrepared);
+            }
+            return new(result.Image, version, result.IsPending, result.Error);
+        }
+        return new(access == ImageResourceAccess.ResidentOnly
+            ? leases.TryAcquireResident(resource, cache) : leases.Acquire(resource, cache), version);
+    }
+
+    private static async Task RefreshOnCompletionAsync(Task completion, WeakReference<UIElement> ownerReference,
+        WeakReference<UIRoot> rootReference, ImageResourceLeaseSet.Acquisition acquisition,
+        InvalidationFlags effects, Action<UIElement>? onPrepared)
+    {
+        // Failures are exposed by the same acquisition on the next UI resolve.
+        // No image/lease is transferred to or owned by this notification. A
+        // shared load must not retain a detached tree until another consumer's
+        // load finishes. Callbacks receive the live owner instead of capturing it.
+        try { await completion.ConfigureAwait(false); }
+        catch { }
+        if (!acquisition.IsActive || !rootReference.TryGetTarget(out UIRoot? root)) { return; }
+        root.Relay.Post(() =>
+        {
+            if (!acquisition.IsActive || !ownerReference.TryGetTarget(out UIElement? owner) ||
+                !rootReference.TryGetTarget(out UIRoot? currentRoot) || !ReferenceEquals(owner.Root, currentRoot)) { return; }
+            if (onPrepared is not null) { onPrepared(owner); }
+            else
+            {
+                owner.IncrementRenderVersion();
+                owner.Invalidate(effects, "Image preparation completed");
+            }
+        });
     }
 
     private static long GetProviderVersion(
@@ -74,4 +115,8 @@ internal static class ImageResourceResolver
 
 internal readonly record struct ImageResourceResolution(
     IDrawImage? Image,
-    long Version);
+    long Version,
+    bool IsPending = false,
+    Exception? Error = null);
+
+internal enum ImageResourceAccess { Synchronous, ResidentOnly, Prepare }

@@ -731,7 +731,9 @@ public sealed class RenderSurface2DSceneFoundationContractTests
         UIRoot root = new(motionClock: clock);
         ObservableList<string> items = [];
         List<IDisposable> prismAttachments = [];
-        SceneItems2D sceneItems = new() { ItemsSource = items };
+        SceneSpatialSource2D<object> source = new([], (entry, _) => ValueTask.FromResult(new SceneSpatialLease2D<object>(entry.Id)));
+        void Publish() => source.SetEntries(items.Select(id => new SceneSpatialEntry2D(id, new(0, 0, 100, 100), isSimulated: true)));
+        SceneItems2D sceneItems = new() { ItemsSource = source };
         sceneItems.Templates.Add(new ContentTemplate<string>(
             "sprite",
             key: null,
@@ -755,6 +757,7 @@ public sealed class RenderSurface2DSceneFoundationContractTests
         try
         {
             items.Add("item");
+            Publish();
             root.ProcessFrame();
             Sprite2D sprite = Assert.IsType<Sprite2D>(Assert.Single(sceneItems.LogicalChildren));
             Assert.True(sprite.IsAttached);
@@ -779,11 +782,13 @@ public sealed class RenderSurface2DSceneFoundationContractTests
 
             items.Add("second");
             items.Move(0, 1);
-            Assert.False(sprite.IsAttached);
+            Publish();
+            Assert.True(sprite.IsAttached);
             Sprite2D[] moved = sceneItems.LogicalChildren
                 .Cast<Sprite2D>()
                 .ToArray();
             Assert.Equal(2, moved.Length);
+            Assert.Same(sprite, moved[1]);
             Assert.All(moved, node => Assert.True(node.IsAttached));
             Assert.All(moved, node => Assert.Equal(Color.Black, node.Tint));
             Assert.Equal(
@@ -800,6 +805,7 @@ public sealed class RenderSurface2DSceneFoundationContractTests
 
             Sprite2D unaffectedByReplace = moved[1];
             items[0] = "replacement";
+            Publish();
             Sprite2D[] replaced = sceneItems.LogicalChildren
                 .Cast<Sprite2D>()
                 .ToArray();
@@ -808,7 +814,9 @@ public sealed class RenderSurface2DSceneFoundationContractTests
             Assert.Equal(Color.Black, replaced[0].Tint);
 
             items.RemoveAt(0);
-            Assert.All(replaced, node => Assert.False(node.IsAttached));
+            Publish();
+            Assert.False(replaced[0].IsAttached);
+            Assert.True(replaced[1].IsAttached);
             Sprite2D beforeReattach = Assert.IsType<Sprite2D>(
                 Assert.Single(sceneItems.LogicalChildren));
             Assert.True(beforeReattach.IsAttached);

@@ -126,6 +126,15 @@ public readonly record struct PrismDrawScope
 
     internal long DrawContentVersion { get; }
 
+    // Spatial scene recording cannot replace a required effect with raw drawing
+    // when its surfaces cannot be allocated. Ordinary retained UI keeps its
+    // existing fallback contract.
+    internal bool StrictSurfaceAllocation { get; init; }
+
+    // Complete source region, distinct from the host's output clip and the
+    // logical coordinate bounds used by filters. Null keeps the ordinary UI path.
+    internal DrawRect? InputBounds { get; init; }
+
     internal PrismDrawScope TranslateLocal(float offsetX, float offsetY)
     {
         if (!IsLocalDrawingScope || offsetX == 0 && offsetY == 0)
@@ -148,7 +157,12 @@ public readonly record struct PrismDrawScope
             LowerUiVersion,
             isLocalDrawingScope: true,
             ImageDependency,
-            DrawContentVersion);
+            DrawContentVersion)
+        {
+            StrictSurfaceAllocation = StrictSurfaceAllocation,
+            InputBounds = InputBounds is DrawRect input
+                ? new DrawRect(input.X + offsetX, input.Y + offsetY, input.Width, input.Height) : null
+        };
     }
 
     internal PrismDrawScope ApplyLocalTransform(Matrix3x2 transform)
@@ -168,6 +182,10 @@ public readonly record struct PrismDrawScope
             Resources,
             LowerUiVersion,
             imageDependency: ImageDependency,
-            drawContentVersion: DrawContentVersion);
+            drawContentVersion: DrawContentVersion)
+        {
+            StrictSurfaceAllocation = StrictSurfaceAllocation,
+            InputBounds = InputBounds
+        };
     }
 }

@@ -1,5 +1,6 @@
 using Cerneala.Drawing;
 using System.Security.Cryptography;
+using System.Runtime.CompilerServices;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
@@ -139,7 +140,8 @@ public sealed class SvgImageTests
 
         try
         {
-            byte[] actual = SvgRasterizer.Rasterize(path);
+            using SvgRasterizer.RasterLease raster = SvgRasterizer.Acquire(path);
+            byte[] actual = raster.PngBytes;
 
             Assert.Equal(expected, actual);
         }
@@ -167,7 +169,8 @@ public sealed class SvgImageTests
 
         try
         {
-            byte[] actual = SvgRasterizer.Rasterize(path);
+            using SvgRasterizer.RasterLease raster = SvgRasterizer.Acquire(path);
+            byte[] actual = raster.PngBytes;
             using SKBitmap bitmap = SKBitmap.Decode(actual);
 
             Assert.Equal(7, bitmap.Width);
@@ -179,6 +182,206 @@ public sealed class SvgImageTests
             File.Delete(compiledPath);
             File.Delete(signaturePath);
         }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void CompletedSvgDecodesDoNotRetain32UnownedRasterBuffers(bool compiled)
+    {
+        List<string> paths = [];
+        try
+        {
+            WeakReference<byte[]>[] rasters = CreateUnownedRasters(paths, compiled);
+            for (int cycle = 0; cycle < 3; cycle++)
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+            }
+
+            Assert.Equal(32, rasters.Length);
+            Assert.Equal(0, rasters.Count(raster => raster.TryGetTarget(out _)));
+        }
+        finally
+        {
+            foreach (string path in paths)
+            {
+                File.Delete(path);
+                File.Delete(path + ".cerneala.png");
+                File.Delete(path + ".cerneala.png.sha256");
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static WeakReference<byte[]>[] CreateUnownedRasters(List<string> paths, bool compiled)
+    {
+        WeakReference<byte[]>[] rasters = new WeakReference<byte[]>[32];
+        for (int index = 0; index < rasters.Length; index++)
+        {
+            string path = WriteSvg("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><rect width=\"16\" height=\"16\" fill=\"red\" /></svg>");
+            paths.Add(path);
+            if (compiled)
+            {
+                File.WriteAllBytes(path + ".cerneala.png", CreatePng(16, 16));
+                File.WriteAllText(path + ".cerneala.png.sha256", SvgRasterizer.ComputeSourceSignature(path));
+            }
+            using SvgRasterizer.RasterLease raster = SvgRasterizer.Acquire(path);
+            rasters[index] = new(raster.PngBytes);
+        }
+        return rasters;
+    }
+
+    [Fact]
+    public void ActiveRasterAcquisitionsShareAcross64ConcurrentDecodesAndRetireTheLastOwner()
+    {
+        string path = WriteSvg("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" />");
+        try
+        {
+            using SvgRasterizer.RasterLease keeper = SvgRasterizer.Acquire(path);
+            byte[] original = keeper.PngBytes;
+            Parallel.For(0, 64, _ =>
+            {
+                using SvgRasterizer.RasterLease acquired = SvgRasterizer.Acquire(path);
+                Assert.Same(original, acquired.PngBytes);
+                acquired.Dispose();
+                Assert.Throws<ObjectDisposedException>(() => acquired.PngBytes);
+            });
+            Assert.Same(original, keeper.PngBytes);
+            keeper.Dispose();
+            byte[] next = AcquireAndRelease(path);
+            Assert.NotSame(original, next);
+            Assert.Equal(original, next);
+        }
+        finally { File.Delete(path); }
+    }
+
+    [Fact]
+    public void ReleasingAnOldArtifactDoesNotEvictItsCurrentReplacement()
+    {
+        string path = WriteSvg("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" />");
+        string compiled = path + ".cerneala.png";
+        try
+        {
+            File.WriteAllBytes(compiled, CreatePng(3, 2));
+            File.WriteAllText(compiled + ".sha256", SvgRasterizer.ComputeSourceSignature(path));
+            File.SetLastWriteTimeUtc(compiled, new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+            using SvgRasterizer.RasterLease old = SvgRasterizer.Acquire(path);
+            byte[] oldBytes = old.PngBytes;
+            byte[] replacement = CreatePng(7, 5);
+            File.WriteAllBytes(compiled, replacement);
+            File.SetLastWriteTimeUtc(compiled, new DateTime(2025, 1, 2, 0, 0, 0, DateTimeKind.Utc));
+            using SvgRasterizer.RasterLease current = SvgRasterizer.Acquire(path);
+            Assert.Equal(replacement, current.PngBytes);
+            Assert.NotSame(oldBytes, current.PngBytes);
+
+            old.Dispose();
+
+            Assert.Same(current.PngBytes, AcquireAndRelease(path));
+            using SKBitmap original = SKBitmap.Decode(oldBytes);
+            Assert.Equal(3, original.Width);
+            Assert.Equal(2, original.Height);
+        }
+        finally
+        {
+            File.Delete(path);
+            File.Delete(compiled);
+            File.Delete(compiled + ".sha256");
+        }
+    }
+
+    [Fact]
+    public void TwoSvgControlsKeepSharedRasterUntilBothDetach()
+    {
+        string path = WriteSvg("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" />");
+        UIRoot root = new();
+        RecordingImageLoader loader = new();
+        root.SetImageLoader(loader);
+        SvgImage first = new() { SourcePath = path }, second = new() { SourcePath = path };
+        try
+        {
+            root.VisualChildren.Add(first);
+            root.VisualChildren.Add(second);
+            RecordingImage firstImage = Assert.IsType<RecordingImage>(first.Source);
+            RecordingImage secondImage = Assert.IsType<RecordingImage>(second.Source);
+            byte[] original = AcquireAndRelease(path);
+
+            root.VisualChildren.Remove(first);
+
+            Assert.True(firstImage.IsDisposed);
+            Assert.False(secondImage.IsDisposed);
+            Assert.Same(original, AcquireAndRelease(path));
+            root.VisualChildren.Remove(second);
+            Assert.True(secondImage.IsDisposed);
+            Assert.NotSame(original, AcquireAndRelease(path));
+            Assert.Equal(2, loader.StreamLoadCount);
+        }
+        finally
+        {
+            root.VisualChildren.Remove(first);
+            root.VisualChildren.Remove(second);
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void FailedBackendDecodeReleasesItsRasterAcquisition()
+    {
+        string path = WriteSvg("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" />");
+        UIRoot root = new();
+        root.SetImageLoader(new ThrowingImageLoader());
+        SvgImage image = new() { SourcePath = path };
+        try
+        {
+            using SvgRasterizer.RasterLease probe = SvgRasterizer.Acquire(path);
+            byte[] original = probe.PngBytes;
+            Assert.Throws<InvalidOperationException>(() => root.VisualChildren.Add(image));
+            Assert.Null(image.Source);
+            probe.Dispose();
+            Assert.NotSame(original, AcquireAndRelease(path));
+        }
+        finally
+        {
+            root.VisualChildren.Remove(image);
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void ClosedRasterHandleDoesNotRetainItsReleasedBuffer()
+    {
+        string path = WriteSvg("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" />");
+        try
+        {
+            (SvgRasterizer.RasterLease closed, WeakReference<byte[]> data) = CreateClosedRaster(path);
+            for (int cycle = 0; cycle < 3; cycle++)
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+            }
+            Assert.False(data.TryGetTarget(out _));
+            closed.Dispose();
+            Assert.Throws<ObjectDisposedException>(() => closed.PngBytes);
+            GC.KeepAlive(closed);
+        }
+        finally { File.Delete(path); }
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static (SvgRasterizer.RasterLease, WeakReference<byte[]>) CreateClosedRaster(string path)
+    {
+        SvgRasterizer.RasterLease lease = SvgRasterizer.Acquire(path);
+        WeakReference<byte[]> data = new(lease.PngBytes);
+        lease.Dispose();
+        return (lease, data);
+    }
+
+    private static byte[] AcquireAndRelease(string path)
+    {
+        using SvgRasterizer.RasterLease lease = SvgRasterizer.Acquire(path);
+        return lease.PngBytes;
     }
 
     private static string WriteSvg(string markup)
@@ -234,5 +437,11 @@ public sealed class SvgImageTests
         {
             IsDisposed = true;
         }
+    }
+
+    private sealed class ThrowingImageLoader : IImageLoader
+    {
+        public IDrawImage Load(string path) => throw new InvalidOperationException("Unexpected path decode.");
+        public IDrawImage Load(Stream stream) => throw new InvalidOperationException("Intentional backend decode failure.");
     }
 }

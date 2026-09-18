@@ -16,6 +16,45 @@ namespace Cerneala.Tests.SdlGpu;
 public sealed class SdlGpuPrismExecutorTests
 {
     [Theory]
+    [InlineData(1f, 1f)]
+    [InlineData(1f, 2f)]
+    [InlineData(2f, 2f)]
+    public void StyleUvMappingUsesTheTargetCoordinateScale(float targetScale, float effectScale)
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = targetScale };
+        nint window = api.CreateWindow("prism-paint-scale", 256, 256, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = Assert.IsType<SdlGpuWindowGraphicsSession>(
+            factory.Create(new SdlWindowSurface(window, api.GetWindowId(window)), 256, 256, coordinateScale: targetScale));
+        PrismInstance instance = new(new("Paint coordinates",
+            [new PrismLayerDefinition(new(1), "Paint", styles: [new(PrismStyleId.ColorOverlay)])]));
+        DrawRect bounds = new(0, 0, 48, 32);
+        Matrix3x2 transform = Matrix3x2.CreateScale(2) * Matrix3x2.CreateTranslation(10, 12);
+        DrawCommandList commands = new();
+        commands.Add(DrawCommand.PushTransform(transform));
+        commands.Add(DrawCommand.BeginPrism(new(instance, new(95301), bounds, Matrix3x2.Identity,
+            effectScale, 1) { InputBounds = new(0, 0, 24, 32) }));
+        commands.Add(DrawCommand.FillRectangle(bounds, Color.Coral));
+        commands.Add(DrawCommand.EndPrism());
+        commands.Add(DrawCommand.PopTransform());
+
+        Render(session, commands, 256, 256);
+
+        byte[] paint = Assert.Single(api.FragmentUniformWrites.Where(bytes =>
+            bytes.Length == SdlGpuPrismUniforms.ByteCount && Read(bytes, 34).Z == 82));
+        Vector2 rasterPoint = Vector2.Transform(new(4, 6), transform) * targetScale -
+            new Vector2(Read(paint, 0).W, Read(paint, 34).W);
+        Vector3 position = new(rasterPoint, 1);
+        Vector4 x = Read(paint, 20), y = Read(paint, 21);
+        Assert.Equal(4f / bounds.Width, Vector3.Dot(new(x.X, x.Y, x.Z), position), precision: 6);
+        Assert.Equal(6f / bounds.Height, Vector3.Dot(new(y.X, y.Y, y.Z), position), precision: 6);
+        Assert.Equal(0, Diagnostics(session).Count);
+
+        static Vector4 Read(byte[] bytes, int index) =>
+            MemoryMarshal.Read<Vector4>(bytes.AsSpan(SdlGpuPrismUniforms.OffsetOfVector(index), 16));
+    }
+
+    [Theory]
     [InlineData(false)]
     [InlineData(true)]
     public void FallbackOnlyPreventsRetentionOfItsOwnDependentWork(bool nested)

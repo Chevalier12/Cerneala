@@ -149,7 +149,7 @@ public sealed class PathBackedImageResourceIntegrationTests
         return root;
     }
 
-    private sealed class RecordingImageLoader : IImageLoader
+    private sealed class RecordingImageLoader : IAsyncImageLoader
     {
         private readonly Dictionary<string, IDrawImage> images = new(StringComparer.Ordinal);
         private readonly Dictionary<string, int> loadCounts = new(StringComparer.Ordinal);
@@ -170,6 +170,12 @@ public sealed class PathBackedImageResourceIntegrationTests
             return images.TryGetValue(path, out IDrawImage? image)
                 ? image
                 : throw new InvalidOperationException($"No fake image registered for '{path}'.");
+        }
+
+        public ValueTask<IDrawImage> LoadAsync(string path, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return new(Load(path));
         }
     }
 

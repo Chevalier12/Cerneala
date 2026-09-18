@@ -112,6 +112,46 @@ internal static class PrismNeighborhoodPlanner
     private const int MaximumDomainTransformRadius = 8;
     internal const int MaximumSpinSamples = 65;
 
+    internal static bool TryGetInputOutset(PrismFilterState state, float pixelScale,
+        Matrix3x2 effectiveTransform, out Vector2 outset)
+    {
+        outset = default;
+        // Only kernels whose source sampling is translation-invariant and has
+        // the support recorded by their passes belong here. Output bounds are
+        // NOT input support (high-pass and sharpening do not grow output).
+        if (state.Filter is not (PrismFilterId.Average or PrismFilterId.Blur or
+            PrismFilterId.BlurMore or PrismFilterId.BoxBlur or PrismFilterId.GaussianBlur or
+            PrismFilterId.MotionBlur or PrismFilterId.SmartBlur or PrismFilterId.SurfaceBlur or
+            PrismFilterId.Sharpen or PrismFilterId.SharpenMore or PrismFilterId.SharpenEdges or
+            PrismFilterId.UnsharpMask or PrismFilterId.HighPass or PrismFilterId.DustScratches or
+            PrismFilterId.Median)) { return false; }
+
+        PrismNeighborhoodPlan plan = Create(state.Filter, PrismGraphBuilder.SnapshotFilterParameters(state),
+            state.BlendMode, pixelScale, effectiveTransform, sourceBounds: null);
+        int edgeMode = plan.Operation switch
+        {
+            PrismNeighborhoodOperation.Blur or PrismNeighborhoodOperation.BlurMore or
+            PrismNeighborhoodOperation.BoxBlur or PrismNeighborhoodOperation.GaussianBlur or
+            PrismNeighborhoodOperation.HighPass => (int)plan.Options0.Z,
+            PrismNeighborhoodOperation.MotionBlur => (int)plan.Options0.W,
+            PrismNeighborhoodOperation.SmartBlur or PrismNeighborhoodOperation.SurfaceBlur => (int)plan.Options1.X,
+            _ => 0
+        };
+        // Wrap/mirror address the opposite/full capture boundary, not the edge
+        // of a camera ROI. Keep those modes conservative until that preimage is
+        // represented; never reinterpret the ROI edge as the world's edge.
+        if (edgeMode >= 2) { return false; }
+        foreach (PrismNeighborhoodPass pass in plan.Passes)
+        {
+            if (pass.IsNoOp) { continue; }
+            // Each bilinear pass can read the next texel beyond a fractional
+            // offset. Compose support across passes, rather than taking a max.
+            outset += new Vector2(MathF.Ceiling(MathF.Abs(pass.RadiusX)),
+                MathF.Ceiling(MathF.Abs(pass.RadiusY)));
+        }
+        return true;
+    }
+
     public static bool IsSupported(PrismFilterId filter)
     {
         if (!TryGetOperation(filter, out _))
@@ -139,7 +179,7 @@ internal static class PrismNeighborhoodPlanner
         PrismBlendMode blendMode,
         float pixelScale,
         Matrix3x2 effectiveTransform,
-        DrawRect sourceBounds)
+        DrawRect? sourceBounds)
     {
         if (!IsSupported(filter) ||
             !TryGetOperation(filter, out PrismNeighborhoodOperation operation))
@@ -169,10 +209,12 @@ internal static class PrismNeighborhoodPlanner
                 "The filter transform produced an invalid device scale.");
         }
 
-        float sourceWidth =
-            MathF.Max(1, sourceBounds.Width * deviceScale);
-        float sourceHeight =
-            MathF.Max(1, sourceBounds.Height * deviceScale);
+        // A dependency query has no captured texture yet. Do not suppress a
+        // pass from the size of the camera crop that this query will expand.
+        float sourceWidth = sourceBounds is DrawRect boundsX
+            ? MathF.Max(1, boundsX.Width * deviceScale) : float.PositiveInfinity;
+        float sourceHeight = sourceBounds is DrawRect boundsY
+            ? MathF.Max(1, boundsY.Height * deviceScale) : float.PositiveInfinity;
         PrismFilterParameterReader values =
             new(filter, parameters);
 

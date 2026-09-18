@@ -54,6 +54,8 @@ nameTextBox.Text = "Grace";
 
 For an attached `UIElement`, the binding automatically uses `UIRoot.Relay`. Overloads accepting an explicit `UiRelay` support generic `UiObject` targets and targets that are not attached yet. An explicit Relay must match the target root's Relay when that target is later attached.
 
+Scene nodes in an independent [SceneSimulationContext2D](Cerneala.UI.Controls.SceneSimulationContext2D.md) automatically use that context's relay. An explicit relay must also match this owner during adoption. Data binding observation stops on leaving the independent context without requiring UI Loaded/Unloaded events.
+
 All bindings write the current source value to the target during construction. After that, source changes update the target property. When the mode is `TwoWay`, changes to the target property also update the observable source.
 
 The target, target property, and source arguments must be non-null. The target property must not be read-only. If the initial target write fails, for example because the target property's validation rejects the source value, the binding unsubscribes before the exception is rethrown.

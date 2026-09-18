@@ -19,11 +19,11 @@ public sealed class ImageResourceCacheTests
         ImageResourceCache cache = new(loader);
         ImageResource resource = new("logo.png");
 
-        IDrawImage first = cache.Resolve(resource);
-        IDrawImage second = cache.Resolve(resource);
+        using ImageResourceLease first = cache.Acquire(resource);
+        using ImageResourceLease second = cache.Acquire(resource);
 
-        Assert.Same(loaded, first);
-        Assert.Same(first, second);
+        Assert.Same(loaded, first.Image);
+        Assert.Same(first.Image, second.Image);
         Assert.Equal(1, loader.GetLoadCount("logo.png"));
     }
 
@@ -66,27 +66,30 @@ public sealed class ImageResourceCacheTests
         loader.SetImage("avatar.png", avatar);
         ImageResourceCache cache = new(loader);
 
-        IDrawImage first = cache.Resolve(new ImageResource("logo.png"));
-        IDrawImage second = cache.Resolve(new ImageResource("avatar.png"));
+        using ImageResourceLease first = cache.Acquire(new ImageResource("logo.png"));
+        using ImageResourceLease second = cache.Acquire(new ImageResource("avatar.png"));
 
-        Assert.Same(logo, first);
-        Assert.Same(avatar, second);
-        Assert.NotSame(first, second);
+        Assert.Same(logo, first.Image);
+        Assert.Same(avatar, second.Image);
+        Assert.NotSame(first.Image, second.Image);
         Assert.Equal(1, loader.GetLoadCount("logo.png"));
         Assert.Equal(1, loader.GetLoadCount("avatar.png"));
     }
 
     [Fact]
-    public void CacheClearDisposesOwnedDisposableImages()
+    public void CacheClearPreservesAcquisitionsUntilTheirLastRelease()
     {
         RecordingImageLoader loader = new();
         DisposableTestImage loaded = new(16, 8);
         loader.SetImage("logo.png", loaded);
         ImageResourceCache cache = new(loader);
-        cache.Resolve(new ImageResource("logo.png"));
+        ImageResourceLease lease = cache.Acquire(new ImageResource("logo.png"));
 
         cache.Clear();
 
+        Assert.False(loaded.IsDisposed);
+        Assert.Same(loaded, lease.Image);
+        lease.Dispose();
         Assert.True(loaded.IsDisposed);
         Assert.Equal(1, loaded.DisposeCount);
     }
@@ -97,10 +100,11 @@ public sealed class ImageResourceCacheTests
         DisposableTestImage supplied = new(16, 8);
         ImageResourceCache cache = new(new RecordingImageLoader());
 
-        IDrawImage resolved = cache.Resolve(new ImageResource(supplied));
+        ImageResourceLease resolved = cache.Acquire(new ImageResource(supplied));
         cache.Clear();
 
-        Assert.Same(supplied, resolved);
+        Assert.Same(supplied, resolved.Image);
+        resolved.Dispose();
         Assert.False(supplied.IsDisposed);
         Assert.Equal(0, supplied.DisposeCount);
     }
@@ -111,7 +115,7 @@ public sealed class ImageResourceCacheTests
         ImageResourceCache cache = new(null);
 
         InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
-            (Action)(() => cache.Resolve(new ImageResource("logo.png"))));
+            (Action)(() => cache.Acquire(new ImageResource("logo.png"))));
 
         Assert.Contains("image loader", exception.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("path-backed", exception.Message, StringComparison.OrdinalIgnoreCase);
@@ -145,7 +149,7 @@ public sealed class ImageResourceCacheTests
         }
     }
 
-    private sealed class RecordingImageLoader : IImageLoader
+    private sealed class RecordingImageLoader : IAsyncImageLoader
     {
         private readonly Dictionary<string, IDrawImage> images = new(StringComparer.Ordinal);
         private readonly Dictionary<string, int> loadCounts = new(StringComparer.Ordinal);
@@ -166,6 +170,12 @@ public sealed class ImageResourceCacheTests
             return images.TryGetValue(path, out IDrawImage? image)
                 ? image
                 : throw new InvalidOperationException($"No fake image registered for '{path}'.");
+        }
+
+        public ValueTask<IDrawImage> LoadAsync(string path, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return new(Load(path));
         }
     }
 

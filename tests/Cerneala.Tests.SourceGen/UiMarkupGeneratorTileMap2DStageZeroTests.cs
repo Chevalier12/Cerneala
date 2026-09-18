@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
@@ -18,7 +20,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void TileMapMarkupUsesRealAspectMotionPrismSyntaxAtSceneMapAndSpriteScopes()
     {
         const string markup = """
-            <RenderSurface2D DataType="Cerneala.UI.Controls.TileMap2DModel"
+            <RenderSurface2D DataType="Cerneala.UI.Controls.TileMapSource2D"
                              xmlns:r="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
               <RenderSurface2D.Resources>
                 <r:ImageResource Name="VillageTerrain" Source="terrain.png" />
@@ -31,7 +33,7 @@ public sealed partial class UiMarkupGeneratorTests
                   </Scene2D.Aspect>
                   @prism { @layer SceneContent { @filter Blur { Radius = 1; } } }
                   <TileMap2D Name="Ground" Layer="0" />
-                  <TileMap2D Name="Buildings" Layer="1" Model="$DataContext:OneWay">
+                  <TileMap2D Name="Buildings" Layer="1" Source="$DataContext:OneWay">
                     <TileMap2D.Aspect>
                       @on Loaded { @animate with Tween(100ms) { @to { Opacity = 0.8; } } }
                     </TileMap2D.Aspect>
@@ -55,16 +57,17 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.DoesNotContain(compilation.GetDiagnostics(), diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
 
         (TileMap2DModel groundModel, TileMap2DModel buildingsModel) = CreateMarkupVillageModels();
+        TileMapSource2D buildingSource = TileMapSource2D.FromModel(buildingsModel);
         Assembly assembly = EmitBindingTestAssembly(compilation);
         RenderSurface2D surface = Assert.IsType<RenderSurface2D>(InvokeBindingTestCreate(
-            assembly, "Cerneala.GeneratedUi.TileMap2DRealSyntaxFactory", buildingsModel));
+            assembly, "Cerneala.GeneratedUi.TileMap2DRealSyntaxFactory", buildingSource));
         Scene2D scene = Assert.IsType<Scene2D>(surface.Scene);
         Assert.Equal(3, scene.Children.Count);
         TileMap2D ground = Assert.IsType<TileMap2D>(scene.Children[0]);
         TileMap2D buildings = Assert.IsType<TileMap2D>(scene.Children[1]);
         Sprite2D door = Assert.IsType<Sprite2D>(scene.Children[2]);
-        ground.Model = groundModel;
-        UIRoot root = new();
+        ground.Source = TileMapSource2D.FromModel(groundModel);
+        UIRoot root = new(512, 256);
         TestImage terrain = new("terrain");
         TestImage structures = new("structures");
         root.SetImageLoader(new TestImageLoader(new Dictionary<string, IDrawImage>(StringComparer.Ordinal)
@@ -76,7 +79,7 @@ public sealed partial class UiMarkupGeneratorTests
         root.ProcessFrame();
         try
         {
-            Assert.Same(buildingsModel, buildings.Model);
+            Assert.Same(buildingSource, buildings.Source);
             Assert.Same(scene, door.LogicalParent);
             Assert.Empty(ground.LogicalChildren);
             Assert.Empty(buildings.LogicalChildren);
@@ -98,13 +101,13 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public void EqualCoordinatesRemainIndependentStaticTileDeclarations()
+    public async Task EqualCoordinatesRemainIndependentStaticTileDeclarations()
     {
         const string markup = """
             <Scene2D xmlns:r="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
               <Scene2D.Resources><r:ImageResource Name="Atlas" Source="atlas.png" /></Scene2D.Resources>
               <TileMap2D>
-                <Tile Image="$Atlas" X="1.5" Y="-2.5" />
+                <Tile Image="$Atlas" ImageWidth="32" ImageHeight="32" X="1.5" Y="-2.5" />
                 <Tile Image="$Atlas" X="1.5" Y="-2.5" />
               </TileMap2D>
             </Scene2D>
@@ -114,8 +117,9 @@ public sealed partial class UiMarkupGeneratorTests
         Assembly assembly = EmitBindingTestAssembly(compilation);
         Scene2D scene = Assert.IsType<Scene2D>(InvokeBindingTestCreate(assembly, "Cerneala.GeneratedUi.IndependentTileDataFactory"));
         TileMap2D map = Assert.IsType<TileMap2D>(Assert.Single(scene.Children));
-        Assert.Equal(2, map.Model!.Tiles.Count);
-        Assert.All(map.Model.Tiles, tile => { Assert.Equal(1.5f, tile.X); Assert.Equal(-2.5f, tile.Y); });
+        using SceneSpatialLease2D<TileMapChunkData2D> data = await AcquireGeneratedTileChunkAsync(map);
+        Assert.Equal(2, data.Value.Placements.Count);
+        Assert.All(data.Value.Placements, tile => { Assert.Equal(1.5f, tile.X); Assert.Equal(-2.5f, tile.Y); });
         Assert.Empty(map.LogicalChildren);
     }
 
@@ -162,6 +166,12 @@ public sealed partial class UiMarkupGeneratorTests
                 bounds, order: 1));
     }
 
+    private static async Task<SceneSpatialLease2D<TileMapChunkData2D>> AcquireGeneratedTileChunkAsync(TileMap2D map)
+    {
+        TileMapSource2D source = Assert.IsType<TileMapSource2D>(map.Source);
+        return await source.LoadAsync(Assert.Single(source.Entries));
+    }
+
     private static DrawCommandList RecordSurface(RenderSurface2D surface)
     {
         DrawCommandList commands = new();
@@ -181,8 +191,10 @@ public sealed partial class UiMarkupGeneratorTests
         public int Height => 32;
     }
 
-    private sealed class TestImageLoader(IReadOnlyDictionary<string, IDrawImage> images) : IImageLoader
+    private sealed class TestImageLoader(IReadOnlyDictionary<string, IDrawImage> images) : IAsyncImageLoader
     {
         public IDrawImage Load(string path) => images[path];
+        public ValueTask<IDrawImage> LoadAsync(string path, CancellationToken cancellationToken = default) =>
+            ValueTask.FromResult(Load(path));
     }
 }

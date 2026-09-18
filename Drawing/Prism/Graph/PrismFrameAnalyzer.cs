@@ -51,13 +51,23 @@ internal sealed class PrismFrameAnalyzer
                         scope.EffectiveTransform,
                         state.Transform);
                     DrawRect bounds = DrawCommandStateAnalyzer.TransformBounds(
-                        scope.ControlBounds,
+                        scope.InputBounds ?? scope.ControlBounds,
                         effectiveTransform);
-                    if (state.ClipBounds is DrawRect clipBounds)
+                    if (scope.InputBounds is null && state.ClipBounds is DrawRect clipBounds)
                     {
                         bounds = DrawCommandStateAnalyzer.Intersect(
                             bounds,
                             clipBounds);
+                    }
+
+                    int? parentScopeIndex = openScopes.Count == 0
+                        ? null
+                        : openScopes[^1].ScopeIndex;
+                    if (parentScopeIndex is int parentIndex && IsEmpty(scopes[parentIndex].Bounds))
+                    {
+                        // A nested output is consumed by its parent's capture. An explicit
+                        // input domain cannot keep work alive when that capture is absent.
+                        bounds = new DrawRect(bounds.X, bounds.Y, 0, 0);
                     }
 
                     bool requiresBackdrop = RequiresBackdrop(scope, bounds);
@@ -70,9 +80,6 @@ internal sealed class PrismFrameAnalyzer
                     }
 
                     int scopeIndex = scopes.Count;
-                    int? parentScopeIndex = openScopes.Count == 0
-                        ? null
-                        : openScopes[^1].ScopeIndex;
                     scopes.Add(
                         new ScopeBuilder(
                             scopeIndex,

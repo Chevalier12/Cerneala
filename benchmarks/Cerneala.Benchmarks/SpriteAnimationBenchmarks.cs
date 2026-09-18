@@ -89,7 +89,7 @@ internal static class SpriteAnimationBenchmarkRunner
 
     private sealed class Workload : IDisposable
     {
-        private readonly UIRoot root = new();
+        private readonly UIRoot root = new() { Width = Bounds.Width, Height = Bounds.Height };
         private readonly List<IDisposable> effects = [];
         private long recordedVersion = -1;
         internal RenderSurface2D Surface { get; }
@@ -109,10 +109,10 @@ internal static class SpriteAnimationBenchmarkRunner
                 ResourceId<ImageResource> atlas = new("AnimationAtlas");
                 TileCell2D[] cells = Enumerable.Repeat(new TileCell2D(1), count).ToArray();
                 for (int i = 0; i < active; i++) { cells[1 + i * 3] = default; }
-                Map = new TileMap2D { Model = new TileMap2DModel("Ground", new DrawSize(16, 16),
+                Map = new TileMap2D { Source = TileMapSource2D.FromModel(new TileMap2DModel("Ground", new DrawSize(16, 16),
                     [new TileSet2D("World", atlas, [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16))])],
                     [new TileChunk2D(new TileCoordinate2D(0, 0), 32, 32, cells)],
-                    new TileMapBounds2D(0, 0, 32, 32)) };
+                    new TileMapBounds2D(0, 0, 32, 32))) };
                 scene.Children.Add(Map);
                 Surface.Resources.SetResource(atlas, new ImageResource("animation-atlas.png"));
                 root.SetImageLoader(new ImageLoader());
@@ -140,6 +140,7 @@ internal static class SpriteAnimationBenchmarkRunner
             }
             root.VisualChildren.Add(Surface);
             root.ProcessFrame();
+            ((ITimeSensitiveRenderElement)Surface).UpdateRenderTime(TimeSpan.Zero);
             Record();
             if (Surface.ActiveAnimationCount != active)
                 throw new InvalidOperationException("Active registration count does not match fixture.");
@@ -177,8 +178,10 @@ internal static class SpriteAnimationBenchmarkRunner
         public int Height => 16;
     }
 
-    private sealed class ImageLoader : IImageLoader
+    private sealed class ImageLoader : IImageLoader, IAsyncImageLoader
     {
         public IDrawImage Load(string path) => new Image();
+        public ValueTask<IDrawImage> LoadAsync(string path, CancellationToken cancellationToken = default) =>
+            ValueTask.FromResult(Load(path));
     }
 }

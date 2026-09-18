@@ -40,6 +40,14 @@ public sealed class DrawCommandList : IReadOnlyList<DrawCommand>
         }
     }
 
+    internal void Truncate(int count)
+    {
+        if (count < 0 || count > _commands.Count) { throw new ArgumentOutOfRangeException(nameof(count)); }
+        if (count == _commands.Count) { return; }
+        _commands.RemoveRange(count, _commands.Count - count);
+        unchecked { version++; }
+    }
+
     public IEnumerator<DrawCommand> GetEnumerator()
     {
         return _commands.GetEnumerator();

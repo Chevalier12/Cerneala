@@ -27,7 +27,7 @@ if (imported.Success)
     var scene = new Scene2D { OrderMode = SceneOrderMode.Layer,
         TranslateX = level.WorldOffset.X, TranslateY = level.WorldOffset.Y };
     foreach (TileMap2DModel model in level.TileMaps)
-        scene.Children.Add(new TileMap2D { Model = model, Layer = model.Order });
+        scene.Children.Add(new TileMap2D { Source = TileMapSource2D.FromModel(model), Layer = model.Order });
     // Composition also registers images and creates ordinary sprites/templates.
 }
 ```
@@ -43,6 +43,14 @@ The project requires exact string `jsonVersion: "1.5.3"`. Separate `.ldtkl` leve
 Inline and official separate-level exports are supported. Both the project reference and external payload are checked; identity, dimensions and world placement must agree. Missing files, repeated/circular payload paths, duplicate definition UIDs or instance IIDs, unresolved references and unsupported constructs prevent publication. IID uniqueness compares parsed GUID identity, including differently cased spellings.
 
 All atlas and nonempty FilePath fields resolve relative to the project, including fields inside separate levels. Returned asset keys/paths are normalized relative to the configured local root. Missing assets fail even though image decoding is deferred. See [options](Cerneala.Scene2D.Importers.Scene2DImportOptions.md) for exact budgets, stable-tree containment and reparse-point policy. Import does not protect against hostile concurrent filesystem replacement.
+
+The successful [import result](Cerneala.Scene2D.Importers.Scene2DImportResult.md)
+also publishes `AssetRootDirectory` and the unique, ordinally sorted
+`ReferencedFiles` list. It includes atlas images and nonempty `FilePath` fields,
+not ordinary text or dependencies inferred by parsing their contents. Project
+and external-level JSON files are not included merely because the importer read
+them. On failure the root is null and the list is empty, rather than partially
+published.
 
 ### Worlds, grids and tiles
 
@@ -67,6 +75,14 @@ Supported primitive fields are `Int` (Int64), `Float` (finite Double), `String`,
 Promotion requires explicit `TileLayer`, `TileX`, `TileY`; an optional `TileId` uses core/global identity and is required over an empty cell. Duplicate or unresolved addresses fail. The source `TileLayer` identifies the resulting map. The parser returns sparse metadata only; composition can explicitly clear a replaced static cell and create an ordinary peer sprite. See [TilePromotion2D](Cerneala.UI.Controls.TilePromotion2D.md).
 
 ### Field disposition and provenance
+
+JSON fields preserved verbatim, including values nested in provenance
+dictionaries, use [SceneJsonValue2D](Cerneala.UI.Controls.SceneJsonValue2D.md)
+instead of raw `JsonElement`. Read the detached JSON through its `Value`
+property. Identity is reference-based, not a comparison of JSON text. Mapped
+primitive fields, `DrawPoint`, `Color`, and the typed `$IntGrid` collection are
+unchanged. These values remain owned by the complete import result until that
+result is released or explicitly prepared into a streamed source.
 
 The [versioned field inventory](../../../tests/Fixtures/Scene2DImport/compatibility-matrix.json) lists every accepted field at all 16 LDtk scopes. Unknown fields fail, including nested definitions, tile rectangles and external level references. Known editor-only fields produce aggregated `SCN2D017` warnings, once per source file. Their values are not interpreted as runtime instructions.
 

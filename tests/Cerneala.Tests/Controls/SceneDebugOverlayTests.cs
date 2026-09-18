@@ -27,14 +27,15 @@ public sealed class SceneDebugOverlayTests
             [new TileSet2D("atlas", new ResourceId<ImageResource>("atlas"),
                 [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16)),
                  new TileDefinition2D(2, new DrawRect(0, 0, 16, 16))])],
-            [new TileChunk2D(new TileCoordinate2D(-1, -1), 1, 1, [new TileCell2D(tileId)])]);
-        TileMap2D map = new() { Model = Model(1), TranslateX = 16, TranslateY = 16 };
+            [new TileChunk2D(new TileCoordinate2D(-1, -1), 1, 1, [new TileCell2D(tileId)], version: tileId)]);
+        TileMap2D map = new() { Source = TileMapTestSource.Create(Model(1)), TranslateX = 16, TranslateY = 16 };
         map.Resources.SetResource(new ResourceId<ImageResource>("atlas"), new ImageResource(new TestImage()));
         Scene2DDebugOverlay overlay = new() { Flags = Scene2DDebugFlags.TileCoordinates | Scene2DDebugFlags.TileIds };
         Scene2D scene = new();
         scene.Children.Add(map);
         scene.Children.Add(overlay);
         RenderSurface2D surface = new() { Scene = scene };
+        using TileMapTestSurface host = new(surface, new(0, 0, 64, 64));
         DrawCommand Label()
         {
             DrawCommandList commands = new();
@@ -62,7 +63,7 @@ public sealed class SceneDebugOverlayTests
             Assert.Equal("minus1,minus1", Label().Text);
             overlay.Flags = Scene2DDebugFlags.TileIds;
             Assert.Equal(" #1", Label().Text);
-            map.Model = Model(2);
+            map.PublishModel(Model(2));
             Assert.Equal(" #2", Label().Text);
             overlay.Flags = Scene2DDebugFlags.TileCoordinates | Scene2DDebugFlags.TileIds;
             Assert.Equal("minus1,minus1 #2", Label().Text);
@@ -78,6 +79,7 @@ public sealed class SceneDebugOverlayTests
     {
         (Scene2D scene, Scene2DDebugOverlay overlay, _) = Fixture();
         RenderSurface2D surface = new() { Scene = scene };
+        using TileMapTestSurface host = new(surface, new(0, 0, 64, 64));
         DrawCommandList commands = new();
         long BytesPerFrame(Scene2DDebugFlags selected)
         {
@@ -105,6 +107,7 @@ public sealed class SceneDebugOverlayTests
     {
         (Scene2D scene, Scene2DDebugOverlay overlay, _) = Fixture();
         RenderSurface2D surface = new() { Scene = scene };
+        using TileMapTestSurface host = new(surface, new(0, 0, 64, 64));
         DrawCommandList commands = new();
         long BytesPerFrame(Scene2DDebugFlags flags)
         {
@@ -139,6 +142,7 @@ public sealed class SceneDebugOverlayTests
         const Scene2DDebugFlags labels = Scene2DDebugFlags.TileCoordinates | Scene2DDebugFlags.TileIds;
         overlay.Flags = labels;
         RenderSurface2D surface = new() { Scene = scene };
+        using TileMapTestSurface host = new(surface, new(0, 0, 64, 64));
         DrawCommand[] RecordLabels()
         {
             DrawCommandList commands = new();
@@ -196,6 +200,7 @@ public sealed class SceneDebugOverlayTests
         Scene2D scene = new();
         scene.Children.Add(overlay);
         RenderSurface2D surface = new() { Scene = scene };
+        using TileMapTestSurface host = new(surface, new(0, 0, 64, 64));
         DrawCommandList commands = new();
         RenderSurface2DFrame frame = new(commands, new DrawRect(0, 0, 100, 100), TimeSpan.Zero);
         Scene2DRecordContext context = new(surface, frame, Matrix3x2.Identity, frame.Bounds);
@@ -249,6 +254,7 @@ public sealed class SceneDebugOverlayTests
         overlay.Layer = int.MinValue;
         SceneBounds2D before = scene.GetLocalBounds();
         RenderSurface2D surface = new() { Scene = scene };
+        using TileMapTestSurface host = new(surface, new(0, 0, 64, 64));
         DrawCommandList commands = new();
         RenderSurface2DFrame frame = new(commands, new DrawRect(0, 0, 64, 64), TimeSpan.Zero);
         Scene2DRecordContext context = new(surface, frame, Matrix3x2.Identity, frame.Bounds);
@@ -266,11 +272,11 @@ public sealed class SceneDebugOverlayTests
     {
         (Scene2D scene, Scene2DDebugOverlay overlay, TileMap2D map) = Fixture();
         overlay.Flags = Scene2DDebugFlags.Colliders;
-        TileMap2DModel model = map.Model!;
+        TileMap2DModel model = map.GetSourceModel()!;
         ManualMotionClock clock = new();
         UIRoot root = new(motionClock: clock);
         RenderSurface2D surface = new() { Scene = scene };
-        root.VisualChildren.Add(surface);
+        using TileMapTestSurface host = new(surface, new(0, 0, 64, 64), root);
         overlay.Aspect = new ElementAspect([new ElementAspectValue(Scene2DDebugOverlay.LineThicknessProperty, 2f)]);
         root.ProcessFrame();
         Assert.Equal(2, overlay.LineThickness);
@@ -293,7 +299,7 @@ public sealed class SceneDebugOverlayTests
         var after = scene.CollisionWorld.GetDiagnosticsSnapshot();
         Assert.Equal(before.RebuildCount, after.RebuildCount);
         Assert.Equal(before.IncrementalUpdateCount, after.IncrementalUpdateCount);
-        Assert.Same(model, map.Model);
+        Assert.Same(model, map.GetSourceModel());
     }
 
     private static object Hit(CollisionHit2D hit) => (hit.Collider, hit.Entity, hit.Point, hit.Normal, hit.Distance, hit.Fraction, hit.IsTrigger);
@@ -302,9 +308,9 @@ public sealed class SceneDebugOverlayTests
     {
         List<TileChunk2D> chunks = [new(new TileCoordinate2D(0, 0), 4, 4, Enumerable.Repeat(new TileCell2D(1), 16))];
         for (int i = 0; i < remoteChunks; i++) { chunks.Add(new TileChunk2D(new TileCoordinate2D(1000 + i * 4, 1000), 4, 4, Enumerable.Repeat(new TileCell2D(1), 16))); }
-        TileMap2D map = new() { Model = new TileMap2DModel("ground", new DrawSize(16, 16),
+        TileMap2D map = new() { Source = TileMapTestSource.Create(new TileMap2DModel("ground", new DrawSize(16, 16),
             [new TileSet2D("atlas", new ResourceId<ImageResource>("atlas"), [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16))])],
-            chunks) };
+            chunks)) };
         map.Resources.SetResource(new ResourceId<ImageResource>("atlas"), new ImageResource(new TestImage()));
         Scene2DDebugOverlay overlay = new() { NavigationGrid = new Grid() };
         Scene2D scene = new();
@@ -318,6 +324,7 @@ public sealed class SceneDebugOverlayTests
     private static DrawCommandList Record(Scene2D scene)
     {
         RenderSurface2D surface = new() { Scene = scene };
+        using TileMapTestSurface host = new(surface, new(0, 0, 64, 64));
         DrawCommandList commands = new();
         ((IRenderSurface2DFrameSource)surface).RecordFrame(commands, new DrawRect(0, 0, 64, 64));
         return commands;

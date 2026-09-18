@@ -14,7 +14,7 @@ internal static class PrismMaskStyle
         double density,
         bool invert)
     {
-        if (!Enum.IsDefined(channel))
+        if (!PrismEnumValidation.IsDefined(channel))
         {
             throw new ArgumentOutOfRangeException(
                 nameof(channel),

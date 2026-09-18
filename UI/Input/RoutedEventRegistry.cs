@@ -6,7 +6,7 @@ public static class RoutedEventRegistry
     {
         ArgumentNullException.ThrowIfNull(argsType);
 
-        if (!Enum.IsDefined(routingStrategy))
+        if (routingStrategy is not (RoutingStrategy.Direct or RoutingStrategy.Bubble or RoutingStrategy.Tunnel))
         {
             throw new ArgumentOutOfRangeException(nameof(routingStrategy), routingStrategy, "Unsupported routing strategy.");
         }

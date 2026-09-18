@@ -104,6 +104,8 @@ static Task AddItemAsync<T>(
 
 `UiRelay` captures its owner thread when `UIRoot` constructs it and is exposed through `UIRoot.Relay` and `UiHost.Relay`. The class does not create a thread, block the caller, or run a nested message loop. It does not provide a blocking `Invoke`, priorities, delayed dispatch, or a general-purpose task scheduler.
 
+An independent [SceneSimulationContext2D](Cerneala.UI.Controls.SceneSimulationContext2D.md) also constructs a relay on its owner thread and exposes it through `Relay`. Its `Update` drains the same bounded queue implementation without creating a UI root. Attached scenes reuse their existing root relay rather than adding another queue. Scheduling, cancellation, snapshot limits, and synchronization-context behavior are the same for either owner.
+
 `UIRoot.ProcessFrame` and each host update drain one queue snapshot on the owner thread before retained scheduler and input work. The root must keep being pumped for queued callbacks and captured continuations to run. Relay invalidations can therefore participate in the same update, while callbacks posted during the drain or input wait for a later update.
 
 `Post` and accepted `InvokeAsync` work enqueue even when called from the owner thread. An `InvokeAsync` call whose token is already canceled instead returns a canceled task without enqueuing or invoking the callback. Enqueued work is dequeued in FIFO order after enqueue linearization. A drain processes a stable snapshot up to the configured callback budget, so callbacks posted during a drain remain pending for a later update. Value-producing asynchronous callbacks are unwrapped: the returned `Task<T>` completes only after the callback's task completes and carries its result, cancellation, or exception.

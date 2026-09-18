@@ -65,7 +65,7 @@ file sealed class MemoryImage(int width, int height) : IDrawImage
 
 `Identity` is the path for path-backed resources. For embedded images, `Identity` is generated from the runtime hash code of the stored image and prefixed with `embedded:`.
 
-Path-backed resources are commonly resolved through `ImageResourceCache`, which loads each identity once and reuses the resulting `IDrawImage`. Calling `Resolve()` directly on a path-backed resource without a loader throws `InvalidOperationException`.
+Path-backed resources are commonly acquired through [ImageResourceCache.Acquire](Cerneala.UI.Resources.ImageResourceCache.md), which shares each identity while acquisitions overlap and unloads the owned image after its last release. Keep the returned lease alive for as long as the image is needed. Calling this resource's `Resolve(loader)` directly is an uncached load; the caller owns the resulting image's lifetime. `Resolve()` on a path-backed resource without a loader throws `InvalidOperationException`.
 
 ## Constructors
 

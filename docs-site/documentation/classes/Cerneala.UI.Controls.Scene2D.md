@@ -115,7 +115,13 @@ Picking uses that same effective order in reverse, so the last visible eligible 
 
 Children belong to the logical tree and inherit data context and attachment state. Setting either `IsVisible` to `false` or `Visibility` to a non-visible value skips the group and all of its descendants.
 
+When recording skips a hidden or zero-opacity group, its descendant render/image acquisitions are released without detaching those nodes. Retained command owners and other consumers can still keep shared images alive until they release their own acquisitions. Opacity does not disable colliders or stop attached sprite-animation playback.
+
 The root group owns a `CollisionWorld2D`. `CollisionWorld` on any nested group resolves to the same root-owned world. Structural and collider-property mutations update that world incrementally; removing a subtree removes its indexed colliders before the next query.
+
+For source-backed collision preparation without UI, give an unowned root group an explicit [SceneSimulationContext2D](Cerneala.UI.Controls.SceneSimulationContext2D.md). The inherited `SimulationContext` identifies that owner throughout its scene-node subtree. Data observation, source preparation and queries then use its owner thread and ordinary `Update` loop, without creating rendering or UI lifecycle services. Dispose that independent context before reparenting or attaching the root to a surface. A UI-attached surface automatically supplies the same common lifecycle using its existing root relay.
+
+The world also owns prepared spatial collision-region interests. Detaching the owning scene or changing its surface invalidates those leases and cancels unfinished preparation; reattachment does not revive old leases. See [CollisionWorld2D](Cerneala.UI.Controls.CollisionWorld2D.md) for readiness checks and explicit preparation before querying unloaded terrain.
 
 The scene owns the query world, not the collision shapes themselves. A `Sprite2D` owns zero or one live collider through its `Collider` property. `Scene2D.Children` rejects collider nodes, including in derived markup components. A static `Tile` or `TileDefinition2D` likewise owns zero or one immutable descriptor through `Collider`.
 
@@ -126,6 +132,45 @@ These transform channels and `TransformOrigin` are `UiProperty` values, so Aspec
 Aspect can also assign the structural `OrderMode` and inherited `Layer` properties. Motion deliberately rejects those two properties because no ordering mixer or interpolation contract exists. Animating `TranslateY`, other transform channels, or `Opacity` remains supported and updates ordering or presentation in the same logical frame.
 
 A transform with no inverse, such as `ScaleX="0"`, still records the group. Forward rendering and conservative bounds remain available, while world-to-local conversion is unavailable internally for that transform.
+
+### Prism input and streamed children
+
+For source-backed children, a pointwise operation reads the same scene pixel rather than neighboring scene pixels or an input-wide distribution. Compositions containing only the following active filters and paint styles therefore preserve ordinary viewport selection and offscreen resource retirement:
+
+- `BrightnessContrast`, `Curves`, `Exposure`, `Vibrance`, `HueSaturation`, `ColorBalance`, `BlackWhite`, `PhotoFilter`, `ChannelMixer`, `ColorLookup`, `Invert`, `Posterize`, `GradientMap`, and `SelectiveColor`;
+- `Levels` when its live `Auto` value is `false`;
+- the `ColorOverlay`, `GradientOverlay`, and `PatternOverlay` styles.
+
+An image mask also does not expand scene-payload interest. Alpha/luminance extraction, inversion and feathering sample the mask's own image, not neighboring scene pixels. Feathering retains the finite intermediate raster margin required by its kernel; that margin does not acquire additional scene objects or map chunks. Existing raster allocation limits still apply.
+
+Color lookup, paint and mask resources remain independent dependencies; this classification does not eliminate their acquisition, preparation or leases. Paint, mask and dithering coordinates retain their logical reference when physical input is cropped, including at non-unit DPI. The composition's logical bounds do not shrink with the realized subset: `SceneItems2D` contributes the union of its catalog bounds, and `TileMap2D` contributes its catalog's spatial bounds. Ordinary direct children retain their usual bounds contract.
+
+Selection reads live layer/group/filter visibility and opacity, style visibility, nested groups, and the current definition. Hidden operations and zero-opacity layers/groups/filters do not expand input interest; a style's effect-specific opacity parameter alone does not remove its input requirement. `Levels.Auto = true` and `Threshold` require input-wide analysis. In a hosted scene containing spatial materializers, declare the inherited [PrismInputDomain](Cerneala.UI.Controls.SceneNode2D.md#finite-prism-input-domains) on each node owning such a composition. Its finite rectangle uses that owner's local coordinates and becomes its logical capture domain. Missing declarations report a presentation error instead of preparing the whole world.
+
+Declared input is prepared in full even when part of it is outside the camera. The backend evaluates the effect using that input before applying the final camera clip. Changing the camera therefore does not redefine a histogram's input. Changing the declaration reconciles payload/image interest; simulation and explicit collision interest are independent. Nested global-effect owners need their own declarations. Unsupported raster extents or allocation failure produce an explicit rendering error rather than an effect-free or lower-resolution fallback.
+
+Without a declared domain, hosted spatial scenes automatically include the finite sampling neighborhood of these filters:
+
+- `Average`, `Blur`, `BlurMore`, `BoxBlur`, `GaussianBlur`, and `MotionBlur`;
+- `SmartBlur`, `SurfaceBlur`, `Sharpen`, `SharpenMore`, `SharpenEdges`, and `UnsharpMask`;
+- `HighPass`, `DustScratches`, and `Median`.
+
+For filters exposing `EdgeMode`, this automatic path covers `Clamp` and `Transparent`, not `Wrap` or `Mirror`/`Reflect`. Input selection uses the existing kernel passes' sampling support, including fractional-sample texels and sequential passes; output expansion alone is insufficient for filters such as `HighPass`. Filter chains, isolated/pass-through groups and nested scene compositions combine their dependencies before selection. The raster neighborhood is projected back through the current surface and scene transforms. Live parameters, visibility, opacity, definition changes and DPI are reconsidered; a zero-radius/no-op kernel does not retain its former neighborhood. The composition's logical coordinate bounds remain unchanged.
+
+These required neighbors are prepared and recorded even when off camera. They are effect input, not extra displayed content. A declared non-pointwise `PrismInputDomain` still selects its complete input rather than this automatic camera neighborhood. Independent collision/simulation interests and the map's bounded optional warm set can retain additional data.
+
+Required sampling interest is not synthetic source content. When the composition's
+content bounds are known, capture intersects that interest with its actual input
+bounds; the kernel planner separately owns output expansion. Thus a small bounded
+child does not acquire a camera-sized transparent border merely because an
+ancestor needs a larger region. An explicit domain on the composition's own owner
+defines its input boundary instead. Unknown content bounds remain conservative.
+
+The remaining styles (`DropShadow`, `InnerShadow`, `OuterGlow`, `InnerGlow`, `BevelEmboss`, `Satin`, and `Stroke`), boundary-wrapping kernels and every other unclassified filter **require a finite `PrismInputDomain`** in a hosted spatial scene. Without it, presentation enters `Error` and the unsupported composition does not start full-catalog presentation acquisition. This is an explicit compatibility restriction, not a visual approximation or automatic support for those operations. Declare the complete intended input on each effect owner, including nested sprite owners; effects are still evaluated normally before the camera clip. Changing a live edge mode or replacing a definition can introduce or remove this requirement. Clearing a required domain reports the error again.
+
+Non-invertible or unknown transforms can still make geometric selection conservative even for supported operations; this restriction does not invent an inverse or promise bounded residency for invalid/unbounded geometry. A finite declared domain can also exceed available memory or raster limits and fail explicitly. An effect attached only to an ordinary UI ancestor is outside this scene-node input classification.
+
+Simulation and collision interests remain independent: a pointwise effect does not detach an offscreen simulated actor or remove required terrain. These input rules apply to automatic source selection, not virtualization of direct caller-owned children or ordinary UI controls.
 
 ## Constructors
 

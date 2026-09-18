@@ -218,11 +218,12 @@ public sealed class DrawingApiShowcaseVisualTests : IDisposable
 
         public PathEdgeCoverageProbe()
         {
+            Draw += DrawFrame;
             ClearColor = new Color(10, 14, 20);
             RedrawMode = RenderSurface2DRedrawMode.OnDemand;
         }
 
-        protected override void OnDraw(RenderSurface2DFrame frame)
+        private void DrawFrame(RenderSurface2D sender, RenderSurface2DFrame frame)
         {
             frame.FillRectangle(frame.Bounds, SurfaceBrush);
             frame.FillPath(
@@ -240,11 +241,12 @@ public sealed class DrawingApiShowcaseVisualTests : IDisposable
 
         public PrimitiveEdgeCoverageProbe()
         {
+            Draw += DrawFrame;
             ClearColor = new Color(10, 14, 20);
             RedrawMode = RenderSurface2DRedrawMode.OnDemand;
         }
 
-        protected override void OnDraw(RenderSurface2DFrame frame)
+        private void DrawFrame(RenderSurface2D sender, RenderSurface2DFrame frame)
         {
             frame.FillRectangle(frame.Bounds, SurfaceBrush);
             frame.FillEllipse(new DrawRect(20, 20, 60, 60), ShapeBrush);

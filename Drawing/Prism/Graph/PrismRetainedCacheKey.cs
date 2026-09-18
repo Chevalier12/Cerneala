@@ -212,7 +212,7 @@ internal readonly record struct PrismRetainedRasterContext
                 SurfaceHeight,
                 "A retained surface height must be positive.");
         }
-        if (!Enum.IsDefined(OutputColorProfile))
+        if (!PrismEnumValidation.IsDefined(OutputColorProfile))
         {
             throw new ArgumentOutOfRangeException(
                 nameof(OutputColorProfile),
@@ -224,14 +224,14 @@ internal readonly record struct PrismRetainedRasterContext
             throw new ArgumentOutOfRangeException(nameof(ReferenceExtent),
                 "A retained reference raster must have positive dimensions.");
         }
-        if (!Enum.IsDefined(SurfaceFormat))
+        if (!PrismEnumValidation.IsDefined(SurfaceFormat))
         {
             throw new ArgumentOutOfRangeException(
                 nameof(SurfaceFormat),
                 SurfaceFormat,
                 "Unknown Prism retained surface format.");
         }
-        if (!Enum.IsDefined(Sampling))
+        if (!PrismEnumValidation.IsDefined(Sampling))
         {
             throw new ArgumentOutOfRangeException(
                 nameof(Sampling),

@@ -230,12 +230,25 @@ public sealed class UIRoot : UIElement, IElementHost, IInvalidationSink
 
         if (!ReferenceEquals(ImageResourceCache, cache))
         {
-            ImageResourceCache?.Clear();
+            ReleaseDrawingResources();
         }
 
         ImageLoader = loader;
         ImageResourceCache = cache;
         Invalidate(InvalidationFlags.Resource | InvalidationFlags.Render | InvalidationFlags.Subtree, "Root image loader changed");
+    }
+
+    internal void ReleaseDrawingResources()
+    {
+        // A device cache can be shared by several windows. Release this root's
+        // acquisitions, never the shared cache's identity mappings.
+        foreach (UIElement element in ElementTreeWalker.PreOrderRenderability(this))
+        {
+            if (element is RenderSurface2D surface) { surface.ReleaseDrawingResources(); }
+            element.ReleaseImageResources();
+            RetainedRenderCache.ReleaseElement(element);
+        }
+        RetainedRenderCache.ReleaseRootResources();
     }
 
     public void SetViewport(float width, float height, float scale)

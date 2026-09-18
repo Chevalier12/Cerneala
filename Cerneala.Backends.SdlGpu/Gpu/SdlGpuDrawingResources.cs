@@ -18,6 +18,10 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     private readonly Dictionary<SdlGpuPipelineKey, nint> pipelines = [];
     private readonly Dictionary<SdlGpuSamplerKey, nint> samplers = [];
     private readonly Dictionary<object, SdlGpuTextureResource> textures = [];
+    private readonly int ownerThreadId = Environment.CurrentManagedThreadId;
+    private readonly object imageInvalidationGate = new();
+    private readonly Queue<SdlGpuImage> pendingImageInvalidations = new();
+    private readonly HashSet<SdlGpuImage> subscribedImages = new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<object, int> textureReferenceCounts = [];
     private readonly List<SdlGpuTextureResource> idleSampledTextures = [];
     private long idleSampledTextureBytes;
@@ -281,6 +285,12 @@ internal sealed class SdlGpuDrawingResources : IDisposable
                 CanRecycleStorage = recycleStorage
             };
             textures.Add(key, created);
+            // The device, not the uploading window, owns this texture. This
+            // covers ordinary drawing and direct resource uploads (e.g. Prism).
+            if (key is SdlGpuImage image && subscribedImages.Add(image))
+            {
+                image.ContentChanged += OnImageContentChanged;
+            }
             return created;
         }
         catch
@@ -440,10 +450,42 @@ internal sealed class SdlGpuDrawingResources : IDisposable
 
     public void InvalidateTexture(object key)
     {
+        if (key is SdlGpuImage image && subscribedImages.Remove(image))
+        {
+            image.ContentChanged -= OnImageContentChanged;
+        }
         if (textures.Remove(key, out SdlGpuTextureResource? texture))
         {
             RetireTexture(texture.Handle);
         }
+    }
+
+    internal void ProcessImageInvalidations()
+    {
+        while (true)
+        {
+            SdlGpuImage? image;
+            lock (imageInvalidationGate)
+            {
+                if (!pendingImageInvalidations.TryDequeue(out image)) { return; }
+            }
+            InvalidateTexture(image);
+        }
+    }
+
+    private void OnImageContentChanged(object? sender, EventArgs args)
+    {
+        if (sender is not SdlGpuImage image) { return; }
+        lock (imageInvalidationGate)
+        {
+            if (disposed) { return; }
+            if (Environment.CurrentManagedThreadId != ownerThreadId)
+            {
+                pendingImageInvalidations.Enqueue(image);
+                return;
+            }
+        }
+        InvalidateTexture(image);
     }
 
     public void RetainTexture(object key)
@@ -679,6 +721,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
 
     public void FlushRetired()
     {
+        ProcessImageInvalidations();
         foreach (nint texture in retiredTextures)
         {
             if (ownedTextures.Remove(texture))
@@ -696,7 +739,16 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         {
             return;
         }
-        disposed = true;
+        lock (imageInvalidationGate)
+        {
+            disposed = true;
+            pendingImageInvalidations.Clear();
+        }
+        foreach (SdlGpuImage image in subscribedImages)
+        {
+            image.ContentChanged -= OnImageContentChanged;
+        }
+        subscribedImages.Clear();
 
         prismResources?.Dispose();
         prismResources = null;

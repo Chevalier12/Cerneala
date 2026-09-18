@@ -47,6 +47,8 @@ IReadOnlyList<UiElementId> route = map.InputTree.GetRouteToRoot(childId);
 
 Element lookup uses reference equality for `UIElement` keys. Two distinct element instances that compare equal through `Equals` are still tracked as distinct elements.
 
+Scene-node lookup also checks the live preparation state of its owning [RenderSurface2D](Cerneala.UI.Controls.RenderSurface2D.md). `TryGetId` returns false/default and `TryGetElement` returns false/null while that scene's required visible coverage is unavailable, even when the node is still registered in this snapshot. This prevents existing capture/focus targets from bypassing scene readiness after asynchronous source publication. It does not remove entries from `Count`, `ElementsInRouteOrder`, or the backing `InputTree`, and it does not disable the node or its simulation. Use the normal retained input dispatch services rather than manually raising input through a stale backing tree.
+
 `Add` registers the element in all internal structures and immediately adds the same id to `InputTree`. The supplied `parentId`, when present, must already exist in the `InputTree`; `UiInputTree.Add` throws if a child is registered before its parent. The enabled state stored in the `InputTree` is copied from `element.IsEnabled` at the time of `Add`.
 
 `ElementsInRouteOrder` reflects insertion order. When the map is produced by `ElementInputRouteBuilder`, that order comes from the builder's traversal of attached, input-participating visual elements.

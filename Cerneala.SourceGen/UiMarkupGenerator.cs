@@ -3117,6 +3117,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
         private void EmitTileMapContent(MarkupElement map, string variable, DirectiveParseResult content)
         {
             List<string> placements = new();
+            Dictionary<string, string> imageSizes = new(StringComparer.Ordinal);
             foreach (DirectiveNode node in content.Nodes)
             {
                 if (node is DirectiveElementNode child)
@@ -3127,6 +3128,13 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                     if (image is null || !image.Value.StartsWith("$", StringComparison.Ordinal)) { continue; }
                     GeneratedExpression? reference = ResolveReferenceValue("Tile", "Image", image.Value.Substring(1), MarkupValueKind.ImageReference, image);
                     if (reference is null) { continue; }
+                    if (tile.Attribute("ImageWidth") is MarkupAttribute imageWidth &&
+                        tile.Attribute("ImageHeight") is MarkupAttribute imageHeight)
+                    {
+                        string width = float.Parse(imageWidth.Value, CultureInfo.InvariantCulture).ToString("R", CultureInfo.InvariantCulture) + "f";
+                        string height = float.Parse(imageHeight.Value, CultureInfo.InvariantCulture).ToString("R", CultureInfo.InvariantCulture) + "f";
+                        imageSizes[reference.Code] = "new global::Cerneala.Drawing.DrawSize(" + width + ", " + height + ")";
+                    }
                     string[] values = new[] { "X", "Y", "Width", "Height" }.Select(name =>
                         tile.Attribute(name) is MarkupAttribute attribute
                             ? float.Parse(attribute.Value, CultureInfo.InvariantCulture).ToString("R", CultureInfo.InvariantCulture) + "f"
@@ -3143,7 +3151,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             }
             if (placements.Count > 0)
             {
-                currentLines.Add(variable + ".Model = new global::Cerneala.UI.Controls.TileMap2DModel(new global::Cerneala.UI.Controls.Tile[] { " + string.Join(", ", placements) + " });");
+                string metadata = imageSizes.Count == 0 ? string.Empty :
+                    ", new global::System.Collections.Generic.Dictionary<string, global::Cerneala.Drawing.DrawSize>(global::System.StringComparer.Ordinal) { " +
+                    string.Join(", ", imageSizes.Select(pair => "[(" + pair.Key + ").ResourceId!.Value.Key] = " + pair.Value)) + " }";
+                currentLines.Add(variable + ".Source = global::Cerneala.UI.Controls.TileMapSource2D.FromModel(new global::Cerneala.UI.Controls.TileMap2DModel(new global::Cerneala.UI.Controls.Tile[] { " + string.Join(", ", placements) + " })" + metadata + ");");
             }
         }
 

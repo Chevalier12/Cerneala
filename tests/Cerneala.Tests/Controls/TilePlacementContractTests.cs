@@ -70,10 +70,11 @@ public sealed class TilePlacementContractTests
     }
 
     [Fact]
-    public void MissingImageAndReplacementDimensionsRefreshBoundsAndDependentBatches()
+    public void ResourcePixelsDoNotResizeNaturalGeometryWithoutMetadataPublication()
     {
         ResourceId<ImageResource> id = new("Art");
-        Fixture fixture = Create([new Tile(new ImageReference(id), -40, 0)]);
+        TileMap2DModel model = new([new Tile(new ImageReference(id), -40, 0)]);
+        Fixture fixture = Create(model.Tiles, new Dictionary<string, DrawSize> { ["Art"] = new(32, 16) });
         fixture.Surface.ViewBox = new DrawRect(0, 0, 20, 20);
         Assert.Empty(Batches(Record(fixture.Surface)));
         TestImage small = new(32, 16);
@@ -85,10 +86,16 @@ public sealed class TilePlacementContractTests
         fixture.Surface.Resources.SetResource(id, new ImageResource("small.png"));
         Assert.Empty(Batches(Record(fixture.Surface)));
         fixture.Surface.Resources.SetResource(id, new ImageResource("large.png"));
+        Assert.Empty(Batches(Record(fixture.Surface))); // Pixel replacement cannot change declared spatial bounds.
+        fixture.Map.Source = TileMapTestSource.Create(model, new Dictionary<string, DrawSize> { ["Art"] = new(64, 24) });
         DrawSpriteBatch batch = Assert.Single(Batches(Record(fixture.Surface)));
         Assert.Same(large, batch.Image);
         Assert.Equal(new DrawRect(-40, 0, 64, 24), Assert.Single(batch.Sprites).Destination);
         fixture.Surface.Resources.SetResource(id, new ImageResource("small.png"));
+        DrawSpriteBatch smallerPixels = Assert.Single(Batches(Record(fixture.Surface)));
+        Assert.Same(small, smallerPixels.Image);
+        Assert.Equal(new DrawRect(-40, 0, 64, 24), Assert.Single(smallerPixels.Sprites).Destination);
+        fixture.Map.Source = TileMapTestSource.Create(model, new Dictionary<string, DrawSize> { ["Art"] = new(32, 16) });
         Assert.Empty(Batches(Record(fixture.Surface)));
     }
 
@@ -108,12 +115,12 @@ public sealed class TilePlacementContractTests
     }
 
     [Fact]
-    public void ReplacingImmutableModelChangesGeometryEvenAtDefaultVersion()
+    public void ReplacingSourceChangesGeometryEvenAtDefaultVersion()
     {
         ImageReference image = new(new TestImage(16, 16));
         Fixture fixture = Create([new Tile(image, 10)]);
         DrawSpriteBatch first = Assert.Single(Batches(Record(fixture.Surface)));
-        fixture.Map.Model = new TileMap2DModel([new Tile(image, 20)]);
+        fixture.Map.Source = TileMapTestSource.Create(new TileMap2DModel([new Tile(image, 20)]));
         DrawSpriteBatch second = Assert.Single(Batches(Record(fixture.Surface)));
         Assert.NotSame(first, second);
         Assert.Equal(20, Assert.Single(second.Sprites).Destination.X);
@@ -174,7 +181,8 @@ public sealed class TilePlacementContractTests
     public void TransformAndCameraReuseBatchesAndReparentResolvesNewResourceScope()
     {
         ResourceId<ImageResource> id = new("Art");
-        Fixture fixture = Create([new Tile(new ImageReference(id), 10, 10)]);
+        Fixture fixture = Create([new Tile(new ImageReference(id), 10, 10)],
+            new Dictionary<string, DrawSize> { ["Art"] = new(16, 16) });
         TestImage firstImage = new(16, 16);
         TestImage secondImage = new(32, 32);
         fixture.Root.SetImageLoader(new TestLoader(new Dictionary<string, IDrawImage> { ["a.png"] = firstImage, ["b.png"] = secondImage }));
@@ -192,12 +200,13 @@ public sealed class TilePlacementContractTests
         nextScene.Children.Add(fixture.Map);
         DrawSpriteBatch second = Assert.Single(Batches(Record(nextSurface)));
         Assert.Same(secondImage, second.Image);
-        Assert.Equal(new DrawRect(10, 10, 32, 32), Assert.Single(second.Sprites).Destination);
+        Assert.Equal(new DrawRect(10, 10, 16, 16), Assert.Single(second.Sprites).Destination);
+        Assert.Equal(new DrawSize(16, 16), fixture.Map.Source!.Catalog.ImageSizes["Art"]);
     }
 
-    private static Fixture Create(IEnumerable<Tile> placements)
+    private static Fixture Create(IEnumerable<Tile> placements, IReadOnlyDictionary<string, DrawSize>? imageSizes = null)
     {
-        TileMap2D map = new() { Model = new TileMap2DModel(placements) };
+        TileMap2D map = new() { Source = TileMapTestSource.Create(new TileMap2DModel(placements), imageSizes) };
         Scene2D scene = new();
         scene.Children.Add(map);
         RenderSurface2D surface = new() { Scene = scene };
@@ -208,6 +217,7 @@ public sealed class TilePlacementContractTests
 
     private static DrawCommandList Record(RenderSurface2D surface, DrawSize? size = null)
     {
+        TileMapTestSource.PrepareFrame(surface, new DrawRect(0, 0, size?.Width ?? 128, size?.Height ?? 64));
         DrawCommandList commands = new();
         ((IRenderSurface2DFrameSource)surface).RecordFrame(commands, new DrawRect(0, 0, size?.Width ?? 128, size?.Height ?? 64));
         return commands;
@@ -223,8 +233,10 @@ public sealed class TilePlacementContractTests
         public int Width => width;
         public int Height => height;
     }
-    private sealed class TestLoader(IReadOnlyDictionary<string, IDrawImage> images) : IImageLoader
+    private sealed class TestLoader(IReadOnlyDictionary<string, IDrawImage> images) : IAsyncImageLoader
     {
         public IDrawImage Load(string path) => images[path];
+        public ValueTask<IDrawImage> LoadAsync(string path, CancellationToken cancellationToken = default) =>
+            ValueTask.FromResult(Load(path));
     }
 }

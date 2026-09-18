@@ -10,6 +10,7 @@ using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windowing;
+using Cerneala.UI.Rendering;
 using Cerneala.UI.Resources;
 using SkiaSharp;
 
@@ -319,6 +320,7 @@ internal static class TileMapStage4BackendProfileRunner
         private readonly UIRoot root = new();
         private readonly TileMap2DModel[] originalModels = TileMapStage4ModelFactory.Create(mutated: false);
         private readonly TileMap2DModel[] mutatedModels = TileMapStage4ModelFactory.Create(mutated: true);
+        private readonly TileMapStage4Publication[] publications;
         private bool useMutatedModel;
 
         internal TileMapStage4BackendWorkload(
@@ -327,7 +329,9 @@ internal static class TileMapStage4BackendProfileRunner
             string structuresPath,
             DrawRect bounds)
         {
-            Maps = originalModels.Select(model => new TileMap2D { Model = model, Layer = model.Order }).ToArray();
+            publications = originalModels.Select((model, index) => new TileMapStage4Publication(model, mutatedModels[index])).ToArray();
+            Maps = publications.Select((publication, index) => new TileMap2D
+                { Source = publication.Source, Layer = originalModels[index].Order }).ToArray();
             Scene2D scene = new() { OrderMode = SceneOrderMode.Layer };
             foreach (TileMap2D map in Maps) { scene.Children.Add(map); }
             Surface = new RenderSurface2D
@@ -347,6 +351,8 @@ internal static class TileMapStage4BackendProfileRunner
             root.SetImageLoader(session.ImageLoader ??
                 throw new InvalidOperationException("The backend profile requires an image loader."));
             root.VisualChildren.Add(Surface);
+            root.Width = bounds.Width;
+            root.Height = bounds.Height;
         }
 
         internal RenderSurface2D Surface { get; }
@@ -359,18 +365,35 @@ internal static class TileMapStage4BackendProfileRunner
             {
                 Surface.InvalidateFrame();
             }
+            PrepareRequired();
         }
 
         internal void PrepareCameraPan(int frame)
         {
             Surface.ViewBox = TileMapStage4ModelFactory.CameraView(32 + (frame % 32));
+            PrepareRequired();
         }
 
         internal void PrepareChunkMutation()
         {
             useMutatedModel = !useMutatedModel;
-            Maps[1].Model = useMutatedModel ? mutatedModels[1] : originalModels[1];
+            publications[1].Publish(useMutatedModel);
             Surface.InvalidateFrame();
+            PrepareRequired();
+        }
+
+        private void PrepareRequired()
+        {
+            long started = Stopwatch.GetTimestamp();
+            do
+            {
+                root.ProcessFrame();
+                ((ITimeSensitiveRenderElement)Surface).UpdateRenderTime(TimeSpan.Zero);
+                if (Surface.PresentationState == RenderSurface2DPresentationState.Ready) return;
+                if (Surface.PresentationError is { } error) throw new InvalidOperationException("Required profile preparation failed.", error);
+                Thread.Yield();
+            } while (Stopwatch.GetElapsedTime(started) < TimeSpan.FromSeconds(10));
+            throw new TimeoutException("Required profile preparation did not finish.");
         }
 
         public void Dispose() => root.VisualChildren.Remove(Surface);

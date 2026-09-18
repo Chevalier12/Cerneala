@@ -255,7 +255,7 @@ internal sealed class CernealaCompletionService
             (staticTileOwner || CernealaSemanticModel.IsLiveColliderOwner(colliderOwnerType));
         if (parentType?.MetadataName == "Cerneala.UI.Controls.TileMap2D" && parent?.Kind != SyntaxKind.PropertyElement)
         {
-            bool imported = parent!.Attributes.Any(static attribute => attribute.NameToken.Text == "Model");
+            bool imported = parent!.Attributes.Any(static attribute => attribute.NameToken.Text == "Source");
             if (!imported)
             {
                 Add(result, "Tile", ElementInsertion(site, "Tile"), site.WordSpan,
@@ -340,6 +340,12 @@ internal sealed class CernealaCompletionService
                 Add(result, member.Name, member.Name + "=\"\"", site.WordSpan, CernealaCompletionItemKind.Property,
                     member.ValueTypeMetadataName, "00", type.MetadataName, member.Name);
             }
+            foreach (string name in new[] { "ImageWidth", "ImageHeight" })
+            {
+                if (used.Contains(name)) { continue; }
+                Add(result, name, name + "=\"\"", site.WordSpan, CernealaCompletionItemKind.Property,
+                    "Positive intrinsic image dimension; source-catalog metadata", "00");
+            }
             return;
         }
         if (IsStaticTileCollider(model, element))
@@ -392,7 +398,7 @@ internal sealed class CernealaCompletionService
                 cancellationToken.ThrowIfCancellationRequested();
                 if (member.Kind is not (LanguageMemberKind.Property or LanguageMemberKind.Event) ||
                     member.IsStatic || used.Contains(member.Name) ||
-                    CernealaSemanticModel.IsTileMapContentMember(type, member.Name) && (member.Name != "Model" ||
+                    CernealaSemanticModel.IsTileMapContentMember(type, member.Name) && (member.Name != "Source" ||
                         element?.Children.OfType<ElementSyntax>().Any(child =>
                             model?.GetCompletionElementType(child)?.MetadataName == "Cerneala.UI.Controls.Tile") == true) ||
                     member.Kind == LanguageMemberKind.Property && !member.CanWrite)
@@ -452,9 +458,9 @@ internal sealed class CernealaCompletionService
             {
                 AddTileImageCompletions(result, model, element, site.ValueWordSpan);
             }
-            else if (attributeName is "X" or "Y" or "Width" or "Height")
+            else if (attributeName is "X" or "Y" or "Width" or "Height" || CernealaSemanticModel.IsTileImageSizeAttribute(attributeName))
             {
-                foreach (string value in new[] { "0", "1" })
+                foreach (string value in CernealaSemanticModel.IsTileImageSizeAttribute(attributeName) ? new[] { "1", "32" } : new[] { "0", "1" })
                 {
                     Add(result, value, value, site.ValueWordSpan, CernealaCompletionItemKind.Value, "float", "00");
                 }

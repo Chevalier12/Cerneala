@@ -1,11 +1,13 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Numerics;
+using System.Runtime;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Rendering;
 using Cerneala.UI.Resources;
 
 namespace Cerneala.Benchmarks;
@@ -14,6 +16,11 @@ internal static class TileMapStage4BenchmarkRunner
 {
     private const int WarmupIterations = 64;
     private const int MeasurementIterations = 512;
+    private const int RuntimePrimerBlocks = 8;
+    private const int RuntimePrimerBlockIterations = 128;
+    private const int RuntimePrimerPauseMilliseconds = 100;
+    private const int JitQuietMilliseconds = 100;
+    private const int JitQuietTimeoutMilliseconds = 2_000;
 
     internal static void Run(string reportPath)
     {
@@ -23,14 +30,12 @@ internal static class TileMapStage4BenchmarkRunner
         TileMapStage4Scenario warmStatic = MeasureScenario(
             "warm-static",
             static (workload, iteration) => workload.RecordWarmStatic(),
-            static (workload, iteration) => workload.RecordWarmStatic());
+            isProcessColdFixture: true);
         TileMapStage4Scenario cameraPan = MeasureScenario(
             "camera-pan",
-            static (workload, iteration) => workload.RecordCameraPan(iteration),
             static (workload, iteration) => workload.RecordCameraPan(iteration));
         TileMapStage4Scenario chunkMutation = MeasureScenario(
             "chunk-mutation",
-            static (workload, iteration) => workload.RecordChunkMutation(),
             static (workload, iteration) => workload.RecordChunkMutation());
 
         long fullFixtureRetainedBytes;
@@ -49,7 +54,7 @@ internal static class TileMapStage4BenchmarkRunner
         string commit = ResolveGit("rev-parse HEAD");
         bool workingTreeDirty = ResolveGit("status --porcelain").Length != 0;
         TileMapStage4Report report = new(
-            Schema: "cerneala-tilemap-stage4-v2",
+            Schema: "cerneala-tilemap-stage4-v5-separated-phases",
             TimestampUtc: DateTimeOffset.UtcNow,
             Commit: commit.Length == 0 ? "unknown" : commit,
             WorkingTreeDirty: workingTreeDirty,
@@ -61,6 +66,11 @@ internal static class TileMapStage4BenchmarkRunner
             StopwatchFrequency: Stopwatch.Frequency,
             WarmupIterations,
             MeasurementIterations,
+            RuntimePrimerBlocks,
+            RuntimePrimerBlockIterations,
+            RuntimePrimerPauseMilliseconds,
+            JitQuietMilliseconds,
+            JitQuietTimeoutMilliseconds,
             Fixture: TileMapStage4FixtureDescription.Current,
             Baseline: TileMapStage4Baseline.Current,
             Scenarios: scenarios,
@@ -77,8 +87,9 @@ internal static class TileMapStage4BenchmarkRunner
                 $"{scenario.Name}: p50={scenario.CpuP50Microseconds:F3}us, " +
                 $"p95={scenario.CpuP95Microseconds:F3}us, allocated={scenario.AllocatedBytesPerOperation:F0}B/op, " +
                 $"commands={scenario.Counters.DrawCommands}, rebuilds={scenario.Counters.BatchesRebuilt}, " +
-                $"reused={scenario.Counters.BatchesReused}");
+                $"reused={scenario.Counters.BatchesReused}, measured-jit={scenario.CompletedJitCompilations}");
         }
+        Console.WriteLine($"Process-cold fixture construction + first recording: {warmStatic.Initialization.ConstructionAndFirstRecordingMicroseconds / 1000:F3}ms (maximum 300ms)");
 
         TileMapStage4Gate[] failures = gates.Where(static gate => !gate.Passed).ToArray();
         if (failures.Length != 0)
@@ -91,36 +102,125 @@ internal static class TileMapStage4BenchmarkRunner
 
     private static TileMapStage4Scenario MeasureScenario(
         string name,
-        Action<TileMapStage4Workload, int> warmup,
-        Func<TileMapStage4Workload, int, TileMapStage4Counters> action)
+        Func<TileMapStage4Workload, int, TileMapStage4Counters> action,
+        bool isProcessColdFixture = false)
     {
+        long constructionAllocatedBefore = GC.GetAllocatedBytesForCurrentThread();
+        long constructionStarted = Stopwatch.GetTimestamp();
         using TileMapStage4Workload workload = new();
-        for (int iteration = 0; iteration < WarmupIterations; iteration++)
-        {
-            warmup(workload, iteration);
-        }
+        double constructionMicroseconds = Stopwatch.GetElapsedTime(constructionStarted).TotalMicroseconds;
+        long constructionAllocated = GC.GetAllocatedBytesForCurrentThread() - constructionAllocatedBefore;
+        long warmupStarted = Stopwatch.GetTimestamp();
+        TileMapStage4Samples warmup = RecordSamples(workload, action, WarmupIterations);
+        double warmupMicroseconds = Stopwatch.GetElapsedTime(warmupStarted).TotalMicroseconds;
+
+        // Train runtime code on a separate fixture, not the target's retained
+        // presentation. Extra target recordings would hide measured preparation.
+        TileMapStage4RuntimePrimer primer = PrimeRuntime(action);
 
         GC.Collect();
         GC.WaitForPendingFinalizers();
         GC.Collect();
+        TileMapStage4JitQuiescence quiescence = WaitForJitQuiescence();
+        TileMapStage4Samples measured = RecordSamples(workload, action, MeasurementIterations);
+        double[] sortedSamples = (double[])measured.OperationMicroseconds.Clone();
+        Array.Sort(sortedSamples);
+        return new TileMapStage4Scenario(
+            name,
+            CpuP50Microseconds: Percentile(sortedSamples, 0.50),
+            CpuP95Microseconds: Percentile(sortedSamples, 0.95),
+            AllocatedBytesPerOperation: (double)measured.AllocatedBytes / MeasurementIterations,
+            measured.Counters,
+            measured.MaximumRebuilds, measured.MaximumPreparedTiles, measured.TotalPreparedBatches, measured.MaximumWarmChunks,
+            measured.MaximumWarmChargedBytes, measured.MaximumWarmRetainedBytes, measured.MaximumWarmImageBytes,
+            new TileMapStage4Initialization(
+                isProcessColdFixture, constructionMicroseconds, constructionAllocated,
+                warmup.OperationMicroseconds[0], warmupMicroseconds, warmup.AllocatedBytes,
+                warmup.CompletedJitCompilations, warmup.OperationMicroseconds),
+            primer, quiescence, measured.CompletedJitCompilations, measured.OperationMicroseconds);
+    }
 
-        double[] samples = new double[MeasurementIterations];
+    private static TileMapStage4Samples RecordSamples(
+        TileMapStage4Workload workload,
+        Func<TileMapStage4Workload, int, TileMapStage4Counters> action,
+        int iterations)
+    {
+        double[] samples = new double[iterations];
+        long jitBefore = JitInfo.GetCompiledMethodCount();
         long allocatedBefore = GC.GetAllocatedBytesForCurrentThread();
         TileMapStage4Counters counters = default;
-        for (int iteration = 0; iteration < MeasurementIterations; iteration++)
+        int maximumRebuilds = 0, maximumPreparedTiles = 0, totalPreparedBatches = 0, maximumWarmChunks = 0;
+        long maximumWarmChargedBytes = 0, maximumWarmRetainedBytes = 0, maximumWarmImageBytes = 0;
+        for (int iteration = 0; iteration < iterations; iteration++)
         {
             long started = Stopwatch.GetTimestamp();
             counters = action(workload, iteration);
             samples[iteration] = Stopwatch.GetElapsedTime(started).TotalMicroseconds;
+            maximumRebuilds = Math.Max(maximumRebuilds, counters.BatchesRebuilt);
+            maximumPreparedTiles = Math.Max(maximumPreparedTiles, counters.WarmTilesPrepared);
+            totalPreparedBatches += counters.WarmBatchesPrepared;
+            maximumWarmChunks = Math.Max(maximumWarmChunks, counters.WarmChunks);
+            maximumWarmChargedBytes = Math.Max(maximumWarmChargedBytes, counters.WarmChargedBytes);
+            maximumWarmRetainedBytes = Math.Max(maximumWarmRetainedBytes, counters.WarmRetainedBytes);
+            maximumWarmImageBytes = Math.Max(maximumWarmImageBytes, counters.WarmImageBytes);
         }
         long allocated = GC.GetAllocatedBytesForCurrentThread() - allocatedBefore;
-        Array.Sort(samples);
-        return new TileMapStage4Scenario(
-            name,
-            CpuP50Microseconds: Percentile(samples, 0.50),
-            CpuP95Microseconds: Percentile(samples, 0.95),
-            AllocatedBytesPerOperation: (double)allocated / MeasurementIterations,
-            counters);
+        long compiled = JitInfo.GetCompiledMethodCount() - jitBefore;
+        return new TileMapStage4Samples(
+            samples, allocated, compiled, counters,
+            maximumRebuilds, maximumPreparedTiles, totalPreparedBatches, maximumWarmChunks,
+            maximumWarmChargedBytes, maximumWarmRetainedBytes, maximumWarmImageBytes);
+    }
+
+    private static TileMapStage4RuntimePrimer PrimeRuntime(
+        Func<TileMapStage4Workload, int, TileMapStage4Counters> action)
+    {
+        long jitBefore = JitInfo.GetCompiledMethodCount();
+        long allocatedBefore = GC.GetAllocatedBytesForCurrentThread();
+        long started = Stopwatch.GetTimestamp();
+        double actionMicroseconds = 0;
+        using (TileMapStage4Workload primer = new())
+        {
+            for (int block = 0; block < RuntimePrimerBlocks; block++)
+            {
+                TileMapStage4Samples samples = RecordSamples(primer, action, RuntimePrimerBlockIterations);
+                actionMicroseconds += samples.OperationMicroseconds.Sum();
+                Thread.Sleep(RuntimePrimerPauseMilliseconds);
+            }
+        }
+        double elapsedMicroseconds = Stopwatch.GetElapsedTime(started).TotalMicroseconds;
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - allocatedBefore;
+        long compiled = JitInfo.GetCompiledMethodCount() - jitBefore;
+        return new TileMapStage4RuntimePrimer(
+            RuntimePrimerBlocks * RuntimePrimerBlockIterations, elapsedMicroseconds, actionMicroseconds, allocated, compiled);
+    }
+
+    private static TileMapStage4JitQuiescence WaitForJitQuiescence()
+    {
+        long started = Stopwatch.GetTimestamp();
+        long lastChange = started;
+        long firstCount = JitInfo.GetCompiledMethodCount();
+        long lastCount = firstCount;
+        while (true)
+        {
+            Thread.Sleep(10);
+            long now = Stopwatch.GetTimestamp();
+            long count = JitInfo.GetCompiledMethodCount();
+            if (count != lastCount)
+            {
+                lastCount = count;
+                lastChange = now;
+            }
+            double elapsed = Stopwatch.GetElapsedTime(started, now).TotalMilliseconds;
+            if (elapsed >= JitQuietTimeoutMilliseconds)
+            {
+                return new TileMapStage4JitQuiescence(false, elapsed, count - firstCount);
+            }
+            if (Stopwatch.GetElapsedTime(lastChange, now).TotalMilliseconds >= JitQuietMilliseconds)
+            {
+                return new TileMapStage4JitQuiescence(true, elapsed, count - firstCount);
+            }
+        }
     }
 
     private static TileMapStage4Gate[] EvaluateGates(
@@ -130,16 +230,20 @@ internal static class TileMapStage4BenchmarkRunner
         long fullFixtureRetainedBytes)
     {
         List<TileMapStage4Gate> gates = [];
+        AddMaximum(gates, "process-cold-fixture-us", warm.Initialization.ConstructionAndFirstRecordingMicroseconds, 300_000);
         AddMaximum(gates, "warm-static-p95-us", warm.CpuP95Microseconds, 875);
         AddMaximum(gates, "warm-static-allocated-bytes", warm.AllocatedBytesPerOperation, 30_000);
-        AddExact(gates, "warm-static-rebuilds", warm.Counters.BatchesRebuilt, 0);
+        AddExact(gates, "warm-static-rebuilds", warm.MaximumRebuilds, 0);
         AddMinimum(gates, "warm-static-reused-segments", warm.Counters.BatchesReused, 36);
         AddMaximum(gates, "warm-static-draw-commands", warm.Counters.DrawCommands, 36);
-        AddMaximum(gates, "warm-static-retained-bytes", warm.Counters.RetainedBytes, 1_048_576);
+        // The approved warm-memory policy adds a separately bounded optional
+        // working set. Preserve the former visible-work estimate limit, report
+        // total memory unchanged, and gate the added charge independently.
+        AddMaximum(gates, "warm-static-required-retained-bytes", warm.Counters.RetainedBytes - warm.Counters.WarmRetainedBytes, 1_048_576);
 
         AddMaximum(gates, "camera-pan-p95-us", pan.CpuP95Microseconds, 1_460);
         AddMaximum(gates, "camera-pan-allocated-bytes", pan.AllocatedBytesPerOperation, 192_000);
-        AddExact(gates, "camera-pan-rebuilds", pan.Counters.BatchesRebuilt, 0);
+        AddExact(gates, "camera-pan-rebuilds", pan.MaximumRebuilds, 0);
         AddMaximum(gates, "camera-pan-draw-commands", pan.Counters.DrawCommands, 48);
 
         AddMaximum(gates, "chunk-mutation-p95-us", mutation.CpuP95Microseconds, 1_135);
@@ -154,6 +258,17 @@ internal static class TileMapStage4BenchmarkRunner
 
         foreach (TileMapStage4Scenario scenario in new[] { warm, pan, mutation })
         {
+            gates.Add(new TileMapStage4Gate(
+                $"{scenario.Name}-jit-quiescence", scenario.JitQuiescence.Reached,
+                $"reached={scenario.JitQuiescence.Reached}, elapsedMs={scenario.JitQuiescence.ElapsedMilliseconds.ToString("0.###", CultureInfo.InvariantCulture)}"));
+            // Completed JIT work remains in every raw sample and is reported
+            // diagnostically; the approved budgets decide acceptance.
+            AddExact(gates, $"{scenario.Name}-measured-optional-batches", scenario.TotalPreparedBatches,
+                scenario.Name == "camera-pan" ? 647 : 19);
+            AddMaximum(gates, $"{scenario.Name}-warm-charge-bytes", scenario.MaximumWarmChargedBytes,
+                TileMap2D.WarmCacheBudgetBytes * TileMapStage4ModelFactory.LayerCount);
+            AddMaximum(gates, $"{scenario.Name}-warm-prepared-cells", scenario.MaximumPreparedTiles,
+                RenderSurface2D.WarmPreparationTileBudget);
             gates.Add(new TileMapStage4Gate(
                 $"{scenario.Name}-indexed-culling",
                 scenario.Counters.CandidateChunks < scenario.Counters.TotalChunks &&
@@ -191,8 +306,8 @@ internal static class TileMapStage4BenchmarkRunner
     private static void AddExact(
         ICollection<TileMapStage4Gate> gates,
         string name,
-        int actual,
-        int expected) =>
+        long actual,
+        long expected) =>
         gates.Add(new TileMapStage4Gate(
             name,
             actual == expected,
@@ -245,6 +360,7 @@ internal sealed class TileMapStage4Workload : IDisposable
     private readonly TileMap2D[] maps;
     private readonly TileMap2DModel[] originalModels;
     private readonly TileMap2DModel[] mutatedModels;
+    private readonly TileMapStage4Publication[] publications;
     private readonly DrawCommandList commands = new();
     private bool useMutatedModel;
 
@@ -252,7 +368,9 @@ internal sealed class TileMapStage4Workload : IDisposable
     {
         originalModels = TileMapStage4ModelFactory.Create(mutated: false);
         mutatedModels = TileMapStage4ModelFactory.Create(mutated: true);
-        maps = originalModels.Select(model => new TileMap2D { Model = model, Layer = model.Order }).ToArray();
+        publications = originalModels.Select((model, index) => new TileMapStage4Publication(model, mutatedModels[index])).ToArray();
+        maps = publications.Select((publication, index) => new TileMap2D
+            { Source = publication.Source, Layer = originalModels[index].Order }).ToArray();
         scene = new Scene2D { OrderMode = SceneOrderMode.Layer };
         foreach (TileMap2D map in maps) { scene.Children.Add(map); }
         surface = new RenderSurface2D
@@ -289,7 +407,7 @@ internal sealed class TileMapStage4Workload : IDisposable
     internal TileMapStage4Counters RecordChunkMutation()
     {
         useMutatedModel = !useMutatedModel;
-        maps[1].Model = useMutatedModel ? mutatedModels[1] : originalModels[1];
+        publications[1].Publish(useMutatedModel);
         return Record(TileMapStage4ModelFactory.CameraView(32), FrameBounds);
     }
 
@@ -307,6 +425,15 @@ internal sealed class TileMapStage4Workload : IDisposable
 
     private TileMapStage4Counters Record(DrawRect viewBox, DrawRect bounds)
     {
+        // Source publication and camera preparation belong to the operation,
+        // including its process-cold first sample; no extra target warmups.
+        root.Width = surface.Width = bounds.Width;
+        root.Height = surface.Height = bounds.Height;
+        surface.ViewBox = viewBox;
+        root.ProcessFrame();
+        ((ITimeSensitiveRenderElement)surface).UpdateRenderTime(TimeSpan.Zero);
+        if (surface.PresentationState != RenderSurface2DPresentationState.Ready)
+            throw new InvalidOperationException("The inline benchmark source did not finish required preparation.", surface.PresentationError);
         commands.Clear();
         float scaleX = bounds.Width / viewBox.Width;
         float scaleY = bounds.Height / viewBox.Height;
@@ -331,10 +458,29 @@ internal sealed class TileMapStage4Workload : IDisposable
 
     private sealed record InlineImage(int Width, int Height, string Name) : IDrawImage;
 
-    private sealed class InlineImageLoader(IReadOnlyDictionary<string, IDrawImage> images) : IImageLoader
+    private sealed class InlineImageLoader(IReadOnlyDictionary<string, IDrawImage> images) : IImageLoader, IAsyncImageLoader
     {
         public IDrawImage Load(string path) => images[path];
+        public ValueTask<IDrawImage> LoadAsync(string path, CancellationToken cancellationToken = default) =>
+            ValueTask.FromResult(Load(path));
     }
+}
+
+internal sealed class TileMapStage4Publication
+{
+    private readonly TileMapSource2D original;
+    private readonly TileMapSource2D mutated;
+    internal TileMapSource2D Source { get; }
+
+    internal TileMapStage4Publication(TileMap2DModel originalModel, TileMap2DModel mutatedModel)
+    {
+        original = TileMapSource2D.FromModel(originalModel);
+        mutated = TileMapSource2D.FromModel(mutatedModel);
+        Source = new(original.Catalog, (catalog, chunk, token) =>
+            (ReferenceEquals(catalog, original.Catalog) ? original : mutated).LoadAsync(chunk.Spatial, token));
+    }
+
+    internal void Publish(bool useMutation) => Source.SetCatalog(useMutation ? mutated.Catalog : original.Catalog);
 }
 
 internal static class TileMapStage4ModelFactory
@@ -466,6 +612,13 @@ internal readonly record struct TileMapStage4Counters(
     int RetainedObjects,
     int TileInvalidations)
 {
+    public int WarmChunks { get; init; }
+    public int WarmBatchesPrepared { get; init; }
+    public int WarmTilesPrepared { get; init; }
+    public long WarmRetainedBytes { get; init; }
+    public long WarmChargedBytes { get; init; }
+    public long WarmImageBytes { get; init; }
+
     internal static TileMapStage4Counters From(IReadOnlyList<TileMap2D> maps)
     {
         TileMapStage4Counters total = default;
@@ -484,7 +637,15 @@ internal readonly record struct TileMapStage4Counters(
                 total.DrawCommands + snapshot.DrawCommands,
                 total.RetainedBytes + snapshot.RetainedBytes,
                 total.RetainedObjects + snapshot.RetainedObjects,
-                total.TileInvalidations + snapshot.TileInvalidations);
+                total.TileInvalidations + snapshot.TileInvalidations)
+            {
+                WarmChunks = total.WarmChunks + snapshot.WarmChunks,
+                WarmBatchesPrepared = total.WarmBatchesPrepared + snapshot.WarmBatchesPrepared,
+                WarmTilesPrepared = total.WarmTilesPrepared + snapshot.WarmTilesPrepared,
+                WarmRetainedBytes = total.WarmRetainedBytes + snapshot.WarmRetainedBytes,
+                WarmChargedBytes = total.WarmChargedBytes + snapshot.WarmChargedBytes,
+                WarmImageBytes = total.WarmImageBytes + snapshot.WarmImageBytes
+            };
         }
         return total;
     }
@@ -495,7 +656,57 @@ internal sealed record TileMapStage4Scenario(
     double CpuP50Microseconds,
     double CpuP95Microseconds,
     double AllocatedBytesPerOperation,
-    TileMapStage4Counters Counters);
+    TileMapStage4Counters Counters,
+    int MaximumRebuilds,
+    int MaximumPreparedTiles,
+    int TotalPreparedBatches,
+    int MaximumWarmChunks,
+    long MaximumWarmChargedBytes,
+    long MaximumWarmRetainedBytes,
+    long MaximumWarmImageBytes,
+    TileMapStage4Initialization Initialization,
+    TileMapStage4RuntimePrimer RuntimePrimer,
+    TileMapStage4JitQuiescence JitQuiescence,
+    long CompletedJitCompilations,
+    double[] OperationMicroseconds);
+
+internal sealed record TileMapStage4Samples(
+    double[] OperationMicroseconds,
+    long AllocatedBytes,
+    long CompletedJitCompilations,
+    TileMapStage4Counters Counters,
+    int MaximumRebuilds,
+    int MaximumPreparedTiles,
+    int TotalPreparedBatches,
+    int MaximumWarmChunks,
+    long MaximumWarmChargedBytes,
+    long MaximumWarmRetainedBytes,
+    long MaximumWarmImageBytes);
+
+internal sealed record TileMapStage4Initialization(
+    bool IsProcessColdFixture,
+    double ConstructionMicroseconds,
+    long ConstructionAllocatedBytes,
+    double FirstRecordingMicroseconds,
+    double WarmupElapsedMicroseconds,
+    long WarmupAllocatedBytes,
+    long WarmupCompletedJitCompilations,
+    double[] WarmupOperationMicroseconds)
+{
+    public double ConstructionAndFirstRecordingMicroseconds => ConstructionMicroseconds + FirstRecordingMicroseconds;
+}
+
+internal sealed record TileMapStage4RuntimePrimer(
+    int Operations,
+    double ElapsedMicroseconds,
+    double ActionMicroseconds,
+    long AllocatedBytes,
+    long CompletedJitCompilations);
+
+internal sealed record TileMapStage4JitQuiescence(
+    bool Reached,
+    double ElapsedMilliseconds,
+    long CompletedJitCompilations);
 
 internal sealed record TileMapStage4Gate(
     string Name,
@@ -515,6 +726,11 @@ internal sealed record TileMapStage4Report(
     long StopwatchFrequency,
     int WarmupIterations,
     int MeasurementIterations,
+    int RuntimePrimerBlocks,
+    int RuntimePrimerBlockIterations,
+    int RuntimePrimerPauseMilliseconds,
+    int JitQuietMilliseconds,
+    int JitQuietTimeoutMilliseconds,
     TileMapStage4FixtureDescription Fixture,
     TileMapStage4Baseline Baseline,
     IReadOnlyList<TileMapStage4Scenario> Scenarios,

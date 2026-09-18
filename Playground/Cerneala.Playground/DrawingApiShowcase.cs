@@ -32,10 +32,12 @@ public sealed class DrawingApiShowcase : RenderSurface2D
     private readonly DrawLineBatch lines;
     private readonly DrawTextLayout textLayout;
     private IDrawImage? mascot;
+    private ImageResourceLease? mascotLease;
     private DrawSpriteBatch? sprites;
 
     public DrawingApiShowcase()
     {
+        Draw += DrawFrame;
         RedrawMode = RenderSurface2DRedrawMode.OnDemand;
         ClearColor = new Color(10, 14, 20);
         Margin = new Thickness(18);
@@ -88,7 +90,7 @@ public sealed class DrawingApiShowcase : RenderSurface2D
                 trimming: DrawTextTrimming.WordEllipsis));
     }
 
-    protected override void OnDraw(RenderSurface2DFrame frame)
+    private void DrawFrame(RenderSurface2D sender, RenderSurface2DFrame frame)
     {
         EnsureImage();
         frame.FillRectangle(frame.Bounds, SurfaceBrush);
@@ -212,7 +214,8 @@ public sealed class DrawingApiShowcase : RenderSurface2D
             return;
         }
 
-        mascot = cache.Resolve(MascotResource);
+        mascotLease = cache.Acquire(MascotResource);
+        mascot = mascotLease.Image;
         sprites = new DrawSpriteBatch(
             mascot,
             [
@@ -225,5 +228,14 @@ public sealed class DrawingApiShowcase : RenderSurface2D
                         flip: DrawImageFlip.Horizontal,
                         sampling: DrawSamplingMode.Point))
             ]);
+    }
+
+    protected override void OnDetached()
+    {
+        base.OnDetached();
+        sprites = null;
+        mascot = null;
+        mascotLease?.Dispose();
+        mascotLease = null;
     }
 }

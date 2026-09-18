@@ -29,6 +29,8 @@ The query computes a shape cast but does not mutate the collider, its entity, or
 
 Triggers never limit `Travel` and cannot become `Collision`. Matching trigger contacts along the requested cast are returned in `TriggerHits`, ordered by fraction, distance, and stable attachment ordinal.
 
+For an impact reached from separation, `Collision.Normal` describes the contacted surface, using the approach direction to disambiguate equal polygon contact axes at a seam. It is not a sliding vector or the negated movement direction. An initial touching/overlap result retains the static contact normal and zero travel, even when the requested movement points away. See [CollisionHit2D](Cerneala.UI.Controls.CollisionHit2D.md).
+
 ## Properties
 
 | Name | Type | Description |

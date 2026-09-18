@@ -7,19 +7,24 @@ namespace Cerneala.Tests.UI.Hosting;
 public sealed class DrawingContentServicesLifetimeTests
 {
     [Fact]
-    public void ContentServicesDisposeTheirOwnedImageCacheOnce()
+    public void ContentServicesDisposalDoesNotInvalidateOutstandingImageAcquisitions()
     {
         RecordingImageLoader loader = new();
         DisposableTestImage image = new(16, 8);
         loader.SetImage("logo.png", image);
         DrawingContentServices services = new(imageLoader: loader);
         Assert.Same(loader, services.ImageLoader);
-        services.ImageResourceCache.Resolve(new ImageResource("logo.png"));
+        ImageResourceLease lease = services.ImageResourceCache.Acquire(new ImageResource("logo.png"));
 
         services.Dispose();
         services.Dispose();
 
+        Assert.Equal(0, image.DisposeCount);
+        Assert.Same(image, lease.Image);
+        lease.Dispose();
+        lease.Dispose();
         Assert.Equal(1, image.DisposeCount);
+        Assert.Throws<ObjectDisposedException>(() => services.ImageResourceCache.Acquire(new ImageResource("logo.png")));
     }
 
     [Fact]
@@ -37,7 +42,7 @@ public sealed class DrawingContentServicesLifetimeTests
             RecordingImageLoader loader = new();
             loader.SetImage("logo.png", image);
             using DrawingContentServices services = new(imageLoader: loader);
-            services.ImageResourceCache.Resolve(new ImageResource("logo.png"));
+            using ImageResourceLease lease = services.ImageResourceCache.Acquire(new ImageResource("logo.png"));
         }
     }
 

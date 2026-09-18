@@ -14,11 +14,12 @@ public sealed class SmokeDrawingSurface : RenderSurface2D
 
     public SmokeDrawingSurface()
     {
+        Draw += DrawFrame;
         ClearColor = new Color(8, 13, 20);
         RedrawMode = RenderSurface2DRedrawMode.Continuous;
     }
 
-    protected override void OnDraw(RenderSurface2DFrame frame)
+    private void DrawFrame(RenderSurface2D sender, RenderSurface2DFrame frame)
     {
         frame.FillRectangle(frame.Bounds, BackgroundBrush);
         frame.FillRoundedRectangle(

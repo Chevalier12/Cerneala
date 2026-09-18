@@ -172,13 +172,13 @@ internal static class PrismStylePlanner
     private static readonly int StrokeEmbossSymbol =
         PrismCatalogRuntime.ResolveSymbol("Style", "StrokeEmboss");
     private static readonly (int Symbol, PrismBlendMode Mode)[]
-        HashedBlendModes = Enum
-            .GetValues<PrismBlendMode>()
-            .Select(mode => (
+        HashedBlendModes = PrismCatalogGenerated.Entries
+            .Where(entry => entry.Kind == "blend-mode")
+            .Select(entry => (
                 PrismCatalogRuntime.ResolveSymbol(
                     "HighlightMode",
-                    mode.ToString()),
-                mode))
+                    entry.Symbol),
+                (PrismBlendMode)entry.StableId))
             .ToArray();
 
     public static PrismStylePlan Create(
@@ -228,7 +228,7 @@ internal static class PrismStylePlanner
         int value,
         string propertyName)
     {
-        if (Enum.IsDefined((PrismBlendMode)value))
+        if (PrismEnumValidation.IsDefined((PrismBlendMode)value))
         {
             return (PrismBlendMode)value;
         }

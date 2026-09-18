@@ -1,10 +1,9 @@
-using System.Collections.Concurrent;
-
 namespace Cerneala.UI.Core;
 
 public static class UiPropertyRegistry
 {
-    private static readonly ConcurrentDictionary<(Type OwnerType, string Name), UiProperty> Properties = new();
+    private static readonly Dictionary<(Type OwnerType, string Name), UiProperty> Properties = new();
+    private static readonly List<UiProperty> PropertiesById = new();
     private static readonly Dictionary<UiPropertyOptions, IReadOnlyList<UiProperty>> PropertiesByOptions = new();
     private static readonly object SyncRoot = new();
     private static IReadOnlyList<UiProperty>? registeredProperties;
@@ -18,15 +17,29 @@ public static class UiPropertyRegistry
         lock (SyncRoot)
         {
             UiProperty<T> property = new(Interlocked.Increment(ref nextId), name, ownerType, metadata);
-            if (!Properties.TryAdd((ownerType, name), property))
-            {
-                throw new InvalidOperationException($"UI property '{ownerType.FullName}.{name}' is already registered.");
-            }
-
-            registeredProperties = null;
-            PropertiesByOptions.Clear();
+            Publish(property);
             return property;
         }
+    }
+
+    // The caller holds SyncRoot across identity allocation, construction and publication.
+    private static void Publish(UiProperty property)
+    {
+        if (!Properties.TryAdd((property.OwnerType, property.Name), property))
+        {
+            throw new InvalidOperationException($"UI property '{property.OwnerType.FullName}.{property.Name}' is already registered.");
+        }
+
+        int index = PropertiesById.Count;
+        // Normally an append. A custom owner's metadata can register another
+        // property reentrantly during construction, publishing a later ID first.
+        while (index > 0 && PropertiesById[index - 1].Id > property.Id)
+        {
+            index--;
+        }
+        PropertiesById.Insert(index, property);
+        registeredProperties = null;
+        PropertiesByOptions.Clear();
     }
 
     public static UiPropertyKey<T> RegisterReadOnly<T>(string name, Type ownerType, UiPropertyMetadata<T> metadata)
@@ -48,8 +61,7 @@ public static class UiPropertyRegistry
     {
         lock (SyncRoot)
         {
-            return registeredProperties ??= Array.AsReadOnly(
-                Properties.Values.OrderBy(property => property.Id).ToArray());
+            return registeredProperties ??= Array.AsReadOnly(PropertiesById.ToArray());
         }
     }
 
@@ -62,10 +74,18 @@ public static class UiPropertyRegistry
                 return cached;
             }
 
-            IReadOnlyList<UiProperty> properties = Array.AsReadOnly(Properties.Values
-                .Where(property => (property.Options & options) == options)
-                .OrderBy(property => property.Id)
-                .ToArray());
+            int count = 0;
+            foreach (UiProperty property in PropertiesById)
+            {
+                if ((property.Options & options) == options) { count++; }
+            }
+            UiProperty[] selected = new UiProperty[count];
+            int index = 0;
+            foreach (UiProperty property in PropertiesById)
+            {
+                if ((property.Options & options) == options) { selected[index++] = property; }
+            }
+            IReadOnlyList<UiProperty> properties = Array.AsReadOnly(selected);
             PropertiesByOptions.Add(options, properties);
             return properties;
         }

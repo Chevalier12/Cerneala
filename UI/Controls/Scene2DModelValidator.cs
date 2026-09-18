@@ -331,7 +331,7 @@ public static class Scene2DModelValidator
         ValidateTileSets(model.TileSets, atlasSizes, diagnostics, path, requireAllAtlases);
     }
 
-    private static void ValidateTileSets(IReadOnlyList<TileSet2D> tileSets, IReadOnlyDictionary<string, DrawSize> atlasSizes,
+    internal static void ValidateTileSets(IReadOnlyList<TileSet2D> tileSets, IReadOnlyDictionary<string, DrawSize> atlasSizes,
         Scene2DDiagnosticCollector diagnostics, string path, bool requireAllAtlases = true)
     {
         for (int setIndex = 0; setIndex < tileSets.Count; setIndex++)
@@ -432,6 +432,15 @@ public static class Scene2DModelValidator
     internal static T[] CopyBounded<T>(IEnumerable<T> source, int maximum, string parameter, string code = "SCN2D013")
     {
         ArgumentNullException.ThrowIfNull(source, parameter);
+        if (source is T[] array && array.Length <= maximum)
+        {
+            if (array.Length == 0) { return Array.Empty<T>(); }
+            // Arrays have a fixed length; copy directly without an intermediate
+            // growing list. Keep the requested element type for covariant input.
+            T[] copied = new T[array.Length];
+            Array.Copy(array, copied, array.Length);
+            return copied;
+        }
         List<T> values = new();
         foreach (T value in source)
         {

@@ -11,7 +11,7 @@ public sealed class CollisionStageThreeTileMapTests
 {
     [Fact]
     [Trait("CollisionStage", "3")]
-    public void VillageFenceCrossesChunkBoundaryAndNegativeCoordinatesWithoutCullingCollision()
+    public async Task VillageFenceCrossesChunkBoundaryAndNegativeCoordinatesWithoutCullingCollision()
     {
         TileColliderDescriptor2D fence = FullCellBox();
         TileDefinition2D definition = Definition(1, fence);
@@ -24,6 +24,8 @@ public sealed class CollisionStageThreeTileMapTests
         scene.Children.Add(map);
         scene.Children.Add(new Sprite2D { Collider = player });
         RenderSurface2D surface = new() { Scene = scene };
+        using TileMapTestSurface host = new(surface, default);
+        using SceneCollisionRegion2D prepared = await scene.CollisionWorld.PrepareRegionAsync(new(-64, -64, 40_000, 128));
         DrawCommandList commands = [];
 
         ((IRenderSurface2DFrameSource)surface).RecordFrame(commands, default);
@@ -45,7 +47,7 @@ public sealed class CollisionStageThreeTileMapTests
 
     [Fact]
     [Trait("CollisionStage", "3")]
-    public void CoalescingRequiresIdenticalFilterTriggerPropertiesAndDebugIdentity()
+    public async Task CoalescingRequiresIdenticalFilterTriggerPropertiesAndDebugIdentity()
     {
         IReadOnlyDictionary<string, object?> wood = new Dictionary<string, object?>
         {
@@ -72,6 +74,8 @@ public sealed class CollisionStageThreeTileMapTests
                 Chunk(0, 0, 2, 1, 1, 2));
             Scene2D splitScene = new();
             splitScene.Children.Add(split);
+            using SceneSimulationContext2D splitContext = new(splitScene);
+            using SceneCollisionRegion2D splitRegion = await splitScene.CollisionWorld.PrepareRegionAsync(new(0, 0, 32, 16));
 
             Assert.Equal(2, splitScene.CollisionWorld.GetDiagnosticsSnapshot().EntryCount);
         }
@@ -88,18 +92,22 @@ public sealed class CollisionStageThreeTileMapTests
             Chunk(0, 0, 2, 1, 1, 2));
         Scene2D mergedScene = new();
         mergedScene.Children.Add(merged);
+        using SceneSimulationContext2D mergedContext = new(mergedScene);
+        using SceneCollisionRegion2D mergedRegion = await mergedScene.CollisionWorld.PrepareRegionAsync(new(0, 0, 32, 16));
 
         Assert.Equal(1, mergedScene.CollisionWorld.GetDiagnosticsSnapshot().EntryCount);
     }
 
     [Fact]
     [Trait("CollisionStage", "3")]
-    public void SpriteColliderIsIndependentAndRemovingStaticCellExplicitlyTransfersCollision()
+    public async Task SpriteColliderIsIndependentAndRemovingStaticCellExplicitlyTransfersCollision()
     {
         TileMap2D map = Map(Definition(1, FullCellBox()), Chunk(2, 0, 1, 1, 1));
         Scene2D scene = new();
         scene.Children.Add(map);
-        TileMap2DModel original = map.Model!;
+        using SceneSimulationContext2D context = new(scene);
+        using SceneCollisionRegion2D prepared = await scene.CollisionWorld.PrepareRegionAsync(new(-64, -64, 40_000, 128));
+        TileMap2DModel original = map.GetSourceModel()!;
         BoxCollider2D custom = new() { Width = 16, Height = 16 };
         Sprite2D sprite = new() { X = 32, Width = 16, Height = 16, Collider = custom };
         scene.Children.Add(sprite);
@@ -110,8 +118,8 @@ public sealed class CollisionStageThreeTileMapTests
             32);
         Assert.Equal(2, composed.Length);
 
-        map.Model = new TileMap2DModel(original.Id, original.TileSize, original.TileSets,
-            [new TileChunk2D(new TileCoordinate2D(2, 0), 1, 1, [default])]);
+        map.PublishModel(new TileMap2DModel(original.Id, original.TileSize, original.TileSets,
+            [new TileChunk2D(new TileCoordinate2D(2, 0), 1, 1, [default], version: 2)]));
         CollisionHit2D replaced = Assert.Single(scene.CollisionWorld.Raycast(
             new Vector2(24, 8),
             Vector2.UnitX,
@@ -120,7 +128,7 @@ public sealed class CollisionStageThreeTileMapTests
         Assert.Same(sprite, replaced.Entity);
 
         Assert.True(scene.Children.Remove(sprite));
-        map.Model = original;
+        map.PublishModel(original);
         CollisionHit2D restored = Assert.Single(scene.CollisionWorld.Raycast(
             new Vector2(24, 8),
             Vector2.UnitX,
@@ -131,7 +139,7 @@ public sealed class CollisionStageThreeTileMapTests
 
     [Fact]
     [Trait("CollisionStage", "3")]
-    public void ReplacingOneChunkUpdatesOnlyItsCollisionEntries()
+    public async Task ReplacingOneChunkUpdatesOnlyItsCollisionEntries()
     {
         TileDefinition2D definition = Definition(1, FullCellBox());
         TileChunk2D changed = Chunk(0, 0, 1, 1, 1);
@@ -139,13 +147,15 @@ public sealed class CollisionStageThreeTileMapTests
         TileMap2D map = Map(definition, changed, unchanged);
         Scene2D scene = new();
         scene.Children.Add(map);
+        using SceneSimulationContext2D context = new(scene);
+        using SceneCollisionRegion2D prepared = await scene.CollisionWorld.PrepareRegionAsync(new(-64, -64, 40_000, 128));
         CollisionWorld2D world = scene.CollisionWorld;
         CollisionWorld2DDiagnosticsSnapshot before = world.GetDiagnosticsSnapshot();
         Collider2D unchangedCollider = Assert.Single(
             world.Raycast(new Vector2(150, 8), Vector2.UnitX, 30)).Collider;
 
         TileChunk2D replacement = Chunk(0, 0, 1, 1, 0, version: 2);
-        map.Model = Model(definition, replacement, unchanged, version: 2);
+        map.PublishModel(Model(definition, replacement, unchanged, version: 2));
         CollisionWorld2DDiagnosticsSnapshot after = world.GetDiagnosticsSnapshot();
         Collider2D sameUnchangedCollider = Assert.Single(
             world.Raycast(new Vector2(150, 8), Vector2.UnitX, 30)).Collider;
@@ -181,22 +191,26 @@ public sealed class CollisionStageThreeTileMapTests
         Assert.True(polygon.IsTrigger);
     }
 
-    [Fact]
-    public void ReplacingEqualChunkDataRetainsCollisionAdapters()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ReplacingEqualChunkDataRetainsCollisionAdapters(bool copyDescriptor)
     {
         TileColliderDescriptor2D fence = FullCellBox();
         TileMap2D map = Map(Definition(1, fence),
             Chunk(0, 0, 2, 1, 1, 1), Chunk(10, 0, 1, 1, 1));
         Scene2D scene = new();
         scene.Children.Add(map);
+        using SceneSimulationContext2D context = new(scene);
+        using SceneCollisionRegion2D prepared = await scene.CollisionWorld.PrepareRegionAsync(new(-64, -64, 40_000, 128));
         Collider2D first = Assert.Single(scene.CollisionWorld.Raycast(
             new Vector2(8, -8), Vector2.UnitY, 32)).Collider;
         Collider2D distant = Assert.Single(scene.CollisionWorld.Raycast(
             new Vector2(168, -8), Vector2.UnitY, 32)).Collider;
 
         // New model, definition, and chunk objects; collision-relevant data is identical.
-        map.Model = Model(Definition(1, fence),
-            Chunk(0, 0, 2, 1, 1, 1), Chunk(10, 0, 1, 1, 1), version: 2);
+        map.PublishModel(Model(Definition(1, copyDescriptor ? FullCellBox() : fence),
+            Chunk(0, 0, 2, 1, 1, 1), Chunk(10, 0, 1, 1, 1), version: 2));
 
         Assert.Same(first, Assert.Single(scene.CollisionWorld.Raycast(
             new Vector2(8, -8), Vector2.UnitY, 32)).Collider);
@@ -205,56 +219,63 @@ public sealed class CollisionStageThreeTileMapTests
     }
 
     [Fact]
-    public void AddingColliderToPreviouslyNoncollidingDefinitionRefreshesCachedChunk()
+    public async Task AddingColliderToPreviouslyNoncollidingDefinitionRefreshesCachedChunk()
     {
         TileColliderDescriptor2D fence = FullCellBox();
         TileDefinition2D fixedDefinition = Definition(1, fence);
         TileChunk2D chunk = Chunk(0, 0, 2, 1, 1, 2);
         TileMap2D map = Map([fixedDefinition, Definition(2)], chunk);
-        TileMap2DModel original = map.Model!;
+        TileMap2DModel original = map.GetSourceModel()!;
         Scene2D scene = new();
         scene.Children.Add(map);
+        using SceneSimulationContext2D context = new(scene);
+        using SceneCollisionRegion2D prepared = await scene.CollisionWorld.PrepareRegionAsync(new(-64, -64, 40_000, 128));
         Assert.Empty(scene.CollisionWorld.Raycast(new Vector2(24, -8), Vector2.UnitY, 32));
 
-        map.Model = new TileMap2DModel(original.Id, original.TileSize,
+        map.PublishModel(new TileMap2DModel(original.Id, original.TileSize,
             [new TileSet2D("Village", new ResourceId<ImageResource>("VillageAtlas"),
-                [fixedDefinition, Definition(2, fence)], version: 2)], [chunk], version: 2);
+                [fixedDefinition, Definition(2, fence)], version: 2)],
+            [new TileChunk2D(chunk.Origin, chunk.Width, chunk.Height, chunk.Tiles, version: 2)], version: 2));
 
         CollisionHit2D added = Assert.Single(scene.CollisionWorld.Raycast(
             new Vector2(24, -8), Vector2.UnitY, 32));
         Assert.Same(map, added.Entity);
         Assert.Equal(1, scene.CollisionWorld.GetDiagnosticsSnapshot().EntryCount);
 
-        map.Model = original;
+        map.PublishModel(original);
         Assert.Empty(scene.CollisionWorld.Raycast(new Vector2(24, -8), Vector2.UnitY, 32));
         Assert.Single(scene.CollisionWorld.Raycast(new Vector2(8, -8), Vector2.UnitY, 32));
     }
 
     [Fact]
-    public void CollisionReuseStillDetectsChangedCellsWithAnUnchangedPublicationVersion()
+    public async Task CollisionReuseDetectsRevisedCellsWithAnUnchangedMapPublicationVersion()
     {
         TileColliderDescriptor2D narrow = new(TileColliderShape2D.Box,
             width: 4, height: 16, offsetX: 1);
         TileMap2D map = Map(Definition(1, narrow), Chunk(0, 0, 1, 1, 1));
-        TileMap2DModel original = map.Model!;
+        TileMap2DModel original = map.GetSourceModel()!;
         Scene2D scene = new();
         scene.Children.Add(map);
+        using SceneSimulationContext2D context = new(scene);
+        using SceneCollisionRegion2D prepared = await scene.CollisionWorld.PrepareRegionAsync(new(-64, -64, 40_000, 128));
         Assert.Single(scene.CollisionWorld.Raycast(new Vector2(2, -8), Vector2.UnitY, 32));
 
-        // Collision compares actual immutable cell data, not a version-only shortcut.
-        map.Model = new TileMap2DModel(original.Id, original.TileSize, original.TileSets,
-            [new TileChunk2D(default, 1, 1, [new TileCell2D(1, TileFlip2D.Horizontal)])]);
+        // The map publication version may stay unchanged; revised payloads still need a new chunk revision.
+        map.PublishModel(new TileMap2DModel(original.Id, original.TileSize, original.TileSets,
+            [new TileChunk2D(default, 1, 1, [new TileCell2D(1, TileFlip2D.Horizontal)], version: 2)]));
 
         Assert.Empty(scene.CollisionWorld.Raycast(new Vector2(2, -8), Vector2.UnitY, 32));
         Assert.Single(scene.CollisionWorld.Raycast(new Vector2(14, -8), Vector2.UnitY, 32));
     }
 
     [Fact]
-    public void RepeatedChunkReplacementReleasesCollisionAdaptersAndSnapshots()
+    public async Task RepeatedChunkReplacementReleasesCollisionAdaptersAndSnapshots()
     {
         TileMap2D map = new();
         Scene2D scene = new();
         scene.Children.Add(map);
+        using SceneSimulationContext2D context = new(scene);
+        using SceneCollisionRegion2D prepared = await scene.CollisionWorld.PrepareRegionAsync(new(-64, -64, 40_000, 128));
         WeakReference[] retired = ReplaceAndClearCollisionModels(map, scene);
 
         GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
@@ -279,14 +300,14 @@ public sealed class CollisionStageThreeTileMapTests
                 .Select(x => Chunk(iteration * 32 + x, 0, 1, 1, 1)).ToArray();
             TileMap2DModel model = new("Lifetime", new DrawSize(16, 16),
                 [new TileSet2D("Village", new ResourceId<ImageResource>("VillageAtlas"), [definition])], chunks);
-            map.Model = model;
+            map.PublishModel(model);
             Assert.Equal(count, scene.CollisionWorld.GetDiagnosticsSnapshot().EntryCount);
             Assert.Equal(count, map.LogicalChildren.Count);
             retired.Add(new WeakReference(model));
             retired.AddRange(chunks.Select(static chunk => new WeakReference(chunk)));
             retired.AddRange(map.LogicalChildren.Select(static collider => new WeakReference(collider)));
         }
-        map.Model = null;
+        map.Source = null;
         Assert.Equal(0, scene.CollisionWorld.GetDiagnosticsSnapshot().EntryCount);
         return retired.ToArray();
     }
@@ -351,11 +372,11 @@ public sealed class CollisionStageThreeTileMapTests
         IReadOnlyList<TileDefinition2D> definitions,
         params TileChunk2D[] chunks) => new()
         {
-            Model = new TileMap2DModel(
+            Source = TileMapTestSource.Create(new TileMap2DModel(
                 "Structures",
                 new DrawSize(16, 16),
                 [new TileSet2D("Village", new ResourceId<ImageResource>("VillageAtlas"), definitions)],
-                chunks)
+                chunks))
         };
 
     private static TileMap2DModel Model(

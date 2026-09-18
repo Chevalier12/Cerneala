@@ -146,8 +146,9 @@ public sealed class Sprite2DImageResourceTests
         resources.SetResource(id, new ImageResource("second.png"));
 
         Assert.True(((IRenderSurface2DFrameSource)surface).FrameVersion > before);
+        Assert.False(first.IsDisposed); // The previous recorded frame still owns an acquisition.
         Assert.Same(second, Assert.Single(Record(surface).Where(IsImageDraw)).Image);
-        Assert.False(first.IsDisposed);
+        Assert.True(first.IsDisposed);
         Assert.False(second.IsDisposed);
 
         root.SetImageLoader(null);
@@ -156,7 +157,7 @@ public sealed class Sprite2DImageResourceTests
     }
 
     [Fact]
-    public void ReattachingToAnotherRootUsesThatRootsCacheWithoutPrematureDisposal()
+    public void ReattachingToAnotherRootReleasesTheOldAcquisitionAndUsesTheNewRootsCache()
     {
         ResourceId<ImageResource> id = new("WorldAtlas");
         DisposableImage first = new("first-root");
@@ -181,11 +182,11 @@ public sealed class Sprite2DImageResourceTests
         firstRoot.VisualChildren.Add(surface);
         Assert.Same(first, Assert.Single(Record(surface).Where(IsImageDraw)).Image);
         firstRoot.VisualChildren.Remove(surface);
-        Assert.False(first.IsDisposed);
+        Assert.True(first.IsDisposed);
 
         secondRoot.VisualChildren.Add(surface);
         Assert.Same(second, Assert.Single(Record(surface).Where(IsImageDraw)).Image);
-        Assert.False(first.IsDisposed);
+        Assert.True(first.IsDisposed);
         Assert.False(second.IsDisposed);
 
         long beforeOldRootChange = ((IRenderSurface2DFrameSource)surface).FrameVersion;
@@ -200,7 +201,7 @@ public sealed class Sprite2DImageResourceTests
     }
 
     [Fact]
-    public void RemovingLocalResourceInvalidatesFrameWithoutDisposingCachedImage()
+    public void RemovingLocalResourceInvalidatesFrameAndReleasesTheLastAcquisitionAfterRecording()
     {
         ResourceId<ImageResource> id = new("WorldAtlas");
         DisposableImage loaded = new("loaded");
@@ -218,8 +219,9 @@ public sealed class Sprite2DImageResourceTests
         Assert.True(surface.Resources.Remove(id.Key));
 
         Assert.True(((IRenderSurface2DFrameSource)surface).FrameVersion > before);
-        Assert.Empty(Record(surface).Where(IsImageDraw));
         Assert.False(loaded.IsDisposed);
+        Assert.Empty(Record(surface).Where(IsImageDraw));
+        Assert.True(loaded.IsDisposed);
         root.SetImageLoader(null);
         Assert.Equal(1, loaded.DisposeCount);
     }
@@ -281,7 +283,7 @@ public sealed class Sprite2DImageResourceTests
         }
     }
 
-    private sealed class RecordingImageLoader : IImageLoader
+    private sealed class RecordingImageLoader : IAsyncImageLoader
     {
         private readonly Dictionary<string, IDrawImage> images = new(StringComparer.Ordinal);
         private readonly Dictionary<string, int> counts = new(StringComparer.Ordinal);
@@ -301,5 +303,8 @@ public sealed class Sprite2DImageResourceTests
             counts[path] = GetLoadCount(path) + 1;
             return images[path];
         }
+
+        public ValueTask<IDrawImage> LoadAsync(string path, CancellationToken cancellationToken = default) =>
+            ValueTask.FromResult(Load(path));
     }
 }

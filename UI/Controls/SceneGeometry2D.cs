@@ -36,6 +36,39 @@ internal readonly record struct SceneBounds2D
 
 internal static class SceneGeometry2D
 {
+    internal static bool TryGetEntityBounds(Scene2DEntity entity, out DrawRect bounds)
+    {
+        Matrix3x2 placement = Matrix3x2.CreateRotation(entity.Rotation) *
+            Matrix3x2.CreateTranslation(entity.Position.X, entity.Position.Y);
+        switch (entity.Shape)
+        {
+            case "Point":
+                return TryTransformBounds(default, placement, out bounds);
+            case "Box":
+                return TryTransformBounds(new(0, 0, entity.Size.Width, entity.Size.Height), placement, out bounds);
+            case "Ellipse":
+                Matrix3x2 ellipse = Matrix3x2.CreateScale(entity.Size.Width / 2, entity.Size.Height / 2) *
+                    Matrix3x2.CreateTranslation(entity.Size.Width / 2, entity.Size.Height / 2) * placement;
+                return TryGetColliderBounds(ColliderLocalShape2D.Circle(1), ellipse, out bounds);
+            case "Polygon":
+            case "Polyline":
+                return TryGetPolygonBounds(entity.Vertices, placement, out bounds);
+            default:
+                bounds = default;
+                return false;
+        }
+    }
+
+    internal static DrawRect GetColliderBounds(TileColliderDescriptor2D descriptor, Matrix3x2 placement)
+    {
+        Matrix3x2 transform = Matrix3x2.CreateTranslation(descriptor.OffsetX, descriptor.OffsetY) * descriptor.LocalTransform * placement;
+        if (!TryGetColliderBounds(descriptor.CreateLocalShape(), transform, out DrawRect bounds))
+        {
+            throw new ArgumentException("Scene collision bounds must be finite.", nameof(descriptor));
+        }
+        return bounds;
+    }
+
     // Project the same geometry and child ownership used by scene input, without
     // arranging logical nodes or touching the collision index. Transform each
     // shape before union so nested transforms do not repeatedly inflate AABBs.

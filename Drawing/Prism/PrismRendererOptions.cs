@@ -35,7 +35,7 @@ public sealed class PrismRendererOptions
             throw new ArgumentOutOfRangeException(
                 nameof(RetainedCacheEntryLimit));
         }
-        if (!Enum.IsDefined(HostColorProfile))
+        if (!PrismEnumValidation.IsDefined(HostColorProfile))
         {
             throw new ArgumentOutOfRangeException(
                 nameof(HostColorProfile));

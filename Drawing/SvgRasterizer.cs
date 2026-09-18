@@ -11,7 +11,7 @@ internal static class SvgRasterizer
     private static readonly object CacheLock = new();
     private static readonly Dictionary<string, CacheEntry> Cache = new(StringComparer.OrdinalIgnoreCase);
 
-    public static byte[] Rasterize(string path)
+    internal static RasterLease Acquire(string path)
     {
         string compiledPath = path + CompiledSidecarSuffix;
         bool hasCompiledSidecar = HasCurrentCompiledSidecar(path, compiledPath);
@@ -22,19 +22,25 @@ internal static class SvgRasterizer
 
         lock (CacheLock)
         {
-            if (Cache.TryGetValue(path, out CacheEntry cached) &&
+            CacheEntry entry;
+            if (Cache.TryGetValue(path, out CacheEntry? cached) &&
                 string.Equals(cached.ArtifactPath, artifactPath, StringComparison.OrdinalIgnoreCase) &&
                 cached.LastWriteTicks == lastWriteTicks &&
                 cached.SourceLength == length)
             {
-                return cached.PngBytes;
+                entry = cached;
             }
-
-            byte[] pngBytes = hasCompiledSidecar
-                ? File.ReadAllBytes(compiledPath)
-                : RasterizeCore(path);
-            Cache[path] = new CacheEntry(artifactPath, lastWriteTicks, length, pngBytes);
-            return pngBytes;
+            else
+            {
+                byte[] pngBytes = hasCompiledSidecar
+                    ? File.ReadAllBytes(compiledPath)
+                    : RasterizeCore(path);
+                entry = new CacheEntry(path, artifactPath, lastWriteTicks, length, pngBytes);
+                Cache[path] = entry;
+            }
+            RasterLease lease = new(entry);
+            entry.Acquisitions = checked(entry.Acquisitions + 1);
+            return lease;
         }
     }
 
@@ -84,9 +90,42 @@ internal static class SvgRasterizer
         return data.ToArray();
     }
 
-    private readonly record struct CacheEntry(
-        string ArtifactPath,
-        long LastWriteTicks,
-        long SourceLength,
-        byte[] PngBytes);
+    internal sealed class CacheEntry(
+        string path,
+        string artifactPath,
+        long lastWriteTicks,
+        long sourceLength,
+        byte[] pngBytes)
+    {
+        internal string Path { get; } = path;
+        internal string ArtifactPath { get; } = artifactPath;
+        internal long LastWriteTicks { get; } = lastWriteTicks;
+        internal long SourceLength { get; } = sourceLength;
+        internal byte[] PngBytes { get; } = pngBytes;
+        internal int Acquisitions;
+    }
+
+    internal sealed class RasterLease(CacheEntry entry) : IDisposable
+    {
+        private CacheEntry? current = entry;
+
+        internal byte[] PngBytes => Volatile.Read(ref current)?.PngBytes ??
+            throw new ObjectDisposedException(nameof(RasterLease));
+
+        public void Dispose()
+        {
+            CacheEntry? released = Interlocked.Exchange(ref current, null);
+            if (released is null) { return; }
+            lock (CacheLock)
+            {
+                released.Acquisitions--;
+                if (released.Acquisitions == 0 &&
+                    Cache.TryGetValue(released.Path, out CacheEntry? cached) &&
+                    ReferenceEquals(cached, released))
+                {
+                    Cache.Remove(released.Path);
+                }
+            }
+        }
+    }
 }

@@ -166,7 +166,7 @@ public sealed class DetectiveSnapshotTests
         loader.SetImage("logo.png", new TestImage(16, 8));
         UIRoot root = new(100, 100);
         root.SetImageLoader(loader);
-        root.ImageResourceCache!.Resolve(new ImageResource("logo.png"));
+        using ImageResourceLease lease = root.ImageResourceCache!.Acquire(new ImageResource("logo.png"));
 
         DetectiveSnapshot snapshot = root.Detective.Capture(new FrameStats());
 

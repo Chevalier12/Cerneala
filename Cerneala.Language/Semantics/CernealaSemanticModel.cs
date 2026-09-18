@@ -308,7 +308,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         string propertyName = separator < 0 ? element.Name : element.Name.Substring(separator + 1);
         if (IsTileMapContentMember(parentType, propertyName))
         {
-            AddShapeDiagnostic(element.NameToken.Span, "TileMap2D markup uses direct Tile declarations or a Model binding; Model property elements are not supported.");
+            AddShapeDiagnostic(element.NameToken.Span, "TileMap2D markup uses direct Tile declarations or a Source binding; Source property elements are not supported.");
             return null;
         }
         ILanguageMemberSymbol? member = FindProperty(parentType, propertyName);

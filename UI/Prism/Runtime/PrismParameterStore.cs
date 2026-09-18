@@ -317,38 +317,37 @@ internal static class PrismCatalogRuntime
 
     public static int ResolveSymbol(string propertyName, string symbol)
     {
-        if (propertyName == "BlendMode" &&
-            Enum.TryParse(symbol, ignoreCase: false, out PrismBlendMode blendMode))
+        // Catalog parameters admit exact declared symbols, not arbitrary enum
+        // parsing syntax. The generated descriptors own these stable IDs/names.
+        string? kind = propertyName switch
         {
-            return (int)blendMode;
-        }
-        if (propertyName == "WorkingColorProfile" &&
-            Enum.TryParse(symbol, ignoreCase: false, out PrismColorProfile colorProfile))
+            "BlendMode" => "blend-mode",
+            "WorkingColorProfile" => "color-profile",
+            _ => null
+        };
+        if (kind is not null)
         {
-            return (int)colorProfile;
-        }
-        if (propertyName == "Channel" &&
-            Enum.TryParse(symbol, ignoreCase: false, out PrismMaskChannel maskChannel))
-        {
-            return (int)maskChannel;
-        }
-        if (propertyName == "BlendChannels" &&
-            string.Equals(symbol, "RGBA", StringComparison.Ordinal))
-        {
-            return (int)PrismBlendChannels.Rgba;
-        }
-        if (propertyName == "Knockout" &&
-            Enum.TryParse(symbol, ignoreCase: false, out PrismKnockout knockout))
-        {
-            return (int)knockout;
-        }
-        if (propertyName == "BlendIfChannel" &&
-            Enum.TryParse(symbol, ignoreCase: false, out PrismBlendIfChannel blendIfChannel))
-        {
-            return (int)blendIfChannel;
+            foreach (PrismCatalogEntryDescriptor entry in PrismCatalogGenerated.Entries)
+            {
+                if (entry.Kind == kind && entry.Symbol == symbol)
+                    return entry.StableId;
+            }
         }
 
-        return StableSymbolId(symbol);
+        return (propertyName, symbol) switch
+        {
+            ("Channel", nameof(PrismMaskChannel.Alpha)) => (int)PrismMaskChannel.Alpha,
+            ("Channel", nameof(PrismMaskChannel.Luminance)) => (int)PrismMaskChannel.Luminance,
+            ("BlendChannels", "RGBA") => (int)PrismBlendChannels.Rgba,
+            ("Knockout", nameof(PrismKnockout.None)) => (int)PrismKnockout.None,
+            ("Knockout", nameof(PrismKnockout.Shallow)) => (int)PrismKnockout.Shallow,
+            ("Knockout", nameof(PrismKnockout.Deep)) => (int)PrismKnockout.Deep,
+            ("BlendIfChannel", nameof(PrismBlendIfChannel.Gray)) => (int)PrismBlendIfChannel.Gray,
+            ("BlendIfChannel", nameof(PrismBlendIfChannel.Red)) => (int)PrismBlendIfChannel.Red,
+            ("BlendIfChannel", nameof(PrismBlendIfChannel.Green)) => (int)PrismBlendIfChannel.Green,
+            ("BlendIfChannel", nameof(PrismBlendIfChannel.Blue)) => (int)PrismBlendIfChannel.Blue,
+            _ => StableSymbolId(symbol)
+        };
     }
 
     private static int StableSymbolId(string symbol)

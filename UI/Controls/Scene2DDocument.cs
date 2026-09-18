@@ -144,6 +144,15 @@ public sealed class Scene2DEntity
     public bool IsVisible { get; }
     public float Opacity { get; }
     public IReadOnlyDictionary<string, object?> Properties { get; }
+
+    public DrawRect GetAuthoringBounds() =>
+        SceneGeometry2D.TryGetEntityBounds(this, out DrawRect bounds)
+            ? bounds
+            : throw new InvalidOperationException("The entity has no finite authoring bounds.");
+
+    public DrawRect? GetCollisionBounds() => Collider is null ? null :
+        SceneGeometry2D.GetColliderBounds(Collider, Matrix3x2.CreateRotation(Rotation) *
+            Matrix3x2.CreateTranslation(Position.X, Position.Y));
 }
 
 public sealed class Scene2DLevel

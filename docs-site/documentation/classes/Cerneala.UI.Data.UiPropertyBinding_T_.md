@@ -57,6 +57,8 @@ editor.Text = "Grace";
 
 Source notifications already raised on the UI thread remain synchronous. For an attached `UIElement`, worker-thread notifications are coalesced through `UIRoot.Relay`; the source's current value is read only when the Relay callback runs. Detach invalidates queued callbacks, and reattach performs a complete refresh with a new activation generation.
 
+A scene node in an independent [SceneSimulationContext2D](Cerneala.UI.Controls.SceneSimulationContext2D.md) uses that context's relay instead, without requiring UI attachment. Joining the context rebinds observation; leaving it unsubscribes and invalidates queued refreshes. An explicitly supplied relay must match the current owner, including during independent scene adoption. Pump the context on its owner thread for worker notifications to apply.
+
 When `Mode` is `BindingMode.TwoWay`, the binding also listens to `UiObject.PropertyChanged` on the target. If the changed property is the bound `UiProperty<T>`, the new target value is cast to `T` and written back to the source with `ObservableValue<T>.SetValue`.
 
 The binding guards source-to-target and target-to-source updates with an internal update flag, so a write triggered by one side is not immediately echoed back by the other side. A worker-thread echo is scheduled before that guard is considered, so a later source value is not lost. Disposing the binding removes subscriptions and makes queued callbacks no-ops.

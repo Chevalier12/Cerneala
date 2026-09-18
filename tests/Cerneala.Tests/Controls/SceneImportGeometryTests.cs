@@ -27,15 +27,18 @@ public sealed class SceneImportGeometryTests
         TileColliderDescriptor2D descriptor = new(TileColliderShape2D.Box, width: 4, height: 2, offsetX: 2, offsetY: 1);
         TileSet2D tileset = new("Atlas", new ResourceId<ImageResource>("Atlas"),
             [new TileDefinition2D(1, new DrawRect(0, 0, 20, 10), collider: descriptor)]);
-        TileMap2D map = new() { Model = new("Tiles", size, [tileset],
-            [new TileChunk2D(default, 1, 1, [new TileCell2D(1, (TileFlip2D)flags)])]) };
+        TileMap2D map = new() { Source = TileMapTestSource.Create(new("Tiles", size, [tileset],
+            [new TileChunk2D(default, 1, 1, [new TileCell2D(1, (TileFlip2D)flags)])])) };
         Scene2D scene = new();
         scene.Children.Add(map);
         RenderSurface2D surface = new() { Scene = scene };
         surface.Resources.SetResource(new ResourceId<ImageResource>("Atlas"), new ImageResource("atlas"));
-        UIRoot root = new();
+        UIRoot root = new(40, 40);
         root.SetImageLoader(new ImageLoader());
         root.VisualChildren.Add(surface);
+        // Spatial residency follows the arranged surface viewport, not the
+        // arbitrary bounds of a standalone command-recording probe.
+        root.ProcessFrame();
 
         DrawCommandList commands = Record(surface);
         DrawSprite2D sprite = Assert.Single(Assert.Single(commands.Where(command => command.Kind == DrawCommandKind.DrawSpriteBatch)).SpriteBatch!.Sprites);
@@ -86,7 +89,7 @@ public sealed class SceneImportGeometryTests
 
     [Fact]
     [Trait("SceneImportStage", "1")]
-    public void TileColliderDescriptorRetainsAffineEllipseWithoutApproximation()
+    public async Task TileColliderDescriptorRetainsAffineEllipseWithoutApproximation()
     {
         ConstructorInfo constructor = Assert.Single(typeof(TileColliderDescriptor2D).GetConstructors()
             .Where(candidate => candidate.GetParameters().Any(parameter => parameter.Name == "localTransform")));
@@ -96,7 +99,9 @@ public sealed class SceneImportGeometryTests
         TileColliderDescriptor2D descriptor = (TileColliderDescriptor2D)constructor.Invoke(arguments);
         Tile tile = new(new ImageReference(new Image()), descriptor);
         Scene2D scene = new();
-        scene.Children.Add(new TileMap2D { Model = new TileMap2DModel([tile]) });
+        scene.Children.Add(new TileMap2D { Source = TileMapTestSource.Create(new TileMap2DModel([tile])) });
+        using SceneSimulationContext2D context = new(scene);
+        using SceneCollisionRegion2D prepared = await scene.CollisionWorld.PrepareRegionAsync(new(0, 0, 32, 16));
         CollisionHit2D horizontal = Assert.Single(scene.CollisionWorld.Raycast(new Vector2(0, 3), Vector2.UnitX, 32));
         CollisionHit2D vertical = Assert.Single(scene.CollisionWorld.Raycast(new Vector2(12, 0), Vector2.UnitY, 16));
         Assert.InRange(horizontal.Distance, 1.999f, 2.001f);
@@ -142,6 +147,7 @@ public sealed class SceneImportGeometryTests
 
     private static DrawCommandList Record(RenderSurface2D surface)
     {
+        TileMapTestSource.PrepareFrame(surface, new DrawRect(0, 0, 40, 40));
         DrawCommandList commands = new();
         ((IRenderSurface2DFrameSource)surface).RecordFrame(commands, new DrawRect(0, 0, 40, 40));
         return commands;
@@ -153,8 +159,10 @@ public sealed class SceneImportGeometryTests
         public int Height => 10;
     }
 
-    private sealed class ImageLoader : IImageLoader
+    private sealed class ImageLoader : IAsyncImageLoader
     {
         public IDrawImage Load(string path) => new Image();
+        public ValueTask<IDrawImage> LoadAsync(string path, CancellationToken cancellationToken = default) =>
+            ValueTask.FromResult(Load(path));
     }
 }

@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Xml.Linq;
 using Cerneala.LanguageServer.Protocol;
 using StreamJsonRpc;
+using Xunit.Abstractions;
 
 namespace Cerneala.Tests.LanguageServer;
 
@@ -14,7 +15,7 @@ public sealed class LanguageServerPerformanceCollection
 }
 
 [Collection(LanguageServerPerformanceCollection.Name)]
-public sealed class HardeningProtocolTests
+public sealed class HardeningProtocolTests(ITestOutputHelper output)
 {
     [Fact]
     public async Task FullSolutionIncrementalRequestsRespectWarmBudgets()
@@ -199,9 +200,10 @@ public sealed class HardeningProtocolTests
         return Stopwatch.GetElapsedTime(started).TotalMilliseconds;
     }
 
-    private static void AssertBudget(string operation, IReadOnlyList<double> samples, double budget)
+    private void AssertBudget(string operation, IReadOnlyList<double> samples, double budget)
     {
         double p95 = samples.OrderBy(value => value).ElementAt((int)Math.Ceiling(samples.Count * 0.95) - 1);
+        output.WriteLine(JsonSerializer.Serialize(new { operation, p95Ms = p95, budgetMs = budget, samplesMs = samples }));
         Assert.True(p95 < budget, operation + " warm p95 was " + p95.ToString("F2") + " ms.");
     }
 

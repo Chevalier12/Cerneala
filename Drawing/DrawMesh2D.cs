@@ -135,7 +135,8 @@ public sealed class DrawMesh2D
         DrawPrimitiveTopology topology,
         IDrawImage? image)
     {
-        if (!Enum.IsDefined(topology))
+        if (topology is not DrawPrimitiveTopology.TriangleList and
+            not DrawPrimitiveTopology.TriangleStrip)
         {
             throw new ArgumentOutOfRangeException(nameof(topology));
         }

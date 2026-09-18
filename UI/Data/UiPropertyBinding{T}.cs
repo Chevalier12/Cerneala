@@ -4,7 +4,7 @@ using Cerneala.UI.Relay;
 
 namespace Cerneala.UI.Data;
 
-public sealed class UiPropertyBinding<T> : Binding, IElementLifecycleBehavior
+public sealed class UiPropertyBinding<T> : Binding, IElementDataLifecycleBehavior
 {
     private readonly ObservableValue<T> source;
     private readonly UiObject target;
@@ -57,12 +57,16 @@ public sealed class UiPropertyBinding<T> : Binding, IElementLifecycleBehavior
 
     public BindingMode Mode => mode;
 
-    void IElementLifecycleBehavior.ValidateRoot(UIRoot root)
+    void IElementLifecycleBehavior.ValidateRoot(UIRoot root) => ValidateRelay(root.Relay);
+
+    void IElementDataLifecycleBehavior.ValidateRelay(UiRelay relay) => ValidateRelay(relay);
+
+    private void ValidateRelay(UiRelay relay)
     {
-        if (explicitRelay is not null && !ReferenceEquals(explicitRelay, root.Relay))
+        if (explicitRelay is not null && !ReferenceEquals(explicitRelay, relay))
         {
             throw new InvalidOperationException(
-                $"Binding target '{targetProperty.DiagnosticName}' is attaching to a root with a different Relay.");
+                $"Binding target '{targetProperty.DiagnosticName}' is attaching to an owner with a different Relay.");
         }
     }
 
@@ -182,7 +186,7 @@ public sealed class UiPropertyBinding<T> : Binding, IElementLifecycleBehavior
 
     private UiRelay? ResolveRelay()
     {
-        UiRelay? rootRelay = targetElement?.Root?.Relay;
+        UiRelay? rootRelay = targetElement?.OwnerRelay;
         if (explicitRelay is not null && rootRelay is not null && !ReferenceEquals(explicitRelay, rootRelay))
         {
             throw new InvalidOperationException(

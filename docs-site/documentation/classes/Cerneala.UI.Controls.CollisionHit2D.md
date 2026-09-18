@@ -33,6 +33,8 @@ if (first is not null && !first.IsTrigger)
 
 For overlap and movement, the normal points from the returned collider toward the queried or moving collider. A raycast normal is the hit surface normal opposing the ray. Edge contact is included with an internal comparison epsilon of `1e-5` scene units.
 
+A movement impact reached from separation uses its approach direction to resolve equally shallow polygon contact axes. An introduced floor/chunk seam therefore does not select a tangent side face merely because static overlap tie-breaking would prefer that axis. Analytic curved-surface normals are retained; the normal is not simply the opposite of the requested displacement. Initial touching or overlap still uses the static contact result at zero distance and fraction, including zero or separating movement.
+
 `Entity` is the closest non-collider `SceneNode2D` ancestor of `Collider`. For live colliders this is the owning `Sprite2D`; static tile adapters identify their containing `TileMap2D`. A static tile placement is immutable model data, not a per-tile UI entity.
 
 ## Properties

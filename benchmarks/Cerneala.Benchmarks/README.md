@@ -138,3 +138,77 @@ reusable paths, nested state analysis, solid/dashed/round-join stroke
 tessellation, and rebuilt versus reused text layouts. The accepted machine
 baseline and comparison thresholds are recorded in
 [results/2026-08-24-rendersurface2d-drawing-api.md](results/2026-08-24-rendersurface2d-drawing-api.md).
+
+## TileMap grid recording and bounded warm presentation
+
+```powershell
+dotnet build .\benchmarks\Cerneala.Benchmarks\Cerneala.Benchmarks.csproj -c Release --no-restore -m:1 -v:quiet
+dotnet run --project .\benchmarks\Cerneala.Benchmarks\Cerneala.Benchmarks.csproj -c Release --no-build --no-restore -- --tilemap-stage4 .\TestResults\SceneStreaming\tilemap-stage4.json
+```
+
+Run without concurrent builds, indexers, profilers, tests or other benchmarks.
+The deterministic three-map fixture uses 64 target warmup and 512 measured operations.
+Its CPU samples include source publication/camera updates, the root frame pump,
+surface readiness preparation, map recording and all optional batch preparation.
+The maintained fixture uses in-memory `TileMapSource2D` adapters and an explicitly
+asynchronous image-loader stub that completes inline. Required preparation is
+inside the measured operation, not a preload before the clock. Final command
+recording still calls the scene directly: this is not the native input/layout/
+submission/presentation path, package I/O, actual image decoding or GPU timing.
+
+The current report schema is `cerneala-tilemap-stage4-v5-separated-phases`. All original
+CPU and allocation thresholds remain unchanged. Following the approved extra
+warm-memory policy, the former 1 MiB warm-static retained estimate gate is now
+explicitly the **required visible-entry** estimate (`RetainedBytes` minus
+`WarmRetainedBytes`), not the total. Total estimates are still reported. Optional
+memory is separately gated at the implementation's 1 MiB charge per map, and
+preparation at 256 cells **shared by the surface per recording**, not 256 for
+each map. The frame completion that coordinates this work is inside the timed
+operation, after required scene recording. The whole-fixture estimate limit
+is unchanged. These are estimates/charges, not process/RSS/native/GPU bytes.
+See the canonical TileMap2D and TileMapDiagnosticsSnapshot API pages for their
+accounting definitions.
+
+In addition to the historical final-operation counters, every scenario reports
+the maximum visible rebuild count, maximum prepared cells, total optional
+batches prepared, and maximum warm counts/charges over **all** measured
+operations. Thus a zero final rebuild count cannot hide earlier pan phases.
+Aggregate bookkeeping happens outside each timed operation; it does
+not move preparation out of the measured recording path. No report claims that
+an arbitrary camera jump can always be satisfied by the bounded warm set.
+
+### Separated startup, transition, and measurement phases
+
+For each scenario, v5 times fixture construction and retains all 64 target warmup
+samples. It then runs 1,024 matching operations on a **separate fixture**, in eight
+blocks of 128 with a requested 100 ms pause after each block. This runtime primer
+does not add target recordings or prepare the target's retained batches. Target
+warmup, primer, and measurement use the same sample-collection helper. The report
+includes primer duration, operation time, allocations, and completed-JIT count.
+
+After primer disposal and full GC/finalizer/full GC, the runner observes a 100 ms
+interval without an increase in the process-wide completed-JIT counter, bounded
+by a 2,000 ms timeout. This observation is not proof that no compilation is pending.
+It then keeps all 512 chronological operation samples, with no trimming,
+subtraction, or replacement of outliers. Exact measured optional-batch totals
+must remain 19 / 647 / 19 for static / pan / mutation; static and pan must have
+zero visible rebuilds throughout the measured window, not just at its end.
+
+The approved cold fixture limit is 300 ms for construction plus the first command
+recording in each fresh process. Only the first scenario is process-cold. This
+limit is **not** a game-startup or first-native-frame budget and excludes package
+opening, cold image decoding, and GPU presentation. Use three fresh default-runtime
+Release processes for a validation set and keep every result, including failures.
+Historical v4 reports retain their original protocol and are not directly
+comparable speedup measurements against v5. Earlier v5 results used the former
+direct `Model` control path; they do not verify the migrated `Source` workload.
+
+The maintained v5 runner reports the process-wide completed-JIT delta as a
+diagnostic. The user explicitly removed the agent-added zero-JIT rejection
+criterion after CLR attribution identified a benchmark `TimeSpan` helper.
+All timing/allocation samples still include compilation costs; numeric, work,
+memory, startup and quiescence gates are unchanged. A JIT count is neither a
+reflection-invocation count nor attribution to Cerneala; method identities and
+reachable source paths require separate evidence.
+The current acceptance status and all failed sets are recorded in
+`TestResults/SceneStreaming/implementation-status.md`.

@@ -7,10 +7,10 @@ public static class ElementLifecycle
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(element);
         root.Relay.VerifyAccess();
-        ValidateSubtreeAttachment(root, element);
-
-        AttachPreOrder(root, element, ElementChildRole.Logical);
-        AttachPreOrder(root, element, ElementChildRole.Visual);
+        HashSet<UIElement> visited = new(ReferenceEqualityComparer.Instance);
+        ValidatePreOrder(root, element, visited);
+        visited.Clear();
+        AttachPreOrder(root, element, visited);
     }
 
     public static void DetachSubtree(UIRoot root, UIElement element)
@@ -19,25 +19,23 @@ public static class ElementLifecycle
         ArgumentNullException.ThrowIfNull(element);
         root.Relay.VerifyAccess();
 
-        HashSet<UIElement> detached = new(ReferenceEqualityComparer.Instance);
-        DetachPostOrder(root, element, ElementChildRole.Visual, detached);
-        DetachPostOrder(root, element, ElementChildRole.Logical, detached);
+        HashSet<UIElement> visited = new(ReferenceEqualityComparer.Instance);
+        DetachPostOrder(root, element, visited);
     }
 
     internal static void ValidateSubtreeAttachment(UIRoot root, UIElement element)
     {
         HashSet<UIElement> validated = new(ReferenceEqualityComparer.Instance);
-        ValidatePreOrder(root, element, ElementChildRole.Logical, validated);
-        ValidatePreOrder(root, element, ElementChildRole.Visual, validated);
+        ValidatePreOrder(root, element, validated);
     }
 
     private static void ValidatePreOrder(
         UIRoot root,
         UIElement current,
-        ElementChildRole role,
         HashSet<UIElement> validated)
     {
-        if (validated.Add(current) && !ReferenceEquals(current.Root, root))
+        if (!validated.Add(current)) { return; }
+        if (!ReferenceEquals(current.Root, root))
         {
             if (current.Root is not null)
             {
@@ -47,43 +45,46 @@ public static class ElementLifecycle
             current.ValidateLifecycleRoot(root);
         }
 
-        IReadOnlyList<UIElement> children = Children(current, role);
-        for (int index = 0; index < children.Count; index++)
+        for (int role = 0; role < 2; role++)
         {
-            ValidatePreOrder(root, children[index], role, validated);
+            IReadOnlyList<UIElement> children = role == 0 ? current.LogicalChildren : current.VisualChildren;
+            for (int index = 0; index < children.Count; index++)
+            {
+                ValidatePreOrder(root, children[index], validated);
+            }
         }
     }
 
-    private static void AttachPreOrder(UIRoot root, UIElement current, ElementChildRole role)
+    private static void AttachPreOrder(UIRoot root, UIElement current, HashSet<UIElement> visited)
     {
+        if (!visited.Add(current)) { return; }
         AttachSingle(root, current);
-        IReadOnlyList<UIElement> children = Children(current, role);
-        for (int index = 0; index < children.Count; index++)
+        for (int role = 0; role < 2; role++)
         {
-            AttachPreOrder(root, children[index], role);
+            IReadOnlyList<UIElement> children = role == 0 ? current.LogicalChildren : current.VisualChildren;
+            for (int index = 0; index < children.Count; index++)
+            {
+                AttachPreOrder(root, children[index], visited);
+            }
         }
     }
 
     private static void DetachPostOrder(
         UIRoot root,
         UIElement current,
-        ElementChildRole role,
-        HashSet<UIElement> detached)
+        HashSet<UIElement> visited)
     {
-        IReadOnlyList<UIElement> children = Children(current, role);
-        for (int index = 0; index < children.Count; index++)
+        if (!visited.Add(current)) { return; }
+        for (int role = 0; role < 2; role++)
         {
-            DetachPostOrder(root, children[index], role, detached);
+            IReadOnlyList<UIElement> children = role == 0 ? current.VisualChildren : current.LogicalChildren;
+            for (int index = 0; index < children.Count; index++)
+            {
+                DetachPostOrder(root, children[index], visited);
+            }
         }
 
-        DetachSingle(root, current, detached);
-    }
-
-    private static IReadOnlyList<UIElement> Children(UIElement element, ElementChildRole role)
-    {
-        return role == ElementChildRole.Logical
-            ? element.LogicalChildren
-            : element.VisualChildren;
+        DetachSingle(root, current);
     }
 
     private static void AttachSingle(UIRoot root, UIElement element)
@@ -101,9 +102,9 @@ public static class ElementLifecycle
         element.AttachToRoot(root, root.ElementIds.GetOrCreate(element));
     }
 
-    private static void DetachSingle(UIRoot root, UIElement element, HashSet<UIElement> detached)
+    private static void DetachSingle(UIRoot root, UIElement element)
     {
-        if (!detached.Add(element) || !ReferenceEquals(element.Root, root))
+        if (!ReferenceEquals(element.Root, root))
         {
             return;
         }

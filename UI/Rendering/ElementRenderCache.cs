@@ -2,18 +2,21 @@ using Cerneala.Drawing;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Media;
+using Cerneala.UI.Resources;
 
 namespace Cerneala.UI.Rendering;
 
-public sealed class ElementRenderCache
+public sealed class ElementRenderCache : IDisposable
 {
     private readonly DrawCommandList commands = new();
+    private readonly ImageResourceLeaseSet imageLeases = new();
     private UIElement? cachedElement;
     private UIElement? transformElement;
     private long transformPropertyVersion;
     private int transformScopeVersion;
     private LayoutRect transformBounds;
     private Matrix3x2 elementTransform;
+    private bool disposed;
 
     public DrawCommandList Commands => commands;
 
@@ -27,6 +30,7 @@ public sealed class ElementRenderCache
 
     internal Matrix3x2 GetElementTransform(UIElement element)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         ArgumentNullException.ThrowIfNull(element);
         // Property writes precede PropertyChanged callbacks, whereas scope
         // invalidation follows them. Include the store version so composition
@@ -56,6 +60,7 @@ public sealed class ElementRenderCache
 
     public DrawCommandList GetValidCommands(UIElement element)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         ArgumentNullException.ThrowIfNull(element);
         if (IsStale(element))
         {
@@ -69,6 +74,7 @@ public sealed class ElementRenderCache
 
     public bool Ensure(UIElement element, RenderCounters counters, bool forceRebuild = false)
     {
+        ObjectDisposedException.ThrowIf(disposed, this);
         ArgumentNullException.ThrowIfNull(element);
         ArgumentNullException.ThrowIfNull(counters);
 
@@ -85,11 +91,21 @@ public sealed class ElementRenderCache
         cachedElement = null;
         commands.Clear();
 
-        if (element.Visibility == Visibility.Visible && element.IsVisible)
+        try
         {
-            DrawingContext drawingContext = new(commands);
-            RenderContext context = new(element, drawingContext, element.ArrangedBounds, RenderLayer.Default, counters);
-            element.Render(context);
+            if (element.Visibility == Visibility.Visible && element.IsVisible)
+            {
+                DrawingContext drawingContext = new(commands);
+                RenderContext context = new(element, drawingContext, element.ArrangedBounds, RenderLayer.Default, counters);
+                element.Render(context);
+            }
+            imageLeases.RetainCommands(commands, element.Root?.ImageResourceCache);
+        }
+        catch
+        {
+            commands.Clear();
+            imageLeases.Clear();
+            throw;
         }
 
         RenderVersion = element.RenderVersion;
@@ -105,5 +121,14 @@ public sealed class ElementRenderCache
         IsValid = false;
         cachedElement = null;
         transformElement = null;
+    }
+
+    public void Dispose()
+    {
+        if (disposed) { return; }
+        disposed = true;
+        Invalidate();
+        commands.Clear();
+        imageLeases.Clear();
     }
 }

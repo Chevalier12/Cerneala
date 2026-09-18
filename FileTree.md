@@ -585,6 +585,17 @@ Generated from `.`.
 |   |-- Scene2DImportResult.cs
 |   |-- TileDataDecoder.cs
 |   +-- TiledScene2DImporter.cs
+|-- Cerneala.Scene2D.Packages/
+|   |-- Cerneala.Scene2D.Packages.csproj
+|   |-- PackageFiles.cs
+|   |-- PackageIndex.cs
+|   |-- PackageValueCodec.cs
+|   |-- Scene2DPackage.cs
+|   |-- Scene2DPackageEntityInfo.cs
+|   |-- Scene2DPackageGridChunkMetadata.cs
+|   |-- Scene2DPackageLevel.cs
+|   |-- Scene2DPackageMetadata.cs
+|   +-- Scene2DPackageWriter.cs
 |-- Cerneala.SourceGen/
 |   |-- Prism/
 |   |   |-- Binding/
@@ -1445,6 +1456,13 @@ Generated from `.`.
 |   |   |   |-- Cerneala.Scene2D.Importers.Scene2DImportOptions.md
 |   |   |   |-- Cerneala.Scene2D.Importers.Scene2DImportResult.md
 |   |   |   |-- Cerneala.Scene2D.Importers.TiledScene2DImporter.md
+|   |   |   |-- Cerneala.Scene2D.Packages.Scene2DPackage.md
+|   |   |   |-- Cerneala.Scene2D.Packages.Scene2DPackageEntityInfo.md
+|   |   |   |-- Cerneala.Scene2D.Packages.Scene2DPackageGridChunkMetadata.md
+|   |   |   |-- Cerneala.Scene2D.Packages.Scene2DPackageLevel.md
+|   |   |   |-- Cerneala.Scene2D.Packages.Scene2DPackageMetadata.md
+|   |   |   |-- Cerneala.Scene2D.Packages.Scene2DPackageReadOptions.md
+|   |   |   |-- Cerneala.Scene2D.Packages.Scene2DPackageWriter.md
 |   |   |   |-- Cerneala.SourceGen.UiMarkupGenerator.GenerationScope.md
 |   |   |   |-- Cerneala.SourceGen.UiMarkupGenerator.MarkupSource.md
 |   |   |   |-- Cerneala.SourceGen.UiMarkupGenerator.md
@@ -1577,12 +1595,14 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Decorator.md
 |   |   |   |-- Cerneala.UI.Controls.Image.md
 |   |   |   |-- Cerneala.UI.Controls.Image.ReferenceImageComparer.md
+|   |   |   |-- Cerneala.UI.Controls.ImageLoadingState.md
 |   |   |   |-- Cerneala.UI.Controls.InkCanvas.InkInputAction.md
 |   |   |   |-- Cerneala.UI.Controls.InkCanvas.InkInputKey.md
 |   |   |   |-- Cerneala.UI.Controls.InkCanvas.InkInputKind.md
 |   |   |   |-- Cerneala.UI.Controls.InkCanvas.md
 |   |   |   |-- Cerneala.UI.Controls.InkCanvasStrokeCollectedEventArgs.md
 |   |   |   |-- Cerneala.UI.Controls.IScene2DDebugNavigationGrid.md
+|   |   |   |-- Cerneala.UI.Controls.ISceneSpatialSource2D_T_.md
 |   |   |   |-- Cerneala.UI.Controls.IScrollInfo.md
 |   |   |   |-- Cerneala.UI.Controls.ISelectableItemContainer.md
 |   |   |   |-- Cerneala.UI.Controls.Items.ItemCollection.md
@@ -1624,6 +1644,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.RenderSurface2D.md
 |   |   |   |-- Cerneala.UI.Controls.RenderSurface2DDrawEventHandler.md
 |   |   |   |-- Cerneala.UI.Controls.RenderSurface2DFrame.md
+|   |   |   |-- Cerneala.UI.Controls.RenderSurface2DPresentationState.md
 |   |   |   |-- Cerneala.UI.Controls.RenderSurface2DRedrawMode.md
 |   |   |   |-- Cerneala.UI.Controls.RenderSurface2DSpriteFlip.md
 |   |   |   |-- Cerneala.UI.Controls.ResizeMode.md
@@ -1641,9 +1662,18 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Scene2DModelValidator.md
 |   |   |   |-- Cerneala.UI.Controls.Scene2DValidationOptions.md
 |   |   |   |-- Cerneala.UI.Controls.Scene2DValidationResult.md
+|   |   |   |-- Cerneala.UI.Controls.SceneCollisionRegion2D.md
+|   |   |   |-- Cerneala.UI.Controls.SceneCollisionRegionNotReadyException.md
 |   |   |   |-- Cerneala.UI.Controls.SceneItems2D.md
+|   |   |   |-- Cerneala.UI.Controls.SceneJsonValue2D.md
 |   |   |   |-- Cerneala.UI.Controls.SceneNode2D.md
 |   |   |   |-- Cerneala.UI.Controls.SceneOrderMode.md
+|   |   |   |-- Cerneala.UI.Controls.SceneSimulationContext2D.md
+|   |   |   |-- Cerneala.UI.Controls.SceneSpatialEntry2D.md
+|   |   |   |-- Cerneala.UI.Controls.SceneSpatialLease2D_T_.md
+|   |   |   |-- Cerneala.UI.Controls.SceneSpatialRegion2D_T_.md
+|   |   |   |-- Cerneala.UI.Controls.SceneSpatialResidency2D_T_.md
+|   |   |   |-- Cerneala.UI.Controls.SceneSpatialSource2D_T_.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollBarVisibility.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollChangedEventArgs.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollContentPresenter.md
@@ -1709,6 +1739,10 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.TileMap2D.md
 |   |   |   |-- Cerneala.UI.Controls.TileMap2DModel.md
 |   |   |   |-- Cerneala.UI.Controls.TileMapBounds2D.md
+|   |   |   |-- Cerneala.UI.Controls.TileMapCatalog2D.md
+|   |   |   |-- Cerneala.UI.Controls.TileMapChunkData2D.md
+|   |   |   |-- Cerneala.UI.Controls.TileMapChunkInfo2D.md
+|   |   |   |-- Cerneala.UI.Controls.TileMapSource2D.md
 |   |   |   |-- Cerneala.UI.Controls.TilePromotion2D.md
 |   |   |   |-- Cerneala.UI.Controls.TileSet2D.md
 |   |   |   |-- Cerneala.UI.Controls.ToolTip.md
@@ -2237,10 +2271,12 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Rendering.RetainedRenderer.md
 |   |   |   |-- Cerneala.UI.Rendering.TimeSensitiveRenderInvalidator.md
 |   |   |   |-- Cerneala.UI.Resources.FontResource.md
+|   |   |   |-- Cerneala.UI.Resources.IAsyncImageLoader.md
 |   |   |   |-- Cerneala.UI.Resources.IImageLoader.md
 |   |   |   |-- Cerneala.UI.Resources.ImageReference.md
 |   |   |   |-- Cerneala.UI.Resources.ImageResource.md
 |   |   |   |-- Cerneala.UI.Resources.ImageResourceCache.md
+|   |   |   |-- Cerneala.UI.Resources.ImageResourceLease.md
 |   |   |   |-- Cerneala.UI.Resources.IObservableResourceProvider.md
 |   |   |   |-- Cerneala.UI.Resources.IResourceProvider.md
 |   |   |   |-- Cerneala.UI.Resources.ResourceChangedEventArgs.md
@@ -2576,6 +2612,7 @@ Generated from `.`.
 |   |   |   |-- PrismGraphCapabilities.cs
 |   |   |   |-- PrismGraphDiagnostic.cs
 |   |   |   |-- PrismGraphOptimizer.cs
+|   |   |   |-- PrismInputDependency.cs
 |   |   |   |-- PrismRasterPlanner.cs
 |   |   |   +-- PrismRetainedCacheKey.cs
 |   |   |-- Kernels/
@@ -2826,6 +2863,7 @@ Generated from `.`.
 |   |   |-- PrismCacheOwnerTokenAllocator.cs
 |   |   |-- PrismDrawResources.cs
 |   |   |-- PrismDrawScope.cs
+|   |   |-- PrismEnumValidation.cs
 |   |   |-- PrismImage.cs
 |   |   |-- PrismOperation.cs
 |   |   |-- PrismPipeline.cs
@@ -2913,6 +2951,7 @@ Generated from `.`.
 |   |   |-- automation/
 |   |   |-- SceneWorldAssets/
 |   |   |   |-- New-Assets.ps1
+|   |   |   |-- README.md
 |   |   |   |-- village.ldtk
 |   |   |   |-- village.tmj
 |   |   |   +-- world-atlas.png
@@ -2924,6 +2963,8 @@ Generated from `.`.
 |   |   |-- MainWindow.crn
 |   |   |-- MainWindow.crn.cs
 |   |   |-- SceneWorldConformance.cs
+|   |   |-- SceneWorldPackage.cs
+|   |   |-- SceneWorldPackages.targets
 |   |   |-- SceneWorldShowcase.crn
 |   |   |-- SceneWorldShowcase.crn.cs
 |   |   +-- SvgWindow.cs
@@ -3136,6 +3177,7 @@ Generated from `.`.
 |   |   |   |-- ContentPresenterDefaultTextTests.cs
 |   |   |   |-- ContentPresenterTests.cs
 |   |   |   |-- ContentTemplateTests.cs
+|   |   |   |-- ContinuousImpactNormalTests.cs
 |   |   |   |-- ControlTests.cs
 |   |   |   |-- DecoratorTests.cs
 |   |   |   |-- ElementAspectTests.cs
@@ -3158,13 +3200,24 @@ Generated from `.`.
 |   |   |   |-- RenderSurface2DSceneFoundationContractTests.cs
 |   |   |   |-- RenderSurface2DSceneTests.cs
 |   |   |   |-- RenderSurface2DTests.cs
+|   |   |   |-- SceneBoundedCopyTests.cs
+|   |   |   |-- SceneCollisionStreamingTests.cs
 |   |   |   |-- SceneComponentRuntimeTests.cs
 |   |   |   |-- SceneDebugOverlayTests.cs
 |   |   |   |-- SceneDocumentContractTests.cs
+|   |   |   |-- SceneEntityBoundsTests.cs
+|   |   |   |-- SceneImagePresentationTests.cs
 |   |   |   |-- SceneImportGeometryTests.cs
 |   |   |   |-- SceneImportStageZeroContractTests.cs
 |   |   |   |-- SceneItems2DIncrementalContractTests.cs
+|   |   |   |-- SceneJsonValue2DTests.cs
 |   |   |   |-- SceneModelValidationTests.cs
+|   |   |   |-- ScenePresentationTests.cs
+|   |   |   |-- ScenePrismStreamingTests.cs
+|   |   |   |-- SceneSimulationContext2DTests.cs
+|   |   |   |-- SceneSpatialResidency2DTests.cs
+|   |   |   |-- SceneSpatialSource2DTests.cs
+|   |   |   |-- SceneStreamingReflectionContractTests.cs
 |   |   |   |-- ScrollBarTests.cs
 |   |   |   |-- ScrollViewerTests.cs
 |   |   |   |-- SelectionModelTests.cs
@@ -3194,7 +3247,15 @@ Generated from `.`.
 |   |   |   |-- TileMap2DCacheContractTests.cs
 |   |   |   |-- TileMap2DContractTests.cs
 |   |   |   |-- TileMap2DStageZeroContractTests.cs
+|   |   |   |-- TileMapConstructionContractTests.cs
+|   |   |   |-- TileMapIdentityValidationTests.cs
+|   |   |   |-- TileMapPaletteResidencyTests.cs
+|   |   |   |-- TileMapPresentationStreamingTests.cs
 |   |   |   |-- TileMapSingleLayerContractTests.cs
+|   |   |   |-- TileMapSource2DTests.cs
+|   |   |   |-- TileMapSpatialResidencyTests.cs
+|   |   |   |-- TileMapStreamingTests.cs
+|   |   |   |-- TileMapTestSource.cs
 |   |   |   |-- TilePlacementContractTests.cs
 |   |   |   |-- ToggleButtonTests.cs
 |   |   |   |-- ToolTipTests.cs
@@ -3237,6 +3298,7 @@ Generated from `.`.
 |   |   |   |   |-- PrismDissolveBlendTests.cs
 |   |   |   |   |-- PrismDistortionFilterTests.cs
 |   |   |   |   |-- PrismEmbossFilterTests.cs
+|   |   |   |   |-- PrismEnumValidationTests.cs
 |   |   |   |   |-- PrismFrescoFilterTests.cs
 |   |   |   |   |-- PrismGlowingEdgesFilterTests.cs
 |   |   |   |   |-- PrismGradientOverlayPipelineTests.cs
@@ -3252,6 +3314,7 @@ Generated from `.`.
 |   |   |   |   |-- PrismMaskPipelineTests.cs
 |   |   |   |   |-- PrismMosaicTilesFilterTests.cs
 |   |   |   |   |-- PrismNeighborhoodFilterTests.cs
+|   |   |   |   |-- PrismNestedScopeCullingTests.cs
 |   |   |   |   |-- PrismNotePaperFilterTests.cs
 |   |   |   |   |-- PrismOilPaintFilterTests.cs
 |   |   |   |   |-- PrismPatchworkFilterTests.cs
@@ -3299,6 +3362,7 @@ Generated from `.`.
 |   |   |   |-- DrawingStateTests.cs
 |   |   |   |-- DrawingTextLayoutTests.cs
 |   |   |   |-- SdlGpuDrawingConformanceTests.cs
+|   |   |   |-- SpriteBatchGeometryParityTests.cs
 |   |   |   +-- TextPipelineTests.cs
 |   |   |-- Golden/
 |   |   |   +-- Prism/
@@ -3573,6 +3637,7 @@ Generated from `.`.
 |   |   |   |   |-- DrawCommandListPoolTests.cs
 |   |   |   |   |-- ElementRenderCacheTests.cs
 |   |   |   |   |-- RenderBackdoorContractTests.cs
+|   |   |   |   |-- RenderCacheImageLifetimeTests.cs
 |   |   |   |   |-- RenderCountersTests.cs
 |   |   |   |   |-- RenderDependencyTests.cs
 |   |   |   |   |-- RenderingTestElement.cs
@@ -3590,8 +3655,12 @@ Generated from `.`.
 |   |   |   |   |-- ElementResourceDictionaryTests.cs
 |   |   |   |   |-- FontResourceInvalidationTests.cs
 |   |   |   |   |-- HostResourceInvalidationIntegrationTests.cs
+|   |   |   |   |-- ImageAsyncPresentationTests.cs
+|   |   |   |   |-- ImageResourceAsyncLeaseTests.cs
 |   |   |   |   |-- ImageResourceCacheTests.cs
 |   |   |   |   |-- ImageResourceInvalidationTests.cs
+|   |   |   |   |-- ImageResourceLeaseTests.cs
+|   |   |   |   |-- ImageResourceResidentProbeTests.cs
 |   |   |   |   |-- PathBackedImageResourceIntegrationTests.cs
 |   |   |   |   |-- ResourceDependencyTrackerTests.cs
 |   |   |   |   |-- ResourceIdTests.cs
@@ -3646,6 +3715,7 @@ Generated from `.`.
 |   |   |-- MotionPrismSemanticTests.cs
 |   |   |-- NavigationTests.cs
 |   |   |-- RecoveryBaselineTests.cs
+|   |   |-- RoslynCompilationSymbolsTests.cs
 |   |   |-- SceneComponentLanguageTests.cs
 |   |   |-- SEMANTIC-INVENTORY.md
 |   |   |-- SemanticScopesTests.cs
@@ -3674,10 +3744,21 @@ Generated from `.`.
 |   |-- Cerneala.Tests.Scene2DImporters/
 |   |   |-- Cerneala.Tests.Scene2DImporters.csproj
 |   |   |-- ImportStageZeroContractTests.cs
+|   |   |-- JsonMetadataContractTests.cs
 |   |   |-- LdtkImporterTests.cs
+|   |   |-- ReferencedFileContractTests.cs
 |   |   |-- SceneWorldAssetTests.cs
 |   |   |-- TiledContractCoverageTests.cs
 |   |   +-- TiledHostileInputTests.cs
+|   |-- Cerneala.Tests.Scene2DPackages/
+|   |   |-- Cerneala.Tests.Scene2DPackages.csproj
+|   |   |-- ImportedPackageTests.cs
+|   |   |-- PackageCompilerTests.cs
+|   |   |-- PackageValueCodecTests.cs
+|   |   |-- Scene2DPackageEntityTests.cs
+|   |   |-- Scene2DPackageGridGeometryTests.cs
+|   |   |-- Scene2DPackageGridTests.cs
+|   |   +-- Scene2DPackageTests.cs
 |   |-- Cerneala.Tests.SdlGpu/
 |   |   |-- Prism/
 |   |   |   |-- PrismAdditionalKernelGpuTests.cs
@@ -3702,6 +3783,7 @@ Generated from `.`.
 |   |   |   |-- PrismGraphicPenGpuTests.cs
 |   |   |   |-- PrismMosaicTilesGpuTests.cs
 |   |   |   |-- PrismMultipassKernelGpuTests.cs
+|   |   |   |-- PrismNestedScopeCullingRenderingTests.cs
 |   |   |   |-- PrismNotePaperGpuTests.cs
 |   |   |   |-- PrismOperationalDiagnosticsTests.cs
 |   |   |   |-- PrismPatchworkGpuTests.cs
@@ -3724,22 +3806,33 @@ Generated from `.`.
 |   |   |   |-- PrismTraceContourGpuTests.cs
 |   |   |   |-- PrismWaterPaperGpuTests.cs
 |   |   |   |-- PrismWindGpuTests.cs
+|   |   |   |-- ScenePrismAllocationTests.cs
 |   |   |   +-- SdlPrismKernelFixture.cs
 |   |   |-- AlphaBlendRenderingTests.cs
 |   |   |-- BrushRenderingTests.cs
 |   |   |-- CerberusTests.cs
 |   |   |-- Cerneala.Tests.SdlGpu.csproj
 |   |   |-- ColorPickerSdlGpuTests.cs
+|   |   |-- DelayedSdlImageLoader.cs
 |   |   |-- DrawingBackendLifecycleContractTests.cs
 |   |   |-- DrawingRetainedPayloadTests.cs
 |   |   |-- FakeSdlApi.cs
 |   |   |-- GraphixManagedDependencyTests.cs
 |   |   |-- GraphixNativeDependencyTests.cs
 |   |   |-- NativeDrawingSmokeTests.cs
+|   |   |-- NativeImageLeaseTests.cs
+|   |   |-- NativePackageGridSubdivisionTests.cs
+|   |   |-- NativePackageWarmStreamingTests.cs
+|   |   |-- NativeSceneImagePresentationTests.cs
+|   |   |-- NativeScenePresentationTests.cs
+|   |   |-- NativeScenePrismDomainTests.cs
+|   |   |-- NativeScenePrismStreamingTests.cs
 |   |   |-- NativeSdlLifetimeTests.cs
+|   |   |-- NativeUiImagePresentationTests.cs
 |   |   |-- RectanglePixelBoundaryMigrationTests.cs
 |   |   |-- RenderSurface2DPresentationTests.cs
 |   |   |-- SdlArchitectureTests.cs
+|   |   |-- SdlGpuAsyncImageLoadingTests.cs
 |   |   |-- SdlGpuBrushTextureLifetimeTests.cs
 |   |   |-- SdlGpuCommandRangeStateTests.cs
 |   |   |-- SdlGpuDeviceOwnerTests.cs
@@ -3748,6 +3841,7 @@ Generated from `.`.
 |   |   |-- SdlGpuGeometryAllocationTests.cs
 |   |   |-- SdlGpuGeometryCacheTests.cs
 |   |   |-- SdlGpuGradientCacheTests.cs
+|   |   |-- SdlGpuImageLifetimeTests.cs
 |   |   |-- SdlGpuPrismBuiltinTextureAllocationTests.cs
 |   |   |-- SdlGpuPrismExecutorTests.cs
 |   |   |-- SdlGpuPrismUniformAllocationTests.cs
@@ -3932,6 +4026,10 @@ Generated from `.`.
 |   +-- TetrominoAtlas.cs
 |-- tmp/
 |-- Tools/
+|   |-- Cerneala.Scene2D.PackageCompiler/
+|   |   |-- Cerneala.Scene2D.PackageCompiler.csproj
+|   |   |-- Program.cs
+|   |   +-- README.md
 |   |-- Cerneala.SdlShaderCompiler/
 |   |   |-- Cerneala.SdlShaderCompiler.csproj
 |   |   +-- Program.cs
@@ -4151,6 +4249,7 @@ Generated from `.`.
 |   |   |-- CollisionNarrowPhase2D.cs
 |   |   |-- CollisionQuery2D.cs
 |   |   |-- CollisionWorld2D.cs
+|   |   |-- CollisionWorld2D.Streaming.cs
 |   |   |-- CollisionWorld2DDiagnosticsSnapshot.cs
 |   |   |-- ColorPicker.cs
 |   |   |-- ColorPickerColorMath.cs
@@ -4170,6 +4269,7 @@ Generated from `.`.
 |   |   |-- Image.cs
 |   |   |-- InkCanvas.cs
 |   |   |-- InkCanvasEventArgs.cs
+|   |   |-- ISceneSpatialParticipant2D.cs
 |   |   |-- IScrollInfo.cs
 |   |   |-- ItemsControl.cs
 |   |   |-- ItemsPresenter.cs
@@ -4195,6 +4295,7 @@ Generated from `.`.
 |   |   |-- ProgressBar.cs
 |   |   |-- RadioButton.cs
 |   |   |-- RenderSurface2D.cs
+|   |   |-- RenderSurface2D.Presentation.cs
 |   |   |-- RenderSurface2DFrame.cs
 |   |   |-- RenderSurface2DFrame.Images.cs
 |   |   |-- RenderSurface2DFrame.Shapes.cs
@@ -4209,8 +4310,13 @@ Generated from `.`.
 |   |   |-- SceneGeometry2D.cs
 |   |   |-- SceneHitTest2D.cs
 |   |   |-- SceneItems2D.cs
+|   |   |-- SceneJsonValue2D.cs
 |   |   |-- SceneNode2D.cs
 |   |   |-- SceneOrderMode.cs
+|   |   |-- ScenePreparationRequest2D.cs
+|   |   |-- SceneSimulationContext2D.cs
+|   |   |-- SceneSpatialResidency2D.cs
+|   |   |-- SceneSpatialSource2D.cs
 |   |   |-- ScrollBarVisibility.cs
 |   |   |-- ScrollChangedEventArgs.cs
 |   |   |-- ScrollContentPresenter.cs
@@ -4239,8 +4345,12 @@ Generated from `.`.
 |   |   |-- TileMap2D.Cache.cs
 |   |   |-- TileMap2D.Collision.cs
 |   |   |-- TileMap2D.cs
+|   |   |-- TileMap2D.Streaming.cs
+|   |   |-- TileMap2D.WarmCache.cs
 |   |   |-- TileMap2DDiagnosticsSnapshot.cs
 |   |   |-- TileMap2DModel.cs
+|   |   |-- TileMapCatalog2D.cs
+|   |   |-- TileMapSource2D.cs
 |   |   |-- TileStaticCollider2D.cs
 |   |   |-- ToolTip.cs
 |   |   |-- UserControl.cs
@@ -4392,6 +4502,7 @@ Generated from `.`.
 |   |   |-- IInputCommandSource.cs
 |   |   |-- IInputCoordinateSpace.cs
 |   |   |-- IInputPressable.cs
+|   |   |-- IInputRouteGuard.cs
 |   |   |-- IInputSource.cs
 |   |   |-- IInputSubtreeHost.cs
 |   |   |-- InputBinding.cs
@@ -4731,10 +4842,13 @@ Generated from `.`.
 |   |-- Resources/
 |   |   |-- MonoGame/
 |   |   |-- FontResource.cs
+|   |   |-- IAsyncImageLoader.cs
 |   |   |-- IImageLoader.cs
 |   |   |-- ImageReference.cs
 |   |   |-- ImageResource.cs
 |   |   |-- ImageResourceCache.cs
+|   |   |-- ImageResourceLease.cs
+|   |   |-- ImageResourceLeaseSet.cs
 |   |   |-- ImageResourceResolver.cs
 |   |   |-- IObservableResourceProvider.cs
 |   |   |-- IResourceProvider.cs

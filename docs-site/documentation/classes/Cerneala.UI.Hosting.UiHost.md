@@ -50,7 +50,7 @@ The constructor can receive an initial root, viewport, input source, backend, cl
 
 `Draw(IDrawingBackend)` submits to an explicit drawing backend. It uses the configured backdrop source only when the explicit backend is the same instance as `Backend.DrawingBackend`; unrelated explicit backends receive no configured lease. Drawing requires a retained root and a drawing backend, but it does not create a new `UiFrame`; frames are produced by `Update`.
 
-If the root exposes a platform cursor service, `Update` resolves the cursor at the current pointer position and publishes it after committing retained render data.
+If the root exposes a platform cursor service, `Update` resolves the cursor at the current pointer position after input processing and before the final retained-render commit. Cursor hit testing can observe newly prepared scene inputs and invalidate their presentation or render dependencies. The host processes work queued by that resolution through the root scheduler before committing, without another Relay drain, input dispatch, cursor resolution, or render-time advancement. The resolved cursor is published to the platform after committing retained render data, exactly once per update. Drawing consumes the committed frame; it does not retry or repair an invalid commit. Cursor diagnostics include resolution and platform publication; follow-up scheduler work contributes to input-processing time and phases, while retained-commit time remains separate.
 
 ## Constructors
 

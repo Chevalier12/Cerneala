@@ -132,9 +132,16 @@ the same key. The controller subscribes only while its owner is attached,
 re-resolves the nearest value after matching application-provider changes, and
 marshals a cross-thread provider notification through the root Relay.
 
-The binding thread is captured when the controller first activates. A source
-notification received on another thread fails before the observation reads its
-source or writes the target. These helpers do not marshal notifications.
+Property-binding and condition observation use the current owner's relay when
+available. Owner-thread notifications remain synchronous; worker notifications
+are coalesced before refreshing the source and writing the target. Without a
+relay, activation captures a thread and off-thread notifications are rejected.
+Independent [SceneSimulationContext2D](Cerneala.UI.Controls.SceneSimulationContext2D.md)
+adoption rebinds these data observers and subtree retirement disconnects them,
+without setting UI attachment state. Conditional data values can therefore
+update colliders without UI. Rule activation callbacks, Aspect processing,
+Motion, Prism and root resource-provider services retain their existing UI
+requirements; the independent context does not synthesize those services.
 
 These methods are public so emitted source in consuming assemblies can call
 them. `MarkupPropertyBindingController<T>`, conditional provider activation,

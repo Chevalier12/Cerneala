@@ -432,7 +432,7 @@ internal static class PrismBlendMath
         PrismPremultipliedColor backdrop,
         PrismBlendOptions options)
     {
-        if (!Enum.IsDefined(typeof(PrismBlendMode), mode))
+        if (!PrismEnumValidation.IsDefined(mode))
         {
             throw new ArgumentOutOfRangeException(
                 nameof(mode),
@@ -440,10 +440,8 @@ internal static class PrismBlendMath
                 "Unknown Prism blend mode.");
         }
         if ((options.BlendChannels & ~PrismBlendChannels.Rgba) != 0 ||
-            !Enum.IsDefined(typeof(PrismKnockout), options.Knockout) ||
-            !Enum.IsDefined(
-                typeof(PrismBlendIfChannel),
-                options.BlendIfChannel))
+            !PrismEnumValidation.IsDefined(options.Knockout) ||
+            !PrismEnumValidation.IsDefined(options.BlendIfChannel))
         {
             throw new ArgumentOutOfRangeException(
                 nameof(options),

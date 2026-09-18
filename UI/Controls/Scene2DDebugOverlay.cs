@@ -222,7 +222,7 @@ public sealed class Scene2DDebugOverlay : SceneNode2D
 
     private void DrawMap(TileMap2D map, Scene2DRecordContext context)
     {
-        if (map.Model is not TileMap2DModel model || !model.IsVisible || model.Opacity <= 0) { return; }
+        if (map.Catalog is not TileMapCatalog2D model || !model.IsVisible || model.Opacity <= 0) { return; }
         SceneBounds2D visible = context.GetConservativeVisibleLocalBounds();
         if (visible.Kind != SceneBoundsKind.Known) { return; }
         DrawSize size = model.TileSize;
@@ -234,14 +234,15 @@ public sealed class Scene2DDebugOverlay : SceneNode2D
             DrawRect bounds = renderChunk.Bounds.Bounds;
             if (!context.IntersectsVisibleLocalBounds(SceneBounds2D.Known(bounds))) { continue; }
             if (Has(Scene2DDebugFlags.ChunkBounds)) { Rectangle(context.Frame, bounds, ChunkColor); }
-            if (renderChunk.Grid is not TileChunk2D chunk)
+            if (!map.TryGetResidentData(renderChunk, out TileMapChunkData2D? data)) { continue; }
+            if (data.Grid is not TileChunk2D chunk)
             {
                 if (Has(Scene2DDebugFlags.Order)) { Label(context.Frame, $"{model.Id}: placements {renderChunk.Start}..{renderChunk.Start + renderChunk.Count - 1}", new DrawPoint(bounds.X, bounds.Y), ChunkColor); }
                 if (Has(Scene2DDebugFlags.TileCoordinates))
                 {
                     for (int index = 0; index < renderChunk.Count; index++)
                     {
-                        Tile tile = renderChunk.Placements![renderChunk.Start + index];
+                        Tile tile = data.Placements[index];
                         Label(context.Frame, $"{tile.X},{tile.Y}", new DrawPoint(tile.X, tile.Y), Color.White);
                         diagnostics = diagnostics with { VisitedTiles = diagnostics.VisitedTiles + 1 };
                     }

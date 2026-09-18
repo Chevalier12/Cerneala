@@ -10,7 +10,7 @@ Source: `UI/Rendering/ElementRenderCache.cs`
 Caches the local draw command list and render state for a single `UIElement`.
 
 ```csharp
-public sealed class ElementRenderCache
+public sealed class ElementRenderCache : IDisposable
 ```
 
 Inheritance:
@@ -24,8 +24,8 @@ Rebuild a local render cache and reuse it while the element remains unchanged:
 using Cerneala.UI.Elements;
 using Cerneala.UI.Rendering;
 
-UIElement element = GetElement();
-ElementRenderCache cache = new();
+UIElement element = new();
+using ElementRenderCache cache = new();
 RenderCounters counters = new();
 
 cache.Ensure(element, counters, forceRebuild: true);
@@ -43,6 +43,10 @@ if (!cache.IsStale(element))
 `Ensure` returns `false` and counts a cache hit when the cache is still valid for the supplied element. Otherwise it clears the current commands, counts a cache miss and local rebuild, renders the visible element into the command list, then marks the cache valid for that element.
 
 `GetValidCommands` throws `InvalidOperationException` when the cache is stale for the supplied element. `Invalidate` marks the cache invalid and clears the cached element reference without clearing the command list.
+
+The cache retains independent image acquisitions for cache-managed images referenced by its commands. These acquisitions keep the recorded images valid even when the element replaces its source or detaches. Rebuilding replaces the recorded resource set; `Dispose` clears commands and releases the remaining acquisitions. `Invalidate` alone does not release them. Embedded or otherwise externally owned images remain borrowed.
+
+Dispose a cache that you create directly. A cache returned by `RetainedRenderCache.GetElementCache` belongs to that retained cache; do not dispose it independently. Disposal is idempotent, including when an image release throws. After disposal, `Ensure` and `GetValidCommands` throw `ObjectDisposedException`; `IsValid` is false and `IsStale` returns true. Use the cache on the rendering/UI thread, not concurrently with recording or disposal.
 
 ## Properties
 
@@ -62,6 +66,7 @@ if (!cache.IsStale(element))
 | `GetValidCommands(UIElement element)` | `DrawCommandList` | Returns the cached command list, or throws when the cache is stale for `element`. |
 | `Ensure(UIElement element, RenderCounters counters, bool forceRebuild = false)` | `bool` | Ensures the cache is valid for `element`; returns `true` when a rebuild happened. |
 | `Invalidate()` | `void` | Marks the cache invalid and clears the cached element reference. |
+| `Dispose()` | `void` | Invalidates the cache, clears its commands, and releases its owned image acquisitions. |
 
 ## Applies To
 

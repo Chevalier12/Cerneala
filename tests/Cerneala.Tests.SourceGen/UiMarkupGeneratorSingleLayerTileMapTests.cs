@@ -15,7 +15,7 @@ public sealed partial class UiMarkupGeneratorTests
               <RenderSurface2D.Scene>
                 <Scene2D>
                   <TileMap2D Layer="0">
-                    <Tile Image="$Atlas" X="18" Y="11">
+                    <Tile Image="$Atlas" X="18" Y="11" ImageWidth="16" ImageHeight="16">
                       <BoxCollider2D Width="16" Height="4" OffsetY="12" />
                     </Tile>
                   </TileMap2D>

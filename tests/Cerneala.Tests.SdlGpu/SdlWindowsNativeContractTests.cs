@@ -166,7 +166,16 @@ public sealed class SdlWindowsNativeContractTests
         first.BeginFrame(new Color(20, 40, 60));
         first.CompleteFrame(present: true);
         owner.Show();
-        platform.PumpEvents();
+        // Showing is not activation: establish the native input target rather
+        // than requiring other desktop applications to be moved out of its way.
+        owner.Activate();
+        Assert.True(SpinWait.SpinUntil(() =>
+        {
+            platform.PumpEvents();
+            return SDL.GetKeyboardFocus() == owner.Handle && GetForegroundWindow() == ownerHandle;
+        }, TimeSpan.FromSeconds(30)),
+            $"Native input setup did not acquire foreground focus for '{ownerModel.Title}': " +
+            $"expected={ownerHandle}, actual={GetForegroundWindow()}, SDL focus={SDL.GetKeyboardFocus()}.");
         _ = owner.InputSource.GetFrame();
         _ = child.InputSource.GetFrame();
 
@@ -181,8 +190,7 @@ public sealed class SdlWindowsNativeContractTests
         try
         {
             Assert.True(api.AddEventWatch(inputWatch));
-            // Showing a window does not guarantee OS keyboard focus. Click it
-            // before typing, otherwise SDL can emit a key event with windowID=0.
+            // Activation is setup, not a substitute for the native click/key path.
             // The window-local warp synthesizes SDL motion and suppresses the
             // associated Win32 motion. Exercise native tracking before clicking.
             NativePoint nativeClick = new() { X = 45, Y = 35 };
@@ -413,6 +421,8 @@ public sealed class SdlWindowsNativeContractTests
     private static extern nint LoadCursor(nint instance, nint resource);
     [DllImport("user32.dll")]
     private static extern nint GetCursor();
+    [DllImport("user32.dll")]
+    private static extern nint GetForegroundWindow();
     [DllImport("user32.dll")]
     private static extern int GetSystemMetrics(int index);
     [DllImport("user32.dll", EntryPoint = "FindWindowW", CharSet = CharSet.Unicode)]

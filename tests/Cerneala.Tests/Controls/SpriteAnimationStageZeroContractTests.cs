@@ -284,12 +284,12 @@ public sealed class SpriteAnimationStageZeroContractTests
         ResourceId<ImageResource> atlasId = new("Atlas");
         TileMap2D map = new()
         {
-            Model = new TileMap2DModel(
+            Source = TileMapTestSource.Create(new TileMap2DModel(
                 "Ground",
                 new DrawSize(16, 16),
                 [new TileSet2D("World", atlasId, [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16))])],
                 [new TileChunk2D(new TileCoordinate2D(0, 0), 3, 1, [new TileCell2D(1), default, new TileCell2D(1)])],
-                new TileMapBounds2D(0, 0, 3, 1))
+                new TileMapBounds2D(0, 0, 3, 1)))
         };
         Sprite2D promoted = new() { X = 16, Width = 16, Height = 16, Image = new ImageReference(atlasId) };
         SetAnimation(promoted, animations, "Walk");
@@ -416,6 +416,8 @@ public sealed class SpriteAnimationStageZeroContractTests
 
     private static DrawCommandList Record(RenderSurface2D surface)
     {
+        if (surface.Scene!.Children.OfType<TileMap2D>().Any())
+            TileMapTestSource.PrepareFrame(surface, new(0, 0, 128, 128));
         DrawCommandList commands = new();
         ((IRenderSurface2DFrameSource)surface).RecordFrame(commands, new DrawRect(0, 0, 128, 128));
         return commands;
@@ -465,8 +467,10 @@ public sealed class SpriteAnimationStageZeroContractTests
         public int Height { get; } = height;
     }
 
-    private sealed class TestImageLoader(IDrawImage image) : IImageLoader
+    private sealed class TestImageLoader(IDrawImage image) : IAsyncImageLoader
     {
         public IDrawImage Load(string path) => image;
+        public ValueTask<IDrawImage> LoadAsync(string path, CancellationToken cancellationToken = default) =>
+            ValueTask.FromResult(Load(path));
     }
 }

@@ -61,7 +61,9 @@ public sealed class PressableElement : UiObject
 
 The registry rejects duplicate registrations for the same `(ownerType, name)` pair. Names must be non-empty and non-whitespace because `UiProperty` validates the name during construction. `Register` also rejects a null `ownerType` or null metadata. `RegisterReadOnly` creates new metadata with the `ReadOnly` option added while preserving the original default value, equality comparer, validation callback, and coercion callback.
 
-The registry is backed by a `ConcurrentDictionary`, but it is append-only from the public API: this class does not expose unregister or clear operations. Tests and samples that register properties should use unique names when they share the same process.
+Registration and snapshot queries are serialized by the registry's shared lock. The registry is append-only from the public API: this class does not expose unregister or clear operations. Tests and samples that register properties should use unique names when they share the same process.
+
+Queries cache read-only snapshots until the next successful registration. A previously returned snapshot does not change when more properties are registered. A rejected duplicate does not invalidate the cached snapshots. Ordering follows `Id`, including when owner-type metadata causes a nested registration to finish before the outer registration.
 
 `GetPropertiesWithOptions` returns properties whose `Options` contain all requested flags. Passing `UiPropertyOptions.None` matches all registered properties because every flags value contains `None`.
 

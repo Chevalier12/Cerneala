@@ -31,21 +31,21 @@ public sealed class CompletionTests
         using CompletionFixture children = CompletionFixture.Create("<TileMap2D><Tile Image=\"$Grass\" /><Ti|caret| /></TileMap2D>");
         Assert.Equal("Tile", Assert.Single(children.Complete()).Label);
         using CompletionFixture attributes = CompletionFixture.Create("<TileMap2D><Tile |caret| /></TileMap2D>");
-        Assert.Equal(new[] { "Height", "Image", "Width", "X", "Y" }, attributes.Complete().Select(item => item.Label).OrderBy(label => label));
+        Assert.Equal(new[] { "Height", "Image", "ImageHeight", "ImageWidth", "Width", "X", "Y" }, attributes.Complete().Select(item => item.Label).OrderBy(label => label));
         using CompletionFixture map = CompletionFixture.Create("<TileMap2D |caret| ><Tile Image=\"$Grass\" /></TileMap2D>");
-        Assert.DoesNotContain(map.Complete(), item => item.Label is "Model" or "PromotedTiles" or "Layers");
+        Assert.DoesNotContain(map.Complete(), item => item.Label is "Source" or "PromotedTiles" or "Layers");
         using CompletionFixture properties = CompletionFixture.Create("<TileMap2D><TileMap2D.|caret| /></TileMap2D>");
-        Assert.DoesNotContain(properties.Complete(), item => item.Label is "TileMap2D.Model" or "TileMap2D.PromotedTiles" or "TileMap2D.Layers");
+        Assert.DoesNotContain(properties.Complete(), item => item.Label is "TileMap2D.Source" or "TileMap2D.PromotedTiles" or "TileMap2D.Layers");
         using CompletionFixture directives = CompletionFixture.Create("<TileMap2D><Tile>@|caret|</Tile></TileMap2D>");
         Assert.Empty(directives.Complete());
     }
 
     [Fact]
-    public void BoundTileMapOffersItsModelButNoInlineTileContent()
+    public void BoundTileMapOffersItsSourceButNoInlineTileContent()
     {
         using CompletionFixture map = CompletionFixture.Create("<TileMap2D |caret| />");
-        Assert.Contains(map.Complete(), item => item.Label == "Model");
-        using CompletionFixture bound = CompletionFixture.Create("<TileMap2D Model=\"$DataContext\"><Ti|caret| /></TileMap2D>");
+        Assert.Contains(map.Complete(), item => item.Label == "Source");
+        using CompletionFixture bound = CompletionFixture.Create("<TileMap2D Source=\"$DataContext\"><Ti|caret| /></TileMap2D>");
         Assert.Empty(bound.Complete());
     }
 

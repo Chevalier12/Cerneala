@@ -61,8 +61,6 @@ internal sealed partial class SdlGpuDrawingBackend :
     private readonly SdlGpuPrismExecutor prismExecutor;
     private readonly Cerberus batches;
     private readonly SdlGpuGeometryCache geometry = new();
-    private readonly HashSet<SdlGpuImage> subscribedImages =
-        new(ReferenceEqualityComparer.Instance);
     private readonly HashSet<object> retainedBrushTextureKeys = [];
     private readonly HashSet<object> activeBrushTextureKeys = [];
     private readonly List<object> unusedBrushTextureKeys = [];
@@ -173,6 +171,7 @@ internal sealed partial class SdlGpuDrawingBackend :
 
     internal void BeginFrame()
     {
+        resources.ProcessImageInvalidations();
         ObjectDisposedException.ThrowIf(disposed, this);
         geometry.BeginFrame();
         textAtlasFrameToken = resources.BeginTextAtlasFrame();
@@ -288,11 +287,6 @@ internal sealed partial class SdlGpuDrawingBackend :
         prismExecutor.Dispose();
         resources.EndTextAtlasFrame(textAtlasFrameToken);
         textAtlasFrameToken = 0;
-        foreach (SdlGpuImage image in subscribedImages)
-        {
-            image.ContentChanged -= OnImageContentChanged;
-        }
-        subscribedImages.Clear();
         foreach (object key in retainedBrushTextureKeys)
         {
             resources.ReleaseTexture(key);
@@ -1843,26 +1837,12 @@ internal sealed partial class SdlGpuDrawingBackend :
             throw new InvalidOperationException(
                 "SDL_GPU image drawing requires an image created by SdlGpuImageLoader.");
         }
-        if (subscribedImages.Add(sdlImage))
-        {
-            sdlImage.ContentChanged += OnImageContentChanged;
-        }
         return resources.GetOrCreateTexture(
             session,
             sdlImage,
             sdlImage.Width,
             sdlImage.Height,
             sdlImage.RgbaPixels.Span);
-    }
-
-    private void OnImageContentChanged(object? sender, EventArgs args)
-    {
-        if (sender is SdlGpuImage image)
-        {
-            resources.InvalidateTexture(image);
-            image.ContentChanged -= OnImageContentChanged;
-            subscribedImages.Remove(image);
-        }
     }
 
     private static byte[] RasterizeBrush(

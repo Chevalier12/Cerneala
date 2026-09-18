@@ -52,6 +52,7 @@ public sealed class TetrisGameSurface : RenderSurface2D
 
     public TetrisGameSurface()
     {
+        Draw += DrawFrame;
         game = new TetrisGame();
         SceneModel = new TetrisSceneModel();
         ClearColor = new Color(7, 11, 20);
@@ -179,7 +180,7 @@ public sealed class TetrisGameSurface : RenderSurface2D
         }
     }
 
-    protected override void OnDraw(RenderSurface2DFrame frame)
+    private void DrawFrame(RenderSurface2D sender, RenderSurface2DFrame frame)
     {
         EnsureAtlas();
         long now = Stopwatch.GetTimestamp();

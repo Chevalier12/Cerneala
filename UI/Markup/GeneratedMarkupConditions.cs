@@ -719,7 +719,7 @@ public static partial class GeneratedMarkup
     }
 }
 
-internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDisposable
+internal sealed class MarkupConditionController : IElementDataLifecycleBehavior, IDisposable
 {
     private readonly UIElement owner;
     private readonly IReadOnlyList<MarkupObservation> observations;
@@ -748,7 +748,7 @@ internal sealed class MarkupConditionController : IElementLifecycleBehavior, IDi
         this.observations = observations?.ToArray() ?? throw new ArgumentNullException(nameof(observations));
         this.rules = rules?.OrderBy(rule => rule.Order).ToArray() ?? throw new ArgumentNullException(nameof(rules));
         hasRuleActivations = this.rules.Any(rule => rule.Activated is not null || rule.Deactivated is not null);
-        refreshDispatcher = new UiRelayRefreshDispatcher(() => owner.Root?.Relay, RefreshFromRelay, "markup condition");
+        refreshDispatcher = new UiRelayRefreshDispatcher(() => owner.OwnerRelay, RefreshFromRelay, "markup condition");
         Start();
     }
 

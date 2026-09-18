@@ -43,13 +43,13 @@ public sealed partial class UiMarkupGeneratorTests
 
     [Fact]
     [Trait("SceneImportStage", "0")]
-    public void ImportedModelBindingDoesNotRequireAParserInSourceGenerator()
+    public void ImportedSourceBindingDoesNotRequireAParserInSourceGenerator()
     {
         const string markup = """
-            <RenderSurface2D DataType="Cerneala.UI.Controls.TileMap2DModel">
+            <RenderSurface2D DataType="Cerneala.UI.Controls.TileMapSource2D">
               <RenderSurface2D.Scene>
                 <Scene2D>
-                  <TileMap2D Model="$DataContext:OneWay" />
+                  <TileMap2D Source="$DataContext:OneWay" />
                       <Sprite2D X="16" Y="0" Width="16" Height="16">
                         <Sprite2D.Aspect>
                           @on Loaded

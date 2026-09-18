@@ -46,6 +46,39 @@ public sealed class RoutedEventTests
                 typeof(RoutedEventArgs)));
     }
 
+    [Theory]
+    [InlineData(RoutingStrategy.Direct)]
+    [InlineData(RoutingStrategy.Bubble)]
+    [InlineData(RoutingStrategy.Tunnel)]
+    public void RegisterPreservesEverySupportedStrategy(RoutingStrategy strategy)
+    {
+        RoutedEvent routedEvent = RoutedEventRegistry.Register(
+            "Valid", typeof(RoutedEventTests), strategy, typeof(MouseEventArgs));
+        Assert.Equal(strategy, routedEvent.RoutingStrategy);
+        Assert.Equal(typeof(MouseEventArgs), routedEvent.ArgsType);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(3)]
+    [InlineData(int.MinValue)]
+    [InlineData(int.MaxValue)]
+    public void RegisterPreservesInvalidStrategyFailure(int value)
+    {
+        ArgumentOutOfRangeException error = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            RoutedEventRegistry.Register("Invalid", typeof(RoutedEventTests), (RoutingStrategy)value, typeof(string)));
+        Assert.Equal("routingStrategy", error.ParamName);
+        Assert.Equal((RoutingStrategy)value, error.ActualValue);
+    }
+
+    [Fact]
+    public void RegisterValidatesNullArgumentTypeBeforeStrategy()
+    {
+        ArgumentNullException error = Assert.Throws<ArgumentNullException>(() =>
+            RoutedEventRegistry.Register("Invalid", typeof(RoutedEventTests), (RoutingStrategy)(-1), null!));
+        Assert.Equal("argsType", error.ParamName);
+    }
+
     [Fact]
     public void RoutedEventArgsDefaultsSourceToOriginalSource()
     {

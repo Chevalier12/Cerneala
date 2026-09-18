@@ -26,9 +26,9 @@ ElementLifecycle.DetachSubtree(root, child);
 
 `AttachSubtree` and `DetachSubtree` verify the supplied root's Relay before traversing or changing lifecycle state. Calls from another thread throw `InvalidOperationException` without partially attaching or detaching the subtree.
 
-`AttachSubtree` walks the logical subtree first, then the visual subtree, and attaches each element to the supplied root. Elements already attached to that same root are skipped. Attaching an element that already belongs to a different root throws `InvalidOperationException`.
+`AttachSubtree` validates the complete reachable subtree before attaching any element. At every node it follows logical children before visual children, including paths that alternate between those roles. It attaches parents before their descendants and visits each element once by reference. Elements already attached to that same root keep their attachment; their descendants are still traversed. An element belonging to a different root throws `InvalidOperationException` during validation, before partial attachment.
 
-`DetachSubtree` walks the visual subtree and then the logical subtree in post-order. It tracks detached elements by reference so an element reached through both roles is cleaned up once.
+`DetachSubtree` follows visual children before logical children at every node, in post-order. Mixed-role paths are included, and an element reached through both roles is cleaned up once. For example, a visual `RenderSurface2D` child of a panel still owns the lifecycle of its logical scene descendants; constructing the scene before panel attachment does not exclude those descendants.
 
 Detaching releases the element id, removes resource dependency ownership, detaches the element from the root, removes pending measure, arrange, inherited-property, command-state, aspect, render, and hit-test work, and clears aspect processor state for the element. Pending work is removed after detach callbacks complete, so work enqueued by a callback for the departing element is removed as well.
 

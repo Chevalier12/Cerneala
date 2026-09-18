@@ -75,13 +75,43 @@ Aspect, Motion, and Prism can still target the sprite declared from markup:
 
 `X` and `Y` position the sprite in scene coordinates. `Width` and `Height` are inherited UI properties used as draw dimensions, not scene layout. Each omitted dimension (`float.NaN`) uses the corresponding selected source-region dimension. `SourceX` and `SourceY` default to zero; omitted `SourceWidth` and `SourceHeight` (`float.NaN`) use the remaining image extent from that coordinate. There is no aspect-ratio inference when just one destination dimension is explicit. Source coordinates must be finite and nonnegative, explicit source dimensions finite and positive, and the selected region must fit inside the image. Invalid regions are rejected when geometry is resolved, not clamped. `X` and `Y` must be finite; destination dimensions accept zero or positive finite values, or `NaN` for automatic size. `Rotation` is inherited from `UIElement` and is passed to image drawing in radians. `Origin` uses source-image pixels. Inherited `Layer` controls ordering in a parent `Scene2D` whose `OrderMode` is not `Source`. `LayerDepth` is separate: it is passed to `RenderSurface2DFrame.DrawSprite`, never changes scene-tree ordering, and must satisfy that API's `0` through `1` contract when the sprite is recorded.
 
-`Image` accepts an immutable [ImageReference](Cerneala.UI.Resources.ImageReference.md): either a direct image (`new ImageReference(image)`) or a typed resource ID (`new ImageReference(new ResourceId<ImageResource>("WorldAtlas"))`). A resource reference resolves an `ImageResource` from the nearest element resource dictionary or the owning root resource provider. A missing resource skips drawing; there is no second source or fallback. `Image = null` clears the image. Sprites that resolve the same image resource through one root reuse that root's image cache. The cache or graphics session owns the resolved image and its disposal; `Sprite2D` does not dispose shared images.
+`Image` accepts an immutable [ImageReference](Cerneala.UI.Resources.ImageReference.md): either a direct image (`new ImageReference(image)`) or a typed resource ID (`new ImageReference(new ResourceId<ImageResource>("WorldAtlas"))`). A resource reference resolves an `ImageResource` from the nearest element resource dictionary or the owning root resource provider. A missing resource skips drawing; there is no second source or fallback. `Image = null` clears the image. Sprites that resolve the same path-backed image through one root reuse that root's image cache with independent acquisitions. A sprite releases its acquisition when the image is no longer needed; the cache disposes an owned image only after the last consumer, including retained commands, releases it. Direct and embedded images remain borrowed from their caller.
 
 `Opacity` is inherited from `UIElement` and multiplies the alpha channel of `Tint`. A null resolved source, non-positive opacity, `IsVisible == false`, or non-visible `Visibility` skips the sprite. Other inherited UI-element transforms do not alter sprite recording; use the scene coordinates and sprite-specific properties listed below.
 
 `Sprite2D` remains a `UIElement` even though it is recorded through the scene command stream. Its logical attachment supports `Aspect`, generated bindings, and Motion. Motion targets registered interpolatable properties or Prism parameters, not every UI property; the sprite-animation restrictions are listed below. Normal UI-property precedence still applies: a local value masks an animation value for the same UI property.
 
 An inline `@prism` block wraps only this sprite's image command. Sibling sprites and imperative surface commands are outside that Prism scope. Prism bounds are derived from the actual destination, source-relative `Origin`, and `Rotation`, then composed with the owning scene transform, including a `ViewBox` mapping. Effects can expand beyond those input bounds; applying Prism does not change scene coordinates, layout, hit testing, or the destination rectangle itself.
+
+In a hosted spatial scene, an active composition on the sprite without supported
+automatic input selection requires
+its own inherited [PrismInputDomain](Cerneala.UI.Controls.SceneNode2D.md#finite-prism-input-domains),
+even when an ancestor composition has a declaration. This includes the seven
+non-pointwise styles, wrapped edge modes and unclassified/global filters. That finite domain
+replaces this composition's ordinary logical capture bounds. It is in local
+destination units relative to the sprite anchor, before `Rotation`, `X` and `Y`;
+it does not change `Origin` or rescale the image. A missing required declaration
+is a surface presentation error, not permission to omit the nested effect.
+Input-domain validation still runs when it causes empty input selection, without
+starting image acquisition merely to report the configuration error.
+
+In a spatial scene, covered local filters on this sprite or its scene ancestors
+use the shared finite sampling-input region without shrinking their logical
+coordinate bounds. Capture intersects that region with the sprite's actual
+input bounds, unless its own active non-pointwise composition declares a domain;
+an ancestor's larger interest does not enlarge the sprite's source boundary.
+This can retain an image just outside the camera when a
+visible filtered pixel needs it. See [Scene2D's exact input coverage](Cerneala.UI.Controls.Scene2D.md#prism-input-and-streamed-children);
+unclassified effects require their own declared domain, and this does not detach or stop an
+offscreen simulated sprite.
+
+### Asynchronous image presentation
+
+The owning surface prepares required cold path-backed images through [IAsyncImageLoader](Cerneala.UI.Resources.IAsyncImageLoader.md). The sprite and its live Prism image resources, including masks, share the existing root cache; referencing one atlas in both places does not start two decodes. Each use keeps its own acquisition. Scene recording and sprite bounds queries use resident images only: they do not perform synchronous path loading or wait for a pending decode.
+
+Until all required scene payloads and sprite/Prism images are ready, the surface reports [PresentationState](Cerneala.UI.Controls.RenderSurface2D.md#scene-preparation-and-input-availability) as `Loading` and withholds the entire retained scene, including ready siblings, and its input routes. A load failure reports `Error` and `PresentationError`; polling an unchanged failed acquisition does not retry it. A cold path backed by a synchronous-only loader fails through that state rather than falling back to blocking decoding. Ordinary UI, imperative drawing, attached animation, and collision participation continue. A missing resource lookup or `Image = null` still means no image, not a loading error.
+
+Explicit destination dimensions, static crop dimensions, or an animation frame can provide bounds before decoding. Images outside proven required coverage are not prepared, and unused sprite and Prism acquisitions are retired without detaching the sprite or its collider. Unknown natural dimensions cannot prove exclusion; Prism can conservatively require off-camera input because effects may extend beyond sprite bounds. Spatial metadata on [SceneItems2D](Cerneala.UI.Controls.SceneItems2D.md) independently controls which objects require presentation. Removing a sprite's resolved content also retires its no-longer-used Prism images, including pending work. Other consumers may still keep a shared atlas resident.
 
 ## Collider ownership
 
@@ -175,6 +205,7 @@ All five properties have matching public `<Name>Property` identifier fields and 
 | `Flip` | `RenderSurface2DSpriteFlip` | Gets or sets sprite mirroring. |
 | `LayerDepth` | `float` | Gets or sets the layer depth forwarded to image drawing. |
 | `Layer` | `int` | Gets or sets the parent-scene ordering layer. Inherited from `SceneNode2D`. |
+| `PrismInputDomain` | `DrawRect?` | Optional complete local input of this sprite's non-pointwise composition. Inherited from `SceneNode2D`; required when active effects lack supported automatic input selection in a hosted spatial scene. |
 | `Rotation` | `float` | Gets or sets rotation in radians. Inherited from `UIElement`. |
 | `Opacity` | `float` | Gets or sets the alpha multiplier. Inherited from `UIElement`. |
 
@@ -207,6 +238,8 @@ Project: `Cerneala`
 Move a collider formerly declared beside a sprite under a scene group into that sprite's `Collider`. If an old owner had multiple shapes, split the represented objects into separate `Sprite2D` owners; a second collider child is invalid markup and is not silently dropped. Keep geometry in destination units relative to the sprite anchor; subtract any position previously duplicated in collider offsets. Scene groups no longer accept colliders directly. Use a tile's immutable descriptor for static tile collision geometry, not an unrelated scene-level collider.
 
 `Source`, `SourceResourceId`, `Destination`, and `SourceRect` have been removed without deprecated aliases. Replace a direct `Source` with `Image = new ImageReference(image)` and a resource ID with `Image = new ImageReference(id)` (markup: `Image="$Atlas"`). Split `Destination` into `X`, `Y`, `Width`, and `Height`; split a static `SourceRect` into `SourceX`, `SourceY`, `SourceWidth`, and `SourceHeight`. Rectangle-valued bindings become bindings to scalar properties exposed by the view model. Live `OneWay` paths cannot traverse `DrawRect` members: each CLR path owner must implement `INotifyPropertyChanged`. Notify changes for the exposed scalar properties. To restore the full-image static crop, set source offsets to zero and source dimensions to `float.NaN`, or clear their local UI values.
+
+Custom path loaders used by cold scene images must implement `IAsyncImageLoader`, not only `IImageLoader`. Do not assume that attaching a sprite or reading its bounds synchronously loads the atlas. Keep the normal UI update loop running and observe the surface's presentation state; direct caller-prepared images remain available without asynchronous path preparation.
 
 ## See also
 

@@ -89,7 +89,15 @@ public sealed class Detective
         return new TileMapDiagnosticsSnapshot(
             state.TotalChunks, state.CandidateChunks, state.VisibleChunks, state.CandidateTiles,
             state.DrawnTiles, state.BatchesBuilt, state.BatchesRebuilt, state.BatchesReused,
-            state.DrawCommands, state.RetainedBytes, state.RetainedObjects, state.TileInvalidations);
+            state.DrawCommands, state.RetainedBytes, state.RetainedObjects, state.TileInvalidations)
+        {
+            WarmChunks = state.WarmChunks,
+            WarmBatchesPrepared = state.WarmBatchesPrepared,
+            WarmTilesPrepared = state.WarmTilesPrepared,
+            WarmRetainedBytes = state.WarmRetainedBytes,
+            WarmChargedBytes = state.WarmChargedBytes,
+            WarmImageBytes = state.WarmImageBytes
+        };
     }
 
     public AspectDiagnostics.Snapshot CaptureAspect(UIElement element) =>

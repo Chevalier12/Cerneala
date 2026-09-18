@@ -27,7 +27,7 @@ if (imported.Success)
     var scene = new Scene2D { OrderMode = SceneOrderMode.Layer,
         TranslateX = level.WorldOffset.X, TranslateY = level.WorldOffset.Y };
     foreach (TileMap2DModel model in level.TileMaps)
-        scene.Children.Add(new TileMap2D { Model = model, Layer = model.Order });
+        scene.Children.Add(new TileMap2D { Source = TileMapSource2D.FromModel(model), Layer = model.Order });
     // Composition also registers images and creates ordinary sprites/templates.
 }
 ```
@@ -44,6 +44,13 @@ Maps must be orthogonal with `right-down` render order and a uniform destination
 
 Each tileset has one atlas image, with declared dimensions, margin, spacing and columns. Asset paths and resource keys are normalized root-relative paths. External tileset paths resolve relative to the map; their atlas/file properties resolve relative to the tileset. Missing assets are errors even though pixel decoding remains deferred. See [path policy and budgets](Cerneala.Scene2D.Importers.Scene2DImportOptions.md).
 
+The successful [import result](Cerneala.Scene2D.Importers.Scene2DImportResult.md)
+also returns `AssetRootDirectory` and `ReferencedFiles`: all atlas paths and
+nonempty `file` properties, deduplicated and sorted relative to that root.
+Ordinary strings are not dependencies, and file contents are not recursively
+parsed. Editor JSON is not included merely because it was read during import.
+No partial file list is returned after an import failure.
+
 Numeric tile arrays and base64 little-endian UInt32 data are supported. Base64 may be raw, zlib or gzip. Decompression is bounded to exactly four bytes per declared cell; malformed framing/checksums, incomplete input and trailing compressed garbage fail. Gzip concatenated members and optional headers are validated. Preset compression dictionaries are unsupported.
 
 ### Layers, objects and promotion
@@ -55,6 +62,14 @@ Rectangles become boxes, ellipses remain exact affine circles, convex polygons r
 Ordinary objects default to `Metadata`; tile collision-editor objects default to `Collider`. One tile definition can import at most one collider-producing object; a second collider in its object group reports `SCN2D008` rather than being merged or truncated. Primitive properties preserve their names and values: string/file as strings, int as Int64, float as finite Double, bool as Boolean and color as `Color`. `$` names are reserved. Supported conventions are `CernealaRole` (`Metadata`, `Spawn`, `Collider`, `Promote`), unsigned `CollisionLayer`/`CollisionMask`, Boolean `IsTrigger`, and primitive `InitialState`. Promotion requires explicit `TileLayer`, `TileX`, `TileY`, with optional positive `TileId` override. Empty-cell promotion needs that override. Missing/duplicate addresses fail core validation. The source `TileLayer` identifies the resulting map. Promotion stays sparse metadata: composition can explicitly clear a replaced static cell and create an ordinary peer sprite, as described by [TilePromotion2D](Cerneala.UI.Controls.TilePromotion2D.md).
 
 ### Field dispositions
+
+JSON fields preserved verbatim under provenance keys are
+[SceneJsonValue2D](Cerneala.UI.Controls.SceneJsonValue2D.md) instances, not raw
+`JsonElement` values. The wrapper has reference identity and exposes detached
+content through `Value`; equal JSON text does not merge distinct metadata.
+Application casts must use the wrapper. This does not change the types of
+mapped primitive properties or turn the complete imported document into a
+streamed source.
 
 The following inventory is closed. Unlisted fields and listed unsupported constructs fail with `SCN2D004`; a field belonging to a different layer kind is not silently discarded. Known editor-only fields produce an aggregated `SCN2D017` warning. Metadata is retained under `$` provenance keys.
 

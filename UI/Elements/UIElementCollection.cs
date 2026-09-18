@@ -55,8 +55,8 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
     internal void ValidateInsertion(int index, UIElement child, bool ownerManaged = false)
     {
         ArgumentNullException.ThrowIfNull(child);
-        owner.Root?.Relay.VerifyAccess();
-        child.Root?.Relay.VerifyAccess();
+        owner.VerifyOwnerAccess();
+        child.VerifyOwnerAccess();
         if ((uint)index > (uint)children.Count)
         {
             throw new ArgumentOutOfRangeException(nameof(index));
@@ -104,7 +104,7 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
 
     public void Move(int oldIndex, int newIndex)
     {
-        owner.Root?.Relay.VerifyAccess();
+        owner.VerifyOwnerAccess();
         if ((uint)oldIndex >= (uint)children.Count)
         {
             throw new ArgumentOutOfRangeException(nameof(oldIndex));
@@ -141,8 +141,8 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
     private bool RemoveCore(UIElement child, bool ownerManaged)
     {
         ArgumentNullException.ThrowIfNull(child);
-        owner.Root?.Relay.VerifyAccess();
-        child.Root?.Relay.VerifyAccess();
+        owner.VerifyOwnerAccess();
+        child.VerifyOwnerAccess();
 
         int index = IndexOfReference(child);
         if (index < 0)

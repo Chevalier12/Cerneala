@@ -67,7 +67,8 @@ public sealed class TileMap2DStageZeroContractTests
         RequireProperties(resolved["TileDefinition2D"]!, "Id", "SourceRect", "Properties");
         RequireProperties(resolved["TileChunk2D"]!, "Origin", "Width", "Height", "Tiles", "Version", "Properties");
         RequireProperties(resolved["TileCell2D"]!, "TileId", "Flip");
-        RequireProperties(resolved["TileMap2D"]!, "Model", "Offset", "Tint");
+        RequireProperties(resolved["TileMap2D"]!, "Source", "Offset", "Tint", "Preparation", "PreparationError");
+        Assert.Null(resolved["TileMap2D"]!.GetProperty("Model"));
         RequireProperties(resolved["Tile"]!, "Image", "X", "Y", "Width", "Height", "Collider");
         Assert.Null(resolved["TileMap2D"]!.GetMethod("Promote", BindingFlags.Instance | BindingFlags.Public));
         Assert.Null(resolved["TileMap2D"]!.GetProperty("Layers", BindingFlags.Instance | BindingFlags.Public));

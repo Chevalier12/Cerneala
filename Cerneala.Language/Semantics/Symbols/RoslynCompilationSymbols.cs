@@ -2,18 +2,25 @@ using Cerneala.Language.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 
 namespace Cerneala.Language.Semantics.Symbols;
 
 internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
 {
+    private const int TypeNameCacheCapacity = 256;
     private readonly Compilation compilation;
     private readonly Lazy<IReadOnlyList<ILanguageTypeSymbol>> allTypes;
+    private readonly ConditionalWeakTable<ITypeSymbol, RoslynTypeSymbol> typeSymbols = new();
+    private readonly ConditionalWeakTable<ITypeSymbol, RoslynTypeSymbol>.CreateValueCallback createTypeSymbol;
+    private readonly Dictionary<string, RoslynTypeSymbol?> typeNames = new(StringComparer.Ordinal);
+    private readonly Queue<string> typeNameOrder = new();
 
     public RoslynCompilationSymbols(Compilation compilation, long version = 0)
     {
         this.compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
         Version = version;
+        createTypeSymbol = symbol => new RoslynTypeSymbol(this, symbol);
         allTypes = new Lazy<IReadOnlyList<ILanguageTypeSymbol>>(CreateAllTypes, LazyThreadSafetyMode.ExecutionAndPublication);
     }
 
@@ -21,8 +28,26 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
 
     public ILanguageTypeSymbol? FindType(string metadataName)
     {
-        INamedTypeSymbol? symbol = compilation.GetTypeByMetadataName(metadataName);
-        return symbol is null ? null : new RoslynTypeSymbol(compilation, symbol);
+        lock (typeNames)
+        {
+            if (typeNames.TryGetValue(metadataName, out RoslynTypeSymbol? cached))
+            {
+                return cached;
+            }
+
+            INamedTypeSymbol? symbol = compilation.GetTypeByMetadataName(metadataName);
+            RoslynTypeSymbol? resolved = symbol is null ? null : WrapType(symbol);
+            // Missing names are common while typing and during namespace probing.
+            // Bound both positive and negative entries; eviction changes cost only.
+            if (typeNames.Count == TypeNameCacheCapacity)
+            {
+                typeNames.Remove(typeNameOrder.Dequeue());
+            }
+
+            typeNames.Add(metadataName, resolved);
+            typeNameOrder.Enqueue(metadataName);
+            return resolved;
+        }
     }
 
     public IReadOnlyList<ILanguageTypeSymbol> FindTypes(string simpleName)
@@ -33,7 +58,7 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
             .OfType<INamedTypeSymbol>()
             .Distinct<INamedTypeSymbol>(SymbolEqualityComparer.Default)
             .OrderBy(symbol => symbol.ToDisplayString(), StringComparer.Ordinal)
-            .Select(symbol => (ILanguageTypeSymbol)new RoslynTypeSymbol(compilation, symbol))
+            .Select(symbol => (ILanguageTypeSymbol)WrapType(symbol))
             .ToArray();
     }
 
@@ -50,7 +75,7 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
             .OfType<INamedTypeSymbol>()
             .Distinct<INamedTypeSymbol>(SymbolEqualityComparer.Default)
             .ToArray();
-        return candidates.Length == 1 ? new RoslynTypeSymbol(compilation, candidates[0]) : null;
+        return candidates.Length == 1 ? WrapType(candidates[0]) : null;
     }
 
     public IReadOnlyList<LanguageReferenceLocation> FindReferences(
@@ -104,14 +129,18 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
 
     private static string NormalizePath(string path) => path.Replace('\\', '/');
 
+    // Roslyn type symbols are immutable. Reference identity keeps tuple names and
+    // constructed/annotated types distinct; weak keys do not retain transient types.
+    private RoslynTypeSymbol WrapType(ITypeSymbol symbol) => typeSymbols.GetValue(symbol, createTypeSymbol);
+
     private IReadOnlyList<ILanguageTypeSymbol> CreateAllTypes()
     {
         List<INamedTypeSymbol> result = new();
         CollectTypes(compilation.GlobalNamespace, result);
         return result
             .Distinct<INamedTypeSymbol>(SymbolEqualityComparer.Default)
-            .OrderBy(type => type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat), StringComparer.Ordinal)
-            .Select(type => (ILanguageTypeSymbol)new RoslynTypeSymbol(compilation, type))
+            .Select(type => (ILanguageTypeSymbol)WrapType(type))
+            .OrderBy(type => type.MetadataName, StringComparer.Ordinal)
             .ToArray();
     }
 
@@ -139,18 +168,22 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
 
     private sealed class RoslynTypeSymbol : ILanguageTypeSymbol
     {
-        private readonly Compilation compilation;
+        private readonly RoslynCompilationSymbols owner;
         private readonly ITypeSymbol symbol;
+        private string? metadataName;
+        private int hasAccessibleParameterlessConstructor = -1;
 
-        public RoslynTypeSymbol(Compilation compilation, ITypeSymbol symbol)
+        public RoslynTypeSymbol(RoslynCompilationSymbols owner, ITypeSymbol symbol)
         {
-            this.compilation = compilation;
+            this.owner = owner;
             this.symbol = symbol;
         }
 
         public string Name => symbol.Name;
 
-        public string MetadataName => symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+        public string MetadataName => Volatile.Read(ref metadataName) ??
+            LazyInitializer.EnsureInitialized(ref metadataName,
+                () => symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat))!;
 
         public string AssemblyName => symbol.ContainingAssembly?.Name ?? string.Empty;
 
@@ -166,10 +199,22 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
 
         public bool IsEnum => symbol.TypeKind == TypeKind.Enum;
 
-        public bool HasAccessibleParameterlessConstructor =>
-            symbol is INamedTypeSymbol named && named.InstanceConstructors.Any(constructor =>
-                constructor.Parameters.Length == 0 &&
-                IsAccessible(constructor.DeclaredAccessibility));
+        public bool HasAccessibleParameterlessConstructor
+        {
+            get
+            {
+                int cached = Volatile.Read(ref hasAccessibleParameterlessConstructor);
+                if (cached >= 0)
+                {
+                    return cached != 0;
+                }
+
+                bool value = symbol is INamedTypeSymbol named && named.InstanceConstructors.Any(constructor =>
+                    constructor.Parameters.Length == 0 && IsAccessible(constructor.DeclaredAccessibility));
+                Volatile.Write(ref hasAccessibleParameterlessConstructor, value ? 1 : 0);
+                return value;
+            }
+        }
 
         public string? DocumentationXml => EmptyToNull(symbol.GetDocumentationCommentXml());
 
@@ -192,11 +237,11 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
         }
 
         public ILanguageTypeSymbol? BaseType =>
-            symbol.BaseType is null ? null : new RoslynTypeSymbol(compilation, symbol.BaseType);
+            symbol.BaseType is null ? null : owner.WrapType(symbol.BaseType);
 
         public IReadOnlyList<ILanguageTypeSymbol> TypeArguments => (symbol is INamedTypeSymbol named
             ? named.TypeArguments.AsEnumerable() : Enumerable.Empty<ITypeSymbol>())
-            .Select(type => (ILanguageTypeSymbol)new RoslynTypeSymbol(compilation, type))
+            .Select(type => (ILanguageTypeSymbol)owner.WrapType(type))
             .ToArray();
 
         public ILanguageTypeSymbol? CollectionElementType
@@ -204,14 +249,14 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
             get
             {
                 if (symbol is IArrayTypeSymbol array)
-                    return new RoslynTypeSymbol(compilation, array.ElementType);
+                    return owner.WrapType(array.ElementType);
                 INamedTypeSymbol? enumerable = symbol.AllInterfaces
                     .Concat(symbol is INamedTypeSymbol named ? new[] { named } : Array.Empty<INamedTypeSymbol>())
                     .FirstOrDefault(candidate =>
-                        candidate.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat) ==
+                        owner.WrapType(candidate.OriginalDefinition).MetadataName ==
                         "System.Collections.Generic.IEnumerable<T>");
                 return enumerable?.TypeArguments.FirstOrDefault() is ITypeSymbol itemType
-                    ? new RoslynTypeSymbol(compilation, itemType)
+                    ? owner.WrapType(itemType)
                     : null;
             }
         }
@@ -223,7 +268,7 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
             {
                 members.AddRange(current.GetMembers(name)
                     .Where(member => IsAccessible(member.DeclaredAccessibility))
-                    .Select(member => (ILanguageMemberSymbol)new RoslynMemberSymbol(compilation, member)));
+                    .Select(member => (ILanguageMemberSymbol)new RoslynMemberSymbol(owner, member)));
             }
 
             return members;
@@ -237,7 +282,7 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
                 members.AddRange(current.GetMembers()
                     .Where(member => IsAccessible(member.DeclaredAccessibility))
                     .Where(member => !member.IsImplicitlyDeclared)
-                    .Select(member => (ILanguageMemberSymbol)new RoslynMemberSymbol(compilation, member)));
+                    .Select(member => (ILanguageMemberSymbol)new RoslynMemberSymbol(owner, member)));
             }
 
             return members;
@@ -250,7 +295,7 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
             for (ITypeSymbol? current = symbol; current is not null; current = current.BaseType)
             {
                 if (string.Equals(
-                    current.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                    owner.WrapType(current).MetadataName,
                     metadataName,
                     StringComparison.Ordinal))
                 {
@@ -269,7 +314,7 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
             }
 
             return symbol.AllInterfaces.Any(candidate => string.Equals(
-                candidate.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                owner.WrapType(candidate).MetadataName,
                 metadataName,
                 StringComparison.Ordinal));
         }
@@ -279,11 +324,11 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
     {
         private readonly ISymbol symbol;
 
-        private readonly Compilation compilation;
+        private readonly RoslynCompilationSymbols owner;
 
-        public RoslynMemberSymbol(Compilation compilation, ISymbol symbol)
+        public RoslynMemberSymbol(RoslynCompilationSymbols owner, ISymbol symbol)
         {
-            this.compilation = compilation;
+            this.owner = owner;
             this.symbol = symbol;
         }
 
@@ -305,10 +350,12 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
 
         public bool CanWrite => symbol is IPropertySymbol property && property.SetMethod is { IsInitOnly: false };
 
-        public string ValueTypeMetadataName => GetValueType(symbol)?.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat) ?? "System.Object";
+        public string ValueTypeMetadataName => GetValueType(symbol) is ITypeSymbol type
+            ? owner.WrapType(type).MetadataName
+            : "System.Object";
 
         public ILanguageTypeSymbol? ValueType => GetValueType(symbol) is ITypeSymbol type
-            ? new RoslynTypeSymbol(compilation, type)
+            ? owner.WrapType(type)
             : null;
 
         public IReadOnlyList<string> EnumValues
@@ -323,7 +370,7 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
         }
 
         public string DeclaringTypeMetadataName =>
-            symbol.ContainingType?.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat) ?? string.Empty;
+            symbol.ContainingType is ITypeSymbol type ? owner.WrapType(type).MetadataName : string.Empty;
 
         public string AssemblyName => symbol.ContainingAssembly?.Name ?? string.Empty;
 
@@ -347,7 +394,7 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
         public IReadOnlyList<LanguageParameterSymbol> Parameters => symbol is IMethodSymbol method
             ? method.Parameters.Select(parameter => new LanguageParameterSymbol(
                 parameter.Name,
-                parameter.Type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                owner.WrapType(parameter.Type).MetadataName,
                 parameter.IsOptional)).ToArray()
             : Array.Empty<LanguageParameterSymbol>();
 

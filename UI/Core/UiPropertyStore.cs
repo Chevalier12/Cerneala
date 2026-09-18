@@ -114,7 +114,7 @@ public sealed class UiPropertyStore
 
     private static void ValidateSource(UiPropertyValueSource source)
     {
-        if (!Enum.IsDefined(source) || source == UiPropertyValueSource.Default)
+        if (Array.IndexOf(EffectiveOrder, source) < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(source), source, "Only concrete non-default value sources can be stored.");
         }

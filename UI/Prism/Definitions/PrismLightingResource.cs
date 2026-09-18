@@ -73,7 +73,7 @@ public readonly record struct PrismLight
         DirectionOrPosition;
 
     internal bool IsValid =>
-        Enum.IsDefined(Kind) &&
+        Kind is PrismLightKind.Directional or PrismLightKind.Point &&
         IsFinite(DirectionOrPosition) &&
         (Kind != PrismLightKind.Directional ||
             DirectionOrPosition.LengthSquared() > 0) &&

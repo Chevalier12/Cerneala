@@ -5,7 +5,7 @@ using Cerneala.UI.Elements;
 
 namespace Cerneala.UI.Controls;
 
-public sealed class CollisionWorld2D
+public sealed partial class CollisionWorld2D
 {
     private readonly Scene2D owner;
     private readonly SparseCollisionGrid2D broadphase = new();
@@ -37,6 +37,7 @@ public sealed class CollisionWorld2D
     {
         ArgumentNullException.ThrowIfNull(first);
         ArgumentNullException.ThrowIfNull(second);
+        owner.VerifyOwnerAccess();
         long started = Stopwatch.GetTimestamp();
         try
         {
@@ -62,6 +63,7 @@ public sealed class CollisionWorld2D
         CollisionQuery2D query = default)
     {
         ArgumentNullException.ThrowIfNull(collider);
+        owner.VerifyOwnerAccess();
         long started = Stopwatch.GetTimestamp();
         try
         {
@@ -71,6 +73,7 @@ public sealed class CollisionWorld2D
                 return [];
             }
 
+            EnsureCollisionCoverage(source.Geometry.SceneBounds, collider, query);
             broadphase.Query(source.Geometry.SceneBounds, candidates);
             broadphaseCandidateCount += candidates.Count;
             List<(CollisionHit2D Hit, long Ordinal)> hits = [];
@@ -112,6 +115,7 @@ public sealed class CollisionWorld2D
         float maxDistance,
         CollisionQuery2D query = default)
     {
+        owner.VerifyOwnerAccess();
         ValidateFinite(origin, nameof(origin));
         ValidateFinite(direction, nameof(direction));
         if (direction.LengthSquared() <= CollisionNarrowPhase2D.Epsilon * CollisionNarrowPhase2D.Epsilon)
@@ -131,6 +135,7 @@ public sealed class CollisionWorld2D
             EnsureCurrent();
             Vector2 end = origin + (direction * maxDistance);
             DrawRect bounds = CreateBounds(origin, end);
+            EnsureCollisionCoverage(bounds, null, query);
             broadphase.Query(bounds, candidates);
             broadphaseCandidateCount += candidates.Count;
             List<(CollisionHit2D Hit, long Ordinal)> hits = [];
@@ -169,6 +174,7 @@ public sealed class CollisionWorld2D
         CollisionQuery2D query = default)
     {
         ArgumentNullException.ThrowIfNull(collider);
+        owner.VerifyOwnerAccess();
         ValidateFinite(displacement, nameof(displacement));
         long started = Stopwatch.GetTimestamp();
         try
@@ -182,6 +188,7 @@ public sealed class CollisionWorld2D
             DrawRect sweptBounds = CollisionNarrowPhase2D.GetSweptBounds(
                 source.Geometry.SceneBounds,
                 displacement);
+            EnsureCollisionCoverage(sweptBounds, collider, query);
             broadphase.Query(sweptBounds, candidates);
             broadphaseCandidateCount += candidates.Count;
             List<(CollisionHit2D Hit, long Ordinal)> blocking = [];
@@ -256,6 +263,7 @@ public sealed class CollisionWorld2D
         ISet<Collider2D> results)
     {
         ArgumentNullException.ThrowIfNull(results);
+        owner.VerifyOwnerAccess();
         ValidateFinite(scenePoint, nameof(scenePoint));
         long started = Stopwatch.GetTimestamp();
         try
@@ -329,6 +337,7 @@ public sealed class CollisionWorld2D
 
     internal void Reset()
     {
+        InvalidateSpatialRegions();
         broadphase.Clear();
         entriesByCollider.Clear();
         entriesById.Clear();
@@ -341,6 +350,7 @@ public sealed class CollisionWorld2D
 
     private void EnsureCurrent()
     {
+        owner.VerifyOwnerAccess();
         if (!initialized || observedVersion != Version)
         {
             Rebuild();

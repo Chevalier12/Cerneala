@@ -1,494 +1,617 @@
-using System.Collections;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
+using System.Diagnostics.CodeAnalysis;
+using Cerneala.Drawing;
 using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Core;
-using Cerneala.UI.Data;
 using Cerneala.UI.Elements;
 
 namespace Cerneala.UI.Controls;
 
-public sealed class SceneItems2D : SceneNode2D
+public sealed class SceneItems2D : SceneNode2D, ISceneSpatialParticipant2D
 {
-    public static readonly UiProperty<IEnumerable?> ItemsSourceProperty =
-        UiProperty<IEnumerable?>.Register(
-            nameof(ItemsSource),
-            typeof(SceneItems2D),
-            new UiPropertyMetadata<IEnumerable?>(null, UiPropertyOptions.AffectsRender));
+    public static readonly UiProperty<ISceneSpatialSource2D<object>?> ItemsSourceProperty =
+        UiProperty<ISceneSpatialSource2D<object>?>.Register(
+            nameof(ItemsSource), typeof(SceneItems2D),
+            new UiPropertyMetadata<ISceneSpatialSource2D<object>?>(null, UiPropertyOptions.AffectsRender));
 
-    private readonly List<SceneNode2D> realizedNodes = [];
+    private readonly List<RealizedItem> realized = [];
+    private readonly Dictionary<string, RealizedItem> byId = new(StringComparer.Ordinal);
     private ContentTemplateRegistry templateRegistry = new();
-    private IObservableList? observableItemsSource;
-    private INotifyCollectionChanged? notifyingItemsSource;
-    private bool isSubscribed;
-    private bool hasEverAttached;
+    private ISceneSpatialSource2D<object>? observedSource;
+    private SceneSpatialResidency2D<object>? residency;
+    private IReadOnlyList<SceneSpatialEntry2D>? appliedCatalog;
+    private IReadOnlyList<SceneSpatialEntry2D>? requestedCatalog;
+    private IReadOnlyList<SceneSpatialEntry2D>? boundsCatalog;
+    private SceneBounds2D catalogBounds;
+    private SceneBounds2D requestedBounds;
+    private bool requestedPresentationVisible;
+    private IReadOnlyList<SceneBounds2D>? requestedCollisionInterest;
+    private Request? pending;
+    private long templateVersion;
+    private long requestVersion;
 
-    public SceneItems2D()
-    {
-        Templates = new TemplateCollection(RebuildTemplates);
-    }
+    public SceneItems2D() => Templates = new TemplateCollection(RebuildTemplates, VerifyOwnerAccess);
 
-    public IEnumerable? ItemsSource
+    public ISceneSpatialSource2D<object>? ItemsSource
     {
         get => GetValue(ItemsSourceProperty);
         set => SetValue(ItemsSourceProperty, value);
     }
 
     public Collection<ContentTemplate> Templates { get; }
+    public int RealizedItemCount => realized.Count;
+    public Task Preparation { get; private set; } = Task.CompletedTask;
+    public Exception? PreparationError { get; private set; }
 
-    public int RealizedItemCount => realizedNodes.Count;
+    SceneNode2D ISceneSpatialParticipant2D.Node => this;
+    IReadOnlyList<SceneSpatialEntry2D>? ISceneSpatialParticipant2D.SimulationCatalog => ItemsSource?.Entries;
+    void ISceneSpatialParticipant2D.UpdateSpatialInterest(SceneBounds2D visibleBounds, IReadOnlyList<SceneBounds2D> collisionInterest,
+        DrawRect? surfaceBounds) => UpdateSpatialInterest(visibleBounds, collisionInterest, surfaceBounds);
+    string? ISceneSpatialParticipant2D.GetUnpreparedCollisionEntry(DrawRect sceneBounds) => GetUnpreparedCollisionEntry(sceneBounds);
+
+    public bool TryGetRealizedNode(string id, [NotNullWhen(true)] out SceneNode2D? node)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        VerifyOwnerAccess();
+        node = byId.TryGetValue(id, out RealizedItem? item) ? item.Node : null;
+        return node is not null;
+    }
+
+    // Explicit retry, not an unbounded automatic I/O retry loop.
+    public void Refresh()
+    {
+        VerifyOwnerAccess();
+        requestedCatalog = null;
+        SimulationContext?.RefreshSpatialItems();
+    }
 
     internal SceneItems2DUpdateCounters UpdateCounters { get; } = new();
 
     protected override void OnAttached()
     {
         base.OnAttached();
-        hasEverAttached = true;
-        SubscribeToItemsSource();
-        RebuildRealizedNodes();
+        SimulationContext?.RefreshSpatialItems();
     }
 
-    protected override void OnDetached()
+    internal override void OnSimulationContextChanged(SceneSimulationContext2D? previous)
     {
-        UnsubscribeFromItemsSource();
-        base.OnDetached();
+        StopSource();
+        StartSource();
     }
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
         base.OnPropertyChanged(args);
-        if (!ReferenceEquals(args.Property, ItemsSourceProperty))
-        {
-            return;
-        }
-
-        UnsubscribeFromItemsSource();
-        if (!hasEverAttached || IsAttached)
-        {
-            SubscribeToItemsSource();
-        }
-
-        RebuildRealizedNodes();
+        if (!ReferenceEquals(args.Property, ItemsSourceProperty)) { return; }
+        StopSource();
+        StartSource();
+        Refresh();
     }
 
     internal override void AttachSurface(RenderSurface2D? surface)
     {
+        if (ReferenceEquals(Surface, surface)) { return; }
         base.AttachSurface(surface);
-        foreach (SceneNode2D node in realizedNodes)
+        foreach (RealizedItem item in realized) { item.Node.AttachSurface(surface); }
+        SimulationContext?.RefreshSpatialItems();
+    }
+
+    internal void UpdateSpatialInterest(SceneBounds2D visibleBounds, IReadOnlyList<SceneBounds2D> collisionInterest,
+        DrawRect? surfaceBounds = null)
+    {
+        if (SimulationContext is not { IsDisposed: false } context || residency is null || observedSource is null) { return; }
+        context.Relay.VerifyAccess();
+        // Presentation uses the shared Prism input region; simulation and
+        // collision interest remain independent of its camera footprint.
+        if (!context.IsHeadless) { visibleBounds = SceneSpatialInterest2D.ResolveInputBounds(this, visibleBounds, includeSelf: false,
+            surfaceBounds: surfaceBounds); }
+        bool presentationVisible = !context.IsHeadless && IsPresentationVisible();
+        IReadOnlyList<SceneSpatialEntry2D> catalog = observedSource.Entries;
+        if (ReferenceEquals(requestedCatalog, catalog) && requestedBounds == visibleBounds &&
+            requestedPresentationVisible == presentationVisible &&
+            ReferenceEquals(requestedCollisionInterest, collisionInterest)) { return; }
+        requestedCatalog = catalog;
+        requestedBounds = visibleBounds;
+        requestedPresentationVisible = presentationVisible;
+        requestedCollisionInterest = collisionInterest;
+        PreparationError = null;
+        ISceneSpatialSource2D<object> source = observedSource;
+        if (!ReferenceEquals(appliedCatalog, catalog)) { RetireObsoleteCatalogEntries(catalog); }
+        RetireUnusedPresentation(visibleBounds, presentationVisible);
+        // Release callbacks may publish another catalog or replace the source.
+        if (!ReferenceEquals(observedSource, source) || !ReferenceEquals(source.Entries, catalog) ||
+            !ReferenceEquals(SimulationContext, context) || context.IsDisposed || residency is null) { return; }
+
+        Request? previous = pending;
+        Request request = new(context, templateVersion, ++requestVersion);
+        pending = request;
+        // Acquire replacement interests before cancelling the previous request.
+        ValueTask<SceneSpatialRegion2D<object>> acquisition;
+        try
         {
-            node.AttachSurface(surface);
+            List<SceneBounds2D> localInterests = new(collisionInterest.Count);
+            var transform = SceneGeometry2D.GetLocalToSceneTransform(this);
+            foreach (SceneBounds2D interest in collisionInterest)
+            {
+                localInterests.Add(interest.Kind == SceneBoundsKind.Known &&
+                    SceneGeometry2D.TryTransformBoundsToLocal(interest.Bounds, transform, out DrawRect local)
+                        ? SceneBounds2D.Known(local) : interest.Kind == SceneBoundsKind.Empty ? interest : SceneBounds2D.Unknown);
+            }
+            acquisition = residency.AcquireSceneAsync(visibleBounds, localInterests, request.Token);
         }
+        catch (Exception failure)
+        {
+            acquisition = ValueTask.FromException<SceneSpatialRegion2D<object>>(failure);
+        }
+        previous?.Cancel();
+        Task preparation = CompleteRequestAsync(request, acquisition);
+        // A synchronous application callback can replace the source and start a
+        // newer preparation before this call returns.
+        if (request.Version == requestVersion) { Preparation = preparation; }
+        _ = ObserveAsync(preparation);
+    }
+
+    private async Task CompleteRequestAsync(Request request, ValueTask<SceneSpatialRegion2D<object>> acquisition)
+    {
+        SceneSpatialRegion2D<object>? acquired = null;
+        CancellationToken token = request.Token;
+        try
+        {
+            acquired = await acquisition.ConfigureAwait(false);
+            if (request.Context.Relay.CheckAccess()) { Publish(); }
+            else { await request.Context.Relay.InvokeAsync(Publish, token).ConfigureAwait(false); }
+
+            void Publish()
+            {
+                token.ThrowIfCancellationRequested();
+                if (!ReferenceEquals(pending, request) || !ReferenceEquals(SimulationContext, request.Context) || request.Context.IsDisposed) { return; }
+                if (!acquired.IsCurrent) { requestedCatalog = null; return; }
+                Commit(acquired, request);
+            }
+        }
+        catch (Exception failure)
+        {
+            if (!token.IsCancellationRequested)
+            {
+                if (request.Context.Relay.CheckAccess()) { Report(); }
+                else { await request.Context.Relay.InvokeAsync(Report, token).ConfigureAwait(false); }
+                void Report()
+                {
+                    if (!ReferenceEquals(pending, request) || !ReferenceEquals(SimulationContext, request.Context) || request.Context.IsDisposed) { return; }
+                    PreparationError = failure;
+                    Surface?.InvalidateFrame();
+                }
+            }
+            throw;
+        }
+        finally
+        {
+            try { acquired?.Dispose(); }
+            // Retirement must finish even when a disposed headless owner will
+            // never drain its Relay again. The request does not mutate the tree.
+            finally { request.Complete(); }
+        }
+    }
+
+    private static async Task ObserveAsync(Task task)
+    {
+        // The application can inspect/await Preparation; automatic preparation
+        // must not leave unobserved fire-and-forget task failures.
+        try { await task.ConfigureAwait(false); }
+        catch { }
+    }
+
+    private void Commit(SceneSpatialRegion2D<object> prepared, Request request)
+    {
+        long version = request.TemplateVersion;
+        List<RealizedItem> next = new(prepared.Entries.Count);
+        List<RealizedItem> created = [];
+        List<RealizedItem> removed = [];
+        HashSet<SceneNode2D> nodes = new(ReferenceEqualityComparer.Instance);
+        try
+        {
+            foreach (SceneSpatialEntry2D entry in prepared.Entries)
+            {
+                RealizedItem item;
+                if (byId.TryGetValue(entry.Id, out RealizedItem? existing) &&
+                    existing.Entry.Version == entry.Version && existing.TemplateVersion == version)
+                {
+                    item = existing;
+                }
+                else
+                {
+                    SceneNode2D node = CreateNode(prepared.GetValue(entry.Id));
+                    if (!IsCurrent()) { return; }
+                    ContentControl.ValidateCanOwnChild(this, node);
+                    item = new(entry, node, version, prepared.RetainValue(entry.Id));
+                    created.Add(item);
+                }
+                if (!nodes.Add(item.Node))
+                {
+                    throw new InvalidOperationException("Distinct spatial identities must create distinct scene nodes.");
+                }
+                next.Add(item);
+            }
+
+            if (!IsCurrent()) { return; }
+
+            Scene2D? scene = SceneGeometry2D.FindRootScene(this);
+            for (int index = realized.Count - 1; index >= 0; index--)
+            {
+                if (!nodes.Contains(realized[index].Node)) { removed.Add(RemoveAt(index)); }
+            }
+            for (int index = 0; index < next.Count; index++)
+            {
+                RealizedItem item = next[index];
+                item.Entry = prepared.Entries[index];
+                int currentIndex = realized.IndexOf(item);
+                if (currentIndex < 0)
+                {
+                    LogicalChildren.Insert(index, item.Node);
+                    realized.Insert(index, item);
+                    item.Node.AttachSurface(Surface);
+                    if (item.Node is Scene2D nested) { nested.ResetOwnedCollisionWorlds(); }
+                    if (item.Node.IsAttached) { UpdateCounters.CountAttached(); }
+                }
+                else if (currentIndex != index)
+                {
+                    LogicalChildren.Move(currentIndex, index);
+                    realized.RemoveAt(currentIndex);
+                    realized.Insert(index, item);
+                    UpdateCounters.CountMoved();
+                }
+            }
+            byId.Clear();
+            foreach (RealizedItem item in realized) { byId.Add(item.Entry.Id, item); }
+            scene?.NotifyCollisionMutation(this, SceneCollisionMutationKind.Structure);
+            Surface?.InvalidateFrame();
+        }
+        finally
+        {
+            // New template acquisitions not adopted by the tree must be retired
+            // even when a later factory fails or reenters source publication.
+            ReleasePayloads(removed.Concat(created.Where(item => !realized.Contains(item))));
+        }
+
+        bool IsCurrent() => ReferenceEquals(pending, request) &&
+            ReferenceEquals(SimulationContext, request.Context) && !request.Context.IsDisposed &&
+            prepared.IsCurrent && templateVersion == version;
+    }
+
+    private void RetireObsoleteCatalogEntries(IReadOnlyList<SceneSpatialEntry2D> catalog)
+    {
+        Dictionary<string, SceneSpatialEntry2D> current = catalog.ToDictionary(static entry => entry.Id, StringComparer.Ordinal);
+        List<RealizedItem> removed = [];
+        try
+        {
+            for (int index = realized.Count - 1; index >= 0; index--)
+            {
+                RealizedItem item = realized[index];
+                if (current.TryGetValue(item.Entry.Id, out SceneSpatialEntry2D? entry) && entry.Version == item.Entry.Version)
+                {
+                    item.Entry = entry;
+                }
+                else { removed.Add(RemoveAt(index)); }
+            }
+            appliedCatalog = catalog;
+            if (removed.Count == 0) { return; }
+            SceneGeometry2D.FindRootScene(this)?.NotifyCollisionMutation(this, SceneCollisionMutationKind.Structure);
+            Surface?.InvalidateFrame();
+        }
+        finally { ReleasePayloads(removed); }
     }
 
     internal override void Record(Scene2DRecordContext context)
     {
-        if (!UIElementVisibility.ParticipatesInRendering(this))
+        bool visible = UIElementVisibility.ParticipatesInRendering(this);
+        SceneBounds2D input = SceneSpatialInterest2D.ResolveInputBounds(this,
+            context.GetConservativeVisibleLocalBounds(), includeSelf: false, surfaceBounds: context.Frame.Bounds);
+        for (int index = 0; index < realized.Count; index++)
         {
-            return;
+            RealizedItem item = realized[index];
+            if (visible && ScenePresentationContext2D.Intersects(input, item.Entry.Bounds))
+            {
+                item.Node.Record(context.WithSourceIndex(index));
+            }
+            else { item.Node.ReleaseRenderCaches(); }
         }
+    }
 
-        for (int index = 0; index < realizedNodes.Count; index++)
+    internal override void CheckPresentation(ScenePresentationContext2D context)
+    {
+        if (!UIElementVisibility.ParticipatesInRendering(this) || Opacity <= 0 || ItemsSource is not { } source) { return; }
+        SceneBounds2D visible = context.GetVisibleBounds(this);
+        IReadOnlyList<SceneSpatialEntry2D> catalog = source.Entries;
+        if (!ReferenceEquals(appliedCatalog, catalog))
         {
-            realizedNodes[index].Record(context.WithSourceIndex(index));
+            // Do not present old positions/deletions while a worker publication
+            // is waiting for the UI relay, even if the new catalog is empty.
+            foreach (RealizedItem item in realized)
+            {
+                if (ScenePresentationContext2D.Intersects(visible, item.Entry.Bounds)) { context.Require(); break; }
+            }
         }
+        foreach (SceneSpatialEntry2D entry in catalog)
+        {
+            if (!ScenePresentationContext2D.Intersects(visible, entry.Bounds)) { continue; }
+            if (!ReferenceEquals(source, observedSource) || !byId.TryGetValue(entry.Id, out RealizedItem? item) ||
+                item.Entry.Version != entry.Version || item.TemplateVersion != templateVersion || !item.Node.IsAttached)
+            {
+                context.Require(ReferenceEquals(source, observedSource) && ReferenceEquals(requestedCatalog, catalog)
+                    ? PreparationError : null);
+            }
+            else { item.Node.CheckPresentation(context); }
+        }
+    }
+
+    internal string? GetUnpreparedCollisionEntry(DrawRect sceneBounds)
+    {
+        ISceneSpatialSource2D<object>? source = ItemsSource;
+        if (source is null || !UIElementVisibility.IsEffectivelyVisible(this)) { return null; }
+        bool invertible = SceneGeometry2D.TryTransformBoundsToLocal(sceneBounds,
+            SceneGeometry2D.GetLocalToSceneTransform(this), out DrawRect localBounds);
+        IReadOnlyList<SceneSpatialEntry2D> catalog = source.Entries;
+        // A worker can publish before its UI notification is drained. Reject
+        // affected stale geometry without loading or mutating the tree here.
+        if (!ReferenceEquals(appliedCatalog, catalog))
+        {
+            foreach (RealizedItem item in realized)
+            {
+                if (Intersects(item.Entry)) { return item.Entry.Id; }
+            }
+        }
+        foreach (SceneSpatialEntry2D entry in catalog)
+        {
+            if (!Intersects(entry)) { continue; }
+            if (!ReferenceEquals(source, observedSource) || !byId.TryGetValue(entry.Id, out RealizedItem? item) ||
+                item.Entry.Version != entry.Version || item.TemplateVersion != templateVersion ||
+                SimulationContext is null || !ReferenceEquals(item.Node.SimulationContext, SimulationContext))
+            {
+                return entry.Id;
+            }
+        }
+        return null;
+
+        bool Intersects(SceneSpatialEntry2D entry) => entry.CollisionBounds is DrawRect collision &&
+            (!invertible || localBounds.X <= collision.Right && localBounds.Right >= collision.X &&
+                localBounds.Y <= collision.Bottom && localBounds.Bottom >= collision.Y);
+    }
+
+    internal IReadOnlyList<SceneNode2D> GetInputCandidates(DrawPoint point, IReadOnlySet<SceneNode2D>? colliderPaths)
+    {
+        List<SceneNode2D> candidates = [];
+        foreach (RealizedItem item in realized)
+        {
+            if (!item.Node.ParticipatesInInputRoute) { continue; }
+            DrawRect bounds = item.Entry.Bounds;
+            // Metadata is a visual broadphase, not an exact hit shape. Actual
+            // collider hits retain their route even outside the visual envelope.
+            if (colliderPaths?.Contains(item.Node) == true ||
+                point.X >= bounds.X && point.X <= bounds.Right && point.Y >= bounds.Y && point.Y <= bounds.Bottom)
+            {
+                candidates.Add(item.Node);
+            }
+        }
+        return candidates;
     }
 
     internal override SceneBounds2D GetVisibleLocalBounds()
     {
-        SceneBounds2D result = SceneBounds2D.Empty;
-        foreach (SceneNode2D node in realizedNodes)
+        IReadOnlyList<SceneSpatialEntry2D>? catalog = ItemsSource?.Entries;
+        if (ReferenceEquals(boundsCatalog, catalog)) { return catalogBounds; }
+        SceneBounds2D bounds = SceneBounds2D.Empty;
+        if (catalog is not null)
         {
-            SceneBounds2D nodeBounds = SceneGeometry2D.TransformBounds(
-                node.GetLocalBounds(),
-                node.GetLocalTransform());
-            result = SceneGeometry2D.Union(result, nodeBounds);
-            if (result.Kind == SceneBoundsKind.Unknown)
+            for (int index = 0; index < catalog.Count; index++)
             {
-                break;
+                bounds = SceneGeometry2D.Union(bounds, SceneBounds2D.Known(catalog[index].Bounds));
             }
         }
+        // Logical geometry (Prism capture coordinates and painter ordering) must
+        // not change when a payload is acquired or retired for camera residency.
+        boundsCatalog = catalog;
+        return catalogBounds = bounds;
+    }
 
-        return result;
+    private bool IsPresentationVisible()
+    {
+        for (UIElement? node = this; node is SceneNode2D; node = node.LogicalParent)
+        {
+            if (!UIElementVisibility.ParticipatesInRendering(node) || node.Opacity <= 0) { return false; }
+        }
+        return true;
+    }
+
+    private void RetireUnusedPresentation(SceneBounds2D visibleBounds, bool visible)
+    {
+        // Residency retirement belongs to interest updates, not successful
+        // recording. An unrelated pending source can withhold the whole scene.
+        List<Exception>? failures = null;
+        foreach (RealizedItem item in realized.ToArray())
+        {
+            if (visible && ScenePresentationContext2D.Intersects(visibleBounds, item.Entry.Bounds)) { continue; }
+            try { item.Node.ReleaseRenderCaches(); }
+            catch (Exception failure) { (failures ??= []).Add(failure); }
+        }
+        if (failures is not null) { throw new AggregateException(failures); }
+    }
+
+    private SceneNode2D CreateNode(object item)
+    {
+        // Index intentionally stays -1. Spatial identity is not a list position.
+        if (templateRegistry.TryResolve(new ContentTemplateMatchContext(item, owner: this), out ContentTemplate template))
+        {
+            SceneNode2D created = template.Create(new ContentTemplateContext(item, owner: this)) as SceneNode2D
+                ?? throw new InvalidOperationException($"Content template '{template.Name}' must create a {nameof(SceneNode2D)}.");
+            UpdateCounters.CountCreated();
+            return created;
+        }
+        return item as SceneNode2D ?? throw new InvalidOperationException(
+            $"No content template matches item type '{item.GetType().FullName}' in {nameof(SceneItems2D)}.");
     }
 
     private void RebuildTemplates()
     {
         templateRegistry = new ContentTemplateRegistry();
-        foreach (ContentTemplate template in Templates)
-        {
-            templateRegistry.Register(template);
-        }
-
-        RebuildRealizedNodes();
+        foreach (ContentTemplate template in Templates) { templateRegistry.Register(template); }
+        templateVersion++;
+        Refresh();
     }
 
-    private void RebuildRealizedNodes()
+    private void StartSource()
     {
-        RebuildFrom(0);
+        if (SimulationContext is not { IsDisposed: false } || observedSource is not null || ItemsSource is null) { return; }
+        observedSource = ItemsSource;
+        residency = new(observedSource);
+        observedSource.Changed += OnSourceChanged;
     }
 
-    private SceneNode2D CreateNode(object? item, int index)
+    private void OnSourceChanged(object? sender, EventArgs args)
     {
-        ContentTemplateMatchContext match = new(item, owner: this, index: index);
-        if (templateRegistry.TryResolve(match, out ContentTemplate template))
+        SceneSimulationContext2D? context = SimulationContext;
+        if (context is null || context.IsDisposed) { return; }
+        if (context.Relay.CheckAccess())
         {
-            SceneNode2D created = template.Create(
-                new ContentTemplateContext(item, index: index, owner: this))
-                as SceneNode2D
-                ?? throw new InvalidOperationException(
-                    $"Content template '{template.Name}' must create a {nameof(SceneNode2D)} for {nameof(SceneItems2D)}.");
-            UpdateCounters.CountCreated();
-            return created;
-        }
-
-        if (item is SceneNode2D node)
-        {
-            return node;
-        }
-
-        throw new InvalidOperationException(
-            $"No content template matches item type '{item?.GetType().FullName ?? "null"}' in {nameof(SceneItems2D)}.");
-    }
-
-    private void SubscribeToItemsSource()
-    {
-        if (isSubscribed)
-        {
+            if (ReferenceEquals(sender, observedSource) && ReferenceEquals(SimulationContext, context) && !context.IsDisposed) { Refresh(); }
             return;
         }
-
-        observableItemsSource = ItemsSource as IObservableList;
-        notifyingItemsSource = ItemsSource as INotifyCollectionChanged;
-        if (observableItemsSource is not null)
+        if (sender is not ISceneSpatialSource2D<object> source) { return; }
+        // Preserve Post's owner-visible failure contract without a queued
+        // callback retaining a retired scene, source or independent context.
+        WeakReference<SceneItems2D> target = new(this);
+        WeakReference<SceneSimulationContext2D> lifetime = new(context);
+        WeakReference<ISceneSpatialSource2D<object>> publisher = new(source);
+        context.Relay.Post(() =>
         {
-            observableItemsSource.Changed += OnObservableItemsChanged;
-        }
-        else if (notifyingItemsSource is not null)
-        {
-            notifyingItemsSource.CollectionChanged += OnCollectionChanged;
-        }
-
-        isSubscribed = observableItemsSource is not null || notifyingItemsSource is not null;
+            if (target.TryGetTarget(out SceneItems2D? items) &&
+                lifetime.TryGetTarget(out SceneSimulationContext2D? owner) && !owner.IsDisposed &&
+                ReferenceEquals(items.SimulationContext, owner) && publisher.TryGetTarget(out var current) &&
+                ReferenceEquals(items.observedSource, current)) { items.Refresh(); }
+        });
     }
 
-    private void UnsubscribeFromItemsSource()
+    private void StopSource()
     {
-        if (observableItemsSource is not null)
+        if (observedSource is not null) { observedSource.Changed -= OnSourceChanged; }
+        observedSource = null;
+        appliedCatalog = null;
+        requestedCatalog = null;
+        boundsCatalog = null;
+        catalogBounds = SceneBounds2D.Empty;
+        Request? previousRequest = pending;
+        pending = null;
+        SceneSpatialResidency2D<object>? previous = residency;
+        residency = null;
+        Scene2D? scene = SceneGeometry2D.FindRootScene(this);
+        // Freeze the outgoing ownership before invoking application cleanup.
+        // Reentrant publication must not cause us to retire a newer source.
+        RealizedItem[] removed = realized.ToArray();
+        List<Exception>? failures = null;
+        try { previousRequest?.Cancel(); }
+        catch (Exception failure) { (failures ??= []).Add(failure); }
+        for (int index = removed.Length - 1; index >= 0; index--)
         {
-            observableItemsSource.Changed -= OnObservableItemsChanged;
+            int current = realized.IndexOf(removed[index]);
+            if (current < 0) { continue; }
+            try { RemoveAt(current); }
+            catch (Exception failure) { (failures ??= []).Add(failure); }
         }
-
-        if (notifyingItemsSource is not null)
-        {
-            notifyingItemsSource.CollectionChanged -= OnCollectionChanged;
-        }
-
-        observableItemsSource = null;
-        notifyingItemsSource = null;
-        isSubscribed = false;
-    }
-
-    private void OnObservableItemsChanged(object? sender, ObservableListChangedEventArgs args)
-    {
-        switch (args.Kind)
-        {
-            case ObservableListChangeKind.Add:
-                ApplyAdd(args.Index, DeltaCount(args.Items, args.Item));
-                break;
-            case ObservableListChangeKind.Remove:
-                ApplyRemove(args.Index, DeltaCount(args.OldItems, args.OldItem));
-                break;
-            case ObservableListChangeKind.Replace:
-                ApplyReplace(
-                    args.Index,
-                    DeltaCount(args.OldItems, args.OldItem),
-                    DeltaCount(args.Items, args.Item));
-                break;
-            case ObservableListChangeKind.Move:
-                ApplyMove(
-                    args.OldIndex,
-                    args.Index,
-                    DeltaCount(args.Items, args.Item));
-                break;
-            case ObservableListChangeKind.Reset:
-            case ObservableListChangeKind.Clear:
-            default:
-                RebuildRealizedNodes();
-                break;
-        }
-    }
-
-    private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs args)
-    {
-        switch (args.Action)
-        {
-            case NotifyCollectionChangedAction.Add:
-                ApplyAdd(args.NewStartingIndex, args.NewItems?.Count ?? 0);
-                break;
-            case NotifyCollectionChangedAction.Remove:
-                ApplyRemove(args.OldStartingIndex, args.OldItems?.Count ?? 0);
-                break;
-            case NotifyCollectionChangedAction.Replace:
-                ApplyReplace(
-                    args.NewStartingIndex,
-                    args.OldItems?.Count ?? 0,
-                    args.NewItems?.Count ?? 0);
-                break;
-            case NotifyCollectionChangedAction.Move:
-                ApplyMove(
-                    args.OldStartingIndex,
-                    args.NewStartingIndex,
-                    args.NewItems?.Count ?? 0);
-                break;
-            case NotifyCollectionChangedAction.Reset:
-            default:
-                RebuildRealizedNodes();
-                break;
-        }
-    }
-
-    private void ApplyAdd(int index, int count)
-    {
-        int currentCount = GetCurrentItemCount();
-        if (index < 0 ||
-            count <= 0 ||
-            currentCount != realizedNodes.Count + count ||
-            index > realizedNodes.Count)
-        {
-            RebuildRealizedNodes();
-            return;
-        }
-
-        RebuildFrom(index);
-    }
-
-    private void ApplyRemove(int index, int count)
-    {
-        int currentCount = GetCurrentItemCount();
-        if (index < 0 ||
-            count <= 0 ||
-            currentCount != realizedNodes.Count - count ||
-            index > currentCount)
-        {
-            RebuildRealizedNodes();
-            return;
-        }
-
-        RebuildFrom(index);
-    }
-
-    private void ApplyReplace(int index, int oldCount, int newCount)
-    {
-        int currentCount = GetCurrentItemCount();
-        if (index < 0 ||
-            oldCount <= 0 ||
-            newCount <= 0 ||
-            currentCount != realizedNodes.Count - oldCount + newCount ||
-            index + newCount > currentCount)
-        {
-            RebuildRealizedNodes();
-            return;
-        }
-
-        if (oldCount != newCount)
-        {
-            RebuildFrom(index);
-            return;
-        }
-
-        RebuildRange(index, newCount);
-    }
-
-    private void ApplyMove(int oldIndex, int newIndex, int count)
-    {
-        int currentCount = GetCurrentItemCount();
-        if (oldIndex < 0 ||
-            newIndex < 0 ||
-            count <= 0 ||
-            currentCount != realizedNodes.Count ||
-            oldIndex + count > currentCount ||
-            newIndex + count > currentCount)
-        {
-            RebuildRealizedNodes();
-            return;
-        }
-
-        int start = Math.Min(oldIndex, newIndex);
-        int end = Math.Max(oldIndex, newIndex) + count;
-        RebuildRange(start, end - start);
-    }
-
-    private void RebuildFrom(int index)
-    {
-        int currentCount = GetCurrentItemCount();
-        int safeIndex = Math.Clamp(index, 0, Math.Min(realizedNodes.Count, currentCount));
-        RemoveRealizedRange(safeIndex, realizedNodes.Count - safeIndex);
-        InsertCurrentRange(safeIndex, currentCount);
+        try { scene?.NotifyCollisionMutation(this, SceneCollisionMutationKind.Structure); }
+        catch (Exception failure) { (failures ??= []).Add(failure); }
+        try { ReleasePayloads(removed); }
+        catch (Exception failure) { (failures ??= []).Add(failure); }
+        try { previous?.Dispose(); }
+        catch (Exception failure) { (failures ??= []).Add(failure); }
         Surface?.InvalidateFrame();
+        if (failures is not null) { throw new AggregateException(failures); }
     }
 
-    private void RebuildRange(int index, int count)
+    private RealizedItem RemoveAt(int index)
     {
-        int currentCount = GetCurrentItemCount();
-        if (index < 0 || count < 0 || index + count > currentCount)
+        RealizedItem item = realized[index];
+        SceneNode2D node = item.Node;
+        realized.RemoveAt(index);
+        byId.Remove(item.Entry.Id);
+        List<Exception>? failures = null;
+        try { node.ReleaseRenderCaches(); }
+        catch (Exception failure) { (failures ??= []).Add(failure); }
+        try { node.AttachSurface(null); }
+        catch (Exception failure) { (failures ??= []).Add(failure); }
+        try { LogicalChildren.Remove(node); }
+        catch (Exception failure) { (failures ??= []).Add(failure); }
+        try { if (node is Scene2D nested) { nested.ResetOwnedCollisionWorlds(); } }
+        catch (Exception failure) { (failures ??= []).Add(failure); }
+        UpdateCounters.CountRemoved();
+        if (failures is not null)
         {
-            RebuildRealizedNodes();
-            return;
+            // The caller cannot adopt a return value when cleanup throws.
+            // Retire its lease here and publish the completed tree removal.
+            try { item.Payload.Dispose(); }
+            catch (Exception failure) { failures.Add(failure); }
+            try { SceneGeometry2D.FindRootScene(this)?.NotifyCollisionMutation(this, SceneCollisionMutationKind.Structure); }
+            catch (Exception failure) { failures.Add(failure); }
+            throw new AggregateException(failures);
         }
-
-        RemoveRealizedRange(index, count);
-        InsertCurrentRange(index, index + count);
-        Surface?.InvalidateFrame();
+        return item;
     }
 
-    private void RemoveRealizedRange(int index, int count)
+    private static void ReleasePayloads(IEnumerable<RealizedItem> items)
     {
-        for (int offset = count - 1; offset >= 0; offset--)
+        List<Exception>? failures = null;
+        foreach (RealizedItem item in items)
         {
-            int removalIndex = index + offset;
-            SceneNode2D node = realizedNodes[removalIndex];
-            node.AttachSurface(null);
-            realizedNodes.RemoveAt(removalIndex);
-            LogicalChildren.Remove(node);
-            UpdateCounters.CountRemoved();
+            try { item.Payload.Dispose(); }
+            catch (Exception failure) { (failures ??= []).Add(failure); }
         }
+        if (failures is not null) { throw new AggregateException(failures); }
     }
 
-    private void InsertCurrentRange(int startIndex, int endIndex)
+    private sealed class RealizedItem(SceneSpatialEntry2D entry, SceneNode2D node, long templateVersion, SceneSpatialLease2D<object> payload)
     {
-        if (ItemsSource is IObservableList observable)
-        {
-            for (int index = startIndex; index < endIndex; index++)
-            {
-                InsertRealizedNode(index, observable[index]);
-            }
-
-            return;
-        }
-
-        if (ItemsSource is IList list)
-        {
-            for (int index = startIndex; index < endIndex; index++)
-            {
-                InsertRealizedNode(index, list[index]);
-            }
-
-            return;
-        }
-
-        int sourceIndex = 0;
-        if (ItemsSource is not null)
-        {
-            foreach (object? item in ItemsSource)
-            {
-                if (sourceIndex >= endIndex)
-                {
-                    break;
-                }
-
-                if (sourceIndex >= startIndex)
-                {
-                    InsertRealizedNode(sourceIndex, item);
-                }
-
-                sourceIndex++;
-            }
-        }
+        internal SceneSpatialEntry2D Entry = entry;
+        internal readonly SceneNode2D Node = node;
+        internal readonly long TemplateVersion = templateVersion;
+        internal readonly SceneSpatialLease2D<object> Payload = payload;
     }
 
-    private void InsertRealizedNode(int index, object? item)
+    private sealed class Request(SceneSimulationContext2D context, long templateVersion, long version)
+        : ScenePreparationRequest2D(context, version)
     {
-        SceneNode2D node = CreateNode(item, index);
-        realizedNodes.Insert(index, node);
-        LogicalChildren.Insert(index, node);
-        node.AttachSurface(Surface);
-        if (node.IsAttached)
-        {
-            UpdateCounters.CountAttached();
-        }
+        internal readonly long TemplateVersion = templateVersion;
     }
 
-    private int GetCurrentItemCount()
-    {
-        if (ItemsSource is IObservableList observable)
-        {
-            return observable.Count;
-        }
-
-        if (ItemsSource is ICollection collection)
-        {
-            return collection.Count;
-        }
-
-        int count = 0;
-        if (ItemsSource is not null)
-        {
-            foreach (object? _ in ItemsSource)
-            {
-                count++;
-            }
-        }
-
-        return count;
-    }
-
-    private static int DeltaCount(IReadOnlyList<object?> items, object? item) =>
-        items.Count > 0 || item is null
-            ? items.Count
-            : 1;
-
-    private sealed class TemplateCollection(Action changed) : Collection<ContentTemplate>
+    private sealed class TemplateCollection(Action changed, Action verifyAccess) : Collection<ContentTemplate>
     {
         protected override void InsertItem(int index, ContentTemplate item)
         {
+            verifyAccess();
             ArgumentNullException.ThrowIfNull(item);
             base.InsertItem(index, item);
             changed();
         }
-
         protected override void SetItem(int index, ContentTemplate item)
         {
+            verifyAccess();
             ArgumentNullException.ThrowIfNull(item);
             base.SetItem(index, item);
             changed();
         }
-
-        protected override void RemoveItem(int index)
-        {
-            base.RemoveItem(index);
-            changed();
-        }
-
-        protected override void ClearItems()
-        {
-            base.ClearItems();
-            changed();
-        }
+        protected override void RemoveItem(int index) { verifyAccess(); base.RemoveItem(index); changed(); }
+        protected override void ClearItems() { verifyAccess(); base.ClearItems(); changed(); }
     }
 }
 
 internal sealed class SceneItems2DUpdateCounters
 {
     internal int CreatedNodes { get; private set; }
-
     internal int AttachedNodes { get; private set; }
-
     internal int MovedNodes { get; private set; }
-
     internal int RemovedNodes { get; private set; }
-
-    internal SceneItems2DUpdateSnapshot Snapshot() =>
-        new(CreatedNodes, AttachedNodes, MovedNodes, RemovedNodes);
-
+    internal SceneItems2DUpdateSnapshot Snapshot() => new(CreatedNodes, AttachedNodes, MovedNodes, RemovedNodes);
     internal void CountCreated() => CreatedNodes++;
-
     internal void CountAttached() => AttachedNodes++;
-
+    internal void CountMoved() => MovedNodes++;
     internal void CountRemoved() => RemovedNodes++;
 }
 
-internal readonly record struct SceneItems2DUpdateSnapshot(
-    int CreatedNodes,
-    int AttachedNodes,
-    int MovedNodes,
-    int RemovedNodes);
+internal readonly record struct SceneItems2DUpdateSnapshot(int CreatedNodes, int AttachedNodes, int MovedNodes, int RemovedNodes);

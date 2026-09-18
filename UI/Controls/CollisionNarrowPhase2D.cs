@@ -137,6 +137,7 @@ internal static class CollisionNarrowPhase2D
 
         float lower = 0;
         float fraction = 0;
+        Vector2 approachNormal = Vector2.Zero;
         for (int iteration = 0; iteration < CastIterations; iteration++)
         {
             ColliderGeometry2D translated = Translate(moving, displacement * fraction);
@@ -153,6 +154,7 @@ internal static class CollisionNarrowPhase2D
                     if (middleDistance.Intersects || middleDistance.Distance <= Epsilon)
                     {
                         upper = middle;
+                        distance = middleDistance;
                     }
                     else
                     {
@@ -162,11 +164,14 @@ internal static class CollisionNarrowPhase2D
 
                 fraction = upper;
                 ColliderGeometry2D atImpact = Translate(moving, displacement * fraction);
-                if (!TryContact(atImpact, target, out NarrowPhaseContact2D impact))
+                // Impact has an approach direction; a static MTV's axis tie-break
+                // does not. Keep analytic surface normals, but resolve a polygon
+                // corner using the separating direction that advanced this cast.
+                if (!TryFastContact(atImpact, target, out NarrowPhaseContact2D impact, out _, approachNormal))
                 {
-                    Vector2 normal = GetFallbackNormal(atImpact, target, distance.Normal);
+                    Vector2 normal = approachNormal != Vector2.Zero ? approachNormal : distance.Normal;
                     impact = new NarrowPhaseContact2D(
-                        Support(target, normal, Vector2.Zero),
+                        distance.SecondPoint,
                         normal,
                         0,
                         0);
@@ -195,6 +200,7 @@ internal static class CollisionNarrowPhase2D
             }
 
             lower = fraction;
+            approachNormal = distance.Normal;
             fraction += advance;
             if (fraction > 1 + Epsilon)
             {
@@ -222,7 +228,8 @@ internal static class CollisionNarrowPhase2D
         ColliderGeometry2D first,
         ColliderGeometry2D second,
         out NarrowPhaseContact2D contact,
-        out bool handled)
+        out bool handled,
+        Vector2? preferredAxis = null)
     {
         // A segment has finite endpoints but no interior. Polygon SAT assumes
         // area; the existing support-mapped distance path handles both endpoints.
@@ -265,7 +272,8 @@ internal static class CollisionNarrowPhase2D
             return TryPolygonContact(
                 GetWorldPolygonVertices(first),
                 GetWorldPolygonVertices(second),
-                out contact);
+                out contact,
+                preferredAxis);
         }
 
         if (firstCircle && secondPolygon)
@@ -298,14 +306,15 @@ internal static class CollisionNarrowPhase2D
     private static bool TryPolygonContact(
         Vector2[] first,
         Vector2[] second,
-        out NarrowPhaseContact2D contact)
+        out NarrowPhaseContact2D contact,
+        Vector2? preferredAxis)
     {
         Vector2 firstCenter = GetCentroid(first);
         Vector2 secondCenter = GetCentroid(second);
         float minimumOverlap = float.PositiveInfinity;
         Vector2 minimumAxis = Vector2.UnitX;
-        if (!TestPolygonAxes(first, second, firstCenter, secondCenter, ref minimumOverlap, ref minimumAxis) ||
-            !TestPolygonAxes(second, first, firstCenter, secondCenter, ref minimumOverlap, ref minimumAxis))
+        if (!TestPolygonAxes(first, second, firstCenter, secondCenter, ref minimumOverlap, ref minimumAxis, preferredAxis) ||
+            !TestPolygonAxes(second, first, firstCenter, secondCenter, ref minimumOverlap, ref minimumAxis, preferredAxis))
         {
             contact = default;
             return false;
@@ -327,7 +336,8 @@ internal static class CollisionNarrowPhase2D
         Vector2 firstCenter,
         Vector2 secondCenter,
         ref float minimumOverlap,
-        ref Vector2 minimumAxis)
+        ref Vector2 minimumAxis,
+        Vector2? preferredAxis)
     {
         for (int index = 0; index < axisSource.Length; index++)
         {
@@ -351,7 +361,7 @@ internal static class CollisionNarrowPhase2D
                 axis = -axis;
             }
 
-            if (IsPreferredAxis(overlap, axis, minimumOverlap, minimumAxis))
+            if (IsPreferredAxis(overlap, axis, minimumOverlap, minimumAxis, preferredAxis))
             {
                 minimumOverlap = MathF.Max(0, overlap);
                 minimumAxis = axis;
@@ -463,7 +473,8 @@ internal static class CollisionNarrowPhase2D
         float overlap,
         Vector2 axis,
         float currentOverlap,
-        Vector2 currentAxis)
+        Vector2 currentAxis,
+        Vector2? preferredAxis = null)
     {
         if (overlap < currentOverlap - Epsilon)
         {
@@ -471,7 +482,9 @@ internal static class CollisionNarrowPhase2D
         }
 
         return MathF.Abs(overlap - currentOverlap) <= Epsilon &&
-            MathF.Abs(axis.X) > MathF.Abs(currentAxis.X) + Epsilon;
+            (preferredAxis is Vector2 preferred
+                ? Vector2.Dot(axis, preferred) > Vector2.Dot(currentAxis, preferred) + Epsilon
+                : MathF.Abs(axis.X) > MathF.Abs(currentAxis.X) + Epsilon);
     }
 
     private static DistanceResult GetDistance(
@@ -511,7 +524,10 @@ internal static class CollisionNarrowPhase2D
             direction = -closest;
             SupportVertex support = GetMinkowskiSupport(first, second, direction);
             float improvement = Vector2.Dot(support.Point, direction) - Vector2.Dot(closest, direction);
-            if (improvement <= Epsilon * MathF.Max(1, direction.Length()) ||
+            // Improvement is scaled by the search vector's length. Compare its
+            // projected distance with the same scene-unit epsilon near contact;
+            // clamping the length to one admits a much larger geometric error.
+            if (improvement <= Epsilon * direction.Length() ||
                 simplex.Any(vertex => Vector2.DistanceSquared(vertex.Point, support.Point) <= Epsilon * Epsilon))
             {
                 float distance = MathF.Sqrt(distanceSquared);
@@ -554,7 +570,7 @@ internal static class CollisionNarrowPhase2D
 
         if (simplex.Count == 2)
         {
-            ClosestOnSegment(simplex[0], simplex[1], out float weight, out closest, out witnessFirst, out witnessSecond);
+            ClosestOnSegment(simplex[0], simplex[1], out double weight, out closest, out witnessFirst, out witnessSecond);
             if (weight <= Epsilon)
             {
                 simplex.RemoveAt(1);
@@ -570,11 +586,12 @@ internal static class CollisionNarrowPhase2D
         SupportVertex a = simplex[0];
         SupportVertex b = simplex[1];
         SupportVertex c = simplex[2];
-        Vector2 ab = b.Point - a.Point;
-        Vector2 ac = c.Point - a.Point;
-        Vector2 ap = -a.Point;
-        float d1 = Vector2.Dot(ab, ap);
-        float d2 = Vector2.Dot(ac, ap);
+        double abX = (double)b.Point.X - a.Point.X;
+        double abY = (double)b.Point.Y - a.Point.Y;
+        double acX = (double)c.Point.X - a.Point.X;
+        double acY = (double)c.Point.Y - a.Point.Y;
+        double d1 = -(abX * a.Point.X) - (abY * a.Point.Y);
+        double d2 = -(acX * a.Point.X) - (acY * a.Point.Y);
         if (d1 <= 0 && d2 <= 0)
         {
             simplex.Clear();
@@ -585,9 +602,8 @@ internal static class CollisionNarrowPhase2D
             return false;
         }
 
-        Vector2 bp = -b.Point;
-        float d3 = Vector2.Dot(ab, bp);
-        float d4 = Vector2.Dot(ac, bp);
+        double d3 = -(abX * b.Point.X) - (abY * b.Point.Y);
+        double d4 = -(acX * b.Point.X) - (acY * b.Point.Y);
         if (d3 >= 0 && d4 <= d3)
         {
             simplex.Clear();
@@ -598,17 +614,15 @@ internal static class CollisionNarrowPhase2D
             return false;
         }
 
-        float vc = (d1 * d4) - (d3 * d2);
+        double vc = (d1 * d4) - (d3 * d2);
         if (vc <= 0 && d1 >= 0 && d3 <= 0)
         {
-            float weight = d1 / (d1 - d3);
-            SetSegment(simplex, a, b, weight, out closest, out witnessFirst, out witnessSecond);
+            SetSegment(simplex, a, b, out closest, out witnessFirst, out witnessSecond);
             return false;
         }
 
-        Vector2 cp = -c.Point;
-        float d5 = Vector2.Dot(ab, cp);
-        float d6 = Vector2.Dot(ac, cp);
+        double d5 = -(abX * c.Point.X) - (abY * c.Point.Y);
+        double d6 = -(acX * c.Point.X) - (acY * c.Point.Y);
         if (d6 >= 0 && d5 <= d6)
         {
             simplex.Clear();
@@ -619,27 +633,25 @@ internal static class CollisionNarrowPhase2D
             return false;
         }
 
-        float vb = (d5 * d2) - (d1 * d6);
+        double vb = (d5 * d2) - (d1 * d6);
         if (vb <= 0 && d2 >= 0 && d6 <= 0)
         {
-            float weight = d2 / (d2 - d6);
-            SetSegment(simplex, a, c, weight, out closest, out witnessFirst, out witnessSecond);
+            SetSegment(simplex, a, c, out closest, out witnessFirst, out witnessSecond);
             return false;
         }
 
-        float va = (d3 * d6) - (d5 * d4);
-        float d43 = d4 - d3;
-        float d56 = d5 - d6;
+        double va = (d3 * d6) - (d5 * d4);
+        double d43 = d4 - d3;
+        double d56 = d5 - d6;
         if (va <= 0 && d43 >= 0 && d56 >= 0)
         {
-            float weight = d43 / (d43 + d56);
-            SetSegment(simplex, b, c, weight, out closest, out witnessFirst, out witnessSecond);
+            SetSegment(simplex, b, c, out closest, out witnessFirst, out witnessSecond);
             return false;
         }
 
-        float denominator = 1 / (va + vb + vc);
-        float v = vb * denominator;
-        float w = vc * denominator;
+        double denominator = 1 / (va + vb + vc);
+        float v = (float)(vb * denominator);
+        float w = (float)(vc * denominator);
         float u = 1 - v - w;
         closest = Vector2.Zero;
         witnessFirst = (a.First * u) + (b.First * v) + (c.First * w);
@@ -650,26 +662,41 @@ internal static class CollisionNarrowPhase2D
     private static void ClosestOnSegment(
         SupportVertex first,
         SupportVertex second,
-        out float weight,
+        out double weight,
         out Vector2 closest,
         out Vector2 witnessFirst,
         out Vector2 witnessSecond)
     {
-        Vector2 segment = second.Point - first.Point;
-        float lengthSquared = segment.LengthSquared();
+        double dx = (double)second.Point.X - first.Point.X;
+        double dy = (double)second.Point.Y - first.Point.Y;
+        double lengthSquared = (dx * dx) + (dy * dy);
         weight = lengthSquared <= Epsilon * Epsilon
             ? 0
-            : Math.Clamp(-Vector2.Dot(first.Point, segment) / lengthSquared, 0, 1);
-        closest = Vector2.Lerp(first.Point, second.Point, weight);
-        witnessFirst = Vector2.Lerp(first.First, second.First, weight);
-        witnessSecond = Vector2.Lerp(first.Second, second.Second, weight);
+            : Math.Clamp(-((first.Point.X * dx) + (first.Point.Y * dy)) / lengthSquared, 0, 1);
+        if (weight <= 0)
+        {
+            closest = first.Point;
+        }
+        else if (weight >= 1)
+        {
+            closest = second.Point;
+        }
+        else
+        {
+            // Interpolating distant endpoints in float loses the tiny separating
+            // vector near impact. Project onto the edge's perpendicular instead,
+            // with double intermediates for cancellation and simplex predicates.
+            double perpendicular = ((first.Point.Y * dx) - (first.Point.X * dy)) / lengthSquared;
+            closest = new Vector2((float)(-dy * perpendicular), (float)(dx * perpendicular));
+        }
+        witnessFirst = InterpolateWitness(first.First, second.First, weight);
+        witnessSecond = InterpolateWitness(first.Second, second.Second, weight);
     }
 
     private static void SetSegment(
         List<SupportVertex> simplex,
         SupportVertex first,
         SupportVertex second,
-        float weight,
         out Vector2 closest,
         out Vector2 witnessFirst,
         out Vector2 witnessSecond)
@@ -677,10 +704,12 @@ internal static class CollisionNarrowPhase2D
         simplex.Clear();
         simplex.Add(first);
         simplex.Add(second);
-        closest = Vector2.Lerp(first.Point, second.Point, weight);
-        witnessFirst = Vector2.Lerp(first.First, second.First, weight);
-        witnessSecond = Vector2.Lerp(first.Second, second.Second, weight);
+        ClosestOnSegment(first, second, out _, out closest, out witnessFirst, out witnessSecond);
     }
+
+    private static Vector2 InterpolateWitness(Vector2 first, Vector2 second, double weight) => new(
+        (float)((first.X * (1 - weight)) + (second.X * weight)),
+        (float)((first.Y * (1 - weight)) + (second.Y * weight)));
 
     private static bool TryEpa(
         ColliderGeometry2D first,

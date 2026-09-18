@@ -39,10 +39,13 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Theory]
-    [InlineData("System.Collections.ObjectModel.ObservableCollection<string>")]
-    [InlineData("System.Collections.Generic.IReadOnlyList<string>")]
-    [InlineData("string[]")]
-    public void SceneItemsAcceptsOneWayReferenceAssignableCollection(string sourceType)
+    [InlineData("Cerneala.UI.Controls.ISceneSpatialSource2D<object>", true)]
+    [InlineData("Cerneala.UI.Controls.SceneSpatialSource2D<object>", true)]
+    [InlineData("Cerneala.UI.Controls.ISceneSpatialSource2D<string>", false)]
+    [InlineData("System.Collections.ObjectModel.ObservableCollection<string>", false)]
+    [InlineData("System.Collections.Generic.IReadOnlyList<string>", false)]
+    [InlineData("string[]", false)]
+    public void SceneItemsOneWayBindingsRequireReferenceAssignableSpatialSource(string sourceType, bool accepted)
     {
         string source = $$"""
             namespace TestInput;
@@ -64,6 +67,13 @@ public sealed partial class UiMarkupGeneratorTests
             </RenderSurface2D>
             """;
         GeneratorRunResult result = RunGeneratorWithInput("WorldBindings.crn", markup, source, out Compilation compilation);
+        if (!accepted)
+        {
+            Diagnostic error = Assert.Single(result.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error));
+            Assert.Equal("CERNEALAUI007", error.Id);
+            Assert.Contains("not compatible", error.GetMessage());
+            return;
+        }
         Assert.DoesNotContain(result.Diagnostics, d => d.Severity == DiagnosticSeverity.Error);
         using MemoryStream stream = new();
         var emit = compilation.Emit(stream);
@@ -77,7 +87,7 @@ public sealed partial class UiMarkupGeneratorTests
             namespace TestInput;
             public sealed class WorldState : System.ComponentModel.INotifyPropertyChanged
             {
-                public System.Collections.ObjectModel.ObservableCollection<string> Items { get; set; } = new();
+                public Cerneala.UI.Controls.SceneSpatialSource2D<object> Items { get; set; } = null!;
                 public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
             }
             """;

@@ -33,15 +33,15 @@ public readonly record struct BackdropFrameMetadata
                 nameof(PixelScale),
                 "Backdrop pixel scale must be finite and greater than zero.");
         }
-        if (!Enum.IsDefined(ColorProfile))
+        if (!PrismEnumValidation.IsDefined(ColorProfile))
         {
             throw new ArgumentOutOfRangeException(nameof(ColorProfile));
         }
-        if (!Enum.IsDefined(PixelFormat))
+        if (!PrismEnumValidation.IsDefined(PixelFormat))
         {
             throw new ArgumentOutOfRangeException(nameof(PixelFormat));
         }
-        if (!Enum.IsDefined(AlphaMode))
+        if (!PrismEnumValidation.IsDefined(AlphaMode))
         {
             throw new ArgumentOutOfRangeException(nameof(AlphaMode));
         }

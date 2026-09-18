@@ -9,6 +9,62 @@ namespace Cerneala.Drawing.Prism.Graph;
 
 internal sealed class PrismGraphBuilder
 {
+    internal static ImmutableArray<PrismGraphParameter> SnapshotFilterParameters(PrismFilterState state)
+    {
+        int stableId = (int)state.Filter;
+        PrismCatalogEntryDescriptor entry = PrismCatalogRuntime.GetEntry(stableId);
+        ImmutableArray<PrismGraphParameter>.Builder parameters =
+            ImmutableArray.CreateBuilder<PrismGraphParameter>(entry.Properties.Length);
+        for (int index = 0; index < entry.Properties.Length; index++)
+        {
+            PrismCatalogPropertyDescriptor property = entry.Properties[index];
+            parameters.Add(SnapshotFilterParameter(stableId, index, property, state));
+        }
+        return parameters.MoveToImmutable();
+    }
+
+    private static PrismGraphParameter SnapshotFilterParameter(
+        int stableId,
+        int index,
+        PrismCatalogPropertyDescriptor property,
+        PrismFilterState state)
+    {
+        return property.ValueType switch
+        {
+            PrismCatalogValueType.Boolean => new PrismGraphParameter(
+                index,
+                PrismGraphParameterValueKind.Boolean,
+                booleanValue: state.GetValue(new PrismParameterKey<bool>(stableId, property.TypeSlot))),
+            PrismCatalogValueType.Integer => new PrismGraphParameter(
+                index,
+                PrismGraphParameterValueKind.Integer,
+                integerValue: state.GetValue(new PrismParameterKey<int>(stableId, property.TypeSlot))),
+            PrismCatalogValueType.Number => new PrismGraphParameter(
+                index,
+                PrismGraphParameterValueKind.Number,
+                numberValue: state.GetValue(new PrismParameterKey<float>(stableId, property.TypeSlot))),
+            PrismCatalogValueType.Color => new PrismGraphParameter(
+                index,
+                PrismGraphParameterValueKind.Color,
+                colorValue: state.GetValue(new PrismParameterKey<Color>(stableId, property.TypeSlot))),
+            PrismCatalogValueType.Vector => new PrismGraphParameter(
+                index,
+                PrismGraphParameterValueKind.Vector,
+                vectorValue: state.GetValue(new PrismParameterKey<Vector4>(stableId, property.TypeSlot))),
+            PrismCatalogValueType.Symbol => new PrismGraphParameter(
+                index,
+                PrismGraphParameterValueKind.Symbol,
+                integerValue: state.GetValue(new PrismParameterKey<int>(stableId, property.TypeSlot))),
+            PrismCatalogValueType.Resource => new PrismGraphParameter(
+                index,
+                PrismGraphParameterValueKind.Resource,
+                resourceValue: state.GetValue(
+                    new PrismParameterKey<PrismResourceId>(stableId, property.TypeSlot))),
+            _ => throw new InvalidOperationException(
+                $"Unsupported Prism catalog value type '{property.ValueType}'.")
+        };
+    }
+
     private ImmutableArray<PrismAnalyzedScope> previousScopes;
     private PrismBackdropFrameDescriptor? previousBackdropFrame;
     private PrismGraph? previousGraph;
@@ -730,7 +786,7 @@ internal sealed class PrismGraphBuilder
                 }
 
                 ImmutableArray<PrismGraphParameter> parameters =
-                    SnapshotParameters(state.Filter, state);
+                    SnapshotFilterParameters(state);
                 PrismNeighborhoodPlan? neighborhoodPlan = null;
                 PrismResamplingPlan? resamplingPlan = null;
                 PrismCatalogFilterPlan? catalogFilterPlan = null;
@@ -982,7 +1038,7 @@ internal sealed class PrismGraphBuilder
             {
                 throw new InvalidOperationException("Mask definition has no runtime state.");
             }
-            if (!Enum.IsDefined(typeof(PrismMaskChannel), state.Channel))
+            if (!PrismEnumValidation.IsDefined(state.Channel))
             {
                 throw new InvalidOperationException($"Unknown mask channel '{state.Channel}'.");
             }
@@ -1295,7 +1351,7 @@ internal sealed class PrismGraphBuilder
             PrismColorProfile colorProfile = state.WorkingColorProfile;
             float globalLightAngle = state.GlobalLightAngle;
             float globalLightAltitude = state.GlobalLightAltitude;
-            if (!Enum.IsDefined(typeof(PrismColorProfile), colorProfile))
+            if (!PrismEnumValidation.IsDefined(colorProfile))
             {
                 throw Failure(null, $"Unknown working color profile '{colorProfile}'.");
             }
@@ -1326,11 +1382,11 @@ internal sealed class PrismGraphBuilder
                 throw new InvalidOperationException(
                     $"Unknown blend channels '{blendChannels}'.");
             }
-            if (!Enum.IsDefined(typeof(PrismKnockout), knockout))
+            if (!PrismEnumValidation.IsDefined(knockout))
             {
                 throw new InvalidOperationException($"Unknown knockout mode '{knockout}'.");
             }
-            if (!Enum.IsDefined(typeof(PrismBlendIfChannel), blendIfChannel))
+            if (!PrismEnumValidation.IsDefined(blendIfChannel))
             {
                 throw new InvalidOperationException(
                     $"Unknown Blend If channel '{blendIfChannel}'.");
@@ -1354,21 +1410,6 @@ internal sealed class PrismGraphBuilder
                 dissolveSeed);
         }
 
-        private ImmutableArray<PrismGraphParameter> SnapshotParameters(
-            PrismFilterId filter,
-            PrismFilterState state)
-        {
-            int stableId = (int)filter;
-            PrismCatalogEntryDescriptor entry = PrismCatalogRuntime.GetEntry(stableId);
-            ImmutableArray<PrismGraphParameter>.Builder parameters =
-                ImmutableArray.CreateBuilder<PrismGraphParameter>(entry.Properties.Length);
-            for (int index = 0; index < entry.Properties.Length; index++)
-            {
-                PrismCatalogPropertyDescriptor property = entry.Properties[index];
-                parameters.Add(SnapshotParameter(stableId, index, property, state));
-            }
-            return parameters.MoveToImmutable();
-        }
 
         private ImmutableArray<PrismGraphParameter> SnapshotParameters(
             PrismStyleId style,
@@ -1386,47 +1427,6 @@ internal sealed class PrismGraphBuilder
             return parameters.MoveToImmutable();
         }
 
-        private static PrismGraphParameter SnapshotParameter(
-            int stableId,
-            int index,
-            PrismCatalogPropertyDescriptor property,
-            PrismFilterState state)
-        {
-            return property.ValueType switch
-            {
-                PrismCatalogValueType.Boolean => new PrismGraphParameter(
-                    index,
-                    PrismGraphParameterValueKind.Boolean,
-                    booleanValue: state.GetValue(new PrismParameterKey<bool>(stableId, property.TypeSlot))),
-                PrismCatalogValueType.Integer => new PrismGraphParameter(
-                    index,
-                    PrismGraphParameterValueKind.Integer,
-                    integerValue: state.GetValue(new PrismParameterKey<int>(stableId, property.TypeSlot))),
-                PrismCatalogValueType.Number => new PrismGraphParameter(
-                    index,
-                    PrismGraphParameterValueKind.Number,
-                    numberValue: state.GetValue(new PrismParameterKey<float>(stableId, property.TypeSlot))),
-                PrismCatalogValueType.Color => new PrismGraphParameter(
-                    index,
-                    PrismGraphParameterValueKind.Color,
-                    colorValue: state.GetValue(new PrismParameterKey<Color>(stableId, property.TypeSlot))),
-                PrismCatalogValueType.Vector => new PrismGraphParameter(
-                    index,
-                    PrismGraphParameterValueKind.Vector,
-                    vectorValue: state.GetValue(new PrismParameterKey<Vector4>(stableId, property.TypeSlot))),
-                PrismCatalogValueType.Symbol => new PrismGraphParameter(
-                    index,
-                    PrismGraphParameterValueKind.Symbol,
-                    integerValue: state.GetValue(new PrismParameterKey<int>(stableId, property.TypeSlot))),
-                PrismCatalogValueType.Resource => new PrismGraphParameter(
-                    index,
-                    PrismGraphParameterValueKind.Resource,
-                    resourceValue: state.GetValue(
-                        new PrismParameterKey<PrismResourceId>(stableId, property.TypeSlot))),
-                _ => throw new InvalidOperationException(
-                    $"Unsupported Prism catalog value type '{property.ValueType}'.")
-            };
-        }
 
         private static PrismGraphParameter SnapshotParameter(
             int stableId,
@@ -1542,7 +1542,7 @@ internal sealed class PrismGraphBuilder
             PrismBlendMode blendMode,
             bool allowPassThrough)
         {
-            if (!Enum.IsDefined(typeof(PrismBlendMode), blendMode) ||
+            if (!PrismEnumValidation.IsDefined(blendMode) ||
                 (!allowPassThrough && blendMode == PrismBlendMode.PassThrough))
             {
                 throw new InvalidOperationException($"Unsupported blend mode '{blendMode}'.");

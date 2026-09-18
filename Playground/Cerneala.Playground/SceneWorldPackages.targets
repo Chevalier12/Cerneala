@@ -1,0 +1,33 @@
+<Project>
+  <!-- These two packages are build-owned outputs, not editor sources. The common
+       compiler remains create-only; replacement is confined to this obj subtree. -->
+  <PropertyGroup>
+    <_ScenePackageRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/obj/SceneWorldPackages/$(Configuration)/$(TargetFramework)'))</_ScenePackageRoot>
+    <_ScenePackageBoundary>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/obj/SceneWorldPackages/'))</_ScenePackageBoundary>
+  </PropertyGroup>
+  <ItemGroup>
+    <_SceneWorldInput Include="$(MSBuildProjectDirectory)/SceneWorldAssets/*.tmj;$(MSBuildProjectDirectory)/SceneWorldAssets/*.ldtk;$(MSBuildProjectDirectory)/SceneWorldAssets/*.png" />
+  </ItemGroup>
+  <Target Name="PrepareSceneWorldPackages" DependsOnTargets="ResolveProjectReferences"
+          Condition="'$(DesignTimeBuild)' != 'true'"
+          Inputs="@(_SceneWorldInput);@(_ScenePackageCompiler);@(_ScenePackageCompiler->'%(RootDir)%(Directory)Cerneala.Scene2D.Packages.dll');@(_ScenePackageCompiler->'%(RootDir)%(Directory)Cerneala.Scene2D.Importers.dll');@(_ScenePackageCompiler->'%(RootDir)%(Directory)Cerneala.dll');$(MSBuildThisFileFullPath)"
+          Outputs="$(_ScenePackageRoot)/tiled/catalog.c2d;$(_ScenePackageRoot)/tiled/payloads.c2d;$(_ScenePackageRoot)/tiled/assets/world-atlas.png;$(_ScenePackageRoot)/ldtk/catalog.c2d;$(_ScenePackageRoot)/ldtk/payloads.c2d;$(_ScenePackageRoot)/ldtk/assets/world-atlas.png">
+    <Error Condition="!$(_ScenePackageRoot.StartsWith('$(_ScenePackageBoundary)')) or '$(_ScenePackageRoot)' == '$(_ScenePackageBoundary)'"
+           Text="Scene World package outputs must remain inside the dedicated project obj subtree." />
+    <Error Condition="'@(_ScenePackageCompiler)' == ''" Text="The build-time Scene2D package compiler was not resolved." />
+    <RemoveDir Directories="$(_ScenePackageRoot)/tiled;$(_ScenePackageRoot)/ldtk" />
+    <MakeDir Directories="$(_ScenePackageRoot)" />
+    <Exec Command="dotnet &quot;@(_ScenePackageCompiler)&quot; tiled &quot;$(MSBuildProjectDirectory)/SceneWorldAssets/village.tmj&quot; &quot;$(MSBuildProjectDirectory)/SceneWorldAssets&quot; &quot;$(_ScenePackageRoot)/tiled&quot;" />
+    <Exec Command="dotnet &quot;@(_ScenePackageCompiler)&quot; ldtk &quot;$(MSBuildProjectDirectory)/SceneWorldAssets/village.ldtk&quot; &quot;$(MSBuildProjectDirectory)/SceneWorldAssets&quot; &quot;$(_ScenePackageRoot)/ldtk&quot;" />
+  </Target>
+  <Target Name="IncludeSceneWorldPackages" BeforeTargets="AssignTargetPaths"
+          DependsOnTargets="PrepareSceneWorldPackages" Condition="'$(DesignTimeBuild)' != 'true'">
+    <ItemGroup>
+      <_SceneWorldPackageFile Include="$(_ScenePackageRoot)/**/*" />
+      <Content Include="@(_SceneWorldPackageFile)"
+               Link="SceneWorldPackages/%(_SceneWorldPackageFile.RecursiveDir)%(_SceneWorldPackageFile.Filename)%(_SceneWorldPackageFile.Extension)"
+               CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+      <FileWrites Include="$(_ScenePackageRoot)/**/*" />
+    </ItemGroup>
+  </Target>
+</Project>

@@ -9,8 +9,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Cerneala.csproj" />
-    <ProjectReference Include="..\..\Cerneala.Scene2D.Importers\Cerneala.Scene2D.Importers.csproj" />
-    <Content Include="SceneWorldAssets\*.tmj;SceneWorldAssets\*.ldtk;SceneWorldAssets\*.png" CopyToOutputDirectory="PreserveNewest" />
+    <ProjectReference Include="..\..\Cerneala.Scene2D.Packages\Cerneala.Scene2D.Packages.csproj" />
+    <ProjectReference Include="..\..\Tools\Cerneala.Scene2D.PackageCompiler\Cerneala.Scene2D.PackageCompiler.csproj"
+                      ReferenceOutputAssembly="false" Private="false" OutputItemType="_ScenePackageCompiler" />
     <ProjectReference Include="..\..\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj" />
     <ProjectReference Include="..\..\Cerneala.SourceGen\Cerneala.SourceGen.csproj"
                       OutputItemType="Analyzer"
@@ -22,4 +23,5 @@
              CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <Import Project="SceneWorldPackages.targets" />
 </Project>

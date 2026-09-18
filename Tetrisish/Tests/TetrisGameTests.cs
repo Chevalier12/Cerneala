@@ -52,6 +52,9 @@ public sealed class TetrisGameTests
             surface,
             new DrawRect(0, 0, 300, 600));
 
+        Assert.True(surface.PresentationState == RenderSurface2DPresentationState.Ready,
+            surface.PresentationError?.ToString());
+
         int boardBorderIndex = commands
             .Select((command, index) => (command, index))
             .Last(entry => entry.command.Kind == DrawCommandKind.DrawRectangle)
@@ -62,6 +65,23 @@ public sealed class TetrisGameTests
             .index;
         Assert.True(boardBorderIndex < firstSceneImageIndex);
 
+        root.VisualChildren.Remove(window);
+    }
+
+    [Fact]
+    public void ActivePieceDeclaresItsLocalPrismInputWhenDimensionsChange()
+    {
+        (UIRoot root, MainWindow window, Sprite2D sprite) = CreateActivePieceWindow();
+        Assert.Equal(new DrawRect(0, 0, 4, 4), sprite.PrismInputDomain);
+        TetrisGameSurface surface = DescendantsAndSelf(window).OfType<TetrisGameSurface>().Single();
+        TestImage image = new(256, 448);
+        surface.SceneModel.UpdateActivePiece(image, image, new(0, 0, 64, 64),
+            new(3, 2, 2, 3), Color.White, new(3, 16, 2, 3), visible: true);
+        root.ProcessFrame();
+
+        Assert.Equal(new DrawRect(0, 0, 2, 3), sprite.PrismInputDomain);
+        Assert.True(surface.PresentationState == RenderSurface2DPresentationState.Ready,
+            surface.PresentationError?.ToString());
         root.VisualChildren.Remove(window);
     }
 
@@ -339,7 +359,7 @@ public sealed class TetrisGameTests
     }
 
     [Fact]
-    public void LineClearedFragmentsRemainLockedSpriteModels()
+    public async Task LineClearedFragmentsRemainLockedSpriteModels()
     {
         TetrisGameSurface surface = new();
         TetrisGame game = Assert.IsType<TetrisGame>(
@@ -375,9 +395,10 @@ public sealed class TetrisGameTests
                 System.Reflection.BindingFlags.NonPublic)!
             .Invoke(surface, null);
 
-        TetrisSpriteModel[] sprites = surface.SceneModel.LockedPieces
-            .Cast<TetrisSpriteModel>()
-            .ToArray();
+        await using SceneSpatialResidency2D<object> residency = new(surface.SceneModel.LockedPieces);
+        using SceneSpatialRegion2D<object> region = await residency.AcquireAsync(new DrawRect(0, 0, 10, 20));
+        TetrisSpriteModel[] sprites = region.Entries
+            .Select(entry => Assert.IsType<TetrisSpriteModel>(region.GetValue(entry.Id))).ToArray();
         Assert.Equal(2, sprites.Length);
         Assert.All(sprites, sprite => Assert.Same(atlas, sprite.Image.DirectImage));
         Assert.Equal(

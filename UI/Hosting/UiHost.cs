@@ -179,18 +179,35 @@ public sealed class UiHost
                 currentRoot.ProcessFrameCore(null, default, stats, MotionFrameReason.Input);
                 inputPhases = currentRoot.Scheduler.LastFrameTiming;
             }
-            else if (!stats.HasWork)
+            TimeSpan inputProcessingTime = Stopwatch.GetElapsedTime(updatePhaseStarted);
+
+            // Cursor hit testing can observe newly prepared scene inputs and
+            // invalidate presentation. Resolve it before the final commit;
+            // platform publication still receives the committed frame below.
+            updatePhaseStarted = Stopwatch.GetTimestamp();
+            (ICursorService? platformCursor, CursorShape cursorShape) = ResolveCursor(currentRoot, inputFrame);
+            TimeSpan cursorPublicationTime = Stopwatch.GetElapsedTime(updatePhaseStarted);
+            if (currentRoot.Scheduler.HasWork)
+            {
+                // Cursor resolution can acquire a new scene node's image and
+                // publish its render dependencies. Process that input work
+                // before composing local caches; do not drain Relay again or
+                // replay input, cursor resolution, or render-time advancement.
+                updatePhaseStarted = Stopwatch.GetTimestamp();
+                currentRoot.ProcessFrameCore(null, default, stats, MotionFrameReason.Input);
+                inputProcessingTime += Stopwatch.GetElapsedTime(updatePhaseStarted);
+                inputPhases = AddPhaseTiming(inputPhases, currentRoot.Scheduler.LastFrameTiming);
+            }
+            if (!stats.HasWork)
             {
                 stats.CountNoWorkFrame();
             }
-            TimeSpan inputProcessingTime = Stopwatch.GetElapsedTime(updatePhaseStarted);
-
             updatePhaseStarted = Stopwatch.GetTimestamp();
             currentRoot.RetainedRenderer.Commit(currentRoot);
             TimeSpan retainedCommitTime = Stopwatch.GetElapsedTime(updatePhaseStarted);
             updatePhaseStarted = Stopwatch.GetTimestamp();
-            PublishCursor(currentRoot, inputFrame);
-            TimeSpan cursorPublicationTime = Stopwatch.GetElapsedTime(updatePhaseStarted);
+            platformCursor?.SetCursor(cursorShape);
+            cursorPublicationTime += Stopwatch.GetElapsedTime(updatePhaseStarted);
             LastFrame = new UiFrame(frameTime, this.viewport, inputFrame, stats);
             LastFrame.DiagnosticsTiming = new UiFrameTiming(
                 default,
@@ -456,17 +473,27 @@ public sealed class UiHost
         needsInitialFrame = false;
     }
 
-    private void PublishCursor(UIRoot currentRoot, InputFrame inputFrame)
+    private (ICursorService? Platform, CursorShape Shape) ResolveCursor(UIRoot currentRoot, InputFrame inputFrame)
     {
         ICursorService? platformCursor = currentRoot.PlatformServices.Cursor;
         if (platformCursor is null)
         {
-            return;
+            return (null, CursorShape.Arrow);
         }
 
         Cursor cursor = cursorService.Resolve(currentRoot, inputFrame.Pointer.X, inputFrame.Pointer.Y);
-        platformCursor.SetCursor(ToCursorShape(cursor));
+        return (platformCursor, ToCursorShape(cursor));
     }
+
+    private static FramePhaseTiming AddPhaseTiming(FramePhaseTiming first, FramePhaseTiming second) => new(
+        first.InheritedProperties + second.InheritedProperties,
+        first.CommandState + second.CommandState,
+        first.Aspect + second.Aspect,
+        first.Measure + second.Measure,
+        first.Arrange + second.Arrange,
+        first.Render + second.Render,
+        first.HitTest + second.HitTest,
+        first.Motion + second.Motion);
 
     private static CursorShape ToCursorShape(Cursor cursor)
     {

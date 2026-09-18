@@ -13,6 +13,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Cerneala.Tests.Scene2DImporters/Cerneala.Tests.Scene2DImporters.csproj" />
+    <Project Path="tests/Cerneala.Tests.Scene2DPackages/Cerneala.Tests.Scene2DPackages.csproj" />
     <Project Path="tests/Cerneala.Tests.Language/Cerneala.Tests.Language.csproj" />
     <Project Path="tests/Cerneala.Tests.LanguageServer/Cerneala.Tests.LanguageServer.csproj" />
     <Project Path="tests/Cerneala.Tests.PreviewHost/Cerneala.Tests.PreviewHost.csproj" />
@@ -31,9 +32,11 @@
     <Project Path="Tools/PrismAudit/PrismAudit.csproj" />
     <Project Path="Tools/Cerneala.SdlShaderCompiler/Cerneala.SdlShaderCompiler.csproj" />
     <Project Path="Tools/Cerneala.SvgAssetCompiler/Cerneala.SvgAssetCompiler.csproj" />
+    <Project Path="Tools/Cerneala.Scene2D.PackageCompiler/Cerneala.Scene2D.PackageCompiler.csproj" />
   </Folder>
   <Project Path="Cerneala.csproj" />
   <Project Path="Cerneala.Scene2D.Importers/Cerneala.Scene2D.Importers.csproj" />
+  <Project Path="Cerneala.Scene2D.Packages/Cerneala.Scene2D.Packages.csproj" />
   <Project Path="Cerneala.Backends.SdlGpu/Cerneala.Backends.SdlGpu.csproj" />
   <Project Path="Cerneala.Platforms.Sdl3/Cerneala.Platforms.Sdl3.csproj" />
   <Project Path="Cerneala.Language/Cerneala.Language.csproj" />

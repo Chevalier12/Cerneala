@@ -27,12 +27,20 @@ public sealed class ElementInputRouteMap
     public bool TryGetId(UIElement element, out UiElementId id)
     {
         ArgumentNullException.ThrowIfNull(element);
+        if (element is IInputRouteGuard { IsInputRouteAvailable: false })
+        {
+            id = default;
+            return false;
+        }
         return idsByElement.TryGetValue(element, out id);
     }
 
     public bool TryGetElement(UiElementId id, out UIElement? element)
     {
-        return elementsById.TryGetValue(id, out element);
+        if (!elementsById.TryGetValue(id, out element)) { return false; }
+        if (element is not IInputRouteGuard { IsInputRouteAvailable: false }) { return true; }
+        element = null;
+        return false;
     }
 
     internal IReadOnlyList<UIElement> GetRouteToRoot(UIElement element)

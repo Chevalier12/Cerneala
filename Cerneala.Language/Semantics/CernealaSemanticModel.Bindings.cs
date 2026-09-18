@@ -570,7 +570,7 @@ internal sealed partial class CernealaSemanticModel
                 : assignment.Name;
             if (IsTileMapContentMember(aspect.TargetType, propertyName))
             {
-                AddShapeDiagnostic(assignment.NameSpan, "TileMap2D.Model cannot be assigned through Aspect; use a Model binding or direct Tile declarations.");
+                AddShapeDiagnostic(assignment.NameSpan, "TileMap2D.Source cannot be assigned through Aspect; use a Source binding or direct Tile declarations.");
                 continue;
             }
             ILanguageMemberSymbol? member = FindProperty(aspect.TargetType, propertyName);

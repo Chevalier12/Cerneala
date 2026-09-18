@@ -23,14 +23,23 @@ public sealed class DrawCommandListBuilder
         DrawCommandList rootCommands = renderCache.RootCommands;
         rootCommands.Clear();
         long lowerUiVersion = 17;
-        AppendElement(
-            root,
-            renderCache,
-            counters,
-            rootCommands,
-            1,
-            ref lowerUiVersion);
-        renderCache.MarkRootBuilt();
+        try
+        {
+            AppendElement(
+                root,
+                renderCache,
+                counters,
+                rootCommands,
+                1,
+                ref lowerUiVersion);
+            renderCache.RetainRootResources(root.Root?.ImageResourceCache);
+            renderCache.MarkRootBuilt();
+        }
+        catch
+        {
+            renderCache.ReleaseRootResources();
+            throw;
+        }
     }
 
     private static void AppendElement(
@@ -204,8 +213,11 @@ public sealed class DrawCommandListBuilder
 
     internal static PrismDrawResources ResolvePrismResources(
         UIElement element,
-        PrismInstance instance)
+        PrismInstance instance,
+        ImageResourceAccess access = ImageResourceAccess.Synchronous,
+        Action<ImageResourceResolution>? observeImage = null)
     {
+        using ImageResourceLeaseSet.Scope usage = element.PrismImageLeases.Begin();
         List<PrismDrawImageResource>? imageResources = null;
         List<PrismDrawCurvesResource>? curveResources = null;
         List<PrismDrawLensProfileResource>? lensProfileResources = null;
@@ -382,9 +394,7 @@ public sealed class DrawCommandListBuilder
                     key,
                     out ImageResource? resource))
             {
-                IDrawImage? image = resource.HasEmbeddedImage
-                    ? resource.Resolve()
-                    : element.Root?.ImageResourceCache?.Resolve(resource);
+                IDrawImage? image = ResolveImageResource(resource);
                 AddResolvedImage(
                     image,
                     ResourceVersion<ImageResource>(key),
@@ -407,8 +417,7 @@ public sealed class DrawCommandListBuilder
                 !string.IsNullOrWhiteSpace(sourceIdentity))
             {
                 ImageResource pathResource = new(sourceIdentity);
-                brushImage = element.Root?.ImageResourceCache?
-                    .Resolve(pathResource);
+                brushImage = ResolveImageResource(pathResource);
             }
 
             long identity = !string.IsNullOrWhiteSpace(sourceIdentity)
@@ -426,7 +435,7 @@ public sealed class DrawCommandListBuilder
                 long version,
                 long identity)
             {
-                if (image is not null)
+                if (image is not null && access != ImageResourceAccess.Prepare)
                 {
                     (imageResources ??= []).Add(
                         new PrismDrawImageResource(
@@ -439,8 +448,24 @@ public sealed class DrawCommandListBuilder
 
         }
 
+        IDrawImage? ResolveImageResource(ImageResource resource)
+        {
+            if (access == ImageResourceAccess.Synchronous)
+            {
+                return resource.HasEmbeddedImage ? resource.Resolve()
+                    : element.Root?.ImageResourceCache is ImageResourceCache cache
+                        ? element.PrismImageLeases.Acquire(resource, cache) : null;
+            }
+
+            ImageResourceResolution resolution = ImageResourceResolver.ResolveImage(element, resource,
+                element.PrismImageLeases, access, version: 0, InvalidationFlags.Render, onPrepared: null);
+            observeImage?.Invoke(resolution);
+            return resolution.Image;
+        }
+
         void ResolveCurves(PrismResourceId id)
         {
+            if (access == ImageResourceAccess.Prepare) { return; }
             if (id.Key is not string key ||
                 !(resolvedCurveIds ??= []).Add(id) ||
                 !element.TryFindResource<PrismCurvesResource>(
@@ -461,6 +486,7 @@ public sealed class DrawCommandListBuilder
 
         void ResolveLensProfile(PrismResourceId id)
         {
+            if (access == ImageResourceAccess.Prepare) { return; }
             if (id.Key is not string key ||
                 !(resolvedLensProfileIds ??= []).Add(id) ||
                 !element.TryFindResource<PrismLensProfileResource>(
@@ -481,6 +507,7 @@ public sealed class DrawCommandListBuilder
 
         void ResolveLighting(PrismResourceId id)
         {
+            if (access == ImageResourceAccess.Prepare) { return; }
             if (id.Key is not string key ||
                 !(resolvedLightingIds ??= []).Add(id) ||
                 !element.TryFindResource<PrismLightingResource>(
@@ -501,6 +528,7 @@ public sealed class DrawCommandListBuilder
 
         void ResolveColorMatrix(PrismResourceId id)
         {
+            if (access == ImageResourceAccess.Prepare) { return; }
             if (id.Key is not string key ||
                 !(resolvedColorMatrixIds ??= []).Add(id) ||
                 !element.TryFindResource<PrismColorMatrixResource>(

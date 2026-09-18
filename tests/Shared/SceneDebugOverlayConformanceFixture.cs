@@ -29,7 +29,8 @@ internal sealed class SceneDebugOverlayConformanceFixture : IDisposable
     private readonly Scene2DDebugOverlay overlay;
     private readonly Sprite2D pickTarget;
     private readonly TileMap2D map;
-    private readonly TileMap2DModel model;
+    private readonly TileMapSource2D source;
+    private readonly TileMapCatalog2D catalog;
     private readonly List<object> samples = [];
     private readonly string directory;
     private IDisposable? prism;
@@ -56,10 +57,12 @@ internal sealed class SceneDebugOverlayConformanceFixture : IDisposable
             chunks.Add(new TileChunk2D(new TileCoordinate2D(10000 + x * 4, 10000), 4, 3,
                 Enumerable.Repeat(new TileCell2D(1), 12)));
         }
-        model = new TileMap2DModel("Ground", new DrawSize(24, 24),
+        TileMap2DModel model = new("Ground", new DrawSize(24, 24),
             [new TileSet2D("Atlas", atlas, [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16)), new TileDefinition2D(2, new DrawRect(16, 0, 16, 16))])],
             chunks, order: 2, offset: new DrawPoint(8, 108));
-        map = new TileMap2D { Model = model };
+        source = TileMapSource2D.FromModel(model);
+        catalog = source.Catalog;
+        map = new TileMap2D { Source = source };
         Sprite2D tile = new() { Image = new(atlas), SourceX = 0, SourceY = 0, SourceWidth = 16, SourceHeight = 16,
             Width = 24, Height = 24 };
         Scene2D tilePose = new()
@@ -136,7 +139,8 @@ internal sealed class SceneDebugOverlayConformanceFixture : IDisposable
             if (overlay.GetValueSource(Scene2DDebugOverlay.LineThicknessProperty) != UiPropertyValueSource.AspectBase)
                 throw new InvalidOperationException("Overlay Aspect did not apply through the scene tree.");
         }
-        if (!hits.SequenceEqual(initialHits!) || world.IncrementalUpdateCount != initialVersion || !ReferenceEquals(model, map.Model))
+        if (!hits.SequenceEqual(initialHits!) || world.IncrementalUpdateCount != initialVersion ||
+            !ReferenceEquals(source, map.Source) || !ReferenceEquals(catalog, map.Source?.Catalog))
             throw new InvalidOperationException("Debug presentation changed collision results, mutations, or map data.");
         Vector2 rootPoint = Surface.SceneToRoot(new Vector2(24, 30));
         if (!ReferenceEquals(new HitTestService().HitTest(Surface.Root!, rootPoint.X, rootPoint.Y)?.Element, pickTarget))

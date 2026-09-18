@@ -78,7 +78,9 @@ An image quad is two affine 2D triangles with explicit or derived UV coordinates
 
 When the image is a `PrismImage`, `DrawImage` records a native Prism scope around the source-image command. It does not use a surface-specific effect workaround or a separate shader path.
 
-The frame is created and owned by Cerneala. It is valid only while `RenderSurface2D.OnDraw` and the surface's `Draw` subscribers execute. Calling a drawing method after the callback returns throws `ObjectDisposedException`.
+The frame is created and owned by Cerneala. It is valid only while the surface's `Draw` subscribers execute. Calling a drawing method after the recording has completed throws `ObjectDisposedException`. Custom surfaces subscribe to `Draw` explicitly; the former `RenderSurface2D.OnDraw` override API is removed.
+
+A failed drawing callback or required scene recording also ends the frame lifetime. Optional grid preparation is coordinated internally only after successful required scene recording; aborting a recording cancels that pending work. Applications do not complete, retain, or resubmit a frame to resume it later.
 
 `Bounds` uses local surface pixels and begins at `(0, 0)`. Image rotation is expressed in radians, and `origin` uses source-image pixels. Cerneala owns the render target, drawing state, retained command stream, and presentation.
 

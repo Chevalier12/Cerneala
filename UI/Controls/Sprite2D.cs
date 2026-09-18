@@ -239,9 +239,33 @@ public sealed class Sprite2D : SceneNode2D
     internal override bool HasActiveAnimation =>
         animationPlayback.IsActive(AnimationPlaybackRate, IsAnimationPaused);
 
+    internal override void CheckPresentation(ScenePresentationContext2D context)
+    {
+        SceneBounds2D declared = GetDeclaredLocalBounds();
+        if (!UIElementVisibility.ParticipatesInRendering(this) || Opacity <= 0)
+        {
+            ReleaseRenderCaches();
+            return;
+        }
+        if (declared.Kind == SceneBoundsKind.Known &&
+            !ScenePresentationContext2D.Intersects(context.GetVisibleBounds(this), declared.Bounds))
+        {
+            // Missing required domains intentionally select empty input. Report
+            // that error before culling, without acquiring source or Prism images.
+            CheckPrismInputDomain(context);
+            ReleaseRenderCaches();
+            return;
+        }
+
+        ImageResourceResolution source = ResolveSource(ImageResourceAccess.Prepare);
+        context.RequireImage(source);
+        if (source.Image is not null || source.IsPending) { CheckPrismPresentation(context); }
+        else { PrismImageLeases.Clear(); }
+    }
+
     internal override void Record(Scene2DRecordContext context)
     {
-        IDrawImage? source = ResolveSource();
+        IDrawImage? source = ResolveSource(ImageResourceAccess.ResidentOnly).Image;
         if (!UIElementVisibility.ParticipatesInRendering(this) ||
             Opacity <= 0 ||
             source is null)
@@ -292,25 +316,47 @@ public sealed class Sprite2D : SceneNode2D
 
     internal override SceneBounds2D GetHitTestLocalBounds()
     {
-        IDrawImage? source = ResolveSource();
+        // Geometry/input observation may reuse a completed acquisition, but it
+        // must never decode or wait for an image. Required presentation owns
+        // preparation; querying a cold sprite is not a second loading path.
+        IDrawImage? source = ResolveSource(ImageResourceAccess.ResidentOnly).Image;
         if (source is not null)
         {
             ResolveGeometry(source, out DrawRect destination, out _, out DrawRect resolvedSourceRect);
             return SceneBounds2D.Known(GetImageLocalBounds(destination, resolvedSourceRect));
         }
 
-        return Origin == default && !float.IsNaN(Width) && !float.IsNaN(Height)
-            ? SceneBounds2D.Known(new DrawRect(0, 0, Width, Height))
-            : SceneBounds2D.Unknown;
+        return GetDeclaredLocalBounds();
     }
 
-    private IDrawImage? ResolveSource()
+    private SceneBounds2D GetDeclaredLocalBounds()
     {
+        DrawRect? frame = animationPlayback.CurrentFrame?.SourceRect;
+        float sourceWidth = frame?.Width ?? SourceWidth;
+        float sourceHeight = frame?.Height ?? SourceHeight;
+        float width = float.IsNaN(Width) ? sourceWidth : Width;
+        float height = float.IsNaN(Height) ? sourceHeight : Height;
+        if (float.IsNaN(width) || float.IsNaN(height) ||
+            Origin.X != 0 && float.IsNaN(sourceWidth) || Origin.Y != 0 && float.IsNaN(sourceHeight))
+        {
+            // Unknown natural dimensions cannot prove that an image is outside
+            // the camera. Spatial SceneItems metadata can still exclude its
+            // entire object without decoding any of its images.
+            return SceneBounds2D.Unknown;
+        }
+        float originX = Origin.X == 0 ? 0 : Origin.X * width / sourceWidth;
+        float originY = Origin.Y == 0 ? 0 : Origin.Y * height / sourceHeight;
+        return SceneBounds2D.Known(new(-originX, -originY, width, height));
+    }
+
+    private ImageResourceResolution ResolveSource(ImageResourceAccess access)
+    {
+        using ImageResourceLeaseSet.Scope usage = SourceImageLeases.Begin();
         ImageReference? reference = Image;
         if (reference?.ResourceId is not ResourceId<ImageResource> id)
         {
             SetRenderDependencies(RenderDependency.None);
-            return reference?.DirectImage;
+            return new(reference?.DirectImage, 0);
         }
 
         ImageResourceResolution resolution = ImageResourceResolver.Resolve(
@@ -319,11 +365,12 @@ public sealed class Sprite2D : SceneNode2D
             explicitProvider: null,
             explicitTracker: null,
             InvalidationFlags.Render,
-            affectsIntrinsicSize: false);
+            affectsIntrinsicSize: false,
+            access: access);
         SetRenderDependencies(RenderDependencies
             .WithResourceIdentity(reference.ResourceIdentity)
             .WithResourceVersion(resolution.Version));
-        return resolution.Image;
+        return resolution;
     }
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)

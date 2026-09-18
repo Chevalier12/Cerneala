@@ -89,7 +89,12 @@ internal readonly record struct PrismGraphNodeId
         ArgumentOutOfRangeException.ThrowIfNegative(definitionNodeId);
         ArgumentOutOfRangeException.ThrowIfNegative(ordinal);
         ArgumentOutOfRangeException.ThrowIfNegative(analysisScopeIndex);
-        if (!Enum.IsDefined(typeof(PrismGraphNodeKind), kind))
+        if (kind is not (PrismGraphNodeKind.ControlCapture or PrismGraphNodeKind.BackdropInput or
+            PrismGraphNodeKind.ColorConversion or PrismGraphNodeKind.Layer or PrismGraphNodeKind.Group or
+            PrismGraphNodeKind.Filter or PrismGraphNodeKind.Style or PrismGraphNodeKind.Mask or
+            PrismGraphNodeKind.Fill or PrismGraphNodeKind.Opacity or PrismGraphNodeKind.ClipToBelow or
+            PrismGraphNodeKind.Composite or PrismGraphNodeKind.PassThroughComposite or
+            PrismGraphNodeKind.BackdropCrop or PrismGraphNodeKind.RasterAuxiliary))
         {
             throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown Prism graph node kind.");
         }

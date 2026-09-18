@@ -46,17 +46,17 @@ public sealed class TileMap2DCacheContractTests
 
     [Fact]
     [Trait("TileMapStage", "2")]
-    public void ChunkAndTilesetVersionsInvalidateOnlyTheirDependentSegments()
+    public void CellAndPalettePayloadRevisionsInvalidateOnlyTheirDependentSegments()
     {
         CacheFixture fixture = CacheFixture.Create();
         Record(fixture.Surface);
         DrawSpriteBatch[] warmBatches = Batches(Record(fixture.Surface));
 
-        fixture.Map.Model = CreateModel(
+        fixture.Map.PublishModel(CreateModel(
             terrainChunkVersion: 2,
             structureChunkVersion: 1,
             terrainSetVersion: 1,
-            terrainFirstFlip: TileFlip2D.Horizontal);
+            terrainFirstFlip: TileFlip2D.Horizontal));
         DrawCommandList chunkMutationCommands = Record(fixture.Surface);
         TileMap2DDiagnosticsSnapshot chunkMutation = fixture.Map.GetDiagnosticsSnapshot();
         Assert.Equal(1, chunkMutation.BatchesRebuilt);
@@ -66,12 +66,12 @@ public sealed class TileMap2DCacheContractTests
         DrawSpriteBatch[] afterChunkMutation = Batches(chunkMutationCommands);
         Assert.NotSame(warmBatches[0], afterChunkMutation[0]);
         Assert.Same(warmBatches[1], afterChunkMutation[1]);
-        fixture.Map.Model = CreateModel(
-            terrainChunkVersion: 2,
+        fixture.Map.PublishModel(CreateModel(
+            terrainChunkVersion: 3,
             structureChunkVersion: 1,
             terrainSetVersion: 2,
             terrainFirstFlip: TileFlip2D.Horizontal,
-            terrainSourceX: 16);
+            terrainSourceX: 16));
         DrawCommandList tilesetMutationCommands = Record(fixture.Surface);
         TileMap2DDiagnosticsSnapshot tilesetMutation = fixture.Map.GetDiagnosticsSnapshot();
         DrawSpriteBatch[] afterTilesetMutation = Batches(tilesetMutationCommands);
@@ -79,6 +79,7 @@ public sealed class TileMap2DCacheContractTests
         Assert.Equal(1, tilesetMutation.BatchesReused);
         Assert.NotSame(afterChunkMutation[0], afterTilesetMutation[0]);
         Assert.Same(afterChunkMutation[1], afterTilesetMutation[1]);
+        Assert.All(afterTilesetMutation[0].Sprites, sprite => Assert.Equal(16, sprite.Options.Source!.Value.X));
     }
 
     [Fact]
@@ -131,6 +132,10 @@ public sealed class TileMap2DCacheContractTests
     {
         CacheFixture fixture = CacheFixture.Create();
         Record(fixture.Surface);
+        // A second consumer now keeps shared resources alive explicitly. The
+        // cache itself no longer owns a permanent, implicit acquisition.
+        using ImageResourceLease terrainConsumer = fixture.Root.ImageResourceCache!.Acquire(new ImageResource("terrain.png"));
+        using ImageResourceLease structureConsumer = fixture.Root.ImageResourceCache.Acquire(new ImageResource("structures.png"));
         Assert.True(fixture.Map.GetDiagnosticsSnapshot().RetainedBytes > 0);
 
         object backendOwner = new();
@@ -150,7 +155,7 @@ public sealed class TileMap2DCacheContractTests
         Assert.False(fixture.Structures.IsDisposed);
 
         UIRoot replacementRoot = new();
-        replacementRoot.SetImageLoader(fixture.Loader);
+        replacementRoot.SetImageResourceCache(fixture.Loader, fixture.Root.ImageResourceCache);
         replacementRoot.VisualChildren.Add(fixture.Surface);
         Record(fixture.Surface);
         Assert.Equal(2, fixture.Map.GetDiagnosticsSnapshot().BatchesRebuilt);
@@ -168,7 +173,7 @@ public sealed class TileMap2DCacheContractTests
 
         Assert.All(retired, reference => Assert.False(reference.IsAlive));
         Assert.Equal(0, fixture.Map.GetDiagnosticsSnapshot().RetainedObjects);
-        Assert.False(fixture.Terrain.IsDisposed);
+        Assert.True(fixture.Terrain.IsDisposed);
         GC.KeepAlive(fixture);
     }
 
@@ -184,7 +189,7 @@ public sealed class TileMap2DCacheContractTests
             int origin = iteration * 32;
             TileMap2DModel model = new("Lifetime", new DrawSize(16, 16), [TerrainSet()],
                 Enumerable.Range(0, count).Select(x => FilledChunk(origin + x, 0, 1, 1)));
-            fixture.Map.Model = model;
+            fixture.Map.PublishModel(model);
             fixture.Surface.ViewBox = new DrawRect(origin * 16, 0, count * 16, 16);
             DrawSpriteBatch[] batches = Batches(Record(fixture.Surface));
             Assert.Equal(count, batches.Length);
@@ -197,7 +202,7 @@ public sealed class TileMap2DCacheContractTests
             retired.Add(new WeakReference(model));
             retired.AddRange(batches.Select(static batch => new WeakReference(batch)));
         }
-        fixture.Map.Model = null;
+        fixture.Map.Source = null;
         fixture.Surface.Scene!.Children.Remove(fixture.Map);
         Record(fixture.Surface);
         return retired.ToArray();
@@ -212,7 +217,7 @@ public sealed class TileMap2DCacheContractTests
             [new TileChunk2D(new(-2, -1), 2, 1, [new TileCell2D(1), default]),
              new TileChunk2D(new(4, 3), 1, 2, [default, new TileCell2D(1)])]);
         CacheFixture fixture = CacheFixture.Create(sparse);
-        fixture.Surface.Scene!.Children.Add(new TileMap2D { Model = new TileMap2DModel("Empty", new DrawSize(16, 16), [], []) });
+        fixture.Surface.Scene!.Children.Add(new TileMap2D { Source = TileMapTestSource.Create(new TileMap2DModel("Empty", new DrawSize(16, 16), [], [])) });
         DrawCommandList cold = Record(fixture.Surface);
         Assert.Single(Batches(cold));
         Assert.Equal(1, fixture.Map.GetDiagnosticsSnapshot().BatchesRebuilt);
@@ -253,7 +258,7 @@ public sealed class TileMap2DCacheContractTests
         Sprite2D[] sprites = Enumerable.Range(0, 32).Select(static x => new Sprite2D { X = x * 16 }).ToArray();
         Scene2D scene = fixture.Surface.Scene!;
         foreach (Sprite2D sprite in sprites) { scene.Children.Add(sprite); }
-        Assert.Equal(4_096, fixture.Map.Model!.Chunks[0].Tiles.Count);
+        Assert.Equal(4_096, fixture.Map.GetSourceModel()!.Chunks[0].Tiles.Count);
         Assert.Equal(sprites.Length + 1, scene.Children.Count);
         Assert.Empty(fixture.Map.LogicalChildren);
         Assert.All(sprites, sprite => Assert.Same(scene, sprite.LogicalParent));
@@ -439,6 +444,7 @@ public sealed class TileMap2DCacheContractTests
 
     private static DrawCommandList Record(RenderSurface2D surface, DrawRect bounds)
     {
+        TileMapTestSource.PrepareFrame(surface, bounds);
         DrawCommandList commands = new();
         ((IRenderSurface2DFrameSource)surface).RecordFrame(commands, bounds);
         return commands;
@@ -488,7 +494,7 @@ public sealed class TileMap2DCacheContractTests
                 ["terrain.png"] = terrain,
                 ["structures.png"] = structures
             });
-            TileMap2D map = new() { Model = model ?? CreateModel() };
+            TileMap2D map = new() { Source = TileMapTestSource.Create(model ?? CreateModel()) };
             Scene2D scene = new();
             scene.Children.Add(map);
             RenderSurface2D surface = new() { Scene = scene };
@@ -521,9 +527,11 @@ public sealed class TileMap2DCacheContractTests
         }
     }
 
-    private sealed class TestImageLoader(IReadOnlyDictionary<string, IDrawImage> images) : IImageLoader
+    private sealed class TestImageLoader(IReadOnlyDictionary<string, IDrawImage> images) : IAsyncImageLoader
     {
         public IDrawImage Load(string path) => images[path];
+        public ValueTask<IDrawImage> LoadAsync(string path, CancellationToken cancellationToken = default) =>
+            ValueTask.FromResult(Load(path));
     }
 
     private sealed class TestBackendState : IRenderSurface2DBackendState

@@ -120,6 +120,90 @@ public sealed class DrawingImageMeshBatchTests
     }
 
     [Fact]
+    public void MeshConstructionDoesNotUseEnumMetadataOrReflection()
+    {
+        DirectoryInfo? directory = new(AppContext.BaseDirectory);
+        while (directory is not null &&
+            !File.Exists(Path.Combine(directory.FullName, "Cerneala.slnx")))
+        {
+            directory = directory.Parent;
+        }
+
+        Assert.NotNull(directory);
+        string source = File.ReadAllText(Path.Combine(directory.FullName, "Drawing", "DrawMesh2D.cs"));
+        string[] forbiddenTokens =
+        [
+            "Enum.", "System.Reflection", "BindingFlags", "MethodInfo", "PropertyInfo",
+            "FieldInfo", "GetCustomAttribute", "Activator.CreateInstance"
+        ];
+
+        Assert.Empty(forbiddenTokens.Where(token => source.Contains(token, StringComparison.Ordinal)));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void MeshConstructionDoesNotReplenishEnumMetadataAfterCollection(bool ownedBuffers)
+    {
+        Func<DrawMesh2D> create = ownedBuffers
+            ? static () => DrawMesh2D.FromOwnedBuffers(TriangleVertices(), [0, 1, 2])
+            : static () => new DrawMesh2D(TriangleVertices(), [0, 1, 2]);
+        for (int index = 0; index < 128; index++)
+        {
+            _ = create();
+        }
+
+        for (int cycle = 0; cycle < 8; cycle++)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            DrawMesh2D afterCollection = create();
+            long collectionBytes = GC.GetAllocatedBytesForCurrentThread() - before;
+            before = GC.GetAllocatedBytesForCurrentThread();
+            DrawMesh2D steady = create();
+            long steadyBytes = GC.GetAllocatedBytesForCurrentThread() - before;
+
+            Assert.Equal(steady.Topology, afterCollection.Topology);
+            Assert.Equal(steadyBytes, collectionBytes);
+        }
+    }
+
+    [Theory]
+    [InlineData(int.MinValue)]
+    [InlineData(-1)]
+    [InlineData(2)]
+    [InlineData(int.MaxValue)]
+    public void MeshConstructionRejectsOutOfDomainTopologyBeforeOtherValidation(int invalid)
+    {
+        Assert.Equal("topology", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new DrawMesh2D([], [], (DrawPrimitiveTopology)invalid)).ParamName);
+        Assert.Equal("topology", Assert.Throws<ArgumentOutOfRangeException>(() =>
+            DrawMesh2D.FromOwnedBuffers([], [], (DrawPrimitiveTopology)invalid)).ParamName);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void MeshConstructionPreservesTriangleListAndStripRules(bool ownedBuffers)
+    {
+        Func<int[], DrawPrimitiveTopology, DrawMesh2D> create = ownedBuffers
+            ? static (indices, topology) => DrawMesh2D.FromOwnedBuffers(TriangleVertices(), indices, topology)
+            : static (indices, topology) => new DrawMesh2D(TriangleVertices(), indices, topology);
+
+        DrawMesh2D list = create([0, 1, 2], DrawPrimitiveTopology.TriangleList);
+        DrawMesh2D strip = create([0, 1, 2, 0], DrawPrimitiveTopology.TriangleStrip);
+        Assert.Equal(DrawPrimitiveTopology.TriangleList, list.Topology);
+        Assert.Equal(DrawPrimitiveTopology.TriangleStrip, strip.Topology);
+        Assert.Equal([0, 1, 2, 0], strip.Indices);
+        Assert.Equal("indices", Assert.Throws<ArgumentException>(() =>
+            create([0, 1, 2, 0], DrawPrimitiveTopology.TriangleList)).ParamName);
+        Assert.Equal("indices", Assert.Throws<ArgumentException>(() =>
+            create([0, 1], DrawPrimitiveTopology.TriangleStrip)).ParamName);
+    }
+
+    [Fact]
     public void ImmutableBatchesRecordOneCommandAndCarryDistinctVersionsAndBounds()
     {
         DrawPoint[] sourcePoints = [new DrawPoint(5, 5), new DrawPoint(10, 10)];

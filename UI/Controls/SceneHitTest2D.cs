@@ -17,12 +17,21 @@ internal static class SceneHitTest2D
         ArgumentNullException.ThrowIfNull(filter);
         ArgumentNullException.ThrowIfNull(colliderHits);
         scene.CollisionWorld.CollectPointHits(scenePoint, colliderHits);
+        HashSet<SceneNode2D>? colliderPaths = null;
+        foreach (Collider2D collider in colliderHits)
+        {
+            for (UIElement? current = collider.LogicalParent; current is SceneNode2D node; current = current.LogicalParent)
+            {
+                (colliderPaths ??= new(ReferenceEqualityComparer.Instance)).Add(node);
+            }
+        }
         return HitTestChildren(
             scene,
             scene.GetLocalTransform(),
             scenePoint,
             filter,
-            colliderHits);
+            colliderHits,
+            colliderPaths);
     }
 
     private static UIElement? HitTestChildren(
@@ -30,11 +39,12 @@ internal static class SceneHitTest2D
         Matrix3x2 ownerToScene,
         Vector2 scenePoint,
         HitTestFilter filter,
-        IReadOnlySet<Collider2D> colliderHits)
+        IReadOnlySet<Collider2D> colliderHits,
+        IReadOnlySet<SceneNode2D>? colliderPaths)
     {
         IReadOnlyList<SceneNode2D> children = GetChildrenInDrawOrder(
             owner,
-            ownerToScene);
+            ownerToScene, scenePoint, colliderPaths);
         for (int index = children.Count - 1; index >= 0; index--)
         {
             SceneNode2D child = children[index];
@@ -48,7 +58,7 @@ internal static class SceneHitTest2D
                 ownerToScene,
                 scenePoint,
                 filter,
-                colliderHits);
+                colliderHits, colliderPaths);
             if (hit is not null)
             {
                 return hit;
@@ -72,7 +82,8 @@ internal static class SceneHitTest2D
         Matrix3x2 parentToScene,
         Vector2 scenePoint,
         HitTestFilter filter,
-        IReadOnlySet<Collider2D> colliderHits)
+        IReadOnlySet<Collider2D> colliderHits,
+        IReadOnlySet<SceneNode2D>? colliderPaths)
     {
         HitTestFilterBehavior behavior = filter.Evaluate(node);
         if (behavior == HitTestFilterBehavior.ExcludeSubtree ||
@@ -86,7 +97,7 @@ internal static class SceneHitTest2D
         Matrix3x2 nodeToScene = node.GetLocalTransform() * parentToScene;
         IReadOnlyList<SceneNode2D> children = GetChildrenInDrawOrder(
             node,
-            nodeToScene);
+            nodeToScene, scenePoint, colliderPaths);
 
         for (int index = children.Count - 1; index >= 0; index--)
         {
@@ -112,7 +123,7 @@ internal static class SceneHitTest2D
                 nodeToScene,
                 scenePoint,
                 filter,
-                colliderHits);
+                colliderHits, colliderPaths);
             if (childHit is not null)
             {
                 return childHit;
@@ -156,8 +167,16 @@ internal static class SceneHitTest2D
 
     private static IReadOnlyList<SceneNode2D> GetChildrenInDrawOrder(
         SceneNode2D owner,
-        Matrix3x2 ownerToScene)
+        Matrix3x2 ownerToScene,
+        Vector2 scenePoint,
+        IReadOnlySet<SceneNode2D>? colliderPaths)
     {
+        if (owner is SceneItems2D items && SceneGeometry2D.TryTransformToLocal(
+            new DrawPoint(scenePoint.X, scenePoint.Y), ownerToScene, out DrawPoint localPoint))
+        {
+            return items.GetInputCandidates(localPoint, colliderPaths);
+        }
+
         List<SceneNode2D> children = owner.LogicalChildren
             .OfType<SceneNode2D>()
             .Where(static child => child.ParticipatesInInputRoute)

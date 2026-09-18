@@ -11,6 +11,7 @@
     <Compile Remove="docs\**" />
     <Compile Remove="Cerneala.SourceGen\**" />
     <Compile Remove="Cerneala.Scene2D.Importers\**" />
+    <Compile Remove="Cerneala.Scene2D.Packages\**" />
     <Compile Remove="Cerneala.Backends.SdlGpu\**" />
     <Compile Remove="Cerneala.Platforms.Sdl3\**" />
     <Compile Remove="Cerneala.Language\**" />
@@ -27,6 +28,7 @@
     <EmbeddedResource Remove="docs\**" />
     <EmbeddedResource Remove="Cerneala.SourceGen\**" />
     <EmbeddedResource Remove="Cerneala.Scene2D.Importers\**" />
+    <EmbeddedResource Remove="Cerneala.Scene2D.Packages\**" />
     <EmbeddedResource Remove="Cerneala.Backends.SdlGpu\**" />
     <EmbeddedResource Remove="Cerneala.Platforms.Sdl3\**" />
     <EmbeddedResource Remove="Cerneala.Language\**" />
@@ -43,6 +45,7 @@
     <None Remove="docs\**" />
     <None Remove="Cerneala.SourceGen\**" />
     <None Remove="Cerneala.Scene2D.Importers\**" />
+    <None Remove="Cerneala.Scene2D.Packages\**" />
     <None Remove="Cerneala.Backends.SdlGpu\**" />
     <None Remove="Cerneala.Platforms.Sdl3\**" />
     <None Remove="Cerneala.Language\**" />
@@ -68,7 +71,7 @@
 
   <ItemGroup>
     <ProjectReference Include="Cerneala.SourceGen\Cerneala.SourceGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    <AdditionalFiles Include="**\*.crn" Exclude="bin\**;obj\**;Cerneala.Language\**;Cerneala.LanguageServer\**;Cerneala.PreviewHost\**;Cerneala.SourceGen\**;Cerneala.Scene2D.Importers\**;CernealaPresentation\**;docs\**;Playground\**;Shared\**;Tetrisish\**;Tools\**;tests\**" />
+    <AdditionalFiles Include="**\*.crn" Exclude="bin\**;obj\**;Cerneala.Language\**;Cerneala.LanguageServer\**;Cerneala.PreviewHost\**;Cerneala.SourceGen\**;Cerneala.Scene2D.Importers\**;Cerneala.Scene2D.Packages\**;CernealaPresentation\**;docs\**;Playground\**;Shared\**;Tetrisish\**;Tools\**;tests\**" />
     <AdditionalFiles Include="Cerneala.SourceGen\Prism\Catalog\prism-catalog.json" />
     <EmbeddedResource Include="Drawing\Prism\Filters\Assets\bluenoise.bin">
       <LogicalName>Cerneala.Drawing.Prism.Filters.Assets.bluenoise.bin</LogicalName>

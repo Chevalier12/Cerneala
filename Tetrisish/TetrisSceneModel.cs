@@ -1,14 +1,14 @@
-using System.Collections;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Cerneala.Drawing;
+using Cerneala.UI.Controls;
 using Cerneala.UI.Resources;
 
 namespace Cerneala.Tetris;
 
 public sealed class TetrisSceneModel : INotifyPropertyChanged
 {
-    private IEnumerable lockedPieces = Array.Empty<TetrisSpriteModel>();
+    private ISceneSpatialSource2D<object> lockedPieces = CreateLockedSource([]);
     private ImageReference? currentImage;
     private DrawRect? currentSource;
     private DrawRect currentDestination;
@@ -24,7 +24,7 @@ public sealed class TetrisSceneModel : INotifyPropertyChanged
 
     public DrawRect? ViewBox { get; } = new DrawRect(0, 0, 10, 20);
 
-    public IEnumerable LockedPieces
+    public ISceneSpatialSource2D<object> LockedPieces
     {
         get => lockedPieces;
         private set => Set(ref lockedPieces, value);
@@ -64,6 +64,7 @@ public sealed class TetrisSceneModel : INotifyPropertyChanged
             Notify(nameof(CurrentY));
             Notify(nameof(CurrentWidth));
             Notify(nameof(CurrentHeight));
+            Notify(nameof(CurrentPrismInputDomain));
         }
     }
 
@@ -71,6 +72,9 @@ public sealed class TetrisSceneModel : INotifyPropertyChanged
     public float CurrentY => currentDestination.Y;
     public float CurrentWidth => currentDestination.Width;
     public float CurrentHeight => currentDestination.Height;
+
+    public DrawRect? CurrentPrismInputDomain => CurrentWidth > 0 && CurrentHeight > 0
+        ? new DrawRect(0, 0, CurrentWidth, CurrentHeight) : null;
 
     public Color CurrentTint
     {
@@ -140,7 +144,16 @@ public sealed class TetrisSceneModel : INotifyPropertyChanged
 
     internal void UpdateLockedPieces(IEnumerable<TetrisSpriteModel> pieces)
     {
-        LockedPieces = pieces.ToArray();
+        LockedPieces = CreateLockedSource(pieces);
+    }
+
+    private static ISceneSpatialSource2D<object> CreateLockedSource(IEnumerable<TetrisSpriteModel> pieces)
+    {
+        TetrisSpriteModel[] snapshot = pieces.ToArray();
+        Dictionary<string, TetrisSpriteModel> byId = snapshot.ToDictionary(piece => piece.Id);
+        return new SceneSpatialSource2D<object>(
+            snapshot.Select(piece => new SceneSpatialEntry2D(piece.Id, piece.Destination)),
+            (entry, _) => ValueTask.FromResult(new SceneSpatialLease2D<object>(byId[entry.Id])));
     }
 
     internal void UpdateActivePiece(
@@ -167,7 +180,7 @@ public sealed class TetrisSceneModel : INotifyPropertyChanged
 
     internal void Reset()
     {
-        LockedPieces = Array.Empty<TetrisSpriteModel>();
+        LockedPieces = CreateLockedSource([]);
         CurrentImage = null;
         CurrentVisible = false;
         GhostImage = null;
@@ -195,6 +208,7 @@ public sealed class TetrisSceneModel : INotifyPropertyChanged
 
 public sealed class TetrisSpriteModel : INotifyPropertyChanged
 {
+    internal string Id { get; } = Guid.NewGuid().ToString("N");
     public TetrisSpriteModel(
         IDrawImage source,
         DrawRect? sourceRect,

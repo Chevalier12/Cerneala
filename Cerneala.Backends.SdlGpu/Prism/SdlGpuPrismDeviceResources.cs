@@ -79,10 +79,6 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
         ObjectDisposedException.ThrowIf(disposed, this);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
-        if (!Enum.IsDefined(format))
-        {
-            throw new ArgumentOutOfRangeException(nameof(format), format, "Unknown SDL_GPU surface format.");
-        }
         uint mipLevelCount = mipmapped
             ? CalculateMipLevelCount(width, height)
             : 1;
@@ -102,6 +98,16 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
             return CreateLease(target, windowId);
         }
 
+        // Reusable buckets already passed admission. Preserve the distinction
+        // between unknown formats and defined formats unsupported by EstimateBytes.
+        if (format is not (SdlGpuTextureFormat.Invalid or SdlGpuTextureFormat.R8G8B8A8Unorm or
+            SdlGpuTextureFormat.B8G8R8A8Unorm or SdlGpuTextureFormat.R16G16B16A16Float or
+            SdlGpuTextureFormat.R32Float or SdlGpuTextureFormat.R32G32B32A32Float or
+            SdlGpuTextureFormat.R8G8B8A8UnormSrgb or SdlGpuTextureFormat.B8G8R8A8UnormSrgb or
+            SdlGpuTextureFormat.D24UnormS8Uint))
+        {
+            throw new ArgumentOutOfRangeException(nameof(format), format, "Unknown SDL_GPU surface format.");
+        }
         long byteCount = EstimateBytes(width, height, format, mipLevelCount);
         EnsureBudget(byteCount);
         try

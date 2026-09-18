@@ -270,8 +270,10 @@ public sealed class Sprite2DAuthoringTests
         public int Height => height;
     }
 
-    private sealed class Loader(IDrawImage image) : IImageLoader
+    private sealed class Loader(IDrawImage image) : IAsyncImageLoader
     {
         public IDrawImage Load(string path) => image;
+        public ValueTask<IDrawImage> LoadAsync(string path, CancellationToken cancellationToken = default) =>
+            ValueTask.FromResult(Load(path));
     }
 }

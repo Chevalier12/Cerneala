@@ -13,4 +13,12 @@ public readonly record struct TileMapDiagnosticsSnapshot(
     int DrawCommands,
     long RetainedBytes,
     int RetainedObjects,
-    int TileInvalidations);
+    int TileInvalidations)
+{
+    public int WarmChunks { get; init; }
+    public int WarmBatchesPrepared { get; init; }
+    public int WarmTilesPrepared { get; init; }
+    public long WarmRetainedBytes { get; init; }
+    public long WarmChargedBytes { get; init; }
+    public long WarmImageBytes { get; init; }
+}

@@ -19,6 +19,18 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     private readonly ElementAspectConsumer aspectConsumer;
     private IDisposable? elementAspectBehavior;
     private readonly long prismVisualNodeId;
+    private ImageResourceLeaseSet? sourceImageLeases;
+    private ImageResourceLeaseSet? prismImageLeases;
+
+    internal ImageResourceLeaseSet SourceImageLeases => sourceImageLeases ??= new();
+
+    internal ImageResourceLeaseSet PrismImageLeases => prismImageLeases ??= new();
+
+    internal void ReleaseImageResources()
+    {
+        try { sourceImageLeases?.Clear(); }
+        finally { prismImageLeases?.Clear(); }
+    }
 
     public static readonly UiProperty<object?> DataContextProperty = UiProperty<object?>.Register(
         nameof(DataContext),
@@ -268,7 +280,11 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     protected override UiPropertyMutationObserver? MutationObserver => Root?.PropertyMutations;
 
-    protected override void VerifyMutationAccess() => Root?.Relay.VerifyAccess();
+    internal virtual Cerneala.UI.Relay.UiRelay? OwnerRelay => Root?.Relay;
+
+    internal void VerifyOwnerAccess() => VerifyMutationAccess();
+
+    protected override void VerifyMutationAccess() => OwnerRelay?.VerifyAccess();
 
     private bool hasPendingCommandStateRefresh;
     private bool hasPendingRenderScopeInvalidation;
@@ -644,6 +660,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     internal void InvalidatePrismAttachment()
     {
+        prismImageLeases?.Clear();
         hasPendingRenderScopeInvalidation = true;
         Invalidate(InvalidationFlags.Render, "Prism attachment changed");
     }
@@ -669,7 +686,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         RaiseEvent(new RoutedEventArgs(LoadedEvent, this));
     }
 
-    internal void ValidateLifecycleRoot(UIRoot root)
+    internal virtual void ValidateLifecycleRoot(UIRoot root)
     {
         foreach (IElementLifecycleBehavior behavior in lifecycleBehaviors)
         {
@@ -689,6 +706,8 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
             behavior.Detach();
         }
         OnDetached();
+        ReleaseImageResources();
+        Root?.RetainedRenderCache.ReleaseElement(this);
         Bindings.Clear();
         ElementId = null;
         Root = null;
@@ -726,6 +745,36 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         {
             behavior.OnRenderabilityChanged(isRenderable);
         }
+    }
+
+    internal void ValidateDataLifecycle(Cerneala.UI.Relay.UiRelay relay)
+    {
+        foreach (IElementLifecycleBehavior behavior in lifecycleBehaviors)
+        {
+            if (behavior is IElementDataLifecycleBehavior data) { data.ValidateRelay(relay); }
+        }
+    }
+
+    internal void AttachDataLifecycle()
+    {
+        foreach (IElementLifecycleBehavior behavior in lifecycleBehaviors.ToArray())
+        {
+            if (behavior is IElementDataLifecycleBehavior) { behavior.Attach(); }
+        }
+    }
+
+    internal void DetachDataLifecycle()
+    {
+        List<Exception>? failures = null;
+        foreach (IElementLifecycleBehavior behavior in lifecycleBehaviors.ToArray())
+        {
+            if (behavior is not IElementDataLifecycleBehavior) { continue; }
+            try { behavior.Detach(); }
+            catch (Exception failure) { (failures ??= []).Add(failure); }
+        }
+        try { Bindings.Clear(); }
+        catch (Exception failure) { (failures ??= []).Add(failure); }
+        if (failures is not null) { throw new AggregateException(failures); }
     }
 
     public void QueueCommandStateRefresh()

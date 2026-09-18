@@ -1,4 +1,5 @@
 using System.Reflection;
+using Cerneala.Tests.Controls;
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
@@ -20,15 +21,16 @@ public sealed class TileMapDiagnosticsTests
         ResourceId<ImageResource> atlas = new("atlas");
         TileMap2D map = new()
         {
-            Model = new TileMap2DModel("ground", new DrawSize(16, 16),
+            Source = TileMapTestSource.Create(new TileMap2DModel("ground", new DrawSize(16, 16),
                 [new TileSet2D("atlas", atlas, [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16))])],
-                [new TileChunk2D(default, 2, 1, [new TileCell2D(1), new TileCell2D(1)])])
+                [new TileChunk2D(default, 2, 1, [new TileCell2D(1), new TileCell2D(1)])]))
         };
         map.Resources.SetResource(atlas, new ImageResource(new TestImage()));
         Scene2D scene = new();
         scene.Children.Add(map);
         RenderSurface2D surface = new() { Scene = scene };
         root.VisualChildren.Add(surface);
+        TileMapTestSource.PrepareFrame(surface, new(0, 0, 32, 16));
         DrawCommandList commands = new();
         ((IRenderSurface2DFrameSource)surface).RecordFrame(commands, new DrawRect(0, 0, 32, 16));
         TileMap2DDiagnosticsSnapshot before = map.GetDiagnosticsSnapshot();

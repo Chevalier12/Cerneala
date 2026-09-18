@@ -10,6 +10,21 @@ namespace Cerneala.Tests.Drawing.Prism;
 public sealed class PrismGraphPlanningAllocationTests
 {
     [Fact]
+    public void RepeatedLocalInputPlanningStaysWithinTheRetainedPlanningAllocationBudget()
+    {
+        PrismInstance instance = new(new("Cached kernel", [new PrismLayerDefinition(new(1), "Blur", filters: [new(PrismFilterId.GaussianBlur)])]));
+        PrismInputDependency.LocalInputCache cache = new();
+        for (int index = 0; index < 256; index++) { cache.TryGet(instance, 1, System.Numerics.Matrix3x2.Identity, out _); }
+        const int queries = 10000;
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int index = 0; index < queries; index++) { cache.TryGet(instance, 1, System.Numerics.Matrix3x2.Identity, out _); }
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        // Use this fixture's existing retained-planning allowance. This checks
+        // plan reuse, not an unsupported exact-zero process-allocation contract.
+        Assert.True(allocated <= queries * 32L, $"Repeated local input planning allocated {allocated:N0} bytes across {queries} unchanged queries.");
+    }
+
+    [Fact]
     public void RerecordedEquivalentScopesReuseGraphAndPlanWithoutRebuilding()
     {
         PrismDrawScope scope = PrismTestData.Scope(

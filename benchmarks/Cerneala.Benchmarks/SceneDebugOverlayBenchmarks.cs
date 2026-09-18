@@ -4,6 +4,8 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Elements;
+using Cerneala.UI.Rendering;
 using Cerneala.UI.Resources;
 
 namespace Cerneala.Benchmarks;
@@ -18,7 +20,7 @@ internal static class SceneDebugOverlayBenchmarkRunner
         List<Result> results = [];
         foreach (int remoteChunks in new[] { 0, 4096 })
         {
-            Workload workload = new(remoteChunks);
+            using Workload workload = new(remoteChunks);
             Result absent = Measure("frame-absent", workload, workload.RecordFrame);
             workload.Scene.Children.Add(workload.Overlay);
             Result disabled = Measure("frame-disabled", workload, workload.RecordFrame);
@@ -93,9 +95,10 @@ internal static class SceneDebugOverlayBenchmarkRunner
         double CpuP95Microseconds, double AllocatedBytesPerOperation, int Commands,
         Scene2DDebugOverlayDiagnostics Debug, TileMap2DDiagnosticsSnapshot Map);
 
-    private sealed class Workload
+    private sealed class Workload : IDisposable
     {
         private static readonly DrawRect Bounds = new(0, 0, 256, 192);
+        private readonly UIRoot root = new() { Width = 256, Height = 192 };
         private readonly RenderSurface2D surface;
         private readonly Scene2DRecordContext disabledContext;
         internal int RemoteChunks { get; }
@@ -113,9 +116,9 @@ internal static class SceneDebugOverlayBenchmarkRunner
                 chunks.Add(Chunk(x * 4, y * 4));
             for (int i = 0; i < remoteChunks; i++) { chunks.Add(Chunk(10000 + i * 4, 10000)); }
             ResourceId<ImageResource> atlas = new("DebugBenchmarkAtlas");
-            Map = new TileMap2D { Model = new TileMap2DModel("ground", new DrawSize(16, 16),
+            Map = new TileMap2D { Source = TileMapSource2D.FromModel(new TileMap2DModel("ground", new DrawSize(16, 16),
                 [new TileSet2D("atlas", atlas, [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16))])],
-                chunks) };
+                chunks)) };
             Map.Resources.SetResource(atlas, new ImageResource(new InlineImage()));
             Scene.Children.Add(Map);
             for (int i = 0; i < 8; i++)
@@ -123,6 +126,9 @@ internal static class SceneDebugOverlayBenchmarkRunner
             for (int i = 0; i < 32; i++)
                 Scene.Children.Add(new Sprite2D { X = 10000 + i * 24, Collider = new BoxCollider2D { Width = 8, Height = 8 } });
             surface = new RenderSurface2D { Scene = Scene, ViewBox = Bounds };
+            root.VisualChildren.Add(surface);
+            root.ProcessFrame();
+            ((ITimeSensitiveRenderElement)surface).UpdateRenderTime(TimeSpan.Zero);
             RenderSurface2DFrame frame = new(Commands, Bounds, TimeSpan.Zero);
             disabledContext = new Scene2DRecordContext(surface, frame, Matrix3x2.Identity, Bounds);
         }
@@ -138,6 +144,8 @@ internal static class SceneDebugOverlayBenchmarkRunner
             Commands.Clear();
             Overlay.Record(disabledContext);
         }
+
+        public void Dispose() => root.VisualChildren.Remove(surface);
 
         private static TileChunk2D Chunk(int x, int y) =>
             new(new TileCoordinate2D(x, y), 4, 4, Enumerable.Repeat(new TileCell2D(1), 16));

@@ -29,7 +29,13 @@ The constructor copies collections, checks the core schema version, and runs the
 
 No file is parsed or opened, no image is decoded, and no UI node, resource registration, promotion, or collision world is created. Composition owns publication. Metadata dictionaries are shallow snapshots, like existing tile model dictionaries; opaque values are not deep-cloned.
 
-### Runtime import and declarative composition
+### Import, package preparation and declarative composition
+
+Verbatim JSON metadata published by the importers uses
+[SceneJsonValue2D](Cerneala.UI.Controls.SceneJsonValue2D.md). Access its `Value`
+instead of casting the property directly to `JsonElement`. The wrapper preserves
+detached content and reference identity without reflective equality. Other
+mapped metadata types and the document's shallow-copy semantics are unchanged.
 
 The optional [Tiled](Cerneala.Scene2D.Importers.TiledScene2DImporter.md) and
 [LDtk](Cerneala.Scene2D.Importers.LdtkScene2DImporter.md) importers return this
@@ -38,17 +44,37 @@ operations, not source-generator parsers. Their canonical pages specify the
 closed format/version matrices, supported fields and explicit non-goals.
 
 The [Scene World Playground composition](../../../Playground/Cerneala.Playground/SceneWorldShowcase.crn)
-binds independent imported models to peer `TileMap2D` nodes and declares atlas
-resources, an ordinary door sprite, colliders, animation sets, and dynamic templates in markup.
-Its [code-behind](../../../Playground/Cerneala.Playground/SceneWorldShowcase.crn.cs)
-loads/validates the document, maps the sample's six box entities to template
-data, and handles gameplay through routed input and `MoveAndCollide`. It does
-not rebuild the declared scene in C# or create one UI node per static tile.
+binds package-backed sources to peer `TileMap2D` nodes and declares an ordinary
+door sprite, colliders, animation sets, and dynamic templates in markup. Its build
+uses these importers and the optional [package writer](Cerneala.Scene2D.Packages.Scene2DPackageWriter.md)
+to prepare two autonomous directories. Runtime opening uses
+[Scene2DPackage](Cerneala.Scene2D.Packages.Scene2DPackage.md), not an importer or
+a resident complete document.
+
+The [application adapter](../../../Playground/Cerneala.Playground/SceneWorldPackage.cs)
+acquires the spawn and door metadata explicitly, streams the six authored box
+entities for spatial interests, and reconstructs only affected chunk payloads
+for its two supported cell edits. The [code-behind](../../../Playground/Cerneala.Playground/SceneWorldShowcase.crn.cs)
+prepares player collision interests before movement/reset, publishes through the
+UI relay, and handles gameplay through routed input and `MoveAndCollide`.
+It does not create one UI node per static tile or modify the package on disk.
+
+In this sample, `SceneWorldState.PlantAsync(CancellationToken)` prepares a decorative
+flower edit before UI-thread publication. It replaces the former synchronous
+`Plant()` sample method; callers await the operation. Plant toggles Buildings cell
+(11,10), preserving the grass in Terrain and the authored neighboring flower. The
+prepared managed payload is shared with current scene interests only during
+publication, then staging is released; later acquisitions reconstruct it from the
+package. Cancellation before publication or a superseded operation prevents the
+pending edit from being published. This does
+not change `RenderSurface2D`'s whole-scene Loading behavior for missing required
+data, and is not a general mutable-map API.
 
 The separate Tiled and LDtk fixtures preserve equivalent tile content and gameplay
-entities while retaining their different chunk representations and source provenance.
-The published runtime door map clears the cell drawn by the peer door sprite; the
-imported document remains unchanged. See [sparse composition metadata](Cerneala.UI.Controls.TilePromotion2D.md).
+entities. Preparation preserves the authored provenance in leased metadata and
+subdivides oversized grids into at most 16-by-16 pieces. The application-owned
+door source clears the cell drawn by the peer sprite; the original package
+payload remains unchanged. See [sparse composition metadata](Cerneala.UI.Controls.TilePromotion2D.md).
 
 ## Constructors
 

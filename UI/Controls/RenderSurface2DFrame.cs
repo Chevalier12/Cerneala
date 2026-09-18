@@ -1,8 +1,10 @@
 using Cerneala.Drawing;
 using Cerneala.Drawing.Prism;
+using Cerneala.Drawing.Prism.Graph;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Prism.Runtime;
 using Cerneala.UI.Rendering;
+using Cerneala.UI.Resources;
 using System.Numerics;
 
 namespace Cerneala.UI.Controls;
@@ -21,6 +23,8 @@ public sealed partial class RenderSurface2DFrame
     private readonly DrawCommandList commands;
     private readonly Action<IDrawImage>? trackImageDependency;
     private readonly long contentVersion;
+    private RenderSurface2D? preparationSurface;
+    private List<TileMap2D.WarmPreparationRequest>? warmPreparation;
     private bool active = true;
 
     internal RenderSurface2DFrame(
@@ -396,7 +400,17 @@ public sealed partial class RenderSurface2DFrame
 
     internal void Complete()
     {
+        EnsureActive();
         active = false;
+        try
+        {
+            if (warmPreparation is not null) { preparationSurface!.CompleteWarmPreparation(warmPreparation); }
+        }
+        finally
+        {
+            warmPreparation?.Clear();
+            preparationSurface = null;
+        }
         if (trackImageDependency is null)
         {
             return;
@@ -408,7 +422,42 @@ public sealed partial class RenderSurface2DFrame
         }
     }
 
-    internal bool BeginPrism(UIElement owner, DrawRect bounds)
+    internal void QueueWarmPreparation(RenderSurface2D surface, TileMap2D.WarmPreparationRequest request)
+    {
+        EnsureActive();
+        if (preparationSurface is not null && !ReferenceEquals(preparationSurface, surface))
+        {
+            throw new InvalidOperationException("A frame belongs to one render surface.");
+        }
+        preparationSurface = surface;
+        (warmPreparation ??= []).Add(request);
+    }
+
+    internal void Abort()
+    {
+        active = false;
+        DiscardOptionalPreparation();
+    }
+
+    internal void DiscardOptionalPreparation()
+    {
+        List<Exception>? failures = null;
+        if (warmPreparation is not null)
+        {
+            foreach (TileMap2D.WarmPreparationRequest request in warmPreparation)
+            {
+                try { request.Complete(0, prepare: false); }
+                catch (Exception error) { (failures ??= []).Add(error); }
+            }
+            warmPreparation.Clear();
+        }
+        preparationSurface = null;
+        if (failures is not null) { throw new AggregateException(failures); }
+    }
+
+    internal bool BeginPrism(UIElement owner, DrawRect bounds,
+        ImageResourceAccess imageAccess = ImageResourceAccess.Synchronous,
+        bool hasKnownContentBounds = true)
     {
         EnsureActive();
         if (!PrismAttachment.TryGetRenderState(
@@ -419,15 +468,59 @@ public sealed partial class RenderSurface2DFrame
             return false;
         }
 
+        SceneBounds2D? input = null;
+        Cerneala.UI.Media.Matrix3x2 captureTransform = Cerneala.UI.Media.Matrix3x2.Identity;
+        if (owner is SceneNode2D node &&
+            SceneSpatialInterest2D.TryGetExpandedInputBounds(node, includeSelf: true, out SceneBounds2D expanded, Bounds) &&
+            (node.SimulationContext is { SpatialItems.Count: > 0 } || expanded.Kind != SceneBoundsKind.Unknown))
+        {
+            input = expanded;
+            if (node is Sprite2D sprite)
+            {
+                // Sprite vertices already contain their anchor/rotation; unlike
+                // scene groups they do not push that transform on the command
+                // stack. The source region is nevertheless in sprite-local units.
+                captureTransform = Cerneala.UI.Media.Matrix3x2.FromNumerics(sprite.GetLocalTransform());
+                SceneBounds2D local = sprite.GetLocalBounds();
+                bounds = local.Kind == SceneBoundsKind.Known ? local.Bounds : default;
+                hasKnownContentBounds = local.Kind != SceneBoundsKind.Unknown;
+            }
+            if (node.PrismInputDomain is DrawRect domain && PrismInputDependency.RequiresWholeInput(instance!))
+            {
+                bounds = domain;
+                hasKnownContentBounds = true;
+            }
+            if (expanded.Kind == SceneBoundsKind.Known && hasKnownContentBounds)
+            {
+                // Interest tells us which source pixels may be needed, not that
+                // they exist. Preserve this composition's actual input boundary;
+                // its output expansion remains owned by the Prism kernel plan.
+                // An explicit domain on this owner defines that boundary above.
+                input = SceneBounds2D.Known(DrawCommandStateAnalyzer.Intersect(expanded.Bounds, bounds));
+            }
+        }
         PrismDrawScope scope = DrawCommandListBuilder.CreatePrismScope(
             owner,
             instance!,
             cacheOwnerToken,
             bounds,
-            Cerneala.UI.Media.Matrix3x2.Identity,
+            captureTransform,
             owner.PrismVisualVersion,
             contentVersion,
-            DrawCommandListBuilder.ResolvePrismResources(owner, instance!));
+            DrawCommandListBuilder.ResolvePrismResources(owner, instance!, imageAccess));
+        if (input is { } required)
+        {
+            scope = scope with { InputBounds = required.Kind switch
+            {
+                SceneBoundsKind.Known => required.Bounds,
+                SceneBoundsKind.Empty => default(DrawRect),
+                _ => bounds
+            } };
+        }
+        if (input is not null || owner is SceneNode2D { SimulationContext: { SpatialItems.Count: > 0 } })
+        {
+            scope = scope with { StrictSurfaceAllocation = true };
+        }
         commands.Add(DrawCommand.BeginPrism(scope));
         return true;
     }

@@ -27,6 +27,8 @@ The constructor requires a non-empty ID, atlas resource ID, at least one tile, u
 
 Definition enumeration is limited to 1,048,576 entries. Source rectangles are checked against actual/declared atlas dimensions by [Scene2DModelValidator](Cerneala.UI.Controls.Scene2DModelValidator.md); the constructor does not load an image.
 
+In a streamed map, complete used definitions and set properties belong to the acquired [TileMapChunkData2D](Cerneala.UI.Controls.TileMapChunkData2D.md), not the resident catalog. Changing a set's definitions, atlas reference or metadata requires new payload revisions for affected chunks; incrementing `TileSet2D.Version` alone cannot replace those revisions.
+
 ## Properties
 
 | Name | Description |
@@ -34,5 +36,5 @@ Definition enumeration is limited to 1,048,576 entries. Source rectangles are ch
 | `Id` | Stable tileset ID. |
 | `AtlasResourceId` | Shared `ImageResource` atlas ID. |
 | `Tiles` | Immutable tile definitions. |
-| `Version` | Positive cache-visible tileset version. |
+| `Version` | Positive tileset version preserved in payloads; not a substitute for an affected chunk payload revision. |
 | `Properties` | Copied opaque importer metadata. |

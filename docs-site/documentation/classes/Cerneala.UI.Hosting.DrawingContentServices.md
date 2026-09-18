@@ -25,7 +25,7 @@ ImageResourceCache cache = services.ImageResourceCache;
 
 The service creates a `SystemFontSource` and `SkiaTextRasterizer` when those dependencies are omitted. `ImageResourceCache` is always created from the optional `IImageLoader`.
 
-The service owns its image resource cache. `Dispose` releases the cache once and is idempotent. The class is independent of the graphics backend and can be supplied to any compatible UI host; text rasterization remains explicitly Skia-based.
+The service owns its image resource cache. `Dispose` closes the cache once and is idempotent. Outstanding [image leases](Cerneala.UI.Resources.ImageResourceLease.md) remain valid until their consumers release them; disposing the service does not revoke another consumer's acquisition. The class is independent of the graphics backend and can be supplied to any compatible UI host; text rasterization remains explicitly Skia-based.
 
 ## Constructors
 

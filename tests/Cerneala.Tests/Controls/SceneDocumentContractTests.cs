@@ -259,9 +259,9 @@ public sealed class SceneDocumentContractTests(ITestOutputHelper output)
         ResourceId<ImageResource> resourceId = new("Atlas");
         TileSet2D set = new("Atlas", resourceId,
             [new TileDefinition2D(1, new DrawRect(0, 0, 1, 1)), new TileDefinition2D(2, new DrawRect(1, 0, 2, 1))]);
-        TileMap2D map = new() { Model = new("Layer", new DrawSize(1, 1), [set],
+        TileMap2D map = new() { Source = TileMapTestSource.Create(new("Layer", new DrawSize(1, 1), [set],
             [new TileChunk2D(default, 1, 1, [new TileCell2D(1)]),
-                new TileChunk2D(new TileCoordinate2D(1, 0), 1, 1, [new TileCell2D(2)])]) };
+                new TileChunk2D(new TileCoordinate2D(1, 0), 1, 1, [new TileCell2D(2)])])) };
         Scene2D scene = new();
         scene.Children.Add(map);
         RenderSurface2D surface = new() { Scene = scene };
@@ -270,7 +270,10 @@ public sealed class SceneDocumentContractTests(ITestOutputHelper output)
         root.SetImageLoader(new AtlasLoader());
         root.VisualChildren.Add(surface);
         DrawCommandList commands = new();
-        Assert.ThrowsAny<ArgumentException>(() => ((IRenderSurface2DFrameSource)surface).RecordFrame(commands, new DrawRect(0, 0, 10, 10)));
+        TileMapTestSource.PrepareFrame(surface, new(0, 0, 10, 10));
+        ((IRenderSurface2DFrameSource)surface).RecordFrame(commands, new DrawRect(0, 0, 10, 10));
+        Assert.Equal(RenderSurface2DPresentationState.Error, surface.PresentationState);
+        Assert.IsAssignableFrom<ArgumentException>(surface.PresentationError);
         Assert.Equal(0, map.GetDiagnosticsSnapshot().BatchesBuilt);
         Assert.DoesNotContain(commands, command => command.Kind is DrawCommandKind.DrawImage or DrawCommandKind.DrawSpriteBatch);
     }
@@ -281,8 +284,10 @@ public sealed class SceneDocumentContractTests(ITestOutputHelper output)
         public int Height => 1;
     }
 
-    private sealed class AtlasLoader : IImageLoader
+    private sealed class AtlasLoader : IAsyncImageLoader
     {
         public IDrawImage Load(string path) => new AtlasImage();
+        public ValueTask<IDrawImage> LoadAsync(string path, CancellationToken cancellationToken = default) =>
+            ValueTask.FromResult(Load(path));
     }
 }

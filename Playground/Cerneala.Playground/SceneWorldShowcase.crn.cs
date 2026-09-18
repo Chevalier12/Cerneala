@@ -3,10 +3,10 @@ using System.ComponentModel;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using Cerneala.Drawing;
-using Cerneala.Scene2D.Importers;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
+using Cerneala.UI.Relay;
 using Cerneala.UI.Resources;
 
 namespace Cerneala.Playground;
@@ -16,29 +16,123 @@ public partial class SceneWorldShowcase : UserControl
     public SceneWorldState State { get; } = new();
     public MoveCollisionResult2D? LastMove { get; private set; }
     public int PlayerSelections { get; private set; }
+    public Task PendingOperation { get; private set; } = Task.CompletedTask;
+    public Exception? OperationError { get; private set; }
 
-    private bool initialized;
+    private CancellationTokenSource? lifetime;
+    private SceneCollisionRegion2D? playerRegion;
 
     private void OnLoaded(UiElementId sender, RoutedEventArgs args)
     {
-        if (initialized) return;
-        initialized = true;
-        if (!Resources.TryGetResource(new ResourceId<ImageResource>("WorldAtlas"), out ImageResource? atlas))
-            throw new InvalidOperationException("The declarative world atlas is missing.");
-        // Importers retain root-relative resource IDs. Composition aliases the declared
-        // resource, not its decoded pixels, so the root image cache remains the owner.
-        Surface.Resources.SetResource(new ResourceId<ImageResource>("world-atlas.png"), atlas);
+        if (lifetime is not null) return;
+        lifetime = new();
+        State.OwnerRelay = Root!.Relay;
+        State.PropertyChanged += OnStatePropertyChanged;
         DataContext = State;
+        PendingOperation = Task.CompletedTask;
+        Begin(token => LoadWorldAsync(State.IsLdtk, resume: true, Root!.Relay, token));
+    }
+
+    private void OnUnloaded(UiElementId sender, RoutedEventArgs args)
+    {
+        CancellationTokenSource? previous = lifetime;
+        lifetime = null;
+        State.PropertyChanged -= OnStatePropertyChanged;
+        previous?.Cancel();
+        playerRegion?.Dispose();
+        playerRegion = null;
+        Surface.Scene = null;
+        State.Suspend();
+        State.OwnerRelay = null;
+        Surface.Resources.Remove("world-atlas.png");
+        previous?.Dispose();
+    }
+
+    private void Begin(Func<CancellationToken, Task> operation)
+    {
+        if (lifetime is null || !PendingOperation.IsCompleted) return;
+        State.IsBusy = true;
+        OperationError = null;
+        PendingOperation = RunAsync(operation, Root!.Relay, lifetime.Token);
+    }
+
+    private async Task RunAsync(Func<CancellationToken, Task> operation, UiRelay relay, CancellationToken token)
+    {
+        try { await operation(token).ConfigureAwait(false); }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { return; }
+        catch (Exception error)
+        {
+            if (token.IsCancellationRequested) return;
+            await relay.InvokeAsync(() =>
+            {
+                OperationError = error;
+                State.Status = $"Scene operation failed: {error.Message}";
+            }, token).ConfigureAwait(false);
+        }
+        if (!token.IsCancellationRequested)
+            await relay.InvokeAsync(() => State.IsBusy = false, token).ConfigureAwait(false);
+    }
+
+    private async Task LoadWorldAsync(bool ldtk, bool resume, UiRelay relay, CancellationToken token)
+    {
+        // Initial opening has no world to present. Replacing a package must not
+        // detach the simulation or recreate actors whose source has not changed.
+        if (!State.IsLoaded) Surface.Scene = null;
+        playerRegion?.Dispose();
+        playerRegion = null;
+        State.Status = "Loading prepared village package...";
+        await State.LoadCoreAsync(ldtk, reset: !resume || !State.HasLoaded, token).ConfigureAwait(false);
+        await relay.InvokeAsync(() =>
+        {
+            Surface.Scene = World;
+            LastMove = null;
+        }, token).ConfigureAwait(false);
+        await PreparePlayerAsync(relay, reset: false, token).ConfigureAwait(false);
+    }
+
+    private void OnStatePropertyChanged(object? sender, PropertyChangedEventArgs args)
+    {
+        if (args.PropertyName != nameof(SceneWorldState.Atlas) || State.Atlas is not { } atlas) return;
+        // Resources and map-source notifications share the same UI publication.
+        // There is no frame with new tile data and the previous package's atlas.
+        Resources.SetResource(new ResourceId<ImageResource>("WorldAtlas"), atlas);
+        Surface.Resources.SetResource(new ResourceId<ImageResource>("world-atlas.png"), atlas);
+    }
+
+    private async Task PreparePlayerAsync(UiRelay relay, bool reset, CancellationToken token)
+    {
+        SceneCollisionRegion2D? acquired = await relay.InvokeAsync(() =>
+        {
+            DrawPoint point = reset ? State.Spawn : new(State.PlayerX, State.PlayerY);
+            // Prepare one movement step in every direction. Missing coverage never
+            // becomes empty space, and an input received while busy is not replayed.
+            return World.CollisionWorld.PrepareRegionAsync(
+                new(point.X - 64, point.Y - 64, 128 + 12, 128 + 14), token).AsTask();
+        }, token).ConfigureAwait(false);
+        try
+        {
+            await relay.InvokeAsync(() =>
+            {
+                SceneCollisionRegion2D? previous = playerRegion;
+                playerRegion = acquired;
+                acquired = null;
+                if (reset) { State.ResetPlayer(); LastMove = null; }
+                previous?.Dispose();
+            }, token).ConfigureAwait(false);
+        }
+        finally { acquired?.Dispose(); }
     }
 
     private void OnSelectPlayer(UiElementId sender, RoutedEventArgs args)
     {
+        if (State.IsBusy) return;
         PlayerSelections++;
         State.Status = "Player selected. Arrows: move; Space: attack.";
     }
 
     private void OnDoor(UiElementId sender, RoutedEventArgs args)
     {
+        if (State.IsBusy) return;
         State.DoorClosed = !State.DoorClosed;
         State.Status = State.DoorClosed ? "Door closed: collider active." : "Door open: collider disabled.";
     }
@@ -46,6 +140,11 @@ public partial class SceneWorldShowcase : UserControl
     private void OnPlayerKey(UiElementId sender, RoutedEventArgs args)
     {
         if (args is not KeyEventArgs key) return;
+        if (State.IsBusy || playerRegion?.IsReady != true)
+        {
+            args.Handled = true;
+            return;
+        }
         if (key.Key == InputKey.Space)
         {
             State.PlayerState = "Attack";
@@ -65,52 +164,79 @@ public partial class SceneWorldShowcase : UserControl
         State.PlayerState = "Walk";
         PlayerSprite.RestartAnimation();
         State.Status = $"Requested {requested}; travel {LastMove.Travel}; contact {LastMove.Collision is not null}";
+        Begin(token => PreparePlayerAsync(Root!.Relay, reset: false, token));
         args.Handled = true;
     }
 
-    private void OnReset(UiElementId sender, RoutedEventArgs args) { State.ResetPlayer(); LastMove = null; }
-    private void OnPan(UiElementId sender, RoutedEventArgs args) { State.CameraX = State.CameraX > -500 ? State.CameraX - 128 : 8; }
-    private void OnHome(UiElementId sender, RoutedEventArgs args) { State.CameraX = 8; }
-    private void OnMutate(UiElementId sender, RoutedEventArgs args) { State.Plant(); }
-    private void OnAddNpc(UiElementId sender, RoutedEventArgs args) { State.Npcs.Add(new(300 + State.Npcs.Count * 20, 190)); }
+    private void OnReset(UiElementId sender, RoutedEventArgs args) =>
+        Begin(token => PreparePlayerAsync(Root!.Relay, reset: true, token));
+    private void OnPan(UiElementId sender, RoutedEventArgs args)
+    { if (!State.IsBusy) State.CameraX = State.CameraX > -500 ? State.CameraX - 128 : 8; }
+    private void OnHome(UiElementId sender, RoutedEventArgs args) { if (!State.IsBusy) State.CameraX = 8; }
+    private void OnMutate(UiElementId sender, RoutedEventArgs args)
+    { if (!State.IsBusy && State.IsLoaded) Begin(token => State.PlantAsync(token)); }
+    private void OnAddNpc(UiElementId sender, RoutedEventArgs args)
+    { if (!State.IsBusy) State.Npcs.Add(new(300 + State.Npcs.Count * 20, 190)); }
     private void OnDebug(UiElementId sender, RoutedEventArgs args)
     {
-        State.DebugFlags = State.DebugFlags == Scene2DDebugFlags.None ? Scene2DDebugFlags.All : Scene2DDebugFlags.None;
+        if (!State.IsBusy)
+            State.DebugFlags = State.DebugFlags == Scene2DDebugFlags.None ? Scene2DDebugFlags.All : Scene2DDebugFlags.None;
     }
-    private void OnFormat(UiElementId sender, RoutedEventArgs args) { State.Load(!State.IsLdtk); }
+    private void OnFormat(UiElementId sender, RoutedEventArgs args) =>
+        Begin(token => LoadWorldAsync(!State.IsLdtk, resume: false, Root!.Relay, token));
 }
 
-// Authored collision regions are realized as collision-only Sprite2D items.
+// Authored walls are acquired only for spatial interests. Their large authoring
+// properties do not become permanent application backing data.
 public sealed record SceneWorldBox(float X, float Y, float Width, float Height, uint Layer, uint Mask);
 public sealed record SceneWorldNpc(float X, float Y)
 {
+    internal string Id { get; } = Guid.NewGuid().ToString("N");
     public DrawRect Destination => new(0, 0, 16, 16);
+    public DrawRect? PrismInputDomain => Destination;
     public float SourceX => 64;
     public float SourceY => 16;
     public float SourceWidth => 16;
     public float SourceHeight => 16;
 }
 
-public sealed class SceneWorldState : INotifyPropertyChanged
+public sealed class SceneWorldState : INotifyPropertyChanged, IDisposable
 {
     private float playerX, playerY, cameraX = 8;
-    private bool doorClosed = true;
+    private bool doorClosed = true, planted, isBusy;
     private string playerState = "Idle", status = "";
     private Scene2DDebugFlags debugFlags;
-    private Scene2DLevel level = null!;
+    private SceneWorldPackage? world;
+    private long generation;
+    private bool disposed;
+    private readonly string packageRoot;
+    private readonly Dictionary<string, SceneWorldNpc> npcPayloads = new(StringComparer.Ordinal);
 
-    public SceneWorldState() { Load(false); Npcs.Add(new(310, 190)); }
+    public SceneWorldState(string? packageRoot = null)
+    {
+        this.packageRoot = packageRoot ?? Path.Combine(AppContext.BaseDirectory, "SceneWorldPackages");
+        NpcSource = new([], (entry, _) => ValueTask.FromResult(new SceneSpatialLease2D<object>(npcPayloads[entry.Id])));
+        Npcs.CollectionChanged += (_, _) => PublishNpcs();
+        Npcs.Add(new(310, 190));
+    }
+
+    internal UiRelay? OwnerRelay { get; set; }
+    internal bool HasLoaded { get; private set; }
+    internal ImageResource? Atlas => world?.Atlas;
+    public bool IsLoaded => world is not null;
+    public bool IsBusy { get => isBusy; internal set { isBusy = value; Changed(); } }
     public event PropertyChangedEventHandler? PropertyChanged;
-    public IReadOnlyList<TileMap2DModel> TileMaps { get; private set; } = [];
-    public TileMap2DModel GroundModel => TileMaps.Single(map => map.Id == "1");
-    public TileMap2DModel BuildingModel => TileMaps.Single(map => map.Id == "2");
-    public TileMap2DModel DoorModel => TileMaps.Single(map => map.Id == "4");
-    public float DoorX => DoorModel.Offset.X + 14 * DoorModel.TileSize.Width;
-    public float DoorY => DoorModel.Offset.Y + 9 * DoorModel.TileSize.Height;
-    public float DoorWidth => DoorModel.TileSize.Width;
-    public float DoorHeight => DoorModel.TileSize.Height;
-    public Color DoorTint => DoorModel.Tint;
-    public float DoorOpacity => DoorModel.Opacity;
+    public IReadOnlyList<TileMapSource2D> TileMaps => world?.TileMaps ?? [];
+    public TileMapSource2D? GroundSource => TileMaps.SingleOrDefault(map => map.Catalog.Id == "1");
+    public TileMapSource2D? BuildingSource => TileMaps.SingleOrDefault(map => map.Catalog.Id == "2");
+    public TileMapSource2D? DoorSource => TileMaps.SingleOrDefault(map => map.Catalog.Id == "4");
+    public float DoorX => (DoorSource?.Catalog.Offset.X ?? 0) + 14 * DoorWidth;
+    public float DoorY => (DoorSource?.Catalog.Offset.Y ?? 0) + 9 * DoorHeight;
+    public float DoorWidth => DoorSource?.Catalog.TileSize.Width ?? 16;
+    public float DoorHeight => DoorSource?.Catalog.TileSize.Height ?? 16;
+    public DrawRect? DoorPrismInputDomain => new DrawRect(0, 0, DoorWidth, DoorHeight);
+    public Color DoorTint => DoorSource?.Catalog.Tint ?? Color.White;
+    public float DoorOpacity => DoorSource?.Catalog.Opacity ?? 1;
     public float PlayerX { get => playerX; set { playerX = value; Changed(); } }
     public float PlayerY { get => playerY; set { playerY = value; Changed(); } }
     public float CameraX { get => cameraX; set { cameraX = value; Changed(); } }
@@ -120,83 +246,129 @@ public sealed class SceneWorldState : INotifyPropertyChanged
     public Scene2DDebugFlags DebugFlags { get => debugFlags; set { debugFlags = value; Changed(); } }
     public string Status { get => status; set { status = value; Changed(); } }
     public bool IsLdtk { get; private set; }
-    public IReadOnlyList<SceneWorldBox> Colliders { get; private set; } = [];
     public ObservableCollection<SceneWorldNpc> Npcs { get; } = [];
+    public SceneSpatialSource2D<object> NpcSource { get; }
+    public ISceneSpatialSource2D<object>? ColliderSource => world?.ColliderSource;
+    public DrawPoint Spawn => RequireWorld().Spawn;
     public IScene2DDebugNavigationGrid Navigation { get; } = new VillageNavigation();
     public float PlayerWidth => 16;
     public float PlayerHeight => 16;
+    public DrawRect? PlayerPrismInputDomain => new DrawRect(0, 0, PlayerWidth, PlayerHeight);
 
-    public void Load(bool ldtk)
+    public Task LoadAsync(bool ldtk, CancellationToken cancellationToken = default) =>
+        LoadCoreAsync(ldtk, reset: true, cancellationToken);
+
+    internal async Task LoadCoreAsync(bool ldtk, bool reset, CancellationToken token)
     {
-        string path = Path.Combine(AppContext.BaseDirectory, "SceneWorldAssets", ldtk ? "village.ldtk" : "village.tmj");
-        Scene2DImportResult result = ldtk ? LdtkScene2DImporter.Import(path) : TiledScene2DImporter.Import(path);
-        if (!result.Success) throw new InvalidOperationException(string.Join(Environment.NewLine, result.Diagnostics));
-        level = result.Document!.Levels.Single();
-        if (level.Promotions.Single().Cell != new TileCellKey2D("4", 14, 9))
-            throw new InvalidOperationException("The authored door declaration requires cell (4,14,9).");
-        IsLdtk = ldtk;
-        Colliders = level.Entities.Where(e => e.Role == "Collider").Select(e =>
+        ObjectDisposedException.ThrowIf(disposed, this);
+        OwnerRelay?.VerifyAccess();
+        long request = ++generation;
+        UiRelay? relay = OwnerRelay;
+        bool restorePlant = !reset && planted;
+        SceneWorldPackage? next = await SceneWorldPackage.OpenAsync(
+            Path.Combine(packageRoot, ldtk ? "ldtk" : "tiled"), token).ConfigureAwait(false);
+        try
         {
-            if (e.Shape != "Box" || e.Rotation != 0 || e.Collider is null)
-                throw new InvalidOperationException("This sample composes the six declared axis-aligned boxes only.");
-            TileColliderDescriptor2D collider = e.Collider;
-            return new SceneWorldBox(e.Position.X, e.Position.Y, e.Size.Width, e.Size.Height, collider.CollisionLayer, collider.CollisionMask);
-        }).ToArray();
-        // The door is an ordinary Sprite2D. Its source cell remains in the
-        // imported document, but not in the immutable map used for rendering.
-        SetTileMaps(level.TileMaps.Select(map => map.Id == "4" ? ReplaceCell(map, new(14, 9), default) : map));
-        Changed(nameof(Colliders));
-        DoorClosed = Equals(level.Promotions.Single().Properties["InitialState"], "Closed");
-        CameraX = 8;
-        ResetPlayer();
-        Status = $"{(ldtk ? "LDtk" : "Tiled")} | {TileMaps.Sum(map => map.Chunks.Count)} chunks | 1 door sprite | {result.Diagnostics.Count} diagnostics";
+            if (restorePlant)
+            {
+                using var edit = await next.PreparePlantAsync(token).ConfigureAwait(false);
+                edit.Publish(); // This unopened composition has no scene subscribers yet.
+            }
+            void Publish()
+            {
+                token.ThrowIfCancellationRequested();
+                if (disposed || generation != request) throw new OperationCanceledException("The village load was superseded.");
+                SceneWorldPackage? previous = world;
+                world = next;
+                next = null;
+                try
+                {
+                    IsLdtk = ldtk;
+                    HasLoaded = true;
+                    if (reset)
+                    {
+                        planted = false;
+                        DoorClosed = world.DoorClosed;
+                        CameraX = 8;
+                        ResetPlayer();
+                    }
+                    SourcesChanged();
+                    Status = $"{(ldtk ? "LDtk" : "Tiled")} package | {TileMaps.Sum(map => map.Catalog.Chunks.Count)} chunks | 1 door sprite";
+                }
+                finally { previous?.Dispose(); }
+            }
+            if (relay is null) Publish();
+            else await relay.InvokeAsync(Publish, token).ConfigureAwait(false);
+        }
+        finally { next?.Dispose(); }
     }
 
     public void ResetPlayer()
     {
-        Scene2DEntity spawn = level.Entities.Single(e => e.Role == "Spawn");
-        PlayerX = spawn.Position.X; PlayerY = spawn.Position.Y;
-        PlayerState = (string)spawn.Properties["InitialState"]!;
+        SceneWorldPackage current = RequireWorld();
+        PlayerX = current.Spawn.X; PlayerY = current.Spawn.Y;
+        PlayerState = current.SpawnState;
     }
 
-    public void Plant()
+    public async Task PlantAsync(CancellationToken cancellationToken = default)
     {
-        TileCoordinate2D location = new(10, 10);
-        TileMap2DModel map = GroundModel;
-        if (!map.TryGetCell(location, out TileCell2D current))
-            throw new InvalidOperationException("The plant location must address an existing cell.");
-        TileMap2DModel updated = ReplaceCell(map, location, new(current.TileId == 15 ? 1 : 15));
-        SetTileMaps(TileMaps.Select(item => ReferenceEquals(item, map) ? updated : item));
-        Status = "Plant: one immutable chunk replaced; all other chunk objects retained.";
+        ObjectDisposedException.ThrowIf(disposed, this);
+        OwnerRelay?.VerifyAccess();
+        cancellationToken.ThrowIfCancellationRequested();
+        SceneWorldPackage current = RequireWorld();
+        UiRelay? relay = OwnerRelay;
+        long request = ++generation;
+        using var edit = await current.PreparePlantAsync(cancellationToken).ConfigureAwait(false);
+        void Publish()
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (disposed || generation != request || !ReferenceEquals(world, current))
+                throw new OperationCanceledException("The Plant operation was superseded.");
+            edit.Publish();
+            planted = !planted;
+            Status = "Plant: one prepared decorative chunk published; grass and unchanged chunks retained.";
+        }
+        if (relay is null) Publish();
+        else await relay.InvokeAsync(Publish, cancellationToken).ConfigureAwait(false);
     }
 
-    private void SetTileMaps(IEnumerable<TileMap2DModel> maps)
+    internal void Suspend()
     {
-        TileMaps = Array.AsReadOnly(maps.ToArray());
-        Changed(nameof(TileMaps));
-        Changed(nameof(GroundModel));
-        Changed(nameof(BuildingModel));
-        Changed(nameof(DoorModel));
-        Changed(nameof(DoorX));
-        Changed(nameof(DoorY));
-        Changed(nameof(DoorWidth));
-        Changed(nameof(DoorHeight));
-        Changed(nameof(DoorTint));
-        Changed(nameof(DoorOpacity));
+        generation++;
+        SceneWorldPackage? previous = world;
+        world = null;
+        SourcesChanged();
+        previous?.Dispose();
     }
 
-    private static TileMap2DModel ReplaceCell(TileMap2DModel map, TileCoordinate2D location, TileCell2D cell)
+    public void Dispose()
     {
-        TileChunk2D changed = map.Chunks.Single(chunk => chunk.Contains(location));
-        TileCell2D[] cells = changed.Tiles.ToArray();
-        int index = (location.Y - changed.Origin.Y) * changed.Width + location.X - changed.Origin.X;
-        cells[index] = cell;
-        TileChunk2D replacement = new(changed.Origin, changed.Width, changed.Height, cells, changed.Version + 1, changed.Properties);
-        return new(map.Id, map.TileSize, map.TileSets, map.Chunks.Select(chunk => ReferenceEquals(chunk, changed) ? replacement : chunk),
-            map.Bounds, map.Order, map.IsVisible, map.Offset, map.Opacity, map.Tint, map.Version + 1, map.Properties);
+        if (disposed) return;
+        OwnerRelay?.VerifyAccess();
+        disposed = true;
+        Suspend();
+    }
+
+    private SceneWorldPackage RequireWorld() => world ?? throw new InvalidOperationException("The village package is not loaded.");
+
+    private void SourcesChanged()
+    {
+        foreach (string name in new[] { nameof(Atlas), nameof(IsLoaded), nameof(IsLdtk), nameof(TileMaps),
+            nameof(GroundSource), nameof(BuildingSource), nameof(DoorSource), nameof(ColliderSource),
+            nameof(DoorX), nameof(DoorY), nameof(DoorWidth), nameof(DoorHeight), nameof(DoorPrismInputDomain),
+            nameof(DoorTint), nameof(DoorOpacity) })
+            Changed(name);
     }
 
     private void Changed([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
+
+    private void PublishNpcs()
+    {
+        npcPayloads.Clear();
+        foreach (SceneWorldNpc npc in Npcs) npcPayloads.Add(npc.Id, npc);
+        NpcSource.SetEntries(Npcs.Select(npc => new SceneSpatialEntry2D(
+            npc.Id, new(npc.X, npc.Y, 16, 16), isSimulated: true)));
+    }
 
     private sealed class VillageNavigation : IScene2DDebugNavigationGrid
     {

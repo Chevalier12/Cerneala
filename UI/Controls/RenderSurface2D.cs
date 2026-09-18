@@ -1,10 +1,10 @@
-using System.Reflection;
 using System.Numerics;
 using Cerneala.Drawing;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Input;
+using Cerneala.UI.Layout;
 using Cerneala.UI.Rendering;
 
 namespace Cerneala.UI.Controls;
@@ -13,7 +13,7 @@ public delegate void RenderSurface2DDrawEventHandler(
     RenderSurface2D sender,
     RenderSurface2DFrame frame);
 
-public class RenderSurface2D : ContentControl,
+public partial class RenderSurface2D : ContentControl,
     ITimeSensitiveRenderElement,
     IRenderSurface2DFrameSource,
     IInputSubtreeHost,
@@ -59,10 +59,7 @@ public class RenderSurface2D : ContentControl,
                 DrawBrushStretch.Fill,
                 UiPropertyOptions.AffectsRender));
 
-    private static readonly object OnDrawOverrideCacheLock = new();
-    private static readonly Dictionary<Type, bool> OnDrawOverrideCache = [];
-
-    private readonly bool hasOnDrawOverride;
+    private readonly Cerneala.UI.Resources.ImageResourceLeaseSet frameImages = new();
     private readonly Dictionary<object, IRenderSurface2DBackendState> backendStates =
         new(ReferenceEqualityComparer.Instance);
     private HashSet<IDrawImageInvalidationSource> imageDependencies =
@@ -74,13 +71,11 @@ public class RenderSurface2D : ContentControl,
     private long contentVersion = 1;
     private TimeSpan currentFrameTime;
     private readonly List<SceneNode2D> activeAnimations = [];
+    private SceneSimulationContext2D? simulationContext;
+    internal const int WarmPreparationTileBudget = 256;
+    private int nextWarmPreparationIndex;
     private readonly HashSet<Collider2D> hitTestColliders =
         new(ReferenceEqualityComparer.Instance);
-
-    public RenderSurface2D()
-    {
-        hasOnDrawOverride = DetectOnDrawOverride(GetType());
-    }
 
     public Color ClearColor
     {
@@ -180,6 +175,8 @@ public class RenderSurface2D : ContentControl,
             throw new ArgumentOutOfRangeException(nameof(frameTime));
         }
         currentFrameTime = frameTime;
+        RefreshSpatialItems(ArrangedBounds.Width, ArrangedBounds.Height);
+        CheckPresentation(GetPresentationBounds());
         bool animationChanged = false;
         if (IsAttached)
         {
@@ -205,11 +202,85 @@ public class RenderSurface2D : ContentControl,
 
         // Continuous scene recording is not itself a content mutation. Imperative
         // callbacks may depend on time or external state, so remain conservative.
-        InvalidateFrame(animationChanged || draw is not null || hasOnDrawOverride);
+        InvalidateFrame(animationChanged || draw is not null);
         return true;
     }
 
     internal int ActiveAnimationCount => activeAnimations.Count;
+
+    internal void RegisterSpatialItems(ISceneSpatialParticipant2D items)
+    {
+        simulationContext?.Register(items);
+        RefreshSpatialItems();
+    }
+
+    internal void UnregisterSpatialItems(ISceneSpatialParticipant2D items)
+    {
+        simulationContext?.Unregister(items);
+        RefreshSpatialItems();
+    }
+
+    internal void CompleteWarmPreparation(IReadOnlyList<TileMap2D.WarmPreparationRequest> requests)
+    {
+        if (requests.Count == 0) { return; }
+        int start = nextWarmPreparationIndex % requests.Count;
+        int remaining = WarmPreparationTileBudget;
+        bool granted = false;
+        List<Exception>? failures = null;
+        for (int offset = 0; offset < requests.Count; offset++)
+        {
+            int index = (start + offset) % requests.Count;
+            try
+            {
+                int used = requests[index].Complete(remaining);
+                remaining -= used;
+                if (used > 0 && !granted)
+                {
+                    // Rotate after the first recipient, not the last one:
+                    // smaller chunks filling a remainder must not starve a
+                    // map whose next chunk needs the entire next-frame budget.
+                    nextWarmPreparationIndex = (index + 1) % requests.Count;
+                    granted = true;
+                }
+            }
+            catch (Exception error)
+            {
+                (failures ??= []).Add(error);
+                // Work before a failure may already have consumed budget.
+                // Finish every map's retirement, but do no more preparation.
+                remaining = 0;
+            }
+        }
+        if (failures is not null) { throw new AggregateException(failures); }
+    }
+
+    internal void RefreshSpatialItems() => RefreshSpatialItems(ArrangedBounds.Width, ArrangedBounds.Height);
+
+    private void RefreshSpatialItems(float width, float height)
+    {
+        simulationContext?.RefreshSpatialItems(width, height);
+    }
+
+    internal SceneBounds2D GetSpatialViewport(SceneNode2D items) =>
+        GetSpatialViewport(items, ArrangedBounds.Width, ArrangedBounds.Height);
+
+    internal SceneBounds2D GetSpatialViewport(SceneNode2D items, float width, float height)
+    {
+        if (width <= 0 || height <= 0) { return SceneBounds2D.Empty; }
+        (int pixelWidth, int pixelHeight) = RenderSurface2DGeometry.GetPixelSize(width, height, Root?.Scale ?? 1);
+        DrawRect bounds = new(0, 0, pixelWidth, pixelHeight);
+        Matrix3x2 transform = SceneGeometry2D.GetLocalToSceneTransform(items);
+        if (ViewBox is DrawRect viewBox) { transform *= CreateViewBoxTransform(viewBox, bounds, Stretch); }
+        return SceneGeometry2D.TryTransformBoundsToLocal(bounds, transform, out DrawRect localBounds)
+            ? SceneBounds2D.Known(localBounds) : SceneBounds2D.Unknown;
+    }
+
+    protected override LayoutRect ArrangeCore(ArrangeContext context)
+    {
+        LayoutRect arranged = base.ArrangeCore(context);
+        RefreshSpatialItems(arranged.Width, arranged.Height);
+        return arranged;
+    }
 
     internal void RefreshAnimationRegistration(SceneNode2D node)
     {
@@ -239,13 +310,10 @@ public class RenderSurface2D : ContentControl,
         node.ActiveAnimationIndex = -1;
     }
 
-    protected virtual void OnDraw(RenderSurface2DFrame frame)
-    {
-    }
-
     protected override void OnAttached()
     {
         base.OnAttached();
+        if (Scene is { } scene) { simulationContext = new(scene, this); }
         if (IsDrawingActive)
         {
             AdvanceFrameVersion();
@@ -254,6 +322,7 @@ public class RenderSurface2D : ContentControl,
 
     protected override void OnDetached()
     {
+        StopSimulationContext();
         foreach (SceneNode2D node in activeAnimations)
         {
             node.ActiveAnimationIndex = -1;
@@ -285,6 +354,7 @@ public class RenderSurface2D : ContentControl,
         if (args is UiPropertyChangedEventArgs<Scene2D?> sceneChange &&
             ReferenceEquals(args.Property, SceneProperty))
         {
+            StopSimulationContext();
             sceneChange.OldValue?.AttachSurface(null);
             if (sceneChange.OldValue is not null)
             {
@@ -295,6 +365,11 @@ public class RenderSurface2D : ContentControl,
             {
                 LogicalChildren.Add(sceneChange.NewValue);
                 sceneChange.NewValue.AttachSurface(this);
+                if (IsAttached)
+                {
+                    simulationContext = new(sceneChange.NewValue, this);
+                    RefreshSpatialItems();
+                }
             }
         }
 
@@ -322,10 +397,27 @@ public class RenderSurface2D : ContentControl,
 
     IEnumerable<UIElement> IInputSubtreeHost.GetInputSubtreeChildren()
     {
-        if (Scene is not null)
+        if (Scene is not null && CanRouteSceneInput)
         {
             yield return Scene;
         }
+    }
+
+    internal override void ValidatePropertyMutation(UiProperty property, object? value)
+    {
+        base.ValidatePropertyMutation(property, value);
+        if (ReferenceEquals(property, SceneProperty) && value is Scene2D scene && !ReferenceEquals(scene, Scene))
+        {
+            // Reject a second owner before the property store or either tree changes.
+            LogicalChildren.ValidateInsertion(LogicalChildren.Count, scene);
+        }
+    }
+
+    private void StopSimulationContext()
+    {
+        SceneSimulationContext2D? previous = simulationContext;
+        simulationContext = null;
+        previous?.Retire();
     }
 
     UIElement? IGeometricHitTestHost.HitTestGeometry(
@@ -335,7 +427,7 @@ public class RenderSurface2D : ContentControl,
         HitTestFilter filter)
     {
         Scene2D? scene = Scene;
-        if (scene is null ||
+        if (scene is null || !CanRouteSceneInput ||
             !TryRootToScene(new Vector2(rootX, rootY), out Vector2 scenePosition))
         {
             return null;
@@ -351,7 +443,7 @@ public class RenderSurface2D : ContentControl,
             : null;
     }
 
-    private bool IsDrawingActive => draw is not null || hasOnDrawOverride || Scene is not null;
+    private bool IsDrawingActive => draw is not null || Scene is not null;
 
     Color IRenderSurface2DFrameSource.ClearColor => ClearColor;
 
@@ -361,6 +453,7 @@ public class RenderSurface2D : ContentControl,
         DrawCommandList commands,
         DrawRect bounds)
     {
+        using Cerneala.UI.Resources.ImageResourceLeaseSet.Scope imageUsage = frameImages.Begin();
         pendingImageDependencies.Clear();
         RenderSurface2DFrame frame = new(
             commands,
@@ -371,13 +464,31 @@ public class RenderSurface2D : ContentControl,
         try
         {
             InvokeDraw(frame);
-            RecordScene(frame, bounds);
+            if (CheckPresentation(bounds))
+            {
+                int sceneStart = commands.Count;
+                Scene2D? recordedScene = Scene;
+                DrawRect? recordedViewBox = ViewBox;
+                DrawBrushStretch recordedStretch = Stretch;
+                RecordScene(frame, bounds);
+                // A source or camera can be superseded while recording. Do not
+                // submit even the already-recorded prefix of that scene.
+                bool current = ReferenceEquals(recordedScene, Scene) && recordedViewBox == ViewBox && recordedStretch == Stretch;
+                if (!CheckPresentation(bounds) || !current)
+                {
+                    commands.Truncate(sceneStart);
+                    frame.DiscardOptionalPreparation();
+                    if (!current) { SetPresentation(RenderSurface2DPresentationState.Loading); }
+                }
+            }
             frame.Complete();
             CommitImageDependencies();
         }
-        catch
+        catch (Exception failure)
         {
             pendingImageDependencies.Clear();
+            try { frame.Abort(); }
+            catch (Exception cleanupFailure) { throw new AggregateException(failure, cleanupFailure); }
             throw;
         }
     }
@@ -420,8 +531,6 @@ public class RenderSurface2D : ContentControl,
 
     private void InvokeDraw(RenderSurface2DFrame frame)
     {
-        OnDraw(frame);
-
         if (draw is null)
         {
             return;
@@ -516,6 +625,7 @@ public class RenderSurface2D : ContentControl,
 
     private void TrackImageDependency(IDrawImage image)
     {
+        frameImages.Retain(image, Root?.ImageResourceCache);
         if (image is IDrawImageInvalidationSource dependency)
         {
             pendingImageDependencies.Add(dependency);
@@ -564,27 +674,7 @@ public class RenderSurface2D : ContentControl,
         }
     }
 
-    private static bool DetectOnDrawOverride(Type type)
-    {
-        lock (OnDrawOverrideCacheLock)
-        {
-            if (OnDrawOverrideCache.TryGetValue(type, out bool cached))
-            {
-                return cached;
-            }
-
-            MethodInfo? method = type.GetMethod(
-                nameof(OnDraw),
-                BindingFlags.Instance | BindingFlags.NonPublic,
-                binder: null,
-                [typeof(RenderSurface2DFrame)],
-                modifiers: null);
-            bool hasOverride = method?.GetBaseDefinition().DeclaringType !=
-                method?.DeclaringType;
-            OnDrawOverrideCache[type] = hasOverride;
-            return hasOverride;
-        }
-    }
+    internal void ReleaseDrawingResources() => DisposeManagedSession();
 
     private void DisposeManagedSession()
     {
@@ -602,5 +692,6 @@ public class RenderSurface2D : ContentControl,
         }
 
         backendStates.Clear();
+        frameImages.Clear();
     }
 }

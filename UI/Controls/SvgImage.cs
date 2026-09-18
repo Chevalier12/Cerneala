@@ -15,6 +15,7 @@ public class SvgImage : Image, IElementLifecycleBehavior
             UiPropertyOptions.AffectsMeasure | UiPropertyOptions.AffectsRender));
 
     private IDrawImage? loadedImage;
+    private SvgRasterizer.RasterLease? loadedRaster;
 
     public SvgImage()
     {
@@ -84,24 +85,42 @@ public class SvgImage : Image, IElementLifecycleBehavior
         }
 
         string resolvedPath = ResolvePath(SourcePath);
-        using MemoryStream rasterized = new(SvgRasterizer.Rasterize(resolvedPath), writable: false);
-        loadedImage = loader.Load(rasterized)
-            ?? throw new InvalidOperationException("Image loader returned a null image for the rasterized SVG.");
+        SvgRasterizer.RasterLease raster = SvgRasterizer.Acquire(resolvedPath);
+        try
+        {
+            using MemoryStream rasterized = new(raster.PngBytes, writable: false);
+            loadedImage = loader.Load(rasterized)
+                ?? throw new InvalidOperationException("Image loader returned a null image for the rasterized SVG.");
+            loadedRaster = raster;
+        }
+        catch
+        {
+            raster.Dispose();
+            throw;
+        }
         Source = loadedImage;
     }
 
     private void ReleaseLoadedImage()
     {
         IDrawImage? previous = loadedImage;
+        SvgRasterizer.RasterLease? previousRaster = loadedRaster;
         loadedImage = null;
-        if (ReferenceEquals(Source, previous))
+        loadedRaster = null;
+        try
         {
-            Source = null;
+            if (ReferenceEquals(Source, previous))
+            {
+                Source = null;
+            }
         }
-
-        if (previous is IDisposable disposable)
+        finally
         {
-            disposable.Dispose();
+            try
+            {
+                if (previous is IDisposable disposable) { disposable.Dispose(); }
+            }
+            finally { previousRaster?.Dispose(); }
         }
     }
 

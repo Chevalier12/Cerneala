@@ -26,9 +26,18 @@ Construction requires a nonempty map identity and an optional positive override 
 
 This class is metadata, not a UI node or an automatic extraction operation. Tiled/LDtk keep the external `CernealaRole="Promote"`, `TileLayer`, `TileX`, and `TileY` conventions; the source layer identity becomes `Cell.MapId`.
 
-Application composition decides whether to represent a candidate as an ordinary [Sprite2D](Cerneala.UI.Controls.Sprite2D.md). It must explicitly remove any replaced static cell from the published map, select the image/source rectangle, convert the grid coordinate to pixels, and preserve any required source offsets, tint, opacity, and scene order. Adding a sprite does not automatically suppress a static cell or inherit its collider. Restore static content by publishing the original immutable model and removing the sprite. Changed grid content must follow the chunk version contract.
+Application composition decides whether to represent a candidate as an ordinary [Sprite2D](Cerneala.UI.Controls.Sprite2D.md). It must explicitly remove any replaced static cell from the published source, select the image/source rectangle, convert the grid coordinate to pixels, and preserve any required source offsets, tint, opacity, and scene order. Adding a sprite does not automatically suppress a static cell or inherit its collider. Restore static content by publishing the original source content and removing the sprite. Changed grid content must follow the chunk version contract.
 
-The Scene World sample retains its imported document, publishes a runtime door map with cell `("4", 14, 9)` cleared, and declares a peer door sprite at pixel position `(224, 144)`. The sprite owns its live collider, animation state, routed input, Motion trigger, and Prism. `InitialState` initializes application state; the importer does not execute it. Other dynamic entities use [SceneItems2D](Cerneala.UI.Controls.SceneItems2D.md) templates.
+The Scene World sample opens a build-prepared package and explicitly acquires its
+promotion record. Its application-owned door source reconstructs the requested
+chunk with cell `("4", 14, 9)` cleared; it does not retain the imported document
+or rewrite the package. A peer door sprite at pixel position `(224, 144)` owns
+the live collider, animation state, routed input, Motion trigger, and Prism.
+`InitialState` initializes application state; neither importing nor opening a
+package executes it. Other dynamic entities use [SceneItems2D](Cerneala.UI.Controls.SceneItems2D.md)
+templates. The sample's edited payloads declare an unknown data-residency charge,
+so they are loaded for required interests rather than admitted into optional
+warm residency as supposedly zero-cost data.
 
 ## Constructors
 

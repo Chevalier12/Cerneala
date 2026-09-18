@@ -127,7 +127,7 @@ public sealed class TileMap2DContractTests
                     TileMapVillageFixture.ChunkSize, TileMapVillageFixture.ChunkSize,
                     chunk.Cells.Select(static cell => new TileCell2D(cell.TileId, (TileFlip2D)(int)cell.Flip)))),
                 new TileMapBounds2D(0, 0, TileMapVillageFixture.WidthInTiles, TileMapVillageFixture.HeightInTiles), order: group.Key);
-            scene.Children.Add(new TileMap2D { Model = model, Layer = model.Order });
+            scene.Children.Add(new TileMap2D { Source = TileMapTestSource.Create(model), Layer = model.Order });
         }
         Assert.Equal(36_864, fixture.FiniteChunks.Sum(static chunk => chunk.Cells.Count));
         Assert.Equal(3, scene.Children.Count);
@@ -145,10 +145,10 @@ public sealed class TileMap2DContractTests
     {
 
         (_, RenderSurface2D surface, TileMap2D map, TestImage terrain, TestImage structures) = CreateSurface();
-        TileMap2DModel original = map.Model!;
-        map.Model = new("Ground", original.TileSize, original.TileSets,
+        TileMap2DModel original = map.GetSourceModel()!;
+        map.PublishModel(new("Ground", original.TileSize, original.TileSets,
             [new TileChunk2D(default, 2, 1, [new TileCell2D(1), default], version: original.Chunks[0].Version + 1)],
-            original.Bounds, version: original.Version + 1);
+            original.Bounds, version: original.Version + 1));
         Sprite2D sprite = new()
         {
             Image = new(new ResourceId<ImageResource>("VillageStructures")), X = 16, Width = 16, Height = 16,
@@ -162,12 +162,12 @@ public sealed class TileMap2DContractTests
         Assert.Equal(new DrawRect(16, 0, 16, 16), draws[1].ImageSource);
         Assert.Equal(DrawImageFlip.Vertical, draws[1].ImageFlip);
         Assert.Equal(new DrawRect(16, 0, 16, 16), draws[1].Rect);
-        Assert.True(map.Model.TryGetCell(new(1, 0), out TileCell2D cleared));
+        Assert.True(map.GetSourceModel().TryGetCell(new(1, 0), out TileCell2D cleared));
         Assert.Equal(0, cleared.TileId);
         Assert.True(original.TryGetCell(new(1, 0), out TileCell2D unchanged));
         Assert.Equal(100, unchanged.TileId);
         surface.Scene.Children.Remove(sprite);
-        map.Model = original;
+        map.PublishModel(original);
         DrawCommand[] restored = Record(surface).Where(IsImageCommand).ToArray();
         Assert.Equal(3, restored.Length);
         Assert.All(restored, static draw => Assert.Equal(DrawCommandKind.DrawSpriteBatch, draw.Kind));
@@ -190,7 +190,7 @@ public sealed class TileMap2DContractTests
     {
 
         (_, RenderSurface2D surface, TileMap2D map, _, _) = CreateSurface();
-        TileMap2DModel original = map.Model!;
+        TileMap2DModel original = map.GetSourceModel()!;
         Sprite2D sprite = new()
         {
             Image = new(new ResourceId<ImageResource>("VillageTerrain")), Width = 16, Height = 16, Opacity = 0.5f
@@ -200,7 +200,7 @@ public sealed class TileMap2DContractTests
         Assert.Equal((byte)128, draw.Color.A);
         sprite.Visibility = Visibility.Hidden;
         Assert.DoesNotContain(Record(surface), static command => command.Kind == DrawCommandKind.DrawImage);
-        Assert.Same(original, map.Model);
+        Assert.Same(original, map.GetSourceModel());
     }
 
     [Fact]
@@ -314,8 +314,8 @@ public sealed class TileMap2DContractTests
         TileMap2D early = new()
         {
             Layer = -10, Tint = Color.Blue,
-            Model = new TileMap2DModel("Early", new DrawSize(16, 16), [TerrainSet(), StructureSet()],
-                [new TileChunk2D(default, 2, 1, [new TileCell2D(100), new TileCell2D(1)])])
+            Source = TileMapTestSource.Create(new TileMap2DModel("Early", new DrawSize(16, 16), [TerrainSet(), StructureSet()],
+                [new TileChunk2D(default, 2, 1, [new TileCell2D(100), new TileCell2D(1)])]))
         };
         surface.Scene!.OrderMode = SceneOrderMode.Layer;
         surface.Scene.Children.Add(early);
@@ -341,15 +341,15 @@ public sealed class TileMap2DContractTests
         });
         TileMap2D map = new()
         {
-            Model = new TileMap2DModel("Ground", new DrawSize(16, 16), [TerrainSet(), StructureSet()],
+            Source = TileMapTestSource.Create(new TileMap2DModel("Ground", new DrawSize(16, 16), [TerrainSet(), StructureSet()],
                 [new TileChunk2D(default, 2, 1, [new TileCell2D(1), new TileCell2D(100, TileFlip2D.Vertical)])],
-                new TileMapBounds2D(0, 0, 2, 1))
+                new TileMapBounds2D(0, 0, 2, 1)))
         };
         TileMap2D overlay = new()
         {
             Layer = 1,
-            Model = new TileMap2DModel("Overlay", new DrawSize(16, 16), [TerrainSet(), StructureSet()],
-                [new TileChunk2D(default, 2, 1, [new TileCell2D(100), default])], new TileMapBounds2D(0, 0, 2, 1))
+            Source = TileMapTestSource.Create(new TileMap2DModel("Overlay", new DrawSize(16, 16), [TerrainSet(), StructureSet()],
+                [new TileChunk2D(default, 2, 1, [new TileCell2D(100), default])], new TileMapBounds2D(0, 0, 2, 1)))
         };
         Scene2D scene = new() { OrderMode = SceneOrderMode.Layer };
         scene.Children.Add(map);
@@ -377,8 +377,8 @@ public sealed class TileMap2DContractTests
         });
         TileMap2D map = new()
         {
-            Model = new TileMap2DModel("Batch", new DrawSize(16, 16), [TerrainSet(), StructureSet()],
-                [new TileChunk2D(default, cells.Count, 1, cells)], new TileMapBounds2D(0, 0, cells.Count, 1))
+            Source = TileMapTestSource.Create(new TileMap2DModel("Batch", new DrawSize(16, 16), [TerrainSet(), StructureSet()],
+                [new TileChunk2D(default, cells.Count, 1, cells)], new TileMapBounds2D(0, 0, cells.Count, 1)))
         };
         Scene2D scene = new();
         scene.Children.Add(map);
@@ -408,6 +408,7 @@ public sealed class TileMap2DContractTests
 
     private static DrawCommandList Record(RenderSurface2D surface)
     {
+        TileMapTestSource.PrepareFrame(surface, new DrawRect(0, 0, 64, 64));
         DrawCommandList commands = new();
         ((IRenderSurface2DFrameSource)surface).RecordFrame(commands, new DrawRect(0, 0, 64, 64));
         return commands;
@@ -439,8 +440,10 @@ public sealed class TileMap2DContractTests
         public int Height => 32;
     }
 
-    private sealed class TestImageLoader(IReadOnlyDictionary<string, IDrawImage> images) : IImageLoader
+    private sealed class TestImageLoader(IReadOnlyDictionary<string, IDrawImage> images) : IAsyncImageLoader
     {
         public IDrawImage Load(string path) => images[path];
+        public ValueTask<IDrawImage> LoadAsync(string path, CancellationToken cancellationToken = default) =>
+            ValueTask.FromResult(Load(path));
     }
 }

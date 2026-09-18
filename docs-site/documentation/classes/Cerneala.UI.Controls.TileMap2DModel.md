@@ -23,7 +23,7 @@ var model = new TileMap2DModel(
     [new TileChunk2D(new TileCoordinate2D(0, 0), 2, 1,
         [new TileCell2D(1), default])],
     new TileMapBounds2D(0, 0, 2, 1));
-var map = new TileMap2D { Model = model, Layer = model.Order };
+var map = new TileMap2D { Source = TileMapSource2D.FromModel(model), Layer = model.Order };
 ```
 
 ## Remarks
@@ -34,11 +34,15 @@ The grid constructor stores `Chunks` directly, not nested layer models; `Tiles` 
 
 Collections and property dictionaries are copied into read-only views. Opaque property values are not interpreted or deep-cloned. Neither constructor transfers image ownership. `Order` is metadata for composition: assign it to the map node's `Layer` under a scene with a corresponding order mode. The map applies model visibility, offset, opacity, and tint in addition to its own presentation state.
 
+### Spatial source adapter
+
+[TileMapSource2D.FromModel](Cerneala.UI.Controls.TileMapSource2D.md) derives a metadata catalog and exposes acquisitions over this complete in-memory data. It does not turn this model into an unloaded or partial map. The adapter retains its backing chunks/placements even when spatial acquisitions are released, and `TryGetCell` keeps its complete-snapshot semantics. For path-backed free placements with omitted dimensions, supply intrinsic image-size metadata to the adapter; it does not decode every image to discover spatial bounds. Assign the adapter to `TileMap2D.Source`. This is the same explicit preparation path as custom sources, including when collision queries are used without UI.
+
 ### Versions and retained caches
 
-`Version` is a positive publication stamp, not an automatically incremented counter. For grid changes, publish replacement objects with changed versions and assign the replacement model to `TileMap2D.Model`. A changed chunk must receive a changed `TileChunk2D.Version`; changed definitions or atlas identity must receive a changed tileset or resource version. Reusing a cache-visible version for different grid data is unsupported.
+`Version` is a positive publication stamp, not an automatically incremented counter. For grid changes, publish replacement objects with changed versions and publish the replacement through a source with matching backing payloads, or assign a new adapter to `TileMap2D.Source`. A changed chunk must receive a changed `TileChunk2D.Version`. This includes every chunk affected by a definition, atlas-reference, collider-prototype or opaque-metadata change, even when its cell IDs are unchanged. A changed tileset or map version alone does not replace payload revisions. Reusing a cache-visible revision for different payload data is unsupported.
 
-The drawing cache compares chunk versions, tileset/resource versions, tile size, composed tint, and resolved image identity. Free-placement list replacement is detected independently of the publication version. Model objects never mutate themselves or instantiate live sprites.
+The drawing cache compares chunk payload versions, image resource versions, tile size, composed tint, and resolved image identity. Definitions belong to the loaded chunk, not a global catalog palette. Replacing the source retires its old acquisitions and caches. When retaining a source identity, changed free-placement payloads require changed chunk revisions just like grid payloads. Model objects never mutate themselves or instantiate live sprites.
 
 ### Validation
 

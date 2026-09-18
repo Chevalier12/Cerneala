@@ -133,9 +133,9 @@ internal static class PrismBackdropFramePolicy
                 "Backdrop frame metadata is incomplete or invalid.",
                 nameof(metadata));
         }
-        if (!Enum.IsDefined(metadata.ColorProfile) ||
-            !Enum.IsDefined(metadata.PixelFormat) ||
-            !Enum.IsDefined(metadata.AlphaMode))
+        if (!PrismEnumValidation.IsDefined(metadata.ColorProfile) ||
+            !PrismEnumValidation.IsDefined(metadata.PixelFormat) ||
+            !PrismEnumValidation.IsDefined(metadata.AlphaMode))
         {
             throw new ArgumentException(
                 "Backdrop frame metadata contains an unsupported color profile, pixel format, or alpha mode.",

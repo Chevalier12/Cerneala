@@ -199,14 +199,14 @@ public sealed class RenderSurface2DSceneTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void ContinuousSceneWithImperativeDrawingDoesNotAssumeItsContentIsUnchanged(bool useOverride)
+    public void ContinuousSceneWithImperativeDrawingDoesNotAssumeItsContentIsUnchanged(bool useSubclass)
     {
         Sprite2D sprite = new() { Image = new(new TestImage()), Width = 4, Height = 5 };
         Scene2D scene = new();
         scene.Children.Add(sprite);
-        RenderSurface2D surface = useOverride ? new ImperativeSurface() : new RenderSurface2D();
+        RenderSurface2D surface = useSubclass ? new ImperativeSurface() : new RenderSurface2D();
         int callbacks = 0;
-        if (!useOverride) surface.Draw += (_, _) => callbacks++;
+        if (!useSubclass) surface.Draw += (_, _) => callbacks++;
         surface.Scene = scene;
         UIRoot root = new();
         using IDisposable prism = GeneratedMarkup.AttachPrism(sprite,
@@ -219,7 +219,7 @@ public sealed class RenderSurface2DSceneTests
             Assert.True(((ITimeSensitiveRenderElement)surface).UpdateRenderTime(TimeSpan.FromMilliseconds(16)));
             PrismDrawScope after = Record(surface, bounds)[0].PrismScope!.Value;
             Assert.NotEqual(before.LowerUiVersion, after.LowerUiVersion);
-            Assert.Equal(2, useOverride ? ((ImperativeSurface)surface).DrawCount : callbacks);
+            Assert.Equal(2, useSubclass ? ((ImperativeSurface)surface).DrawCount : callbacks);
         }
         finally { ElementLifecycle.DetachSubtree(root, surface); }
     }
@@ -341,11 +341,18 @@ public sealed class RenderSurface2DSceneTests
                 Image = new(image),
                 X = context.Data!.Destination.X, Y = context.Data!.Destination.Y, Width = context.Data!.Destination.Width, Height = context.Data!.Destination.Height
             }));
-        sceneItems.ItemsSource = items;
+        SceneSpatialSource2D<object> source = new([], (entry, _) => ValueTask.FromResult(
+            new SceneSpatialLease2D<object>(items.Single(item => item.Destination.X.ToString(System.Globalization.CultureInfo.InvariantCulture) == entry.Id))));
+        void Publish() => source.SetEntries(items.Select(item => new SceneSpatialEntry2D(
+            item.Destination.X.ToString(System.Globalization.CultureInfo.InvariantCulture), item.Destination, isSimulated: true)));
+        Publish();
+        sceneItems.ItemsSource = source;
         Scene2D scene = new();
         scene.Children.Add(sceneItems);
         RenderSurface2D surface = new() { Scene = scene };
 
+        UIRoot root = new();
+        root.VisualChildren.Add(surface);
         DrawCommandList first = Record(surface, new DrawRect(0, 0, 10, 10));
         Assert.Equal(
             [new DrawRect(1, 0, 1, 1), new DrawRect(2, 0, 1, 1)],
@@ -353,6 +360,7 @@ public sealed class RenderSurface2DSceneTests
                 .Select(command => command.Rect));
 
         items.Insert(1, new TestSprite(new DrawRect(3, 0, 1, 1)));
+        Publish();
 
         DrawCommandList second = Record(surface, new DrawRect(0, 0, 10, 10));
         Assert.Equal(
@@ -363,6 +371,7 @@ public sealed class RenderSurface2DSceneTests
             ],
             second.Where(command => command.Kind == DrawCommandKind.DrawImage)
                 .Select(command => command.Rect));
+        root.VisualChildren.Remove(surface);
     }
 
     private static DrawCommandList Record(RenderSurface2D surface, DrawRect bounds)
@@ -377,7 +386,7 @@ public sealed class RenderSurface2DSceneTests
     private sealed class ImperativeSurface : RenderSurface2D
     {
         public int DrawCount { get; private set; }
-        protected override void OnDraw(RenderSurface2DFrame frame) => DrawCount++;
+        public ImperativeSurface() => Draw += (_, _) => DrawCount++;
     }
 
     private sealed class TestImage : IDrawImage

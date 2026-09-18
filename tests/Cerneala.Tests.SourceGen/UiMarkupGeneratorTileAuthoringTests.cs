@@ -24,9 +24,9 @@ public sealed partial class UiMarkupGeneratorTests
               <RenderSurface2D.Scene>
                 <Scene2D>
                   <TileMap2D>
-                    <Tile Image="$Grass" X="-2.5" Y="4.25" />
+                    <Tile Image="$Grass" ImageWidth="32" ImageHeight="32" X="-2.5" Y="4.25" />
                     <Tile Image="$Grass" X="20" Y="12" Width="7" Height="9" />
-                    <Tile Image="$House" X="15" Y="10" Width="80" />
+                    <Tile Image="$House" ImageWidth="32" ImageHeight="32" X="15" Y="10" Width="80" />
                     <Tile Image="$Grass" X="25" Y="15" Height="6" />
                   </TileMap2D>
                 </Scene2D>
@@ -43,7 +43,7 @@ public sealed partial class UiMarkupGeneratorTests
             assembly, "Cerneala.GeneratedUi.PixelTilesFactory"));
         TestImage grass = new("grass");
         TestImage house = new("house");
-        UIRoot root = new();
+        UIRoot root = new(512, 256);
         root.SetImageLoader(new TestImageLoader(new Dictionary<string, IDrawImage>
         {
             ["grass.png"] = grass,
@@ -54,6 +54,7 @@ public sealed partial class UiMarkupGeneratorTests
 
         TileMap2D map = Assert.IsType<TileMap2D>(Assert.Single(Assert.IsType<Scene2D>(surface.Scene).Children));
         Assert.Empty(map.LogicalChildren);
+        Assert.Equal(2, map.Source!.Catalog.ImageSizes.Count);
 
         DrawSpriteBatch[] batches = RecordSurface(surface)
             .Where(command => command.Kind == DrawCommandKind.DrawSpriteBatch)
@@ -74,6 +75,7 @@ public sealed partial class UiMarkupGeneratorTests
 
     [Theory]
     [InlineData("<TileMap2D><TileMap2D.Model /></TileMap2D>")]
+    [InlineData("<TileMap2D><TileMap2D.Source /></TileMap2D>")]
     [InlineData("<TileMap2D><TileMap2D.PromotedTiles /></TileMap2D>")]
     [InlineData("<TileMap2D><TileMap2D.Layers /></TileMap2D>")]
     [InlineData("<TileMap2D><Sprite2D /></TileMap2D>")]
@@ -91,11 +93,11 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Theory]
-    [InlineData("<TileMap2D Model=\"$DataContext\"><Tile Image=\"$Grass\" /></TileMap2D>")]
-    public void TileAuthoringRejectsMixingPlacementsWithBoundModel(string mapMarkup)
+    [InlineData("<TileMap2D Source=\"$DataContext\"><Tile Image=\"$Grass\" ImageWidth=\"32\" ImageHeight=\"32\" /></TileMap2D>")]
+    public void TileAuthoringRejectsMixingPlacementsWithBoundSource(string mapMarkup)
     {
         string markup = """
-            <RenderSurface2D DataType="Cerneala.UI.Controls.TileMap2DModel"
+            <RenderSurface2D DataType="Cerneala.UI.Controls.TileMapSource2D"
                 xmlns:r="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
               <RenderSurface2D.Resources><r:ImageResource Name="Grass" Source="grass.png" /></RenderSurface2D.Resources>
               <RenderSurface2D.Scene><Scene2D>
@@ -107,14 +109,14 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public void TileAuthoringRejectsModelAssignmentThroughAspect()
+    public void TileAuthoringRejectsSourceAssignmentThroughAspect()
     {
         const string markup = """
             <TileMap2D>
-              <TileMap2D.Aspect>@default { Model = null; }</TileMap2D.Aspect>
+              <TileMap2D.Aspect>@default { Source = null; }</TileMap2D.Aspect>
             </TileMap2D>
             """;
-        GeneratorRunResult result = RunGenerator("TileAspectModel.crn", markup, out _);
+        GeneratorRunResult result = RunGenerator("TileAspectSource.crn", markup, out _);
         Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI005" &&
             diagnostic.GetMessage().Contains("cannot be assigned through Aspect", StringComparison.Ordinal));
         Assert.Empty(result.GeneratedSources);
@@ -130,7 +132,7 @@ public sealed partial class UiMarkupGeneratorTests
                 @on Loaded { @animate with Tween(100ms) { @from { Opacity = 0.5; } @to { Opacity = 1; } } }
               </TileMap2D.Aspect>
               @prism { @layer Content { @filter Blur { Radius = 1; } } }
-              <Tile Image="$Art" X="10" Y="20" />
+              <Tile Image="$Art" ImageWidth="32" ImageHeight="32" X="10" Y="20" />
             </TileMap2D>
             """;
         GeneratorRunResult result = RunGenerator("TileEffects.crn", markup, out Compilation compilation);
@@ -154,6 +156,13 @@ public sealed partial class UiMarkupGeneratorTests
     [InlineData("<Tile Image=\"$Grass\" Name=\"GrassTile\" />")]
     [InlineData("<Tile Image=\"$Grass\" SourceRect=\"0,0,16,16\" />")]
     [InlineData("<Tile Image=\"$Grass\"><Sprite2D /></Tile>")]
+    [InlineData("<Tile Image=\"$Grass\" />")]
+    [InlineData("<Tile Image=\"$Grass\" ImageWidth=\"32\" />")]
+    [InlineData("<Tile Image=\"$Grass\" ImageWidth=\"32\" ImageHeight=\"0\" />")]
+    [InlineData("<Tile Image=\"$Grass\" ImageWidth=\"NaN\" ImageHeight=\"32\" />")]
+    [InlineData("<Tile Image=\"$Grass\" ImageWidth=\"-1\" ImageHeight=\"32\" />")]
+    [InlineData("<Tile Image=\"$Grass\" ImageWidth=\"Infinity\" ImageHeight=\"32\" />")]
+    [InlineData("<Tile Image=\"$Grass\" ImageWidth=\"$DataContext.Width\" ImageHeight=\"32\" />")]
     public void TileAuthoringRejectsInvalidPlacementDeclarations(string tile)
     {
         string markup = """
@@ -165,5 +174,21 @@ public sealed partial class UiMarkupGeneratorTests
             """ + tile + "</TileMap2D>";
         GeneratorRunResult result = RunGenerator("InvalidTile.crn", markup, out _);
         Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+    }
+
+    [Fact]
+    public void TileImageMetadataRejectsConflictsInsteadOfDependingOnDeclarationOrder()
+    {
+        const string markup = """
+            <TileMap2D xmlns:r="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
+              <TileMap2D.Resources><r:ImageResource Name="Art" Source="art.png" /></TileMap2D.Resources>
+              <Tile Image="$Art" ImageWidth="32" ImageHeight="32" />
+              <Tile Image="$Art" ImageWidth="64" ImageHeight="32" />
+            </TileMap2D>
+            """;
+        GeneratorRunResult result = RunGenerator("ConflictingImageSize.crn", markup, out _);
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI005" &&
+            diagnostic.GetMessage().Contains("conflicting dimensions", StringComparison.Ordinal));
+        Assert.Empty(result.GeneratedSources);
     }
 }

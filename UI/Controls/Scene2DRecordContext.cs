@@ -1,5 +1,6 @@
 using System.Numerics;
 using Cerneala.Drawing;
+using Cerneala.UI.Resources;
 
 namespace Cerneala.UI.Controls;
 
@@ -74,7 +75,8 @@ internal readonly struct Scene2DRecordContext
         DrawRect prismBounds = ResolveConservativeLocalBounds(localBounds);
         return new ScenePrismScope(
             Frame,
-            Frame.BeginPrism(owner, prismBounds));
+            Frame.BeginPrism(owner, prismBounds, ImageResourceAccess.ResidentOnly,
+                hasKnownContentBounds: localBounds.Kind != SceneBoundsKind.Unknown));
     }
 
     internal bool HasPrism(SceneNode2D owner)

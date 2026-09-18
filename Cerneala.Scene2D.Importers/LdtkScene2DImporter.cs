@@ -20,7 +20,7 @@ public static class LdtkScene2DImporter
         }
         catch (Exception error) when (error is ImportFailure or JsonException or IOException or UnauthorizedAccessException or ArgumentException or OverflowException)
         { context.Record(error); }
-        return new(document, context.Diagnostics.Complete());
+        return new(document, context.Diagnostics.Complete(), context.Root, context.ReferencedFiles);
     }
 
     private sealed class Parser(ImportContext context, string projectFile)
@@ -478,7 +478,7 @@ public static class LdtkScene2DImporter
         { if (value.TryGetProperty(name, out JsonElement item) && item.ValueKind != JsonValueKind.Null && (item.ValueKind != JsonValueKind.Array || item.GetArrayLength() > 0)) { context.Fail(code, $"'{name}' must be empty in this layer/subset."); } }
         private static string Id(int value) => value.ToString(CultureInfo.InvariantCulture);
         private static void Preserve(JsonElement value, Dictionary<string, object?> properties, params string[] names)
-        { foreach (string name in names) { if (value.TryGetProperty(name, out JsonElement field)) { properties["$" + name] = field.Clone(); } } }
+        { foreach (string name in names) { if (value.TryGetProperty(name, out JsonElement field)) { properties["$" + name] = new SceneJsonValue2D(field); } } }
         private sealed record Atlas(TileSet2D Set, int Grid, int Columns, int Rows, int Padding, int Spacing, int First, string File, DrawSize Size);
         private sealed record LayerDefinition(string Name, string Type, int Grid, int? TilesetUid, Dictionary<string, object?> Properties, HashSet<int> IntGridValues);
         private sealed record EntityDefinition(string Name, Dictionary<int, FieldDefinition> Fields, Dictionary<string, object?> Properties);

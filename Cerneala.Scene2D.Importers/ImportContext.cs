@@ -11,6 +11,7 @@ internal sealed class ImportContext : IDisposable
 {
     private readonly List<JsonDocument> documents = new();
     private readonly HashSet<string> warnedFiles = new(StringComparer.Ordinal);
+    private readonly HashSet<string> referencedFiles = new(StringComparer.Ordinal);
     private long totalBytes;
     private int files;
     private long cells, chunks, layers, entities;
@@ -28,6 +29,7 @@ internal sealed class ImportContext : IDisposable
     internal Scene2DImportOptions Options { get; }
     internal Scene2DDiagnosticCollector Diagnostics { get; }
     internal string Root { get; private set; } = "";
+    internal IEnumerable<string> ReferencedFiles => referencedFiles;
     internal string File { get; set; } = "";
     internal string Path { get; set; } = "$";
     internal Scene2DValidationOptions ValidationOptions => new()
@@ -94,6 +96,7 @@ internal sealed class ImportContext : IDisposable
     {
         CheckContained(full);
         using FileStream stream = System.IO.File.Open(full, FileMode.Open, FileAccess.Read, FileShare.Read);
+        referencedFiles.Add(Relative(full));
     }
 
     internal JsonElement Load(string full)
@@ -193,7 +196,7 @@ internal sealed class ImportContext : IDisposable
             if (retained.Contains(field.Name))
             {
                 if (properties is null) { throw new InvalidOperationException("Metadata requires an owning property bag."); }
-                properties["$" + field.Name] = field.Value.Clone();
+                properties["$" + field.Name] = new SceneJsonValue2D(field.Value);
             }
             else if (ignored.Contains(field.Name))
             {

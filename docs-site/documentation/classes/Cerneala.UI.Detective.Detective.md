@@ -31,6 +31,8 @@ string summary = root.Detective.Format(snapshot);
 
 Every `UIRoot` creates exactly one `Detective`. Capture methods copy current retained state; they do not rebuild caches, load resources, or invalidate the tree. Domain systems continue to produce their own evidence, but `Detective` is the public root-level owner used to inspect it.
 
+`CaptureTileMap` separates visible drawing, optional warm preparation, retained-cache estimates, and the warm admission charge through [TileMapDiagnosticsSnapshot](Cerneala.UI.Detective.TileMapDiagnosticsSnapshot.md). Its warm counters are observational; capturing does not advance preparation or enforce a budget. Byte estimates and charges are not native/GPU memory measurements.
+
 Invalidation tracing is disabled by the default `UIRoot` constructor. Supply an `InvalidationTrace` when constructing the root to retain invalidation entries.
 
 ## Properties

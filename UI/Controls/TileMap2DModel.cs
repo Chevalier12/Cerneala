@@ -174,11 +174,14 @@ public sealed class TileSet2D
         {
             throw Diagnostic(new ArgumentException("A tileset cannot contain null tile definitions.", nameof(tiles)), "SCN2D006");
         }
-        int duplicateId = copied
-            .GroupBy(static tile => tile.Id)
-            .Where(static group => group.Count() > 1)
-            .Select(static group => group.Key)
-            .FirstOrDefault();
+        HashSet<int> ids = [];
+        int duplicateId = 0;
+        // Reverse traversal retains the duplicate with the earliest first
+        // occurrence, matching the original diagnostic without storing groups.
+        for (int index = copied.Length - 1; index >= 0; index--)
+        {
+            if (!ids.Add(copied[index].Id)) { duplicateId = copied[index].Id; }
+        }
         if (duplicateId != 0)
         {
             throw Diagnostic(new ArgumentException($"Tile id {duplicateId} is duplicated in tileset '{id}'.", nameof(tiles)), "SCN2D015");
@@ -371,7 +374,7 @@ public sealed class TileMap2DModel
             throw Diagnostic(new ArgumentException("A tilemap cannot contain null chunks.", nameof(chunks)), "SCN2D005");
         }
         ValidateAggregateBudgets(copiedTileSets, copiedChunks);
-        ValidateNoOverlaps(copiedChunks);
+        ValidateNoOverlaps(copiedChunks.Select(static chunk => new TileMapBounds2D(chunk.Origin.X, chunk.Origin.Y, chunk.Width, chunk.Height)).ToArray());
         ValidateUniqueIds(copiedTileSets);
         ExpandedColliderCount = ValidateCells(id, tileSize, copiedTileSets, copiedChunks, bounds, offset);
 
@@ -474,22 +477,29 @@ public sealed class TileMap2DModel
     internal static void ValidateUniqueIds(
         IReadOnlyList<TileSet2D> tileSets)
     {
-        string? duplicateTileset = tileSets
-            .GroupBy(static tileSet => tileSet.Id, StringComparer.Ordinal)
-            .Where(static group => group.Count() > 1)
-            .Select(static group => group.Key)
-            .FirstOrDefault();
+        HashSet<string> setIds = new(StringComparer.Ordinal);
+        string? duplicateTileset = null;
+        // Preserve first-occurrence diagnostic order and report duplicate set
+        // identities before checking tile identities, as before.
+        for (int index = tileSets.Count - 1; index >= 0; index--)
+        {
+            if (!setIds.Add(tileSets[index].Id)) { duplicateTileset = tileSets[index].Id; }
+        }
         if (duplicateTileset is not null)
         {
             throw Diagnostic(new ArgumentException($"Tileset id '{duplicateTileset}' is duplicated.", nameof(tileSets)), "SCN2D015");
         }
 
-        int duplicateTile = tileSets
-            .SelectMany(static tileSet => tileSet.Tiles)
-            .GroupBy(static tile => tile.Id)
-            .Where(static group => group.Count() > 1)
-            .Select(static group => group.Key)
-            .FirstOrDefault();
+        HashSet<int> tileIds = [];
+        int duplicateTile = 0;
+        for (int setIndex = tileSets.Count - 1; setIndex >= 0; setIndex--)
+        {
+            IReadOnlyList<TileDefinition2D> definitions = tileSets[setIndex].Tiles;
+            for (int tileIndex = definitions.Count - 1; tileIndex >= 0; tileIndex--)
+            {
+                if (!tileIds.Add(definitions[tileIndex].Id)) { duplicateTile = definitions[tileIndex].Id; }
+            }
+        }
         if (duplicateTile != 0)
         {
             throw Diagnostic(new ArgumentException($"Tile id {duplicateTile} is defined by multiple tilesets.", nameof(tileSets)), "SCN2D015");
@@ -579,14 +589,14 @@ public sealed class TileMap2DModel
         return colliderInstances;
     }
 
-    private static void ValidateNoOverlaps(IReadOnlyList<TileChunk2D> chunks)
+    internal static void ValidateNoOverlaps(IReadOnlyList<TileMapBounds2D> chunks)
     {
         if (chunks.Count < 2) { return; }
         // Sweep exclusive X bounds. Until the first overlap, active Y intervals
         // are disjoint, so only the immediate predecessor/successor can overlap.
         // Integer comparisons preserve negative and remote chunk coordinates.
         int[] ordered = Enumerable.Range(0, chunks.Count)
-            .OrderBy(index => chunks[index].Origin.X).ThenBy(index => index).ToArray();
+            .OrderBy(index => chunks[index].X).ThenBy(index => index).ToArray();
         SortedSet<ChunkInterval> active = new(Comparer<ChunkInterval>.Create(static (left, right) =>
         {
             int top = left.Top.CompareTo(right.Top);
@@ -597,27 +607,27 @@ public sealed class TileMap2DModel
         ChunkInterval maximum = new(int.MaxValue, int.MaxValue, int.MaxValue);
         foreach (int index in ordered)
         {
-            TileChunk2D chunk = chunks[index];
-            while (ending.TryPeek(out ChunkInterval? expired, out int right) && right <= chunk.Origin.X)
+            TileMapBounds2D chunk = chunks[index];
+            while (ending.TryPeek(out ChunkInterval? expired, out int right) && right <= chunk.X)
             {
                 ending.Dequeue();
                 active.Remove(expired);
             }
-            ChunkInterval probe = new(chunk.Origin.Y, int.MaxValue, 0);
+            ChunkInterval probe = new(chunk.Y, int.MaxValue, 0);
             ChunkInterval? before = active.GetViewBetween(minimum, probe).Max;
             ChunkInterval? after = active.GetViewBetween(probe, maximum).Min;
-            ChunkInterval? overlap = before is not null && before.Bottom > chunk.Origin.Y ? before
-                : after is not null && after.Top < chunk.Origin.Y + chunk.Height ? after : null;
+            ChunkInterval? overlap = before is not null && before.Bottom > chunk.Y ? before
+                : after is not null && after.Top < chunk.Bottom ? after : null;
             if (overlap is not null)
             {
-                TileChunk2D other = chunks[overlap.Index];
+                TileMapBounds2D other = chunks[overlap.Index];
                 throw Diagnostic(new ArgumentException(
-                    $"Chunks at ({other.Origin.X},{other.Origin.Y}) and ({chunk.Origin.X},{chunk.Origin.Y}) overlap.",
+                    $"Chunks at ({other.X},{other.Y}) and ({chunk.X},{chunk.Y}) overlap.",
                     nameof(chunks)), "SCN2D011");
             }
-            ChunkInterval interval = new(chunk.Origin.Y, index, chunk.Origin.Y + chunk.Height);
+            ChunkInterval interval = new(chunk.Y, index, chunk.Bottom);
             active.Add(interval);
-            ending.Enqueue(interval, chunk.Origin.X + chunk.Width);
+            ending.Enqueue(interval, chunk.Right);
         }
     }
 

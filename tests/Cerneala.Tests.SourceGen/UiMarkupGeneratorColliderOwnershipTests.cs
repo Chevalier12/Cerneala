@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Microsoft.CodeAnalysis;
@@ -99,7 +100,7 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public void FreePlacementTileMarkupLowersOneColliderToAnImmutableDescriptor()
+    public async Task FreePlacementTileMarkupLowersOneColliderToAnImmutableDescriptor()
     {
         const string markup = """
             <Scene2D xmlns:resources="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
@@ -115,7 +116,8 @@ public sealed partial class UiMarkupGeneratorTests
             """;
         Scene2D scene = (Scene2D)CompileColliderMarkup(markup);
         TileMap2D map = (TileMap2D)Assert.Single(scene.Children);
-        Tile tile = Assert.Single(map.Model!.Tiles);
+        using SceneSpatialLease2D<TileMapChunkData2D> data = await AcquireGeneratedTileChunkAsync(map);
+        Tile tile = Assert.Single(data.Value.Placements);
         TileColliderDescriptor2D descriptor = Assert.IsType<TileColliderDescriptor2D>(tile.Collider);
         Assert.Equal(TileColliderShape2D.Box, descriptor.Shape);
         Assert.Equal(32, descriptor.Width);
@@ -126,7 +128,7 @@ public sealed partial class UiMarkupGeneratorTests
     [Theory]
     [InlineData(" 0 ", " 8 ", 0f, 8f)]
     [InlineData(" 3.2e1 ", " +8 ", 32f, 8f)]
-    public void StaticTileSegmentNormalizesNumericLiteralsBeforeConstructingPointText(string endX, string endY, float x, float y)
+    public async Task StaticTileSegmentNormalizesNumericLiteralsBeforeConstructingPointText(string endX, string endY, float x, float y)
     {
         string markup = $$"""
             <Scene2D xmlns:resources="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
@@ -134,7 +136,7 @@ public sealed partial class UiMarkupGeneratorTests
                     <resources:ImageResource Name="Wall" Source="Assets/wall-32.png" />
                 </Scene2D.Resources>
                 <TileMap2D>
-                    <Tile Image="$Wall">
+                    <Tile Image="$Wall" ImageWidth="32" ImageHeight="32">
                         <SegmentCollider2D EndX="{{endX}}" EndY="{{endY}}" />
                     </Tile>
                 </TileMap2D>
@@ -142,7 +144,8 @@ public sealed partial class UiMarkupGeneratorTests
             """;
         Scene2D scene = (Scene2D)CompileColliderMarkup(markup);
         TileMap2D map = (TileMap2D)Assert.Single(scene.Children);
-        TileColliderDescriptor2D descriptor = Assert.IsType<TileColliderDescriptor2D>(Assert.Single(map.Model!.Tiles).Collider);
+        using SceneSpatialLease2D<TileMapChunkData2D> data = await AcquireGeneratedTileChunkAsync(map);
+        TileColliderDescriptor2D descriptor = Assert.IsType<TileColliderDescriptor2D>(Assert.Single(data.Value.Placements).Collider);
         Assert.Equal(new System.Numerics.Vector2(x, y), descriptor.Vertices[1]);
     }
 

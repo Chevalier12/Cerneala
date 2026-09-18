@@ -17,7 +17,8 @@ public class Scene2D : SceneNode2D
             new UiPropertyMetadata<SceneOrderMode>(
                 SceneOrderMode.Source,
                 UiPropertyOptions.AffectsRender,
-                validateValue: Enum.IsDefined));
+            validateValue: value => value is SceneOrderMode.Source or
+                SceneOrderMode.Layer or SceneOrderMode.LayerThenY));
 
     public static readonly UiProperty<DrawPoint> TransformOriginProperty =
         UiProperty<DrawPoint>.Register(
@@ -63,6 +64,7 @@ public class Scene2D : SceneNode2D
     {
         ArgumentNullException.ThrowIfNull(node);
         Scene2D root = SceneGeometry2D.FindRootScene(this) ?? this;
+        root.VerifyOwnerAccess();
         if (root.collisionMutationVersion == long.MaxValue)
         {
             throw new InvalidOperationException("Scene collision mutation version space was exhausted.");
@@ -87,6 +89,7 @@ public class Scene2D : SceneNode2D
 
     internal override void AttachSurface(RenderSurface2D? surface)
     {
+        if (!ReferenceEquals(Surface, surface)) { ownedCollisionWorld.InvalidateSpatialRegions(); }
         base.AttachSurface(surface);
         foreach (SceneNode2D child in Children)
         {
@@ -94,10 +97,17 @@ public class Scene2D : SceneNode2D
         }
     }
 
+    protected override void OnDetached()
+    {
+        ownedCollisionWorld.InvalidateSpatialRegions();
+        base.OnDetached();
+    }
+
     internal override void Record(Scene2DRecordContext context)
     {
         if (!UIElementVisibility.ParticipatesInRendering(this) || Opacity <= 0)
         {
+            ReleaseRenderCaches();
             return;
         }
 
@@ -148,6 +158,7 @@ public class Scene2D : SceneNode2D
 
     internal override void ReleaseRenderCaches()
     {
+        ReleaseImageResources();
         foreach (SceneNode2D child in Children)
         {
             child.ReleaseRenderCaches();
@@ -290,6 +301,7 @@ public class Scene2D : SceneNode2D
 
         protected override void SetItem(int index, SceneNode2D item)
         {
+            owner.VerifyOwnerAccess();
             ArgumentNullException.ThrowIfNull(item);
             SceneNode2D previous = this[index];
             if (ReferenceEquals(previous, item)) { return; }
@@ -313,6 +325,7 @@ public class Scene2D : SceneNode2D
 
         protected override void RemoveItem(int index)
         {
+            owner.VerifyOwnerAccess();
             SceneNode2D previous = this[index];
             previous.AttachSurface(null);
             owner.LogicalChildren.Remove(previous);
@@ -327,6 +340,7 @@ public class Scene2D : SceneNode2D
 
         protected override void ClearItems()
         {
+            owner.VerifyOwnerAccess();
             foreach (SceneNode2D child in this)
             {
                 child.AttachSurface(null);

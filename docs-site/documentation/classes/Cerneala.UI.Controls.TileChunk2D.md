@@ -28,6 +28,8 @@ Width, height, and version must be positive. `Tiles.Count` must equal `Width * H
 
 A chunk is limited to 1,048,576 cells. Dimension multiplication and exclusive Int32 endpoints are checked before cell enumeration. Enumeration stops at the first excess cell instead of consuming an unbounded tail. Failures retain argument-exception categories and can be mapped through [Scene2DModelValidator.GetDiagnostic](Cerneala.UI.Controls.Scene2DModelValidator.md).
 
+[TileMapSource2D.FromModel](Cerneala.UI.Controls.TileMapSource2D.md) uses this `Version` for the full grid payload revision. That payload includes the used definitions, atlas references, collider prototypes and their opaque metadata in addition to these cells. When publishing through the same source, revise every affected chunk even if its cell IDs and flip flags stay unchanged.
+
 ## Properties
 
 | Name | Description |
