@@ -69,7 +69,7 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
             child.Measure(new MeasureContext(new LayoutSize(context.AvailableSize.Width, float.PositiveInfinity), context.Rounding));
             width = MathF.Max(width, child.DesiredSize.Width);
             height += child.DesiredSize.Height;
-            if (automaticViewport is not null && child.DesiredSize.Height > 0 && float.IsFinite(child.DesiredSize.Height))
+            if (automaticViewport is not null && child.DesiredSize.Height >= 0 && float.IsFinite(child.DesiredSize.Height))
             {
                 measuredItemExtents[itemIndex] = child.DesiredSize.Height;
             }
@@ -203,7 +203,12 @@ public class VirtualizingStackPanel : Panel, IItemsVirtualizingPanel
             return;
         }
 
-        estimatedItemExtent = measuredItemExtents.Values.Average();
+        // Zero is an exact measurement for its item, not evidence that unknown
+        // items have no extent. Preserve the positive estimate when all samples are zero.
+        estimatedItemExtent = measuredItemExtents.Values
+            .Where(extent => extent > 0)
+            .DefaultIfEmpty(estimatedItemExtent)
+            .Average();
     }
 
     private static float SanitizeExtent(float value)

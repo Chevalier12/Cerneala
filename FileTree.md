@@ -3557,6 +3557,7 @@ Generated from `.`.
 |   |   |   |   +-- UiFrameSchedulerTests.cs
 |   |   |   |-- Layout/
 |   |   |   |   |-- CanvasTests.cs
+|   |   |   |   |-- CollapsedLayoutBreakerRegressionTests.cs
 |   |   |   |   |-- GridDefinitionMutationTests.cs
 |   |   |   |   |-- GridTests.cs
 |   |   |   |   |-- LayoutDiagnosticsAccuracyTests.cs
@@ -3565,6 +3566,7 @@ Generated from `.`.
 |   |   |   |   |-- LayoutPrimitiveTests.cs
 |   |   |   |   |-- StackPanelTests.cs
 |   |   |   |   |-- UIElementMeasureArrangeTests.cs
+|   |   |   |   |-- VirtualizationBreakerRegressionTests.cs
 |   |   |   |   |-- VirtualizationTests.cs
 |   |   |   |   |-- VirtualizingStackPanelTests.cs
 |   |   |   |   |-- VisibilityCombinationTests.cs

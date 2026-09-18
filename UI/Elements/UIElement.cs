@@ -1266,7 +1266,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
             (oldVisibility == Visibility.Collapsed) != (newVisibility == Visibility.Collapsed);
         bool expandingFromCollapsed = layoutParticipationChanged &&
             oldVisibility == Visibility.Collapsed;
-        bool requiresExpandedSubtreeScheduling = expandingFromCollapsed &&
+        bool requiresParentLayoutScheduling = layoutParticipationChanged &&
             (Root is not UIRoot root || !root.Scheduler.IsProcessingLayout);
         if (expandingFromCollapsed)
         {
@@ -1279,7 +1279,9 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         if (flags != InvalidationFlags.None)
         {
             Invalidate(new InvalidationRequest(this, flags, "Property changed", args.Property));
-            if (requiresExpandedSubtreeScheduling &&
+            // A participation change affects the parent's layout even when the child
+            // is skipped by the scheduler because it has just become collapsed.
+            if (requiresParentLayoutScheduling &&
                 Root is UIRoot layoutRoot &&
                 VisualParent is UIElement parent)
             {

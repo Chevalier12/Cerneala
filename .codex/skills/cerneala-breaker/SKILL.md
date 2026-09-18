@@ -162,7 +162,7 @@ If two targeted experiments fail to support the same theory, discard the theory 
 
 Every confirmed finding, including Material findings, must finish with the smallest permanent automated regression test that faithfully expresses the violated contract.
 
-- Put the test in the existing project that owns the contract. If no faithful test home exists and adding one would require a new project, dependency, or architecture decision, stop and ask rather than dumping the test into a convenient unrelated suite.
+- Integrate the regression into the existing test project and subsystem suite that own the contract. Reuse a suitable existing test class/file and its fixtures when they can faithfully express the failure; do not create a separate breaker suite or harness merely to group findings from the current audit. Create a new test class/file only when the existing ones cannot provide a cohesive, faithful home, and state why it is necessary. If no faithful test home exists and adding one would require a new project, dependency, or architecture decision, stop and ask rather than dumping the test into a convenient unrelated suite.
 - Test observable behavior through the real owning path. Do not replace a rendering, input, frame, backend, or native failure with a weaker mock-level assertion merely to obtain a test file.
 - For process crashes or hangs, isolate the scenario in a bounded child-process or native harness so the test runner can assert the exit, timeout, and captured diagnostics.
 - For visual findings, use deterministic scenes, explicit pixel/color comparisons with justified tolerance, and window-backed Servo screenshots when the scenario is Servo-driven; those captures remain in the application-owned `Window.SaveScreenshot` pipeline.

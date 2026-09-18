@@ -57,6 +57,8 @@ During arrange, automatic mode positions each child using the measured or estima
 
 In automatic mode, `TotalExtent` combines measured heights with the current estimate for unknown items. Without either automatic viewport data or a fixed `VirtualizationContext`, it reports the measured desired height.
 
+A realized item's measured height of zero replaces any previously recorded positive height. This includes an item measured after `Height` becomes zero or `Visibility` becomes `Collapsed`; the item no longer contributes to `TotalExtent` or subsequent item offsets. Unknown items continue to use a positive estimate learned from positive measured heights. If no positive samples remain, the panel retains its previous estimate (initially 28) rather than treating unmeasured items as zero-height.
+
 ## Constructors
 
 | Name | Description |
