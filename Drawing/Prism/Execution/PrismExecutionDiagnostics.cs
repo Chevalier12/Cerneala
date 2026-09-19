@@ -253,15 +253,12 @@ internal sealed class PrismExecutionDiagnostics
         ArgumentOutOfRangeException.ThrowIfNegative(activeSurfaces);
         ArgumentOutOfRangeException.ThrowIfNegative(surfaceBytes);
         ArgumentOutOfRangeException.ThrowIfNegative(peakSurfaceBytes);
-        if (peakSurfaceBytes < surfaceBytes)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(peakSurfaceBytes));
-        }
-        if (submitTime < TimeSpan.Zero)
-        {
-            throw new ArgumentOutOfRangeException(nameof(submitTime));
-        }
+        ArgumentOutOfRangeException.ThrowIfLessThan(
+            peakSurfaceBytes,
+            surfaceBytes);
+        ArgumentOutOfRangeException.ThrowIfLessThan(
+            submitTime,
+            TimeSpan.Zero);
 
         createdSurfaceCount = createdSurfaces;
         reusedSurfaceCount = reusedSurfaces;
@@ -296,9 +293,10 @@ internal sealed class PrismExecutionDiagnostics
             return action;
         }
 
+        (string code, PrismExecutionDiagnosticStage stage) = Describe(reason);
         PrismExecutionDiagnostic diagnostic = new(
-            CodeFor(reason),
-            StageFor(reason),
+            code,
+            stage,
             nodeId,
             scopeIndex,
             reason,
@@ -540,40 +538,24 @@ internal sealed class PrismExecutionDiagnostics
         }
     }
 
-    private static string CodeFor(PrismFallbackReason reason) =>
-        reason switch
-        {
-            PrismFallbackReason.UnsupportedCapability => "PRISM7001",
-            PrismFallbackReason.MissingKernel => "PRISM7002",
-            PrismFallbackReason.MissingBackdrop => "PRISM7003",
-            PrismFallbackReason.MissingResource => "PRISM7004",
-            PrismFallbackReason.InvalidColorProfile => "PRISM7005",
-            PrismFallbackReason.SurfaceAllocationFailed => "PRISM7006",
-            PrismFallbackReason.ShaderUnavailable => "PRISM7007",
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(reason),
-                reason,
-                "Unknown Prism fallback reason.")
-        };
-
-    private static PrismExecutionDiagnosticStage StageFor(
+    private static (string Code, PrismExecutionDiagnosticStage Stage) Describe(
         PrismFallbackReason reason) =>
         reason switch
         {
             PrismFallbackReason.UnsupportedCapability =>
-                PrismExecutionDiagnosticStage.CapabilityCheck,
+                ("PRISM7001", PrismExecutionDiagnosticStage.CapabilityCheck),
             PrismFallbackReason.MissingKernel =>
-                PrismExecutionDiagnosticStage.KernelLookup,
+                ("PRISM7002", PrismExecutionDiagnosticStage.KernelLookup),
             PrismFallbackReason.MissingBackdrop =>
-                PrismExecutionDiagnosticStage.BackdropAcquisition,
+                ("PRISM7003", PrismExecutionDiagnosticStage.BackdropAcquisition),
             PrismFallbackReason.MissingResource =>
-                PrismExecutionDiagnosticStage.ResourceResolution,
+                ("PRISM7004", PrismExecutionDiagnosticStage.ResourceResolution),
             PrismFallbackReason.InvalidColorProfile =>
-                PrismExecutionDiagnosticStage.ColorProfile,
+                ("PRISM7005", PrismExecutionDiagnosticStage.ColorProfile),
             PrismFallbackReason.SurfaceAllocationFailed =>
-                PrismExecutionDiagnosticStage.SurfaceBudget,
+                ("PRISM7006", PrismExecutionDiagnosticStage.SurfaceBudget),
             PrismFallbackReason.ShaderUnavailable =>
-                PrismExecutionDiagnosticStage.ShaderLoad,
+                ("PRISM7007", PrismExecutionDiagnosticStage.ShaderLoad),
             _ => throw new ArgumentOutOfRangeException(
                 nameof(reason),
                 reason,

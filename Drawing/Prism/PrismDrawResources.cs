@@ -288,49 +288,13 @@ internal sealed class PrismDrawResources
     public bool TryGetDependency(
         PrismResourceId id,
         out long identity,
-        out long version)
-    {
-        if (images.TryGetValue(id, out ResolvedResource<IDrawImage> resource))
-        {
-            identity = resource.Identity;
-            version = resource.Version;
-            return true;
-        }
-        if (curves.TryGetValue(id, out ResolvedResource<PrismCurvesResource> curve))
-        {
-            identity = curve.Identity;
-            version = curve.Version;
-            return true;
-        }
-        if (gradients.TryGetValue(id, out ResolvedResource<PrismGradientMapResource> gradient))
-        {
-            identity = gradient.Identity;
-            version = gradient.Version;
-            return true;
-        }
-        if (lensProfiles.TryGetValue(id, out ResolvedResource<PrismLensProfileResource> lensProfile))
-        {
-            identity = lensProfile.Identity;
-            version = lensProfile.Version;
-            return true;
-        }
-        if (lighting.TryGetValue(id, out ResolvedResource<PrismLightingResource> lightingResource))
-        {
-            identity = lightingResource.Identity;
-            version = lightingResource.Version;
-            return true;
-        }
-        if (colorMatrices.TryGetValue(id, out ResolvedResource<PrismColorMatrixResource> colorMatrix))
-        {
-            identity = colorMatrix.Identity;
-            version = colorMatrix.Version;
-            return true;
-        }
-
-        identity = 0;
-        version = 0;
-        return false;
-    }
+        out long version) =>
+        TryGetDependency(images, id, out identity, out version) ||
+        TryGetDependency(curves, id, out identity, out version) ||
+        TryGetDependency(gradients, id, out identity, out version) ||
+        TryGetDependency(lensProfiles, id, out identity, out version) ||
+        TryGetDependency(lighting, id, out identity, out version) ||
+        TryGetDependency(colorMatrices, id, out identity, out version);
 
     public bool TryGetLensProfile(
         PrismResourceId id,
@@ -387,6 +351,14 @@ internal sealed class PrismDrawResources
         version = 0;
         return false;
     }
+
+    private static bool TryGetDependency<TResource>(
+        Dictionary<PrismResourceId, ResolvedResource<TResource>> resources,
+        PrismResourceId id,
+        out long identity,
+        out long version)
+        where TResource : class =>
+        TryGetResource(resources, id, out _, out identity, out version);
 
     private readonly record struct ResolvedResource<TResource>(
         TResource Resource,
