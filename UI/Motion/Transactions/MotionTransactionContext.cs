@@ -83,7 +83,7 @@ public sealed class MotionTransactionContext : UiPropertyMutationObserver, IDisp
             return;
         }
 
-        if (!motion.AnimatableProperties.TryGet(mutation.Property, out MotionPropertyOptions? options))
+        if (!motion.AnimatableProperties.TryGet(mutation.Property, out _))
         {
             return;
         }
@@ -91,7 +91,6 @@ public sealed class MotionTransactionContext : UiPropertyMutationObserver, IDisp
         AnimateMutationUntyped(
             element,
             mutation,
-            options,
             transaction.Options.DefaultSpec,
             transaction.Options.Priority);
     }
@@ -99,18 +98,16 @@ public sealed class MotionTransactionContext : UiPropertyMutationObserver, IDisp
     private void AnimateMutationUntyped(
         UIElement element,
         UiPropertyMutation mutation,
-        MotionPropertyOptions options,
         MotionSpec spec,
         MotionPriority priority)
     {
         IValueMixer mixer = motion.Mixers.Resolve(mutation.Property.ValueType, mutation.Property.DiagnosticName);
-        MotionSpec typedSpec = spec is null ? options.DefaultSpec : spec;
         if (mixer is not IValueMixerDispatcher dispatcher)
         {
             throw new InvalidOperationException($"Mixer for {mutation.Property.ValueType.Name} cannot animate property mutations.");
         }
 
-        dispatcher.AnimateMutation(this, element, mutation, typedSpec, priority);
+        dispatcher.AnimateMutation(this, element, mutation, spec, priority);
     }
 
     internal void AnimateMutation<T>(

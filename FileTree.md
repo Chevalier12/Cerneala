@@ -2141,7 +2141,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Motion.ObjectMotionFacade_TTarget_.md
 |   |   |   |-- Cerneala.UI.Motion.ObjectMotionFacade.md
 |   |   |   |-- Cerneala.UI.Motion.Presence.PresenceCoordinator.md
-|   |   |   |-- Cerneala.UI.Motion.Presence.PresenceHandle.md
 |   |   |   |-- Cerneala.UI.Motion.Presence.PresenceOptions.md
 |   |   |   |-- Cerneala.UI.Motion.Presence.PresenceState.md
 |   |   |   |-- Cerneala.UI.Motion.Properties.AnimatablePropertyRegistry.md
@@ -4718,7 +4717,6 @@ Generated from `.`.
 |   |   |   +-- LayoutSnapshot.cs
 |   |   |-- Presence/
 |   |   |   |-- PresenceCoordinator.cs
-|   |   |   |-- PresenceHandle.cs
 |   |   |   |-- PresenceOptions.cs
 |   |   |   +-- PresenceState.cs
 |   |   |-- Prism/

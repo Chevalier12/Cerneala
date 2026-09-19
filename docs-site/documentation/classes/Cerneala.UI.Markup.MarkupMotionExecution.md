@@ -59,11 +59,18 @@ cancels the previous execution before storing the next one, and lifecycle
 detach cancels all remaining executions without starting deferred sequence
 children.
 
+Cancellation reaches a terminal state before an exception raised by child
+cancellation or a terminal observer is rethrown. `Completion` is canceled,
+terminal subscriptions are detached, and every `Completed` subscriber is
+invoked even when an earlier subscriber throws. If more than one callback
+fails, the first observed exception is rethrown after terminalization.
+
 ## Exceptions
 | Member | Exception | Condition |
 | --- | --- | --- |
 | `From`, `Parallel`, `Sequence` | `ArgumentNullException` | A required handle, child array, or child factory is `null`. |
 | `Parallel`, `Sequence` | `InvalidOperationException` | A child factory returns `null`. |
+| `Cancel` | Callback exception | A child cancellation callback or terminal observer throws. The execution is already canceled and terminalized before the exception is rethrown. |
 
 ## Applies to
 Source-generated Motion markup execution trees.

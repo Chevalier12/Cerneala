@@ -1,3 +1,4 @@
+using System.Runtime.ExceptionServices;
 using Cerneala.UI.Motion.Core;
 
 namespace Cerneala.UI.Markup;
@@ -102,13 +103,7 @@ public sealed class MarkupMotionExecution
 
         EventHandler? handler = null;
         MarkupMotionExecution execution = new(
-            () =>
-            {
-                foreach (MarkupMotionExecution child in started)
-                {
-                    child.Cancel();
-                }
-            },
+            () => CancelAll(started),
             () =>
             {
                 foreach (MarkupMotionExecution child in started)
@@ -242,6 +237,24 @@ public sealed class MarkupMotionExecution
         }
     }
 
+    private static void CancelAll(IReadOnlyList<MarkupMotionExecution> children)
+    {
+        ExceptionDispatchInfo? firstFailure = null;
+        foreach (MarkupMotionExecution child in children)
+        {
+            try
+            {
+                child.Cancel();
+            }
+            catch (Exception exception)
+            {
+                firstFailure ??= ExceptionDispatchInfo.Capture(exception);
+            }
+        }
+
+        firstFailure?.Throw();
+    }
+
     private void SetCompleted()
     {
         if (IsCompleted || IsCanceled)
@@ -263,18 +276,62 @@ public sealed class MarkupMotionExecution
 
         IsCanceled = true;
         Action? cancelAction = invokeCancel ? cancel : null;
-        cancelAction?.Invoke();
+        ExceptionDispatchInfo? firstFailure = null;
+        try
+        {
+            cancelAction?.Invoke();
+        }
+        catch (Exception exception)
+        {
+            firstFailure = ExceptionDispatchInfo.Capture(exception);
+        }
+
         completion.TrySetCanceled();
-        FinishTerminal();
+        try
+        {
+            FinishTerminal();
+        }
+        catch (Exception exception)
+        {
+            firstFailure ??= ExceptionDispatchInfo.Capture(exception);
+        }
+
+        firstFailure?.Throw();
     }
 
     private void FinishTerminal()
     {
-        detach?.Invoke();
+        Action? detachAction = detach;
+        EventHandler? handlers = completed;
         detach = null;
         cancel = null;
-        EventHandler? handler = completed;
         completed = null;
-        handler?.Invoke(this, EventArgs.Empty);
+
+        ExceptionDispatchInfo? firstFailure = null;
+        try
+        {
+            detachAction?.Invoke();
+        }
+        catch (Exception exception)
+        {
+            firstFailure = ExceptionDispatchInfo.Capture(exception);
+        }
+
+        if (handlers is not null)
+        {
+            foreach (EventHandler handler in handlers.GetInvocationList())
+            {
+                try
+                {
+                    handler(this, EventArgs.Empty);
+                }
+                catch (Exception exception)
+                {
+                    firstFailure ??= ExceptionDispatchInfo.Capture(exception);
+                }
+            }
+        }
+
+        firstFailure?.Throw();
     }
 }

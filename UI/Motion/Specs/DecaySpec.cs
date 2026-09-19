@@ -140,10 +140,7 @@ public sealed class DecaySpec<T> : MotionSpec<T>
 
         public override void Advance(TimeSpan delta)
         {
-            if (delta < TimeSpan.Zero)
-            {
-                throw new ArgumentOutOfRangeException(nameof(delta), "Delta cannot be negative.");
-            }
+            MotionSampler.ThrowIfNegativeDelta(delta);
 
             if (isComplete)
             {

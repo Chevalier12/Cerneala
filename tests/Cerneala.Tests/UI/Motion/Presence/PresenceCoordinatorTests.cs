@@ -14,6 +14,13 @@ namespace Cerneala.Tests.UI.Motion.Presence;
 public sealed class PresenceCoordinatorTests
 {
     [Fact]
+    public void PublicApiDoesNotExposeAnUnobtainablePresenceHandle()
+    {
+        Assert.Null(typeof(PresenceCoordinator).Assembly.GetType(
+            "Cerneala.UI.Motion.Presence.PresenceHandle"));
+    }
+
+    [Fact]
     public void RepeatedAttachDetachDoesNotAccumulateEnterMotion()
     {
         ManualMotionClock clock = new();

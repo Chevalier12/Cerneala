@@ -66,7 +66,9 @@ An attached element with `PresenceOptions` starts enter motion when it is attach
 
 Removing a visual child with `PresenceOptions` starts exit motion instead of detaching the subtree immediately. The child is removed from the owner's public `VisualChildren` collection, tracked as an exiting visual child for the former owner, marked as `PresenceState.Exiting`, and animated toward opacity `0` and scale `0.95`. The renderer appends exiting visual children after the owner's normal visual children so they can continue drawing during the exit.
 
-By default, exiting elements are excluded from hit testing through `PresenceOptions.ExcludeInputWhileExiting`. Re-adding an element while it is exiting cancels the exit, restores presence opacity and scale to `1`, and marks the element present again. When the exit opacity animation completes without cancellation, the coordinator detaches the subtree from the root and records the element as detached.
+By default, exiting elements are excluded from hit testing through `PresenceOptions.ExcludeInputWhileExiting`. Re-adding an element while it is exiting cancels the exit, restores presence opacity and scale to `1`, and marks the element present again. When the exit opacity animation completes without cancellation, the coordinator detaches the subtree from the root, after which `GetState` reports `PresenceState.Detached`.
+
+`GetState` is the public source of truth for presence state. Exit-operation bookkeeping is internal to the coordinator and is not exposed as a separate public handle.
 
 Presence visual state participates in render transforms and opacity composition through `UIElement.PresenceOpacity` and `UIElement.PresenceScale`. The coordinator also coexists with layout motion; exit motion does not clear an element's layout-motion binding.
 
@@ -126,5 +128,4 @@ Target framework: `net8.0`
 - `Cerneala.UI.Motion.Core.MotionSystem`
 - `Cerneala.UI.Motion.Presence.PresenceOptions`
 - `Cerneala.UI.Motion.Presence.PresenceState`
-- `Cerneala.UI.Motion.Presence.PresenceHandle`
 - `Cerneala.UI.Elements.UIElement`

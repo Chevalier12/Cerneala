@@ -7,7 +7,7 @@ public sealed class PresenceCoordinator
 {
     private readonly MotionSystem motion;
     private readonly Dictionary<UIElement, EnterAnimation> enters = new(ReferenceEqualityComparer.Instance);
-    private readonly Dictionary<UIElement, PresenceHandle> exits = new(ReferenceEqualityComparer.Instance);
+    private readonly Dictionary<UIElement, ExitAnimation> exits = new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<UIElement, PresenceState> states = new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<UIElement, List<UIElement>> exitingByOwner = new(ReferenceEqualityComparer.Instance);
 
@@ -53,8 +53,8 @@ public sealed class PresenceCoordinator
         }
 
         CancelEnter(element);
-        PresenceHandle handle = new(owner, element, CompleteExit);
-        exits[element] = handle;
+        ExitAnimation exit = new(owner, element, CompleteExit);
+        exits[element] = exit;
         if (!exitingByOwner.TryGetValue(owner, out List<UIElement>? exitingChildren))
         {
             exitingChildren = [];
@@ -68,20 +68,20 @@ public sealed class PresenceCoordinator
 
         MotionValue<float> opacity = motion.Graph.CreateValue(element.PresenceOpacity);
         MotionValue<float> scale = motion.Graph.CreateValue(element.PresenceScale);
-        handle.AddSubscription(opacity.Subscribe(change => element.SetPresenceVisual(change.NewValue, element.PresenceScale)));
-        handle.AddSubscription(scale.Subscribe(change => element.SetPresenceVisual(element.PresenceOpacity, change.NewValue)));
-        handle.OpacityHandle = opacity.AnimateTo(0, options.Exit);
-        handle.ScaleHandle = scale.AnimateTo(0.95f, options.Exit);
-        handle.OpacityHandle.Completed += (_, args) =>
+        exit.AddSubscription(opacity.Subscribe(change => element.SetPresenceVisual(change.NewValue, element.PresenceScale)));
+        exit.AddSubscription(scale.Subscribe(change => element.SetPresenceVisual(element.PresenceOpacity, change.NewValue)));
+        exit.OpacityHandle = opacity.AnimateTo(0, options.Exit);
+        exit.ScaleHandle = scale.AnimateTo(0.95f, options.Exit);
+        exit.OpacityHandle.Completed += (_, args) =>
         {
             if (!args.IsCanceled)
             {
-                handle.CompleteRemoval();
+                exit.CompleteRemoval();
             }
         };
-        if (handle.OpacityHandle.IsCompleted)
+        if (exit.OpacityHandle.IsCompleted)
         {
-            handle.CompleteRemoval();
+            exit.CompleteRemoval();
         }
 
         return true;
@@ -92,18 +92,17 @@ public sealed class PresenceCoordinator
         motion.VerifyAccess();
         ArgumentNullException.ThrowIfNull(newOwner);
         ArgumentNullException.ThrowIfNull(element);
-        if (!exits.Remove(element, out PresenceHandle? handle))
+        if (!exits.Remove(element, out ExitAnimation? exit))
         {
             return false;
         }
 
-        RemoveFromOwner(handle.Owner, element);
+        RemoveFromOwner(exit.Owner, element);
         element.SetRetainedVisualParent(null);
-        handle.Owner.IncrementPrismDescendantVisualVersion();
-        handle.Cancel();
+        exit.Owner.IncrementPrismDescendantVisualVersion();
+        exit.Cancel();
         element.SetPresenceExiting(false);
         element.SetPresenceVisual(1, 1);
-        PresenceOptions? options = element.Presence;
 
         states[element] = PresenceState.Present;
         return true;
@@ -143,33 +142,33 @@ public sealed class PresenceCoordinator
     internal void MarkDetached(UIElement element)
     {
         CancelEnter(element);
-        if (exits.Remove(element, out PresenceHandle? handle))
+        if (exits.Remove(element, out ExitAnimation? exit))
         {
-            RemoveFromOwner(handle.Owner, element);
+            RemoveFromOwner(exit.Owner, element);
             element.SetRetainedVisualParent(null);
-            handle.Owner.IncrementPrismDescendantVisualVersion();
-            handle.Cancel();
+            exit.Owner.IncrementPrismDescendantVisualVersion();
+            exit.Cancel();
         }
 
         element.SetPresenceExiting(false);
         states.Remove(element);
     }
 
-    private void CompleteExit(PresenceHandle handle)
+    private void CompleteExit(ExitAnimation exit)
     {
-        UIElement element = handle.Element;
+        UIElement element = exit.Element;
         if (!exits.Remove(element))
         {
             return;
         }
 
-        RemoveFromOwner(handle.Owner, element);
+        RemoveFromOwner(exit.Owner, element);
         element.SetRetainedVisualParent(null);
-        handle.Owner.IncrementPrismDescendantVisualVersion();
+        exit.Owner.IncrementPrismDescendantVisualVersion();
         element.SetPresenceExiting(false);
         element.SetPresenceVisual(1, 1);
-        handle.RemoveElement(motion.Root);
-        handle.Cancel();
+        exit.RemoveElement(motion.Root);
+        exit.Cancel();
         states.Remove(element);
     }
 
@@ -232,6 +231,63 @@ public sealed class PresenceCoordinator
             }
 
             subscriptions.Clear();
+        }
+    }
+
+    private sealed class ExitAnimation
+    {
+        private readonly UIElement element;
+        private readonly Action<ExitAnimation> complete;
+        private readonly List<IDisposable> subscriptions = [];
+        private bool completed;
+
+        public ExitAnimation(UIElement owner, UIElement element, Action<ExitAnimation> complete)
+        {
+            Owner = owner ?? throw new ArgumentNullException(nameof(owner));
+            this.element = element ?? throw new ArgumentNullException(nameof(element));
+            this.complete = complete ?? throw new ArgumentNullException(nameof(complete));
+        }
+
+        public UIElement Owner { get; }
+
+        public UIElement Element => element;
+
+        public MotionHandle? OpacityHandle { get; set; }
+
+        public MotionHandle? ScaleHandle { get; set; }
+
+        public void AddSubscription(IDisposable subscription)
+        {
+            subscriptions.Add(subscription);
+        }
+
+        public void CompleteRemoval()
+        {
+            if (completed)
+            {
+                return;
+            }
+
+            completed = true;
+            complete(this);
+        }
+
+        public void Cancel()
+        {
+            OpacityHandle?.Cancel(MotionCancelBehavior.KeepCurrent);
+            ScaleHandle?.Cancel(MotionCancelBehavior.KeepCurrent);
+            foreach (IDisposable subscription in subscriptions)
+            {
+                subscription.Dispose();
+            }
+
+            subscriptions.Clear();
+        }
+
+        public void RemoveElement(UIRoot root)
+        {
+            ElementLifecycle.DetachSubtree(root, element);
+            root.IncrementTreeVersion();
         }
     }
 }

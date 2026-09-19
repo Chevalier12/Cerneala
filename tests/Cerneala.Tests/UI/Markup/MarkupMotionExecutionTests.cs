@@ -64,6 +64,48 @@ public sealed class MarkupMotionExecutionTests
     }
 
     [Fact]
+    public async Task CancelTerminalizesExecutionWhenAChildCompletionHandlerThrows()
+    {
+        MotionHandle handle = FakeHandle();
+        MarkupMotionExecution execution = MarkupMotionExecution.From(handle);
+        int completions = 0;
+        execution.Completed += (_, _) => throw new ApplicationException("Synthetic execution observer failure.");
+        execution.Completed += (_, _) => completions++;
+        handle.Completed += (_, _) => throw new InvalidOperationException("Synthetic child completion failure.");
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(execution.Cancel);
+
+        Assert.Equal("Synthetic child completion failure.", failure.Message);
+        Assert.True(handle.IsCanceled);
+        Assert.True(execution.IsCanceled);
+        Assert.True(execution.Completion.IsCompleted);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => execution.Completion.AsTask());
+        Assert.Equal(1, completions);
+
+        execution.Cancel();
+        Assert.Equal(1, completions);
+    }
+
+    [Fact]
+    public void CancelingParallelContinuesAfterAChildCancellationThrows()
+    {
+        MotionHandle first = FakeHandle();
+        MotionHandle second = FakeHandle();
+        MarkupMotionExecution execution = MarkupMotionExecution.Parallel(
+            () => MarkupMotionExecution.From(first),
+            () => MarkupMotionExecution.From(second));
+        first.Completed += (_, _) => throw new InvalidOperationException("Synthetic child completion failure.");
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(execution.Cancel);
+
+        Assert.Equal("Synthetic child completion failure.", failure.Message);
+        Assert.True(first.IsCanceled);
+        Assert.True(second.IsCanceled);
+        Assert.True(execution.IsCanceled);
+        Assert.True(execution.Completion.IsCompleted);
+    }
+
+    [Fact]
     public void NestedGroupsWorkInBothDirections()
     {
         MotionHandle first = FakeHandle();

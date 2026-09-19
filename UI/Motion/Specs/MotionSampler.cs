@@ -9,6 +9,14 @@ public abstract class MotionSampler
     public abstract void Advance(TimeSpan delta);
 
     public abstract void RetargetUntyped(object? to, RetargetMode mode);
+
+    internal static void ThrowIfNegativeDelta(TimeSpan delta)
+    {
+        if (delta < TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(delta), "Delta cannot be negative.");
+        }
+    }
 }
 
 public abstract class MotionSampler<T> : MotionSampler

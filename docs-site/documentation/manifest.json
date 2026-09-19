@@ -3924,11 +3924,6 @@
     "source": "UI/Motion/Presence/PresenceCoordinator.cs"
   },
   {
-    "name": "Cerneala.UI.Motion.Presence.PresenceHandle",
-    "file": "documentation/classes/Cerneala.UI.Motion.Presence.PresenceHandle.md",
-    "source": "UI/Motion/Presence/PresenceHandle.cs"
-  },
-  {
     "name": "Cerneala.UI.Motion.Presence.PresenceOptions",
     "file": "documentation/classes/Cerneala.UI.Motion.Presence.PresenceOptions.md",
     "source": "UI/Motion/Presence/PresenceOptions.cs"

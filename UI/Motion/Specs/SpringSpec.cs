@@ -111,10 +111,7 @@ public sealed class SpringSpec<T> : MotionSpec<T>
 
         public override void Advance(TimeSpan delta)
         {
-            if (delta < TimeSpan.Zero)
-            {
-                throw new ArgumentOutOfRangeException(nameof(delta), "Delta cannot be negative.");
-            }
+            MotionSampler.ThrowIfNegativeDelta(delta);
 
             if (isComplete)
             {
@@ -165,7 +162,6 @@ public sealed class SpringSpec<T> : MotionSpec<T>
 
             isComplete = false;
         }
-
 
         private void Integrate(float seconds)
         {
