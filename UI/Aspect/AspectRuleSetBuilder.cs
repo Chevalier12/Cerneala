@@ -28,6 +28,6 @@ public sealed class AspectRuleSetBuilder
 
     public AspectRuleSet Build()
     {
-        return new AspectRuleSet(Name, Layer, Target, declarations.ToArray(), DeclarationOrder);
+        return new AspectRuleSet(Name, Layer, Target, declarations, DeclarationOrder);
     }
 }

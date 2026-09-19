@@ -65,6 +65,60 @@ public sealed class AspectAuditRegressionTests
     }
 
     [Fact]
+    public void NestedProcessingKeepsOuterEngineMutationSuppression()
+    {
+        UIRoot root = new();
+        ReentrantBorder outer = new();
+        Border nested = new();
+        root.AspectRegistry.Register(AspectPackage.Create("base")
+            .Components(components => components.AddRule(new AspectRuleSet(
+                "base",
+                AspectLayer.App,
+                new AspectTarget(
+                    typeof(ReentrantBorder),
+                    conditions:
+                    [
+                        AspectCondition.Property(UIElement.HeightProperty)
+                            .Matches(_ => true, "height dependency")
+                    ]),
+                [
+                    new AspectDeclaration(UIElement.WidthProperty, AspectValue<float>.Literal(10f)),
+                    new AspectDeclaration(UIElement.HeightProperty, AspectValue<float>.Literal(10f))
+                ],
+                declarationOrder: 0))));
+        root.VisualChildren.Add(outer);
+        root.VisualChildren.Add(nested);
+        root.AspectProcessor.Process(outer);
+        root.AspectProcessor.Process(nested);
+
+        outer.NestedProcess = () => root.AspectProcessor.Process(nested);
+        root.AspectRegistry.Register(AspectPackage.Create("override")
+            .Components(components => components.AddRule(new AspectRuleSet(
+                "override",
+                AspectLayer.App,
+                new AspectTarget(
+                    typeof(ReentrantBorder),
+                    conditions:
+                    [
+                        AspectCondition.Property(UIElement.HeightProperty)
+                            .Matches(_ => true, "height dependency")
+                    ]),
+                [
+                    new AspectDeclaration(UIElement.WidthProperty, AspectValue<float>.Literal(20f)),
+                    new AspectDeclaration(UIElement.HeightProperty, AspectValue<float>.Literal(20f))
+                ],
+                declarationOrder: 1))));
+        root.AspectQueue.Remove(outer);
+        root.AspectQueue.Remove(nested);
+
+        root.AspectProcessor.Process(outer);
+
+        Assert.Equal(20f, outer.Width);
+        Assert.Equal(20f, outer.Height);
+        Assert.DoesNotContain(outer, root.AspectQueue.Snapshot());
+    }
+
+    [Fact]
     public void ElementAspectBehaviorFollowsAttachDetachAndReattachLifecycle()
     {
         int attaches = 0;
@@ -190,6 +244,16 @@ public sealed class AspectAuditRegressionTests
     }
 
     [Fact]
+    public void ElementAspectRejectsNullDefaultValueEntry()
+    {
+        IReadOnlyList<ElementAspectValue> defaultValues = [null!];
+
+        ArgumentException exception = Assert.Throws<ArgumentException>(() => new ElementAspect(defaultValues));
+
+        Assert.Equal("defaultValues", exception.ParamName);
+    }
+
+    [Fact]
     public void EngineRejectsDeclarationIncompatibleWithTargetElement()
     {
         AspectPackage package = AspectPackage.Create("invalid-property")
@@ -215,6 +279,20 @@ public sealed class AspectAuditRegressionTests
         public void Dispose()
         {
             Interlocked.Exchange(ref dispose, null)?.Invoke();
+        }
+    }
+
+    private sealed class ReentrantBorder : Border
+    {
+        public Action? NestedProcess { get; set; }
+
+        protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
+        {
+            base.OnPropertyChanged(args);
+            if (ReferenceEquals(args.Property, WidthProperty))
+            {
+                NestedProcess?.Invoke();
+            }
         }
     }
 }

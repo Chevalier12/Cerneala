@@ -13,7 +13,7 @@ public static class DefaultAspectPackage
     public static AspectPackage Create()
     {
         return AspectPackage.Create("Default")
-            .Tokens(tokens => AddTokens(tokens))
+            .Tokens(tokens => AddTokens(new PackageTokenWriter(tokens)))
             .Components(components =>
             {
                 components.AddTemplate(new ComponentTemplateDefinition("Button.Modern", typeof(Button), ButtonTemplates.Modern));
@@ -31,11 +31,11 @@ public static class DefaultAspectPackage
     public static AspectEnvironment CreateEnvironment()
     {
         AspectEnvironment environment = new("default");
-        SetTokens(environment);
+        AddTokens(new EnvironmentTokenWriter(environment));
         return environment;
     }
 
-    private static void AddTokens(AspectTokenBuilder tokens)
+    private static void AddTokens(ITokenWriter tokens)
     {
         tokens.Set(DefaultAspectTokens.Color.Background, new Color(248, 250, 252));
         tokens.Set(DefaultAspectTokens.Color.Foreground, new Color(28, 35, 48));
@@ -61,34 +61,29 @@ public static class DefaultAspectPackage
         tokens.Set(ButtonTokens.Padding, new Thickness(8));
     }
 
-    private static void SetTokens(AspectEnvironment environment)
-    {
-        environment.Set(DefaultAspectTokens.Color.Background, new Color(248, 250, 252));
-        environment.Set(DefaultAspectTokens.Color.Foreground, new Color(28, 35, 48));
-        environment.Set(DefaultAspectTokens.Color.Surface, new Color(255, 255, 255));
-        environment.Set(DefaultAspectTokens.Color.Border, new Color(148, 163, 184));
-        environment.Set(DefaultAspectTokens.Color.Accent, new Color(37, 99, 235));
-        environment.Set(DefaultAspectTokens.Brush.Background, new SolidColorBrush(new Color(248, 250, 252)));
-        environment.Set(DefaultAspectTokens.Brush.Surface, new SolidColorBrush(new Color(255, 255, 255)));
-        environment.Set(DefaultAspectTokens.Brush.Border, new SolidColorBrush(new Color(148, 163, 184)));
-        environment.Set(DefaultAspectTokens.Brush.Foreground, new SolidColorBrush(new Color(28, 35, 48)));
-        environment.Set(DefaultAspectTokens.Typography.FontFamily, "Default");
-        environment.Set(DefaultAspectTokens.Typography.FontSize, 16f);
-        environment.Set(DefaultAspectTokens.Spacing.ControlPadding, new Thickness(8));
-        environment.Set(DefaultAspectTokens.Stroke.ControlBorderThickness, new Thickness(1));
-        environment.Set(DefaultAspectTokens.Motion.Fast, new TweenSpec<float>(TimeSpan.FromMilliseconds(120)));
-        environment.Set(DefaultAspectTokens.Motion.Normal, new TweenSpec<float>(TimeSpan.FromMilliseconds(200)));
-        environment.Set(ButtonTokens.Background, new SolidColorBrush(new Color(255, 255, 255)));
-        environment.Set(ButtonTokens.Foreground, new SolidColorBrush(new Color(28, 35, 48)));
-        environment.Set(ButtonTokens.BorderBrush, new SolidColorBrush(new Color(148, 163, 184)));
-        environment.Set(ButtonTokens.HoverBackground, new SolidColorBrush(new Color(37, 99, 235)));
-        environment.Set(ButtonTokens.PressedBackground, new SolidColorBrush(new Color(148, 163, 184)));
-        environment.Set(ButtonTokens.DisabledOpacity, 0.5f);
-        environment.Set(ButtonTokens.Padding, new Thickness(8));
-    }
-
     private static AspectRuleSet Rule(string name, Type type, params AspectDeclaration[] declarations)
     {
         return new AspectRuleSet(name, AspectLayer.Theme, new AspectTarget(type), declarations, 0);
+    }
+
+    private interface ITokenWriter
+    {
+        void Set<T>(AspectToken<T> token, T value);
+    }
+
+    private sealed class PackageTokenWriter(AspectTokenBuilder builder) : ITokenWriter
+    {
+        public void Set<T>(AspectToken<T> token, T value)
+        {
+            builder.Set(token, value);
+        }
+    }
+
+    private sealed class EnvironmentTokenWriter(AspectEnvironment environment) : ITokenWriter
+    {
+        public void Set<T>(AspectToken<T> token, T value)
+        {
+            environment.Set(token, value);
+        }
     }
 }

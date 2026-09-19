@@ -122,7 +122,7 @@ public sealed class AspectEnvironment
 
     private void RegisterChild(AspectEnvironment child)
     {
-        CompactChildren();
+        RemoveDeadChildren();
         children.Add(new WeakReference<AspectEnvironment>(child));
     }
 
@@ -164,8 +164,14 @@ public sealed class AspectEnvironment
         return [.. liveChildren];
     }
 
-    private void CompactChildren()
+    private void RemoveDeadChildren()
     {
-        _ = GetLiveChildren();
+        for (int index = children.Count - 1; index >= 0; index--)
+        {
+            if (!children[index].TryGetTarget(out _))
+            {
+                children.RemoveAt(index);
+            }
+        }
     }
 }

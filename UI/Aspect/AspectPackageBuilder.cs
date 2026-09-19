@@ -58,11 +58,11 @@ public sealed class AspectPackageBuilder
         return new AspectPackage(
             Name,
             origin ?? AspectOrigin.Code(Name),
-            tokens.ToArray(),
-            rules.ToArray(),
-            behaviors.ToArray(),
-            componentTemplates.ToArray(),
-            contentTemplates.ToArray());
+            tokens,
+            rules,
+            behaviors,
+            componentTemplates,
+            contentTemplates);
     }
 
     public static implicit operator AspectPackage(AspectPackageBuilder builder)

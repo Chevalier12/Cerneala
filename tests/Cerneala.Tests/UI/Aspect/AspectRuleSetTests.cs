@@ -4,6 +4,7 @@ using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Core;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 
 namespace Cerneala.Tests.UI.Aspect;
@@ -50,6 +51,24 @@ public sealed class AspectRuleSetTests
     }
 
     [Fact]
+    public void RuleSetBuildSnapshotsBuilderDeclarations()
+    {
+        AspectRuleSetBuilder builder = new(
+            "opacity",
+            AspectLayer.App,
+            new AspectTarget(typeof(Button)),
+            declarationOrder: 0);
+        builder.Set(UIElement.OpacityProperty, AspectValue<float>.Literal(0.5f));
+
+        AspectRuleSet firstRule = builder.Build();
+        builder.Set(UIElement.OpacityProperty, AspectValue<float>.Literal(0.75f));
+        AspectRuleSet secondRule = builder.Build();
+
+        Assert.Single(firstRule.Declarations);
+        Assert.Equal(2, secondRule.Declarations.Count);
+    }
+
+    [Fact]
     public void DataConditionMatchesTypedTemplateData()
     {
         AspectCondition condition = AspectCondition.Data<UserCard>(
@@ -58,6 +77,31 @@ public sealed class AspectRuleSetTests
             AspectDataDependency.Property<UserCard, bool>(nameof(UserCard.IsImportant)));
 
         Assert.True(condition.Evaluate(Context(new Button(), data: new UserCard(true))).Matches);
+        Assert.False(condition.Evaluate(Context(new Button(), data: new UserCard(false))).Matches);
+        Assert.False(condition.Evaluate(Context(new Button(), data: "wrong")).Matches);
+    }
+
+    [Fact]
+    public void DataSelectorConditionMatchesSelectedValueAndReportsDependency()
+    {
+        AspectDataDependency dependency = AspectDataDependency.Property<UserCard, bool>(nameof(UserCard.IsImportant));
+        AspectCondition condition = AspectCondition.Data<UserCard, bool>(
+            "important user",
+            user => user.IsImportant,
+            isImportant => isImportant,
+            dependency);
+
+        AspectConditionResult result = condition.Evaluate(Context(new Button(), data: new UserCard(true)));
+
+        Assert.True(result.Matches);
+        Assert.Equal("important user matched", result.DiagnosticText);
+        Assert.Collection(
+            result.Dependencies,
+            conditionDependency =>
+            {
+                Assert.Equal(AspectConditionDependencyKind.DataContext, conditionDependency.Kind);
+                Assert.Same(dependency, conditionDependency.Data);
+            });
         Assert.False(condition.Evaluate(Context(new Button(), data: new UserCard(false))).Matches);
         Assert.False(condition.Evaluate(Context(new Button(), data: "wrong")).Matches);
     }

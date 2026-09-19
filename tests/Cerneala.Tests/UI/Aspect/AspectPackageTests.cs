@@ -26,6 +26,22 @@ public sealed class AspectPackageTests
     }
 
     [Fact]
+    public void PackageBuildSnapshotsBuilderCollections()
+    {
+        AspectToken<Color> firstToken = AspectToken.Color("first");
+        AspectToken<Color> secondToken = AspectToken.Color("second");
+        AspectPackageBuilder builder = AspectPackage.Create("App")
+            .Tokens(tokens => tokens.Set(firstToken, Color.White));
+
+        AspectPackage firstPackage = builder.Build();
+        builder.Tokens(tokens => tokens.Set(secondToken, Color.Black));
+        AspectPackage secondPackage = builder.Build();
+
+        Assert.Same(firstToken, Assert.Single(firstPackage.Tokens).Token);
+        Assert.Equal([firstToken, secondToken], secondPackage.Tokens.Select(definition => definition.Token));
+    }
+
+    [Fact]
     public void RegistryCombinesPackagesInRegistrationOrder()
     {
         AspectToken<Color> firstToken = AspectToken.Color("first");
@@ -89,10 +105,12 @@ public sealed class AspectPackageTests
         registry.Register(AspectPackage.Create("Second"), notify: false);
         AspectCatalog afterRegister = registry.BuildCatalog();
         Assert.NotSame(first, afterRegister);
+        Assert.Equal(["First"], first.PackageDiagnostics.Select(package => package.Name));
         Assert.Equal(["First", "Second"], afterRegister.PackageDiagnostics.Select(package => package.Name));
 
         Assert.True(registry.Unregister("Second"));
         Assert.NotSame(afterRegister, registry.BuildCatalog());
+        Assert.Equal(["First", "Second"], afterRegister.PackageDiagnostics.Select(package => package.Name));
     }
 
     private sealed record UserCard(string Name);

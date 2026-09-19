@@ -212,7 +212,7 @@ public sealed class AspectEngine
             {
                 evaluations[ruleIndex] = new AspectRuleEvaluationSnapshot(rule, conditionResults, "matched");
             }
-            AspectCascadeKey cascadeKey = new(rule.Layer.Order, rule.SourceOrder, rule.Target.Specificity, rule.DeclarationOrder);
+            AspectCascadeKey cascadeKey = rule.CascadeKey;
             AspectMotionSource motionSource = GetMotionSource(conditionResults);
             foreach (AspectDeclaration declaration in rule.Declarations)
             {

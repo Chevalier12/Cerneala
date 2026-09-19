@@ -58,7 +58,7 @@ bool hasDependencies = graph.TryGetDependencies(button, out _);
 
 `AspectInvalidationGraph` is a small per-element dependency store used by `AspectEngine`. After `AspectEngine.Apply` resolves and applies aspect values to a `UIElement`, the engine stores the resolved `AspectDependencySet` in this graph. `AspectEngine.GetDependencies` then reads the tracked set through `TryGetDependencies`.
 
-Tracked entries are keyed by `UIElement` in a `ConditionalWeakTable`, so the graph does not keep an element alive solely because dependencies were tracked for it. Calling `Track` replaces any previous dependency set for the same element by removing the old entry and adding a new holder.
+Tracked entries are keyed by `UIElement` in a `ConditionalWeakTable`, so the graph does not keep an element alive solely because dependencies were tracked for it. Calling `Track` replaces any previous dependency set for the same element.
 
 `TryGetDependencies` returns `false` and outputs a new empty `AspectDependencySet` when no entry is tracked. `Track` throws `ArgumentNullException` when `element` or `dependencySet` is `null`; `TryGetDependencies` throws when `element` is `null`. `Untrack` removes the element when present and otherwise has no effect.
 

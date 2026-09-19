@@ -49,38 +49,38 @@ public sealed class AspectStateSet : IEquatable<AspectStateSet>
     {
         ArgumentNullException.ThrowIfNull(element);
 
-        AspectStateSet result = Empty;
+        List<AspectState> activeStates = new(6);
         if (element.IsPointerOver)
         {
-            result = result.Add(AspectState.Hover);
+            activeStates.Add(AspectState.Hover);
         }
 
         if (element is IInputPressable { IsPressed: true })
         {
-            result = result.Add(AspectState.Pressed);
+            activeStates.Add(AspectState.Pressed);
         }
 
         if (element.IsKeyboardFocused)
         {
-            result = result.Add(AspectState.Focus);
+            activeStates.Add(AspectState.Focus);
         }
 
         if (element.IsKeyboardFocusWithin)
         {
-            result = result.Add(AspectState.FocusWithin);
+            activeStates.Add(AspectState.FocusWithin);
         }
 
         if (!element.IsEnabled)
         {
-            result = result.Add(AspectState.Disabled);
+            activeStates.Add(AspectState.Disabled);
         }
 
         if (element is ISelectableItemContainer { IsSelected: true })
         {
-            result = result.Add(AspectState.Selected);
+            activeStates.Add(AspectState.Selected);
         }
 
-        return result;
+        return activeStates.Count == 0 ? Empty : new AspectStateSet(activeStates);
     }
 
     public bool Equals(AspectStateSet? other)

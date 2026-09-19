@@ -70,6 +70,12 @@ public sealed class AspectRuleSet
 
     public string Scope { get; }
 
+    internal AspectCascadeKey CascadeKey => new(
+        Layer.Order,
+        SourceOrder,
+        Target.Specificity,
+        DeclarationOrder);
+
     internal AspectRuleSet WithOrigin(
         string packageName,
         int sourceOrder,
@@ -113,7 +119,7 @@ public sealed class AspectRuleSet
                 continue;
             }
 
-            AspectCascadeKey key = new(rule.Layer.Order, rule.SourceOrder, rule.Target.Specificity, rule.DeclarationOrder);
+            AspectCascadeKey key = rule.CascadeKey;
             foreach (AspectDeclaration declaration in rule.Declarations)
             {
                 if (!winners.TryGetValue(declaration.Property, out (AspectCascadeKey Key, AspectDeclaration Declaration) current) ||

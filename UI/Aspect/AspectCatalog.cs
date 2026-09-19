@@ -9,20 +9,20 @@ public sealed class AspectCatalog
 
     private AspectCatalog(
         int version,
-        IReadOnlyList<AspectPackageDiagnostic> packageDiagnostics,
+        List<AspectPackageDiagnostic> packageDiagnostics,
         Dictionary<AspectToken, AspectValue> tokenDefaults,
-        IReadOnlyList<AspectRuleSet> rules,
-        IReadOnlyList<AspectBehavior> behaviors,
-        IReadOnlyList<ComponentTemplateDefinition> componentTemplates,
-        IReadOnlyList<ContentTemplateDefinition> contentTemplates)
+        List<AspectRuleSet> rules,
+        List<AspectBehavior> behaviors,
+        List<ComponentTemplateDefinition> componentTemplates,
+        List<ContentTemplateDefinition> contentTemplates)
     {
         Version = version;
-        PackageDiagnostics = Array.AsReadOnly(packageDiagnostics.ToArray());
-        this.tokenDefaults = new ReadOnlyDictionary<AspectToken, AspectValue>(new Dictionary<AspectToken, AspectValue>(tokenDefaults));
-        Rules = Array.AsReadOnly(rules.ToArray());
-        Behaviors = Array.AsReadOnly(behaviors.ToArray());
-        ComponentTemplates = Array.AsReadOnly(componentTemplates.ToArray());
-        ContentTemplates = Array.AsReadOnly(contentTemplates.ToArray());
+        PackageDiagnostics = packageDiagnostics.AsReadOnly();
+        this.tokenDefaults = new ReadOnlyDictionary<AspectToken, AspectValue>(tokenDefaults);
+        Rules = rules.AsReadOnly();
+        Behaviors = behaviors.AsReadOnly();
+        ComponentTemplates = componentTemplates.AsReadOnly();
+        ContentTemplates = contentTemplates.AsReadOnly();
     }
 
     public int Version { get; }
@@ -47,28 +47,13 @@ public sealed class AspectCatalog
 
     internal static AspectCatalog FromPackages(IReadOnlyList<AspectPackage> packages, int version)
     {
-        Dictionary<AspectToken, AspectValue> tokens = [];
-        Dictionary<string, AspectToken> tokensByName = new(StringComparer.Ordinal);
-        List<AspectRuleSet> rules = [];
-        List<AspectBehavior> behaviors = [];
-        List<ComponentTemplateDefinition> componentTemplates = [];
-        List<ContentTemplateDefinition> contentTemplates = [];
-        List<AspectPackageDiagnostic> diagnostics = [];
-
+        CatalogAccumulator accumulator = new();
         foreach (AspectPackage package in packages)
         {
-            AppendPackage(
-                new AspectPackageSource(package, SourceOrder: 0, Scope: "root"),
-                diagnostics,
-                tokens,
-                tokensByName,
-                rules,
-                behaviors,
-                componentTemplates,
-                contentTemplates);
+            accumulator.Append(new AspectPackageSource(package, SourceOrder: 0, Scope: "root"));
         }
 
-        return new AspectCatalog(version, diagnostics, tokens, rules, behaviors, componentTemplates, contentTemplates);
+        return accumulator.Build(version);
     }
 
     internal static AspectCatalog Compose(
@@ -78,65 +63,82 @@ public sealed class AspectCatalog
     {
         ArgumentNullException.ThrowIfNull(rootCatalog);
         ArgumentNullException.ThrowIfNull(sources);
-        Dictionary<AspectToken, AspectValue> tokens = rootCatalog.TokenDefaults
-            .ToDictionary(pair => pair.Key, pair => pair.Value);
-        Dictionary<string, AspectToken> tokensByName = rootCatalog.TokenDefaults.Keys
-            .ToDictionary(token => token.Name, StringComparer.Ordinal);
-        List<AspectRuleSet> rules = [.. rootCatalog.Rules];
-        List<AspectBehavior> behaviors = [.. rootCatalog.Behaviors];
-        List<ComponentTemplateDefinition> componentTemplates = [.. rootCatalog.ComponentTemplates];
-        List<ContentTemplateDefinition> contentTemplates = [.. rootCatalog.ContentTemplates];
-        List<AspectPackageDiagnostic> diagnostics = [.. rootCatalog.PackageDiagnostics];
-
+        CatalogAccumulator accumulator = new(rootCatalog);
         foreach (AspectPackageSource source in sources)
         {
-            AppendPackage(
-                source,
+            accumulator.Append(source);
+        }
+
+        return accumulator.Build(version);
+    }
+
+    private sealed class CatalogAccumulator
+    {
+        private readonly Dictionary<AspectToken, AspectValue> tokenDefaults = [];
+        private readonly Dictionary<string, AspectToken> tokensByName = new(StringComparer.Ordinal);
+        private readonly List<AspectRuleSet> rules = [];
+        private readonly List<AspectBehavior> behaviors = [];
+        private readonly List<ComponentTemplateDefinition> componentTemplates = [];
+        private readonly List<ContentTemplateDefinition> contentTemplates = [];
+        private readonly List<AspectPackageDiagnostic> diagnostics = [];
+
+        public CatalogAccumulator()
+        {
+        }
+
+        public CatalogAccumulator(AspectCatalog catalog)
+        {
+            foreach ((AspectToken token, AspectValue defaultValue) in catalog.TokenDefaults)
+            {
+                tokenDefaults.Add(token, defaultValue);
+                tokensByName.Add(token.Name, token);
+            }
+
+            rules.AddRange(catalog.Rules);
+            behaviors.AddRange(catalog.Behaviors);
+            componentTemplates.AddRange(catalog.ComponentTemplates);
+            contentTemplates.AddRange(catalog.ContentTemplates);
+            diagnostics.AddRange(catalog.PackageDiagnostics);
+        }
+
+        public void Append(AspectPackageSource source)
+        {
+            AspectPackage package = source.Package;
+            diagnostics.Add(new AspectPackageDiagnostic(package.Name));
+            foreach (AspectTokenDefinition token in package.Tokens)
+            {
+                if (tokensByName.TryGetValue(token.Token.Name, out AspectToken? existing) &&
+                    existing.ValueType != token.Token.ValueType)
+                {
+                    throw new InvalidOperationException(
+                        $"Aspect token '{token.Token.Name}' is registered with both '{existing.ValueType.FullName}' and '{token.Token.ValueType.FullName}'.");
+                }
+
+                tokensByName[token.Token.Name] = token.Token;
+                tokenDefaults[token.Token] = token.DefaultValue;
+            }
+
+            foreach (AspectRuleSet rule in package.Rules)
+            {
+                rules.Add(rule.WithOrigin(package.Name, source.SourceOrder, package.Origin, source.Scope));
+            }
+
+            behaviors.AddRange(package.Behaviors);
+            componentTemplates.AddRange(package.ComponentTemplates);
+            contentTemplates.AddRange(package.ContentTemplates);
+        }
+
+        public AspectCatalog Build(int version)
+        {
+            return new AspectCatalog(
+                version,
                 diagnostics,
-                tokens,
-                tokensByName,
+                tokenDefaults,
                 rules,
                 behaviors,
                 componentTemplates,
                 contentTemplates);
         }
-
-        return new AspectCatalog(version, diagnostics, tokens, rules, behaviors, componentTemplates, contentTemplates);
-    }
-
-    private static void AppendPackage(
-        AspectPackageSource source,
-        List<AspectPackageDiagnostic> diagnostics,
-        Dictionary<AspectToken, AspectValue> tokens,
-        Dictionary<string, AspectToken> tokensByName,
-        List<AspectRuleSet> rules,
-        List<AspectBehavior> behaviors,
-        List<ComponentTemplateDefinition> componentTemplates,
-        List<ContentTemplateDefinition> contentTemplates)
-    {
-        AspectPackage package = source.Package;
-        diagnostics.Add(new AspectPackageDiagnostic(package.Name));
-        foreach (AspectTokenDefinition token in package.Tokens)
-        {
-            if (tokensByName.TryGetValue(token.Token.Name, out AspectToken? existing) &&
-                existing.ValueType != token.Token.ValueType)
-            {
-                throw new InvalidOperationException(
-                    $"Aspect token '{token.Token.Name}' is registered with both '{existing.ValueType.FullName}' and '{token.Token.ValueType.FullName}'.");
-            }
-
-            tokensByName[token.Token.Name] = token.Token;
-            tokens[token.Token] = token.DefaultValue;
-        }
-
-        foreach (AspectRuleSet rule in package.Rules)
-        {
-            rules.Add(rule.WithOrigin(package.Name, source.SourceOrder, package.Origin, source.Scope));
-        }
-
-        behaviors.AddRange(package.Behaviors);
-        componentTemplates.AddRange(package.ComponentTemplates);
-        contentTemplates.AddRange(package.ContentTemplates);
     }
 }
 

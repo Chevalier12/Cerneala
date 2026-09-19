@@ -49,7 +49,9 @@ public sealed class ElementAspect
         Name = string.IsNullOrWhiteSpace(name) ? null : name;
         Origin = origin ?? AspectOrigin.Code(Name);
         TargetType = targetType;
-        this.defaultValues = defaultValues?.ToList() ?? throw new ArgumentNullException(nameof(defaultValues));
+        ArgumentNullException.ThrowIfNull(defaultValues);
+        this.defaultValues = defaultValues.Select(
+            value => value ?? throw new ArgumentException("Element aspect default values cannot contain null.", nameof(defaultValues))).ToList();
         if (this.defaultValues.Select(value => value.Property).Distinct(ReferenceEqualityComparer.Instance).Count() != this.defaultValues.Count)
         {
             throw new ArgumentException("A local aspect cannot assign the same UI property more than once.", nameof(defaultValues));

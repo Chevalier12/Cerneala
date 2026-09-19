@@ -6,13 +6,14 @@ namespace Cerneala.Tests.UI.Aspect;
 public sealed class AspectStateSetTests
 {
     [Fact]
-    public void StateSetTracksHoverPressedFocusDisabledSelected()
+    public void StateSetTracksHoverPressedFocusFocusWithinDisabledSelected()
     {
         StatefulSelectableButton button = new()
         {
             IsPointerOver = true,
             IsPressed = true,
             IsKeyboardFocused = true,
+            IsKeyboardFocusWithin = true,
             IsEnabled = false,
             IsSelected = true
         };
@@ -22,6 +23,7 @@ public sealed class AspectStateSetTests
         Assert.True(states.Contains(AspectState.Hover));
         Assert.True(states.Contains(AspectState.Pressed));
         Assert.True(states.Contains(AspectState.Focus));
+        Assert.True(states.Contains(AspectState.FocusWithin));
         Assert.True(states.Contains(AspectState.Disabled));
         Assert.True(states.Contains(AspectState.Selected));
     }

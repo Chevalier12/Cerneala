@@ -95,13 +95,12 @@ internal sealed class PropertyAspectCondition<TValue> : AspectConditionNode
     }
 }
 
-internal sealed class DataAspectCondition<TData> : AspectConditionNode
+internal abstract class DataAspectConditionBase : AspectConditionNode
 {
     private readonly string diagnosticName;
-    private readonly Func<TData, bool> predicate;
     private readonly IReadOnlyList<AspectDataDependency> dataDependencies;
 
-    public DataAspectCondition(string diagnosticName, Func<TData, bool> predicate, IReadOnlyList<AspectDataDependency> dependencies)
+    protected DataAspectConditionBase(string diagnosticName, IReadOnlyList<AspectDataDependency> dependencies)
     {
         if (string.IsNullOrWhiteSpace(diagnosticName))
         {
@@ -114,15 +113,13 @@ internal sealed class DataAspectCondition<TData> : AspectConditionNode
         }
 
         this.diagnosticName = diagnosticName;
-        this.predicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
         dataDependencies = dependencies.ToArray();
     }
 
     public override AspectSpecificity Specificity => new(Data: 1);
 
-    public override AspectConditionResult Evaluate(AspectMatchContext context)
+    protected AspectConditionResult CreateResult(bool matches)
     {
-        bool matches = context.Data is TData typed && predicate(typed);
         return new AspectConditionResult(
             matches,
             dataDependencies.Select(dependency => new AspectConditionDependency(AspectConditionDependencyKind.DataContext, Data: dependency)).ToArray(),
@@ -130,40 +127,39 @@ internal sealed class DataAspectCondition<TData> : AspectConditionNode
     }
 }
 
-internal sealed class DataAspectCondition<TData, TValue> : AspectConditionNode
+internal sealed class DataAspectCondition<TData> : DataAspectConditionBase
 {
-    private readonly string diagnosticName;
-    private readonly Func<TData, TValue> selector;
-    private readonly Func<TValue, bool> predicate;
-    private readonly IReadOnlyList<AspectDataDependency> dataDependencies;
+    private readonly Func<TData, bool> predicate;
 
-    public DataAspectCondition(string diagnosticName, Func<TData, TValue> selector, Func<TValue, bool> predicate, IReadOnlyList<AspectDataDependency> dependencies)
+    public DataAspectCondition(string diagnosticName, Func<TData, bool> predicate, IReadOnlyList<AspectDataDependency> dependencies)
+        : base(diagnosticName, dependencies)
     {
-        if (string.IsNullOrWhiteSpace(diagnosticName))
-        {
-            throw new ArgumentException("Data condition diagnostic name cannot be empty.", nameof(diagnosticName));
-        }
-
-        if (dependencies is null || dependencies.Count == 0)
-        {
-            throw new ArgumentException("Data conditions must declare at least one dependency.", nameof(dependencies));
-        }
-
-        this.diagnosticName = diagnosticName;
-        this.selector = selector ?? throw new ArgumentNullException(nameof(selector));
         this.predicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
-        dataDependencies = dependencies.ToArray();
     }
 
-    public override AspectSpecificity Specificity => new(Data: 1);
+    public override AspectConditionResult Evaluate(AspectMatchContext context)
+    {
+        bool matches = context.Data is TData typed && predicate(typed);
+        return CreateResult(matches);
+    }
+}
+
+internal sealed class DataAspectCondition<TData, TValue> : DataAspectConditionBase
+{
+    private readonly Func<TData, TValue> selector;
+    private readonly Func<TValue, bool> predicate;
+
+    public DataAspectCondition(string diagnosticName, Func<TData, TValue> selector, Func<TValue, bool> predicate, IReadOnlyList<AspectDataDependency> dependencies)
+        : base(diagnosticName, dependencies)
+    {
+        this.selector = selector ?? throw new ArgumentNullException(nameof(selector));
+        this.predicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
+    }
 
     public override AspectConditionResult Evaluate(AspectMatchContext context)
     {
         bool matches = context.Data is TData typed && predicate(selector(typed));
-        return new AspectConditionResult(
-            matches,
-            dataDependencies.Select(dependency => new AspectConditionDependency(AspectConditionDependencyKind.DataContext, Data: dependency)).ToArray(),
-            matches ? $"{diagnosticName} matched" : $"{diagnosticName} did not match");
+        return CreateResult(matches);
     }
 }
 

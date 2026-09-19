@@ -1504,7 +1504,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Aspect.AspectEngineElementState.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectEnvironment.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectInvalidation.md
-|   |   |   |-- Cerneala.UI.Aspect.AspectInvalidationGraph.DependencyHolder.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectInvalidationGraph.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectLayer.md
 |   |   |   |-- Cerneala.UI.Aspect.AspectMatchContext.md

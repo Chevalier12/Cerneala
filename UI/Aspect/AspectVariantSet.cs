@@ -91,13 +91,12 @@ public sealed class AspectVariantSet : IEquatable<AspectVariantSet>
 
     public override int GetHashCode()
     {
-        HashCode hash = new();
-        foreach ((AspectVariantKey key, object? value) in values.OrderBy(pair => pair.Key.ToString(), StringComparer.Ordinal))
+        int entriesHash = 0;
+        foreach ((AspectVariantKey key, object? value) in values)
         {
-            hash.Add(key);
-            hash.Add(value);
+            entriesHash ^= HashCode.Combine(key, value);
         }
 
-        return hash.ToHashCode();
+        return HashCode.Combine(values.Count, entriesHash);
     }
 }

@@ -890,11 +890,6 @@
     "source": "UI/Aspect/AspectInvalidationGraph.cs"
   },
   {
-    "name": "Cerneala.UI.Aspect.AspectInvalidationGraph.DependencyHolder",
-    "file": "documentation/classes/Cerneala.UI.Aspect.AspectInvalidationGraph.DependencyHolder.md",
-    "source": "UI/Aspect/AspectInvalidationGraph.cs"
-  },
-  {
     "name": "Cerneala.UI.Aspect.AspectLayer",
     "file": "documentation/classes/Cerneala.UI.Aspect.AspectLayer.md",
     "source": "UI/Aspect/AspectLayer.cs"

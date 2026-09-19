@@ -103,6 +103,7 @@ public sealed class AspectProcessor
 
     private void ApplyEngine(Action action)
     {
+        bool wasApplying = isApplying;
         isApplying = true;
         try
         {
@@ -110,7 +111,7 @@ public sealed class AspectProcessor
         }
         finally
         {
-            isApplying = false;
+            isApplying = wasApplying;
         }
     }
 

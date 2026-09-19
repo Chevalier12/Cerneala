@@ -37,13 +37,7 @@ public sealed class AspectRegistry
         }
 
         packages.Add(package);
-        Version++;
-        cachedCatalog = null;
-        if (notify)
-        {
-            changed?.Invoke();
-        }
-
+        OnPackagesChanged(notify);
         return this;
     }
 
@@ -62,9 +56,7 @@ public sealed class AspectRegistry
         }
 
         packages.RemoveAt(index);
-        Version++;
-        cachedCatalog = null;
-        changed?.Invoke();
+        OnPackagesChanged(notify: true);
         return true;
     }
 
@@ -72,5 +64,15 @@ public sealed class AspectRegistry
     {
         threadAccess.VerifyAccess();
         return cachedCatalog ??= AspectCatalog.FromPackages(packages, Version);
+    }
+
+    private void OnPackagesChanged(bool notify)
+    {
+        Version++;
+        cachedCatalog = null;
+        if (notify)
+        {
+            changed?.Invoke();
+        }
     }
 }
