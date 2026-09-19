@@ -1540,27 +1540,23 @@ internal sealed class PrismGraphBuilder
 
         private static long StableBoundsHash(DrawRect bounds)
         {
-            const ulong offset = 14695981039346656037;
-            const ulong prime = 1099511628211;
-            ulong hash = offset;
-            hash = (hash ^ BitConverter.SingleToUInt32Bits(bounds.X)) * prime;
-            hash = (hash ^ BitConverter.SingleToUInt32Bits(bounds.Y)) * prime;
-            hash = (hash ^ BitConverter.SingleToUInt32Bits(bounds.Width)) * prime;
-            hash = (hash ^ BitConverter.SingleToUInt32Bits(bounds.Height)) * prime;
+            ulong hash = PrismFnv1aHash.OffsetBasis;
+            hash = PrismFnv1aHash.MixSingleBits(hash, bounds.X);
+            hash = PrismFnv1aHash.MixSingleBits(hash, bounds.Y);
+            hash = PrismFnv1aHash.MixSingleBits(hash, bounds.Width);
+            hash = PrismFnv1aHash.MixSingleBits(hash, bounds.Height);
             return unchecked((long)hash);
         }
 
         private static long StableTransformHash(Matrix3x2 transform)
         {
-            const ulong offset = 14695981039346656037;
-            const ulong prime = 1099511628211;
-            ulong hash = offset;
-            hash = (hash ^ BitConverter.SingleToUInt32Bits(transform.M11)) * prime;
-            hash = (hash ^ BitConverter.SingleToUInt32Bits(transform.M12)) * prime;
-            hash = (hash ^ BitConverter.SingleToUInt32Bits(transform.M21)) * prime;
-            hash = (hash ^ BitConverter.SingleToUInt32Bits(transform.M22)) * prime;
-            hash = (hash ^ BitConverter.SingleToUInt32Bits(transform.M31)) * prime;
-            hash = (hash ^ BitConverter.SingleToUInt32Bits(transform.M32)) * prime;
+            ulong hash = PrismFnv1aHash.OffsetBasis;
+            hash = PrismFnv1aHash.MixSingleBits(hash, transform.M11);
+            hash = PrismFnv1aHash.MixSingleBits(hash, transform.M12);
+            hash = PrismFnv1aHash.MixSingleBits(hash, transform.M21);
+            hash = PrismFnv1aHash.MixSingleBits(hash, transform.M22);
+            hash = PrismFnv1aHash.MixSingleBits(hash, transform.M31);
+            hash = PrismFnv1aHash.MixSingleBits(hash, transform.M32);
             return unchecked((long)hash);
         }
 

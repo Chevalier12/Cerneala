@@ -9,8 +9,6 @@ namespace Cerneala.Drawing.Prism.Graph;
 
 internal sealed class PrismFrameAnalyzer
 {
-    private const ulong DependencyOffset = 14695981039346656037UL;
-    private const ulong DependencyPrime = 1099511628211UL;
     private PrismFrameAnalysis? previousAnalysis;
 
     public PrismFrameAnalysis Analyze(
@@ -369,18 +367,17 @@ internal sealed class PrismFrameAnalyzer
 
     private static long MixDependency(long aggregate, PrismDependencyStamp stamp)
     {
-        ulong hash = aggregate == 0 ? DependencyOffset : unchecked((ulong)aggregate);
-        hash = Mix(hash, stamp.CacheOwnerToken.Value);
-        hash = Mix(hash, stamp.StructuralVersion.Value);
-        hash = Mix(hash, stamp.ValueVersion.Value);
-        hash = Mix(hash, stamp.VisualContentVersion);
-        hash = Mix(hash, stamp.DrawContentVersion);
-        hash = Mix(hash, stamp.DescendantVersion);
+        ulong hash = aggregate == 0
+            ? PrismFnv1aHash.OffsetBasis
+            : unchecked((ulong)aggregate);
+        hash = PrismFnv1aHash.MixInt64(hash, stamp.CacheOwnerToken.Value);
+        hash = PrismFnv1aHash.MixInt64(hash, stamp.StructuralVersion.Value);
+        hash = PrismFnv1aHash.MixInt64(hash, stamp.ValueVersion.Value);
+        hash = PrismFnv1aHash.MixInt64(hash, stamp.VisualContentVersion);
+        hash = PrismFnv1aHash.MixInt64(hash, stamp.DrawContentVersion);
+        hash = PrismFnv1aHash.MixInt64(hash, stamp.DescendantVersion);
         return unchecked((long)hash);
     }
-
-    private static ulong Mix(ulong hash, long value) =>
-        unchecked((hash ^ (ulong)value) * DependencyPrime);
 
     private readonly record struct CapabilityEstimate(
         PrismGraphCapabilities Capabilities,

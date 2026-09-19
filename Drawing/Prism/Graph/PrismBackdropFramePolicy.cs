@@ -32,20 +32,17 @@ internal readonly record struct PrismBackdropFrameDescriptor(
         long contentVersion,
         long lowerUiVersion)
     {
-        const ulong offset = 14695981039346656037;
-        ulong hash = offset;
-        Mix(ref hash, (uint)contentVersion);
-        Mix(ref hash, (uint)((ulong)contentVersion >> 32));
-        Mix(ref hash, (uint)lowerUiVersion);
-        Mix(ref hash, (uint)((ulong)lowerUiVersion >> 32));
+        ulong hash = PrismFnv1aHash.OffsetBasis;
+        hash = PrismFnv1aHash.MixUInt32(hash, (uint)contentVersion);
+        hash = PrismFnv1aHash.MixUInt32(
+            hash,
+            (uint)((ulong)contentVersion >> 32));
+        hash = PrismFnv1aHash.MixUInt32(hash, (uint)lowerUiVersion);
+        hash = PrismFnv1aHash.MixUInt32(
+            hash,
+            (uint)((ulong)lowerUiVersion >> 32));
         long version = (long)(hash & long.MaxValue);
         return version == 0 ? 1 : version;
-    }
-
-    private static void Mix(ref ulong hash, uint value)
-    {
-        const ulong prime = 1099511628211;
-        hash = unchecked((hash ^ value) * prime);
     }
 }
 

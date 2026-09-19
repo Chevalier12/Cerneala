@@ -88,16 +88,14 @@ internal readonly struct PrismVerifiedFingerprint :
                 nameof(values));
         }
 
-        const ulong offset = 14695981039346656037UL;
-        const ulong prime = 1099511628211UL;
-        ulong hash = offset;
+        ulong hash = PrismFnv1aHash.OffsetBasis;
         foreach (long value in values)
         {
             ulong bits = unchecked((ulong)value);
-            hash = unchecked((hash ^ (uint)bits) * prime);
-            hash = unchecked((hash ^ (uint)(bits >> 32)) * prime);
+            hash = PrismFnv1aHash.MixUInt32(hash, (uint)bits);
+            hash = PrismFnv1aHash.MixUInt32(hash, (uint)(bits >> 32));
         }
-        hash = unchecked((hash ^ (uint)values.Length) * prime);
+        hash = PrismFnv1aHash.MixUInt32(hash, (uint)values.Length);
         return hash;
     }
 }
