@@ -40,23 +40,23 @@ internal readonly record struct PrismDrawColorMatrixResource(
 
 internal sealed class PrismDrawResources
 {
-    private readonly Dictionary<PrismResourceId, ResolvedImage> images;
-    private readonly Dictionary<PrismResourceId, ResolvedCurves> curves;
-    private readonly Dictionary<PrismResourceId, ResolvedGradientMap> gradients;
-    private readonly Dictionary<PrismResourceId, ResolvedLensProfile>
+    private readonly Dictionary<PrismResourceId, ResolvedResource<IDrawImage>> images;
+    private readonly Dictionary<PrismResourceId, ResolvedResource<PrismCurvesResource>> curves;
+    private readonly Dictionary<PrismResourceId, ResolvedResource<PrismGradientMapResource>> gradients;
+    private readonly Dictionary<PrismResourceId, ResolvedResource<PrismLensProfileResource>>
         lensProfiles;
-    private readonly Dictionary<PrismResourceId, ResolvedLighting>
+    private readonly Dictionary<PrismResourceId, ResolvedResource<PrismLightingResource>>
         lighting;
-    private readonly Dictionary<PrismResourceId, ResolvedColorMatrix>
+    private readonly Dictionary<PrismResourceId, ResolvedResource<PrismColorMatrixResource>>
         colorMatrices;
 
     private PrismDrawResources(
-        Dictionary<PrismResourceId, ResolvedImage> images,
-        Dictionary<PrismResourceId, ResolvedCurves> curves,
-        Dictionary<PrismResourceId, ResolvedGradientMap> gradients,
-        Dictionary<PrismResourceId, ResolvedLensProfile> lensProfiles,
-        Dictionary<PrismResourceId, ResolvedLighting> lighting,
-        Dictionary<PrismResourceId, ResolvedColorMatrix> colorMatrices,
+        Dictionary<PrismResourceId, ResolvedResource<IDrawImage>> images,
+        Dictionary<PrismResourceId, ResolvedResource<PrismCurvesResource>> curves,
+        Dictionary<PrismResourceId, ResolvedResource<PrismGradientMapResource>> gradients,
+        Dictionary<PrismResourceId, ResolvedResource<PrismLensProfileResource>> lensProfiles,
+        Dictionary<PrismResourceId, ResolvedResource<PrismLightingResource>> lighting,
+        Dictionary<PrismResourceId, ResolvedResource<PrismColorMatrixResource>> colorMatrices,
         bool hasStableVersions)
     {
         this.images = images;
@@ -74,7 +74,7 @@ internal sealed class PrismDrawResources
     public bool HasStableVersions { get; }
 
     internal IEnumerable<IDrawImage> Images =>
-        images.Values.Select(static resource => resource.Image);
+        images.Values.Select(static resource => resource.Resource);
 
     public static PrismDrawResources Create(
         IEnumerable<PrismDrawImageResource> resources) =>
@@ -131,7 +131,7 @@ internal sealed class PrismDrawResources
         ArgumentNullException.ThrowIfNull(lensProfileResources);
         ArgumentNullException.ThrowIfNull(lightingResources);
         ArgumentNullException.ThrowIfNull(colorMatrixResources);
-        Dictionary<PrismResourceId, ResolvedImage> images = [];
+        Dictionary<PrismResourceId, ResolvedResource<IDrawImage>> images = [];
         foreach (PrismDrawImageResource resource in resources)
         {
             ArgumentNullException.ThrowIfNull(resource.Image);
@@ -151,13 +151,13 @@ internal sealed class PrismDrawResources
             }
 
             images[resource.Id] =
-                new ResolvedImage(
+                new ResolvedResource<IDrawImage>(
                     resource.Image,
                     resource.Identity,
                     resource.Version);
         }
 
-        Dictionary<PrismResourceId, ResolvedCurves> curves = [];
+        Dictionary<PrismResourceId, ResolvedResource<PrismCurvesResource>> curves = [];
         foreach (PrismDrawCurvesResource resource in curveResources)
         {
             ArgumentNullException.ThrowIfNull(resource.Resource);
@@ -177,13 +177,13 @@ internal sealed class PrismDrawResources
             }
 
             curves[resource.Id] =
-                new ResolvedCurves(
+                new ResolvedResource<PrismCurvesResource>(
                     resource.Resource,
                     resource.Identity,
                     resource.Version);
         }
 
-        Dictionary<PrismResourceId, ResolvedGradientMap> gradients = [];
+        Dictionary<PrismResourceId, ResolvedResource<PrismGradientMapResource>> gradients = [];
         foreach (PrismDrawGradientMapResource resource in gradientResources)
         {
             ArgumentNullException.ThrowIfNull(resource.Resource);
@@ -193,13 +193,13 @@ internal sealed class PrismDrawResources
                     nameof(gradientResources),
                     "Prism gradient identities and versions cannot be negative.");
             }
-            gradients[resource.Id] = new ResolvedGradientMap(
+            gradients[resource.Id] = new ResolvedResource<PrismGradientMapResource>(
                 resource.Resource,
                 resource.Identity,
                 resource.Version);
         }
 
-        Dictionary<PrismResourceId, ResolvedLensProfile> lensProfiles = [];
+        Dictionary<PrismResourceId, ResolvedResource<PrismLensProfileResource>> lensProfiles = [];
         foreach (PrismDrawLensProfileResource resource in lensProfileResources)
         {
             ArgumentNullException.ThrowIfNull(resource.Resource);
@@ -209,13 +209,13 @@ internal sealed class PrismDrawResources
                     nameof(lensProfileResources),
                     "Prism lens-profile identities and versions cannot be negative.");
             }
-            lensProfiles[resource.Id] = new ResolvedLensProfile(
+            lensProfiles[resource.Id] = new ResolvedResource<PrismLensProfileResource>(
                 resource.Resource,
                 resource.Identity,
                 resource.Version);
         }
 
-        Dictionary<PrismResourceId, ResolvedLighting> lighting = [];
+        Dictionary<PrismResourceId, ResolvedResource<PrismLightingResource>> lighting = [];
         foreach (PrismDrawLightingResource resource in lightingResources)
         {
             ArgumentNullException.ThrowIfNull(resource.Resource);
@@ -225,13 +225,13 @@ internal sealed class PrismDrawResources
                     nameof(lightingResources),
                     "Prism lighting identities and versions cannot be negative.");
             }
-            lighting[resource.Id] = new ResolvedLighting(
+            lighting[resource.Id] = new ResolvedResource<PrismLightingResource>(
                 resource.Resource,
                 resource.Identity,
                 resource.Version);
         }
 
-        Dictionary<PrismResourceId, ResolvedColorMatrix> colorMatrices = [];
+        Dictionary<PrismResourceId, ResolvedResource<PrismColorMatrixResource>> colorMatrices = [];
         foreach (PrismDrawColorMatrixResource resource in colorMatrixResources)
         {
             ArgumentNullException.ThrowIfNull(resource.Resource);
@@ -241,7 +241,7 @@ internal sealed class PrismDrawResources
                     nameof(colorMatrixResources),
                     "Prism color-matrix identities and versions cannot be negative.");
             }
-            colorMatrices[resource.Id] = new ResolvedColorMatrix(
+            colorMatrices[resource.Id] = new ResolvedResource<PrismColorMatrixResource>(
                 resource.Resource,
                 resource.Identity,
                 resource.Version);
@@ -277,93 +277,50 @@ internal sealed class PrismDrawResources
 
     public bool TryGetImage(
         PrismResourceId id,
-        out IDrawImage image)
-    {
-        if (images.TryGetValue(id, out ResolvedImage resource))
-        {
-            image = resource.Image;
-            return true;
-        }
-
-        image = null!;
-        return false;
-    }
+        out IDrawImage image) =>
+        TryGetResource(images, id, out image, out _, out _);
 
     public bool TryGetVersion(
         PrismResourceId id,
-        out long version)
-    {
-        if (images.TryGetValue(id, out ResolvedImage resource))
-        {
-            version = resource.Version;
-            return true;
-        }
-        if (curves.TryGetValue(id, out ResolvedCurves curve))
-        {
-            version = curve.Version;
-            return true;
-        }
-        if (gradients.TryGetValue(id, out ResolvedGradientMap gradient))
-        {
-            version = gradient.Version;
-            return true;
-        }
-        if (lensProfiles.TryGetValue(id, out ResolvedLensProfile lensProfile))
-        {
-            version = lensProfile.Version;
-            return true;
-        }
-        if (lighting.TryGetValue(id, out ResolvedLighting lightingResource))
-        {
-            version = lightingResource.Version;
-            return true;
-        }
-        if (colorMatrices.TryGetValue(id, out ResolvedColorMatrix colorMatrix))
-        {
-            version = colorMatrix.Version;
-            return true;
-        }
-
-        version = 0;
-        return false;
-    }
+        out long version) =>
+        TryGetDependency(id, out _, out version);
 
     public bool TryGetDependency(
         PrismResourceId id,
         out long identity,
         out long version)
     {
-        if (images.TryGetValue(id, out ResolvedImage resource))
+        if (images.TryGetValue(id, out ResolvedResource<IDrawImage> resource))
         {
             identity = resource.Identity;
             version = resource.Version;
             return true;
         }
-        if (curves.TryGetValue(id, out ResolvedCurves curve))
+        if (curves.TryGetValue(id, out ResolvedResource<PrismCurvesResource> curve))
         {
             identity = curve.Identity;
             version = curve.Version;
             return true;
         }
-        if (gradients.TryGetValue(id, out ResolvedGradientMap gradient))
+        if (gradients.TryGetValue(id, out ResolvedResource<PrismGradientMapResource> gradient))
         {
             identity = gradient.Identity;
             version = gradient.Version;
             return true;
         }
-        if (lensProfiles.TryGetValue(id, out ResolvedLensProfile lensProfile))
+        if (lensProfiles.TryGetValue(id, out ResolvedResource<PrismLensProfileResource> lensProfile))
         {
             identity = lensProfile.Identity;
             version = lensProfile.Version;
             return true;
         }
-        if (lighting.TryGetValue(id, out ResolvedLighting lightingResource))
+        if (lighting.TryGetValue(id, out ResolvedResource<PrismLightingResource> lightingResource))
         {
             identity = lightingResource.Identity;
             version = lightingResource.Version;
             return true;
         }
-        if (colorMatrices.TryGetValue(id, out ResolvedColorMatrix colorMatrix))
+        if (colorMatrices.TryGetValue(id, out ResolvedResource<PrismColorMatrixResource> colorMatrix))
         {
             identity = colorMatrix.Identity;
             version = colorMatrix.Version;
@@ -379,86 +336,46 @@ internal sealed class PrismDrawResources
         PrismResourceId id,
         out PrismLensProfileResource resource,
         out long identity,
-        out long version)
-    {
-        if (lensProfiles.TryGetValue(id, out ResolvedLensProfile resolved))
-        {
-            resource = resolved.Resource;
-            identity = resolved.Identity;
-            version = resolved.Version;
-            return true;
-        }
-        resource = null!;
-        identity = 0;
-        version = 0;
-        return false;
-    }
+        out long version) =>
+        TryGetResource(lensProfiles, id, out resource, out identity, out version);
 
     public bool TryGetLighting(
         PrismResourceId id,
         out PrismLightingResource resource,
         out long identity,
-        out long version)
-    {
-        if (lighting.TryGetValue(id, out ResolvedLighting resolved))
-        {
-            resource = resolved.Resource;
-            identity = resolved.Identity;
-            version = resolved.Version;
-            return true;
-        }
-        resource = null!;
-        identity = 0;
-        version = 0;
-        return false;
-    }
+        out long version) =>
+        TryGetResource(lighting, id, out resource, out identity, out version);
 
     public bool TryGetColorMatrix(
         PrismResourceId id,
         out PrismColorMatrixResource resource,
         out long identity,
-        out long version)
-    {
-        if (colorMatrices.TryGetValue(id, out ResolvedColorMatrix resolved))
-        {
-            resource = resolved.Resource;
-            identity = resolved.Identity;
-            version = resolved.Version;
-            return true;
-        }
-        resource = null!;
-        identity = 0;
-        version = 0;
-        return false;
-    }
+        out long version) =>
+        TryGetResource(colorMatrices, id, out resource, out identity, out version);
 
     public bool TryGetCurves(
         PrismResourceId id,
         out PrismCurvesResource resource,
         out long identity,
-        out long version)
-    {
-        if (curves.TryGetValue(id, out ResolvedCurves resolved))
-        {
-            resource = resolved.Resource;
-            identity = resolved.Identity;
-            version = resolved.Version;
-            return true;
-        }
-
-        resource = null!;
-        identity = 0;
-        version = 0;
-        return false;
-    }
+        out long version) =>
+        TryGetResource(curves, id, out resource, out identity, out version);
 
     public bool TryGetGradientMap(
         PrismResourceId id,
         out PrismGradientMapResource resource,
         out long identity,
+        out long version) =>
+        TryGetResource(gradients, id, out resource, out identity, out version);
+
+    private static bool TryGetResource<TResource>(
+        Dictionary<PrismResourceId, ResolvedResource<TResource>> resources,
+        PrismResourceId id,
+        out TResource resource,
+        out long identity,
         out long version)
+        where TResource : class
     {
-        if (gradients.TryGetValue(id, out ResolvedGradientMap resolved))
+        if (resources.TryGetValue(id, out ResolvedResource<TResource> resolved))
         {
             resource = resolved.Resource;
             identity = resolved.Identity;
@@ -471,33 +388,8 @@ internal sealed class PrismDrawResources
         return false;
     }
 
-    private readonly record struct ResolvedImage(
-        IDrawImage Image,
-        long Identity,
-        long Version);
-
-    private readonly record struct ResolvedCurves(
-        PrismCurvesResource Resource,
-        long Identity,
-        long Version);
-
-    private readonly record struct ResolvedGradientMap(
-        PrismGradientMapResource Resource,
-        long Identity,
-        long Version);
-
-    private readonly record struct ResolvedLensProfile(
-        PrismLensProfileResource Resource,
-        long Identity,
-        long Version);
-
-    private readonly record struct ResolvedLighting(
-        PrismLightingResource Resource,
-        long Identity,
-        long Version);
-
-    private readonly record struct ResolvedColorMatrix(
-        PrismColorMatrixResource Resource,
+    private readonly record struct ResolvedResource<TResource>(
+        TResource Resource,
         long Identity,
         long Version);
 }

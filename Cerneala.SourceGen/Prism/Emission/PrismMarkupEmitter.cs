@@ -391,7 +391,9 @@ public sealed partial class UiMarkupGenerator
             _ => "System.Int32"
         };
 
-        private static string PrismRuntimeValueKind(BoundPrismValueType type) => type switch
+        private static string PrismRuntimeValueKind(
+            BoundPrismValueType type,
+            string unsupportedMessage = "Unknown Prism parameter type.") => type switch
         {
             BoundPrismValueType.Boolean => "Boolean",
             BoundPrismValueType.Integer => "Integer",
@@ -400,7 +402,7 @@ public sealed partial class UiMarkupGenerator
             BoundPrismValueType.Vector => "Vector",
             BoundPrismValueType.Symbol => "Integer",
             BoundPrismValueType.Resource => "Resource",
-            _ => throw new InvalidOperationException("Unknown Prism parameter type.")
+            _ => throw new InvalidOperationException(unsupportedMessage)
         };
 
         private static string PrismNodeStateExpression(BoundPrismNode node, string instance) =>
@@ -762,17 +764,7 @@ public sealed partial class UiMarkupGenerator
                 }
 
                 int slot = GetPrismParameterSlot(entry, property.Schema);
-                string valueKind = property.Value.Type switch
-                {
-                    BoundPrismValueType.Boolean => "Boolean",
-                    BoundPrismValueType.Integer => "Integer",
-                    BoundPrismValueType.Number => "Number",
-                    BoundPrismValueType.Color => "Color",
-                    BoundPrismValueType.Vector => "Vector",
-                    BoundPrismValueType.Symbol => "Integer",
-                    BoundPrismValueType.Resource => "Resource",
-                    _ => throw new InvalidOperationException("Unknown Prism parameter type.")
-                };
+                string valueKind = PrismRuntimeValueKind(property.Value.Type);
                 PrismDeclarationLines.Add(
                     "    global::Cerneala.UI.Markup.GeneratedMarkup.SetPrism" +
                     operationKind + valueKind + "(" + variable + ", " +

@@ -40,7 +40,7 @@ internal static class PrismMosaicTilesFilter
                 float localX = pixelX - (cellX * tileSize);
                 float edgeX = MathF.Min(localX, tileSize - localX);
                 float sampleX = ((cellX + 0.5f) * tileSize) - 0.5f;
-                Vector4 tile = SampleBilinear(
+                Vector4 tile = PrismCatalogFilterMath.SamplePixelBilinear(
                     source,
                     width,
                     height,
@@ -54,32 +54,6 @@ internal static class PrismMosaicTilesFilter
         }
 
         return result;
-    }
-
-    private static Vector4 SampleBilinear(
-        Vector4[] source,
-        int width,
-        int height,
-        float x,
-        float y)
-    {
-        float sampleX = Math.Clamp(x, 0, width - 1);
-        float sampleY = Math.Clamp(y, 0, height - 1);
-        int left = (int)MathF.Floor(sampleX);
-        int top = (int)MathF.Floor(sampleY);
-        int right = Math.Min(left + 1, width - 1);
-        int bottom = Math.Min(top + 1, height - 1);
-        float horizontal = sampleX - left;
-        float vertical = sampleY - top;
-        Vector4 upper = Vector4.Lerp(
-            source[(top * width) + left],
-            source[(top * width) + right],
-            horizontal);
-        Vector4 lower = Vector4.Lerp(
-            source[(bottom * width) + left],
-            source[(bottom * width) + right],
-            horizontal);
-        return Vector4.Lerp(upper, lower, vertical);
     }
 
     private static Vector4 Lighten(Vector4 color, float amount)

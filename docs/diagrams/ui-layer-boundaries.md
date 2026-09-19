@@ -10,7 +10,8 @@ This diagram shows where each layer is allowed to depend.
                               ▼
 ┌───────────────────────────────────────────────────────────────┐
 │                         UI Hosting                            │
-│  MonoGameUiHost lives here, not inside core UI elements.       │
+│  WindowApplicationRuntime composes registered platform/backend │
+│  owners; concrete SDL code does not live in core UI elements.   │
 └───────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -33,44 +34,47 @@ This diagram shows where each layer is allowed to depend.
 │ DrawCommandList               │  │ InputFrame                 │
 │ DrawCommand                   │  │ RoutedEvent metadata       │
 │ DrawRect / DrawPoint          │  │ RoutedEventArgs            │
-│ Color                     │  │ command primitives         │
-│ IDrawingBackend               │  │ MonoGameInputMapper        │
+│ Color                         │  │ command primitives         │
+│ IDrawingBackend               │  │ retained route bridge      │
 └───────────────────────────────┘  └────────────────────────────┘
                  │                              │
                  ▼                              ▼
 ┌───────────────────────────────┐  ┌────────────────────────────┐
-│   Drawing/MonoGame         │  │   UI/Input/MonoGame        │
+│ Cerneala.Backends.SdlGpu      │  │ Cerneala.Platforms.Sdl3   │
 ├───────────────────────────────┤  ├────────────────────────────┤
-│ MonoGameDrawingBackend        │  │ MonoGameInputSource        │
-│ MonoGameImage                 │  │ Mouse.GetState             │
-│ SpriteBatch                   │  │ Keyboard.GetState          │
-│ Texture2D                     │  │ MonoGame keys/buttons      │
+│ SdlGpuDrawingBackend          │  │ SdlWindowPlatform          │
+│ Cerberus                      │  │ SdlInputSource             │
+│ SdlGpuImageLoader             │  │ SDL window/input events    │
+│ SDL_GPU resources             │  │ platform services          │
 └───────────────────────────────┘  └────────────────────────────┘
 ```
 
 ## Boundary Rules
 
-- UI core must not reference `SpriteBatch`, `Texture2D`, `Mouse.GetState()`, `Keyboard.GetState()`, Skia, or HarfBuzz.
+- UI core must not reference SDL3/SDL_GPU handles or calls, Skia, HarfBuzz, or
+  another concrete platform/backend API.
 - Controls render through retained render caches and `DrawingContext`.
-- Controls consume input through retained input/focus/command services, not through MonoGame directly.
+- Controls consume input through retained input/focus/command services, not
+  through SDL3 directly.
 - `Drawing` remains a command layer, not a scene graph.
 - `UI/Input` remains an input foundation; v2 route ownership moves to the retained tree.
-- MonoGame-specific code stays in adapter folders.
+- SDL3 platform code and SDL_GPU rendering code stay in their adapter projects.
 
 ## Allowed Direction
 
 ```text
 UI core -> Drawing abstractions
 UI core -> UI/Input abstractions
-Adapters -> MonoGame
+Platform adapter -> SDL3
+Drawing backend -> SDL_GPU
 ```
 
 ## Disallowed Direction
 
 ```text
-UI core -> MonoGame
+UI core -> SDL3/SDL_GPU
 UI core -> Skia/HarfBuzz
-Drawing core -> MonoGame
-UI/Input core -> MonoGame
+Drawing core -> SDL_GPU
+UI/Input core -> SDL3
 Controls -> backend-specific rendering/input APIs
 ```

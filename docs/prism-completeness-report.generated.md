@@ -18,9 +18,9 @@ The audit treats generated runtime and documentation owners as concrete only bec
 
 | Contract | SHA-256 |
 | --- | --- |
-| `docs/prism-markup-syntax-proposal.md` | `6359040d1fd4cf4bbba899107edc4305e9e9f43847720604322b6d8627cecda5` |
-| `docs/prism-technical-design.md` | `93fdfe53a198ceab4a6c23bbec48449c7e158d6d52bd2587cdeac71ef2f85ad0` |
-| `docs/prism-public-api-baseline.md` | `37e6b902655b22a850c226b1f0f9832e4c1dab63952a6f37fe6de7f948113093` |
+| `docs/prism-markup-syntax-proposal.md` | `cfb0b93f08fb48773fda258d28e0be23887b68146d4ea423409a49fb778c8bd3` |
+| `docs/prism-technical-design.md` | `0114977ee98e7a6784d728387dcf245b7b6422a22fda061ab4bfbbaaf9da2606` |
+| `docs/prism-public-api-baseline.md` | `f6e7ee2efe610b721c91944091d5733b99a3acc0708316f5b349f7346f5e5b61` |
 | `Cerneala.SourceGen/Prism/Catalog/prism-catalog.json` | `34e0a0546cc986386e0a02752ac16e4c08c6b2073e44359f3596f7cb7fcc9d10` |
 
 ## Approved matrix
@@ -38,7 +38,7 @@ The audit treats generated runtime and documentation owners as concrete only bec
 | implicit backdrop | lazy destination input + host contract | analyzer + host contract | PASS |
 | conformance features | 4 | 4 | PASS |
 | public Prism types | 66 | 216 | PASS |
-| existing public types extended for Prism | 7 | 7 | PASS |
+| existing public types extended for Prism | 8 | 8 | PASS |
 
 Directives: `@prism`, `@parameter`, `@layer`, `@group`, `@filter`, `@style`, `@mask`.
 
@@ -986,6 +986,7 @@ The approved surface includes the frame/backdrop host changes, the public catalo
 | `Cerneala.Drawing.DrawCommandKind` | `EndPrism = 20` | Command-list Prism scope ABI consumed by retained rendering and backends. |
 | `Cerneala.Drawing.DrawingFrameContext` | `Cerneala.Drawing.Prism.IBackdropFrameLease BackdropLease { get; }` | Per-frame Prism analysis and optional backdrop submission contract. |
 | `Cerneala.Drawing.IDrawingBackend` | `System.Void Render(Cerneala.Drawing.DrawCommandList commands, in Cerneala.Drawing.DrawingFrameContext frameContext)` | Per-frame Prism analysis and optional backdrop submission contract. |
+| `Cerneala.UI.Controls.SceneNode2D` | `System.Nullable<Cerneala.Drawing.DrawRect> PrismInputDomain { get; set; }` | Finite input-domain contract for Prism compositions over spatially virtualized scene content. |
 | `Cerneala.UI.Hosting.IUiBackend` | `Cerneala.Drawing.Prism.IBackdropFrameSource BackdropFrameSource { get; }` | Optional host backdrop source; SDL renderer configuration is internal. |
 | `Cerneala.UI.Markup.GeneratedMarkup` | `Cerneala.Drawing.Color GetPrismFilterColor(Cerneala.UI.Prism.Runtime.PrismFilterState state, System.Int32 entryStableId, System.Int32 slot)` | Generated markup accessors used by typed Prism Motion paths. |
 | `Cerneala.UI.Markup.GeneratedMarkup` | `Cerneala.Drawing.Color GetPrismStyleColor(Cerneala.UI.Prism.Runtime.PrismStyleState state, System.Int32 entryStableId, System.Int32 slot)` | Generated markup accessors used by typed Prism Motion paths. |

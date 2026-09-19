@@ -15,7 +15,7 @@ This document defines the supported Cerneala Developer Preview surface. It is a 
 - TextBlock and single-line TextBox MVP
 - ItemsControl/ListBox/ScrollViewer retained list path
 - Resources/image cache/font resources
-- MonoGame runtime adapter
+- SDL3 + SDL_GPU desktop runtime composition
 - Platform services seams for cursor/clipboard/etc.
 - Platform-neutral semantics tree
 - Diagnostics and preview samples

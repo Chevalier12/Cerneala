@@ -37,7 +37,7 @@
   <rect class="bg" x="0" y="0" width="2400" height="1800" />
 
   <text class="title" x="80" y="90">Cerneala Drawing Architecture</text>
-  <text class="subtitle" x="80" y="135">Core Drawing is abstract. Text is prepared by Skia/HarfBuzz. MonoGame adapter performs the final draw.</text>
+  <text class="subtitle" x="80" y="135">Core Drawing is abstract. Text is prepared by Skia/HarfBuzz. SDL_GPU performs the final draw.</text>
 
   <rect class="control" x="80" y="220" width="380" height="1260" rx="22" />
   <text class="section-title" x="120" y="280">1. Future Controls</text>
@@ -51,8 +51,8 @@
 
   <rect class="neutral" x="120" y="610" width="300" height="220" rx="18" />
   <text class="box-title" x="150" y="665">Does NOT draw</text>
-  <text class="box-text" x="150" y="710">No SpriteBatch</text>
-  <text class="box-text" x="150" y="745">No Texture2D</text>
+  <text class="box-text" x="150" y="710">No backend calls</text>
+  <text class="box-text" x="150" y="745">No native GPU handles</text>
   <text class="box-text" x="150" y="780">No Skia canvas</text>
   <text class="box-text" x="150" y="815">No HarfBuzz calls</text>
 
@@ -88,7 +88,7 @@
   <text class="box-text" x="645" y="1195">DrawTextRun</text>
   <text class="box-text" x="645" y="1230">IDrawImage, IDrawFont</text>
   <text class="box-text" x="645" y="1265">IDrawingBackend</text>
-  <text class="tiny" x="645" y="1310">No MonoGame / No Skia / No HarfBuzz</text>
+  <text class="tiny" x="645" y="1310">No SDL_GPU / No Skia / No HarfBuzz</text>
 
   <rect class="textpipe" x="1180" y="220" width="500" height="1260" rx="22" />
   <text class="section-title" x="1220" y="280">3. Cerneala.Drawing.Text</text>
@@ -98,7 +98,7 @@
   <text class="box-title" x="1265" y="425">SystemFontSource</text>
   <text class="box-text" x="1265" y="470">Loads OS fonts.</text>
   <text class="box-text" x="1265" y="505">Uses Skia font manager.</text>
-  <text class="box-text" x="1265" y="540">No MonoGame Content fonts.</text>
+  <text class="box-text" x="1265" y="540">No backend-native font assets.</text>
 
   <rect class="neutral" x="1230" y="660" width="400" height="240" rx="18" />
   <text class="box-title" x="1265" y="715">Skia + HarfBuzz</text>
@@ -113,32 +113,32 @@
   <text class="box-text" x="1265" y="1095">RasterizedText</text>
   <text class="box-text" x="1265" y="1130">RGBA pixels</text>
   <text class="box-text" x="1265" y="1165">width / height</text>
-  <text class="tiny" x="1265" y="1205">Consumed by MonoGame adapter</text>
+  <text class="tiny" x="1265" y="1205">Consumed by SDL_GPU backend</text>
 
   <rect class="adapter" x="1780" y="220" width="520" height="1260" rx="22" />
-  <text class="section-title" x="1820" y="280">4. Cerneala.Drawing.MonoGame</text>
+  <text class="section-title" x="1820" y="280">4. SDL_GPU Backend</text>
   <text class="small" x="1820" y="320">Concrete adapter / final renderer</text>
 
   <rect class="neutral" x="1830" y="370" width="420" height="250" rx="18" />
-  <text class="box-title" x="1865" y="425">MonoGameDrawingBackend</text>
+  <text class="box-title" x="1865" y="425">SdlGpuDrawingBackend</text>
   <text class="box-text" x="1865" y="470">Implements IDrawingBackend.</text>
   <text class="box-text" x="1865" y="505">Reads DrawCommandList.</text>
-  <text class="box-text" x="1865" y="540">Uses SpriteBatch.</text>
+  <text class="box-text" x="1865" y="540">Uses Cerberus + SDL_GPU.</text>
   <text class="box-text" x="1865" y="575">Draws to screen.</text>
 
   <rect class="neutral" x="1830" y="680" width="420" height="285" rx="18" />
   <text class="box-title" x="1865" y="735">Primitive Commands</text>
-  <text class="box-text" x="1865" y="780">Rectangles - white pixel</text>
-  <text class="box-text" x="1865" y="815">Images - Texture2D</text>
+  <text class="box-text" x="1865" y="780">Geometry - Cerberus batches</text>
+  <text class="box-text" x="1865" y="815">Images - SDL_GPU textures</text>
   <text class="box-text" x="1865" y="850">Text - texture from</text>
   <text class="box-text" x="1865" y="885">RasterizedText pixels</text>
-  <text class="tiny" x="1865" y="925">MonoGame details stay here</text>
+  <text class="tiny" x="1865" y="925">SDL_GPU details stay here</text>
 
   <rect class="output" x="1830" y="1030" width="420" height="210" rx="18" />
   <text class="box-title" x="1865" y="1085">Final Output</text>
-  <text class="box-text" x="1865" y="1130">MonoGame window</text>
-  <text class="box-text" x="1865" y="1165">GraphicsDevice</text>
-  <text class="box-text" x="1865" y="1200">SpriteBatch draw calls</text>
+  <text class="box-text" x="1865" y="1130">SDL3 window</text>
+  <text class="box-text" x="1865" y="1165">SDL_GPU device</text>
+  <text class="box-text" x="1865" y="1200">indexed GPU draws</text>
 
   <path class="line" d="M420 1025 C500 1025 520 490 610 490" />
   <text class="label" x="445" y="840">records intent</text>
@@ -157,14 +157,14 @@
 
   <rect class="warning" x="80" y="1540" width="2220" height="190" rx="22" />
   <text class="note-title" x="120" y="1595">Important boundary rules</text>
-  <text class="note-text" x="120" y="1640">1. Controls never call SpriteBatch, Skia, or HarfBuzz directly.</text>
+  <text class="note-text" x="120" y="1640">1. Controls never call SDL_GPU, Skia, or HarfBuzz directly.</text>
   <text class="note-text" x="120" y="1680">2. Cerneala.Drawing core records abstract commands only. It does not know how rendering happens.</text>
-  <text class="note-text" x="120" y="1720">3. Skia/HarfBuzz prepare text. MonoGame adapter performs the final on-screen drawing.</text>
+  <text class="note-text" x="120" y="1720">3. Skia/HarfBuzz prepare text. SDL_GPU performs the final on-screen drawing.</text>
 
   <path class="no-line" d="M820 1350 C870 1540 1450 1540 1430 1245" />
   <text class="label" x="940" y="1515">NO direct dependency from Drawing core to Skia/HarfBuzz</text>
 
   <path class="no-line" d="M820 1350 C1000 1610 2020 1605 2040 1240" />
-  <text class="label" x="1250" y="1585">NO direct dependency from Drawing core to MonoGame</text>
+  <text class="label" x="1250" y="1585">NO direct dependency from Drawing core to SDL_GPU</text>
 </svg>
 

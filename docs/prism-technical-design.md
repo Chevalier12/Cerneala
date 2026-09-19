@@ -319,7 +319,7 @@ tests/
     Cerneala.Tests.SdlGpu/Prism/
 ```
 Responsibilities should not be moved between these directories just for convenience.
-In particular, `UI/Prism` cannot reference MonoGame or SDL.
+In particular, `UI/Prism` cannot reference a concrete platform or drawing backend.
 
 The backend-neutral shader math lives under `Drawing/Prism/Shaders/Hlsl/`.
 SDL_GPU keeps its entry-point wrappers and versioned SPIR-V/DXIL/MSL artifacts
@@ -404,7 +404,7 @@ Does not contain:
 - render targets;
 - shader instances;
 - filtered results;
-- references to the MonoGame backend.
+- references to a concrete drawing backend.
 
 ### PrismRenderState
 
@@ -664,7 +664,7 @@ The main nodes are:
 - composite finish.
 
 The analyzer, builder and optimizer are backend-neutral. Work with
-catalog descriptors and does not reference MonoGame.
+catalog descriptors and does not reference a concrete drawing backend.
 
 ### Scope Prism
 
@@ -1303,6 +1303,22 @@ Prism does not change:
 
 Explicit clips of the element and ancestors apply to the final result.
 
+### Spatially virtualized scene input
+
+`SceneNode2D.PrismInputDomain` is the explicit finite-input contract for an active
+non-pointwise composition over hosted spatial materializers when the framework
+cannot derive a supported automatic footprint. It is expressed in the owning
+node's local content coordinates. Required off-camera payloads and images inside
+that domain are prepared and recorded before the final camera clip.
+
+A domain belongs to the node that owns the composition. An ancestor's declaration
+does not satisfy a nested Prism owner. Missing required input is a presentation
+error rather than permission to load the complete spatial catalog or approximate
+the visual result. Pointwise-only compositions retain ordinary viewport selection;
+supported local filters may use their bounded automatic sampling neighborhood.
+The domain is not an output clip, camera rectangle, collision region, or memory
+budget, and it does not make oversized raster input representable.
+
 ## Mandatory optimizations
 
 ### Fusion pass
@@ -1472,7 +1488,7 @@ The backend-neutral pipeline must be tested without a GPU:
 - complete cache keys.
 
 An architecture test verifies that the analyzer, builder, and optimizer do not
-references MonoGame. A build test verifies that the runtime descriptors,
+reference a concrete drawing backend. A build test verifies that the runtime descriptors,
 the backend registry and documented tables come from the same catalog.
 
 ### Historical MonoGame backend gates (retired)
@@ -1627,6 +1643,9 @@ classify the changes as follows:
 - `MonoGameUiHostOptions.BackdropFrameSource` and its Prism configuration were
   originally optional additions. The MonoGame retirement removed those entry
   points without adding a replacement SDL configuration facade.
+- `SceneNode2D.PrismInputDomain` is additive. It declares the complete finite
+  source domain required by spatially virtualized scene effects when automatic
+  input selection is unavailable.
 - `BeginPrism`/`EndPrism`, authoring/runtime/hosting public types and keys
   Typed motions are additive. Consumers who switch exhaustively on
   `DrawCommandKind` must have a default case for new values.
@@ -1644,7 +1663,7 @@ unclassified break; the older signature change `IDrawingBackend` is
 covered separately from the pre-Prism baseline above.
 
 There is no public API for third-party extensions or runtime shader injection.
-The completeness audit currently inventories 216 public Prism types and 7
+The completeness audit currently inventories 216 public Prism types and 8
 existing types extended by Prism across the delivered assemblies. The
 public types have pages in `docs-site/documentation/classes/` and manifest entries.
 

@@ -59,7 +59,7 @@ internal static class PrismWaterPaperFilter
                 {
                     for (int offsetX = -2; offsetX <= 2; offsetX++)
                     {
-                        Vector4 sample = SampleBilinear(
+                        Vector4 sample = PrismCatalogFilterMath.SamplePixelBilinear(
                             source,
                             width,
                             height,
@@ -155,7 +155,7 @@ internal static class PrismWaterPaperFilter
                 float sampleX = x + (horizontal * warpStrength);
                 float sampleY = y + (vertical * warpStrength);
                 Vector3 color = Unpremultiply(
-                    SampleBilinear(
+                    PrismCatalogFilterMath.SamplePixelBilinear(
                         pigment,
                         width,
                         height,
@@ -163,26 +163,26 @@ internal static class PrismWaterPaperFilter
                         sampleY));
 
                 Vector3 edgeDelta = Vector3.Abs(
-                        Unpremultiply(SampleBilinear(
+                        Unpremultiply(PrismCatalogFilterMath.SamplePixelBilinear(
                             pigment,
                             width,
                             height,
                             sampleX - edgeStep,
                             sampleY)) -
-                        Unpremultiply(SampleBilinear(
+                        Unpremultiply(PrismCatalogFilterMath.SamplePixelBilinear(
                             pigment,
                             width,
                             height,
                             sampleX + edgeStep,
                             sampleY))) +
                     Vector3.Abs(
-                        Unpremultiply(SampleBilinear(
+                        Unpremultiply(PrismCatalogFilterMath.SamplePixelBilinear(
                             pigment,
                             width,
                             height,
                             sampleX,
                             sampleY - edgeStep)) -
-                        Unpremultiply(SampleBilinear(
+                        Unpremultiply(PrismCatalogFilterMath.SamplePixelBilinear(
                             pigment,
                             width,
                             height,
@@ -287,32 +287,6 @@ internal static class PrismWaterPaperFilter
         value *= 0x846ca68bu;
         value ^= value >> 16;
         return (value & 0x00ffffffu) / 16777215f;
-    }
-
-    private static Vector4 SampleBilinear(
-        Vector4[] source,
-        int width,
-        int height,
-        float x,
-        float y)
-    {
-        float clampedX = Math.Clamp(x, 0, width - 1);
-        float clampedY = Math.Clamp(y, 0, height - 1);
-        int left = (int)MathF.Floor(clampedX);
-        int top = (int)MathF.Floor(clampedY);
-        int right = Math.Min(left + 1, width - 1);
-        int bottom = Math.Min(top + 1, height - 1);
-        float horizontal = clampedX - left;
-        float vertical = clampedY - top;
-        Vector4 upper = Vector4.Lerp(
-            source[(top * width) + left],
-            source[(top * width) + right],
-            horizontal);
-        Vector4 lower = Vector4.Lerp(
-            source[(bottom * width) + left],
-            source[(bottom * width) + right],
-            horizontal);
-        return Vector4.Lerp(upper, lower, vertical);
     }
 
     private static Vector3 ApplyPigmentDensity(

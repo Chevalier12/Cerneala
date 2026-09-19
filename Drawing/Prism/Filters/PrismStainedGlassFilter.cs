@@ -82,7 +82,7 @@ internal static class PrismStainedGlassFilter
                 {
                     label = new Vector2(x, y);
                 }
-                Vector4 sampled = SampleBilinear(
+                Vector4 sampled = PrismCatalogFilterMath.SamplePixelBilinear(
                     source,
                     width,
                     height,
@@ -321,32 +321,6 @@ internal static class PrismStainedGlassFilter
         value *= 0x846ca68bu;
         value ^= value >> 16;
         return value;
-    }
-
-    private static Vector4 SampleBilinear(
-        Vector4[] source,
-        int width,
-        int height,
-        float x,
-        float y)
-    {
-        float clampedX = Math.Clamp(x, 0, width - 1);
-        float clampedY = Math.Clamp(y, 0, height - 1);
-        int left = (int)MathF.Floor(clampedX);
-        int top = (int)MathF.Floor(clampedY);
-        int right = Math.Min(left + 1, width - 1);
-        int bottom = Math.Min(top + 1, height - 1);
-        float horizontal = clampedX - left;
-        float vertical = clampedY - top;
-        Vector4 upper = Vector4.Lerp(
-            source[(top * width) + left],
-            source[(top * width) + right],
-            horizontal);
-        Vector4 lower = Vector4.Lerp(
-            source[(bottom * width) + left],
-            source[(bottom * width) + right],
-            horizontal);
-        return Vector4.Lerp(upper, lower, vertical);
     }
 
     private static bool IsValid(Vector2 value) =>

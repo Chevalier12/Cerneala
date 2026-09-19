@@ -421,34 +421,25 @@ transparent child stack and composite the completed group at the boundary.
 ### Backdrop Runtime Contract
 
 Backdrop acquisition uses one optional host capability, `IBackdropFrameSource`.
-The source is configured on the host, not on a view:
+The configured backend or graphics session supplies it to the host; views do not
+own or configure native backdrop resources:
 
 ```csharp
 public interface IBackdropFrameSource
 {
-    bool TryAcquire(
-        in BackdropFrameRequest request,
-        out BackdropFrameLease frame);
+    bool IsCompatibleWith(IDrawingBackend drawingBackend);
+    IBackdropFrameLease AcquireFrame(in BackdropFrameRequest request);
 }
 
-public readonly record struct BackdropFrameRequest(
-    long UiFrameId,
-    PixelSize ViewportSize,
-    PrismColorProfile OutputColorProfile);
-
-public abstract class BackdropFrameLease : IDisposable
+public interface IBackdropFrameLease : IDisposable
 {
-    public abstract IBackdropSurface Surface { get; }
-    public abstract long ContentVersion { get; }
-    public abstract PixelSize PixelSize { get; }
-    public abstract Matrix3x2 ScreenToSurface { get; }
-    public abstract PrismColorProfile ColorProfile { get; }
+    BackdropFrameMetadata Metadata { get; }
 }
 ```
 
-`IBackdropSurface` is an opaque, GPU-readable backend surface. It is deliberately
-not a MonoGame `Texture2D` in the framework contract. The MonoGame adapter unwraps
-its own surface implementation without leaking MonoGame types into Prism.
+The public lease deliberately exposes metadata rather than a native GPU handle.
+The SDL_GPU backend recognizes its own internal lease implementation and unwraps
+the texture without leaking SDL types into the framework Prism contract.
 
 The capability is wired explicitly:
 
@@ -458,11 +449,11 @@ public interface IUiBackend
     IBackdropFrameSource? BackdropFrameSource { get; }
 }
 
-public readonly record struct DrawingFrameContext(
-    long UiFrameId,
-    PixelSize ViewportSize,
-    PrismColorProfile OutputColorProfile,
-    BackdropFrameLease? Backdrop);
+public readonly struct DrawingFrameContext
+{
+    public DrawCommandStateAnalysis StateAnalysis { get; }
+    public IBackdropFrameLease? BackdropLease { get; }
+}
 
 public interface IDrawingBackend
 {
@@ -471,32 +462,29 @@ public interface IDrawingBackend
         in DrawingFrameContext frame);
 }
 
-public sealed class MonoGameUiHostOptions
-{
-    public IBackdropFrameSource? BackdropFrameSource { get; init; }
-}
 ```
 
 These members join the interfaces' existing properties. The
 `IDrawingBackend.Render` signature replaces the context-free submission contract so
 frame inputs are explicit rather than hidden in mutable backend state. The host
-calls `TryAcquire` at most once for one `UiHost.Draw`, even when many scopes need
+calls `AcquireFrame` at most once for one `UiHost.Draw`, even when many scopes need
 destination pixels, then passes the lease through `DrawingFrameContext`. A successful
 lease remains immutable and valid until the draw submission completes; the host
-then disposes the lease. Prism never retains or disposes the underlying game render
-target.
+then disposes the lease. Prism never retains or disposes the underlying native
+render target. SDL registration does not expose application-supplied Prism renderer
+options; its graphics session supplies the backdrop capability internally.
 
 The provider returns the source in its native `ColorProfile`. It is not asked to
 convert for one Prism because a single frame may contain compositions with different
 working profiles. The compositor performs and frame-locally shares the appropriate
 conversion for each working profile.
 
-For a MonoGame game, the supplied surface is normally the resolved scene render
-target produced immediately before UI composition. The renderer imports it into a
-frame-local composition graph as an external read-only resource. Lower UI commands
-are added to that graph in paint order. An implicit destination reads the graph node that exists
-immediately before its owning control, so it sees the game plus lower UI, but never
-itself or later UI.
+For the maintained SDL_GPU composition, the supplied texture is the resolved
+window graphics target produced immediately before UI composition. The renderer
+imports it into a frame-local composition graph as an external read-only resource.
+Lower UI commands are added to that graph in paint order. An implicit destination
+reads the graph node that exists immediately before its owning control, so it sees
+the application content plus lower UI, but never itself or later UI.
 
 Backdrop acquisition is a hosting and renderer responsibility. A view must never
 take screenshots, read pixels back to the CPU, copy the back buffer, or create its
@@ -1500,6 +1488,21 @@ Pointer, keyboard, focus, automation, and accessibility continue to target the
 original control and its normal visual tree. Prism layers and groups are
 not UI elements and never become independent input targets.
 
+For `SceneNode2D`, `PrismInputDomain` declares the complete finite input of an
+active non-pointwise composition in the owning node's local content coordinates.
+In a hosted scene containing spatial materializers, an owner whose active
+composition has no supported automatic input selection must declare this domain.
+The declared input, including required off-camera payloads and images, is prepared
+and recorded before the final camera clip. A nested Prism owner has its own input
+contract; an ancestor's declaration does not satisfy it.
+
+This property is not a camera rectangle, output clip, collision region, or memory
+budget. A missing required domain is a presentation error: the framework does not
+load the entire spatial catalog or approximate the effect. Pointwise-only
+compositions retain ordinary viewport selection, and supported local filters may
+continue to use their finite automatic sampling neighborhood. The exact supported
+operation and edge-mode set is documented by `Scene2D` and `SceneNode2D`.
+
 ## Lifecycle Expectations
 
 The Prism authoring model is syntax, not resource ownership.
@@ -1549,14 +1552,13 @@ The Prism authoring model is syntax, not resource ownership.
   dependency stamps and explicit memory budgets.
 - Public application-provided or third-party filter/style registration is explicitly
   deferred. This scope decision does not change the approved markup grammar.
-- Measurements freeze the MonoGame defaults at a 512 MiB hard surface limit, a
-  256 MiB retained soft limit, and 256 retained entries. A hard-limit failure
-  reports `PRISM7006`/`SurfaceAllocationFailed`, restores host graphics state, and
-  resumes the remaining raw inner commands without partial Prism output.
-- The Release WindowsDX dogfood gate measured a 388.664 ms Solar System cold frame
-  against a 500 ms ceiling and a 12.874 ms warm p99 against 16.6667 ms. The two
-  warm outliers remain visible in the raw report; no adaptive degradation hides
-  them.
+- Historical MonoGame measurements used a 512 MiB hard surface limit, a 256 MiB
+  retained soft limit, and 256 retained entries. Those values and the associated
+  fallback behavior are not the current SDL_GPU configuration contract.
+- The retired WindowsDX dogfood gate measured a 388.664 ms Solar System cold frame
+  against a 500 ms ceiling and a 12.874 ms warm p99 against 16.6667 ms. This is
+  historical evidence, not current SDL_GPU performance verification; the two warm
+  outliers remain visible in the raw report.
 
 ### Implemented contract
 

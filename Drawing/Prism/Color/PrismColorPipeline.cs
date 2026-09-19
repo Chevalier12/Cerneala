@@ -17,27 +17,8 @@ internal static class PrismColorPipeline
     public static PrismPremultipliedColor ConvertInputToWorking(
         PrismPremultipliedColor source,
         PrismColorProfile sourceProfile,
-        PrismColorProfile targetProfile)
-    {
-        Validate(source);
-        if (source.Alpha == 0)
-        {
-            return default;
-        }
-
-        PrismColorChannels straight = new(
-            source.Red / source.Alpha,
-            source.Green / source.Alpha,
-            source.Blue / source.Alpha);
-        PrismColorChannels linear = DecodeProfile(
-            straight,
-            sourceProfile);
-        PrismColorChannels converted = EncodeProfile(
-            linear,
-            targetProfile);
-
-        return Associate(converted, source.Alpha);
-    }
+        PrismColorProfile targetProfile) =>
+        Convert(source, sourceProfile, targetProfile);
 
     public static PrismPremultipliedColor ConvertWorkingToOutput(
         PrismPremultipliedColor source,
@@ -48,6 +29,12 @@ internal static class PrismColorPipeline
             PrismColorProfile.Srgb);
 
     public static PrismPremultipliedColor ConvertWorkingToOutput(
+        PrismPremultipliedColor source,
+        PrismColorProfile sourceProfile,
+        PrismColorProfile targetProfile) =>
+        Convert(source, sourceProfile, targetProfile);
+
+    private static PrismPremultipliedColor Convert(
         PrismPremultipliedColor source,
         PrismColorProfile sourceProfile,
         PrismColorProfile targetProfile)

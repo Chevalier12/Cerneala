@@ -167,6 +167,7 @@ internal static class Program
         "Cerneala.Drawing.DrawCommandKind",
         "Cerneala.Drawing.DrawingFrameContext",
         "Cerneala.Drawing.IDrawingBackend",
+        "Cerneala.UI.Controls.SceneNode2D",
         "Cerneala.UI.Hosting.IUiBackend",
         "Cerneala.UI.Markup.GeneratedMarkup",
         "Cerneala.UI.Rendering.RetainedRenderer"
@@ -850,6 +851,8 @@ internal static class Program
             "Optional host backdrop source; SDL renderer configuration is internal.",
         "Cerneala.UI.Markup.GeneratedMarkup" =>
             "Generated markup accessors used by typed Prism Motion paths.",
+        "Cerneala.UI.Controls.SceneNode2D" =>
+            "Finite input-domain contract for Prism compositions over spatially virtualized scene content.",
         "Cerneala.UI.Rendering.RetainedRenderer" =>
             "Retained-render traversal discovers and submits attached Prism instances.",
         _ => null

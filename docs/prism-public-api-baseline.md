@@ -6,6 +6,10 @@ Captured before the Prism foundation implementation on 2026-07-19. This baseline
 records the public host and drawing contracts that later Prism plans are expected
 to extend. It intentionally contains no proposed members and no Prism types.
 
+The MonoGame/WindowsDX signatures below are historical baseline inputs only.
+Those adapters were retired; the current audit loads the core and SDL_GPU
+delivered assemblies.
+
 The final API comparison must account for every signature added to or changed from
 this file. Unrelated public API changes are outside the Prism plans.
 
@@ -32,7 +36,7 @@ public interface IUiBackend
 }
 ```
 
-## Cerneala.UI.Hosting.MonoGame.MonoGameUiHostOptions
+## Historical Cerneala.UI.Hosting.MonoGame.MonoGameUiHostOptions
 
 ```csharp
 namespace Cerneala.UI.Hosting.MonoGame;
@@ -52,18 +56,18 @@ public sealed class MonoGameUiHostOptions
 }
 ```
 
-## Anticipated Prism Touch Points
+## Anticipated Prism Touch Points At Capture Time
 
-- `IDrawingBackend.Render` will receive an explicit frame context in a later plan.
-- `IUiBackend` will expose the optional backdrop source in a later plan.
-- `MonoGameUiHostOptions` will accept backdrop and Prism renderer options in later
-  plans.
+- `IDrawingBackend.Render` was expected to receive an explicit frame context.
+- `IUiBackend` was expected to expose the optional backdrop source.
+- `MonoGameUiHostOptions` was expected to accept backdrop and Prism renderer
+  options.
 
-The foundation-and-catalog plan does not change these three APIs.
+The foundation-and-catalog plan did not change these three APIs.
 
 ## Final Compatibility Result
 
-The current Prism public-surface audit covers 217 Prism types and 10 existing types
+The current Prism public-surface audit covers 216 Prism types and 8 existing types
 extended for Prism. Every retained symbol has a current author, backend, hosting,
 or diagnostics scenario and a matching API page/manifest entry.
 
@@ -71,7 +75,8 @@ or diagnostics scenario and a matching API page/manifest entry.
 | --- | --- | --- |
 | `IDrawingBackend.Render(DrawCommandList)` -> `Render(DrawCommandList, in DrawingFrameContext)` | Source and binary breaking for custom drawing backends | Necessary: the host must pass one validated per-frame context, including the optional backdrop lease, without duplicate analysis or backend-specific host coupling. |
 | `IUiBackend.BackdropFrameSource` | Additive default interface member | Existing implementations inherit `null`; no backdrop provider is required. |
-| `MonoGameUiHostOptions.BackdropFrameSource` and `PrismRendererOptions` | Additive optional properties | Existing construction remains valid. |
+| Historical `MonoGameUiHostOptions.BackdropFrameSource` and `PrismRendererOptions` | Additive optional properties when introduced; later removed with the adapter | The maintained SDL composition does not expose a replacement configuration facade. |
+| `SceneNode2D.PrismInputDomain` | Additive | Declares the required finite source domain for a spatially virtualized scene composition when automatic input selection is unavailable. |
 | `BeginPrism`/`EndPrism` and the public authoring/runtime/host Prism types | Additive | Non-Prism backends ignore the delimiters and render interior commands. Exhaustive enum switches should retain a default case. |
 | `PrismImage`, `PrismPipeline`, `PrismOperation`, `PrismFilter`, `PrismStyle`, and the 144 catalog-generated filter/style types | Additive | Strongly typed image-pipeline authoring approved by the RenderSurface2D delivery; the catalog remains the source of operation names and parameter contracts. |
 | Interim public graph/planning types, graph-bearing frame/request members, and framework-only context construction | Source and binary breaking for consumers of the unfinished pre-release Prism surface | Necessary: graph analysis, freshness, planning, and requirement ownership are internal framework invariants, not application extension points. |
@@ -88,7 +93,7 @@ or speculative graph abstraction was retained. The reproducible compatibility
 check is `dotnet run --project .\Tools\PrismAudit\PrismAudit.csproj -- --check`;
 its generated report is `docs/prism-completeness-report.generated.md`.
 
-The audit loads both the core and MonoGame assemblies. Catalog-generated filter
+The audit loads both the core and SDL_GPU assemblies. Catalog-generated filter
 and style type names are derived from `prism-catalog.json` rather than copied into
 a second manual list. For existing types extended by Prism, the audit compares the
 Prism/backdrop members only; unrelated approved members such as

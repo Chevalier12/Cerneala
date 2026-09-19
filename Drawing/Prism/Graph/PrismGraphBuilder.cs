@@ -215,23 +215,7 @@ internal sealed class PrismGraphBuilder
                 SnapshotCompositionSettings();
             if (analyzedScope.Bounds.Width <= 0 || analyzedScope.Bounds.Height <= 0)
             {
-                return new PrismGraphScope(
-                    analyzedScope.ScopeIndex,
-                    analyzedScope.BeginCommandIndex,
-                    analyzedScope.EndCommandIndex,
-                    analyzedScope.Depth,
-                    analyzedScope.ParentScopeIndex,
-                    analyzedScope.DependencyStamp.CacheOwnerToken,
-                    compositionSettings,
-                    analyzedScope.Bounds,
-                    analyzedScope.Scope.ControlBounds,
-                    analyzedScope.EffectiveTransform,
-                    analyzedScope.Scope.EffectiveTransform,
-                    analyzedScope.Scope.PixelScale,
-                    analyzedScope.DependencyStamp,
-                    analyzedScope.Scope.LowerUiVersion,
-                    analyzedScope.Scope.Resources,
-                    null);
+                return CreateScope(compositionSettings, content: null);
             }
 
             PrismColorProfile colorProfile = compositionSettings.WorkingColorProfile;
@@ -313,7 +297,13 @@ internal sealed class PrismGraphBuilder
                         PrismGraphEdgeKind.KnockoutBackdrop);
                 }
             }
-            return new PrismGraphScope(
+            return CreateScope(compositionSettings, content);
+        }
+
+        private PrismGraphScope CreateScope(
+            PrismGraphCompositionSettings compositionSettings,
+            PrismGraphNodeId? content) =>
+            new(
                 analyzedScope.ScopeIndex,
                 analyzedScope.BeginCommandIndex,
                 analyzedScope.EndCommandIndex,
@@ -330,7 +320,6 @@ internal sealed class PrismGraphBuilder
                 analyzedScope.Scope.LowerUiVersion,
                 analyzedScope.Scope.Resources,
                 content);
-        }
 
         private StackBuildResult BuildStack(
             IReadOnlyList<PrismNodeDefinition> definitions,

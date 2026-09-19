@@ -395,48 +395,17 @@ internal static class PrismCatalogFilterPlanner
         }
         else if (filter == PrismFilterId.ConteCrayon)
         {
-            options[4] = new Vector4(
-                reader.SymbolCode(
-                    "LightDirection",
-                    ("Top", 0),
-                    ("TopRight", 1),
-                    ("Right", 2),
-                    ("BottomRight", 3),
-                    ("Bottom", 4),
-                    ("BottomLeft", 5),
-                    ("Left", 6),
-                    ("TopLeft", 7)),
-                0,
-                0,
-                0);
+            options[4] = PackLightDirection(reader);
             options[6].X = Math.Clamp(
                 MathF.Abs(options[6].X) * deviceScale,
                 0.125f,
                 16);
-            options[7] = new Vector4(
-                reader.SymbolCode(
-                    "Texture",
-                    ("Canvas", 0),
-                    ("Brick", 1),
-                    ("Burlap", 2),
-                    ("Sandstone", 3)),
-                0,
-                0,
-                0);
+            options[7] = PackSurfaceTexture(reader);
             options[8] = ConteCrayonXDogSettings(deviceScale);
         }
         else if (filter == PrismFilterId.Texturizer)
         {
-            options[4] = new Vector4(
-                reader.SymbolCode(
-                    "Texture",
-                    ("Canvas", 0),
-                    ("Brick", 1),
-                    ("Burlap", 2),
-                    ("Sandstone", 3)),
-                0,
-                0,
-                0);
+            options[4] = PackSurfaceTexture(reader);
             options[3].X = Math.Clamp(
                 MathF.Abs(reader.Number("Scaling")),
                 0.125f,
@@ -445,20 +414,7 @@ internal static class PrismCatalogFilterPlanner
                 MathF.Abs(reader.Number("Relief")),
                 0,
                 1);
-            options[1] = new Vector4(
-                reader.SymbolCode(
-                    "LightDirection",
-                    ("Top", 0),
-                    ("TopRight", 1),
-                    ("Right", 2),
-                    ("BottomRight", 3),
-                    ("Bottom", 4),
-                    ("BottomLeft", 5),
-                    ("Left", 6),
-                    ("TopLeft", 7)),
-                0,
-                0,
-                0);
+            options[1] = PackLightDirection(reader);
             options[6].X = deviceScale;
         }
         else if (filter == PrismFilterId.GraphicPen)
@@ -510,20 +466,7 @@ internal static class PrismCatalogFilterPlanner
         }
         else if (filter == PrismFilterId.Plaster)
         {
-            options[6] = new Vector4(
-                reader.SymbolCode(
-                    "LightDirection",
-                    ("Top", 0),
-                    ("TopRight", 1),
-                    ("Right", 2),
-                    ("BottomRight", 3),
-                    ("Bottom", 4),
-                    ("BottomLeft", 5),
-                    ("Left", 6),
-                    ("TopLeft", 7)),
-                0,
-                0,
-                0);
+            options[6] = PackLightDirection(reader);
             options[5] = PlasterSettings(reader, deviceScale);
         }
         else if (filter is PrismFilterId.Photocopy or PrismFilterId.Stamp)
@@ -697,74 +640,17 @@ internal static class PrismCatalogFilterPlanner
         }
         else if (filter == PrismFilterId.BasRelief)
         {
-            options[3] = new Vector4(
-                reader.SymbolCode(
-                    "LightDirection",
-                    ("Top", 0),
-                    ("TopRight", 1),
-                    ("Right", 2),
-                    ("BottomRight", 3),
-                    ("Bottom", 4),
-                    ("BottomLeft", 5),
-                    ("Left", 6),
-                    ("TopLeft", 7)),
-                0,
-                0,
-                0);
+            options[3] = PackLightDirection(reader);
         }
         else if (filter == PrismFilterId.RoughPastels)
         {
-            options[6] = new Vector4(
-                reader.SymbolCode(
-                    "Texture",
-                    ("Canvas", 0),
-                    ("Brick", 1),
-                    ("Burlap", 2),
-                    ("Sandstone", 3)),
-                0,
-                0,
-                0);
-            options[1] = new Vector4(
-                reader.SymbolCode(
-                    "LightDirection",
-                    ("Top", 0),
-                    ("TopRight", 1),
-                    ("Right", 2),
-                    ("BottomRight", 3),
-                    ("Bottom", 4),
-                    ("BottomLeft", 5),
-                    ("Left", 6),
-                    ("TopLeft", 7)),
-                0,
-                0,
-                0);
+            options[6] = PackSurfaceTexture(reader);
+            options[1] = PackLightDirection(reader);
         }
         else if (filter == PrismFilterId.Underpainting)
         {
-            options[5] = new Vector4(
-                reader.SymbolCode(
-                    "Texture",
-                    ("Canvas", 0),
-                    ("Brick", 1),
-                    ("Burlap", 2),
-                    ("Sandstone", 3)),
-                0,
-                0,
-                0);
-            options[2] = new Vector4(
-                reader.SymbolCode(
-                    "LightDirection",
-                    ("Top", 0),
-                    ("TopRight", 1),
-                    ("Right", 2),
-                    ("BottomRight", 3),
-                    ("Bottom", 4),
-                    ("BottomLeft", 5),
-                    ("Left", 6),
-                    ("TopLeft", 7)),
-                0,
-                0,
-                0);
+            options[5] = PackSurfaceTexture(reader);
+            options[2] = PackLightDirection(reader);
         }
         else if (filter == PrismFilterId.Crosshatch)
         {
@@ -2846,6 +2732,36 @@ internal static class PrismCatalogFilterPlanner
                 $"Unsupported Mezzotint type '{type}'.")
         };
     }
+
+    private static Vector4 PackLightDirection(
+        PrismFilterParameterReader values) =>
+        new(
+            values.SymbolCode(
+                "LightDirection",
+                ("Top", 0),
+                ("TopRight", 1),
+                ("Right", 2),
+                ("BottomRight", 3),
+                ("Bottom", 4),
+                ("BottomLeft", 5),
+                ("Left", 6),
+                ("TopLeft", 7)),
+            0,
+            0,
+            0);
+
+    private static Vector4 PackSurfaceTexture(
+        PrismFilterParameterReader values) =>
+        new(
+            values.SymbolCode(
+                "Texture",
+                ("Canvas", 0),
+                ("Brick", 1),
+                ("Burlap", 2),
+                ("Sandstone", 3)),
+            0,
+            0,
+            0);
 
     private static Vector4 Pack(
         PrismFilterParameterReader reader,

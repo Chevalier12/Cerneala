@@ -84,7 +84,7 @@ internal static class PrismWindFilter
                     original,
                     width,
                     height);
-                Vector4 total = SampleBilinear(
+                Vector4 total = PrismCatalogFilterMath.SamplePixelBilinear(
                     signal,
                     width,
                     height,
@@ -116,14 +116,14 @@ internal static class PrismWindFilter
                     float forwardWeight = window *
                         StaggerWeight(method, forward, seed, step);
                     float backwardWeight = window * reverseBias;
-                    total += SampleBilinear(
+                    total += PrismCatalogFilterMath.SamplePixelBilinear(
                             signal,
                             width,
                             height,
                             forward.X,
                             forward.Y) *
                         forwardWeight;
-                    total += SampleBilinear(
+                    total += PrismCatalogFilterMath.SamplePixelBilinear(
                             signal,
                             width,
                             height,
@@ -135,7 +135,7 @@ internal static class PrismWindFilter
 
                 Vector4 integrated = total / weightTotal;
                 float directionSign = direction == 1 ? -1 : 1;
-                Vector4 rampSample = SampleBilinear(
+                Vector4 rampSample = PrismCatalogFilterMath.SamplePixelBilinear(
                     signal,
                     width,
                     height,
@@ -145,7 +145,7 @@ internal static class PrismWindFilter
                     integrated,
                     rampSample,
                     0.18f);
-                integrated.W = SampleBilinear(
+                integrated.W = PrismCatalogFilterMath.SamplePixelBilinear(
                     original,
                     width,
                     height,
@@ -199,25 +199,25 @@ internal static class PrismWindFilter
             method,
             seed);
 
-        float horizontal = Luminance(SampleBilinear(
+        float horizontal = Luminance(PrismCatalogFilterMath.SamplePixelBilinear(
                 original,
                 width,
                 height,
                 position.X + 1,
                 position.Y)) -
-            Luminance(SampleBilinear(
+            Luminance(PrismCatalogFilterMath.SamplePixelBilinear(
                 original,
                 width,
                 height,
                 position.X - 1,
                 position.Y));
-        float vertical = Luminance(SampleBilinear(
+        float vertical = Luminance(PrismCatalogFilterMath.SamplePixelBilinear(
                 original,
                 width,
                 height,
                 position.X,
                 position.Y + 1)) -
-            Luminance(SampleBilinear(
+            Luminance(PrismCatalogFilterMath.SamplePixelBilinear(
                 original,
                 width,
                 height,
@@ -279,17 +279,17 @@ internal static class PrismWindFilter
         {
             for (int x = 0; x < width; x++)
             {
-                Vector4 center = SampleBilinear(
+                Vector4 center = PrismCatalogFilterMath.SamplePixelBilinear(
                     source,
                     width,
                     height,
                     x,
                     y);
                 Vector4 neighbors =
-                    SampleBilinear(source, width, height, x - 1, y) +
-                    SampleBilinear(source, width, height, x + 1, y) +
-                    SampleBilinear(source, width, height, x, y - 1) +
-                    SampleBilinear(source, width, height, x, y + 1);
+                    PrismCatalogFilterMath.SamplePixelBilinear(source, width, height, x - 1, y) +
+                    PrismCatalogFilterMath.SamplePixelBilinear(source, width, height, x + 1, y) +
+                    PrismCatalogFilterMath.SamplePixelBilinear(source, width, height, x, y - 1) +
+                    PrismCatalogFilterMath.SamplePixelBilinear(source, width, height, x, y + 1);
                 Vector3 highPass = new(
                     (center.X * 4) - neighbors.X,
                     (center.Y * 4) - neighbors.Y,
@@ -363,32 +363,6 @@ internal static class PrismWindFilter
         value *= 0x846ca68bu;
         value ^= value >> 16;
         return (value & 0x00ffffffu) / 16777215f;
-    }
-
-    private static Vector4 SampleBilinear(
-        Vector4[] source,
-        int width,
-        int height,
-        float x,
-        float y)
-    {
-        float clampedX = Math.Clamp(x, 0, width - 1);
-        float clampedY = Math.Clamp(y, 0, height - 1);
-        int left = (int)MathF.Floor(clampedX);
-        int top = (int)MathF.Floor(clampedY);
-        int right = Math.Min(left + 1, width - 1);
-        int bottom = Math.Min(top + 1, height - 1);
-        float horizontal = clampedX - left;
-        float vertical = clampedY - top;
-        Vector4 upper = Vector4.Lerp(
-            source[(top * width) + left],
-            source[(top * width) + right],
-            horizontal);
-        Vector4 lower = Vector4.Lerp(
-            source[(bottom * width) + left],
-            source[(bottom * width) + right],
-            horizontal);
-        return Vector4.Lerp(upper, lower, vertical);
     }
 
     private static float Luminance(Vector4 color)

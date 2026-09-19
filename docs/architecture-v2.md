@@ -40,7 +40,7 @@ UIRoot
         +--> UI/Input
         |
         v
-MonoGame adapters
+SDL3 platform + SDL_GPU backend adapters
 ```
 
 ## Existing Foundations
@@ -50,12 +50,13 @@ MonoGame adapters
 - `DrawingContext` records commands.
 - `DrawCommandList` stores ordered commands.
 - `IDrawingBackend` renders command lists.
-- `MonoGameDrawingBackend` is the current concrete renderer.
+- `SdlGpuDrawingBackend` is the maintained concrete renderer behind the public
+  SDL_GPU application registration.
 
 `UI/Input` remains the low-level input foundation:
 
 - `IInputSource` produces `InputFrame`.
-- `MonoGameInputSource` reads MonoGame input state.
+- `SdlInputSource` translates SDL3 input state into retained input frames.
 - routed event metadata and args remain useful.
 - existing command primitives remain useful.
 
@@ -161,7 +162,7 @@ Layout uses layout-specific geometry:
 
 These are separate from `DrawPoint` and `DrawRect` because layout can have different semantics, such as unconstrained available size.
 
-Layout uses `float` to align with drawing and MonoGame boundaries.
+Layout uses `float` to align with drawing and backend coordinate boundaries.
 
 Layout phases:
 
@@ -194,7 +195,8 @@ root command list
 IDrawingBackend.Render(...)
 ```
 
-Controls must not call MonoGame, Skia, HarfBuzz, `SpriteBatch`, or `Texture2D` directly.
+Controls must not call SDL3, SDL_GPU, Skia, HarfBuzz, or another concrete
+platform/backend API directly.
 
 ## Input, Hit Testing, And Focus
 
@@ -252,10 +254,12 @@ completion and diagnostics. `.cui.xml` is retired and is not a supported alias.
 
 ## Hosting
 
-`UiHost` and `MonoGameUiHost` integrate retained UI with the game loop. A root
-owns the Relay, frame scheduler, layout manager, retained renderer, resources,
-aspects and motion state; hosts submit input during update and drawing during
-draw without rebuilding unchanged retained work.
+`UiHost` integrates retained UI with the frame loop. The maintained desktop
+composition is registered through `SdlGpuApplicationBackend.UseSdlGpu`; its
+internal SDL3 platform and SDL_GPU graphics owners supply input and drawing to
+the host. A root owns the Relay, frame scheduler, layout manager, retained
+renderer, resources, aspects and motion state; the runtime submits input and
+drawing without rebuilding unchanged retained work.
 
 Expected frame shape:
 
@@ -276,8 +280,9 @@ retained scheduling and command generation.
 
 ## Current Boundaries
 
-- `Cerneala.UI` remains backend-neutral; MonoGame and WindowsDX types stay in
-  hosting and drawing adapter folders.
+- `Cerneala.UI` remains backend-neutral. SDL3 window/input ownership lives in
+  `Cerneala.Platforms.Sdl3`; SDL_GPU rendering ownership lives in
+  `Cerneala.Backends.SdlGpu`.
 - `Cerneala.Language` is editor/build infrastructure and is not a runtime UI
   dependency.
 - Visual Studio support is an out-of-process `.crn` language-server host. It

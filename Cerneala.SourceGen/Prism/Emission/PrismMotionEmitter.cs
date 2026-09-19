@@ -136,7 +136,9 @@ public sealed partial class UiMarkupGenerator
             return
                 "global::Cerneala.UI.Markup.GeneratedMarkup.GetPrism" +
                 PrismMotionOperationName(accessor.Kind) +
-                PrismMotionStorageName(accessor.StorageType) +
+                PrismRuntimeValueKind(
+                    accessor.StorageType,
+                    "Unsupported Prism Motion storage type.") +
                 "(" + state + ", " +
                 accessor.EntryStableId.ToString(CultureInfo.InvariantCulture) +
                 ", " +
@@ -157,7 +159,9 @@ public sealed partial class UiMarkupGenerator
             return
                 "global::Cerneala.UI.Markup.GeneratedMarkup.SetPrism" +
                 PrismMotionOperationName(accessor.Kind) +
-                PrismMotionStorageName(accessor.StorageType) +
+                PrismRuntimeValueKind(
+                    accessor.StorageType,
+                    "Unsupported Prism Motion storage type.") +
                 "(" + state + ", " +
                 accessor.EntryStableId.ToString(CultureInfo.InvariantCulture) +
                 ", " +
@@ -209,19 +213,5 @@ public sealed partial class UiMarkupGenerator
                     "Only Prism filters and styles use catalog parameter bridges.")
             };
 
-        private static string PrismMotionStorageName(
-            BoundPrismValueType type) =>
-            type switch
-            {
-                BoundPrismValueType.Boolean => "Boolean",
-                BoundPrismValueType.Integer => "Integer",
-                BoundPrismValueType.Number => "Number",
-                BoundPrismValueType.Color => "Color",
-                BoundPrismValueType.Vector => "Vector",
-                BoundPrismValueType.Symbol => "Integer",
-                BoundPrismValueType.Resource => "Resource",
-                _ => throw new InvalidOperationException(
-                    "Unsupported Prism Motion storage type.")
-            };
     }
 }
