@@ -4828,6 +4828,7 @@ Generated from `.`.
 |   |   |-- ClipNode.cs
 |   |   |-- DrawCommandListBuilder.cs
 |   |   |-- DrawCommandListPool.cs
+|   |   |-- DrawCommandTransform.cs
 |   |   |-- ElementRenderCache.cs
 |   |   |-- IRenderableElement.cs
 |   |   |-- ITimeSensitiveRenderElement.cs
