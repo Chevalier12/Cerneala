@@ -311,7 +311,7 @@ public sealed class SceneItems2D : SceneNode2D, ISceneSpatialParticipant2D
             RealizedItem item = realized[index];
             if (visible && ScenePresentationContext2D.Intersects(input, item.Entry.Bounds))
             {
-                item.Node.Record(context.WithSourceIndex(index));
+                item.Node.Record(context);
             }
             else { item.Node.ReleaseRenderCaches(); }
         }

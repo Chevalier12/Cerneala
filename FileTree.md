@@ -3214,6 +3214,7 @@ Generated from `.`.
 |   |   |   |-- ScenePrismStreamingTests.cs
 |   |   |   |-- SceneSimulationContext2DTests.cs
 |   |   |   |-- SceneSpatialResidency2DTests.cs
+|   |   |   |-- SceneSpatialSelectionScalingTests.cs
 |   |   |   |-- SceneSpatialSource2DTests.cs
 |   |   |   |-- SceneStreamingReflectionContractTests.cs
 |   |   |   |-- ScrollBarTests.cs

@@ -111,15 +111,13 @@ public partial class RenderSurface2D : ContentControl,
     {
         add
         {
-            bool wasDrawingActive = IsDrawingActive;
             draw += value;
-            HandleDrawingMutation(wasDrawingActive);
+            HandleDrawingMutation();
         }
         remove
         {
-            bool wasDrawingActive = IsDrawingActive;
             draw -= value;
-            HandleDrawingMutation(wasDrawingActive);
+            HandleDrawingMutation();
         }
     }
 
@@ -207,18 +205,6 @@ public partial class RenderSurface2D : ContentControl,
     }
 
     internal int ActiveAnimationCount => activeAnimations.Count;
-
-    internal void RegisterSpatialItems(ISceneSpatialParticipant2D items)
-    {
-        simulationContext?.Register(items);
-        RefreshSpatialItems();
-    }
-
-    internal void UnregisterSpatialItems(ISceneSpatialParticipant2D items)
-    {
-        simulationContext?.Unregister(items);
-        RefreshSpatialItems();
-    }
 
     internal void CompleteWarmPreparation(IReadOnlyList<TileMap2D.WarmPreparationRequest> requests)
     {
@@ -463,7 +449,7 @@ public partial class RenderSurface2D : ContentControl,
             TrackImageDependency);
         try
         {
-            InvokeDraw(frame);
+            draw?.Invoke(this, frame);
             if (CheckPresentation(bounds))
             {
                 int sceneStart = commands.Count;
@@ -518,28 +504,14 @@ public partial class RenderSurface2D : ContentControl,
         }
     }
 
-    private void HandleDrawingMutation(bool wasDrawingActive)
+    private void HandleDrawingMutation()
     {
-        bool isDrawingActive = IsDrawingActive;
-        if (!isDrawingActive)
+        if (!IsDrawingActive)
         {
             DisposeManagedSession();
         }
 
         InvalidateFrame();
-    }
-
-    private void InvokeDraw(RenderSurface2DFrame frame)
-    {
-        if (draw is null)
-        {
-            return;
-        }
-
-        foreach (RenderSurface2DDrawEventHandler handler in draw.GetInvocationList())
-        {
-            handler(this, frame);
-        }
     }
 
     private void RecordScene(RenderSurface2DFrame frame, DrawRect bounds)

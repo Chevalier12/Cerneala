@@ -10,6 +10,8 @@ public sealed class SceneSpatialResidency2D<T> : IDisposable, IAsyncDisposable w
     private readonly ISceneSpatialSource2D<T> source;
     private readonly SemaphoreSlim loadSlots;
     private readonly Dictionary<(string Id, long Version), Resident> residents = [];
+    private IReadOnlyList<SceneSpatialEntry2D>? indexedCatalog;
+    private Dictionary<string, (SceneSpatialEntry2D Entry, int Order)>? catalogIndex;
     private bool disposed;
     private int pendingLoads;
     private int operations;
@@ -98,30 +100,33 @@ public sealed class SceneSpatialResidency2D<T> : IDisposable, IAsyncDisposable w
         lock (gate)
         {
             ObjectDisposedException.ThrowIf(disposed, this);
-            HashSet<string> identities = new(StringComparer.Ordinal);
-            int selectedInCatalog = 0;
-            foreach (SceneSpatialEntry2D entry in catalog)
+            Dictionary<string, (SceneSpatialEntry2D Entry, int Order)> index = GetCatalogIndex(catalog);
+            if (selection is not null)
             {
-                ArgumentNullException.ThrowIfNull(entry);
-                if (!identities.Add(entry.Id))
+                foreach (SceneSpatialEntry2D entry in selection)
                 {
-                    throw new InvalidOperationException($"Spatial identity '{entry.Id}' occurs more than once.");
+                    if (!index.TryGetValue(entry.Id, out var indexed) || !ReferenceEquals(indexed.Entry, entry))
+                    {
+                        throw new ArgumentException("Selected entries must belong to the captured spatial catalog.", nameof(selectedEntries));
+                    }
+                    entries.Add(entry);
                 }
-                if (selection?.Contains(entry) == true) { selectedInCatalog++; }
+                entries.Sort((left, right) => index[left.Id].Order.CompareTo(index[right.Id].Order));
             }
-            if (selection is not null && selectedInCatalog != selection.Count)
+            else
             {
-                throw new ArgumentException("Selected entries must belong to the captured spatial catalog.", nameof(selectedEntries));
-            }
-            foreach (SceneSpatialEntry2D entry in catalog)
-            {
-                if (selection is not null ? !selection.Contains(entry) :
-                    !includeAll && !(includeSimulated && entry.IsSimulated) &&
-                    !(bounds is DrawRect region && Intersects(region, entry.Bounds)) &&
-                    !NeedsCollision(entry, collisionBounds))
+                foreach (SceneSpatialEntry2D entry in catalog)
                 {
-                    continue;
+                    if (includeAll || includeSimulated && entry.IsSimulated ||
+                        bounds is DrawRect region && Intersects(region, entry.Bounds) ||
+                        NeedsCollision(entry, collisionBounds))
+                    {
+                        entries.Add(entry);
+                    }
                 }
+            }
+            foreach (SceneSpatialEntry2D entry in entries)
+            {
                 if (!residents.TryGetValue((entry.Id, entry.Version), out Resident? resident))
                 {
                     resident = new(entry);
@@ -132,7 +137,6 @@ public sealed class SceneSpatialResidency2D<T> : IDisposable, IAsyncDisposable w
                 }
                 resident.Interests++;
                 acquired.Add(resident);
-                entries.Add(entry);
             }
         }
 
@@ -166,6 +170,26 @@ public sealed class SceneSpatialResidency2D<T> : IDisposable, IAsyncDisposable w
         }
     }
 
+    private Dictionary<string, (SceneSpatialEntry2D Entry, int Order)> GetCatalogIndex(
+        IReadOnlyList<SceneSpatialEntry2D> catalog)
+    {
+        if (ReferenceEquals(indexedCatalog, catalog)) { return catalogIndex!; }
+        // Sources publish immutable snapshots. Validate metadata once per snapshot,
+        // not once per chunk request; retain only one index, never payloads.
+        Dictionary<string, (SceneSpatialEntry2D Entry, int Order)> index = new(catalog.Count, StringComparer.Ordinal);
+        foreach (SceneSpatialEntry2D entry in catalog)
+        {
+            ArgumentNullException.ThrowIfNull(entry);
+            if (!index.TryAdd(entry.Id, (entry, index.Count)))
+            {
+                throw new InvalidOperationException($"Spatial identity '{entry.Id}' occurs more than once.");
+            }
+        }
+        indexedCatalog = catalog;
+        catalogIndex = index;
+        return index;
+    }
+
     private Func<string, SceneSpatialLease2D<T>> CreateRetainer(List<Resident> acquired)
     {
         Dictionary<string, Resident> byId = acquired.ToDictionary(static resident => resident.Entry.Id, StringComparer.Ordinal);
@@ -189,6 +213,8 @@ public sealed class SceneSpatialResidency2D<T> : IDisposable, IAsyncDisposable w
         {
             if (disposed) { return; }
             disposed = true;
+            indexedCatalog = null;
+            catalogIndex = null;
             releasing = residents.Values.ToList();
             residents.Clear();
             foreach (Resident resident in releasing)

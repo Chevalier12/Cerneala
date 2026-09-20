@@ -134,7 +134,7 @@ public class Scene2D : SceneNode2D
             for (int index = 0; index < ordered.Count; index++)
             {
                 SceneOrderEntry entry = ordered[index];
-                entry.Node.Record(childContext.WithSourceIndex(entry.SourceIndex));
+                entry.Node.Record(childContext);
             }
             // Debug presentation is a post-pass, never a gameplay order entry.
             for (int index = 0; index < Children.Count; index++)

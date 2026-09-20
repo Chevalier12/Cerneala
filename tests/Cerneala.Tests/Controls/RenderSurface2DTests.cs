@@ -93,6 +93,74 @@ public sealed class RenderSurface2DTests
     }
 
     [Fact]
+    public void DrawSubscriberChangesTakeEffectOnTheNextRecording()
+    {
+        RenderSurface2D surface = new();
+        List<string> calls = [];
+        bool changed = false;
+        RenderSurface2DDrawEventHandler removed = (_, frame) =>
+        {
+            calls.Add("removed");
+            frame.FillRectangle(frame.Bounds, Color.White);
+        };
+        RenderSurface2DDrawEventHandler added = (_, frame) =>
+        {
+            calls.Add("added");
+            frame.FillRectangle(frame.Bounds, Color.HotPink);
+        };
+        surface.Draw += (sender, frame) =>
+        {
+            Assert.Same(surface, sender);
+            calls.Add("first");
+            frame.FillRectangle(frame.Bounds, Color.Black);
+            if (!changed)
+            {
+                changed = true;
+                surface.Draw -= removed;
+                surface.Draw += added;
+            }
+        };
+        surface.Draw += removed;
+        IRenderSurface2DFrameSource source = surface;
+        DrawRect bounds = new(0, 0, 10, 10);
+        DrawCommandList first = new();
+        DrawCommandList second = new();
+
+        source.RecordFrame(first, bounds);
+        source.RecordFrame(second, bounds);
+
+        Assert.Equal(["first", "removed", "first", "added"], calls);
+        Assert.Equal([Color.Black, Color.White], first.Select(command => command.Color));
+        Assert.Equal([Color.Black, Color.HotPink], second.Select(command => command.Color));
+    }
+
+    [Fact]
+    public void ThrowingDrawSubscriberStopsDispatchAndEndsTheFrameLifetime()
+    {
+        RenderSurface2D surface = new();
+        InvalidOperationException failure = new("Drawing failed.");
+        RenderSurface2DFrame? captured = null;
+        bool laterSubscriberCalled = false;
+        surface.Draw += (_, frame) => frame.FillRectangle(frame.Bounds, Color.Black);
+        surface.Draw += (_, frame) =>
+        {
+            captured = frame;
+            throw failure;
+        };
+        surface.Draw += (_, _) => laterSubscriberCalled = true;
+        DrawCommandList commands = new();
+
+        InvalidOperationException actual = Assert.Throws<InvalidOperationException>(() =>
+            ((IRenderSurface2DFrameSource)surface).RecordFrame(commands, new DrawRect(0, 0, 10, 10)));
+
+        Assert.Same(failure, actual);
+        Assert.False(laterSubscriberCalled);
+        Assert.Equal(Color.Black, Assert.Single(commands).Color);
+        Assert.NotNull(captured);
+        Assert.Throws<ObjectDisposedException>(() => captured.FillRectangle(captured.Bounds, Color.White));
+    }
+
+    [Fact]
     public void ManagedSurfaceParticipatesInTheCernealaFrameLoop()
     {
         RenderSurface2D surface = new();

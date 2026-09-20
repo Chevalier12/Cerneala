@@ -16,8 +16,7 @@ internal readonly struct Scene2DRecordContext
             frame,
             Matrix3x2.Identity,
             sceneToSurfaceTransform,
-            visibleSurfaceBounds,
-            sourceIndex: 0)
+            visibleSurfaceBounds)
     {
     }
 
@@ -26,15 +25,13 @@ internal readonly struct Scene2DRecordContext
         RenderSurface2DFrame frame,
         Matrix3x2 localToSceneTransform,
         Matrix3x2 localToSurfaceTransform,
-        DrawRect visibleSurfaceBounds,
-        int sourceIndex)
+        DrawRect visibleSurfaceBounds)
     {
         Surface = surface ?? throw new ArgumentNullException(nameof(surface));
         Frame = frame ?? throw new ArgumentNullException(nameof(frame));
         LocalToSceneTransform = localToSceneTransform;
         LocalToSurfaceTransform = localToSurfaceTransform;
         VisibleSurfaceBounds = visibleSurfaceBounds;
-        SourceIndex = sourceIndex;
     }
 
     internal RenderSurface2D Surface { get; }
@@ -47,25 +44,13 @@ internal readonly struct Scene2DRecordContext
 
     internal DrawRect VisibleSurfaceBounds { get; }
 
-    internal int SourceIndex { get; }
-
     internal Scene2DRecordContext WithLocalTransform(Matrix3x2 localTransform) =>
         new(
             Surface,
             Frame,
             localTransform * LocalToSceneTransform,
             localTransform * LocalToSurfaceTransform,
-            VisibleSurfaceBounds,
-            SourceIndex);
-
-    internal Scene2DRecordContext WithSourceIndex(int sourceIndex) =>
-        new(
-            Surface,
-            Frame,
-            LocalToSceneTransform,
-            LocalToSurfaceTransform,
-            VisibleSurfaceBounds,
-            sourceIndex);
+            VisibleSurfaceBounds);
 
     internal ScenePrismScope BeginPrism(
         SceneNode2D owner,
