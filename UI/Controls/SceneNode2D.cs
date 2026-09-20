@@ -23,6 +23,9 @@ public abstract class SceneNode2D : UIElement, IInputSubtreeHost, IInputCoordina
 
     protected SceneNode2D() => LogicalChildren.Changed += OnSceneChildrenChanged;
 
+    private IEnumerable<SceneNode2D> EnumerateSceneChildren() =>
+        LogicalChildren.OfType<SceneNode2D>();
+
     public SceneSimulationContext2D? SimulationContext { get; private set; }
 
     internal override Cerneala.UI.Relay.UiRelay? OwnerRelay => SimulationContext?.Relay ?? base.OwnerRelay;
@@ -60,7 +63,7 @@ public abstract class SceneNode2D : UIElement, IInputSubtreeHost, IInputCoordina
             throw new InvalidOperationException("The simulation context and UI root must have the same owner.");
         }
         ValidateDataLifecycle(context.Relay);
-        foreach (SceneNode2D child in LogicalChildren.OfType<SceneNode2D>()) { child.ValidateSimulationAttachment(context); }
+        foreach (SceneNode2D child in EnumerateSceneChildren()) { child.ValidateSimulationAttachment(context); }
     }
 
     internal void AttachSimulationContext(SceneSimulationContext2D? context)
@@ -69,12 +72,13 @@ public abstract class SceneNode2D : UIElement, IInputSubtreeHost, IInputCoordina
         if (ReferenceEquals(previous, context)) { return; }
         previous?.Relay.VerifyAccess();
         context?.Relay.VerifyAccess();
-        SceneSimulationContext2D scope = context ?? previous!;
-        scope.BeginTreeChange();
+        SceneSimulationContext2D treeChangeOwner = context ?? previous!;
+        treeChangeOwner.BeginTreeChange();
         List<Exception>? failures = null;
         try
         {
-            if (this is ISceneSpatialParticipant2D oldItems) { previous?.Unregister(oldItems); }
+            ISceneSpatialParticipant2D? spatialParticipant = this as ISceneSpatialParticipant2D;
+            if (spatialParticipant is not null) { previous?.Unregister(spatialParticipant); }
             if (previous?.IsHeadless == true)
             {
                 try { DetachDataLifecycle(); }
@@ -88,14 +92,14 @@ public abstract class SceneNode2D : UIElement, IInputSubtreeHost, IInputCoordina
                 try { AttachDataLifecycle(); }
                 catch (Exception failure) { (failures ??= []).Add(failure); }
             }
-            foreach (SceneNode2D child in LogicalChildren.OfType<SceneNode2D>().ToArray())
+            foreach (SceneNode2D child in EnumerateSceneChildren().ToArray())
             {
                 try { child.AttachSimulationContext(context); }
                 catch (Exception failure) { (failures ??= []).Add(failure); }
             }
-            if (this is ISceneSpatialParticipant2D newItems) { context?.Register(newItems); }
+            if (spatialParticipant is not null) { context?.Register(spatialParticipant); }
         }
-        finally { scope.EndTreeChange(); }
+        finally { treeChangeOwner.EndTreeChange(); }
         if (failures is not null) { throw new AggregateException(failures); }
     }
 
@@ -161,7 +165,7 @@ public abstract class SceneNode2D : UIElement, IInputSubtreeHost, IInputCoordina
     {
         if (!UIElementVisibility.ParticipatesInRendering(this) || Opacity <= 0) { return; }
         CheckPrismPresentation(context);
-        foreach (SceneNode2D child in LogicalChildren.OfType<SceneNode2D>()) { child.CheckPresentation(context); }
+        foreach (SceneNode2D child in EnumerateSceneChildren()) { child.CheckPresentation(context); }
     }
 
     internal void CheckPrismPresentation(ScenePresentationContext2D context)
@@ -198,7 +202,7 @@ public abstract class SceneNode2D : UIElement, IInputSubtreeHost, IInputCoordina
     internal virtual void ReleaseRenderCaches()
     {
         ReleaseImageResources();
-        foreach (SceneNode2D child in LogicalChildren.OfType<SceneNode2D>())
+        foreach (SceneNode2D child in EnumerateSceneChildren())
         {
             child.ReleaseRenderCaches();
         }
@@ -221,8 +225,7 @@ public abstract class SceneNode2D : UIElement, IInputSubtreeHost, IInputCoordina
     internal virtual bool ParticipatesInInputRoute => true;
 
     IEnumerable<UIElement> IInputSubtreeHost.GetInputSubtreeChildren() =>
-        LogicalChildren
-            .OfType<SceneNode2D>()
+        EnumerateSceneChildren()
             .Where(static child => child.ParticipatesInInputRoute);
 
     LayoutRect IInputCoordinateSpace.GetRootBounds()
