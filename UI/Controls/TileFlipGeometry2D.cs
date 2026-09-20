@@ -5,6 +5,20 @@ namespace Cerneala.UI.Controls;
 
 internal static class TileFlipGeometry2D
 {
+    internal static TileCoordinate2D GetCellCoordinate(TileChunk2D chunk, int index) =>
+        new(chunk.Origin.X + index % chunk.Width, chunk.Origin.Y + index / chunk.Width);
+
+    internal static DrawRect GetCellDestination(TileCoordinate2D coordinate, DrawSize size) =>
+        new(coordinate.X * size.Width, coordinate.Y * size.Height, size.Width, size.Height);
+
+    internal static Matrix3x2 GetCellTransform(
+        TileCoordinate2D coordinate,
+        TileFlip2D flip,
+        DrawSize size) =>
+        Transform(flip, size) * Matrix3x2.CreateTranslation(
+            coordinate.X * size.Width,
+            coordinate.Y * size.Height);
+
     internal static Matrix3x2 Transform(TileFlip2D flip, DrawSize size)
     {
         Matrix3x2 transform = (flip & TileFlip2D.Diagonal) != 0

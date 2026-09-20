@@ -130,6 +130,19 @@ public sealed class TileColliderDescriptor2D
         _ => throw new InvalidOperationException("The descriptor shape was not validated.")
     };
 
+    internal static bool AreSemanticallyEqual(
+        TileColliderDescriptor2D? first,
+        TileColliderDescriptor2D? second) =>
+        ReferenceEquals(first, second) || first is not null && second is not null &&
+        first.Shape == second.Shape && first.LocalTransform == second.LocalTransform &&
+        first.Width == second.Width && first.Height == second.Height && first.Radius == second.Radius &&
+        string.Equals(first.Points, second.Points, StringComparison.Ordinal) &&
+        first.OffsetX == second.OffsetX && first.OffsetY == second.OffsetY &&
+        first.CollisionLayer == second.CollisionLayer && first.CollisionMask == second.CollisionMask &&
+        first.IsTrigger == second.IsTrigger &&
+        string.Equals(first.DebugIdentity, second.DebugIdentity, StringComparison.Ordinal) &&
+        HaveEqualProperties(first.Properties, second.Properties);
+
     internal void ValidateGeometry(Matrix3x2 placement)
     {
         try
@@ -148,5 +161,17 @@ public sealed class TileColliderDescriptor2D
         IReadOnlyList<Vector2> vertices = Scene2DModelValidator.ParseShapePoints(points, 2, 2);
         SegmentCollider2D.ValidateEndpoints(vertices[0], vertices[1]);
         return vertices;
+    }
+
+    private static bool HaveEqualProperties(
+        IReadOnlyDictionary<string, object?> first,
+        IReadOnlyDictionary<string, object?> second)
+    {
+        if (first.Count != second.Count) { return false; }
+        foreach ((string key, object? value) in first)
+        {
+            if (!second.TryGetValue(key, out object? other) || !Equals(value, other)) { return false; }
+        }
+        return true;
     }
 }

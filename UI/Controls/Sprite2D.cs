@@ -336,16 +336,18 @@ public sealed class Sprite2D : SceneNode2D
         float sourceHeight = frame?.Height ?? SourceHeight;
         float width = float.IsNaN(Width) ? sourceWidth : Width;
         float height = float.IsNaN(Height) ? sourceHeight : Height;
-        if (float.IsNaN(width) || float.IsNaN(height) ||
-            Origin.X != 0 && float.IsNaN(sourceWidth) || Origin.Y != 0 && float.IsNaN(sourceHeight))
+        DrawPoint origin = Origin;
+        bool needsUnknownSourceWidth = origin.X != 0 && float.IsNaN(sourceWidth);
+        bool needsUnknownSourceHeight = origin.Y != 0 && float.IsNaN(sourceHeight);
+        if (float.IsNaN(width) || float.IsNaN(height) || needsUnknownSourceWidth || needsUnknownSourceHeight)
         {
             // Unknown natural dimensions cannot prove that an image is outside
             // the camera. Spatial SceneItems metadata can still exclude its
             // entire object without decoding any of its images.
             return SceneBounds2D.Unknown;
         }
-        float originX = Origin.X == 0 ? 0 : Origin.X * width / sourceWidth;
-        float originY = Origin.Y == 0 ? 0 : Origin.Y * height / sourceHeight;
+        float originX = origin.X == 0 ? 0 : origin.X * width / sourceWidth;
+        float originY = origin.Y == 0 ? 0 : origin.Y * height / sourceHeight;
         return SceneBounds2D.Known(new(-originX, -originY, width, height));
     }
 
@@ -386,15 +388,16 @@ public sealed class Sprite2D : SceneNode2D
         {
             SceneGeometry2D.FindRootScene(this)?.NotifyCollisionMutation(this, SceneCollisionMutationKind.Participation);
         }
-        if (ReferenceEquals(args.Property, AnimationsProperty) ||
+
+        bool animationSelectionChanged =
+            ReferenceEquals(args.Property, AnimationsProperty) ||
             ReferenceEquals(args.Property, AnimationStateProperty) ||
-            ReferenceEquals(args.Property, AnimationStateChangeModeProperty))
+            ReferenceEquals(args.Property, AnimationStateChangeModeProperty);
+        if (animationSelectionChanged)
         {
             animationPlayback.Synchronize(Animations, AnimationState, AnimationStateChangeMode);
         }
-        if (ReferenceEquals(args.Property, AnimationsProperty) ||
-            ReferenceEquals(args.Property, AnimationStateProperty) ||
-            ReferenceEquals(args.Property, AnimationStateChangeModeProperty) ||
+        if (animationSelectionChanged ||
             ReferenceEquals(args.Property, AnimationPlaybackRateProperty) ||
             ReferenceEquals(args.Property, IsAnimationPausedProperty))
         {

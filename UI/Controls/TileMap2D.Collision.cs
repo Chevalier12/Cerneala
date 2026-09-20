@@ -76,8 +76,9 @@ public sealed partial class TileMap2D
                 for (int localY = 0; localY < chunk.Height; localY++)
                 for (int localX = 0; localX < chunk.Width;)
                 {
-                    TileCoordinate2D coordinate = new(chunk.Origin.X + localX, chunk.Origin.Y + localY);
-                    TileCell2D cell = chunk.Tiles[localY * chunk.Width + localX];
+                    int index = localY * chunk.Width + localX;
+                    TileCoordinate2D coordinate = TileFlipGeometry2D.GetCellCoordinate(chunk, index);
+                    TileCell2D cell = chunk.Tiles[index];
                     if (cell.TileId == 0) { localX++; continue; }
                     data.TryResolveTile(cell.TileId, out _, out TileDefinition2D? definition);
                     TileColliderDescriptor2D? descriptor = definition?.Collider;
@@ -99,8 +100,8 @@ public sealed partial class TileMap2D
                     }
                     else
                     {
-                        AddCollider(new(descriptor, this, TileFlipGeometry2D.Transform(cell.Flip, catalog.TileSize) *
-                            Matrix3x2.CreateTranslation(coordinate.X * catalog.TileSize.Width, coordinate.Y * catalog.TileSize.Height)));
+                        AddCollider(new(descriptor, this,
+                            TileFlipGeometry2D.GetCellTransform(coordinate, cell.Flip, catalog.TileSize)));
                         localX++;
                     }
                 }
@@ -129,7 +130,7 @@ public sealed partial class TileMap2D
         TileCell2D cell = chunk.Tiles[y * chunk.Width + x];
         if (cell.TileId != 0 && data.TryResolveTile(cell.TileId, out _, out definition) &&
             definition?.Collider is TileColliderDescriptor2D collider &&
-            IsFullCellBox(collider, tileSize) && AreSemanticallyEqual(expected, collider)) { return true; }
+            IsFullCellBox(collider, tileSize) && TileColliderDescriptor2D.AreSemanticallyEqual(expected, collider)) { return true; }
         definition = null;
         return false;
     }
@@ -137,26 +138,6 @@ public sealed partial class TileMap2D
     private static bool IsFullCellBox(TileColliderDescriptor2D descriptor, DrawSize tileSize) =>
         descriptor.Shape == TileColliderShape2D.Box && descriptor.LocalTransform == Matrix3x2.Identity &&
         descriptor.OffsetX == 0 && descriptor.OffsetY == 0 && descriptor.Width == tileSize.Width && descriptor.Height == tileSize.Height;
-
-    private static bool AreSemanticallyEqual(TileColliderDescriptor2D? first, TileColliderDescriptor2D? second) =>
-        ReferenceEquals(first, second) || first is not null && second is not null &&
-        first.Shape == second.Shape && first.LocalTransform == second.LocalTransform &&
-        first.Width == second.Width && first.Height == second.Height && first.Radius == second.Radius &&
-        string.Equals(first.Points, second.Points, StringComparison.Ordinal) &&
-        first.OffsetX == second.OffsetX && first.OffsetY == second.OffsetY &&
-        first.CollisionLayer == second.CollisionLayer && first.CollisionMask == second.CollisionMask &&
-        first.IsTrigger == second.IsTrigger && string.Equals(first.DebugIdentity, second.DebugIdentity, StringComparison.Ordinal) &&
-        HaveEqualProperties(first.Properties, second.Properties);
-
-    private static bool HaveEqualProperties(IReadOnlyDictionary<string, object?> first, IReadOnlyDictionary<string, object?> second)
-    {
-        if (first.Count != second.Count) { return false; }
-        foreach ((string key, object? value) in first)
-        {
-            if (!second.TryGetValue(key, out object? other) || !Equals(value, other)) { return false; }
-        }
-        return true;
-    }
 
     private void RemoveCollisionChunk(TileCollisionChunkState state) => RemoveCollisionNodes(state.Colliders);
 
@@ -197,7 +178,8 @@ public sealed partial class TileMap2D
             if (!ReferenceEquals(Resident, current) || tileSize != catalog.TileSize || visible != catalog.IsVisible) { return false; }
             foreach ((int id, TileColliderDescriptor2D? descriptor) in dependencies)
             {
-                if (!current.Payload.Value.TryResolveTile(id, out _, out TileDefinition2D? definition) || !AreSemanticallyEqual(descriptor, definition?.Collider)) { return false; }
+                if (!current.Payload.Value.TryResolveTile(id, out _, out TileDefinition2D? definition) ||
+                    !TileColliderDescriptor2D.AreSemanticallyEqual(descriptor, definition?.Collider)) { return false; }
             }
             return true;
         }

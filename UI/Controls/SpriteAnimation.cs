@@ -189,8 +189,7 @@ public enum SpriteAnimationStateChangeMode
 internal readonly record struct SpriteAnimationSample(
     SpriteAnimationFrame Frame,
     int FrameIndex,
-    bool IsCompleted,
-    TimeSpan ElapsedInClip);
+    bool IsCompleted);
 
 internal static class SpriteAnimationSampler
 {
@@ -219,8 +218,7 @@ internal static class SpriteAnimationSampler
         return new SpriteAnimationSample(
             clip.Frames[frameIndex],
             frameIndex,
-            completed,
-            TimeSpan.FromTicks(clipTicks));
+            completed);
     }
 
     internal static long ScaleTicks(long elapsedTicks, double playbackRate)
@@ -266,12 +264,11 @@ internal sealed class SpriteAnimationPlayback
     private SpriteAnimationClip? clip;
     private long elapsedTicks;
 
-    internal bool Synchronize(
+    internal void Synchronize(
         SpriteAnimationSet? nextAnimations,
         string? nextState,
         SpriteAnimationStateChangeMode stateChangeMode)
     {
-        SpriteAnimationFrame? previousFrame = CurrentFrame;
         if (!ReferenceEquals(animations, nextAnimations))
         {
             animations = nextAnimations;
@@ -295,8 +292,6 @@ internal sealed class SpriteAnimationPlayback
                     ? saved
                     : 0;
         }
-
-        return !FramesHaveSamePresentation(previousFrame, CurrentFrame);
     }
 
     internal bool Restart()

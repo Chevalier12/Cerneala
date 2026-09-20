@@ -27,7 +27,7 @@ public readonly record struct TileCellKey2D
     }
 
     public TileCellKey2D(string mapId, int x, int y)
-        : this(ValidateMapId(mapId), new TileCoordinate2D(x, y))
+        : this(mapId, new TileCoordinate2D(x, y))
     {
     }
 
@@ -315,7 +315,6 @@ public sealed class TileMap2DModel
             }
         }
         Tiles = Array.AsReadOnly(copied);
-        PlacementImages = copied.Select(static tile => tile.Image).Distinct().ToArray();
         tileSets = Array.AsReadOnly(Array.Empty<TileSet2D>());
         chunks = Array.AsReadOnly(Array.Empty<TileChunk2D>());
         tileLookup = [];
@@ -423,13 +422,9 @@ public sealed class TileMap2DModel
 
     public IReadOnlyDictionary<string, object?> Properties { get; }
 
-    internal IReadOnlyList<ImageReference> PlacementImages { get; } = Array.Empty<ImageReference>();
-
     internal bool IsFreePlacement { get; }
 
     internal long ExpandedColliderCount { get; }
-
-    internal int TileDefinitionCount => tileLookup.Count;
 
     public bool TryGetCell(TileCoordinate2D coordinate, out TileCell2D cell)
     {
@@ -579,9 +574,9 @@ public sealed class TileMap2DModel
                 }
                 if (definition.Collider is TileColliderDescriptor2D collider)
                 {
-                    Matrix3x2 placement = TileFlipGeometry2D.Transform(cell.Flip, tileSize) * Matrix3x2.CreateTranslation(
-                        (chunk.Origin.X + index % chunk.Width) * tileSize.Width + offset.X,
-                        (chunk.Origin.Y + index / chunk.Width) * tileSize.Height + offset.Y);
+                    TileCoordinate2D coordinate = TileFlipGeometry2D.GetCellCoordinate(chunk, index);
+                    Matrix3x2 placement = TileFlipGeometry2D.GetCellTransform(coordinate, cell.Flip, tileSize) *
+                        Matrix3x2.CreateTranslation(offset.X, offset.Y);
                     collider.ValidateGeometry(placement);
                 }
             }

@@ -161,9 +161,9 @@ public sealed partial class TileMap2D
         List<TileAtlasBatchBuilder> batches = [];
         List<TileAtlasDependencyStamp> dependencies = [];
         int staticTileCount = 0;
+        TileChunk2D? grid = data.Grid;
         for (int index = 0; index < chunk.Count; index++)
         {
-            TileChunk2D? grid = data.Grid;
             ImageReference imageKey;
             DrawRect destination, source;
             TileFlip2D flip;
@@ -172,10 +172,9 @@ public sealed partial class TileMap2D
                 TileCell2D cell = grid.Tiles[index];
                 if (cell.TileId == 0 || !data.TryResolveTile(cell.TileId, out TileSet2D? tileSet, out TileDefinition2D? definition) ||
                     tileSet is null || definition is null) { continue; }
-                TileCoordinate2D coordinate = new(grid.Origin.X + index % grid.Width, grid.Origin.Y + index / grid.Width);
+                TileCoordinate2D coordinate = TileFlipGeometry2D.GetCellCoordinate(grid, index);
                 imageKey = data.GetTileSetImage(tileSet.Id);
-                destination = new(coordinate.X * catalog.TileSize.Width, coordinate.Y * catalog.TileSize.Height,
-                    catalog.TileSize.Width, catalog.TileSize.Height);
+                destination = TileFlipGeometry2D.GetCellDestination(coordinate, catalog.TileSize);
                 source = definition.SourceRect;
                 flip = cell.Flip;
             }

@@ -247,8 +247,8 @@ public sealed class TileMapCatalog2D
                 }
                 if (definition!.Collider is not TileColliderDescriptor2D descriptor) { continue; }
                 colliders++;
-                Matrix3x2 placement = TileFlipGeometry2D.Transform(cell.Flip, TileSize) * Matrix3x2.CreateTranslation(
-                    (chunk.Origin.X + index % chunk.Width) * TileSize.Width, (chunk.Origin.Y + index / chunk.Width) * TileSize.Height);
+                TileCoordinate2D coordinate = TileFlipGeometry2D.GetCellCoordinate(chunk, index);
+                Matrix3x2 placement = TileFlipGeometry2D.GetCellTransform(coordinate, cell.Flip, TileSize);
                 descriptor.ValidateGeometry(placement * Matrix3x2.CreateTranslation(Offset.X, Offset.Y));
                 collisionBounds = Union(collisionBounds, SceneGeometry2D.GetColliderBounds(descriptor, placement));
             }

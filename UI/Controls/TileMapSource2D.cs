@@ -123,78 +123,11 @@ public sealed class TileMapSource2D : ISceneSpatialSource2D<TileMapChunkData2D>
         Dictionary<string, TileMapChunkData2D> payloads = new(StringComparer.Ordinal);
         if (model.IsFreePlacement)
         {
-            // Consecutive ranges preserve painter order even when their visual
-            // bounds overlap. This adapter remains an in-memory backing store.
-            const int placementChunkSize = 256;
-            for (int start = 0; start < model.Tiles.Count; start += placementChunkSize)
-            {
-                TileMapChunkData2D data = new(model.Tiles.Skip(start).Take(placementChunkSize));
-                DrawRect? visual = null, collision = null;
-                int colliders = 0;
-                foreach (Tile tile in data.Placements)
-                {
-                    DrawSize size = default;
-                    bool known = tile.Image.DirectImage is IDrawImage;
-                    if (tile.Image.DirectImage is IDrawImage direct) { size = new(direct.Width, direct.Height); }
-                    else if (imageSizes is not null) { known = imageSizes.TryGetValue(tile.Image.ResourceId!.Value.Key, out size); }
-                    if (!known && (float.IsNaN(tile.Width) || float.IsNaN(tile.Height)))
-                    {
-                        throw new ArgumentException($"Natural-size placement requires image metadata for '{tile.Image.ResourceId?.Key}'.", nameof(imageSizes));
-                    }
-                    visual = TileMapCatalog2D.Union(visual, tile.GetDestination(size));
-                    if (tile.Collider is not TileColliderDescriptor2D descriptor) { continue; }
-                    colliders++;
-                    collision = TileMapCatalog2D.Union(collision,
-                        SceneGeometry2D.GetColliderBounds(descriptor, Matrix3x2.CreateTranslation(tile.X, tile.Y)));
-                }
-                string id = FormattableString.Invariant($"placements:{start}");
-                infos.Add(new(new SceneSpatialEntry2D(id, visual!.Value, collision, version: model.Version),
-                    data.Placements.Count, data.Placements.Select(static tile => tile.Image).Distinct(), colliders,
-                    dataResidencyBytes: 0));
-                payloads.Add(id, data);
-            }
+            AddFreePlacementChunks(model, imageSizes, infos, payloads);
         }
         else
         {
-            foreach (TileChunk2D chunk in model.Chunks)
-            {
-                DrawRect? collision = null;
-                int colliders = 0;
-                HashSet<int> ids = [];
-                Dictionary<TileSet2D, List<TileDefinition2D>> usedSets = [];
-                for (int index = 0; index < chunk.Tiles.Count; index++)
-                {
-                    TileCell2D cell = chunk.Tiles[index];
-                    if (cell.TileId == 0) { continue; }
-                    model.TryResolveTile(cell.TileId, out TileSet2D? set, out TileDefinition2D? definition);
-                    if (ids.Add(cell.TileId))
-                    {
-                        if (!usedSets.TryGetValue(set!, out List<TileDefinition2D>? definitions))
-                        {
-                            definitions = [];
-                            usedSets.Add(set!, definitions);
-                        }
-                        definitions.Add(definition!);
-                    }
-                    if (definition!.Collider is not TileColliderDescriptor2D descriptor) { continue; }
-                    colliders++;
-                    Matrix3x2 placement = TileFlipGeometry2D.Transform(cell.Flip, model.TileSize) * Matrix3x2.CreateTranslation(
-                        (chunk.Origin.X + index % chunk.Width) * model.TileSize.Width,
-                        (chunk.Origin.Y + index / chunk.Width) * model.TileSize.Height);
-                    collision = TileMapCatalog2D.Union(collision, SceneGeometry2D.GetColliderBounds(descriptor, placement));
-                }
-                TileMapBounds2D cells = new(chunk.Origin.X, chunk.Origin.Y, chunk.Width, chunk.Height);
-                string id = FormattableString.Invariant($"grid:{cells.X}:{cells.Y}:{cells.Width}:{cells.Height}");
-                List<TileSet2D> palette = [];
-                foreach ((TileSet2D set, List<TileDefinition2D> definitions) in usedSets)
-                {
-                    palette.Add(new(set.Id, set.AtlasResourceId, definitions, set.Version, set.Properties));
-                }
-                TileMapChunkData2D data = new(chunk, palette);
-                infos.Add(new(new SceneSpatialEntry2D(id, TileMapCatalog2D.GetGridBounds(model.TileSize, cells), collision, version: chunk.Version),
-                    cells, ids, data.Images.Distinct(), colliders, dataResidencyBytes: 0));
-                payloads.Add(id, data);
-            }
+            AddGridChunks(model, infos, payloads);
         }
         TileMapCatalog2D snapshot = new(model.Id, infos, model.IsFreePlacement ? null : model.TileSize,
             model.Bounds, model.Order, model.IsVisible, model.Offset, model.Opacity, model.Tint, model.Version, imageSizes);
@@ -202,5 +135,88 @@ public sealed class TileMapSource2D : ISceneSpatialSource2D<TileMapChunkData2D>
         // placement arrays and opaque properties. An acquisition does not create
         // or extend their residency; zero is not a claim that the source uses no RAM.
         return new(snapshot, (_, info, _) => ValueTask.FromResult(new SceneSpatialLease2D<TileMapChunkData2D>(payloads[info.Spatial.Id])));
+    }
+
+    private static void AddFreePlacementChunks(
+        TileMap2DModel model,
+        IReadOnlyDictionary<string, DrawSize>? imageSizes,
+        List<TileMapChunkInfo2D> infos,
+        Dictionary<string, TileMapChunkData2D> payloads)
+    {
+        // Consecutive ranges preserve painter order even when their visual
+        // bounds overlap. This adapter remains an in-memory backing store.
+        const int placementChunkSize = 256;
+        for (int start = 0; start < model.Tiles.Count; start += placementChunkSize)
+        {
+            TileMapChunkData2D data = new(model.Tiles.Skip(start).Take(placementChunkSize));
+            DrawRect? visual = null, collision = null;
+            int colliders = 0;
+            foreach (Tile tile in data.Placements)
+            {
+                DrawSize size = default;
+                bool known = tile.Image.DirectImage is IDrawImage;
+                if (tile.Image.DirectImage is IDrawImage direct) { size = new(direct.Width, direct.Height); }
+                else if (imageSizes is not null) { known = imageSizes.TryGetValue(tile.Image.ResourceId!.Value.Key, out size); }
+                if (!known && (float.IsNaN(tile.Width) || float.IsNaN(tile.Height)))
+                {
+                    throw new ArgumentException($"Natural-size placement requires image metadata for '{tile.Image.ResourceId?.Key}'.", nameof(imageSizes));
+                }
+                visual = TileMapCatalog2D.Union(visual, tile.GetDestination(size));
+                if (tile.Collider is not TileColliderDescriptor2D descriptor) { continue; }
+                colliders++;
+                collision = TileMapCatalog2D.Union(collision,
+                    SceneGeometry2D.GetColliderBounds(descriptor, Matrix3x2.CreateTranslation(tile.X, tile.Y)));
+            }
+            string id = FormattableString.Invariant($"placements:{start}");
+            infos.Add(new(new SceneSpatialEntry2D(id, visual!.Value, collision, version: model.Version),
+                data.Placements.Count, data.Placements.Select(static tile => tile.Image).Distinct(), colliders,
+                dataResidencyBytes: 0));
+            payloads.Add(id, data);
+        }
+    }
+
+    private static void AddGridChunks(
+        TileMap2DModel model,
+        List<TileMapChunkInfo2D> infos,
+        Dictionary<string, TileMapChunkData2D> payloads)
+    {
+        foreach (TileChunk2D chunk in model.Chunks)
+        {
+            DrawRect? collision = null;
+            int colliders = 0;
+            HashSet<int> ids = [];
+            Dictionary<TileSet2D, List<TileDefinition2D>> usedSets = [];
+            for (int index = 0; index < chunk.Tiles.Count; index++)
+            {
+                TileCell2D cell = chunk.Tiles[index];
+                if (cell.TileId == 0) { continue; }
+                model.TryResolveTile(cell.TileId, out TileSet2D? set, out TileDefinition2D? definition);
+                if (ids.Add(cell.TileId))
+                {
+                    if (!usedSets.TryGetValue(set!, out List<TileDefinition2D>? definitions))
+                    {
+                        definitions = [];
+                        usedSets.Add(set!, definitions);
+                    }
+                    definitions.Add(definition!);
+                }
+                if (definition!.Collider is not TileColliderDescriptor2D descriptor) { continue; }
+                colliders++;
+                TileCoordinate2D coordinate = TileFlipGeometry2D.GetCellCoordinate(chunk, index);
+                Matrix3x2 placement = TileFlipGeometry2D.GetCellTransform(coordinate, cell.Flip, model.TileSize);
+                collision = TileMapCatalog2D.Union(collision, SceneGeometry2D.GetColliderBounds(descriptor, placement));
+            }
+            TileMapBounds2D cells = new(chunk.Origin.X, chunk.Origin.Y, chunk.Width, chunk.Height);
+            string id = FormattableString.Invariant($"grid:{cells.X}:{cells.Y}:{cells.Width}:{cells.Height}");
+            List<TileSet2D> palette = [];
+            foreach ((TileSet2D set, List<TileDefinition2D> definitions) in usedSets)
+            {
+                palette.Add(new(set.Id, set.AtlasResourceId, definitions, set.Version, set.Properties));
+            }
+            TileMapChunkData2D data = new(chunk, palette);
+            infos.Add(new(new SceneSpatialEntry2D(id, TileMapCatalog2D.GetGridBounds(model.TileSize, cells), collision, version: chunk.Version),
+                cells, ids, data.Images.Distinct(), colliders, dataResidencyBytes: 0));
+            payloads.Add(id, data);
+        }
     }
 }

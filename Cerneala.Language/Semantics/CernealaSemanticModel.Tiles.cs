@@ -94,8 +94,7 @@ internal sealed partial class CernealaSemanticModel
                     AddDiagnostic("CERNEALAUI004", attribute.ValueToken.Span, type.Name, name, value);
                 }
             }
-            else if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out float number) ||
-                float.IsNaN(number) || float.IsInfinity(number) || Math.Abs(number) > 2_000_000_000f ||
+            else if (!TryParseTileFloat(value, out float number) ||
                 (name is "Width" or "Height") && number < 0 || imageSize && number <= 0)
             {
                 AddDiagnostic("CERNEALAUI004", attribute.ValueToken.Span, type.Name, name, value);
@@ -131,10 +130,8 @@ internal sealed partial class CernealaSemanticModel
                 AddShapeDiagnostic((width ?? height)!.NameToken.Span, "Tile image metadata requires both ImageWidth and ImageHeight.");
                 continue;
             }
-            if (!float.TryParse(Unquote(width.ValueToken.Text), NumberStyles.Float, CultureInfo.InvariantCulture, out float w) ||
-                !float.TryParse(Unquote(height.ValueToken.Text), NumberStyles.Float, CultureInfo.InvariantCulture, out float h) ||
-                float.IsNaN(w) || float.IsInfinity(w) || w <= 0 || w > 2_000_000_000f ||
-                float.IsNaN(h) || float.IsInfinity(h) || h <= 0 || h > 2_000_000_000f) { continue; }
+            if (!TryParseTileFloat(Unquote(width.ValueToken.Text), out float w) || w <= 0 ||
+                !TryParseTileFloat(Unquote(height.ValueToken.Text), out float h) || h <= 0) { continue; }
             AttributeSyntax? image = FindAttribute(tile, "Image");
             if (image is null) { continue; }
             string reference = Unquote(image.ValueToken.Text);
@@ -179,8 +176,7 @@ internal sealed partial class CernealaSemanticModel
                 "IsTrigger" => bool.TryParse(value, out _),
                 "CollisionLayer" or "CollisionMask" => uint.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
                 "Points" => !string.IsNullOrWhiteSpace(value) && value.IndexOf('$') < 0,
-                _ => float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out float number) &&
-                    !float.IsNaN(number) && !float.IsInfinity(number) && Math.Abs(number) <= 2_000_000_000f &&
+                _ => TryParseTileFloat(value, out float number) &&
                     (name is not ("Width" or "Height" or "Radius") || number > 0)
             };
             if (!valid) { AddDiagnostic("CERNEALAUI004", attribute.ValueToken.Span, type.Name, name, value); }
@@ -188,4 +184,8 @@ internal sealed partial class CernealaSemanticModel
                 member.ValueTypeMetadataName, attribute.NameToken.Span, member.ValueType, member, value, isWritable: false));
         }
     }
+
+    private static bool TryParseTileFloat(string value, out float number) =>
+        float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out number) &&
+        !float.IsNaN(number) && !float.IsInfinity(number) && Math.Abs(number) <= 2_000_000_000f;
 }

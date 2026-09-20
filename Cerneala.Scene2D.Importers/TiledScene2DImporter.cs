@@ -413,7 +413,14 @@ public static class TiledScene2DImporter
         private float Opacity(JsonElement value)
         { float opacity = context.Number(value, "opacity", 1); if (opacity < 0 || opacity > 1) { context.Fail("SCN2D014", "Opacity must be in [0,1]."); } return opacity; }
         private Color ParseColor(string value)
-        { if (value.Length is not (7 or 9) || !value.StartsWith('#') || !Color.TryParse(value, out Color color)) { context.Fail("SCN2D016", "Tiled colors require #RRGGBB or #AARRGGBB."); } Color.TryParse(value, out Color parsed); return parsed; }
+        {
+            Color parsed = default;
+            if (value.Length is not (7 or 9) || !value.StartsWith('#') || !Color.TryParse(value, out parsed))
+            {
+                context.Fail("SCN2D016", "Tiled colors require #RRGGBB or #AARRGGBB.");
+            }
+            return parsed;
+        }
         private static Color Multiply(Color left, Color right) => new(
             (byte)((left.R * right.R + 127) / 255), (byte)((left.G * right.G + 127) / 255),
             (byte)((left.B * right.B + 127) / 255), (byte)((left.A * right.A + 127) / 255));
