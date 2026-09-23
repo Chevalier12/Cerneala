@@ -8,7 +8,6 @@ param(
         ".vs",
         ".idea",
         ".vscode",
-        ".roslyn-index",
         "bin",
         "obj",
         "node_modules",

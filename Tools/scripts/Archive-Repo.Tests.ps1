@@ -23,7 +23,6 @@ try {
     New-Item -ItemType Directory -Path (Join-Path $repoRoot 'obj/Debug') | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $repoRoot 'artifacts/archives') | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $repoRoot '.git/objects') | Out-Null
-    New-Item -ItemType Directory -Path (Join-Path $repoRoot '.roslyn-index') | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $repoRoot '.vscode') | Out-Null
 
     Set-Content -LiteralPath (Join-Path $repoRoot 'src/Keep.cs') -Value 'public sealed class Keep {}'
@@ -32,7 +31,6 @@ try {
     Set-Content -LiteralPath (Join-Path $repoRoot 'obj/Debug/Cerneala.g.cs') -Value 'generated'
     Set-Content -LiteralPath (Join-Path $repoRoot 'artifacts/archives/old.zip') -Value 'old'
     Set-Content -LiteralPath (Join-Path $repoRoot '.git/config') -Value 'git'
-    Set-Content -LiteralPath (Join-Path $repoRoot '.roslyn-index/index.json') -Value '{}'
     Set-Content -LiteralPath (Join-Path $repoRoot '.vscode/settings.json') -Value '{}'
     Set-Content -LiteralPath (Join-Path $repoRoot 'local.user') -Value 'user'
 
@@ -52,7 +50,6 @@ try {
         Assert-True (-not ($entries -like 'obj/*')) 'obj output was archived.'
         Assert-True (-not ($entries -like 'artifacts/*')) 'artifacts output was archived.'
         Assert-True (-not ($entries -like '.git/*')) '.git metadata was archived.'
-        Assert-True (-not ($entries -like '.roslyn-index/*')) 'Roslyn index was archived.'
         Assert-True (-not ($entries -like '.vscode/*')) 'Editor settings were archived.'
         Assert-True (-not ($entries -contains 'local.user')) 'User-local file was archived.'
     }

@@ -10,7 +10,6 @@ $ErrorActionPreference = 'Stop'
 $excludedDirectories = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
 @(
     '.git',
-    '.roslyn-index',
     '.vs',
     '.idea',
     '.vscode',
