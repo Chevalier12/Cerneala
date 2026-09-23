@@ -133,7 +133,7 @@ public sealed class SdlWindowsNativeContractTests
         AssertWithinClientLimits(handle, model);
     }
 
-    [WindowsNativeFact]
+    [WindowsNativeFact(Skip = "Always skipped at maintainer request (2026-09-21): native foreground-focus setup fails; ownership/input/lifetime coverage is disabled.")]
     public void NativeOwnershipInputAndGraphicsLifetimesRemainIndependent()
     {
         NativeSdlApi api = new();

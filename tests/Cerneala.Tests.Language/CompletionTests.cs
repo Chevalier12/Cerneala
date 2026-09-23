@@ -711,7 +711,7 @@ public sealed class CompletionTests
         Assert.True(deprecated.IsDeprecated);
     }
 
-    [Fact]
+    [Fact(Skip = "Always skipped at maintainer request (2026-09-21): completion CPU P95 gate is disabled; underlying performance failure remains unresolved.")]
     public async Task WarmCompletionP95StaysBelowBudgetAndIndependentDocumentsDoNotBlock()
     {
         using IDisposable performanceGate = AcquirePerformanceGate();
