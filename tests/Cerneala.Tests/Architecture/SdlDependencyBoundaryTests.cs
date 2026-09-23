@@ -1,3 +1,5 @@
+using System.Xml.Linq;
+
 namespace Cerneala.Tests.Architecture;
 
 public sealed class SdlDependencyBoundaryTests
@@ -43,8 +45,27 @@ public sealed class SdlDependencyBoundaryTests
         Assert.DoesNotContain("SDL3-CS.Linux", platformProject, StringComparison.Ordinal);
         Assert.DoesNotContain("SDL3-CS.MacOS", platformProject, StringComparison.Ordinal);
         Assert.Contains("Cerneala.Platforms.Sdl3.csproj", backendProject, StringComparison.Ordinal);
-        Assert.Contains("<Compile Remove=\"Cerneala.Platforms.Sdl3\\**\"", coreProject, StringComparison.Ordinal);
-        Assert.Contains("<Compile Remove=\"Cerneala.Backends.SdlGpu\\**\"", coreProject, StringComparison.Ordinal);
+
+        XDocument coreProjectDocument = XDocument.Parse(coreProject);
+        XElement coreProjectRoot = coreProjectDocument.Root
+            ?? throw new InvalidOperationException("Cerneala.csproj has no root element.");
+        XElement excludedDirectoriesProperty = coreProjectRoot
+            .Elements("PropertyGroup")
+            .Elements("_CernealaExcludedDirectories")
+            .Single();
+        string[] excludedDirectories = excludedDirectoriesProperty.Value.Split(
+            ';',
+            StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+        Assert.Contains(@"Cerneala.Platforms.Sdl3\**", excludedDirectories);
+        Assert.Contains(@"Cerneala.Backends.SdlGpu\**", excludedDirectories);
+        Assert.NotNull(coreProjectRoot
+            .Elements("ItemGroup")
+            .Elements("Compile")
+            .SingleOrDefault(element => string.Equals(
+                (string?)element.Attribute("Remove"),
+                "$(_CernealaExcludedDirectories)",
+                StringComparison.Ordinal)));
     }
 
     [Fact]
