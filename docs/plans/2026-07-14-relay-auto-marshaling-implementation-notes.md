@@ -3,9 +3,7 @@
 ## Stage 0 baseline
 
 - `FileTree.md` regenerated on 2026-07-14 before repository inspection.
-- Roslyn index: 1,936 documents, 27,843 symbols, 114,062 references, 0 index warnings.
 - Baseline suite: 1,769 runtime tests and 158 source-generator tests passed.
-- The first baseline attempt was blocked by a stale persistent RoslynRepoIndexer process holding `Cerneala.SourceGen.dll`; terminating that process and repeating the same command produced the green baseline above.
 - The focused RED run compiled 12 deterministic tests: 11 failed for the expected missing Relay contract, unguarded attached-property/Aspect mutation, and missing standalone `MotionGraph` constructor; the existing tree-mutation guard test already passed. No test uses `Thread.Sleep`.
 
 ## Thread ownership and frame order inventory
@@ -100,4 +98,4 @@ Direct `MotionThreadGuard` references exist in:
 - Conceptual hosting and markup-binding documentation now describes Relay ordering, coalesced CLR notifications, coherent source publication, direct UI mutation rejection, explicit collection dispatch, cancellation, exceptions, and synchronous-wait deadlocks.
 - `dotnet format`, the complete solution build, 1,844 runtime tests, and 158 source-generator tests passed. The 77 Relay-targeted tests passed, and the three 100,000-item stress/allocation tests passed three consecutive runs without sleeps.
 - The final Release benchmark run executed all 13 Relay cases and archived the raw BenchmarkDotNet reports, environment, allocations, Gen0 observations, throughput, baseline comparison, and interpretation under `benchmarks/results/2026-07-14-relay/`.
-- `FileTree.md` was regenerated. The final Roslyn index contains 1,995 documents, 28,964 symbols, and 118,213 references with zero warnings; `doctor` and `status` report a valid index with zero dirty files.
+- `FileTree.md` was regenerated.

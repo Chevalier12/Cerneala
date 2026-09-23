@@ -145,7 +145,7 @@ Probably changed files:
 ### Stage 0 - Baseline and characterization contracts
 
 - [x] Complete the `RepeatButton` plan and confirm that his tests are green.
-- [x] Generates `FileTree.md` and updates the RoslynIndexer index.
+- [x] Generates `FileTree.md`.
 - [x] Run the existing tests for `ScrollViewer`, `ScrollBar`, `Track`, `Thumb`, template lifecycle and layout scheduler.
 - [x] Add characterization tests for wheel, drag, track click, visibility policy and convergence `Auto`.
 - [x] Add characterization tests for the idle frame with no work remaining.
@@ -324,7 +324,6 @@ Tests stage 5:
 - [x] Update the API docs for `Control`, `ScrollViewer`, `ScrollBar`, `Track` and any new public type using the `writing-api-documentation` skill.
 - [x] Corrects in the same change the old sections that state that `ScrollBar` or `ScrollViewer` do not declare events.
 - [x] Updates `docs-site/documentation/manifest.json` for new or renamed pages. (It wasn't necessary: no public types, new API pages, or renamed pages appeared.)
-- [x] Reindexes after each code or project change.
 - [x] Run the targeted tests for controls, template lifecycle, markup and layout scheduler.
 - [x] Runs `dotnet test Cerneala.slnx`.
 - [x] Check the API public diff and compare it with the contract of this plan.

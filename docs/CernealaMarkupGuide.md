@@ -1262,7 +1262,8 @@ For application and developer-tool UI:
 
 ## 17. Repository workflow
 
-This repository requires RoslynIndexer for navigation.
+Read files directly and use `rg` / `rg --files` for text search and file discovery.
+Text matches do not establish symbol identity or complete semantic references.
 
 From the repository root:
 
@@ -1270,21 +1271,9 @@ From the repository root:
 .\Tools\scripts\New-FileTree.ps1
 ```
 
-Read `FileTree.md`, then use:
-
-```powershell
-dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- read .\path\to\File.cs
-```
-
-```powershell
-dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- search "SymbolOrText" --json
-```
-
-After code or project-file changes, refresh the index:
-
-```powershell
-dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- index .\Cerneala.slnx --json
-```
+Read `FileTree.md` before broad repository navigation. Read complete source files
+and the relevant ownership context before editing. Verify changes with the
+applicable build, test, and runtime gates.
 
 ## 18. Build and native visual validation
 

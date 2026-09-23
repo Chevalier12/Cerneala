@@ -49,7 +49,6 @@ The server must work on the unsaved buffer, load the project's C# context, cance
 - [x] Add a RED test that initializes the server, opens a `.crn`, applies incremental `didChange` and asks for diagnostics/completion.
 - [x] Defines declared capabilities exactly; the server does not announce a feature until the feature's protocol-level test is GREEN.
 - [x] Defines structured logging, trace levels and crash reports without default document content.
-- [x] Reindex the solution.
 
 **Gate Stage 0**
 
@@ -65,7 +64,6 @@ The server must work on the unsaved buffer, load the project's C# context, cance
 - [x] Cancel parse/bind/feature requests for stale versions and publish results only if the document version is still current.
 - [x] Manages standalone files with syntax-only support and a unique informational diagnosis regarding the lack of semantic project.
 - [x] Add tests for project reload, rename/delete, document in two projects, broken C# compilation and server restart.
-- [x] Reindex the solution.
 
 **Gate stage 1**
 
@@ -81,7 +79,6 @@ The server must work on the unsaved buffer, load the project's C# context, cance
 - [x] Add golden tests for all `CERNEALAUI*`, Motion and Prism and compare the LSP result with the source generator.
 - [x] Add character-by-character typing scenarios for opening/closing tag, attribute, binding, directive and template.
 - [x] Runs the repo corpus and asks for zero editor diagnostics for each document that compiles validly.
-- [x] Reindex the solution.
 
 **Gate stage 2**
 
@@ -100,7 +97,6 @@ The server must work on the unsaved buffer, load the project's C# context, cance
 - [x] Implements completion resolve with signature, declaring type, XML documentation, deprecation and source assembly without loading everything upfront.
 - [x] Implement signature help for directives/functions/specs/filter parameters with correct active parameter after incomplete edits.
 - [x] Add negative tests that demonstrate that impossible suggestions do not appear.
-- [x] Reindex the solution.
 
 **Gate stage 3**
 
@@ -116,7 +112,6 @@ The server must work on the unsaved buffer, load the project's C# context, cance
 - [x] Implement document highlights for declaration and usage in the current file.
 - [x] Allows renaming only when all references are resolved exactly and editors do not touch arbitrary text; explicitly refuse ambiguous cases.
 - [x] Add cross-file, cross-project, shadowing, duplicate names, generated companion and partially invalid documents tests.
-- [x] Reindex the solution.
 
 **Gate Stage 4**
 
@@ -132,7 +127,6 @@ The server must work on the unsaved buffer, load the project's C# context, cance
 - [x] Issue folding ranges for elements, resources, templates and directive blocks, keeping XML comments/regions.
 - [x] Issue selection ranges from token to expression, attribute, element and document.
 - [x] Add tests on mixed and incomplete documents.
-- [x] Reindex the solution.
 
 **Gate Stage 5**
 
@@ -147,7 +141,6 @@ The server must work on the unsaved buffer, load the project's C# context, cance
 - [x] Add code actions only for deterministic repairs: namespace alias missing, closing tag missing, typo with unique candidate, event handler companion and attribute/property-element conversion where valid.
 - [x] Add organize/fix-all only for independent diagnostics; refuse fix-all when edits overlap or change semantics.
 - [x] Add snapshot tests for real markup, comments, Motion, Prism and partial documents.
-- [x] Reindex the solution.
 
 **Gate stage 6**
 
@@ -161,7 +154,7 @@ The server must work on the unsaved buffer, load the project's C# context, cance
 - [x] Enforce latest-version wins, cache limits and cleanup at close/solution unload/shutdown.
 - [x] Establishes gates on documented hardware: diagnostics warm p95 under 200 ms, completion p95 under 100 ms, hover/navigation p95 under 100 ms and non-cancellable zero request over 500 ms.
 - [x] Check memory plateau after 1,000 open/change/close cycles and absence of child processes after shutdown/crash host.
-- [x] Runs `dotnet test .\tests\Cerneala.Tests.LanguageServer\Cerneala.Tests.LanguageServer.csproj`, `dotnet test .\Cerneala.slnx`, `git diff --check` and final reindexing.
+- [x] Runs `dotnet test .\tests\Cerneala.Tests.LanguageServer\Cerneala.Tests.LanguageServer.csproj`, `dotnet test .\Cerneala.slnx`, `git diff --check`.
 - [x] Documents protocol capabilities, logging, troubleshooting and syntax-only limitation for standalone files.
 
 **Gate stage 7**

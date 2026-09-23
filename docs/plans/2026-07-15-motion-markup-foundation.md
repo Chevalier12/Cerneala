@@ -46,7 +46,6 @@ Motion exhibits `MotionAnimationBuilder<T>`, `MotionPropertyBinding<T>` and typi
 - [x] Add RED tests for `retarget`, `holdOnComplete` and `debugName`; confirm through an API test that the generator does not need internal members.
 - [x] Establishes the minimum public overload of `MotionAnimationBuilder<T>` or the public bridge `GeneratedMarkup` that transmits `MotionPropertyStartOptions`, without duplicating the logic from `MotionPropertyBinding<T>`.
 - [x] Update API docs for any public member entered and run public API diff review.
-- [x] Reindex the solution after C# changes.
 
 **Gate Stage 0**
 
@@ -61,7 +60,6 @@ Motion exhibits `MotionAnimationBuilder<T>`, `MotionPropertyBinding<T>` and typi
 - [x] Parse durations `ms`/`s`, easing names and inline constructors `Tween(...)`/`Spring(...)` with diagnostics for the wrong token.
 - [x] Keep XML controls forbidden in execution bodies and keep non-Motion directives unchanged.
 - [x] Add recovery tests for braces, semicolons, quotes and unknown directives.
-- [x] Reindex the solution.
 
 **Gate stage 1**
 
@@ -77,7 +75,6 @@ Motion exhibits `MotionAnimationBuilder<T>`, `MotionPropertyBinding<T>` and typi
 - [x] Resolve `current` to the current Motion visual value, not to a stale reading of the base value.
 - [x] Validates that each property in `@from` exists in `@to`; `@from` omitted starts from the current visual value.
 - [x] Validate options exactly at `Restart|PreserveProgress`, Boolean and string; reject `conflict`, channel and reduced-motion options invented.
-- [x] Reindex the solution.
 
 **Gate stage 2**
 
@@ -93,7 +90,6 @@ Motion exhibits `MotionAnimationBuilder<T>`, `MotionPropertyBinding<T>` and typi
 - [x] Ignore event args in the language, according to the decision without `$event`.
 - [x] Add tests with built-in event, custom CLR event, custom routed event, inherited event and `TargetType` too general.
 - [x] Add attach/detach/reattach tests that count invocations and demonstrate a single active subscription.
-- [x] Reindex the solution.
 
 **Gate stage 3**
 
@@ -108,7 +104,6 @@ Motion exhibits `MotionAnimationBuilder<T>`, `MotionPropertyBinding<T>` and typi
 - [x] Ensure order: resources and Presence/Layout-independent properties are configured before attach, and animations require root Motion only after attach.
 - [x] Add tests with two instances of the same Aspect to demonstrate independent sessions and handles.
 - [x] Add replacement/detach test during animation and confirm zero active handles after cleanup.
-- [x] Reindex the solution.
 
 **Gate Stage 4**
 
@@ -121,7 +116,7 @@ Motion exhibits `MotionAnimationBuilder<T>`, `MotionPropertyBinding<T>` and typi
 - [x] Run the targeted tests `GeneratedMarkupMotionTests` from `Cerneala.Tests`.
 - [x] Inspect the generated code for event wiring, spec specialization and absent reflection.
 - [x] Runs `dotnet test .\Cerneala.slnx`.
-- [x] Runs `git diff --check` and the final reindexing.
+- [x] Runs `git diff --check`.
 
 ## 7. The definition of ready
 

@@ -166,7 +166,7 @@ Evidenta etapa 4 din 2026-09-04:
 - `SceneHitTest2D` foloseste candidatii indexului spatial, verdictul geometric exact si reverse effective draw order. Colliderele statice batch-uite raman date; o entitate logica cu collidere directe este tinta reala, iar visibility, enabled, `IsHitTestVisible`, layer si filtrul comun sunt respectate.
 - `RenderSurface2D.TryRootToScene`, `RenderSurface2D.SceneToRoot` si `MouseEventArgs.GetPosition` folosesc transformul de randare/ViewBox si ruta scenei fara rotunjire prematura. `MouseEventArgs.X/Y` raman compatibile prin rotunjirea coordonatelor root brute; transformurile neinversabile refuza conversia determinist.
 - Hover, pressed, cursor, focus, input bindings, command routing, keyboard activation, drag si repeat-button cauta stramosii prin acelasi route-map. Regresia a expus faptul ca filtrarea initiala din `UIRoot` ignora modificarile handler-map; ruta este acum invalidata la adaugarea/eliminarea handlerelor, dar nu la esantioane geometrice/transform animate.
-- Reproducerile originale si corpusul etapei sunt verzi 18/18 (`CollisionStage=0|CollisionStage=4`). Regresia pentru input, Servo si primitive este verde 306/306. Verificarea formatter-ului pe toate fisierele C# ale etapei, sectiunile documentatiei canonice, parsarea manifestului si `git diff --check` sunt verzi; indexul final are zero erori RoslynIndexer.
+- Reproducerile originale si corpusul etapei sunt verzi 18/18 (`CollisionStage=0|CollisionStage=4`). Regresia pentru input, Servo si primitive este verde 306/306. Verificarea formatter-ului pe toate fisierele C# ale etapei, sectiunile documentatiei canonice, parsarea manifestului si `git diff --check` sunt verzi.
 
 ## Etapa 5 - documentatie si verificare
 
@@ -176,7 +176,7 @@ Evidenta etapa 4 din 2026-09-04:
 - [x] Se actualizeaza exemplele markup pentru gard/player si manifestul.
 - [x] Se ruleaza testele focusate core pentru scena, input si coliziune, apoi corpusul/benchmark-ul spatial.
 - [x] Se ruleaza scenariile reale MonoGame/WindowsDX si SDL_GPU; capturile sunt facute numai cu `Window.SaveScreenshot`.
-- [x] Se reindexeaza, se ruleaza API Compat strict, validarea manifestului si `dotnet test .\Cerneala.slnx`.
+- [x] Se ruleaza API Compat strict, validarea manifestului si `dotnet test .\Cerneala.slnx`.
 
 Evidenta etapa 5 din 2026-09-04:
 

@@ -19,7 +19,6 @@
 - [x] Fix the Drag controller to hold and release subscriptions and active handles without changing the Begin/Move/End semantics.
 - [x] Checks if `ScrollTimeline` requires disposal for graph values/event wiring and implements the minimum real ownership. (It does not require its own disposal: idle values are not graph work; bindings own and release the only event wiring.)
 - [x] Updates all affected public API pages and the manifest if applicable. (The manifest does not require change: no pages have been added or renamed.)
-- [x] Reindex the solution.
 
 **Gate Stage 0**
 
@@ -34,7 +33,6 @@
 - [x] Release event subscription, bindings and timeline at the detachment.
 - [x] Rejects pixel ranges, easing, input subranges, keyframe scroll and non-float targets.
 - [x] Add tests for vertical/horizontal, clamp, zero extent, opt-in layout and detach.
-- [x] Reindex the solution.
 
 **Gate stage 1**
 - [x] Scroll render-only does not produce measure/arrange and does not leave the frame requester active when the scroll is idle.
@@ -47,7 +45,6 @@
 - [x] Accurately maps both translation axes, fixed velocity projection and settle/capture-lost behavior from runtime.
 - [x] Rejects axis, bounds, resistance, snapping, separate source/target and Decay release.
 - [x] Add tests with input routed real, capture loss, detach mid-drag and reattach.
-- [x] Reindex the solution.
 
 **Gate stage 2**
 
@@ -59,7 +56,6 @@
 - [x] Generate pressed/released/capture-lost wiring to `GestureMotionController`, without `$event` in the language.
 - [x] Keep runtime endpoints 0.97 and 1 and reject pinch/rotate/custom scale endpoints.
 - [x] Add tests for press/release, rapid retarget, detach pressed and reduced motion.
-- [x] Reindex the solution.
 
 **Gate stage 3**
 
@@ -69,5 +65,5 @@
 
 - [x] Runs the targeted Motion Input, ScrollViewer and sourcegen Motion tests.
 - [x] Run stress click/drag/scroll + attach/detach and check stabilized memory and listener counts. (100 cycles per adapter; handlers remain unique and graph work returns to zero.)
-- [x] Runs `dotnet test .\Cerneala.slnx`, `git diff --check` and the final reindex.
+- [x] Runs `dotnet test .\Cerneala.slnx`, `git diff --check`.
 - [x] Scroll, Drag and Gesture work without unnecessary polling, `$event` or leaks.

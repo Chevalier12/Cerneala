@@ -37,8 +37,7 @@ This is not a package split, markup push, animation expansion, or accessibility 
 - [ ] Write RED tests first unless a step explicitly says otherwise.
 - [ ] Run targeted tests after each task and `dotnet test Cerneala.slnx` after each plan.
 - [ ] Prefer fixing the owning layer over adding compatibility shims.
-- [ ] Re-index after code/project-file modifications according to `AGENTS.md`.
-- [ ] Do not use shell search/navigation when RoslynIndexer is available, except for the exceptions allowed by `AGENTS.md`.
+- [ ] Read source files directly and use `rg` / `rg --files` for text search and file discovery.
 
 ## Do Not Build During This Sequence
 

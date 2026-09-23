@@ -187,7 +187,7 @@ The main stream is:
 - [ ] Capture and visually inspect the window at 1360x880 and 1100x720 for clipping, overlap, contrast, focus and readability.
 - [ ] Check the frame budget during a component with Sequence + Parallel + Keyframes and confirm the lack of layout invalidation per frame for transform/opacity.
 - [ ] Run the targeted Motion tests, `MotionStudio.Tests` and then `dotnet test .\Cerneala.slnx`.
-- [ ] Run the reindexing and `doctor` through RoslynRepoIndexer after the final changes.
+- [ ] Read source files directly and use `rg` / `rg --files` for text search and file discovery.
 - [ ] Updates public documentation Cerneala only for public APIs changed in implementation; the application documentation remains a short README in `MotionStudio/README.md`.
 - [ ] Run `git diff --check` and audit the project dependencies to confirm the absence of Prism, `CernealaPresentation` and Aspect authoring.
 

@@ -110,7 +110,6 @@ invert and feather according to catalog properties.
 - [x] Updates the public documentation with the skill
   `writing-api-documentation` and the manifest for the types/properties
   exposed.
-- [x] Run reindexing after every C# batch/project.
 - [x] Running
   ZZZ BLACK30ZZZ
   and `dotnet test .\Cerneala.slnx`.

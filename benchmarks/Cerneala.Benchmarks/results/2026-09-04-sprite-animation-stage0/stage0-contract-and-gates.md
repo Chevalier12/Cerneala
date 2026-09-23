@@ -2,9 +2,9 @@
 
 Date: 2026-09-04
 
-## RoslynIndexer inventory
+## Source inventory
 
-The index was valid before the inventory (3,741 documents, 99,424 symbols, 404,915 references). The production callers/consumers are:
+The production callers/consumers are:
 
 | Contract | Owners and consumers |
 | --- | --- |

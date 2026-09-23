@@ -129,7 +129,6 @@ hidden quality degradation or non-benchmarked numerical thresholds.
   synchronize `docs-site/documentation/manifest.json`. (Audit performed with
   the skill; no change required: batch does not change the public API,
   and the manifesto has all 926 existing pages.)
-- [x] Run reindexing after every C# batch/project.
 - [x] Running
   `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj --filter Prism`,
   `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj --filter PrismFilter`

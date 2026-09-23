@@ -65,7 +65,6 @@
 
 ### Stage 4 - Final check
 
-- [x] Dr. RoslynIndexer is also running reindexing.
 - [x] Run the SourceGen tests, the Cerneala and `dotnet test .\Cerneala.slnx` tests in the final state.
 - [x] Runs Presentation automation and a frame-budget smoke cycle.
 - [x] Capture and visually inspect Prism at default and minimum size, including non-blank preview, text, clipping and diagnostics.

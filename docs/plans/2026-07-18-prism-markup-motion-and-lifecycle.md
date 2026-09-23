@@ -125,7 +125,6 @@ after hiding or detaching the owner.
 - [x] Document all new/changed public APIs in
   `docs-site/documentation/classes/` with the skill
   `writing-api-documentation` and synchronize the manifest.
-- [x] Run mandatory reindexing after every C# batch/project.
 - [x] Running
   `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj`,
   `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj --filter "Prism|Motion"`

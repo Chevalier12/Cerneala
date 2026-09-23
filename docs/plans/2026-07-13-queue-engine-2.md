@@ -232,7 +232,7 @@ The list is indicative. We don't create files or abstractions just because they 
 
 ### Stage 0 - Baseline and safety net
 
-- [x] Run the `FileTree.md` generator and update the Roslyn index.
+- [x] Run the `FileTree.md` generator.
 - [x] Run the entire suite of tests and write down the number of tests and the duration.
 - [x] Add characterization tests for the order of all snapshots.
 - [x] Add characterization tests for deduplication and re-enqueue.
@@ -334,7 +334,6 @@ For each queue:
 - [x] Keeps the detach semantics.
 - [x] Run the queue-specific tests after migration.
 - [x] Run the scheduler tests after migration.
-- [x] Re-indexes the repository after each code or project modification.
 
 **Gate stage 3**
 
@@ -483,7 +482,6 @@ The absolute thresholds in milliseconds are established after the baseline on th
 - [x] Run the final benchmarks in Release configuration.
 - [x] Run the Playground scenario and save the relevant diagnosis.
 - [x] Regenerate `FileTree.md`.
-- [x] Re-index the solution with RoslynIndexer.
 - [x] Runs `git diff --check`.
 - [x] Manually check the public API diff.
 - [x] Update this plan by ticking off the executed tasks.
@@ -674,7 +672,7 @@ The commits can be merged if the diffs are small, but the conceptual order must 
 - [x] Benchmark before/after available.
 - [x] public API unchanged.
 - [x] The relevant documentation is synchronized.
-- [x] `FileTree.md` and the Roslyn index are updated.
+- [x] `FileTree.md` is updated.
 - [x] The plan is ticked according to the actual stage, without decoration checkboxes.
 
 ## 14. The definition of "ready"

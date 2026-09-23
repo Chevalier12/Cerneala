@@ -108,8 +108,6 @@ GPU and does not modify the CUI parser.
   `writing-api-documentation` for pages from
   `docs-site/documentation/classes/` and synchronize the manifest; don't add
   API documentation in `docs/documentation/`.
-- [x] Run RoslynIndexer reindex after every C# batch/project and at
-  final, `doctor`.
 - [x] Running
   `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj --filter Prism` and
   `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj`.

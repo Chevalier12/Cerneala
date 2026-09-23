@@ -24,7 +24,6 @@ The runtime has `MotionGroup.Parallel(MotionHandle[])`, `MotionSequence.Start(Fu
 - [x] Add RED tests for completion ordering, cancel in the middle of the sequence and zero-step/one-step edge cases.
 - [x] Add a test that demonstrates that the current runtime APIs cannot be forced by casts or polling; use the adapter explicitly.
 - [x] Add lifecycle tests: detach cancels active children and does not start future steps of a sequence.
-- [x] Reindex the solution.
 
 **Gate Stage 0**
 
@@ -37,7 +36,6 @@ The runtime has `MotionGroup.Parallel(MotionHandle[])`, `MotionSequence.Start(Fu
 - [x] Implements the runtime adapter with idempotent cancel, completion exactly once and without continuations that keep the session alive after detach.
 - [x] Issue in parallel so that completion waits for all children; emits sequence so that the next child starts only after natural completion.
 - [x] Propagate cancellation without inventing selectable cancel behavior for `MotionGroupHandle`.
-- [x] Reindex the solution.
 
 **Gate stage 1**
 
@@ -52,7 +50,6 @@ The runtime has `MotionGroup.Parallel(MotionHandle[])`, `MotionSequence.Start(Fu
 - [x] Issue the recipe as factory without runtime class `MotionClip`, without subscriptions and without shared state.
 - [x] Implements `@run $Clip` as execution leaf only in Aspect.
 - [x] Add diagnostics for missing clip, wrong target, recursive invocation and direct assignment on control.
-- [x] Reindex the solution.
 
 **Gate stage 2**
 
@@ -66,7 +63,6 @@ The runtime has `MotionGroup.Parallel(MotionHandle[])`, `MotionSequence.Start(Fu
 - [x] Issue immutable parameters per execution and validate named arguments, required arguments and duplicate arguments.
 - [x] Allows parameters in values, specs, counts, ranges and options only where the resulting type remains known.
 - [x] Add tests for spec parameter XML-safe `MotionSpec[float]`, numeric parameter, default and diagnostics.
-- [x] Reindex the solution.
 
 **Gate stage 3**
 
@@ -79,7 +75,6 @@ The runtime has `MotionGroup.Parallel(MotionHandle[])`, `MotionSequence.Start(Fu
 - [x] Cancels all slots at detach and removes references to finished execution.
 - [x] Issue diagnostics for undeclared handles, duplicates, use-before-declaration and `@cancel` in MotionClip.
 - [x] Add stress test with repeated restart/cancel and check Motion graph + stabilized memory after GC.
-- [x] Reindex the solution.
 
 **Gate Stage 4**
 
@@ -89,6 +84,6 @@ The runtime has `MotionGroup.Parallel(MotionHandle[])`, `MotionSequence.Start(Fu
 
 - [x] Runs targeted sourcegen and runtime Motion suites.
 - [x] Inspect the generated code for a nested parameterized clip and confirm new factory per run.
-- [x] Runs `dotnet test .\Cerneala.slnx`, `git diff --check` and the final reindex.
+- [x] Runs `dotnet test .\Cerneala.slnx`, `git diff --check`.
 - [x] Composition nested, MotionClip single-body, parameters and handles exactly respect the grammar of the proposal.
 - [x] API docs are updated for any new public bridge.

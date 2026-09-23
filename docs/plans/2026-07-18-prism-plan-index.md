@@ -88,8 +88,6 @@ markup and compositor; can advance in parallel with the styles. DONE
   are explicitly postponed, without changing the approved grammar.
 - [x] Do not start a dependent plan until all its plan gates
   prerequisites are checked and their target tests are green.
-- [x] For each C# or project change, run immediately:
-  `dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- index .\Cerneala.slnx --json`.
 - [x] For each new or changed public API, update to the same
   stage `docs-site/documentation/classes/` with the skill
   `writing-api-documentation` and sync
@@ -132,5 +130,5 @@ Implementation stops and the decision returns to the design documents if:
   visual are green on supported WindowsDX configuration.
 - [x] A static Prism produces hit retained without recapture or effect passes,
   and any changed pixel-affecting input produces misses and correct output.
-- [x] RoslynIndexer `doctor` and full reindexing are green, documentation
-  public is synchronized and `git diff --check` reports no problems.
+- [x] Public documentation
+  is synchronized and `git diff --check` reports no problems.

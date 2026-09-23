@@ -54,7 +54,6 @@ Diagnostics `CERNEALAUI*` are declared in the source generator, and the resoluti
 - [x] Add RED tests for incomplete documents by each token category: `<`, element name, attribute, quote, property element, binding, directive body, Motion and Prism.
 - [x] Add RED tests that ask for a maximum of one primary diagnosis per broken syntactic area and absent semantic diagnostics under the unrecoverable node.
 - [x] Captures the current sourcegen diagnostics baseline by id, severity, message and span for the invalid corpus.
-- [x] Reindex the solution.
 
 **Gate Stage 0**
 
@@ -70,7 +69,6 @@ Diagnostics `CERNEALAUI*` are declared in the source generator, and the resoluti
 - [x] Keep exact source spans for real tokens and define deterministic zero-width spans for missing tokens.
 - [x] Add round-trip tests that reconstruct byte-for-byte valid documents, including whitespace and comments.
 - [x] Add mutation tests that apply character-by-character edits and confirm that the parser does not throw exceptions.
-- [x] Reindex the solution.
 
 **Gate stage 1**
 
@@ -86,7 +84,6 @@ Diagnostics `CERNEALAUI*` are declared in the source generator, and the resoluti
 - [x] Centralizes the `CERNEALAUI*` descriptors in a host-agnostic catalog with id, severity, message format, category and exact span.
 - [x] Defines `Editor` and `Build` modes: same parser and same semantics, but transient incompleteness diagnostics are reduced in editor and strict in build.
 - [x] Add recovery tests for each embedded language, including braces, commas, quotes, comparators and unfinished nesting.
-- [x] Reindex the solution.
 
 **Gate stage 2**
 
@@ -102,7 +99,6 @@ Diagnostics `CERNEALAUI*` are declared in the source generator, and the resoluti
 - [x] Separate the semantic bind from the emission: the result contains validated symbols and values, not C# fragments.
 - [x] Add versioned caches to the compilation/document and invalidate only the projects/documents affected by the changes.
 - [x] Add tests with project references, partial types, namespace aliases, duplicate types and compilations with independent C# errors.
-- [x] Reindex the solution.
 
 **Gate stage 3**
 - [x] The same markup and the same `Compilation` produce the same ordered set of symbols and diagnostics regardless of the host.
@@ -117,7 +113,6 @@ Diagnostics `CERNEALAUI*` are declared in the source generator, and the resoluti
 - [x] Move `Aspect` resources, `TargetType`, assignments, templates, conditions and application-site validation to the common core.
 - [x] Add anti-cascade diagnostics: an unresolved binding source does not produce an error for each dependent segment.
 - [x] Add parity tests for all existing binding/template/Aspect tests and for the real markup from `CernealaPresentation`.
-- [x] Reindex the solution.
 
 **Gate Stage 4**
 
@@ -131,7 +126,6 @@ Diagnostics `CERNEALAUI*` are declared in the source generator, and the resoluti
 - [x] Exposes editor-agnostic facts for directive keywords, argument lists, parameter types, enum-like values ​​and symbol locations.
 - [x] Add parity tests for all `UiMarkupGeneratorMotion*` and `PrismMarkupContractTests` suites.
 - [x] Add recovery tests for an incomplete Motion/Prism document that preserves semantic understanding for unaffected XML elements.
-- [x] Reindex the solution.
 
 **Gate Stage 5**
 
@@ -147,7 +141,6 @@ Diagnostics `CERNEALAUI*` are declared in the source generator, and the resoluti
 - [x] Keep incremental caching generator: changing a document must not semantically regenerate all independent documents.
 - [x] Compare the output generated for the corpus; accept textual differences only if assembly behavior and diagnostics are identical or the improvement is explicitly approved.
 - [x] Runs `dotnet test .\tests\Cerneala.Tests.Language\Cerneala.Tests.Language.csproj` and `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj`.
-- [x] Reindex the solution.
 
 **Gate stage 6**
 
@@ -161,7 +154,7 @@ Diagnostics `CERNEALAUI*` are declared in the source generator, and the resoluti
 - [x] Profiles allocations and removes full rebuilds produced by a local edit where the benchmark demonstrates impact. (No optimization needed: the big edit has p95 1.534ms, about 32x under budget, although it allocates 369,984 B/op.)
 - [x] Marks the minimal cross-assembly surface; avoid public APIs for general consumption and mandatory document any remaining public type.
 - [x] Updates `docs/CernealaMarkupGuide.md`, bindings/Motion/Prism documentation and `UiMarkupGenerator` page with new common model without promising LSP before plan 2.
-- [x] Runs `dotnet test .\Cerneala.slnx`, the approved benchmarks, `git diff --check` and the final reindex.
+- [x] Runs `dotnet test .\Cerneala.slnx`, the approved benchmarks, `git diff --check`.
 
 **Gate stage 7**
 

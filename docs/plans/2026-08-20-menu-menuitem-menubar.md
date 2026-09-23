@@ -145,7 +145,6 @@ Data: 2026-08-20
 - [x] Extinde masurarea si aranjarea `OverlayManager` pe axa orizontala, inclusiv remeasure cu spatiul lateral ales.
 - [x] Introdu contractul intern de dismiss scope/grup si pastreaza comportamentul existent pentru overlay-urile care nu apartin unui grup.
 - [x] Acopera deschiderea/inchiderea mai multor overlay-uri, z-order, hit testing si invalidarea placement-ului dupa mutarea tintei.
-- [x] Reindexeaza solutia dupa fiecare batch de modificari C#.
 
 - [x] Poarta etapei:
 
@@ -165,7 +164,6 @@ dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj --filter "FullyQualifie
 - [x] Inchide si curata starea la disable, detach, eliminarea copiilor si schimbarea template-ului.
 - [x] Adauga teste obligatorii de template swap/detach care verifica dezabonarea partilor vechi, inchiderea overlay-ului vechi si absenta handlerelor duplicate dupa reattach.
 - [x] Adauga teste pentru schimbari `Items`, `ItemsSource`, `DisplayMemberPath` si containere `MenuItem` furnizate direct.
-- [x] Reindexeaza solutia dupa fiecare batch de modificari C#.
 
 - [x] Poarta etapei:
 
@@ -186,7 +184,6 @@ dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj --filter "FullyQualifie
 - [x] Inchide ramurile surori cand se schimba calea activa si inchide toate overlay-urile la click extern, disable, detach sau pierderea radacinii.
 - [x] Restaureaza focusul la elementul radacina dupa `Escape`/light-dismiss, dar permite lui `Tab` sa continue navigarea normala.
 - [x] Adauga teste pentru mutarea unui `MenuItem` intre radacini, eliminarea unui element deschis si schimbarea `ItemsSource` in timpul unei sesiuni.
-- [x] Reindexeaza solutia dupa fiecare batch de modificari C#.
 
 - [x] Poarta etapei:
 
@@ -204,7 +201,6 @@ dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj --filter "FullyQualifie
 - [x] Adauga teste de completare pentru numele celor trei controale si pentru proprietatile specifice `MenuItem` in `CompletionTests`.
 - [x] Adauga un test de protocol LSP care cere `textDocument/completion` intr-un `MenuItem` si verifica sugestiile `Header`, `Command`, `CommandParameter` si `IsSubmenuOpen`.
 - [x] Verifica completarea valorii enum pentru `OverlayPlacement.AutoHorizontal`.
-- [x] Reindexeaza solutia dupa fiecare batch de modificari C#.
 
 - [x] Poarta etapei:
 

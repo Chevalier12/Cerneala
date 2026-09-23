@@ -39,6 +39,5 @@ The last material mismatch was traced to sample-count negotiation: WindowsDX sel
 - Windows native SDL lifetime/multi-window/screenshot subset: 3 passed.
 - Core Drawing Release suite: 1026 passed, 1 native SDL oracle skipped by the default opt-in guard. The same oracle was run explicitly and passed with the metrics above.
 - Full solution Release build: succeeded with 0 warnings and 0 errors.
-- Roslyn index: valid, 3424 documents, 87796 symbols, 355334 references, and no dirty indexed files. The three retained index warnings are the two known unmatched `Cerneala.Language` metadata references and the oversized binary `Drawing/Prism/Filters/Assets/bluenoise.bin`.
 
 Native Linux/macOS smoke execution is intentionally omitted because no runners are available. Their SDL_GPU implementation and packaging support remain in scope; only native smoke execution is waived.

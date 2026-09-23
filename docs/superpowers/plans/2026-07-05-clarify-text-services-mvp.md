@@ -6,7 +6,7 @@
 
 **Architecture:** Keep the low-level Skia/HarfBuzz drawing text pipeline as-is. Treat `LineBreakService` as an MVP deterministic approximation, not a production line-breaking engine, and tighten the higher-level contract so `TextRenderer` draws one command per measured `TextLine`. Keep `Button` scoped by reusing `TextMeasurer`/`TextRenderer` for string content instead of introducing a new templating system pass.
 
-**Tech Stack:** C#, xUnit, `Cerneala.slnx`, RoslynIndexer, Markdown, existing `UI/Text`, `UI/Controls`, `ROADMAPv2.md`, `ROADMAPv2_AUDIT.md`, and `AUDIT_FIX_PLAN.md`.
+**Tech Stack:** C#, xUnit, `Cerneala.slnx`, Markdown, existing `UI/Text`, `UI/Controls`, `ROADMAPv2.md`, `ROADMAPv2_AUDIT.md`, and `AUDIT_FIX_PLAN.md`.
 
 ---
 
@@ -315,15 +315,9 @@ dotnet test Cerneala.slnx --filter "FullyQualifiedName~TextRenderer"
 
 Expected: all matching tests pass.
 
-- [ ] **Step 3: Re-index after C# modification**
+- [ ] **Step 3: Inspect the current source**
 
-Run RoslynIndexer on `Cerneala.slnx` with C#-only indexing:
-
-```text
-roslyn_index repoRoot=C:\Users\Shadow\Desktop\Cerneala configPath=Cerneala.slnx includeGenerated=false includeNonCSharpText=false
-```
-
-Expected: index succeeds with no C# parse errors.
+Read source files directly and use `rg` / `rg --files` for text search and file discovery.
 
 - [ ] **Step 4: Commit renderer fix**
 
@@ -631,15 +625,9 @@ dotnet test Cerneala.slnx --filter "FullyQualifiedName~Button"
 
 Expected: all matching tests pass.
 
-- [ ] **Step 8: Re-index after C# modification**
+- [ ] **Step 8: Inspect the current source**
 
-Run RoslynIndexer on `Cerneala.slnx` with C#-only indexing:
-
-```text
-roslyn_index repoRoot=C:\Users\Shadow\Desktop\Cerneala configPath=Cerneala.slnx includeGenerated=false includeNonCSharpText=false
-```
-
-Expected: index succeeds with no C# parse errors.
+Read source files directly and use `rg` / `rg --files` for text search and file discovery.
 
 - [ ] **Step 9: Commit button text service fix**
 

@@ -180,7 +180,7 @@ Nu se modifică proiectele core, MonoGame sau WindowsDX decât dacă o verificar
 
 - [x] Salvează statusul worktree-ului și separă explicit schimbările utilizatorului de fișierele planului.
 - [x] Rulează baseline-ul focalizat pentru `SdlGpuDrawingBackendTests`, `SdlGpuDrawingFrameCountersTests` și `DrawingImageMeshBatchTests`; înregistrează numărul de teste, durata și orice skip.
-- [x] Extinde `SdlArchitectureTests` cu un test RED care caută tipul top-level `Cerneala.Backends.SdlGpu.Cerberus`, cere vizibilitate non-publică și interzice `SdlGpuDrawingBackend` în semnăturile constructorilor, câmpurilor, proprietăților și metodelor Cerberus. Testul trebuie să fie RED numai pentru că Cerberus este încă imbricat și owner-coupled; gate-ul semantic final verifică separat și corpul implementării prin RoslynIndexer.
+- [x] Extinde `SdlArchitectureTests` cu un test RED care caută tipul top-level `Cerneala.Backends.SdlGpu.Cerberus`, cere vizibilitate non-publică și interzice `SdlGpuDrawingBackend` în semnăturile constructorilor, câmpurilor, proprietăților și metodelor Cerberus. Testul trebuie să fie RED numai pentru că Cerberus este încă imbricat și owner-coupled; gate-ul semantic final verifică separat și corpul implementării.
 - [x] Caracterizează în același test de arhitectură suprafața publică exactă a assembly-ului SDL GPU: singurul tip exportat rămâne `SdlGpuApplicationBackend`, iar singurul entry point intenționat rămâne `public static void EnsureRegistered()`.
 - [x] Adaugă teste de caracterizare GREEN pentru ordinea draw-urilor, merge numai adiacent, target switch, flush la text/Prism/layer/`RenderSurface2D`, reset după eșec și instanțe independente pentru două ferestre.
 - [x] Extinde scenariul de 4.096 texturi alternante ca baseline pentru numărul actual de draw calls, pipeline binds, sampler binds, scissor sets și stencil-reference sets. Nu schimba încă așteptările către valorile optimizate.
@@ -207,15 +207,12 @@ dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj -c Release --filter Ful
 - [x] Păstrează o instanță Cerberus per backend/sesiune; adaugă test care dovedește că două ferestre nu partajează coada sau targetul.
 - [x] Adaugă teste directe pentru `Begin`, target invalid, empty add, `Discard`, reset după excepție și reutilizarea capacității după flush.
 - [x] Confirmă că testul arhitectural din etapa 0 devine GREEN fără slăbirea lui.
-- [x] Reîmprospătează RoslynIndexer imediat după fiecare modificare C# sau de proiect și nu continua analiza pe index stale.
 - [x] **Gate etapa 1:** Cerberus este top-level internal, nu referă `SdlGpuDrawingBackend`, toate caracterizările păstrează exact ordinea/draw counts din baseline și suita SDL GPU este GREEN.
 
 **Verificare:**
 
 ```powershell
 dotnet test .\tests\Cerneala.Tests.SdlGpu\Cerneala.Tests.SdlGpu.csproj -c Release --filter "FullyQualifiedName~Cerberus|FullyQualifiedName~SdlGpuDrawingBackend"
-dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- index .\Cerneala.slnx --json
-dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- refs SdlGpuDrawingBackend --exact --json
 ```
 
 ## Etapa 2 — Planner intern robust și testabil
@@ -281,7 +278,6 @@ dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj -c Release --filter Ful
 dotnet test .\Cerneala.slnx -c Release
 dotnet build .\Cerneala.slnx -c Release
 dotnet format .\Cerneala.slnx --verify-no-changes --include .\Cerneala.Backends.SdlGpu\Gpu\Cerberus.cs .\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingBackend.cs .\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingFrameCounters.cs .\tests\Cerneala.Tests.SdlGpu\SdlArchitectureTests.cs .\tests\Cerneala.Tests.SdlGpu\CerberusTests.cs .\tests\Cerneala.Tests.SdlGpu\SdlGpuDrawingBackendTests.cs .\tests\Cerneala.Tests.SdlGpu\SdlGpuDrawingFrameCountersTests.cs .\benchmarks\Cerneala.Benchmarks\CerberusPlanningBenchmarks.cs
-dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- index .\Cerneala.slnx --json
 .\Tools\scripts\New-FileTree.ps1
 git diff --check
 ```
@@ -319,6 +315,6 @@ Dacă implementarea dovedește că este necesar un API public, lucrul se opreșt
 - [x] Nu există API public Cerberus, opțiuni Cerberus, `Begin`/`End` public sau dependență Cerberus în core/MonoGame/WindowsDX.
 - [x] Documentația internă descrie proprietatea, data flow-ul și barierele reale.
 - [x] API diff-ul public/protected este gol.
-- [x] Testele focalizate, suitele afectate, buildul Release, formatterul, conformance-ul aplicabil, RoslynIndexer și `git diff --check` sunt GREEN. Suita completă a fost rulată pe starea finală, dar are cele 12 eșecuri din auditul paralel exceptate explicit de utilizator; nu este raportată drept GREEN.
+- [x] Testele focalizate, suitele afectate, buildul Release, formatterul, conformance-ul aplicabil și `git diff --check` sunt GREEN. Suita completă a fost rulată pe starea finală, dar are cele 12 eșecuri din auditul paralel exceptate explicit de utilizator; nu este raportată drept GREEN.
 - [x] Nu există gate nativ neexecutat: conformance-ul SDL_GPU/WindowsDX a trecut 1/1, iar lifetime/multi-window a trecut 3/3.
 - [x] Schimbările utilizatorului și fișierele din afara scope-ului rămân neatinse, cu singura regenerare mixtă a `FileTree.md` autorizată explicit de utilizator.

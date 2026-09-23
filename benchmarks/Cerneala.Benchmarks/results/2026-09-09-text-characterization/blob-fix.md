@@ -101,7 +101,6 @@ managed binary hashes across the matrix. Raw arrays and logs remain under
 - Complete Release build: **0 warnings / 0 errors**.
 - Focused `TextPipelineTests`: **45 PASS / 0 FAIL**.
 - Complete principal `Cerneala.Tests` project: **3,327 PASS / 0 FAIL**.
-- Roslyn index refreshed after the production change.
 - Native-enabled complete solution suite: **4,873 PASS / 7 FAIL / 0 skipped**
   across 4,880 tests. **The full-suite gate remains RED and is not waived.**
 - Historical-reference native pixel conformance: **133 PASS / 0 FAIL**.

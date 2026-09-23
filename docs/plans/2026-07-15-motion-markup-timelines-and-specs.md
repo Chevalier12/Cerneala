@@ -22,7 +22,6 @@ Decay remains an explicit problem: `DecaySpec<T>` uses velocity and ignores the 
 - [x] Add sourcegen RED tests for invalid ranges, overlap on the same property, legal overlap on different properties, Spring/Decay in keyframes and illegal nested groups.
 - [x] Add RED tests for Repeat/PingPong restrictions to Tween and Stagger to a single Tween `@animate`.
 - [x] Write in this plan, before implementing Decay markup, the accepted form and the reason why it does not ask for an ignored endpoint; if the decision does not exist, keep Decay markup deferred. (Decay markup remains deferred: the runtime has no execution without an endpoint.)
-- [x] Reindex the solution.
 
 **Gate Stage 0**
 
@@ -36,7 +35,6 @@ Decay remains an explicit problem: `DecaySpec<T>` uses velocity and ignores the 
 - [x] Rejects empty, inverted, out-of-range ranges and overlaps on the same target property; allow common boundary.
 - [x] Allows Tween easing and `Step(...)`; rejects Spring, Decay, Repeat and PingPong in ranged children. (`Step(...)` is completely closed in stage 2.)
 - [x] Emits the timeline as an execution body compatible with composition and MotionClip.
-- [x] Reindex the solution.
 
 **Gate stage 1**
 
@@ -48,7 +46,6 @@ Decay remains an explicit problem: `DecaySpec<T>` uses velocity and ignores the 
 - [x] Map `Step(count, JumpStart|JumpEnd|JumpBoth|JumpNone)` to `StepEasing` and validate count/options at build.
 - [x] Add tests that differentiate sampling hold from persistence after completion.
 - [x] Add diagnostics for steps/hold outside keyframes.
-- [x] Reindex the solution.
 
 **Gate stage 2**
 
@@ -60,7 +57,6 @@ Decay remains an explicit problem: `DecaySpec<T>` uses velocity and ignores the 
 - [x] Specializes wrappers to `TweenSpec<T>` and rejects Spring/Decay/clip/group arguments.
 - [x] Validates positive count and finished PingPong; document reduced-motion for repeat forever.
 - [x] Add generated-code + runtime tests for odd/even completion and infinite cancellation.
-- [x] Reindex the solution.
 
 **Gate stage 3**
 
@@ -72,7 +68,6 @@ Decay remains an explicit problem: `DecaySpec<T>` uses velocity and ignores the 
 - [x] Resolves the static collection and item type, takes a snapshot at execution start and applies `WithDelay(offset * index)`.
 - [x] Rejects reverse/center ordering, Spring, arbitrary sequence and mutation-driven rescheduling.
 - [x] Add tests for empty collection, snapshot mutation, cancellation and cleanup.
-- [x] Reindex the solution.
 
 **Gate Stage 4**
 
@@ -84,7 +79,6 @@ Decay remains an explicit problem: `DecaySpec<T>` uses velocity and ignores the 
 - [x] Validate Decay `ValueType`, typed `InitialVelocity`, `Deceleration`, paired bounds, comparability and Bounce spec type. (Not applicable after Gate 0: the entire form is rejected before the options are validated, not partially accepted.)
 - [x] Implements Decay execution only if Gate stage 0 has established a syntax without false `@to`; otherwise, it documents the declaration/execution as deferred and does not accept unnecessary resources in the markup.
 - [x] Updates the proposal if the Decay decision changes the grammar, in the same change with tests.
-- [x] Reindex the solution.
 
 **Gate Stage 5**
 
@@ -93,6 +87,6 @@ Decay remains an explicit problem: `DecaySpec<T>` uses velocity and ignores the 
 ## 3. Verification and definition ready
 
 - [x] Run the Specs/Core Motion and sourcegen Motion tests.
-- [x] Runs `dotnet test .\Cerneala.slnx`, `git diff --check` and the final reindex.
+- [x] Runs `dotnet test .\Cerneala.slnx`, `git diff --check`.
 - [x] Keyframes, Hold, Step, Repeat, PingPong and Stagger have deterministic semantics demonstrated with manual clock.
 - [x] Seek/reverse/scrubbing and unsupported combinations receive diagnostics, not pseudo-support.

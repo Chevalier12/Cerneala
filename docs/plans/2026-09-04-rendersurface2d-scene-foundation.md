@@ -35,7 +35,7 @@ Fundatia garanteaza si integrarea comuna Aspect/Motion/Prism pentru nodurile viz
 
 ## Etapa 0 - baseline, API si teste RED/characterization
 
-- [x] Se inventariaza prin RoslynIndexer toate referintele la `SceneNode2D`, `Scene2D`, `SceneItems2D`, `Sprite2D`, `Image.SourceResourceId` si proprietatile de transform ale `UIElement`; rezultatul se noteaza in plan daca ownership-ul estimat se schimba.
+- [x] Se inventariaza toate referintele la `SceneNode2D`, `Scene2D`, `SceneItems2D`, `Sprite2D`, `Image.SourceResourceId` si proprietatile de transform ale `UIElement`; rezultatul se noteaza in plan daca ownership-ul estimat se schimba.
 - [x] Se adauga teste de caracterizare pentru: ordinea curenta a copiilor, `OnDraw` urmat de `Scene`, invalidarea la schimbarea unui nod, attach/detach, cache-ul imaginii si faptul ca transformurile UI nedocumentate nu modifica azi sprite-ul.
 - [x] Se pastreaza ca teste de caracterizare GREEN contractele existente `SpriteAspectAppliesSpritePropertiesThroughTheSceneLogicalTree`, `SpriteMotionAnimatesSpritePropertiesThroughTheSceneLogicalTree`, `SpritePrismCapturesOnlyTheSpriteDrawUsingDestinationBounds` si transformarea Prism prin ViewBox.
 - [x] Se adauga teste RED pentru o resursa `ImageResource` declarata in `.crn` si consumata de `Sprite2D` prin ID tipat; esecul trebuie sa fie lipsa suportului, nu fixture invalid.
@@ -48,7 +48,7 @@ Fundatia garanteaza si integrarea comuna Aspect/Motion/Prism pentru nodurile viz
 
 ### Inventar si decizie API inghetata la etapa 0
 
-- Inventarul RoslynIndexer confirma ownership-ul estimat. `RenderSurface2D` este singurul proprietar al radacinii `Scene2D` si al transformului ViewBox; `Scene2D` si `SceneItems2D` detin copiii logici; `Sprite2D` este singurul emitator de sprite din arborele curent. Consumatorul extern relevant este `Tetrisish`, iar testele de resurse sunt singurii consumatori ai `Image.SourceResourceId`. Registrul Motion detine mixerele proprietatilor de transform `UIElement`; niciuna dintre aceste proprietati, in afara rotatiei consumate direct de `Sprite2D`, nu este aplicata azi de arborele scenei. Nu se schimba ownership-ul estimat.
+- Inventarul surselor confirma ownership-ul estimat. `RenderSurface2D` este singurul proprietar al radacinii `Scene2D` si al transformului ViewBox; `Scene2D` si `SceneItems2D` detin copiii logici; `Sprite2D` este singurul emitator de sprite din arborele curent. Consumatorul extern relevant este `Tetrisish`, iar testele de resurse sunt singurii consumatori ai `Image.SourceResourceId`. Registrul Motion detine mixerele proprietatilor de transform `UIElement`; niciuna dintre aceste proprietati, in afara rotatiei consumate direct de `Sprite2D`, nu este aplicata azi de arborele scenei. Nu se schimba ownership-ul estimat.
 - Transformul de grup nu introduce un al doilea tip matriceal public. `Scene2D` reutilizeaza canalele `UIElement` deja animabile (`TranslateX/Y`, `Scale`, `ScaleX/Y`, `Rotation`, `SkewX/Y`, `RenderTransform`) si adauga `TransformOrigin: DrawPoint`, in unitati locale scene-space, implicit `(0, 0)`. Matricea locala este `T(-origin) * Scale * Skew * Rotation * Translation * RenderTransform * T(origin)`; unghiurile sunt in radiani, conform `Matrix3x2`. `RenderTransformOrigin` ramane contract de layout normalizat si nu este reinterpretat. Transformurile imbricate se compun local-la-parinte, iar acelasi rezultat intern alimenteaza desenul, bounds, apoi planurile de input/culling/coliziune. Pentru o matrice neinversabila, conversia world-to-local esueaza explicit, dar transformarea forward, bounds conservatoare si desenul continua.
 - API-ul minim de ordine este `Scene2D.OrderMode: SceneOrderMode`, cu valorile `Source` (implicit), `Layer` si `LayerThenY`, plus `SceneNode2D.Layer: int` implicit `0`. `Source` emite strict ordinea colectiei. `Layer` sorteaza crescator dupa layer si stabil dupa indexul sursei. `LayerThenY` sorteaza crescator dupa layer, apoi dupa marginea `Bottom` a bounds-ului scene-space transformat al nodului si stabil dupa indexul sursei; bounds necunoscute folosesc ancora `0`. `Sprite2D.LayerDepth` ramane payload pentru backend si nu participa la ordinea arborelui.
 - Sintaxa resursei este declaratia specializata `<resources:ImageResource Name="WorldAtlas" Source="Assets/world.png" />` intr-un property-element `.Resources`, apoi `SourceResourceId="$WorldAtlas"` pe `Sprite2D`. Tipul proprietatii este `ResourceId<ImageResource>?`; un ID nenul are precedenta fata de `Source`, exact ca la `Image`. Doua sprite-uri cu acelasi ID folosesc acelasi cache al radacinii, iar sprite-urile nu detin si nu elibereaza imaginea.
@@ -91,7 +91,7 @@ Evidenta RED/GREEN din 2026-09-04:
 - [x] Se adauga suport generatorului pentru declararea `ImageResource` in dictionarele `.crn` si pentru referinta tipata `$WorldAtlas` catre proprietatea scenei.
 - [x] `Sprite2D` primeste contractul de resursa planificat fara sa elimine `Source`; precedenta celor doua cai este validata.
 - [x] Schimbarea resursei, atasarea la alta radacina, descarcarea si eliminarea resursei invalideaza cadrul corect si nu dubleaza/elimina prematur imaginea partajata.
-- [x] Se ruleaza testele focusate core si generator, apoi se reindexeaza solutia.
+- [x] Se ruleaza testele focusate core si generator.
 
 ### Gate etapa 1
 
@@ -115,7 +115,7 @@ Evidenta GREEN din 2026-09-04:
 - [x] Transformul si proprietatile de prezentare ale grupului sunt `UiProperty` compatibile Aspect/Motion; fiecare sample invalideaza o data si actualizeaza bounds-urile folosite de redare/input.
 - [x] Prism pe grup incadreaza exact comenzile descendentilor, foloseste bounds scene-space agregate si compune corect cu Prism pe un copil conform comportamentului caracterizat.
 - [x] Se verifica ViewBox `Uniform`, `UniformToFill`, `Fill`, clip-ul, transformurile negative si transformul neinversabil.
-- [x] Se reindexeaza si se ruleaza testele RenderSurface/Scene.
+- [x] Se ruleaza testele RenderSurface/Scene.
 
 ### Gate etapa 2
 
@@ -186,7 +186,7 @@ Evidenta GREEN din 2026-09-04:
 - [x] Se ruleaza testele generatorului:
   `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj --filter "FullyQualifiedName~RenderSurface2D|FullyQualifiedName~ImageResource"`.
 - [x] Se ruleaza scenariul `Tetrisish` si se verifica automat ca `OnDraw` + `Scene` continua sa functioneze; orice validare umana ramasa este declarata, nu inventata.
-- [x] Se reindexeaza, se ruleaza API Compat strict si testul manifestului.
+- [x] Se ruleaza API Compat strict si testul manifestului.
 - [x] Se ruleaza `dotnet test .\Cerneala.slnx`.
 
 Evidenta finala din 2026-09-04:

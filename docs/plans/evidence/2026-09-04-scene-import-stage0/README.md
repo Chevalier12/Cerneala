@@ -35,4 +35,4 @@ dotnet test tests/Cerneala.Tests.SourceGen/Cerneala.Tests.SourceGen.csproj --no-
 
 Dependency builds completed before the recorded runs; `BuildProjectReferences=false` reused that current state. The initial build also rebuilt the existing MonoGame shader artifact and reported HLSL warnings. An initial test-fixture compile error was corrected before the recorded core RED run; it was not counted as regression evidence.
 
-Roslyn index was refreshed after the final C# edit. It succeeded with 11 existing indexing warnings (missing-metadata diagnostics and large non-semantic artifacts); this is not a zero-warning claim. `git diff --check` passed for stage files. There was no human visual validation and none is claimed.
+`git diff --check` passed for stage files. There was no human visual validation and none is claimed.

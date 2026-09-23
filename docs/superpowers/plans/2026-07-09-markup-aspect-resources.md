@@ -8,7 +8,7 @@
 
 **Historical architecture (inactive):** The direct public-property/applicator guidance below is not a current recommendation. The source generator still performs compile-time validation and no runtime markup parsing, but Aspect values now lower to common rules/declarations and are applied only by `AspectEngine`.
 
-**Tech Stack:** C# incremental source generator, `System.Xml` / `System.Xml.Linq`, xUnit source-generator tests, RoslynIndexer for navigation and re-indexing.
+**Tech Stack:** C# incremental source generator, `System.Xml` / `System.Xml.Linq`, xUnit source-generator tests.
 
 ---
 
@@ -38,11 +38,6 @@
 - `Aspect="$KickerText"` accepts only named `Aspect` resources.
 - `Foreground = $PulseColor;` accepts a named resource that can produce a `Color`.
 - `SolidColorBrush` resources emit `global::Cerneala.UI.Media.SolidColorBrush` instances and can be coerced to `Color` through their constructor color when assigned to `Color` properties.
-- Run RoslynIndexer after each production or test edit:
-
-```text
-roslyn_index(repoRoot: "C:\\Users\\Shadow\\Desktop\\Cerneala", configPath: "C:\\Users\\Shadow\\Desktop\\Cerneala\\Cerneala.slnx", includeNonCSharpText: false, includeGenerated: false)
-```
 
 ---
 
@@ -233,9 +228,9 @@ dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj --f
 
 Expected: all existing generator tests plus the two new Task 1 tests pass.
 
-- [ ] **Step 6: Re-index and commit**
+- [ ] **Step 6: Commit**
 
-Run RoslynIndexer for `Cerneala.slnx`, then:
+Run:
 
 ```powershell
 git add .\Cerneala.SourceGen\UiMarkupGenerator.cs .\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorTests.cs
@@ -408,9 +403,9 @@ dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj --f
 
 Expected: PASS. Generated source remains direct public property assignment.
 
-- [ ] **Step 6: Re-index and commit**
+- [ ] **Step 6: Commit**
 
-Run RoslynIndexer, then:
+Run:
 
 ```powershell
 git add .\Cerneala.SourceGen\UiMarkupGenerator.cs .\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorTests.cs
@@ -660,9 +655,9 @@ dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj --f
 
 Expected: PASS.
 
-- [ ] **Step 6: Re-index and commit**
+- [ ] **Step 6: Commit**
 
-Run RoslynIndexer, then:
+Run:
 
 ```powershell
 git add .\Cerneala.SourceGen\UiMarkupGenerator.cs .\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorTests.cs
@@ -1033,9 +1028,9 @@ dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj --f
 
 Expected: PASS.
 
-- [ ] **Step 8: Re-index and commit**
+- [ ] **Step 8: Commit**
 
-Run RoslynIndexer, then:
+Run:
 
 ```powershell
 git add .\Cerneala.SourceGen\UiMarkupGenerator.cs .\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorTests.cs
@@ -1153,9 +1148,9 @@ dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj --f
 
 Expected: PASS.
 
-- [ ] **Step 5: Re-index and commit**
+- [ ] **Step 5: Commit**
 
-Run RoslynIndexer, then:
+Run:
 
 ```powershell
 git add .\Cerneala.SourceGen\UiMarkupGenerator.cs .\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorTests.cs
@@ -1257,9 +1252,9 @@ dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj --f
 
 Expected: PASS.
 
-- [ ] **Step 5: Re-index and commit**
+- [ ] **Step 5: Commit**
 
-Run RoslynIndexer, then:
+Run:
 
 ```powershell
 git add .\Cerneala.SourceGen\UiMarkupGenerator.cs .\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorTests.cs
@@ -1394,9 +1389,9 @@ dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj
 
 Expected: PASS.
 
-- [ ] **Step 5: Re-index and commit**
+- [ ] **Step 5: Commit**
 
-Run RoslynIndexer, then:
+Run:
 
 ```powershell
 git add .\Cerneala.SourceGen\UiMarkupGenerator.cs .\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorTests.cs
@@ -1452,13 +1447,7 @@ Run:
 
 Expected: command reports `Wrote C:\Users\Shadow\Desktop\Cerneala\FileTree.md`.
 
-- [ ] **Step 5: Re-index final C# state**
-
-Run RoslynIndexer for `Cerneala.slnx`.
-
-Expected: index succeeds with no errors.
-
-- [ ] **Step 6: Inspect final diff**
+- [ ] **Step 5: Inspect final diff**
 
 Run:
 
@@ -1469,9 +1458,9 @@ git diff -- .\Cerneala.SourceGen\UiMarkupGenerator.cs .\tests\Cerneala.Tests.Sou
 
 Expected: only source-generator, source-generator tests, `FileTree.md`, and an explicitly justified spec correction appear.
 
-- [ ] **Step 7: Commit integration**
+- [ ] **Step 6: Commit integration**
 
-If Step 6 shows only expected files, run:
+If Step 5 shows only expected files, run:
 
 ```powershell
 git add .\Cerneala.SourceGen\UiMarkupGenerator.cs .\tests\Cerneala.Tests.SourceGen\UiMarkupGeneratorTests.cs .\FileTree.md
@@ -1493,4 +1482,4 @@ git commit -m "docs: align markup aspect resource spec"
 - [ ] Placeholder scan: this plan contains no unresolved placeholder markers or vague edge-case instructions.
 - [ ] Type consistency: `SolidColorBrushResource`, `AspectResource`, `AspectPropertyAssignment`, `PropertySpec`, `MarkupValueKind`, `GeneratedExpression`, and `NamedSymbol` are defined before later tasks use them.
 - [ ] Test discipline: each behavior-changing task starts with a failing or guard test and ends with a pass command.
-- [ ] Repo discipline: every code/test modification task includes RoslynIndexer re-indexing and a commit step.
+- [ ] Repo discipline: every code/test modification task includes a commit step.

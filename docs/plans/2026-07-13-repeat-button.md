@@ -89,7 +89,7 @@ Probably changed files:
 
 ### Stage 0 - Baseline and characterization tests
 
-- [x] Generate `FileTree.md` and check the RoslynIndexer index.
+- [x] Generate `FileTree.md`.
 - [x] Run the existing tests for `Button`, `ButtonBase`, keyboard activation, commands and `ElementInputBridge`.
 - [x] Add characterization tests for the normal click on release of a `Button`.
 - [x] Adds characterization tests for executing a command exactly once per click.
@@ -201,7 +201,6 @@ Probably changed files:
 - [x] Create the API documentation in `docs-site/documentation/classes/` using the `writing-api-documentation` skill.
 - [x] Updates `docs-site/documentation/manifest.json` for the new page.
 - [x] Updates the `ButtonBase` documentation if the protected hook becomes a public/protected API.
-- [x] Re-indexes after each code or project change.
 - [x] Run the targeted tests for input, buttons, commands and host.
 - [x] Runs `dotnet test Cerneala.slnx`.
 - [x] Check the public API diff and confirm that it only includes the intended surface. (`RepeatButton`, its properties, the protected hook from `ButtonBase` and the timed overload from `ElementInputBridge`; the repetition mechanism remains internal.)

@@ -31,7 +31,7 @@ Un sprite sau un tile promovat sparse poate declara in markup clipuri/stari prec
 
 ## Etapa 0 - API review si teste RED
 
-- [x] Se inventariaza toti consumatorii `FrameTime`, `RedrawMode`, `UpdateRenderTime`, `Sprite2D.SourceRect` si `Flip` prin RoslynIndexer.
+- [x] Se inventariaza toti consumatorii `FrameTime`, `RedrawMode`, `UpdateRenderTime`, `Sprite2D.SourceRect` si `Flip`.
 - [x] Se compara extinderea `Sprite2D` cu un nod `AnimatedSprite2D`; se alege varianta cu o singura cale de desen si fara proprietati invalide pentru sprite static.
 - [x] Se stabileste sintaxa markup pentru atlas, colectia de clipuri, cadre, stare curenta, loop, rate si flip; exemplul trebuie sa compileze conceptual fara API-uri fictive.
 - [x] Sintaxa Aspect/Motion/Prism foloseste exact gramatica existenta demonstrata in `Tetrisish/MainWindow.crn`: property-element/`Aspect`, `@animate with` si `@prism { ... }`; orice sintaxa noua pentru clip sau tile promovat are mai intai test parser/SourceGen RED.
@@ -122,7 +122,7 @@ Evidenta etapei 3 din 2026-09-04 este in `benchmarks/Cerneala.Benchmarks/results
 - [x] Se foloseste `writing-api-documentation` pentru nod, clipuri, cadre, stari si proprietati.
 - [x] Se documenteaza timpul, loop-ul, schimbarea starii, lifecycle-ul, culling-ul si exemple markup reale.
 - [x] Se documenteaza folosirea pe tile promovat si sintaxa Cerneala reala; nu se publica pseudo-XML din discutia de design.
-- [x] Se actualizeaza manifestul, se reindexeaza, se ruleaza API Compat strict si testul manifestului.
+- [x] Se actualizeaza manifestul, se ruleaza API Compat strict si testul manifestului.
 - [x] Se ruleaza testele focusate, conformance-ul ambelor backend-uri si `dotnet test .\Cerneala.slnx` (GREEN cu exceptia unica aprobata explicit mai jos).
 
 Evidenta istorica partiala din 2026-09-04 (inainte de remediere si inchiderea etapei):

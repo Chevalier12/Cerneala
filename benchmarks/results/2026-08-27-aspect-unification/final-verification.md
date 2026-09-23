@@ -41,11 +41,10 @@ The first solution attempt exposed a harness collision: `StructureProtocolTests`
 ## Repository and architecture gates
 
 - `MarkupAspectResource` source and documentation page are absent.
-- RoslynIndexer symbol search reports no legacy type, executor methods, or authoring-specific value-source symbols.
+- The recorded symbol inventory contains no legacy type, executor methods, or authoring-specific value-source symbols.
 - Exact production text search reports no legacy identifiers.
 - `UIRoot` contains no markup Aspect discovery, target matching, or cascade.
 - Motion transactions remain in the existing Aspect-to-Motion bridge; generated event/Motion/binding/input sidecars remain owned by their dedicated subsystems.
-- RoslynIndexer forced full rebuild: valid, 0 dirty files; `doctor` passes every applicable check. Seven reported warnings are the two established project-reference metadata warnings plus five intentionally skipped oversized shader/binary/frame-report files.
 
 ## Performance and visual gates
 

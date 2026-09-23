@@ -111,7 +111,6 @@ readback CPU and without confusing the backdrop with the control image.
 - [x] Documents public contracts with the skill
   `writing-api-documentation`, update `IUiBackend`,
   `MonoGameUiHostOptions`, the backdrop types and the manifest.
-- [x] Run reindex after every C# batch/project.
 - [x] Running
   `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj --filter "PrismBackdrop|MonoGameUiHost|RenderPng"`,
   `dotnet test .\Cerneala.slnx` and `git diff --check`.

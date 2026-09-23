@@ -107,8 +107,7 @@ fundatia scenei
 
 ## Politica de platforma si verificare
 
-- [ ] Fiecare etapa care modifica C# sau un proiect ruleaza imediat indexarea:
-  `dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- index .\Cerneala.slnx --json`.
+- [ ] Citește fișierele sursă direct și folosește `rg` / `rg --files` pentru căutare textuală și inventariere.
 - [ ] Testele unitare/core si testele generatorului trec pe fiecare etapa relevanta.
 - [ ] Scenariile reale de randare trec atat pe MonoGame/WindowsDX, cat si pe SDL_GPU; diferentele sunt judecate dupa contract si dif-uri vizuale, nu dupa presupunerea ca backend-ul vechi are automat dreptate.
 - [ ] Capturile Cerneala sunt produse exclusiv prin `Window.SaveScreenshot`.

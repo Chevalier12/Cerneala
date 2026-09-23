@@ -231,7 +231,6 @@ Documentație și artefacte:
 - [x] Adaugă un test RED de suprafață publică bazat pe reflection care cere `Cerneala.UI.Servo.Servo`, constructorii `Window`/`UiHost`, membrii enumerați în secțiunea 5 și absența expunerii `UIElement`/input driver; confirmă că eșuează fiindcă API-ul Servo lipsește, nu din cauza fixture-ului.
 - [x] Adaugă caracterizări pentru proiecția accessibility curentă: hidden/collapsed subtree este omis, ordinea nodurilor este stabilă, iar `ElementId` se rezolvă numai cât elementul aparține root-ului.
 - [x] Fixează prin teste contractele actuale care trebuie păstrate: normalizarea ID-ului, input prin hit-test/routed events, frame commit după input, screenshot prin `Window.SaveScreenshot`, izolarea a două window contexts și resetarea key/pointer state după secvențe complete.
-- [x] După fiecare modificare C# sau `.csproj`, reindexează cu `dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- index .\Cerneala.slnx --json`.
 
 **Gate etapa 0**
 
@@ -245,7 +244,6 @@ Documentație și artefacte:
 - [x] Implementează query engine-ul intern peste `SemanticsNode`/`ElementIdProvider`; citește bounds și starea efectivă live și nu păstrează `UIElement` în `ServoElement` ori `ServoTarget`.
 - [x] Adaugă RED apoi GREEN pentru `ById`, `ByName`, `ByRole`, `WithName`, `Within`, zero/unul/mai multe rezultate, `FindAllAsync` empty și re-rezolvarea aceluiași target după replace/reparent.
 - [x] Verifică prin reflection că toate modulele de infrastructură rămân internal și că `ServoElement` nu expune referințe către arborele live.
-- [x] Reindexează soluția după modificările C#.
 
 **Gate etapa 1**
 
@@ -260,7 +258,6 @@ Documentație și artefacte:
 - [x] Pentru cancellation/excepții în mijlocul drag/chord, garantează frame de release/reset și dovedește că următoarea acțiune nu moștenește pointer button ori modifier apăsat.
 - [x] Pentru `Window`, enqueue-uiește secvențele prin frame loop-ul existent și finalizează după present; pentru `UiHost`, finalizează după `Update`/retained commit. Adaugă un test care separă „input trimis” de „frame comis”.
 - [x] Migrează `DesignPreviewSession`, `WindowApplicationRuntime` preview helpers și `Cerneala.PreviewHost` la driverul intern/`ServoModifiers`, păstrând API-ul public de preview și testele lui.
-- [x] Reindexează soluția după modificările C#.
 
 **Gate etapa 2**
 
@@ -277,7 +274,6 @@ Documentație și artefacte:
 - [x] Adaugă RED pentru `SaveScreenshotAsync(target, path)`: target fresh, target disabled sau non-hit-testable încă este capturabil, iar missing/ambiguous/hidden/zero-bounds/outside-client au rezultatele fixate în secțiunea 5.4.
 - [x] Extinde contractul intern application-owned de screenshot cu regiune pixel și implementează crop după full render, înainte de PNG encode, în WindowsDX și SDL_GPU; nu salva/decodează un PNG temporar și nu expune region overload pe `Window` public.
 - [x] Adaugă o matrice deterministă de pixeli pentru full-window versus target crop la scale 1, 1.5 și 2, bounds fracționare, clamp la fiecare margine și overlay peste target; verifică dimensiunile PNG și culorile exacte/toleranțele backend existente.
-- [x] Reindexează soluția după modificările C#.
 
 **Gate etapa 3**
 
@@ -293,7 +289,7 @@ Documentație și artefacte:
 - [x] Elimină `Window.CreateAutomationSession`, `WindowApplicationRuntime.CreateAutomationSession`, `RunAutomationScriptIfRequested`, `AutomationScriptRunner`, XPath/XML projection și cele două variabile generale de mediu.
 - [x] Elimină cele două fișiere JSON fără referințe. Adaugă în SDL_GPU smoke un mod `servo` code-first care deschide o aplicație Cerneala, găsește prin `Servo.Id`, execută input real, așteaptă starea observabilă, salvează screenshot complet și target crop prin `Window.SaveScreenshot` și închide controlat.
 - [x] Șterge directorul `UI/Automation/` numai după ce Roslyn search și textual search pentru markup/docs/config confirmă că fiecare call-site din tabel a fost migrat și că nu se ating `UI/Accessibility/AutomationPeer*`.
-- [x] Reindexează soluția după modificările C# și rulează din nou references pentru toate tipurile eliminate.
+- [x] Verifică din nou referințele pentru toate tipurile eliminate.
 
 **Gate etapa 4**
 
@@ -318,7 +314,6 @@ Documentație și artefacte:
 - [x] Rulează suita completă: `dotnet test .\Cerneala.slnx -c Release --no-build`.
 - [x] Rulează formatter verification: `dotnet format .\Cerneala.slnx --verify-no-changes --no-restore`; orice failure preexistent se separă prin lista exactă de fișiere și se rulează suplimentar verificarea goal-scoped, fără a edita fișierele dirty ale utilizatorului.
 - [x] Rulează comparația API arhivată: `dotnet msbuild .\benchmarks\results\2026-09-03-servo\api-compat.proj -t:Compare -v:minimal`.
-- [x] Reindexează final și cere status curat: `dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- index .\Cerneala.slnx --json`, apoi `dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- status .\Cerneala.slnx --json`.
 - [x] Rulează `git diff --check`, inventariază exact fișierele schimbate și confirmă că modificările dirty preexistente au fost păstrate.
 
 **Gate etapa 5**
@@ -334,7 +329,7 @@ Documentație și artefacte:
 - Smoke nativ: mod `servo` GREEN; `servo-main.png` este 800×525, iar `servo-target.png` este 200×60, ambele produse prin calea application-owned.
 - Formatter: verificarea completă a separat exact 10 fișiere cu probleme preexistente/concurente; verificarea goal-scoped a trecut pentru toate cele 111 fișiere C# schimbate.
 - ApiCompat strict: 119 diferențe aprobate (20 Servo, 98 Detective și overload-ul `GeneratedMarkup.AttachMotionSession(UIElement, ElementAspect?)` aprobat explicit); comanda arhivată a ieșit cu cod 0.
-- RoslynIndexer: status `valid`, 3621 documente și `dirtyFiles: 0`; `git diff --check` a trecut, inventarul `git status --short` are 239 intrări, iar sentinel-urile preexistente `D AGENTS.md`, `?? AGENTS_DEPRECATED.md` și `?? .codex/config.toml` au rămas intacte.
+- `git diff --check` a trecut, inventarul `git status --short` are 239 intrări, iar sentinel-urile preexistente `D AGENTS.md`, `?? AGENTS_DEPRECATED.md` și `?? .codex/config.toml` au rămas intacte.
 
 ## 9. Ordinea recomandată
 

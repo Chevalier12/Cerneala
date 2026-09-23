@@ -54,7 +54,6 @@ Plan 4 starts only after complete migration to `.crn`; the spike `.cui.xml` rema
 
 ## 6. Global gates
 
-- [x] After each C# or project change, run `dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- index .\Cerneala.slnx --json`. (Reindexes are recorded in the dependent plans and the current index is valid.)
 - [x] Any new or modified public API has the synchronized page in `docs-site/documentation/classes/`, created with the `writing-api-documentation` skill; `docs-site/documentation/manifest.json` is updated when a page is added or renamed. (The 2026-08-18 audit confirms the manifest and all pages/sources.)
 - [x] Each IntelliSense feature has tests at the semantic core level, LSP protocol and, where Visual Studio integration can change the behavior, test in Experimental Instance. (The Language, LanguageServer and VSIX plans document green matrices at these levels.)
 - [x] The corpus of all files `.crn` from the repo and valid sourcegen tests remains without false diagnostics in the editor. (Stage 4 records 12/12 documents without error tags.)

@@ -1,7 +1,6 @@
 # Historical Class Checklist
 
-Generated from `.roslyn-index/v1/symbols.jsonl` using RoslynIndexer data.
-Test projects, test paths, Playground classes, and RoslynRepoIndexer tool classes are excluded.
+Test projects, test paths, and Playground classes are excluded.
 Verified at: 2026-08-18
 
 > This is a dated class-like symbol snapshot, retained for audit history. The
@@ -14,7 +13,6 @@ Classes: 487
 Records: 130
 Excluded test class-like types: 462
 Excluded Playground class-like types: 24
-Excluded RoslynRepoIndexer class-like types: 0
 
 ## Cerneala
 

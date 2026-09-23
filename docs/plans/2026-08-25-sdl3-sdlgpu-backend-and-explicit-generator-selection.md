@@ -140,11 +140,7 @@ Android, iOS, tvOS, WebAssembly, audio, gamepad și migrarea PreviewHost la SDL 
 
 ## Ordinea obligatorie de implementare
 
-Etapele se execută în ordine. După orice modificare C# sau `.csproj`, se rulează reindexarea obligatorie:
-
-```powershell
-dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- index .\Cerneala.slnx --json
-```
+Etapele se execută în ordine.
 
 ### Etapa 0 — baseline reproductibil și teste RED
 
@@ -174,7 +170,6 @@ dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.
 - [x] Adaugă declarația assembly pentru WindowsDX în toate aplicațiile executabile din repository care folosesc startup generat; nu adăuga fallback implicit în generator.
 - [x] Păstrează apelurile explicite existente din PreviewHost, smoke și fixtures care nu sunt deținute de generator; acestea sunt compoziții intenționate, nu hardcodare SourceGen.
 - [x] Folosește skillul `writing-api-documentation` pentru pagina publică `ApplicationBackendAttribute`, actualizarea paginii `WindowsDxApplicationBackend`, pagina `UiMarkupGenerator`, ghidul `docs/application-markup.md` și `docs-site/documentation/manifest.json`.
-- [x] Reindexează soluția după modificările C# și proiect.
 
 - [x] **Gate etapa 1:** toate testele SourceGen sunt GREEN; generatorul nu conține și nu emite o alegere concretă; aplicațiile Windows existente compilează cu selecție explicită; zero și multiple selecții sunt fail-closed prin `CERNEALAUI015`.
 
@@ -191,7 +186,6 @@ dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.
 - [x] Creează scheletul `SdlWindowSurface` ca handle opac între platformă și graphics factory; core-ul nu poate downcasta la SDL.
 - [x] Creează `tests/Cerneala.Tests.SdlGpu` pe `net8.0`, cu fake SDL API pentru teste fără display și teste native marcate explicit pentru matrix runners.
 - [x] Verifică `dotnet publish` pentru toate cele șase RIDs și asertează că outputul conține exact runtime-ul SDL potrivit, fără DLL/dylib/so pentru alt OS.
-- [x] Reindexează soluția.
 
 - [x] **Gate etapa 2:** noile proiecte compilează pe `net8.0`, core-ul rămâne fără referințe SDL, lifetime-ul device/platform este acoperit de teste, iar publish-ul RID produce asset-uri native corecte.
 
@@ -208,7 +202,6 @@ dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.
 - [x] Implementează cursorul prin `PlatformServices`; nu adăuga clipboard/file-dialog API dacă nu există contract core consumat astăzi.
 - [x] Acoperă cu fake API crearea/distrugerea a minimum două ferestre, rutarea inputului intercalat, owner/modal, focus, DPI și close independent.
 - [x] Adaugă teste native care deschid două ferestre reale și confirmă ID-uri distincte, evenimente distincte și shutdown numai conform `ApplicationShutdownMode`.
-- [x] Reindexează soluția.
 
 - [x] **Gate etapa 3:** două sau mai multe ferestre SDL au lifetime, DPI, input și rutare independente; event pump-ul este unic; testele headless și smoke-ul nativ Windows nu lasă handles sau procese active. (Smoke-ul nativ Linux/macOS este omis explicit la cererea utilizatorului deoarece nu există runners; suportul și implementarea cross-platform rămân în scope.)
 
@@ -224,7 +217,6 @@ dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.
 - [x] Păstrează singura cale publică de captură `Window.SaveScreenshot`; nu utiliza API-uri OS, screen-copy sau utilitare de captură.
 - [x] Acoperă clear/present/resize/minimize/restore, două swapchain-uri simultane, failure cleanup și device disposal order.
 - [x] Adaugă primul smoke real care produce capturi deterministe din două ferestre prin API-ul Cerneala.
-- [x] Reindexează soluția.
 
 - [x] **Gate etapa 4:** două ferestre prezintă cadre diferite prin același device, se redimensionează și se închid independent, screenshot/readback este corect, iar validation layers nu raportează leaks sau use-after-free.
 
@@ -242,7 +234,6 @@ dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.
 - [x] Implementează frame/source/state pentru `RenderSurface2D`, resize, preserve/clear semantics, sampling, nested surfaces și folosire simultană din ferestre diferite.
 - [x] Rulează scenele canonice WindowsDX și SDL_GPU la aceeași dimensiune/DPI/color space și calculează pixel diff RGBA: MAE `<= 1.0`, percentila 99 a deltei pe canal `<= 10`, maxim absolut `< 50`; orice abatere este investigată, nu mascată prin blur sau toleranțe locale.
 - [x] Adaugă teste de disposal și buget care demonstrează că resursele GPU nu cresc după cicluri repetate create/render/resize/destroy.
-- [x] Reindexează soluția.
 
 - [x] **Gate etapa 5:** toate comenzile Drawing și `RenderSurface2D` sunt implementate, scenele canonice respectă pragurile pixel-diff, iar multi-window nu dublează nejustificat cache-urile per-device.
 
@@ -259,7 +250,6 @@ dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.
 - [x] Integrează build incremental cu `Inputs`/`Outputs`, target de restore controlat și target fail-closed pentru artefact absent/stale, analog disciplinei MGFX existente.
 - [x] Adaugă un mod `--verify` care nu scrie și eșuează dacă outputul versionat/embedded nu corespunde surselor.
 - [x] Rulează compilarea shaderelor pe Windows, Linux și macOS; nu accepta artefact produs doar pe o singură platformă fără verificare pe driverul consumator. (Compilarea și încărcarea Windows au fost verificate; execuția nativă Linux/macOS a fost omisă explicit la cererea utilizatorului din lipsă de runners, cu implementarea, pachetele și artefactele cross-platform păstrate.)
-- [x] Reindexează soluția după proiect/tool changes.
 
 - [x] **Gate etapa 6:** catalogul are o singură implementare HLSL a matematicii, MonoGame continuă să compileze, SDL_GPU încarcă toate formatele cerute, iar `--verify` detectează orice artefact stale fără runtime compilation. (Pipeline-urile reale au fost create pe Windows; smoke-ul nativ Vulkan/Metal rămâne exceptat numai ca execuție, conform lipsei de runners Linux/macOS.)
 
@@ -276,7 +266,6 @@ dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.
 - [x] Rulează pixel diff WindowsDX/SDL_GPU pentru catalog: MAE `<= 1.0`, percentila 99 `<= 10`, maxim `< 50`; excepțiile hardware demonstrate trebuie documentate global, nu per-efect.
 - [x] Acoperă două ferestre cu grafuri Prism simultane, backdrops distincte, cache partajat valid și închiderea uneia în timpul randării celeilalte.
 - [x] Măsoară CPU frame time, submit count, alocări și peak GPU resource bytes; investighează orice regresie SDL peste `1.25x` față de WindowsDX pe aceeași mașină/scenă.
-- [x] Reindexează soluția.
 
 - [x] **Gate etapa 7:** fiecare operație Prism din catalog rulează pe SDL_GPU, respectă diagnosticele/bugetele și pragurile vizuale, fără leak sau contaminare între ferestre.
 
@@ -295,7 +284,7 @@ dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.
 - [x] Folosește skillul `writing-api-documentation` pentru `SdlGpuApplicationBackend`, actualizează `ApplicationBackendAttribute`, `WindowsDxApplicationBackend`, manifestul docs și ghidul de alegere/package/RID.
 - [x] Actualizează inventarul de coupling pentru a arăta că SDL este limitat la cele două adaptoare și tool-ul shader, fără a rescrie istoricul schimbărilor existente.
 - [x] Rulează scanarea de API public, boundary tests și căutarea finală pentru tipuri SDL/Windows concrete în core și SourceGen.
-- [x] Reindexează soluția și regenerează `FileTree.md` numai ca ultim pas, după structura finală.
+- [x] Regenerează `FileTree.md` numai ca ultim pas, după structura finală.
 
 - [x] **Gate etapa 8:** o aplicație poate alege explicit WindowsDX sau SDL_GPU fără modificarea generatorului; cele șase publish-uri conțin asseturile native corecte, iar outputul publicat `win-x64` rulează toate modurile, inclusiv multi-window și Prism; matricea CI păstrează smoke-urile native Vulkan/Metal și jobul WindowsDX. (Execuția nativă Linux/macOS și confirmarea unui run CI remote sunt omise explicit la cererea utilizatorului din lipsă de runners; implementarea, packaging-ul și configurația CI rămân complete.) Documentația publică este sincronizată.
 
@@ -370,4 +359,4 @@ Tipurile interne SDL nu primesc pagini publice individuale.
 - [x] Pachetele publicate conțin numai asseturile native corecte pentru RID și nu cer ShaderCross la runtime.
 - [x] CI matrix și jobul de regresie WindowsDX sunt GREEN. (Configurația completă este livrată și gate-urile locale Windows sunt GREEN; confirmarea unui run CI remote este omisă explicit deoarece utilizatorul nu are runners.)
 - [x] Documentația API și manifestul sunt sincronizate.
-- [x] RoslynIndexer este reindexat, `FileTree.md` este regenerat la final și `git diff --check` nu raportează erori.
+- [x] `FileTree.md` este regenerat la final și `git diff --check` nu raportează erori.

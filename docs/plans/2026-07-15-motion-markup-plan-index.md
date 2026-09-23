@@ -40,7 +40,6 @@ Plans 4 and 5 can run after foundation without waiting for timelines/clips. Plan
 
 ## 5. Global gates
 
-- [x] After each C# or project change, run `dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- index .\Cerneala.slnx --json` indexing.
 - [x] Any new or modified public API has the synchronized page in `docs-site/documentation/classes/`, created with the `writing-api-documentation` skill; the manifest is updated when a page is added or renamed.
 - [x] Each dependent plan starts only after the final gate of the dependency is GREEN.
 - [x] No lifecycle test is limited to the first attach: each new controller is checked by attach/detach/reattach and replacement.

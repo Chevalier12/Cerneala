@@ -30,7 +30,6 @@ Planul acoperă toate capabilitățile identificate, nu doar subsetul recomandat
 - Payload-urile păstrate în command list sunt immutable sau versionate explicit, pentru equality retained, cache și damage tracking corecte.
 - Drawing oferă compoziția 2D de bază; filtrele, style-urile, măștile și graph composition avansată rămân responsabilitatea Prism.
 - Orice public API nou este documentat în `docs-site/documentation/classes/` folosind skill-ul `writing-api-documentation`, iar `manifest.json` este sincronizat.
-- După fiecare batch de cod sau proiect se reindexează soluția cu RoslynIndexer.
 - Nu se adaugă workaround-uri în demo sau UI pentru defecte care aparțin nucleului Drawing/backend.
 
 ## Baseline curent
@@ -178,8 +177,8 @@ Etapele 4, 5 și 6 pot fi implementate separat după gate-ul etapei 3, dar toate
 
 ## Etapa 0 — Baseline, inventar și teste RED
 
-- [x] Regenerează `FileTree.md`, citește-l și indexează `Cerneala.slnx`.
-- [x] Folosește RoslynIndexer pentru toate referințele și switch-urile `DrawCommandKind`.
+- [x] Regenerează `FileTree.md` și citește-l.
+- [x] Verifică toate referințele și switch-urile `DrawCommandKind`.
 - [x] Inventariază exact payload-urile, equality-ul, hashing-ul, bounds și resursele fiecărei comenzi curente.
 - [x] Mapează fluxul complet `RenderSurface2DFrame` → `DrawingContext` → command list → backend/session → Prism analyzer.
 - [x] Fixează în teste comportamentul public existent pentru toate primitivele deja disponibile.
@@ -210,7 +209,7 @@ Etapele 4, 5 și 6 pot fi implementate separat după gate-ul etapei 3, dar toate
 - [x] Adaugă `FillPath(DrawPath, ...)` în `DrawingContext` și îl deleagă prin `RenderSurface2DFrame`.
 - [x] Include path-ul tipizat în equality, cache keys, damage bounds și analiza Prism.
 - [x] Migrează `Shape`/`SvgGeometry` către substratul comun acolo unde nu rupe API-ul public.
-- [x] Rulează testele focalizate și reindexează soluția.
+- [x] Rulează testele focalizate.
 
 ### Gate etapa 1
 
@@ -233,7 +232,7 @@ Etapele 4, 5 și 6 pot fi implementate separat după gate-ul etapei 3, dar toate
 - [x] Calculează bounds conservatoare pentru caps, joins, dashes și alignment.
 - [x] Propagă stroke-ul în retained equality, damage, Prism și `RenderSurface2DFrame`.
 - [x] Adaugă benchmark-uri pentru paths mari, dashed strokes și round joins.
-- [x] Rulează testele focalizate și reindexează soluția.
+- [x] Rulează testele focalizate.
 
 ### Gate etapa 2
 
@@ -257,7 +256,7 @@ Etapele 4, 5 și 6 pot fi implementate separat după gate-ul etapei 3, dar toate
 - [x] Adaugă scope-urile publice `ref struct` și validează LIFO/double-dispose.
 - [x] Respinge command lists dezechilibrate cu diagnostice care indică push-ul neînchis.
 - [x] Restaurează starea GPU după pop, excepție, resize, device reset și dispose.
-- [x] Rulează teste de nesting mixt și benchmark-uri pentru layere/clipuri, apoi reindexează.
+- [x] Rulează teste de nesting mixt și benchmark-uri pentru layere/clipuri.
 
 ### Gate etapa 3
 
@@ -280,7 +279,7 @@ Etapele 4, 5 și 6 pot fi implementate separat după gate-ul etapei 3, dar toate
 - [x] Documentează și testează inputurile degenerate/non-finite.
 - [x] Testează bounds pentru extrema arcurilor, stroke exterior și transformări.
 - [x] Adaugă benchmark-uri pentru rounded rectangles, poligoane mari și paths reutilizate.
-- [x] Rulează testele focalizate și reindexează soluția.
+- [x] Rulează testele focalizate.
 
 ### Gate etapa 4
 
@@ -306,7 +305,7 @@ Etapele 4, 5 și 6 pot fi implementate separat după gate-ul etapei 3, dar toate
 - [x] Integrează comenzile cu retained comparison, Prism scopes și `OnDemand`.
 - [x] Eliberează resursele GPU la image dispose, surface dispose și device reset.
 - [x] Adaugă benchmark-uri comparative pentru comenzi individuale versus batches.
-- [x] Rulează testele focalizate și reindexează soluția.
+- [x] Rulează testele focalizate.
 
 ### Gate etapa 5
 
@@ -333,7 +332,7 @@ Etapele 4, 5 și 6 pot fi implementate separat după gate-ul etapei 3, dar toate
 - [x] Cache-uiește layout-ul după conținut, fonturi, opțiuni, constraints și scale relevante.
 - [x] Integrează bounds, retained comparison, `OnDemand` și Prism.
 - [x] Adaugă benchmark-uri pentru layout reutilizat versus reconstruit.
-- [x] Rulează testele Unicode/layout și reindexează soluția.
+- [x] Rulează testele Unicode/layout.
 
 ### Gate etapa 6
 
@@ -355,7 +354,7 @@ Etapele 4, 5 și 6 pot fi implementate separat după gate-ul etapei 3, dar toate
 - [x] Verifică resize, device lost/reset și recrearea resurselor.
 - [x] Adaugă diagnostice pentru stack imbalance, invalid geometry, cache miss și resurse disposed.
 - [x] Elimină orice workaround temporar devenit inutil în `PathGeometry`, demo-uri sau controale.
-- [x] Rulează testele de integrare și stress, apoi reindexează soluția.
+- [x] Rulează testele de integrare și stress.
 
 ### Gate etapa 7
 
@@ -379,7 +378,6 @@ Etapele 4, 5 și 6 pot fi implementate separat după gate-ul etapei 3, dar toate
 - [x] Rulează benchmark-urile și înregistrează baseline/threshold-uri acceptate.
 - [x] Rulează testele focalizate, întreaga suită și build-ul soluției.
 - [x] Regenerează `FileTree.md` dacă structura s-a schimbat.
-- [x] Reindexează soluția și rulează RoslynIndexer `doctor`.
 - [x] Rulează `git diff --check` pe toate fișierele modificate.
 - [x] Confirmă că nu există API public nedocumentat sau pagină absentă din manifest.
 
@@ -432,11 +430,9 @@ Etapele 4, 5 și 6 pot fi implementate separat după gate-ul etapei 3, dar toate
 
 ```powershell
 .\Tools\scripts\New-FileTree.ps1
-dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- index .\Cerneala.slnx --json
 dotnet test .\Cerneala.slnx --filter "FullyQualifiedName~Drawing|FullyQualifiedName~RenderSurface2D|FullyQualifiedName~Prism"
 dotnet test .\Cerneala.slnx
 dotnet build .\Cerneala.slnx
-dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- doctor
 git diff --check
 ```
 
@@ -473,4 +469,4 @@ git diff --check
 - [x] Nu există workaround-uri în UI sau demo pentru defecte ale Drawing/backend.
 - [x] Toate API-urile publice sunt documentate în locația canonică și manifestul este sincronizat.
 - [x] Testele unitare, de integrare, vizuale și de stress sunt verzi.
-- [x] Build-ul complet, RoslynIndexer `doctor`, benchmark-urile acceptate și `git diff --check` sunt verzi.
+- [x] Build-ul complet, benchmark-urile acceptate și `git diff --check` sunt verzi.

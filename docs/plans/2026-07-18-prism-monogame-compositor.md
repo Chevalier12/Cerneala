@@ -117,7 +117,6 @@ over these contracts.
   changed; also corrects the old statement that the backend does not own
   `Begin/End`.
 - [x] Sync `docs-site/documentation/manifest.json`.
-- [x] Run reindexing after every C# batch/project.
 - [x] Running
   `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj --filter "MonoGame|Prism"`,
   `dotnet test .\Cerneala.slnx` and a clean build that recompiles the shaders.

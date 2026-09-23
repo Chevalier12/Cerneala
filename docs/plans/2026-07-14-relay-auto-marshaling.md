@@ -551,9 +551,8 @@ Dependencies between plans:
 
 ### Stage 0 - Inventory, baseline and RED tests
 
-- [x] Regenerate `FileTree.md`, index `Cerneala.slnx --json` and confirm
-  `doctor` green before changes.
-- [x] Use RoslynIndexer for definitions and references of `MotionThreadGuard`,
+- [x] Regenerate `FileTree.md` before changes.
+- [x] Inspect definitions and references of `MotionThreadGuard`,
   `MotionSystem.ThreadGuard`, builders `MotionGraph` and calls
   `ThreadGuard.VerifyAccess`; save the inventory in the implementation notes.
 - [x] Inventory the examples and API pages that build
@@ -617,7 +616,6 @@ Dependencies between plans:
   for the next update.
 - [x] Add tests for the 1,024 budget, backlog and continuation in updates
   successive.
-- [x] Reindexes after each C# or project-file modification.
 
 **Gate stage 1**
 
@@ -642,7 +640,6 @@ Dependencies between plans:
   the tail of the root that captured it.
 - [x] Checks the fact that a pre-existing context is restored exactly after the update.
 - [x] Checks exceptions and cancellation of async callbacks without blocking the drain.
-- [x] Reindex after C# changes.
 
 **Gate stage 2**
 
@@ -680,7 +677,6 @@ they have the same owner thread.
   verification path and does not start the artificial scheduler.
 - [x] Add root replacement tests: the old Relay is not closed,
   the new root is checked, and each queue is pumped only with its root.
-- [x] Reindex after each C# change.
 
 **Gate stage 3**
 
@@ -716,7 +712,7 @@ they have the same owner thread.
   internally, keeping the thread affinity check without public guard.
 - [x] Completely delete `UI/Motion/Core/MotionThreadGuard.cs`; do not add `[Obsolete]`,
   adapter, alias, forwarding type or compatibility shim.
-- [x] Check through RoslynIndexer that there are no more C# references to the type,
+- [x] Check that there are no more C# references to the type,
   `MotionSystem.ThreadGuard` or removed builders.
 - [x] Link mutable points Aspect to Relay without `AspectThreadGuard`: registry,
   environment, invalidation, engine and processor check the same owner thread
@@ -729,9 +725,8 @@ they have the same owner thread.
 - [x] Add tests for detached element configured on the worker and attached later
   on the owner thread.
 - [x] Add tests for attach/detach, Motion, Aspect and off-thread root methods.
-- [x] Run a Roslyn audit of public points that modify an attached root and
+- [x] Audit public points that modify an attached root and
   explicitly note the remaining UI-thread-only exceptions by superior contract.
-- [x] Reindex after each C# change.
 
 **Gate Stage 4**
 
@@ -776,7 +771,6 @@ they have the same owner thread.
 - [x] Updates the strict contract from the plan and data binding documentation:
   CLR `INotifyPropertyChanged` attached becomes auto-marshal, while
   `UiObject.PropertyChanged` and direct UI mutations remain strictly UI-thread.
-- [x] Reindex after each C# or source-generator change.
 
 **Gate Stage 5**
 
@@ -803,7 +797,6 @@ they have the same owner thread.
   `InvokeAsync`, including cancellation.
 - [x] Don't migrate an event just because it exists; document for each if
   is UI-owned, auto-marshaled or requires explicit dispatch.
-- [x] Reindex after each C# change.
 
 **Gate stage 6**
 
@@ -833,7 +826,6 @@ they have the same owner thread.
   the root remains temporarily unrooted.
 - [x] Do not add pooling until the benchmark demonstrates a real problem and
   the tests can guarantee the complete reset of the work item.
-- [x] Re-indexes after benchmark/project changes.
 
 **Gate stage 7**
 
@@ -880,8 +872,7 @@ the budget, the latency of an update and the fact that the root must be pumped.
 - [x] Run the hosting, data binding, Motion, Aspect, invalidation tests,
   lifecycle and Windows runtime.
 - [x] Run the final benchmarks in Release and save the report.
-- [x] Regenerate `FileTree.md`, reindex `Cerneala.slnx --json` and confirm
-  zero warnings of the indexer.
+- [x] Regenerate `FileTree.md`.
 - [x] Run `git diff --check` and confirm that there are no temporary files left,
   flaky processes or tests.
 

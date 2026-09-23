@@ -147,7 +147,6 @@ API documentation before continuing.
 - [x] Make the runner output non-zero for any frame above `16.6667 ms`, incomplete report, asynchronous error or blocked process.
 - [x] Record the RED baseline in `benchmarks/results/<data>-presentation-frame-budget/README.md`, including hardware, OS, configuration, maximums per view, counts over budget and exact order.
 - [x] Confirm that the baseline reproduces allocations/GC associated with the draw through a separate profiling run; does not introduce permanent public phase timings.
-- [x] Reindex after each C# or project-file change.
 
 **Gate Stage 0**
 
@@ -162,7 +161,6 @@ API documentation before continuing.
 - [x] Check by test that the exhaust releases all RGB textures, optional mask and dependent `textBrushTextureCache` inputs.
 - [x] Keep tests for `Dispose()` idempotent, coordinate-scale reset and device reset; everyone must immediately empty the caches.
 - [x] Add internal/test-only diagnostics counters for hits, misses, evictions and estimated bytes, without public API.
-- [x] Reindex after C# changes.
 
 **Gate stage 1**
 
@@ -177,7 +175,6 @@ API documentation before continuing.
 - [x] Add pixel-diff tests for the canonical phases and the positions between them; check baseline, clipping, color/gamma and the absence of jumps greater than the accepted tolerance.
 - [x] Check solid text and brush text, because both caches include the text key.
 - [x] Keep `TextTextureKey` separately for font, size, scale coordinates and rasterization color.
-- [x] Reindex after C# changes.
 
 **Gate stage 2**
 
@@ -194,7 +191,6 @@ API documentation before continuing.
 - [x] Use `ArrayPool<byte>` only if the buffer can be returned after upload without `RasterizedText` or `Texture2D` keeping its reference.
 - [x] Add allocation tests after warm-up for static text, animated text and A-B-A view switching.
 - [x] Run the benchmark after each substep and keep the cold/warm comparison against the baseline.
-- [x] Reindex after C# changes.
 
 **Gate stage 3**
 
@@ -211,7 +207,6 @@ API documentation before continuing.
 - [x] Keep the final result in `benchmarks/results/<data>-presentation-frame-budget/README.md` near the baseline, with the same hardware and the same parameters.
 - [x] Confirm that the benchmark does not force GC, does not write in the frame callback and does not include the time of its own serialization in `ProcessingTime`.
 - [x] Confirm that the process closes the window on success, failure and timeout and does not leave Cerneala/dotnet processes active.
-- [x] Reindex after C# and project-file changes.
 
 **Gate Stage 4**
 
@@ -228,8 +223,8 @@ API documentation before continuing.
 - [x] Request human visual validation for static and animated text at scales 1, 1.25, 1.5 and 2; the agent does not invent the result of this gate.
 - [x] Run public API diff; if it is empty, it records that no new pages are needed in `docs-site/documentation/classes/`. (The strict diff contains only two documented additions; the non-strict compatibility check is GREEN.)
 - [x] If there are unexpected public changes, update the documentation via `writing-api-documentation` and synchronize the manifest where pages are added or renamed. (The existing pages for `UIRoot` and `UiFrame` are synchronized; the manifest does not require change.)
-- [x] Run `git diff --check` and RoslynIndexer `doctor/status` after final indexing.
-- [x] Confirm that there are no new warnings, new skipped tests, remaining processes or temporary profiling artifacts. (The indexer warning for `tmp/presentation-frame-cause.nettrace.etlx` is a pre-existing user artifact, not one created by the plan.)
+- [x] Run `git diff --check`.
+- [x] Confirm that there are no new warnings, new skipped tests, remaining processes or temporary profiling artifacts.
 
 **Gate Stage 5**
 

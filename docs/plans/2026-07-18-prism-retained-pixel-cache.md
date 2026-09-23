@@ -173,7 +173,6 @@ interior of the scope and all passes covered, then compose the surface.
   `docs-site/documentation/manifest.json`.
 - [x] Update the TDD/proposal only with details confirmed by
   implementation and benchmark without changing the grammar.
-- [x] Run mandatory reindexing after every C# batch/project.
 - [x] Running
   `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj --filter "PrismRetainedCache|PrismDependencyStamp|PrismBackdrop"`.
 - [x] Run all Prism goldens in cache-on and cache-off mode, then

@@ -51,7 +51,6 @@ Verificare după remediere:
 - Auditul a rulat într-un worktree temporar separat: `C:\Users\lauri\Desktop\Cerneala-motion-audit-09022026`.
 - Nu au fost folosite skill-uri, conform cererii.
 - Înainte de inspecția largă am regenerat și citit `FileTree.md`.
-- Pentru navigarea și citirea semantică a surselor C# am indexat `Cerneala.slnx` cu RoslynRepoIndexer: 3.579 documente, 92.757 simboluri, 358.944 referințe și 3.190.449 tokenuri. Indexerul a raportat 10 avertismente interne; indexarea a reușit.
 - Au fost inspectate cele 116 fișiere C# urmărite de Git din `UI/Motion`, integrarea cu `UIRoot`/`UiFrameScheduler`, testele Motion din proiectele core, SourceGen și Language, documentația publică și planul `docs/superpowers/plans/2026-07-07-modern-motion-system.md`.
 - Defectele critice de stare au fost reproduse printr-un executabil public-API separat, în afara repository-ului, referit la assembly-ul construit din worktree. Nu au fost introduse fișiere-probă în proiectele Cerneala.
 

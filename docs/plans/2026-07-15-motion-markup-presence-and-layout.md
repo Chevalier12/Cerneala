@@ -18,7 +18,7 @@ The audit identified a real runtime risk: `PresenceCoordinator.MarkAttached` cre
 - [x] Add RED test in `PresenceCoordinatorTests` for repeated attach/detach/reattach and demonstrate that subscriptions/graph values of enter do not accumulate.
 - [x] Fix `PresenceCoordinator` so that enter handles and subscriptions have an owner, to be canceled/released at detach, replacement and exit handoff.
 - [x] Check re-add during exit and coexistence with layout correction.
-- [x] Updates API docs if any public member changes and reindexes the solution. (It wasn't necessary: the public API remained unchanged.)
+- [x] Updates API docs if any public member changes. (It wasn't necessary: the public API remained unchanged.)
 
 **Gate Stage 0**
 
@@ -31,7 +31,6 @@ The audit identified a real runtime risk: `PresenceCoordinator.MarkAttached` cre
 - [x] Issue the Presence assignment before the element enters the retained tree.
 - [x] Rejects custom endpoints, custom bodies, initial mode and Presence retroactively applied to an already attached element.
 - [x] Adds sourcegen and runtime tests for enter, exit, input exclusion, removal once and reduced motion.
-- [x] Reindex the solution.
 
 **Gate stage 1**
 
@@ -45,7 +44,6 @@ The audit identified a real runtime risk: `PresenceCoordinator.MarkAttached` cre
 - [x] Add tests for layout rect change, mid-flight retarget, reparent with the same element and detach cleanup.
 - [x] Add idle-frame assertions: correction ticks do not enqueue measure/arrange.
 - [x] Reject position/size modes, crossfade, shared element between distinct controls and custom layout sequences.
-- [x] Reindex the solution.
 
 **Gate stage 2**
 
@@ -55,5 +53,5 @@ The audit identified a real runtime risk: `PresenceCoordinator.MarkAttached` cre
 
 - [x] Run targeted Presence/Layout and sourcegen Motion tests.
 - [x] Run stress attach/detach/reparent with diagnostics counters.
-- [x] Runs `dotnet test .\Cerneala.slnx`, `git diff --check` and the final reindex.
+- [x] Runs `dotnet test .\Cerneala.slnx`, `git diff --check`.
 - [x] Presence and Layout are declarative, coordinator-owned and without the crazy extensions excluded from the proposal.

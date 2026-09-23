@@ -174,7 +174,6 @@ Target examples:
       deduplicated, fully bracketed predicates and lifetime registration.
 - [x] Run a repeated attach/detach smoke test for conditional content
       and check the lack of subscription leaks.
-- [x] Reindex the solution and confirm zero warnings in RoslynIndexer.
 - [x] Check the checklist only as each step is demonstrated.
 
 ## The definition of ready

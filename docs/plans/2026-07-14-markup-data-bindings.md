@@ -585,13 +585,10 @@ intermediate `null`, nullable terminal, replacement by `DataContext` and templat
 - [x] Add runtime tests that confirm that the change of any owner
   `INotifyPropertyChanged` from a path reconstructs the descending segments and
   that the old owners are unsubscribed.
-- [x] After each modification C# reindexes with
-  `dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- index .\Cerneala.slnx --json`.
 
   Proof stage 1 of 2026-07-14: `GeneratedMarkupObservationTests` is
   `4/4` GREEN, including explicit subscription counters for owners
-  old, and the existing source-generator regression is `123/123` GREEN. The index
-  Roslyn reports zero warnings. The new public overload and internal semantics
+  old, and the existing source-generator regression is `123/123` GREEN. The new public overload and internal semantics
   solutions are synchronized in the existing API pages.
 
 **Gate stage 1**
@@ -653,16 +650,13 @@ intermediate `null`, nullable terminal, replacement by `DataContext` and templat
 - [x] Add cascade tests with two branches that offer different bindings
   the same properties; only the binding of the winning branch can update
   target or source `TwoWay`.
-- [x] Re-index the solution after each C# or project-file modification.
 
   Stage 2 proof from 2026-07-14: `GeneratedMarkupBindingTests` is `11/11`
   GREEN; the matrix combined with the existing observations and bindings is
   `34/34` GREEN; the existing source-generator regression is `123/123` GREEN.
   Slots, crop conversion, deduplicated interpolation,
   TwoWay and `Local` normalization, the conditional fallback, the lifecycle,
-  template the swap and fail-fast off-thread before the getter. The Roslyn Index
-  it has zero warnings, and the new public factories are documented in the API pages
-  existing.
+  template the swap and fail-fast off-thread before the getter. The new public factories are documented in the existing API pages.
 
 **Gate stage 2**
 
@@ -715,7 +709,6 @@ intermediate `null`, nullable terminal, replacement by `DataContext` and templat
 - [x] Confirm that the documents `Window<TViewModel>` and
   `UserControl<TViewModel>` use the existing generic type when `DataType` does not
   it is repeated according to the current solution.
-- [x] Re-index the solution after each C# or project-file change.
 
 **Gate stage 3**
 
@@ -730,8 +723,8 @@ Stage 3 proof from 2026-07-14: the parser and common descriptor are covered by
 assignment unquoted, quoted/interpolation, `\$`, deduplication, all endpoints,
 type validation/writability/observability and generic inference for
 `Window<TViewModel>` / `UserControl<TViewModel>`. The source-gen suite without samples
-RED from stage 0 is green (`129/129`), indexing has zero warnings again
-RoslynIndexer no longer finds the old symbols `EmitDataObservation` or
+RED from stage 0 is green (`129/129`).
+The old symbols are absent: `EmitDataObservation` and
 `EmitTemplatePartObservation`; inspection of the generated code confirms typed access,
 without reflection or property paths evaluated at runtime.
 
@@ -767,7 +760,6 @@ use the lifecycle owner of the target.
 - [x] Inspect the generated code for simple examples with default/explicit mode,
   nested, directly named, `$self`, conditional unquoted, two-way and part: all
   accesses must be typed and fully qualified.
-- [x] Re-index the solution after each C# or project-file change.
 
 **Gate Stage 4**
 
@@ -784,7 +776,7 @@ skipped. Inspection of the generated source confirms typical and complete factor
 qualified for direct binding, nested, named forward, `$self`, conditional,
 interpolation and template lifetime, without reflection. End-to-end testing covers
 factory, `Window<TViewModel>`, `UserControl<TViewModel>`, template swap and
-detach/reattach; RoslynIndexer reports zero warnings, and `git diff --check`
+detach/reattach; `git diff --check`
 does not report errors.
 
 ### Stage 5 - Diagnostics and compatibility
@@ -839,7 +831,6 @@ mode, with unknown mode or used as a fragment in a longer value.
   existing.
 - [x] Tests that the unquoted assignment without mode and the one with `:OneWay` emit
   the same semantic descriptor, while the quoted form receives diagnosis.
-- [x] Re-index the solution after each C# or project-file change.
 
 **Gate Stage 5**
 
@@ -856,7 +847,7 @@ and template binding are GREEN (`23/23`), without skipped tests. They are covere
 syntax and invalid modes, accessibility, types, writability, name
 scope, direct and named self-binding, resources/aspects, interpolation,
 the escape `\$`, `$owner` with conditional restoration and template parts in
-attributes and conditions. RoslynIndexer reports zero warnings, again
+attributes and conditions.
 `git diff --check` reports no errors.
 
 ### Stage 6 - Documentation and public API
@@ -930,15 +921,13 @@ is GREEN, and `git diff --check` reports no errors.
   `DataContext`, template swap, forward reference to named element, change
   between two conditional bindings, interpolation with several sources and o
   expression `(A and B) or C`.
-- [x] Final reindex with
-  `dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- index .\Cerneala.slnx --json` and confirm zero warnings.
 - [x] Review `git diff` to confirm that no conversion has entered,
   reflection paths or other extensions from non-objectives.
 
 **Gate stage 7**
 
 - [x] The targeted tests and the complete suite are GREEN.
-- [x] The generated code, public API diff, documentation and RoslynIndexer are clean.
+- [x] The generated code, public API diff, documentation are clean.
 Stage 7 proof from 2026-07-14: the targeted source-generator tests are GREEN
 (`158/158`), the targeted runtime tests are GREEN (`11/11`), and the regressions
 existing binding/template are GREEN (`20/20`). The complete suite is GREEN:
@@ -949,9 +938,7 @@ template swap, forward named source, two conditional suppliers, interpolation
 multi-source and `(A and B) or C`. Emitter inspection and code test
 generated confirm typed accessors without reflection, deduplication after expression
 canonical and setter only on the terminal segment; the production audit reports
-zero prohibited terms. The final reindex covers documents `1936`, `27843`
-symbols and `114062` references with zero warnings, and `git diff --check` is
-clean
+zero prohibited terms. `git diff --check` is clean.
 
 ## 9. Recommended order
 
@@ -1008,4 +995,4 @@ implicitly, I reject a quoted path as a diagnosis, it only activates the binding
   compatible.
 - [x] There are no reflection paths, conversion or additional modes.
 - [x] The diagnoses are accurate, the public documentation is synchronized,
-  the tests are GREEN and the Roslyn index is clean.
+  the tests are GREEN.

@@ -125,8 +125,6 @@ establishes limits, performance and lifecycle resistance through measurements.
 
 ## Stage 6 — final suite
 
-- [x] Run full reindex and
-  `dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- doctor`.
 - [x] Running
   `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj`.
 - [x] Running

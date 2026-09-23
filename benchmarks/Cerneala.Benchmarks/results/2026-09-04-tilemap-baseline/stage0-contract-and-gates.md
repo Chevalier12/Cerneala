@@ -8,7 +8,7 @@ documentation. Public documentation is produced only when the API exists.
 
 ## `DrawSpriteBatch` semantic inventory
 
-RoslynIndexer found 28 exact references to `Cerneala.Drawing.DrawSpriteBatch`.
+The inventory recorded 28 exact references to `Cerneala.Drawing.DrawSpriteBatch`.
 The relevant ownership chain is:
 
 1. `Drawing/DrawBatches.cs` owns the immutable copied sprite list, one image,

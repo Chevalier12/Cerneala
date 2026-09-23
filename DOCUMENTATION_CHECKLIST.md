@@ -22,7 +22,6 @@
 - [x] ROADMAP.md
 - [x] ROADMAPv2_AUDIT.md
 - [x] ROADMAPv2.md
-- [x] roslyn_indexer_codex_plan_final.md
 
 ## Project and benchmark documentation
 
@@ -34,8 +33,6 @@
 - [x] benchmarks/results/2026-07-17-presentation-frame-budget/README.md
 - [x] Drawing/Prism/Blend/Assets/README.md
 - [x] tests/Cerneala.Tests.Language/SEMANTIC-INVENTORY.md
-- [x] Tools/RoslynRepoIndexer/benchmarks/README.md
-- [x] Tools/RoslynRepoIndexer/README.md
 
 ## Thematic and historical documentation
 
@@ -61,7 +58,6 @@
 - [x] docs/plans/2026-07-11-background-and-borderbrush-brush-migration.md
 - [x] docs/plans/2026-07-11-brush-types-and-rendering.md
 - [x] docs/plans/2026-07-11-foreground-brush-migration.md
-- [x] docs/plans/2026-07-12-roslyn-indexer-agent-performance-upgrades.md
 - [x] docs/plans/2026-07-13-markup-logical-expressions.md
 - [x] docs/plans/2026-07-13-queue-engine-2.md
 - [x] docs/plans/2026-07-13-repeat-button.md

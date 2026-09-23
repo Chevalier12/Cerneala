@@ -65,9 +65,9 @@
         <p><span>&gt;</span> contributor.rule</p>
         <strong class="console-lime">USE_THE_REPO_TOOLING</strong>
         <p><span>&gt;</span> forbidden.mutations</p>
-        <strong class="console-red">AGENTS_MD / ROSLYN_INDEXER</strong>
+        <strong class="console-red">AGENTS_MD</strong>
       </div>
-      <footer><span>INDEX</span><strong>RoslynIndexer</strong><span>EXPERIMENT</span><strong>CSI</strong><span>GATE</span><strong>GREEN SUITE</strong></footer>
+      <footer><span>EVIDENCE</span><strong>SOURCE + TESTS</strong><span>EXPERIMENT</span><strong>CSI</strong><span>GATE</span><strong>GREEN SUITE</strong></footer>
     </div>
   </section>
 
@@ -156,7 +156,7 @@
     <div class="human-memory-warning">
       <span>PRIME DIRECTIVE</span>
       <strong>Do not raw-dog this repository with your unaided human brain.</strong>
-      <p>Cerneala has the surface area of a repository that would normally require 40+ developers. Its maintainer is one person. Trying to understand every subsystem at once is not diligence; it is a fast route to losing your mind. Give a capable agent the exact scenario, let it load the local context, read the repository instructions, navigate through RoslynIndexer, run focused experiments, create tests, and show you evidence. Your job is intent, judgment, review, and deeply understanding the slice you are actually changing.</p>
+      <p>Cerneala has the surface area of a repository that would normally require 40+ developers. Its maintainer is one person. Trying to understand every subsystem at once is not diligence; it is a fast route to losing your mind. Give a capable agent the exact scenario, let it load the local context, read the repository instructions, read files directly, use rg for text search, run focused experiments, create tests, and show you evidence. Your job is intent, judgment, review, and deeply understanding the slice you are actually changing.</p>
     </div>
 
     <div class="repo-entry-paths">
@@ -170,7 +170,7 @@
           <span class="entry-orb" aria-hidden="true">&lt;/&gt;</span>
           <small>PATH 01</small>
           <h4>Read the code</h4>
-          <p>Follow the exact subsystem you care about through RoslynIndexer. Read definitions, references, tests, and the surrounding contracts instead of scanning random folders until your eyes file for divorce.</p>
+          <p>Read files directly for definitions, tests, and the surrounding contracts; use rg for text search.</p>
           <a href="https://github.com/Chevalier12/Cerneala">Browse the source</a>
         </article>
 
@@ -218,11 +218,11 @@
         <p><strong>Maintainer assessment:</strong> every Anthropic model evaluated through September 2, 2026—including Fable 5.1—is unreliable and dangerous to use for Cerneala architecture, implementation, and bug fixing. The maintainer considers the observed behavior a provider-wide regression, not an Opus-only problem.</p>
         <ul>
           <li>They may ignore or only imitate the instructions in repository skills.</li>
-          <li>They may skip RoslynIndexer and navigate C# through weaker, prohibited shortcuts.</li>
+          <li>They may mistake text matches for symbol identity or complete references.</li>
           <li>They may disregard <code>AGENTS.md</code> and established ownership or verification rules.</li>
           <li>They may claim they performed one action while the diff, commands, or artifacts show that they performed something else.</li>
         </ul>
-        <strong class="anthropic-warning__gate">If you use Claude despite an explicit instruction not to, treat every claim as untrusted: inspect the exact diff, rerun every claimed command, confirm RoslynIndexer usage, and reproduce every test or runtime result yourself. Visual CSS, composition, and art direction remain a separate allowed lane; that exception does not include architecture, implementation, or bug fixes.</strong>
+        <strong class="anthropic-warning__gate">If you use Claude despite an explicit instruction not to, treat every claim as untrusted: inspect the exact diff, rerun every claimed command, and reproduce every test or runtime result yourself. Visual CSS, composition, and art direction remain a separate allowed lane; that exception does not include architecture, implementation, or bug fixes.</strong>
       </div>
     </aside>
 
@@ -398,7 +398,7 @@
           <h3>CernealaFixBug</h3>
           <p>Give the skill the user-visible failure, expected result, reproduction steps, and whatever diagnostics you have. It drives the fix from evidence instead of treating the first plausible theory like holy scripture.</p>
           <ul>
-            <li>Uses RoslynIndexer and the repository rules for every investigation</li>
+            <li>Reads files directly and uses rg for text search</li>
             <li>Prefers a focused CSI experiment for observable runtime state</li>
             <li>Requires a RED regression test before production changes</li>
             <li>Retests the automated reproduction and finishes with the full green suite</li>

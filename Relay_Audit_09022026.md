@@ -209,8 +209,6 @@ Acestea nu demonstrează defecte suplimentare ale cozii, dar reduc valoarea docu
 | Verificare | Rezultat |
 | --- | --- |
 | `New-FileTree.ps1` + inspecție `FileTree.md` | structură Relay, teste, benchmarkuri și docs identificate; fișierul generat a fost restaurat ulterior |
-| RoslynIndexer `index .\Cerneala.slnx --json` | 3.577 documente, 92.458 simboluri, 376.600 referințe; index incremental reîmprospătat |
-| RoslynIndexer după modificările C# | 3.577 documente, 92.487 simboluri, 376.691 referințe; index incremental reîmprospătat cu succes |
 | `dotnet test tests/Cerneala.Tests/Cerneala.Tests.csproj --no-restore --filter FullyQualifiedName~Relay` | 81 passed, 0 failed |
 | `dotnet test .\Cerneala.slnx --no-restore` | 4.062 passed, 0 failed, 7 skipped |
 | probă publică async lambda fără parametru | `Task<Task>`; outer completed după frame 1, continuarea după frame 2 |
@@ -276,7 +274,6 @@ Observabilitatea per-frame este utilă: snapshot, dequeued, executed, canceled, 
 - Nu au fost rerulate benchmarkurile BenchmarkDotNet și nu se revendică performanță curentă; gate-urile P95 LanguageServer indică faptul că mediul sau acel subsistem necesită diagnostic separat înaintea unei comparații de performanță.
 - Nu a fost făcută validare manuală de UI sau captură de screenshot; auditul Relay nu a necesitat o afirmație de conformanță vizuală.
 - Șapte teste native/conformance au fost skipped în full-suite.
-- RoslynIndexer a raportat avertismente pentru două project references fără metadata matching și pentru fișiere prea mari omise din index; fișierele C# Relay și integrările analizate au fost indexate și citite semantic.
 - Poarta full-solution rămâne roșie din cauza celor două gate-uri P95 LanguageServer reproductibile și a unui timeout văzut numai în run-ul complet; nu au fost slăbite pragurile și nu a fost modificat cod LanguageServer.
 
 ## Artefacte și cleanup

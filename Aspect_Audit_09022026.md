@@ -142,7 +142,6 @@ Cele șapte reproduceri inițiale au fost confirmate RED pentru motivul intenți
 - formatterul limitat la toate fișierele C# modificate: **GREEN**;
 - testul `ApiDocumentationManifestIsValidAndReferencesExistingFiles`: **GREEN**;
 - comparația strictă ApiCompat între assembly-ul `HEAD` și assembly-ul remediat: **GREEN**, fără schimbări publice/protejate;
-- RoslynRepoIndexer force rebuild: **valid**, 3.584 documente, 92.847 simboluri, 377.943 referințe, 0 fișiere dirty; `doctor` este verde, cu cele șapte warnings baseline cunoscute;
 - `git diff --check`: **GREEN**; Git raportează numai avertismentele de conversie LF → CRLF ale checkout-ului.
 
 ### Performanță

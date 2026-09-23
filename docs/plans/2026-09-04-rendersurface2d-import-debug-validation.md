@@ -117,7 +117,6 @@ Dovezi etapa 1: [checkpoint, RED/GREEN, comenzi si limite](evidence/2026-09-04-s
 - [x] Metadatele aprobate pentru tile interactiv/promovabil sunt pastrate cu identitate layer/coordonata stabila; importerul nu materializeaza toate celulele ca noduri.
 - [x] Orice orientation, compression, object/template sau field cunoscut dar nesuportat produce `unsupported`/eroare conform matricei.
 - [x] Se ruleaza fixture-urile, golden model comparison, validarea core si teste de cai/fisiere lipsa.
-- [x] Se reindexeaza solutia dupa modificarile de proiect/C#.
 
 ### Gate etapa 2
 
@@ -190,7 +189,7 @@ Dovezi etapa 5: [checkpoint, defecte RED/GREEN, matrice #1-#16 si reproducere](e
 - [x] Se documenteaza promovarea sparse, usa interactiva si Aspect/Motion/Prism cu sintaxa reala; exemplele `SceneItems2D` plaseaza directivele pe nodul din `@templates`.
 - [x] Se actualizeaza `docs-site/documentation/manifest.json` si se ruleaza testul manifestului.
 - [x] Se ruleaza testele focusate importer/validator, core Scene2D, SourceGen, Servo si conformance pe SDL GPU. (Cerinta WindowsDX retrasa explicit de utilizator.)
-- [x] Se reindexeaza, se ruleaza API Compat strict cu raport arhivat si se revizuieste orice diferenta publica.
+- [x] Se ruleaza API Compat strict cu raport arhivat si se revizuieste orice diferenta publica.
 - [x] Se ruleaza `dotnet test .\Cerneala.slnx` si orice proiect optional care nu este inclus automat in solutie; rezultatele exclusiv MonoGame sunt inventariate separat, neblocante conform deciziei aprobate, fara a pretinde ca au trecut.
 
 Dovezi etapa 6: [checkpoint final, comenzi si inventarul complet](evidence/2026-09-04-scene-import-stage6/README.md), [API Compat strict si revizuirea diferentelor](evidence/2026-09-04-scene-import-stage6/api-compat.md). Suita finala: 4584 PASS, 2 FAIL exclusiv MonoGame (aceleasi cazuri MSAA documentate, 47/255 si 25/255), 7 SKIP opt-in. Comanda completa iese cu cod 1; nu este declarata integral verde. Toate gate-urile aplicabile tintei aprobate trec, inclusiv manifestul, cele 277 regresii afectate si corpusul nativ SDL. Coliziunea de nume `Scene2D` din build-ul restaurat al testelor a fost reprodusa si rezolvata cu aliasuri locale, fara schimbarea asertiunilor sau a API-ului public.

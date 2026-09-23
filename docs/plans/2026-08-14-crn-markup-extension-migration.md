@@ -65,7 +65,6 @@ MSBuild remains the owner of the include files as `AdditionalFiles`, but each pr
 - [x] Add RED tests in `Cerneala.Tests.SourceGen` that request generation for `View.crn` and zero output for the same content provided as `View.cui.xml`.
 - [x] Add RED tests in `Cerneala.Tests.LanguageServer` that ask for project ownership and semantic context for `View.crn`, but not for `View.cui.xml`.
 - [x] Captures the baseline of the generated output and diagnostics for a representative document before renaming, so that the path change does not mask a semantic divergence. (Hint `ViewFactory.abdf9b8e.g.cs`, SHA-256 `DCD437128E0720708F736B79865B5D8C9F3A1D38C2BA580473DD655E62F4CF9F`, zero diagnostics.)
-- [x] Reindex the solution.
 
 **Gate Stage 0**
 
@@ -80,7 +79,6 @@ MSBuild remains the owner of the include files as `AdditionalFiles`, but each pr
 - [x] Replaces the `.cui.xml` strip and the companion build from `CernealaSemanticModel` with the common helper.
 - [x] Remove duplicate convention literals from the production code and keep the ownership in `Cerneala.Language`.
 - [x] Run the RED tests from stage 0 and the affected Language, SourceGen and LanguageServer target suites. (GREEN: 8 Language, 3 SourceGen and 2 LanguageServer.)
-- [x] Reindex the solution.
 
 **Gate stage 1**
 
@@ -95,7 +93,6 @@ MSBuild remains the owner of the include files as `AdditionalFiles`, but each pr
 - [x] Updates the Language Server fixture, the `repository-documents.txt` corpus, golden paths and any test resource that encodes the old name.
 - [x] Updates the language benchmarks to load the renamed `.crn` documents without changing the measured corpus.
 - [x] Build `CernealaPresentation` and the three Playground projects and confirm that the source generator produces the same approved types/hint names. (GREEN: 15 outputs with approved stems; only the hash derived from the path changed.)
-- [x] Reindex the solution.
 
 **Gate stage 2**
 
@@ -109,7 +106,6 @@ MSBuild remains the owner of the include files as `AdditionalFiles`, but each pr
 - [x] Updates all path literals from the LanguageServer protocol tests, including workspace reload, diagnostics, completion, navigation, formatting, structure and hardening.
 - [x] Keep `.cui.xml` examples only in explicit negative tests that verify the rejection of the breaking change.
 - [x] Runs `dotnet test .\tests\Cerneala.Tests.Language\Cerneala.Tests.Language.csproj`, `dotnet test .\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj` and `dotnet test .\tests\Cerneala.Tests.LanguageServer\Cerneala.Tests.LanguageServer.csproj`. (GREEN: 125 + 431 + 30 tests.)
-- [x] Reindex the solution.
 
 **Gate stage 3**
 
@@ -137,7 +133,6 @@ MSBuild remains the owner of the include files as `AdditionalFiles`, but each pr
 - [x] Runs `dotnet test .\Cerneala.slnx` only once after the last change of code/project/renamed file. (Final GREEN: 3,507 tests; a transient allocation-gate failure passed in isolation and on full rerun without code change.)
 - [x] Check through the inventory that there are 16 documents `*.crn`, 16 companions `*.crn.cs` and zero real files `*.cui.xml`/`*.cui.xml.cs`.
 - [x] Run `git diff --check`, inspect rename detection and confirm that the renaming did not lose pre-existing local changes. (32 mappings: 27 blobs identical to HEAD and 5 renames with expected changed content; all 32 kept SHA-256 on move.)
-- [x] Reindex the final solution and request indexing without new errors.
 
 **Gate Stage 5**
 

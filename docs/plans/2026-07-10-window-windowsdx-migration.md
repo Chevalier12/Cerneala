@@ -344,7 +344,6 @@ In addition:
 - check PID, `HWND`, resize, input, rendering and exit code `0`;
 - we run `git diff --check`;
 - we regenerate `FileTree.md`;
-- we reindex `Cerneala.slnx` with RoslynIndexer after each code or project change.
 
 ## Risks and measures
 

@@ -29,7 +29,6 @@ Nu am găsit, în scenariile automate rulate, o dovadă că nucleul grafului Pri
 - Auditul a fost executat într-un worktree separat: `C:\Users\lauri\Desktop\Cerneala-Prism-Audit-09022026`.
 - Worktree-ul principal nu a fost folosit pentru build, teste sau experimente și modificările existente ale utilizatorului nu au fost atinse.
 - Suprafața inspectată: catalogul și generatorul Prism, graful/runtime-ul, API-ul public de nivel înalt, integrarea UI, backendurile MonoGame și SDL GPU, compilarea și verificarea shaderelor, testele, benchmarkurile și documentația contractuală.
-- Navigarea C# a fost făcută cu RoslynRepoIndexer după regenerarea `FileTree.md` și indexarea `Cerneala.slnx`.
 - Nu au fost folosite skilluri.
 
 Clasificare:
@@ -228,7 +227,6 @@ Următoarele rezultate sunt reale și merită păstrate, dar nu anulează consta
 | Verificare | Rezultat |
 | --- | --- |
 | `New-FileTree.ps1` și citire `FileTree.md` | executat în worktree-ul temporar |
-| RoslynRepoIndexer build + index `Cerneala.slnx` | 3.575 documente, 92.458 simboluri, 358.027 referințe; 10 warnings de indexare |
 | Build incremental `tests/Cerneala.Tests` după regenerarea artefactelor SDL | PASS, 0 warnings, 0 errors |
 | `Cerneala.Tests.SourceGen`, filtru Prism | PASS: 50/50 |
 | `Cerneala.Tests.Language`, filtru Prism | PASS: 40/40 |

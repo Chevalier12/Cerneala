@@ -154,7 +154,6 @@ Lista este estimativă. Nu justifică abstractions decorative sau modificări î
 - [x] Adaugă `AspectResolutionBenchmarks` cu scenarii warm pentru catalog code-first, application package, scope nesting și element-local Aspect; benchmarkul trebuie să raporteze timp și alocări, nu doar număr de reguli.
 - [x] Rulează benchmarkul și Presentation frame budget în starea baseline și salvează comenzile, configurația și rezultatele în directorul rezultat al planului. (BDN GREEN; frame-budget gate RED în baseline, raportul brut și valorile sunt păstrate pentru comparația din etapa 6.)
 - [x] Confirmă că noile teste sunt RED din motivele contractuale așteptate, nu din fixture/build/environment, iar testele Aspect existente rămân GREEN separat. (11 runtime + 3 source-generator RED intenționat; 141 runtime + 36 source-generator + 14 language Aspect existente GREEN.)
-- [x] Reindexează soluția după modificările de teste/benchmark.
 
 **Gate etapa 0**
 
@@ -170,7 +169,7 @@ Lista este estimativă. Nu justifică abstractions decorative sau modificări î
 - [x] Elimină mutarea `AspectRuleSet.PackageName`; păstrează package/scope/name origin în entries de catalog sau în metadata de rezoluție deținută de catalog. (Catalogul creează proiecții imutabile cu origine; source rules rămân reutilizabile.)
 - [x] Actualizează diagnostics și documentația API afectată fără să schimbi încă source-generatorul.
 - [x] Rulează testele RED de core, întregul proiect de teste Aspect și testele de diagnostics. (8 contracte core GREEN; 150 teste Aspect incluzând contractele etapei + 26 template/slot/variant/trace GREEN.)
-- [x] Reindexează soluția și verifică faptul că noile snapshoturi nu expun colecții mutabile prin cast.
+- [x] Verifică faptul că noile snapshoturi nu expun colecții mutabile prin cast.
 
 **Gate etapa 1**
 
@@ -189,7 +188,6 @@ Lista este estimativă. Nu justifică abstractions decorative sau modificări î
 - [x] Păstrează template resolution prin engine pentru packages scoped și local Aspect, inclusiv template swap și cleanup la detach.
 - [x] Actualizează în aceeași etapă documentația canonică pentru `ElementAspect`, `ElementAspectValue` și orice API public schimbat.
 - [x] Rulează testele runtime pentru scope shadowing, derived targets, runtime-created template/items controls, mutation, detach/reattach, template replacement și idle frames. (32 focused GREEN; 3.123 broader runtime GREEN + 2 skip-uri vizuale declarate. Cele 4 teste RED rămase sunt contractele deliberate pentru markup named/application și ștergerea legacy din etapele 3/5.)
-- [x] Reindexează soluția.
 
 **Gate etapa 2**
 
@@ -207,7 +205,6 @@ Lista este estimativă. Nu justifică abstractions decorative sau modificări î
 - [x] Elimină emisia directă `SetValue` pentru declarations Aspect necondiționate și verifică generated source prin assertions structurale.
 - [x] Migrează testele source-generator și runtime pentru unnamed/named/inline aspects, custom/derived controls, templates, nested resources și code-created descendants.
 - [x] Rulează testele complete `Cerneala.Tests.SourceGen` filtrate pe Aspect/Template/Resource și testele runtime dependente. (122 teste statice/template/resource aplicabile etapei GREEN; 467 teste SourceGen mai largi GREEN; 160 runtime Aspect GREEN. Două contracte reactive rămân RED exclusiv pentru etapa 4.)
-- [x] Reindexează soluția.
 
 **Gate etapa 3**
 
@@ -223,7 +220,6 @@ Lista este estimativă. Nu justifică abstractions decorative sau modificări î
 - [x] Integrează `@template` owner/self conditions cu același evaluator Aspect fără subscriptions stilistice duplicate.
 - [x] Verifică schimbările de DataContext, resource, state, property și token: recomputare o singură dată, eliminarea valorii când condiția devine falsă și zero callbacks după detach.
 - [x] Rulează suitele source-generator reactive/Motion și testele runtime Aspect/Motion relevante. (472 SourceGen GREEN; 427 runtime Aspect/Motion GREEN; Presentation rebuild GREEN.)
-- [x] Reindexează soluția.
 
 **Gate etapa 4**
 
@@ -235,14 +231,13 @@ Lista este estimativă. Nu justifică abstractions decorative sau modificări î
 
 - [x] Șterge `UI/Markup/MarkupAspectResource.cs` și migrează toate call-site-urile, testele și generated ABI la `AspectPackage`/`ElementAspect`. (`AspectBehavior` este sidecar-ul target-typed din package; lifetime-ul este sincronizat de `AspectProcessor`, nu de un executor paralel.)
 - [x] Elimină `UIRoot.applicationAspects`, `ApplyApplicationAspects`, `ApplyLocalAspects`, `InheritanceDistance` și apelurile lor din lifecycle.
-- [x] Elimină `ApplicationAspectBase`, `ApplicationAspectVisualState`, `LocalAspectBase` și `LocalAspectConditional` după ce RoslynIndexer confirmă zero call-site-uri legitime.
+- [x] Elimină `ApplicationAspectBase`, `ApplicationAspectVisualState`, `LocalAspectBase` și `LocalAspectConditional` după confirmarea că există zero call-site-uri legitime.
 - [x] Simplifică `UiPropertyStore.EffectiveOrder` la sursele deținute de subsisteme reale și rulează toate testele de precedence/property store. (`TemplateOwnerBinding` aparține template subsystem-ului și păstrează contractul owner-to-part demonstrat de Presentation; 534 teste runtime Aspect/Motion/store/template/control relevante GREEN.)
 - [x] Elimină helpers și branches source-generator rămase exclusiv pentru applicatorul vechi. (Sidecar-urile Motion/event care cer contextul site-ului rămân generate la site; condițiile context-free sunt package behaviors. 474/474 SourceGen GREEN.)
 - [x] Șterge pagina API `Cerneala.UI.Markup.MarkupAspectResource.md`, scoate intrarea din manifest și actualizează toate paginile care menționează vechiul tip/sursele eliminate. (Manifest: 1.072 entries, 0 duplicate, 0 pagini/surse lipsă; testul oficial de manifest GREEN.)
 - [x] Adaugă/actualizează testele architecture/reflection care interzic reintroducerea tipului, executorului și benzilor de precedență șterse.
-- [x] Rulează RoslynIndexer search/reference pentru toate simbolurile eliminate și confirmă că rămân doar mențiuni istorice marcate ca supersedate. (Zero simboluri și zero text de producție; șirurile rămase sunt assertions de interdicție, planul activ și planul istoric 2026-07-10 marcat explicit superseded.)
+- [x] Verifică referințele pentru toate simbolurile eliminate și confirmă că rămân doar mențiuni istorice marcate ca supersedate. (Zero simboluri și zero text de producție; șirurile rămase sunt assertions de interdicție, planul activ și planul istoric 2026-07-10 marcat explicit superseded.)
 - [x] Rulează API diff și justifică fiecare eliminare/modificare publică prin decizia aprobată în acest plan. (Raw strict ApiCompat și clasificarea completă: `benchmarks/results/2026-08-27-aspect-unification/stage5-api-diff.*`.)
-- [x] Reindexează soluția.
 
 **Gate etapa 5**
 
@@ -258,7 +253,6 @@ Lista este estimativă. Nu justifică abstractions decorative sau modificări î
 - [x] Dacă există regresie măsurată relevantă, optimizează numai ownerul demonstrat și rerulează benchmarkul; nu introduce cache fără invalidare/versioning testate. (Eager public trace materialization a fost ownerul măsurat; `Resolve` nu mai capturează, iar `Apply` materializează public lazy fără reevaluare. Rerun-ul autoritativ este `final-bdn-optimized/`.)
 - [x] Rulează Presentation frame budget pe scenariile Aspect și compară CPU frame cost, allocations și scheduled Aspect time cu baseline-ul. (SDL3, 8x45: Aspect mean 0.001877 ms, p99 0.0726 ms, max 0.1766 ms; mean allocation/frame -0.7%; baseline și final rămân sub același gate general RED al mașinii.)
 - [x] Rulează scenariile vizuale deterministe pentru Aspect/templates și capturează exclusiv prin `Window.SaveScreenshot`; compară outputul cu referința/toleranța existentă și investighează orice diferență. (`CERNEALA_PRESENTATION_SETTLED_CAPTURE=1`; Aspect Studio și Build-Time Markup: 0/1.440.000 pixeli diferiți, MAE/P99/max 0.)
-- [x] Reindexează după orice modificare de cod rezultată din măsurători.
 
 **Gate etapa 6**
 
@@ -274,7 +268,7 @@ Lista este estimativă. Nu justifică abstractions decorative sau modificări î
 - [x] Rulează testele complete pentru `Cerneala.Tests.SourceGen`, `Cerneala.Tests.Language` și proiectul runtime relevant. (476/476, 181/181, respectiv 3.131 passed + 2 skip-uri native declarate.)
 - [x] Rulează `dotnet test .\Cerneala.slnx` o singură dată în starea finală de cod. (Final-state run GREEN: runtime 3.131+2 skip, SourceGen 476, Language 181, LanguageServer 40, PreviewHost 12, VisualStudio 47, SDL GPU 63+4 skip. Un run anterior a expus și a reparat coliziunea de output a fixture-ului LanguageServer.)
 - [x] Rulează build Release, formatter verification, documentația/manifest tests, API diff review și `git diff --check`. (Release 0 warnings/errors; goal-scoped formatter GREEN; full formatter rămâne RED exclusiv pe fișiere baseline neatinse; manifest GREEN; final strict ApiCompat complet clasificat; diff-check clean.)
-- [x] Regenerează `FileTree.md`, reindexează soluția și rulează RoslynIndexer `doctor`/`status`; investighează orice warning sau stale state. (Forced full index: valid, 0 dirty; doctor PASS. Cele 7 warnings sunt cele 2 metadata-reference cunoscute și 5 fișiere oversized intenționat sărite.)
+- [x] Regenerează `FileTree.md`.
 - [x] Revizuiește diff-ul complet pentru debug code, generated churn, worktree user changes, API-uri decorative și mențiuni active ale căii vechi. (0 fișiere temporare în `.agents`; 0 mențiuni legacy active; schimbările utilizatorului rămân neatinse.)
 - [x] Confirmă explicit că nu s-a mutat Motion/input/binding ownership în engine și că nu a rămas un al doilea resolver Aspect. (`AspectEngine` păstrează bridge-ul Motion existent; generated Motion/event/binding/input sidecars rămân în subsistemele lor; `UIRoot` are zero matching/cascade markup.)
 
@@ -316,4 +310,4 @@ Nu se sare la o etapă ulterioară pentru că este mai comodă. Fiecare gate tre
 - [x] Condițiile sunt evaluate o singură dată după prefiltrare, typed contracts sunt impuse și snapshoturile sunt stabile/imutabile.
 - [x] Feature parity markup, lifecycle, detach, templates, Motion, diagnostics, idle frames, conformance vizual și performanță sunt verificate.
 - [x] API docs, manifestul, `docs/aspect-system.md`, planurile supersedate și FileTree sunt sincronizate.
-- [x] Suita completă, buildul Release, formatterul, API diff, RoslynIndexer și `git diff --check` sunt GREEN. (Formatter goal-scoped GREEN; baseline unrestricted failure documentat separat.)
+- [x] Suita completă, buildul Release, formatterul, API diff și `git diff --check` sunt GREEN. (Formatter goal-scoped GREEN; baseline unrestricted failure documentat separat.)

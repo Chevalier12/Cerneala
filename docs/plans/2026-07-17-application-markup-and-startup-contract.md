@@ -255,7 +255,6 @@ The list is an estimate. No decorative abstractions are created if the implement
 - [x] Add RED tests for `StartupWindow` missing, unknown, ambiguous, inaccessible, abstract, non-`Window` and reference to `Application` itself.
 - [x] Add RED runtime tests for the three shutdown modes, `Closing` cancellation, exit code and `Exit` exactly once.
 - [x] Add a RED test for the complete order of the lifecycle and the disposal of the provider.
-- [x] Reindexes `Cerneala.slnx` after test changes.
 
 **Gate Stage 0**
 
@@ -273,7 +272,6 @@ The list is an estimate. No decorative abstractions are created if the implement
 - [x] Make `Shutdown` idempotent and safe if called from `OnStartup`, from an event handler or after closing all windows.
 - [x] Ensure deterministic cleanup after partially failed startup: windows, runtime, services and `Application.Current`.
 - [x] Extends runtime tests for standalone and hosted disposal, including repeated shutdown and reset between tests.
-- [x] Reindexes `Cerneala.slnx`.
 
 **Gate stage 1**
 
@@ -296,7 +294,6 @@ The list is an estimate. No decorative abstractions are created if the implement
 - [x] Keeps the static hook `App.ConfigureServices` only in the legacy fallback and issues a clear diagnosis if it is mixed with the new `App : Application`.
 - [x] Add diagnostics for illegal attributes/directives/children on `<Application>`.
 - [x] Checks the deterministic output of the incremental generator regardless of the order `AdditionalFiles`.
-- [x] Reindexes `Cerneala.slnx`.
 
 **Gate stage 2**
 
@@ -319,7 +316,6 @@ The list is an estimate. No decorative abstractions are created if the implement
 - [x] Add tests that modify a global resource and demonstrate the invalidation of both windows, without repeating work on unaffected consumers.
 - [x] Add tests for local shadowing and for a window opened after changing the resource.
 - [x] Add idle-frame regression: after stabilizing a global change, idle frames no longer contain layout/render work.
-- [x] Reindexes `Cerneala.slnx`.
 
 **Gate stage 3**
 
@@ -337,7 +333,6 @@ The list is an estimate. No decorative abstractions are created if the implement
 - [x] Secure `OnExit`/`Exit` exactly once for all failures that occurred after installing `Application.Current`.
 - [x] Keep the original exception and add descriptive context for startup target and failed stage.
 - [x] Add integration tests with fake platform for main window, secondary window, hosted pump and shutdown modes.
-- [x] Reindexes `Cerneala.slnx`.
 
 **Gate Stage 4**
 
@@ -355,7 +350,6 @@ The list is an estimate. No decorative abstractions are created if the implement
 - [x] Keep the Continue behavior, the opening of secondary windows and automation/benchmark startup.
 - [x] Checks that the Presentation has exactly one generated descriptor and no entry point derived from the `MainWindow` convention.
 - [x] Run native Presentation and check startup, close, explicit secondary windows and exit process.
-- [x] Reindexes `Cerneala.slnx`.
 
 **Gate Stage 5**
 
@@ -373,7 +367,6 @@ The list is an estimate. No decorative abstractions are created if the implement
 - [x] Document the legacy fallback as a compatibility mechanism, not as a recommended style.
 - [x] Add a complete minimal example that compiles without `Program.cs`.
 - [x] Run a public API diff and confirm that all additions are intended, documented and nullable correctly.
-- [x] Reindexes `Cerneala.slnx`.
 
 **Gate stage 6**
 
@@ -389,7 +382,6 @@ The list is an estimate. No decorative abstractions are created if the implement
 - [x] Run Presentation native smoke and the permanent frame budget benchmark to detect startup/resource wiring regressions.
 - [x] Runs `git diff --check`.
 - [x] Regenerates `FileTree.md`.
-- [x] Finally reindex `Cerneala.slnx` and check `doctor/status`.
 
 **Gate stage 7**
 
@@ -407,8 +399,6 @@ dotnet format .\Cerneala.slnx --verify-no-changes
 dotnet run -c Release --project .\benchmarks\Cerneala.PresentationFrameBudget\Cerneala.PresentationFrameBudget.csproj -- --cycles 8 --frames-per-load 45 --budget-ms 16.6667
 git diff --check
 .\Tools\scripts\New-FileTree.ps1
-dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- index .\Cerneala.slnx --json
-dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- doctor --json
 ```
 ## 9. Recommended order
 

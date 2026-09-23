@@ -6,7 +6,7 @@
 
 **Architecture:** Keep the existing retained UI architecture. Add one small text caret layout service beside existing text services, add one small time-sensitive render invalidation hook in the element/rendering layer, and wire `TextBoxBase` into both. Do not redesign input, text editing, retained rendering, or platform services.
 
-**Tech Stack:** C#/.NET, xUnit, Cerneala retained UI, RoslynIndexer, existing drawing/text stack (`FontResolver`, `TextRunStyle`, `SkiaTextShaper`, `TextMeasurer`), existing `UiHost`/`IUiClock`.
+**Tech Stack:** C#/.NET, xUnit, Cerneala retained UI, existing drawing/text stack (`FontResolver`, `TextRunStyle`, `SkiaTextShaper`, `TextMeasurer`), existing `UiHost`/`IUiClock`.
 
 ---
 
@@ -23,9 +23,9 @@ The fix must therefore cover metrics, hit testing, and time-driven retained inva
 
 ## Implementation Rules
 
-- [ ] Start each task by reading the listed files with RoslynIndexer.
+- [ ] Start each task by reading the listed files directly.
 - [ ] Write or adjust RED tests before production code for every behavior change.
-- [ ] After each C# or project-file modification, re-index `Cerneala.slnx` with RoslynIndexer.
+- [ ] Read source files directly and use `rg` / `rg --files` for text search and file discovery.
 - [ ] Keep changes minimal. No new public feature surface beyond the smallest needed internal/public helpers used by tests.
 - [ ] Do not add multiline editing, drag selection, double-click word selection, IME composition, selection handles, or clipboard features in this plan.
 - [ ] Preserve existing TextBox editing behavior: keyboard input, arrow/home/end, selection replacement, clipboard shortcuts, horizontal viewport, and password masking.
@@ -125,12 +125,6 @@ public sealed class TextCaretLayout
 - `UI/Text/TextCaretLayout.cs`
 - `Drawing/Text/TextShapeResult.cs`
 - `Drawing/Text/SkiaTextShaper.cs`
-
-**Re-index command after edits**
-
-```powershell
-# RoslynIndexer: re-index Cerneala.slnx, C# only
-```
 
 **Targeted command**
 
@@ -501,7 +495,7 @@ Passed!  - Failed: 0
 
 **Steps**
 
-- [ ] Re-index after the final C# edit.
+- [ ] Ensure any source evidence needed for completion reflects the changed source.
 - [ ] Run the TextBox-focused suite:
 
 ```powershell
@@ -577,4 +571,3 @@ Manual checks:
 - [ ] Authoring App typed text keeps caret visually aligned.
 - [ ] Getting Started text input does not crash.
 - [ ] `dotnet test` passes.
-

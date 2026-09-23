@@ -45,7 +45,7 @@ TextMate grammar ensures immediate coloring before the server is ready, and Lang
 - [x] Demonstrates coexistence with the XML editor, TextMate grammar, semantic tokens and Error List without duplicate diagnostics.
 - [x] Check the support for completion, completion resolve, diagnostics, hover, definition, references, rename, formatting, semantic tokens and code actions offered by the Visual Studio 18.9 client.
 - [x] Document any feature gap with minimal project and reproducible result; use classic VSSDK only if the gap blocks a binding contract and has no workaround in the new model. (Report: `docs/visual-studio-community-spike.md`; VSSDK fallback explicitly approved.)
-- [x] Delete the spike code that does not become the basis of the final project and reindex the solution.
+- [x] Delete the spike code that does not become the basis of the final project.
 
 **Gate Stage 0**
 
@@ -60,7 +60,6 @@ TextMate grammar ensures immediate coloring before the server is ready, and Lang
 - [x] Configure activation rules so that the extension does not start at solution load if a Cerneala document is not opened.
 - [x] Adds a discrete command `Cerneala: Restart Language Server` and output channel for troubleshooting; do not add promotional UI.
 - [x] Add manifest tests and package contents that fail if the server, grammar or configuration are missing. (GREEN: 4 tests.)
-- [x] Reindex the solution.
 
 **Gate stage 1**
 
@@ -75,7 +74,6 @@ TextMate grammar ensures immediate coloring before the server is ready, and Lang
 - [x] Check precedence: semantic tokens wins for typed symbols, and TextMate remains fallback for unanalyzed text. (The Stage 0 runtime proof remains valid; the final grammar uses only standard scopes and does not fix colors.)
 - [x] Add golden tokenization tests to the corpus and tests for an edit in the middle of an incomplete directive. (GREEN: 11 VisualStudio tests, including the golden corpus and recovery after incomplete `@lay`.)
 - [x] Checks light, dark and high contrast themes through API classification, without hardcoded colors that become invisible. (`TextMateSharp.Registry` resolved scopes through `VisualStudioLight`, `VisualStudioDark` and `HighContrastDark`.)
-- [x] Reindex the solution. (3,078 documents, 75,147 symbols, zero errors.)
 
 **Gate stage 2**
 
@@ -91,7 +89,6 @@ TextMate grammar ensures immediate coloring before the server is ready, and Lang
 - [x] Restarts the server after a crash with limited backoff and disables the restart loop after the threshold, displaying the cause in the output channel. (Runtime: new PID after crash, backoff 250 ms; missing binary stopped after exactly 3 attempts.)
 - [x] Do not send telemetry or document content; any future telemetry remains opt-in and out of this plan. (Initialization option `telemetryEnabled=false`; the two push/privacy tests are GREEN.)
 - [x] Add tests for missing binary, startup failure, protocol failure, crash, restart, disable and uninstall. (21/21 VisualStudio GREEN tests.)
-- [x] Reindex the solution. (3,085 documents, 75,628 symbols, zero new bugs.)
 
 **Gate stage 3**
 
@@ -108,7 +105,6 @@ TextMate grammar ensures immediate coloring before the server is ready, and Lang
 - [x] Check project reload after adding a C# type/properties, changing `DataType`, package reference and target framework. (Reload CPS via `IVsSolution4`, then IntelliSense and build `net9.0-windows` GREEN.)
 - [x] Run the same matrix on `CernealaPresentation` and ask for zero false errors for all valid `.crn` documents. (12/12 documents without error tags; the repository files remained byte-for-byte unchanged.)
 - [x] Do not directly modify buffer properties or semantic state in user-like scenarios; use the commands/editor input APIs. (Structural tests prohibit direct mutation and global input/clipboard APIs.)
-- [x] Reindex the solution. (3,100 documents, 75,667 symbols, 308,906 references, zero errors and two known warnings.)
 
 **Gate Stage 4**
 
@@ -123,7 +119,6 @@ TextMate grammar ensures immediate coloring before the server is ready, and Lang
 - [x] Establish gates on documented hardware: provider activation under 100 ms CPU in devenv, server ready under 2 s cold and first useful completion under 2.5 s cold; the warm budgets remain those from the LSP plan. (Fixture: 15.625/833.196/1.357.454 ms; `Cerneala.slnx`: 0/964.291/1.922.658 ms; the JSON-RPC full-solution test imposed p95 completion under 100 ms and p95 diagnostics under 200 ms.)
 - [x] Run soak with 100 open/close cycles, 1,000 edits, server restart and close/reopen solution; check memory/process plateau. (Second-half increase: devenv 4.68 MiB/0 MiB, server 0 MiB/0 MiB; restart and both reloads GREEN.)
 - [x] Check the behavior with disabled extension, unavailable server and project with build errors without crashes or repetitive modal dialogs. (All samples hidden GREEN, with zero server in disabled/unavailable scenarios.)
-- [x] Reindex the solution. (3,104 documents, 75,773 symbols, 309,188 references, zero errors and two known warnings.)
 
 **Gate Stage 5**
 
@@ -139,7 +134,7 @@ TextMate grammar ensures immediate coloring before the server is ready, and Lang
 - [x] Write `docs/visual-studio-community.md` with installation, update, uninstall, features, troubleshooting, logs, privacy and target versions. (The guide is synchronized for version 0.1.30 and Community 18.9.)
 - [x] Update the markup documentation so that it no longer recommends XML-only tooling after the release of the extension. (`.crn` is the canonical path in `docs/CernealaMarkupGuide.md`, while `.cui.xml` is documented only as migrated/retired.)
 - [x] Update the API docs for any public member introduced and check `docs-site/documentation/manifest.json`. (The 2026-08-18 audit confirms 944 pages, existing sources and a synchronized manifest.)
-- [x] Run the Language, LanguageServer and VisualStudio project tests, then `dotnet test .\Cerneala.slnx`, `git diff --check` and the final reindexing. (The results and reindexes for stages 3-5 are retained in this plan and the reports; the final documentation audit repeats the manifest, link and diff checks.)
+- [x] Run the Language, LanguageServer and VisualStudio project tests, then `dotnet test .\Cerneala.slnx`, `git diff --check`. (The results for stages 3-5 are retained in this plan and the reports; the final documentation audit repeats the manifest, link and diff checks.)
 
 **Gate stage 6**
 

@@ -140,7 +140,6 @@ and has no GPU resources.
 - [x] Updates the pages with the `writing-api-documentation` skill
   `IDrawingBackend`, `IUiBackend` and all public frame context types;
   synchronize the manifest.
-- [x] Run reindex after every C# batch/project.
 - [x] Running
   `dotnet test .\tests\Cerneala.Tests\Cerneala.Tests.csproj --filter "Prism|DrawCommand|RetainedRenderer"`
   and `dotnet test .\Cerneala.slnx`.

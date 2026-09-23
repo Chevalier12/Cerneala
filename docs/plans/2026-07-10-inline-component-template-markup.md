@@ -378,7 +378,7 @@ For a `Window` root:
 - [ ] Extends `DirectiveWhenNode` for direct boolean body.
 - [ ] Keeps its shape with compatible `@if`.
 - [ ] Issue grammatical errors with the correct XML position.
-- [ ] Run the parser tests and reindex the solution.
+- [ ] Run the parser tests.
 
 ### Stage 3: preserving the Aspect contract
 
@@ -386,7 +386,6 @@ For a `Window` root:
 - [ ] Keep `MarkupAspectResource.Name` and the existing internal models.
 - [ ] Add regression tests for Default Layout and Named Layout with current syntax.
 - [ ] Confirm that adding a `@template` does not change the `Aspect="$Name"` solution.
-- [ ] Re-indexes the solution after each coherent group of changes.
 
 ### Stage 4: issuing the minimal local template
 
@@ -518,7 +517,6 @@ Grammatical errors may continue to use existing diagnostics for invalid directiv
    - reapplying/replacing the template.
 8. Run `git diff --check`.
 9. Regenerates `FileTree.md`.
-10. Reindex `Cerneala.slnx` with RoslynIndexer and confirm that the index is healthy.
 
 ## Non-targets for the first version
 
@@ -579,4 +577,3 @@ The implementation is ready only when:
 - `git diff --check`: clean.
 - The Playground generated source contains `ComponentTemplate<Button>`, `RequirePart`, owner bindings and `RegisterLifetime` for the reactive conditions.
 - The compiled playground starts, creates the native window `Cerneala generator playground` and remains responsive.
-- RoslynIndexer reports valid index, without dirty files or warnings.

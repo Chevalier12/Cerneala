@@ -77,7 +77,7 @@ Dovezi etapa 0: `benchmarks/Cerneala.Benchmarks/results/2026-09-04-tilemap-basel
 - [x] Bounds-urile tilemap-ului si straturilor folosesc contractul scene-space comun.
 - [x] Proprietatile aprobate de transform/prezentare sunt `UiProperty`: Aspect le poate furniza, Motion le poate esantiona, iar fiecare sample invalideaza render/bounds/order exact unde trebuie.
 - [x] Prism pe harta/strat/instanta promovata foloseste bounds scene-space corecte si incadreaza numai comenzile tintei.
-- [x] Se reindexeaza si se ruleaza testele core si SourceGen focusate.
+- [x] Se ruleaza testele core si SourceGen focusate.
 
 ### Gate etapa 1
 
@@ -146,7 +146,7 @@ Dovezi etapa 4: cele 29 de teste core `TileMapStage=0|1|2|3|4` sunt verzi si inc
 - [x] Capturile aplicatiei folosesc exclusiv `Window.SaveScreenshot`.
 - [x] Se foloseste `writing-api-documentation`; se documenteaza modelul, `TileMap2D`, stratul adresabil, promovarea/demotarea, sintaxa `.crn` reala, costul batch splits, mutatia/versionarea si limitele.
 - [x] Se actualizeaza manifestul si se ruleaza testul lui.
-- [x] Se reindexeaza, se ruleaza API Compat strict, benchmark-urile, suitele backend si `dotnet test .\Cerneala.slnx`.
+- [x] Se ruleaza API Compat strict, benchmark-urile, suitele backend si `dotnet test .\Cerneala.slnx`.
 
 Stare curenta etapa 5: scenele/capturile de conformance, comparatia backend, documentatia canonica, manifestul, API Compat strict, benchmark-urile, suitele backend si suita completa serializata sunt verzi. Dupa inchiderea workload-ului extern, rularea standard normal-priority a trecut toate cele 19 gate-uri: warm static P95 458,8 us, pan P95 189,3 us si mutatie de chunk P95 803,2 us fata de pragul 1.135 us, cu alocarile si contoarele structurale asteptate. Profilul WindowsDX/SDL_GPU a fost regenerat in aceeasi stare idle. Istoricul masuratorilor contaminate si rezultatul final sunt arhivate in `benchmarks/Cerneala.Benchmarks/results/2026-09-04-tilemap-stage5/benchmark-final-verification.md`.
 

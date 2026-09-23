@@ -6,7 +6,7 @@
 
 **Architecture:** Keep Cerneala's retained UI, `UiProperty`, `UIRoot`, invalidation queues, the current MVP aspect work queue, inherited property propagation, and motion system. Add a new aspect engine inside `Cerneala.UI.Aspect` and a modern template layer inside `Cerneala.UI.Controls.Templates`. Bridge the existing API only while migrating controls. When migration is complete, delete compatibility shims instead of leaving `[Obsolete]` garbage.
 
-**Tech Stack:** C#/.NET, xUnit, existing `UiProperty` value precedence, the root aspect processor introduced by this plan, `ThemeProvider`, `Motion`, retained renderer, RoslynIndexer for repo navigation.
+**Tech Stack:** C#/.NET, xUnit, existing `UiProperty` value precedence, the root aspect processor introduced by this plan, `ThemeProvider`, `Motion`, retained renderer.
 
 **Naming Decision:** The public system name is **Aspect**, matching **Motion**. Existing MVP classes must be treated as pre-rebrand compatibility, not as the model to copy. New public API should use `AspectPackage`, `AspectRegistry`, `AspectCatalog`, `AspectEngine`, `AspectToken<T>`, `AspectCondition`, and `AspectSlot`. Internal files should move to `UI/Aspect` as they are migrated.
 
@@ -161,7 +161,6 @@ This is only the shape to target. Keep the final API small and consistent with e
   - [x] Add a final cleanup task to delete it once no production code needs it.
 - [x] Run targeted tests:
   - [x] `dotnet test --filter "FullyQualifiedName~AspectTokenTests|FullyQualifiedName~ThemeTokenBridgeTests"`
-- [x] Re-index `Cerneala.slnx` with RoslynIndexer after changes.
 
 Expected skeleton:
 
@@ -242,7 +241,6 @@ public abstract class AspectToken
   - [x] Contains `AspectSlot Slot` and optional `string DiagnosticPath`.
 - [x] Run targeted tests:
   - [x] `dotnet test --filter "FullyQualifiedName~AspectStateSetTests|FullyQualifiedName~AspectVariantTests|FullyQualifiedName~AspectSlotTests"`
-- [x] Re-index `Cerneala.slnx` with RoslynIndexer after changes.
 
 ---
 
@@ -387,7 +385,6 @@ public abstract class AspectToken
 - [x] Keep existing `AspectRule` untouched in this phase.
 - [x] Run targeted tests:
   - [x] `dotnet test --filter "FullyQualifiedName~AspectRuleSetTests"`
-- [x] Re-index `Cerneala.slnx` with RoslynIndexer after changes.
 
 Expected cascade compare:
 
@@ -444,7 +441,6 @@ internal readonly record struct AspectCascadeKey(
   - [x] `RegisteringPackageInvalidatesAspectForSubtree`.
 - [x] Run targeted tests:
   - [x] `dotnet test --filter "FullyQualifiedName~AspectPackageTests|FullyQualifiedName~AspectRootRegistryTests"`
-- [x] Re-index `Cerneala.slnx` with RoslynIndexer after changes.
 
 ---
 
@@ -509,7 +505,6 @@ internal readonly record struct AspectCascadeKey(
   - [x] Keep old invalidation tests green.
 - [x] Run targeted tests:
   - [x] `dotnet test --filter "FullyQualifiedName~AspectEngineTests|FullyQualifiedName~AspectInvalidationTests|FullyQualifiedName~AspectApplicatorTests"`
-- [x] Re-index `Cerneala.slnx` with RoslynIndexer after changes.
 
 ---
 
@@ -545,7 +540,6 @@ internal readonly record struct AspectCascadeKey(
   - [x] Keep existing trace tests green.
 - [x] Run targeted tests:
   - [x] `dotnet test --filter "FullyQualifiedName~ModernAspectTraceTests|FullyQualifiedName~AspectTraceTests"`
-- [x] Re-index `Cerneala.slnx` with RoslynIndexer after changes.
 
 ---
 
@@ -609,7 +603,6 @@ internal readonly record struct AspectCascadeKey(
   - [x] Final cleanup phase must delete this if no production code uses old `ControlTemplate`.
 - [x] Run targeted tests:
   - [x] `dotnet test --filter "FullyQualifiedName~ComponentTemplateTests|FullyQualifiedName~ControlTemplateTests|FullyQualifiedName~TemplateBindingTests"`
-- [x] Re-index `Cerneala.slnx` with RoslynIndexer after changes.
 
 ---
 
@@ -671,7 +664,6 @@ internal readonly record struct AspectCascadeKey(
   - [x] Delete in final cleanup if no production code requires old `DataTemplate`.
 - [x] Run targeted tests:
   - [x] `dotnet test --filter "FullyQualifiedName~ContentTemplateRegistryTests|FullyQualifiedName~ContentPresenterTests|FullyQualifiedName~DataTemplateTests"`
-- [x] Re-index `Cerneala.slnx` with RoslynIndexer after changes.
 
 ---
 
@@ -699,7 +691,6 @@ internal readonly record struct AspectCascadeKey(
   - [x] Add invalidation when root aspect catalog content template version changes.
 - [x] Run targeted tests:
   - [x] `dotnet test --filter "FullyQualifiedName~ItemsContentTemplateIntegrationTests|FullyQualifiedName~ItemsControlTests|FullyQualifiedName~ItemsControlRecyclingStabilityTests|FullyQualifiedName~ItemContainerRecyclePoolTests"`
-- [x] Re-index `Cerneala.slnx` with RoslynIndexer after changes.
 
 ---
 
@@ -757,7 +748,6 @@ internal readonly record struct AspectCascadeKey(
   - [x] Ensure playground samples still get default aspects.
 - [x] Run targeted tests:
   - [x] `dotnet test --filter "FullyQualifiedName~DefaultAspectPackageTests|FullyQualifiedName~ThemeTests|FullyQualifiedName~RetainedAppAspectContractTests"`
-- [x] Re-index `Cerneala.slnx` with RoslynIndexer after changes.
 
 ---
 
@@ -770,7 +760,7 @@ internal readonly record struct AspectCascadeKey(
   - [x] `ProductionCodeDoesNotReferenceControlTemplateAdapterAfterMigration`.
   - [x] `ProductionCodeDoesNotReferenceDataTemplateAdapterAfterMigration`.
   - [x] `NoObsoleteAspectOrTemplateTypesRemain`.
-- [x] Search references with RoslynIndexer:
+- [x] Search references:
   - [x] legacy rule-sheet type.
   - [x] `AspectRule`.
   - [x] `AspectSelector`.
@@ -808,7 +798,6 @@ internal readonly record struct AspectCascadeKey(
 - [x] Update tests to modern names only after equivalent behavior is covered.
 - [x] Run targeted tests:
   - [x] `dotnet test --filter "FullyQualifiedName~ModernAspectArchitectureTests|FullyQualifiedName~DefaultAspectPackageTests|FullyQualifiedName~ComponentTemplateTests|FullyQualifiedName~ContentTemplateRegistryTests"`
-- [x] Re-index `Cerneala.slnx` with RoslynIndexer after changes.
 
 ---
 
@@ -836,7 +825,6 @@ internal readonly record struct AspectCascadeKey(
   - [x] Validate docs mention tokens, variants, slots, component templates, content templates.
 - [x] Run targeted tests:
   - [x] `dotnet test --filter "FullyQualifiedName~ModernAspectSampleTests|FullyQualifiedName~AspectDocsTests|FullyQualifiedName~PlaygroundSampleTests"`
-- [x] Re-index `Cerneala.slnx` with RoslynIndexer after changes.
 
 ---
 
@@ -858,13 +846,12 @@ internal readonly record struct AspectCascadeKey(
 - [x] Wire counters into existing frame diagnostics if appropriate.
 - [x] Run targeted tests:
   - [x] `dotnet test --filter "FullyQualifiedName~AspectEngineStressBudgetTests"`
-- [x] Re-index `Cerneala.slnx` with RoslynIndexer after changes.
 
 ---
 
 ## Phase 14 - Final Verification And Cleanup
 
-- [x] Run RoslynIndexer reference sweeps:
+- [x] Check references:
   - [x] No unwanted production references to the old rule-sheet runtime path.
   - [x] No unwanted production references to old `ControlTemplate` runtime path.
   - [x] No unwanted production references to old `DataTemplate` runtime path.

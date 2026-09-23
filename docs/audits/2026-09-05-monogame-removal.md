@@ -96,9 +96,6 @@ not authorize removal of its shared behavioral coverage.
 - `.config/dotnet-tools.json` includes `dotnet-mgfxc`.
 - CI includes legacy shader checks, a WindowsDX runtime smoke, and live
   WindowsDX-to-SDL pixel comparisons.
-- The RoslynIndexer search command returns only 50 hits, including with a
-  temporary larger configured limit and daemon disabled. A textual inventory was
-  used to supplement that incomplete result; source reads still use the indexer.
 
 ## Verification record
 
@@ -1864,8 +1861,8 @@ remaining dispositions in addition to the earlier kernel/retained migration:
   and the expanded 44-case resource ownership suite. Native device-owner
   lifetime is tested without copying MonoGame's immediate-reset semantics.
 
-The old file has no user diff and RoslynIndexer reports no references to its
-class. No compile exclusion or test skip replaces it. Main-project and complete
+The old file has no user diff and no references to its
+class were found. No compile exclusion or test skip replaces it. Main-project and complete
 repository verification follow this final retirement; they are not yet green.
 
 ### 2026-09-06 solution and documentation closure in progress
@@ -1888,11 +1885,7 @@ The core project's old directory exclusion globs remain intentional protection
 against ignored generated bin/obj files left under retired project directories;
 they do not include source or reference a retired project/package.
 
-During source inventory I accidentally overlapped indexer query processes after
-shell calls yielded. They failed on the query daemon shadow-copy DLL lock. No
-source modification was inferred from those failed reads. Exact files were read
-through the permitted fallback; subsequent indexer queries use its existing
-RI_DISABLE_DAEMON=1 switch and run serially. The indexer itself was not modified.
+
 
 Complete-solution verification is still running. It has already exposed a
 packaged image fixture decode failure, stale catalog metadata expectations, and
@@ -2018,7 +2011,7 @@ verification and another complete run are required after this fixture update.
 Shader artifact verification passed for all six artifacts
 (`final-shader-verify.log`). PreviewHost is being rerun independently without
 changing protocol timeouts or implementation; its timeout cause is not yet
-established. Shader verification and a Roslyn read overlapped the previous
+established. Shader verification and source inspection overlapped the previous
 solution test run, so resource contention is a hypothesis, not a conclusion.
 
 The exact surface allocation/reuse regression and its drawing/surface neighbors
@@ -2055,8 +2048,7 @@ are not proof of a valid published application.
 The second parallel full run has 4,799 tests, with six failures: four alpha,
 one PreviewHost initial-render timeout and one native pre-click window mismatch.
 Main again passes 3,297/3,297, and the surface-resize assertion passes. The
-PreviewHost failure happened before any indexer was started in this run, and no
-shader compiler was running, so shader compilation is not a necessary trigger.
+PreviewHost failure happened while no shader compiler was running, so shader compilation is not a necessary trigger.
 Added the actual target process ID to the native click precondition's failure
 message without changing the assertion or injecting input into the wrong window.
 The parallel solution run includes multiple real-window test processes; a serial

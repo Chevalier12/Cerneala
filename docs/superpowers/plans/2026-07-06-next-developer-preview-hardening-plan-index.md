@@ -39,8 +39,7 @@ This sequence is deliberately practical. It adds small missing contracts and qua
 - [ ] Write RED tests first unless a step explicitly says otherwise.
 - [ ] Run targeted tests after each task and `dotnet test Cerneala.slnx` after each plan.
 - [ ] Prefer fixing the owning layer over adding compatibility shims.
-- [ ] Follow `AGENTS.md`: run `./Tools/scripts/New-FileTree.ps1`, read `FileTree.md`, use RoslynIndexer for C# search/navigation when available, and re-index after code/project-file changes.
-- [ ] If Roslyn MCP transport fails, use the RoslynIndexer CLI path and record that fallback in the final notes.
+- [ ] Run `./Tools/scripts/New-FileTree.ps1`, read `FileTree.md`, then read source files directly and use `rg` / `rg --files` for text search and file discovery.
 
 ## Do Not Build During This Sequence
 

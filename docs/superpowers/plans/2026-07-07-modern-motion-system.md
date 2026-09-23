@@ -6,7 +6,7 @@
 
 **Architecture:** Introduce a root-owned `MotionSystem` composed of a deterministic clock, a retained `MotionGraph`, typed `MotionValue<T>` nodes, physics/tween/keyframe specs, property bindings, implicit transactions, layout-motion FLIP, presence orchestration, input/scroll timelines, reduced-motion policy, and diagnostics. Existing `Animation<T>`, `AnimationScheduler`, `Transition<T>`, and `Storyboard` are retired after the new API is green.
 
-**Tech Stack:** C#/.NET, existing Cerneala `UiProperty` value-source system, existing invalidation/layout/render queues, existing retained renderer, xUnit tests, playground samples, RoslynIndexer for navigation/indexing.
+**Tech Stack:** C#/.NET, existing Cerneala `UiProperty` value-source system, existing invalidation/layout/render queues, existing retained renderer, xUnit tests, playground samples.
 
 **Audit remediation (2026-09-02):** The Motion audit findings in `Motion_Audit_09022026.md` are remediated. Permanent regressions cover terminal listener exceptions, already-terminal and canceled sequence children, transaction-stack recovery, truthful diagnostic snapshots, priority conflict enforcement, state-builder registration, named timeline registry operations/thread affinity, and negative-delta validation. Focused verification: 292 core Motion tests, 182 SourceGen Motion tests, and 52 Language Motion tests passed. The repository-wide test command still reproduces the pre-existing non-Motion Language, LanguageServer, and VisualStudio fixture failures recorded in the audit report.
 
