@@ -568,6 +568,190 @@ public sealed class PrismSurfaceOwnershipTests
         using (SdlGpuPrismSurfaceLease reusable = fixture.Rent()) { Assert.Same(previous, reusable.Target); }
     }
 
+    [Fact]
+    public void InvalidatedPendingPromotionIsNotReusedOrResurrectedAtSubmit()
+    {
+        using Fixture fixture = new();
+        PrismRetainedCacheKey key = Key(71);
+        fixture.Session.BeginFrame(Color.Transparent);
+        SdlGpuRenderTarget pendingTarget;
+        using (SdlGpuPrismSurfaceLease pending = fixture.Rent())
+        {
+            pendingTarget = pending.Target;
+            fixture.Resources.Promote(fixture.Session, key, pending);
+        }
+
+        fixture.Resources.Invalidate(PrismCacheInvalidation.All);
+        Assert.False(fixture.Resources.TryAcquireRetained(
+            fixture.Session,
+            key,
+            fixture.Session.WindowIdentity,
+            out _));
+        using (SdlGpuPrismSurfaceLease other = fixture.Rent())
+        {
+            Assert.NotSame(pendingTarget, other.Target);
+        }
+
+        fixture.Session.CompleteFrame(present: false);
+
+        Assert.False(fixture.Resources.TryAcquireRetained(
+            key,
+            fixture.Session.WindowIdentity,
+            out _));
+        Assert.Equal(0, fixture.Resources.RetainedCount);
+    }
+
+    [Fact]
+    public void InvalidatedPendingPromotionStaysPinnedAfterItsHostLeaseIsReleased()
+    {
+        using Fixture fixture = new();
+        using SdlGpuWindowGraphicsSession second = fixture.CreateAdditionalSession(
+            "pending invalidation contender");
+        PrismRetainedCacheKey key = Key(711);
+        fixture.Session.BeginFrame(Color.Transparent);
+        SdlGpuPrismSurfaceLease pending = fixture.Rent();
+        SdlGpuRenderTarget pendingTarget = pending.Target;
+        fixture.Resources.Promote(fixture.Session, key, pending);
+
+        fixture.Resources.Invalidate(PrismCacheInvalidation.All);
+        pending.Dispose();
+
+        using (SdlGpuPrismSurfaceLease other = fixture.Resources.RentSurface(
+            second.WindowIdentity,
+            8,
+            8,
+            SdlGpuTextureFormat.R8G8B8A8Unorm,
+            mipmapped: false))
+        {
+            Assert.NotSame(pendingTarget, other.Target);
+        }
+
+        fixture.Session.CompleteFrame(present: false);
+        Assert.Equal(0, fixture.Resources.RetainedCount);
+    }
+
+    [Fact]
+    public void InvalidatedSubmittedHitStaysPinnedUntilItsUsingBufferEnds()
+    {
+        using Fixture fixture = new();
+        using SdlGpuWindowGraphicsSession second = fixture.CreateAdditionalSession(
+            "submitted invalidation contender");
+        PrismRetainedCacheKey key = Key(712);
+        fixture.Promote(key);
+        fixture.Session.BeginFrame(Color.Transparent);
+        Assert.True(fixture.Resources.TryAcquireRetained(
+            fixture.Session,
+            key,
+            fixture.Session.WindowIdentity,
+            out SdlGpuPrismSurfaceLease hit));
+        SdlGpuRenderTarget submittedTarget = hit.Target;
+
+        fixture.Resources.Invalidate(PrismCacheInvalidation.All);
+        hit.Dispose();
+
+        using (SdlGpuPrismSurfaceLease other = fixture.Resources.RentSurface(
+            second.WindowIdentity,
+            8,
+            8,
+            SdlGpuTextureFormat.R8G8B8A8Unorm,
+            mipmapped: false))
+        {
+            Assert.NotSame(submittedTarget, other.Target);
+        }
+
+        fixture.Session.CompleteFrame(present: false);
+        Assert.Equal(0, fixture.Resources.RetainedCount);
+    }
+
+    [Fact]
+    public void SubmittedHitCannotBeReusedDuringBudgetEvictionBeforeItsBufferEnds()
+    {
+        using Fixture fixture = new(hardBytes: 768, softBytes: 512, entries: 1);
+        using SdlGpuWindowGraphicsSession second = fixture.CreateAdditionalSession(
+            "submitted budget contender");
+        PrismRetainedCacheKey firstKey = Key(713);
+        PrismRetainedCacheKey secondKey = Key(714);
+        fixture.Promote(firstKey);
+        fixture.Session.BeginFrame(Color.Transparent);
+        Assert.True(fixture.Resources.TryAcquireRetained(
+            fixture.Session,
+            firstKey,
+            fixture.Session.WindowIdentity,
+            out SdlGpuPrismSurfaceLease hit));
+        SdlGpuRenderTarget submittedTarget = hit.Target;
+        hit.Dispose();
+
+        using (SdlGpuPrismSurfaceLease pressure = fixture.Rent())
+        {
+            fixture.Resources.Promote(secondKey, pressure);
+            Assert.False(pressure.IsRetained);
+        }
+        using (SdlGpuPrismSurfaceLease other = fixture.Resources.RentSurface(
+            second.WindowIdentity,
+            8,
+            8,
+            SdlGpuTextureFormat.R8G8B8A8Unorm,
+            mipmapped: false))
+        {
+            Assert.NotSame(submittedTarget, other.Target);
+        }
+
+        fixture.Session.CompleteFrame(present: false);
+    }
+
+    [Fact]
+    public void PendingPromotionCannotBeEvictedOrReusedToSatisfyItsOwnBudget()
+    {
+        using Fixture fixture = new(hardBytes: 512, softBytes: 512, entries: 1);
+        PrismRetainedCacheKey firstKey = Key(72);
+        PrismRetainedCacheKey secondKey = Key(73);
+        fixture.Session.BeginFrame(Color.Transparent);
+        SdlGpuRenderTarget firstTarget;
+        using (SdlGpuPrismSurfaceLease first = fixture.Rent())
+        {
+            firstTarget = first.Target;
+            fixture.Resources.Promote(fixture.Session, firstKey, first);
+        }
+
+        using (SdlGpuPrismSurfaceLease second = fixture.Rent())
+        {
+            Assert.NotSame(firstTarget, second.Target);
+            fixture.Resources.Promote(fixture.Session, secondKey, second);
+            Assert.False(second.IsRetained);
+        }
+        Assert.Equal(1, fixture.Resources.RetainedCount);
+        Assert.Equal(1, fixture.Resources.FreeSurfaceCount);
+
+        fixture.Session.CompleteFrame(present: false);
+
+        using SdlGpuPrismSurfaceLease submitted = fixture.Acquire(firstKey);
+        Assert.Same(firstTarget, submitted.Target);
+        Assert.False(fixture.Resources.TryAcquireRetained(
+            secondKey,
+            fixture.Session.WindowIdentity,
+            out _));
+    }
+
+    [Fact]
+    public void DisposedPendingResourceOwnerCannotPublishDuringLaterSubmitCleanup()
+    {
+        using Fixture fixture = new();
+        PrismRetainedCacheKey key = Key(74);
+        fixture.Session.BeginFrame(Color.Transparent);
+        using (SdlGpuPrismSurfaceLease pending = fixture.Rent())
+        {
+            fixture.Resources.Promote(fixture.Session, key, pending);
+        }
+
+        fixture.Resources.Dispose();
+        fixture.Session.CompleteFrame(present: false);
+
+        Assert.Equal(0, fixture.Resources.RetainedCount);
+        Assert.Throws<ObjectDisposedException>(() =>
+            fixture.Resources.TryAcquireRetained(key, fixture.Session.WindowIdentity, out _));
+        Assert.Equal(0, fixture.Api.LiveCommandBufferCount);
+    }
+
     private static PrismRetainedCacheKey Key(long owner)
     {
         PrismDrawScope scope = PrismTestData.Scope(PrismTestData.Composition("Surface ownership",
@@ -586,6 +770,7 @@ public sealed class PrismSurfaceOwnershipTests
     {
         private readonly SdlGpuWindowGraphicsSessionFactory factory;
         private readonly nint window;
+        private readonly List<nint> additionalWindows = [];
         public FakeSdlApi Api { get; } = new() { WindowPixelDensity = 1 };
         public SdlGpuWindowGraphicsSession Session { get; }
         public SdlGpuPrismDeviceResources Resources { get; }
@@ -597,8 +782,12 @@ public sealed class PrismSurfaceOwnershipTests
             Session = Assert.IsType<SdlGpuWindowGraphicsSession>(factory.Create(
                 new SdlWindowSurface(window, Api.GetWindowId(window)), 8, 8, 1));
             Resources = new(Api, Session.Device, SdlGpuShaderFormats.Dxil, Session.DrawingResources,
-                new PrismRendererOptions { SurfaceHardByteLimit = hardBytes,
-                    RetainedCacheSoftByteLimit = softBytes, RetainedCacheEntryLimit = entries });
+                new PrismRendererOptions
+                {
+                    SurfaceHardByteLimit = hardBytes,
+                    RetainedCacheSoftByteLimit = softBytes,
+                    RetainedCacheEntryLimit = entries
+                });
         }
 
         public SdlGpuPrismSurfaceLease Rent(int width = 8, int height = 8,
@@ -609,6 +798,17 @@ public sealed class PrismSurfaceOwnershipTests
         {
             Assert.True(Resources.TryAcquireRetained(key, Session.WindowIdentity, out SdlGpuPrismSurfaceLease lease));
             return lease;
+        }
+
+        public SdlGpuWindowGraphicsSession CreateAdditionalSession(string title)
+        {
+            nint additionalWindow = Api.CreateWindow(title, 8, 8, SdlWindowOptions.Hidden);
+            additionalWindows.Add(additionalWindow);
+            return Assert.IsType<SdlGpuWindowGraphicsSession>(factory.Create(
+                new SdlWindowSurface(additionalWindow, Api.GetWindowId(additionalWindow)),
+                8,
+                8,
+                1));
         }
 
         public void Promote(PrismRetainedCacheKey key)
@@ -623,6 +823,10 @@ public sealed class PrismSurfaceOwnershipTests
             Resources.Dispose();
             Session.Dispose();
             factory.Dispose();
+            foreach (nint additionalWindow in additionalWindows)
+            {
+                Api.DestroyWindow(additionalWindow);
+            }
             Api.DestroyWindow(window);
         }
     }

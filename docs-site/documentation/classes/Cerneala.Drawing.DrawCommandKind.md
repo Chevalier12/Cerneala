@@ -39,6 +39,7 @@ public enum DrawCommandKind
 | `DrawLineBatch` | Draws an immutable line batch in one primitive submission. |
 | `DrawSpriteBatch` | Draws same-image sprites in one primitive submission. |
 | `RenderSurface2D` | Composes a backend-managed 2D game surface into the retained command stream. |
+| `RenderSurface3D` (`32`) | Composes a backend-managed 3D surface; unsupported backends must diagnose it explicitly. This value is appended after `PopLayer` (`31`). |
 | `PushClip` | Pushes a rectangular clip. |
 | `PopClip` | Removes the current clip. |
 | `BeginPrism` | Begins a typed retained Prism capture scope. |

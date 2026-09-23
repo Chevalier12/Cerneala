@@ -99,7 +99,7 @@ public sealed class SdlGpuGeometryAllocationTests
             try
             {
                 long before = GC.GetAllocatedBytesForCurrentThread();
-                SdlGpuGeometryBinding binding = fixture.Session.GeometryUploadArena.UploadGeometry(
+                SdlGpuGeometryBinding binding = fixture.Session.GeometryUploadArena.UploadGeometry<SdlGpuVertex>(
                     fixture.Session, vertices, indices);
                 long delta = GC.GetAllocatedBytesForCurrentThread() - before;
                 if (frame >= 8) allocated += delta;

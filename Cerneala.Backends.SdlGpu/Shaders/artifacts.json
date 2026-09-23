@@ -2,9 +2,100 @@
   "toolVersion": "2",
   "shaderCrossVersion": "3.0.0",
   "shaderCrossPackageVersion": "3.0.0.9",
-  "manifestHash": "3A07037D177EB061D888C20A0A7A8D8912C6A5DDB37B65F0F38452315C67BE6C",
-  "sourceHash": "494643E20E9177CF676DFBF8809E0C7CFC8F082944AD82ADEC0AA7EA9AA6C15C",
+  "manifestHash": "8AF0ADC75DC8CDB7388641669A4A335FE13DD26CD50B60D581E276D7CC661224",
+  "sourceHash": "4CFC205969A53CF5A11F6EFC99FBD326AA72F851837F4EB463EB491406CDE422",
   "shaders": [
+    {
+      "logicalName": "surface-3d-vertex",
+      "stage": "Vertex",
+      "entryPoint": "main",
+      "variants": [
+        "line",
+        "marker",
+        "homogeneous-clipping"
+      ],
+      "bindings": {
+        "samplers": 0,
+        "storageTextures": 0,
+        "storageBuffers": 0,
+        "uniformBuffers": 1,
+        "inputs": 5,
+        "outputs": 5
+      },
+      "layout": {
+        "uniformBuffers": [
+          {
+            "name": "Surface3DUniforms",
+            "slot": 0
+          }
+        ],
+        "samplers": [],
+        "storageTextures": [],
+        "storageBuffers": [],
+        "vertexInputs": [
+          {
+            "semantic": "TEXCOORD0",
+            "location": 0,
+            "format": "Float3"
+          },
+          {
+            "semantic": "TEXCOORD1",
+            "location": 1,
+            "format": "Float3"
+          },
+          {
+            "semantic": "TEXCOORD2",
+            "location": 2,
+            "format": "Float4"
+          },
+          {
+            "semantic": "TEXCOORD3",
+            "location": 3,
+            "format": "Float2"
+          },
+          {
+            "semantic": "TEXCOORD4",
+            "location": 4,
+            "format": "Float2"
+          }
+        ]
+      },
+      "outputs": {
+        "spirv": "F55C8B57824CC485403617AFA9759E3002CF7701A3CF8DA4561132138FA4095F",
+        "dxil": "BBD84F0F6C421A9FA2AAD4DEAB4BD177F4519F09F8A5A26BDAF33B81E3199893",
+        "msl": "9E65C41E46320D117C9F2C409926D936E3BF565A28B4E7A1A49317FCF9F73753"
+      }
+    },
+    {
+      "logicalName": "surface-3d-fragment",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [
+        "opaque-interior",
+        "sample-coverage-boundary",
+        "discard-exterior"
+      ],
+      "bindings": {
+        "samplers": 0,
+        "storageTextures": 0,
+        "storageBuffers": 0,
+        "uniformBuffers": 0,
+        "inputs": 5,
+        "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [],
+        "samplers": [],
+        "storageTextures": [],
+        "storageBuffers": [],
+        "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "D8080B5AB11A8948DDDBFDD1D52645DEDEA578AE6CF610FBB54B03AD65474214",
+        "dxil": "9A4B6301442D3AC805C77D01CA95E0F11A227B4BBA9877FBF0E66C1BB5F76BB3",
+        "msl": "1CC37AAE1A4C8E19C3458EE05A33D0D327E8E528F1A0D2D7D1245EF3153157BD"
+      }
+    },
     {
       "logicalName": "prism-presentation-fragment",
       "stage": "Fragment",

@@ -48,6 +48,44 @@ public sealed class SdlGpuShaderArtifactTests
         Assert.Equal(3, api.GpuShaders.Count);
     }
 
+    [Fact]
+    public void Failed_pipeline_creation_is_not_cached_and_owned_resources_are_disposed()
+    {
+        FakeSdlApi api = new()
+        {
+            FailPipelineCreationCount = 1
+        };
+
+        using (SdlGpuDrawingResources resources = new(
+            api,
+            api.DeviceResult,
+            SdlGpuShaderFormats.Dxil))
+        {
+            nint CreatePipeline() => resources.GetPipeline(
+                SdlGpuTextureFormat.R8G8B8A8Unorm,
+                SdlGpuSampleCount.One,
+                DrawPrimitiveTopology.TriangleList,
+                DrawBlendMode.Normal,
+                SdlGpuStencilMode.Disabled);
+
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                _ = CreatePipeline();
+            });
+            Assert.Equal(0, resources.PipelineCount);
+            Assert.Empty(api.GpuPipelines);
+            Assert.Equal(2, api.GpuShaders.Count);
+
+            nint pipeline = CreatePipeline();
+            Assert.NotEqual(0, pipeline);
+            Assert.Equal(1, resources.PipelineCount);
+            Assert.Single(api.GpuPipelines);
+        }
+
+        Assert.Empty(api.GpuPipelines);
+        Assert.Empty(api.GpuShaders);
+    }
+
     [Theory]
     [InlineData((uint)SdlGpuShaderFormats.Dxil, "main")]
     [InlineData((uint)SdlGpuShaderFormats.SpirV, "main")]
@@ -141,17 +179,23 @@ public sealed class SdlGpuShaderArtifactTests
                 api,
                 device,
                 handles["drawing-vertex"],
-                handles["drawing-fragment"]));
+                handles["drawing-fragment"],
+                SdlGpuTextureFormat.D24UnormS8Uint,
+                SdlGpuVertexInputDescription.Drawing2D));
             pipelines.Add(CreatePipeline(
                 api,
                 device,
                 handles["drawing-vertex"],
-                handles["prism-presentation-fragment"]));
+                handles["prism-presentation-fragment"],
+                SdlGpuTextureFormat.D24UnormS8Uint,
+                SdlGpuVertexInputDescription.Drawing2D));
             pipelines.Add(CreatePipeline(
                 api,
                 device,
                 handles["prism-fullscreen-vertex"],
-                handles["prism-copy-fragment"]));
+                handles["prism-copy-fragment"],
+                SdlGpuTextureFormat.Invalid,
+                SdlGpuVertexInputDescription.Empty));
             Assert.All(pipelines, static pipeline => Assert.NotEqual(0, pipeline));
         }
         finally
@@ -179,15 +223,19 @@ public sealed class SdlGpuShaderArtifactTests
         ISdlApi api,
         nint device,
         nint vertexShader,
-        nint fragmentShader) => api.CreateGpuGraphicsPipeline(
+        nint fragmentShader,
+        SdlGpuTextureFormat depthStencilFormat,
+        SdlGpuVertexInputDescription vertexInput) => api.CreateGpuGraphicsPipeline(
             device,
             new SdlGpuGraphicsPipelineCreateInfo(
                 vertexShader,
                 fragmentShader,
                 SdlGpuTextureFormat.R8G8B8A8Unorm,
-                SdlGpuTextureFormat.D24UnormS8Uint,
+                depthStencilFormat,
                 SdlGpuSampleCount.One,
                 SdlGpuPrimitiveType.TriangleList,
                 SdlGpuBlendState.Opaque,
-                SdlGpuStencilMode.Disabled));
+                SdlGpuStencilMode.Disabled,
+                vertexInput,
+                SdlGpuDepthState.Disabled));
 }

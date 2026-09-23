@@ -7,6 +7,7 @@ internal sealed class SdlGpuGeometryUploadArena : IDisposable
 {
     private const int FrameSlotCount = 3;
     private const uint InitialCapacity = 64 * 1024;
+    private const uint BufferOffsetAlignment = sizeof(float);
     private readonly ISdlApi api;
     private readonly nint device;
     private readonly FrameSlot[] slots = new FrameSlot[FrameSlotCount];
@@ -35,10 +36,11 @@ internal sealed class SdlGpuGeometryUploadArena : IDisposable
         slots[activeSlotIndex].ResetOffsets();
     }
 
-    public SdlGpuGeometryBinding UploadGeometry(
+    public unsafe SdlGpuGeometryBinding UploadGeometry<TVertex>(
         SdlGpuWindowGraphicsSession session,
-        ReadOnlySpan<SdlGpuVertex> vertices,
+        ReadOnlySpan<TVertex> vertices,
         ReadOnlySpan<int> indices)
+        where TVertex : unmanaged
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(session);
@@ -51,23 +53,39 @@ internal sealed class SdlGpuGeometryUploadArena : IDisposable
         {
             throw new ArgumentException("GPU geometry cannot be empty.");
         }
+        if (sizeof(TVertex) % BufferOffsetAlignment != 0)
+        {
+            throw new ArgumentException(
+                "GPU vertex strides must be aligned to four bytes.",
+                nameof(vertices));
+        }
 
         FrameSlot slot = slots[activeSlotIndex];
         ReadOnlySpan<byte> vertexBytes = MemoryMarshal.AsBytes(vertices);
         ReadOnlySpan<byte> indexBytes = MemoryMarshal.AsBytes(indices);
         uint vertexByteCount = checked((uint)vertexBytes.Length);
         uint indexByteCount = checked((uint)indexBytes.Length);
-        uint totalByteCount = checked(vertexByteCount + indexByteCount);
-        EnsureVertexCapacity(slot, checked(slot.VertexOffset + vertexByteCount));
-        EnsureIndexCapacity(slot, checked(slot.IndexOffset + indexByteCount));
-        EnsureTransferCapacity(slot, checked(slot.TransferOffset + totalByteCount));
+        uint requiredVertexEnd = checked(AlignOffset(slot.VertexOffset) + vertexByteCount);
+        uint requiredIndexEnd = checked(AlignOffset(slot.IndexOffset) + indexByteCount);
+        uint requiredTransferOffset = AlignOffset(slot.TransferOffset);
+        uint requiredTransferIndexOffset = AlignOffset(
+            checked(requiredTransferOffset + vertexByteCount));
+        uint requiredTransferEnd = checked(requiredTransferIndexOffset + indexByteCount);
+        EnsureVertexCapacity(slot, requiredVertexEnd);
+        EnsureIndexCapacity(slot, requiredIndexEnd);
+        EnsureTransferCapacity(slot, requiredTransferEnd);
 
-        uint vertexOffset = slot.VertexOffset;
-        uint indexOffset = slot.IndexOffset;
-        uint transferOffset = slot.TransferOffset;
-        slot.VertexOffset = checked(vertexOffset + vertexByteCount);
-        slot.IndexOffset = checked(indexOffset + indexByteCount);
-        slot.TransferOffset = checked(transferOffset + totalByteCount);
+        uint vertexOffset = AlignOffset(slot.VertexOffset);
+        uint indexOffset = AlignOffset(slot.IndexOffset);
+        uint transferOffset = AlignOffset(slot.TransferOffset);
+        uint transferIndexOffset = AlignOffset(checked(transferOffset + vertexByteCount));
+        uint nextVertexOffset = checked(vertexOffset + vertexByteCount);
+        uint nextIndexOffset = checked(indexOffset + indexByteCount);
+        uint nextTransferOffset = checked(transferIndexOffset + indexByteCount);
+
+        slot.VertexOffset = nextVertexOffset;
+        slot.IndexOffset = nextIndexOffset;
+        slot.TransferOffset = nextTransferOffset;
 
         nint mapped = RequireHandle(
             api.MapGpuTransferBuffer(device, slot.TransferBuffer, cycle: false),
@@ -76,7 +94,9 @@ internal sealed class SdlGpuGeometryUploadArena : IDisposable
         {
             nint destination = mapped + checked((int)transferOffset);
             CopyToUnmanaged(vertexBytes, destination);
-            CopyToUnmanaged(indexBytes, destination + vertexBytes.Length);
+            CopyToUnmanaged(
+                indexBytes,
+                mapped + checked((int)transferIndexOffset));
         }
         finally
         {
@@ -85,6 +105,7 @@ internal sealed class SdlGpuGeometryUploadArena : IDisposable
 
         session.RunCopyPass(
             (Arena: this, Slot: slot, TransferOffset: transferOffset,
+                TransferIndexOffset: transferIndexOffset,
                 VertexOffset: vertexOffset, IndexOffset: indexOffset,
                 VertexByteCount: vertexByteCount, IndexByteCount: indexByteCount),
             static (copyPass, upload) =>
@@ -100,7 +121,7 @@ internal sealed class SdlGpuGeometryUploadArena : IDisposable
             upload.Arena.api.UploadToGpuBuffer(
                 copyPass,
                 upload.Slot.TransferBuffer,
-                checked(upload.TransferOffset + upload.VertexByteCount),
+                upload.TransferIndexOffset,
                 upload.Slot.IndexBuffer,
                 upload.IndexOffset,
                 upload.IndexByteCount,
@@ -227,6 +248,9 @@ internal sealed class SdlGpuGeometryUploadArena : IDisposable
         }
         return next;
     }
+
+    internal static uint AlignOffset(uint offset) =>
+        checked((offset + BufferOffsetAlignment - 1) & ~(BufferOffsetAlignment - 1));
 
     private nint RequireHandle(nint handle, string operation) =>
         handle != 0 ? handle : throw SdlApiError.Create(api, operation);

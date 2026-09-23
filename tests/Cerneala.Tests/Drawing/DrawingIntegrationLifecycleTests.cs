@@ -326,6 +326,8 @@ public sealed class DrawingIntegrationLifecycleTests
         commands.Add(DrawCommand.DrawLineBatch(lines));
         commands.Add(DrawCommand.DrawSpriteBatch(sprites));
         commands.Add(DrawCommand.RenderSurface2D(new TestSurface(), new DrawRect(1, 1, 8, 8), Color.White));
+        RenderSurface3D surface3D = new();
+        commands.Add(DrawCommand.RenderSurface3DCommand(surface3D, new DrawRect(2, 2, 8, 8), Color.White, 7));
         commands.Add(DrawCommand.EndPrism());
         commands.Add(DrawCommand.PushClip(new DrawRect(0, 0, 10, 10)));
         commands.Add(DrawCommand.PopClip());
@@ -357,6 +359,9 @@ public sealed class DrawingIntegrationLifecycleTests
         Assert.Contains(
             state.Entries[19].Metadata!.Resources,
             resource => resource is TestSurface);
+        Assert.Contains(
+            state.Entries[20].Metadata!.Resources,
+            resource => ReferenceEquals(resource, surface3D));
     }
 
     [Fact]

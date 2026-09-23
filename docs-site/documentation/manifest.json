@@ -5717,5 +5717,50 @@
     "name": "Cerneala.UI.Controls.Scene2DDebugOverlayDiagnostics",
     "file": "documentation/classes/Cerneala.UI.Controls.Scene2DDebugOverlayDiagnostics.md",
     "source": "UI/Controls/Scene2DDebugOverlay.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.RenderProjection3DKind",
+    "file": "documentation/classes/Cerneala.Drawing.RenderProjection3DKind.md",
+    "source": "Drawing/RenderProjection3D.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.RenderProjection3D",
+    "file": "documentation/classes/Cerneala.Drawing.RenderProjection3D.md",
+    "source": "Drawing/RenderProjection3D.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawRay3D",
+    "file": "documentation/classes/Cerneala.Drawing.DrawRay3D.md",
+    "source": "Drawing/RenderProjection3D.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawLineSegment3D",
+    "file": "documentation/classes/Cerneala.Drawing.DrawLineSegment3D.md",
+    "source": "Drawing/RenderProjection3D.cs"
+  },
+  {
+    "name": "Cerneala.Drawing.DrawMarker3D",
+    "file": "documentation/classes/Cerneala.Drawing.DrawMarker3D.md",
+    "source": "Drawing/RenderProjection3D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.RenderSurface3DRedrawMode",
+    "file": "documentation/classes/Cerneala.UI.Controls.RenderSurface3DRedrawMode.md",
+    "source": "UI/Controls/RenderSurface3DRedrawMode.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.RenderSurface3DDrawEventHandler",
+    "file": "documentation/classes/Cerneala.UI.Controls.RenderSurface3DDrawEventHandler.md",
+    "source": "UI/Controls/RenderSurface3D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.RenderSurface3D",
+    "file": "documentation/classes/Cerneala.UI.Controls.RenderSurface3D.md",
+    "source": "UI/Controls/RenderSurface3D.cs"
+  },
+  {
+    "name": "Cerneala.UI.Controls.RenderSurface3DFrame",
+    "file": "documentation/classes/Cerneala.UI.Controls.RenderSurface3DFrame.md",
+    "source": "UI/Controls/RenderSurface3DFrame.cs"
   }
 ]

@@ -10,7 +10,9 @@ using Cerneala.UI.Prism.Definitions;
 
 namespace Cerneala.Backends.SdlGpu;
 
-internal sealed class SdlGpuPrismDeviceResources : IDisposable
+internal sealed class SdlGpuPrismDeviceResources :
+    IDisposable,
+    ISdlGpuCommandBufferParticipant
 {
     private static readonly object WhiteTextureKey = new();
     private static readonly object SpatterPointTextureKey = new();
@@ -27,6 +29,10 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
     private readonly Dictionary<(SdlGpuTextureFormat, SdlGpuSampleCount), nint> pipelines = [];
     private readonly Dictionary<SurfaceKey, SurfaceBucket> surfaceBuckets = [];
     private readonly Dictionary<PrismRetainedCacheKey, RetainedEntry> retained = [];
+    private readonly Dictionary<PendingRetainedKey, RetainedEntry> pendingRetained = [];
+    private readonly List<PendingRetainedKey> pendingRetainedKeysToInvalidate = [];
+    private readonly Dictionary<SdlGpuCommandBufferToken, HashSet<RetainedEntry>> commandBufferPins = [];
+    private readonly Stack<HashSet<RetainedEntry>> reusableCommandBufferPinSets = [];
     private readonly Dictionary<long, LeaseState> activeLeases = [];
     private readonly List<PrismRetainedCacheKey> retainedKeysToRemove = [];
     private readonly Dictionary<SdlGpuRenderTarget, LinkedListNode<FreeSurfaceEntry>> allSurfaces = [];
@@ -66,7 +72,7 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
     internal long ReusedSurfaceCount => reusedSurfaceCount;
     internal int FreeSurfaceCount => surfaceBuckets.Values.Sum(
         static bucket => bucket.Free.Count);
-    internal int RetainedCount => retained.Count;
+    internal int RetainedCount => retained.Count + pendingRetained.Count;
 
     public SdlGpuPrismSurfaceLease RentSurface(
         long windowId,
@@ -161,6 +167,38 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
         return true;
     }
 
+    internal bool TryAcquireRetained(
+        SdlGpuWindowGraphicsSession session,
+        in PrismRetainedCacheKey key,
+        long windowId,
+        out SdlGpuPrismSurfaceLease lease)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+        VerifyAccess();
+        ObjectDisposedException.ThrowIf(disposed, this);
+        SdlGpuCommandBufferToken token = session.ActiveCommandBufferToken;
+        PendingRetainedKey pendingKey = new(key, token);
+        if (pendingRetained.TryGetValue(pendingKey, out RetainedEntry? pending) &&
+            !pending.Invalidated)
+        {
+            lease = CreateLease(pending.Target, windowId, pending);
+            pending.PinCount++;
+            pending.LastUse = ++useSequence;
+            PinForCommandBuffer(session, token, pending);
+            return true;
+        }
+        if (!retained.TryGetValue(key, out RetainedEntry? submitted) || submitted.Invalidated)
+        {
+            lease = default;
+            return false;
+        }
+        lease = CreateLease(submitted.Target, windowId, submitted);
+        submitted.PinCount++;
+        submitted.LastUse = ++useSequence;
+        PinForCommandBuffer(session, token, submitted);
+        return true;
+    }
+
     public void Promote(
         in PrismRetainedCacheKey key,
         SdlGpuPrismSurfaceLease lease)
@@ -179,9 +217,10 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
         }
         if (retained.TryGetValue(key, out RetainedEntry? existing))
         {
-            if (!ReferenceEquals(existing.Target, lease.Target) && existing.PinCount == 0)
+            if (!ReferenceEquals(existing.Target, lease.Target) && !IsPinned(existing))
             {
                 retained.Remove(key);
+                existing.Released = true;
                 ReturnSurface(existing.Target);
             }
             else
@@ -198,8 +237,55 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
                 return;
             }
         }
-        activeLeases[lease.Id] = new LeaseState(lease.Target, key);
-        retained.Add(key, new RetainedEntry(lease.Target, ++useSequence) { PinCount = 1 });
+        RetainedEntry entry = new(key, lease.Target, ++useSequence) { PinCount = 1 };
+        activeLeases[lease.Id] = new LeaseState(lease.Target, entry);
+        retained.Add(key, entry);
+    }
+
+    internal void Promote(
+        SdlGpuWindowGraphicsSession session,
+        in PrismRetainedCacheKey key,
+        SdlGpuPrismSurfaceLease lease)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+        VerifyAccess();
+        ObjectDisposedException.ThrowIf(disposed, this);
+        RequireActiveLease(lease);
+        SdlGpuCommandBufferToken token = session.ActiveCommandBufferToken;
+        PendingRetainedKey pendingKey = new(key, token);
+        if (pendingRetained.TryGetValue(pendingKey, out RetainedEntry? existingPending))
+        {
+            if (ReferenceEquals(existingPending.Target, lease.Target))
+            {
+                return;
+            }
+
+            return;
+        }
+
+        long byteCount = EstimateBytes(
+            lease.Target.PixelWidth,
+            lease.Target.PixelHeight,
+            lease.Target.ColorFormat,
+            lease.Target.MipLevelCount);
+        if (options.RetainedCacheEntryLimit == 0 || byteCount > options.RetainedCacheSoftByteLimit)
+        {
+            return;
+        }
+
+        while (retained.Count + pendingRetained.Count >= options.RetainedCacheEntryLimit ||
+            RetainedBytes() > options.RetainedCacheSoftByteLimit - byteCount)
+        {
+            if (!EvictOneRetained())
+            {
+                return;
+            }
+        }
+
+        RetainedEntry entry = new(key, lease.Target, ++useSequence) { PinCount = 1 };
+        activeLeases[lease.Id] = new LeaseState(lease.Target, entry);
+        pendingRetained.Add(pendingKey, entry);
+        PinForCommandBuffer(session, token, entry);
     }
 
     public void Invalidate(PrismCacheInvalidation invalidation)
@@ -212,13 +298,16 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
             .ToArray())
         {
             RetainedEntry entry = retained[key];
-            if (entry.PinCount != 0)
-            {
-                entry.Invalidated = true;
-                continue;
-            }
-            retained.Remove(key);
-            ReturnSurface(entry.Target);
+            entry.Invalidated = true;
+            ReleaseInvalidatedEntryIfUnpinned(entry);
+        }
+        foreach (PendingRetainedKey key in pendingRetained.Keys
+            .Where(candidate => invalidation.Kind == PrismCacheInvalidationKind.All ||
+                candidate.Key.StableNodeId.ScopeOwnerToken == invalidation.OwnerToken)
+            .ToArray())
+        {
+            RetainedEntry entry = pendingRetained[key];
+            entry.Invalidated = true;
         }
     }
 
@@ -241,13 +330,22 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
         foreach (PrismRetainedCacheKey key in retainedKeysToRemove)
         {
             RetainedEntry entry = retained[key];
-            if (entry.PinCount != 0)
+            entry.Invalidated = true;
+            ReleaseInvalidatedEntryIfUnpinned(entry);
+        }
+        pendingRetainedKeysToInvalidate.Clear();
+        foreach (PendingRetainedKey key in pendingRetained.Keys)
+        {
+            if (key.Key.StableNodeId.ScopeOwnerToken == ownerToken &&
+                !currentKeys.Contains(key.Key))
             {
-                entry.Invalidated = true;
-                continue;
+                pendingRetainedKeysToInvalidate.Add(key);
             }
-            retained.Remove(key);
-            ReturnSurface(entry.Target);
+        }
+        foreach (PendingRetainedKey key in pendingRetainedKeysToInvalidate)
+        {
+            RetainedEntry entry = pendingRetained[key];
+            entry.Invalidated = true;
         }
     }
 
@@ -273,8 +371,9 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
                     SdlGpuPrimitiveType.TriangleList,
                     SdlGpuBlendState.Opaque,
                     SdlGpuStencilMode.Disabled,
-                    SdlGpuColorWriteMask.All,
-                    UsesVertexInput: false)),
+                    SdlGpuVertexInputDescription.Empty,
+                    SdlGpuDepthState.Disabled,
+                    SdlGpuColorWriteMask.All)),
             "SDL GPU Prism pipeline creation");
         pipelines.Add(key, pipeline);
         return pipeline;
@@ -465,19 +564,17 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
             return;
         }
         disposed = true;
-        foreach (PrismRetainedCacheKey key in retained.Keys.ToArray())
+        foreach (RetainedEntry entry in retained.Values
+            .Concat(pendingRetained.Values)
+            .Distinct()
+            .ToArray())
         {
-            RetainedEntry entry = retained[key];
-            if (entry.PinCount != 0)
-            {
-                entry.Invalidated = true;
-            }
-            else
-            {
-                retained.Remove(key);
-                RetireSurface(entry.Target);
-            }
+            entry.Invalidated = true;
+            entry.RetireOnRelease = true;
+            ReleaseInvalidatedEntryIfUnpinned(entry);
         }
+        retained.Clear();
+        pendingRetained.Clear();
         foreach (FreeSurfaceEntry entry in surfaceBuckets.Values.SelectMany(static bucket => bucket.Free).ToArray())
         {
             RetireSurface(entry.Target);
@@ -519,20 +616,14 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
         {
             return;
         }
-        if (state.RetainedKey is PrismRetainedCacheKey key &&
-            retained.TryGetValue(key, out RetainedEntry? entry) &&
-            ReferenceEquals(entry.Target, state.Target))
+        if (state.Entry is RetainedEntry entry)
         {
             entry.PinCount--;
             if (entry.PinCount < 0)
             {
                 throw new InvalidOperationException("SDL_GPU Prism retained surface pin count is unbalanced.");
             }
-            if (entry.PinCount == 0 && entry.Invalidated)
-            {
-                retained.Remove(key);
-                ReturnSurface(entry.Target);
-            }
+            ReleaseInvalidatedEntryIfUnpinned(entry);
             return;
         }
         ReturnSurface(state.Target);
@@ -541,7 +632,7 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
     internal PrismRetainedCacheKey? GetRetainedKey(long leaseId)
     {
         VerifyAccess();
-        return activeLeases.TryGetValue(leaseId, out LeaseState state) ? state.RetainedKey : null;
+        return activeLeases.TryGetValue(leaseId, out LeaseState state) ? state.Entry?.Key : null;
     }
 
     private SdlGpuPrismSurfaceLease CreateLease(
@@ -549,9 +640,20 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
         long windowId,
         PrismRetainedCacheKey? retainedKey = null)
     {
+        RetainedEntry? entry = retainedKey is PrismRetainedCacheKey key
+            ? retained.GetValueOrDefault(key)
+            : null;
+        return CreateLease(target, windowId, entry);
+    }
+
+    private SdlGpuPrismSurfaceLease CreateLease(
+        SdlGpuRenderTarget target,
+        long windowId,
+        RetainedEntry? entry)
+    {
         // Never recycle an acquisition identity: old value copies must stay inert.
         long id = checked(++leaseSequence);
-        activeLeases.Add(id, new LeaseState(target, retainedKey));
+        activeLeases.Add(id, new LeaseState(target, entry));
         return new SdlGpuPrismSurfaceLease(this, id, target, windowId);
     }
 
@@ -562,6 +664,83 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
             throw new ArgumentException("The surface lease belongs to another SDL_GPU Prism resource owner.", nameof(lease));
         }
         ObjectDisposedException.ThrowIf(!activeLeases.ContainsKey(lease.Id), typeof(SdlGpuPrismSurfaceLease));
+    }
+
+    private void PinForCommandBuffer(
+        SdlGpuWindowGraphicsSession session,
+        SdlGpuCommandBufferToken token,
+        RetainedEntry entry)
+    {
+        if (!commandBufferPins.TryGetValue(token, out HashSet<RetainedEntry>? entries))
+        {
+            entries = reusableCommandBufferPinSets.Count > 0
+                ? reusableCommandBufferPinSets.Pop()
+                : [];
+            commandBufferPins.Add(token, entries);
+        }
+        if (entries.Add(entry))
+        {
+            entry.CommandBufferPinCount++;
+        }
+        session.RegisterCommandBufferParticipant(this);
+    }
+
+    private void ReleaseCommandBufferPins(SdlGpuCommandBufferToken token)
+    {
+        if (!commandBufferPins.Remove(token, out HashSet<RetainedEntry>? entries))
+        {
+            return;
+        }
+        foreach (RetainedEntry entry in entries)
+        {
+            entry.CommandBufferPinCount--;
+            if (entry.CommandBufferPinCount < 0)
+            {
+                throw new InvalidOperationException(
+                    "SDL_GPU Prism command-buffer pin count is unbalanced.");
+            }
+            ReleaseInvalidatedEntryIfUnpinned(entry);
+        }
+        entries.Clear();
+        reusableCommandBufferPinSets.Push(entries);
+    }
+
+    private static bool IsPinned(RetainedEntry entry) =>
+        entry.PinCount != 0 || entry.CommandBufferPinCount != 0;
+
+    private void ReleaseInvalidatedEntryIfUnpinned(RetainedEntry entry)
+    {
+        if (!entry.Invalidated || entry.Released || IsPinned(entry))
+        {
+            return;
+        }
+        if (retained.TryGetValue(entry.Key, out RetainedEntry? submitted) &&
+            ReferenceEquals(submitted, entry))
+        {
+            retained.Remove(entry.Key);
+        }
+        PendingRetainedKey? pendingKeyToRemove = null;
+        foreach ((PendingRetainedKey pendingKey, RetainedEntry pendingEntry) in pendingRetained)
+        {
+            if (ReferenceEquals(pendingEntry, entry))
+            {
+                pendingKeyToRemove = pendingKey;
+                break;
+            }
+        }
+        if (pendingKeyToRemove is PendingRetainedKey matchedPendingKey)
+        {
+            pendingRetained.Remove(matchedPendingKey);
+        }
+        entry.Released = true;
+        if (entry.RetireOnRelease || disposed)
+        {
+            RetireSurface(entry.Target);
+        }
+        else
+        {
+            ReturnSurface(entry.Target);
+        }
     }
 
     private void ReturnSurface(SdlGpuRenderTarget target)
@@ -672,7 +851,7 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
     private bool EvictOneRetained()
     {
         KeyValuePair<PrismRetainedCacheKey, RetainedEntry>? candidate = retained
-            .Where(static pair => pair.Value.PinCount == 0)
+            .Where(static pair => !IsPinned(pair.Value))
             .OrderBy(static pair => pair.Value.LastUse)
             .Cast<KeyValuePair<PrismRetainedCacheKey, RetainedEntry>?>()
             .FirstOrDefault();
@@ -681,11 +860,13 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
             return false;
         }
         retained.Remove(candidate.Value.Key);
+        candidate.Value.Value.Released = true;
         ReturnSurface(candidate.Value.Value.Target);
         return true;
     }
 
     private long RetainedBytes() => retained.Values
+        .Concat(pendingRetained.Values)
         .Select(static entry => EstimateBytes(
             entry.Target.PixelWidth,
             entry.Target.PixelHeight,
@@ -794,16 +975,65 @@ internal sealed class SdlGpuPrismDeviceResources : IDisposable
         public int SurfaceCount { get; set; }
     }
 
+    public void OnCommandBufferSubmitted(SdlGpuCommandBufferToken token)
+    {
+        VerifyAccess();
+        foreach (PendingRetainedKey pendingKey in pendingRetained.Keys
+            .Where(candidate => candidate.Token == token)
+            .ToArray())
+        {
+            RetainedEntry entry = pendingRetained[pendingKey];
+            pendingRetained.Remove(pendingKey);
+            if (entry.Invalidated)
+            {
+                continue;
+            }
+
+            if (retained.Remove(entry.Key, out RetainedEntry? replaced))
+            {
+                replaced.Invalidated = true;
+                ReleaseInvalidatedEntryIfUnpinned(replaced);
+            }
+            retained.Add(entry.Key, entry);
+        }
+        ReleaseCommandBufferPins(token);
+    }
+
+    public void OnCommandBufferAbandoned(SdlGpuCommandBufferToken token)
+    {
+        VerifyAccess();
+        foreach (PendingRetainedKey pendingKey in pendingRetained.Keys
+            .Where(candidate => candidate.Token == token)
+            .ToArray())
+        {
+            RetainedEntry entry = pendingRetained[pendingKey];
+            pendingRetained.Remove(pendingKey);
+            entry.Invalidated = true;
+        }
+        ReleaseCommandBufferPins(token);
+    }
+
     private readonly record struct LeaseState(
         SdlGpuRenderTarget Target,
-        PrismRetainedCacheKey? RetainedKey);
+        RetainedEntry? Entry);
 
-    private sealed class RetainedEntry(SdlGpuRenderTarget target, long lastUse)
+    private readonly record struct PendingRetainedKey(
+        PrismRetainedCacheKey Key,
+        SdlGpuCommandBufferToken Token);
+
+    private sealed class RetainedEntry(
+        PrismRetainedCacheKey key,
+        SdlGpuRenderTarget target,
+        long lastUse)
     {
+        public PrismRetainedCacheKey Key { get; } = key;
         public SdlGpuRenderTarget Target { get; } = target;
         public long LastUse { get; set; } = lastUse;
         public int PinCount { get; set; }
+        public int CommandBufferPinCount { get; set; }
         public bool Invalidated { get; set; }
+        public bool RetireOnRelease { get; set; }
+        public bool Released { get; set; }
     }
 
     private sealed record WaveNoiseEntry(

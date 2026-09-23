@@ -3,9 +3,23 @@ using System.Runtime.InteropServices;
 
 namespace Cerneala.Tests.SdlGpu;
 
+internal enum FakeGpuCommandBufferActionKind
+{
+    Submit,
+    SubmitAndAcquireFence,
+    Cancel
+}
+
+internal readonly record struct FakeGpuCommandBufferAction(
+    nint CommandBuffer,
+    FakeGpuCommandBufferActionKind Kind,
+    bool Succeeded);
+
 internal sealed class FakeSdlApi : ISdlApi
 {
     private readonly Queue<SdlEvent> events = [];
+    private readonly Queue<bool> submitResults = [];
+    private readonly Queue<bool> swapchainAcquireResults = [];
     private readonly List<SdlEventWatch> eventWatches = [];
     private int nextWindow = 100;
     private int nextCursor = 1000;
@@ -22,6 +36,7 @@ internal sealed class FakeSdlApi : ISdlApi
     private int nextSampler = 12000;
     private readonly Dictionary<nint, SdlGpuColorTargetInfo> colorTargetsByRenderPass = [];
     private readonly Dictionary<nint, nint> swapchainTexturesByCommandBuffer = [];
+    private readonly HashSet<nint> liveCommandBuffers = [];
 
     public bool InitializeResult { get; set; } = true;
 
@@ -72,6 +87,26 @@ internal sealed class FakeSdlApi : ISdlApi
 
     public int FailTextureCreationAt { get; set; }
 
+    public Func<SdlGpuTextureCreateInfo, bool>? FailNextTextureMatching { get; set; }
+
+    public int FailPipelineCreationCount { get; set; }
+
+    public Func<SdlGpuGraphicsPipelineCreateInfo, bool>? FailNextPipelineMatching { get; set; }
+
+    public int FailRenderPassCount { get; set; }
+
+    public Func<SdlGpuColorTargetInfo, SdlGpuDepthStencilTargetInfo, bool>? FailNextDepthPassMatching { get; set; }
+
+    public int FailTransferBufferMapCount { get; set; }
+
+    public int FailBufferUploadCount { get; set; }
+
+    public Func<uint, bool>? FailNextBufferUploadMatching { get; set; }
+
+    public int FailBufferUploadAtAttempt { get; set; }
+
+    public bool CaptureGpuBufferUploads { get; set; }
+
     public SdlGpuTextureFormat SwapchainTextureFormat { get; set; } =
         SdlGpuTextureFormat.R8G8B8A8Unorm;
 
@@ -93,9 +128,13 @@ internal sealed class FakeSdlApi : ISdlApi
     public HashSet<SdlGpuSampleCount> SupportedSampleCounts { get; } =
         [SdlGpuSampleCount.One, SdlGpuSampleCount.Two, SdlGpuSampleCount.Four];
 
+    public HashSet<(SdlGpuTextureFormat Format, SdlGpuSampleCount Count)> UnsupportedFormatSampleCounts { get; } = [];
+
     public List<string> DebugLabelCalls { get; } = [];
 
     public List<string> GpuActions { get; } = [];
+
+    public List<FakeGpuCommandBufferAction> GpuCommandBufferActions { get; } = [];
 
     public Dictionary<nint, FakeGpuTexture> GpuTextures { get; } = [];
 
@@ -118,7 +157,16 @@ internal sealed class FakeSdlApi : ISdlApi
     public List<SdlGpuBlitInfo> Blits { get; } = [];
 
     public List<(SdlGpuTextureTransferInfo Source, SdlGpuTextureRegion Destination, bool Cycle)>
-        GpuTextureUploads { get; } = [];
+        GpuTextureUploads
+    { get; } = [];
+
+    public bool CaptureGpuTextureUploadSnapshots { get; set; }
+
+    public List<FakeGpuTextureUpload> GpuTextureUploadSnapshots { get; } = [];
+
+    public List<(nint CopyPass, nint TransferBuffer, uint TransferOffset,
+        nint Buffer, uint BufferOffset, uint Size, bool Cycle)> GpuBufferUploads
+    { get; } = [];
 
     public List<SdlGpuColorTargetInfo> RenderTargets { get; } = [];
 
@@ -128,11 +176,19 @@ internal sealed class FakeSdlApi : ISdlApi
 
     public List<byte[]> FragmentUniformWrites { get; } = [];
 
+    public bool CaptureVertexUniformWrites { get; set; }
+
+    public List<byte[]> VertexUniformWrites { get; } = [];
+
     public List<(uint Slot, SdlGpuTextureSamplerBinding Binding)> FragmentSamplerBindings { get; } = [];
 
     public int SubmitCount { get; private set; }
 
+    public int BufferUploadAttemptCount { get; private set; }
+
     public int CancelCount { get; private set; }
+
+    public int LiveCommandBufferCount => liveCommandBuffers.Count;
 
     public int SwapchainConfigurationCount { get; private set; }
 
@@ -163,6 +219,22 @@ internal sealed class FakeSdlApi : ISdlApi
         foreach (SdlEvent value in values)
         {
             events.Enqueue(value);
+        }
+    }
+
+    public void EnqueueSubmitResults(params bool[] values)
+    {
+        foreach (bool value in values)
+        {
+            submitResults.Enqueue(value);
+        }
+    }
+
+    public void EnqueueSwapchainAcquireResults(params bool[] values)
+    {
+        foreach (bool value in values)
+        {
+            swapchainAcquireResults.Enqueue(value);
         }
     }
 
@@ -287,13 +359,20 @@ internal sealed class FakeSdlApi : ISdlApi
     {
         Assert.Equal(DeviceResult, device);
         Assert.Contains(format, SupportedTextureFormats);
-        return SupportedSampleCounts.Contains(sampleCount);
+        return SupportedSampleCounts.Contains(sampleCount) &&
+            !UnsupportedFormatSampleCounts.Contains((format, sampleCount));
     }
 
     public nint CreateGpuTexture(nint device, in SdlGpuTextureCreateInfo createInfo)
     {
         Assert.Equal(DeviceResult, device);
         TextureCreationCount++;
+        if (FailNextTextureMatching?.Invoke(createInfo) == true)
+        {
+            FailNextTextureMatching = null;
+            GpuActions.Add($"create-texture-targeted-failed:{createInfo.Format}:{createInfo.Width}x{createInfo.Height}");
+            return 0;
+        }
         if (FailTextureCreationAt == TextureCreationCount)
         {
             return 0;
@@ -336,6 +415,18 @@ internal sealed class FakeSdlApi : ISdlApi
         Assert.Equal(DeviceResult, device);
         Assert.Contains(createInfo.VertexShader, GpuShaders.Keys);
         Assert.Contains(createInfo.FragmentShader, GpuShaders.Keys);
+        if (FailNextPipelineMatching?.Invoke(createInfo) == true)
+        {
+            FailNextPipelineMatching = null;
+            GpuActions.Add($"create-pipeline-targeted-failed:{createInfo.DepthStencilFormat}:{createInfo.DepthState}");
+            return 0;
+        }
+        if (FailPipelineCreationCount > 0)
+        {
+            FailPipelineCreationCount--;
+            GpuActions.Add($"create-pipeline-failed:{createInfo.BlendState}:{createInfo.StencilMode}");
+            return 0;
+        }
         nint handle = (nint)nextPipeline++;
         GpuPipelines.Add(handle, createInfo);
         GpuActions.Add($"create-pipeline:{handle}:{createInfo.BlendState}:{createInfo.StencilMode}");
@@ -385,6 +476,7 @@ internal sealed class FakeSdlApi : ISdlApi
     {
         Assert.Equal(DeviceResult, device);
         nint commandBuffer = (nint)nextCommandBuffer++;
+        Assert.True(liveCommandBuffers.Add(commandBuffer));
         GpuActions.Add($"acquire-command:{commandBuffer}");
         return commandBuffer;
     }
@@ -396,13 +488,19 @@ internal sealed class FakeSdlApi : ISdlApi
         out uint width,
         out uint height)
     {
+        Assert.Contains(commandBuffer, liveCommandBuffers);
         Assert.Contains(window, ClaimedGpuWindows);
         FakeWindow fakeWindow = Windows[window];
         width = checked((uint)Math.Max(1, MathF.Ceiling(fakeWindow.Width * WindowPixelDensity)));
         height = checked((uint)Math.Max(1, MathF.Ceiling(fakeWindow.Height * WindowPixelDensity)));
-        if (FailSwapchainAcquireCount > 0)
+        bool acquireResult = swapchainAcquireResults.Count == 0 ||
+            swapchainAcquireResults.Dequeue();
+        if (!acquireResult || FailSwapchainAcquireCount > 0)
         {
-            FailSwapchainAcquireCount--;
+            if (FailSwapchainAcquireCount > 0)
+            {
+                FailSwapchainAcquireCount--;
+            }
             texture = 0;
             GpuActions.Add($"acquire-swapchain-failed:{commandBuffer}:{window}");
             return false;
@@ -432,6 +530,12 @@ internal sealed class FakeSdlApi : ISdlApi
     public nint BeginGpuRenderPass(nint commandBuffer, in SdlGpuColorTargetInfo target)
     {
         Assert.Contains(target.Texture, GpuTextures.Keys);
+        if (FailRenderPassCount > 0)
+        {
+            FailRenderPassCount--;
+            GpuActions.Add($"begin-render-failed:{commandBuffer}:{target.Texture}");
+            return 0;
+        }
         RenderTargets.Add(target);
         nint renderPass = (nint)nextRenderPass++;
         colorTargetsByRenderPass.Add(renderPass, target);
@@ -445,6 +549,12 @@ internal sealed class FakeSdlApi : ISdlApi
         in SdlGpuDepthStencilTargetInfo depthStencilTarget)
     {
         Assert.Contains(depthStencilTarget.Texture, GpuTextures.Keys);
+        if (FailNextDepthPassMatching?.Invoke(target, depthStencilTarget) == true)
+        {
+            FailNextDepthPassMatching = null;
+            GpuActions.Add($"begin-depth-render-targeted-failed:{commandBuffer}:{target.Texture}:{depthStencilTarget.Texture}");
+            return 0;
+        }
         DepthStencilTargets.Add(depthStencilTarget);
         nint renderPass = BeginGpuRenderPass(commandBuffer, target);
         GpuActions.Add($"depth-stencil:{renderPass}:{depthStencilTarget.Texture}:{depthStencilTarget.StencilLoadOp}");
@@ -484,17 +594,29 @@ internal sealed class FakeSdlApi : ISdlApi
 
     public bool SubmitGpuCommandBuffer(nint commandBuffer)
     {
+        Assert.True(liveCommandBuffers.Remove(commandBuffer));
         SubmitCount++;
+        bool result = submitResults.Count > 0 ? submitResults.Dequeue() : SubmitResult;
         GpuActions.Add($"submit:{commandBuffer}");
+        GpuCommandBufferActions.Add(new(
+            commandBuffer,
+            FakeGpuCommandBufferActionKind.Submit,
+            result));
         ReleaseFakeSwapchainTexture(commandBuffer);
-        return SubmitResult;
+        return result;
     }
 
     public nint SubmitGpuCommandBufferAndAcquireFence(nint commandBuffer)
     {
+        Assert.True(liveCommandBuffers.Remove(commandBuffer));
         SubmitCount++;
-        nint fence = SubmitResult ? (nint)nextFence++ : 0;
+        bool result = submitResults.Count > 0 ? submitResults.Dequeue() : SubmitResult;
+        nint fence = result ? (nint)nextFence++ : 0;
         GpuActions.Add($"submit-fence:{commandBuffer}:{fence}");
+        GpuCommandBufferActions.Add(new(
+            commandBuffer,
+            FakeGpuCommandBufferActionKind.SubmitAndAcquireFence,
+            result));
         ReleaseFakeSwapchainTexture(commandBuffer);
         return fence;
     }
@@ -502,8 +624,19 @@ internal sealed class FakeSdlApi : ISdlApi
     public bool CancelGpuCommandBuffer(nint commandBuffer)
     {
         CancelCount++;
-        GpuActions.Add($"cancel:{commandBuffer}");
-        return true;
+        bool succeeded = liveCommandBuffers.Contains(commandBuffer) &&
+            !swapchainTexturesByCommandBuffer.ContainsKey(commandBuffer);
+        if (succeeded)
+        {
+            liveCommandBuffers.Remove(commandBuffer);
+            ReleaseFakeSwapchainTexture(commandBuffer);
+        }
+        GpuActions.Add($"cancel:{commandBuffer}:{succeeded}");
+        GpuCommandBufferActions.Add(new(
+            commandBuffer,
+            FakeGpuCommandBufferActionKind.Cancel,
+            succeeded));
+        return succeeded;
     }
 
     public nint CreateGpuTransferBuffer(
@@ -529,6 +662,12 @@ internal sealed class FakeSdlApi : ISdlApi
     public nint MapGpuTransferBuffer(nint device, nint transferBuffer, bool cycle)
     {
         Assert.Equal(DeviceResult, device);
+        if (FailTransferBufferMapCount > 0)
+        {
+            FailTransferBufferMapCount--;
+            GpuActions.Add($"map-transfer-failed:{transferBuffer}:{cycle}");
+            return 0;
+        }
         GpuActions.Add($"map-transfer:{transferBuffer}:{cycle}");
         return TransferBuffers[transferBuffer].Pointer;
     }
@@ -555,12 +694,42 @@ internal sealed class FakeSdlApi : ISdlApi
         uint size,
         bool cycle)
     {
+        BufferUploadAttemptCount++;
+        if (FailNextBufferUploadMatching?.Invoke(size) == true)
+        {
+            FailNextBufferUploadMatching = null;
+            GpuActions.Add($"upload-buffer-targeted-failed:{copyPass}:{buffer}:{size}");
+            throw new InvalidOperationException("Configured targeted fake GPU buffer upload failure.");
+        }
+        if (FailBufferUploadAtAttempt == BufferUploadAttemptCount)
+        {
+            FailBufferUploadAtAttempt = 0;
+            GpuActions.Add($"upload-buffer-failed:{copyPass}:{transferBuffer}:{buffer}:{size}:{cycle}");
+            throw new InvalidOperationException("Configured fake GPU buffer upload failure.");
+        }
+        if (FailBufferUploadCount > 0)
+        {
+            FailBufferUploadCount--;
+            GpuActions.Add($"upload-buffer-failed:{copyPass}:{transferBuffer}:{buffer}:{size}:{cycle}");
+            throw new InvalidOperationException("Configured fake GPU buffer upload failure.");
+        }
         FakeTransferBuffer source = TransferBuffers[transferBuffer];
         FakeGpuBuffer destination = GpuBuffers[buffer];
         destination.CopyFrom(
             source.Pointer + checked((int)transferOffset),
             checked((int)bufferOffset),
             checked((int)size));
+        if (CaptureGpuBufferUploads)
+        {
+            GpuBufferUploads.Add((
+                copyPass,
+                transferBuffer,
+                transferOffset,
+                buffer,
+                bufferOffset,
+                size,
+                cycle));
+        }
         GpuActions.Add($"upload-buffer:{copyPass}:{transferBuffer}:{buffer}:{size}:{cycle}");
     }
 
@@ -575,6 +744,25 @@ internal sealed class FakeSdlApi : ISdlApi
         int pixelsPerRow = checked((int)(source.PixelsPerRow == 0
             ? destination.Width
             : source.PixelsPerRow));
+        if (CaptureGpuTextureUploadSnapshots)
+        {
+            int rowLength = checked((int)destination.Width * 4);
+            byte[] pixels = new byte[checked(rowLength * (int)destination.Height)];
+            for (int row = 0; row < destination.Height; row++)
+            {
+                Marshal.Copy(
+                    buffer.Pointer + checked((int)source.Offset) + row * pixelsPerRow * 4,
+                    pixels,
+                    row * rowLength,
+                    rowLength);
+            }
+            GpuTextureUploadSnapshots.Add(new FakeGpuTextureUpload(
+                copyPass,
+                source,
+                destination,
+                cycle,
+                pixels));
+        }
         GpuTextures[destination.Texture].CopyFrom(
             buffer.Pointer + checked((int)source.Offset),
             checked((int)destination.Width),
@@ -643,8 +831,11 @@ internal sealed class FakeSdlApi : ISdlApi
     public void PushGpuVertexUniformData(
         nint commandBuffer,
         uint slot,
-        ReadOnlySpan<byte> data) =>
+        ReadOnlySpan<byte> data)
+    {
+        if (CaptureVertexUniformWrites) VertexUniformWrites.Add(data.ToArray());
         GpuActions.Add($"push-uniform:{commandBuffer}:{slot}:{data.Length}");
+    }
 
     public void PushGpuFragmentUniformData(
         nint commandBuffer,
@@ -1056,4 +1247,11 @@ internal sealed class FakeSdlApi : ISdlApi
             }
         }
     }
+
+    internal readonly record struct FakeGpuTextureUpload(
+        nint CopyPass,
+        SdlGpuTextureTransferInfo Source,
+        SdlGpuTextureRegion Destination,
+        bool Cycle,
+        byte[] Pixels);
 }

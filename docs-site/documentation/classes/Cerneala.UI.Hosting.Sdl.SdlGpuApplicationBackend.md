@@ -33,6 +33,8 @@ Registration is idempotent for SDL_GPU. Registering a different windowing backen
 
 The adapter uses SDL3 for windowing and `SDL_GPU` for rendering over D3D12, Vulkan, or Metal. It does not use `SDL_Renderer`, and no SDL binding type is exposed by the public API. Shaders are precompiled and packaged; ShaderCross is not required at application runtime.
 
+For `RenderSurface3D`, the selected GPU device must support at least two common samples for the surface color format and depth format. The 3D renderer selects eight, four, or two samples; if only 1x is common, or no multisample count is common, a 3D render command throws `NotSupportedException`. This is a 3D capability requirement, not a change to the existing `RenderSurface2D` single-sample fallback or ordinary 2D rendering.
+
 SDL3 + SDL_GPU is the sole maintained desktop backend. The removed MonoGame and WindowsDX adapters have no compatibility facade. Their application-supplied Prism renderer options are also removed: this registration method does not accept renderer budgets, host color-profile overrides, or development-diagnostics options. SDL retains its existing internal renderer configuration.
 
 ## Methods

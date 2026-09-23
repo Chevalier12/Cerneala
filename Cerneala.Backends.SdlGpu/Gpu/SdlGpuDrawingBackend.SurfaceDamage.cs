@@ -8,11 +8,14 @@ internal sealed partial class SdlGpuDrawingBackend
     private static SdlRect? ResolveSurfaceDamage(
         SdlGpuRenderSurfaceState surface,
         DrawCommandStateAnalysis next,
-        Color clearColor)
+        Color clearColor,
+        SdlGpuCommandBufferToken token)
     {
         SdlRect bounds = new(0, 0, surface.PixelWidth, surface.PixelHeight);
-        IReadOnlyList<DrawCommandStateEntry>? previous = surface.RetainedEntries;
-        if (previous is null || surface.RetainedClearColor != clearColor)
+        IReadOnlyList<DrawCommandStateEntry>? previous = surface.GetRetainedEntries(token);
+        if (surface.RequiresFullReplay(token) ||
+            previous is null ||
+            surface.GetRetainedClearColor(token) != clearColor)
         {
             return bounds;
         }

@@ -7,6 +7,7 @@ using Cerneala.Drawing.Prism.Graph;
 using Cerneala.Drawing.Text;
 using Cerneala.Platforms.Sdl3;
 using Cerneala.UI.Media;
+using Cerneala.UI.Controls;
 using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
 using SkiaSharp;
@@ -21,6 +22,30 @@ public sealed class SdlGpuDrawingBackendTests
     public SdlGpuDrawingBackendTests(ITestOutputHelper output)
     {
         this.output = output;
+    }
+
+    [Fact]
+    public void RenderSurface3DCommandUsesBackendRoute()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1 };
+        nint window = api.CreateWindow("surface-3d", 64, 48, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window);
+        RenderSurface3D surface = new();
+        DrawCommandList commands = new();
+        commands.Add(DrawCommand.RenderSurface3DCommand(surface, new DrawRect(0, 0, 20, 20), Color.White, 1));
+        DrawingFrameContext frame = new(new PrismFrameAnalyzer().Analyze(commands));
+        session.BeginFrame(Color.Transparent);
+        try
+        {
+            session.DrawingBackend.Render(commands, in frame);
+        }
+        finally
+        {
+            session.CompleteFrame(present: false);
+        }
+
+        Assert.Contains(api.DepthStencilTargets, target => target.DepthLoadOp == SdlGpuLoadOp.Clear);
     }
 
     [Fact]

@@ -88,6 +88,7 @@ internal static class DrawCommandTransform
                 point => Translate(point, offsetX, offsetY),
                 opacity: 1),
             DrawCommandKind.RenderSurface2D => DrawCommand.RenderSurface2D(command.RenderSurface!, Translate(command.Rect, offsetX, offsetY), command.Color),
+            DrawCommandKind.RenderSurface3D => DrawCommand.WithRenderSurface3DPresentation(command, Translate(command.Rect, offsetX, offsetY), command.Color),
             DrawCommandKind.PushTransform => DrawCommand.PushTransform(
                 NumericsMatrix3x2.CreateTranslation(-offsetX, -offsetY) *
                 command.Transform *
@@ -191,6 +192,7 @@ internal static class DrawCommandTransform
                 static point => point,
                 opacity),
             DrawCommandKind.RenderSurface2D => DrawCommand.RenderSurface2D(command.RenderSurface!, command.Rect, ApplyOpacity(command.Color, opacity)),
+            DrawCommandKind.RenderSurface3D => DrawCommand.WithRenderSurface3DPresentation(command, command.Rect, ApplyOpacity(command.Color, opacity)),
             _ => command
         };
     }

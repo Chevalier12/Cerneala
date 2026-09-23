@@ -194,7 +194,10 @@ public sealed class DrawingRetainedPayloadTests
         Assert.Same(first, source.GetBackendState(fixture.Session.DrawingResources));
         fixture.Render(Presentation(surface, 16, 12));
         IRenderSurface2DBackendState? resized = source.GetBackendState(fixture.Session.DrawingResources);
-        Assert.NotSame(first, resized);
+        // The resource-owned container remains stable so one control can hold
+        // isolated targets for multiple sessions; resizing replaces only this
+        // session's target, which is verified by the released texture handles.
+        Assert.Same(first, resized);
         Assert.Equal(2, drawCount);
         Assert.All(firstTextures, texture => Assert.Contains(texture, fixture.Api.ReleasedGpuTextures));
         nint[] resizedTextures = fixture.Api.GpuTextures.Keys.Where(key =>

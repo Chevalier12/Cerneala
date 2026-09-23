@@ -47,6 +47,12 @@
     <EmbeddedResource Include="Gpu\Shaders\Drawing.frag.dxil" />
     <EmbeddedResource Include="Gpu\Shaders\Drawing.frag.spv" />
     <EmbeddedResource Include="Gpu\Shaders\Drawing.frag.msl" />
+    <EmbeddedResource Include="Gpu\Shaders\Surface3D.vert.dxil" />
+    <EmbeddedResource Include="Gpu\Shaders\Surface3D.vert.spv" />
+    <EmbeddedResource Include="Gpu\Shaders\Surface3D.vert.msl" />
+    <EmbeddedResource Include="Gpu\Shaders\Surface3D.frag.dxil" />
+    <EmbeddedResource Include="Gpu\Shaders\Surface3D.frag.spv" />
+    <EmbeddedResource Include="Gpu\Shaders\Surface3D.frag.msl" />
     <EmbeddedResource Include="Prism\Shaders\Prism.vert.dxil" />
     <EmbeddedResource Include="Prism\Shaders\Prism.vert.spv" />
     <EmbeddedResource Include="Prism\Shaders\Prism.vert.msl" />

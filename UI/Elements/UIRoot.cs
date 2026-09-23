@@ -244,7 +244,7 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
         // acquisitions, never the shared cache's identity mappings.
         foreach (UIElement element in ElementTreeWalker.PreOrderRenderability(this))
         {
-            if (element is RenderSurface2D surface) { surface.ReleaseDrawingResources(); }
+            if (element is IRenderSurfaceResourceOwner surface) { surface.ReleaseDrawingResources(); }
             element.ReleaseImageResources();
             RetainedRenderCache.ReleaseElement(element);
         }

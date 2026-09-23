@@ -60,7 +60,6 @@ internal sealed partial class SdlGpuDrawingBackend
             }
             catch
             {
-                surface.RetainedEntries = null;
                 DiscardBatches();
                 throw;
             }

@@ -49,7 +49,9 @@ public readonly partial record struct DrawCommand
         DrawLineBatch? lineBatch = null,
         DrawSpriteBatch? spriteBatch = null,
         DrawTextLayout? textLayout = null,
-        long retainedVersion = 0)
+        long retainedVersion = 0,
+        IRenderSurface3DSource? renderSurface3D = null,
+        long? renderSurface3DResourceEpoch = null)
     {
         Kind = kind;
         Rect = rect;
@@ -88,6 +90,10 @@ public readonly partial record struct DrawCommand
         SpriteBatch = spriteBatch;
         TextLayout = textLayout;
         RetainedVersion = retainedVersion;
+        RenderSurface3D = renderSurface3D;
+        RenderSurface3DResourceEpoch = renderSurface3D is null
+            ? 0
+            : renderSurface3DResourceEpoch ?? renderSurface3D.ResourceEpoch;
     }
 
     public DrawCommandKind Kind { get; }
@@ -163,6 +169,10 @@ public readonly partial record struct DrawCommand
     public PrismDrawScope? PrismScope { get; }
 
     internal IRenderSurface2DSource? RenderSurface { get; }
+
+    internal IRenderSurface3DSource? RenderSurface3D { get; }
+
+    internal long RenderSurface3DResourceEpoch { get; }
 
     public static DrawCommand FillRectangle(DrawRect rect, Color color)
     {
@@ -499,6 +509,33 @@ public readonly partial record struct DrawCommand
             null,
             1,
             renderSurface: surface);
+    }
+
+    internal static DrawCommand RenderSurface3DCommand(
+        IRenderSurface3DSource surface,
+        DrawRect destination,
+        Color color,
+        long generation)
+    {
+        ArgumentNullException.ThrowIfNull(surface);
+        return new DrawCommand(
+            DrawCommandKind.RenderSurface3D, destination, color, 0, null, null,
+            default, default, null, null, null, 1,
+            retainedVersion: generation,
+            renderSurface3D: surface);
+    }
+
+    internal static DrawCommand WithRenderSurface3DPresentation(
+        DrawCommand captured, DrawRect destination, Color color)
+    {
+        if (captured.Kind != DrawCommandKind.RenderSurface3D || captured.RenderSurface3D is null)
+            throw new ArgumentException("The command is not a RenderSurface3D capture.", nameof(captured));
+        return new DrawCommand(
+            DrawCommandKind.RenderSurface3D, destination, color, 0, null, null,
+            default, default, null, null, null, 1,
+            retainedVersion: captured.RetainedVersion,
+            renderSurface3D: captured.RenderSurface3D,
+            renderSurface3DResourceEpoch: captured.RenderSurface3DResourceEpoch);
     }
 
     public static DrawCommand PushClip(DrawRect rect)

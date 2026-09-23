@@ -194,6 +194,15 @@ public sealed partial class DrawingContext
         _commands.Add(DrawCommand.RenderSurface2D(surface, destination, color));
     }
 
+    internal void DrawRenderSurface3D(
+        IRenderSurface3DSource surface,
+        DrawRect destination,
+        Color color,
+        long generation)
+    {
+        _commands.Add(DrawCommand.RenderSurface3DCommand(surface, destination, color, generation));
+    }
+
     public void PushClip(DrawRect rect)
     {
         PushRaw(DrawStateScopeKind.Clip, DrawCommand.PushClip(rect));

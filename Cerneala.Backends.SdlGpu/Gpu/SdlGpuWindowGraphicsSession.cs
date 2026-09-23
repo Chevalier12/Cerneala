@@ -112,10 +112,12 @@ internal sealed class SdlGpuWindowGraphicsSession :
     private readonly SdlGpuDrawingBackend drawingBackend;
     private readonly SdlGpuGeometryUploadArena geometryUploadArena;
     private readonly HashSet<nint> writtenTextures = [];
+    private readonly HashSet<ISdlGpuCommandBufferParticipant> commandBufferParticipants = [];
     private nint frameTexture;
     private nint multisampleTexture;
     private nint depthStencilTexture;
     private nint activeCommandBuffer;
+    private SdlGpuCommandBufferToken activeCommandBufferToken;
     private nint activeRenderPass;
     private SdlGpuRenderTarget? activeTarget;
     private SdlGpuRenderTarget? windowRenderTarget;
@@ -125,6 +127,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
     private float coordinateScale;
     private BackdropFrameMetadata activeBackdropMetadata;
     private long contentVersion;
+    private long commandBufferGeneration;
     private int activeBackdropLeaseCount;
     private bool windowClaimed;
     private bool suspended;
@@ -221,6 +224,17 @@ internal sealed class SdlGpuWindowGraphicsSession :
 
     internal nint ActiveCommandBuffer => activeCommandBuffer;
 
+    internal SdlGpuCommandBufferToken ActiveCommandBufferToken =>
+        activeCommandBuffer != 0
+            ? activeCommandBufferToken
+            : throw new InvalidOperationException("The SDL_GPU session has no active command buffer.");
+
+    internal bool TryGetActiveCommandBufferToken(out SdlGpuCommandBufferToken token)
+    {
+        token = activeCommandBufferToken;
+        return activeCommandBuffer != 0;
+    }
+
     internal nint ActiveRenderPass => activeRenderPass;
 
     internal SdlGpuGeometryUploadArena GeometryUploadArena => geometryUploadArena;
@@ -316,9 +330,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
         try
         {
             writtenTextures.Clear();
-            activeCommandBuffer = RequireHandle(
-                api.AcquireGpuCommandBuffer(deviceLease.Device),
-                "SDL GPU command-buffer acquisition");
+            AcquireCommandBuffer("SDL GPU command-buffer acquisition");
             activeDebugGroup = debugLabels.Push(activeCommandBuffer, $"Cerneala window {windowSurface.WindowId} frame");
             contentVersion = checked(contentVersion + 1);
             geometryUploadArena.BeginFrame(contentVersion);
@@ -377,7 +389,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
         }
         finally
         {
-            if (!commandSubmitted && !swapchainAcquired)
+            if (activeCommandBuffer != 0 && !swapchainAcquired)
             {
                 CancelActiveCommandBuffer();
             }
@@ -441,8 +453,10 @@ internal sealed class SdlGpuWindowGraphicsSession :
             api.DownloadFromGpuTexture(copyPass, source, destination);
             api.EndGpuCopyPass(copyPass);
             copyPass = 0;
+            nint submittedCommandBuffer = commandBuffer;
+            commandBuffer = 0;
             fence = RequireHandle(
-                api.SubmitGpuCommandBufferAndAcquireFence(commandBuffer),
+                api.SubmitGpuCommandBufferAndAcquireFence(submittedCommandBuffer),
                 "SDL GPU readback submission");
             submitted = true;
             commandBuffer = 0;
@@ -903,9 +917,7 @@ internal sealed class SdlGpuWindowGraphicsSession :
             SubmitActiveCommandBuffer(ref commandSubmitted);
             Diagnostics = ConfigurePresentation();
             windowRenderTarget = null;
-            activeCommandBuffer = RequireHandle(
-                api.AcquireGpuCommandBuffer(deviceLease.Device),
-                "SDL GPU recovery command-buffer acquisition");
+            AcquireCommandBuffer("SDL GPU recovery command-buffer acquisition");
             commandSubmitted = false;
             if (!api.WaitAndAcquireGpuSwapchainTexture(
                 activeCommandBuffer,
@@ -941,8 +953,31 @@ internal sealed class SdlGpuWindowGraphicsSession :
         activeDebugGroup = null;
         if (activeCommandBuffer != 0)
         {
-            api.CancelGpuCommandBuffer(activeCommandBuffer);
+            nint commandBuffer = activeCommandBuffer;
             activeCommandBuffer = 0;
+            SdlGpuCommandBufferToken token = activeCommandBufferToken;
+            activeCommandBufferToken = default;
+            Exception? cancellationFailure = null;
+            try
+            {
+                api.CancelGpuCommandBuffer(commandBuffer);
+            }
+            catch (Exception exception)
+            {
+                cancellationFailure = exception;
+            }
+
+            Exception? notificationFailure = NotifyCommandBufferOutcome(token, submitted: false);
+            if (cancellationFailure is not null)
+            {
+                System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(cancellationFailure).Throw();
+            }
+            if (notificationFailure is not null)
+            {
+                throw new InvalidOperationException(
+                    "An SDL_GPU command-buffer participant failed during cancellation.",
+                    notificationFailure);
+            }
         }
 
         activeRenderPass = 0;
@@ -955,6 +990,8 @@ internal sealed class SdlGpuWindowGraphicsSession :
         activeRenderPass = 0;
         activeTarget = null;
         activeCommandBuffer = 0;
+        activeCommandBufferToken = default;
+        commandBufferParticipants.Clear();
         writtenTextures.Clear();
         activeDebugGroup?.Dispose();
         activeDebugGroup = null;
@@ -998,6 +1035,18 @@ internal sealed class SdlGpuWindowGraphicsSession :
     {
         ArgumentNullException.ThrowIfNull(copy);
         RunCopyPass(copy, static (pass, callback) => callback(pass));
+    }
+
+    internal void RegisterCommandBufferParticipant(ISdlGpuCommandBufferParticipant participant)
+    {
+        ArgumentNullException.ThrowIfNull(participant);
+        if (!frameActive || activeCommandBuffer == 0)
+        {
+            throw new InvalidOperationException(
+                "SDL_GPU command-buffer publication requires an active command buffer.");
+        }
+
+        commandBufferParticipants.Add(participant);
     }
 
     internal void RunCopyPass<TState>(TState state, Action<nint, TState> copy)
@@ -1107,14 +1156,79 @@ internal sealed class SdlGpuWindowGraphicsSession :
 
     private void SubmitActiveCommandBuffer(ref bool commandSubmitted)
     {
-        if (!api.SubmitGpuCommandBuffer(activeCommandBuffer))
+        nint commandBuffer = activeCommandBuffer;
+        SdlGpuCommandBufferToken token = activeCommandBufferToken;
+        activeCommandBuffer = 0;
+        activeCommandBufferToken = default;
+
+        Exception? submissionFailure = null;
+        bool submitted = false;
+        try
         {
-            throw SdlApiError.Create(api, "SDL GPU command-buffer submission");
+            submitted = api.SubmitGpuCommandBuffer(commandBuffer);
+            if (!submitted)
+            {
+                submissionFailure = SdlApiError.Create(api, "SDL GPU command-buffer submission");
+            }
+        }
+        catch (Exception exception)
+        {
+            submissionFailure = exception;
+        }
+
+        Exception? notificationFailure = NotifyCommandBufferOutcome(token, submitted);
+        if (submissionFailure is not null)
+        {
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(submissionFailure).Throw();
+        }
+        if (notificationFailure is not null)
+        {
+            throw new InvalidOperationException(
+                "An SDL_GPU command-buffer participant failed after submission.",
+                notificationFailure);
         }
 
         commandSubmitted = true;
-        activeCommandBuffer = 0;
         writtenTextures.Clear();
+    }
+
+    private void AcquireCommandBuffer(string operation)
+    {
+        activeCommandBuffer = RequireHandle(
+            api.AcquireGpuCommandBuffer(deviceLease.Device),
+            operation);
+        activeCommandBufferToken = new SdlGpuCommandBufferToken(
+            this,
+            checked(++commandBufferGeneration));
+        commandBufferParticipants.Clear();
+    }
+
+    private Exception? NotifyCommandBufferOutcome(
+        SdlGpuCommandBufferToken token,
+        bool submitted)
+    {
+        Exception? failure = null;
+        foreach (ISdlGpuCommandBufferParticipant participant in commandBufferParticipants)
+        {
+            try
+            {
+                if (submitted)
+                {
+                    participant.OnCommandBufferSubmitted(token);
+                }
+                else
+                {
+                    participant.OnCommandBufferAbandoned(token);
+                }
+            }
+            catch (Exception exception)
+            {
+                failure ??= exception;
+            }
+        }
+        commandBufferParticipants.Clear();
+
+        return failure;
     }
 
     private nint RequireHandle(nint handle, string operation) =>
@@ -1194,4 +1308,15 @@ internal sealed class SdlGpuWindowGraphicsSession :
         private SdlGpuWindowGraphicsSession RequireOwner() =>
             owner ?? throw new ObjectDisposedException(nameof(BackdropFrameLease));
     }
+}
+
+internal readonly record struct SdlGpuCommandBufferToken(
+    SdlGpuWindowGraphicsSession Session,
+    long Generation);
+
+internal interface ISdlGpuCommandBufferParticipant
+{
+    void OnCommandBufferSubmitted(SdlGpuCommandBufferToken token);
+
+    void OnCommandBufferAbandoned(SdlGpuCommandBufferToken token);
 }

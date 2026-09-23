@@ -17,7 +17,8 @@ public partial class RenderSurface2D : ContentControl,
     ITimeSensitiveRenderElement,
     IRenderSurface2DFrameSource,
     IInputSubtreeHost,
-    IGeometricHitTestHost
+    IGeometricHitTestHost,
+    IRenderSurfaceResourceOwner
 {
     public static readonly UiProperty<Color> ClearColorProperty =
         UiProperty<Color>.Register(
@@ -647,6 +648,8 @@ public partial class RenderSurface2D : ContentControl,
     }
 
     internal void ReleaseDrawingResources() => DisposeManagedSession();
+
+    void IRenderSurfaceResourceOwner.ReleaseDrawingResources() => ReleaseDrawingResources();
 
     private void DisposeManagedSession()
     {

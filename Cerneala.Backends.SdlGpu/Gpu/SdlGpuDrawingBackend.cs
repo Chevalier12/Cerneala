@@ -38,6 +38,7 @@ internal sealed partial class SdlGpuDrawingBackend :
             DrawCommandKind.DrawLineBatch,
             DrawCommandKind.DrawSpriteBatch,
             DrawCommandKind.RenderSurface2D,
+            DrawCommandKind.RenderSurface3D,
             DrawCommandKind.PushClip,
             DrawCommandKind.PopClip,
             DrawCommandKind.BeginPrism,
@@ -59,11 +60,14 @@ internal sealed partial class SdlGpuDrawingBackend :
     private readonly SdlGpuDrawingResources resources;
     private readonly SkiaTextRasterizer textRasterizer = new();
     private readonly SdlGpuPrismExecutor prismExecutor;
+    private readonly SdlGpuRenderSurface3DDiagnostics renderSurface3DDiagnostics = new();
     private readonly Cerberus batches;
     private readonly SdlGpuGeometryCache geometry = new();
     private readonly HashSet<object> retainedBrushTextureKeys = [];
     private readonly HashSet<object> activeBrushTextureKeys = [];
     private readonly List<object> unusedBrushTextureKeys = [];
+    private readonly HashSet<SdlGpuRenderSurfaceStateCache> renderSurfaceStateCaches = [];
+    private SdlGpuRenderSurface3DExecutor? surface3DExecutor;
     private readonly HashSet<PrismCacheOwnerToken> analyzedPrismOwners = [];
     private readonly HashSet<PrismCacheOwnerToken> pendingPrismOwnerInvalidations = [];
     private long textAtlasFrameToken;
@@ -100,6 +104,12 @@ internal sealed partial class SdlGpuDrawingBackend :
     internal SdlGpuDrawingFrameCounters LastFrameCounters { get; private set; }
 
     internal SdlGpuPrismFrameCounters LastFramePrismCounters { get; private set; }
+
+    internal SdlGpuRenderSurface3DDiagnostics RenderSurface3DDiagnostics =>
+        renderSurface3DDiagnostics;
+
+    internal SdlGpuRenderSurface3DFrameCounters LastFrameRenderSurface3DCounters =>
+        renderSurface3DDiagnostics.FrameCounters;
 
     public void Render(DrawCommandList commands, in DrawingFrameContext frameContext)
     {
@@ -189,6 +199,7 @@ internal sealed partial class SdlGpuDrawingBackend :
         LastFrameTiming = default;
         LastFrameCounters = default;
         LastFramePrismCounters = default;
+        renderSurface3DDiagnostics.BeginFrame();
         prismExecutor.Diagnostics.BeginFrame();
         frameActive = true;
     }
@@ -283,7 +294,14 @@ internal sealed partial class SdlGpuDrawingBackend :
             return;
         }
         disposed = true;
+        foreach (SdlGpuRenderSurfaceStateCache surfaceCache in renderSurfaceStateCaches.ToArray())
+        {
+            surfaceCache.Remove(this, session);
+        }
+        renderSurfaceStateCaches.Clear();
         geometry.Clear();
+        surface3DExecutor?.Dispose();
+        surface3DExecutor = null;
         prismExecutor.Dispose();
         resources.EndTextAtlasFrame(textAtlasFrameToken);
         textAtlasFrameToken = 0;
@@ -303,7 +321,7 @@ internal sealed partial class SdlGpuDrawingBackend :
         // brush textures without evicting another window's live brush entries.
         if (retainedBrushTextureKeys.Add(key))
         {
-            resources.RetainTexture(key);
+            resources.RetainTexture(session, key);
         }
         activeBrushTextureKeys.Add(key);
     }
@@ -377,6 +395,11 @@ internal sealed partial class SdlGpuDrawingBackend :
                 case DrawCommandKind.RenderSurface2D:
                     FlushBatches();
                     AddRenderSurface(command, state, target, batches);
+                    break;
+                case DrawCommandKind.RenderSurface3D:
+                    FlushBatches();
+                    (surface3DExecutor ??= new(this, session, resources, renderSurface3DDiagnostics))
+                        .AddSurface(command, state, target, batches);
                     break;
                 case DrawCommandKind.PushTransform:
                     state.Transforms.Add(Matrix3x2.Multiply(
@@ -899,6 +922,7 @@ internal sealed partial class SdlGpuDrawingBackend :
         SdlGpuTextAtlasEntries cachedEntries = default;
         bool atlasHit = cachedSolid is not null &&
             resources.TryGetTextAtlasEntries(
+                session,
                 redKey,
                 greenKey,
                 blueKey,
@@ -908,7 +932,7 @@ internal sealed partial class SdlGpuDrawingBackend :
             descriptor is TileDrawBrushDescriptor ? new TextCoverageKey(rasterKey) :
             new SdlGpuTextBrushTextureKey(rasterKey, (object?)brush ?? descriptor);
         SdlGpuTextureResource? cachedBrushTexture = brushTextureKey is null
-            ? null : resources.FindTexture(brushTextureKey);
+            ? null : resources.FindTexture(session, brushTextureKey);
         textRequestCollectionTime += Stopwatch.GetElapsedTime(requestCollectionStarted);
         if (atlasHit)
         {
@@ -935,9 +959,9 @@ internal sealed partial class SdlGpuDrawingBackend :
         }
 
         if (cachedSolid is not null &&
-            resources.FindTexture(redKey) is { } redTexture &&
-            resources.FindTexture(greenKey) is { } greenTexture &&
-            resources.FindTexture(blueKey) is { } blueTexture)
+            resources.FindTexture(session, redKey) is { } redTexture &&
+            resources.FindTexture(session, greenKey) is { } greenTexture &&
+            resources.FindTexture(session, blueKey) is { } blueTexture)
         {
             DrawRect destination = CreateTextDestination(
                 baseline, redTexture.OriginOffset, redTexture.Width, redTexture.Height);
@@ -1382,11 +1406,19 @@ internal sealed partial class SdlGpuDrawingBackend :
                 "RenderSurface2D requires a frame-producing source.");
         (int width, int height) = RenderSurface2DGeometry.GetPixelSize(
             command.Rect.Width, command.Rect.Height, CoordinateScale);
-        SdlGpuRenderSurfaceState? surface =
-            source.GetBackendState(resources) as SdlGpuRenderSurfaceState;
+        IRenderSurface2DBackendState? backendState = source.GetBackendState(resources);
+        SdlGpuRenderSurfaceStateCache? surfaceCache =
+            backendState as SdlGpuRenderSurfaceStateCache;
+        if (surfaceCache is null)
+        {
+            backendState?.Dispose();
+            surfaceCache = new SdlGpuRenderSurfaceStateCache();
+            source.SetBackendState(resources, surfaceCache);
+        }
+        surfaceCache.Attach(this);
+        SdlGpuRenderSurfaceState? surface = surfaceCache.Get(session);
         if (surface is null || surface.PixelWidth != width || surface.PixelHeight != height)
         {
-            surface?.Dispose();
             surface = new SdlGpuRenderSurfaceState(
                 resources,
                 resources.CreateRenderTarget(
@@ -1397,10 +1429,11 @@ internal sealed partial class SdlGpuDrawingBackend :
                     // including single-sample design-preview windows.
                     session.SelectSampleCount(parentTarget.ColorFormat, SdlGpuSampleCount.Eight)),
                 new SdlGpuPrismExecutor(session, this));
-            source.SetBackendState(resources, surface);
+            surfaceCache.Set(session, surface);
         }
 
-        if (surface.FrameVersion != source.FrameVersion)
+        SdlGpuCommandBufferToken token = session.ActiveCommandBufferToken;
+        if (surface.GetFrameVersion(token) != source.FrameVersion)
         {
             // A surface records local pixels, not the hosting window's DIPs.
             // Keep that coordinate contract through text, clips and Prism, then
@@ -1412,7 +1445,7 @@ internal sealed partial class SdlGpuDrawingBackend :
             try
             {
                 RenderSurfaceFrame(source, surface, parentBatches);
-                surface.FrameVersion = source.FrameVersion;
+                surface.SetPendingFrameVersion(session, token, source.FrameVersion);
             }
             finally
             {
@@ -1459,15 +1492,16 @@ internal sealed partial class SdlGpuDrawingBackend :
         Cerberus surfaceBatches,
         bool requireFullReplay = false)
     {
-        PrismFrameAnalysis analysis = new PrismFrameAnalyzer().Analyze(surface.Commands, surface.RetainedEntries);
+        SdlGpuCommandBufferToken token = session.ActiveCommandBufferToken;
+        IReadOnlyList<DrawCommandStateEntry>? retainedEntries = surface.GetRetainedEntries(token);
+        PrismFrameAnalysis analysis = new PrismFrameAnalyzer().Analyze(surface.Commands, retainedEntries);
         if (analysis.Scopes.IsDefaultOrEmpty)
         {
             surface.PrismExecutor.ProcessInvalidations(analysis, surface.PrismCacheInvalidations);
         }
-        SdlRect? damage = ResolveSurfaceDamage(surface, analysis.StateAnalysis, clearColor);
+        SdlRect? damage = ResolveSurfaceDamage(surface, analysis.StateAnalysis, clearColor, token);
         if (damage is null)
         {
-            surface.RetainedEntries = analysis.StateAnalysis.Entries;
             return false;
         }
         DrawingFrameContext frameContext = new(
@@ -1483,7 +1517,7 @@ internal sealed partial class SdlGpuDrawingBackend :
         bool fullReplay = damage.Value == bounds;
         // A failed replay must not leave a partially changed texture eligible
         // for reuse on a later attempt.
-        surface.RetainedEntries = null;
+        surface.InvalidatePending(session, token);
         session.BeginRenderTarget(surface.Target, clearColor,
             fullReplay ? SdlGpuLoadOp.Clear : SdlGpuLoadOp.Load);
         if (!analysis.Scopes.IsDefaultOrEmpty)
@@ -1525,8 +1559,11 @@ internal sealed partial class SdlGpuDrawingBackend :
             FlushBatches();
             EnsureCompositingScopesClosed(rangeState);
         }
-        surface.RetainedEntries = analysis.StateAnalysis.Entries;
-        surface.RetainedClearColor = clearColor;
+        surface.PublishPending(
+            session,
+            token,
+            analysis.StateAnalysis.Entries,
+            clearColor);
         return true;
     }
 
@@ -1765,7 +1802,7 @@ internal sealed partial class SdlGpuDrawingBackend :
                         bounds,
                         width,
                         height);
-                    SdlGpuTextureResource? texture = resources.FindTexture(key);
+                    SdlGpuTextureResource? texture = resources.FindTexture(session, key);
                     if (texture is null)
                     {
                         // A valid retained texture already owns these pixels.
@@ -2278,20 +2315,52 @@ internal sealed partial class SdlGpuDrawingBackend :
         }
     }
 
-    private sealed record SdlGpuRenderSurfaceState(
-        SdlGpuDrawingResources Resources,
-        SdlGpuRenderTarget Target,
-        SdlGpuPrismExecutor PrismExecutor) : IRenderSurface2DBackendState
+    private sealed class SdlGpuRenderSurfaceStateCache : IRenderSurface2DBackendState
     {
+        private readonly Dictionary<SdlGpuWindowGraphicsSession, SdlGpuRenderSurfaceState> surfaces =
+            new(ReferenceEqualityComparer.Instance);
+        private readonly HashSet<SdlGpuDrawingBackend> owners =
+            new(ReferenceEqualityComparer.Instance);
         private bool disposed;
 
-        public int PixelWidth => Target.PixelWidth;
-        public int PixelHeight => Target.PixelHeight;
-        public DrawCommandList Commands { get; } = new();
-        public PrismCacheInvalidationQueue PrismCacheInvalidations { get; } = new();
-        public long FrameVersion { get; set; } = long.MinValue;
-        public IReadOnlyList<DrawCommandStateEntry>? RetainedEntries { get; set; }
-        public Color RetainedClearColor { get; set; }
+        public void Attach(SdlGpuDrawingBackend owner)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            if (owners.Add(owner))
+            {
+                owner.renderSurfaceStateCaches.Add(this);
+            }
+        }
+
+        public SdlGpuRenderSurfaceState? Get(SdlGpuWindowGraphicsSession session)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            return surfaces.GetValueOrDefault(session);
+        }
+
+        public void Set(
+            SdlGpuWindowGraphicsSession session,
+            SdlGpuRenderSurfaceState surface)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            if (surfaces.Remove(session, out SdlGpuRenderSurfaceState? previous))
+            {
+                previous.Dispose();
+            }
+            surfaces.Add(session, surface);
+        }
+
+        public void Remove(
+            SdlGpuDrawingBackend owner,
+            SdlGpuWindowGraphicsSession session)
+        {
+            owners.Remove(owner);
+            owner.renderSurfaceStateCaches.Remove(this);
+            if (!disposed && surfaces.Remove(session, out SdlGpuRenderSurfaceState? surface))
+            {
+                surface.Dispose();
+            }
+        }
 
         public void Dispose()
         {
@@ -2300,8 +2369,154 @@ internal sealed partial class SdlGpuDrawingBackend :
                 return;
             }
             disposed = true;
+            foreach (SdlGpuDrawingBackend owner in owners)
+            {
+                owner.renderSurfaceStateCaches.Remove(this);
+            }
+            owners.Clear();
+            foreach (SdlGpuRenderSurfaceState surface in surfaces.Values)
+            {
+                surface.Dispose();
+            }
+            surfaces.Clear();
+        }
+    }
+
+    private sealed record SdlGpuRenderSurfaceState(
+        SdlGpuDrawingResources Resources,
+        SdlGpuRenderTarget Target,
+        SdlGpuPrismExecutor PrismExecutor) :
+        IDisposable,
+        ISdlGpuCommandBufferParticipant
+    {
+        private bool disposed;
+        private long submittedFrameVersion = long.MinValue;
+        private IReadOnlyList<DrawCommandStateEntry>? submittedRetainedEntries;
+        private Color submittedClearColor;
+        private SdlGpuCommandBufferToken pendingToken;
+        private long pendingFrameVersion = long.MinValue;
+        private IReadOnlyList<DrawCommandStateEntry>? pendingRetainedEntries;
+        private Color pendingClearColor;
+        private bool pendingInvalidated;
+
+        public int PixelWidth => Target.PixelWidth;
+        public int PixelHeight => Target.PixelHeight;
+        public DrawCommandList Commands { get; } = new();
+        public PrismCacheInvalidationQueue PrismCacheInvalidations { get; } = new();
+        public long GetFrameVersion(SdlGpuCommandBufferToken token) =>
+            pendingToken == token && !pendingInvalidated
+                ? pendingFrameVersion
+                : submittedFrameVersion;
+
+        public IReadOnlyList<DrawCommandStateEntry>? GetRetainedEntries(
+            SdlGpuCommandBufferToken token) =>
+            pendingToken == token && !pendingInvalidated
+                ? pendingRetainedEntries
+                : submittedRetainedEntries;
+
+        public Color GetRetainedClearColor(SdlGpuCommandBufferToken token) =>
+            pendingToken == token && !pendingInvalidated
+                ? pendingClearColor
+                : submittedClearColor;
+
+        public bool RequiresFullReplay(SdlGpuCommandBufferToken token) =>
+            pendingToken == token && pendingInvalidated;
+
+        public void SetPendingFrameVersion(
+            SdlGpuWindowGraphicsSession session,
+            SdlGpuCommandBufferToken token,
+            long frameVersion)
+        {
+            EnsurePending(session, token);
+            pendingFrameVersion = frameVersion;
+        }
+
+        public void PublishPending(
+            SdlGpuWindowGraphicsSession session,
+            SdlGpuCommandBufferToken token,
+            IReadOnlyList<DrawCommandStateEntry> retainedEntries,
+            Color clearColor)
+        {
+            EnsurePending(session, token);
+            pendingRetainedEntries = retainedEntries;
+            pendingClearColor = clearColor;
+            pendingInvalidated = false;
+        }
+
+        public void InvalidatePending(
+            SdlGpuWindowGraphicsSession session,
+            SdlGpuCommandBufferToken token)
+        {
+            EnsurePending(session, token);
+            pendingRetainedEntries = null;
+            pendingFrameVersion = long.MinValue;
+            pendingInvalidated = true;
+        }
+
+        public void OnCommandBufferSubmitted(SdlGpuCommandBufferToken token)
+        {
+            if (disposed || pendingToken != token)
+            {
+                return;
+            }
+
+            if (pendingInvalidated)
+            {
+                submittedFrameVersion = long.MinValue;
+                submittedRetainedEntries = null;
+            }
+            else
+            {
+                submittedFrameVersion = pendingFrameVersion;
+                submittedRetainedEntries = pendingRetainedEntries;
+                submittedClearColor = pendingClearColor;
+            }
+            ClearPending();
+        }
+
+        public void OnCommandBufferAbandoned(SdlGpuCommandBufferToken token)
+        {
+            if (pendingToken == token)
+            {
+                ClearPending();
+            }
+        }
+
+        public void Dispose()
+        {
+            if (disposed)
+            {
+                return;
+            }
+            disposed = true;
+            ClearPending();
             PrismExecutor.Dispose();
             Resources.RetireRenderTarget(Target);
+        }
+
+        private void EnsurePending(
+            SdlGpuWindowGraphicsSession session,
+            SdlGpuCommandBufferToken token)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            if (pendingToken != token)
+            {
+                pendingToken = token;
+                pendingFrameVersion = submittedFrameVersion;
+                pendingRetainedEntries = submittedRetainedEntries;
+                pendingClearColor = submittedClearColor;
+                pendingInvalidated = false;
+                session.RegisterCommandBufferParticipant(this);
+            }
+        }
+
+        private void ClearPending()
+        {
+            pendingToken = default;
+            pendingFrameVersion = long.MinValue;
+            pendingRetainedEntries = null;
+            pendingClearColor = default;
+            pendingInvalidated = false;
         }
     }
 

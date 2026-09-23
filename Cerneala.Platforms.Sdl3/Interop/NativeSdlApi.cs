@@ -129,6 +129,20 @@ internal sealed class NativeSdlApi : ISdlApi
         nint device,
         in SdlGpuGraphicsPipelineCreateInfo createInfo)
     {
+        SdlGpuNativeGraphicsPipelineDescriptor descriptor =
+            CreateNativeGraphicsPipelineDescriptor(createInfo);
+        SDL.GPUGraphicsPipelineCreateInfo native = descriptor.Pipeline;
+        return SDL.CreateGPUGraphicsPipeline(
+            device,
+            in native,
+            descriptor.VertexBuffers,
+            descriptor.Attributes,
+            descriptor.ColorTargets);
+    }
+
+    internal static SdlGpuNativeGraphicsPipelineDescriptor CreateNativeGraphicsPipelineDescriptor(
+        in SdlGpuGraphicsPipelineCreateInfo createInfo)
+    {
         SDL.GPUColorTargetBlendState blendState = new()
         {
             SrcColorBlendFactor = (SDL.GPUBlendFactor)createInfo.BlendState.SourceColor,
@@ -143,43 +157,32 @@ internal sealed class NativeSdlApi : ISdlApi
             EnableBlend = createInfo.BlendState.Enabled,
             EnableColorWriteMask = true
         };
-        SDL.GPUVertexBufferDescription[] vertexBuffers = createInfo.UsesVertexInput
+        ArgumentNullException.ThrowIfNull(createInfo.VertexInput);
+        IReadOnlyList<SdlGpuVertexAttributeDescription> vertexInputAttributes =
+            createInfo.VertexInput.Attributes;
+        SDL.GPUVertexBufferDescription[] vertexBuffers = vertexInputAttributes.Count != 0
             ?
             [
                 new SDL.GPUVertexBufferDescription
                 {
                     Slot = 0,
-                    Pitch = 32,
+                    Pitch = createInfo.VertexInput.Stride,
                     InputRate = SDL.GPUVertexInputRate.Vertex
                 }
             ]
             : [];
-        SDL.GPUVertexAttribute[] attributes = createInfo.UsesVertexInput
-            ?
-            [
-                new SDL.GPUVertexAttribute
-                {
-                    Location = 0,
-                    BufferSlot = 0,
-                    Format = SDL.GPUVertexElementFormat.Float2,
-                    Offset = 0
-                },
-                new SDL.GPUVertexAttribute
-                {
-                    Location = 1,
-                    BufferSlot = 0,
-                    Format = SDL.GPUVertexElementFormat.Float2,
-                    Offset = 8
-                },
-                new SDL.GPUVertexAttribute
-                {
-                    Location = 2,
-                    BufferSlot = 0,
-                    Format = SDL.GPUVertexElementFormat.Float4,
-                    Offset = 16
-                }
-            ]
-            : [];
+        SDL.GPUVertexAttribute[] attributes = new SDL.GPUVertexAttribute[vertexInputAttributes.Count];
+        for (int index = 0; index < attributes.Length; index++)
+        {
+            SdlGpuVertexAttributeDescription attribute = vertexInputAttributes[index];
+            attributes[index] = new SDL.GPUVertexAttribute
+            {
+                Location = attribute.Location,
+                BufferSlot = 0,
+                Format = ToNativeVertexFormat(attribute.Format),
+                Offset = attribute.Offset
+            };
+        }
         SDL.GPUColorTargetDescription[] colorTargets =
         [
             new SDL.GPUColorTargetDescription
@@ -189,6 +192,7 @@ internal sealed class NativeSdlApi : ISdlApi
             }
         ];
         SDL.GPUDepthStencilState depthStencilState = CreateDepthStencilState(
+            createInfo.DepthState,
             createInfo.StencilMode);
         SDL.GPUGraphicsPipelineCreateInfo native = new()
         {
@@ -211,12 +215,7 @@ internal sealed class NativeSdlApi : ISdlApi
                 DepthStencilFormat = (SDL.GPUTextureFormat)createInfo.DepthStencilFormat
             }
         };
-        return SDL.CreateGPUGraphicsPipeline(
-            device,
-            in native,
-            vertexBuffers,
-            attributes,
-            colorTargets);
+        return new(native, vertexBuffers, attributes, colorTargets);
     }
 
     public void ReleaseGpuGraphicsPipeline(nint device, nint pipeline) =>
@@ -799,6 +798,7 @@ internal sealed class NativeSdlApi : ISdlApi
         };
 
     private static SDL.GPUDepthStencilState CreateDepthStencilState(
+        SdlGpuDepthState depthState,
         SdlGpuStencilMode mode)
     {
         SDL.GPUStencilOpState stencil = new()
@@ -817,13 +817,39 @@ internal sealed class NativeSdlApi : ISdlApi
         };
         return new SDL.GPUDepthStencilState
         {
+            CompareOp = ToNativeCompareOperation(depthState.CompareOperation),
             BackStencilState = stencil,
             FrontStencilState = stencil,
             CompareMask = byte.MaxValue,
             WriteMask = byte.MaxValue,
+            EnableDepthTest = depthState.TestEnabled,
+            EnableDepthWrite = depthState.WriteEnabled,
             EnableStencilTest = mode != SdlGpuStencilMode.Disabled
         };
     }
+
+    private static SDL.GPUVertexElementFormat ToNativeVertexFormat(
+        SdlGpuVertexFormat format) => format switch
+        {
+            SdlGpuVertexFormat.Float2 => SDL.GPUVertexElementFormat.Float2,
+            SdlGpuVertexFormat.Float3 => SDL.GPUVertexElementFormat.Float3,
+            SdlGpuVertexFormat.Float4 => SDL.GPUVertexElementFormat.Float4,
+            _ => throw new ArgumentOutOfRangeException(nameof(format))
+        };
+
+    private static SDL.GPUCompareOp ToNativeCompareOperation(
+        SdlGpuCompareOperation operation) => operation switch
+        {
+            SdlGpuCompareOperation.Never => SDL.GPUCompareOp.Never,
+            SdlGpuCompareOperation.Less => SDL.GPUCompareOp.Less,
+            SdlGpuCompareOperation.Equal => SDL.GPUCompareOp.Equal,
+            SdlGpuCompareOperation.LessOrEqual => SDL.GPUCompareOp.LessOrEqual,
+            SdlGpuCompareOperation.Greater => SDL.GPUCompareOp.Greater,
+            SdlGpuCompareOperation.NotEqual => SDL.GPUCompareOp.NotEqual,
+            SdlGpuCompareOperation.GreaterOrEqual => SDL.GPUCompareOp.GreaterOrEqual,
+            SdlGpuCompareOperation.Always => SDL.GPUCompareOp.Always,
+            _ => throw new ArgumentOutOfRangeException(nameof(operation))
+        };
 
     private static SDL.GPUColorComponentFlags ToNativeColorWriteMask(
         SdlGpuColorWriteMask mask)
@@ -848,3 +874,9 @@ internal sealed class NativeSdlApi : ISdlApi
         return result;
     }
 }
+
+internal readonly record struct SdlGpuNativeGraphicsPipelineDescriptor(
+    SDL.GPUGraphicsPipelineCreateInfo Pipeline,
+    SDL.GPUVertexBufferDescription[] VertexBuffers,
+    SDL.GPUVertexAttribute[] Attributes,
+    SDL.GPUColorTargetDescription[] ColorTargets);

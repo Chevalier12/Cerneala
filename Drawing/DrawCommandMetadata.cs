@@ -119,6 +119,7 @@ internal sealed class DrawCommandMetadata
             Add(current.SpriteBatch);
             Add(current.TextLayout);
             Add(current.RenderSurface);
+            Add(current.RenderSurface3D);
             if (current.PrismScope is not PrismDrawScope prismScope)
             {
                 return;
@@ -242,7 +243,8 @@ internal sealed class DrawCommandMetadata
             DrawCommandKind.DrawPointBatch or
             DrawCommandKind.DrawLineBatch or
             DrawCommandKind.DrawSpriteBatch or
-            DrawCommandKind.RenderSurface2D => false,
+            DrawCommandKind.RenderSurface2D or
+            DrawCommandKind.RenderSurface3D => false,
             DrawCommandKind.PushClip or
             DrawCommandKind.PopClip or
             DrawCommandKind.BeginPrism or
@@ -270,6 +272,7 @@ internal sealed class DrawCommandMetadata
             DrawCommandKind.FillPath or
             DrawCommandKind.DrawPath or
             DrawCommandKind.RenderSurface2D or
+            DrawCommandKind.RenderSurface3D or
             DrawCommandKind.DrawImageQuad or
             DrawCommandKind.DrawNineSlice or
             DrawCommandKind.DrawMesh or

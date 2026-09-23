@@ -111,7 +111,7 @@ internal sealed class Cerberus
             SdlGpuRenderTarget activeTarget = target ??
                 throw new InvalidOperationException("SDL_GPU batching requires an active target.");
             SdlGpuWindowGraphicsSession session = context.Session;
-            SdlGpuGeometryBinding geometry = session.GeometryUploadArena.UploadGeometry(
+            SdlGpuGeometryBinding geometry = session.GeometryUploadArena.UploadGeometry<SdlGpuVertex>(
                 session,
                 vertices.AsSpan(0, vertexCount),
                 indices.AsSpan(0, indexCount));

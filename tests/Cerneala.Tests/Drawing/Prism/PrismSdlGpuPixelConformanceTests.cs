@@ -91,10 +91,11 @@ public sealed class PrismSdlGpuPixelConformanceTests : IDisposable
                 $"SDL_GPU Prism pixel diff exceeded the canonical RGBA thresholds for " +
                 $"{symbol}: {diff}" +
                 $"; artifacts: {directory}");
+            SdlGpuConformanceArtifacts.PreserveRequested(directory);
         }
         catch
         {
-            PreserveFailureArtifacts(directory);
+            SdlGpuConformanceArtifacts.PreserveFailure(directory);
             throw;
         }
         finally
@@ -185,24 +186,6 @@ public sealed class PrismSdlGpuPixelConformanceTests : IDisposable
             deltas[cursor++] = delta;
             total += delta;
             maximum = Math.Max(maximum, delta);
-        }
-    }
-
-    private static void PreserveFailureArtifacts(string sourceDirectory)
-    {
-        if (!Directory.Exists(sourceDirectory))
-        {
-            return;
-        }
-
-        string artifactRoot = Path.Combine(
-            AppContext.BaseDirectory,
-            "TestResults",
-            Path.GetFileName(sourceDirectory));
-        Directory.CreateDirectory(artifactRoot);
-        foreach (string source in Directory.EnumerateFiles(sourceDirectory))
-        {
-            File.Copy(source, Path.Combine(artifactRoot, Path.GetFileName(source)), overwrite: true);
         }
     }
 

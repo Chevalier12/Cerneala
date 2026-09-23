@@ -5,7 +5,9 @@ using Cerneala.Platforms.Sdl3;
 
 namespace Cerneala.Backends.SdlGpu;
 
-internal sealed class SdlGpuDrawingResources : IDisposable
+internal sealed class SdlGpuDrawingResources :
+    IDisposable,
+    ISdlGpuCommandBufferParticipant
 {
     private const uint InitialTransferCapacity = 64 * 1024;
     private const int TextAtlasDimension = 1024;
@@ -18,6 +20,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     private readonly Dictionary<SdlGpuPipelineKey, nint> pipelines = [];
     private readonly Dictionary<SdlGpuSamplerKey, nint> samplers = [];
     private readonly Dictionary<object, SdlGpuTextureResource> textures = [];
+    private readonly Dictionary<PendingTextureKey, SdlGpuTextureResource> pendingTextures = [];
     private readonly int ownerThreadId = Environment.CurrentManagedThreadId;
     private readonly object imageInvalidationGate = new();
     private readonly Queue<SdlGpuImage> pendingImageInvalidations = new();
@@ -29,6 +32,13 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     private readonly LinkedList<SdlGpuTextAtlasEntry> textAtlasRecency = new();
     private readonly Dictionary<long, HashSet<SdlGpuTextAtlasEntry>> activeTextAtlasFrames = [];
     private readonly Stack<HashSet<SdlGpuTextAtlasEntry>> unusedTextAtlasFrames = new();
+    private readonly Dictionary<SdlGpuCommandBufferToken, HashSet<SdlGpuTextAtlasEntry>> pendingTextAtlasPins = [];
+    private readonly Stack<HashSet<SdlGpuTextAtlasEntry>> unusedPendingTextAtlasPins = new();
+    private readonly List<SdlRect> requiredTextAtlasUploadRegions = [];
+    private readonly Dictionary<SdlGpuCommandBufferToken, HashSet<nint>> pendingSampledTexturePins = [];
+    private readonly Stack<HashSet<nint>> unusedPendingSampledTexturePins = new();
+    private readonly Dictionary<nint, int> sampledTexturePinCounts = [];
+    private readonly Dictionary<nint, SdlGpuTextureResource> deferredIdleSampledTextures = [];
     private readonly List<SdlGpuTextAtlasPage> textAtlasPages = [];
     private readonly HashSet<SdlGpuTextAtlasPage> dirtyTextAtlasPages = [];
     private readonly Dictionary<SdlGpuLayerTargetKey, SdlGpuRenderTarget> layerTargets = [];
@@ -40,6 +50,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     private nint prismPresentationShader;
     private long nextTextAtlasFrameToken;
     private SdlGpuPrismDeviceResources? prismResources;
+    private SdlGpuRenderSurface3DDeviceResources? surface3DResources;
     private bool disposed;
 
     public SdlGpuDrawingResources(
@@ -59,7 +70,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     internal int SamplerCount => samplers.Count;
 
     internal int CachedTextureCount =>
-        textures.Count + textAtlasPages.Count;
+        textures.Count + pendingTextures.Count + textAtlasPages.Count;
 
     internal int TextAtlasPageCount => textAtlasPages.Count;
 
@@ -79,6 +90,9 @@ internal sealed class SdlGpuDrawingResources : IDisposable
             {
                 RetainedCacheSoftByteLimit = 32L * 1024 * 1024
             });
+
+    internal SdlGpuRenderSurface3DDeviceResources Surface3DResources =>
+        surface3DResources ??= new(api, device, supportedShaderFormats);
 
     public nint GetPipeline(
         SdlGpuTextureFormat colorFormat,
@@ -127,6 +141,8 @@ internal sealed class SdlGpuDrawingResources : IDisposable
                     SdlGpuBlendFactor.Zero, SdlGpuBlendFactor.SourceAlpha, SdlGpuBlendOperation.Add)
                 : ToBlendState(blendMode),
             stencilMode,
+            SdlGpuVertexInputDescription.Drawing2D,
+            SdlGpuDepthState.Disabled,
             colorWriteMask);
         nint pipeline = RequireHandle(
             api.CreateGpuGraphicsPipeline(device, createInfo),
@@ -166,7 +182,34 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     public SdlGpuTextureResource? FindTexture(object key)
     {
         ThrowIfDisposed();
-        return textures.GetValueOrDefault(key);
+        if (textures.TryGetValue(key, out SdlGpuTextureResource? submitted))
+        {
+            return submitted;
+        }
+
+        return pendingTextures
+            .FirstOrDefault(pair => Equals(pair.Key.Key, key))
+            .Value;
+    }
+
+    internal SdlGpuTextureResource? FindTexture(
+        SdlGpuWindowGraphicsSession session,
+        object key)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(session);
+        if (!session.TryGetActiveCommandBufferToken(out SdlGpuCommandBufferToken token))
+        {
+            return textures.GetValueOrDefault(key);
+        }
+        SdlGpuTextureResource? texture =
+            pendingTextures.GetValueOrDefault(new PendingTextureKey(key, token)) ??
+            textures.GetValueOrDefault(key);
+        if (texture is not null)
+        {
+            PinSampledTexture(session, token, texture);
+        }
+        return texture;
     }
 
     public SdlGpuTextureResource GetOrCreateTexture(
@@ -190,7 +233,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
                 nameof(rgbaPixels));
         }
 
-        if (textures.TryGetValue(key, out SdlGpuTextureResource? cached))
+        if (FindTexture(session, key) is SdlGpuTextureResource cached)
         {
             return cached;
         }
@@ -224,7 +267,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
                 "Half-vector texture upload data must contain exactly width * height values.",
                 nameof(pixels));
         }
-        if (textures.TryGetValue(key, out SdlGpuTextureResource? cached))
+        if (FindTexture(session, key) is SdlGpuTextureResource cached)
         {
             return cached;
         }
@@ -259,7 +302,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         DrawPoint originOffset = default,
         bool recycleStorage = false)
     {
-        if (textures.TryGetValue(key, out SdlGpuTextureResource? cached))
+        if (FindTexture(session, key) is SdlGpuTextureResource cached)
         {
             return cached;
         }
@@ -284,7 +327,10 @@ internal sealed class SdlGpuDrawingResources : IDisposable
             {
                 CanRecycleStorage = recycleStorage
             };
-            textures.Add(key, created);
+            PendingTextureKey pendingKey = new(key, session.ActiveCommandBufferToken);
+            pendingTextures.Add(pendingKey, created);
+            session.RegisterCommandBufferParticipant(this);
+            PinSampledTexture(session, pendingKey.Token, created);
             // The device, not the uploading window, owns this texture. This
             // covers ordinary drawing and direct resource uploads (e.g. Prism).
             if (key is SdlGpuImage image && subscribedImages.Add(image))
@@ -369,39 +415,60 @@ internal sealed class SdlGpuDrawingResources : IDisposable
                 "Subpixel text atlases require exactly three raster layers.",
                 nameof(layers));
         }
-        if (TryGetTextAtlasEntries(
+        bool hasCommandBuffer = session.TryGetActiveCommandBufferToken(
+            out SdlGpuCommandBufferToken token);
+        bool found = hasCommandBuffer
+            ? TryGetTextAtlasEntries(
+                session,
                 redKey,
                 greenKey,
                 blueKey,
                 frameToken,
-                out SdlGpuTextAtlasEntries cached))
+                out SdlGpuTextAtlasEntries cached)
+            : TryGetTextAtlasEntries(
+                redKey,
+                greenKey,
+                blueKey,
+                frameToken,
+                out cached);
+        if (found)
         {
             return cached;
         }
 
-        if (!TryGetOrCreateTextAtlasEntry(redKey, layers[0], frameToken, out SdlGpuTextAtlasEntry red) ||
-            !TryGetOrCreateTextAtlasEntry(greenKey, layers[1], frameToken, out SdlGpuTextAtlasEntry green) ||
-            !TryGetOrCreateTextAtlasEntry(blueKey, layers[2], frameToken, out SdlGpuTextAtlasEntry blue))
+        if (!TryGetOrCreateTextAtlasEntry(redKey, layers[0], frameToken, token, out SdlGpuTextAtlasEntry red) ||
+            !TryGetOrCreateTextAtlasEntry(greenKey, layers[1], frameToken, token, out SdlGpuTextAtlasEntry green) ||
+            !TryGetOrCreateTextAtlasEntry(blueKey, layers[2], frameToken, token, out SdlGpuTextAtlasEntry blue))
         {
             return null;
         }
 
-        return new SdlGpuTextAtlasEntries(red, green, blue);
+        SdlGpuTextAtlasEntries entries = new(red, green, blue);
+        if (token.Session is not null)
+        {
+            PinTextAtlasEntries(session, token, entries);
+        }
+        return entries;
     }
 
     private bool TryGetOrCreateTextAtlasEntry(
         SdlGpuTextLayerTextureKey key,
         RasterizedText layer,
         long frameToken,
+        SdlGpuCommandBufferToken token,
         out SdlGpuTextAtlasEntry entry)
     {
         if (textAtlasEntries.TryGetValue(key, out SdlGpuTextAtlasEntry? existing))
         {
+            if (token.Session is not null)
+            {
+                existing.Page.RequireUpload(token, existing.CreatedRevision);
+            }
             MarkTextAtlasEntryUsed(existing, frameToken);
             entry = existing;
             return true;
         }
-        if (!TryAddTextAtlasEntry(key, layer, frameToken, out entry))
+        if (!TryAddTextAtlasEntry(key, layer, frameToken, token, out entry))
         {
             return false;
         }
@@ -423,29 +490,41 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(session);
-        if (dirtyTextAtlasPages.Count == 0)
+        SdlGpuCommandBufferToken token = session.ActiveCommandBufferToken;
+        bool recordedUpload = false;
+        foreach (SdlGpuTextAtlasPage page in textAtlasPages)
         {
-            return;
-        }
-
-        foreach (SdlGpuTextAtlasPage page in dirtyTextAtlasPages)
-        {
-            if (!page.TryGetDirtyRegion(out SdlRect dirtyRegion))
+            if (!page.CollectRequiredUploadRegions(
+                    token,
+                    requiredTextAtlasUploadRegions,
+                    out long revision))
             {
                 continue;
             }
 
-            UploadTextureRegion(
+            PinTextAtlasEntriesCoveredByUploads(
                 session,
-                page.Texture.Handle,
-                TextAtlasDimension,
-                TextAtlasDimension,
-                page.Pixels,
-                dirtyRegion,
-                bytesPerPixel: 4);
-            page.MarkUploaded();
+                token,
+                page,
+                requiredTextAtlasUploadRegions);
+            foreach (SdlRect dirtyRegion in requiredTextAtlasUploadRegions)
+            {
+                UploadTextureRegion(
+                    session,
+                    page.Texture.Handle,
+                    TextAtlasDimension,
+                    TextAtlasDimension,
+                    page.Pixels,
+                    dirtyRegion,
+                    bytesPerPixel: 4);
+            }
+            page.MarkUploadRecorded(token, revision);
+            recordedUpload = true;
         }
-        dirtyTextAtlasPages.Clear();
+        if (recordedUpload)
+        {
+            session.RegisterCommandBufferParticipant(this);
+        }
     }
 
     public void InvalidateTexture(object key)
@@ -457,6 +536,13 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         if (textures.Remove(key, out SdlGpuTextureResource? texture))
         {
             RetireTexture(texture.Handle);
+        }
+        foreach (PendingTextureKey pendingKey in pendingTextures.Keys
+            .Where(candidate => Equals(candidate.Key, key))
+            .ToArray())
+        {
+            RetireTexture(pendingTextures[pendingKey].Handle);
+            pendingTextures.Remove(pendingKey);
         }
     }
 
@@ -491,7 +577,18 @@ internal sealed class SdlGpuDrawingResources : IDisposable
     public void RetainTexture(object key)
     {
         ThrowIfDisposed();
-        if (!textures.ContainsKey(key))
+        if (!textures.ContainsKey(key) &&
+            !pendingTextures.Keys.Any(candidate => Equals(candidate.Key, key)))
+        {
+            throw new InvalidOperationException("Cannot retain an uncached SDL_GPU texture.");
+        }
+        textureReferenceCounts.TryGetValue(key, out int count);
+        textureReferenceCounts[key] = checked(count + 1);
+    }
+
+    internal void RetainTexture(SdlGpuWindowGraphicsSession session, object key)
+    {
+        if (FindTexture(session, key) is null)
         {
             throw new InvalidOperationException("Cannot retain an uncached SDL_GPU texture.");
         }
@@ -523,6 +620,13 @@ internal sealed class SdlGpuDrawingResources : IDisposable
                 ReturnIdleSampledTexture(texture);
             }
         }
+        foreach (PendingTextureKey pendingKey in pendingTextures.Keys
+            .Where(candidate => Equals(candidate.Key, key))
+            .ToArray())
+        {
+            RetireTexture(pendingTextures[pendingKey].Handle);
+            pendingTextures.Remove(pendingKey);
+        }
         if (textureReferenceCounts.Count == 0)
         {
             foreach (SdlGpuTextureResource idle in idleSampledTextures)
@@ -552,6 +656,11 @@ internal sealed class SdlGpuDrawingResources : IDisposable
 
     private void ReturnIdleSampledTexture(SdlGpuTextureResource texture)
     {
+        if (sampledTexturePinCounts.ContainsKey(texture.Handle))
+        {
+            deferredIdleSampledTextures[texture.Handle] = texture;
+            return;
+        }
         // Only explicitly recyclable RGBA storage reaches this path after its
         // last retained brush lease ends. Other textures keep their own lifetime
         // policies, including the bounded histories of text masks and captures.
@@ -719,17 +828,30 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         RetireTexture(target.ResolveTexture);
     }
 
+    internal void PinRenderTarget(SdlGpuWindowGraphicsSession session,
+        SdlGpuCommandBufferToken token, SdlGpuRenderTarget target)
+    {
+        PinTexture(session, token, target.ColorTexture);
+        PinTexture(session, token, target.DepthStencilTexture);
+        PinTexture(session, token, target.ResolveTexture);
+    }
+
     public void FlushRetired()
     {
         ProcessImageInvalidations();
-        foreach (nint texture in retiredTextures)
+        for (int index = retiredTextures.Count - 1; index >= 0; index--)
         {
+            nint texture = retiredTextures[index];
+            if (sampledTexturePinCounts.ContainsKey(texture))
+            {
+                continue;
+            }
             if (ownedTextures.Remove(texture))
             {
                 api.ReleaseGpuTexture(device, texture);
             }
+            retiredTextures.RemoveAt(index);
         }
-        retiredTextures.Clear();
 
     }
 
@@ -752,6 +874,8 @@ internal sealed class SdlGpuDrawingResources : IDisposable
 
         prismResources?.Dispose();
         prismResources = null;
+        surface3DResources?.Dispose();
+        surface3DResources = null;
         FlushRetired();
         foreach (nint pipeline in pipelines.Values)
         {
@@ -769,6 +893,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         }
         ownedTextures.Clear();
         textures.Clear();
+        pendingTextures.Clear();
         textureReferenceCounts.Clear();
         idleSampledTextures.Clear();
         idleSampledTextureBytes = 0;
@@ -776,6 +901,12 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         textAtlasRecency.Clear();
         activeTextAtlasFrames.Clear();
         unusedTextAtlasFrames.Clear();
+        pendingTextAtlasPins.Clear();
+        unusedPendingTextAtlasPins.Clear();
+        pendingSampledTexturePins.Clear();
+        unusedPendingSampledTexturePins.Clear();
+        sampledTexturePinCounts.Clear();
+        deferredIdleSampledTextures.Clear();
         textAtlasPages.Clear();
         dirtyTextAtlasPages.Clear();
         layerTargets.Clear();
@@ -904,6 +1035,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
         SdlGpuTextLayerTextureKey key,
         RasterizedText layer,
         long frameToken,
+        SdlGpuCommandBufferToken token,
         out SdlGpuTextAtlasEntry entry)
     {
         entry = null!;
@@ -948,6 +1080,10 @@ internal sealed class SdlGpuDrawingResources : IDisposable
                     {
                         SdlGpuTextAtlasPage candidate = stale.Page;
                         candidate.Free(stale);
+                        if (!candidate.HasUnsubmittedChanges)
+                        {
+                            dirtyTextAtlasPages.Remove(candidate);
+                        }
                         textAtlasEntries.Remove(stale.Key);
                         textAtlasRecency.Remove(node);
                         if (candidate.TryAllocate(layer.Width, layer.Height, out x, out y))
@@ -965,7 +1101,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
             }
         }
 
-        page.CopyPixels(x, y, layer);
+        long createdRevision = page.CopyPixels(x, y, layer);
         DrawRect textureCoordinates = new(
             x / (float)TextAtlasDimension,
             y / (float)TextAtlasDimension,
@@ -978,11 +1114,235 @@ internal sealed class SdlGpuDrawingResources : IDisposable
             layer.Height,
             layer.OriginOffset,
             page,
-            key);
+            key,
+            createdRevision);
         textAtlasEntries.Add(key, entry);
         textAtlasRecency.AddLast(entry.RecencyNode);
         MarkTextAtlasEntryUsed(entry, frameToken);
+        if (token.Session is not null)
+        {
+            page.RequireUpload(token, createdRevision);
+        }
         return true;
+    }
+
+    internal bool TryGetTextAtlasEntries(
+        SdlGpuWindowGraphicsSession session,
+        SdlGpuTextLayerTextureKey redKey,
+        SdlGpuTextLayerTextureKey greenKey,
+        SdlGpuTextLayerTextureKey blueKey,
+        long frameToken,
+        out SdlGpuTextAtlasEntries entries)
+    {
+        if (!TryGetTextAtlasEntries(redKey, greenKey, blueKey, frameToken, out entries))
+        {
+            return false;
+        }
+
+        SdlGpuCommandBufferToken token = session.ActiveCommandBufferToken;
+        for (int index = 0; index < 3; index++)
+        {
+            SdlGpuTextAtlasEntry entry = entries[index];
+            entry.Page.RequireUpload(token, entry.CreatedRevision);
+        }
+        PinTextAtlasEntries(session, token, entries);
+        return true;
+    }
+
+    private void PinTextAtlasEntries(
+        SdlGpuWindowGraphicsSession session,
+        SdlGpuCommandBufferToken token,
+        SdlGpuTextAtlasEntries entries)
+    {
+        for (int index = 0; index < 3; index++)
+        {
+            PinTextAtlasEntry(session, token, entries[index]);
+        }
+    }
+
+    private void PinTextAtlasEntriesCoveredByUploads(
+        SdlGpuWindowGraphicsSession session,
+        SdlGpuCommandBufferToken token,
+        SdlGpuTextAtlasPage page,
+        IReadOnlyList<SdlRect> uploadRegions)
+    {
+        foreach (SdlGpuTextAtlasEntry entry in textAtlasEntries.Values)
+        {
+            if (!ReferenceEquals(entry.Page, page) ||
+                !OverlapsAnyTextAtlasUpload(entry, uploadRegions))
+            {
+                continue;
+            }
+            PinTextAtlasEntry(session, token, entry);
+        }
+    }
+
+    private static bool OverlapsAnyTextAtlasUpload(
+        SdlGpuTextAtlasEntry entry,
+        IReadOnlyList<SdlRect> uploadRegions)
+    {
+        const int padding = 1;
+        int left = (int)(entry.TextureCoordinates.X * TextAtlasDimension) - padding;
+        int top = (int)(entry.TextureCoordinates.Y * TextAtlasDimension) - padding;
+        int right = left + entry.Width + (padding * 2);
+        int bottom = top + entry.Height + (padding * 2);
+        foreach (SdlRect region in uploadRegions)
+        {
+            if (left < region.X + region.Width &&
+                region.X < right &&
+                top < region.Y + region.Height &&
+                region.Y < bottom)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void PinTextAtlasEntry(
+        SdlGpuWindowGraphicsSession session,
+        SdlGpuCommandBufferToken token,
+        SdlGpuTextAtlasEntry entry)
+    {
+        if (!pendingTextAtlasPins.TryGetValue(token, out HashSet<SdlGpuTextAtlasEntry>? pins))
+        {
+            pins = unusedPendingTextAtlasPins.TryPop(out HashSet<SdlGpuTextAtlasEntry>? unused)
+                ? unused
+                : [];
+            pendingTextAtlasPins.Add(token, pins);
+            session.RegisterCommandBufferParticipant(this);
+        }
+        if (pins.Add(entry))
+        {
+            entry.ActiveFrameCount++;
+        }
+    }
+
+    private void ReleaseTextAtlasPins(SdlGpuCommandBufferToken token)
+    {
+        if (!pendingTextAtlasPins.Remove(token, out HashSet<SdlGpuTextAtlasEntry>? pins))
+        {
+            return;
+        }
+        foreach (SdlGpuTextAtlasEntry entry in pins)
+        {
+            entry.ActiveFrameCount--;
+        }
+        pins.Clear();
+        unusedPendingTextAtlasPins.Push(pins);
+    }
+
+    private void PinSampledTexture(
+        SdlGpuWindowGraphicsSession session,
+        SdlGpuCommandBufferToken token,
+        SdlGpuTextureResource texture)
+    {
+        PinTexture(session, token, texture.Handle);
+    }
+
+    private void PinTexture(
+        SdlGpuWindowGraphicsSession session,
+        SdlGpuCommandBufferToken token,
+        nint handle)
+    {
+        if (handle == 0) return;
+        if (!pendingSampledTexturePins.TryGetValue(token, out HashSet<nint>? pins))
+        {
+            pins = unusedPendingSampledTexturePins.TryPop(out HashSet<nint>? unused)
+                ? unused
+                : [];
+            pendingSampledTexturePins.Add(token, pins);
+            session.RegisterCommandBufferParticipant(this);
+        }
+        if (pins.Add(handle))
+        {
+            sampledTexturePinCounts.TryGetValue(handle, out int count);
+            sampledTexturePinCounts[handle] = checked(count + 1);
+        }
+    }
+
+    private void ReleaseSampledTexturePins(SdlGpuCommandBufferToken token)
+    {
+        if (!pendingSampledTexturePins.Remove(token, out HashSet<nint>? pins))
+        {
+            return;
+        }
+        foreach (nint handle in pins)
+        {
+            int count = sampledTexturePinCounts[handle] - 1;
+            if (count == 0)
+            {
+                sampledTexturePinCounts.Remove(handle);
+                if (deferredIdleSampledTextures.Remove(
+                    handle,
+                    out SdlGpuTextureResource? deferred))
+                {
+                    ReturnIdleSampledTexture(deferred);
+                }
+            }
+            else
+            {
+                sampledTexturePinCounts[handle] = count;
+            }
+        }
+        pins.Clear();
+        unusedPendingSampledTexturePins.Push(pins);
+    }
+
+    public void OnCommandBufferSubmitted(SdlGpuCommandBufferToken token)
+    {
+        foreach (PendingTextureKey pendingKey in pendingTextures.Keys
+            .Where(candidate => candidate.Token == token)
+            .ToArray())
+        {
+            SdlGpuTextureResource pending = pendingTextures[pendingKey];
+            pendingTextures.Remove(pendingKey);
+            if (textures.TryGetValue(pendingKey.Key, out SdlGpuTextureResource? existing))
+            {
+                RetireTexture(pending.Handle);
+            }
+            else
+            {
+                textures.Add(pendingKey.Key, pending);
+            }
+        }
+
+        foreach (SdlGpuTextAtlasPage page in textAtlasPages)
+        {
+            page.OnCommandBufferSubmitted(token);
+            if (!page.HasUnsubmittedChanges)
+            {
+                dirtyTextAtlasPages.Remove(page);
+            }
+        }
+        ReleaseTextAtlasPins(token);
+        ReleaseSampledTexturePins(token);
+    }
+
+    public void OnCommandBufferAbandoned(SdlGpuCommandBufferToken token)
+    {
+        foreach (PendingTextureKey pendingKey in pendingTextures.Keys
+            .Where(candidate => candidate.Token == token)
+            .ToArray())
+        {
+            SdlGpuTextureResource pending = pendingTextures[pendingKey];
+            pendingTextures.Remove(pendingKey);
+            RetireTexture(pending.Handle);
+            if (pendingKey.Key is SdlGpuImage image &&
+                !textures.ContainsKey(pendingKey.Key) &&
+                !pendingTextures.Keys.Any(candidate => Equals(candidate.Key, pendingKey.Key)) &&
+                subscribedImages.Remove(image))
+            {
+                image.ContentChanged -= OnImageContentChanged;
+            }
+        }
+
+        foreach (SdlGpuTextAtlasPage page in textAtlasPages)
+        {
+            page.OnCommandBufferAbandoned(token);
+        }
+        ReleaseTextAtlasPins(token);
+        ReleaseSampledTexturePins(token);
     }
 
     private SdlGpuTextAtlasPage CreateTextAtlasPage()
@@ -1034,6 +1394,7 @@ internal sealed class SdlGpuDrawingResources : IDisposable
 
     private void RetireTexture(nint texture)
     {
+        deferredIdleSampledTextures.Remove(texture);
         if (texture != 0 && ownedTextures.Contains(texture) &&
             !retiredTextures.Contains(texture))
         {
@@ -1118,6 +1479,10 @@ internal sealed class SdlGpuDrawingResources : IDisposable
 
     private void ThrowIfDisposed() =>
         ObjectDisposedException.ThrowIf(disposed, this);
+
+    private readonly record struct PendingTextureKey(
+        object Key,
+        SdlGpuCommandBufferToken Token);
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -1141,7 +1506,8 @@ internal sealed class SdlGpuTextAtlasEntry
         int height,
         DrawPoint originOffset,
         SdlGpuTextAtlasPage page,
-        SdlGpuTextLayerTextureKey key)
+        SdlGpuTextLayerTextureKey key,
+        long createdRevision)
     {
         Texture = texture;
         TextureCoordinates = textureCoordinates;
@@ -1150,6 +1516,7 @@ internal sealed class SdlGpuTextAtlasEntry
         OriginOffset = originOffset;
         Page = page;
         Key = key;
+        CreatedRevision = createdRevision;
         RecencyNode = new(this);
     }
 
@@ -1170,6 +1537,8 @@ internal sealed class SdlGpuTextAtlasEntry
     public DrawPoint OriginOffset { get; }
 
     public SdlGpuTextAtlasPage Page { get; }
+
+    public long CreatedRevision { get; }
 }
 
 internal readonly record struct SdlGpuTextAtlasEntries(
@@ -1207,6 +1576,11 @@ internal sealed class SdlGpuTextAtlasPage(
     private int dirtyTop = int.MaxValue;
     private int dirtyRight;
     private int dirtyBottom;
+    private long revision;
+    private long submittedRevision;
+    private readonly List<DirtyChange> dirtyChanges = [];
+    private readonly Dictionary<SdlGpuCommandBufferToken, long> requiredRevisions = [];
+    private readonly Dictionary<SdlGpuCommandBufferToken, long> uploadedRevisions = [];
 
     public SdlGpuTextureResource Texture { get; } = texture;
 
@@ -1228,18 +1602,26 @@ internal sealed class SdlGpuTextAtlasPage(
         return true;
     }
 
-    public void Free(SdlGpuTextAtlasEntry entry) => allocator.Free(new SdlRect(
-        (int)(entry.TextureCoordinates.X * dimension) - Padding,
-        (int)(entry.TextureCoordinates.Y * dimension) - Padding,
-        entry.Width + Padding * 2,
-        entry.Height + Padding * 2));
-
-    public void CopyPixels(int x, int y, RasterizedText layer)
+    public void Free(SdlGpuTextAtlasEntry entry)
     {
-        CopyPixels(x, y, layer.Width, layer.Height, layer.PixelSpan);
+        allocator.Free(new SdlRect(
+            (int)(entry.TextureCoordinates.X * dimension) - Padding,
+            (int)(entry.TextureCoordinates.Y * dimension) - Padding,
+            entry.Width + Padding * 2,
+            entry.Height + Padding * 2));
+        if (dirtyChanges.RemoveAll(change =>
+            change.Revision == entry.CreatedRevision) != 0)
+        {
+            RebuildDirtyBounds();
+        }
     }
 
-    public void CopyPixels(
+    public long CopyPixels(int x, int y, RasterizedText layer)
+    {
+        return CopyPixels(x, y, layer.Width, layer.Height, layer.PixelSpan);
+    }
+
+    public long CopyPixels(
         int x,
         int y,
         int width,
@@ -1267,6 +1649,15 @@ internal sealed class SdlGpuTextAtlasPage(
         dirtyTop = Math.Min(dirtyTop, y - Padding);
         dirtyRight = Math.Max(dirtyRight, checked(x + width + Padding));
         dirtyBottom = Math.Max(dirtyBottom, checked(y + height + Padding));
+        long nextRevision = checked(++revision);
+        dirtyChanges.Add(new DirtyChange(
+            nextRevision,
+            new SdlRect(
+                x - Padding,
+                y - Padding,
+                width + Padding * 2,
+                height + Padding * 2)));
+        return nextRevision;
     }
 
     public bool TryGetDirtyRegion(out SdlRect region)
@@ -1287,11 +1678,126 @@ internal sealed class SdlGpuTextAtlasPage(
 
     public void MarkUploaded()
     {
+        submittedRevision = revision;
+        dirtyChanges.Clear();
         dirtyLeft = int.MaxValue;
         dirtyTop = int.MaxValue;
         dirtyRight = 0;
         dirtyBottom = 0;
     }
+
+    public bool HasUnsubmittedChanges => dirtyChanges.Count != 0;
+
+    public void RequireUpload(SdlGpuCommandBufferToken token, long requiredRevision)
+    {
+        if (requiredRevision <= submittedRevision)
+        {
+            return;
+        }
+        if (!requiredRevisions.TryGetValue(token, out long current) || current < requiredRevision)
+        {
+            requiredRevisions[token] = requiredRevision;
+        }
+    }
+
+    public bool CollectRequiredUploadRegions(
+        SdlGpuCommandBufferToken token,
+        List<SdlRect> regions,
+        out long uploadRevision)
+    {
+        ArgumentNullException.ThrowIfNull(regions);
+        regions.Clear();
+        if (!requiredRevisions.TryGetValue(token, out long required) ||
+            required <= submittedRevision)
+        {
+            uploadRevision = 0;
+            return false;
+        }
+
+        uploadedRevisions.TryGetValue(token, out long alreadyUploaded);
+        long afterRevision = Math.Max(submittedRevision, alreadyUploaded);
+        uploadRevision = required;
+        foreach (DirtyChange change in dirtyChanges)
+        {
+            if (change.Revision <= afterRevision || change.Revision > uploadRevision)
+            {
+                continue;
+            }
+            // Record exact changed rectangles. A bounding rectangle may include
+            // an unrelated free slot which another command buffer can reuse;
+            // submitting the older snapshot last would then restore stale bytes.
+            AddUploadRegion(regions, change.Region);
+        }
+
+        return regions.Count != 0;
+    }
+
+    private static void AddUploadRegion(List<SdlRect> regions, SdlRect region)
+    {
+        for (int index = regions.Count - 1; index >= 0; index--)
+        {
+            SdlRect candidate = regions[index];
+            if (candidate.Y != region.Y ||
+                candidate.Height != region.Height ||
+                candidate.X + candidate.Width < region.X ||
+                region.X + region.Width < candidate.X)
+            {
+                continue;
+            }
+
+            int left = Math.Min(candidate.X, region.X);
+            int right = Math.Max(
+                candidate.X + candidate.Width,
+                region.X + region.Width);
+            region = new SdlRect(left, region.Y, right - left, region.Height);
+            regions.RemoveAt(index);
+        }
+        regions.Add(region);
+    }
+
+    public void MarkUploadRecorded(SdlGpuCommandBufferToken token, long uploadRevision)
+    {
+        uploadedRevisions[token] = Math.Max(
+            uploadedRevisions.GetValueOrDefault(token),
+            uploadRevision);
+    }
+
+    public void OnCommandBufferSubmitted(SdlGpuCommandBufferToken token)
+    {
+        requiredRevisions.Remove(token);
+        if (!uploadedRevisions.Remove(token, out long uploadedRevision) ||
+            uploadedRevision <= submittedRevision)
+        {
+            return;
+        }
+
+        submittedRevision = uploadedRevision;
+        dirtyChanges.RemoveAll(change => change.Revision <= submittedRevision);
+        RebuildDirtyBounds();
+    }
+
+    public void OnCommandBufferAbandoned(SdlGpuCommandBufferToken token)
+    {
+        requiredRevisions.Remove(token);
+        uploadedRevisions.Remove(token);
+    }
+
+    private void RebuildDirtyBounds()
+    {
+        dirtyLeft = int.MaxValue;
+        dirtyTop = int.MaxValue;
+        dirtyRight = 0;
+        dirtyBottom = 0;
+        foreach (DirtyChange change in dirtyChanges)
+        {
+            dirtyLeft = Math.Min(dirtyLeft, change.Region.X);
+            dirtyTop = Math.Min(dirtyTop, change.Region.Y);
+            dirtyRight = Math.Max(dirtyRight, checked(change.Region.X + change.Region.Width));
+            dirtyBottom = Math.Max(dirtyBottom, checked(change.Region.Y + change.Region.Height));
+        }
+    }
+
+    private readonly record struct DirtyChange(long Revision, SdlRect Region);
 
 }
 

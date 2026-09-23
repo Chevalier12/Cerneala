@@ -5,6 +5,14 @@ namespace Cerneala.Backends.SdlGpu;
 
 internal static class SdlGpuShaderArtifacts
 {
+    public static SdlGpuShaderArtifact Surface3DVertex { get; } = new(
+        "surface-3d-vertex", "Gpu.Shaders", "Surface3D.vert",
+        SdlGpuShaderStage.Vertex, 0, 0, 0, 1);
+
+    public static SdlGpuShaderArtifact Surface3DFragment { get; } = new(
+        "surface-3d-fragment", "Gpu.Shaders", "Surface3D.frag",
+        SdlGpuShaderStage.Fragment, 0, 0, 0, 0);
+
     public static SdlGpuShaderArtifact DrawingVertex { get; } = new(
         "drawing-vertex",
         "Gpu.Shaders",
@@ -69,6 +77,8 @@ internal static class SdlGpuShaderArtifacts
     [
         DrawingVertex,
         DrawingFragment,
+        Surface3DVertex,
+        Surface3DFragment,
         PrismVertex,
         PrismCopyFragment,
         PrismCatalogFragment,

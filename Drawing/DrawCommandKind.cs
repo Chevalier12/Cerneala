@@ -33,5 +33,6 @@ public enum DrawCommandKind
     PushBlend,
     PopBlend,
     PushLayer,
-    PopLayer
+    PopLayer,
+    RenderSurface3D
 }

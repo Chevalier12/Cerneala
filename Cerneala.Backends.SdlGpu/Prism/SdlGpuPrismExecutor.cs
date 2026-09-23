@@ -199,7 +199,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                     fallbackDependentNodes[step] = fallbackDependent;
                     if (cacheKey is PrismRetainedCacheKey key && !fallbackDependent)
                     {
-                        deviceResources.Promote(key, lease);
+                        deviceResources.Promote(session, key, lease);
                         promotedLeases.Add(lease);
                     }
                 }
@@ -328,7 +328,11 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                 continue;
             }
             if (CreateCacheKey(plan, plan.ExecutionOrder[step]) is PrismRetainedCacheKey key &&
-                deviceResources.TryAcquireRetained(key, session.WindowIdentity, out SdlGpuPrismSurfaceLease lease))
+                deviceResources.TryAcquireRetained(
+                    session,
+                    key,
+                    session.WindowIdentity,
+                    out SdlGpuPrismSurfaceLease lease))
             {
                 retainedHits.Add(step, lease);
                 frameLeases.Add(lease);

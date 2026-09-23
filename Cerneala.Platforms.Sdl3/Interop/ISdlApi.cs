@@ -183,6 +183,25 @@ internal enum SdlGpuStencilMode
     Decrement
 }
 
+internal enum SdlGpuVertexFormat
+{
+    Float2,
+    Float3,
+    Float4
+}
+
+internal enum SdlGpuCompareOperation
+{
+    Never,
+    Less,
+    Equal,
+    LessOrEqual,
+    Greater,
+    NotEqual,
+    GreaterOrEqual,
+    Always
+}
+
 [Flags]
 internal enum SdlGpuColorWriteMask
 {
@@ -282,6 +301,162 @@ internal readonly record struct SdlGpuBlendState(
         Enabled: false);
 }
 
+internal readonly record struct SdlGpuVertexAttributeDescription
+{
+    public SdlGpuVertexAttributeDescription(
+        uint location,
+        SdlGpuVertexFormat format,
+        uint offset)
+    {
+        if (!Enum.IsDefined(format))
+        {
+            throw new ArgumentOutOfRangeException(nameof(format));
+        }
+
+        Location = location;
+        Format = format;
+        Offset = offset;
+    }
+
+    public uint Location { get; }
+
+    public SdlGpuVertexFormat Format { get; }
+
+    public uint Offset { get; }
+}
+
+internal sealed class SdlGpuVertexInputDescription
+{
+    public static SdlGpuVertexInputDescription Empty { get; } = new(0, []);
+
+    public static SdlGpuVertexInputDescription Drawing2D { get; } = new(
+        32,
+        new SdlGpuVertexAttributeDescription(0, SdlGpuVertexFormat.Float2, 0),
+        new SdlGpuVertexAttributeDescription(1, SdlGpuVertexFormat.Float2, 8),
+        new SdlGpuVertexAttributeDescription(2, SdlGpuVertexFormat.Float4, 16));
+
+    public SdlGpuVertexInputDescription(
+        uint stride,
+        params SdlGpuVertexAttributeDescription[] attributes)
+    {
+        ArgumentNullException.ThrowIfNull(attributes);
+        if (attributes.Length == 0)
+        {
+            if (stride != 0)
+            {
+                throw new ArgumentException(
+                    "An empty vertex input must have a zero-byte stride.",
+                    nameof(stride));
+            }
+
+            Stride = 0;
+            Attributes = Array.AsReadOnly(Array.Empty<SdlGpuVertexAttributeDescription>());
+            return;
+        }
+        if (stride == 0 || (stride & 3) != 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(stride),
+                "A vertex stride must be positive and aligned to four bytes.");
+        }
+
+        SdlGpuVertexAttributeDescription[] snapshot = attributes.ToArray();
+        HashSet<uint> locations = [];
+        for (int index = 0; index < snapshot.Length; index++)
+        {
+            SdlGpuVertexAttributeDescription attribute = snapshot[index];
+            if (!Enum.IsDefined(attribute.Format))
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(attributes),
+                    $"Vertex attribute {index} has an unsupported format.");
+            }
+            if (!locations.Add(attribute.Location))
+            {
+                throw new ArgumentException(
+                    $"Vertex attribute location {attribute.Location} is duplicated.",
+                    nameof(attributes));
+            }
+            if ((attribute.Offset & 3) != 0)
+            {
+                throw new ArgumentException(
+                    $"Vertex attribute location {attribute.Location} has an unaligned offset.",
+                    nameof(attributes));
+            }
+
+            uint size = SizeOf(attribute.Format);
+            if (attribute.Offset > stride || size > stride - attribute.Offset)
+            {
+                throw new ArgumentException(
+                    $"Vertex attribute location {attribute.Location} exceeds the vertex stride.",
+                    nameof(attributes));
+            }
+
+            uint end = attribute.Offset + size;
+            for (int previousIndex = 0; previousIndex < index; previousIndex++)
+            {
+                SdlGpuVertexAttributeDescription previous = snapshot[previousIndex];
+                uint previousEnd = previous.Offset + SizeOf(previous.Format);
+                if (attribute.Offset < previousEnd && previous.Offset < end)
+                {
+                    throw new ArgumentException(
+                        $"Vertex attributes at locations {previous.Location} and {attribute.Location} overlap.",
+                        nameof(attributes));
+                }
+            }
+        }
+
+        Stride = stride;
+        Attributes = Array.AsReadOnly(snapshot);
+    }
+
+    public uint Stride { get; }
+
+    public IReadOnlyList<SdlGpuVertexAttributeDescription> Attributes { get; }
+
+    private static uint SizeOf(SdlGpuVertexFormat format) => format switch
+    {
+        SdlGpuVertexFormat.Float2 => 8,
+        SdlGpuVertexFormat.Float3 => 12,
+        SdlGpuVertexFormat.Float4 => 16,
+        _ => throw new ArgumentOutOfRangeException(nameof(format))
+    };
+}
+
+internal readonly record struct SdlGpuDepthState
+{
+    public static SdlGpuDepthState Disabled { get; } = new(
+        testEnabled: false,
+        writeEnabled: false,
+        SdlGpuCompareOperation.Always);
+
+    public static SdlGpuDepthState ReadWriteLessOrEqual { get; } = new(
+        testEnabled: true,
+        writeEnabled: true,
+        SdlGpuCompareOperation.LessOrEqual);
+
+    public SdlGpuDepthState(
+        bool testEnabled,
+        bool writeEnabled,
+        SdlGpuCompareOperation compareOperation)
+    {
+        if (!Enum.IsDefined(compareOperation))
+        {
+            throw new ArgumentOutOfRangeException(nameof(compareOperation));
+        }
+
+        TestEnabled = testEnabled;
+        WriteEnabled = writeEnabled;
+        CompareOperation = compareOperation;
+    }
+
+    public bool TestEnabled { get; }
+
+    public bool WriteEnabled { get; }
+
+    public SdlGpuCompareOperation CompareOperation { get; }
+}
+
 internal readonly record struct SdlGpuGraphicsPipelineCreateInfo(
     nint VertexShader,
     nint FragmentShader,
@@ -291,8 +466,9 @@ internal readonly record struct SdlGpuGraphicsPipelineCreateInfo(
     SdlGpuPrimitiveType PrimitiveType,
     SdlGpuBlendState BlendState,
     SdlGpuStencilMode StencilMode,
-    SdlGpuColorWriteMask ColorWriteMask = SdlGpuColorWriteMask.All,
-    bool UsesVertexInput = true);
+    SdlGpuVertexInputDescription VertexInput,
+    SdlGpuDepthState DepthState,
+    SdlGpuColorWriteMask ColorWriteMask = SdlGpuColorWriteMask.All);
 
 internal readonly record struct SdlGpuBufferCreateInfo(
     SdlGpuBufferUsage Usage,
