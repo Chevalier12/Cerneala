@@ -4,6 +4,9 @@ Generated from `.`.
 
 ```text
 ./
+|-- .codex-remote-attachments/
+|   +-- 01a067bb-bc3c-7b52-9a11-ae58e29091de/
+|       +-- df456dc8-3416-4ee2-b99c-218f297b11a2/
 |-- .config/
 |   +-- dotnet-tools.json
 |-- .github/
@@ -221,6 +224,7 @@ Generated from `.`.
 |   |   |-- Program.cs
 |   |   |-- QueueEngineBenchmarks.cs
 |   |   |-- README.md
+|   |   |-- RenderSurface3DProbeRunner.cs
 |   |   |-- SceneDebugOverlayBenchmarks.cs
 |   |   |-- SpriteAnimationBenchmarks.cs
 |   |   |-- TextCharacterizationRunner.cs
@@ -411,12 +415,21 @@ Generated from `.`.
 |   |   |   |-- Drawing.vert.dxil
 |   |   |   |-- Drawing.vert.hlsl
 |   |   |   |-- Drawing.vert.msl
-|   |   |   +-- Drawing.vert.spv
+|   |   |   |-- Drawing.vert.spv
+|   |   |   |-- Surface3D.frag.dxil
+|   |   |   |-- Surface3D.frag.hlsl
+|   |   |   |-- Surface3D.frag.msl
+|   |   |   |-- Surface3D.frag.spv
+|   |   |   |-- Surface3D.vert.dxil
+|   |   |   |-- Surface3D.vert.hlsl
+|   |   |   |-- Surface3D.vert.msl
+|   |   |   +-- Surface3D.vert.spv
 |   |   |-- Cerberus.cs
 |   |   |-- SdlGpuDebugLabels.cs
 |   |   |-- SdlGpuDeviceOwner.cs
 |   |   |-- SdlGpuDrawingBackend.BrushCaptures.cs
 |   |   |-- SdlGpuDrawingBackend.cs
+|   |   |-- SdlGpuDrawingBackend.Surface3D.cs
 |   |   |-- SdlGpuDrawingBackend.SurfaceDamage.cs
 |   |   |-- SdlGpuDrawingFrameCounters.cs
 |   |   |-- SdlGpuDrawingResources.cs
@@ -425,6 +438,8 @@ Generated from `.`.
 |   |   |-- SdlGpuImageLoader.cs
 |   |   |-- SdlGpuPresentationOptions.cs
 |   |   |-- SdlGpuPrismFrameCounters.cs
+|   |   |-- SdlGpuRenderSurface3DDeviceResources.cs
+|   |   |-- SdlGpuRenderSurface3DDiagnostics.cs
 |   |   |-- SdlGpuShaderArtifacts.cs
 |   |   |-- SdlGpuTextAtlasAllocator.cs
 |   |   +-- SdlGpuWindowGraphicsSession.cs
@@ -528,6 +543,7 @@ Generated from `.`.
 |   |   |-- DiagnosticPublisher.cs
 |   |   |-- DiagnosticService.cs
 |   |   |-- FormattingService.cs
+|   |   |-- LspTextCoordinates.cs
 |   |   |-- NavigationService.cs
 |   |   +-- StructureService.cs
 |   |-- Logging/
@@ -1052,7 +1068,6 @@ Generated from `.`.
 |   |   |-- 2026-07-11-background-and-borderbrush-brush-migration.md
 |   |   |-- 2026-07-11-brush-types-and-rendering.md
 |   |   |-- 2026-07-11-foreground-brush-migration.md
-|   |   |-- 2026-07-12-roslyn-indexer-agent-performance-upgrades.md
 |   |   |-- 2026-07-13-markup-logical-expressions.md
 |   |   |-- 2026-07-13-queue-engine-2.md
 |   |   |-- 2026-07-13-repeat-button.md
@@ -1098,7 +1113,11 @@ Generated from `.`.
 |   |   |-- 2026-09-04-rendersurface2d-scene-foundation.md
 |   |   |-- 2026-09-04-rendersurface2d-sprite-animation.md
 |   |   |-- 2026-09-04-rendersurface2d-tilemap-and-scale.md
-|   |   +-- 2026-09-04-rendersurface2d-world-authoring-plan-index.md
+|   |   |-- 2026-09-04-rendersurface2d-world-authoring-plan-index.md
+|   |   |-- 2026-09-21-rendersurface3d-control.md
+|   |   |-- 2026-09-21-rendersurface3d-gpu-foundation.md
+|   |   |-- 2026-09-21-rendersurface3d-plan-index.md
+|   |   +-- 2026-09-22-sdlgpu-retained-submit-prerequisite.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
@@ -1223,6 +1242,8 @@ Generated from `.`.
 |   |   |   |-- Cerneala.Drawing.DrawLineCap.md
 |   |   |   |-- Cerneala.Drawing.DrawLineJoin.md
 |   |   |   |-- Cerneala.Drawing.DrawLineSegment2D.md
+|   |   |   |-- Cerneala.Drawing.DrawLineSegment3D.md
+|   |   |   |-- Cerneala.Drawing.DrawMarker3D.md
 |   |   |   |-- Cerneala.Drawing.DrawMesh2D.md
 |   |   |   |-- Cerneala.Drawing.DrawOpacityScope.md
 |   |   |   |-- Cerneala.Drawing.DrawPath.md
@@ -1236,6 +1257,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.Drawing.DrawPoint.md
 |   |   |   |-- Cerneala.Drawing.DrawPointBatch.md
 |   |   |   |-- Cerneala.Drawing.DrawPrimitiveTopology.md
+|   |   |   |-- Cerneala.Drawing.DrawRay3D.md
 |   |   |   |-- Cerneala.Drawing.DrawRect.md
 |   |   |   |-- Cerneala.Drawing.DrawSamplingMode.md
 |   |   |   |-- Cerneala.Drawing.DrawSize.md
@@ -1440,6 +1462,8 @@ Generated from `.`.
 |   |   |   |-- Cerneala.Drawing.Prism.WindFilter.md
 |   |   |   |-- Cerneala.Drawing.Prism.ZigZagFilter.md
 |   |   |   |-- Cerneala.Drawing.RadialGradientDrawBrushDescriptor.md
+|   |   |   |-- Cerneala.Drawing.RenderProjection3D.md
+|   |   |   |-- Cerneala.Drawing.RenderProjection3DKind.md
 |   |   |   |-- Cerneala.Drawing.SolidDrawBrushDescriptor.md
 |   |   |   |-- Cerneala.Drawing.Text.RasterizedText.md
 |   |   |   |-- Cerneala.Drawing.Text.SkiaFont.md
@@ -1646,6 +1670,10 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.RenderSurface2DPresentationState.md
 |   |   |   |-- Cerneala.UI.Controls.RenderSurface2DRedrawMode.md
 |   |   |   |-- Cerneala.UI.Controls.RenderSurface2DSpriteFlip.md
+|   |   |   |-- Cerneala.UI.Controls.RenderSurface3D.md
+|   |   |   |-- Cerneala.UI.Controls.RenderSurface3DDrawEventHandler.md
+|   |   |   |-- Cerneala.UI.Controls.RenderSurface3DFrame.md
+|   |   |   |-- Cerneala.UI.Controls.RenderSurface3DRedrawMode.md
 |   |   |   |-- Cerneala.UI.Controls.ResizeMode.md
 |   |   |   |-- Cerneala.UI.Controls.Scene2D.md
 |   |   |   |-- Cerneala.UI.Controls.Scene2DAsset.md
@@ -1683,7 +1711,10 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.Selection.SelectionModel_T_.md
 |   |   |   |-- Cerneala.UI.Controls.Selection.SelectionModel.md
 |   |   |   |-- Cerneala.UI.Controls.Shapes.Ellipse.md
+|   |   |   |-- Cerneala.UI.Controls.Shapes.Line.md
 |   |   |   |-- Cerneala.UI.Controls.Shapes.Path.md
+|   |   |   |-- Cerneala.UI.Controls.Shapes.Polygon.md
+|   |   |   |-- Cerneala.UI.Controls.Shapes.Polyline.md
 |   |   |   |-- Cerneala.UI.Controls.Shapes.Rectangle.md
 |   |   |   |-- Cerneala.UI.Controls.Shapes.Shape.md
 |   |   |   |-- Cerneala.UI.Controls.Shapes.SvgPath.md
@@ -2603,6 +2634,7 @@ Generated from `.`.
 |   |   |   |-- PrismBackdropRequirement.cs
 |   |   |   |-- PrismColdStartWarmup.cs
 |   |   |   |-- PrismDependencyStamp.cs
+|   |   |   |-- PrismFnv1aHash.cs
 |   |   |   |-- PrismFrameAnalysis.cs
 |   |   |   |-- PrismFrameAnalyzer.cs
 |   |   |   |-- PrismGraph.cs
@@ -2918,6 +2950,8 @@ Generated from `.`.
 |   |-- IDrawingBackend.cs
 |   |-- IFontSource.cs
 |   |-- IRenderSurface2DSource.cs
+|   |-- IRenderSurface3DSource.cs
+|   |-- RenderProjection3D.cs
 |   |-- RenderSurface2DGeometry.cs
 |   +-- SvgRasterizer.cs
 |-- Playground/
@@ -3131,6 +3165,8 @@ Generated from `.`.
 |   |   |-- Cerneala.SdlGpuSmoke.csproj
 |   |   |-- MainWindow.crn
 |   |   |-- MainWindow.crn.cs
+|   |   |-- RenderSurface3DPreview.crn
+|   |   |-- RenderSurface3DPreview.crn.cs
 |   |   |-- SmokeDrawingSurface.cs
 |   |   +-- SmokeOptions.cs
 |   |-- Cerneala.Tests/
@@ -3198,6 +3234,10 @@ Generated from `.`.
 |   |   |   |-- RenderSurface2DSceneFoundationContractTests.cs
 |   |   |   |-- RenderSurface2DSceneTests.cs
 |   |   |   |-- RenderSurface2DTests.cs
+|   |   |   |-- RenderSurface3DConformanceFixtureTests.cs
+|   |   |   |-- RenderSurface3DStageOnePresenceTests.cs
+|   |   |   |-- RenderSurface3DStageZeroCharacterizationTests.cs
+|   |   |   |-- RenderSurface3DTests.cs
 |   |   |   |-- SceneBoundedCopyTests.cs
 |   |   |   |-- SceneCollisionStreamingTests.cs
 |   |   |   |-- SceneComponentRuntimeTests.cs
@@ -3360,6 +3400,8 @@ Generated from `.`.
 |   |   |   |-- DrawingShapeTests.cs
 |   |   |   |-- DrawingStateTests.cs
 |   |   |   |-- DrawingTextLayoutTests.cs
+|   |   |   |-- SdlGpuConformanceArtifacts.cs
+|   |   |   |-- SdlGpuConformanceArtifactsTests.cs
 |   |   |   |-- SdlGpuDrawingConformanceTests.cs
 |   |   |   |-- SpriteBatchGeometryParityTests.cs
 |   |   |   +-- TextPipelineTests.cs
@@ -3467,6 +3509,9 @@ Generated from `.`.
 |   |   |   |-- Automation/
 |   |   |   |-- Controls/
 |   |   |   |   |-- Shapes/
+|   |   |   |   |   |-- ShapePrimitiveTests.cs
+|   |   |   |   |   |-- ShapeRenderingContractTests.cs
+|   |   |   |   |   |-- ShapeRetainedReuseTests.cs
 |   |   |   |   |   +-- ShapeTests.cs
 |   |   |   |   +-- ListStressBudgetTests.cs
 |   |   |   |-- Core/
@@ -3585,6 +3630,7 @@ Generated from `.`.
 |   |   |   |   |-- BrushTests.cs
 |   |   |   |   |-- GeometryTests.cs
 |   |   |   |   |-- ImageSourceTests.cs
+|   |   |   |   |-- RichPathGeometryTests.cs
 |   |   |   |   +-- TransformTests.cs
 |   |   |   |-- Motion/
 |   |   |   |   |-- Core/
@@ -3649,6 +3695,7 @@ Generated from `.`.
 |   |   |   |   |-- RetainedRenderCacheTests.cs
 |   |   |   |   |-- RetainedRendererDrawPurityTests.cs
 |   |   |   |   |-- RetainedRendererTests.cs
+|   |   |   |   |-- RetainedTransformContractTests.cs
 |   |   |   |   +-- TextRenderDependencyTests.cs
 |   |   |   |-- Resources/
 |   |   |   |   |-- ApplicationResourceIntegrationTests.cs
@@ -3716,6 +3763,7 @@ Generated from `.`.
 |   |   |-- MotionPrismSemanticTests.cs
 |   |   |-- NavigationTests.cs
 |   |   |-- RecoveryBaselineTests.cs
+|   |   |-- RenderSurface3DLanguageTests.cs
 |   |   |-- RoslynCompilationSymbolsTests.cs
 |   |   |-- SceneComponentLanguageTests.cs
 |   |   |-- SEMANTIC-INVENTORY.md
@@ -3741,7 +3789,8 @@ Generated from `.`.
 |   |   +-- WorkspaceTests.cs
 |   |-- Cerneala.Tests.PreviewHost/
 |   |   |-- Cerneala.Tests.PreviewHost.csproj
-|   |   +-- PreviewHostTests.cs
+|   |   |-- PreviewHostTests.cs
+|   |   +-- RenderSurface3DPreviewTests.cs
 |   |-- Cerneala.Tests.Scene2DImporters/
 |   |   |-- Cerneala.Tests.Scene2DImporters.csproj
 |   |   |-- ImportStageZeroContractTests.cs
@@ -3824,6 +3873,7 @@ Generated from `.`.
 |   |   |-- NativeImageLeaseTests.cs
 |   |   |-- NativePackageGridSubdivisionTests.cs
 |   |   |-- NativePackageWarmStreamingTests.cs
+|   |   |-- NativeRenderSurface3DTests.cs
 |   |   |-- NativeSceneImagePresentationTests.cs
 |   |   |-- NativeScenePresentationTests.cs
 |   |   |-- NativeScenePrismDomainTests.cs
@@ -3832,6 +3882,11 @@ Generated from `.`.
 |   |   |-- NativeUiImagePresentationTests.cs
 |   |   |-- RectanglePixelBoundaryMigrationTests.cs
 |   |   |-- RenderSurface2DPresentationTests.cs
+|   |   |-- RenderSurface3DBackendRouteTests.cs
+|   |   |-- RenderSurface3DMathOracleTests.cs
+|   |   |-- RenderSurface3DStage3LifecycleTests.cs
+|   |   |-- RenderSurface3DStageZeroNativeCharacterizationTests.cs
+|   |   |-- RenderSurface3DStageZeroOracle.cs
 |   |   |-- SdlArchitectureTests.cs
 |   |   |-- SdlGpuAsyncImageLoadingTests.cs
 |   |   |-- SdlGpuBrushTextureLifetimeTests.cs
@@ -3839,13 +3894,17 @@ Generated from `.`.
 |   |   |-- SdlGpuDeviceOwnerTests.cs
 |   |   |-- SdlGpuDrawingBackendTests.cs
 |   |   |-- SdlGpuDrawingFrameCountersTests.cs
+|   |   |-- SdlGpuFrameTransactionCharacterizationTests.cs
 |   |   |-- SdlGpuGeometryAllocationTests.cs
 |   |   |-- SdlGpuGeometryCacheTests.cs
+|   |   |-- SdlGpuGeometryUploadArenaTests.cs
 |   |   |-- SdlGpuGradientCacheTests.cs
 |   |   |-- SdlGpuImageLifetimeTests.cs
+|   |   |-- SdlGpuNativePipelineDescriptorTests.cs
 |   |   |-- SdlGpuPrismBuiltinTextureAllocationTests.cs
 |   |   |-- SdlGpuPrismExecutorTests.cs
 |   |   |-- SdlGpuPrismUniformAllocationTests.cs
+|   |   |-- SdlGpuRenderSurface3DDiagnosticsTests.cs
 |   |   |-- SdlGpuSampledTextureReuseTests.cs
 |   |   |-- SdlGpuScreenshotRegionTests.cs
 |   |   |-- SdlGpuShaderArtifactTests.cs
@@ -3863,6 +3922,7 @@ Generated from `.`.
 |   |   |-- SdlWindowPlatformTests.cs
 |   |   |-- SdlWindowsNativeContractTests.cs
 |   |   |-- SdlWindowSurfaceTests.cs
+|   |   |-- ShapePrimitiveRenderingTests.cs
 |   |   +-- WindowTestDoubles.cs
 |   |-- Cerneala.Tests.SourceGen/
 |   |   |-- Prism/
@@ -3892,10 +3952,12 @@ Generated from `.`.
 |   |   |-- UiMarkupGeneratorMotionTests.cs
 |   |   |-- UiMarkupGeneratorMotionTimelineTests.cs
 |   |   |-- UiMarkupGeneratorRenderSurface2DTests.cs
+|   |   |-- UiMarkupGeneratorRenderSurface3DTests.cs
 |   |   |-- UiMarkupGeneratorResourceBindingModeTests.cs
 |   |   |-- UiMarkupGeneratorSceneComponentTests.cs
 |   |   |-- UiMarkupGeneratorSceneImportStageZeroTests.cs
 |   |   |-- UiMarkupGeneratorSceneWorldBindingTests.cs
+|   |   |-- UiMarkupGeneratorShapeTests.cs
 |   |   |-- UiMarkupGeneratorSingleLayerTileMapTests.cs
 |   |   |-- UiMarkupGeneratorSpriteAnimationStageZeroTests.cs
 |   |   |-- UiMarkupGeneratorSpriteAuthoringTests.cs
@@ -3919,6 +3981,7 @@ Generated from `.`.
 |   |-- CodexGpuDriverHarness/
 |   |-- CodexMonoGameParityHarness/
 |   |-- CodexTetrisStyleHarness/
+|   |-- CodexUiImagePerfHarness/
 |   |-- Fixtures/
 |   |   |-- LanguageServerWorkspace/
 |   |   |   |-- LanguageServerWorkspace.csproj
@@ -3990,6 +4053,7 @@ Generated from `.`.
 |       |-- CollisionStageFiveFixture.cs
 |       |-- PrismStainedGlassTestData.cs
 |       |-- PrismTestData.cs
+|       |-- RenderSurface3DConformanceFixture.cs
 |       |-- SceneDebugOverlayConformanceFixture.cs
 |       |-- SdlDrawingFixture.cs
 |       |-- SpriteAnimationConformanceFixture.cs
@@ -4040,59 +4104,6 @@ Generated from `.`.
 |   |-- PrismAudit/
 |   |   |-- PrismAudit.csproj
 |   |   +-- Program.cs
-|   |-- RoslynRepoIndexer/
-|   |   |-- benchmarks/
-|   |   |   |-- RoslynRepoIndexer.Benchmarks/
-|   |   |   |   |-- IndexerBenchmarks.cs
-|   |   |   |   |-- Program.cs
-|   |   |   |   +-- RoslynRepoIndexer.Benchmarks.csproj
-|   |   |   |-- baseline-2026-07-12.json
-|   |   |   +-- README.md
-|   |   |-- src/
-|   |   |   |-- RoslynRepoIndexer.Cli/
-|   |   |   |   |-- CliQueryDaemon.cs
-|   |   |   |   |-- Program.cs
-|   |   |   |   +-- RoslynRepoIndexer.Cli.csproj
-|   |   |   +-- RoslynRepoIndexer.Core/
-|   |   |       |-- BinaryIndexCodec.cs
-|   |   |       |-- Configuration.cs
-|   |   |       |-- Discovery.cs
-|   |   |       |-- IndexStore.cs
-|   |   |       |-- Models.cs
-|   |   |       |-- RepositoryFileReader.cs
-|   |   |       |-- RepositorySessions.cs
-|   |   |       |-- RoslynIndexerApplicationService.cs
-|   |   |       |-- RoslynIndexing.cs
-|   |   |       |-- RoslynRepoIndexer.Core.csproj
-|   |   |       |-- Search.cs
-|   |   |       |-- SegmentedIndexCodec.cs
-|   |   |       |-- SemanticChanges.cs
-|   |   |       |-- SemanticQueries.cs
-|   |   |       +-- TextUtilities.cs
-|   |   |-- tests/
-|   |   |   +-- RoslynRepoIndexer.Tests/
-|   |   |       |-- ApplicationServiceTests.cs
-|   |   |       |-- ArchitectureWrapperTests.cs
-|   |   |       |-- AssemblyInfo.cs
-|   |   |       |-- BinaryStorageTests.cs
-|   |   |       |-- CliBehaviorTests.cs
-|   |   |       |-- CoreBehaviorTests.cs
-|   |   |       |-- CrossPlatformCompatibilityTests.cs
-|   |   |       |-- FileReadCliTests.cs
-|   |   |       |-- IntegrationCliTests.cs
-|   |   |       |-- JsonContractSnapshotTests.cs
-|   |   |       |-- LinkedGeneratedIndexingTests.cs
-|   |   |       |-- PerformanceSmokeTests.cs
-|   |   |       |-- RepositorySessionTests.cs
-|   |   |       |-- RoslynRepoIndexer.Tests.csproj
-|   |   |       |-- RoslynSymbolIntegrationTests.cs
-|   |   |       |-- SearchScorerTests.cs
-|   |   |       |-- SemanticChangesTests.cs
-|   |   |       |-- SemanticQueryTests.cs
-|   |   |       +-- TextIndexingTests.cs
-|   |   |-- README.md
-|   |   |-- RoslynRepoIndexer.sln
-|   |   +-- RoslynRepoIndexer.slnx
 |   |-- scripts/
 |   |   |-- Archive-Repo.ps1
 |   |   |-- Archive-Repo.Tests.ps1
@@ -4214,7 +4225,11 @@ Generated from `.`.
 |   |   |   +-- SelectionModel{T}.cs
 |   |   |-- Shapes/
 |   |   |   |-- Ellipse.cs
+|   |   |   |-- Line.cs
 |   |   |   |-- Path.cs
+|   |   |   |-- PointShapeGeometry.cs
+|   |   |   |-- Polygon.cs
+|   |   |   |-- Polyline.cs
 |   |   |   |-- Rectangle.cs
 |   |   |   |-- Shape.cs
 |   |   |   +-- SvgPath.cs
@@ -4270,6 +4285,7 @@ Generated from `.`.
 |   |   |-- Image.cs
 |   |   |-- InkCanvas.cs
 |   |   |-- InkCanvasEventArgs.cs
+|   |   |-- IRenderSurfaceResourceOwner.cs
 |   |   |-- ISceneSpatialParticipant2D.cs
 |   |   |-- IScrollInfo.cs
 |   |   |-- ItemsControl.cs
@@ -4302,6 +4318,9 @@ Generated from `.`.
 |   |   |-- RenderSurface2DFrame.Shapes.cs
 |   |   |-- RenderSurface2DFrame.Text.cs
 |   |   |-- RenderSurface2DRedrawMode.cs
+|   |   |-- RenderSurface3D.cs
+|   |   |-- RenderSurface3DFrame.cs
+|   |   |-- RenderSurface3DRedrawMode.cs
 |   |   |-- ResizeMode.cs
 |   |   |-- Scene2D.cs
 |   |   |-- Scene2DDebugOverlay.cs
@@ -4442,7 +4461,8 @@ Generated from `.`.
 |   |   |-- UIElement.InputEvents.cs
 |   |   |-- UIElementCollection.cs
 |   |   |-- UIElementVisibility.cs
-|   |   +-- UIRoot.cs
+|   |   |-- UIRoot.cs
+|   |   +-- UIRoot.Subscriptions.cs
 |   |-- Hosting/
 |   |   |-- MonoGame/
 |   |   |-- Windowing/
@@ -4917,7 +4937,6 @@ Generated from `.`.
 |   +-- ApplicationStartupEventArgs.cs
 |-- .gitattributes
 |-- .gitignore
-|-- .roslyn-index.json
 |-- AGENTS_DEPRECATED.md
 |-- architecture.md
 |-- Aspect_Audit_09022026.md
@@ -4938,7 +4957,6 @@ Generated from `.`.
 |-- Relay_Audit_09022026.md
 |-- ROADMAP.md
 |-- ROADMAPv2_AUDIT.md
-|-- ROADMAPv2.md
-+-- roslyn_indexer_codex_plan_final.md
++-- ROADMAPv2.md
 ```
 
