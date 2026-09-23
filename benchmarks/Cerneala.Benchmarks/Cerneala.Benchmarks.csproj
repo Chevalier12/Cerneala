@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj" />
     <ProjectReference Include="..\..\Cerneala.Platforms.Sdl3\Cerneala.Platforms.Sdl3.csproj" />
     <ProjectReference Include="..\..\Cerneala.Language\Cerneala.Language.csproj" />
+    <Compile Include="..\..\tests\Shared\RenderSurface3DConformanceFixture.cs" Link="RenderSurface3DConformanceFixture.cs" />
   </ItemGroup>
 
 </Project>

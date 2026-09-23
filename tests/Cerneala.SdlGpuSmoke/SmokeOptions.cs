@@ -14,6 +14,7 @@ internal sealed record SmokeOptions(
         "resize",
         "drawing",
         "rendersurface2d",
+        "rendersurface3d",
         "tilemap",
         "tilemap-conformance",
         "collision",

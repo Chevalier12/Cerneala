@@ -7,7 +7,7 @@ param(
     [Parameter(Mandatory)]
     [string] $PublishedDirectory,
 
-    [ValidateSet('single-window', 'multi-window', 'input', 'resize', 'drawing', 'rendersurface2d', 'prism', 'screenshot')]
+    [ValidateSet('single-window', 'multi-window', 'input', 'resize', 'drawing', 'rendersurface2d', 'rendersurface3d', 'prism', 'screenshot')]
     [string] $Mode = 'single-window',
 
     [string] $ArtifactDirectory = 'artifacts/ci/sdlgpu-smoke'

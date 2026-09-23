@@ -13,12 +13,20 @@ on:
       - "Tools/Cerneala.SdlShaderCompiler/**"
       - "Tools/PrismAudit/**"
       - "docs/prism-*.md"
+      - "docs/sdl-desktop-backend.md"
       - "docs-site/documentation/classes/**"
       - "docs-site/documentation/manifest.json"
       - "Tools/scripts/*SdlGpuSmoke*.ps1"
       - "NuGet.Config"
       - "global.json"
       - "benchmarks/Cerneala.Benchmarks/Cerneala.Benchmarks.csproj"
+      - "benchmarks/Cerneala.Benchmarks/RenderSurface3DProbeRunner.cs"
+      - "benchmarks/Cerneala.Benchmarks/Program.cs"
+      - "tests/Shared/RenderSurface3DConformanceFixture.cs"
+      - "tests/Cerneala.Tests.Language/**"
+      - "tests/Cerneala.Tests.PreviewHost/**"
+      - "UI/Controls/RenderSurface3D*.cs"
+      - "UI/Layout/**"
       - "UI/Hosting/Windowing/**"
       - "UI/Prism/**"
       - "tests/Cerneala.SdlGpuSmoke/**"
@@ -38,12 +46,20 @@ on:
       - "Tools/Cerneala.SdlShaderCompiler/**"
       - "Tools/PrismAudit/**"
       - "docs/prism-*.md"
+      - "docs/sdl-desktop-backend.md"
       - "docs-site/documentation/classes/**"
       - "docs-site/documentation/manifest.json"
       - "Tools/scripts/*SdlGpuSmoke*.ps1"
       - "NuGet.Config"
       - "global.json"
       - "benchmarks/Cerneala.Benchmarks/Cerneala.Benchmarks.csproj"
+      - "benchmarks/Cerneala.Benchmarks/RenderSurface3DProbeRunner.cs"
+      - "benchmarks/Cerneala.Benchmarks/Program.cs"
+      - "tests/Shared/RenderSurface3DConformanceFixture.cs"
+      - "tests/Cerneala.Tests.Language/**"
+      - "tests/Cerneala.Tests.PreviewHost/**"
+      - "UI/Controls/RenderSurface3D*.cs"
+      - "UI/Layout/**"
       - "UI/Hosting/Windowing/**"
       - "UI/Prism/**"
       - "tests/Cerneala.SdlGpuSmoke/**"
@@ -95,6 +111,7 @@ jobs:
         run: |
           dotnet restore ./tests/Cerneala.SdlGpuSmoke/Cerneala.SdlGpuSmoke.csproj
           dotnet restore ./tests/Cerneala.Tests.SdlGpu/Cerneala.Tests.SdlGpu.csproj
+          dotnet restore ./tests/Cerneala.Tests/Cerneala.Tests.csproj
           dotnet restore ./tests/Cerneala.Tests.SourceGen/Cerneala.Tests.SourceGen.csproj
           dotnet restore ./Tools/Cerneala.SdlShaderCompiler/Cerneala.SdlShaderCompiler.csproj
           dotnet restore ./Tetrisish/Tests/Tetris.Tests.csproj
@@ -102,6 +119,12 @@ jobs:
       - name: Build SDL_GPU smoke
         shell: pwsh
         run: dotnet build ./tests/Cerneala.SdlGpuSmoke/Cerneala.SdlGpuSmoke.csproj -c Release --no-restore
+
+      - name: Build native foundation test projects
+        shell: pwsh
+        run: |
+          dotnet build ./tests/Cerneala.Tests.SdlGpu/Cerneala.Tests.SdlGpu.csproj -c Release --no-restore
+          dotnet build ./tests/Cerneala.Tests/Cerneala.Tests.csproj -c Release --no-restore
 
       - name: Unit and contract tests
         shell: pwsh
@@ -134,6 +157,94 @@ jobs:
           "VK_ICD_FILENAMES=$($lavapipe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
           'LIBGL_ALWAYS_SOFTWARE=1' | Out-File -FilePath $env:GITHUB_ENV -Append
           'SDL_VIDEODRIVER=x11' | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Native pipeline and 2D/Prism conformance
+        shell: pwsh
+        env:
+          CERNEALA_SDL_NATIVE_TESTS: 1
+          CERNEALA_SDL_CONFORMANCE_ARTIFACTS: ${{ github.workspace }}/artifacts/ci/native-foundation/captures
+        run: |
+          $resultDirectory = 'artifacts/ci/native-foundation/test-results'
+          New-Item -ItemType Directory -Path $resultDirectory -Force | Out-Null
+
+          function Invoke-NativeTest([string[]] $TestArguments) {
+            if ($IsLinux) {
+              & xvfb-run -a dotnet @TestArguments
+            }
+            else {
+              & dotnet @TestArguments
+            }
+            if ($LASTEXITCODE -ne 0) {
+              throw "Native test command failed with exit code $LASTEXITCODE."
+            }
+          }
+
+          $pipelineTrx = "native-pipeline-${{ matrix.nativeRid }}.trx"
+          Invoke-NativeTest @(
+            'test', './tests/Cerneala.Tests.SdlGpu/Cerneala.Tests.SdlGpu.csproj',
+            '-c', 'Release', '--no-build', '--no-restore',
+            '--filter', 'FullyQualifiedName=Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Native_device_creates_drawing_and_prism_pipelines_from_offline_artifacts',
+            '--logger', "trx;LogFileName=$pipelineTrx",
+            '--results-directory', $resultDirectory)
+
+          $conformanceTrx = "native-conformance-${{ matrix.nativeRid }}.trx"
+          Invoke-NativeTest @(
+            'test', './tests/Cerneala.Tests/Cerneala.Tests.csproj',
+            '-c', 'Release', '--no-build', '--no-restore',
+            '--filter', 'FullyQualifiedName~SdlGpuDrawingConformanceTests|FullyQualifiedName~PrismSdlGpuPixelConformanceTests',
+            '--logger', "trx;LogFileName=$conformanceTrx",
+            '--results-directory', $resultDirectory)
+
+          $surface3DTrx = "native-rendersurface3d-${{ matrix.nativeRid }}.trx"
+          Invoke-NativeTest @(
+            'test', './tests/Cerneala.Tests.SdlGpu/Cerneala.Tests.SdlGpu.csproj',
+            '-c', 'Release', '--no-build', '--no-restore',
+            '--filter', 'FullyQualifiedName~NativeRenderSurface3DTests',
+            '--logger', "trx;LogFileName=$surface3DTrx",
+            '--results-directory', $resultDirectory)
+
+          function Assert-ExactPassingTrx(
+            [string] $Path,
+            [int] $Expected,
+            [string] $Label) {
+            [xml] $document = Get-Content -LiteralPath $Path -Raw
+            $counters = $document.SelectSingleNode("//*[local-name()='Counters']")
+            if ($null -eq $counters) {
+              throw "$Label TRX has no Counters element: $Path"
+            }
+            $total = [int] $counters.total
+            $executed = [int] $counters.executed
+            $passed = [int] $counters.passed
+            $notExecuted = [int] $counters.notExecuted
+            $failed = [int] $counters.failed
+            if ($total -ne $Expected -or
+                $executed -ne $Expected -or
+                $passed -ne $Expected -or
+                $notExecuted -ne 0 -or
+                $failed -ne 0) {
+              throw "$Label count mismatch: expected $Expected passed with no skips; total=$total executed=$executed passed=$passed notExecuted=$notExecuted failed=$failed."
+            }
+            "${Label}: total=$total executed=$executed passed=$passed notExecuted=$notExecuted failed=$failed"
+          }
+
+          $counts = @(
+            Assert-ExactPassingTrx (Join-Path $resultDirectory $pipelineTrx) 1 'native pipeline'
+            Assert-ExactPassingTrx (Join-Path $resultDirectory $conformanceTrx) 133 '2D/Prism conformance'
+            Assert-ExactPassingTrx (Join-Path $resultDirectory $surface3DTrx) 27 '3D native conformance')
+
+          $captureRoot = $env:CERNEALA_SDL_CONFORMANCE_ARTIFACTS
+          $actualCaptures = @(Get-ChildItem -LiteralPath $captureRoot -Recurse -File -Filter 'sdlgpu.png')
+          $references = @(Get-ChildItem -LiteralPath $captureRoot -Recurse -File -Filter 'reference.png')
+          $heatmaps = @(Get-ChildItem -LiteralPath $captureRoot -Recurse -File -Filter 'heatmap.png')
+          $diffReports = @(Get-ChildItem -LiteralPath $captureRoot -Recurse -File -Filter 'pixel-diff.txt')
+          if ($actualCaptures.Count -ne 133 -or
+              $references.Count -ne 133 -or
+              $heatmaps.Count -ne 133 -or
+              $diffReports.Count -ne 133) {
+            throw "Conformance artifact count mismatch: captures=$($actualCaptures.Count) references=$($references.Count) heatmaps=$($heatmaps.Count) reports=$($diffReports.Count); expected 133 of each."
+          }
+          $counts += "conformance artifacts: captures=133 references=133 heatmaps=133 reports=133"
+          $counts | Set-Content -LiteralPath 'artifacts/ci/native-foundation/counts.txt'
 
       - name: Native multi-window smoke
         shell: pwsh
@@ -169,6 +280,23 @@ jobs:
           }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: Native RenderSurface3D smoke
+        shell: pwsh
+        run: |
+          $arguments = @(
+            '-NoLogo', '-NoProfile', '-File', './Tools/scripts/Invoke-SdlGpuSmoke.ps1',
+            '-RuntimeIdentifier', '${{ matrix.nativeRid }}',
+            '-PublishedDirectory', 'artifacts/ci/publish/${{ matrix.nativeRid }}',
+            '-Mode', 'rendersurface3d',
+            '-ArtifactDirectory', 'artifacts/ci/smoke/rendersurface3d')
+          if ($IsLinux) {
+            & xvfb-run -a pwsh @arguments
+          }
+          else {
+            & pwsh @arguments
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Upload SDL_GPU logs and Window.SaveScreenshot captures
         if: always()
         uses: actions/upload-artifact@v4
@@ -177,7 +305,11 @@ jobs:
           if-no-files-found: warn
           path: |
             artifacts/ci/test-results/**
+            artifacts/ci/native-foundation/**
             artifacts/ci/smoke/**
+            artifacts/rendersurface3d/control-stage2/native/**
+            artifacts/rendersurface3d/control-stage3/native/**
+            artifacts/rendersurface3d/control-stage5/native/**
 
   full-regression:
     name: SDL desktop full regression
@@ -216,6 +348,10 @@ jobs:
         shell: pwsh
         run: dotnet run --project ./tests/Cerneala.SdlGpuSmoke/Cerneala.SdlGpuSmoke.csproj -c Release --no-build --no-restore -- --mode multi-window --artifacts artifacts/ci/smoke/multi-window
 
+      - name: Validate RenderSurface3D probe argument branch
+        shell: pwsh
+        run: dotnet run --project ./benchmarks/Cerneala.Benchmarks/Cerneala.Benchmarks.csproj -c Release --no-build --no-restore -- --rendersurface3d-probe-args-test
+
       - name: SDL_GPU historical-reference pixel-diff report
         shell: pwsh
         env:
@@ -235,4 +371,5 @@ jobs:
             artifacts/ci/test-results/**
             artifacts/ci/pixel-diff/**
             artifacts/ci/smoke/**
+            artifacts/rendersurface3d/control-stage5/native/**
             tests/Cerneala.Tests/bin/Release/**/TestResults/**

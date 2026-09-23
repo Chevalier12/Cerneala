@@ -2,6 +2,18 @@ using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
 using Cerneala.Benchmarks;
 
+if (args is ["--rendersurface3d-probe-args-test"])
+{
+    RenderSurface3DProbeRunner.TestArgumentBranch();
+    return;
+}
+
+if (args is ["--rendersurface3d-probe", ..])
+{
+    RenderSurface3DProbeRunner.Run(args);
+    return;
+}
+
 if (args is ["--text-characterization", string textCase, string textReportPath])
 {
     TextCharacterizationRunner.Run(textCase, textReportPath);

@@ -18,6 +18,8 @@
     <ProjectReference Include="..\..\Cerneala.PreviewHost\Cerneala.PreviewHost.csproj" />
     <ProjectReference Include="..\..\CernealaPresentation\CernealaPresentation.csproj"
                       ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Cerneala.SdlGpuSmoke\Cerneala.SdlGpuSmoke.csproj"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>

@@ -11,6 +11,7 @@ using Cerneala.UI.Media;
 using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
 using Cerneala.UI.Servo;
+using System.Numerics;
 using ServoApi = Cerneala.UI.Servo.Servo;
 
 namespace Cerneala.SdlGpuSmoke;
@@ -31,11 +32,28 @@ public partial class MainWindow : Window
     private CollisionStageFiveFixture? collisionFixture;
     private SpriteAnimationConformanceFixture? animationFixture;
     private SceneDebugOverlayConformanceFixture? debugFixture;
+    private RenderSurface3DConformanceFixture? surface3DFixture;
+    private bool surface3DInputComplete;
+    private int surface3DCaptureFrame;
+    private int surface3DCaptures;
 
     private void OnContentRendered(object? sender, EventArgs args)
     {
         SmokeOptions options = SmokeOptions.Current;
         StatusText.Text = $"mode: {options.Mode}";
+
+        if (options.Mode == "rendersurface3d")
+        {
+            Width = 800;
+            Height = 600;
+            surface3DFixture = RenderSurface3DConformanceFixture.Create();
+            Content = surface3DFixture.Surface;
+            prismLifetime = GeneratedMarkup.AttachPrism(surface3DFixture.Surface, () =>
+                new PrismInstance(new PrismCompositionDefinition("RenderSurface3DSmoke",
+                    [new PrismLayerDefinition(new PrismNodeId(1), "SurfaceImage",
+                        filters: [new PrismFilterDefinition(PrismFilterId.Invert)])])));
+            _ = RunRenderSurface3DInputAsync(options);
+        }
 
         if (options.Mode == "scene-debug")
         {
@@ -141,6 +159,35 @@ public partial class MainWindow : Window
 
         mainFrames++;
         SmokeOptions options = SmokeOptions.Current;
+        if (options.Mode == "rendersurface3d")
+        {
+            if (!surface3DInputComplete) return;
+            surface3DCaptureFrame++;
+            if (surface3DCaptureFrame < 3)
+            {
+                surface3DFixture!.Surface.InvalidateFrame();
+                return;
+            }
+            surface3DCaptureFrame = 0;
+            if (options.CaptureScreenshots)
+            {
+                Directory.CreateDirectory(options.ArtifactDirectory);
+                SaveScreenshot(Path.Combine(options.ArtifactDirectory, $"rendersurface3d-direction-{surface3DCaptures:D2}.png"));
+            }
+            surface3DCaptures++;
+            if (surface3DCaptures < 8)
+            {
+                surface3DFixture!.SetPresetDirection(surface3DCaptures);
+                return;
+            }
+            completed = true;
+            Console.WriteLine($"SDL_GPU_SMOKE_OK mode=rendersurface3d captures={surface3DCaptures} " +
+                $"orbit={surface3DFixture!.OrbitCount} pan={surface3DFixture.PanCount} " +
+                $"zoom={surface3DFixture.ZoomCount} selected={surface3DFixture.SelectedJoint} " +
+                $"pose={surface3DFixture.PoseIndex} draws={surface3DFixture.DrawCount}");
+            Close();
+            return;
+        }
         if (options.Mode == "scene-debug")
         {
             if (mainFrames < 4 || mainFrames % 4 != 0) { return; }
@@ -392,6 +439,54 @@ public partial class MainWindow : Window
             Directory.CreateDirectory(options.ArtifactDirectory);
             await File.WriteAllTextAsync(errorPath, exception.ToString());
             Console.Error.WriteLine($"SDL_GPU_SMOKE_FAIL servo: {exception}");
+            Application.Current?.Shutdown(2);
+        }
+    }
+
+    private async Task RunRenderSurface3DInputAsync(SmokeOptions options)
+    {
+        try
+        {
+            ServoApi servo = new(this);
+            ServoTarget surfaceTarget = ServoTarget.ById("3d-surface");
+            ServoElement element = await servo.FindAsync(surfaceTarget);
+            float centerX = element.Bounds.X + element.Bounds.Width / 2;
+            float centerY = element.Bounds.Y + element.Bounds.Height / 2;
+            RenderSurface3DConformanceFixture fixture = surface3DFixture!;
+            await servo.ClickAsync(surfaceTarget);
+            if (fixture.SelectedJoint < 0) throw new InvalidOperationException("Surface click did not select a visible joint.");
+            await servo.DragAsync(surfaceTarget, new ServoPoint(centerX + 72, centerY + 28));
+            if (fixture.OrbitCount == 0) throw new InvalidOperationException("Orbit drag did not reach the controller.");
+            int orbitBeforeOverlay = fixture.OrbitCount;
+            await servo.ClickAsync(ServoTarget.ById("3d-pan"));
+            if (fixture.OrbitCount != orbitBeforeOverlay) throw new InvalidOperationException("Overlay click started orbit.");
+            Matrix4x4 beforePan = fixture.Surface.ViewMatrix;
+            await servo.DragAsync(surfaceTarget, new ServoPoint(centerX + 40, centerY + 18));
+            if (fixture.Surface.ViewMatrix == beforePan) throw new InvalidOperationException("Pan input did not move the camera.");
+            fixture.SetPresetDirection(0);
+            await servo.ClickAsync(ServoTarget.ById("3d-projection"));
+            if (!fixture.Surface.TryWorldToRoot(fixture.JointPositions[6], out Vector2 leftBefore) ||
+                !fixture.Surface.TryWorldToRoot(fixture.JointPositions[10], out Vector2 rightBefore))
+                throw new InvalidOperationException("Orthographic sample joints were not visible before wheel input.");
+            await servo.ScrollAsync(surfaceTarget, 120);
+            if (!fixture.Surface.TryWorldToRoot(fixture.JointPositions[6], out Vector2 leftAfter) ||
+                !fixture.Surface.TryWorldToRoot(fixture.JointPositions[10], out Vector2 rightAfter) ||
+                Vector2.Distance(leftAfter, rightAfter) <= Vector2.Distance(leftBefore, rightBefore) + .1f)
+                throw new InvalidOperationException("Orthographic wheel input did not enlarge the projected skeleton.");
+            await servo.ClickAsync(ServoTarget.ById("3d-pose"));
+            if (fixture.PanCount == 0 || fixture.ZoomCount == 0 || fixture.PoseIndex != 1 ||
+                fixture.Surface.Projection.Kind != RenderProjection3DKind.Orthographic || fixture.SelectedJoint < 0)
+                throw new InvalidOperationException($"3D input mismatch: pan={fixture.PanCount}, zoom={fixture.ZoomCount}, " +
+                    $"projection={fixture.Surface.Projection.Kind}, pose={fixture.PoseIndex}, selected={fixture.SelectedJoint}.");
+            fixture.SetPresetDirection(0);
+            surface3DInputComplete = true;
+        }
+        catch (Exception exception)
+        {
+            completed = true;
+            Directory.CreateDirectory(options.ArtifactDirectory);
+            await File.WriteAllTextAsync(Path.Combine(options.ArtifactDirectory, "rendersurface3d.error.txt"), exception.ToString());
+            Console.Error.WriteLine($"SDL_GPU_SMOKE_FAIL rendersurface3d: {exception}");
             Application.Current?.Shutdown(2);
         }
     }

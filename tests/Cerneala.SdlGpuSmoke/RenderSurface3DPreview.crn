@@ -1,0 +1,5 @@
+<UserControl>
+  <RenderSurface3D Draw="OnDraw" RedrawMode="OnDemand" ClearColor="#FF08101A">
+    <Button Content="Preview overlay" Width="100" Height="30" />
+  </RenderSurface3D>
+</UserControl>

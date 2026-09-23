@@ -21,6 +21,7 @@
     <Compile Include="..\Shared\CollisionStageFiveFixture.cs" Link="CollisionStageFiveFixture.cs" />
     <Compile Include="..\Shared\SpriteAnimationConformanceFixture.cs" Link="SpriteAnimationConformanceFixture.cs" />
     <Compile Include="..\Shared\SceneDebugOverlayConformanceFixture.cs" Link="SceneDebugOverlayConformanceFixture.cs" />
+    <Compile Include="..\Shared\RenderSurface3DConformanceFixture.cs" Link="RenderSurface3DConformanceFixture.cs" />
   </ItemGroup>
 
 </Project>
