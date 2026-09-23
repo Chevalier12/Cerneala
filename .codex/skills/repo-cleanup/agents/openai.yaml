@@ -1,0 +1,4 @@
+interface:
+  display_name: "Repo Cleanup"
+  short_description: "Evidence-based cleanup and cohesive modularization"
+  default_prompt: "Use $repo-cleanup to scan this repository and apply justified, behavior-preserving cleanup in small verified batches; ask before changing architecture or public contracts."

@@ -47,7 +47,7 @@ mandatory compaction wording.
 
 - Follow the repository `AGENTS.md` before inspecting or editing anything.
 - Run `Tools/scripts/New-FileTree.ps1`, then read `FileTree.md`.
-- Use RoslynRepoIndexer as the primary repository search and navigation tool.
+- Use direct file reads and `rg` for text.
 - Resolve a bare plan name against `docs/plans/` first, then other documented plan locations only if needed.
 - If multiple files match, ask for the exact plan instead of choosing the least ugly filename.
 - Read the complete plan and identify:
@@ -86,10 +86,9 @@ Optimize end-to-end elapsed time and tool round-trips after correctness, reposit
 Default shape for each stage: one consolidated audit pass, one implementation pass, one verification ladder, and one mandatory checklist checkpoint.
 
 - Build one work map for the active stage, then execute it continuously. Do not rediscover scope before every task.
-- Batch independent reads, status checks, and non-Roslyn tool calls when the tool surface supports safe parallel execution.
-- Keep RoslynRepoIndexer primary, but do not launch multiple RoslynIndexer CLI processes concurrently; its query daemon can contend on shadow-copy files. Prefer a small number of broad, sequential queries over many tiny searches.
-- Read the full contents only of C# files that are likely to be edited, as required by repository policy. Use targeted `ri pread`, symbols, and references for already-understood supporting files instead of rereading them repeatedly.
-- Consolidate related manual edits into the fewest coherent `apply_patch` calls. In particular, finish all intended changes to one C# or project file before triggering the mandatory reindex whenever practical.
+- Batch independent reads, status checks, and tool calls when the tool surface supports safe parallel execution.
+- Read the full contents only of C# files that are likely to be edited, as required by repository policy. Use targeted reads, symbols, and references for already-understood supporting files instead of rereading them repeatedly.
+- Consolidate related manual edits into the fewest coherent `apply_patch` calls.
 - Implement the complete stage before entering its verification ladder, except where the plan explicitly requires RED/GREEN test-first sequencing.
 - Choose the verification ladder once: compile or narrow test during development, required stage tests at the gate, and the full suite only when the stage or final audit requires it.
 - Treat a successful verification as valid until a later change touches code, project configuration, generated inputs, or another surface that can affect it. Documentation and checklist-only edits do not invalidate compiled test evidence.
@@ -104,8 +103,8 @@ Default shape for each stage: one consolidated audit pass, one implementation pa
 ### 1. Revalidate scope
 
 - Perform one consolidated scope pass for the whole active stage.
-- Read every C# file before editing it with `ri read <filePath>`.
-- Use `ri pread` only after full context is known.
+- Read every C# file completely before editing it.
+- Use targeted partial reads only after full context is known.
 - Inspect only the definitions, references, tests, and public docs plausibly affected by the batch.
 - Preserve user changes and unrelated dirty worktree changes.
 - Do not expand into non-goals or unrelated cleanup.
@@ -117,11 +116,6 @@ Default shape for each stage: one consolidated audit pass, one implementation pa
 - Use `apply_patch` for manual edits.
 - Prefer current Cerneala patterns, simple ownership, and explicit lifecycle handling.
 - Keep public API changes exactly within the approved plan.
-- After every code or project-file modification, run:
-
-```powershell
-dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- index .\Cerneala.slnx --json
-```
 
 - If a public API changes, update `docs-site/documentation/classes/` in the same batch using `writing-api-documentation`; treat this as mandatory current-stage collateral, not permission to implement the later documentation stage.
 - Update `docs-site/documentation/manifest.json` when API pages are added or renamed.
@@ -199,7 +193,6 @@ Before completing the goal:
 - Run `git diff --check` across all files changed for the goal.
 - Review `git diff` for accidental scope, stale debug code, generated churn, and unchecked required work.
 - Update plan status to `finalizat`.
-- Reindex the final repository state when code or project files changed. Reuse the latest zero-warning index if no code or project file changed afterward.
 - Call `update_goal(status: "complete")`.
 - Report the completed batches, verification results, plan path, and final token usage returned by the goal tool.
 

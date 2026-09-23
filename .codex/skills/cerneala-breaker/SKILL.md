@@ -32,7 +32,7 @@ Do not waste the attack budget on naming, formatting, aesthetics, friendly diagn
 ## Operating Rules
 
 - Follow repository instructions and preserve the dirty worktree. Existing changes and failures are not yours.
-- Generate and read `FileTree.md` before broad repository reasoning. Use RoslynIndexer as the primary C# navigation tool and read complete source files before editing test or harness code.
+- Generate and read `FileTree.md` before broad repository reasoning. Use direct file reads and `rg` for text. Read complete source files before editing test or harness code.
 - Establish the documented or observable contract before calling behavior broken. Distinguish valid hostile use from invalid use that the API is allowed to reject.
 - Before adding a probe, record the baseline revision, dirty state, toolchain/runtime identity, applicable backend/platform/configuration, focused command, and broader command. Run the focused baseline when practical and capture duration, skips, retries, hangs, leaks, and known flakes instead of reducing it to pass/fail.
 - Classify every anomalous result as unclassified until evidence distinguishes a Cerneala defect, test defect, harness/environment defect, specification gap, or flake. Only Cerneala defects are indictments against the target.
@@ -40,7 +40,7 @@ Do not waste the attack budget on naming, formatting, aesthetics, friendly diagn
 - Do not implement production behavior changes or fixes outside Servo and Detective. This skill normally attacks and diagnoses; the self-repair policy below is the explicit exception.
 - For in-process Cerneala UI scenarios, use public `Cerneala.UI.Servo.Servo` for semantic queries, real input, and waits, and use `SaveScreenshotAsync` from a window-backed Servo for application-owned screenshots. Servo is the exclusive user-interaction path: do not invoke handlers directly or assign control state to imitate input.
 - Use the root-owned `UIRoot.Detective` surface before inventing probes for frame, input, layout, rendering, Aspect, Motion, invalidation, resource, or platform state.
-- Temporary production-source instrumentation is permitted only when a lower reproduction rung and existing Detective evidence cannot observe the real behavior. It must be narrowly scoped, explicitly opt-in, observational rather than corrective, add no public API, and be removed completely after evidence capture. Reindex after adding and removing it, then verify that the instrumented production files retain no audit-created diff. A permanent Detective addition satisfying the policy below is not temporary instrumentation.
+- Temporary production-source instrumentation is permitted only when a lower reproduction rung and existing Detective evidence cannot observe the real behavior. It must be narrowly scoped, explicitly opt-in, observational rather than corrective, add no public API, and be removed completely after evidence capture. Verify that the instrumented production files retain no audit-created diff. A permanent Detective addition satisfying the policy below is not temporary instrumentation.
 - Prefer temporary probes and harnesses during discovery. For every confirmed finding, replace or minimize the successful probe into a permanent regression test in the architecture-correct test project. Keep findings outside Servo and Detective intentionally RED at handoff; keep repaired Servo and Detective regressions GREEN. Remove only superseded exploratory artifacts.
 - Existing tests are repository evidence, not cleanup opportunities. Do not delete, consolidate, rewrite, quarantine, or weaken them under this skill. If an existing test is vacuous, flaky, order-dependent, or incapable of detecting the target failure, record that as an evidence limitation and add the smallest distinct regression needed for the confirmed Cerneala defect.
 - Never hide a finding with `Skip`, quarantine, conditional suppression, an expected-failure wrapper, weakened assertions, or an updated baseline that blesses the broken behavior. The resulting suite is deliberately red until the defect is fixed.
@@ -187,7 +187,7 @@ Severity follows impact and reproducibility, not how angry the prose sounds.
 
 ### 6. Clean up and report
 
-Remove temporary probes, reports, generated files, instrumentation, and superseded harness projects using exact validated paths. Preserve every permanent regression test, including GREEN Servo or Detective self-repair coverage, and any justified Detective diagnostic with its focused tests and documentation. Refresh the Roslyn index after C# or project-file changes, including cleanup. Confirm with `git status` that the retained audit changes are exactly those intended artifacts and that unrelated user changes are untouched.
+Remove temporary probes, reports, generated files, instrumentation, and superseded harness projects using exact validated paths. Preserve every permanent regression test, including GREEN Servo or Detective self-repair coverage, and any justified Detective diagnostic with its focused tests and documentation. Confirm with `git status` that the retained audit changes are exactly those intended artifacts and that unrelated user changes are untouched.
 
 Lead with a blunt verdict:
 

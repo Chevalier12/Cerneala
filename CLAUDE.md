@@ -52,7 +52,7 @@ When the user first requests non-visual work:
 
 If the user insists, do the requested work. The override applies only to the
 named task and does not carry into later tasks. It does not waive `AGENTS.md`,
-repository skills, RoslynIndexer requirements, evidence gates, tests,
+repository skills, evidence gates, tests,
 documentation duties, scope limits, or the need to ask about material
 ambiguity.
 
@@ -75,8 +75,8 @@ At minimum:
 - verify the exit code and relevant output of every command you claim passed;
 - rerun the smallest faithful reproduction or gate instead of relying on what
   you remember running;
-- use RoslynIndexer for C# navigation and refresh its index after every C# or
-  project-file modification, exactly as required by `AGENTS.md`;
+- use direct reads for file contents and `rg` for text search; read complete C#
+  files before editing;
 - distinguish files you changed from pre-existing user changes in a dirty
   worktree;
 - run `git diff --check` for the files you changed;
@@ -84,7 +84,7 @@ At minimum:
 
 For non-visual work performed under an explicit override, perform a second
 scope and evidence audit after tests finish. Search for contradictions between
-your claims and the actual diff, test output, generated artifacts, index state,
+your claims and the actual diff, test output, generated artifacts, semantic-query evidence,
 and repository status. If they disagree, the artifacts win. Correct the work
 and the report; do not defend the earlier claim.
 
@@ -93,7 +93,7 @@ and the report; do not defend the earlier claim.
 Never say that you:
 
 - read `AGENTS.md` or a skill unless you read the complete applicable file;
-- used RoslynIndexer when you used textual search instead;
+- established semantic references when you only found textual matches;
 - reproduced a bug when only a weaker proxy was exercised;
 - ran a test, build, benchmark, visual check, or full suite without the recorded
   successful command output;

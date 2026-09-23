@@ -18,17 +18,11 @@
 - `<collaboration_mode>` MUST NOT be treated as resolving ambiguity or authorizing assumptions about product intent, architecture, scope, destructive actions, or bug ownership.
 - When any of those are materially unclear, Codex MUST stop and ask before acting. Proceeding without clarification is a workflow violation. Unattended assumptions are allowed only for low-risk, reversible mechanical details and MUST be recorded explicitly.
 
-## Repository Search and Indexing (MANDATORY)
+## Repository Search and Navigation
 
-- Codex must use the RoslynIndexer CLI as the default and primary search/navigation tool for this repository.
-- Invoke it with `dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- <command>` from the repository root.
-- Use the CLI for indexing, status, search, read, partial read, go-to-definition, references, symbols, and doctor whenever it can answer the task.
-- Do not use `rg`, `grep`, shell directory scans, IDE search, or other search/navigation tools unless the RoslynIndexer CLI cannot answer that specific scenario.
-- Valid exceptions include CLI failure, non-indexable files, binary/generated artifacts where RoslynIndexer has no useful coverage, or troubleshooting RoslynIndexer itself.
+- Use direct reads for file contents and `rg` / `rg --files` for text search and file discovery; textual matches are not semantic reference evidence.
 - Before inspecting or reasoning about repository structure, run `.\Tools\scripts\New-FileTree.ps1` from the repository root, then read `FileTree.md` first.
-- After every code or project-file modification, re-index with `dotnet run --no-build --project .\Tools\RoslynRepoIndexer\src\RoslynRepoIndexer.Cli\RoslynRepoIndexer.Cli.csproj -- index .\Cerneala.slnx --json` so Codex stays current.
-- Before editing a C# file, use `ri read <filePath>` through the CLI to read the full file. Use `ri pread` only for targeted partial reads after the full context is known.
-- RoslynIndexer is read/search/index only. Do not expect shell execution or write-file capabilities from it.
+- Before editing a C# file, read the full file and relevant ownership context. Use targeted partial reads only after the full context is known.
 
 ## API Documentation (MANDATORY)
 

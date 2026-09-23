@@ -22,8 +22,8 @@ A clean Markdown file is not evidence that a plan is correct. Mechanical validat
 
 - Follow the repository `AGENTS.md` instructions.
 - Run `Tools/scripts/New-FileTree.ps1`, then read `FileTree.md` before inspecting structure.
-- Use RoslynRepoIndexer as the primary tool for status, search, symbols, definitions, references, and reads.
-- Refresh a stale Roslyn index before source reasoning. Do not plan against stale semantic data merely because search snippets look plausible.
+- Use direct file reads and `rg` for text.
+- Use semantic-query evidence from the current relevant source state; inspect warnings, workspace scope, and truncation. Do not plan against stale data or treat text matches as semantic reference evidence. Report unavailable required queries as blockers.
 - Inspect the relevant production code, tests, public API docs, and at least one current plan for local conventions.
 - Identify existing extension points before proposing new abstractions.
 - Read the complete definition of the primary type being changed and trace its ownership cone: all semantic callers, factories/composers, resource owners, lifecycle/disposal paths, failure paths, platform/native adapters, and at least one consumer outside the most recently discussed subsystem when one exists.
@@ -85,7 +85,6 @@ For each stage:
 - Describe observable behavior, not vague work such as "handle edge cases".
 - Include focused tests near the implementation tasks they validate. For changed behavior, require the smallest RED test and confirmation that it fails for the intended reason before production changes. Label existing GREEN behavior as characterization, not RED.
 - Add a `Gate` subsection with conditions that must be true before continuing.
-- Include Roslyn reindexing after future code or project-file modifications.
 - Include exact targeted and full-suite verification commands where useful.
 - Confirm that the current or explicitly planned harness can observe every gate. If instrumentation does not exist, plan instrumentation before the baseline and do not claim unavailable metrics.
 - Distinguish deterministic gates (draw counts, binds, invalidations, resource counts, API surface) from noisy measurements. Define warmup, repetitions, variation handling, and inconclusive results for timing gates.

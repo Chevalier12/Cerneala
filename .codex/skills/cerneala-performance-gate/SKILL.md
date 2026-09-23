@@ -48,7 +48,7 @@ Instrument production source temporarily when that is the narrowest faithful obs
 
 Keep the instrumentation observational and quantify its overhead. If a probe perturbs timing, allocations, synchronization, resource lifetime, output, or scheduling enough to invalidate the gate, replace it with a lower-overhead probe or measure in separate diagnostic and gate runs. Never mistake profiler overhead for product cost.
 
-This authority ends at relevance and observability: do not inspect unrelated subsystems for sport, bypass platform security, or claim visibility into proprietary driver internals that the available APIs and tools do not expose. Before final verification, remove every temporary source branch, shader change, hook, environment variable, harness, trace sink, assertion, native artifact, and generated report from the repository. Reindex and rebuild after cleanup, then confirm the instrumented files have no residual temporary diagnostic diff. Retain only permanent Detective additions that satisfy the policy below.
+This authority ends at relevance and observability: do not inspect unrelated subsystems for sport, bypass platform security, or claim visibility into proprietary driver internals that the available APIs and tools do not expose. Before final verification, remove every temporary source branch, shader change, hook, environment variable, harness, trace sink, assertion, native artifact, and generated report from the repository. Rebuild after cleanup, then confirm the instrumented files have no residual temporary diagnostic diff. Retain only permanent Detective additions that satisfy the policy below.
 
 ### Permanent Detective Diagnostics
 
@@ -128,7 +128,7 @@ Implement the smallest architecture-correct framework change that removes the ev
 - Do not pass by disabling an effect, reducing resolution or samples, skipping necessary work, deferring work beyond the measurement window, changing timing semantics, or weakening the gate.
 - Pool, cache, batch, or retain work only when ownership, invalidation, disposal, device loss, and bounded-growth behavior remain correct.
 - Avoid replacing measured cost with unmeasured retained memory, latency, GPU work, or startup work.
-- Reindex after C# or project-file modifications and follow the repository's source, test, and documentation rules.
+- Follow the repository's source, test, and documentation rules. Use direct reads and `rg` for text.
 
 When the correct solution requires a nontrivial algorithm choice, use the project algorithm-market workflow before committing to one. Do not add algorithmic machinery for an ordinary lifetime or invalidation bug.
 

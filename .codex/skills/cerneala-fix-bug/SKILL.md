@@ -18,9 +18,9 @@ Fix the reported behavior from reproduction through final verification. Treat th
 
 - Follow `AGENTS.md` and any narrower repository instructions.
 - Generate and read `FileTree.md` before reasoning about structure.
-- Use RoslynIndexer as the primary navigation and reading tool. Read a full C# file before editing it.
+- Use direct file reads and `rg` for text. Read a full C# file before editing it.
 - Locate the owning contract, callers, tests, documentation, and adjacent state transitions. Do not scan unrelated subsystems for sport.
-- Do not modify `AGENTS.md` or RoslynIndexer unless the bug explicitly concerns that tooling.
+- Do not modify `AGENTS.md` unless the bug explicitly concerns those instructions.
 
 ## 3. Reproduce Before Fixing
 
@@ -41,7 +41,7 @@ Prefer this over a separate harness when the bug belongs to an application view 
 5. Add temporary observations at the narrowest useful boundaries when still needed: event-handler phases, model mutation, invalidation, measure/arrange/render, frame hooks, allocations and GC counts, backend state, or relevant snapshots. Capture component, trigger, and owning-layer evidence separately.
 6. Run a bounded scenario, use Servo waits for the observable state actually required, write a concise structured report outside the repository, surface asynchronous failures, and close the window automatically.
 7. Keep temporary instrumentation observational. Do not mix a speculative fix into the probe or permanently alter product behavior merely to gather evidence.
-8. After capturing the result, remove every temporary branch, `Servo.Id`, probe, environment variable, report, and generated artifact. Re-index after source changes, rebuild, and verify the temporarily instrumented production files have no remaining diff. Permanent Detective additions approved by the policy below are retained and verified instead of cleaned up.
+8. After capturing the result, remove every temporary branch, `Servo.Id`, probe, environment variable, report, and generated artifact. Rebuild after source changes and verify the temporarily instrumented production files have no remaining diff. Permanent Detective additions approved by the policy below are retained and verified instead of cleaned up.
 
 Use a separate native runtime harness instead when direct instrumentation would distort the failing ownership boundary, cannot start the required host/backend, or would require broad product changes.
 
@@ -72,7 +72,6 @@ The harness supplies high-fidelity reproduction evidence; it does not replace th
 ### Harness Cleanup
 
 - Close the native window on success, failure, and timeout paths. Surface asynchronous exceptions in the report instead of silently hanging.
-- Reindex after creating, modifying, or deleting harness C# or project files, as required by `AGENTS.md`.
 - Delete only the exact resolved harness directory and its generated report after verification. Guard the resolved path before recursive deletion.
 - Confirm with `git status` that no harness source, project, binaries, or reports remain.
 - Never commit the temporary harness unless the user explicitly asks to promote it. If its observation has lasting framework value, apply the permanent Detective policy below instead of preserving an application-specific harness.
@@ -118,7 +117,6 @@ Servo and Detective are part of this workflow, not assumed-correct test equipmen
 - A justified permanent Detective diagnostic is a separate observability deliverable, not the behavioral fix. Keep its contract and verification distinct from the defect regression.
 - Preserve unrelated user changes in the working tree.
 - Keep public API documentation synchronized when the fix changes public behavior or surface area. Use the repository-mandated API documentation workflow.
-- Reindex after every code or project-file modification as required by `AGENTS.md`.
 
 ## 7. Verify in Layers
 
