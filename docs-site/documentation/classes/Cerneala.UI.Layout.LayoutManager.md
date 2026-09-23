@@ -52,12 +52,14 @@ For attached descendants that have a valid render cache, the same render depende
 
 For nested elements, a later measure reuses the last constraint received from the parent before falling back to the arranged bounds. This preserves infinite or partial panel constraints and prevents a resize from accidentally turning an unconstrained measure into a constrained one.
 
+For arrangement, a direct child of `UIRoot` uses the root's arranged bounds when they have positive width and height. When a viewport resize queues subtree arrangement, `UiFrameScheduler` arranges the root before its direct children, so those children observe the new bounds in the same frame. Nested children retain slots assigned by their parents.
+
 The default space rules are:
 
 | Case | Used space |
 | --- | --- |
 | The element is `UIRoot` | The root viewport. |
-| The visual parent is `UIRoot` | The root viewport. |
+| The visual parent is `UIRoot` | The root viewport for measurement; the root's arranged bounds for arrangement when available. |
 | The parent has `ArrangedBounds` with positive width and height | The size or rectangle of the parent. |
 | Child in a `Canvas` | Parent position plus `Canvas.GetLeft(element)` and `Canvas.GetTop(element)`, with size `DesiredSize`. |
 | There is no usable parent | The viewport is used for measurement; for arrangement, `DesiredSize` is used at the origin `(0, 0)`. |

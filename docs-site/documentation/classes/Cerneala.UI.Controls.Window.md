@@ -26,6 +26,8 @@ var window = new Window
 ## Remarks
 Window dimensions and constraints participate in measure; native state and resize settings are translated by the SDL hosting layer. Closing can be cancelled through the closing event args.
 
+After a native viewport size change, the window and stretching content are arranged against the new viewport in the same UI frame. A retained `RenderSurface3D` child therefore receives its new raster size when its arranged bounds change; resizing the window is not a camera mutation.
+
 `MaxWidth` and `MaxHeight` constrain the client area, including while the window is maximized. Both default to positive infinity, which means no explicit upper limit. Maximization does not temporarily remove a finite limit; a constrained maximized window may therefore be smaller than the monitor's work area.
 
 Each maximum is independent: a finite `MaxWidth` still applies when `MaxHeight` is positive infinity, and vice versa. The Windows native runtime enforces this for bordered and borderless windows.

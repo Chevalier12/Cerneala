@@ -1,4 +1,6 @@
 using Cerneala.Drawing;
+using Control = Cerneala.UI.Controls.Control;
+using Window = Cerneala.UI.Controls.Window;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
 using Cerneala.UI.Layout;
@@ -241,6 +243,41 @@ public sealed class LayoutManagerTests
         root.ProcessFrame();
 
         Assert.Equal(new LayoutRect(0, 0, 200, 150), child.ArrangedBounds);
+    }
+
+    [Fact]
+    public void ResizedWindowAndPlainContentFollowNewViewportInTheSameFrame()
+    {
+        UIRoot root = new(160, 120);
+        Control child = new();
+        Window window = new() { Width = 160, Height = 120, Content = child };
+        root.VisualChildren.Add(window);
+        root.ProcessFrame();
+        Assert.Equal(new LayoutRect(0, 0, 160, 120), child.ArrangedBounds);
+
+        window.Width = 240;
+        window.Height = 160;
+        root.SetViewport(240, 160, 1);
+        root.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange |
+            InvalidationFlags.Render | InvalidationFlags.HitTest | InvalidationFlags.Subtree,
+            "Viewport changed");
+        root.ProcessFrame();
+
+        Assert.Equal(new LayoutRect(0, 0, 240, 160), root.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 0, 240, 160), window.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 0, 240, 160), child.ArrangedBounds);
+
+        window.Width = 120;
+        window.Height = 80;
+        root.SetViewport(120, 80, 1);
+        root.Invalidate(InvalidationFlags.Measure | InvalidationFlags.Arrange |
+            InvalidationFlags.Render | InvalidationFlags.HitTest | InvalidationFlags.Subtree,
+            "Viewport changed");
+        root.ProcessFrame();
+
+        Assert.Equal(new LayoutRect(0, 0, 120, 80), root.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 0, 120, 80), window.ArrangedBounds);
+        Assert.Equal(new LayoutRect(0, 0, 120, 80), child.ArrangedBounds);
     }
 
     [Fact]

@@ -408,7 +408,8 @@ public sealed class UiFrameScheduler
 
                 LayoutQueueEntryKind kind = layoutQueue.GetArrangeKind(element);
                 if (processors.SupportsIncrementalMeasure && pass != 1 &&
-                    kind is LayoutQueueEntryKind.Propagated or LayoutQueueEntryKind.Subtree)
+                    kind is LayoutQueueEntryKind.Propagated or LayoutQueueEntryKind.Subtree &&
+                    !(pass == 0 && kind == LayoutQueueEntryKind.Subtree && element is Elements.UIRoot))
                 {
                     continue;
                 }
