@@ -1,0 +1,16 @@
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Release\net10.0-windows\Cerneala.Tests.PreviewHost.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:00.23]     Cerneala.Tests.PreviewHost.RenderSurface3DPreviewTests.PreviewInstantiatesPairedThreeDimensionalSurfaceWithSampleGeometry [FAIL]
+  Failed Cerneala.Tests.PreviewHost.RenderSurface3DPreviewTests.PreviewInstantiatesPairedThreeDimensionalSurfaceWithSampleGeometry [28 ms]
+  Error Message:
+   Assert.Equal() Failure: Strings differ
+           ↓ (pos 0)
+Expected: "Cerneala.SdlGpuSmoke.RenderSurface3DPrevi"···
+Actual:   "RenderSurface3DPreview"
+           ↑ (pos 0)
+  Stack Trace:
+     at Cerneala.Tests.PreviewHost.RenderSurface3DPreviewTests.PreviewInstantiatesPairedThreeDimensionalSurfaceWithSampleGeometry() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\RenderSurface3DPreviewTests.cs:line 18
+--- End of stack trace from previous location ---
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-24-scene-village-seams\integration\final-previewhost-focused-01\previewhost-render-surface3d-focused-01.trx
+
+Failed!  - Failed:     1, Passed:     0, Skipped:     0, Total:     1, Duration: 28 ms - Cerneala.Tests.PreviewHost.dll (net10.0)

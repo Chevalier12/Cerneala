@@ -1,0 +1,15 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  CernealaPresentation -> C:\Users\lauri\Desktop\Cerneala\CernealaPresentation\bin\Release\net8.0-windows\CernealaPresentation.dll
+  Cerneala.Scene2D.Packages -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Packages\bin\Release\net8.0\Cerneala.Scene2D.Packages.dll
+  Cerneala.Scene2D.Importers -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\bin\Release\net8.0\Cerneala.Scene2D.Importers.dll
+  Cerneala.Scene2D.PackageCompiler -> C:\Users\lauri\Desktop\Cerneala\Tools\Cerneala.Scene2D.PackageCompiler\bin\Release\net8.0\Cerneala.Scene2D.PackageCompiler.dll
+  Prepared 'C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldAssets\village.tmj' -> 'C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\obj\SceneWorldPackages\Release\net8.0-windows\tiled' (1 levels, 1 files).
+  SCN2D017: Known editor-only fields are not used at runtime. (C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldAssets\village.ldtk, $.defs.layers[0].autoRuleGroups)
+  Access to the path 'C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\obj\SceneWorldPackages\Release\net8.0-windows\.cerneala-package-e1389155b00b4e78a4dd072dcee115fe' is denied.
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackages.targets(21,5): error MSB3073: The command "dotnet "C:\Users\lauri\Desktop\Cerneala\Tools\Cerneala.Scene2D.PackageCompiler\bin\Release\net8.0\Cerneala.Scene2D.PackageCompiler.dll" ldtk "C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground/SceneWorldAssets/village.ldtk" "C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground/SceneWorldAssets" "C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\obj\SceneWorldPackages\Release\net8.0-windows/ldtk"" exited with code 1. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\Cerneala.Playground.csproj]

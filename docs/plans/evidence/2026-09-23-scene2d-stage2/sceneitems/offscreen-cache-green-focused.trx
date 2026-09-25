@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="64b2d9da-25b7-45dc-8d83-86e95e3b7e0d" name="lauri@DESKTOP-JT43V3D 2026-09-24 08:07:48" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T08:07:48.6335538+03:00" queuing="2026-09-24T08:07:48.6335542+03:00" start="2026-09-24T08:07:43.1613839+03:00" finish="2026-09-24T08:07:48.6506785+03:00" />
+  <TestSettings name="default" id="c1e3e67f-4408-468c-aab4-a9c135938b58">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_08_07_48" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="f2c73c7b-22f1-40ba-b829-70f784ab1838" testId="88e8c11d-9434-21fd-e5ef-2b50bf0e8d50" testName="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.ColliderOutsideSpriteVisualRemainsPickableWithoutReloadingImage(transformed: True)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0180961" startTime="2026-09-24T08:07:48.3944514+03:00" endTime="2026-09-24T08:07:48.3944518+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f2c73c7b-22f1-40ba-b829-70f784ab1838" />
+    <UnitTestResult executionId="5be8febe-3caa-48e3-8dd4-ea723429d97b" testId="6a8fc8a9-ed75-d648-d2d3-727a13940469" testName="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.PointerMissOutsideAnOffscreenSpriteDoesNotReloadItsImage(transformed: False)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0042091" startTime="2026-09-24T08:07:48.3742486+03:00" endTime="2026-09-24T08:07:48.3742491+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5be8febe-3caa-48e3-8dd4-ea723429d97b" />
+    <UnitTestResult executionId="69ca383c-59d1-4741-880c-a04902b7ccbd" testId="c80d3213-d890-58a1-6f2c-e2030da3d36d" testName="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.PointerMissOutsideAnOffscreenSpriteDoesNotReloadItsImage(transformed: True)" computerName="DESKTOP-JT43V3D" duration="00:00:00.7428722" startTime="2026-09-24T08:07:48.3613734+03:00" endTime="2026-09-24T08:07:48.3614284+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="69ca383c-59d1-4741-880c-a04902b7ccbd" />
+    <UnitTestResult executionId="2c5420b3-2c5c-4098-9eb7-ebd52944963e" testId="97c05e03-42c1-6708-eb94-05eb16f1f1e8" testName="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.ColliderOutsideSpriteVisualRemainsPickableWithoutReloadingImage(transformed: False)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0031112" startTime="2026-09-24T08:07:48.3979301+03:00" endTime="2026-09-24T08:07:48.3979310+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2c5420b3-2c5c-4098-9eb7-ebd52944963e" />
+    <UnitTestResult executionId="62ba246f-b0de-462c-95d9-8046ab6405bb" testId="f9eb3f14-2e51-3a4b-f8aa-24e97f3430b6" testName="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.OffscreenRealizedSpriteReleasesItsImageAndReloadsOnReturn" computerName="DESKTOP-JT43V3D" duration="00:00:00.0175839" startTime="2026-09-24T08:07:48.4158405+03:00" endTime="2026-09-24T08:07:48.4158410+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="62ba246f-b0de-462c-95d9-8046ab6405bb" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.ColliderOutsideSpriteVisualRemainsPickableWithoutReloadingImage(transformed: False)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="97c05e03-42c1-6708-eb94-05eb16f1f1e8">
+      <Execution id="2c5420b3-2c5c-4098-9eb7-ebd52944963e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests" name="ColliderOutsideSpriteVisualRemainsPickableWithoutReloadingImage" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.PointerMissOutsideAnOffscreenSpriteDoesNotReloadItsImage(transformed: False)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="6a8fc8a9-ed75-d648-d2d3-727a13940469">
+      <Execution id="5be8febe-3caa-48e3-8dd4-ea723429d97b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests" name="PointerMissOutsideAnOffscreenSpriteDoesNotReloadItsImage" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.OffscreenRealizedSpriteReleasesItsImageAndReloadsOnReturn" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="f9eb3f14-2e51-3a4b-f8aa-24e97f3430b6">
+      <Execution id="62ba246f-b0de-462c-95d9-8046ab6405bb" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests" name="OffscreenRealizedSpriteReleasesItsImageAndReloadsOnReturn" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.ColliderOutsideSpriteVisualRemainsPickableWithoutReloadingImage(transformed: True)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="88e8c11d-9434-21fd-e5ef-2b50bf0e8d50">
+      <Execution id="f2c73c7b-22f1-40ba-b829-70f784ab1838" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests" name="ColliderOutsideSpriteVisualRemainsPickableWithoutReloadingImage" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.PointerMissOutsideAnOffscreenSpriteDoesNotReloadItsImage(transformed: True)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="c80d3213-d890-58a1-6f2c-e2030da3d36d">
+      <Execution id="69ca383c-59d1-4741-880c-a04902b7ccbd" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests" name="PointerMissOutsideAnOffscreenSpriteDoesNotReloadItsImage" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="88e8c11d-9434-21fd-e5ef-2b50bf0e8d50" executionId="f2c73c7b-22f1-40ba-b829-70f784ab1838" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6a8fc8a9-ed75-d648-d2d3-727a13940469" executionId="5be8febe-3caa-48e3-8dd4-ea723429d97b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c80d3213-d890-58a1-6f2c-e2030da3d36d" executionId="69ca383c-59d1-4741-880c-a04902b7ccbd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="97c05e03-42c1-6708-eb94-05eb16f1f1e8" executionId="2c5420b3-2c5c-4098-9eb7-ebd52944963e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f9eb3f14-2e51-3a4b-f8aa-24e97f3430b6" executionId="62ba246f-b0de-462c-95d9-8046ab6405bb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="5" executed="5" passed="5" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.81]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:02.58]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:02.61]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:03.58]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

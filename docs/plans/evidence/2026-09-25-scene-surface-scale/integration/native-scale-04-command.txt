@@ -1,0 +1,3 @@
+CERNEALA_SDL_NATIVE_TESTS=1
+DefaultItemExcludesInProjectFolder=artifacts/**
+dotnet test tests/Cerneala.Tests.SceneVillage/Cerneala.Tests.SceneVillage.csproj --configuration Release --no-restore -p:DefaultItemExcludesInProjectFolder=artifacts/** --filter FullyQualifiedName~NativeVillageScaleTests --results-directory docs/plans/evidence/2026-09-25-scene-surface-scale/integration --logger "trx;LogFileName=native-scale-04.trx"

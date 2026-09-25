@@ -48,6 +48,8 @@ internal sealed class SdlGpuDrawingResources :
     private nint vertexShader;
     private nint fragmentShader;
     private nint prismPresentationShader;
+    private nint imageDomainVertexShader;
+    private nint imageDomainFragmentShader;
     private long nextTextAtlasFrameToken;
     private SdlGpuPrismDeviceResources? prismResources;
     private SdlGpuRenderSurface3DDeviceResources? surface3DResources;
@@ -102,10 +104,24 @@ internal sealed class SdlGpuDrawingResources :
         SdlGpuStencilMode stencilMode,
         SdlGpuColorWriteMask colorWriteMask = SdlGpuColorWriteMask.All,
         bool alphaMask = false,
-        bool prismPresentation = false)
+        bool prismPresentation = false,
+        bool pointClampImageDomain = false)
     {
         ThrowIfDisposed();
-        EnsureShaders();
+        if (pointClampImageDomain && prismPresentation)
+        {
+            throw new ArgumentException(
+                "Prism presentation cannot use the image-domain drawing pipeline.",
+                nameof(pointClampImageDomain));
+        }
+        if (pointClampImageDomain)
+        {
+            EnsureImageDomainShaders();
+        }
+        else
+        {
+            EnsureShaders();
+        }
         SdlGpuPipelineKey key = new(
             colorFormat,
             sampleCount,
@@ -114,7 +130,8 @@ internal sealed class SdlGpuDrawingResources :
             stencilMode,
             colorWriteMask,
             alphaMask,
-            prismPresentation);
+            prismPresentation,
+            pointClampImageDomain);
         if (pipelines.TryGetValue(key, out nint cached))
         {
             return cached;
@@ -127,8 +144,10 @@ internal sealed class SdlGpuDrawingResources :
                 SdlGpuShaderArtifacts.PrismPresentationFragment);
         }
         SdlGpuGraphicsPipelineCreateInfo createInfo = new(
-            vertexShader,
-            prismPresentation ? prismPresentationShader : fragmentShader,
+            pointClampImageDomain ? imageDomainVertexShader : vertexShader,
+            pointClampImageDomain
+                ? imageDomainFragmentShader
+                : prismPresentation ? prismPresentationShader : fragmentShader,
             colorFormat,
             SdlGpuTextureFormat.D24UnormS8Uint,
             sampleCount,
@@ -141,7 +160,9 @@ internal sealed class SdlGpuDrawingResources :
                     SdlGpuBlendFactor.Zero, SdlGpuBlendFactor.SourceAlpha, SdlGpuBlendOperation.Add)
                 : ToBlendState(blendMode),
             stencilMode,
-            SdlGpuVertexInputDescription.Drawing2D,
+            pointClampImageDomain
+                ? SdlGpuVertexInputDescription.Drawing2DImageDomain
+                : SdlGpuVertexInputDescription.Drawing2D,
             SdlGpuDepthState.Disabled,
             colorWriteMask);
         nint pipeline = RequireHandle(
@@ -920,6 +941,11 @@ internal sealed class SdlGpuDrawingResources :
             api.ReleaseGpuShader(device, fragmentShader);
             fragmentShader = 0;
         }
+        if (imageDomainFragmentShader != 0)
+        {
+            api.ReleaseGpuShader(device, imageDomainFragmentShader);
+            imageDomainFragmentShader = 0;
+        }
         if (prismPresentationShader != 0)
         {
             api.ReleaseGpuShader(device, prismPresentationShader);
@@ -929,6 +955,11 @@ internal sealed class SdlGpuDrawingResources :
         {
             api.ReleaseGpuShader(device, vertexShader);
             vertexShader = 0;
+        }
+        if (imageDomainVertexShader != 0)
+        {
+            api.ReleaseGpuShader(device, imageDomainVertexShader);
+            imageDomainVertexShader = 0;
         }
     }
 
@@ -1392,6 +1423,34 @@ internal sealed class SdlGpuDrawingResources :
         }
     }
 
+    private void EnsureImageDomainShaders()
+    {
+        if (imageDomainVertexShader != 0)
+        {
+            return;
+        }
+
+        imageDomainVertexShader = SdlGpuShaderArtifacts.CreateShader(
+            api,
+            device,
+            supportedShaderFormats,
+            SdlGpuShaderArtifacts.DrawingImageDomainVertex);
+        try
+        {
+            imageDomainFragmentShader = SdlGpuShaderArtifacts.CreateShader(
+                api,
+                device,
+                supportedShaderFormats,
+                SdlGpuShaderArtifacts.DrawingImageDomainFragment);
+        }
+        catch
+        {
+            api.ReleaseGpuShader(device, imageDomainVertexShader);
+            imageDomainVertexShader = 0;
+            throw;
+        }
+    }
+
     private void RetireTexture(nint texture)
     {
         deferredIdleSampledTextures.Remove(texture);
@@ -1824,7 +1883,8 @@ internal readonly record struct SdlGpuPipelineKey(
     SdlGpuStencilMode StencilMode,
     SdlGpuColorWriteMask ColorWriteMask,
     bool AlphaMask = false,
-    bool PrismPresentation = false);
+    bool PrismPresentation = false,
+    bool PointClampImageDomain = false);
 
 internal readonly record struct SdlGpuSamplerKey(
     DrawSamplingMode Sampling,

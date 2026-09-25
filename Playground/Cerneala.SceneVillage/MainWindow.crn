@@ -1,0 +1,56 @@
+<Window
+    xmlns:local="clr-namespace:Cerneala.SceneVillage"
+    Title="Cerneala Scene Village — SDL_GPU"
+    Width="1240"
+    Height="800"
+    MinWidth="820"
+    MinHeight="600"
+    WindowStartupLocation="CenterScreen"
+    Focusable="True"
+    PreviewKeyDown="OnPreviewKeyDown"
+    PreviewKeyUp="OnPreviewKeyUp"
+    Deactivated="OnDeactivated"
+    FrameRendered="OnFrameRendered"
+    Background="#FF162116">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="100" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="56" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="16,4,16,4">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Orientation="Horizontal">
+                <TextBlock Text="SCENE VILLAGE" FontSize="24" Foreground="#FFF2F5DD" Margin="0,8,20,0" />
+                <Button Name="StaticButton" Content="Static" Click="OnStaticClick" Margin="0,2,6,2" Padding="10,4,10,4" />
+                <Button Name="AnimatedButton" Content="Animated" Click="OnAnimatedClick" Margin="0,2,6,2" Padding="10,4,10,4" />
+                <Button Name="CollisionButton" Content="Collision" Click="OnCollisionClick" Margin="0,2,0,2" Padding="10,4,10,4" />
+            </StackPanel>
+            <StackPanel Grid.Row="1" Orientation="Horizontal">
+                <Button Name="CountZeroButton" Content="0" Click="OnCountZeroClick" Margin="0,2,6,2" Padding="10,4,10,4" />
+                <Button Name="CountHundredButton" Content="100" Click="OnCountHundredClick" Margin="0,2,6,2" Padding="10,4,10,4" />
+                <Button Name="CountThousandButton" Content="1k" Click="OnCountThousandClick" Margin="0,2,6,2" Padding="10,4,10,4" />
+                <Button Name="CountTenThousandButton" Content="10k" Click="OnCountTenThousandClick" Margin="0,2,16,2" Padding="10,4,10,4" />
+                <Button Name="FieldButton" Content="Stress field" Click="OnFieldClick" Margin="0,2,6,2" Padding="10,4,10,4" />
+                <Button Name="VillageButton" Content="Village" Click="OnVillageClick" Margin="0,2,0,2" Padding="10,4,10,4" />
+            </StackPanel>
+        </Grid>
+
+        <Border Grid.Row="1" Margin="12,0,12,0" BorderBrush="#FF364E31" BorderThickness="2">
+            <local:VillageGameSurface Name="GameSurface" ContentScale="1" />
+        </Border>
+
+        <Grid Grid.Row="2" Margin="16,6,16,6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Name="StatusText" Grid.Column="0" Text="Static decor — requested 0 / realized 0" FontSize="16" Foreground="#FFF2F5DD" />
+            <TextBlock Grid.Column="1" Text="WASD move · R returns to village" FontSize="14" Foreground="#FFB8C9AC" />
+        </Grid>
+    </Grid>
+</Window>

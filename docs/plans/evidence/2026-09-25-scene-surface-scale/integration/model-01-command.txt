@@ -1,0 +1,2 @@
+DefaultItemExcludesInProjectFolder=artifacts/**
+dotnet test tests/Cerneala.Tests.SceneVillage/Cerneala.Tests.SceneVillage.csproj --configuration Release --no-restore -p:DefaultItemExcludesInProjectFolder=artifacts/** --filter "FullyQualifiedName~VillageModelTests|FullyQualifiedName~VillageScaleContractTests" --results-directory docs/plans/evidence/2026-09-25-scene-surface-scale/integration --logger "trx;LogFileName=model-01.trx"

@@ -1,0 +1,23 @@
+{
+  "Items": {
+    "AdditionalFiles": [
+      {
+        "Identity": "Cerneala.SourceGen\\Prism\\Catalog\\prism-catalog.json",
+        "FullPath": "C:\\Users\\lauri\\Desktop\\Cerneala\\Cerneala.SourceGen\\Prism\\Catalog\\prism-catalog.json",
+        "RootDir": "C:\\",
+        "Filename": "prism-catalog",
+        "Extension": ".json",
+        "RelativeDir": "Cerneala.SourceGen\\Prism\\Catalog\\",
+        "Directory": "Users\\lauri\\Desktop\\Cerneala\\Cerneala.SourceGen\\Prism\\Catalog\\",
+        "RecursiveDir": "",
+        "ModifiedTime": "2026-09-08 15:48:14.2038778",
+        "CreatedTime": "2026-08-22 17:39:52.9543353",
+        "AccessedTime": "2026-09-24 02:59:36.0213631",
+        "DefiningProjectFullPath": "C:\\Users\\lauri\\Desktop\\Cerneala\\Cerneala.csproj",
+        "DefiningProjectDirectory": "C:\\Users\\lauri\\Desktop\\Cerneala\\",
+        "DefiningProjectName": "Cerneala",
+        "DefiningProjectExtension": ".csproj"
+      }
+    ]
+  }
+}

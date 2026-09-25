@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="0df3807d-6975-48da-8cfc-fbd50cab70c0" name="lauri@DESKTOP-JT43V3D 2026-09-25 06:38:12" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-25T06:38:12.2541846+03:00" queuing="2026-09-25T06:38:12.2541849+03:00" start="2026-09-25T06:38:06.6692078+03:00" finish="2026-09-25T06:38:13.0101613+03:00" />
+  <TestSettings name="default" id="13ea8c7a-593d-4093-ae46-69e69e4c3eb1">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-25_06_38_12" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="6faa3c65-6de7-4824-8de7-87f0e57521f9" testId="3addee9a-f852-8383-6272-2b7404dcb894" testName="Cerneala.Tests.SdlGpu.NativeImageDomainWarmMeasurements.WarmImageWorkloadsRecordNativeCpuSubmissionAndCurrentThreadAllocations" computerName="DESKTOP-JT43V3D" duration="00:00:03.7453105" startTime="2026-09-25T06:38:12.2230716+03:00" endTime="2026-09-25T06:38:12.2230910+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6faa3c65-6de7-4824-8de7-87f0e57521f9">
+      <Output>
+        <StdOut>Native SDL, quads=1024, warmup=32, measured=20, frame=256x256. CPU time includes BeginFrame, backend Render, and CompleteFrame(present: false); it is not GPU time or a swapchain presentation measurement. Allocated bytes are for the measured thread only. No GPU readback occurs in the measured path.&#xD;
+ordinary Linear+Clamp images: native CPU ms min/median/p95/max=2.806/3.992/6.670/7.006; current-thread allocated bytes min/median/p95/max=760/760/760/760; vertexBytes=131072; submissions=1024; merged=1023; draws=1; pipelineBinds=1; samplerBinds=1.&#xD;
+ordinary Linear+Clamp images: CPU ms samples=[4.116, 2.806, 3.383, 3.480, 3.925, 7.006, 4.066, 3.555, 4.561, 6.670, 3.990, 3.955, 4.048, 3.871, 4.049, 4.007, 4.256, 3.610, 3.995, 3.744]&#xD;
+ordinary Linear+Clamp images: current-thread allocation samples=[760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760]&#xD;
+Point+Clamp images: native CPU ms min/median/p95/max=3.151/3.413/4.154/4.581; current-thread allocated bytes min/median/p95/max=760/760/784/784; vertexBytes=262144; submissions=1024; merged=1023; draws=1; pipelineBinds=1; samplerBinds=1.&#xD;
+Point+Clamp images: CPU ms samples=[3.251, 4.154, 4.581, 3.401, 3.257, 3.378, 3.603, 3.692, 3.563, 3.689, 3.246, 3.425, 3.320, 3.362, 3.453, 3.151, 3.213, 3.513, 3.287, 3.565]&#xD;
+Point+Clamp images: current-thread allocation samples=[760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 784, 784, 784, 784]&#xD;
+alternating Linear/Point images: native CPU ms min/median/p95/max=1.894/2.325/3.496/3.986; current-thread allocated bytes min/median/p95/max=784/784/784/784; vertexBytes=196608; submissions=1024; merged=0; draws=1024; pipelineBinds=1024; samplerBinds=1024.&#xD;
+alternating Linear/Point images: CPU ms samples=[1.907, 2.084, 1.940, 1.896, 2.031, 1.971, 2.543, 2.240, 3.496, 3.485, 3.056, 2.410, 3.986, 2.973, 3.052, 3.098, 2.954, 1.979, 1.894, 2.101]&#xD;
+alternating Linear/Point images: current-thread allocation samples=[784, 784, 784, 784, 784, 784, 784, 784, 784, 784, 784, 784, 784, 784, 784, 784, 784, 784, 784, 784]&#xD;
+alternating Point images/authored quads, same sampler: native CPU ms min/median/p95/max=0.856/0.946/1.164/1.387; current-thread allocated bytes min/median/p95/max=760/760/760/760; vertexBytes=196608; submissions=1024; merged=0; draws=1024; pipelineBinds=1024; samplerBinds=1024.&#xD;
+alternating Point images/authored quads, same sampler: CPU ms samples=[0.997, 0.934, 0.891, 0.887, 1.164, 1.151, 0.958, 0.905, 0.893, 0.886, 0.884, 1.019, 1.001, 1.387, 1.005, 0.882, 0.904, 0.856, 1.060, 1.116]&#xD;
+alternating Point images/authored quads, same sampler: current-thread allocation samples=[760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760]&#xD;
+GPU time: unavailable; no GPU timestamp query is used.</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="324c1235-0e7c-4cb3-bb20-9cf99859324a" testId="5d4d76a2-8339-848a-35b7-9d6ea599ddda" testName="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Native_device_creates_drawing_and_prism_pipelines_from_offline_artifacts" computerName="DESKTOP-JT43V3D" duration="00:00:00.6952061" startTime="2026-09-25T06:38:12.9196856+03:00" endTime="2026-09-25T06:38:12.9196859+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="324c1235-0e7c-4cb3-bb20-9cf99859324a" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeImageDomainWarmMeasurements.WarmImageWorkloadsRecordNativeCpuSubmissionAndCurrentThreadAllocations" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="3addee9a-f852-8383-6272-2b7404dcb894">
+      <Execution id="6faa3c65-6de7-4824-8de7-87f0e57521f9" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeImageDomainWarmMeasurements" name="WarmImageWorkloadsRecordNativeCpuSubmissionAndCurrentThreadAllocations" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Native_device_creates_drawing_and_prism_pipelines_from_offline_artifacts" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="5d4d76a2-8339-848a-35b7-9d6ea599ddda">
+      <Execution id="324c1235-0e7c-4cb3-bb20-9cf99859324a" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests" name="Native_device_creates_drawing_and_prism_pipelines_from_offline_artifacts" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="3addee9a-f852-8383-6272-2b7404dcb894" executionId="6faa3c65-6de7-4824-8de7-87f0e57521f9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5d4d76a2-8339-848a-35b7-9d6ea599ddda" executionId="324c1235-0e7c-4cb3-bb20-9cf99859324a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="2" executed="2" passed="2" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.19]   Discovering: Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:00.96]   Discovered:  Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:00.97]   Starting:    Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:05.47]   Finished:    Cerneala.Tests.SdlGpu&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

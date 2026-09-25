@@ -1,0 +1,27 @@
+<Project DefaultTargets="CompareCore">
+  <PropertyGroup>
+    <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../../../../../'))</RepoRoot>
+    <SdkRoot>$([System.IO.Path]::GetFullPath('$(MSBuildSDKsPath)/..'))</SdkRoot>
+    <TaskAssembly>$(SdkRoot)/Sdks/Microsoft.NET.Sdk/tools/net10.0/Microsoft.DotNet.ApiCompat.Task.dll</TaskAssembly>
+    <RoslynAssembliesPath>$(SdkRoot)/Roslyn/bincore</RoslynAssembliesPath>
+    <CoreBaseline>$(MSBuildThisFileDirectory)pre-sampling-api/Cerneala.dll</CoreBaseline>
+    <CoreCandidate>$(RepoRoot)/bin/Release/net8.0/Cerneala.dll</CoreCandidate>
+  </PropertyGroup>
+
+  <UsingTask TaskName="Microsoft.DotNet.ApiCompat.Task.ValidateAssembliesTask"
+             AssemblyFile="$(TaskAssembly)" />
+
+  <Target Name="CompareCore">
+    <Error Condition="!Exists('$(CoreBaseline)')" Text="Missing current frozen Core baseline: $(CoreBaseline)" />
+    <Error Condition="!Exists('$(CoreCandidate)')" Text="Missing current Core candidate: $(CoreCandidate)" />
+
+    <ValidateAssembliesTask
+      LeftAssemblies="$(CoreBaseline)"
+      RightAssemblies="$(CoreCandidate)"
+      RoslynAssembliesPath="$(RoslynAssembliesPath)"
+      EnableStrictMode="true"
+      EnableRuleCannotChangeParameterName="true"
+      GenerateSuppressionFile="false"
+      RespectInternals="false" />
+  </Target>
+</Project>

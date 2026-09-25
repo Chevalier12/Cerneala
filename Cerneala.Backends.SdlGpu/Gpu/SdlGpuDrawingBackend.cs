@@ -606,15 +606,17 @@ internal sealed partial class SdlGpuDrawingBackend :
         }
         Color tint = DrawImageGeometry.EffectiveTint(options);
         SdlGpuTextureResource texture = GetImageTexture(image);
-        Span<SdlGpuVertex> vertices = batches.Allocate(
-            4,
-            QuadIndices,
-            CreateBatchKey(
-                DrawPrimitiveTopology.TriangleList,
-                texture.Handle,
-                options.Sampling,
-                options.AddressMode,
-                state));
+        bool imageDomain = IsPointClampImage(options.Sampling, options.AddressMode);
+        CerberusBatchKey key = CreateBatchKey(
+            DrawPrimitiveTopology.TriangleList,
+            texture.Handle,
+            options.Sampling,
+            options.AddressMode,
+            state,
+            pointClampImageDomain: imageDomain);
+        Span<SdlGpuVertex> vertices = imageDomain
+            ? stackalloc SdlGpuVertex[4]
+            : batches.Allocate(4, QuadIndices, key);
         DrawRect destination = command.Rect;
         vertices[0] = CreateVertex(
             DrawImageGeometry.TransformDestinationPoint(image, destination, options, 0, 0),
@@ -655,6 +657,19 @@ internal sealed partial class SdlGpuDrawingBackend :
             tint,
             state.Transform,
             state.Opacity);
+        if (imageDomain)
+        {
+            Span<SdlGpuImageDomainVertex> selected =
+                batches.AllocateImageDomain(4, QuadIndices, key);
+            for (int index = 0; index < 4; index++)
+            {
+                SdlGpuVertex vertex = vertices[index];
+                selected[index] = new SdlGpuImageDomainVertex(
+                    vertex.Position, vertex.TextureCoordinate, vertex.Color,
+                    default, default);
+            }
+            WriteImageDomain(selected, nineSlice: false);
+        }
     }
 
     private void AddCommandMesh(
@@ -674,6 +689,11 @@ internal sealed partial class SdlGpuDrawingBackend :
                 image,
                 options.Sampling,
                 options.AddressMode,
+                command.Kind == DrawCommandKind.DrawNineSlice ||
+                    command.Kind == DrawCommandKind.DrawSpriteBatch ||
+                    (command.Kind == DrawCommandKind.DrawImageQuad &&
+                        mesh.IsOptionsImageQuad),
+                command.Kind == DrawCommandKind.DrawNineSlice,
                 state,
                 batches);
             return;
@@ -708,19 +728,47 @@ internal sealed partial class SdlGpuDrawingBackend :
         IDrawImage image,
         DrawSamplingMode sampling,
         DrawAddressMode addressMode,
+        bool imageProvenance,
+        bool nineSlice,
         RenderState state,
         Cerberus batches)
     {
         SdlGpuTextureResource texture = GetImageTexture(image);
+        bool imageDomain = imageProvenance &&
+            topology == DrawPrimitiveTopology.TriangleList &&
+            IsPointClampImage(sampling, addressMode);
+        CerberusBatchKey key = CreateBatchKey(
+            topology,
+            texture.Handle,
+            sampling,
+            addressMode,
+            state,
+            pointClampImageDomain: imageDomain);
+        if (imageDomain)
+        {
+            Span<SdlGpuImageDomainVertex> selected =
+                batches.AllocateImageDomain(sourceVertices.Length, sourceIndices, key);
+            for (int index = 0; index < selected.Length; index++)
+            {
+                DrawVertex2D source = sourceVertices[index];
+                SdlGpuVertex vertex = CreateVertex(
+                    source.Position,
+                    source.TextureCoordinate,
+                    source.Color,
+                    state.Transform,
+                    state.Opacity);
+                selected[index] = new SdlGpuImageDomainVertex(
+                    vertex.Position, vertex.TextureCoordinate, vertex.Color,
+                    default, default);
+            }
+            WriteImageDomain(selected, nineSlice);
+            return;
+        }
+
         Span<SdlGpuVertex> vertices = batches.Allocate(
             sourceVertices.Length,
             sourceIndices,
-            CreateBatchKey(
-                topology,
-                texture.Handle,
-                sampling,
-                addressMode,
-                state));
+            key);
         for (int i = 0; i < vertices.Length; i++)
         {
             DrawVertex2D source = sourceVertices[i];
@@ -730,6 +778,58 @@ internal sealed partial class SdlGpuDrawingBackend :
                 source.Color,
                 state.Transform,
                 state.Opacity);
+        }
+    }
+
+    private static bool IsPointClampImage(
+        DrawSamplingMode sampling,
+        DrawAddressMode addressMode) =>
+        sampling == DrawSamplingMode.Point && addressMode == DrawAddressMode.Clamp;
+
+    private static void WriteImageDomain(
+        Span<SdlGpuImageDomainVertex> vertices,
+        bool nineSlice)
+    {
+        if (nineSlice)
+        {
+            WriteImageDomainQuad(vertices, 0, 3, 15, 12, 0, vertices.Length);
+            return;
+        }
+
+        for (int first = 0; first < vertices.Length; first += 4)
+        {
+            WriteImageDomainQuad(
+                vertices, first, first + 1, first + 2, first + 3, first, 4);
+        }
+    }
+
+    private static void WriteImageDomainQuad(
+        Span<SdlGpuImageDomainVertex> vertices,
+        int q0,
+        int q1,
+        int q2,
+        int q3,
+        int first,
+        int count)
+    {
+        if (!SdlGpuImageDomainGeometry.TryCreate(
+            vertices[q0].Position,
+            vertices[q1].Position,
+            vertices[q2].Position,
+            vertices[q3].Position,
+            out SdlGpuImageDomainGeometry geometry))
+        {
+            // Both constituent triangles have zero area and emit no fragments.
+            return;
+        }
+
+        for (int index = first; index < first + count; index++)
+        {
+            vertices[index] = vertices[index] with
+            {
+                FirstCorners = geometry.FirstCorners,
+                LastCorners = geometry.LastCorners
+            };
         }
     }
 
@@ -827,7 +927,8 @@ internal sealed partial class SdlGpuDrawingBackend :
         DrawSamplingMode sampling,
         DrawAddressMode addressMode,
         RenderState state,
-        SdlGpuColorWriteMask colorWriteMask = SdlGpuColorWriteMask.All) =>
+        SdlGpuColorWriteMask colorWriteMask = SdlGpuColorWriteMask.All,
+        bool pointClampImageDomain = false) =>
         new(
             topology,
             texture,
@@ -837,7 +938,8 @@ internal sealed partial class SdlGpuDrawingBackend :
             state.StencilMode,
             state.StencilDepth,
             state.Scissor,
-            colorWriteMask);
+            colorWriteMask,
+            PointClampImageDomain: pointClampImageDomain);
 
     private void AddText(
         DrawCommand command,

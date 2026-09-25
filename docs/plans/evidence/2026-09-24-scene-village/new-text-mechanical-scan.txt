@@ -1,0 +1,3 @@
+scanned_text_files=20
+whitespace_or_conflict_issues=0
+excluded_immutable_original_license=Playground/Cerneala.SceneVillage/Assets/Kenney-TinyTown-License.txt line 1 is an original whitespace-only tab; preserved byte-for-byte

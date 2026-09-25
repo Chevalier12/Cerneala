@@ -3,19 +3,13 @@ using Cerneala.Drawing;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Invalidation;
-using Cerneala.UI.Markup;
 using Cerneala.UI.Rendering;
 using Cerneala.UI.Resources;
 
 namespace Cerneala.UI.Controls;
 
-[ContentProperty(nameof(Source))]
-public sealed partial class TileMap2D : SceneNode2D, ISceneSpatialParticipant2D
+public sealed partial class TileMap2D : SceneNode2D, ISceneSpatialParticipant2D, IAsyncDisposable
 {
-    public static readonly UiProperty<TileMapSource2D?> SourceProperty =
-        UiProperty<TileMapSource2D?>.Register(nameof(Source), typeof(TileMap2D),
-            new UiPropertyMetadata<TileMapSource2D?>(null, UiPropertyOptions.AffectsRender));
-
     public static readonly UiProperty<DrawPoint> OffsetProperty =
         UiProperty<DrawPoint>.Register(nameof(Offset), typeof(TileMap2D),
             new UiPropertyMetadata<DrawPoint>(default, UiPropertyOptions.AffectsRender));
@@ -31,10 +25,38 @@ public sealed partial class TileMap2D : SceneNode2D, ISceneSpatialParticipant2D
     private readonly Dictionary<ImageReference, ResolvedAtlas> resolvedAtlases = [];
     private readonly Dictionary<string, DrawSize> resolvedAtlasSizes = new(StringComparer.Ordinal);
     private readonly HashSet<ImageReference> requiredImageKeys = [];
+    private TileMapSource2D? source;
     private int tileInvalidations;
     private TileMap2DDiagnosticsSnapshot diagnostics;
 
-    public TileMapSource2D? Source { get => GetValue(SourceProperty); set => SetValue(SourceProperty, value); }
+    /// <summary>Adapts a complete in-memory model to a detached map node with its composition order.</summary>
+    public static TileMap2D FromModel(TileMap2DModel model, IReadOnlyDictionary<string, DrawSize>? imageSizes = null)
+    {
+        TileMapSource2D source = TileMapSource2D.FromModel(model, imageSizes);
+        return FromSource(source);
+    }
+
+    internal static TileMap2D FromSource(TileMapSource2D source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        return new TileMap2D { Source = source, Layer = source.Catalog.Order };
+    }
+
+    internal TileMapSource2D? Source
+    {
+        get => source;
+        set
+        {
+            VerifyMapOwnerAccess();
+            ObjectDisposedException.ThrowIf(terminalDisposal is not null, this);
+            if (ReferenceEquals(source, value)) { return; }
+            source = value;
+            tileInvalidations++;
+            StopSource();
+            StartSource();
+            Refresh();
+        }
+    }
     public DrawPoint TransformOrigin { get => GetValue(TransformOriginProperty); set => SetValue(TransformOriginProperty, value); }
     public DrawPoint Offset { get => GetValue(OffsetProperty); set => SetValue(OffsetProperty, value); }
     public Color Tint { get => GetValue(TintProperty); set => SetValue(TintProperty, value); }
@@ -46,14 +68,7 @@ public sealed partial class TileMap2D : SceneNode2D, ISceneSpatialParticipant2D
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
         base.OnPropertyChanged(args);
-        if (ReferenceEquals(args.Property, SourceProperty))
-        {
-            tileInvalidations++;
-            StopSource();
-            StartSource();
-            Refresh();
-        }
-        else if (SceneGeometry2D.IsSceneTransformProperty(args.Property) ||
+        if (SceneGeometry2D.IsSceneTransformProperty(args.Property) ||
                  ReferenceEquals(args.Property, TransformOriginProperty) ||
                  ReferenceEquals(args.Property, OffsetProperty) ||
                  ReferenceEquals(args.Property, UIElement.IsVisibleProperty) ||

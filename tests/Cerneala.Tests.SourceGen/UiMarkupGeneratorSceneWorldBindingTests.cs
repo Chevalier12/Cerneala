@@ -39,13 +39,13 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Theory]
-    [InlineData("Cerneala.UI.Controls.ISceneSpatialSource2D<object>", true)]
-    [InlineData("Cerneala.UI.Controls.SceneSpatialSource2D<object>", true)]
-    [InlineData("Cerneala.UI.Controls.ISceneSpatialSource2D<string>", false)]
-    [InlineData("System.Collections.ObjectModel.ObservableCollection<string>", false)]
-    [InlineData("System.Collections.Generic.IReadOnlyList<string>", false)]
-    [InlineData("string[]", false)]
-    public void SceneItemsOneWayBindingsRequireReferenceAssignableSpatialSource(string sourceType, bool accepted)
+    [InlineData("System.Collections.IEnumerable", true)]
+    [InlineData("System.Collections.Generic.IEnumerable<string>", true)]
+    [InlineData("System.Collections.ObjectModel.ObservableCollection<string>", true)]
+    [InlineData("System.Collections.Generic.IReadOnlyList<string>", true)]
+    [InlineData("string[]", true)]
+    [InlineData("object", false)]
+    public void SceneItemsOneWayBindingsAcceptEnumerableSources(string sourceType, bool accepted)
     {
         string source = $$"""
             namespace TestInput;
@@ -87,7 +87,7 @@ public sealed partial class UiMarkupGeneratorTests
             namespace TestInput;
             public sealed class WorldState : System.ComponentModel.INotifyPropertyChanged
             {
-                public Cerneala.UI.Controls.SceneSpatialSource2D<object> Items { get; set; } = null!;
+                public System.Collections.ObjectModel.ObservableCollection<string> Items { get; set; } = null!;
                 public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
             }
             """;

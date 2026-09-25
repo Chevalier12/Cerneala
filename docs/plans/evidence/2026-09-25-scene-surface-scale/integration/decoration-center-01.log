@@ -1,0 +1,29 @@
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  Cerneala.SceneVillage -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\bin\Release\net8.0-windows\Cerneala.SceneVillage.dll
+  Cerneala.Tests.SceneVillage -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:12.15]     Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealVillageShowsTheNativeTreeCanopyAboveItsLowerCellTrunk [FAIL]
+  Failed Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealVillageShowsTheNativeTreeCanopyAboveItsLowerCellTrunk [11 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: #ff3f2631
+Actual:   #ff596246
+  Stack Trace:
+     at Cerneala.Tests.SceneVillage.NativeVillageWindowTests.ExerciseDecorationAsync(MainWindow window, VillageGameSurface surface, String capturePath, CancellationToken cancellationToken) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeVillageWindowTests.cs:line 224
+   at Cerneala.Tests.SceneVillage.NativeVillageWindowTests.<>c__DisplayClass3_1.<<RealVillageShowsTheNativeTreeCanopyAboveItsLowerCellTrunk>b__3>d.MoveNext() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeVillageWindowTests.cs:line 129
+--- End of stack trace from previous location ---
+   at Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealVillageShowsTheNativeTreeCanopyAboveItsLowerCellTrunk() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeVillageWindowTests.cs:line 147
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+  Standard Output Messages:
+ Decoration capture C:\Users\lauri\Desktop\Cerneala\artifacts\ci\scene-village\screenshots\native-20260925-202021048\decorations.png; routed D/S taps=2/8; player=<2117.6692, 2234.644>; ViewBox=DrawRect { X = 1622.6692, Y = 1959.644, Width = 990, Height = 550, Right = 2612.6692, Bottom = 2509.644 }; shrub=#ff479f4a, tree top/leaf/trunk=#ff596246/#ff479f4a/#ffeaa56c.
+
+
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-25-scene-surface-scale\integration\decoration-center-01.trx
+
+Failed!  - Failed:     1, Passed:     0, Skipped:     0, Total:     1, Duration: 11 s - Cerneala.Tests.SceneVillage.dll (net8.0)

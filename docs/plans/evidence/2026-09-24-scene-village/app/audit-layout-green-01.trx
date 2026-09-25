@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="e8d958fe-9478-4e43-ab6f-5946e7aed0f6" name="lauri@DESKTOP-JT43V3D 2026-09-24 19:41:01" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T19:41:01.9438366+03:00" queuing="2026-09-24T19:41:01.9438371+03:00" start="2026-09-24T19:40:09.9833074+03:00" finish="2026-09-24T19:41:01.9585618+03:00" />
+  <TestSettings name="default" id="69c9b954-ec3f-4a8f-840d-ff49eac7a417">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_19_41_01" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="3a3c2fc8-2252-4694-9298-427c8183262e" testId="861b90fd-4e3e-cc69-42dc-84554f04b275" testName="Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset" computerName="DESKTOP-JT43V3D" duration="00:00:48.2941882" startTime="2026-09-24T19:41:01.5126083+03:00" endTime="2026-09-24T19:41:01.5126638+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3a3c2fc8-2252-4694-9298-427c8183262e">
+      <Output>
+        <StdOut>Routed west-house contact after 2 Servo A taps at player x=1984.000.&#xD;
+Animated preset changed 3812 sampled game-area pixels relative to static idle.&#xD;
+Collidable stress actor contact after 1 routed D taps at x=2640.000.&#xD;
+All three ten-thousand-item presets realized 10,000 SceneItems2D children at the same camera ViewBox.&#xD;
+App-owned captures: C:\Users\lauri\Desktop\Cerneala\artifacts\ci\scene-village\screenshots\native-20260924-164013354</StdOut>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="861b90fd-4e3e-cc69-42dc-84554f04b275">
+      <Execution id="3a3c2fc8-2252-4694-9298-427c8183262e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.NativeVillageWindowTests" name="RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="861b90fd-4e3e-cc69-42dc-84554f04b275" executionId="3a3c2fc8-2252-4694-9298-427c8183262e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="1" executed="1" passed="1" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.19]   Discovering: Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:00.30]   Discovered:  Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:00.31]   Starting:    Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:48.86]   Finished:    Cerneala.Tests.SceneVillage&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-09-24T19:41:01.8014107+03:00">
+        <Text>Data collector 'Blame' message: All tests finished running, Sequence file will not be generated.</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

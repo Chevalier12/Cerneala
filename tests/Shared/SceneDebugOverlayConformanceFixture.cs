@@ -29,8 +29,7 @@ internal sealed class SceneDebugOverlayConformanceFixture : IDisposable
     private readonly Scene2DDebugOverlay overlay;
     private readonly Sprite2D pickTarget;
     private readonly TileMap2D map;
-    private readonly TileMapSource2D source;
-    private readonly TileMapCatalog2D catalog;
+    private readonly Scene2D mapGroup;
     private readonly List<object> samples = [];
     private readonly string directory;
     private IDisposable? prism;
@@ -60,9 +59,7 @@ internal sealed class SceneDebugOverlayConformanceFixture : IDisposable
         TileMap2DModel model = new("Ground", new DrawSize(24, 24),
             [new TileSet2D("Atlas", atlas, [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16)), new TileDefinition2D(2, new DrawRect(16, 0, 16, 16))])],
             chunks, order: 2, offset: new DrawPoint(8, 108));
-        source = TileMapSource2D.FromModel(model);
-        catalog = source.Catalog;
-        map = new TileMap2D { Source = source };
+        map = TileMap2D.FromModel(model);
         Sprite2D tile = new() { Image = new(atlas), SourceX = 0, SourceY = 0, SourceWidth = 16, SourceHeight = 16,
             Width = 24, Height = 24 };
         Scene2D tilePose = new()
@@ -72,7 +69,7 @@ internal sealed class SceneDebugOverlayConformanceFixture : IDisposable
         tilePose.Children.Add(tile);
         tile.Collider = new BoxCollider2D { Width = 24, Height = 24 };
         Scene2D scene = new() { OrderMode = SceneOrderMode.LayerThenY };
-        Scene2D mapGroup = new();
+        mapGroup = new Scene2D();
         mapGroup.Children.Add(map);
         mapGroup.Children.Add(tilePose);
         scene.Children.Add(mapGroup);
@@ -140,8 +137,8 @@ internal sealed class SceneDebugOverlayConformanceFixture : IDisposable
                 throw new InvalidOperationException("Overlay Aspect did not apply through the scene tree.");
         }
         if (!hits.SequenceEqual(initialHits!) || world.IncrementalUpdateCount != initialVersion ||
-            !ReferenceEquals(source, map.Source) || !ReferenceEquals(catalog, map.Source?.Catalog))
-            throw new InvalidOperationException("Debug presentation changed collision results, mutations, or map data.");
+            !ReferenceEquals(mapGroup.Children[0], map) || map.Layer != 2)
+            throw new InvalidOperationException("Debug presentation changed collision results, mutations, or map ownership/order.");
         Vector2 rootPoint = Surface.SceneToRoot(new Vector2(24, 30));
         if (!ReferenceEquals(new HitTestService().HitTest(Surface.Root!, rootPoint.X, rootPoint.Y)?.Element, pickTarget))
             throw new InvalidOperationException("Debug presentation changed geometric picking.");

@@ -161,7 +161,8 @@ public sealed class SdlGpuShaderArtifactTests
                 SdlGpuDeviceOwner.RequestedShaderFormats,
                 debugMode: true,
                 preferredDriver: null);
-            Assert.NotEqual(0, device);
+            Assert.True(device != 0,
+                device == 0 ? $"SDL GPU device creation failed: {api.GetError()}" : string.Empty);
             SdlGpuShaderFormats formats = api.GetGpuShaderFormats(device);
             Dictionary<string, nint> handles = [];
             foreach (SdlGpuShaderArtifact artifact in SdlGpuShaderArtifacts.All)

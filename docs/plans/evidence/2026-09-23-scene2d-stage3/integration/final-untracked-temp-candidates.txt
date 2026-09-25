@@ -1,0 +1,3 @@
+scope=all nonignored untracked repository paths
+paths=499
+temp_candidates=0

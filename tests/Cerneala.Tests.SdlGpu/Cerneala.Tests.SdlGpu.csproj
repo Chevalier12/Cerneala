@@ -28,6 +28,7 @@
     <ProjectReference Include="..\..\Cerneala.Platforms.Sdl3\Cerneala.Platforms.Sdl3.csproj" />
     <ProjectReference Include="..\..\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj" />
     <ProjectReference Include="..\..\Cerneala.Scene2D.Packages\Cerneala.Scene2D.Packages.csproj" />
+    <ProjectReference Include="..\..\Tetrisish\Tetris.csproj" />
   </ItemGroup>
 
 </Project>

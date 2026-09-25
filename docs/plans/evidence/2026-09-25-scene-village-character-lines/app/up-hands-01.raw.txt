@@ -1,0 +1,46 @@
+SOURCE Playground\Cerneala.SceneVillage\Assets\ch003.png 02AC85F7A6DD90A486ED4126CC1CE80D482F6D9D17C02AD42DBAAC1C80B479DB (128, 128)
+USER_CROP C:\Users\lauri\AppData\Local\Temp\codex-clipboard-990fb52a-42f2-4e53-a2f3-4a8422076ca5.png 6DC67AF59129DBD6B2247CCA57210B74CF4B61F21A8F20B3EB53F5C31C53C089 (80, 122)
+LINEAR_CAPTURE artifacts\ci\scene-village\screenshots\character-matrix-20260925-163915297\matrix.png A0DC02E47E02B8CFE09021E3AA5F13AD98C3324C1CCE7790B105DEE08D49FF6D (1250, 1063)
+POINT_CAPTURE artifacts\ci\scene-village\screenshots\character-production-frames-20260925-163916848\production-frames.png 82D610A1C9227300A45C9D4191ADD23ABAAD942767A36A4CFEB95CE5887FD0FB (1250, 1063)
+background RGB (130, 190, 101)
+Up neutral column 1 vs 3 visible RGBA differences 0
+whole-image alpha fit scale 2.5 minimum FP+FN 362
+equal-best fits (ox,oy,TP,FP,FN,TN) [(-8.25, 23.25, 3128, 362, 0, 6270), (-8.0, 23.25, 3128, 362, 0, 6270), (-7.25, 23.25, 3128, 362, 0, 6270), (-7.0, 23.25, 3128, 362, 0, 6270), (-6.25, 23.25, 3128, 362, 0, 6270), (-6.0, 23.25, 3128, 362, 0, 6270), (-8.25, 23.5, 3128, 362, 0, 6270), (-8.0, 23.5, 3128, 362, 0, 6270), (-7.25, 23.5, 3128, 362, 0, 6270), (-7.0, 23.5, 3128, 362, 0, 6270), (-6.25, 23.5, 3128, 362, 0, 6270), (-6.0, 23.5, 3128, 362, 0, 6270)]
+hands ROI fit (-8.25, 23.25) observed neutral-black 97 not mapped to source black 0 coordinates []
+hands ROI fit (-8.0, 23.25) observed neutral-black 97 not mapped to source black 0 coordinates []
+hands ROI fit (-7.25, 23.25) observed neutral-black 97 not mapped to source black 0 coordinates []
+hands ROI fit (-7.0, 23.25) observed neutral-black 97 not mapped to source black 0 coordinates []
+hands ROI fit (-6.25, 23.25) observed neutral-black 97 not mapped to source black 2 coordinates [(18, 80, 9, 22), (13, 83, 7, 24)]
+hands ROI fit (-6.0, 23.25) observed neutral-black 97 not mapped to source black 2 coordinates [(18, 80, 9, 22), (13, 83, 7, 24)]
+hands ROI fit (-8.25, 23.5) observed neutral-black 97 not mapped to source black 0 coordinates []
+hands ROI fit (-8.0, 23.5) observed neutral-black 97 not mapped to source black 0 coordinates []
+hands ROI fit (-7.25, 23.5) observed neutral-black 97 not mapped to source black 0 coordinates []
+hands ROI fit (-7.0, 23.5) observed neutral-black 97 not mapped to source black 0 coordinates []
+hands ROI fit (-6.25, 23.5) observed neutral-black 97 not mapped to source black 2 coordinates [(18, 80, 9, 22), (13, 83, 7, 24)]
+hands ROI fit (-6.0, 23.5) observed neutral-black 97 not mapped to source black 2 coordinates [(18, 80, 9, 22), (13, 83, 7, 24)]
+hands ROI (8, 58, 70, 86) source local rows under best fits approx 18..25
+hands ROI black mismatch range 0 2
+source Up neutral local y 18 black-x runs [(9, 23)]
+source Up neutral local y 19 black-x runs [(8, 8), (12, 12), (14, 18), (20, 20), (24, 24)]
+source Up neutral local y 20 black-x runs [(8, 8), (13, 13), (19, 19), (24, 24)]
+source Up neutral local y 21 black-x runs [(7, 7), (10, 11), (14, 18), (21, 22), (25, 25)]
+source Up neutral local y 22 black-x runs [(7, 7), (10, 11), (21, 22), (25, 25)]
+source Up neutral local y 23 black-x runs [(7, 11), (21, 25)]
+source Up neutral local y 24 black-x runs [(8, 9), (11, 14), (18, 21), (23, 24)]
+user hands-band y 70 black-x runs [(23, 23), (28, 38), (43, 43)]
+user hands-band y 71 black-x runs [(29, 38)]
+user hands-band y 77 black-x runs [(19, 20), (46, 48)]
+user hands-band y 78 black-x runs [(19, 20), (46, 48)]
+user hands-band y 79 black-x runs [(19, 20), (46, 48)]
+user hands-band y 80 black-x runs [(11, 11), (18, 20), (46, 48)]
+user hands-band y 81 black-x runs [(11, 12), (17, 20), (46, 50), (54, 55)]
+user hands-band y 82 black-x runs [(13, 16), (20, 21), (46, 46), (50, 54)]
+user hands-band y 83 black-x runs [(13, 16), (21, 21), (46, 46), (51, 53)]
+user hands-band y 84 black-x runs [(21, 28), (39, 45)]
+user hands-band y 85 black-x runs [(21, 22), (45, 45)]
+Linear atlas matrix Up neutral relative rows (45, 65) neutral-black pixels 149
+Linear atlas matrix Up neutral relative rows (50, 60) neutral-black pixels 47
+Point atlas matrix Up neutral relative rows (45, 65) neutral-black pixels 447
+Point atlas matrix Up neutral relative rows (50, 60) neutral-black pixels 174
+Point production Player Up neutral relative rows (45, 65) neutral-black pixels 447
+Point production Player Up neutral relative rows (50, 60) neutral-black pixels 174

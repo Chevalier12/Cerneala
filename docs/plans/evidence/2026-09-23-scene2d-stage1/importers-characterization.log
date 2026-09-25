@@ -1,0 +1,13 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Scene2D.Importers -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\bin\Release\net8.0\Cerneala.Scene2D.Importers.dll
+  Cerneala.Tests.Scene2DImporters -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Release\net8.0\Cerneala.Tests.Scene2DImporters.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Release\net8.0\Cerneala.Tests.Scene2DImporters.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage1\test-results\importers-characterization.trx
+
+Passed!  - Failed:     0, Passed:   173, Skipped:     0, Total:   173, Duration: 6 s - Cerneala.Tests.Scene2DImporters.dll (net8.0)
+EXIT_CODE=0

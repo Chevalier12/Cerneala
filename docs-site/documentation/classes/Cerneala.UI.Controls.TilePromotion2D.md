@@ -26,18 +26,18 @@ Construction requires a nonempty map identity and an optional positive override 
 
 This class is metadata, not a UI node or an automatic extraction operation. Tiled/LDtk keep the external `CernealaRole="Promote"`, `TileLayer`, `TileX`, and `TileY` conventions; the source layer identity becomes `Cell.MapId`.
 
-Application composition decides whether to represent a candidate as an ordinary [Sprite2D](Cerneala.UI.Controls.Sprite2D.md). It must explicitly remove any replaced static cell from the published source, select the image/source rectangle, convert the grid coordinate to pixels, and preserve any required source offsets, tint, opacity, and scene order. Adding a sprite does not automatically suppress a static cell or inherit its collider. Restore static content by publishing the original source content and removing the sprite. Changed grid content must follow the chunk version contract.
+Application composition decides whether to represent a candidate as an ordinary [Sprite2D](Cerneala.UI.Controls.Sprite2D.md). It must explicitly clear any replaced static cell in a replacement immutable model, select the image/source rectangle, convert the grid coordinate to pixels, and preserve any required model offsets, tint, opacity, and scene order. Adding a sprite does not automatically suppress a static cell or inherit its collider. Restore static content by replacing the map from the original model data and removing the sprite. Changed grid content is expressed in a replacement immutable chunk/model, not a live cell setter.
 
-The Scene World sample opens a build-prepared package and explicitly acquires its
-promotion record. Its application-owned door source reconstructs the requested
-chunk with cell `("4", 14, 9)` cleared; it does not retain the imported document
-or rewrite the package. A peer door sprite at pixel position `(224, 144)` owns
-the live collider, animation state, routed input, Motion trigger, and Prism.
-`InitialState` initializes application state; neither importing nor opening a
-package executes it. Other dynamic entities use [SceneItems2D](Cerneala.UI.Controls.SceneItems2D.md)
-templates. The sample's edited payloads declare an unknown data-residency charge,
-so they are loaded for required interests rather than admitted into optional
-warm residency as supposedly zero-cost data.
+For a package-backed promoted door, an application can load the promotion record
+directly and use `Scene2DPackageLevel.LoadMapModelAsync` to obtain a complete
+editable model. It constructs a replacement immutable chunk/model with the
+promoted cell cleared, then replaces the map node through `TileMap2D.FromModel`.
+It does not rewrite the package. A peer door sprite can own the live collider,
+animation state, routed input, Motion trigger, and Prism. `InitialState` is
+application metadata; neither importing nor opening a package executes it. Other
+dynamic entities can use [SceneItems2D](Cerneala.UI.Controls.SceneItems2D.md)
+templates. The full-model edit replaces map identity and can discard prior warm
+residency; it is not a single-chunk package publication.
 
 ## Constructors
 

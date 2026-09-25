@@ -1,0 +1,2 @@
+DefaultItemExcludesInProjectFolder=artifacts/**
+dotnet test .\tests\Cerneala.Tests.PreviewHost\Cerneala.Tests.PreviewHost.csproj -c Release -m:1 --nologo -v:minimal --filter 'FullyQualifiedName~PreviewCompilerFastPathTargetTypeTests' --results-directory 'docs/plans/evidence/2026-09-24-scene-village-seams/integration/preview-repair/red-02' --logger 'trx;LogFileName=preview-fastpath-red-02.trx' '-p:DefaultItemExcludesInProjectFolder=artifacts/**'

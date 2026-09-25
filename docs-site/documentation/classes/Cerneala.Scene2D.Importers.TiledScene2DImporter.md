@@ -27,7 +27,7 @@ if (imported.Success)
     var scene = new Scene2D { OrderMode = SceneOrderMode.Layer,
         TranslateX = level.WorldOffset.X, TranslateY = level.WorldOffset.Y };
     foreach (TileMap2DModel model in level.TileMaps)
-        scene.Children.Add(new TileMap2D { Source = TileMapSource2D.FromModel(model), Layer = model.Order });
+        scene.Children.Add(TileMap2D.FromModel(model));
     // Composition also registers images and creates ordinary sprites/templates.
 }
 ```

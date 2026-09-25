@@ -1,0 +1,31 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  Cerneala.SceneVillage -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\bin\Release\net8.0-windows\Cerneala.SceneVillage.dll
+  Cerneala.Tests.SceneVillage -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:06.04]     Cerneala.Tests.SceneVillage.NativeVillageTileBoundaryTests.OpaquePointSampledAtlasTileJoinsOpaqueGroundAtFractionalCameraPosition [FAIL]
+  Failed Cerneala.Tests.SceneVillage.NativeVillageTileBoundaryTests.OpaquePointSampledAtlasTileJoinsOpaqueGroundAtFractionalCameraPosition [5 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: #ff84c669
+Actual:   #ff739e5b
+  Stack Trace:
+     at Cerneala.Tests.SceneVillage.NativeVillageTileBoundaryTests.AssertBoundaryPixelsAsync(Servo servo, Window window, RenderSurface2D surface, String screenshotPath, CancellationToken cancellationToken) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeVillageTileBoundaryTests.cs:line 164
+   at Cerneala.Tests.SceneVillage.NativeVillageTileBoundaryTests.<>c__DisplayClass2_1.<<OpaquePointSampledAtlasTileJoinsOpaqueGroundAtFractionalCameraPosition>b__4>d.MoveNext() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeVillageTileBoundaryTests.cs:line 101
+--- End of stack trace from previous location ---
+   at Cerneala.Tests.SceneVillage.NativeVillageTileBoundaryTests.OpaquePointSampledAtlasTileJoinsOpaqueGroundAtFractionalCameraPosition() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeVillageTileBoundaryTests.cs:line 119
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+  Standard Output Messages:
+ Point boundary: ViewBox=DrawRect { X = -100, Y = -68.11, Width = 396, Height = 220, Right = 296, Bottom = 151.89 }, bounds=LayoutRect { X = 14.4, Y = 80, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 80 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, x=308, y=350, phase=0.275, above=#ff84c669, edge=#ff739e5b, below=#ff84c669.
+
+
+Results File: C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\TestResults\tile-boundary-red-01.trx
+
+Failed!  - Failed:     1, Passed:     0, Skipped:     0, Total:     1, Duration: 5 s - Cerneala.Tests.SceneVillage.dll (net8.0)

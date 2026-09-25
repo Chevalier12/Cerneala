@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+using Cerneala.Backends.SdlGpu;
 using Cerneala.Platforms.Sdl3;
 using SDL3;
 
@@ -38,6 +40,34 @@ public sealed class SdlGpuNativePipelineDescriptorTests
             attribute => AssertAttribute(attribute, 0, SDL.GPUVertexElementFormat.Float2, 0),
             attribute => AssertAttribute(attribute, 1, SDL.GPUVertexElementFormat.Float2, 8),
             attribute => AssertAttribute(attribute, 2, SDL.GPUVertexElementFormat.Float4, 16));
+    }
+
+    [Fact]
+    public void Point_clamp_image_domain_has_its_own_64_byte_native_layout()
+    {
+        SdlGpuNativeGraphicsPipelineDescriptor descriptor = CreateDescriptor(
+            SdlGpuStencilMode.Disabled,
+            SdlGpuVertexInputDescription.Drawing2DImageDomain);
+
+        SDL.GPUVertexBufferDescription buffer = Assert.Single(descriptor.VertexBuffers);
+        Assert.Equal((uint)Marshal.SizeOf<SdlGpuImageDomainVertex>(), buffer.Pitch);
+        Assert.Equal((uint)64, buffer.Pitch);
+        Assert.Collection(
+            descriptor.Attributes,
+            attribute => AssertAttribute(attribute, 0, SDL.GPUVertexElementFormat.Float2,
+                FieldOffset(nameof(SdlGpuImageDomainVertex.Position))),
+            attribute => AssertAttribute(attribute, 1, SDL.GPUVertexElementFormat.Float2,
+                FieldOffset(nameof(SdlGpuImageDomainVertex.TextureCoordinate))),
+            attribute => AssertAttribute(attribute, 2, SDL.GPUVertexElementFormat.Float4,
+                FieldOffset(nameof(SdlGpuImageDomainVertex.Color))),
+            attribute => AssertAttribute(attribute, 3, SDL.GPUVertexElementFormat.Float4,
+                FieldOffset(nameof(SdlGpuImageDomainVertex.FirstCorners))),
+            attribute => AssertAttribute(attribute, 4, SDL.GPUVertexElementFormat.Float4,
+                FieldOffset(nameof(SdlGpuImageDomainVertex.LastCorners))));
+
+        static uint FieldOffset(string propertyName) => checked((uint)
+            Marshal.OffsetOf<SdlGpuImageDomainVertex>(
+                $"<{propertyName}>k__BackingField").ToInt64());
     }
 
     [Fact]

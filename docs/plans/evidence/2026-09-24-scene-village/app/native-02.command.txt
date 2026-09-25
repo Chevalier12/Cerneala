@@ -1,0 +1,1 @@
+dotnet test .\tests\Cerneala.Tests.SceneVillage\Cerneala.Tests.SceneVillage.csproj -c Release -m:1 -p:DefaultItemExcludesInProjectFolder=artifacts/** --blame-hang-timeout 7m --logger trx;LogFileName=native-02.trx

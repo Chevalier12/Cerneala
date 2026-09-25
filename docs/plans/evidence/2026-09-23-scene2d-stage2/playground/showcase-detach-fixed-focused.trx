@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="2e9eece2-8f37-4b1a-8f71-4d748a365208" name="lauri@DESKTOP-JT43V3D 2026-09-24 08:25:39" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T08:25:39.9808456+03:00" queuing="2026-09-24T08:25:39.9808460+03:00" start="2026-09-24T08:25:32.4994722+03:00" finish="2026-09-24T08:25:40.9854510+03:00" />
+  <TestSettings name="default" id="2c1bb3d8-9e35-4a25-ab56-ce6bdef6a9c8">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_08_25_39" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="d14b62db-97f1-4de2-814f-cb42e57a4013" testId="b0e3e49d-0c65-0168-ad80-f7c9a1cadae7" testName="Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(platformCursor: False)" computerName="DESKTOP-JT43V3D" duration="00:00:00.7158019" startTime="2026-09-24T08:25:40.6679037+03:00" endTime="2026-09-24T08:25:40.6679043+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d14b62db-97f1-4de2-814f-cb42e57a4013" />
+    <UnitTestResult executionId="6a7efa10-0e5a-4931-af04-b90be5b7097b" testId="b3a43f37-7b07-05c5-21fd-7d9509deaf9e" testName="Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(platformCursor: True)" computerName="DESKTOP-JT43V3D" duration="00:00:02.8282264" startTime="2026-09-24T08:25:39.9183657+03:00" endTime="2026-09-24T08:25:39.9184138+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6a7efa10-0e5a-4931-af04-b90be5b7097b" />
+    <UnitTestResult executionId="255f5fe3-c351-4314-b4c4-b75c65578af0" testId="16b3ba54-2e8b-189b-a7e2-51bbd5b53cc0" testName="Cerneala.Tests.Playground.SceneWorldShowcaseTests.DetachingDuringAnAsynchronousOpenRetiresTheOperationWithoutPumpingTheOldRootAndAllowsReattach" computerName="DESKTOP-JT43V3D" duration="00:00:00.0810773" startTime="2026-09-24T08:25:40.7511331+03:00" endTime="2026-09-24T08:25:40.7511336+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="255f5fe3-c351-4314-b4c4-b75c65578af0" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Playground.SceneWorldShowcaseTests.DetachingDuringAnAsynchronousOpenRetiresTheOperationWithoutPumpingTheOldRootAndAllowsReattach" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="16b3ba54-2e8b-189b-a7e2-51bbd5b53cc0">
+      <Execution id="255f5fe3-c351-4314-b4c4-b75c65578af0" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Playground.SceneWorldShowcaseTests" name="DetachingDuringAnAsynchronousOpenRetiresTheOperationWithoutPumpingTheOldRootAndAllowsReattach" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(platformCursor: False)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="b0e3e49d-0c65-0168-ad80-f7c9a1cadae7">
+      <Execution id="d14b62db-97f1-4de2-814f-cb42e57a4013" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Playground.SceneWorldShowcaseTests" name="CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(platformCursor: True)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="b3a43f37-7b07-05c5-21fd-7d9509deaf9e">
+      <Execution id="6a7efa10-0e5a-4931-af04-b90be5b7097b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Playground.SceneWorldShowcaseTests" name="CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="b0e3e49d-0c65-0168-ad80-f7c9a1cadae7" executionId="d14b62db-97f1-4de2-814f-cb42e57a4013" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b3a43f37-7b07-05c5-21fd-7d9509deaf9e" executionId="6a7efa10-0e5a-4931-af04-b90be5b7097b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="16b3ba54-2e8b-189b-a7e2-51bbd5b53cc0" executionId="255f5fe3-c351-4314-b4c4-b75c65578af0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="3" executed="3" passed="3" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:01.24]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:03.10]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:03.14]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:06.99]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

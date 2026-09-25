@@ -1,0 +1,17 @@
+UTC=2026-09-25T04:09:09.8324155Z
+CompilerSHA256=682B443C53BD4E09A8ED1FF56475F9D6962696D04E700C58550B7DEA1AD4BEEB
+InputSHA256=4CA8070CA5AE07BAB29DE51E075C6240EED9121F31C48D183E43FC3A4AEF5B90
+Assets=C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldAssets
+Parent=C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\obj\SceneWorldPackages\Release\net8.0-windows
+Destination=C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\obj\SceneWorldPackages\Release\net8.0-windows\ldtk
+DestinationExistedBefore=False
+ParentEntriesBefore=tiled
+Command: dotnet "
+C:\Users\lauri\Desktop\Cerneala\Tools\Cerneala.Scene2D.PackageCompiler\bin\Release\net8.0\Cerneala.Scene2D.PackageCompiler.dll
+" ldtk "
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldAssets\village.ldtk
+" "
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldAssets
+" "
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\obj\SceneWorldPackages\Release\net8.0-windows\ldtk
+"

@@ -1,7 +1,10 @@
 using System.Diagnostics;
 using System.Reflection;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -37,7 +40,13 @@ internal sealed class PreviewCompiler : IDisposable
         Stopwatch total = Stopwatch.StartNew();
         string fullDocumentPath = Path.GetFullPath(documentPath);
         string projectPath = FindOwningProject(fullDocumentPath);
-        if (TryUseCurrentBuildOutput(fullDocumentPath, projectPath, source, total, out PreviewCompilation? built))
+        if (TryUseCurrentBuildOutput(
+            fullDocumentPath,
+            projectPath,
+            source,
+            total,
+            cancellationToken,
+            out PreviewCompilation? built))
         {
             return built!;
         }
@@ -180,6 +189,7 @@ internal sealed class PreviewCompiler : IDisposable
         string projectPath,
         string source,
         Stopwatch total,
+        CancellationToken cancellationToken,
         out PreviewCompilation? compilation)
     {
         compilation = null;
@@ -192,7 +202,8 @@ internal sealed class PreviewCompiler : IDisposable
         string projectDirectory = Path.GetDirectoryName(projectPath)!;
         string assemblyName = ReadAssemblyName(projectPath);
         string? outputPath = FindCurrentBuildOutput(projectDirectory, assemblyName);
-        if (outputPath is null || !IsBuildOutputCurrent(projectDirectory, outputPath))
+        if (outputPath is null || !IsBuildOutputCurrent(projectDirectory, outputPath) ||
+            !TryResolveCurrentBuildTargetTypeName(documentPath, outputPath, cancellationToken, out string? targetTypeName))
         {
             return false;
         }
@@ -207,7 +218,7 @@ internal sealed class PreviewCompiler : IDisposable
         compilation = new PreviewCompilation(
             File.ReadAllBytes(outputPath),
             actualAssemblyName,
-            Path.GetFileNameWithoutExtension(documentPath),
+            targetTypeName!,
             outputDirectory,
             referencePaths,
             total.Elapsed);
@@ -215,6 +226,73 @@ internal sealed class PreviewCompiler : IDisposable
         {
             BeginWarmUp(projectPath);
         }
+        return true;
+    }
+
+    private static bool TryResolveCurrentBuildTargetTypeName(
+        string documentPath,
+        string outputPath,
+        CancellationToken cancellationToken,
+        out string? targetTypeName)
+    {
+        targetTypeName = null;
+        string companionPath = documentPath + ".cs";
+        if (!File.Exists(companionPath))
+        {
+            // Keep the established saved-markup reuse behavior for unpaired documents.
+            targetTypeName = Path.GetFileNameWithoutExtension(documentPath);
+            return true;
+        }
+
+        SyntaxTree tree = CSharpSyntaxTree.ParseText(File.ReadAllText(companionPath), path: companionPath);
+        SyntaxNode root = tree.GetRoot(cancellationToken);
+        if (tree.GetDiagnostics(cancellationToken).Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error) ||
+            root.DescendantTrivia(descendIntoTrivia: true).Any(trivia => trivia.IsDirective))
+        {
+            return false;
+        }
+
+        CSharpCompilation declarationCompilation = CSharpCompilation.Create(
+            "CernealaPreviewTargetIdentity",
+            syntaxTrees: [tree]);
+        SemanticModel model = declarationCompilation.GetSemanticModel(tree);
+        string expectedName = Path.GetFileNameWithoutExtension(documentPath);
+        INamedTypeSymbol[] candidates = FindTargetTypeSymbols(root, model, expectedName, cancellationToken)
+            .Take(2)
+            .ToArray();
+        if (candidates.Length != 1 || candidates[0].ContainingType is not null ||
+            candidates[0].TypeParameters.Length != 0)
+        {
+            return false;
+        }
+
+        INamedTypeSymbol symbol = candidates[0];
+        string expectedNamespace = symbol.ContainingNamespace.IsGlobalNamespace
+            ? string.Empty
+            : symbol.ContainingNamespace.ToDisplayString();
+        using FileStream assembly = File.OpenRead(outputPath);
+        using PEReader pe = new(assembly);
+        MetadataReader metadata = pe.GetMetadataReader();
+        int matches = 0;
+        foreach (TypeDefinitionHandle handle in metadata.TypeDefinitions)
+        {
+            TypeDefinition definition = metadata.GetTypeDefinition(handle);
+            if (!definition.GetDeclaringType().IsNil ||
+                !string.Equals(metadata.GetString(definition.Name), expectedName, StringComparison.Ordinal) ||
+                !string.Equals(metadata.GetString(definition.Namespace), expectedNamespace, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            matches++;
+        }
+
+        if (matches != 1)
+        {
+            return false;
+        }
+
+        targetTypeName = symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
         return true;
     }
 
@@ -417,7 +495,7 @@ internal sealed class PreviewCompiler : IDisposable
         CancellationToken cancellationToken)
     {
         string companionPath = documentPath + ".cs";
-        Document? companion = project.Documents.FirstOrDefault(document =>
+        Microsoft.CodeAnalysis.Document? companion = project.Documents.FirstOrDefault(document =>
             string.Equals(document.FilePath, companionPath, StringComparison.OrdinalIgnoreCase));
         if (companion is not null)
         {
@@ -426,10 +504,8 @@ internal sealed class PreviewCompiler : IDisposable
             if (root is not null && model is not null)
             {
                 string expectedName = Path.GetFileNameWithoutExtension(documentPath);
-                INamedTypeSymbol? symbol = root.DescendantNodes()
-                    .Select(node => model.GetDeclaredSymbol(node, cancellationToken))
-                    .OfType<INamedTypeSymbol>()
-                    .FirstOrDefault(candidate => candidate.Name == expectedName);
+                INamedTypeSymbol? symbol = FindTargetTypeSymbols(root, model, expectedName, cancellationToken)
+                    .FirstOrDefault();
                 if (symbol is not null)
                 {
                     return symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
@@ -442,6 +518,16 @@ internal sealed class PreviewCompiler : IDisposable
             ? fileName
             : project.DefaultNamespace + "." + fileName;
     }
+
+    private static IEnumerable<INamedTypeSymbol> FindTargetTypeSymbols(
+        SyntaxNode root,
+        SemanticModel model,
+        string expectedName,
+        CancellationToken cancellationToken) =>
+        root.DescendantNodes()
+            .Select(node => model.GetDeclaredSymbol(node, cancellationToken))
+            .OfType<INamedTypeSymbol>()
+            .Where(candidate => candidate.Name == expectedName);
 
     private static string FindOwningProject(string documentPath)
     {

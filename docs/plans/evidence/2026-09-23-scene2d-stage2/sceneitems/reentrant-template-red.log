@@ -1,0 +1,46 @@
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Scene2D.Importers -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\bin\Release\net8.0\Cerneala.Scene2D.Importers.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Scene2D.Packages -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Packages\bin\Release\net8.0\Cerneala.Scene2D.Packages.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  CernealaPresentation -> C:\Users\lauri\Desktop\Cerneala\CernealaPresentation\bin\Release\net8.0-windows\CernealaPresentation.dll
+  Cerneala.Scene2D.PackageCompiler -> C:\Users\lauri\Desktop\Cerneala\Tools\Cerneala.Scene2D.PackageCompiler\bin\Release\net8.0\Cerneala.Scene2D.PackageCompiler.dll
+  Cerneala.Playground -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\bin\Release\net8.0-windows\Cerneala.Playground.dll
+  Cerneala.SdlGpuSmoke -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.SdlGpuSmoke\bin\Release\net8.0\Cerneala.SdlGpuSmoke.dll
+  Cerneala.Tests -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:02.34]     Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ReentrantTemplateEditUsesTheCompletedOneShotSnapshot [FAIL]
+  Failed Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ReentrantTemplateEditUsesTheCompletedOneShotSnapshot [353 ms]
+  Error Message:
+   System.InvalidOperationException : One-shot source was enumerated again.
+  Stack Trace:
+     at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.OneShotEnumerable`1.GetEnumerator() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 945
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.OneShotEnumerable`1.System.Collections.IEnumerable.GetEnumerator() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 948
+   at Cerneala.UI.Controls.SceneItems2D.Enumerate(IEnumerable source) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 246
+   at Cerneala.UI.Controls.SceneItems2D.RequestSnapshot(Boolean reset, Boolean reenumerate, NotifyCollectionChangedEventArgs change) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 170
+--- End of stack trace from previous location ---
+   at Cerneala.UI.Controls.SceneItems2D.RequestSnapshot(Boolean reset, Boolean reenumerate, NotifyCollectionChangedEventArgs change) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 234
+   at Cerneala.UI.Controls.SceneItems2D.ApplyDeferredChanges() in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 444
+   at Cerneala.UI.Controls.SceneItems2D.Commit(List`1 next, List`1 requested, IEnumerable source, List`1 candidates, Int64 version) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 385
+   at Cerneala.UI.Controls.SceneItems2D.RequestSnapshot(Boolean reset, Boolean reenumerate, NotifyCollectionChangedEventArgs change) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 227
+--- End of stack trace from previous location ---
+   at Cerneala.UI.Controls.SceneItems2D.RequestSnapshot(Boolean reset, Boolean reenumerate, NotifyCollectionChangedEventArgs change) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 234
+   at Cerneala.UI.Controls.SceneItems2D.OnPropertyChanged(UiPropertyChangedEventArgs args) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 89
+   at Cerneala.UI.Core.UiObject.NotifyPropertyChanged[T](UiProperty`1 property, T oldValue, T newValue, UiPropertyValueSource valueSource, UiPropertyValueSource mutatingSource, UiPropertyValueSource oldEffectiveSource, Object oldSourceValue, Object newSourceValue, Boolean wasCoerced) in C:\Users\lauri\Desktop\Cerneala\UI\Core\UiObject.cs:line 237
+   at Cerneala.UI.Core.UiObject.SetValueCore[T](UiProperty`1 property, T value, UiPropertyValueSource source) in C:\Users\lauri\Desktop\Cerneala\UI\Core\UiObject.cs:line 202
+   at Cerneala.UI.Core.UiObject.SetValue[T](UiProperty`1 property, T value, UiPropertyValueSource source) in C:\Users\lauri\Desktop\Cerneala\UI\Core\UiObject.cs:line 89
+   at Cerneala.UI.Core.UiObject.SetValue[T](UiProperty`1 property, T value) in C:\Users\lauri\Desktop\Cerneala\UI\Core\UiObject.cs:line 78
+   at Cerneala.UI.Controls.SceneItems2D.set_ItemsSource(IEnumerable value) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 40
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+--- End of stack trace from previous location ---
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 908
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ReentrantTemplateEditUsesTheCompletedOneShotSnapshot() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 605
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage2\sceneitems\reentrant-template-red.trx
+
+Failed!  - Failed:     1, Passed:     1, Skipped:     0, Total:     2, Duration: 377 ms - Cerneala.Tests.dll (net8.0)

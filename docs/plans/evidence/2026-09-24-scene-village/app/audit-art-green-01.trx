@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="aed73570-0d92-4715-9988-b8dbae747b8f" name="lauri@DESKTOP-JT43V3D 2026-09-24 19:46:22" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T19:46:22.5137249+03:00" queuing="2026-09-24T19:46:22.5137254+03:00" start="2026-09-24T19:46:19.3968536+03:00" finish="2026-09-24T19:46:22.5287355+03:00" />
+  <TestSettings name="default" id="8c94a139-c6ca-46d2-9b1c-ece5d5414188">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_19_46_22" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="1a8b3b9f-74e0-4f47-8c62-91dd2cc25b37" testId="2b75e3aa-5a43-ca35-6e0c-c28146966f49" testName="Cerneala.Tests.SceneVillage.VillageModelTests.VillagerWalkClipsUseTheInspectedDirectionalCells" computerName="DESKTOP-JT43V3D" duration="00:00:00.3973717" startTime="2026-09-24T19:46:21.8921266+03:00" endTime="2026-09-24T19:46:21.8921776+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1a8b3b9f-74e0-4f47-8c62-91dd2cc25b37" />
+    <UnitTestResult executionId="97031e87-6ff5-446f-9742-ad3335bd716c" testId="22ec08ca-2425-0e60-45c0-3173641d58e7" testName="Cerneala.Tests.SceneVillage.VillageModelTests.VillageDecorationsUseCompleteInspectedAtlasCellsAndKeepTreeCollision" computerName="DESKTOP-JT43V3D" duration="00:00:00.1586296" startTime="2026-09-24T19:46:22.0603546+03:00" endTime="2026-09-24T19:46:22.0603551+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="97031e87-6ff5-446f-9742-ad3335bd716c" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageModelTests.VillagerWalkClipsUseTheInspectedDirectionalCells" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="2b75e3aa-5a43-ca35-6e0c-c28146966f49">
+      <Execution id="1a8b3b9f-74e0-4f47-8c62-91dd2cc25b37" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageModelTests" name="VillagerWalkClipsUseTheInspectedDirectionalCells" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageModelTests.VillageDecorationsUseCompleteInspectedAtlasCellsAndKeepTreeCollision" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="22ec08ca-2425-0e60-45c0-3173641d58e7">
+      <Execution id="97031e87-6ff5-446f-9742-ad3335bd716c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageModelTests" name="VillageDecorationsUseCompleteInspectedAtlasCellsAndKeepTreeCollision" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="2b75e3aa-5a43-ca35-6e0c-c28146966f49" executionId="1a8b3b9f-74e0-4f47-8c62-91dd2cc25b37" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="22ec08ca-2425-0e60-45c0-3173641d58e7" executionId="97031e87-6ff5-446f-9742-ad3335bd716c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="2" executed="2" passed="2" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.23]   Discovering: Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:00.39]   Discovered:  Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:00.41]   Starting:    Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:01.08]   Finished:    Cerneala.Tests.SceneVillage&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

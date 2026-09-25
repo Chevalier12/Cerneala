@@ -1,0 +1,3 @@
+warning: in the working copy of 'Cerneala.Backends.SdlGpu/Cerneala.Backends.SdlGpu.csproj', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'Cerneala.Platforms.Sdl3/Cerneala.Platforms.Sdl3.csproj', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'Properties/AssemblyInfo.cs', LF will be replaced by CRLF the next time Git touches it

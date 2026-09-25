@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="787f2512-8e66-4c3c-aa70-7c505f54458f" name="lauri@DESKTOP-JT43V3D 2026-09-24 08:53:46" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T08:53:46.8362903+03:00" queuing="2026-09-24T08:53:46.8362908+03:00" start="2026-09-24T08:53:43.3111552+03:00" finish="2026-09-24T08:53:46.8567593+03:00" />
+  <TestSettings name="default" id="bac7552a-975d-47fd-835b-2297626b502d">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_08_53_46" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="1859b1c8-a18a-44c2-a106-95a87ceab6e5" testId="8ff97f2f-fdba-76b1-63e3-6834b36942d4" testName="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_MapAndPackageExposeIdsAndValuesInsteadOfSourcesAndLeases" computerName="DESKTOP-JT43V3D" duration="00:00:00.0132297" startTime="2026-09-24T08:53:46.5923613+03:00" endTime="2026-09-24T08:53:46.5923615+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1859b1c8-a18a-44c2-a106-95a87ceab6e5" />
+    <UnitTestResult executionId="5b064e72-cf50-4f32-9201-b9caae6100f0" testId="44102b21-4183-53f8-88c3-05aafff56214" testName="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_Cpv2RangeReaderHasTheSelectedNonspatialTransportShape" computerName="DESKTOP-JT43V3D" duration="00:00:00.0214709" startTime="2026-09-24T08:53:46.5994422+03:00" endTime="2026-09-24T08:53:46.5994425+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5b064e72-cf50-4f32-9201-b9caae6100f0" />
+    <UnitTestResult executionId="a1ea65e8-808f-4c2b-9e66-f41e20d902bc" testId="8e299c34-f133-f0f9-3fc9-8991b29227f8" testName="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage2_NonspatialTileMapChunkDataRemainsPublic" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001906" startTime="2026-09-24T08:53:46.5868445+03:00" endTime="2026-09-24T08:53:46.5868449+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a1ea65e8-808f-4c2b-9e66-f41e20d902bc" />
+    <UnitTestResult executionId="972bf587-77e1-46c5-b300-e91bd0054287" testId="1a862b60-4fa0-e2d4-357e-242e526215a3" testName="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_PublicSpatialSourceAndResidencyFamilyIsGone" computerName="DESKTOP-JT43V3D" duration="00:00:00.0191599" startTime="2026-09-24T08:53:46.5787715+03:00" endTime="2026-09-24T08:53:46.5788218+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="972bf587-77e1-46c5-b300-e91bd0054287" />
+    <UnitTestResult executionId="acce55ba-a82d-4d4d-ac52-c4e5ca3c7c0f" testId="24c1954f-87a1-afef-e75b-61fe04837302" testName="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_SceneItemsDropsSpatialPreparationAndIdMembers" computerName="DESKTOP-JT43V3D" duration="00:00:00.0050561" startTime="2026-09-24T08:53:46.6051371+03:00" endTime="2026-09-24T08:53:46.6051375+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="acce55ba-a82d-4d4d-ac52-c4e5ca3c7c0f" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage2_NonspatialTileMapChunkDataRemainsPublic" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="8e299c34-f133-f0f9-3fc9-8991b29227f8">
+      <Execution id="a1ea65e8-808f-4c2b-9e66-f41e20d902bc" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests" name="Stage2_NonspatialTileMapChunkDataRemainsPublic" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_PublicSpatialSourceAndResidencyFamilyIsGone" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="1a862b60-4fa0-e2d4-357e-242e526215a3">
+      <Execution id="972bf587-77e1-46c5-b300-e91bd0054287" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests" name="Stage0_PublicSpatialSourceAndResidencyFamilyIsGone" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_SceneItemsDropsSpatialPreparationAndIdMembers" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="24c1954f-87a1-afef-e75b-61fe04837302">
+      <Execution id="acce55ba-a82d-4d4d-ac52-c4e5ca3c7c0f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests" name="Stage0_SceneItemsDropsSpatialPreparationAndIdMembers" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_Cpv2RangeReaderHasTheSelectedNonspatialTransportShape" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="44102b21-4183-53f8-88c3-05aafff56214">
+      <Execution id="5b064e72-cf50-4f32-9201-b9caae6100f0" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests" name="Stage0_Cpv2RangeReaderHasTheSelectedNonspatialTransportShape" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_MapAndPackageExposeIdsAndValuesInsteadOfSourcesAndLeases" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="8ff97f2f-fdba-76b1-63e3-6834b36942d4">
+      <Execution id="1859b1c8-a18a-44c2-a106-95a87ceab6e5" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests" name="Stage0_MapAndPackageExposeIdsAndValuesInsteadOfSourcesAndLeases" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="8ff97f2f-fdba-76b1-63e3-6834b36942d4" executionId="1859b1c8-a18a-44c2-a106-95a87ceab6e5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="44102b21-4183-53f8-88c3-05aafff56214" executionId="5b064e72-cf50-4f32-9201-b9caae6100f0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8e299c34-f133-f0f9-3fc9-8991b29227f8" executionId="a1ea65e8-808f-4c2b-9e66-f41e20d902bc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1a862b60-4fa0-e2d4-357e-242e526215a3" executionId="972bf587-77e1-46c5-b300-e91bd0054287" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="24c1954f-87a1-afef-e75b-61fe04837302" executionId="acce55ba-a82d-4d4d-ac52-c4e5ca3c7c0f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="5" executed="5" passed="5" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.89]   Discovering: Cerneala.Tests.Scene2DPackages&#xD;
+[xUnit.net 00:00:01.05]   Discovered:  Cerneala.Tests.Scene2DPackages&#xD;
+[xUnit.net 00:00:01.07]   Starting:    Cerneala.Tests.Scene2DPackages&#xD;
+[xUnit.net 00:00:01.25]   Finished:    Cerneala.Tests.Scene2DPackages&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

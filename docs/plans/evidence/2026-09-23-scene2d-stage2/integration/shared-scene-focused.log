@@ -1,0 +1,193 @@
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:03.37]     Cerneala.Tests.Controls.SceneSimulationContext2DTests.NestedSimulatedCollidersRetainOnlyNearbyTerrainWithoutAnyViewport [FAIL]
+  Failed Cerneala.Tests.Controls.SceneSimulationContext2DTests.NestedSimulatedCollidersRetainOnlyNearbyTerrainWithoutAnyViewport [13 ms]
+  Error Message:
+   Assert.Single() Failure: The collection was empty
+  Stack Trace:
+     at Cerneala.Tests.Controls.SceneSimulationContext2DTests.NestedSimulatedCollidersRetainOnlyNearbyTerrainWithoutAnyViewport() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneSimulationContext2DTests.cs:line 355
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:05.50]     Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(ldtk: False) [FAIL]
+[xUnit.net 00:00:05.54]     Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(ldtk: True) [FAIL]
+  Failed Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(ldtk: False) [1 s]
+  Error Message:
+   System.IO.InvalidDataException : The village requires zero level offset and authored Ground, Buildings and Doors maps in order.
+  Stack Trace:
+     at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 57
+   at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 96
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(Boolean ldtk) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 47
+--- End of stack trace from previous location ---
+  Failed Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(ldtk: True) [33 ms]
+  Error Message:
+   System.IO.InvalidDataException : The village requires zero level offset and authored Ground, Buildings and Doors maps in order.
+  Stack Trace:
+     at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 57
+   at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 96
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(Boolean ldtk) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 47
+--- End of stack trace from previous location ---
+[xUnit.net 00:00:05.57]     Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantStateSurvivesPlayerResetButFormatReloadDiscardsIt(ldtk: False) [FAIL]
+[xUnit.net 00:00:05.60]     Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantStateSurvivesPlayerResetButFormatReloadDiscardsIt(ldtk: True) [FAIL]
+[xUnit.net 00:00:06.26]     Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(platformCursor: True) [FAIL]
+[xUnit.net 00:00:06.30]     Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(platformCursor: False) [FAIL]
+[xUnit.net 00:00:06.35]     Cerneala.Tests.Playground.SceneWorldShowcaseTests.DetachingDuringAnAsynchronousOpenRetiresTheOperationWithoutPumpingTheOldRootAndAllowsReattach [FAIL]
+[xUnit.net 00:00:06.71]     Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantUsesACompleteEditedModelWithoutChangingGrassOrAuthoredNeighbors(ldtk: False) [FAIL]
+[xUnit.net 00:00:06.72]     Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantUsesACompleteEditedModelWithoutChangingGrassOrAuthoredNeighbors(ldtk: True) [FAIL]
+  Failed Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantStateSurvivesPlayerResetButFormatReloadDiscardsIt(ldtk: False) [18 ms]
+  Error Message:
+   System.IO.InvalidDataException : The village requires zero level offset and authored Ground, Buildings and Doors maps in order.
+  Stack Trace:
+     at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 57
+   at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 96
+   at Cerneala.Playground.SceneWorldState.LoadCoreAsync(Boolean ldtk, Boolean reset, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 283
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantStateSurvivesPlayerResetButFormatReloadDiscardsIt(Boolean ldtk) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 185
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantStateSurvivesPlayerResetButFormatReloadDiscardsIt(Boolean ldtk) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 196
+--- End of stack trace from previous location ---
+  Failed Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantStateSurvivesPlayerResetButFormatReloadDiscardsIt(ldtk: True) [15 ms]
+  Error Message:
+   System.IO.InvalidDataException : The village requires zero level offset and authored Ground, Buildings and Doors maps in order.
+  Stack Trace:
+     at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 57
+   at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 96
+   at Cerneala.Playground.SceneWorldState.LoadCoreAsync(Boolean ldtk, Boolean reset, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 283
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantStateSurvivesPlayerResetButFormatReloadDiscardsIt(Boolean ldtk) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 185
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantStateSurvivesPlayerResetButFormatReloadDiscardsIt(Boolean ldtk) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 196
+--- End of stack trace from previous location ---
+  Failed Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(platformCursor: True) [651 ms]
+  Error Message:
+   Assert.Null() Failure: Value is not null
+Expected: null
+Actual:   System.IO.InvalidDataException: The village requires zero level offset and authored Ground, Buildings and Doors maps in order.
+   at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 57
+   at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 96
+   at Cerneala.Playground.SceneWorldState.LoadCoreAsync(Boolean ldtk, Boolean reset, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 283
+   at Cerneala.Playground.SceneWorldShowcase.LoadWorldAsync(Boolean ldtk, Boolean resume, UiRelay relay, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 84
+   at Cerneala.Playground.SceneWorldShowcase.RunAsync(Func`2 operation, UiRelay relay, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 61
+  Stack Trace:
+     at Cerneala.Tests.Playground.SceneWorldShowcaseTests.<>c__DisplayClass7_0.<CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts>b__19() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 243
+   at System.Threading.SpinWait.SpinUntil(Func`1 condition, Int32 millisecondsTimeout)
+   at System.Threading.SpinWait.SpinUntil(Func`1 condition, TimeSpan timeout)
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.<>c__DisplayClass7_0.<CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts>g__Ready|1() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 240
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(Boolean platformCursor) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 250
+--- End of stack trace from previous location ---
+  Failed Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(platformCursor: False) [32 ms]
+  Error Message:
+   Assert.Null() Failure: Value is not null
+Expected: null
+Actual:   System.IO.InvalidDataException: The village requires zero level offset and authored Ground, Buildings and Doors maps in order.
+   at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 57
+   at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 96
+   at Cerneala.Playground.SceneWorldState.LoadCoreAsync(Boolean ldtk, Boolean reset, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 283
+   at Cerneala.Playground.SceneWorldShowcase.LoadWorldAsync(Boolean ldtk, Boolean resume, UiRelay relay, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 84
+   at Cerneala.Playground.SceneWorldShowcase.RunAsync(Func`2 operation, UiRelay relay, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 61
+  Stack Trace:
+     at Cerneala.Tests.Playground.SceneWorldShowcaseTests.<>c__DisplayClass7_0.<CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts>b__19() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 243
+   at System.Threading.SpinWait.SpinUntil(Func`1 condition, Int32 millisecondsTimeout)
+   at System.Threading.SpinWait.SpinUntil(Func`1 condition, TimeSpan timeout)
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.<>c__DisplayClass7_0.<CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts>g__Ready|1() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 240
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(Boolean platformCursor) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 250
+--- End of stack trace from previous location ---
+  Failed Cerneala.Tests.Playground.SceneWorldShowcaseTests.DetachingDuringAnAsynchronousOpenRetiresTheOperationWithoutPumpingTheOldRootAndAllowsReattach [46 ms]
+  Error Message:
+   Assert.Null() Failure: Value is not null
+Expected: null
+Actual:   System.IO.InvalidDataException: The village requires zero level offset and authored Ground, Buildings and Doors maps in order.
+   at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 57
+   at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 96
+   at Cerneala.Playground.SceneWorldState.LoadCoreAsync(Boolean ldtk, Boolean reset, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 283
+   at Cerneala.Playground.SceneWorldShowcase.LoadWorldAsync(Boolean ldtk, Boolean resume, UiRelay relay, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 84
+   at Cerneala.Playground.SceneWorldShowcase.RunAsync(Func`2 operation, UiRelay relay, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 61
+  Stack Trace:
+     at Cerneala.Tests.Playground.SceneWorldShowcaseTests.<>c__DisplayClass8_0.<DetachingDuringAnAsynchronousOpenRetiresTheOperationWithoutPumpingTheOldRootAndAllowsReattach>b__1() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 428
+   at System.Threading.SpinWait.SpinUntil(Func`1 condition, Int32 millisecondsTimeout)
+   at System.Threading.SpinWait.SpinUntil(Func`1 condition, TimeSpan timeout)
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.DetachingDuringAnAsynchronousOpenRetiresTheOperationWithoutPumpingTheOldRootAndAllowsReattach() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 424
+--- End of stack trace from previous location ---
+  Failed Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantUsesACompleteEditedModelWithoutChangingGrassOrAuthoredNeighbors(ldtk: False) [33 ms]
+  Error Message:
+   System.IO.InvalidDataException : The village requires zero level offset and authored Ground, Buildings and Doors maps in order.
+  Stack Trace:
+     at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 57
+   at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 96
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantUsesACompleteEditedModelWithoutChangingGrassOrAuthoredNeighbors(Boolean ldtk) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 121
+--- End of stack trace from previous location ---
+  Failed Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantUsesACompleteEditedModelWithoutChangingGrassOrAuthoredNeighbors(ldtk: True) [6 ms]
+  Error Message:
+   System.IO.InvalidDataException : The village requires zero level offset and authored Ground, Buildings and Doors maps in order.
+  Stack Trace:
+     at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 57
+   at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 96
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantUsesACompleteEditedModelWithoutChangingGrassOrAuthoredNeighbors(Boolean ldtk) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 121
+--- End of stack trace from previous location ---
+[xUnit.net 00:00:06.75]     Cerneala.Tests.Playground.SceneWorldShowcaseTests.CancelledPlantDoesNotAdvanceTheNextSuccessfulModelEdit(ldtk: True) [FAIL]
+[xUnit.net 00:00:06.77]     Cerneala.Tests.Playground.SceneWorldShowcaseTests.CancelledPlantDoesNotAdvanceTheNextSuccessfulModelEdit(ldtk: False) [FAIL]
+[xUnit.net 00:00:06.79]     Cerneala.Tests.Playground.SceneWorldShowcaseTests.DisposingTheStateClosesItsPackageAndRejectsFutureLoads [FAIL]
+  Failed Cerneala.Tests.Playground.SceneWorldShowcaseTests.CancelledPlantDoesNotAdvanceTheNextSuccessfulModelEdit(ldtk: True) [20 ms]
+  Error Message:
+   System.IO.InvalidDataException : The village requires zero level offset and authored Ground, Buildings and Doors maps in order.
+  Stack Trace:
+     at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 57
+   at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 96
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.CancelledPlantDoesNotAdvanceTheNextSuccessfulModelEdit(Boolean ldtk) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 157
+--- End of stack trace from previous location ---
+  Failed Cerneala.Tests.Playground.SceneWorldShowcaseTests.CancelledPlantDoesNotAdvanceTheNextSuccessfulModelEdit(ldtk: False) [12 ms]
+  Error Message:
+   System.IO.InvalidDataException : The village requires zero level offset and authored Ground, Buildings and Doors maps in order.
+  Stack Trace:
+     at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 57
+   at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 96
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.CancelledPlantDoesNotAdvanceTheNextSuccessfulModelEdit(Boolean ldtk) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 157
+--- End of stack trace from previous location ---
+  Failed Cerneala.Tests.Playground.SceneWorldShowcaseTests.DisposingTheStateClosesItsPackageAndRejectsFutureLoads [22 ms]
+  Error Message:
+   System.IO.InvalidDataException : The village requires zero level offset and authored Ground, Buildings and Doors maps in order.
+  Stack Trace:
+     at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 57
+   at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 96
+   at Cerneala.Playground.SceneWorldState.LoadCoreAsync(Boolean ldtk, Boolean reset, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 283
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.DisposingTheStateClosesItsPackageAndRejectsFutureLoads() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 203
+--- End of stack trace from previous location ---
+[xUnit.net 00:00:08.16]     Cerneala.Tests.Controls.ScenePresentationTests.PublicationDuringRecordingDiscardsEvenTheAlreadyRecordedScenePrefix [FAIL]
+  Failed Cerneala.Tests.Controls.ScenePresentationTests.PublicationDuringRecordingDiscardsEvenTheAlreadyRecordedScenePrefix [19 ms]
+  Error Message:
+   System.NullReferenceException : Object reference not set to an instance of an object.
+  Stack Trace:
+     at Cerneala.UI.Controls.RenderSurface2DFrame.Complete() in C:\Users\lauri\Desktop\Cerneala\UI\Controls\RenderSurface2DFrame.cs:line 407
+   at Cerneala.UI.Controls.RenderSurface2D.Cerneala.Drawing.IRenderSurface2DFrameSource.RecordFrame(DrawCommandList commands, DrawRect bounds) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\RenderSurface2D.cs:line 471
+   at Cerneala.Tests.Controls.ScenePresentationTests.Fixture.Record() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\ScenePresentationTests.cs:line 294
+   at Cerneala.Tests.Controls.ScenePresentationTests.PublicationDuringRecordingDiscardsEvenTheAlreadyRecordedScenePrefix() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\ScenePresentationTests.cs:line 213
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:08.19]     Cerneala.Tests.Controls.ScenePresentationTests.OffscreenSimulationPreparationDoesNotHideAnAlreadyReadyViewport(fail: True) [FAIL]
+[xUnit.net 00:00:08.20]     Cerneala.Tests.Controls.ScenePresentationTests.OffscreenSimulationPreparationDoesNotHideAnAlreadyReadyViewport(fail: False) [FAIL]
+[xUnit.net 00:00:08.26]     Cerneala.Tests.Controls.ScenePresentationTests.CompleteVisiblePreparationPublishesTheWholeSceneAndReadonlyReadyState [FAIL]
+  Failed Cerneala.Tests.Controls.ScenePresentationTests.OffscreenSimulationPreparationDoesNotHideAnAlreadyReadyViewport(fail: True) [6 ms]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 1
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.Controls.ScenePresentationTests.OffscreenSimulationPreparationDoesNotHideAnAlreadyReadyViewport(Boolean fail) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\ScenePresentationTests.cs:line 156
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+  Failed Cerneala.Tests.Controls.ScenePresentationTests.OffscreenSimulationPreparationDoesNotHideAnAlreadyReadyViewport(fail: False) [3 ms]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 1
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.Controls.ScenePresentationTests.OffscreenSimulationPreparationDoesNotHideAnAlreadyReadyViewport(Boolean fail) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\ScenePresentationTests.cs:line 156
+   at InvokeStub_ScenePresentationTests.OffscreenSimulationPreparationDoesNotHideAnAlreadyReadyViewport(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+  Failed Cerneala.Tests.Controls.ScenePresentationTests.CompleteVisiblePreparationPublishesTheWholeSceneAndReadonlyReadyState [51 ms]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 2
+Actual:   1
+  Stack Trace:
+     at Cerneala.Tests.Controls.ScenePresentationTests.CompleteVisiblePreparationPublishesTheWholeSceneAndReadonlyReadyState() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\ScenePresentationTests.cs:line 116
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage2\integration\shared-scene-focused.trx
+
+Failed!  - Failed:    17, Passed:   136, Skipped:     0, Total:   153, Duration: 5 s - Cerneala.Tests.dll (net8.0)

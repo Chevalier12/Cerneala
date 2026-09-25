@@ -1,0 +1,5 @@
+UTC=2026-09-25T07:55:19.6070974Z
+Inventory=docs/plans/evidence/2026-09-24-scene-village-seams/core/diagnostic/flat64-final-source-artifact.sha256.txt
+InventorySHA256=FE372737D4A23A2FF586F235F0ED33B75546DB86D0D26AEA88ED9D4BC8DE2035
+Entries=34
+Mismatches=0

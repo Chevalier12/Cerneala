@@ -33,6 +33,26 @@ internal static class SdlGpuShaderArtifacts
         StorageBufferCount: 0,
         UniformBufferCount: 0);
 
+    public static SdlGpuShaderArtifact DrawingImageDomainVertex { get; } = new(
+        "drawing-point-clamp-image-domain-vertex",
+        "Gpu.Shaders",
+        "DrawingImageDomain.vert",
+        SdlGpuShaderStage.Vertex,
+        SamplerCount: 0,
+        StorageTextureCount: 0,
+        StorageBufferCount: 0,
+        UniformBufferCount: 1);
+
+    public static SdlGpuShaderArtifact DrawingImageDomainFragment { get; } = new(
+        "drawing-point-clamp-image-domain-fragment",
+        "Gpu.Shaders",
+        "DrawingImageDomain.frag",
+        SdlGpuShaderStage.Fragment,
+        SamplerCount: 1,
+        StorageTextureCount: 0,
+        StorageBufferCount: 0,
+        UniformBufferCount: 0);
+
     public static SdlGpuShaderArtifact PrismVertex { get; } = new(
         "prism-fullscreen-vertex",
         "Prism.Shaders",
@@ -77,6 +97,8 @@ internal static class SdlGpuShaderArtifacts
     [
         DrawingVertex,
         DrawingFragment,
+        DrawingImageDomainVertex,
+        DrawingImageDomainFragment,
         Surface3DVertex,
         Surface3DFragment,
         PrismVertex,

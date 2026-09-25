@@ -1,0 +1,541 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="47ab1e83-ca2e-4af1-98d9-4f888eaebab2" name="lauri@DESKTOP-JT43V3D 2026-09-24 03:38:33" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T03:38:33.5792908+03:00" queuing="2026-09-24T03:38:33.5792928+03:00" start="2026-09-24T03:38:28.9182771+03:00" finish="2026-09-24T03:38:33.8260922+03:00" />
+  <TestSettings name="default" id="670c14c3-38ae-4d02-8882-2e15b80fa2d5">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_03_38_33" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="c7ea3816-1bd2-43c9-afe1-50069e3c385f" testId="579c2ca3-0a72-a860-c5c7-b09ba6c5d8d1" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.NullWithoutNullCapableTemplateReportsTemplateError" computerName="DESKTOP-JT43V3D" duration="00:00:00.0012704" startTime="2026-09-24T03:38:33.4820232+03:00" endTime="2026-09-24T03:38:33.4820236+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c7ea3816-1bd2-43c9-afe1-50069e3c385f">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: typeof(System.Collections.IEnumerable)&#xD;
+Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 352&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 358&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.NullWithoutNullCapableTemplateReportsTemplateError() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 183&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="ecfbadf0-c82f-45f7-94b4-f39cef9c098c" testId="ed5f1090-31ea-e1cd-c883-0ce8c07111fd" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(fault: Attach)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0011530" startTime="2026-09-24T03:38:33.4961487+03:00" endTime="2026-09-24T03:38:33.4961492+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ecfbadf0-c82f-45f7-94b4-f39cef9c098c">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: typeof(System.Collections.IEnumerable)&#xD;
+Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 352&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 358&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(StructuralFault fault) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 278&#xD;
+   at InvokeStub_SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="0aedbf48-886d-4d05-af6d-708c1577f511" testId="e71ecd0d-369d-87df-26ac-2d777e6e44de" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.OccurrenceDataContextAndTemplateIndexStayBoundToValueNotPosition" computerName="DESKTOP-JT43V3D" duration="00:00:00.0017612" startTime="2026-09-24T03:38:33.5687206+03:00" endTime="2026-09-24T03:38:33.5687210+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0aedbf48-886d-4d05-af6d-708c1577f511">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: typeof(System.Collections.IEnumerable)&#xD;
+Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 352&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 358&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.OccurrenceDataContextAndTemplateIndexStayBoundToValueNotPosition() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 143&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="6da0a02e-266d-40ed-b8dd-bc99ebd89e79" testId="26668bcf-d43d-ccdc-a594-33036c269549" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.AttachedSourceMutationAssignmentAndRefreshRejectOffOwnerCalls" computerName="DESKTOP-JT43V3D" duration="00:00:00.0017774" startTime="2026-09-24T03:38:33.5071716+03:00" endTime="2026-09-24T03:38:33.5071742+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6da0a02e-266d-40ed-b8dd-bc99ebd89e79">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: typeof(System.Collections.IEnumerable)&#xD;
+Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 352&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 358&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.AttachedSourceMutationAssignmentAndRefreshRejectOffOwnerCalls() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 220&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="29f7e0f6-3482-45b4-9373-574e6ee4a188" testId="16984204-ff0d-7821-2749-1bf091b3eb55" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ObservableDeltasKeepUnaffectedOccurrenceNodesEvenForDuplicateReferences" computerName="DESKTOP-JT43V3D" duration="00:00:00.0021537" startTime="2026-09-24T03:38:33.5117471+03:00" endTime="2026-09-24T03:38:33.5117477+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="29f7e0f6-3482-45b4-9373-574e6ee4a188">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: typeof(System.Collections.IEnumerable)&#xD;
+Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 352&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 358&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ObservableDeltasKeepUnaffectedOccurrenceNodesEvenForDuplicateReferences() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 82&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="d936d52d-4847-4281-8f08-709b3a720c75" testId="a986d112-2dcb-d598-a393-9522d3928502" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ResetSourceReplacementAndTemplateReplacementRecreateOccurrences" computerName="DESKTOP-JT43V3D" duration="00:00:00.0011535" startTime="2026-09-24T03:38:33.5639572+03:00" endTime="2026-09-24T03:38:33.5639576+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d936d52d-4847-4281-8f08-709b3a720c75">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: typeof(System.Collections.IEnumerable)&#xD;
+Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 352&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 358&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ResetSourceReplacementAndTemplateReplacementRecreateOccurrences() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 115&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="48969ae9-457e-453c-8158-6dace461e1e5" testId="218aad1e-1157-8dea-7ac2-583fbbab4813" testName="Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.IsSimulatedDefaultsFalseAndMarksOnlyTheChosenCollider" computerName="DESKTOP-JT43V3D" duration="00:00:00.0007988" startTime="2026-09-24T03:38:33.6118931+03:00" endTime="2026-09-24T03:38:33.6118934+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="48969ae9-457e-453c-8158-6dace461e1e5">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.GetMarkerProperty() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\Collider2DSimulationInterestContractTests.cs:line 82&#xD;
+   at Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.GetSimulated(Collider2D collider) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\Collider2DSimulationInterestContractTests.cs:line 88&#xD;
+   at Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.IsSimulatedDefaultsFalseAndMarksOnlyTheChosenCollider() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\Collider2DSimulationInterestContractTests.cs:line 15&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="46ddebe3-6a77-49cf-bf6c-c3051e4e49c3" testId="4203fd26-a843-38b6-54bf-1c790378227e" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.PlainSourceIsSnapshottedOnceAndRefreshIsTheExplicitResetBoundary" computerName="DESKTOP-JT43V3D" duration="00:00:00.0025951" startTime="2026-09-24T03:38:33.5747863+03:00" endTime="2026-09-24T03:38:33.5747869+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="46ddebe3-6a77-49cf-bf6c-c3051e4e49c3">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: typeof(System.Collections.IEnumerable)&#xD;
+Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 352&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 358&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.PlainSourceIsSnapshottedOnceAndRefreshIsTheExplicitResetBoundary() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 50&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="ee6a5341-afdf-4358-989d-712157079006" testId="058b480c-eb50-c685-0fbe-d93362735543" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(fault: Changed)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0006506" startTime="2026-09-24T03:38:33.4992336+03:00" endTime="2026-09-24T03:38:33.4992341+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ee6a5341-afdf-4358-989d-712157079006">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: typeof(System.Collections.IEnumerable)&#xD;
+Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 352&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 358&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(StructuralFault fault) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 278&#xD;
+   at InvokeStub_SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="99699ed5-aaea-4908-b11f-937a10f4fc00" testId="ea0f8253-6870-fcc2-e332-0eaa9d65aec1" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.NullIsARealOccurrenceWithItsOwnNullCapableTemplate" computerName="DESKTOP-JT43V3D" duration="00:00:00.3123938" startTime="2026-09-24T03:38:33.4697654+03:00" endTime="2026-09-24T03:38:33.4698177+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="99699ed5-aaea-4908-b11f-937a10f4fc00">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: typeof(System.Collections.IEnumerable)&#xD;
+Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 352&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 358&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.NullIsARealOccurrenceWithItsOwnNullCapableTemplate() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 165&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="91a499d6-30c2-4e5a-87b1-f29179c0fed5" testId="4f4eafdb-23f8-9625-6c41-3c6a52c23ef2" testName="Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.MarkedColliderUsesItsOwnActiveGeometryNotUiEnabledState" computerName="DESKTOP-JT43V3D" duration="00:00:00.0262946" startTime="2026-09-24T03:38:33.6090301+03:00" endTime="2026-09-24T03:38:33.6090304+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="91a499d6-30c2-4e5a-87b1-f29179c0fed5">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.GetMarkerProperty() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\Collider2DSimulationInterestContractTests.cs:line 82&#xD;
+   at Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.SetSimulated(Collider2D collider, Boolean value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\Collider2DSimulationInterestContractTests.cs:line 90&#xD;
+   at Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.MarkedColliderUsesItsOwnActiveGeometryNotUiEnabledState() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\Collider2DSimulationInterestContractTests.cs:line 31&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="0ea3cf44-069c-4adc-b8aa-6a09f982c34b" testId="693342d2-3468-168d-c950-3020724b63be" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(fault: Detach)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0029784" startTime="2026-09-24T03:38:33.4885463+03:00" endTime="2026-09-24T03:38:33.4885467+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0ea3cf44-069c-4adc-b8aa-6a09f982c34b">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: typeof(System.Collections.IEnumerable)&#xD;
+Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 352&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 358&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(StructuralFault fault) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 278&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c4db6d20-bd60-4d20-869e-e3f050688636" testId="65bf7c38-f069-6668-7c02-1d531172d89b" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ObservableSourceResnapshotsOnReattachAndOwnerRelayCanApplyDetachedChanges" computerName="DESKTOP-JT43V3D" duration="00:00:00.0022042" startTime="2026-09-24T03:38:33.5475933+03:00" endTime="2026-09-24T03:38:33.5475938+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c4db6d20-bd60-4d20-869e-e3f050688636">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: typeof(System.Collections.IEnumerable)&#xD;
+Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 352&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 358&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ObservableSourceResnapshotsOnReattachAndOwnerRelayCanApplyDetachedChanges() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 197&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="949a3323-af02-4c27-8fba-5e7eba28aa42" testId="68dd57cc-3454-c973-f9b7-4fec83a56e17" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateProducedSceneNodeReceivesRealClickAndKeyInput" computerName="DESKTOP-JT43V3D" duration="00:00:00.0048392" startTime="2026-09-24T03:38:33.5606893+03:00" endTime="2026-09-24T03:38:33.5606897+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="949a3323-af02-4c27-8fba-5e7eba28aa42">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: typeof(System.Collections.IEnumerable)&#xD;
+Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 352&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 358&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateProducedSceneNodeReceivesRealClickAndKeyInput() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 324&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="54f0b232-99ae-48ad-988e-79d77a83ff3e" testId="f670d610-a303-6771-dd8b-83795a8b668c" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplatePreflightFailureKeepsCommittedTreeAndRefreshCanRetry" computerName="DESKTOP-JT43V3D" duration="00:00:00.0015378" startTime="2026-09-24T03:38:33.5154755+03:00" endTime="2026-09-24T03:38:33.5154757+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="54f0b232-99ae-48ad-988e-79d77a83ff3e">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: typeof(System.Collections.IEnumerable)&#xD;
+Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 352&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 358&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplatePreflightFailureKeepsCommittedTreeAndRefreshCanRetry() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 243&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c3194c59-98d7-448b-925e-6700003a2712" testId="485ba4bf-f08b-50f4-53d9-cb963bd262d0" testName="Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.MarkerAndGeometryMutationsInvalidateExistingCollisionRevisionButIdleUpdatesDoNot" computerName="DESKTOP-JT43V3D" duration="00:00:00.0016236" startTime="2026-09-24T03:38:33.6159999+03:00" endTime="2026-09-24T03:38:33.6160003+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c3194c59-98d7-448b-925e-6700003a2712">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.GetMarkerProperty() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\Collider2DSimulationInterestContractTests.cs:line 82&#xD;
+   at Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.SetSimulated(Collider2D collider, Boolean value) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\Collider2DSimulationInterestContractTests.cs:line 90&#xD;
+   at Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.MarkerAndGeometryMutationsInvalidateExistingCollisionRevisionButIdleUpdatesDoNot() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\Collider2DSimulationInterestContractTests.cs:line 56&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="8a781b49-e0e0-4502-afc4-dc03c3afbad3" testId="20bcfb6d-edac-5e32-0441-732ccb4bb01a" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ItemsSourceAcceptsPlainAndObservableEnumerables" computerName="DESKTOP-JT43V3D" duration="00:00:00.0009428" startTime="2026-09-24T03:38:33.5025708+03:00" endTime="2026-09-24T03:38:33.5025712+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8a781b49-e0e0-4502-afc4-dc03c3afbad3">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: typeof(System.Collections.IEnumerable)&#xD;
+Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 352&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ItemsSourceAcceptsPlainAndObservableEnumerables() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 27&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateProducedSceneNodeReceivesRealClickAndKeyInput" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="68dd57cc-3454-c973-f9b7-4fec83a56e17">
+      <Execution id="949a3323-af02-4c27-8fba-5e7eba28aa42" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="TemplateProducedSceneNodeReceivesRealClickAndKeyInput" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.PlainSourceIsSnapshottedOnceAndRefreshIsTheExplicitResetBoundary" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="4203fd26-a843-38b6-54bf-1c790378227e">
+      <Execution id="46ddebe3-6a77-49cf-bf6c-c3051e4e49c3" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="PlainSourceIsSnapshottedOnceAndRefreshIsTheExplicitResetBoundary" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ObservableSourceResnapshotsOnReattachAndOwnerRelayCanApplyDetachedChanges" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="65bf7c38-f069-6668-7c02-1d531172d89b">
+      <Execution id="c4db6d20-bd60-4d20-869e-e3f050688636" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="ObservableSourceResnapshotsOnReattachAndOwnerRelayCanApplyDetachedChanges" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.MarkedColliderUsesItsOwnActiveGeometryNotUiEnabledState" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="4f4eafdb-23f8-9625-6c41-3c6a52c23ef2">
+      <Execution id="91a499d6-30c2-4e5a-87b1-f29179c0fed5" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests" name="MarkedColliderUsesItsOwnActiveGeometryNotUiEnabledState" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.IsSimulatedDefaultsFalseAndMarksOnlyTheChosenCollider" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="218aad1e-1157-8dea-7ac2-583fbbab4813">
+      <Execution id="48969ae9-457e-453c-8158-6dace461e1e5" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests" name="IsSimulatedDefaultsFalseAndMarksOnlyTheChosenCollider" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.NullIsARealOccurrenceWithItsOwnNullCapableTemplate" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="ea0f8253-6870-fcc2-e332-0eaa9d65aec1">
+      <Execution id="99699ed5-aaea-4908-b11f-937a10f4fc00" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="NullIsARealOccurrenceWithItsOwnNullCapableTemplate" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ItemsSourceAcceptsPlainAndObservableEnumerables" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="20bcfb6d-edac-5e32-0441-732ccb4bb01a">
+      <Execution id="8a781b49-e0e0-4502-afc4-dc03c3afbad3" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="ItemsSourceAcceptsPlainAndObservableEnumerables" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.AttachedSourceMutationAssignmentAndRefreshRejectOffOwnerCalls" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="26668bcf-d43d-ccdc-a594-33036c269549">
+      <Execution id="6da0a02e-266d-40ed-b8dd-bc99ebd89e79" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="AttachedSourceMutationAssignmentAndRefreshRejectOffOwnerCalls" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.OccurrenceDataContextAndTemplateIndexStayBoundToValueNotPosition" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="e71ecd0d-369d-87df-26ac-2d777e6e44de">
+      <Execution id="0aedbf48-886d-4d05-af6d-708c1577f511" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="OccurrenceDataContextAndTemplateIndexStayBoundToValueNotPosition" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.MarkerAndGeometryMutationsInvalidateExistingCollisionRevisionButIdleUpdatesDoNot" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="485ba4bf-f08b-50f4-53d9-cb963bd262d0">
+      <Execution id="c3194c59-98d7-448b-925e-6700003a2712" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests" name="MarkerAndGeometryMutationsInvalidateExistingCollisionRevisionButIdleUpdatesDoNot" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplatePreflightFailureKeepsCommittedTreeAndRefreshCanRetry" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="f670d610-a303-6771-dd8b-83795a8b668c">
+      <Execution id="54f0b232-99ae-48ad-988e-79d77a83ff3e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="TemplatePreflightFailureKeepsCommittedTreeAndRefreshCanRetry" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(fault: Attach)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="ed5f1090-31ea-e1cd-c883-0ce8c07111fd">
+      <Execution id="ecfbadf0-c82f-45f7-94b4-f39cef9c098c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(fault: Changed)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="058b480c-eb50-c685-0fbe-d93362735543">
+      <Execution id="ee6a5341-afdf-4358-989d-712157079006" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ObservableDeltasKeepUnaffectedOccurrenceNodesEvenForDuplicateReferences" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="16984204-ff0d-7821-2749-1bf091b3eb55">
+      <Execution id="29f7e0f6-3482-45b4-9373-574e6ee4a188" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="ObservableDeltasKeepUnaffectedOccurrenceNodesEvenForDuplicateReferences" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ResetSourceReplacementAndTemplateReplacementRecreateOccurrences" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="a986d112-2dcb-d598-a393-9522d3928502">
+      <Execution id="d936d52d-4847-4281-8f08-709b3a720c75" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="ResetSourceReplacementAndTemplateReplacementRecreateOccurrences" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(fault: Detach)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="693342d2-3468-168d-c950-3020724b63be">
+      <Execution id="0ea3cf44-069c-4adc-b8aa-6a09f982c34b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.NullWithoutNullCapableTemplateReportsTemplateError" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="579c2ca3-0a72-a860-c5c7-b09ba6c5d8d1">
+      <Execution id="c7ea3816-1bd2-43c9-afe1-50069e3c385f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="NullWithoutNullCapableTemplateReportsTemplateError" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="579c2ca3-0a72-a860-c5c7-b09ba6c5d8d1" executionId="c7ea3816-1bd2-43c9-afe1-50069e3c385f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ed5f1090-31ea-e1cd-c883-0ce8c07111fd" executionId="ecfbadf0-c82f-45f7-94b4-f39cef9c098c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e71ecd0d-369d-87df-26ac-2d777e6e44de" executionId="0aedbf48-886d-4d05-af6d-708c1577f511" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="26668bcf-d43d-ccdc-a594-33036c269549" executionId="6da0a02e-266d-40ed-b8dd-bc99ebd89e79" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="16984204-ff0d-7821-2749-1bf091b3eb55" executionId="29f7e0f6-3482-45b4-9373-574e6ee4a188" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a986d112-2dcb-d598-a393-9522d3928502" executionId="d936d52d-4847-4281-8f08-709b3a720c75" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="218aad1e-1157-8dea-7ac2-583fbbab4813" executionId="48969ae9-457e-453c-8158-6dace461e1e5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4203fd26-a843-38b6-54bf-1c790378227e" executionId="46ddebe3-6a77-49cf-bf6c-c3051e4e49c3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="058b480c-eb50-c685-0fbe-d93362735543" executionId="ee6a5341-afdf-4358-989d-712157079006" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ea0f8253-6870-fcc2-e332-0eaa9d65aec1" executionId="99699ed5-aaea-4908-b11f-937a10f4fc00" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4f4eafdb-23f8-9625-6c41-3c6a52c23ef2" executionId="91a499d6-30c2-4e5a-87b1-f29179c0fed5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="693342d2-3468-168d-c950-3020724b63be" executionId="0ea3cf44-069c-4adc-b8aa-6a09f982c34b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="65bf7c38-f069-6668-7c02-1d531172d89b" executionId="c4db6d20-bd60-4d20-869e-e3f050688636" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="68dd57cc-3454-c973-f9b7-4fec83a56e17" executionId="949a3323-af02-4c27-8fba-5e7eba28aa42" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f670d610-a303-6771-dd8b-83795a8b668c" executionId="54f0b232-99ae-48ad-988e-79d77a83ff3e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="485ba4bf-f08b-50f4-53d9-cb963bd262d0" executionId="c3194c59-98d7-448b-925e-6700003a2712" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="20bcfb6d-edac-5e32-0441-732ccb4bb01a" executionId="8a781b49-e0e0-4502-afc4-dc03c3afbad3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="17" executed="17" passed="0" failed="17" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.47]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:02.07]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:02.10]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:02.59]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.59]       Expected: typeof(System.Collections.IEnumerable)&#xD;
+[xUnit.net 00:00:02.59]       Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)&#xD;
+[xUnit.net 00:00:02.59]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.59]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(352,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty()&#xD;
+[xUnit.net 00:00:02.59]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(358,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source)&#xD;
+[xUnit.net 00:00:02.59]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(165,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.NullIsARealOccurrenceWithItsOwnNullCapableTemplate()&#xD;
+[xUnit.net 00:00:02.59]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.59]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.61]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.61]       Expected: typeof(System.Collections.IEnumerable)&#xD;
+[xUnit.net 00:00:02.61]       Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)&#xD;
+[xUnit.net 00:00:02.61]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.61]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(352,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty()&#xD;
+[xUnit.net 00:00:02.61]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(358,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source)&#xD;
+[xUnit.net 00:00:02.61]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(183,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.NullWithoutNullCapableTemplateReportsTemplateError()&#xD;
+[xUnit.net 00:00:02.61]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.61]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.61]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.61]       Expected: typeof(System.Collections.IEnumerable)&#xD;
+[xUnit.net 00:00:02.61]       Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)&#xD;
+[xUnit.net 00:00:02.61]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.61]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(352,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty()&#xD;
+[xUnit.net 00:00:02.61]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(358,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source)&#xD;
+[xUnit.net 00:00:02.61]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(278,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(StructuralFault fault)&#xD;
+[xUnit.net 00:00:02.61]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.62]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.62]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.62]       Expected: typeof(System.Collections.IEnumerable)&#xD;
+[xUnit.net 00:00:02.62]       Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)&#xD;
+[xUnit.net 00:00:02.62]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.62]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(352,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty()&#xD;
+[xUnit.net 00:00:02.62]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(358,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source)&#xD;
+[xUnit.net 00:00:02.62]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(278,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(StructuralFault fault)&#xD;
+[xUnit.net 00:00:02.62]            at InvokeStub_SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(Object, Span`1)&#xD;
+[xUnit.net 00:00:02.62]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:02.62]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.62]       Expected: typeof(System.Collections.IEnumerable)&#xD;
+[xUnit.net 00:00:02.62]       Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)&#xD;
+[xUnit.net 00:00:02.62]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.63]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(352,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty()&#xD;
+[xUnit.net 00:00:02.63]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(358,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source)&#xD;
+[xUnit.net 00:00:02.63]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(278,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(StructuralFault fault)&#xD;
+[xUnit.net 00:00:02.63]            at InvokeStub_SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(Object, Span`1)&#xD;
+[xUnit.net 00:00:02.63]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:02.63]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.63]       Expected: typeof(System.Collections.IEnumerable)&#xD;
+[xUnit.net 00:00:02.63]       Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)&#xD;
+[xUnit.net 00:00:02.63]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.63]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(352,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty()&#xD;
+[xUnit.net 00:00:02.63]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(27,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ItemsSourceAcceptsPlainAndObservableEnumerables()&#xD;
+[xUnit.net 00:00:02.63]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.63]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.63]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.63]       Expected: typeof(System.Collections.IEnumerable)&#xD;
+[xUnit.net 00:00:02.63]       Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)&#xD;
+[xUnit.net 00:00:02.63]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.63]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(352,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty()&#xD;
+[xUnit.net 00:00:02.63]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(358,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source)&#xD;
+[xUnit.net 00:00:02.63]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(220,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.AttachedSourceMutationAssignmentAndRefreshRejectOffOwnerCalls()&#xD;
+[xUnit.net 00:00:02.63]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.63]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.64]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.64]       Expected: typeof(System.Collections.IEnumerable)&#xD;
+[xUnit.net 00:00:02.64]       Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)&#xD;
+[xUnit.net 00:00:02.64]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.64]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(352,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty()&#xD;
+[xUnit.net 00:00:02.64]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(358,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source)&#xD;
+[xUnit.net 00:00:02.64]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(82,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ObservableDeltasKeepUnaffectedOccurrenceNodesEvenForDuplicateReferences()&#xD;
+[xUnit.net 00:00:02.64]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.64]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.64]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.64]       Expected: typeof(System.Collections.IEnumerable)&#xD;
+[xUnit.net 00:00:02.64]       Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)&#xD;
+[xUnit.net 00:00:02.64]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.64]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(352,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty()&#xD;
+[xUnit.net 00:00:02.64]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(358,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source)&#xD;
+[xUnit.net 00:00:02.64]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(243,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplatePreflightFailureKeepsCommittedTreeAndRefreshCanRetry()&#xD;
+[xUnit.net 00:00:02.64]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.64]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.67]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.67]       Expected: typeof(System.Collections.IEnumerable)&#xD;
+[xUnit.net 00:00:02.67]       Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)&#xD;
+[xUnit.net 00:00:02.67]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.67]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(352,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty()&#xD;
+[xUnit.net 00:00:02.67]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(358,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source)&#xD;
+[xUnit.net 00:00:02.67]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(197,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ObservableSourceResnapshotsOnReattachAndOwnerRelayCanApplyDetachedChanges()&#xD;
+[xUnit.net 00:00:02.67]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.67]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.69]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.69]       Expected: typeof(System.Collections.IEnumerable)&#xD;
+[xUnit.net 00:00:02.69]       Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)&#xD;
+[xUnit.net 00:00:02.69]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.69]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(352,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty()&#xD;
+[xUnit.net 00:00:02.69]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(358,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source)&#xD;
+[xUnit.net 00:00:02.69]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(324,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateProducedSceneNodeReceivesRealClickAndKeyInput()&#xD;
+[xUnit.net 00:00:02.69]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.69]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.69]       Expected: typeof(System.Collections.IEnumerable)&#xD;
+[xUnit.net 00:00:02.69]       Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)&#xD;
+[xUnit.net 00:00:02.69]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.69]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(352,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty()&#xD;
+[xUnit.net 00:00:02.69]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(358,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source)&#xD;
+[xUnit.net 00:00:02.69]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(115,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ResetSourceReplacementAndTemplateReplacementRecreateOccurrences()&#xD;
+[xUnit.net 00:00:02.69]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.69]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.69]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.69]       Expected: typeof(System.Collections.IEnumerable)&#xD;
+[xUnit.net 00:00:02.69]       Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)&#xD;
+[xUnit.net 00:00:02.69]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.69]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(352,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty()&#xD;
+[xUnit.net 00:00:02.69]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(358,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source)&#xD;
+[xUnit.net 00:00:02.69]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(143,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.OccurrenceDataContextAndTemplateIndexStayBoundToValueNotPosition()&#xD;
+[xUnit.net 00:00:02.70]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.70]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.70]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.70]       Expected: typeof(System.Collections.IEnumerable)&#xD;
+[xUnit.net 00:00:02.70]       Actual:   typeof(Cerneala.UI.Controls.ISceneSpatialSource2D&lt;object&gt;)&#xD;
+[xUnit.net 00:00:02.70]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.70]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(352,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.GetEnumerableItemsSourceProperty()&#xD;
+[xUnit.net 00:00:02.70]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(358,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source)&#xD;
+[xUnit.net 00:00:02.70]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(50,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.PlainSourceIsSnapshottedOnceAndRefreshIsTheExplicitResetBoundary()&#xD;
+[xUnit.net 00:00:02.70]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.70]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.73]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:02.73]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.73]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\Collider2DSimulationInterestContractTests.cs(82,0): at Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.GetMarkerProperty()&#xD;
+[xUnit.net 00:00:02.74]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\Collider2DSimulationInterestContractTests.cs(90,0): at Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.SetSimulated(Collider2D collider, Boolean value)&#xD;
+[xUnit.net 00:00:02.74]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\Collider2DSimulationInterestContractTests.cs(31,0): at Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.MarkedColliderUsesItsOwnActiveGeometryNotUiEnabledState()&#xD;
+[xUnit.net 00:00:02.74]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.74]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.74]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:02.74]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.74]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\Collider2DSimulationInterestContractTests.cs(82,0): at Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.GetMarkerProperty()&#xD;
+[xUnit.net 00:00:02.74]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\Collider2DSimulationInterestContractTests.cs(88,0): at Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.GetSimulated(Collider2D collider)&#xD;
+[xUnit.net 00:00:02.74]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\Collider2DSimulationInterestContractTests.cs(15,0): at Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.IsSimulatedDefaultsFalseAndMarksOnlyTheChosenCollider()&#xD;
+[xUnit.net 00:00:02.74]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.74]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.74]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:02.74]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.74]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\Collider2DSimulationInterestContractTests.cs(82,0): at Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.GetMarkerProperty()&#xD;
+[xUnit.net 00:00:02.74]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\Collider2DSimulationInterestContractTests.cs(90,0): at Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.SetSimulated(Collider2D collider, Boolean value)&#xD;
+[xUnit.net 00:00:02.74]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\Collider2DSimulationInterestContractTests.cs(56,0): at Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.MarkerAndGeometryMutationsInvalidateExistingCollisionRevisionButIdleUpdatesDoNot()&#xD;
+[xUnit.net 00:00:02.74]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.74]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.75]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T03:38:33.4624386+03:00">
+        <Text>[xUnit.net 00:00:02.59]     Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.NullIsARealOccurrenceWithItsOwnNullCapableTemplate [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T03:38:33.4806037+03:00">
+        <Text>[xUnit.net 00:00:02.61]     Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.NullWithoutNullCapableTemplateReportsTemplateError [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T03:38:33.4872606+03:00">
+        <Text>[xUnit.net 00:00:02.61]     Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(fault: Detach) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T03:38:33.4916769+03:00">
+        <Text>[xUnit.net 00:00:02.62]     Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(fault: Attach) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T03:38:33.4980929+03:00">
+        <Text>[xUnit.net 00:00:02.62]     Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(fault: Changed) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T03:38:33.5013208+03:00">
+        <Text>[xUnit.net 00:00:02.63]     Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ItemsSourceAcceptsPlainAndObservableEnumerables [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T03:38:33.5057755+03:00">
+        <Text>[xUnit.net 00:00:02.63]     Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.AttachedSourceMutationAssignmentAndRefreshRejectOffOwnerCalls [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T03:38:33.5105716+03:00">
+        <Text>[xUnit.net 00:00:02.64]     Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ObservableDeltasKeepUnaffectedOccurrenceNodesEvenForDuplicateReferences [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T03:38:33.5144523+03:00">
+        <Text>[xUnit.net 00:00:02.64]     Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplatePreflightFailureKeepsCommittedTreeAndRefreshCanRetry [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T03:38:33.5996633+03:00">
+        <Text>[xUnit.net 00:00:02.67]     Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ObservableSourceResnapshotsOnReattachAndOwnerRelayCanApplyDetachedChanges [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T03:38:33.5997926+03:00">
+        <Text>[xUnit.net 00:00:02.69]     Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateProducedSceneNodeReceivesRealClickAndKeyInput [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T03:38:33.5999012+03:00">
+        <Text>[xUnit.net 00:00:02.69]     Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ResetSourceReplacementAndTemplateReplacementRecreateOccurrences [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T03:38:33.6001489+03:00">
+        <Text>[xUnit.net 00:00:02.69]     Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.OccurrenceDataContextAndTemplateIndexStayBoundToValueNotPosition [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T03:38:33.6002781+03:00">
+        <Text>[xUnit.net 00:00:02.70]     Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.PlainSourceIsSnapshottedOnceAndRefreshIsTheExplicitResetBoundary [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T03:38:33.6081374+03:00">
+        <Text>[xUnit.net 00:00:02.73]     Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.MarkedColliderUsesItsOwnActiveGeometryNotUiEnabledState [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T03:38:33.6111534+03:00">
+        <Text>[xUnit.net 00:00:02.74]     Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.IsSimulatedDefaultsFalseAndMarksOnlyTheChosenCollider [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T03:38:33.6148782+03:00">
+        <Text>[xUnit.net 00:00:02.74]     Cerneala.Tests.Controls.Collider2DSimulationInterestContractTests.MarkerAndGeometryMutationsInvalidateExistingCollisionRevisionButIdleUpdatesDoNot [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

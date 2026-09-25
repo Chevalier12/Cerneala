@@ -20,7 +20,7 @@ public sealed class NativeScenePrismStreamingTests
 {
     [SdlNativeFact]
     [Trait("Category", "Native")]
-    public void PointwiseSceneAndMapStreamingMatchEagerPixelsAcrossCameraAndFilterChanges()
+    public void PointwiseEagerItemsAndMapStreamingMatchEagerPixelsAcrossCameraAndFilterChanges()
     {
         string directory = Path.Combine(Path.GetTempPath(), $"Cerneala-pointwise-streaming-{Guid.NewGuid():N}");
         Directory.CreateDirectory(directory);
@@ -46,21 +46,18 @@ public sealed class NativeScenePrismStreamingTests
         using SdlGpuImage image = (SdlGpuImage)new SdlGpuImageLoader().Load(atlasPath);
         ImageReference picture = new(image);
         SceneSpatialEntry2D[] entries = [new("near", new(16, 16, 16, 16), null), new("far", new(1016, 16, 16, 16), null)];
-        List<string> itemLoads = [], itemReleases = [], mapLoads = [], mapReleases = [];
-        SceneItems2D items = new() { ItemsSource = new SceneSpatialSource2D<object>(entries, (entry, _) =>
-        {
-            itemLoads.Add(entry.Id);
-            return ValueTask.FromResult(new SceneSpatialLease2D<object>(Sprite(entry), _ => itemReleases.Add(entry.Id)));
-        }) };
+        List<string> mapLoads = [], mapReleases = [];
+        Sprite2D nearActor = Sprite(entries[0]), farActor = Sprite(entries[1]);
+        SceneItems2D items = new() { ItemsSource = new[] { nearActor, farActor } };
         TileMapCatalog2D catalog = new("native-pointwise", entries.Select(entry => new TileMapChunkInfo2D(entry, 1, [picture])));
-        TileMap2D map = new() { Source = new(catalog, (_, info, _) =>
+        TileMap2D map = TileMap2D.FromSource(new TileMapSource2D(catalog, (_, info, _) =>
         {
             SceneSpatialEntry2D entry = info.Spatial;
             mapLoads.Add(entry.Id);
             return ValueTask.FromResult(new SceneSpatialLease2D<TileMapChunkData2D>(
                 new([new Tile(picture, x: entry.Bounds.X, y: entry.Bounds.Y, width: 16, height: 16)]),
                 _ => mapReleases.Add(entry.Id)));
-        }) };
+        }));
         SceneGraph2D eager = new(), actors = new(), terrain = new();
         foreach (SceneSpatialEntry2D entry in entries) { eager.Children.Add(Sprite(entry)); }
         actors.Children.Add(items);
@@ -98,26 +95,24 @@ public sealed class NativeScenePrismStreamingTests
                 {
                     byte[] reference = Capture();
                     string expected = far ? "far" : "near";
-                    int beforeItems = itemLoads.Count, beforeMaps = mapLoads.Count;
+                    int beforeMaps = mapLoads.Count;
                     Click("mode");
-                    Assert.Equal(1, items.RealizedItemCount);
-                    Assert.Equal(beforeItems + 1, itemLoads.Count);
-                    Assert.Equal(expected, itemLoads[^1]);
+                    Assert.Equal(2, items.RealizedItemCount);
+                    Assert.Same(nearActor, items.LogicalChildren.First());
+                    Assert.Same(farActor, items.LogicalChildren.Last());
                     Assert.Equal(reference, Capture());
                     Click("mode");
-                    Assert.Equal(itemLoads.Count, itemReleases.Count);
                     Assert.Equal(beforeMaps + 1, mapLoads.Count);
                     Assert.Equal(expected, mapLoads[^1]);
                     Assert.Equal(reference, Capture());
+                    Assert.Equal(1, map.GetDiagnosticsSnapshot().DrawnTiles);
                     Click("mode");
                     Assert.Equal(mapLoads.Count, mapReleases.Count);
                     Click("camera");
                 }
                 Click("filter");
             }
-            Assert.Equal(6, itemLoads.Count);
             Assert.Equal(6, mapLoads.Count);
-            Assert.Equal(itemLoads, itemReleases);
             Assert.Equal(mapLoads, mapReleases);
 
             void Click(string id)

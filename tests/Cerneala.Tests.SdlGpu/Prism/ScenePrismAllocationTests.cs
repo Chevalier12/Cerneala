@@ -46,9 +46,9 @@ public sealed class ScenePrismAllocationTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void StreamedSceneRejectsAllocationFailureInsteadOfDrawingWithoutItsEffect(bool nested)
+    public void EagerSceneItemsRejectAllocationFailureInsteadOfDrawingWithoutItsEffect(bool nested)
     {
-        using SceneFixture scene = new(streamed: true, nested);
+        using SceneFixture scene = new(withItems: true, nested);
         FakeSdlApi api = new() { WindowPixelDensity = 1 };
         nint window = api.CreateWindow("streamed-prism-allocation", 48, 32, SdlWindowOptions.Hidden);
         using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
@@ -77,9 +77,9 @@ public sealed class ScenePrismAllocationTests
     }
 
     [Fact]
-    public void SceneWithoutSpatialSourcesKeepsItsExistingAllocationFallback()
+    public void SceneWithoutSceneItemsKeepsItsExistingAllocationFallback()
     {
-        using SceneFixture scene = new(streamed: false, nested: false);
+        using SceneFixture scene = new(withItems: false, nested: false);
         FakeSdlApi api = new() { WindowPixelDensity = 1 };
         nint window = api.CreateWindow("ordinary-prism-allocation", 48, 32, SdlWindowOptions.Hidden);
         using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
@@ -93,7 +93,7 @@ public sealed class ScenePrismAllocationTests
     [Fact]
     public void DeclaredDomainOverHardMemoryLimitFailsBeforeTextureCreation()
     {
-        using SceneFixture scene = new(streamed: true, nested: false, domain: new(0, 0, 65536, 65536));
+        using SceneFixture scene = new(withItems: true, nested: false, domain: new(0, 0, 65536, 65536));
         FakeSdlApi api = new() { WindowPixelDensity = 1 };
         nint window = api.CreateWindow("prism-domain-budget", 48, 32, SdlWindowOptions.Hidden);
         using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
@@ -114,7 +114,7 @@ public sealed class ScenePrismAllocationTests
     {
         // The logical rectangle is valid, but at 2x density its raster width
         // exceeds Int32. Invalid DrawRect construction is not a renderer test.
-        using SceneFixture scene = new(streamed: true, nested: false, domain: new(0, 0, 1_500_000_000, 32));
+        using SceneFixture scene = new(withItems: true, nested: false, domain: new(0, 0, 1_500_000_000, 32));
         FakeSdlApi api = new() { WindowPixelDensity = 2 };
         nint window = api.CreateWindow("prism-domain-raster", 48, 32, SdlWindowOptions.Hidden);
         using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
@@ -148,7 +148,7 @@ public sealed class ScenePrismAllocationTests
         private readonly RenderSurface2D surface = new() { ViewBox = new(0, 0, 48, 32) };
         private readonly List<IDisposable> effects = [];
 
-        internal SceneFixture(bool streamed, bool nested, DrawRect? domain = null)
+        internal SceneFixture(bool withItems, bool nested, DrawRect? domain = null)
         {
             Scene2D scene = new() { PrismInputDomain = domain };
             Scene2D owner = scene;
@@ -157,13 +157,9 @@ public sealed class ScenePrismAllocationTests
                 owner = new();
                 scene.Children.Add(owner);
             }
-            if (streamed)
+            if (withItems)
             {
-                owner.Children.Add(new SceneItems2D
-                {
-                    ItemsSource = new SceneSpatialSource2D<object>([new("shape", new(0, 0, 48, 32))],
-                        (_, _) => ValueTask.FromResult(new SceneSpatialLease2D<object>(new SolidNode())))
-                });
+                owner.Children.Add(new SceneItems2D { ItemsSource = new SceneNode2D[] { new SolidNode() } });
             }
             else { owner.Children.Add(new SolidNode()); }
             effects.Add(Attach(scene, domain is null ? PrismFilterId.Invert : PrismFilterId.Threshold));

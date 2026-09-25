@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="02f42823-cde8-4a38-9f70-a01a421294ed" name="lauri@DESKTOP-JT43V3D 2026-09-25 23:18:42" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-25T23:18:42.1395983+03:00" queuing="2026-09-25T23:18:42.1395986+03:00" start="2026-09-25T23:17:52.0516939+03:00" finish="2026-09-25T23:18:51.7591419+03:00" />
+  <TestSettings name="default" id="5fab2e97-c059-45f0-986d-e6216d909d6f">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-25_23_18_42" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="da015726-f5d4-4ff1-8dbe-bad0a726157b" testId="861b90fd-4e3e-cc69-42dc-84554f04b275" testName="Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset" computerName="DESKTOP-JT43V3D" duration="00:00:48.3189718" startTime="2026-09-25T23:18:42.0528551+03:00" endTime="2026-09-25T23:18:42.0528976+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="da015726-f5d4-4ff1-8dbe-bad0a726157b">
+      <Output>
+        <StdOut>Path-edge crop probe: ViewBox=DrawRect { X = 1553, Y = 1773, Width = 990, Height = 550, Right = 2543, Bottom = 2323 }, gameBounds=LayoutRect { X = 14.4, Y = 102.4, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 102.4 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, edge phases x=1.000 y=1.000; vertical x=497/500 y=323 edge=#ff84c669 safe=#ff84c669; horizontal x=561 y=417/418/414 edge=#ff84c669 boundary=#ff84c669 safe=#ff84c669.&#xD;
+Path-edge crop probe: ViewBox=DrawRect { X = 1586.0405, Y = 1773, Width = 990, Height = 550, Right = 2576.0405, Bottom = 2323 }, gameBounds=LayoutRect { X = 14.4, Y = 102.4, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 102.4 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, edge phases x=0.959 y=1.000; vertical x=464/467 y=323 edge=#ff84c669 safe=#ff84c669; horizontal x=527 y=417/418/414 edge=#ff84c669 boundary=#ff84c669 safe=#ff84c669.&#xD;
+Path-edge crop probe: ViewBox=DrawRect { X = 1553, Y = 1751.716, Width = 990, Height = 550, Right = 2543, Bottom = 2301.7158 }, gameBounds=LayoutRect { X = 14.4, Y = 102.4, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 102.4 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, edge phases x=1.000 y=0.284; vertical x=497/500 y=344 edge=#ff84c669 safe=#ff84c669; horizontal x=561 y=439/440/436 edge=#ff84c669 boundary=#ff84c669 safe=#ff84c669.&#xD;
+Routed west-house contact after 5 Servo A taps at player x=1920.000.&#xD;
+Animated preset changed 2380 sampled game-area pixels relative to static idle.&#xD;
+Collidable stress actor contact after 2 routed D taps at x=2640.000.&#xD;
+Servo clicked 0 after 10,000 and the app retired all 10,000 realized stress actors.&#xD;
+All three ten-thousand-item presets realized 10,000 SceneItems2D children at the same camera ViewBox.&#xD;
+App-owned captures: C:\Users\lauri\Desktop\Cerneala\artifacts\ci\scene-village\screenshots\native-20260925-201753732</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="71d997e2-d453-48a5-a8ad-4afb65b39345" testId="43503f71-9f8f-119c-1ab7-6c3e57d29aaa" testName="Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealVillageShowsTheNativeTreeCanopyAboveItsLowerCellTrunk" computerName="DESKTOP-JT43V3D" duration="00:00:09.3861046" startTime="2026-09-25T23:18:51.5095299+03:00" endTime="2026-09-25T23:18:51.5095304+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="71d997e2-d453-48a5-a8ad-4afb65b39345">
+      <Output>
+        <StdOut>Decoration capture C:\Users\lauri\Desktop\Cerneala\artifacts\ci\scene-village\screenshots\native-20260925-201842087\decorations.png; routed D/S taps=3/8; player=&lt;2126.64, 2222.0547&gt;; ViewBox=DrawRect { X = 1631.6399, Y = 1947.0547, Width = 990, Height = 550, Right = 2621.64, Bottom = 2497.0547 }; shrub=#ff3f2631, tree top/leaf/trunk=#ff84c669/#ff84c669/#ffbd6c4a.</StdOut>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: #ff479f4a&#xD;
+Actual:   #ff3f2631</Message>
+          <StackTrace>   at Cerneala.Tests.SceneVillage.NativeVillageWindowTests.ExerciseDecorationAsync(MainWindow window, VillageGameSurface surface, String capturePath, CancellationToken cancellationToken) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeVillageWindowTests.cs:line 221&#xD;
+   at Cerneala.Tests.SceneVillage.NativeVillageWindowTests.&lt;&gt;c__DisplayClass3_1.&lt;&lt;RealVillageShowsTheNativeTreeCanopyAboveItsLowerCellTrunk&gt;b__3&gt;d.MoveNext() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeVillageWindowTests.cs:line 129&#xD;
+--- End of stack trace from previous location ---&#xD;
+   at Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealVillageShowsTheNativeTreeCanopyAboveItsLowerCellTrunk() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeVillageWindowTests.cs:line 147&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="861b90fd-4e3e-cc69-42dc-84554f04b275">
+      <Execution id="da015726-f5d4-4ff1-8dbe-bad0a726157b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.NativeVillageWindowTests" name="RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealVillageShowsTheNativeTreeCanopyAboveItsLowerCellTrunk" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="43503f71-9f8f-119c-1ab7-6c3e57d29aaa">
+      <Execution id="71d997e2-d453-48a5-a8ad-4afb65b39345" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.NativeVillageWindowTests" name="RealVillageShowsTheNativeTreeCanopyAboveItsLowerCellTrunk" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="861b90fd-4e3e-cc69-42dc-84554f04b275" executionId="da015726-f5d4-4ff1-8dbe-bad0a726157b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="43503f71-9f8f-119c-1ab7-6c3e57d29aaa" executionId="71d997e2-d453-48a5-a8ad-4afb65b39345" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="2" executed="2" passed="1" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.17]   Discovering: Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:00.26]   Discovered:  Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:00.27]   Starting:    Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:58.08]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:58.09]       Expected: #ff479f4a&#xD;
+[xUnit.net 00:00:58.09]       Actual:   #ff3f2631&#xD;
+[xUnit.net 00:00:58.09]       Stack Trace:&#xD;
+[xUnit.net 00:00:58.09]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeVillageWindowTests.cs(221,0): at Cerneala.Tests.SceneVillage.NativeVillageWindowTests.ExerciseDecorationAsync(MainWindow window, VillageGameSurface surface, String capturePath, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:58.09]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeVillageWindowTests.cs(129,0): at Cerneala.Tests.SceneVillage.NativeVillageWindowTests.&lt;&gt;c__DisplayClass3_1.&lt;&lt;RealVillageShowsTheNativeTreeCanopyAboveItsLowerCellTrunk&gt;b__3&gt;d.MoveNext()&#xD;
+[xUnit.net 00:00:58.09]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:58.09]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeVillageWindowTests.cs(147,0): at Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealVillageShowsTheNativeTreeCanopyAboveItsLowerCellTrunk()&#xD;
+[xUnit.net 00:00:58.09]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:58.09]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:58.09]       Output:&#xD;
+[xUnit.net 00:00:58.10]         Decoration capture C:\Users\lauri\Desktop\Cerneala\artifacts\ci\scene-village\screenshots\native-20260925-201842087\decorations.png; routed D/S taps=3/8; player=&lt;2126.64, 2222.0547&gt;; ViewBox=DrawRect { X = 1631.6399, Y = 1947.0547, Width = 990, Height = 550, Right = 2621.64, Bottom = 2497.0547 }; shrub=#ff3f2631, tree top/leaf/trunk=#ff84c669/#ff84c669/#ffbd6c4a.&#xD;
+[xUnit.net 00:00:58.12]   Finished:    Cerneala.Tests.SceneVillage&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-25T23:18:51.4935192+03:00">
+        <Text>[xUnit.net 00:00:58.08]     Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealVillageShowsTheNativeTreeCanopyAboveItsLowerCellTrunk [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

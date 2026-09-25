@@ -1,0 +1,42 @@
+ M Cerneala.Backends.SdlGpu/Cerneala.Backends.SdlGpu.csproj
+ M Cerneala.Backends.SdlGpu/Gpu/Cerberus.cs
+ M Cerneala.Backends.SdlGpu/Gpu/SdlGpuDrawingBackend.cs
+ M Cerneala.Backends.SdlGpu/Gpu/SdlGpuDrawingResources.cs
+ M Cerneala.Backends.SdlGpu/Gpu/SdlGpuGeometryUploadArena.cs
+ M Cerneala.Backends.SdlGpu/Gpu/SdlGpuShaderArtifacts.cs
+ M Cerneala.Backends.SdlGpu/Shaders/artifacts.json
+ M Cerneala.Backends.SdlGpu/Shaders/manifest.json
+ M Drawing/DrawCommand.Images.cs
+ M Drawing/DrawMesh2D.cs
+ M UI/Controls/Sprite2D.cs
+?? Cerneala.Backends.SdlGpu/Gpu/SdlGpuImageDomainGeometry.cs
+?? Cerneala.Backends.SdlGpu/Gpu/Shaders/DrawingImageDomain.frag.dxil
+?? Cerneala.Backends.SdlGpu/Gpu/Shaders/DrawingImageDomain.frag.hlsl
+?? Cerneala.Backends.SdlGpu/Gpu/Shaders/DrawingImageDomain.frag.msl
+?? Cerneala.Backends.SdlGpu/Gpu/Shaders/DrawingImageDomain.frag.spv
+?? Cerneala.Backends.SdlGpu/Gpu/Shaders/DrawingImageDomain.vert.dxil
+?? Cerneala.Backends.SdlGpu/Gpu/Shaders/DrawingImageDomain.vert.hlsl
+?? Cerneala.Backends.SdlGpu/Gpu/Shaders/DrawingImageDomain.vert.msl
+?? Cerneala.Backends.SdlGpu/Gpu/Shaders/DrawingImageDomain.vert.spv
+?? Playground/Cerneala.SceneVillage/App.crn
+?? Playground/Cerneala.SceneVillage/App.crn.cs
+?? Playground/Cerneala.SceneVillage/Assets/CREDITS.md
+?? Playground/Cerneala.SceneVillage/Assets/Kenney-TinyTown-License.txt
+?? Playground/Cerneala.SceneVillage/Assets/ch003.png
+?? Playground/Cerneala.SceneVillage/Assets/tiny-town.png
+?? Playground/Cerneala.SceneVillage/Cerneala.SceneVillage.csproj
+?? Playground/Cerneala.SceneVillage/MainWindow.crn
+?? Playground/Cerneala.SceneVillage/MainWindow.crn.cs
+?? Playground/Cerneala.SceneVillage/README.md
+?? Playground/Cerneala.SceneVillage/VillageArt.cs
+?? Playground/Cerneala.SceneVillage/VillageCamera.cs
+?? Playground/Cerneala.SceneVillage/VillageGameSurface.cs
+?? Playground/Cerneala.SceneVillage/VillageInput.cs
+?? Playground/Cerneala.SceneVillage/VillageLayout.cs
+?? Playground/Cerneala.SceneVillage/VillageStress.cs
+?? tests/Cerneala.Tests.SceneVillage/Cerneala.Tests.SceneVillage.csproj
+?? tests/Cerneala.Tests.SceneVillage/NativeVillageTileBoundaryTests.cs
+?? tests/Cerneala.Tests.SceneVillage/NativeVillageWindowTests.cs
+?? tests/Cerneala.Tests.SceneVillage/VillageModelTests.cs
+?? tests/Cerneala.Tests.SceneVillage/VillageNativeFactAttribute.cs
+?? tests/Cerneala.Tests.SceneVillage/xunit.runner.json

@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Microsoft.CodeAnalysis;
@@ -100,7 +99,7 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
-    public async Task FreePlacementTileMarkupLowersOneColliderToAnImmutableDescriptor()
+    public void FreePlacementTileMarkupLowersOneColliderToAnImmutableDescriptor()
     {
         const string markup = """
             <Scene2D xmlns:resources="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
@@ -114,21 +113,21 @@ public sealed partial class UiMarkupGeneratorTests
                 </TileMap2D>
             </Scene2D>
             """;
-        Scene2D scene = (Scene2D)CompileColliderMarkup(markup);
+        Scene2D scene = (Scene2D)CompileColliderMarkup(markup, out string generated);
         TileMap2D map = (TileMap2D)Assert.Single(scene.Children);
-        using SceneSpatialLease2D<TileMapChunkData2D> data = await AcquireGeneratedTileChunkAsync(map);
-        Tile tile = Assert.Single(data.Value.Placements);
-        TileColliderDescriptor2D descriptor = Assert.IsType<TileColliderDescriptor2D>(tile.Collider);
-        Assert.Equal(TileColliderShape2D.Box, descriptor.Shape);
-        Assert.Equal(32, descriptor.Width);
-        Assert.Equal(2u, descriptor.CollisionLayer);
-        Assert.Equal(1u, descriptor.CollisionMask);
+        Assert.Empty(map.LogicalChildren);
+        Assert.Contains("TileMap2D.FromModel", generated);
+        Assert.Contains("TileColliderShape2D.Box", generated);
+        Assert.Contains("width: 32f", generated);
+        Assert.Contains("height: 32f", generated);
+        Assert.Contains("collisionLayer: 2u", generated);
+        Assert.Contains("collisionMask: 1u", generated);
     }
 
     [Theory]
-    [InlineData(" 0 ", " 8 ", 0f, 8f)]
-    [InlineData(" 3.2e1 ", " +8 ", 32f, 8f)]
-    public async Task StaticTileSegmentNormalizesNumericLiteralsBeforeConstructingPointText(string endX, string endY, float x, float y)
+    [InlineData(" 0 ", " 8 ", "0,0 0,8")]
+    [InlineData(" 3.2e1 ", " +8 ", "0,0 32,8")]
+    public void StaticTileSegmentNormalizesNumericLiteralsBeforeConstructingPointText(string endX, string endY, string points)
     {
         string markup = $$"""
             <Scene2D xmlns:resources="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
@@ -142,11 +141,11 @@ public sealed partial class UiMarkupGeneratorTests
                 </TileMap2D>
             </Scene2D>
             """;
-        Scene2D scene = (Scene2D)CompileColliderMarkup(markup);
+        Scene2D scene = (Scene2D)CompileColliderMarkup(markup, out string generated);
         TileMap2D map = (TileMap2D)Assert.Single(scene.Children);
-        using SceneSpatialLease2D<TileMapChunkData2D> data = await AcquireGeneratedTileChunkAsync(map);
-        TileColliderDescriptor2D descriptor = Assert.IsType<TileColliderDescriptor2D>(Assert.Single(data.Value.Placements).Collider);
-        Assert.Equal(new System.Numerics.Vector2(x, y), descriptor.Vertices[1]);
+        Assert.Empty(map.LogicalChildren);
+        Assert.Contains("TileColliderShape2D.Segment", generated);
+        Assert.Contains("points: \"" + points + "\"", generated);
     }
 
     [Theory]
@@ -168,10 +167,13 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Empty(result.GeneratedSources);
     }
 
-    private static UIElement CompileColliderMarkup(string markup)
+    private static UIElement CompileColliderMarkup(string markup) => CompileColliderMarkup(markup, out _);
+
+    private static UIElement CompileColliderMarkup(string markup, out string generated)
     {
         GeneratorRunResult result = RunGenerator([new MarkupFile("Ownership.crn", markup)], out Compilation compilation, "");
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        generated = Assert.Single(result.GeneratedSources).SourceText.ToString();
         using MemoryStream stream = new();
         var emit = compilation.Emit(stream);
         Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));

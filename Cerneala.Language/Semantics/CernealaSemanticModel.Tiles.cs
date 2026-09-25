@@ -10,7 +10,7 @@ internal sealed partial class CernealaSemanticModel
 
     internal static bool IsTileImageSizeAttribute(string name) => name is "ImageWidth" or "ImageHeight";
 
-    internal static bool IsTileMapContentMember(ILanguageTypeSymbol? type, string name) =>
+    internal static bool IsRemovedTileMapSourceMember(ILanguageTypeSymbol? type, string name) =>
         type?.MetadataName == "Cerneala.UI.Controls.TileMap2D" && name == "Source";
 
     internal static bool IsLiveColliderOwner(ILanguageTypeSymbol? type) =>
@@ -41,12 +41,6 @@ internal sealed partial class CernealaSemanticModel
             GetElementType(parent, ReferenceEquals(parent, root))?.MetadataName != "Cerneala.UI.Controls.TileMap2D")
         {
             AddShapeDiagnostic(element.NameToken.Span, "Tile must be a direct child of TileMap2D.");
-            return;
-        }
-
-        if (parent.Attributes.Any(static attribute => attribute.NameToken.Text == "Source"))
-        {
-            AddShapeDiagnostic(element.NameToken.Span, "Free Tile placements cannot be combined with a Source binding in one TileMap2D.");
             return;
         }
 

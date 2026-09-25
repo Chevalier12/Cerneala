@@ -63,13 +63,10 @@ internal sealed class SpriteAnimationConformanceFixture : IDisposable
         grouped = CreateSprite(new DrawRect(0, 0, 16, 16));
         prismGroup = new Scene2D { TranslateX = 36, TranslateY = 8, Scale = 1.25f };
         prismGroup.Children.Add(grouped);
-        map = new TileMap2D
-        {
-            Source = TileMapSource2D.FromModel(new TileMap2DModel("Ground", new DrawSize(8, 8),
-                [new TileSet2D("Atlas", atlas, [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16))])],
-                [new TileChunk2D(new TileCoordinate2D(0, 0), 8, 4,
-                    Enumerable.Range(0, 32).Select(index => index == 11 ? default : new TileCell2D(1)))], new TileMapBounds2D(0, 0, 8, 4)))
-        };
+        map = TileMap2D.FromModel(new TileMap2DModel("Ground", new DrawSize(8, 8),
+            [new TileSet2D("Atlas", atlas, [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16))])],
+            [new TileChunk2D(new TileCoordinate2D(0, 0), 8, 4,
+                Enumerable.Range(0, 32).Select(index => index == 11 ? default : new TileCell2D(1)))], new TileMapBounds2D(0, 0, 8, 4)));
         tile = new Sprite2D { Image = new(atlas), X = 24, Y = 8, Width = 8, Height = 8 };
         tile.IsAnimationPaused = true;
         tile.Flip = RenderSurface2DSpriteFlip.Horizontal;

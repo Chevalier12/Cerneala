@@ -5,44 +5,43 @@ using Cerneala.UI.Resources;
 
 namespace Cerneala.Playground;
 
-// Application composition, not a general mutable-map API. Only the two edits
-// already offered by this demo are supported: promote the door and toggle Plant.
-internal sealed class SceneWorldPackage : IDisposable
+// Application composition, not a general mutable-map API. The package owns
+// streaming Ground/Buildings nodes; only the two visible village edits use a
+// complete application-owned model and a replacement node.
+internal sealed class SceneWorldPackage : IAsyncDisposable
 {
+    private static readonly TileCoordinate2D PlantCell = new(11, 10);
+    private static readonly TileCoordinate2D DoorCell = new(14, 9);
+
     private readonly Scene2DPackage package;
-    private readonly CellPublication plant;
+    private readonly Scene2DPackageLevel level;
+    private readonly IReadOnlyDictionary<string, DrawSize> imageSizes;
+    private readonly List<Task> retiredMapDrains = [];
+    private TileMap2DModel? buildingModel;
+    private Task? disposal;
 
     private SceneWorldPackage(Scene2DPackage package, Scene2DPackageLevel level,
-        DrawPoint spawn, string spawnState, bool doorClosed)
+        TileMap2DModel doorModel, IReadOnlyDictionary<string, DrawSize> imageSizes,
+        SceneWorldBox[] walls, DrawPoint spawn, string spawnState, bool doorClosed)
     {
         this.package = package;
+        this.level = level;
+        this.imageSizes = imageSizes;
+        DoorModel = doorModel;
+        Walls = Array.AsReadOnly(walls);
         Spawn = spawn;
         SpawnState = spawnState;
         DoorClosed = doorClosed;
-        plant = new(level, level.TileMaps.Single(map => map.Catalog.Id == "2"), new(11, 10), promote: false);
-        CellPublication door = new(level, level.TileMaps.Single(map => map.Catalog.Id == "4"), new(14, 9), promote: true);
-        TileMaps = Array.AsReadOnly(level.TileMaps.Select(map => map.Catalog.Id switch
-        {
-            "2" => plant.Source, "4" => door.Source, _ => map
-        }).ToArray());
         Atlas = new(package.GetFilePath(package.Assets.Single(asset => asset.ResourceId.Key == "world-atlas.png").Path));
-        Scene2DPackageEntityInfo[] walls = level.Entities.Where(entity => entity.Role == "Collider").ToArray();
-        if (walls.Length != 6) { throw new InvalidDataException("The village requires its six authored wall regions."); }
-        ColliderSource = new(walls.Select(info => new SceneSpatialEntry2D(info.Id, info.AuthoringBounds, info.CollisionBounds)),
-            async (entry, token) =>
-            {
-                using var lease = await level.LoadEntityAsync(entry.Id, token).ConfigureAwait(false);
-                Scene2DEntity entity = lease.Value;
-                if (entity.Shape != "Box" || entity.Rotation != 0 || entity.Collider is not { Shape: TileColliderShape2D.Box } collider)
-                { throw new InvalidDataException("This sample composes axis-aligned box walls only."); }
-                // Copy the gameplay fields, not the authored Properties/vertices.
-                return new SceneSpatialLease2D<object>(new SceneWorldBox(entity.Position.X, entity.Position.Y,
-                    entity.Size.Width, entity.Size.Height, collider.CollisionLayer, collider.CollisionMask));
-            });
     }
 
-    internal IReadOnlyList<TileMapSource2D> TileMaps { get; }
-    internal SceneSpatialSource2D<object> ColliderSource { get; }
+    internal IReadOnlyList<string> TileMapIds => level.TileMapIds;
+    internal TileMap2D? GroundMap { get; private set; }
+    internal TileMap2D? BuildingMap { get; private set; }
+    internal TileMap2D? DoorMap { get; private set; }
+    internal bool HasMaps => GroundMap is not null || BuildingMap is not null || DoorMap is not null;
+    internal TileMap2DModel DoorModel { get; }
+    internal IReadOnlyList<SceneWorldBox> Walls { get; }
     internal ImageResource Atlas { get; }
     internal DrawPoint Spawn { get; }
     internal string SpawnState { get; }
@@ -54,137 +53,140 @@ internal sealed class SceneWorldPackage : IDisposable
         try
         {
             Scene2DPackageLevel level = package.Levels.Single();
-            if (level.WorldOffset != default || level.TileMaps.Any(map => map.Catalog.Offset != default))
-            { throw new InvalidDataException("The authored village composition uses a zero-offset level and layers."); }
-            if (level.PromotionCells.Single() != new TileCellKey2D("4", 14, 9))
+            // The package preserves the writer's map order, which also includes
+            // the empty Objects layer (3). Composition selects the three maps
+            // it renders by identity rather than imposing a sorted ID sequence.
+            if (level.WorldOffset != default ||
+                new[] { "1", "2", "4" }.Any(id => !level.TileMapIds.Contains(id, StringComparer.Ordinal)))
+            { throw new InvalidDataException("The village requires zero level offset and authored Ground, Buildings and Doors maps."); }
+            if (level.PromotionCells.Single() != new TileCellKey2D("4", DoorCell))
             { throw new InvalidDataException("The authored door declaration requires cell (4,14,9)."); }
-            using var spawn = await level.LoadEntityAsync(level.Entities.Single(info => info.Role == "Spawn").Id, token).ConfigureAwait(false);
-            using var door = await level.LoadPromotionAsync(level.PromotionCells[0], token).ConfigureAwait(false);
+
+            // Door promotion is visible from the first presented frame. Unlike
+            // Ground and Buildings, this one authored map must be loaded whole
+            // immediately so the underlying tile can be hidden by an app edit.
+            TileMap2DModel authoredDoor = await level.LoadMapModelAsync("4", token).ConfigureAwait(false);
+            if (!authoredDoor.TryGetCell(DoorCell, out TileCell2D doorCell) || doorCell.TileId != 7 ||
+                !authoredDoor.TryResolveTile(doorCell.TileId, out _, out TileDefinition2D? doorTile) ||
+                doorTile!.Collider is not null)
+            { throw new InvalidDataException("The authored door cell must be a decorative tile 7."); }
+            TileMap2DModel doorModel = ReplaceCell(authoredDoor, DoorCell, 0);
+
+            Scene2DEntity spawn = await level.LoadEntityAsync(level.Entities.Single(info => info.Role == "Spawn").Id, token)
+                .ConfigureAwait(false);
+            TilePromotion2D promotion = await level.LoadPromotionAsync(level.PromotionCells[0], token).ConfigureAwait(false);
+            Scene2DPackageEntityInfo[] wallHeaders = level.Entities.Where(entity => entity.Role == "Collider").ToArray();
+            if (wallHeaders.Length != 6) { throw new InvalidDataException("The village requires its six authored wall regions."); }
+            SceneWorldBox[] walls = new SceneWorldBox[wallHeaders.Length];
+            for (int index = 0; index < wallHeaders.Length; index++)
+            {
+                Scene2DEntity entity = await level.LoadEntityAsync(wallHeaders[index].Id, token).ConfigureAwait(false);
+                if (entity.Shape != "Box" || entity.Rotation != 0 ||
+                    entity.Collider is not { Shape: TileColliderShape2D.Box } collider)
+                { throw new InvalidDataException("This sample composes axis-aligned box walls only."); }
+                // Copy gameplay fields, not the authored Properties/vertices.
+                walls[index] = new(entity.Position.X, entity.Position.Y, entity.Size.Width, entity.Size.Height,
+                    collider.CollisionLayer, collider.CollisionMask);
+            }
             token.ThrowIfCancellationRequested();
-            return new(package, level, spawn.Value.Position, (string)spawn.Value.Properties["InitialState"]!,
-                Equals(door.Value.Properties["InitialState"], "Closed"));
+            return new(package, level, doorModel,
+                package.Assets.ToDictionary(asset => asset.ResourceId.Key, asset => asset.Size, StringComparer.Ordinal),
+                walls, spawn.Position, (string)spawn.Properties["InitialState"]!,
+                Equals(promotion.Properties["InitialState"], "Closed"));
         }
-        catch { package.Dispose(); throw; }
+        catch
+        {
+            await package.DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
     }
 
-    internal Task<CellPublication.PreparedEdit> PreparePlantAsync(CancellationToken token) => plant.PrepareAsync(token);
-    public void Dispose() => package.Dispose();
-
-    internal sealed class CellPublication
+    // Called on the scene owner thread, immediately before the world is
+    // published. A plain state with no UI does not need any map nodes.
+    internal void CreateMaps()
     {
-        private readonly Scene2DPackageLevel level;
-        private readonly TileMapSource2D original;
-        private readonly TileCoordinate2D cell;
-        private readonly TileMapChunkInfo2D originalChunk;
-        private readonly bool promote;
-        private TileMapChunkData2D? publishingPayload;
+        ObjectDisposedException.ThrowIf(disposal is not null, this);
+        if (GroundMap is not null) { throw new InvalidOperationException("Village maps are already active."); }
+        GroundMap = level.CreateTileMap("1");
+        BuildingMap = buildingModel is null
+            ? level.CreateTileMap("2")
+            : TileMap2D.FromModel(buildingModel, imageSizes);
+        DoorMap = TileMap2D.FromModel(DoorModel, imageSizes);
+    }
 
-        internal CellPublication(Scene2DPackageLevel level, TileMapSource2D original, TileCoordinate2D cell, bool promote)
+    internal async Task<TileMap2DModel> PreparePlantAsync(bool plant, CancellationToken token)
+    {
+        ObjectDisposedException.ThrowIf(disposal is not null, this);
+        TileMap2DModel before = buildingModel ?? await level.LoadMapModelAsync("2", token).ConfigureAwait(false);
+        token.ThrowIfCancellationRequested();
+        if (!before.TryGetCell(PlantCell, out TileCell2D cell) || cell.TileId != (plant ? 0 : 15) ||
+            !before.TryResolveTile(15, out _, out TileDefinition2D? flower) || flower!.Collider is not null)
+        { throw new InvalidDataException("The authored Plant cell or its noncolliding flower definition changed."); }
+        return ReplaceCell(before, PlantCell, plant ? 15 : 0);
+    }
+
+    internal TileMap2D ReplaceBuildingMap(TileMap2DModel edited)
+    {
+        ObjectDisposedException.ThrowIf(disposal is not null, this);
+        TileMap2D replacement = TileMap2D.FromModel(edited, imageSizes);
+        TileMap2D previous = BuildingMap ?? throw new InvalidOperationException("Village maps are not active.");
+        BuildingMap = replacement;
+        buildingModel = edited;
+        return previous;
+    }
+
+    internal Task RetireMapAfterDetachAsync(TileMap2D map)
+    {
+        Task drain = map.DisposeAsync().AsTask();
+        retiredMapDrains.Add(drain);
+        return drain;
+    }
+
+    internal void SetBuildingModelBeforeMaps(TileMap2DModel edited)
+    {
+        if (BuildingMap is not null) { throw new InvalidOperationException("Building map is already active."); }
+        buildingModel = edited;
+    }
+
+    internal Task DisposeAfterDetachAsync()
+    {
+        if (disposal is not null) { return disposal; }
+        TileMap2D[] maps = new[] { GroundMap, BuildingMap, DoorMap }.OfType<TileMap2D>().ToArray();
+        if (maps.Any(map => map.LogicalParent is not null || map.VisualParent is not null || map.Root is not null))
+        { throw new InvalidOperationException("Detach village maps before disposing their package."); }
+        // Invoke every map's terminal operation on its owner thread before the
+        // first await. The package reader closes only after every map drain.
+        Task[] drains = retiredMapDrains.Concat(maps.Select(map => map.DisposeAsync().AsTask())).ToArray();
+        disposal = CompleteDisposalAsync(drains);
+        return disposal;
+    }
+
+    public ValueTask DisposeAsync() => new(DisposeAfterDetachAsync());
+
+    private async Task CompleteDisposalAsync(Task[] drains)
+    {
+        List<Exception> failures = [];
+        foreach (Task drain in drains)
         {
-            this.level = level;
-            this.original = original;
-            this.cell = cell;
-            this.promote = promote;
-            originalChunk = original.Catalog.Chunks.Single(info => info.Cells!.Value.Contains(cell));
-            if (originalChunk.ExpandedColliderCount != 0)
-            { throw new InvalidDataException("Village cell edits must not replace authored collision geometry."); }
-            Source = new(original.Catalog, LoadAsync);
-            if (promote) { Source.SetCatalog(NextCatalog(Source.Catalog)); }
+            try { await drain.ConfigureAwait(false); }
+            catch (Exception error) { failures.Add(error); }
         }
+        try { await package.DisposeAsync().ConfigureAwait(false); }
+        catch (Exception error) { failures.Add(error); }
+        if (failures.Count != 0) { throw new AggregateException(failures); }
+    }
 
-        internal TileMapSource2D Source { get; }
-
-        private TileMapCatalog2D NextCatalog(TileMapCatalog2D before)
-        {
-            TileMapChunkInfo2D current = before.Chunks.Single(info => info.Spatial.Id == originalChunk.Spatial.Id);
-            SceneSpatialEntry2D spatial = new(current.Spatial.Id, current.Spatial.Bounds,
-                current.Spatial.CollisionBounds, version: checked(current.Spatial.Version + 1));
-            TileMapChunkInfo2D replacement = new(spatial, current.Cells!.Value,
-                promote ? current.TileIds : current.TileIds.Concat([15]).Distinct(), current.Images,
-                current.ExpandedColliderCount, dataResidencyBytes: null);
-            // The edited payload is reconstructed, not retained in an in-memory
-            // backing map. Its opaque metadata charge is unknown, so it cannot
-            // consume optional warm residency under an invented zero charge.
-            return new(before.Id, before.Chunks.Select(info => ReferenceEquals(info, current) ? replacement : info),
-                before.TileSize, before.Bounds, before.Order, before.IsVisible, before.Offset, before.Opacity,
-                before.Tint, checked(before.Version + 1), before.ImageSizes);
-        }
-
-        internal async Task<PreparedEdit> PrepareAsync(CancellationToken token)
-        {
-            token.ThrowIfCancellationRequested();
-            TileMapCatalog2D before = Source.Catalog;
-            TileMapCatalog2D next = NextCatalog(before);
-            TileMapChunkInfo2D info = next.Chunks.Single(info => info.Spatial.Id == originalChunk.Spatial.Id);
-            SceneSpatialLease2D<TileMapChunkData2D> acquired = await RebuildAsync(next, info, token).ConfigureAwait(false);
-            try
-            {
-                token.ThrowIfCancellationRequested();
-                return new(this, before, next, acquired);
-            }
-            catch { acquired.Dispose(); throw; }
-        }
-
-        internal sealed class PreparedEdit(CellPublication owner, TileMapCatalog2D before, TileMapCatalog2D next,
-            SceneSpatialLease2D<TileMapChunkData2D> payload) : IDisposable
-        {
-            internal void Publish()
-            {
-                TileMapChunkData2D data = payload.Value;
-                if (!ReferenceEquals(owner.Source.Catalog, before))
-                    throw new OperationCanceledException("The prepared cell revision was superseded.");
-                // UI-owned Changed subscribers reconcile their current interests
-                // synchronously. Share this managed payload only during publication;
-                // their returned leases, not this source, own subsequent residency.
-                Volatile.Write(ref owner.publishingPayload, data);
-                try { owner.Source.SetCatalog(next); }
-                finally { Volatile.Write(ref owner.publishingPayload, null); }
-            }
-
-            public void Dispose() => payload.Dispose();
-        }
-
-        private ValueTask<SceneSpatialLease2D<TileMapChunkData2D>> LoadAsync(
-            TileMapCatalog2D catalog, TileMapChunkInfo2D info, CancellationToken token)
-        {
-            TileMapChunkData2D? prepared = Volatile.Read(ref publishingPayload);
-            if (info.Spatial.Id == originalChunk.Spatial.Id && prepared?.Grid?.Version == info.Spatial.Version)
-                return ValueTask.FromResult(new SceneSpatialLease2D<TileMapChunkData2D>(prepared));
-            return RebuildAsync(catalog, info, token);
-        }
-
-        private async ValueTask<SceneSpatialLease2D<TileMapChunkData2D>> RebuildAsync(
-            TileMapCatalog2D catalog, TileMapChunkInfo2D info, CancellationToken token)
-        {
-            if (info.Spatial.Id != originalChunk.Spatial.Id || info.Spatial.Version == originalChunk.Spatial.Version)
-            { return await original.LoadAsync(info.Spatial, token).ConfigureAwait(false); }
-            using var acquired = await original.LoadAsync(originalChunk.Spatial, token).ConfigureAwait(false);
-            TileChunk2D before = acquired.Value.Grid!;
-            TileCell2D[] cells = before.Tiles.ToArray();
-            int index = (cell.Y - before.Origin.Y) * before.Width + cell.X - before.Origin.X;
-            if (!promote && cells[index].TileId != 0)
-            { throw new InvalidDataException("The authored decorative Plant cell must start empty."); }
-            // The revision completely describes this demo's alternating delta.
-            // In-flight old revisions do not consult a mutable 'current tile'.
-            cells[index] = new(promote ? 0 : (info.Spatial.Version - originalChunk.Spatial.Version) % 2 == 1 ? 15 : 0);
-            TileChunk2D grid = new(before.Origin, before.Width, before.Height, cells, info.Spatial.Version, before.Properties);
-            if (promote) { return new(new(grid, UsedPalette(acquired.Value.TileSets, cells))); }
-            // Tile 15 need not occur in the original chunk. Acquire the authoring
-            // palette explicitly, then retain only definitions used by this lease.
-            using var metadata = await level.LoadMapMetadataAsync(catalog.Id, token).ConfigureAwait(false);
-            TileSet2D[] palette = UsedPalette(metadata.Value.TileSets, cells);
-            if (palette.Any(set => set.Tiles.Any(tile => tile.Collider is not null)))
-            { throw new InvalidDataException("Plant must preserve the village's separate collision owners."); }
-            token.ThrowIfCancellationRequested();
-            return new(new(grid, palette));
-        }
-
-        private static TileSet2D[] UsedPalette(IReadOnlyList<TileSet2D> palette, TileCell2D[] cells)
-        {
-            HashSet<int> used = cells.Where(value => value.TileId != 0).Select(value => value.TileId).ToHashSet();
-            return palette.Where(set => set.Tiles.Any(tile => used.Contains(tile.Id)))
-                .Select(set => new TileSet2D(set.Id, set.AtlasResourceId, set.Tiles.Where(tile => used.Contains(tile.Id)),
-                    set.Version, set.Properties)).ToArray();
-        }
+    private static TileMap2DModel ReplaceCell(TileMap2DModel before, TileCoordinate2D coordinate, int tileId)
+    {
+        TileChunk2D target = before.Chunks.Single(chunk => chunk.Contains(coordinate));
+        TileCell2D[] cells = target.Tiles.ToArray();
+        int index = (coordinate.Y - target.Origin.Y) * target.Width + coordinate.X - target.Origin.X;
+        cells[index] = new(tileId, cells[index].Flip);
+        TileChunk2D replacement = new(target.Origin, target.Width, target.Height, cells,
+            checked(target.Version + 1), target.Properties);
+        return new(before.Id, before.TileSize, before.TileSets,
+            before.Chunks.Select(chunk => ReferenceEquals(chunk, target) ? replacement : chunk),
+            before.Bounds, before.Order, before.IsVisible, before.Offset, before.Opacity, before.Tint,
+            checked(before.Version + 1), before.Properties);
     }
 }

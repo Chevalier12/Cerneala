@@ -1,0 +1,6 @@
+TRX ResultSummary Counters.notExecuted reports 0 for all files even when ResultRows contain NotExecuted. Skipped is counted from UnitTestResult outcome=NotExecuted and reconciled against total=passed+failed+skipped; all files reconcile.
+Total=6375
+Passed=6368
+Failed=1
+Skipped=6
+TrxFiles=11

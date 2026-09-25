@@ -8,47 +8,61 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Controls/TileMapSource2D.cs`
 
-Contains one acquired static chunk's immutable cells and used definitions, or ordered free placements.
+Contains either one grid chunk with its used tile definitions or an ordered sequence of free tile placements.
 
 ```csharp
 public sealed class TileMapChunkData2D
 ```
 
+## Examples
+
+```csharp
+var grid = new TileChunk2D(
+    new TileCoordinate2D(0, 0),
+    2,
+    1,
+    [new TileCell2D(1), default]);
+var terrain = new TileSet2D(
+    "Terrain",
+    new ResourceId<ImageResource>("TerrainAtlas"),
+    [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16))]);
+var data = new TileMapChunkData2D(grid, [terrain]);
+
+bool found = data.TryResolveTile(1, out TileSet2D? set, out TileDefinition2D? definition);
+```
+
 ## Remarks
 
-Use the grid constructor for an existing immutable `TileChunk2D` and its used `TileSet2D` definitions, or the placement constructor to copy a bounded sequence of immutable `Tile` references. The representations are exclusive: a grid payload has no placements; a placement payload has a null `Grid` and an empty `TileSets`. Placement order is preserved. Copying does not deep-clone the tiles, images, descriptors or opaque application metadata.
+The constructors select exclusive representations. A grid payload has a non-null `Grid`, a read-only copy of the supplied `TileSets` sequence, and no `Placements`. A placement payload has a null `Grid`, no `TileSets`, and a read-only copy of the placement sequence in its original order. These are bounded shallow copies: the referenced grid, sets, tiles, images, descriptors, and opaque application metadata are not deep-cloned.
 
-A grid payload must supply exactly the definitions used by its nonzero cells. Every used ID must resolve; unused definitions, duplicate IDs, null sets and empty sets are rejected. A completely empty-cell grid uses an empty palette. The payload copies the supplied set sequence, with a limit of 4,096 sets. Full definitions, collider prototypes and their opaque properties belong here, not in the resident catalog. Resolve definitions through `TryResolveTile` while holding the data acquisition. A changed definition, atlas reference or metadata value requires a new revision for each affected chunk payload.
+For a grid payload, each nonzero cell ID must resolve to exactly one supplied definition. Unused definitions, duplicate IDs, null or empty tilesets, and missing definitions are rejected. An all-empty grid uses an empty palette. The sequence is limited to 4,096 tilesets. The placement constructor accepts at most 1,048,576 non-null placements.
 
-This is payload data, not a scene node or an ownership token. A loader transfers one acquisition through `SceneSpatialLease2D<TileMapChunkData2D>`; its release callback owns backing-store cleanup. The data type itself does not dispose borrowed images, unload a complete in-memory model, or retain a graphical-cache acquisition. Holding a separate application reference may retain the data after its source acquisition ends; applications must not use backing resources after the lease contract says they are invalid.
-
-The constructor's local checks do not establish consistency with a catalog. `TileMapSource2D.LoadAsync` checks representation, counts, grid coordinates/revision, dependencies and geometry against the captured `TileMapCatalog2D`. In particular, an empty placement array cannot satisfy a declared positive-count chunk and is not a successful substitute for missing data.
+This is a public data value, not a scene node, image owner, disposable acquisition, or map-loading API. Constructing one does not install it in a `TileMap2D` or give an application a public streaming source. For a complete in-memory map, use [TileMap2D.FromModel](Cerneala.UI.Controls.TileMap2D.md) with a [TileMap2DModel](Cerneala.UI.Controls.TileMap2DModel.md). Framework-owned package streaming is exposed through [Scene2DPackageLevel.CreateTileMap](Cerneala.Scene2D.Packages.Scene2DPackageLevel.md), not through this type.
 
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `TileMapChunkData2D(TileChunk2D grid, IEnumerable<TileSet2D> tileSets)` | Borrows the immutable grid and copies its used palette references; rejects incomplete or extraneous definitions. |
-| `TileMapChunkData2D(IEnumerable<Tile> placements)` | Copies up to 1,048,576 non-null ordered placement references into a read-only collection. |
+| `TileMapChunkData2D(TileChunk2D grid, IEnumerable<TileSet2D> tileSets)` | Retains the grid reference and copies its used palette references. |
+| `TileMapChunkData2D(IEnumerable<Tile> placements)` | Copies ordered placement references into a read-only collection. |
 
 ## Properties
 
 | Name | Description |
 | --- | --- |
-| `Grid` | The immutable grid chunk, or null for placements. |
-| `Placements` | Read-only ordered placements, empty for grids. |
-| `TileSets` | Read-only used grid palette, empty for free placements. Definitions and collider prototypes are acquired data. |
+| `Grid` | Grid chunk, or null for placements. |
+| `Placements` | Ordered placements; empty for a grid payload. |
+| `TileSets` | Used grid palette; empty for a placement payload. |
 
 ## Methods
 
 | Name | Description |
 | --- | --- |
-| `TryResolveTile(int tileId, out TileSet2D? tileSet, out TileDefinition2D? definition)` | Resolves a loaded positive tile ID; returns false with null outputs for an absent ID, including zero. Does not load data. |
+| `TryResolveTile(int tileId, out TileSet2D? tileSet, out TileDefinition2D? definition)` | Finds a supplied positive grid tile ID. Returns false with null outputs for an absent ID, including zero; does not load data. |
 
 ## See also
 
-- [TileMapChunkInfo2D](Cerneala.UI.Controls.TileMapChunkInfo2D.md)
-- [TileMapSource2D](Cerneala.UI.Controls.TileMapSource2D.md)
-- [SceneSpatialLease2D&lt;T&gt;](Cerneala.UI.Controls.SceneSpatialLease2D_T_.md)
 - [TileChunk2D](Cerneala.UI.Controls.TileChunk2D.md)
+- [TileSet2D](Cerneala.UI.Controls.TileSet2D.md)
 - [Tile](Cerneala.UI.Controls.Tile.md)
+- [TileMap2DModel](Cerneala.UI.Controls.TileMap2DModel.md)

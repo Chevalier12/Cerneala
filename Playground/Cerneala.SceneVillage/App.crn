@@ -1,0 +1,4 @@
+<Application
+    StartupWindow="MainWindow"
+    ShutdownMode="OnMainWindowClose"
+    UseMultisampling="False" />

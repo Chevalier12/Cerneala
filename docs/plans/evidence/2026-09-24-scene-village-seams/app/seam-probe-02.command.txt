@@ -1,0 +1,5 @@
+$env:DefaultItemExcludesInProjectFolder = 'artifacts/**'
+$env:CERNEALA_SDL_NATIVE_TESTS = '1'
+& dotnet test .\tests\Cerneala.Tests.SceneVillage\Cerneala.Tests.SceneVillage.csproj -c Release -m:1 '-p:DefaultItemExcludesInProjectFolder=artifacts/**' --filter 'FullyQualifiedName~RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset' --blame-hang-timeout 7m --logger 'trx;LogFileName=seam-probe-02.trx' 2>&1 | Tee-Object -FilePath .\docs\plans\evidence\2026-09-24-scene-village-seams\app\seam-probe-02.log
+$code = $LASTEXITCODE
+Set-Content -LiteralPath .\docs\plans\evidence\2026-09-24-scene-village-seams\app\seam-probe-02.exit.txt -Value $code

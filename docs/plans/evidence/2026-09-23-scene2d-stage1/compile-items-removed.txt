@@ -1,0 +1,17 @@
+artifacts\rendersurface3d\control-stage4\baseline\obj\Debug\net8.0-windows\.NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+artifacts\rendersurface3d\control-stage4\baseline\obj\Debug\net8.0-windows\benchmarks__Cerneala.Benchmarks__Cerneala.Benchmarks.AssemblyInfo.cs
+artifacts\rendersurface3d\control-stage4\baseline\obj\Debug\net8.0-windows\benchmarks__Cerneala.Benchmarks__Cerneala.Benchmarks.GlobalUsings.g.cs
+artifacts\rendersurface3d\control-stage4\baseline\obj\Debug\net8.0\.NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+artifacts\rendersurface3d\control-stage4\baseline\obj\Debug\net8.0\tests__Cerneala.SdlGpuSmoke__Cerneala.SdlGpuSmoke.AssemblyInfo.cs
+artifacts\rendersurface3d\control-stage4\baseline\obj\Debug\net8.0\tests__Cerneala.SdlGpuSmoke__Cerneala.SdlGpuSmoke.GlobalUsings.g.cs
+artifacts\rendersurface3d\control-stage4\final\sources\obj\Debug\net10.0-windows\.NETCoreApp,Version=v10.0.AssemblyAttributes.cs
+artifacts\rendersurface3d\control-stage4\final\sources\obj\Debug\net10.0-windows\tests__Cerneala.Tests.PreviewHost__Cerneala.Tests.PreviewHost.AssemblyInfo.cs
+artifacts\rendersurface3d\control-stage4\final\sources\obj\Debug\net10.0-windows\tests__Cerneala.Tests.PreviewHost__Cerneala.Tests.PreviewHost.GlobalUsings.g.cs
+artifacts\rendersurface3d\control-stage4\final\sources\obj\Debug\net8.0-windows\.NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+artifacts\rendersurface3d\control-stage4\final\sources\obj\Debug\net8.0-windows\benchmarks__Cerneala.Benchmarks__Cerneala.Benchmarks.AssemblyInfo.cs
+artifacts\rendersurface3d\control-stage4\final\sources\obj\Debug\net8.0-windows\benchmarks__Cerneala.Benchmarks__Cerneala.Benchmarks.GlobalUsings.g.cs
+artifacts\rendersurface3d\control-stage4\final\sources\obj\Debug\net8.0-windows\tests__Cerneala.Tests__Cerneala.Tests.AssemblyInfo.cs
+artifacts\rendersurface3d\control-stage4\final\sources\obj\Debug\net8.0-windows\tests__Cerneala.Tests__Cerneala.Tests.GlobalUsings.g.cs
+artifacts\rendersurface3d\control-stage4\final\sources\obj\Debug\net8.0\.NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+artifacts\rendersurface3d\control-stage4\final\sources\obj\Debug\net8.0\tests__Cerneala.SdlGpuSmoke__Cerneala.SdlGpuSmoke.AssemblyInfo.cs
+artifacts\rendersurface3d\control-stage4\final\sources\obj\Debug\net8.0\tests__Cerneala.SdlGpuSmoke__Cerneala.SdlGpuSmoke.GlobalUsings.g.cs

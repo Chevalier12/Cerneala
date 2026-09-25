@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="ecaee0e9-0d51-4dde-8740-210980b8a397" name="lauri@DESKTOP-JT43V3D 2026-09-24 11:51:20" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T11:51:20.8531002+03:00" queuing="2026-09-24T11:51:20.8531006+03:00" start="2026-09-24T11:51:12.4653588+03:00" finish="2026-09-24T11:51:23.9214602+03:00" />
+  <TestSettings name="default" id="6ceafe79-a80f-4b58-87ca-d39f56a97da2">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_11_51_20" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="efe7f752-a384-484e-9be6-eb8070a0749d" testId="5017186c-a578-3bfd-3546-91ff925dad9f" testName="Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.LocalNeighborhoodInputMatchesCompleteDomainRendering" computerName="DESKTOP-JT43V3D" duration="00:00:02.8721107" startTime="2026-09-24T11:51:23.6191509+03:00" endTime="2026-09-24T11:51:23.6191514+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="efe7f752-a384-484e-9be6-eb8070a0749d">
+      <Output>
+        <ErrorInfo>
+          <Message>Expected 9 eager items before/after crop; source=1; filter=0; before=count=0; sourceSame=True; sourceCount=9; parentActors=True; attached=False; context=False; contextDisposed=; contextActors=False; surfaceActors=False; sceneIndex=1; narrow=False; spritesAttached=0; actorsContext=False; terrainContext=True; after=count=0; sourceSame=True; sourceCount=9; parentActors=True; attached=False; context=False; contextDisposed=; contextActors=False; surfaceActors=False; sceneIndex=1; narrow=True; spritesAttached=0; actorsContext=False; terrainContext=True</Message>
+          <StackTrace>   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 241&#xD;
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.LocalNeighborhoodInputMatchesCompleteDomainRendering() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 31&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="d794c290-0c75-45e4-967e-3249a6390fda" testId="1b9f55dd-1cb7-5134-fefe-7555633ddfb9" testName="Cerneala.Tests.SdlGpu.NativeImageLeaseTests.GridCameraInputRetiresAtlasesAndKeepsNpcTerrainAcross32Cycles" computerName="DESKTOP-JT43V3D" duration="00:00:03.7219609" startTime="2026-09-24T11:51:20.7527785+03:00" endTime="2026-09-24T11:51:20.7528291+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d794c290-0c75-45e4-967e-3249a6390fda">
+      <Output>
+        <ErrorInfo>
+          <Message>Expected 2 map collider children at initial view; actual=1; actors=1; npcAttached=True; npcActive=True; npcBounds=DrawRect { X = 1984, Y = 16, Width = 16, Height = 16, Right = 2000, Bottom = 32 }; interest=SceneBounds2D { }; mapColliders=DrawRect { X = 16, Y = 16, Width = 16, Height = 16, Right = 32, Bottom = 32 }; diagnostics=TileMap2DDiagnosticsSnapshot { TotalChunks = 3, CandidateChunks = 3, VisibleChunks = 1, CandidateTiles = 1, DrawnTiles = 1, BatchesBuilt = 0, BatchesRebuilt = 0, BatchesReused = 1, DrawCommands = 1, RetainedBytes = 8576, RetainedObjects = 12, TileInvalidations = 0 }</Message>
+          <StackTrace>   at Cerneala.Tests.SdlGpu.NativeImageLeaseTests.GridCameraInputRetiresAtlasesAndKeepsNpcTerrainAcross32Cycles() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeImageLeaseTests.cs:line 91&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.LocalNeighborhoodInputMatchesCompleteDomainRendering" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="5017186c-a578-3bfd-3546-91ff925dad9f">
+      <Execution id="efe7f752-a384-484e-9be6-eb8070a0749d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests" name="LocalNeighborhoodInputMatchesCompleteDomainRendering" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeImageLeaseTests.GridCameraInputRetiresAtlasesAndKeepsNpcTerrainAcross32Cycles" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="1b9f55dd-1cb7-5134-fefe-7555633ddfb9">
+      <Execution id="d794c290-0c75-45e4-967e-3249a6390fda" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeImageLeaseTests" name="GridCameraInputRetiresAtlasesAndKeepsNpcTerrainAcross32Cycles" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="5017186c-a578-3bfd-3546-91ff925dad9f" executionId="efe7f752-a384-484e-9be6-eb8070a0749d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1b9f55dd-1cb7-5134-fefe-7555633ddfb9" executionId="d794c290-0c75-45e4-967e-3249a6390fda" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="2" executed="2" passed="0" failed="2" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.47]   Discovering: Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:01.82]   Discovered:  Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:01.84]   Starting:    Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:05.68]       Expected 2 map collider children at initial view; actual=1; actors=1; npcAttached=True; npcActive=True; npcBounds=DrawRect { X = 1984, Y = 16, Width = 16, Height = 16, Right = 2000, Bottom = 32 }; interest=SceneBounds2D { }; mapColliders=DrawRect { X = 16, Y = 16, Width = 16, Height = 16, Right = 32, Bottom = 32 }; diagnostics=TileMap2DDiagnosticsSnapshot { TotalChunks = 3, CandidateChunks = 3, VisibleChunks = 1, CandidateTiles = 1, DrawnTiles = 1, BatchesBuilt = 0, BatchesRebuilt = 0, BatchesReused = 1, DrawCommands = 1, RetainedBytes = 8576, RetainedObjects = 12, TileInvalidations = 0 }&#xD;
+[xUnit.net 00:00:05.68]       Stack Trace:&#xD;
+[xUnit.net 00:00:05.68]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeImageLeaseTests.cs(91,0): at Cerneala.Tests.SdlGpu.NativeImageLeaseTests.GridCameraInputRetiresAtlasesAndKeepsNpcTerrainAcross32Cycles()&#xD;
+[xUnit.net 00:00:05.68]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:05.68]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:08.55]       Expected 9 eager items before/after crop; source=1; filter=0; before=count=0; sourceSame=True; sourceCount=9; parentActors=True; attached=False; context=False; contextDisposed=; contextActors=False; surfaceActors=False; sceneIndex=1; narrow=False; spritesAttached=0; actorsContext=False; terrainContext=True; after=count=0; sourceSame=True; sourceCount=9; parentActors=True; attached=False; context=False; contextDisposed=; contextActors=False; surfaceActors=False; sceneIndex=1; narrow=True; spritesAttached=0; actorsContext=False; terrainContext=True&#xD;
+[xUnit.net 00:00:08.55]       Stack Trace:&#xD;
+[xUnit.net 00:00:08.55]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs(241,0): at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode)&#xD;
+[xUnit.net 00:00:08.55]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs(31,0): at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.LocalNeighborhoodInputMatchesCompleteDomainRendering()&#xD;
+[xUnit.net 00:00:08.55]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:08.55]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:08.56]   Finished:    Cerneala.Tests.SdlGpu&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T11:51:20.7463658+03:00">
+        <Text>[xUnit.net 00:00:05.68]     Cerneala.Tests.SdlGpu.NativeImageLeaseTests.GridCameraInputRetiresAtlasesAndKeepsNpcTerrainAcross32Cycles [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T11:51:23.6192835+03:00">
+        <Text>[xUnit.net 00:00:08.55]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.LocalNeighborhoodInputMatchesCompleteDomainRendering [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-09-24T11:51:23.8091506+03:00">
+        <Text>Data collector 'Blame' message: All tests finished running, Sequence file will not be generated.</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

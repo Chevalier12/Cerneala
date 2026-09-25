@@ -28,10 +28,11 @@ public sealed partial class Scene2DPackageTests
         await fixture.WriteAsync(document);
 
         using Scene2DPackage package = await Scene2DPackage.OpenAsync(fixture.Output);
-        TileMapSource2D source = Assert.Single(Assert.Single(package.Levels).TileMaps);
+        TileMapCatalog2D catalog = Assert.Single(fixture.ReadIndex().Levels[0].Maps).Catalog;
 
-        Assert.NotEmpty(source.Catalog.Chunks);
-        Assert.All(source.Catalog.Chunks, info =>
+        Assert.Equal(new[] { Assert.Single(document.Levels[0].TileMaps).Id }, Assert.Single(package.Levels).TileMapIds);
+        Assert.NotEmpty(catalog.Chunks);
+        Assert.All(catalog.Chunks, info =>
         {
             Assert.True(info.DataResidencyBytes.HasValue, "A prepared chunk must declare its data charge before acquisition.");
             Assert.True(info.DataResidencyBytes.Value >= 65_536, "The charge must include its acquisition-owned bulk property, not only cells or placements.");
@@ -56,10 +57,10 @@ public sealed partial class Scene2DPackageTests
         });
 
         using Scene2DPackage package = await Scene2DPackage.OpenAsync(fixture.Output);
-        TileMapSource2D source = package.Levels[0].TileMaps[0];
-        Assert.All(source.Catalog.Chunks, info => Assert.Null(info.DataResidencyBytes));
-        using var lease = await source.LoadAsync(source.Entries[0]);
-        Assert.Equal(65_536, Assert.IsType<byte[]>(lease.Value.Grid!.Properties["bulk"]).Length);
+        Assert.All(fixture.ReadIndex().Levels[0].Maps[0].Catalog.Chunks,
+            info => Assert.Null(info.DataResidencyBytes));
+        TileMap2DModel restored = await package.Levels[0].LoadMapModelAsync("map");
+        Assert.Equal(65_536, Assert.IsType<byte[]>(restored.Chunks[0].Properties["bulk"]).Length);
     }
 
     [Fact]
@@ -78,27 +79,28 @@ public sealed partial class Scene2DPackageTests
         Assert.Equal("level", level.Id);
         Assert.Equal(new DrawPoint(200, -300), level.WorldOffset);
         Assert.Equal(new DrawSize(10, 10), level.TileSize);
-        TileMapSource2D source = Assert.Single(level.TileMaps);
-        Assert.Equal(2, source.Entries.Count);
-        Assert.All(source.Catalog.Chunks, info => Assert.True(info.DataResidencyBytes is >= 65_536));
-        Assert.Equal(new DrawPoint(2, 3), source.Catalog.Offset);
-        Assert.Equal(7, source.Catalog.Version);
-        using var docMetadata = await package.LoadMetadataAsync();
-        using var levelMetadata = await level.LoadMetadataAsync();
-        using var mapMetadata = await level.LoadMapMetadataAsync("map");
-        Assert.Equal("document", docMetadata.Value.Properties["scope"]);
-        Assert.Equal("level", levelMetadata.Value.Properties["scope"]);
-        Assert.Equal("map", mapMetadata.Value.Properties["scope"]);
-        Assert.Equal(2, Assert.Single(mapMetadata.Value.TileSets).Tiles.Count); // Includes unused authoring definition.
-        using var data = await source.LoadAsync(source.Entries[0]);
-        Assert.Single(Assert.Single(data.Value.TileSets).Tiles); // Only the used definition is required to stream.
-        Assert.Equal(65_536, Assert.IsType<byte[]>(data.Value.Grid!.Properties["bulk"]).Length);
-        Assert.Equal("{\"tag\":1.0}", Assert.IsType<SceneJsonValue2D>(data.Value.TileSets[0].Tiles[0].Properties["json"]).Value.GetRawText());
-        using var entity = await level.LoadEntityAsync(Assert.Single(level.EntityIds));
-        Assert.Equal(PackageValueCodec.Encode(document.Levels[0].Entities[0]), PackageValueCodec.Encode(entity.Value));
-        using var promotion = await level.LoadPromotionAsync(Assert.Single(level.PromotionCells));
-        Assert.Equal(PackageValueCodec.Encode(document.Levels[0].Promotions[0]), PackageValueCodec.Encode(promotion.Value));
-        Assert.Equal("map", promotion.Value.Cell.MapId);
+        PackageMap map = Assert.Single(fixture.ReadIndex().Levels[0].Maps);
+        Assert.Equal(new[] { "map" }, level.TileMapIds);
+        Assert.Equal(2, map.Catalog.Chunks.Count);
+        Assert.All(map.Catalog.Chunks, info => Assert.True(info.DataResidencyBytes is >= 65_536));
+        Assert.Equal(new DrawPoint(2, 3), map.Catalog.Offset);
+        Assert.Equal(7, map.Catalog.Version);
+        Scene2DPackageMetadata docMetadata = await package.LoadMetadataAsync();
+        Scene2DPackageMetadata levelMetadata = await level.LoadMetadataAsync();
+        Scene2DPackageMetadata mapMetadata = await level.LoadMapMetadataAsync("map");
+        Assert.Equal("document", docMetadata.Properties["scope"]);
+        Assert.Equal("level", levelMetadata.Properties["scope"]);
+        Assert.Equal("map", mapMetadata.Properties["scope"]);
+        Assert.Equal(2, Assert.Single(mapMetadata.TileSets).Tiles.Count); // Includes unused authoring definition.
+        TileMapChunkData2D data = await package.LoadAsync<TileMapChunkData2D>(map.Chunks[0], CancellationToken.None);
+        Assert.Single(Assert.Single(data.TileSets).Tiles); // Only the used definition is required to stream.
+        Assert.Equal(65_536, Assert.IsType<byte[]>(data.Grid!.Properties["bulk"]).Length);
+        Assert.Equal("{\"tag\":1.0}", Assert.IsType<SceneJsonValue2D>(data.TileSets[0].Tiles[0].Properties["json"]).Value.GetRawText());
+        Scene2DEntity entity = await level.LoadEntityAsync(Assert.Single(level.EntityIds));
+        Assert.Equal(PackageValueCodec.Encode(document.Levels[0].Entities[0]), PackageValueCodec.Encode(entity));
+        TilePromotion2D promotion = await level.LoadPromotionAsync(Assert.Single(level.PromotionCells));
+        Assert.Equal(PackageValueCodec.Encode(document.Levels[0].Promotions[0]), PackageValueCodec.Encode(promotion));
+        Assert.Equal("map", promotion.Cell.MapId);
     }
 
     [Fact]
@@ -110,14 +112,14 @@ public sealed partial class Scene2DPackageTests
         fixture.Corrupt(index.Metadata);
         fixture.Corrupt(index.Levels[0].Maps[0].Chunks[1]);
         using Scene2DPackage package = await Scene2DPackage.OpenAsync(fixture.Output);
-        TileMapSource2D source = package.Levels[0].TileMaps[0];
-        using var first = await source.LoadAsync(source.Entries[0]);
-        Assert.Equal(0, first.Value.Grid!.Origin.X);
-        await Assert.ThrowsAsync<InvalidDataException>(async () => await source.LoadAsync(source.Entries[1]));
+        PackageBlock[] chunks = index.Levels[0].Maps[0].Chunks;
+        TileMapChunkData2D first = await package.LoadAsync<TileMapChunkData2D>(chunks[0], CancellationToken.None);
+        Assert.Equal(0, first.Grid!.Origin.X);
+        await Assert.ThrowsAsync<InvalidDataException>(async () => await package.LoadAsync<TileMapChunkData2D>(chunks[1], CancellationToken.None));
         await Assert.ThrowsAsync<InvalidDataException>(async () => await package.LoadMetadataAsync());
-        using var firstAgain = await source.LoadAsync(source.Entries[0]);
-        Assert.Equal(first.Value.Grid.Tiles, firstAgain.Value.Grid!.Tiles);
-        Assert.NotSame(first.Value, firstAgain.Value);
+        TileMapChunkData2D firstAgain = await package.LoadAsync<TileMapChunkData2D>(chunks[0], CancellationToken.None);
+        Assert.Equal(first.Grid.Tiles, firstAgain.Grid!.Tiles);
+        Assert.NotSame(first, firstAgain);
     }
 
     [Fact]
@@ -126,19 +128,19 @@ public sealed partial class Scene2DPackageTests
         using Fixture fixture = new();
         await fixture.WriteAsync();
         using Scene2DPackage package = await Scene2DPackage.OpenAsync(fixture.Output);
-        TileMapSource2D source = package.Levels[0].TileMaps[0];
+        PackageBlock[] chunks = fixture.ReadIndex().Levels[0].Maps[0].Chunks;
         using CancellationTokenSource canceled = new();
         canceled.Cancel();
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await source.LoadAsync(source.Entries[0], canceled.Token));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await package.LoadAsync<TileMapChunkData2D>(chunks[0], canceled.Token));
         var requests = Enumerable.Range(0, 32).Select(async index =>
         {
-            using var lease = await source.LoadAsync(source.Entries[index % 2]);
-            Assert.Equal(index % 2 * 10, lease.Value.Grid!.Origin.X);
-            Assert.Equal(2, lease.Value.Grid.Tiles.Count);
+            TileMapChunkData2D data = await package.LoadAsync<TileMapChunkData2D>(chunks[index % 2], CancellationToken.None);
+            Assert.Equal(index % 2 * 10, data.Grid!.Origin.X);
+            Assert.Equal(2, data.Grid.Tiles.Count);
         });
         await Task.WhenAll(requests);
-        using var region = await source.LoadAsync(source.Entries[0]);
-        Assert.Equal(0, region.Value.Grid!.Origin.X);
+        TileMapChunkData2D region = await package.LoadAsync<TileMapChunkData2D>(chunks[0], CancellationToken.None);
+        Assert.Equal(0, region.Grid!.Origin.X);
     }
 
     [Fact]
@@ -147,16 +149,16 @@ public sealed partial class Scene2DPackageTests
         using Fixture fixture = new();
         await fixture.WriteAsync();
         Scene2DPackage package = await Scene2DPackage.OpenAsync(fixture.Output);
-        TileMapSource2D source = package.Levels[0].TileMaps[0];
-        var started = source.LoadAsync(source.Entries[0]);
+        PackageBlock[] chunks = fixture.ReadIndex().Levels[0].Maps[0].Chunks;
+        ValueTask<TileMapChunkData2D> started = package.LoadAsync<TileMapChunkData2D>(chunks[0], CancellationToken.None);
         package.Dispose();
         package.Dispose();
-        using var acquired = await started;
-        Assert.Equal(2, acquired.Value.Grid!.Tiles.Count);
-        await Assert.ThrowsAsync<ObjectDisposedException>(async () => await source.LoadAsync(source.Entries[1]));
+        TileMapChunkData2D acquired = await started;
+        Assert.Equal(2, acquired.Grid!.Tiles.Count);
+        await Assert.ThrowsAsync<ObjectDisposedException>(async () => await package.LoadAsync<TileMapChunkData2D>(chunks[1], CancellationToken.None));
         Assert.Throws<ObjectDisposedException>(() => package.GetFilePath("nested/atlas.bin"));
-        acquired.Dispose();
-        Assert.Throws<ObjectDisposedException>(() => acquired.Value);
+        await package.DisposeAsync();
+        Assert.Equal(2, acquired.Grid.Tiles.Count); // Returned values belong to the caller, not to the retired reader.
         using FileStream exclusive = new(fixture.DataPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
     }
 
@@ -166,17 +168,16 @@ public sealed partial class Scene2DPackageTests
         using Fixture fixture = new();
         await fixture.WriteAsync();
         using Scene2DPackage package = await Scene2DPackage.OpenAsync(fixture.Output);
-        TileMapSource2D source = package.Levels[0].TileMaps[0];
+        PackageBlock[] chunks = fixture.ReadIndex().Levels[0].Maps[0].Chunks;
         List<WeakReference> references = [];
-        for (int iteration = 0; iteration < 32; iteration++) { references.AddRange(await AcquireAndRelease(source, iteration % 2)); }
-        references.AddRange(await AcquireMetadataAndRelease(package));
+        for (int iteration = 0; iteration < 32; iteration++) { references.AddRange(await ReadAndRelease(package, chunks[iteration % 2])); }
+        references.AddRange(await ReadMetadataAndRelease(package));
         // An await continuation can run inside the last loader's SetResult,
         // before its stack-local decoded value has returned. Collect only after
         // that completion stack unwinds, not from inside the producer itself.
         await Task.Yield();
         for (int collection = 0; collection < 3; collection++) { GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect(); }
         Assert.All(references, reference => Assert.False(reference.IsAlive));
-        GC.KeepAlive(source);
         GC.KeepAlive(package);
     }
 
@@ -186,7 +187,7 @@ public sealed partial class Scene2DPackageTests
         using Fixture fixture = new();
         await fixture.WriteAsync();
         using Scene2DPackage package = await Scene2DPackage.OpenAsync(fixture.Output);
-        TileMap2D map = new() { Source = package.Levels[0].TileMaps[0] };
+        TileMap2D map = package.Levels[0].CreateTileMap("map");
         var scene = new global::Cerneala.UI.Controls.Scene2D();
         scene.Children.Add(map);
         using SceneSimulationContext2D context = new(scene);
@@ -253,10 +254,10 @@ public sealed partial class Scene2DPackageTests
         await fixture.WriteAsync();
         await Assert.ThrowsAsync<InvalidDataException>(() => Scene2DPackage.OpenAsync(fixture.Output, new() { MaxCatalogBytes = 5 }));
         using Scene2DPackage package = await Scene2DPackage.OpenAsync(fixture.Output, new() { MaxPayloadBytes = 1024 });
-        TileMapSource2D source = package.Levels[0].TileMaps[0];
-        await Assert.ThrowsAsync<InvalidDataException>(async () => await source.LoadAsync(source.Entries[0]));
-        using var metadata = await package.LoadMetadataAsync();
-        Assert.Equal("document", metadata.Value.Properties["scope"]);
+        PackageBlock chunk = fixture.ReadIndex().Levels[0].Maps[0].Chunks[0];
+        await Assert.ThrowsAsync<InvalidDataException>(async () => await package.LoadAsync<TileMapChunkData2D>(chunk, CancellationToken.None));
+        Scene2DPackageMetadata metadata = await package.LoadMetadataAsync();
+        Assert.Equal("document", metadata.Properties["scope"]);
     }
 
     [Fact]
@@ -302,18 +303,18 @@ public sealed partial class Scene2DPackageTests
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static async Task<WeakReference[]> AcquireAndRelease(TileMapSource2D source, int index)
+    private static async Task<WeakReference[]> ReadAndRelease(Scene2DPackage package, PackageBlock block)
     {
-        using var lease = await source.LoadAsync(source.Entries[index]);
-        return [new(lease.Value), new(lease.Value.Grid!), new(lease.Value.Grid!.Properties["bulk"]!),
-            new(lease.Value.TileSets[0]), new(lease.Value.TileSets[0].Tiles[0]), new(lease.Value.TileSets[0].Tiles[0].Collider!)];
+        TileMapChunkData2D value = await package.LoadAsync<TileMapChunkData2D>(block, CancellationToken.None);
+        return [new(value), new(value.Grid!), new(value.Grid!.Properties["bulk"]!),
+            new(value.TileSets[0]), new(value.TileSets[0].Tiles[0]), new(value.TileSets[0].Tiles[0].Collider!)];
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static async Task<WeakReference[]> AcquireMetadataAndRelease(Scene2DPackage package)
+    private static async Task<WeakReference[]> ReadMetadataAndRelease(Scene2DPackage package)
     {
-        using var lease = await package.Levels[0].LoadMapMetadataAsync("map");
-        return [new(lease.Value), new(lease.Value.Properties), new(lease.Value.TileSets[0]), new(lease.Value.TileSets[0].Tiles[1])];
+        Scene2DPackageMetadata value = await package.Levels[0].LoadMapMetadataAsync("map");
+        return [new(value), new(value.Properties), new(value.TileSets[0]), new(value.TileSets[0].Tiles[1])];
     }
 
     private sealed class Fixture : IDisposable

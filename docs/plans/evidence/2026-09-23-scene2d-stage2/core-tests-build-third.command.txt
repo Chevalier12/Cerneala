@@ -1,0 +1,1 @@
+dotnet build .\tests\Cerneala.Tests\Cerneala.Tests.csproj -c Release -m:1 --nologo -v:minimal '-p:DefaultItemExcludesInProjectFolder=artifacts/**'

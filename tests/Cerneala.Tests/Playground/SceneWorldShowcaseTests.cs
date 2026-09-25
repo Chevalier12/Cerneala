@@ -1,8 +1,8 @@
-using System.Runtime.CompilerServices;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Playground;
 using Cerneala.Scene2D.Importers;
+using Cerneala.Scene2D.Packages;
 using Cerneala.Tests.UI.Motion.Core;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Core;
@@ -44,234 +44,170 @@ public sealed class SceneWorldShowcaseTests
     [InlineData(true)]
     public async Task ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(bool ldtk)
     {
-        using SceneWorldState state = new();
-        await state.LoadAsync(ldtk);
+        await using SceneWorldPackage world = await SceneWorldPackage.OpenAsync(
+            Path.Combine(AppContext.BaseDirectory, "SceneWorldPackages", ldtk ? "ldtk" : "tiled"),
+            CancellationToken.None);
         string path = Path.Combine(AppContext.BaseDirectory, "SceneWorldAuthoring", ldtk ? "village.ldtk" : "village.tmj");
         Scene2DImportResult imported = ldtk ? LdtkScene2DImporter.Import(path) : TiledScene2DImporter.Import(path);
         Assert.True(imported.Success);
         Scene2DLevel level = imported.Document!.Levels.Single();
         Scene2DEntity[] importedWalls = level.Entities.Where(e => e.Role == "Collider").ToArray();
         Assert.Equal(6, importedWalls.Length);
-        Assert.Equal(6, state.ColliderSource!.Entries.Count);
-        foreach (var entry in state.ColliderSource.Entries)
+        Assert.Equal(6, world.Walls.Count);
+        for (int index = 0; index < world.Walls.Count; index++)
         {
-            using var lease = await state.ColliderSource.LoadAsync(entry);
-            SceneWorldBox actual = Assert.IsType<SceneWorldBox>(lease.Value);
-            Scene2DEntity expected = importedWalls.Single(wall => wall.Id == entry.Id);
+            SceneWorldBox actual = world.Walls[index];
+            Scene2DEntity expected = importedWalls[index];
             Assert.Equal((expected.Position.X, expected.Position.Y, expected.Size.Width, expected.Size.Height,
                 expected.Collider!.CollisionLayer, expected.Collider.CollisionMask),
                 (actual.X, actual.Y, actual.Width, actual.Height, actual.Layer, actual.Mask));
         }
-        Assert.Equal(level.TileMaps.Count, state.TileMaps.Count);
-        Assert.Equal(ldtk ? 24 : 65, state.TileMaps.Sum(map => map.Catalog.Chunks.Count));
+        Assert.Equal(level.TileMaps.Select(map => map.Id), world.TileMapIds);
+        await using Scene2DPackage package = await Scene2DPackage.OpenAsync(
+            Path.Combine(AppContext.BaseDirectory, "SceneWorldPackages", ldtk ? "ldtk" : "tiled"));
+        Scene2DPackageLevel packedLevel = Assert.Single(package.Levels);
         foreach (TileMap2DModel before in level.TileMaps)
         {
-            TileMapSource2D after = state.TileMaps.Single(map => map.Catalog.Id == before.Id);
-            TileMapCatalog2D catalog = after.Catalog;
+            TileMap2DModel after = await packedLevel.LoadMapModelAsync(before.Id);
             Assert.Equal((before.Offset, before.Opacity, before.Tint, before.Order, before.IsVisible),
-                (catalog.Offset, catalog.Opacity, catalog.Tint, catalog.Order, catalog.IsVisible));
-            Assert.Equal(before.Chunks.Sum(chunk => chunk.Tiles.Count), catalog.Chunks.Sum(info => info.TileCount));
-            foreach (TileMapChunkInfo2D info in catalog.Chunks)
+                (after.Offset, after.Opacity, after.Tint, after.Order, after.IsVisible));
+            Assert.Equal(before.TileSize, after.TileSize);
+            Assert.Equal(before.Bounds, after.Bounds);
+            Assert.Equal(before.Chunks.Sum(chunk => chunk.Tiles.Count), after.Chunks.Sum(chunk => chunk.Tiles.Count));
+            Assert.Equal(before.TileSets.Select(set => set.Id), after.TileSets.Select(set => set.Id));
+            foreach (TileChunk2D chunk in before.Chunks)
             {
-                Assert.InRange(info.Cells!.Value.Width, 1, 16);
-                Assert.InRange(info.Cells.Value.Height, 1, 16);
-                using var lease = await after.LoadAsync(info.Spatial);
-                TileMapChunkData2D data = lease.Value;
-                TileChunk2D chunk = data.Grid!;
                 for (int index = 0; index < chunk.Tiles.Count; index++)
                 {
-                    TileCell2D cell = chunk.Tiles[index];
                     TileCoordinate2D coordinate = new(chunk.Origin.X + index % chunk.Width, chunk.Origin.Y + index / chunk.Width);
-                    Assert.True(before.TryGetCell(coordinate, out TileCell2D oldCell));
-                    if (before.Id == "4" && coordinate == new TileCoordinate2D(14, 9))
-                    {
-                        Assert.Equal(7, oldCell.TileId);
-                        Assert.Equal(0, cell.TileId);
-                        Assert.Equal((224f, 144f), (state.DoorX, state.DoorY));
-                        continue;
-                    }
-                    Assert.Equal(oldCell, cell);
-                    if (oldCell.TileId == 0) continue;
-                    Assert.True(before.TryResolveTile(oldCell.TileId, out TileSet2D? oldSet, out TileDefinition2D? oldTile));
-                    Assert.True(data.TryResolveTile(cell.TileId, out TileSet2D? set, out TileDefinition2D? tile));
-                    Assert.Equal(oldSet!.AtlasResourceId, set!.AtlasResourceId);
-                    Assert.Equal(oldTile!.SourceRect, tile!.SourceRect);
-                    Assert.Null(oldTile.Collider);
-                    Assert.Null(tile.Collider);
+                    Assert.True(after.TryGetCell(coordinate, out TileCell2D cell));
+                    Assert.Equal(chunk.Tiles[index], cell);
                 }
             }
         }
+        Assert.True(level.TileMaps.Single(map => map.Id == "4").TryGetCell(new(14, 9), out TileCell2D authoredDoor));
+        Assert.Equal(7, authoredDoor.TileId);
+        TileMap2DModel authoredDoorMap = level.TileMaps.Single(map => map.Id == "4");
+        Assert.Equal((authoredDoorMap.TileSize, authoredDoorMap.Bounds, authoredDoorMap.Order,
+            authoredDoorMap.IsVisible, authoredDoorMap.Offset, authoredDoorMap.Opacity, authoredDoorMap.Tint),
+            (world.DoorModel.TileSize, world.DoorModel.Bounds, world.DoorModel.Order,
+                world.DoorModel.IsVisible, world.DoorModel.Offset, world.DoorModel.Opacity, world.DoorModel.Tint));
+        Assert.Equal(authoredDoorMap.TileSets.Select(set => set.Id), world.DoorModel.TileSets.Select(set => set.Id));
+        Assert.True(world.DoorModel.TryGetCell(new(14, 9), out TileCell2D editedDoor));
+        Assert.Equal(0, editedDoor.TileId);
+        Assert.Equal((224f, 144f),
+            (world.DoorModel.Offset.X + 14 * world.DoorModel.TileSize.Width,
+                world.DoorModel.Offset.Y + 9 * world.DoorModel.TileSize.Height));
     }
 
     [Fact]
     public async Task ConstructionDoesNotOpenAnEditorDocumentAndFailedPackageOpenLeavesStateEmpty()
     {
-        using SceneWorldState state = new(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")));
+        await using SceneWorldState state = new(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")));
         Assert.False(state.IsLoaded);
-        Assert.Empty(state.TileMaps);
-        Assert.Null(state.ColliderSource);
+        Assert.Empty(state.TileMapIds);
+        Assert.Empty(state.Walls);
         await Assert.ThrowsAsync<DirectoryNotFoundException>(() => state.LoadAsync(false));
         Assert.False(state.IsLoaded);
-        Assert.Empty(state.TileMaps);
+        Assert.Empty(state.TileMapIds);
     }
 
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task PlantPreservesGrassAndOnlyChangesTheDecorativeChunk(bool ldtk)
+    public async Task PlantUsesACompleteEditedModelWithoutChangingGrassOrAuthoredNeighbors(bool ldtk)
     {
-        using SceneWorldState state = new();
-        await state.LoadAsync(ldtk);
-        TileMapCatalog2D ground = state.GroundSource!.Catalog;
-        TileMapSource2D decorations = state.BuildingSource!;
-        TileMapCatalog2D before = decorations.Catalog;
-        TileMapChunkInfo2D target = before.Chunks.Single(info => info.Cells!.Value.Contains(new(11, 10)));
-        using (var baseline = await decorations.LoadAsync(target.Spatial))
-            Assert.Equal(0, baseline.Value.Grid!.GetCell(new(11, 10)).TileId);
+        string directory = Path.Combine(AppContext.BaseDirectory, "SceneWorldPackages", ldtk ? "ldtk" : "tiled");
+        await using SceneWorldPackage world = await SceneWorldPackage.OpenAsync(directory, CancellationToken.None);
+        await using Scene2DPackage package = await Scene2DPackage.OpenAsync(directory);
+        Scene2DPackageLevel level = Assert.Single(package.Levels);
+        TileMap2DModel ground = await level.LoadMapModelAsync("1");
+        TileMap2DModel authored = await level.LoadMapModelAsync("2");
+        Assert.True(authored.TryGetCell(new(11, 10), out TileCell2D empty));
+        Assert.Equal(0, empty.TileId);
 
-        await state.PlantAsync();
-
-        Assert.Same(ground, state.GroundSource.Catalog);
-        Assert.Single(before.Chunks.Zip(decorations.Catalog.Chunks).Where(pair => !ReferenceEquals(pair.First, pair.Second)));
-        TileMapChunkInfo2D revision = decorations.Catalog.Chunks.Single(info => info.Spatial.Id == target.Spatial.Id);
-        using var planted = await decorations.LoadAsync(revision.Spatial);
-        Assert.Equal(15, planted.Value.Grid!.GetCell(new(11, 10)).TileId);
-        Assert.Equal(15, planted.Value.Grid.GetCell(new(10, 10)).TileId); // Preserve the authored neighboring flower.
-        TileMapChunkInfo2D terrain = ground.Chunks.Single(info => info.Cells!.Value.Contains(new(11, 10)));
-        using var grass = await state.GroundSource.LoadAsync(terrain.Spatial);
-        Assert.Equal(1, grass.Value.Grid!.GetCell(new(11, 10)).TileId);
+        TileMap2DModel planted = await world.PreparePlantAsync(plant: true, CancellationToken.None);
+        Assert.Equal(authored.Version + 1, planted.Version);
+        Assert.Equal((authored.TileSize, authored.Bounds, authored.Order, authored.IsVisible,
+            authored.Offset, authored.Opacity, authored.Tint),
+            (planted.TileSize, planted.Bounds, planted.Order, planted.IsVisible,
+                planted.Offset, planted.Opacity, planted.Tint));
+        Assert.Equal(authored.TileSets.Select(set => set.Id), planted.TileSets.Select(set => set.Id));
+        Assert.True(planted.TryGetCell(new(11, 10), out TileCell2D flower));
+        Assert.Equal(15, flower.TileId);
+        Assert.True(planted.TryGetCell(new(10, 10), out TileCell2D neighbor));
+        Assert.Equal(15, neighbor.TileId);
+        Assert.True(ground.TryGetCell(new(11, 10), out TileCell2D grass));
+        Assert.Equal(1, grass.TileId);
+        world.SetBuildingModelBeforeMaps(planted);
+        TileMap2DModel cleared = await world.PreparePlantAsync(plant: false, CancellationToken.None);
+        Assert.Equal(planted.Version + 1, cleared.Version);
+        Assert.Single(planted.Chunks.Zip(cleared.Chunks).Where(pair => !ReferenceEquals(pair.First, pair.Second)));
+        Assert.True(cleared.TryGetCell(new(11, 10), out TileCell2D restored));
+        Assert.Equal(0, restored.TileId);
+        Assert.True(cleared.TryGetCell(new(10, 10), out neighbor));
+        Assert.Equal(15, neighbor.TileId);
     }
 
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task PlantPreparationSharesOnlyThePublishingAcquisitionAndDoesNotKeepBackingPayloads(bool ldtk)
+    public async Task CancelledPlantDoesNotAdvanceTheNextSuccessfulModelEdit(bool ldtk)
     {
-        using SceneWorldState state = new();
-        await state.LoadAsync(ldtk);
-        WeakReference[] payloads = await PublishPlantAndRelease(state);
-        await Task.Yield();
-        for (int collection = 0; collection < 3; collection++) { GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect(); }
-        Assert.All(payloads, reference => Assert.False(reference.IsAlive));
-        GC.KeepAlive(state);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private static async Task<WeakReference[]> PublishPlantAndRelease(SceneWorldState state)
-    {
-        TileMapSource2D source = state.BuildingSource!;
-        ValueTask<SceneSpatialLease2D<TileMapChunkData2D>> acquisition = default;
-        bool changed = false, immediatelyReady = false;
-        void OnChanged(object? sender, EventArgs args)
-        {
-            changed = true;
-            TileMapChunkInfo2D info = source.Catalog.Chunks.Single(info => info.Cells!.Value.Contains(new(11, 10)));
-            acquisition = source.LoadAsync(info.Spatial);
-            immediatelyReady = acquisition.IsCompletedSuccessfully;
-        }
-        source.Changed += OnChanged;
-        try
-        {
-            await state.PlantAsync();
-            Assert.True(changed);
-            using var published = await acquisition;
-            Assert.True(immediatelyReady, "The published edit must be available synchronously to current scene interests.");
-            Assert.Equal(15, published.Value.Grid!.GetCell(new(11, 10)).TileId);
-            TileMapChunkInfo2D info = source.Catalog.Chunks.Single(info => info.Cells!.Value.Contains(new(11, 10)));
-            using var reloaded = await source.LoadAsync(info.Spatial);
-            Assert.NotSame(published.Value, reloaded.Value); // No persistent staging cache after publication.
-            Assert.Equal(published.Value.Grid.Tiles, reloaded.Value.Grid!.Tiles);
-            return [new(published.Value), new(published.Value.Grid), new(published.Value.TileSets), new(reloaded.Value)];
-        }
-        finally { source.Changed -= OnChanged; }
-    }
-
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task CancelledPlantDoesNotPublishOrToggleTheNextSuccessfulEdit(bool ldtk)
-    {
-        using SceneWorldState state = new();
-        await state.LoadAsync(ldtk);
-        TileMapCatalog2D before = state.BuildingSource!.Catalog;
+        await using SceneWorldPackage world = await SceneWorldPackage.OpenAsync(
+            Path.Combine(AppContext.BaseDirectory, "SceneWorldPackages", ldtk ? "ldtk" : "tiled"),
+            CancellationToken.None);
         using CancellationTokenSource cancellation = new();
         cancellation.Cancel();
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => state.PlantAsync(cancellation.Token));
-        Assert.Same(before, state.BuildingSource.Catalog);
-        await state.PlantAsync();
-        TileMapChunkInfo2D info = state.BuildingSource.Catalog.Chunks.Single(info => info.Cells!.Value.Contains(new(11, 10)));
-        _ = await AcquirePlantAndRelease(state.BuildingSource, info, 15);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => world.PreparePlantAsync(plant: true, cancellation.Token));
+        TileMap2DModel first = await world.PreparePlantAsync(plant: true, CancellationToken.None);
+        Assert.True(first.TryGetCell(new(11, 10), out TileCell2D cell));
+        Assert.Equal(15, cell.TileId);
+        world.SetBuildingModelBeforeMaps(first);
+        for (int iteration = 2; iteration <= 32; iteration++)
+        {
+            TileMap2DModel next = await world.PreparePlantAsync(plant: iteration % 2 == 1, CancellationToken.None);
+            Assert.Equal(first.Version + iteration - 1, next.Version);
+            Assert.True(next.TryGetCell(new(11, 10), out cell));
+            Assert.Equal(iteration % 2 == 1 ? 15 : 0, cell.TileId);
+            Assert.Equal(first.TileSets.Select(set => set.Id), next.TileSets.Select(set => set.Id));
+            world.SetBuildingModelBeforeMaps(next);
+        }
     }
 
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task PlantDeltaSurvivesReleaseAndPlayerResetButFormatReloadDiscardsIt(bool ldtk)
+    public async Task PlantStateSurvivesPlayerResetButFormatReloadDiscardsIt(bool ldtk)
     {
-        using SceneWorldState state = new();
+        await using SceneWorldState state = new();
         await state.LoadAsync(ldtk);
         SceneWorldNpc npc = Assert.Single(state.Npcs);
-        TileMapSource2D source = state.BuildingSource!;
-        TileMapCatalog2D baseline = source.Catalog;
-        TileMapChunkInfo2D edited = baseline.Chunks.Single(info => info.Cells!.Value.Contains(new(11, 10)));
-        List<WeakReference> payloads = [];
-        for (int iteration = 1; iteration <= 32; iteration++)
-        {
-            await state.PlantAsync();
-            Assert.Same(source, state.BuildingSource);
-            TileMapChunkInfo2D revision = source.Catalog.Chunks.Single(info => info.Spatial.Id == edited.Spatial.Id);
-            Assert.Equal(edited.Spatial.Version + iteration, revision.Spatial.Version);
-            Assert.Null(revision.DataResidencyBytes); // Unknown is not a zero-byte warm-cache bypass.
-            foreach (TileMapChunkInfo2D unchanged in baseline.Chunks.Where(info => !ReferenceEquals(info, edited)))
-                Assert.Same(unchanged, source.Catalog.Chunks.Single(info => info.Spatial.Id == unchanged.Spatial.Id));
-            payloads.AddRange(await AcquirePlantAndRelease(source, revision, iteration % 2 == 1 ? 15 : 0));
-            state.PlayerX = 999;
-            state.ResetPlayer();
-            Assert.Equal(state.Spawn.X, state.PlayerX);
-            payloads.AddRange(await AcquirePlantAndRelease(source, revision, iteration % 2 == 1 ? 15 : 0));
-        }
-        await Task.Yield();
-        for (int collection = 0; collection < 3; collection++) { GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect(); }
-        Assert.All(payloads, reference => Assert.False(reference.IsAlive));
         await state.PlantAsync();
+        Assert.Contains("complete decorative map", state.Status);
+        state.PlayerX = 999;
+        state.ResetPlayer();
+        Assert.Equal(state.Spawn.X, state.PlayerX);
         await state.LoadAsync(!ldtk);
         Assert.Same(npc, Assert.Single(state.Npcs));
         Assert.True(state.DoorClosed);
         Assert.Equal("Idle", state.PlayerState);
-        TileMapSource2D reloaded = state.BuildingSource!;
-        TileMapChunkInfo2D fresh = reloaded.Catalog.Chunks.Single(info => info.Cells!.Value.Contains(new(11, 10)));
-        _ = await AcquirePlantAndRelease(reloaded, fresh, 0);
-        await Assert.ThrowsAsync<ObjectDisposedException>(async () => await source.LoadAsync(source.Entries[0]));
-        GC.KeepAlive(state);
-        GC.KeepAlive(source);
+        Assert.Equal(new[] { "1", "2", "4", "3" }, state.TileMapIds);
     }
 
     [Fact]
-    public async Task DisposingTheStateClosesPackageSourcesWithoutKeepingACompleteBackingMap()
+    public async Task DisposingTheStateClosesItsPackageAndRejectsFutureLoads()
     {
         SceneWorldState state = new();
         await state.LoadAsync(false);
-        TileMapSource2D source = state.GroundSource!;
-        var walls = state.ColliderSource!;
-        state.Dispose();
-        state.Dispose();
+        Assert.Equal(new[] { "1", "2", "4", "3" }, state.TileMapIds);
+        await state.DisposeAsync();
+        await state.DisposeAsync();
         Assert.False(state.IsLoaded);
-        Assert.Empty(state.TileMaps);
-        Assert.Null(state.ColliderSource);
-        await Assert.ThrowsAsync<ObjectDisposedException>(async () => await source.LoadAsync(source.Entries[0]));
-        await Assert.ThrowsAsync<ObjectDisposedException>(async () => await walls.LoadAsync(walls.Entries[0]));
+        Assert.Empty(state.TileMapIds);
+        Assert.Empty(state.Walls);
         await Assert.ThrowsAsync<ObjectDisposedException>(() => state.LoadAsync(true));
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private static async Task<WeakReference[]> AcquirePlantAndRelease(TileMapSource2D source, TileMapChunkInfo2D info, int expected)
-    {
-        using var lease = await source.LoadAsync(info.Spatial);
-        TileMapChunkData2D data = lease.Value;
-        Assert.Equal(expected, data.Grid!.GetCell(new(11, 10)).TileId);
-        Assert.Equal(data.Grid.Tiles.Where(cell => cell.TileId != 0).Select(cell => cell.TileId).Distinct().Order(),
-            data.TileSets.SelectMany(set => set.Tiles).Select(tile => tile.Id).Order());
-        return [new(data), new(data.Grid), new(data.TileSets)];
     }
 
     [Theory]
@@ -314,24 +250,25 @@ public sealed class SceneWorldShowcaseTests
         Ready();
         Scene2D world = surface.Scene!;
         UIElement[] nodes = Descendants(world).Prepend(world).ToArray();
-        TileMap2D map = nodes.OfType<TileMap2D>().Single(map => map.Source!.Catalog.Id == "1");
-        TileMap2D layer = nodes.OfType<TileMap2D>().Single(map => map.Source!.Catalog.Id == "2");
+        TileMap2D map = view.State.GroundMap!;
+        TileMap2D layer = view.State.BuildingMap!;
+        Scene2D buildingLayer = Assert.IsType<Scene2D>(layer.LogicalParent);
         Sprite2D door = nodes.OfType<Sprite2D>().Single(sprite => ServoApi.GetId(sprite) == "world-door");
         Scene2D mapGroup = Assert.IsType<Scene2D>(door.LogicalParent);
-        Assert.Contains(map, mapGroup.Children);
-        Assert.Contains(layer, mapGroup.Children);
+        Assert.Contains(Assert.IsType<Scene2D>(map.LogicalParent), mapGroup.Children);
+        Assert.Contains(buildingLayer, mapGroup.Children);
+        Assert.Contains(Assert.IsType<Scene2D>(view.State.DoorMap!.LogicalParent), mapGroup.Children);
         Assert.Equal(3, nodes.OfType<TileMap2D>().Count());
         BoxCollider2D doorCollider = door.LogicalChildren.OfType<BoxCollider2D>().Single();
         SceneItems2D importedColliders = nodes.OfType<SceneItems2D>()
-            .Single(n => ReferenceEquals(n.ItemsSource, view.State.ColliderSource));
+            .Single(n => ReferenceEquals(n.ItemsSource, view.State.Walls));
         Sprite2D[] wallOwners = Descendants(importedColliders).OfType<Sprite2D>().ToArray();
         Assert.Equal(6, importedColliders.RealizedItemCount);
         Assert.Equal(6, wallOwners.Length);
-        foreach (var entry in view.State.ColliderSource!.Entries)
+        foreach (SceneWorldBox wall in view.State.Walls)
         {
-            // Payload equality is checked above; the UI test checks composed singular owners.
-            Assert.True(importedColliders.TryGetRealizedNode(entry.Id, out SceneNode2D? node));
-            Assert.Contains(Assert.IsType<Sprite2D>(node), wallOwners);
+            // Value equality is checked above; the UI checks normal collection composition.
+            Assert.Contains(wallOwners, owner => ReferenceEquals(owner.DataContext, wall));
         }
         Assert.All(wallOwners, owner =>
             {
@@ -344,10 +281,10 @@ public sealed class SceneWorldShowcaseTests
             });
         Scene2D player = nodes.OfType<Scene2D>().Single(n => ServoApi.GetId(n) == "world-player");
         Sprite2D playerSprite = player.Children.OfType<Sprite2D>().Single();
-        SceneItems2D npcs = nodes.OfType<SceneItems2D>().Single(n => ReferenceEquals(n.ItemsSource, view.State.NpcSource));
+        SceneItems2D npcs = nodes.OfType<SceneItems2D>().Single(n => ReferenceEquals(n.ItemsSource, view.State.Npcs));
         Sprite2D npcSprite = Descendants(npcs).OfType<Sprite2D>().Single();
         Scene2DDebugOverlay overlay = nodes.OfType<Scene2DDebugOverlay>().Single();
-        UIElement[] visualMatrix = [world, mapGroup, layer, door, player, playerSprite, npcSprite, overlay];
+        UIElement[] visualMatrix = [world, mapGroup, buildingLayer, door, player, playerSprite, npcSprite, overlay];
         Assert.All(visualMatrix, node =>
         {
             Assert.NotNull(node.Aspect);
@@ -360,7 +297,7 @@ public sealed class SceneWorldShowcaseTests
         });
         Assert.NotNull(doorCollider.Aspect);
         Assert.False(PrismAttachment.TryGetInstance(doorCollider, out _));
-        Assert.True(PrismAttachment.TryGetInstance(layer, out PrismInstance? buildingPrism));
+        Assert.True(PrismAttachment.TryGetInstance(buildingLayer, out PrismInstance? buildingPrism));
         PrismFilterState buildingBlur = buildingPrism!.GetLayerState(buildingPrism.Definition.Nodes.Single().Id).Filters.Single();
         Assert.Equal(2f, buildingBlur.GetValue<float>(PrismCatalog.GetFilter(PrismFilterId.Blur).Parameters.Single(p => p.Name == "Radius")));
         Assert.True(PrismAttachment.TryGetInstance(door, out PrismInstance? doorPrism));
@@ -368,7 +305,7 @@ public sealed class SceneWorldShowcaseTests
         var glowParameters = PrismCatalog.GetStyle(PrismStyleId.OuterGlow).Parameters;
         Assert.Equal(4f, doorGlow.GetValue<float>(glowParameters.Single(p => p.Name == "Size")));
         Assert.Equal(0.8f, doorGlow.GetValue<float>(glowParameters.Single(p => p.Name == "Opacity")));
-        UIElement[] loadedFades = [world, mapGroup, layer, player, playerSprite, npcSprite, overlay];
+        UIElement[] loadedFades = [world, mapGroup, buildingLayer, player, playerSprite, npcSprite, overlay];
         float[] starts = loadedFades.Select(n => n.Opacity).ToArray();
         Assert.All(starts, value => Assert.InRange(value, 0.39f, 0.71f));
         Assert.InRange(doorCollider.OffsetX, 0.99f, 1.01f);
@@ -395,7 +332,11 @@ public sealed class SceneWorldShowcaseTests
         Assert.Equal(1, root.ImageResourceCache!.LoadCount);
         Record(); // The first recording builds the retained tile batches.
         Assert.True(map.GetDiagnosticsSnapshot().BatchesReused > 0);
-        Assert.Equal(65, nodes.OfType<TileMap2D>().Sum(map => map.Source!.Catalog.Chunks.Count));
+        // The edited Door is FromModel rather than the package's subdivided
+        // source, so the old aggregate 65-chunk identity is no longer a contract.
+        Assert.True(root.Detective.CaptureTileMap(map).TotalChunks > 0);
+        Assert.True(root.Detective.CaptureTileMap(layer).TotalChunks > 0);
+        Assert.True(root.Detective.CaptureTileMap(view.State.DoorMap!).TotalChunks > 0);
 
         await servo.ClickAsync(ServoTarget.ById("world-player"));
         await servo.PressKeyAsync(InputKey.Up);
@@ -419,13 +360,13 @@ public sealed class SceneWorldShowcaseTests
         Assert.Equal(1, door.Opacity);
         Assert.Contains(Record(), c => c.Kind == DrawCommandKind.DrawImage && c.ImageSource == new DrawRect(112, 0, 16, 16));
 
-        TileMapCatalog2D original = map.Source!.Catalog;
+        TileMap2D original = view.State.GroundMap!;
         var collisionBefore = world.CollisionWorld.GetDiagnosticsSnapshot();
         ServoElement pickingBefore = await servo.FindAsync(ServoTarget.ById("world-player"));
         await servo.ClickAsync(ServoTarget.ById("world-debug"));
         Assert.Equal(8, Record().Count(c => c.Kind == DrawCommandKind.BeginPrism));
         Assert.True(overlay.GetDiagnosticsSnapshot().Primitives > 0);
-        Assert.Same(original, map.Source!.Catalog);
+        Assert.Same(original, view.State.GroundMap);
         var collisionAfter = world.CollisionWorld.GetDiagnosticsSnapshot();
         Assert.Equal(collisionBefore.EntryCount, collisionAfter.EntryCount);
         Assert.Equal(collisionBefore.RebuildCount, collisionAfter.RebuildCount);
@@ -441,11 +382,15 @@ public sealed class SceneWorldShowcaseTests
         Assert.True(view.State.IsLdtk);
         Assert.Same(firstModel, view.State.Npcs[0]);
         Assert.Same(firstNpc, npcs.LogicalChildren[0]);
-        Assert.Equal(24, view.State.TileMaps.Sum(source => source.Catalog.Chunks.Count));
-        TileMapCatalog2D beforePlant = layer.Source!.Catalog;
+        Assert.Equal(new[] { "1", "2", "4", "3" }, view.State.TileMapIds);
+        TileMap2D beforePlant = view.State.BuildingMap!;
+        TileMap2D groundBeforePlant = view.State.GroundMap!;
         await servo.ClickAsync(ServoTarget.ById("world-mutate"));
         Ready();
-        Assert.Single(beforePlant.Chunks.Zip(layer.Source.Catalog.Chunks).Where(pair => !ReferenceEquals(pair.First, pair.Second)));
+        Assert.NotSame(beforePlant, view.State.BuildingMap);
+        Assert.Same(groundBeforePlant, view.State.GroundMap);
+        Assert.Same(view.State.BuildingMap, Assert.Single(buildingLayer.Children));
+        Assert.Null(beforePlant.LogicalParent);
         await servo.ClickAsync(ServoTarget.ById("world-reset"));
         Ready();
         Assert.Equal(view.State.Spawn.X, view.State.PlayerX);
@@ -453,12 +398,13 @@ public sealed class SceneWorldShowcaseTests
         Assert.Null(view.LastMove);
         root.VisualChildren.Remove(view);
         Assert.False(view.State.IsLoaded);
-        Assert.Empty(view.State.TileMaps);
+        Assert.Empty(view.State.TileMapIds);
         Assert.Null(surface.Scene);
+        await view.State.DisposeAsync();
     }
 
     [Fact]
-    public void DetachingDuringAnAsynchronousOpenRetiresTheOperationWithoutPumpingTheOldRootAndAllowsReattach()
+    public async Task DetachingDuringAnAsynchronousOpenRetiresTheOperationWithoutPumpingTheOldRootAndAllowsReattach()
     {
         UIRoot first = new(800, 600);
         first.SetImageLoader(new AtlasLoader());
@@ -468,7 +414,7 @@ public sealed class SceneWorldShowcaseTests
         first.VisualChildren.Remove(view);
         Assert.True(SpinWait.SpinUntil(() => abandoned.IsCompleted, TimeSpan.FromSeconds(10)));
         Assert.False(view.State.IsLoaded);
-        Assert.Empty(view.State.TileMaps);
+        Assert.Empty(view.State.TileMapIds);
 
         UIRoot second = new(800, 600);
         second.SetImageLoader(new AtlasLoader());
@@ -486,6 +432,7 @@ public sealed class SceneWorldShowcaseTests
         Assert.NotNull(surface.Scene);
         second.VisualChildren.Remove(view);
         Assert.False(view.State.IsLoaded);
+        await view.State.DisposeAsync();
     }
 
     private static IEnumerable<UIElement> Descendants(UIElement element)

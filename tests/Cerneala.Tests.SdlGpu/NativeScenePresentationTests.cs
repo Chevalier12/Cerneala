@@ -17,7 +17,7 @@ public sealed class NativeScenePresentationTests
 {
     [SdlNativeFact]
     [Trait("Category", "Native")]
-    public void LoadingAndErrorWithholdTheWholeSceneWhileUiAndNpcMovementContinueAcross32Cycles()
+    public void TileMapLoadingAndErrorWithholdTheWholeSceneWhileUiAndNpcMovementContinueAcross32Cycles()
     {
         string directory = Path.Combine(Path.GetTempPath(), $"Cerneala-native-scene-preparation-{Guid.NewGuid():N}");
         Directory.CreateDirectory(directory);
@@ -34,20 +34,17 @@ public sealed class NativeScenePresentationTests
         using SdlWindowPlatform platform = new(api, graphics, coordinateScaleOverride: 1);
         using WindowApplicationRuntime runtime = new(platform);
         ResourceId<ImageResource> atlas = new("Atlas");
+        ImageReference picture = new(atlas);
         Sprite2D npc = new()
         {
             X = 16, Y = 16, Width = 16, Height = 16, Image = new(atlas),
-            Collider = new BoxCollider2D { Width = 16, Height = 16 }
+            Collider = new BoxCollider2D { Width = 16, Height = 16, IsSimulated = true }
         };
-        int npcLoads = 0, npcReleases = 0, coldReleases = 0, moves = 0;
-        SceneSpatialSource2D<object> npcSource = new(NpcCatalog(), (_, _) =>
-        {
-            npcLoads++;
-            return ValueTask.FromResult(new SceneSpatialLease2D<object>(npc, _ => npcReleases++));
-        });
-        TaskCompletionSource<SceneSpatialLease2D<object>>? pending = null;
-        SceneSpatialSource2D<object> coldSource = new([], (_, _) => new(pending!.Task));
-        SceneItems2D actors = new() { ItemsSource = npcSource }, cold = new() { ItemsSource = coldSource };
+        int coldReleases = 0, moves = 0;
+        TaskCompletionSource<SceneSpatialLease2D<TileMapChunkData2D>>? pending = null;
+        TileMapSource2D coldSource = new(new TileMapCatalog2D("cold", []), (_, _, _) => new(pending!.Task));
+        SceneItems2D actors = new() { ItemsSource = new[] { npc } };
+        TileMap2D cold = TileMap2D.FromSource(coldSource);
         Scene2D scene = new();
         scene.Children.Add(actors);
         scene.Children.Add(cold);
@@ -62,7 +59,8 @@ public sealed class NativeScenePresentationTests
         AddButton("begin", 0, () =>
         {
             pending = new(TaskCreationOptions.RunContinuationsAsynchronously);
-            coldSource.SetEntries([new("cold", new(80, 16, 16, 16), collisionBounds: null)]);
+            coldSource.SetCatalog(new TileMapCatalog2D("cold", [new TileMapChunkInfo2D(
+                new SceneSpatialEntry2D("cold", new(80, 16, 16, 16), collisionBounds: null), 1, [picture])]));
         });
         AddButton("move", 32, () =>
         {
@@ -75,12 +73,11 @@ public sealed class NativeScenePresentationTests
             MoveCollisionResult2D step = scene.CollisionWorld.MoveAndCollide(npc.Collider!, new(npc.X > 16 ? -4 : 4, 0));
             Assert.Null(step.Collision);
             npc.X += step.Travel.X;
-            npcSource.SetEntries(NpcCatalog());
             moves++;
         });
-        AddButton("complete", 64, () => pending!.SetResult(new SceneSpatialLease2D<object>(
-            new Sprite2D { X = 80, Y = 16, Width = 16, Height = 16, Image = new(atlas) }, _ => coldReleases++)));
-        AddButton("reset", 96, () => coldSource.SetEntries([]));
+        AddButton("complete", 64, () => pending!.SetResult(new SceneSpatialLease2D<TileMapChunkData2D>(
+            new TileMapChunkData2D([new Tile(picture, x: 80, y: 16, width: 16, height: 16)]), _ => coldReleases++)));
+        AddButton("reset", 96, () => coldSource.SetCatalog(new TileMapCatalog2D("cold", [])));
         Window window = new() { Title = "Scene preparation input", Width = 128, Height = 96, Content = surface };
         window.Resources.SetResource(atlas, new ImageResource(atlasPath));
         try
@@ -98,18 +95,16 @@ public sealed class NativeScenePresentationTests
                 Click("move");
                 Click("move");
                 Assert.Equal(16, npc.X);
-                Assert.True(actors.TryGetRealizedNode("npc", out SceneNode2D? retained));
-                Assert.Same(npc, retained);
+                Assert.Same(npc, Assert.Single(actors.LogicalChildren));
                 Assert.True(npc.IsAttached);
                 Assert.True(npc.IsVisible);
                 Assert.True(npc.Collider!.Enabled);
-                Assert.Equal(0, npcReleases);
                 _ = Capture(SKColors.Black, SKColors.Black);
                 Click("complete");
                 Wait(() => cold.Preparation.IsCompletedSuccessfully && surface.PresentationState == RenderSurface2DPresentationState.Ready);
                 _ = Capture(SKColors.Red, SKColors.Red);
                 Click("reset");
-                Wait(() => surface.PresentationState == RenderSurface2DPresentationState.Ready && cold.RealizedItemCount == 0);
+                Wait(() => surface.PresentationState == RenderSurface2DPresentationState.Ready && cold.LogicalChildren.Count == 0);
                 Assert.Equal(reference, Capture(SKColors.Red, SKColors.Black));
                 Assert.Equal(cycle + 1, coldReleases);
             }
@@ -118,15 +113,15 @@ public sealed class NativeScenePresentationTests
             pending!.SetException(failure); // Loader completion is test setup, not simulated UI input.
             Wait(() => surface.PresentationState == RenderSurface2DPresentationState.Error);
             Assert.Same(failure, surface.PresentationError);
+            Assert.Same(failure, cold.PreparationError);
             _ = Capture(SKColors.Black, SKColors.Black);
             Click("reset");
             Wait(() => surface.PresentationState == RenderSurface2DPresentationState.Ready);
             Assert.Equal(reference, Capture(SKColors.Red, SKColors.Black));
             Assert.Equal(64, moves);
-            Assert.Equal(1, npcLoads);
             Assert.Equal(1, cache.LoadCount);
             runtime.Close(window, force: true);
-            Assert.Equal(1, npcReleases);
+            Assert.False(npc.IsAttached);
             Assert.Equal(0, cache.ResidentCount);
 
             void Click(string id)
@@ -145,7 +140,6 @@ public sealed class NativeScenePresentationTests
             Directory.Delete(directory);
         }
 
-        SceneSpatialEntry2D[] NpcCatalog() => [new("npc", new(npc.X, 16, 16, 16), isSimulated: true)];
         void AddButton(string id, float x, Action action)
         {
             Button button = new() { Width = 28, Height = 24, Command = new ActionCommand(_ => action()) };

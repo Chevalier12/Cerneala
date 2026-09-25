@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="3abcaa93-78ff-4eef-8233-2367fc6732ed" name="lauri@DESKTOP-JT43V3D 2026-09-25 10:08:19" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-25T10:08:19.2388239+03:00" queuing="2026-09-25T10:08:19.2388242+03:00" start="2026-09-25T10:07:45.3344874+03:00" finish="2026-09-25T10:08:19.2613994+03:00" />
+  <TestSettings name="default" id="514d12ff-068f-48d6-8ead-4036b3bcb502">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-25_10_08_19" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="8b585f26-e9ae-4a4b-a3d7-98f9d4efd942" testId="f89d6999-65ce-9a20-0285-cf1b8c399e09" testName="Cerneala.Tests.PreviewHost.PreviewCompilerFastPathTargetTypeTests.CurrentBuildOutputUsesTheCompanionTypesQualifiedName" computerName="DESKTOP-JT43V3D" duration="00:00:25.1058801" startTime="2026-09-25T10:08:18.8937921+03:00" endTime="2026-09-25T10:08:18.8939016+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8b585f26-e9ae-4a4b-a3d7-98f9d4efd942">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Strings differ&#xD;
+           ↓ (pos 0)&#xD;
+Expected: "Cerneala.Tests.PreviewHost.FastPathFixtur"···&#xD;
+Actual:   "View"&#xD;
+           ↑ (pos 0)</Message>
+          <StackTrace>   at Cerneala.Tests.PreviewHost.PreviewCompilerFastPathTargetTypeTests.CurrentBuildOutputUsesTheCompanionTypesQualifiedName() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\PreviewCompilerFastPathTargetTypeTests.cs:line 51&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.PreviewHost.PreviewCompilerFastPathTargetTypeTests.CurrentBuildOutputUsesTheCompanionTypesQualifiedName" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.previewhost\bin\release\net10.0-windows\cerneala.tests.previewhost.dll" id="f89d6999-65ce-9a20-0285-cf1b8c399e09">
+      <Execution id="8b585f26-e9ae-4a4b-a3d7-98f9d4efd942" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Release\net10.0-windows\Cerneala.Tests.PreviewHost.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.PreviewHost.PreviewCompilerFastPathTargetTypeTests" name="CurrentBuildOutputUsesTheCompanionTypesQualifiedName" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="f89d6999-65ce-9a20-0285-cf1b8c399e09" executionId="8b585f26-e9ae-4a4b-a3d7-98f9d4efd942" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="1" executed="1" passed="0" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.02] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 10.0.11)&#xD;
+[xUnit.net 00:00:03.44]   Discovering: Cerneala.Tests.PreviewHost&#xD;
+[xUnit.net 00:00:03.58]   Discovered:  Cerneala.Tests.PreviewHost&#xD;
+[xUnit.net 00:00:03.60]   Starting:    Cerneala.Tests.PreviewHost&#xD;
+[xUnit.net 00:00:28.97]       Assert.Equal() Failure: Strings differ&#xD;
+[xUnit.net 00:00:28.97]                  ↓ (pos 0)&#xD;
+[xUnit.net 00:00:28.97]       Expected: "Cerneala.Tests.PreviewHost.FastPathFixtur"···&#xD;
+[xUnit.net 00:00:28.97]       Actual:   "View"&#xD;
+[xUnit.net 00:00:28.97]                  ↑ (pos 0)&#xD;
+[xUnit.net 00:00:28.97]       Stack Trace:&#xD;
+[xUnit.net 00:00:28.98]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\PreviewCompilerFastPathTargetTypeTests.cs(51,0): at Cerneala.Tests.PreviewHost.PreviewCompilerFastPathTargetTypeTests.CurrentBuildOutputUsesTheCompanionTypesQualifiedName()&#xD;
+[xUnit.net 00:00:28.98]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:29.00]   Finished:    Cerneala.Tests.PreviewHost&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-25T10:08:18.8799281+03:00">
+        <Text>[xUnit.net 00:00:28.97]     Cerneala.Tests.PreviewHost.PreviewCompilerFastPathTargetTypeTests.CurrentBuildOutputUsesTheCompanionTypesQualifiedName [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

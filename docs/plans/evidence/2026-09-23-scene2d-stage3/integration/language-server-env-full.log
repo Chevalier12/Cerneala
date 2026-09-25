@@ -1,0 +1,5 @@
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.LanguageServer\bin\Release\net10.0\Cerneala.Tests.LanguageServer.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage3\integration\language-server-env-full.trx
+
+Passed!  - Failed:     0, Passed:    40, Skipped:     0, Total:    40, Duration: 3 m 18 s - Cerneala.Tests.LanguageServer.dll (net10.0)

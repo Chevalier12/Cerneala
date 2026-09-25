@@ -1,25 +1,26 @@
 using System.Security.Cryptography;
-using Microsoft.Win32.SafeHandles;
 using Cerneala.UI.Controls;
 
 namespace Cerneala.Scene2D.Packages;
 
 /// <summary>Owns a metadata-only package index and independent asynchronous payload reads.</summary>
-public sealed class Scene2DPackage : IDisposable
+public sealed class Scene2DPackage : IDisposable, IAsyncDisposable
 {
     private readonly object gate = new();
-    private readonly string directory;
-    private readonly SafeFileHandle data;
+    private readonly string? directory;
+    private readonly IScene2DPackageRangeReader reader;
     private readonly PackageBlock metadata;
     private readonly int maximumPayloadBytes;
     private readonly HashSet<string> files;
     private bool disposed;
     private int readers;
+    private TaskCompletionSource<bool>? terminal;
 
-    private Scene2DPackage(string directory, SafeFileHandle data, PackageIndex index, int maximumPayloadBytes)
+    private Scene2DPackage(string? directory, IScene2DPackageRangeReader reader, PackageIndex index,
+        int maximumPayloadBytes)
     {
         this.directory = directory;
-        this.data = data;
+        this.reader = reader;
         this.maximumPayloadBytes = maximumPayloadBytes;
         metadata = index.Metadata;
         Assets = Array.AsReadOnly(index.Assets);
@@ -37,34 +38,56 @@ public sealed class Scene2DPackage : IDisposable
     {
         cancellationToken.ThrowIfCancellationRequested();
         options ??= new();
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.MaxCatalogBytes);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.MaxPayloadBytes);
+        ValidateOptions(options);
         string root = PackageFiles.Root(directory);
-        string catalogPath = PackageFiles.ExistingFile(root, PackageFiles.CatalogName);
-        PackageIndex index;
-        await using (FileStream catalog = new(catalogPath, FileMode.Open, FileAccess.Read, FileShare.Read, 65_536, useAsync: true))
-        {
-            if (catalog.Length <= 32 || catalog.Length - 32 > options.MaxCatalogBytes) { throw new InvalidDataException("The package catalog exceeds its read limit or is truncated."); }
-            byte[] encoded = new byte[(int)(catalog.Length - 32)];
-            byte[] hash = new byte[32];
-            await catalog.ReadExactlyAsync(encoded, cancellationToken).ConfigureAwait(false);
-            await catalog.ReadExactlyAsync(hash, cancellationToken).ConfigureAwait(false);
-            if (!CryptographicOperations.FixedTimeEquals(SHA256.HashData(encoded), hash)) { throw new InvalidDataException("Package catalog checksum mismatch."); }
-            index = PackageValueCodec.Decode(encoded) as PackageIndex ?? throw new InvalidDataException("Expected a scene package catalog.");
-        }
-        ValidateIndex(index);
-        SafeFileHandle handle = File.OpenHandle(PackageFiles.ExistingFile(root, PackageFiles.DataName),
-            FileMode.Open, FileAccess.Read, FileShare.Read, FileOptions.Asynchronous | FileOptions.RandomAccess);
-        try
-        {
-            if (RandomAccess.GetLength(handle) != index.DataLength) { throw new InvalidDataException("Package data length differs from its catalog."); }
-            cancellationToken.ThrowIfCancellationRequested();
-            return new(root, handle, index, options.MaxPayloadBytes);
-        }
-        catch { handle.Dispose(); throw; }
+        LocalPackageRangeReader reader = LocalPackageRangeReader.Open(root);
+        return await OpenCoreAsync(reader, options, cancellationToken, root).ConfigureAwait(false);
     }
 
-    public ValueTask<SceneSpatialLease2D<Scene2DPackageMetadata>> LoadMetadataAsync(CancellationToken cancellationToken = default) =>
+    public static Task<Scene2DPackage> OpenAsync(IScene2DPackageRangeReader reader,
+        Scene2DPackageReadOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(reader);
+        return OpenCoreAsync(reader, options ?? new(), cancellationToken, directory: null);
+    }
+
+    private static async Task<Scene2DPackage> OpenCoreAsync(IScene2DPackageRangeReader reader,
+        Scene2DPackageReadOptions options, CancellationToken cancellationToken, string? directory)
+    {
+        try
+        {
+            ValidateOptions(options);
+            cancellationToken.ThrowIfCancellationRequested();
+            long catalogLength = await reader.GetLengthAsync(Scene2DPackagePart.Catalog, cancellationToken)
+                .ConfigureAwait(false);
+            if (catalogLength <= 32 || catalogLength - 32 > options.MaxCatalogBytes)
+            { throw new InvalidDataException("The package catalog exceeds its read limit or is truncated."); }
+            byte[] encoded = new byte[checked((int)(catalogLength - 32))];
+            byte[] hash = new byte[32];
+            await ReadExactlyAsync(reader, Scene2DPackagePart.Catalog, 0, encoded, cancellationToken)
+                .ConfigureAwait(false);
+            await ReadExactlyAsync(reader, Scene2DPackagePart.Catalog, encoded.Length, hash, cancellationToken)
+                .ConfigureAwait(false);
+            if (!CryptographicOperations.FixedTimeEquals(SHA256.HashData(encoded), hash)) { throw new InvalidDataException("Package catalog checksum mismatch."); }
+            PackageIndex index = PackageValueCodec.Decode(encoded) as PackageIndex
+                ?? throw new InvalidDataException("Expected a scene package catalog.");
+            ValidateIndex(index);
+            long payloadLength = await reader.GetLengthAsync(Scene2DPackagePart.Payloads, cancellationToken)
+                .ConfigureAwait(false);
+            if (payloadLength != index.DataLength)
+            { throw new InvalidDataException("Package data length differs from its catalog."); }
+            cancellationToken.ThrowIfCancellationRequested();
+            return new(directory, reader, index, options.MaxPayloadBytes);
+        }
+        catch (Exception failure)
+        {
+            try { await reader.DisposeAsync().ConfigureAwait(false); }
+            catch (Exception cleanupFailure) { throw new AggregateException(failure, cleanupFailure); }
+            throw;
+        }
+    }
+
+    public ValueTask<Scene2DPackageMetadata> LoadMetadataAsync(CancellationToken cancellationToken = default) =>
         LoadAsync<Scene2DPackageMetadata>(metadata, cancellationToken);
 
     public string GetFilePath(string relativePath)
@@ -72,20 +95,30 @@ public sealed class Scene2DPackage : IDisposable
         ThrowIfDisposed();
         string normalized = PackageFiles.Normalize(relativePath);
         if (!files.Contains(normalized)) { throw new ArgumentException("The file is not declared by this package.", nameof(relativePath)); }
+        if (directory is null) { throw new NotSupportedException("A package range reader does not provide local file paths."); }
         return PackageFiles.ExistingFile(directory, PackageFiles.AssetsName + "/" + normalized);
     }
 
     public void Dispose()
     {
+        TaskCompletionSource<bool>? close = null;
         lock (gate)
         {
             if (disposed) { return; }
             disposed = true;
-            if (readers == 0) { data.Dispose(); }
+            terminal = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            if (readers == 0) { close = terminal; }
         }
+        if (close is not null) { _ = CloseReaderAsync(close); }
     }
 
-    internal async ValueTask<SceneSpatialLease2D<T>> LoadAsync<T>(PackageBlock block, CancellationToken cancellationToken) where T : class
+    public ValueTask DisposeAsync()
+    {
+        Dispose();
+        lock (gate) { return new ValueTask(terminal!.Task); }
+    }
+
+    internal async ValueTask<T> LoadAsync<T>(PackageBlock block, CancellationToken cancellationToken) where T : class
     {
         cancellationToken.ThrowIfCancellationRequested();
         lock (gate)
@@ -97,29 +130,58 @@ public sealed class Scene2DPackage : IDisposable
         try
         {
             byte[] encoded = new byte[block.Length];
-            int read = 0;
-            while (read < encoded.Length)
-            {
-                int count = await RandomAccess.ReadAsync(data, encoded.AsMemory(read), block.Offset + read, cancellationToken).ConfigureAwait(false);
-                if (count == 0) { throw new InvalidDataException("Truncated scene payload."); }
-                read += count;
-            }
+            await ReadExactlyAsync(reader, Scene2DPackagePart.Payloads, block.Offset, encoded, cancellationToken)
+                .ConfigureAwait(false);
             if (!CryptographicOperations.FixedTimeEquals(SHA256.HashData(encoded), block.Hash)) { throw new InvalidDataException("Scene payload checksum mismatch."); }
             T value = PackageValueCodec.Decode(encoded) as T ?? throw new InvalidDataException("Unexpected scene payload type.");
             cancellationToken.ThrowIfCancellationRequested();
-            return new(value);
+            return value;
         }
         finally
         {
+            TaskCompletionSource<bool>? close = null;
             lock (gate)
             {
                 readers--;
-                if (disposed && readers == 0) { data.Dispose(); }
+                if (disposed && readers == 0) { close = terminal; }
             }
+            if (close is not null) { _ = CloseReaderAsync(close); }
         }
     }
 
-    private void ThrowIfDisposed() { lock (gate) { ObjectDisposedException.ThrowIf(disposed, this); } }
+    private async Task CloseReaderAsync(TaskCompletionSource<bool> completion)
+    {
+        try
+        {
+            await reader.DisposeAsync().ConfigureAwait(false);
+            completion.TrySetResult(true);
+        }
+        catch (Exception error) { completion.TrySetException(error); }
+    }
+
+    private static async ValueTask ReadExactlyAsync(IScene2DPackageRangeReader reader, Scene2DPackagePart part,
+        long offset, Memory<byte> destination, CancellationToken cancellationToken)
+    {
+        int read = 0;
+        while (read < destination.Length)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Memory<byte> remaining = destination[read..];
+            int count = await reader.ReadAsync(part, checked(offset + read), remaining, cancellationToken)
+                .ConfigureAwait(false);
+            if (count <= 0 || count > remaining.Length)
+            { throw new InvalidDataException("The package reader returned an invalid or truncated byte range."); }
+            read += count;
+        }
+    }
+
+    private static void ValidateOptions(Scene2DPackageReadOptions options)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.MaxCatalogBytes);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.MaxPayloadBytes);
+    }
+
+    internal void ThrowIfDisposed() { lock (gate) { ObjectDisposedException.ThrowIf(disposed, this); } }
 
     private static void ValidateIndex(PackageIndex index)
     {

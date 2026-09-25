@@ -1,0 +1,13 @@
+  Determining projects to restore...
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj (in 959 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Cerneala.Platforms.Sdl3.csproj (in 1.06 sec).
+  Restored C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\Cerneala.Tests.SdlGpu.csproj (in 1.84 sec).
+  5 of 8 projects are up-to-date for restore.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  Cerneala.Scene2D.Packages -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Packages\bin\Release\net8.0\Cerneala.Scene2D.Packages.dll
+  Tetris -> C:\Users\lauri\Desktop\Cerneala\Tetrisish\bin\Release\net8.0\Cerneala.Tetris.dll
+C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativePackageLifecycleTests.cs(86,9): error CS0118: 'Scene2D' is a namespace but is used like a type [C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\Cerneala.Tests.SdlGpu.csproj]

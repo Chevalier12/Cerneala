@@ -1,0 +1,4 @@
+UTC=2026-09-25T11:28:32.4423850Z
+HEAD=443f100b86f8c4ca5f5e649651ac37c9cd5a330f
+Scope=app/test source and assets, excluding bin/obj/TestResults
+Command=git status --porcelain=v1 --untracked-files=all

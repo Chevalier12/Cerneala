@@ -1,0 +1,26 @@
+<Project DefaultTargets="ComparePackages">
+  <PropertyGroup>
+    <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../../../../../'))</RepoRoot>
+    <SdkRoot>$([System.IO.Path]::GetFullPath('$(MSBuildSDKsPath)/..'))</SdkRoot>
+    <Baseline>$(RepoRoot)/docs/plans/evidence/2026-09-23-scene2d-stage1/binary-baseline/Cerneala.Scene2D.Packages.dll</Baseline>
+    <Candidate>$(RepoRoot)/Cerneala.Scene2D.Packages/bin/Release/net8.0/Cerneala.Scene2D.Packages.dll</Candidate>
+    <TaskAssembly>$(SdkRoot)/Sdks/Microsoft.NET.Sdk/tools/net10.0/Microsoft.DotNet.ApiCompat.Task.dll</TaskAssembly>
+    <RoslynAssembliesPath>$(SdkRoot)/Roslyn/bincore</RoslynAssembliesPath>
+  </PropertyGroup>
+
+  <UsingTask TaskName="Microsoft.DotNet.ApiCompat.Task.ValidateAssembliesTask"
+             AssemblyFile="$(TaskAssembly)" />
+
+  <Target Name="ComparePackages">
+    <Error Condition="!Exists('$(Baseline)')" Text="Missing frozen Packages baseline: $(Baseline)" />
+    <Error Condition="!Exists('$(Candidate)')" Text="Missing Packages candidate: $(Candidate)" />
+    <ValidateAssembliesTask
+      LeftAssemblies="$(Baseline)"
+      RightAssemblies="$(Candidate)"
+      RoslynAssembliesPath="$(RoslynAssembliesPath)"
+      EnableStrictMode="true"
+      EnableRuleCannotChangeParameterName="true"
+      GenerateSuppressionFile="false"
+      RespectInternals="false" />
+  </Target>
+</Project>

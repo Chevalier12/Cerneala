@@ -1,0 +1,44 @@
+Id	Assembly	Code	Direction	Exact diagnostic symbol	Classification and selected contract
+C01	Core	CP0002	addition	Cerneala.UI.Core.UiProperty<bool> Cerneala.UI.Controls.Collider2D.IsSimulatedProperty	Approved addition: explicit Collider2D.IsSimulated dependency property
+C02	Core	CP0002	addition	bool Cerneala.UI.Controls.Collider2D.IsSimulated.get	Approved addition: explicit Collider2D.IsSimulated getter
+C03	Core	CP0002	addition	void Cerneala.UI.Controls.Collider2D.IsSimulated.set	Approved addition: explicit Collider2D.IsSimulated setter
+C04	Core	CP0002	removal	Cerneala.UI.Core.UiProperty<Cerneala.UI.Controls.ISceneSpatialSource2D<object>?> Cerneala.UI.Controls.SceneItems2D.ItemsSourceProperty	Approved removal: old spatial SceneItems.ItemsSource property type
+C05	Core	CP0002	removal	Cerneala.UI.Controls.ISceneSpatialSource2D<object>? Cerneala.UI.Controls.SceneItems2D.ItemsSource.get	Approved removal: old spatial SceneItems.ItemsSource getter type
+C06	Core	CP0002	removal	System.Threading.Tasks.Task Cerneala.UI.Controls.SceneItems2D.Preparation.get	Approved removal: eager SceneItems no longer has async spatial Preparation
+C07	Core	CP0002	removal	System.Exception? Cerneala.UI.Controls.SceneItems2D.PreparationError.get	Approved removal: eager SceneItems no longer has spatial PreparationError
+C08	Core	CP0002	removal	bool Cerneala.UI.Controls.SceneItems2D.TryGetRealizedNode(string, out Cerneala.UI.Controls.SceneNode2D?)	Approved removal: simple collection has no catalog ID node lookup
+C09	Core	CP0002	addition	Cerneala.UI.Core.UiProperty<System.Collections.IEnumerable?> Cerneala.UI.Controls.SceneItems2D.ItemsSourceProperty	Approved addition: enumerable SceneItems.ItemsSource property type
+C10	Core	CP0002	addition	System.Collections.IEnumerable? Cerneala.UI.Controls.SceneItems2D.ItemsSource.get	Approved addition: enumerable SceneItems.ItemsSource getter type
+C11	Core	CP0001	removal	Cerneala.UI.Controls.SceneSpatialResidency2D<T>	Approved removal: spatial residency family internalized
+C12	Core	CP0001	removal	Cerneala.UI.Controls.SceneSpatialRegion2D<T>	Approved removal: spatial region family internalized
+C13	Core	CP0001	removal	Cerneala.UI.Controls.SceneSpatialEntry2D	Approved removal: spatial entry family internalized
+C14	Core	CP0001	removal	Cerneala.UI.Controls.SceneSpatialLease2D<T>	Approved removal: spatial lease family internalized
+C15	Core	CP0001	removal	Cerneala.UI.Controls.ISceneSpatialSource2D<T>	Approved removal: spatial source interface internalized
+C16	Core	CP0001	removal	Cerneala.UI.Controls.SceneSpatialSource2D<T>	Approved removal: spatial source implementation internalized
+C17	Core	CP0002	removal	Cerneala.UI.Core.UiProperty<Cerneala.UI.Controls.TileMapSource2D?> Cerneala.UI.Controls.TileMap2D.SourceProperty	Approved removal: public TileMap.Source dependency property
+C18	Core	CP0002	removal	Cerneala.UI.Controls.TileMapSource2D? Cerneala.UI.Controls.TileMap2D.Source.get	Approved removal: public TileMap.Source getter
+C19	Core	CP0002	removal	void Cerneala.UI.Controls.TileMap2D.Source.set	Approved removal: public TileMap.Source setter
+C20	Core	CP0002	addition	System.Threading.Tasks.ValueTask Cerneala.UI.Controls.TileMap2D.DisposeAsync()	Approved addition: terminal TileMap async drain
+C21	Core	CP0001	removal	Cerneala.UI.Controls.TileMapChunkInfo2D	Approved removal: CPV2 chunk header internalized
+C22	Core	CP0001	removal	Cerneala.UI.Controls.TileMapCatalog2D	Approved removal: CPV2 map catalog internalized
+C23	Core	CP0001	removal	Cerneala.UI.Controls.TileMapSource2D	Approved removal: TileMap source internalized
+P01	Packages	CP0008	addition	Cerneala.Scene2D.Packages.Scene2DPackage	Approved addition: package implements IAsyncDisposable for terminal drain
+P02	Packages	CP0002	removal	System.Threading.Tasks.ValueTask<Cerneala.UI.Controls.SceneSpatialLease2D<Cerneala.Scene2D.Packages.Scene2DPackageMetadata>> Cerneala.Scene2D.Packages.Scene2DPackage.LoadMetadataAsync(System.Threading.CancellationToken)	Approved removal: package metadata lease return replaced by direct value
+P03	Packages	CP0002	addition	System.Threading.Tasks.Task<Cerneala.Scene2D.Packages.Scene2DPackage> Cerneala.Scene2D.Packages.Scene2DPackage.OpenAsync(Cerneala.Scene2D.Packages.IScene2DPackageRangeReader, Cerneala.Scene2D.Packages.Scene2DPackageReadOptions?, System.Threading.CancellationToken)	Approved addition: nonspatial CPV2 range-reader OpenAsync
+P04	Packages	CP0002	addition	System.Threading.Tasks.ValueTask<Cerneala.Scene2D.Packages.Scene2DPackageMetadata> Cerneala.Scene2D.Packages.Scene2DPackage.LoadMetadataAsync(System.Threading.CancellationToken)	Approved addition: package metadata direct-value return
+P05	Packages	CP0002	addition	System.Threading.Tasks.ValueTask Cerneala.Scene2D.Packages.Scene2DPackage.DisposeAsync()	Approved addition: package terminal DisposeAsync
+P06	Packages	CP0002	removal	System.Collections.Generic.IReadOnlyList<Cerneala.UI.Controls.TileMapSource2D> Cerneala.Scene2D.Packages.Scene2DPackageLevel.TileMaps.get	Approved removal: package level public TileMaps source list
+P07	Packages	CP0002	removal	System.Threading.Tasks.ValueTask<Cerneala.UI.Controls.SceneSpatialLease2D<Cerneala.Scene2D.Packages.Scene2DPackageMetadata>> Cerneala.Scene2D.Packages.Scene2DPackageLevel.LoadMetadataAsync(System.Threading.CancellationToken)	Approved removal: level metadata lease return replaced by direct value
+P08	Packages	CP0002	removal	System.Threading.Tasks.ValueTask<Cerneala.UI.Controls.SceneSpatialLease2D<Cerneala.Scene2D.Packages.Scene2DPackageMetadata>> Cerneala.Scene2D.Packages.Scene2DPackageLevel.LoadMapMetadataAsync(string, System.Threading.CancellationToken)	Approved removal: map metadata lease return replaced by direct value
+P09	Packages	CP0002	removal	System.Threading.Tasks.ValueTask<Cerneala.UI.Controls.SceneSpatialLease2D<Cerneala.UI.Controls.Scene2DEntity>> Cerneala.Scene2D.Packages.Scene2DPackageLevel.LoadEntityAsync(string, System.Threading.CancellationToken)	Approved removal: entity lease return replaced by direct value
+P10	Packages	CP0002	removal	Cerneala.UI.Controls.SceneSpatialSource2D<object> Cerneala.Scene2D.Packages.Scene2DPackageLevel.CreateEntitySource(System.Func<Cerneala.Scene2D.Packages.Scene2DPackageEntityInfo, Cerneala.UI.Controls.SceneSpatialEntry2D?>)	Approved removal: public custom pre-load CreateEntitySource
+P11	Packages	CP0002	removal	System.Threading.Tasks.ValueTask<Cerneala.UI.Controls.SceneSpatialLease2D<Cerneala.UI.Controls.TilePromotion2D>> Cerneala.Scene2D.Packages.Scene2DPackageLevel.LoadPromotionAsync(Cerneala.UI.Controls.TileCellKey2D, System.Threading.CancellationToken)	Approved removal: promotion lease return replaced by direct value
+P12	Packages	CP0002	addition	System.Collections.Generic.IReadOnlyList<string> Cerneala.Scene2D.Packages.Scene2DPackageLevel.TileMapIds.get	Approved addition: ordered private package TileMapIds
+P13	Packages	CP0002	addition	System.Threading.Tasks.ValueTask<Cerneala.Scene2D.Packages.Scene2DPackageMetadata> Cerneala.Scene2D.Packages.Scene2DPackageLevel.LoadMetadataAsync(System.Threading.CancellationToken)	Approved addition: level metadata direct-value return
+P14	Packages	CP0002	addition	System.Threading.Tasks.ValueTask<Cerneala.Scene2D.Packages.Scene2DPackageMetadata> Cerneala.Scene2D.Packages.Scene2DPackageLevel.LoadMapMetadataAsync(string, System.Threading.CancellationToken)	Approved addition: map metadata direct-value return
+P15	Packages	CP0002	addition	Cerneala.UI.Controls.TileMap2D Cerneala.Scene2D.Packages.Scene2DPackageLevel.CreateTileMap(string)	Approved addition: private CPV2 stream map factory CreateTileMap
+P16	Packages	CP0002	addition	System.Threading.Tasks.ValueTask<Cerneala.UI.Controls.Scene2DEntity> Cerneala.Scene2D.Packages.Scene2DPackageLevel.LoadEntityAsync(string, System.Threading.CancellationToken)	Approved addition: entity direct-value return
+P17	Packages	CP0002	addition	System.Threading.Tasks.ValueTask<Cerneala.UI.Controls.TilePromotion2D> Cerneala.Scene2D.Packages.Scene2DPackageLevel.LoadPromotionAsync(Cerneala.UI.Controls.TileCellKey2D, System.Threading.CancellationToken)	Approved addition: promotion direct-value return
+P18	Packages	CP0002	addition	System.Threading.Tasks.ValueTask<Cerneala.UI.Controls.TileMap2DModel> Cerneala.Scene2D.Packages.Scene2DPackageLevel.LoadMapModelAsync(string, System.Threading.CancellationToken)	Approved addition: whole model edit load
+P19	Packages	CP0001	addition	Cerneala.Scene2D.Packages.Scene2DPackagePart	Approved addition: nonspatial package part identifier
+P20	Packages	CP0001	addition	Cerneala.Scene2D.Packages.IScene2DPackageRangeReader	Approved addition: nonspatial package range reader interface

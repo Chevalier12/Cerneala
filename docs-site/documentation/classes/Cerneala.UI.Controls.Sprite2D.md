@@ -73,9 +73,32 @@ Aspect, Motion, and Prism can still target the sprite declared from markup:
 
 ## Remarks
 
-`X` and `Y` position the sprite in scene coordinates. `Width` and `Height` are inherited UI properties used as draw dimensions, not scene layout. Each omitted dimension (`float.NaN`) uses the corresponding selected source-region dimension. `SourceX` and `SourceY` default to zero; omitted `SourceWidth` and `SourceHeight` (`float.NaN`) use the remaining image extent from that coordinate. There is no aspect-ratio inference when just one destination dimension is explicit. Source coordinates must be finite and nonnegative, explicit source dimensions finite and positive, and the selected region must fit inside the image. Invalid regions are rejected when geometry is resolved, not clamped. `X` and `Y` must be finite; destination dimensions accept zero or positive finite values, or `NaN` for automatic size. `Rotation` is inherited from `UIElement` and is passed to image drawing in radians. `Origin` uses source-image pixels. Inherited `Layer` controls ordering in a parent `Scene2D` whose `OrderMode` is not `Source`. `LayerDepth` is separate: it is passed to `RenderSurface2DFrame.DrawSprite`, never changes scene-tree ordering, and must satisfy that API's `0` through `1` contract when the sprite is recorded.
+`X` and `Y` position the sprite in scene coordinates. `Width` and `Height` are inherited UI properties used as draw dimensions, not scene layout. Each omitted dimension (`float.NaN`) uses the corresponding selected source-region dimension. `SourceX` and `SourceY` default to zero; omitted `SourceWidth` and `SourceHeight` (`float.NaN`) use the remaining image extent from that coordinate. There is no aspect-ratio inference when just one destination dimension is explicit. Source coordinates must be finite and nonnegative, explicit source dimensions finite and positive, and the selected region must fit inside the image. Invalid regions are rejected when geometry is resolved, not clamped. `X` and `Y` must be finite; destination dimensions accept zero or positive finite values, or `NaN` for automatic size. `Rotation` is inherited from `UIElement` and is passed to image drawing in radians. `Origin` uses source-image pixels. Inherited `Layer` controls ordering in a parent `Scene2D` whose `OrderMode` is not `Source`. `LayerDepth` is separate: it is forwarded to the image drawing options, never changes scene-tree ordering, and must satisfy their `0` through `1` contract when the sprite is recorded.
 
 `Image` accepts an immutable [ImageReference](Cerneala.UI.Resources.ImageReference.md): either a direct image (`new ImageReference(image)`) or a typed resource ID (`new ImageReference(new ResourceId<ImageResource>("WorldAtlas"))`). A resource reference resolves an `ImageResource` from the nearest element resource dictionary or the owning root resource provider. A missing resource skips drawing; there is no second source or fallback. `Image = null` clears the image. Sprites that resolve the same path-backed image through one root reuse that root's image cache with independent acquisitions. A sprite releases its acquisition when the image is no longer needed; the cache disposes an owned image only after the last consumer, including retained commands, releases it. Direct and embedded images remain borrowed from their caller.
+
+### Image sampling
+
+`Sampling` selects [DrawSamplingMode](Cerneala.Drawing.DrawSamplingMode.md) for this sprite's image command. It defaults to `Linear`, which blends neighboring texels. Set `Point` to sample the nearest texel for pixel-art imagery. Only `Point` and `Linear` are accepted; an unsupported enum value is rejected. Changing the value invalidates rendering, not the sprite's geometry, layout, or collider. The selected mode also applies when animation changes the source frame and when sprite and frame flips compose; it does not change those crop or flip rules.
+
+```csharp
+var sprite = new Sprite2D
+{
+    Image = new ImageReference(new ResourceId<ImageResource>("WorldAtlas")),
+    SourceX = 16,
+    SourceWidth = 16,
+    SourceHeight = 16,
+    Sampling = DrawSamplingMode.Point
+};
+```
+
+With `WorldAtlas` declared as in the markup example above, the same choice is:
+
+```xml
+<Sprite2D Image="$WorldAtlas" SourceX="16" SourceWidth="16" SourceHeight="16" Sampling="Point" />
+```
+
+A source rectangle selects image geometry but is not a universal texel-isolation boundary within an atlas: `Linear` filtering can blend neighboring artwork near its edge. `Sprite2D` records an image command with `Clamp` addressing. On the current SDL_GPU path, choosing `Point` uses [coverage-aware image-edge sampling](Cerneala.Drawing.DrawImageOptions.md#point-and-clamp-image-edges-on-sdl-gpu) for covered pixels whose centers lie on or outside the sprite's *external* image boundary. True interior centers keep the ordinary nearest-texel choice. This handles the tested fractional and exact destination-edge cases without adding padding or changing the crop. Exact source-boundary ties can still choose an adjacent texel, so `Point` is not an unconditional atlas-isolation guarantee or a change to all compositing paths.
 
 `Opacity` is inherited from `UIElement` and multiplies the alpha channel of `Tint`. A null resolved source, non-positive opacity, `IsVisible == false`, or non-visible `Visibility` skips the sprite. Other inherited UI-element transforms do not alter sprite recording; use the scene coordinates and sprite-specific properties listed below.
 
@@ -109,9 +132,9 @@ offscreen simulated sprite.
 
 The owning surface prepares required cold path-backed images through [IAsyncImageLoader](Cerneala.UI.Resources.IAsyncImageLoader.md). The sprite and its live Prism image resources, including masks, share the existing root cache; referencing one atlas in both places does not start two decodes. Each use keeps its own acquisition. Scene recording and sprite bounds queries use resident images only: they do not perform synchronous path loading or wait for a pending decode.
 
-Until all required scene payloads and sprite/Prism images are ready, the surface reports [PresentationState](Cerneala.UI.Controls.RenderSurface2D.md#scene-preparation-and-input-availability) as `Loading` and withholds the entire retained scene, including ready siblings, and its input routes. A load failure reports `Error` and `PresentationError`; polling an unchanged failed acquisition does not retry it. A cold path backed by a synchronous-only loader fails through that state rather than falling back to blocking decoding. Ordinary UI, imperative drawing, attached animation, and collision participation continue. A missing resource lookup or `Image = null` still means no image, not a loading error.
+Until all required map chunks and sprite/Prism/atlas images are ready, the surface reports [PresentationState](Cerneala.UI.Controls.RenderSurface2D.md#scene-preparation-and-input-availability) as `Loading` and withholds the entire retained scene, including ready siblings, and its input routes. A load failure reports `Error` and `PresentationError`; polling an unchanged failed acquisition does not retry it. A cold path backed by a synchronous-only loader fails through that state rather than falling back to blocking decoding. Ordinary UI, imperative drawing, attached animation, and collision participation continue. A missing resource lookup or `Image = null` still means no image, not a loading error.
 
-Explicit destination dimensions, static crop dimensions, or an animation frame can provide bounds before decoding. Images outside proven required coverage are not prepared, and unused sprite and Prism acquisitions are retired without detaching the sprite or its collider. Unknown natural dimensions cannot prove exclusion; Prism can conservatively require off-camera input because effects may extend beyond sprite bounds. Spatial metadata on [SceneItems2D](Cerneala.UI.Controls.SceneItems2D.md) independently controls which objects require presentation. Removing a sprite's resolved content also retires its no-longer-used Prism images, including pending work. Other consumers may still keep a shared atlas resident.
+Explicit destination dimensions, static crop dimensions, or an animation frame can provide bounds before decoding. Images outside proven required coverage are not prepared, and unused sprite and Prism acquisitions are retired without detaching the sprite or its collider. Unknown natural dimensions cannot prove exclusion; Prism can conservatively require off-camera input because effects may extend beyond sprite bounds. [SceneItems2D](Cerneala.UI.Controls.SceneItems2D.md) realizes its collection independently of the viewport; only presentation work for its realized children is culled. Removing a sprite's resolved content also retires its no-longer-used Prism images, including pending work. Other consumers may still keep a shared atlas resident.
 
 ## Collider ownership
 
@@ -188,6 +211,7 @@ All five properties have matching public `<Name>Property` identifier fields and 
 | `TintProperty` | `UiProperty<Color>` | Identifies the multiplicative sprite tint. |
 | `OriginProperty` | `UiProperty<DrawPoint>` | Identifies the rotation origin in source-image pixels. |
 | `FlipProperty` | `UiProperty<RenderSurface2DSpriteFlip>` | Identifies horizontal or vertical mirroring. |
+| `SamplingProperty` | `UiProperty<DrawSamplingMode>` | Identifies this sprite's image sampling mode. |
 | `LayerDepthProperty` | `UiProperty<float>` | Identifies the sprite layer depth. |
 
 ## Properties
@@ -203,6 +227,7 @@ All five properties have matching public `<Name>Property` identifier fields and 
 | `Tint` | `Color` | Gets or sets the multiplicative color tint. |
 | `Origin` | `DrawPoint` | Gets or sets the rotation origin in source-image pixels. |
 | `Flip` | `RenderSurface2DSpriteFlip` | Gets or sets sprite mirroring. |
+| `Sampling` | `DrawSamplingMode` | Gets or sets image filtering for this sprite; default `Linear`. |
 | `LayerDepth` | `float` | Gets or sets the layer depth forwarded to image drawing. |
 | `Layer` | `int` | Gets or sets the parent-scene ordering layer. Inherited from `SceneNode2D`. |
 | `PrismInputDomain` | `DrawRect?` | Optional complete local input of this sprite's non-pointwise composition. Inherited from `SceneNode2D`; required when active effects lack supported automatic input selection in a hosted spatial scene. |
@@ -221,6 +246,7 @@ All five properties have matching public `<Name>Property` identifier fields and 
 | `Tint` | `TintProperty` | `Color.White` | `AffectsRender` |
 | `Origin` | `OriginProperty` | `default(DrawPoint)` | `AffectsRender` |
 | `Flip` | `FlipProperty` | `RenderSurface2DSpriteFlip.None` | `AffectsRender` |
+| `Sampling` | `SamplingProperty` | `DrawSamplingMode.Linear` | `AffectsRender`; accepts `Point` or `Linear`. |
 | `LayerDepth` | `LayerDepthProperty` | `0` | `AffectsRender` |
 
 ## Applies to

@@ -1,0 +1,17 @@
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Debug\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Debug\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Debug\net8.0\Cerneala.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Debug\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Scene2D.Packages -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Packages\bin\Debug\net8.0\Cerneala.Scene2D.Packages.dll
+  Cerneala.Scene2D.Importers -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\bin\Debug\net8.0\Cerneala.Scene2D.Importers.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Debug\net8.0\Cerneala.Backends.SdlGpu.dll
+  CernealaPresentation -> C:\Users\lauri\Desktop\Cerneala\CernealaPresentation\bin\Debug\net8.0-windows\CernealaPresentation.dll
+  Cerneala.Scene2D.PackageCompiler -> C:\Users\lauri\Desktop\Cerneala\Tools\Cerneala.Scene2D.PackageCompiler\bin\Debug\net8.0\Cerneala.Scene2D.PackageCompiler.dll
+  Cerneala.Playground -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\bin\Debug\net8.0-windows\Cerneala.Playground.dll
+  Cerneala.SdlGpuSmoke -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.SdlGpuSmoke\bin\Debug\net8.0\Cerneala.SdlGpuSmoke.dll
+  Cerneala.Tests -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Debug\net8.0-windows\Cerneala.Tests.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\TestResults\sprite-sampling-affected-core.trx
+
+Passed!  - Failed:     0, Passed:    68, Skipped:     0, Total:    68, Duration: 2 s - Cerneala.Tests.dll (net8.0)

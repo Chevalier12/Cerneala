@@ -43,13 +43,23 @@ public sealed partial class UiMarkupGeneratorTests
 
     [Fact]
     [Trait("SceneImportStage", "0")]
-    public void ImportedSourceBindingDoesNotRequireAParserInSourceGenerator()
+    public void ImportedCollectionBindingDoesNotRequireAParserInSourceGenerator()
     {
+        const string input = """
+            namespace TestInput;
+            public sealed class ImportedLevel : System.ComponentModel.INotifyPropertyChanged
+            {
+                public System.Collections.Generic.IEnumerable<string> Objects { get; } = System.Array.Empty<string>();
+                public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
+            }
+            """;
         const string markup = """
-            <RenderSurface2D DataType="Cerneala.UI.Controls.TileMapSource2D">
+            <RenderSurface2D DataType="TestInput.ImportedLevel">
               <RenderSurface2D.Scene>
                 <Scene2D>
-                  <TileMap2D Source="$DataContext:OneWay" />
+                  <SceneItems2D ItemsSource="$DataContext.Objects:OneWay">
+                    @templates { <ContentTemplate DataType="System.String"><Sprite2D Width="16" Height="16" /></ContentTemplate> }
+                  </SceneItems2D>
                       <Sprite2D X="16" Y="0" Width="16" Height="16">
                         <Sprite2D.Aspect>
                           @on Loaded
@@ -64,7 +74,7 @@ public sealed partial class UiMarkupGeneratorTests
             </RenderSurface2D>
             """;
 
-        GeneratorRunResult result = RunGenerator("ImportedMapBinding.crn", markup, out Compilation compilation);
+        GeneratorRunResult result = RunGeneratorWithInput("ImportedMapBinding.crn", markup, input, out Compilation compilation);
         Assert.DoesNotContain(result.Diagnostics, static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         Assert.DoesNotContain(compilation.GetDiagnostics(), static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         Assert.DoesNotContain(compilation.ReferencedAssemblyNames, static assembly => assembly.Name == "Cerneala.Scene2D.Importers");

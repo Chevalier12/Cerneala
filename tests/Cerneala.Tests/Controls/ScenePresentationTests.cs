@@ -1,5 +1,6 @@
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Rendering;
@@ -80,17 +81,15 @@ public sealed class ScenePresentationTests
         ResourceId<ImageResource> id = new("npc-image");
         fixture.Surface.Resources.SetResource(id, new ImageResource("npc.png"));
         Sprite2D npc = new() { Image = new(id), Width = 10, Height = 10 };
-        SceneItems2D actors = new()
-        {
-            ItemsSource = new SceneSpatialSource2D<object>([new("npc", new(0, 0, 10, 10), isSimulated: true)],
-                (_, _) => ValueTask.FromResult(new SceneSpatialLease2D<object>(npc)))
-        };
+        npc.Collider = new BoxCollider2D { Width = 10, Height = 10, IsSimulated = true };
+        SceneItems2D actors = new() { ItemsSource = new[] { "npc" } };
+        actors.Templates.Add(new ContentTemplate<string>("npc", null, 0, _ => npc));
         fixture.Scene.Children.Add(actors);
         fixture.Record();
         Assert.Equal(1, fixture.Root.ImageResourceCache!.ResidentCount);
 
         fixture.Surface.ViewBox = new(1000, 0, 100, 100);
-        fixture.Source.SetEntries([new("pending", new(1000, 0, 10, 10))]);
+        fixture.RequirePendingData(1000);
         fixture.Tick();
         fixture.Record();
 
@@ -111,10 +110,14 @@ public sealed class ScenePresentationTests
         Assert.Null(fixture.Surface.PresentationError);
         Assert.Throws<InvalidOperationException>(() =>
             fixture.Surface.SetValue(RenderSurface2D.PresentationStateProperty, RenderSurface2DPresentationState.Ready));
-        fixture.Complete(new Sprite2D { Image = new(new TestImage()), X = 50, Width = 10, Height = 10 });
-        fixture.DrainUntil(() => fixture.Items.Preparation.IsCompleted);
+        fixture.Complete();
+        fixture.DrainUntil(() => fixture.Map.Preparation.IsCompleted);
 
-        Assert.Equal(2, fixture.Record().Count(c => c.Kind == DrawCommandKind.DrawImage));
+        DrawCommandList commands = fixture.Record();
+        Assert.Single(commands.Where(c => c.Kind == DrawCommandKind.DrawImage));
+        DrawSpriteBatch batch = Assert.Single(commands.Where(c => c.Kind == DrawCommandKind.DrawSpriteBatch)).SpriteBatch!;
+        Assert.Equal(new DrawRect(50, 0, 10, 10), Assert.Single(batch.Sprites).Destination);
+        Assert.Equal(1, fixture.Map.GetDiagnosticsSnapshot().DrawnTiles);
         Assert.Equal(RenderSurface2DPresentationState.Ready, fixture.Surface.PresentationState);
         Assert.Null(fixture.Surface.PresentationError);
         Assert.True(fixture.Root.InputCache.EnsureCurrent(fixture.Root).TryGetId(fixture.Actor, out _));
@@ -127,14 +130,14 @@ public sealed class ScenePresentationTests
         fixture.RequirePendingData();
         IOException failure = new("chunk unavailable");
         fixture.Fail(failure);
-        fixture.DrainUntil(() => fixture.Items.Preparation.IsCompleted);
+        fixture.DrainUntil(() => fixture.Map.Preparation.IsCompleted);
         Assert.Empty(fixture.Record().Where(c => c.Kind == DrawCommandKind.DrawImage));
         Assert.Equal(RenderSurface2DPresentationState.Error, fixture.Surface.PresentationState);
         Assert.Same(failure, fixture.Surface.PresentationError);
         for (int i = 0; i < 16; i++) { fixture.Record(); }
         Assert.Equal(1, fixture.Loads);
 
-        fixture.Items.ItemsSource = null;
+        fixture.Map.Source = null;
 
         Assert.Single(fixture.Record().Where(c => c.Kind == DrawCommandKind.DrawImage));
         Assert.Equal(RenderSurface2DPresentationState.Ready, fixture.Surface.PresentationState);
@@ -147,14 +150,26 @@ public sealed class ScenePresentationTests
     public void OffscreenSimulationPreparationDoesNotHideAnAlreadyReadyViewport(bool fail)
     {
         using Fixture fixture = new();
-        fixture.Source.SetEntries([new("pending", new(1000, 0, 10, 10), isSimulated: true)]);
+        fixture.RequirePendingData(1000);
+        fixture.Scene.Children.Add(new Sprite2D
+        {
+            X = 1000,
+            Collider = new BoxCollider2D { Width = 10, Height = 10, IsSimulated = true }
+        });
+        Assert.Contains(fixture.Scene.CollisionWorld.GetSpatialCollisionInterest(), interest =>
+            interest.Kind == SceneBoundsKind.Known && interest.Bounds.X <= 1000 && interest.Bounds.Right >= 1010);
+        ((ITimeSensitiveRenderElement)fixture.Surface).UpdateRenderTime(TimeSpan.FromMilliseconds(16));
+        fixture.Tick();
+        fixture.DrainUntil(() => fixture.Loads == 1);
+        Assert.Equal(1, fixture.Loads);
+        Assert.False(fixture.Map.Preparation.IsCompleted);
         if (fail)
         {
             fixture.Fail(new IOException("offscreen simulation load"));
-            fixture.DrainUntil(() => fixture.Items.Preparation.IsCompleted);
-            Assert.NotNull(fixture.Items.PreparationError);
+            fixture.DrainUntil(() => fixture.Map.Preparation.IsCompleted);
+            Assert.NotNull(fixture.Map.PreparationError);
         }
-        else { Assert.False(fixture.Items.Preparation.IsCompleted); }
+        else { Assert.False(fixture.Map.Preparation.IsCompleted); }
 
         Assert.Single(fixture.Record().Where(c => c.Kind == DrawCommandKind.DrawImage));
         Assert.Equal(RenderSurface2DPresentationState.Ready, fixture.Surface.PresentationState);
@@ -169,8 +184,8 @@ public sealed class ScenePresentationTests
         using Fixture fixture = new();
         fixture.RequirePendingData();
         Scene2D group = new();
-        fixture.Scene.Children.Remove(fixture.Items);
-        group.Children.Add(fixture.Items);
+        fixture.Scene.Children.Remove(fixture.Map);
+        group.Children.Add(fixture.Map);
         fixture.Scene.Children.Add(group);
         if (transparent) { group.Opacity = 0; }
         else { group.IsVisible = false; }
@@ -235,22 +250,27 @@ public sealed class ScenePresentationTests
 
     private sealed class Fixture : IDisposable
     {
-        private readonly TaskCompletionSource<SceneSpatialLease2D<object>> completion =
+        private readonly TaskCompletionSource<SceneSpatialLease2D<TileMapChunkData2D>> completion =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly ImageReference picture = new(new TestImage());
         internal Fixture()
         {
-            Source = new([], (_, _) => { Loads++; return new(completion.Task); });
-            Items.ItemsSource = Source;
+            Source = new(new TileMapCatalog2D("presentation", []), (_, _, _) =>
+            {
+                Loads++;
+                return new(completion.Task);
+            });
+            Map = TileMap2D.FromSource(Source);
             Scene.Children.Add(Actor);
-            Scene.Children.Add(Items);
+            Scene.Children.Add(Map);
             Surface.Scene = Scene;
             Root.VisualChildren.Add(Surface);
             Root.ProcessFrame();
         }
         internal UIRoot Root { get; } = new(100, 100);
         internal Scene2D Scene { get; } = new();
-        internal SceneItems2D Items { get; } = new();
-        internal SceneSpatialSource2D<object> Source { get; }
+        internal TileMap2D Map { get; }
+        internal TileMapSource2D Source { get; }
         internal int Loads { get; private set; }
         internal RenderSurface2D Surface { get; } = new() { ViewBox = new(0, 0, 100, 100) };
         internal Sprite2D Actor { get; } = new()
@@ -258,8 +278,18 @@ public sealed class ScenePresentationTests
             Image = new(new TestImage()), Width = 10, Height = 10, Focusable = true,
             Collider = new BoxCollider2D { Width = 10, Height = 10 }
         };
-        internal void RequirePendingData() => Source.SetEntries([new("pending", new(50, 0, 10, 10))]);
-        internal void Complete(object value) => completion.SetResult(new(value));
+        internal void RequirePendingData() => RequirePendingData(50);
+        internal void RequirePendingData(int x)
+        {
+            SceneSpatialEntry2D spatial = new("pending", new(x, 0, 10, 10), new DrawRect(x, 0, 10, 10));
+            Source.SetCatalog(new("presentation", [new TileMapChunkInfo2D(spatial, 1, [picture], 1)]));
+        }
+        internal void Complete()
+        {
+            TileColliderDescriptor2D shape = new(TileColliderShape2D.Box, width: 10, height: 10);
+            TileMapChunkData2D data = new([new Tile(picture, shape, 50, 0, 10, 10)]);
+            completion.SetResult(new(data));
+        }
         internal void Fail(Exception error) => completion.SetException(error);
         internal void Tick() => Root.ProcessFrame();
         internal void DrainUntil(Func<bool> done) => Assert.True(SpinWait.SpinUntil(() =>
@@ -275,8 +305,11 @@ public sealed class ScenePresentationTests
         }
         public void Dispose()
         {
-            Root.VisualChildren.Remove(Surface);
             completion.TrySetCanceled();
+            Root.VisualChildren.Remove(Surface);
+            Surface.Scene = null;
+            if (Map.LogicalParent is Scene2D parent) { parent.Children.Remove(Map); }
+            Map.DisposeAsync().AsTask().GetAwaiter().GetResult();
         }
     }
 

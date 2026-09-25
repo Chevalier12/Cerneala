@@ -1,16 +1,15 @@
-using System.Numerics;
+using System.Runtime.ExceptionServices;
 using Cerneala.Drawing;
-using Cerneala.UI.Elements;
 
 namespace Cerneala.UI.Controls;
 
 public sealed partial class CollisionWorld2D
 {
     private readonly List<SceneCollisionRegion2D> spatialRegions = [];
-    private readonly List<SpatialInterestSnapshot> spatialInterestSnapshots = [];
     private IReadOnlyList<SceneBounds2D> spatialCollisionInterest = Array.Empty<SceneBounds2D>();
     private long spatialInterestVersion;
     private long observedSpatialInterestVersion = -1;
+    private long observedCollisionMutationVersion = -1;
 
     public async ValueTask<SceneCollisionRegion2D> PrepareRegionAsync(
         DrawRect bounds, CancellationToken cancellationToken = default)
@@ -50,6 +49,7 @@ public sealed partial class CollisionWorld2D
             {
                 throw new InvalidOperationException("The scene left its simulation context while preparing a collision region.");
             }
+            ThrowCollisionReadinessError();
             string? missing = FindUnpreparedCollisionEntry(bounds);
             if (missing is null) { return []; }
             DrawRect collisionBounds = IncludeContactFringe(bounds);
@@ -66,12 +66,13 @@ public sealed partial class CollisionWorld2D
     {
         if (!ReferenceEquals(owner.SimulationContext, context) || context.IsDisposed) { return false; }
         context.Relay.VerifyAccess();
-        return FindUnpreparedCollisionEntry(bounds) is null;
+        return FindCollisionReadinessError() is null && FindUnpreparedCollisionEntry(bounds) is null;
     }
 
     private void EnsureCollisionCoverage(DrawRect bounds, Collider2D? collider, CollisionQuery2D query)
     {
         if (query.CollisionLayer == 0 || query.CollisionMask == 0 || collider?.CollisionMask == 0) { return; }
+        ThrowCollisionReadinessError();
         string? missing = FindUnpreparedCollisionEntry(bounds);
         if (missing is not null) { throw new SceneCollisionRegionNotReadyException(bounds, missing); }
     }
@@ -87,6 +88,20 @@ public sealed partial class CollisionWorld2D
         return null;
     }
 
+    private Exception? FindCollisionReadinessError()
+    {
+        foreach (ISceneSpatialParticipant2D items in EnumerateSpatialItems(owner))
+        {
+            if (items is SceneItems2D { CollisionReadinessError: { } error }) { return error; }
+        }
+        return null;
+    }
+
+    private void ThrowCollisionReadinessError()
+    {
+        if (FindCollisionReadinessError() is { } error) { ExceptionDispatchInfo.Capture(error).Throw(); }
+    }
+
     private static DrawRect IncludeContactFringe(DrawRect bounds)
     {
         // Selection and readiness use the same scene-unit contact tolerance as
@@ -98,42 +113,24 @@ public sealed partial class CollisionWorld2D
 
     internal IReadOnlyList<SceneBounds2D> GetSpatialCollisionInterest()
     {
-        IReadOnlyList<ISceneSpatialParticipant2D> items = owner.SimulationContext?.SpatialItems ?? Array.Empty<ISceneSpatialParticipant2D>();
-        bool changed = observedSpatialInterestVersion != spatialInterestVersion || spatialInterestSnapshots.Count != items.Count;
-        for (int index = 0; !changed && index < items.Count; index++)
-        {
-            ISceneSpatialParticipant2D item = items[index];
-            SpatialInterestSnapshot before = spatialInterestSnapshots[index];
-            changed = !ReferenceEquals(before.Items, item) || !ReferenceEquals(before.Catalog, item.SimulationCatalog) ||
-                before.Transform != SceneGeometry2D.GetLocalToSceneTransform(item.Node) ||
-                before.Visible != UIElementVisibility.IsEffectivelyVisible(item.Node);
-        }
-        if (!changed) { return spatialCollisionInterest; }
+        long collisionVersion = owner.CollisionMutationVersion;
+        if (observedSpatialInterestVersion == spatialInterestVersion &&
+            observedCollisionMutationVersion == collisionVersion) { return spatialCollisionInterest; }
 
         List<SceneBounds2D> interests = new(spatialRegions.Count);
         foreach (SceneCollisionRegion2D region in spatialRegions)
         {
             if (!region.IsDisposed) { interests.Add(SceneBounds2D.Known(IncludeContactFringe(region.Bounds))); }
         }
-        spatialInterestSnapshots.Clear();
-        foreach (ISceneSpatialParticipant2D item in items)
+        foreach (Collider2D collider in EnumerateColliders(owner))
         {
-            IReadOnlyList<SceneSpatialEntry2D>? catalog = item.SimulationCatalog;
-            Matrix3x2 transform = SceneGeometry2D.GetLocalToSceneTransform(item.Node);
-            bool visible = UIElementVisibility.IsEffectivelyVisible(item.Node);
-            spatialInterestSnapshots.Add(new(item, catalog, transform, visible));
-            if (catalog is null || !visible) { continue; }
-            foreach (SceneSpatialEntry2D entry in catalog)
+            if (collider.IsSimulated && collider.TryGetActiveSceneGeometry(out ColliderGeometry2D geometry))
             {
-                if (entry.IsSimulated && entry.CollisionBounds is DrawRect bounds)
-                {
-                    SceneBounds2D transformed = SceneGeometry2D.TransformBounds(SceneBounds2D.Known(bounds), transform);
-                    interests.Add(transformed.Kind == SceneBoundsKind.Known
-                        ? SceneBounds2D.Known(IncludeContactFringe(transformed.Bounds)) : transformed);
-                }
+                interests.Add(SceneBounds2D.Known(IncludeContactFringe(geometry.SceneBounds)));
             }
         }
         observedSpatialInterestVersion = spatialInterestVersion;
+        observedCollisionMutationVersion = collisionVersion;
         spatialCollisionInterest = interests.ToArray();
         return spatialCollisionInterest;
     }
@@ -166,9 +163,9 @@ public sealed partial class CollisionWorld2D
     {
         SceneCollisionRegion2D[] previous = spatialRegions.ToArray();
         spatialRegions.Clear();
-        spatialInterestSnapshots.Clear();
         spatialCollisionInterest = Array.Empty<SceneBounds2D>();
         spatialInterestVersion++;
+        observedCollisionMutationVersion = -1;
         foreach (SceneCollisionRegion2D region in previous) { region.Invalidate(); }
     }
 
@@ -180,9 +177,6 @@ public sealed partial class CollisionWorld2D
             foreach (ISceneSpatialParticipant2D descendant in EnumerateSpatialItems(child)) { yield return descendant; }
         }
     }
-
-    private readonly record struct SpatialInterestSnapshot(
-        ISceneSpatialParticipant2D Items, IReadOnlyList<SceneSpatialEntry2D>? Catalog, Matrix3x2 Transform, bool Visible);
 }
 
 public sealed class SceneCollisionRegion2D : IDisposable

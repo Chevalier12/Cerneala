@@ -1,0 +1,321 @@
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:01:20.19]     Cerneala.Tests.SdlGpu.NativeImageLeaseTests.GridCameraInputRetiresAtlasesAndKeepsNpcTerrainAcross32Cycles [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeImageLeaseTests.GridCameraInputRetiresAtlasesAndKeepsNpcTerrainAcross32Cycles [1 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 2
+Actual:   1
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeImageLeaseTests.GridCameraInputRetiresAtlasesAndKeepsNpcTerrainAcross32Cycles() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeImageLeaseTests.cs:line 90
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:03:05.78]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: ColorOverlay, channel: null, feather: 0) [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: ColorOverlay, channel: null, feather: 0) [2 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.RunPointwisePaintCase(Boolean nestedSprites, Single density, Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 105
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 95
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+[xUnit.net 00:03:07.78]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: GradientOverlay, channel: null, feather: 0) [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: GradientOverlay, channel: null, feather: 0) [2 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.RunPointwisePaintCase(Boolean nestedSprites, Single density, Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 105
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 95
+   at InvokeStub_NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:03:09.80]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: null, channel: Luminance, feather: 6) [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: null, channel: Luminance, feather: 6) [2 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.RunPointwisePaintCase(Boolean nestedSprites, Single density, Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 105
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 95
+   at InvokeStub_NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:03:11.76]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: GradientOverlay, channel: Alpha, feather: 6) [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: GradientOverlay, channel: Alpha, feather: 6) [1 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.RunPointwisePaintCase(Boolean nestedSprites, Single density, Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 105
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 95
+   at InvokeStub_NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:03:13.65]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: null, channel: Alpha, feather: 6) [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: null, channel: Alpha, feather: 6) [1 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.RunPointwisePaintCase(Boolean nestedSprites, Single density, Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 105
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 95
+   at InvokeStub_NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:03:15.87]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: null, channel: Alpha, feather: 0) [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: null, channel: Alpha, feather: 0) [2 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.RunPointwisePaintCase(Boolean nestedSprites, Single density, Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 105
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 95
+   at InvokeStub_NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:03:18.00]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: PatternOverlay, channel: null, feather: 0) [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: PatternOverlay, channel: null, feather: 0) [2 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.RunPointwisePaintCase(Boolean nestedSprites, Single density, Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 105
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 95
+   at InvokeStub_NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:03:31.31]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: null, channel: Alpha, feather: 0) [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: null, channel: Alpha, feather: 0) [2 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.RunPointwisePaintCase(Boolean nestedSprites, Single density, Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 105
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 101
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+[xUnit.net 00:03:34.41]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: PatternOverlay, channel: null, feather: 0) [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: PatternOverlay, channel: null, feather: 0) [3 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.RunPointwisePaintCase(Boolean nestedSprites, Single density, Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 105
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 101
+   at InvokeStub_NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:03:37.76]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: null, channel: Alpha, feather: 6) [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: null, channel: Alpha, feather: 6) [3 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.RunPointwisePaintCase(Boolean nestedSprites, Single density, Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 105
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 101
+   at InvokeStub_NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:03:41.32]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: ColorOverlay, channel: null, feather: 0) [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: ColorOverlay, channel: null, feather: 0) [3 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.RunPointwisePaintCase(Boolean nestedSprites, Single density, Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 105
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 101
+   at InvokeStub_NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:03:44.42]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: null, channel: Luminance, feather: 6) [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: null, channel: Luminance, feather: 6) [3 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.RunPointwisePaintCase(Boolean nestedSprites, Single density, Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 105
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 101
+   at InvokeStub_NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:03:47.90]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: GradientOverlay, channel: Alpha, feather: 6) [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: GradientOverlay, channel: Alpha, feather: 6) [3 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.RunPointwisePaintCase(Boolean nestedSprites, Single density, Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 105
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 101
+   at InvokeStub_NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:03:51.20]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: GradientOverlay, channel: null, feather: 0) [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: GradientOverlay, channel: null, feather: 0) [3 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.RunPointwisePaintCase(Boolean nestedSprites, Single density, Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 105
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 101
+   at InvokeStub_NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: null, channel: Luminance, feather: 6) [1 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.RunPointwisePaintCase(Boolean nestedSprites, Single density, Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 105
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 89
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+[xUnit.net 00:04:30.77]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: null, channel: Luminance, feather: 6) [FAIL]
+[xUnit.net 00:04:32.89]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: GradientOverlay, channel: null, feather: 0) [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: GradientOverlay, channel: null, feather: 0) [2 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.RunPointwisePaintCase(Boolean nestedSprites, Single density, Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 105
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 89
+   at InvokeStub_NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:04:34.84]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: null, channel: Alpha, feather: 6) [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: null, channel: Alpha, feather: 6) [1 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.RunPointwisePaintCase(Boolean nestedSprites, Single density, Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 105
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 89
+   at InvokeStub_NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:04:36.76]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: GradientOverlay, channel: Alpha, feather: 6) [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: GradientOverlay, channel: Alpha, feather: 6) [1 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.RunPointwisePaintCase(Boolean nestedSprites, Single density, Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 105
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 89
+   at InvokeStub_NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:04:38.92]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: PatternOverlay, channel: null, feather: 0) [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: PatternOverlay, channel: null, feather: 0) [2 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.RunPointwisePaintCase(Boolean nestedSprites, Single density, Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 105
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 89
+   at InvokeStub_NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:04:40.92]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: ColorOverlay, channel: null, feather: 0) [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: ColorOverlay, channel: null, feather: 0) [2 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.RunPointwisePaintCase(Boolean nestedSprites, Single density, Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 105
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 89
+   at InvokeStub_NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:04:42.99]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: null, channel: Alpha, feather: 0) [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(style: null, channel: Alpha, feather: 0) [2 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.RunPointwisePaintCase(Boolean nestedSprites, Single density, Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 105
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(Nullable`1 style, Nullable`1 channel, Single feather) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 89
+   at InvokeStub_NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:04:47.28]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedLocalNeighborhoodInputMatchesCompleteDomainRendering [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedLocalNeighborhoodInputMatchesCompleteDomainRendering [1 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedLocalNeighborhoodInputMatchesCompleteDomainRendering() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 35
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:04:49.30]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedBlurInputMatchesCompleteDomainRendering [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedBlurInputMatchesCompleteDomainRendering [2 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedBlurInputMatchesCompleteDomainRendering() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 45
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:04:51.07]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.LocalNeighborhoodInputMatchesCompleteDomainRendering [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.LocalNeighborhoodInputMatchesCompleteDomainRendering [1 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.LocalNeighborhoodInputMatchesCompleteDomainRendering() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 31
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:04:54.23]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityLocalNeighborhoodInputMatchesCompleteDomainRendering [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityLocalNeighborhoodInputMatchesCompleteDomainRendering [3 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 9
+Actual:   0
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 240
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityLocalNeighborhoodInputMatchesCompleteDomainRendering() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 40
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:07:48.90]     Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.NativeOwnershipInputAndGraphicsLifetimesRemainIndependent [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.NativeOwnershipInputAndGraphicsLifetimesRemainIndependent [1 ms]
+[xUnit.net 00:07:59.57]     Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 1) [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 1) [1 ms]
+[xUnit.net 00:08:00.67]     Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 7) [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 7) [1 ms]
+[xUnit.net 00:08:02.85]     Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 6) [SKIP]
+[xUnit.net 00:08:03.89]     Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 3) [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 6) [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent(content: 3) [1 ms]
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage3\integration\sdlgpu-all-native.trx
+
+Failed!  - Failed:    26, Passed:   868, Skipped:     5, Total:   899, Duration: 13 m 34 s - Cerneala.Tests.SdlGpu.dll (net8.0)

@@ -1,0 +1,31 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Cerneala.Tests.VisualStudio -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.VisualStudio\bin\Release\net10.0-windows\Cerneala.Tests.VisualStudio.dll
+  Cerneala.VisualStudio -> C:\Users\lauri\Desktop\Cerneala\Cerneala.VisualStudio\bin\Release\net472\Cerneala.VisualStudio.dll
+  Determining projects to restore...
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\Cerneala.Language.csproj (in 715 ms).
+  1 of 2 projects are up-to-date for restore.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.LanguageServer -> C:\Users\lauri\Desktop\Cerneala\Cerneala.LanguageServer\bin\Release\net10.0\win-x64\Cerneala.LanguageServer.dll
+  Cerneala.LanguageServer -> C:\Users\lauri\Desktop\Cerneala\Cerneala.VisualStudio\obj\Release\net472\bundled-server\
+  Determining projects to restore...
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\Cerneala.SourceGen.csproj (in 202 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj (in 205 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.csproj (in 201 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Cerneala.Platforms.Sdl3.csproj (in 325 ms).
+  2 of 6 projects are up-to-date for restore.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\win-x64\Cerneala.Platforms.Sdl3.dll
+  Cerneala.PreviewHost -> C:\Users\lauri\Desktop\Cerneala\Cerneala.PreviewHost\bin\Release\net10.0-windows\win-x64\Cerneala.PreviewHost.dll
+  Cerneala.PreviewHost -> C:\Users\lauri\Desktop\Cerneala\Cerneala.VisualStudio\obj\Release\net472\bundled-preview-host\
+  Cerneala.VisualStudio -> C:\Users\lauri\Desktop\Cerneala\Cerneala.VisualStudio\bin\Release\net472\Cerneala.VisualStudio.vsix
+  VisualStudioIntegrationHost -> C:\Users\lauri\Desktop\Cerneala\tests\Fixtures\VisualStudioIntegrationHost\bin\Release\net472\Cerneala.VisualStudio.IntegrationHost.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.VisualStudio\bin\Release\net10.0-windows\Cerneala.Tests.VisualStudio.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage2\integration\manifest-current.trx
+
+Passed!  - Failed:     0, Passed:     1, Skipped:     0, Total:     1, Duration: 531 ms - Cerneala.Tests.VisualStudio.dll (net10.0)

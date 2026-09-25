@@ -116,9 +116,9 @@ internal static class SceneDebugOverlayBenchmarkRunner
                 chunks.Add(Chunk(x * 4, y * 4));
             for (int i = 0; i < remoteChunks; i++) { chunks.Add(Chunk(10000 + i * 4, 10000)); }
             ResourceId<ImageResource> atlas = new("DebugBenchmarkAtlas");
-            Map = new TileMap2D { Source = TileMapSource2D.FromModel(new TileMap2DModel("ground", new DrawSize(16, 16),
+            Map = TileMap2D.FromModel(new TileMap2DModel("ground", new DrawSize(16, 16),
                 [new TileSet2D("atlas", atlas, [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16))])],
-                chunks)) };
+                chunks));
             Map.Resources.SetResource(atlas, new ImageResource(new InlineImage()));
             Scene.Children.Add(Map);
             for (int i = 0; i < 8; i++)

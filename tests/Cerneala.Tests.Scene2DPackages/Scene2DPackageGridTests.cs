@@ -37,39 +37,42 @@ public sealed partial class Scene2DPackageTests
         Scene2DDocument document = new([new Scene2DLevel("level", [model])], [new(new("atlas"), "nested/atlas.bin", new(20, 10))]);
         await fixture.WriteAsync(document);
         using Scene2DPackage package = await Scene2DPackage.OpenAsync(fixture.Output);
-        TileMapSource2D source = package.Levels[0].TileMaps[0];
+        PackageMap map = fixture.ReadIndex().Levels[0].Maps[0];
+        TileMapCatalog2D catalog = map.Catalog;
+        Assert.Equal(new[] { model.Id }, package.Levels[0].TileMapIds);
 
-        Assert.All(source.Catalog.Chunks, info =>
+        Assert.All(catalog.Chunks, info =>
         {
             Assert.InRange(info.Cells!.Value.Width, 1, 16);
             Assert.InRange(info.Cells.Value.Height, 1, 16);
             Assert.InRange(info.TileCount, 1, 256);
             Assert.True(info.DataResidencyBytes > 0);
         });
-        Assert.Equal(((width + 15) / 16) * ((height + 15) / 16) + 3, source.Entries.Count);
+        Assert.Equal(((width + 15) / 16) * ((height + 15) / 16) + 3, catalog.Chunks.Count);
         Assert.Equal(3, TileMapSource2D.FromModel(model).Entries.Count); // Preparation must not mutate the importer/model adapter.
         Assert.Same(original, model.Chunks[0]);
         Assert.Equal(cells, original.Tiles);
-        Assert.Equal(model.Bounds, source.Catalog.Bounds);
-        Assert.Equal(model.Offset, source.Catalog.Offset);
-        Assert.Equal(model.Opacity, source.Catalog.Opacity);
-        Assert.Equal(model.Tint, source.Catalog.Tint);
-        Assert.Equal(model.Order, source.Catalog.Order);
-        Assert.Equal(model.Version, source.Catalog.Version);
+        Assert.Equal(model.Bounds, catalog.Bounds);
+        Assert.Equal(model.Offset, catalog.Offset);
+        Assert.Equal(model.Opacity, catalog.Opacity);
+        Assert.Equal(model.Tint, catalog.Tint);
+        Assert.Equal(model.Order, catalog.Order);
+        Assert.Equal(model.Version, catalog.Version);
         HashSet<TileCoordinate2D> visited = [];
-        foreach (TileMapChunkInfo2D info in source.Catalog.Chunks)
+        for (int chunkIndex = 0; chunkIndex < catalog.Chunks.Count; chunkIndex++)
         {
-            using var lease = await source.LoadAsync(info.Spatial);
-            TileChunk2D piece = lease.Value.Grid!;
+            TileMapChunkInfo2D info = catalog.Chunks[chunkIndex];
+            TileMapChunkData2D data = await package.LoadAsync<TileMapChunkData2D>(map.Chunks[chunkIndex], CancellationToken.None);
+            TileChunk2D piece = data.Grid!;
             TileChunk2D authored = Assert.Single(model.Chunks.Where(chunk => chunk.Contains(piece.Origin)));
             Assert.Equal(authored.Version, piece.Version);
             Assert.Equal(PackageValueCodec.Encode(authored.Properties), PackageValueCodec.Encode(piece.Properties));
             Assert.Equal(FormattableString.Invariant($"grid:{piece.Origin.X}:{piece.Origin.Y}:{piece.Width}:{piece.Height}"), info.Spatial.Id);
             int[] used = piece.Tiles.Where(cell => cell.TileId != 0).Select(cell => cell.TileId).Distinct().Order().ToArray();
             Assert.Equal(used, info.TileIds.Order());
-            Assert.Equal(used, lease.Value.TileSets.SelectMany(palette => palette.Tiles).Select(tile => tile.Id).Order());
+            Assert.Equal(used, data.TileSets.SelectMany(palette => palette.Tiles).Select(tile => tile.Id).Order());
             Assert.Equal(piece.Tiles.Count(cell => cell.TileId != 0), info.ExpandedColliderCount);
-            foreach (TileSet2D palette in lease.Value.TileSets)
+            foreach (TileSet2D palette in data.TileSets)
             {
                 Assert.Equal(set.Version, palette.Version);
                 Assert.Same(piece.Properties["original"], palette.Properties["original"]);
@@ -89,21 +92,21 @@ public sealed partial class Scene2DPackageTests
                 Assert.Equal(authored.GetCell(coordinate), piece.GetCell(coordinate));
             }
             if (authored == small) { Assert.Equal(PackageValueCodec.Encode(small), PackageValueCodec.Encode(piece)); }
-            if (authored == empty) { Assert.Empty(lease.Value.TileSets); Assert.Empty(info.Images); Assert.Null(info.Spatial.CollisionBounds); }
+            if (authored == empty) { Assert.Empty(data.TileSets); Assert.Empty(info.Images); Assert.Null(info.Spatial.CollisionBounds); }
         }
         Assert.Equal(width * height + 6 + 17, visited.Count); // Includes every empty cell/extent.
-        using var metadata = await package.Levels[0].LoadMapMetadataAsync(model.Id);
-        Assert.Equal(PackageValueCodec.Encode(model.Properties), PackageValueCodec.Encode(metadata.Value.Properties));
-        Assert.Equal(3, Assert.Single(metadata.Value.TileSets).Tiles.Count); // Unused definitions remain explicit metadata.
-        Assert.Equal(model.Chunks.Count, metadata.Value.GridChunks.Count);
+        Scene2DPackageMetadata metadata = await package.Levels[0].LoadMapMetadataAsync(model.Id);
+        Assert.Equal(PackageValueCodec.Encode(model.Properties), PackageValueCodec.Encode(metadata.Properties));
+        Assert.Equal(3, Assert.Single(metadata.TileSets).Tiles.Count); // Unused definitions remain explicit metadata.
+        Assert.Equal(model.Chunks.Count, metadata.GridChunks.Count);
         for (int index = 0; index < model.Chunks.Count; index++)
         {
             TileChunk2D authored = model.Chunks[index];
-            Scene2DPackageGridChunkMetadata stored = metadata.Value.GridChunks[index];
+            Scene2DPackageGridChunkMetadata stored = metadata.GridChunks[index];
             Assert.Equal(new TileMapBounds2D(authored.Origin.X, authored.Origin.Y, authored.Width, authored.Height), stored.Cells);
             Assert.Equal(authored.Version, stored.Version);
             Assert.Equal(PackageValueCodec.Encode(authored.Properties), PackageValueCodec.Encode(stored.Properties));
-            Assert.Same(metadata.Value.Properties["original"], stored.Properties["original"]);
+            Assert.Same(metadata.Properties["original"], stored.Properties["original"]);
         }
         string second = Path.Combine(fixture.Root, "second");
         await Scene2DPackageWriter.WriteAsync(second, document, fixture.Input, ["scripts/quest.txt"]);
@@ -125,11 +128,10 @@ public sealed partial class Scene2DPackageTests
         fixture.Corrupt(map.Metadata);
         fixture.Corrupt(map.Chunks[7]);
         using Scene2DPackage package = await Scene2DPackage.OpenAsync(fixture.Output, new() { MaxPayloadBytes = 4096 });
-        TileMapSource2D source = package.Levels[0].TileMaps[0];
-        using var first = await source.LoadAsync(source.Entries[0]);
-        Assert.Equal(256, first.Value.Grid!.Tiles.Count);
-        Assert.Equal(default, first.Value.Grid.Origin);
-        await Assert.ThrowsAsync<InvalidDataException>(async () => await source.LoadAsync(source.Entries[7]));
+        TileMapChunkData2D first = await package.LoadAsync<TileMapChunkData2D>(map.Chunks[0], CancellationToken.None);
+        Assert.Equal(256, first.Grid!.Tiles.Count);
+        Assert.Equal(default, first.Grid.Origin);
+        await Assert.ThrowsAsync<InvalidDataException>(async () => await package.LoadAsync<TileMapChunkData2D>(map.Chunks[7], CancellationToken.None));
         await Assert.ThrowsAsync<InvalidDataException>(async () => await package.Levels[0].LoadMapMetadataAsync("map"));
     }
 }

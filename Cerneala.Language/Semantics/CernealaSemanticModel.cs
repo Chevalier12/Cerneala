@@ -306,9 +306,9 @@ internal sealed partial class CernealaSemanticModel : IDisposable
     {
         int separator = element.Name.LastIndexOf('.');
         string propertyName = separator < 0 ? element.Name : element.Name.Substring(separator + 1);
-        if (IsTileMapContentMember(parentType, propertyName))
+        if (IsRemovedTileMapSourceMember(parentType, propertyName))
         {
-            AddShapeDiagnostic(element.NameToken.Span, "TileMap2D markup uses direct Tile declarations or a Source binding; Source property elements are not supported.");
+            AddDiagnostic("CERNEALAUI003", element.NameToken.Span, parentType!.Name, propertyName);
             return null;
         }
         ILanguageMemberSymbol? member = FindProperty(parentType, propertyName);
@@ -371,6 +371,12 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         if (separator > 0)
         {
             BindAttachedAttribute(type, element, attribute, name, value, separator, dataType);
+            return null;
+        }
+
+        if (IsRemovedTileMapSourceMember(type, name))
+        {
+            AddDiagnostic("CERNEALAUI003", attribute.NameToken.Span, type.Name, name);
             return null;
         }
 

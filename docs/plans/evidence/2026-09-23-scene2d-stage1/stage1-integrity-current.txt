@@ -1,0 +1,154 @@
+Stage 1 final repaired candidate, pre-audit checks. No build/test in this command.
+HEAD=443f100b86f8c4ca5f5e649651ac37c9cd5a330f
+git diff --check:
+warning: in the working copy of '.codex/config.toml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.codex/skills/cerneala-checklist-plan/SKILL.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'UI/Controls/TileMap2D.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.Scene2D.Importers.LdtkScene2DImporter.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.Scene2D.Importers.TiledScene2DImporter.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.TileMap2D.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.TileMap2DModel.md', LF will be replaced by CRLF the next time Git touches it
+git_diff_check_exit=0
+git diff --name-only:
+.codex/config.toml
+.codex/skills/cerneala-checklist-plan/SKILL.md
+FileTree.md
+UI/Controls/TileMap2D.cs
+docs-site/documentation/classes/Cerneala.Scene2D.Importers.LdtkScene2DImporter.md
+docs-site/documentation/classes/Cerneala.Scene2D.Importers.TiledScene2DImporter.md
+docs-site/documentation/classes/Cerneala.UI.Controls.TileMap2D.md
+docs-site/documentation/classes/Cerneala.UI.Controls.TileMap2DModel.md
+git status --short --untracked-files=all:
+ M .codex/config.toml
+ M .codex/skills/cerneala-checklist-plan/SKILL.md
+ M FileTree.md
+ M UI/Controls/TileMap2D.cs
+ M docs-site/documentation/classes/Cerneala.Scene2D.Importers.LdtkScene2DImporter.md
+ M docs-site/documentation/classes/Cerneala.Scene2D.Importers.TiledScene2DImporter.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.TileMap2D.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.TileMap2DModel.md
+?? docs/plans/2026-09-23-scene2d-simple-collections-and-internal-spatial.md
+?? docs/plans/2026-09-24-scene2d-stage0-contract-proposal.md
+?? docs/plans/evidence/2026-09-23-scene2d-stage0/caller-inventory.md
+?? docs/plans/evidence/2026-09-23-scene2d-stage0/contract-and-platform-matrix.md
+?? docs/plans/evidence/2026-09-23-scene2d-stage0/worktree-baseline.md
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/additional-files-artifact-excluded.json
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/api-compat-baseline-selfcompare.log
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/api-compat.proj
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/baseline-and-characterization.md
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/baseline-build-package-release-artifact-excluded.log
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/baseline-build-package-release.log
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/binary-baseline/Cerneala.Scene2D.Packages.dll
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/binary-baseline/Cerneala.dll
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/compile-items-after-isolated-probe.json
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/compile-items-artifact-excluded.json
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/compile-items-default.json
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/compile-items-removed.txt
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-characterization.log
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/command-final.txt
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/command-final2.txt
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/command-final3.txt
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/command-final4.txt
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/command-final5.txt
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/command-final6.txt
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/command.txt
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/core-red-final.trx
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/core-red-final2.trx
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/core-red-final3.trx
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/core-red-final4.trx
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/core-red-final5.trx
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/core-red-final6.trx
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/core-red.trx
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/dotnet-test-final.log
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/dotnet-test-final2.log
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/dotnet-test-final3.log
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/dotnet-test-final4.log
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/dotnet-test-final5.log
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/dotnet-test-final6.log
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/dotnet-test.log
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/red-classification-final4.csv
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/red-classification-final5.csv
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/red-classification-final6.csv
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/repair-notes.md
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/cpv2-precutover/assets/nested/atlas.bin
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/cpv2-precutover/assets/scripts/quest.txt
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/cpv2-precutover/catalog.c2d
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/cpv2-precutover/payloads.c2d
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/importers-characterization.log
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/isolated-compile-red.md
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/package-red/baseline-producer.log
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/package-red/baseline-producer.trx
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/package-red/final-map-exception-red.md
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/package-red/package-contract-red-audit-rerun-classification.csv
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/package-red/package-contract-red-audit-rerun.log
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/package-red/package-contract-red-audit-rerun.trx
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/package-red/package-contract-red-final-exceptions-classification.csv
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/package-red/package-contract-red-final-exceptions.log
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/package-red/package-contract-red-final-exceptions.trx
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/package-red/package-contract-red.log
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/package-red/package-contract-red.trx
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/package-red/package-red.md
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/package-red/precutover-cpv2.md
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/packages-characterization.log
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/sceneitems-compile-red.log
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/sceneitems-compile-red/SceneItems2DCollectionCompileRed.cs
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/sceneitems-compile-red/SceneItems2DCollectionCompileRed.csproj
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/sdl-native-no-optin-characterization.log
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/sourcegen-characterization.log
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/stage1-evidence-ledger.md
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/stage1-integrity-current.txt
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/test-results/core-characterization.trx
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/test-results/importers-characterization.trx
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/test-results/packages-characterization.trx
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/test-results/sdl-native-no-optin-characterization.trx
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/test-results/sourcegen-characterization.trx
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/test-results/tetris-characterization.trx
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/tetris-characterization.log
+?? tests/Cerneala.Tests.Scene2DPackages/Scene2DPublicBoundaryContractTests.cs
+?? tests/Cerneala.Tests.Scene2DPackages/Stage0PackageContractTests.cs
+?? tests/Cerneala.Tests/Controls/Collider2DSimulationInterestContractTests.cs
+?? tests/Cerneala.Tests/Controls/SceneItems2DSimpleCollectionContractTests.cs
+?? tests/Cerneala.Tests/Controls/TileMap2DDrainContractTests.cs
+?? tests/Cerneala.Tests/Controls/TileMap2DFactoryTests.cs
+Stage0 user-dirty original hash comparison:
+.codex/config.toml expected=D4EDB0B9D5FE4B7F7323027A670FFF14CD06AF22617A8B21F9E184638C73D712 actual=D4EDB0B9D5FE4B7F7323027A670FFF14CD06AF22617A8B21F9E184638C73D712 match=True
+.codex/skills/cerneala-checklist-plan/SKILL.md expected=D0DC6C1C9DEA0AF888A8BF29ED7BDD47DD39F2938D953160970A1B25101B9088 actual=D0DC6C1C9DEA0AF888A8BF29ED7BDD47DD39F2938D953160970A1B25101B9088 match=True
+UI/Controls/TileMap2D.cs expected=D2F8DF60E51E9C4ACEC93D2F6BE110F8E0FA6CAF4389F0525DBD1C7A4B790BE8 actual=D2F8DF60E51E9C4ACEC93D2F6BE110F8E0FA6CAF4389F0525DBD1C7A4B790BE8 match=True
+docs-site/documentation/classes/Cerneala.Scene2D.Importers.LdtkScene2DImporter.md expected=A7DDE3A30150B5209AAA421FFD6F26CDB59D343E2BB7705B9244B8EDA3681962 actual=A7DDE3A30150B5209AAA421FFD6F26CDB59D343E2BB7705B9244B8EDA3681962 match=True
+docs-site/documentation/classes/Cerneala.Scene2D.Importers.TiledScene2DImporter.md expected=4B3739D2CD6FAB19E2DED1B499E5F4CEDBFE17B6690CAF3DF56C80855D8123D3 actual=4B3739D2CD6FAB19E2DED1B499E5F4CEDBFE17B6690CAF3DF56C80855D8123D3 match=True
+docs-site/documentation/classes/Cerneala.UI.Controls.TileMap2D.md expected=A5EF6EEA88D9529B6987553242BB42FD565332F89D29C9A5DA3DD2BBA54011F6 actual=A5EF6EEA88D9529B6987553242BB42FD565332F89D29C9A5DA3DD2BBA54011F6 match=True
+docs-site/documentation/classes/Cerneala.UI.Controls.TileMap2DModel.md expected=49EEAAA9BBE8F3C7361A4EE8D1355B13EBB3F9EB095BA405B419882C57916360 actual=49EEAAA9BBE8F3C7361A4EE8D1355B13EBB3F9EB095BA405B419882C57916360 match=True
+tests/Cerneala.Tests/Controls/TileMap2DFactoryTests.cs expected=E6C9B6F979FEB422DF3F09CF6891F611BBF0A49BCBC4E17F6A33C4E88634B8A2 actual=E6C9B6F979FEB422DF3F09CF6891F611BBF0A49BCBC4E17F6A33C4E88634B8A2 match=True
+preexisting_hash_mismatch_count=0
+Current plan/tree/contracts/new tests/latest raw evidence/frozen input hashes:
+FileTree.md bytes=229408 SHA256=0438D4087852562EE070E75A420DEC72D961B1FCE908C44BD75DF1687057CE11
+docs/plans/2026-09-23-scene2d-simple-collections-and-internal-spatial.md bytes=29126 SHA256=869C588E0578362CD07A501F41C0143C44455EFF5BA59CA45A2E6E0A90A722D6
+docs/plans/2026-09-24-scene2d-stage0-contract-proposal.md bytes=46579 SHA256=3F6E7A18F17C63D9D4B51B6070FDCE20DED3CBDB43A9EC784E27D65FD41F935C
+docs/plans/evidence/2026-09-23-scene2d-stage0/contract-and-platform-matrix.md bytes=10167 SHA256=65F01BB73BFA4C26D5EC919CADABBECAC45AF358FF435DAD8699131DEDD217BF
+tests/Cerneala.Tests/Controls/SceneItems2DSimpleCollectionContractTests.cs bytes=32715 SHA256=EE17801189795FE52FFD2FB93D515C2CCE5496E54660DE1E3D04D094753F7874
+tests/Cerneala.Tests/Controls/Collider2DSimulationInterestContractTests.cs bytes=7918 SHA256=B6FD0C6E4A5C34510E1DDFFCF5D992172BBEE393FABEE9012AA2E7C5E42687E7
+tests/Cerneala.Tests/Controls/TileMap2DDrainContractTests.cs bytes=6955 SHA256=90F9604EF395A23109A323D03DAABD6ACA271A75FC0926A92A75D95129E5DD5D
+tests/Cerneala.Tests.Scene2DPackages/Stage0PackageContractTests.cs bytes=35529 SHA256=D078F37C1DEBB9F91C02364F86BFC85BFEE30E28AF57C15C6A7D4F0969BADE9F
+tests/Cerneala.Tests.Scene2DPackages/Scene2DPublicBoundaryContractTests.cs bytes=5532 SHA256=D87A7B8CB6B7AF83E129FA976393A305AE07F54922129AC474A154CE87538601
+docs/plans/evidence/2026-09-23-scene2d-stage1/stage1-evidence-ledger.md bytes=10535 SHA256=017C37516577366FD7D139D3404958B2D760C8B9C610AC485332CDAA8B75DDDF
+docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/command-final6.txt bytes=433 SHA256=0D2A7C947E565F0C9F963D28C862B6BF8155DCA1A5F534BCFF2654BB91989989
+docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/dotnet-test-final6.log bytes=43603 SHA256=1BED82F0B173E7B16271A18073C01B5E67C86D60BC02A34FD395EE2CBF7D0BDB
+docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/core-red-final6.trx bytes=122736 SHA256=DD5F11BA2B320E2ADBC3142283D621977BEE00500972F10844344F17F4301698
+docs/plans/evidence/2026-09-23-scene2d-stage1/core-red/red-classification-final6.csv bytes=15613 SHA256=32527CA23C59C2FDC43630AD6587AE90A73497A9EAABFD318142F9979F32CA38
+docs/plans/evidence/2026-09-23-scene2d-stage1/package-red/final-map-exception-red.md bytes=2205 SHA256=CBE10AACFD04195B1C2C9D11E4D8F7B263EB03F7C0BDFA30A69068534AE422C0
+docs/plans/evidence/2026-09-23-scene2d-stage1/package-red/package-contract-red-final-exceptions.log bytes=22491 SHA256=3482C7500D6F20FD337D89789C0E0695CB4BB70747E0390B8B7450CEEF1FCC3C
+docs/plans/evidence/2026-09-23-scene2d-stage1/package-red/package-contract-red-final-exceptions.trx bytes=77039 SHA256=CB0A762EF18E0DC2FF24FD23109029B79313275AFF063D9F8C18A51BB5AA6516
+docs/plans/evidence/2026-09-23-scene2d-stage1/package-red/package-contract-red-final-exceptions-classification.csv bytes=5084 SHA256=F0AF49B6FE833EDDC8807C8C9894CBD59414C49A95149BAEF9B6597BCB2F1F7E
+docs/plans/evidence/2026-09-23-scene2d-stage1/binary-baseline/Cerneala.dll bytes=5483008 SHA256=F5F16215D563E712337DE83D4ACF1FC8CE1D2A0E5F2BB94E94EDE6B78BB6EA83
+docs/plans/evidence/2026-09-23-scene2d-stage1/binary-baseline/Cerneala.Scene2D.Packages.dll bytes=78336 SHA256=7D4B36BD358FEB21889BB4828DDE7B27BF72ECD153B0549B5C2B1D507DD97F2F
+docs/plans/evidence/2026-09-23-scene2d-stage1/cpv2-precutover/catalog.c2d bytes=1012 SHA256=A417E679D0ACE8599A59FCF31738C725B137A3ECD5491ADA1FB38F15A4B8815E
+docs/plans/evidence/2026-09-23-scene2d-stage1/cpv2-precutover/payloads.c2d bytes=263634 SHA256=F6A5EA008D9AEF3C88C4212F3FF93B32D1AFE2BBAB2F8FE5BE5D5665878A326E
+scanned_text_files=33
+trailing_whitespace_issue_count=0
+Post-checkpoint source-plan/ledger hashes supersede their pre-checkpoint hashes above:
+docs/plans/2026-09-23-scene2d-simple-collections-and-internal-spatial.md
+ SHA256=21E1AC38EB7F80DE1BC5C5A9631D5B444F466C3A171A2E29CE6CC5988507288D
+docs/plans/evidence/2026-09-23-scene2d-stage1/stage1-evidence-ledger.md
+ SHA256=7B861D807B30370CD12F7EA1B38D9CE21E7EB912ECC6CBBB73D1BD1EA754E272
+plan_checked=13
+plan_unchecked=18

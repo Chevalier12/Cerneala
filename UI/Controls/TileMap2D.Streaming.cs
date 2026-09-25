@@ -1,6 +1,7 @@
 using System.Numerics;
 using Cerneala.Drawing;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Relay;
 
 namespace Cerneala.UI.Controls;
 
@@ -22,12 +23,15 @@ public sealed partial class TileMap2D
     private readonly Dictionary<TileChunkCacheKey, MapRequest> requiredRequests = [];
     private long requestVersion;
     private long sourceGeneration;
+    private readonly int creatorThreadId = Environment.CurrentManagedThreadId;
+    private readonly List<Task> retiredGenerationDrains = [];
+    private UiRelay? lastOwnerRelay;
+    private Task? terminalDisposal;
 
     public Task Preparation { get; private set; } = Task.CompletedTask;
     public Exception? PreparationError { get; private set; }
 
     SceneNode2D ISceneSpatialParticipant2D.Node => this;
-    IReadOnlyList<SceneSpatialEntry2D>? ISceneSpatialParticipant2D.SimulationCatalog => null;
     Task ISceneSpatialParticipant2D.Preparation => Preparation;
     Task ISceneSpatialParticipant2D.GetCollisionPreparation(DrawRect bounds) => GetCollisionPreparation(bounds);
     void ISceneSpatialParticipant2D.UpdateSpatialInterest(SceneBounds2D visibleBounds, IReadOnlyList<SceneBounds2D> collisionInterest,
@@ -36,7 +40,8 @@ public sealed partial class TileMap2D
 
     public void Refresh()
     {
-        VerifyOwnerAccess();
+        VerifyMapOwnerAccess();
+        ObjectDisposedException.ThrowIf(terminalDisposal is not null, this);
         requestedCatalog = null;
         foreach (WarmAcquisition warm in warmAcquisitions.Values) { warm.Error = null; }
         foreach ((TileChunkCacheKey key, MapRequest request) in requiredRequests.ToArray())
@@ -55,12 +60,70 @@ public sealed partial class TileMap2D
 
     protected override void OnAttached()
     {
+        ObjectDisposedException.ThrowIf(terminalDisposal is not null, this);
         base.OnAttached();
+        lastOwnerRelay = Root?.Relay ?? lastOwnerRelay;
         SimulationContext?.RefreshSpatialItems();
+    }
+
+    internal override void ValidateParentChange(UIElement? parent, ElementChildRole role, bool ownerManaged)
+    {
+        if (parent is not null) { ObjectDisposedException.ThrowIf(terminalDisposal is not null, this); }
+        base.ValidateParentChange(parent, role, ownerManaged);
+    }
+
+    private void VerifyMapOwnerAccess()
+    {
+        if (lastOwnerRelay is { } relay) { relay.VerifyAccess(); }
+        else if (Environment.CurrentManagedThreadId != creatorThreadId)
+        {
+            throw new InvalidOperationException("The map must be accessed on its creator thread before its first attachment.");
+        }
+        VerifyOwnerAccess();
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        VerifyMapOwnerAccess();
+        if (terminalDisposal is { } existing) { return new(existing); }
+        if (LogicalParent is not null || VisualParent is not null || Root is not null ||
+            SimulationContext is not null || Surface is not null)
+        {
+            throw new InvalidOperationException("Detach the map before terminal disposal.");
+        }
+
+        TaskCompletionSource completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        terminalDisposal = completion.Task;
+        try
+        {
+            StopSource();
+            source = null;
+            _ = CompleteTerminalDisposalAsync(retiredGenerationDrains.ToArray(), completion);
+        }
+        catch (Exception failure)
+        {
+            completion.TrySetException(failure);
+        }
+        return new(completion.Task);
+    }
+
+    private static async Task CompleteTerminalDisposalAsync(Task[] retired, TaskCompletionSource completion)
+    {
+        List<Exception> failures = [];
+        foreach (Task drain in retired)
+        {
+            try { await drain.ConfigureAwait(false); }
+            catch (AggregateException aggregate) { failures.AddRange(aggregate.Flatten().InnerExceptions); }
+            catch (Exception failure) { failures.Add(failure); }
+        }
+        if (failures.Count == 0) { completion.TrySetResult(); }
+        else { completion.TrySetException(new AggregateException(failures)); }
     }
 
     internal override void OnSimulationContextChanged(SceneSimulationContext2D? previous)
     {
+        lastOwnerRelay = SimulationContext?.Relay ?? previous?.Relay ?? lastOwnerRelay;
+        ObjectDisposedException.ThrowIf(terminalDisposal is not null && SimulationContext is not null, this);
         StopSource();
         StartSource();
     }
@@ -446,6 +509,10 @@ public sealed partial class TileMap2D
 
     private void StopSource()
     {
+        // Register this generation before any release callback can reenter or
+        // fail. Terminal disposal waits even for work retired by earlier detaches.
+        TaskCompletionSource retirement = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        retiredGenerationDrains.Add(retirement.Task);
         if (observedSource is not null) { observedSource.Changed -= OnSourceChanged; }
         observedSource = null;
         appliedCatalog = null;
@@ -475,23 +542,43 @@ public sealed partial class TileMap2D
         cacheFrameVersion++;
         resolvedAtlases.Clear();
         PreparationError = null;
-        List<Exception>? failures = null;
-        Try(() => SourceImageLeases.Clear());
-        foreach (MapRequest request in previousRequests) { Try(request.Cancel); }
-        foreach (WarmAcquisition acquisition in warm) { Try(acquisition.Dispose); }
-        foreach (TileChunkCacheEntry batch in batches) { Try(batch.Dispose); }
-        foreach (TileCollisionChunkState state in collisions) { Try(() => RemoveCollisionChunk(state)); }
-        foreach (ResidentChunk resident in data) { Try(resident.Payload.Dispose); }
-        Try(() => previous?.Dispose());
-        Try(() => SceneGeometry2D.FindRootScene(this)?.NotifyCollisionMutation(this, SceneCollisionMutationKind.Structure));
+        List<Exception> releaseFailures = [];
+        List<Exception>? structuralFailures = null;
+        TryRelease(() => SourceImageLeases.Clear());
+        foreach (MapRequest request in previousRequests) { TryRelease(request.Cancel); }
+        foreach (WarmAcquisition acquisition in warm) { TryRelease(acquisition.Dispose); }
+        foreach (TileChunkCacheEntry batch in batches) { TryRelease(batch.Dispose); }
+        foreach (TileCollisionChunkState state in collisions)
+        {
+            try { RemoveCollisionChunk(state); }
+            catch (Exception failure) { (structuralFailures ??= []).Add(failure); }
+        }
+        foreach (ResidentChunk resident in data) { TryRelease(resident.Payload.Dispose); }
+        Task residencyDrain = Task.CompletedTask;
+        try { if (previous is not null) { residencyDrain = previous.DisposeAsync().AsTask(); } }
+        catch (Exception failure) { releaseFailures.Add(failure); }
+        _ = CompleteRetirementAsync(residencyDrain, releaseFailures, retirement);
+        // External lifecycle/mutation hooks are not map resource-release errors.
+        // Preserve their existing propagation instead of hiding them in DisposeAsync.
+        SceneGeometry2D.FindRootScene(this)?.NotifyCollisionMutation(this, SceneCollisionMutationKind.Structure);
         Surface?.InvalidateFrame();
-        if (failures is not null) { throw new AggregateException(failures); }
+        if (structuralFailures is not null) { throw new AggregateException(structuralFailures); }
 
-        void Try(Action action)
+        void TryRelease(Action action)
         {
             try { action(); }
-            catch (Exception failure) { (failures ??= []).Add(failure); }
+            catch (Exception failure) { releaseFailures.Add(failure); }
         }
+    }
+
+    private static async Task CompleteRetirementAsync(Task residencyDrain, List<Exception> releaseFailures,
+        TaskCompletionSource completion)
+    {
+        try { await residencyDrain.ConfigureAwait(false); }
+        catch (AggregateException aggregate) { releaseFailures.AddRange(aggregate.Flatten().InnerExceptions); }
+        catch (Exception failure) { releaseFailures.Add(failure); }
+        if (releaseFailures.Count == 0) { completion.TrySetResult(); }
+        else { completion.TrySetException(new AggregateException(releaseFailures)); }
     }
 
     private sealed class ResidentChunk(TileMapChunkInfo2D info, SceneSpatialLease2D<TileMapChunkData2D> payload)

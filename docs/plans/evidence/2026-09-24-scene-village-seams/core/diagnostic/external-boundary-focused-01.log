@@ -1,0 +1,50 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Scene2D.Packages -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Packages\bin\Release\net8.0\Cerneala.Scene2D.Packages.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Verified 10 SDL shader artifacts from 'C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Shaders\manifest.json'.
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  Tetris -> C:\Users\lauri\Desktop\Cerneala\Tetrisish\bin\Release\net8.0\Cerneala.Tetris.dll
+  Cerneala.Tests.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)
+[xUnit.net 00:00:00.29]   Discovering: Cerneala.Tests.SdlGpu
+[xUnit.net 00:00:00.85]   Discovered:  Cerneala.Tests.SdlGpu
+[xUnit.net 00:00:00.85]   Starting:    Cerneala.Tests.SdlGpu
+  Passed Cerneala.Tests.SdlGpu.SdlGpuImageDomainGeometryTests.GeometricEdgePayloadDistinguishesExternalBoundaryFromInternalDiagonal [3 ms]
+  Passed Cerneala.Tests.SdlGpu.SdlGpuImageDomainGeometryTests.WhollyCollapsedQuadHasNoImageDomainOrRasterizedTriangle [< 1 ms]
+  Passed Cerneala.Tests.SdlGpu.SdlGpuImageDomainGeometryTests.SharedDiagonalUsesOneInterpolatedEdgeFunction(x0: 1, y0: 2, x1: 7, y1: 3, x2: 9, y2: 10, x3: 3, y3: 9) [3 ms]
+  Passed Cerneala.Tests.SdlGpu.SdlGpuImageDomainGeometryTests.SharedDiagonalUsesOneInterpolatedEdgeFunction(x0: 0, y0: 0, x1: 8, y1: 0, x2: 8, y2: 8, x3: 0, y3: 8) [< 1 ms]
+  Passed Cerneala.Tests.SdlGpu.SdlGpuImageDomainGeometryTests.SharedDiagonalUsesOneInterpolatedEdgeFunction(x0: 8, y0: 0, x1: 0, y1: 0, x2: 0, y2: 8, x3: 8, y3: 8) [< 1 ms]
+  Passed Cerneala.Tests.SdlGpu.SdlGpuImageDomainGeometryTests.OneCollapsedConstituentDoesNotClassifyOutsideCenterAsInside [< 1 ms]
+  Passed Cerneala.Tests.SdlGpu.SdlGpuImageDomainGeometryTests.LargestFiniteQuadCoordinatesKeepEveryPrivateEdgeRepresentable [< 1 ms]
+  Passed Cerneala.Tests.SdlGpu.SdlGpuImageDomainGeometryTests.ExistingFiniteTrianglesProduceFiniteDomainPayload(x0: 0, y0: 0, x1: 9.99999975E-05, y1: 0, x2: 9.99999975E-05, y2: 9.99999975E-06, x3: 0, y3: 9.99999975E-06) [< 1 ms]
+  Passed Cerneala.Tests.SdlGpu.SdlGpuImageDomainGeometryTests.ExistingFiniteTrianglesProduceFiniteDomainPayload(x0: 0, y0: 0, x1: 8, y1: 8, x2: 0, y2: 8, x3: 8, y3: 0) [< 1 ms]
+[xUnit.net 00:00:01.83]   Finished:    Cerneala.Tests.SdlGpu
+  Passed Cerneala.Tests.SdlGpu.SdlGpuImageDomainGeometryTests.ExistingFiniteTrianglesProduceFiniteDomainPayload(x0: 0, y0: 0, x1: 8, y1: 0, x2: 3, y2: 2, x3: 0, y3: 8) [< 1 ms]
+  Passed Cerneala.Tests.SdlGpu.SdlGpuImageDomainGeometryTests.ExistingFiniteTrianglesProduceFiniteDomainPayload(x0: 0, y0: 0, x1: 8, y1: 0, x2: 8, y2: 8, x3: 4, y3: 4) [< 1 ms]
+  Passed Cerneala.Tests.SdlGpu.SdlGpuImageDomainGeometryTests.ExistingFiniteTrianglesProduceFiniteDomainPayload(x0: 0, y0: 0, x1: 4, y1: 0, x2: 8, y2: 0, x3: 0, y3: 8) [< 1 ms]
+  Passed Cerneala.Tests.SdlGpu.SdlGpuImageDomainGeometryTests.ValidFiniteNearDegenerateQuadHasRepresentablePrivateDomain [< 1 ms]
+  Passed Cerneala.Tests.SdlGpu.SdlGpuImageDomainGeometryTests.ZeroLengthOuterEdgeDoesNotAdmitAnOutsideCenter [< 1 ms]
+  Passed Cerneala.Tests.SdlGpu.SdlGpuImageDomainGeometryTests.CollapsedConstituentMakesFormerSharedEdgeExternal [< 1 ms]
+  Passed Cerneala.Tests.SdlGpu.SdlGpuImageDomainGeometryTests.EdgePayloadAndPipelineLayoutAreOnlyFiveFloatsWiderThanOrdinary [2 ms]
+  Passed Cerneala.Tests.SdlGpu.SdlGpuImageDomainGeometryTests.LogicalCoordinatesSurviveReflectionRotationAndSkew [2 ms]
+  Passed Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.ExactIntegerSourceBoundaryUsesCoveredSamplingButKeepsOrdinaryInterior [910 ms]
+  Standard Output Messages:
+ Exact integer crop selected versus ordinary interior, guard Color { R = 255, G = 0, B = 255, A = 255 }: 0 differing pixels
+ Exact-center left edge at x=8.5, crop x=2: guard=Color { R = 255, G = 0, B = 255, A = 255 }, selected=Color { R = 0, G = 64, B = 0, A = 255 }, ordinary=Color { R = 127, G = 0, B = 127, A = 255 }, isolated=Color { R = 0, G = 64, B = 0, A = 255 }
+ Exact integer crop selected versus ordinary interior, guard Color { R = 0, G = 255, B = 255, A = 255 }: 0 differing pixels
+ Exact-center left edge at x=8.5, crop x=2: guard=Color { R = 0, G = 255, B = 255, A = 255 }, selected=Color { R = 0, G = 64, B = 0, A = 255 }, ordinary=Color { R = 0, G = 127, B = 127, A = 255 }, isolated=Color { R = 0, G = 64, B = 0, A = 255 }
+
+
+Results File: C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\TestResults\external-boundary-focused-01.trx
+
+Test Run Successful.
+Total tests: 18
+     Passed: 18
+ Total time: 2.6066 Seconds

@@ -1,0 +1,1 @@
+dotnet build .\Cerneala.Scene2D.Packages\Cerneala.Scene2D.Packages.csproj -c Release -m:1 --nologo -v:minimal '-p:DefaultItemExcludesInProjectFolder=artifacts/**'

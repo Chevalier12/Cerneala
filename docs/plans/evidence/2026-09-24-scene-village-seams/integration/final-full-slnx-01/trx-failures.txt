@@ -1,0 +1,12 @@
+
+File    : seam-final-full_net10.0_20260925071905.trx
+Test    : Cerneala.Tests.PreviewHost.RenderSurface3DPreviewTests.PreviewInstantiatesPairedThreeDimensionalSurfaceWithSampleGeometry
+Message : Assert.Equal() Failure: Strings differ
+                     ↓ (pos 0)
+          Expected: "Cerneala.SdlGpuSmoke.RenderSurface3DPrevi"···
+          Actual:   "RenderSurface3DPreview"
+                     ↑ (pos 0)
+Stack   :    at Cerneala.Tests.PreviewHost.RenderSurface3DPreviewTests.PreviewInstantiatesPairedThreeDimensionalSurfaceWithSampleGeometry() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\RenderSurface3DPreviewTests.cs:line 18
+          --- End of stack trace from previous location ---
+
+

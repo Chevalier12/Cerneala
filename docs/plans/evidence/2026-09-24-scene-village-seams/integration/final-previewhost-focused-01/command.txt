@@ -1,0 +1,3 @@
+CERNEALA_SDL_NATIVE_TESTS=1
+DefaultItemExcludesInProjectFolder=artifacts/**
+dotnet test .\tests\Cerneala.Tests.PreviewHost\Cerneala.Tests.PreviewHost.csproj -c Release -m:1 --no-build --no-restore --nologo -v:minimal --filter 'FullyQualifiedName~Cerneala.Tests.PreviewHost.RenderSurface3DPreviewTests.PreviewInstantiatesPairedThreeDimensionalSurfaceWithSampleGeometry' --results-directory 'docs/plans/evidence/2026-09-24-scene-village-seams/integration/final-previewhost-focused-01' --logger 'trx;LogFileName=previewhost-render-surface3d-focused-01.trx' '-p:DefaultItemExcludesInProjectFolder=artifacts/**'

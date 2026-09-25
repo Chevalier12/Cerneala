@@ -38,13 +38,8 @@ internal static class TileMapStage3CaptureFixture
                 1,
                 [new TileCell2D((x & 1) == 0 ? 1 : 2)]))
             .ToArray();
-        TileMap2D map = new()
-        {
-            Source = TileMapSource2D.FromModel(new TileMap2DModel(
-                "Boundary", new DrawSize(16, 16),
-                [tileSet],
-                chunks))
-        };
+        TileMap2D map = TileMap2D.FromModel(new TileMap2DModel(
+            "Boundary", new DrawSize(16, 16), [tileSet], chunks));
         Scene2D scene = new();
         scene.Children.Add(map);
         RenderSurface2D surface = new()

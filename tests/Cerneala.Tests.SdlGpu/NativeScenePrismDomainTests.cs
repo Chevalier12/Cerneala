@@ -115,6 +115,7 @@ public sealed class NativeScenePrismDomainTests
         string screenshot = Path.Combine(directory, "frame.png");
         List<string> files = [];
         List<SdlGpuImage> images = [];
+        List<IDisposable> nestedEffects = [];
         NativeSdlApi api = new();
         using SdlGpuWindowGraphicsSessionFactory graphics = new(api, useMultisampling: true);
         using SdlWindowPlatform platform = new(api, graphics, coordinateScaleOverride: density);
@@ -163,28 +164,32 @@ public sealed class NativeScenePrismDomainTests
             SceneSpatialEntry2D[] entries = Enumerable.Range(0, 9)
                 .Select(index => new SceneSpatialEntry2D(index.ToString(),
                     new(index == 8 ? 4096 : index * 32, 0, 32, 64), null)).ToArray();
-            List<string> itemLoads = [], mapLoads = [];
-            SceneItems2D items = new() { ItemsSource = new SceneSpatialSource2D<object>(entries, (entry, _) =>
+            List<string> mapLoads = [];
+            List<Sprite2D> sprites = [];
+            foreach (SceneSpatialEntry2D entry in entries)
             {
-                itemLoads.Add(entry.Id);
                 Sprite2D sprite = new()
                 {
                     X = entry.Bounds.X, Y = entry.Bounds.Y, Width = 32, Height = 64,
                     Image = new(images[int.Parse(entry.Id)])
                 };
-                IDisposable? nested = nestedSprites ? GeneratedMarkup.AttachPrism(sprite, () => new PrismInstance(
-                    new("Nested sprite", [new PrismLayerDefinition(new(1), "Local", filters: [new(nestedFilter)])]))) : null;
-                return ValueTask.FromResult(new SceneSpatialLease2D<object>(sprite, _ => nested?.Dispose()));
-            }) };
+                if (nestedSprites)
+                {
+                    nestedEffects.Add(GeneratedMarkup.AttachPrism(sprite, () => new PrismInstance(
+                        new("Nested sprite", [new PrismLayerDefinition(new(1), "Local", filters: [new(nestedFilter)])]))));
+                }
+                sprites.Add(sprite);
+            }
+            SceneItems2D items = new() { ItemsSource = sprites };
             TileMapCatalog2D catalog = new("native-domain", entries.Select(entry =>
                 new TileMapChunkInfo2D(entry, 1, [new ImageReference(images[int.Parse(entry.Id)])])));
-            TileMap2D map = new() { Source = new(catalog, (_, info, _) =>
+            TileMap2D map = TileMap2D.FromSource(new TileMapSource2D(catalog, (_, info, _) =>
             {
                 SceneSpatialEntry2D entry = info.Spatial;
                 mapLoads.Add(entry.Id);
                 return ValueTask.FromResult(new SceneSpatialLease2D<TileMapChunkData2D>(new([
                     new Tile(new(images[int.Parse(entry.Id)]), x: entry.Bounds.X, width: 32, height: 64)])));
-            }) };
+            }));
             SceneGraph2D actors = new() { PrismInputDomain = new(0, 0, 256, 64) };
             SceneGraph2D terrain = new() { PrismInputDomain = new(0, 0, 256, 64) };
             actors.Children.Add(items);
@@ -232,11 +237,21 @@ public sealed class NativeScenePrismDomainTests
                     byte[] actual = Capture(0);
                     if (localNeighborhood || pointwisePaint)
                     {
-                        int selected = source == 0 ? items.RealizedItemCount : map.GetDiagnosticsSnapshot().DrawnTiles;
-                        // Spatial acquisition includes the two boundary-touching entries;
-                        // map recording excludes chunks with no positive-area intersection.
-                        if (pointwisePaint) { Assert.Equal(source == 0 ? 6 : 4, selected); }
-                        else { Assert.True(selected >= 4 && selected < 8, $"{filters[filter]} source={source}, selected={selected}"); }
+                        Assert.Same(sprites, items.ItemsSource);
+                        if (source == 0)
+                        {
+                            // A cropped active collection keeps every eager logical occurrence.
+                            Assert.Equal(9, items.RealizedItemCount);
+                        }
+                        else
+                        {
+                            // Switching the surface to terrain detaches the actor scene.
+                            Assert.Equal(0, items.RealizedItemCount);
+                            int drawn = map.GetDiagnosticsSnapshot().DrawnTiles;
+                            // Map recording excludes chunks with no positive-area intersection.
+                            if (pointwisePaint) { Assert.Equal(4, drawn); }
+                            else { Assert.True(drawn >= 4 && drawn < 8, $"{filters[filter]} source={source}, drawn={drawn}"); }
+                        }
                     }
                     int first = -1, last = -1, different = 0;
                     for (int index = 0; index < reference.Length; index++)
@@ -252,7 +267,7 @@ public sealed class NativeScenePrismDomainTests
                 }
                 Click("filter");
             }
-            Assert.DoesNotContain("8", itemLoads);
+            Assert.Same(sprites[8], items.LogicalChildren.Last());
             Assert.DoesNotContain("8", mapLoads);
             Assert.True(differences.Count == 0, string.Join(Environment.NewLine, differences));
 
@@ -324,9 +339,9 @@ public sealed class NativeScenePrismDomainTests
                 runtime.PumpOnce(TimeSpan.Zero);
                 return done();
             }, TimeSpan.FromSeconds(15)), $"State={surface.PresentationState}; error={surface.PresentationError}; " +
-                $"items={items.PreparationError}; loads={string.Join(',', itemLoads)}; realized={items.RealizedItemCount}; bounds={surface.ArrangedBounds}; " +
-                $"domain={actors.PrismInputDomain}; attachments={string.Join(',', entries.Select(entry =>
-                    items.TryGetRealizedNode(entry.Id, out SceneNode2D? node) ? $"{entry.Id}:{node.IsAttached}/{node.Root is not null}" : entry.Id + ":absent"))}");
+                $"loads={string.Join(',', mapLoads)}; realized={items.RealizedItemCount}; bounds={surface.ArrangedBounds}; " +
+                $"domain={actors.PrismInputDomain}; attachments={string.Join(',', sprites.Select((sprite, index) =>
+                    $"{index}:{sprite.IsAttached}/{sprite.Root is not null}"))}");
             byte[] Capture(int x)
             {
                 runtime.PumpOnce(TimeSpan.Zero);
@@ -346,6 +361,7 @@ public sealed class NativeScenePrismDomainTests
         finally
         {
             runtime.Close(window, force: true);
+            foreach (IDisposable effect in nestedEffects) { effect.Dispose(); }
             foreach (SdlGpuImage image in images) { image.Dispose(); }
             foreach (string file in files) { File.Delete(file); }
             File.Delete(screenshot);

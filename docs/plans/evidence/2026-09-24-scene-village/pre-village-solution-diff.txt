@@ -1,0 +1,3 @@
+command=git diff --quiet -- Cerneala.slnx
+exit=0
+meaning=no pre-village tracked solution diff

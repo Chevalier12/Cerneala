@@ -109,10 +109,10 @@ internal static class SpriteAnimationBenchmarkRunner
                 ResourceId<ImageResource> atlas = new("AnimationAtlas");
                 TileCell2D[] cells = Enumerable.Repeat(new TileCell2D(1), count).ToArray();
                 for (int i = 0; i < active; i++) { cells[1 + i * 3] = default; }
-                Map = new TileMap2D { Source = TileMapSource2D.FromModel(new TileMap2DModel("Ground", new DrawSize(16, 16),
+                Map = TileMap2D.FromModel(new TileMap2DModel("Ground", new DrawSize(16, 16),
                     [new TileSet2D("World", atlas, [new TileDefinition2D(1, new DrawRect(0, 0, 16, 16))])],
                     [new TileChunk2D(new TileCoordinate2D(0, 0), 32, 32, cells)],
-                    new TileMapBounds2D(0, 0, 32, 32))) };
+                    new TileMapBounds2D(0, 0, 32, 32)));
                 scene.Children.Add(Map);
                 Surface.Resources.SetResource(atlas, new ImageResource("animation-atlas.png"));
                 root.SetImageLoader(new ImageLoader());

@@ -23,6 +23,71 @@ public sealed class SdlGpuGeometryUploadArenaTests
     }
 
     [Fact]
+    public void PackedMixedLayoutBytesUseTheSameFrameSlotAndPreserveExactPayloads()
+    {
+        FakeSdlApi api = new() { CaptureGpuBufferUploads = true };
+        nint window = api.CreateWindow("packed geometry upload", 8, 8, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window);
+        byte[] ordinaryAndSelected = Enumerable.Range(0, (4 * 32) + (4 * 64))
+            .Select(static value => checked((byte)(value % 256)))
+            .ToArray();
+        int[] indices = [0, 1, 2, 3, 4, 5];
+        SdlGpuVertex[] following = [new(Vector2.One, Vector2.UnitY, Vector4.One)];
+
+        session.BeginFrame(Color.Transparent);
+        try
+        {
+            SdlGpuGeometryBinding packed = session.GeometryUploadArena.UploadGeometryBytes(
+                session, ordinaryAndSelected, indices);
+            SdlGpuGeometryBinding next = session.GeometryUploadArena.UploadGeometry<SdlGpuVertex>(
+                session, following, [0]);
+
+            Assert.Equal(packed.VertexBuffer, next.VertexBuffer);
+            Assert.Equal(packed.IndexBuffer, next.IndexBuffer);
+            Assert.Equal(0u, packed.VertexOffset);
+            Assert.Equal((uint)ordinaryAndSelected.Length, next.VertexOffset);
+            Assert.Equal((uint)(indices.Length * sizeof(int)), next.IndexOffset);
+            Assert.Equal(
+                ordinaryAndSelected,
+                api.GpuBuffers[packed.VertexBuffer].Data.Span
+                    .Slice((int)packed.VertexOffset, ordinaryAndSelected.Length).ToArray());
+            Assert.Equal(indices, ReadIndices(
+                api.GpuBuffers[packed.IndexBuffer].Data.Span,
+                packed.IndexOffset,
+                indices.Length));
+            Assert.Equal(4, api.GpuBufferUploads.Count);
+        }
+        finally
+        {
+            session.CompleteFrame(present: false);
+        }
+    }
+
+    [Fact]
+    public void PackedUploadRejectsUnalignedBytesWithoutReservingGpuStorage()
+    {
+        FakeSdlApi api = new();
+        nint window = api.CreateWindow("unaligned packed upload", 8, 8, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = CreateSession(factory, api, window);
+
+        session.BeginFrame(Color.Transparent);
+        try
+        {
+            Assert.Throws<ArgumentException>(() =>
+                session.GeometryUploadArena.UploadGeometryBytes(session, new byte[3], [0]));
+            Assert.Empty(api.GpuBuffers.Where(static pair =>
+                pair.Value.CreateInfo.Usage is SdlGpuBufferUsage.Vertex or SdlGpuBufferUsage.Index));
+            Assert.Empty(api.TransferBuffers);
+        }
+        finally
+        {
+            session.CompleteFrame(present: false);
+        }
+    }
+
+    [Fact]
     public void Interleaved_layouts_preserve_bytes_alignment_offsets_and_int32_indices()
     {
         FakeSdlApi api = new() { CaptureGpuBufferUploads = true };

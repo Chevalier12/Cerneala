@@ -1,0 +1,11 @@
+exit=0
+trx_files=11
+log_results_refs=11
+unique_refs=11
+missing_refs=0
+unreferenced_trx=0
+aggregate_total=6324
+aggregate_passed=6318
+aggregate_failed=0
+aggregate_skipped=6
+aggregate_other=0

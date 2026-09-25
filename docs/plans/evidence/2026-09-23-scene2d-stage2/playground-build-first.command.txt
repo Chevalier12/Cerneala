@@ -1,0 +1,1 @@
+dotnet build .\Playground\Cerneala.Playground\Cerneala.Playground.csproj -c Release -m:1 --nologo -v:minimal '-p:DefaultItemExcludesInProjectFolder=artifacts/**'

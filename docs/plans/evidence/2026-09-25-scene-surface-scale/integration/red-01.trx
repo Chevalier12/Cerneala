@@ -1,0 +1,205 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="e254f6b6-cc2a-4f77-8276-f3645b40ffa8" name="lauri@DESKTOP-JT43V3D 2026-09-25 22:50:35" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-25T22:50:35.5293100+03:00" queuing="2026-09-25T22:50:35.5293106+03:00" start="2026-09-25T22:50:28.9033074+03:00" finish="2026-09-25T22:50:35.5563935+03:00" />
+  <TestSettings name="default" id="e6d91bec-c74e-49e8-a091-0dc0a653b277">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-25_22_50_35" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="b43dafc4-0cf9-4768-b805-f23f505d72d1" testId="25b11ee3-2c48-b590-3cf1-c018e854a6ae" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.TownAndCharacterArtworkUseIndependentNativeWorldSizes" computerName="DESKTOP-JT43V3D" duration="00:00:00.0040277" startTime="2026-09-25T22:50:35.2507442+03:00" endTime="2026-09-25T22:50:35.2507461+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b43dafc4-0cf9-4768-b805-f23f505d72d1">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: 16&#xD;
+Actual:   32</Message>
+          <StackTrace>   at Cerneala.Tests.SceneVillage.VillageScaleContractTests.TownAndCharacterArtworkUseIndependentNativeWorldSizes() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\VillageScaleContractTests.cs:line 69&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="bcab8ea2-0fc9-4150-b522-507da7afe57b" testId="8cc3b1a1-9d32-3f26-5774-d33a725399fc" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.SurfaceOwnsControllableZoomAndNullableInheritedContentScale" computerName="DESKTOP-JT43V3D" duration="00:00:00.0011402" startTime="2026-09-25T22:50:35.2436884+03:00" endTime="2026-09-25T22:50:35.2436890+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bcab8ea2-0fc9-4150-b522-507da7afe57b">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.SceneVillage.VillageScaleContractTests.SurfaceOwnsControllableZoomAndNullableInheritedContentScale() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\VillageScaleContractTests.cs:line 16&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="3d6c2dbc-40bb-42ce-b357-b0acd13d4ccd" testId="cae07087-36a6-fee8-4ac7-09e09c2829f3" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(invalid: ∞)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0781224" startTime="2026-09-25T22:50:35.1159306+03:00" endTime="2026-09-25T22:50:35.1159309+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3d6c2dbc-40bb-42ce-b357-b0acd13d4ccd">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(Single invalid) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\VillageScaleContractTests.cs:line 53&#xD;
+   at InvokeStub_VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="3ffcab46-b4bb-4b0b-a176-e93def740b66" testId="aaab5133-a0f7-c225-2b5a-d5e21319cb34" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(invalid: 0)" computerName="DESKTOP-JT43V3D" duration="00:00:00.8176660" startTime="2026-09-25T22:50:34.9282194+03:00" endTime="2026-09-25T22:50:34.9283062+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3ffcab46-b4bb-4b0b-a176-e93def740b66">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(Single invalid) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\VillageScaleContractTests.cs:line 53&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="cc166545-8d75-44a4-936d-f58e8d775a31" testId="e75247e1-2db2-cf75-5003-8cb3a471760a" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.StressGridRetainsItsThirtyTwoUnitPitchAndFullFieldExtent" computerName="DESKTOP-JT43V3D" duration="00:00:00.0359117" startTime="2026-09-25T22:50:35.2382147+03:00" endTime="2026-09-25T22:50:35.2382151+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cc166545-8d75-44a4-936d-f58e8d775a31" />
+    <UnitTestResult executionId="4b37fe0e-8096-4ffc-b1f8-b17653a83812" testId="62fa3f74-7832-8b06-8684-bf4241db0706" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.NativeTownTilesRetainTheExistingWorldArea" computerName="DESKTOP-JT43V3D" duration="00:00:00.0506192" startTime="2026-09-25T22:50:35.3040471+03:00" endTime="2026-09-25T22:50:35.3040475+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4b37fe0e-8096-4ffc-b1f8-b17653a83812">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: 2500&#xD;
+Actual:   625</Message>
+          <StackTrace>   at Cerneala.Tests.SceneVillage.VillageScaleContractTests.NativeTownTilesRetainTheExistingWorldArea() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\VillageScaleContractTests.cs:line 110&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="79771b85-b0ce-4d1b-8766-ee26d2bcb7c2" testId="fb05585b-2c51-b294-c981-4855723b4de0" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(invalid: -1)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0898441" startTime="2026-09-25T22:50:35.0353799+03:00" endTime="2026-09-25T22:50:35.0353803+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="79771b85-b0ce-4d1b-8766-ee26d2bcb7c2">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(Single invalid) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\VillageScaleContractTests.cs:line 53&#xD;
+   at InvokeStub_VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="d6eb6c2f-69e3-46cc-b5a3-5e0f28ff0ad9" testId="08143550-ca64-9f88-2a67-d1009a8aee56" testName="Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(invalid: NaN)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0805983" startTime="2026-09-25T22:50:35.2000140+03:00" endTime="2026-09-25T22:50:35.2000160+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d6eb6c2f-69e3-46cc-b5a3-5e0f28ff0ad9">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(Single invalid) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\VillageScaleContractTests.cs:line 53&#xD;
+   at InvokeStub_VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(invalid: -1)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="fb05585b-2c51-b294-c981-4855723b4de0">
+      <Execution id="79771b85-b0ce-4d1b-8766-ee26d2bcb7c2" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="InvalidCameraScaleValuesAreRejectedWithoutChangingTheView" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.SurfaceOwnsControllableZoomAndNullableInheritedContentScale" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="8cc3b1a1-9d32-3f26-5774-d33a725399fc">
+      <Execution id="bcab8ea2-0fc9-4150-b522-507da7afe57b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="SurfaceOwnsControllableZoomAndNullableInheritedContentScale" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(invalid: ∞)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="cae07087-36a6-fee8-4ac7-09e09c2829f3">
+      <Execution id="3d6c2dbc-40bb-42ce-b357-b0acd13d4ccd" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="InvalidCameraScaleValuesAreRejectedWithoutChangingTheView" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.StressGridRetainsItsThirtyTwoUnitPitchAndFullFieldExtent" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="e75247e1-2db2-cf75-5003-8cb3a471760a">
+      <Execution id="cc166545-8d75-44a4-936d-f58e8d775a31" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="StressGridRetainsItsThirtyTwoUnitPitchAndFullFieldExtent" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.TownAndCharacterArtworkUseIndependentNativeWorldSizes" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="25b11ee3-2c48-b590-3cf1-c018e854a6ae">
+      <Execution id="b43dafc4-0cf9-4768-b805-f23f505d72d1" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="TownAndCharacterArtworkUseIndependentNativeWorldSizes" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(invalid: 0)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="aaab5133-a0f7-c225-2b5a-d5e21319cb34">
+      <Execution id="3ffcab46-b4bb-4b0b-a176-e93def740b66" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="InvalidCameraScaleValuesAreRejectedWithoutChangingTheView" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.NativeTownTilesRetainTheExistingWorldArea" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="62fa3f74-7832-8b06-8684-bf4241db0706">
+      <Execution id="4b37fe0e-8096-4ffc-b1f8-b17653a83812" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="NativeTownTilesRetainTheExistingWorldArea" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(invalid: NaN)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="08143550-ca64-9f88-2a67-d1009a8aee56">
+      <Execution id="d6eb6c2f-69e3-46cc-b5a3-5e0f28ff0ad9" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageScaleContractTests" name="InvalidCameraScaleValuesAreRejectedWithoutChangingTheView" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="25b11ee3-2c48-b590-3cf1-c018e854a6ae" executionId="b43dafc4-0cf9-4768-b805-f23f505d72d1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8cc3b1a1-9d32-3f26-5774-d33a725399fc" executionId="bcab8ea2-0fc9-4150-b522-507da7afe57b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cae07087-36a6-fee8-4ac7-09e09c2829f3" executionId="3d6c2dbc-40bb-42ce-b357-b0acd13d4ccd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="aaab5133-a0f7-c225-2b5a-d5e21319cb34" executionId="3ffcab46-b4bb-4b0b-a176-e93def740b66" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e75247e1-2db2-cf75-5003-8cb3a471760a" executionId="cc166545-8d75-44a4-936d-f58e8d775a31" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="62fa3f74-7832-8b06-8684-bf4241db0706" executionId="4b37fe0e-8096-4ffc-b1f8-b17653a83812" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fb05585b-2c51-b294-c981-4855723b4de0" executionId="79771b85-b0ce-4d1b-8766-ee26d2bcb7c2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="08143550-ca64-9f88-2a67-d1009a8aee56" executionId="d6eb6c2f-69e3-46cc-b5a3-5e0f28ff0ad9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="8" executed="8" passed="1" failed="7" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:01.78]   Discovering: Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:01.93]   Discovered:  Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:01.94]   Starting:    Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:02.96]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:02.96]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.97]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\VillageScaleContractTests.cs(53,0): at Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(Single invalid)&#xD;
+[xUnit.net 00:00:02.97]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.97]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:03.08]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:03.08]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.08]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\VillageScaleContractTests.cs(53,0): at Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(Single invalid)&#xD;
+[xUnit.net 00:00:03.08]            at InvokeStub_VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(Object, Span`1)&#xD;
+[xUnit.net 00:00:03.08]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:03.16]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:03.16]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.16]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\VillageScaleContractTests.cs(53,0): at Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(Single invalid)&#xD;
+[xUnit.net 00:00:03.16]            at InvokeStub_VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(Object, Span`1)&#xD;
+[xUnit.net 00:00:03.16]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:03.24]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:03.24]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.24]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\VillageScaleContractTests.cs(53,0): at Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(Single invalid)&#xD;
+[xUnit.net 00:00:03.24]            at InvokeStub_VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(Object, Span`1)&#xD;
+[xUnit.net 00:00:03.24]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:03.29]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:03.29]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.29]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\VillageScaleContractTests.cs(16,0): at Cerneala.Tests.SceneVillage.VillageScaleContractTests.SurfaceOwnsControllableZoomAndNullableInheritedContentScale()&#xD;
+[xUnit.net 00:00:03.29]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:03.29]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:03.29]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:03.29]       Expected: 16&#xD;
+[xUnit.net 00:00:03.29]       Actual:   32&#xD;
+[xUnit.net 00:00:03.29]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.29]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\VillageScaleContractTests.cs(69,0): at Cerneala.Tests.SceneVillage.VillageScaleContractTests.TownAndCharacterArtworkUseIndependentNativeWorldSizes()&#xD;
+[xUnit.net 00:00:03.29]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:03.29]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:03.35]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:03.35]       Expected: 2500&#xD;
+[xUnit.net 00:00:03.35]       Actual:   625&#xD;
+[xUnit.net 00:00:03.35]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.35]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\VillageScaleContractTests.cs(110,0): at Cerneala.Tests.SceneVillage.VillageScaleContractTests.NativeTownTilesRetainTheExistingWorldArea()&#xD;
+[xUnit.net 00:00:03.35]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:03.35]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:03.35]   Finished:    Cerneala.Tests.SceneVillage&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-25T22:50:34.9181413+03:00">
+        <Text>[xUnit.net 00:00:02.96]     Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(invalid: 0) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-25T22:50:35.0341443+03:00">
+        <Text>[xUnit.net 00:00:03.08]     Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(invalid: -1) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-25T22:50:35.1159171+03:00">
+        <Text>[xUnit.net 00:00:03.16]     Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(invalid: ∞) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-25T22:50:35.1973152+03:00">
+        <Text>[xUnit.net 00:00:03.24]     Cerneala.Tests.SceneVillage.VillageScaleContractTests.InvalidCameraScaleValuesAreRejectedWithoutChangingTheView(invalid: NaN) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-25T22:50:35.2433006+03:00">
+        <Text>[xUnit.net 00:00:03.29]     Cerneala.Tests.SceneVillage.VillageScaleContractTests.SurfaceOwnsControllableZoomAndNullableInheritedContentScale [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-25T22:50:35.2488969+03:00">
+        <Text>[xUnit.net 00:00:03.29]     Cerneala.Tests.SceneVillage.VillageScaleContractTests.TownAndCharacterArtworkUseIndependentNativeWorldSizes [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-25T22:50:35.3031585+03:00">
+        <Text>[xUnit.net 00:00:03.34]     Cerneala.Tests.SceneVillage.VillageScaleContractTests.NativeTownTilesRetainTheExistingWorldArea [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

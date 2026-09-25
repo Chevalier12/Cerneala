@@ -1,0 +1,30 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Scene2D.Packages -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Packages\bin\Release\net8.0\Cerneala.Scene2D.Packages.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  Cerneala.Scene2D.Importers -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\bin\Release\net8.0\Cerneala.Scene2D.Importers.dll
+  Cerneala.Scene2D.PackageCompiler -> C:\Users\lauri\Desktop\Cerneala\Tools\Cerneala.Scene2D.PackageCompiler\bin\Release\net8.0\Cerneala.Scene2D.PackageCompiler.dll
+  Prepared 'C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldAssets\village.tmj' -> 'C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\obj\SceneWorldPackages\Release\net8.0-windows\tiled' (1 levels, 1 files).
+  SCN2D017: Known editor-only fields are not used at runtime. (C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldAssets\village.ldtk, $.defs.layers[0].autoRuleGroups)
+  Prepared 'C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldAssets\village.ldtk' -> 'C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\obj\SceneWorldPackages\Release\net8.0-windows\ldtk' (1 levels, 1 files).
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs(111,29): error CS0118: 'Scene2D' is a namespace but is used like a type [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\Cerneala.Playground.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs(117,17): error CS1503: Argument 1: cannot convert from 'Cerneala.UI.Controls.Scene2D' to 'Cerneala.Scene2D' [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\Cerneala.Playground.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs(118,17): error CS1503: Argument 1: cannot convert from 'Cerneala.UI.Controls.Scene2D' to 'Cerneala.Scene2D' [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\Cerneala.Playground.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs(119,17): error CS1503: Argument 1: cannot convert from 'Cerneala.UI.Controls.Scene2D' to 'Cerneala.Scene2D' [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\Cerneala.Playground.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs(113,46): error CS8422: A static local function cannot contain a reference to 'this' or 'base'. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\Cerneala.Playground.csproj]
+
+Build FAILED.
+
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs(111,29): error CS0118: 'Scene2D' is a namespace but is used like a type [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\Cerneala.Playground.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs(117,17): error CS1503: Argument 1: cannot convert from 'Cerneala.UI.Controls.Scene2D' to 'Cerneala.Scene2D' [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\Cerneala.Playground.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs(118,17): error CS1503: Argument 1: cannot convert from 'Cerneala.UI.Controls.Scene2D' to 'Cerneala.Scene2D' [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\Cerneala.Playground.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs(119,17): error CS1503: Argument 1: cannot convert from 'Cerneala.UI.Controls.Scene2D' to 'Cerneala.Scene2D' [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\Cerneala.Playground.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs(113,46): error CS8422: A static local function cannot contain a reference to 'this' or 'base'. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\Cerneala.Playground.csproj]
+    0 Warning(s)
+    5 Error(s)
+
+Time Elapsed 00:00:26.01

@@ -1,0 +1,7 @@
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Scene2D.Packages -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Packages\bin\Release\net8.0\Cerneala.Scene2D.Packages.dll
+C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\Cerberus.cs(74,17): error CS0246: The type or namespace name 'SdlGpuImageDomainVertex' could not be found (are you missing a using directive or an assembly reference?) [C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj]
+C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\Cerberus.cs(14,13): error CS0246: The type or namespace name 'SdlGpuImageDomainVertex' could not be found (are you missing a using directive or an assembly reference?) [C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj]

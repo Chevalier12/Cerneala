@@ -1,0 +1,558 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="269f9bc1-a3dc-4c94-85d4-a9b556186619" name="lauri@DESKTOP-JT43V3D 2026-09-24 06:10:40" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T06:10:40.7086743+03:00" queuing="2026-09-24T06:10:40.7086749+03:00" start="2026-09-24T06:10:37.5200409+03:00" finish="2026-09-24T06:10:42.1575953+03:00" />
+  <TestSettings name="default" id="e03f2993-9f65-476e-9dd1-ba127a6642fa">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_06_10_40" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="af858ba7-be08-4e3c-bdf7-e3a162f362eb" testId="cb011857-3f1a-a3fb-ca4f-6dfc6c00d488" testName="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_CreateTileMapOwnsIndependentInstancesAndMapDisposeIsTerminal" computerName="DESKTOP-JT43V3D" duration="00:00:00.3571169" startTime="2026-09-24T06:10:40.5887097+03:00" endTime="2026-09-24T06:10:40.5887103+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="af858ba7-be08-4e3c-bdf7-e3a162f362eb">
+      <Output>
+        <ErrorInfo>
+          <Message>Missing selected public IScene2DPackageRangeReader contract.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 582&#xD;
+   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_CreateTileMapOwnsIndependentInstancesAndMapDisposeIsTerminal() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 432&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="b29c05c0-6b8c-41f4-b4bb-ead432c8cda3" testId="811479c4-00a2-5788-9b22-72c99d7f667b" testName="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderRejectsZeroAndOutOfRangeReadCounts(mode: -1)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0492484" startTime="2026-09-24T06:10:40.7014826+03:00" endTime="2026-09-24T06:10:40.7014873+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b29c05c0-6b8c-41f4-b4bb-ead432c8cda3">
+      <Output>
+        <ErrorInfo>
+          <Message>Missing selected public IScene2DPackageRangeReader contract.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 582&#xD;
+   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderRejectsZeroAndOutOfRangeReadCounts(Int32 mode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 274&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="daefe21e-2b5b-4344-afa6-8755f1ebb660" testId="44102b21-4183-53f8-88c3-05aafff56214" testName="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_Cpv2RangeReaderHasTheSelectedNonspatialTransportShape" computerName="DESKTOP-JT43V3D" duration="00:00:00.0014977" startTime="2026-09-24T06:10:40.2941921+03:00" endTime="2026-09-24T06:10:40.2941925+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="daefe21e-2b5b-4344-afa6-8755f1ebb660">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.NotNull() Failure: Value is null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_Cpv2RangeReaderHasTheSelectedNonspatialTransportShape() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Scene2DPublicBoundaryContractTests.cs:line 71&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="761d13d4-72dc-4a46-8526-abd94dc7501f" testId="abeacae2-e2ac-8303-8e62-f58919fce2d2" testName="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_LoadMapModelReassemblesSubdividedAuthoredGridAndEmptyCells" computerName="DESKTOP-JT43V3D" duration="00:00:00.1409881" startTime="2026-09-24T06:10:40.8986008+03:00" endTime="2026-09-24T06:10:40.8986012+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="761d13d4-72dc-4a46-8526-abd94dc7501f">
+      <Output>
+        <ErrorInfo>
+          <Message>Missing selected Scene2DPackageLevel.LoadMapModelAsync API.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.InvokeValueAsync[T](Object owner, String name, Object[] arguments) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 605&#xD;
+   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_LoadMapModelReassemblesSubdividedAuthoredGridAndEmptyCells() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 147&#xD;
+   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_LoadMapModelReassemblesSubdividedAuthoredGridAndEmptyCells() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 153&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c02fe7ad-780f-41c0-a439-aa2e995bc67b" testId="24c1954f-87a1-afef-e75b-61fe04837302" testName="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_SceneItemsDropsSpatialPreparationAndIdMembers" computerName="DESKTOP-JT43V3D" duration="00:00:00.0096668" startTime="2026-09-24T06:10:40.3023213+03:00" endTime="2026-09-24T06:10:40.3023216+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c02fe7ad-780f-41c0-a439-aa2e995bc67b">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.DoesNotContain() Failure: Filter matched in collection&#xD;
+                                                                                                          ↓ (pos 6)&#xD;
+Collection: [···, System.Threading.Tasks.Task get_Preparation(), System.Exception get_PreparationError(), Boolean TryGetRealizedNode(System.String, Cerneala.UI.Controls.SceneNode2D ByRef), Void Refresh(), Cerneala.UI.Controls.SceneSimulationContext2D get_SimulationContext(), ···]</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_SceneItemsDropsSpatialPreparationAndIdMembers() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Scene2DPublicBoundaryContractTests.cs:line 30&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="dea84895-3752-4c4a-965a-517be71ce220" testId="8ff97f2f-fdba-76b1-63e3-6834b36942d4" testName="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_MapAndPackageExposeIdsAndValuesInsteadOfSourcesAndLeases" computerName="DESKTOP-JT43V3D" duration="00:00:00.0149447" startTime="2026-09-24T06:10:40.2912368+03:00" endTime="2026-09-24T06:10:40.2912372+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="dea84895-3752-4c4a-965a-517be71ce220">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: typeof(System.Collections.Generic.IReadOnlyList&lt;string&gt;)&#xD;
+Actual:   null</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_MapAndPackageExposeIdsAndValuesInsteadOfSourcesAndLeases() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Scene2DPublicBoundaryContractTests.cs:line 40&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="abc91cbe-a6d9-457c-8bf6-7e30913a90ce" testId="1c4ef6e1-e35b-628b-bf2b-758423e61f2c" testName="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_DisposeRejectsNewReadsAndDisposeAsyncDrainsAdmittedReadOnce" computerName="DESKTOP-JT43V3D" duration="00:00:00.0788412" startTime="2026-09-24T06:10:41.3366313+03:00" endTime="2026-09-24T06:10:41.3366323+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="abc91cbe-a6d9-457c-8bf6-7e30913a90ce">
+      <Output>
+        <ErrorInfo>
+          <Message>Missing selected public IScene2DPackageRangeReader contract.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 582&#xD;
+   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_DisposeRejectsNewReadsAndDisposeAsyncDrainsAdmittedReadOnce() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 358&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="e61d8e88-b828-458b-ab62-87fa8a800667" testId="09fa121f-90e2-5427-e99f-70b79bb4df0c" testName="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_LoadMapModelPreservesOrderedFreePlacementsAcrossPackageGroups" computerName="DESKTOP-JT43V3D" duration="00:00:00.0786393" startTime="2026-09-24T06:10:40.9751512+03:00" endTime="2026-09-24T06:10:40.9751516+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e61d8e88-b828-458b-ab62-87fa8a800667">
+      <Output>
+        <ErrorInfo>
+          <Message>Missing selected Scene2DPackageLevel.LoadMapModelAsync API.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.InvokeValueAsync[T](Object owner, String name, Object[] arguments) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 605&#xD;
+   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_LoadMapModelPreservesOrderedFreePlacementsAcrossPackageGroups() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 211&#xD;
+   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_LoadMapModelPreservesOrderedFreePlacementsAcrossPackageGroups() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 217&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="b4275034-97f9-4b51-99b0-fc1d71049a83" testId="7bbfc7e4-39fc-573d-1be7-a43d2d7cb027" testName="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_FailedOpenTransfersReaderOwnershipAndAwaitsCleanup" computerName="DESKTOP-JT43V3D" duration="00:00:00.0634665" startTime="2026-09-24T06:10:41.1565848+03:00" endTime="2026-09-24T06:10:41.1565852+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b4275034-97f9-4b51-99b0-fc1d71049a83">
+      <Output>
+        <ErrorInfo>
+          <Message>Missing selected public IScene2DPackageRangeReader contract.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 582&#xD;
+   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_FailedOpenTransfersReaderOwnershipAndAwaitsCleanup() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 319&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="4534a38e-b94b-4848-beaa-242dd6e67413" testId="4ac9b9e9-d156-cb9f-6e5c-c1026d14d29e" testName="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderRejectsZeroAndOutOfRangeReadCounts(mode: 0)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0568791" startTime="2026-09-24T06:10:40.6503862+03:00" endTime="2026-09-24T06:10:40.6503865+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4534a38e-b94b-4848-beaa-242dd6e67413">
+      <Output>
+        <ErrorInfo>
+          <Message>Missing selected public IScene2DPackageRangeReader contract.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 582&#xD;
+   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderRejectsZeroAndOutOfRangeReadCounts(Int32 mode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 274&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="675ab581-e3db-43e1-9eb4-65d05d047278" testId="f6f2009f-5ff5-3c8b-e28c-d635c9c54fd4" testName="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderHandlesShortConcurrentReadsAndDirectValues" computerName="DESKTOP-JT43V3D" duration="00:00:00.0481984" startTime="2026-09-24T06:10:41.0249148+03:00" endTime="2026-09-24T06:10:41.0249151+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="675ab581-e3db-43e1-9eb4-65d05d047278">
+      <Output>
+        <ErrorInfo>
+          <Message>Missing selected public IScene2DPackageRangeReader contract.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 582&#xD;
+   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderHandlesShortConcurrentReadsAndDirectValues() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 36&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="d7731f8d-9334-4e6e-bc0a-0d72972014c7" testId="a1ea60ad-2328-4b75-9b7e-3121ba82d3ef" testName="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_PreCutoverCpv2BytesRemainReadableWithoutWireChange" computerName="DESKTOP-JT43V3D" duration="00:00:00.0972356" startTime="2026-09-24T06:10:41.5150872+03:00" endTime="2026-09-24T06:10:41.5150877+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d7731f8d-9334-4e6e-bc0a-0d72972014c7">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: typeof(System.Threading.Tasks.ValueTask&lt;Scene2DPackageMetadata&gt;)&#xD;
+Actual:   typeof(System.Threading.Tasks.ValueTask&lt;SceneSpatialLease2D&lt;Scene2DPackageMetadata&gt;&gt;)</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.InvokeValueAsync[T](Object owner, String name, Object[] arguments) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 608&#xD;
+   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_PreCutoverCpv2BytesRemainReadableWithoutWireChange() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 26&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="2f3f0ff2-2ce2-44a8-b34c-980722357e0a" testId="b3e5bf38-be3b-d562-2c80-2dd55536d317" testName="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_MapDisposeAsyncWaitsOldGenerationAfterDetachAndReattach" computerName="DESKTOP-JT43V3D" duration="00:00:00.0412069" startTime="2026-09-24T06:10:41.7083193+03:00" endTime="2026-09-24T06:10:41.7083199+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2f3f0ff2-2ce2-44a8-b34c-980722357e0a">
+      <Output>
+        <ErrorInfo>
+          <Message>Missing selected public IScene2DPackageRangeReader contract.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 582&#xD;
+   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_MapDisposeAsyncWaitsOldGenerationAfterDetachAndReattach() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 500&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="90ba12b3-80c7-4d4e-bfbb-bf6e9b637c34" testId="1a862b60-4fa0-e2d4-357e-242e526215a3" testName="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_PublicSpatialSourceAndResidencyFamilyIsGone" computerName="DESKTOP-JT43V3D" duration="00:00:00.0156797" startTime="2026-09-24T06:10:40.2817568+03:00" endTime="2026-09-24T06:10:40.2818310+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="90ba12b3-80c7-4d4e-bfbb-bf6e9b637c34">
+      <Output>
+        <ErrorInfo>
+          <Message>SceneSpatialEntry2D is still exported by the core assembly.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_PublicSpatialSourceAndResidencyFamilyIsGone() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Scene2DPublicBoundaryContractTests.cs:line 22&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="bec29fe7-f801-4e06-8665-4eddff8bc1ba" testId="3e2c8b10-785e-f310-4910-a1834750f5f5" testName="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_FailedOpenPreservesPrimaryAndReaderCleanupErrors" computerName="DESKTOP-JT43V3D" duration="00:00:00.0982648" startTime="2026-09-24T06:10:41.2578109+03:00" endTime="2026-09-24T06:10:41.2578114+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bec29fe7-f801-4e06-8665-4eddff8bc1ba">
+      <Output>
+        <ErrorInfo>
+          <Message>Missing selected public IScene2DPackageRangeReader contract.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 582&#xD;
+   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_FailedOpenPreservesPrimaryAndReaderCleanupErrors() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 342&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="fc3b86d1-dbd4-4406-9d37-7d977328ff4c" testId="30fbb7ca-1bbf-ebe6-a445-90b0c185576c" testName="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_DirectValuesAndCompleteMapModelRemainCallerOwned" computerName="DESKTOP-JT43V3D" duration="00:00:00.0867599" startTime="2026-09-24T06:10:41.6080669+03:00" endTime="2026-09-24T06:10:41.6080672+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fc3b86d1-dbd4-4406-9d37-7d977328ff4c">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: typeof(System.Threading.Tasks.ValueTask&lt;Scene2DPackageMetadata&gt;)&#xD;
+Actual:   typeof(System.Threading.Tasks.ValueTask&lt;SceneSpatialLease2D&lt;Scene2DPackageMetadata&gt;&gt;)</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.InvokeValueAsync[T](Object owner, String name, Object[] arguments) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 608&#xD;
+   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_DirectValuesAndCompleteMapModelRemainCallerOwned() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 70&#xD;
+   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_DirectValuesAndCompleteMapModelRemainCallerOwned() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 109&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="1c6491d0-f77f-4bd8-8c5c-6a8a90d800bb" testId="b4f7cfa9-682d-259b-abba-53807d9ca681" testName="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderChecksCatalogAndPayloadHashes" computerName="DESKTOP-JT43V3D" duration="00:00:00.0593801" startTime="2026-09-24T06:10:41.6649048+03:00" endTime="2026-09-24T06:10:41.6649054+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1c6491d0-f77f-4bd8-8c5c-6a8a90d800bb">
+      <Output>
+        <ErrorInfo>
+          <Message>Missing selected public IScene2DPackageRangeReader contract.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 582&#xD;
+   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderChecksCatalogAndPayloadHashes() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 285&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="9333917c-f8af-4fef-880e-2af333b2f7d1" testId="72703cd7-aa0c-04fb-3cdc-d87266eb6a7b" testName="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderCancellationIsPerCallAndRetryIsNewRead" computerName="DESKTOP-JT43V3D" duration="00:00:00.0658495" startTime="2026-09-24T06:10:41.0924191+03:00" endTime="2026-09-24T06:10:41.0924196+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9333917c-f8af-4fef-880e-2af333b2f7d1">
+      <Output>
+        <ErrorInfo>
+          <Message>Missing selected public IScene2DPackageRangeReader contract.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 582&#xD;
+   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderCancellationIsPerCallAndRetryIsNewRead() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 237&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="d62e9b63-baa9-44cd-bda0-449f8a1dcc31" testId="bc964e4e-74ab-7f31-5d06-9ec8ab2e219b" testName="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_DisposeAsyncReportsReaderCleanupFailureOnRepeatedAwait" computerName="DESKTOP-JT43V3D" duration="00:00:00.1480289" startTime="2026-09-24T06:10:41.9109424+03:00" endTime="2026-09-24T06:10:41.9109428+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d62e9b63-baa9-44cd-bda0-449f8a1dcc31">
+      <Output>
+        <ErrorInfo>
+          <Message>Missing selected public IScene2DPackageRangeReader contract.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 582&#xD;
+   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_DisposeAsyncReportsReaderCleanupFailureOnRepeatedAwait() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 409&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="703b1e23-c7f7-4500-94ee-05a1f44b0f05" testId="2ea01517-a1d6-3746-081f-47f068704716" testName="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderRejectsPayloadLengthThatDisagreesWithCatalog" computerName="DESKTOP-JT43V3D" duration="00:00:00.0507463" startTime="2026-09-24T06:10:41.7601377+03:00" endTime="2026-09-24T06:10:41.7601381+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="703b1e23-c7f7-4500-94ee-05a1f44b0f05">
+      <Output>
+        <ErrorInfo>
+          <Message>Missing selected public IScene2DPackageRangeReader contract.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 582&#xD;
+   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderRejectsPayloadLengthThatDisagreesWithCatalog() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 308&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="a85a01a1-86c1-4a7b-ac99-4457be778d2a" testId="8e1cf4ed-c9ee-c04a-bd6a-9f2c95756d12" testName="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_AttachedMapRejectsDisposeWithoutConsumingItsTerminal" computerName="DESKTOP-JT43V3D" duration="00:00:00.0776949" startTime="2026-09-24T06:10:41.4176095+03:00" endTime="2026-09-24T06:10:41.4176100+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a85a01a1-86c1-4a7b-ac99-4457be778d2a">
+      <Output>
+        <ErrorInfo>
+          <Message>Missing selected public IScene2DPackageRangeReader contract.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 582&#xD;
+   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_AttachedMapRejectsDisposeWithoutConsumingItsTerminal() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 461&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="0defff5c-93e0-43f8-8a16-10c7afe4796e" testId="1d7a77e4-8bf4-5ceb-8031-56fa4137eb99" testName="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderRejectsZeroAndOutOfRangeReadCounts(mode: 1)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0460307" startTime="2026-09-24T06:10:40.7479547+03:00" endTime="2026-09-24T06:10:40.7479549+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0defff5c-93e0-43f8-8a16-10c7afe4796e">
+      <Output>
+        <ErrorInfo>
+          <Message>Missing selected public IScene2DPackageRangeReader contract.</Message>
+          <StackTrace>   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 582&#xD;
+   at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderRejectsZeroAndOutOfRangeReadCounts(Int32 mode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs:line 274&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderRejectsZeroAndOutOfRangeReadCounts(mode: -1)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="811479c4-00a2-5788-9b22-72c99d7f667b">
+      <Execution id="b29c05c0-6b8c-41f4-b4bb-ead432c8cda3" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests" name="Stage0_RangeReaderRejectsZeroAndOutOfRangeReadCounts" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_Cpv2RangeReaderHasTheSelectedNonspatialTransportShape" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="44102b21-4183-53f8-88c3-05aafff56214">
+      <Execution id="daefe21e-2b5b-4344-afa6-8755f1ebb660" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests" name="Stage0_Cpv2RangeReaderHasTheSelectedNonspatialTransportShape" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_LoadMapModelPreservesOrderedFreePlacementsAcrossPackageGroups" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="09fa121f-90e2-5427-e99f-70b79bb4df0c">
+      <Execution id="e61d8e88-b828-458b-ab62-87fa8a800667" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests" name="Stage0_LoadMapModelPreservesOrderedFreePlacementsAcrossPackageGroups" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_DisposeAsyncReportsReaderCleanupFailureOnRepeatedAwait" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="bc964e4e-74ab-7f31-5d06-9ec8ab2e219b">
+      <Execution id="d62e9b63-baa9-44cd-bda0-449f8a1dcc31" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests" name="Stage0_DisposeAsyncReportsReaderCleanupFailureOnRepeatedAwait" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_SceneItemsDropsSpatialPreparationAndIdMembers" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="24c1954f-87a1-afef-e75b-61fe04837302">
+      <Execution id="c02fe7ad-780f-41c0-a439-aa2e995bc67b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests" name="Stage0_SceneItemsDropsSpatialPreparationAndIdMembers" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_CreateTileMapOwnsIndependentInstancesAndMapDisposeIsTerminal" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="cb011857-3f1a-a3fb-ca4f-6dfc6c00d488">
+      <Execution id="af858ba7-be08-4e3c-bdf7-e3a162f362eb" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests" name="Stage0_CreateTileMapOwnsIndependentInstancesAndMapDisposeIsTerminal" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_MapAndPackageExposeIdsAndValuesInsteadOfSourcesAndLeases" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="8ff97f2f-fdba-76b1-63e3-6834b36942d4">
+      <Execution id="dea84895-3752-4c4a-965a-517be71ce220" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests" name="Stage0_MapAndPackageExposeIdsAndValuesInsteadOfSourcesAndLeases" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_DisposeRejectsNewReadsAndDisposeAsyncDrainsAdmittedReadOnce" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="1c4ef6e1-e35b-628b-bf2b-758423e61f2c">
+      <Execution id="abc91cbe-a6d9-457c-8bf6-7e30913a90ce" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests" name="Stage0_DisposeRejectsNewReadsAndDisposeAsyncDrainsAdmittedReadOnce" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderRejectsZeroAndOutOfRangeReadCounts(mode: 0)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="4ac9b9e9-d156-cb9f-6e5c-c1026d14d29e">
+      <Execution id="4534a38e-b94b-4848-beaa-242dd6e67413" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests" name="Stage0_RangeReaderRejectsZeroAndOutOfRangeReadCounts" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_AttachedMapRejectsDisposeWithoutConsumingItsTerminal" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="8e1cf4ed-c9ee-c04a-bd6a-9f2c95756d12">
+      <Execution id="a85a01a1-86c1-4a7b-ac99-4457be778d2a" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests" name="Stage0_AttachedMapRejectsDisposeWithoutConsumingItsTerminal" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_FailedOpenTransfersReaderOwnershipAndAwaitsCleanup" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="7bbfc7e4-39fc-573d-1be7-a43d2d7cb027">
+      <Execution id="b4275034-97f9-4b51-99b0-fc1d71049a83" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests" name="Stage0_FailedOpenTransfersReaderOwnershipAndAwaitsCleanup" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_FailedOpenPreservesPrimaryAndReaderCleanupErrors" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="3e2c8b10-785e-f310-4910-a1834750f5f5">
+      <Execution id="bec29fe7-f801-4e06-8665-4eddff8bc1ba" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests" name="Stage0_FailedOpenPreservesPrimaryAndReaderCleanupErrors" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_LoadMapModelReassemblesSubdividedAuthoredGridAndEmptyCells" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="abeacae2-e2ac-8303-8e62-f58919fce2d2">
+      <Execution id="761d13d4-72dc-4a46-8526-abd94dc7501f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests" name="Stage0_LoadMapModelReassemblesSubdividedAuthoredGridAndEmptyCells" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderChecksCatalogAndPayloadHashes" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="b4f7cfa9-682d-259b-abba-53807d9ca681">
+      <Execution id="1c6491d0-f77f-4bd8-8c5c-6a8a90d800bb" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests" name="Stage0_RangeReaderChecksCatalogAndPayloadHashes" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderHandlesShortConcurrentReadsAndDirectValues" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="f6f2009f-5ff5-3c8b-e28c-d635c9c54fd4">
+      <Execution id="675ab581-e3db-43e1-9eb4-65d05d047278" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests" name="Stage0_RangeReaderHandlesShortConcurrentReadsAndDirectValues" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_DirectValuesAndCompleteMapModelRemainCallerOwned" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="30fbb7ca-1bbf-ebe6-a445-90b0c185576c">
+      <Execution id="fc3b86d1-dbd4-4406-9d37-7d977328ff4c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests" name="Stage0_DirectValuesAndCompleteMapModelRemainCallerOwned" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_MapDisposeAsyncWaitsOldGenerationAfterDetachAndReattach" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="b3e5bf38-be3b-d562-2c80-2dd55536d317">
+      <Execution id="2f3f0ff2-2ce2-44a8-b34c-980722357e0a" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests" name="Stage0_MapDisposeAsyncWaitsOldGenerationAfterDetachAndReattach" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderCancellationIsPerCallAndRetryIsNewRead" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="72703cd7-aa0c-04fb-3cdc-d87266eb6a7b">
+      <Execution id="9333917c-f8af-4fef-880e-2af333b2f7d1" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests" name="Stage0_RangeReaderCancellationIsPerCallAndRetryIsNewRead" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_PreCutoverCpv2BytesRemainReadableWithoutWireChange" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="a1ea60ad-2328-4b75-9b7e-3121ba82d3ef">
+      <Execution id="d7731f8d-9334-4e6e-bc0a-0d72972014c7" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests" name="Stage0_PreCutoverCpv2BytesRemainReadableWithoutWireChange" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderRejectsZeroAndOutOfRangeReadCounts(mode: 1)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="1d7a77e4-8bf4-5ceb-8031-56fa4137eb99">
+      <Execution id="0defff5c-93e0-43f8-8a16-10c7afe4796e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests" name="Stage0_RangeReaderRejectsZeroAndOutOfRangeReadCounts" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderRejectsPayloadLengthThatDisagreesWithCatalog" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="2ea01517-a1d6-3746-081f-47f068704716">
+      <Execution id="703b1e23-c7f7-4500-94ee-05a1f44b0f05" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPackageTests" name="Stage0_RangeReaderRejectsPayloadLengthThatDisagreesWithCatalog" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_PublicSpatialSourceAndResidencyFamilyIsGone" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scene2dpackages\bin\release\net8.0\cerneala.tests.scene2dpackages.dll" id="1a862b60-4fa0-e2d4-357e-242e526215a3">
+      <Execution id="90ba12b3-80c7-4d4e-bfbb-bf6e9b637c34" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests" name="Stage0_PublicSpatialSourceAndResidencyFamilyIsGone" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="cb011857-3f1a-a3fb-ca4f-6dfc6c00d488" executionId="af858ba7-be08-4e3c-bdf7-e3a162f362eb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="811479c4-00a2-5788-9b22-72c99d7f667b" executionId="b29c05c0-6b8c-41f4-b4bb-ead432c8cda3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="44102b21-4183-53f8-88c3-05aafff56214" executionId="daefe21e-2b5b-4344-afa6-8755f1ebb660" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="abeacae2-e2ac-8303-8e62-f58919fce2d2" executionId="761d13d4-72dc-4a46-8526-abd94dc7501f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="24c1954f-87a1-afef-e75b-61fe04837302" executionId="c02fe7ad-780f-41c0-a439-aa2e995bc67b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8ff97f2f-fdba-76b1-63e3-6834b36942d4" executionId="dea84895-3752-4c4a-965a-517be71ce220" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1c4ef6e1-e35b-628b-bf2b-758423e61f2c" executionId="abc91cbe-a6d9-457c-8bf6-7e30913a90ce" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="09fa121f-90e2-5427-e99f-70b79bb4df0c" executionId="e61d8e88-b828-458b-ab62-87fa8a800667" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7bbfc7e4-39fc-573d-1be7-a43d2d7cb027" executionId="b4275034-97f9-4b51-99b0-fc1d71049a83" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4ac9b9e9-d156-cb9f-6e5c-c1026d14d29e" executionId="4534a38e-b94b-4848-beaa-242dd6e67413" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f6f2009f-5ff5-3c8b-e28c-d635c9c54fd4" executionId="675ab581-e3db-43e1-9eb4-65d05d047278" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a1ea60ad-2328-4b75-9b7e-3121ba82d3ef" executionId="d7731f8d-9334-4e6e-bc0a-0d72972014c7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b3e5bf38-be3b-d562-2c80-2dd55536d317" executionId="2f3f0ff2-2ce2-44a8-b34c-980722357e0a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1a862b60-4fa0-e2d4-357e-242e526215a3" executionId="90ba12b3-80c7-4d4e-bfbb-bf6e9b637c34" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3e2c8b10-785e-f310-4910-a1834750f5f5" executionId="bec29fe7-f801-4e06-8665-4eddff8bc1ba" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="30fbb7ca-1bbf-ebe6-a445-90b0c185576c" executionId="fc3b86d1-dbd4-4406-9d37-7d977328ff4c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b4f7cfa9-682d-259b-abba-53807d9ca681" executionId="1c6491d0-f77f-4bd8-8c5c-6a8a90d800bb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="72703cd7-aa0c-04fb-3cdc-d87266eb6a7b" executionId="9333917c-f8af-4fef-880e-2af333b2f7d1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bc964e4e-74ab-7f31-5d06-9ec8ab2e219b" executionId="d62e9b63-baa9-44cd-bda0-449f8a1dcc31" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2ea01517-a1d6-3746-081f-47f068704716" executionId="703b1e23-c7f7-4500-94ee-05a1f44b0f05" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8e1cf4ed-c9ee-c04a-bd6a-9f2c95756d12" executionId="a85a01a1-86c1-4a7b-ac99-4457be778d2a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1d7a77e4-8bf4-5ceb-8031-56fa4137eb99" executionId="0defff5c-93e0-43f8-8a16-10c7afe4796e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="22" executed="22" passed="0" failed="22" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.27]   Discovering: Cerneala.Tests.Scene2DPackages&#xD;
+[xUnit.net 00:00:00.49]   Discovered:  Cerneala.Tests.Scene2DPackages&#xD;
+[xUnit.net 00:00:00.50]   Starting:    Cerneala.Tests.Scene2DPackages&#xD;
+[xUnit.net 00:00:00.66]       SceneSpatialEntry2D is still exported by the core assembly.&#xD;
+[xUnit.net 00:00:00.66]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.67]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Scene2DPublicBoundaryContractTests.cs(22,0): at Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_PublicSpatialSourceAndResidencyFamilyIsGone()&#xD;
+[xUnit.net 00:00:00.67]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.67]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.68]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:00.68]       Expected: typeof(System.Collections.Generic.IReadOnlyList&lt;string&gt;)&#xD;
+[xUnit.net 00:00:00.68]       Actual:   null&#xD;
+[xUnit.net 00:00:00.68]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.68]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Scene2DPublicBoundaryContractTests.cs(40,0): at Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_MapAndPackageExposeIdsAndValuesInsteadOfSourcesAndLeases()&#xD;
+[xUnit.net 00:00:00.68]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.68]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.68]       Assert.NotNull() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.68]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.68]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Scene2DPublicBoundaryContractTests.cs(71,0): at Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_Cpv2RangeReaderHasTheSelectedNonspatialTransportShape()&#xD;
+[xUnit.net 00:00:00.68]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.68]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.69]       Assert.DoesNotContain() Failure: Filter matched in collection&#xD;
+[xUnit.net 00:00:00.69]                                                                                                                 ↓ (pos 6)&#xD;
+[xUnit.net 00:00:00.69]       Collection: [···, System.Threading.Tasks.Task get_Preparation(), System.Exception get_PreparationError(), Boolean TryGetRealizedNode(System.String, Cerneala.UI.Controls.SceneNode2D ByRef), Void Refresh(), Cerneala.UI.Controls.SceneSimulationContext2D get_SimulationContext(), ···]&#xD;
+[xUnit.net 00:00:00.69]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.69]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Scene2DPublicBoundaryContractTests.cs(30,0): at Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_SceneItemsDropsSpatialPreparationAndIdMembers()&#xD;
+[xUnit.net 00:00:00.69]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.69]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.98]       Missing selected public IScene2DPackageRangeReader contract.&#xD;
+[xUnit.net 00:00:00.98]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.98]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(582,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake)&#xD;
+[xUnit.net 00:00:00.98]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(432,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_CreateTileMapOwnsIndependentInstancesAndMapDisposeIsTerminal()&#xD;
+[xUnit.net 00:00:00.98]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.04]       Missing selected public IScene2DPackageRangeReader contract.&#xD;
+[xUnit.net 00:00:01.04]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.04]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(582,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake)&#xD;
+[xUnit.net 00:00:01.04]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(274,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderRejectsZeroAndOutOfRangeReadCounts(Int32 mode)&#xD;
+[xUnit.net 00:00:01.04]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.09]       Missing selected public IScene2DPackageRangeReader contract.&#xD;
+[xUnit.net 00:00:01.09]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.09]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(582,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake)&#xD;
+[xUnit.net 00:00:01.09]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(274,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderRejectsZeroAndOutOfRangeReadCounts(Int32 mode)&#xD;
+[xUnit.net 00:00:01.09]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.14]       Missing selected public IScene2DPackageRangeReader contract.&#xD;
+[xUnit.net 00:00:01.14]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.14]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(582,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake)&#xD;
+[xUnit.net 00:00:01.14]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(274,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderRejectsZeroAndOutOfRangeReadCounts(Int32 mode)&#xD;
+[xUnit.net 00:00:01.14]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.28]       Missing selected Scene2DPackageLevel.LoadMapModelAsync API.&#xD;
+[xUnit.net 00:00:01.28]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.28]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(605,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.InvokeValueAsync[T](Object owner, String name, Object[] arguments)&#xD;
+[xUnit.net 00:00:01.28]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(147,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_LoadMapModelReassemblesSubdividedAuthoredGridAndEmptyCells()&#xD;
+[xUnit.net 00:00:01.28]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(153,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_LoadMapModelReassemblesSubdividedAuthoredGridAndEmptyCells()&#xD;
+[xUnit.net 00:00:01.28]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.36]       Missing selected Scene2DPackageLevel.LoadMapModelAsync API.&#xD;
+[xUnit.net 00:00:01.36]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.36]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(605,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.InvokeValueAsync[T](Object owner, String name, Object[] arguments)&#xD;
+[xUnit.net 00:00:01.36]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(211,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_LoadMapModelPreservesOrderedFreePlacementsAcrossPackageGroups()&#xD;
+[xUnit.net 00:00:01.36]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(217,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_LoadMapModelPreservesOrderedFreePlacementsAcrossPackageGroups()&#xD;
+[xUnit.net 00:00:01.36]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.41]       Missing selected public IScene2DPackageRangeReader contract.&#xD;
+[xUnit.net 00:00:01.41]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.41]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(582,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake)&#xD;
+[xUnit.net 00:00:01.41]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(36,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderHandlesShortConcurrentReadsAndDirectValues()&#xD;
+[xUnit.net 00:00:01.41]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.48]       Missing selected public IScene2DPackageRangeReader contract.&#xD;
+[xUnit.net 00:00:01.48]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.48]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(582,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake)&#xD;
+[xUnit.net 00:00:01.48]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(237,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderCancellationIsPerCallAndRetryIsNewRead()&#xD;
+[xUnit.net 00:00:01.48]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.54]       Missing selected public IScene2DPackageRangeReader contract.&#xD;
+[xUnit.net 00:00:01.54]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.54]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(582,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake)&#xD;
+[xUnit.net 00:00:01.54]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(319,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_FailedOpenTransfersReaderOwnershipAndAwaitsCleanup()&#xD;
+[xUnit.net 00:00:01.54]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.64]       Missing selected public IScene2DPackageRangeReader contract.&#xD;
+[xUnit.net 00:00:01.64]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.64]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(582,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake)&#xD;
+[xUnit.net 00:00:01.64]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(342,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_FailedOpenPreservesPrimaryAndReaderCleanupErrors()&#xD;
+[xUnit.net 00:00:01.64]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.72]       Missing selected public IScene2DPackageRangeReader contract.&#xD;
+[xUnit.net 00:00:01.72]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.72]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(582,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake)&#xD;
+[xUnit.net 00:00:01.72]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(358,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_DisposeRejectsNewReadsAndDisposeAsyncDrainsAdmittedReadOnce()&#xD;
+[xUnit.net 00:00:01.72]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.80]       Missing selected public IScene2DPackageRangeReader contract.&#xD;
+[xUnit.net 00:00:01.80]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.80]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(582,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake)&#xD;
+[xUnit.net 00:00:01.80]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(461,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_AttachedMapRejectsDisposeWithoutConsumingItsTerminal()&#xD;
+[xUnit.net 00:00:01.80]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.90]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:01.90]       Expected: typeof(System.Threading.Tasks.ValueTask&lt;Scene2DPackageMetadata&gt;)&#xD;
+[xUnit.net 00:00:01.90]       Actual:   typeof(System.Threading.Tasks.ValueTask&lt;SceneSpatialLease2D&lt;Scene2DPackageMetadata&gt;&gt;)&#xD;
+[xUnit.net 00:00:01.90]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.90]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(608,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.InvokeValueAsync[T](Object owner, String name, Object[] arguments)&#xD;
+[xUnit.net 00:00:01.90]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(26,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_PreCutoverCpv2BytesRemainReadableWithoutWireChange()&#xD;
+[xUnit.net 00:00:01.90]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.99]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:01.99]       Expected: typeof(System.Threading.Tasks.ValueTask&lt;Scene2DPackageMetadata&gt;)&#xD;
+[xUnit.net 00:00:01.99]       Actual:   typeof(System.Threading.Tasks.ValueTask&lt;SceneSpatialLease2D&lt;Scene2DPackageMetadata&gt;&gt;)&#xD;
+[xUnit.net 00:00:01.99]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.00]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(608,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.InvokeValueAsync[T](Object owner, String name, Object[] arguments)&#xD;
+[xUnit.net 00:00:02.00]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(70,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_DirectValuesAndCompleteMapModelRemainCallerOwned()&#xD;
+[xUnit.net 00:00:02.00]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(109,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_DirectValuesAndCompleteMapModelRemainCallerOwned()&#xD;
+[xUnit.net 00:00:02.00]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.05]       Missing selected public IScene2DPackageRangeReader contract.&#xD;
+[xUnit.net 00:00:02.05]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.05]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(582,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake)&#xD;
+[xUnit.net 00:00:02.05]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(285,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderChecksCatalogAndPayloadHashes()&#xD;
+[xUnit.net 00:00:02.05]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.09]       Missing selected public IScene2DPackageRangeReader contract.&#xD;
+[xUnit.net 00:00:02.10]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.10]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(582,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake)&#xD;
+[xUnit.net 00:00:02.10]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(500,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_MapDisposeAsyncWaitsOldGenerationAfterDetachAndReattach()&#xD;
+[xUnit.net 00:00:02.10]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.15]       Missing selected public IScene2DPackageRangeReader contract.&#xD;
+[xUnit.net 00:00:02.15]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.15]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(582,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake)&#xD;
+[xUnit.net 00:00:02.15]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(308,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderRejectsPayloadLengthThatDisagreesWithCatalog()&#xD;
+[xUnit.net 00:00:02.15]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.30]       Missing selected public IScene2DPackageRangeReader contract.&#xD;
+[xUnit.net 00:00:02.30]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.30]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(582,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.CreateRangeReader(Fixture fixture, Stage0RangeReaderProxy&amp; fake)&#xD;
+[xUnit.net 00:00:02.30]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Stage0PackageContractTests.cs(409,0): at Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_DisposeAsyncReportsReaderCleanupFailureOnRepeatedAwait()&#xD;
+[xUnit.net 00:00:02.30]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.31]   Finished:    Cerneala.Tests.Scene2DPackages&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:40.2752551+03:00">
+        <Text>[xUnit.net 00:00:00.66]     Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_PublicSpatialSourceAndResidencyFamilyIsGone [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:40.2902687+03:00">
+        <Text>[xUnit.net 00:00:00.68]     Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_MapAndPackageExposeIdsAndValuesInsteadOfSourcesAndLeases [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:40.2932508+03:00">
+        <Text>[xUnit.net 00:00:00.68]     Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_Cpv2RangeReaderHasTheSelectedNonspatialTransportShape [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:40.3015040+03:00">
+        <Text>[xUnit.net 00:00:00.69]     Cerneala.Tests.Scene2DPackages.Scene2DPublicBoundaryContractTests.Stage0_SceneItemsDropsSpatialPreparationAndIdMembers [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:40.5879875+03:00">
+        <Text>[xUnit.net 00:00:00.98]     Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_CreateTileMapOwnsIndependentInstancesAndMapDisposeIsTerminal [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:40.7284428+03:00">
+        <Text>[xUnit.net 00:00:01.04]     Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderRejectsZeroAndOutOfRangeReadCounts(mode: 0) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:40.7286111+03:00">
+        <Text>[xUnit.net 00:00:01.09]     Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderRejectsZeroAndOutOfRangeReadCounts(mode: -1) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:40.7472667+03:00">
+        <Text>[xUnit.net 00:00:01.14]     Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderRejectsZeroAndOutOfRangeReadCounts(mode: 1) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:40.8930548+03:00">
+        <Text>[xUnit.net 00:00:01.28]     Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_LoadMapModelReassemblesSubdividedAuthoredGridAndEmptyCells [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:40.9742162+03:00">
+        <Text>[xUnit.net 00:00:01.36]     Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_LoadMapModelPreservesOrderedFreePlacementsAcrossPackageGroups [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:41.0242599+03:00">
+        <Text>[xUnit.net 00:00:01.41]     Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderHandlesShortConcurrentReadsAndDirectValues [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:41.0917073+03:00">
+        <Text>[xUnit.net 00:00:01.48]     Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderCancellationIsPerCallAndRetryIsNewRead [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:41.1558824+03:00">
+        <Text>[xUnit.net 00:00:01.54]     Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_FailedOpenTransfersReaderOwnershipAndAwaitsCleanup [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:41.2556054+03:00">
+        <Text>[xUnit.net 00:00:01.64]     Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_FailedOpenPreservesPrimaryAndReaderCleanupErrors [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:41.3357774+03:00">
+        <Text>[xUnit.net 00:00:01.72]     Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_DisposeRejectsNewReadsAndDisposeAsyncDrainsAdmittedReadOnce [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:41.4153198+03:00">
+        <Text>[xUnit.net 00:00:01.80]     Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_AttachedMapRejectsDisposeWithoutConsumingItsTerminal [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:41.5147476+03:00">
+        <Text>[xUnit.net 00:00:01.90]     Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_PreCutoverCpv2BytesRemainReadableWithoutWireChange [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:41.6034524+03:00">
+        <Text>[xUnit.net 00:00:01.99]     Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_DirectValuesAndCompleteMapModelRemainCallerOwned [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:41.6642238+03:00">
+        <Text>[xUnit.net 00:00:02.05]     Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderChecksCatalogAndPayloadHashes [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:41.7068253+03:00">
+        <Text>[xUnit.net 00:00:02.09]     Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_MapDisposeAsyncWaitsOldGenerationAfterDetachAndReattach [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:41.7591348+03:00">
+        <Text>[xUnit.net 00:00:02.15]     Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_RangeReaderRejectsPayloadLengthThatDisagreesWithCatalog [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T06:10:41.9086072+03:00">
+        <Text>[xUnit.net 00:00:02.30]     Cerneala.Tests.Scene2DPackages.Scene2DPackageTests.Stage0_DisposeAsyncReportsReaderCleanupFailureOnRepeatedAwait [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

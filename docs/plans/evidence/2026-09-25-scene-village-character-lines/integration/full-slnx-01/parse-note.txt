@@ -1,0 +1,7 @@
+Total=6382
+Passed=6376
+Failed=0
+Skipped=6
+TrxFiles=11
+ResultRows=6382
+AllReconciled=True

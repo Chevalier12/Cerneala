@@ -617,23 +617,18 @@ public sealed class TileMapSpatialResidencyTests
     }
 
     [Fact]
-    public void SimulatedMetadataKeepsTerrainCollisionWithoutKeepingOffCameraImages()
+    public void SimulatedActorKeepsTerrainCollisionWithoutKeepingOffCameraImages()
     {
         using Fixture fixture = new();
-        fixture.Scene.Children.Remove(fixture.Actor);
-        SceneSpatialSource2D<object> source = new(
-            [new("npc", new(1980, 0, 10, 10), new DrawRect(1980, 0, 60, 10), isSimulated: true)],
-            (_, _) => ValueTask.FromResult(new SceneSpatialLease2D<object>(new object())));
-        SceneItems2D npcs = new() { ItemsSource = source };
-        npcs.Templates.Add(new ContentTemplate<object>("npc", null, 0, _ => fixture.Actor));
-        fixture.Scene.Children.Add(npcs);
+        fixture.Actor.X = 1995;
+        fixture.Actor.Collider!.IsSimulated = true;
         fixture.Tick();
         fixture.Record();
         Assert.Same(fixture.Map, fixture.Move().Collision!.Entity);
         Assert.Equal(["near.png"], fixture.Loader.Loads.Select(image => image.Path));
         Assert.Equal(2, fixture.Map.LogicalChildren.Count);
 
-        source.SetEntries([]);
+        fixture.Actor.Collider.IsSimulated = false;
         fixture.Tick();
         Assert.Single(fixture.Map.LogicalChildren);
     }
@@ -710,26 +705,29 @@ public sealed class TileMapSpatialResidencyTests
     {
         using Fixture fixture = new();
         using SceneCollisionRegion2D region = await fixture.Scene.CollisionWorld.PrepareRegionAsync(new(1980, 0, 60, 10));
-        Assert.NotNull(fixture.Move().Collision);
-        CollisionHit2D? duringPublication = null;
+        Collider2D retiredCollider = fixture.Move().Collision!.Collider;
+        Exception? duringPublication = null;
+        bool retiredDuringPublication = false;
         bool published = false;
         SceneItems2D publisher = new()
         {
-            ItemsSource = new SceneSpatialSource2D<object>([new("publisher", new(0, 0, 10, 10), collisionBounds: null)],
-                (_, _) => ValueTask.FromResult(new SceneSpatialLease2D<object>(new object())))
+            ItemsSource = new object[] { new object() }
         };
         publisher.Templates.Add(new ContentTemplate<object>("publish", null, 0, _ =>
         {
             fixture.Map.PublishModel(new("edited", fixture.Model.TileSize, fixture.Model.TileSets, [fixture.Model.Chunks[0]]));
-            duringPublication = fixture.Move().Collision;
+            retiredDuringPublication = !retiredCollider.IsAttached;
+            duringPublication = Record.Exception(() => fixture.Move());
             published = true;
             return new Scene2D();
         }));
         fixture.Scene.Children.Add(publisher);
         fixture.Tick();
-        Assert.Null(publisher.PreparationError);
+        Assert.Null(publisher.CollisionReadinessError);
         Assert.True(published);
-        Assert.Null(duringPublication);
+        Assert.True(retiredDuringPublication);
+        Assert.IsType<InvalidOperationException>(duringPublication);
+        Assert.False(retiredCollider.IsAttached);
         Assert.True(region.IsReady);
         Assert.Null(fixture.Move().Collision);
     }

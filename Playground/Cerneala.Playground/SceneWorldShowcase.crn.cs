@@ -37,12 +37,12 @@ public partial class SceneWorldShowcase : UserControl
     {
         CancellationTokenSource? previous = lifetime;
         lifetime = null;
-        State.PropertyChanged -= OnStatePropertyChanged;
         previous?.Cancel();
         playerRegion?.Dispose();
         playerRegion = null;
         Surface.Scene = null;
         State.Suspend();
+        State.PropertyChanged -= OnStatePropertyChanged;
         State.OwnerRelay = null;
         Surface.Resources.Remove("world-atlas.png");
         previous?.Dispose();
@@ -92,11 +92,31 @@ public partial class SceneWorldShowcase : UserControl
 
     private void OnStatePropertyChanged(object? sender, PropertyChangedEventArgs args)
     {
-        if (args.PropertyName != nameof(SceneWorldState.Atlas) || State.Atlas is not { } atlas) return;
-        // Resources and map-source notifications share the same UI publication.
-        // There is no frame with new tile data and the previous package's atlas.
-        Resources.SetResource(new ResourceId<ImageResource>("WorldAtlas"), atlas);
-        Surface.Resources.SetResource(new ResourceId<ImageResource>("world-atlas.png"), atlas);
+        if (args.PropertyName == nameof(SceneWorldState.Atlas) && State.Atlas is { } atlas)
+        {
+            // Resources and map replacement share one UI publication. No frame
+            // can present new tile data with the previous package's atlas.
+            Resources.SetResource(new ResourceId<ImageResource>("WorldAtlas"), atlas);
+            Surface.Resources.SetResource(new ResourceId<ImageResource>("world-atlas.png"), atlas);
+        }
+        else if (args.PropertyName is nameof(SceneWorldState.GroundMap) or
+                 nameof(SceneWorldState.BuildingMap) or nameof(SceneWorldState.DoorMap))
+        {
+            SyncMapNodes();
+        }
+    }
+
+    private void SyncMapNodes()
+    {
+        static void Replace(Cerneala.UI.Controls.Scene2D layer, TileMap2D? map)
+        {
+            if (layer.Children.Count == 1 && ReferenceEquals(layer.Children[0], map)) return;
+            layer.Children.Clear();
+            if (map is not null) layer.Children.Add(map);
+        }
+        Replace(GroundLayer, State.GroundMap);
+        Replace(BuildingsLayer, State.BuildingMap);
+        Replace(DoorsLayer, State.DoorMap);
     }
 
     private async Task PreparePlayerAsync(UiRelay relay, bool reset, CancellationToken token)
@@ -186,12 +206,10 @@ public partial class SceneWorldShowcase : UserControl
         Begin(token => LoadWorldAsync(!State.IsLdtk, resume: false, Root!.Relay, token));
 }
 
-// Authored walls are acquired only for spatial interests. Their large authoring
-// properties do not become permanent application backing data.
+// The application keeps only the gameplay fields of each authored wall.
 public sealed record SceneWorldBox(float X, float Y, float Width, float Height, uint Layer, uint Mask);
 public sealed record SceneWorldNpc(float X, float Y)
 {
-    internal string Id { get; } = Guid.NewGuid().ToString("N");
     public DrawRect Destination => new(0, 0, 16, 16);
     public DrawRect? PrismInputDomain => Destination;
     public float SourceX => 64;
@@ -200,7 +218,7 @@ public sealed record SceneWorldNpc(float X, float Y)
     public float SourceHeight => 16;
 }
 
-public sealed class SceneWorldState : INotifyPropertyChanged, IDisposable
+public sealed class SceneWorldState : INotifyPropertyChanged, IDisposable, IAsyncDisposable
 {
     private float playerX, playerY, cameraX = 8;
     private bool doorClosed = true, planted, isBusy;
@@ -210,13 +228,11 @@ public sealed class SceneWorldState : INotifyPropertyChanged, IDisposable
     private long generation;
     private bool disposed;
     private readonly string packageRoot;
-    private readonly Dictionary<string, SceneWorldNpc> npcPayloads = new(StringComparer.Ordinal);
+    private readonly List<Task> retirements = [];
 
     public SceneWorldState(string? packageRoot = null)
     {
         this.packageRoot = packageRoot ?? Path.Combine(AppContext.BaseDirectory, "SceneWorldPackages");
-        NpcSource = new([], (entry, _) => ValueTask.FromResult(new SceneSpatialLease2D<object>(npcPayloads[entry.Id])));
-        Npcs.CollectionChanged += (_, _) => PublishNpcs();
         Npcs.Add(new(310, 190));
     }
 
@@ -226,17 +242,17 @@ public sealed class SceneWorldState : INotifyPropertyChanged, IDisposable
     public bool IsLoaded => world is not null;
     public bool IsBusy { get => isBusy; internal set { isBusy = value; Changed(); } }
     public event PropertyChangedEventHandler? PropertyChanged;
-    public IReadOnlyList<TileMapSource2D> TileMaps => world?.TileMaps ?? [];
-    public TileMapSource2D? GroundSource => TileMaps.SingleOrDefault(map => map.Catalog.Id == "1");
-    public TileMapSource2D? BuildingSource => TileMaps.SingleOrDefault(map => map.Catalog.Id == "2");
-    public TileMapSource2D? DoorSource => TileMaps.SingleOrDefault(map => map.Catalog.Id == "4");
-    public float DoorX => (DoorSource?.Catalog.Offset.X ?? 0) + 14 * DoorWidth;
-    public float DoorY => (DoorSource?.Catalog.Offset.Y ?? 0) + 9 * DoorHeight;
-    public float DoorWidth => DoorSource?.Catalog.TileSize.Width ?? 16;
-    public float DoorHeight => DoorSource?.Catalog.TileSize.Height ?? 16;
+    public IReadOnlyList<string> TileMapIds => world?.TileMapIds ?? [];
+    public TileMap2D? GroundMap => world?.GroundMap;
+    public TileMap2D? BuildingMap => world?.BuildingMap;
+    public TileMap2D? DoorMap => world?.DoorMap;
+    public float DoorX => (world?.DoorModel.Offset.X ?? 0) + 14 * DoorWidth;
+    public float DoorY => (world?.DoorModel.Offset.Y ?? 0) + 9 * DoorHeight;
+    public float DoorWidth => world?.DoorModel.TileSize.Width ?? 16;
+    public float DoorHeight => world?.DoorModel.TileSize.Height ?? 16;
     public DrawRect? DoorPrismInputDomain => new DrawRect(0, 0, DoorWidth, DoorHeight);
-    public Color DoorTint => DoorSource?.Catalog.Tint ?? Color.White;
-    public float DoorOpacity => DoorSource?.Catalog.Opacity ?? 1;
+    public Color DoorTint => world?.DoorModel.Tint ?? Color.White;
+    public float DoorOpacity => world?.DoorModel.Opacity ?? 1;
     public float PlayerX { get => playerX; set { playerX = value; Changed(); } }
     public float PlayerY { get => playerY; set { playerY = value; Changed(); } }
     public float CameraX { get => cameraX; set { cameraX = value; Changed(); } }
@@ -247,8 +263,7 @@ public sealed class SceneWorldState : INotifyPropertyChanged, IDisposable
     public string Status { get => status; set { status = value; Changed(); } }
     public bool IsLdtk { get; private set; }
     public ObservableCollection<SceneWorldNpc> Npcs { get; } = [];
-    public SceneSpatialSource2D<object> NpcSource { get; }
-    public ISceneSpatialSource2D<object>? ColliderSource => world?.ColliderSource;
+    public IReadOnlyList<SceneWorldBox> Walls => world?.Walls ?? [];
     public DrawPoint Spawn => RequireWorld().Spawn;
     public IScene2DDebugNavigationGrid Navigation { get; } = new VillageNavigation();
     public float PlayerWidth => 16;
@@ -267,40 +282,54 @@ public sealed class SceneWorldState : INotifyPropertyChanged, IDisposable
         bool restorePlant = !reset && planted;
         SceneWorldPackage? next = await SceneWorldPackage.OpenAsync(
             Path.Combine(packageRoot, ldtk ? "ldtk" : "tiled"), token).ConfigureAwait(false);
+        Task retirement = Task.CompletedTask;
         try
         {
             if (restorePlant)
             {
-                using var edit = await next.PreparePlantAsync(token).ConfigureAwait(false);
-                edit.Publish(); // This unopened composition has no scene subscribers yet.
+                TileMap2DModel edited = await next.PreparePlantAsync(plant: true, token).ConfigureAwait(false);
+                next.SetBuildingModelBeforeMaps(edited);
             }
             void Publish()
             {
                 token.ThrowIfCancellationRequested();
                 if (disposed || generation != request) throw new OperationCanceledException("The village load was superseded.");
+                if (relay is not null) next!.CreateMaps();
                 SceneWorldPackage? previous = world;
                 world = next;
                 next = null;
-                try
+                IsLdtk = ldtk;
+                HasLoaded = true;
+                if (reset)
                 {
-                    IsLdtk = ldtk;
-                    HasLoaded = true;
-                    if (reset)
-                    {
-                        planted = false;
-                        DoorClosed = world.DoorClosed;
-                        CameraX = 8;
-                        ResetPlayer();
-                    }
-                    SourcesChanged();
-                    Status = $"{(ldtk ? "LDtk" : "Tiled")} package | {TileMaps.Sum(map => map.Catalog.Chunks.Count)} chunks | 1 door sprite";
+                    planted = false;
+                    DoorClosed = world!.DoorClosed;
+                    CameraX = 8;
+                    ResetPlayer();
                 }
-                finally { previous?.Dispose(); }
+                SourcesChanged();
+                Status = $"{(ldtk ? "LDtk" : "Tiled")} prepared package | 1 door sprite";
+                if (previous is not null)
+                {
+                    retirement = previous.DisposeAfterDetachAsync();
+                    retirements.Add(retirement);
+                }
             }
             if (relay is null) Publish();
             else await relay.InvokeAsync(Publish, token).ConfigureAwait(false);
+            await retirement.ConfigureAwait(false);
         }
-        finally { next?.Dispose(); }
+        finally
+        {
+            if (next is not null)
+            {
+                Task cleanup = Task.CompletedTask;
+                if (relay is null || !next.HasMaps) cleanup = next.DisposeAfterDetachAsync();
+                else await relay.InvokeAsync(() => { cleanup = next.DisposeAfterDetachAsync(); },
+                    CancellationToken.None).ConfigureAwait(false);
+                await cleanup.ConfigureAwait(false);
+            }
+        }
     }
 
     public void ResetPlayer()
@@ -318,18 +347,27 @@ public sealed class SceneWorldState : INotifyPropertyChanged, IDisposable
         SceneWorldPackage current = RequireWorld();
         UiRelay? relay = OwnerRelay;
         long request = ++generation;
-        using var edit = await current.PreparePlantAsync(cancellationToken).ConfigureAwait(false);
+        TileMap2DModel edited = await current.PreparePlantAsync(!planted, cancellationToken).ConfigureAwait(false);
+        Task retirement = Task.CompletedTask;
         void Publish()
         {
             cancellationToken.ThrowIfCancellationRequested();
             if (disposed || generation != request || !ReferenceEquals(world, current))
                 throw new OperationCanceledException("The Plant operation was superseded.");
-            edit.Publish();
+            if (relay is null) current.SetBuildingModelBeforeMaps(edited);
+            else
+            {
+                TileMap2D previous = current.ReplaceBuildingMap(edited);
+                Changed(nameof(BuildingMap)); // View detaches the old node before its terminal drain.
+                retirement = current.RetireMapAfterDetachAsync(previous);
+                retirements.Add(retirement);
+            }
             planted = !planted;
-            Status = "Plant: one prepared decorative chunk published; grass and unchanged chunks retained.";
+            Status = "Plant: complete decorative map model replaced; streaming Ground retained.";
         }
         if (relay is null) Publish();
         else await relay.InvokeAsync(Publish, cancellationToken).ConfigureAwait(false);
+        await retirement.ConfigureAwait(false);
     }
 
     internal void Suspend()
@@ -338,7 +376,7 @@ public sealed class SceneWorldState : INotifyPropertyChanged, IDisposable
         SceneWorldPackage? previous = world;
         world = null;
         SourcesChanged();
-        previous?.Dispose();
+        if (previous is not null) retirements.Add(previous.DisposeAfterDetachAsync());
     }
 
     public void Dispose()
@@ -349,26 +387,24 @@ public sealed class SceneWorldState : INotifyPropertyChanged, IDisposable
         Suspend();
     }
 
+    public async ValueTask DisposeAsync()
+    {
+        Dispose();
+        foreach (Task retirement in retirements.ToArray()) await retirement.ConfigureAwait(false);
+    }
+
     private SceneWorldPackage RequireWorld() => world ?? throw new InvalidOperationException("The village package is not loaded.");
 
     private void SourcesChanged()
     {
-        foreach (string name in new[] { nameof(Atlas), nameof(IsLoaded), nameof(IsLdtk), nameof(TileMaps),
-            nameof(GroundSource), nameof(BuildingSource), nameof(DoorSource), nameof(ColliderSource),
+        foreach (string name in new[] { nameof(Atlas), nameof(IsLoaded), nameof(IsLdtk), nameof(TileMapIds),
+            nameof(GroundMap), nameof(BuildingMap), nameof(DoorMap), nameof(Walls),
             nameof(DoorX), nameof(DoorY), nameof(DoorWidth), nameof(DoorHeight), nameof(DoorPrismInputDomain),
             nameof(DoorTint), nameof(DoorOpacity) })
             Changed(name);
     }
 
     private void Changed([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
-
-    private void PublishNpcs()
-    {
-        npcPayloads.Clear();
-        foreach (SceneWorldNpc npc in Npcs) npcPayloads.Add(npc.Id, npc);
-        NpcSource.SetEntries(Npcs.Select(npc => new SceneSpatialEntry2D(
-            npc.Id, new(npc.X, npc.Y, 16, 16), isSimulated: true)));
-    }
 
     private sealed class VillageNavigation : IScene2DDebugNavigationGrid
     {

@@ -260,8 +260,8 @@ public sealed class PackageValueCodecTests
         TileMapSource2D backing = TileMapSource2D.FromModel(model);
         using var input = await backing.LoadAsync(backing.Entries[0]);
         byte[] encoded = PackageValueCodec.Encode(input.Value);
-        TileMap2D map = new() { Source = new(backing.Catalog, (_, _, _) =>
-            ValueTask.FromResult(new SceneSpatialLease2D<TileMapChunkData2D>((TileMapChunkData2D)PackageValueCodec.Decode(encoded)!))) };
+        TileMap2D map = TileMap2D.FromSource(new TileMapSource2D(backing.Catalog, (_, _, _) =>
+            ValueTask.FromResult(new SceneSpatialLease2D<TileMapChunkData2D>((TileMapChunkData2D)PackageValueCodec.Decode(encoded)!))));
         var scene = new global::Cerneala.UI.Controls.Scene2D();
         scene.Children.Add(map);
         using SceneSimulationContext2D context = new(scene);

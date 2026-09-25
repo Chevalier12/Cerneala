@@ -8,7 +8,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Controls/SceneItems2D.cs`
 
-Acquires spatial payloads and realizes retained scene nodes for the surface viewport and active simulation.
+Materializes an ordinary collection of models as retained scene nodes under a `Scene2D`.
 
 ```csharp
 public sealed class SceneItems2D : SceneNode2D
@@ -18,106 +18,71 @@ Inheritance: `object` -> `UiObject` -> `UIElement` -> `SceneNode2D` -> `SceneIte
 
 ## Examples
 
-The source declares bounds before the template is instantiated. This in-memory example owns its model strings; releasing an acquisition does not unload those caller-owned strings.
-
 ```csharp
-var source = new SceneSpatialSource2D<object>(
-    [new SceneSpatialEntry2D("npc-17", new DrawRect(120, 80, 32, 48), isSimulated: true)],
-    (entry, cancellationToken) =>
-        ValueTask.FromResult(new SceneSpatialLease2D<object>(entry.Id)));
-
+var models = new ObservableCollection<Scene2DEntity>();
 var items = new SceneItems2D();
-items.Templates.Add(new ContentTemplate<string>("npc", null, 0,
+items.Templates.Add(new ContentTemplate<Scene2DEntity>("actor", null, 0,
     context => new Sprite2D
     {
-        X = 120, Y = 80, Width = 32, Height = 48,
-        DataContext = context.Data
+        X = context.Data!.Position.X,
+        Y = context.Data.Position.Y,
+        Width = 16,
+        Height = 16
     }));
-items.ItemsSource = source;
-
+items.ItemsSource = models;
 var scene = new Scene2D();
 scene.Children.Add(items);
-var surface = new RenderSurface2D { Scene = scene, ViewBox = new DrawRect(0, 0, 320, 180) };
 ```
 
-The sprite in this example has no image. Assign its `Image` and, when required, its collider using the ordinary [Sprite2D](Cerneala.UI.Controls.Sprite2D.md) APIs.
-
-In `.crn` files the template collection still uses `@templates { ... }`. Bind `ItemsSource` to an `ISceneSpatialSource2D<object>`; a template's `DataType` describes its payload model, not the metadata entry. Legacy `SceneItems2D.Templates` property-element syntax remains rejected.
+Populate `models` with separately loaded `Scene2DEntity` values. The template must return a distinct `SceneNode2D` for each occurrence. A sprite still needs an `Image` to draw. In `.crn` markup, declare templates with `@templates { ... }` and bind `ItemsSource` to an ordinary enumerable, including an observable collection.
 
 ## Remarks
 
-### Identity and ordering
+### Snapshot, identity and templates
 
-This is a breaking migration from `IEnumerable`. Arbitrary enumerable/template pairs cannot provide bounds before realization and are no longer accepted. Publish immutable catalog snapshots through a spatial source instead of collection delta notifications.
+`ItemsSource` accepts `IEnumerable`, including `ObservableCollection<T>`. The control enumerates it once when assigned, even before attachment, and does not re-enumerate a plain enumerable on every frame or on detach/reattach. A silent mutation is not visible until `Refresh()` or rebind. `Refresh()` synchronously re-enumerates and resets identity; a one-shot source must support another enumeration if refreshed. An observable source is re-enumerated once after each collection notification and on reattach to recover edits made while detached. Only one observable subscription is active while the control has a simulation context.
 
-Selected entries are realized and recorded in catalog order. Identity is the ordinal, case-sensitive entry ID plus payload version, within the same source. Inserting, removing, or reordering other entries does not recreate retained nodes. Publishing changed bounds with the same ID/version keeps the payload and node. Incrementing a payload version replaces that entry; replacing the source or changing templates replaces the relevant nodes.
+The sequence contains ordered **occurrences**, not unique model identities. Repeated references and `null` are not silently discarded. For valid `Add`, `Remove`, `Move` and `Replace` notifications, unaffected occurrences keep their nodes; `Move` moves the same nodes. `Reset`, `Refresh()`, source replacement and template changes rebuild the realizations. Invalid or inconsistent delta indices fall back to a full reset. This is eager model realization, not viewport-only creation or lazy loading for an arbitrary enumerable.
 
-The materializer's logical bounds are the union of the current catalog's visual bounds, including unloaded entries. Camera residency does not shrink those bounds or change the containing scene's `LayerThenY` anchor or Prism capture coordinates. Publishing a new catalog updates the union without acquiring payloads. An empty or null source has empty bounds.
+Each realized node receives its occurrence value as `DataContext`. Template matching and creation use `ContentTemplateContext.Index = -1`; index is not a reactive collection position. A matching template must return a `SceneNode2D`. Without a match, a value that already is a `SceneNode2D` can be used directly. `null` needs a template that accepts it. No matching template, a null/wrong-type result, a node returned for two occurrences, or a node already owned elsewhere raises `InvalidOperationException` from control validation. The exact message is not contractual. An application template-factory exception normally propagates unchanged; if retiring an uncommitted candidate also fails, the failures are aggregated without losing the primary error. The control does not create a second input tree or transfer image/data ownership from the application.
 
-The template match and creation contexts use their default `Index = -1`; they do not receive a positional index. Put application ordering information in the model and bind it explicitly. Ordinary UI content-template index semantics are unchanged. `TryGetRealizedNode` looks up a currently realized node by ID without loading it.
+The materializer's bounds come from its realized children, not unpublished model metadata. Children remain logical scene nodes even when off camera; their normal scene/input/collision lifecycle applies. Recording may skip off-camera child work and retire unused render/image acquisitions. No automatic bounds, collision envelope, or pre-load terrain interest can be inferred from an arbitrary model before its node exists. For an already-realized actor that needs terrain kept near its own collider geometry, set [Collider2D.IsSimulated](Cerneala.UI.Controls.Collider2D.md) on that collider. For a still-unloaded actor, manage an explicit collision region instead.
 
-A matching content template must return a `SceneNode2D`. With no matching template, a payload that already is a scene node is used directly. Distinct identities require distinct nodes. Nodes already owned by another parent cannot be adopted.
+### Threading, failure and lifecycle
 
-### Residency and presentation
+Assign `ItemsSource`, edit templates, call `Refresh()`, and raise attached observable notifications on the control's owner thread. Before first attachment, assignment and enumeration use the constructing thread. After the first attachment, the owner rule continues while detached. Use `UiRelay` to make a collection mutation on the UI owner; the control does not auto-marshal an already-mutated arbitrary collection from a worker thread.
 
-Preparation requires a [SceneSimulationContext2D](Cerneala.UI.Controls.SceneSimulationContext2D.md). An attached surface supplies that common owner and refreshes spatial interest during frame updates and arrangement, including in `OnDemand` mode. ViewBox, stretch, raster size/DPI, and nested scene transforms determine the conservative local viewport. An independent context has an empty viewport and selects only simulated entries and collision interests; the application's normal owner-thread loop pumps `Update`. It does not attach nodes to UI or start image loading, UI Motion, Aspect, or an animation clock.
+Enumeration and template creation are staged before changing `LogicalChildren`. If preflight fails, the exception reaches the caller and the previously committed nodes remain; the requested property value may already have changed. The latest successfully enumerated requested snapshot is cached separately from the committed tree. When a complete enumeration of the current request is available, a template-only edit rebuilds from it without re-enumeration, including when deferred from a reentrant child-tree notification; source replacement, collection notifications and `Refresh()` still request enumeration. If template creation fails, a later template edit can retry the requested snapshot without consuming a one-shot enumerable again. If enumeration itself fails, there is no complete requested snapshot to retry: a template edit does not enumerate again or mark the old committed tree ready. `Refresh()` explicitly retries enumeration. Collision preparation does not report an uncommitted new snapshot as ready. Reentrant changes during preflight invalidate the older candidate, so it cannot publish late.
 
-Entry bounds use the materializer's local coordinate space. They must conservatively include the templated subtree's visual influence, including its own effects. The source must publish changed bounds as its model moves, or supply an envelope covering that motion. Bounds are not inferred by loading an image or measuring a template.
+Once structural attach/detach or collection callbacks have begun, an exception can leave external lifecycle side effects that this control cannot roll back. The instance then enters a terminal structural fault: it stops publishing new generations, aligns `RealizedItemCount` with observable logical membership, retires local candidates best-effort, and propagates the primary failure together with any cleanup failures. Replace the control; `Refresh()` and rebind do not repair that terminal state. Normal detach removes realized nodes and the observable subscription. A plain source keeps its snapshot for reattach; an observable source is re-enumerated on reattach.
 
-Pointer picking uses those bounds to select visual candidates before asking a templated sprite for image-dependent geometry. A metadata rectangle is not itself a hit shape: retained input filters and precise node geometry still decide the target. Actual collider hits preserve their ancestor route independently of the visual envelope, including a collider extending beyond its sprite. A pointer miss outside an entry's metadata therefore does not reload that entry's retired image just to measure it. Non-invertible input transforms retain conservative traversal.
-
-The materializer selects viewport intersections, collision-interest intersections, and every entry with `IsSimulated = true`. A simulated entry remains attached outside the viewport: its node identity, bindings, Motion state, sprite-animation registration, and colliders remain present. Camera retirement does not assign `IsVisible`, disable colliders, or detach active simulation. Offscreen entries are omitted from recording and their node-owned render/image acquisitions are released, including static entries retained only for collisions. Other consumers, retained commands, direct/borrowed images, or a caller-owned model can still retain resources.
-
-Changed spatial interest retires unnecessary node-owned render acquisitions independently of successful scene recording. An unrelated source that puts the surface in `Loading` must not prevent an offscreen NPC image from being released. Hidden/transparent scene ancestors also retire these graphical acquisitions without detaching simulation.
-
-The owning surface checks current visual identity/version/template coverage before submitting the scene or making scene input available. Missing required visible payloads withhold the entire scene; a relevant `PreparationError` is also exposed as the surface's `PresentationError`. This does not gate on every source task indiscriminately: an offscreen simulation failure can remain source-visible while an already-ready viewport stays presentable. Worker-published catalogs are checked even before their UI notifications apply. See [RenderSurface2D](Cerneala.UI.Controls.RenderSurface2D.md) for the current integration limits and application-composed loading/error UI.
-
-For camera/interest changes, still-valid static entries leaving the selected region are detached and their spatial acquisitions released after the replacement selection is prepared. This does not postpone catalog edits: when a published catalog is applied on the owning UI thread, removed IDs and obsolete payload versions are detached and released immediately, even if unrelated replacements are still loading. Unchanged IDs/versions retain their nodes and acquisitions. The authoritative world is not an old complete snapshot waiting for a future all-at-once commit.
-
-Each realized node owns its payload acquisition independently of the temporary preparation snapshot. Shared ID/version interests are acquired before obsolete requests are cancelled. A deleted object's old collider and image ownership leave with its normal node lifecycle; the materializer does not assign `Collider.Enabled` to hide stale geometry. New unavailable collision data still causes the collision world's readiness exception. Prepare application data before publishing it when a visual transition must not expose an unprepared replacement. The source controls actual payload allocation and release; this control cannot unload data still retained by application code.
-
-An ancestor Prism composition containing only supported pointwise adjustments or paint styles does not expand camera interest. Image masks retain their separate resource dependency, including feathering, without selecting extra scene payloads. Covered local neighborhood filters automatically include the off-camera sampling input they need, without selecting the full catalog. Offscreen payload and image retirement outside required input still applies, while logical capture bounds remain catalog-based. Every active composition without supported automatic input selection requires a finite `PrismInputDomain` on its owner; this includes global filters, the seven remaining styles, wrapped edge modes and unclassified filters. Required off-camera entries within that domain are prepared and recorded before the final camera clip. A missing required declaration reports a surface presentation error instead of starting whole-world presentation I/O. The materializer itself has no Prism scope; place the effect and domain on the containing scene or templated node. See [Scene2D's Prism input rules](Cerneala.UI.Controls.Scene2D.md#prism-input-and-streamed-children) for the exact operation/edge-mode coverage and live-state handling. Non-invertible/non-finite transforms can still require conservative selection; a finite domain can still exceed raster or memory limits. This is not a blanket bounded-residency guarantee for those cases.
-
-The root [CollisionWorld2D](Cerneala.UI.Controls.CollisionWorld2D.md) combines explicit prepared-region leases and the `CollisionBounds` of simulated entries into terrain interest. Those rectangles are separate from visual bounds and are transformed into each materializer's local space. Distant NPCs do not implicitly retain all terrain between them. A query requiring missing collision data throws `SceneCollisionRegionNotReadyException`; prepare its complete envelope explicitly instead of relying on camera residency. Explicitly hidden sources do not contribute collision coverage or simulation terrain interest.
-
-### Asynchronous work and errors
-
-The residency owner allows up to four concurrent payload loads. Application loaders explicitly provide asynchronous work; a synchronous loader is not moved to a worker implicitly. Payload completion and source notifications are marshaled through the simulation context's relay before creating templates or changing the scene tree. Keep the normal UI frame loop or independent simulation `Update` loop running while awaiting preparation; do not synchronously block its thread on an unfinished `Preparation`.
-
-`Preparation` represents the most recently requested preparation, not an immutable guarantee for a later camera/source revision. An error is available through that task and `PreparationError`. Failed requests do not retry every frame. `Refresh()` explicitly retries or republishes interest; source/catalog and viewport changes also create new requests. A superseded request may be cancelled. Late results cannot attach to a replacement source.
-
-Detach unsubscribes, cancels pending interest, removes realized nodes, and releases acquisitions. Reattach subscribes once and prepares the then-current source. Node detach uses the normal binding, Aspect, Motion, Prism, image-resource, and surface lifecycle. The materializer adds no separate Prism effect layer; declare effects on the templated nodes.
-
-In an independent context, leaving the simulation owner performs source/data-binding retirement without pretending to run UI detach events. Cancellation and late-result retirement do not require a final pump of a disposed context. A new context is a new acquisition lifecycle; it never revives old region leases or pending publications.
+`RealizedItemCount` counts the nodes this instance currently owns in `LogicalChildren`, including after an interrupted structural commit. It is not a viewport count. The control exposes no asynchronous `Preparation` or `PreparationError`: collection enumeration and `Refresh()` are synchronous, not package I/O retries.
 
 ## Constructors
 
 | Name | Description |
 | --- | --- |
-| `SceneItems2D()` | Creates an empty spatial materializer and template collection. |
+| `SceneItems2D()` | Creates an empty materializer and template collection. |
 
 ## Fields
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `ItemsSourceProperty` | `UiProperty<ISceneSpatialSource2D<object>?>` | Identifies the source property. |
+| `ItemsSourceProperty` | `UiProperty<IEnumerable?>` | Identifies the items-source UI property. |
 
 ## Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `ItemsSource` | `ISceneSpatialSource2D<object>?` | Source catalog and payload-acquisition provider; initially null. |
-| `Templates` | `Collection<ContentTemplate>` | Templates resolved against acquired payload models. |
-| `RealizedItemCount` | `int` | Number of currently realized entries, including simulated entries; independent-context nodes are not UI-attached. |
-| `Preparation` | `Task` | Most recently requested preparation; initially completed. |
-| `PreparationError` | `Exception?` | Last reported preparation error; cleared when a new request starts. |
+| `ItemsSource` | `IEnumerable?` | Source sequence; initially `null`. |
+| `Templates` | `Collection<ContentTemplate>` | Templates resolved against collection values. |
+| `RealizedItemCount` | `int` | Current logical-child count for this materializer. |
 
 ## Methods
 
 | Name | Description |
 | --- | --- |
-| `Refresh()` | Re-evaluates interest and explicitly retries preparation using the current source and viewport. Requires the current owner's thread. |
-| `TryGetRealizedNode(string id, out SceneNode2D? node)` | Returns a currently realized node without loading; false/null when absent. Requires the current owner's thread. |
+| `Refresh()` | Synchronously re-enumerates the current source and resets occurrence identity on the owner thread. |
 
 ## Property Information
 
@@ -127,8 +92,7 @@ In an independent context, leaving the simulation owner performs source/data-bin
 
 ## See also
 
-- [SceneSpatialEntry2D](Cerneala.UI.Controls.SceneSpatialEntry2D.md)
-- [SceneSpatialSource2D&lt;T&gt;](Cerneala.UI.Controls.SceneSpatialSource2D_T_.md)
-- [SceneSpatialResidency2D&lt;T&gt;](Cerneala.UI.Controls.SceneSpatialResidency2D_T_.md)
-- [RenderSurface2D](Cerneala.UI.Controls.RenderSurface2D.md)
 - [Scene2D](Cerneala.UI.Controls.Scene2D.md)
+- [Sprite2D](Cerneala.UI.Controls.Sprite2D.md)
+- [Collider2D](Cerneala.UI.Controls.Collider2D.md)
+- [SceneCollisionRegion2D](Cerneala.UI.Controls.SceneCollisionRegion2D.md)

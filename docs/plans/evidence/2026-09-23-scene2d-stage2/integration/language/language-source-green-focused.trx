@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="2e3f5c1d-c978-40d3-a4b3-766aba274ac3" name="lauri@DESKTOP-JT43V3D 2026-09-24 09:32:27" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T09:32:27.4372886+03:00" queuing="2026-09-24T09:32:27.4372891+03:00" start="2026-09-24T09:32:18.8188854+03:00" finish="2026-09-24T09:32:36.5696438+03:00" />
+  <TestSettings name="default" id="b5ee7099-ade5-4109-839f-a30b00d4c1dd">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_09_32_27" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="0c6ee68b-91f5-4cfa-90bd-5aa7b5f2b665" testId="a01f7eec-f9f0-26ac-88dd-103b5c73b1b6" testName="Cerneala.Tests.Language.CompletionTests.TileMapNeverOffersRemovedSourceAndStillOffersStaticTiles" computerName="DESKTOP-JT43V3D" duration="00:00:02.0692765" startTime="2026-09-24T09:32:36.3923962+03:00" endTime="2026-09-24T09:32:36.3923965+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0c6ee68b-91f5-4cfa-90bd-5aa7b5f2b665" />
+    <UnitTestResult executionId="b735b5b8-0538-497c-aad3-4c3fea02169b" testId="d07c9419-64d3-34cd-da26-a30963e6f3f7" testName="Cerneala.Tests.Language.TileMapSourceSemanticTests.CompletionNeverOffersRemovedMapSourceButKeepsStaticTile" computerName="DESKTOP-JT43V3D" duration="00:00:05.0570303" startTime="2026-09-24T09:32:33.3175781+03:00" endTime="2026-09-24T09:32:33.3175785+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b735b5b8-0538-497c-aad3-4c3fea02169b" />
+    <UnitTestResult executionId="9933674e-cad0-4651-8c95-6c7dfb51c1ff" testId="0ef1df1e-3186-3f91-8b10-8468abad9fb9" testName="Cerneala.Tests.Language.TileMapSourceSemanticTests.RemovedMapSourceIsDiagnosedAsAnUnknownMemberWithoutBindingAdvice(markup: &quot;&lt;TileMap2D&gt;&lt;TileMap2D.Aspect&gt;@default { Source = n&quot;···)" computerName="DESKTOP-JT43V3D" duration="00:00:04.1271836" startTime="2026-09-24T09:32:27.3720985+03:00" endTime="2026-09-24T09:32:27.3721672+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9933674e-cad0-4651-8c95-6c7dfb51c1ff" />
+    <UnitTestResult executionId="8ca0b826-c3af-4fed-a34b-618a3ff73a2e" testId="92632c22-8af7-c2a0-7476-f7f1169cb0cc" testName="Cerneala.Tests.Language.TileMapSourceSemanticTests.RemovedMapSourceIsDiagnosedAsAnUnknownMemberWithoutBindingAdvice(markup: &quot;&lt;TileMap2D&gt;&lt;TileMap2D.Source /&gt;&lt;/TileMap2D&gt;&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.3565591" startTime="2026-09-24T09:32:28.2602784+03:00" endTime="2026-09-24T09:32:28.2602788+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8ca0b826-c3af-4fed-a34b-618a3ff73a2e" />
+    <UnitTestResult executionId="cec4a5da-1894-4053-a745-7935f7830679" testId="8a648cdb-ca7c-198c-5cc8-e5035f67672c" testName="Cerneala.Tests.Language.TileMapSourceSemanticTests.InvalidMapSourceAttributeDoesNotHideStaticTileSemantics" computerName="DESKTOP-JT43V3D" duration="00:00:00.3451784" startTime="2026-09-24T09:32:34.3179188+03:00" endTime="2026-09-24T09:32:34.3179192+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cec4a5da-1894-4053-a745-7935f7830679" />
+    <UnitTestResult executionId="240c9afd-82c3-445c-8fb8-de934250c07b" testId="734d9b58-0772-6186-144e-a11095db6d75" testName="Cerneala.Tests.Language.TileMapSourceSemanticTests.RemovedMapSourceIsDiagnosedAsAnUnknownMemberWithoutBindingAdvice(markup: &quot;&lt;TileMap2D Source=\&quot;removed\&quot; /&gt;&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.5335468" startTime="2026-09-24T09:32:27.9031188+03:00" endTime="2026-09-24T09:32:27.9031192+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="240c9afd-82c3-445c-8fb8-de934250c07b" />
+    <UnitTestResult executionId="e7f5dfb4-1a40-4f40-9c64-6d9740211c73" testId="c1bc9a98-2179-29e1-7d35-66ff48916790" testName="Cerneala.Tests.Language.TileMapSourceSemanticTests.OrdinaryImageSourceBindingStillResolves" computerName="DESKTOP-JT43V3D" duration="00:00:00.6528476" startTime="2026-09-24T09:32:33.9706199+03:00" endTime="2026-09-24T09:32:33.9706203+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e7f5dfb4-1a40-4f40-9c64-6d9740211c73" />
+    <UnitTestResult executionId="20bb3f9b-dc32-41a9-88e8-ee478c97bc62" testId="ac91e8e5-a28c-0f61-92ba-e4563c538a54" testName="Cerneala.Tests.Language.TileMapSourceSemanticTests.FixtureUsesTheCurrentPublicCoreSurface" computerName="DESKTOP-JT43V3D" duration="00:00:00.0018221" startTime="2026-09-24T09:32:33.9725412+03:00" endTime="2026-09-24T09:32:33.9725414+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="20bb3f9b-dc32-41a9-88e8-ee478c97bc62" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Language.TileMapSourceSemanticTests.OrdinaryImageSourceBindingStillResolves" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="c1bc9a98-2179-29e1-7d35-66ff48916790">
+      <Execution id="e7f5dfb4-1a40-4f40-9c64-6d9740211c73" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TileMapSourceSemanticTests" name="OrdinaryImageSourceBindingStillResolves" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TileMapSourceSemanticTests.FixtureUsesTheCurrentPublicCoreSurface" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="ac91e8e5-a28c-0f61-92ba-e4563c538a54">
+      <Execution id="20bb3f9b-dc32-41a9-88e8-ee478c97bc62" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TileMapSourceSemanticTests" name="FixtureUsesTheCurrentPublicCoreSurface" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TileMapSourceSemanticTests.InvalidMapSourceAttributeDoesNotHideStaticTileSemantics" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="8a648cdb-ca7c-198c-5cc8-e5035f67672c">
+      <Execution id="cec4a5da-1894-4053-a745-7935f7830679" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TileMapSourceSemanticTests" name="InvalidMapSourceAttributeDoesNotHideStaticTileSemantics" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TileMapSourceSemanticTests.RemovedMapSourceIsDiagnosedAsAnUnknownMemberWithoutBindingAdvice(markup: &quot;&lt;TileMap2D&gt;&lt;TileMap2D.Source /&gt;&lt;/TileMap2D&gt;&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="92632c22-8af7-c2a0-7476-f7f1169cb0cc">
+      <Execution id="8ca0b826-c3af-4fed-a34b-618a3ff73a2e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TileMapSourceSemanticTests" name="RemovedMapSourceIsDiagnosedAsAnUnknownMemberWithoutBindingAdvice" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.CompletionTests.TileMapNeverOffersRemovedSourceAndStillOffersStaticTiles" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="a01f7eec-f9f0-26ac-88dd-103b5c73b1b6">
+      <Execution id="0c6ee68b-91f5-4cfa-90bd-5aa7b5f2b665" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.CompletionTests" name="TileMapNeverOffersRemovedSourceAndStillOffersStaticTiles" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TileMapSourceSemanticTests.RemovedMapSourceIsDiagnosedAsAnUnknownMemberWithoutBindingAdvice(markup: &quot;&lt;TileMap2D&gt;&lt;TileMap2D.Aspect&gt;@default { Source = n&quot;···)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="0ef1df1e-3186-3f91-8b10-8468abad9fb9">
+      <Execution id="9933674e-cad0-4651-8c95-6c7dfb51c1ff" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TileMapSourceSemanticTests" name="RemovedMapSourceIsDiagnosedAsAnUnknownMemberWithoutBindingAdvice" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TileMapSourceSemanticTests.RemovedMapSourceIsDiagnosedAsAnUnknownMemberWithoutBindingAdvice(markup: &quot;&lt;TileMap2D Source=\&quot;removed\&quot; /&gt;&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="734d9b58-0772-6186-144e-a11095db6d75">
+      <Execution id="240c9afd-82c3-445c-8fb8-de934250c07b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TileMapSourceSemanticTests" name="RemovedMapSourceIsDiagnosedAsAnUnknownMemberWithoutBindingAdvice" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Language.TileMapSourceSemanticTests.CompletionNeverOffersRemovedMapSourceButKeepsStaticTile" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.language\bin\release\net8.0-windows\cerneala.tests.language.dll" id="d07c9419-64d3-34cd-da26-a30963e6f3f7">
+      <Execution id="b735b5b8-0538-497c-aad3-4c3fea02169b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Language.TileMapSourceSemanticTests" name="CompletionNeverOffersRemovedMapSourceButKeepsStaticTile" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="a01f7eec-f9f0-26ac-88dd-103b5c73b1b6" executionId="0c6ee68b-91f5-4cfa-90bd-5aa7b5f2b665" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d07c9419-64d3-34cd-da26-a30963e6f3f7" executionId="b735b5b8-0538-497c-aad3-4c3fea02169b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0ef1df1e-3186-3f91-8b10-8468abad9fb9" executionId="9933674e-cad0-4651-8c95-6c7dfb51c1ff" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="92632c22-8af7-c2a0-7476-f7f1169cb0cc" executionId="8ca0b826-c3af-4fed-a34b-618a3ff73a2e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8a648cdb-ca7c-198c-5cc8-e5035f67672c" executionId="cec4a5da-1894-4053-a745-7935f7830679" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="734d9b58-0772-6186-144e-a11095db6d75" executionId="240c9afd-82c3-445c-8fb8-de934250c07b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c1bc9a98-2179-29e1-7d35-66ff48916790" executionId="e7f5dfb4-1a40-4f40-9c64-6d9740211c73" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ac91e8e5-a28c-0f61-92ba-e4563c538a54" executionId="20bb3f9b-dc32-41a9-88e8-ee478c97bc62" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="8" executed="8" passed="8" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.69]   Discovering: Cerneala.Tests.Language&#xD;
+[xUnit.net 00:00:01.16]   Discovered:  Cerneala.Tests.Language&#xD;
+[xUnit.net 00:00:01.17]   Starting:    Cerneala.Tests.Language&#xD;
+[xUnit.net 00:00:14.46]   Finished:    Cerneala.Tests.Language&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

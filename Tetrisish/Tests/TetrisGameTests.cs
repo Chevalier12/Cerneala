@@ -11,6 +11,7 @@ using Cerneala.UI.Prism.Definitions;
 using Cerneala.UI.Prism.Runtime;
 using Cerneala.UI.Resources;
 using System.ComponentModel;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Xml.Linq;
 
@@ -116,6 +117,22 @@ public sealed class TetrisGameTests
         Assert.All(
             typeof(TetrisSpriteModel).GetProperties(),
             property => Assert.False(property.CanWrite));
+    }
+
+    [Fact]
+    public void LockedSpritesUseAnObservableCollectionWithoutReplacingItsBindingSource()
+    {
+        TetrisSceneModel model = new();
+        ObservableCollection<TetrisSpriteModel> source = model.LockedPieces;
+        TetrisSpriteModel sprite = new(new TestImage(16, 16), null, new(1, 2, 1, 1), Color.White);
+
+        model.UpdateLockedPieces([sprite]);
+
+        Assert.Same(source, model.LockedPieces);
+        Assert.Same(sprite, Assert.Single(source));
+        model.Reset();
+        Assert.Same(source, model.LockedPieces);
+        Assert.Empty(source);
     }
 
     [Fact]
@@ -359,7 +376,7 @@ public sealed class TetrisGameTests
     }
 
     [Fact]
-    public async Task LineClearedFragmentsRemainLockedSpriteModels()
+    public void LineClearedFragmentsRemainLockedSpriteModels()
     {
         TetrisGameSurface surface = new();
         TetrisGame game = Assert.IsType<TetrisGame>(
@@ -395,10 +412,7 @@ public sealed class TetrisGameTests
                 System.Reflection.BindingFlags.NonPublic)!
             .Invoke(surface, null);
 
-        await using SceneSpatialResidency2D<object> residency = new(surface.SceneModel.LockedPieces);
-        using SceneSpatialRegion2D<object> region = await residency.AcquireAsync(new DrawRect(0, 0, 10, 20));
-        TetrisSpriteModel[] sprites = region.Entries
-            .Select(entry => Assert.IsType<TetrisSpriteModel>(region.GetValue(entry.Id))).ToArray();
+        TetrisSpriteModel[] sprites = surface.SceneModel.LockedPieces.ToArray();
         Assert.Equal(2, sprites.Length);
         Assert.All(sprites, sprite => Assert.Same(atlas, sprite.Image.DirectImage));
         Assert.Equal(

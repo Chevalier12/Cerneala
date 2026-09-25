@@ -1,0 +1,1 @@
+dotnet test .\Tetrisish\Tests\Tetris.Tests.csproj -c Release -m:1 --nologo -v:minimal --results-directory 'docs/plans/evidence/2026-09-23-scene2d-stage2/integration' --logger 'trx;LogFileName=tetris-current.trx' '-p:DefaultItemExcludesInProjectFolder=artifacts/**'

@@ -1,0 +1,429 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="adae230b-faea-417e-8743-14d5c782f705" name="lauri@DESKTOP-JT43V3D 2026-09-24 07:55:55" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T07:55:55.5828195+03:00" queuing="2026-09-24T07:55:55.5828199+03:00" start="2026-09-24T07:55:49.7832794+03:00" finish="2026-09-24T07:55:56.9327054+03:00" />
+  <TestSettings name="default" id="f9155c25-9396-4576-b667-8a2b9a6f047a">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_07_55_55" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="e427bbc6-5fbd-4b6a-8822-59b7625070d8" testId="418434d5-0c03-ece2-347b-b3c67a2b9526" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.GroupOpacityScopesOnlyItsDescendants" computerName="DESKTOP-JT43V3D" duration="00:00:00.0022020" startTime="2026-09-24T07:55:56.5143915+03:00" endTime="2026-09-24T07:55:56.5143923+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e427bbc6-5fbd-4b6a-8822-59b7625070d8" />
+    <UnitTestResult executionId="1cebd74b-3109-4f1b-8f28-57dda874e674" testId="f19a3c62-ed37-c206-8a1e-7a94c68d66c2" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.GroupPrismAndTransformScopesCloseWhenAChildThrows" computerName="DESKTOP-JT43V3D" duration="00:00:00.2097451" startTime="2026-09-24T07:55:55.8441275+03:00" endTime="2026-09-24T07:55:55.8441279+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1cebd74b-3109-4f1b-8f28-57dda874e674" />
+    <UnitTestResult executionId="5701aa95-75b7-4691-ad80-940de69be83f" testId="a8e088ac-469c-e160-99db-f173468dafc1" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.MotionOnLayerOpacityScopesItsSortedDescendants" computerName="DESKTOP-JT43V3D" duration="00:00:00.0019168" startTime="2026-09-24T07:55:56.6220686+03:00" endTime="2026-09-24T07:55:56.6220689+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5701aa95-75b7-4691-ad80-940de69be83f" />
+    <UnitTestResult executionId="a049ba46-ae12-4e6d-b382-3d95759b46b7" testId="1bbffd24-43c7-198b-b4e6-728b8ae9bd25" testName="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.OffCameraSpriteKeepsMotionAndItsActualCollisionOwner(collection: True, startX: 0)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0036333" startTime="2026-09-24T07:55:55.5235717+03:00" endTime="2026-09-24T07:55:55.5235722+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a049ba46-ae12-4e6d-b382-3d95759b46b7" />
+    <UnitTestResult executionId="8a922f80-2742-47ff-8e7d-d8e66f26476c" testId="ae0796e4-63bb-677c-d442-8ad74628f54e" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.ViewBoxAndGroupTransformsDoNotMagnifySpriteOrGroupStyleSizes(groupScale: 1)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0062338" startTime="2026-09-24T07:55:56.4825951+03:00" endTime="2026-09-24T07:55:56.4825956+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8a922f80-2742-47ff-8e7d-d8e66f26476c" />
+    <UnitTestResult executionId="4c9fecaa-d00a-4095-8b90-d3ce0445ec99" testId="2c24463a-259b-89a4-6d22-a6336be13a76" testName="Cerneala.Tests.Controls.RenderSurface2DSceneTests.SpritePrismCapturesOnlyTheSpriteDrawUsingDestinationBounds" computerName="DESKTOP-JT43V3D" duration="00:00:00.0022966" startTime="2026-09-24T07:55:56.6780843+03:00" endTime="2026-09-24T07:55:56.6780848+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4c9fecaa-d00a-4095-8b90-d3ce0445ec99" />
+    <UnitTestResult executionId="bb376560-e462-48cd-a2f0-80ebc6d25f04" testId="6a8fc8a9-ed75-d648-d2d3-727a13940469" testName="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.PointerMissOutsideAnOffscreenSpriteDoesNotReloadItsImage(transformed: False)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0019191" startTime="2026-09-24T07:55:55.3945089+03:00" endTime="2026-09-24T07:55:55.3945092+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bb376560-e462-48cd-a2f0-80ebc6d25f04">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: 0&#xD;
+Actual:   1</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.PointerMissOutsideAnOffscreenSpriteDoesNotReloadItsImage(Boolean transformed) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DIncrementalContractTests.cs:line 180&#xD;
+   at InvokeStub_SceneItems2DIncrementalContractTests.PointerMissOutsideAnOffscreenSpriteDoesNotReloadItsImage(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="670b0f01-73f6-4bcc-b1ae-45e433ae5700" testId="2c2e0672-1f6e-436a-c033-ef95dd98f19f" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.TemplatedSceneNodeKeepsAspectMotionPrismAndLifecycle" computerName="DESKTOP-JT43V3D" duration="00:00:00.0767198" startTime="2026-09-24T07:55:56.6032279+03:00" endTime="2026-09-24T07:55:56.6032283+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="670b0f01-73f6-4bcc-b1ae-45e433ae5700" />
+    <UnitTestResult executionId="2b313802-b855-4b9d-8ac7-f379531ad5be" testId="6c2721b5-c155-c062-fc48-5f0e386cdff8" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.SceneTransformOriginIsAnExplicitSceneSpacePoint" computerName="DESKTOP-JT43V3D" duration="00:00:00.0005109" startTime="2026-09-24T07:55:56.5119600+03:00" endTime="2026-09-24T07:55:56.5119603+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2b313802-b855-4b9d-8ac7-f379531ad5be" />
+    <UnitTestResult executionId="b56d32a5-b304-4143-abe9-661bd4f0bf2c" testId="972bc130-406a-b21e-7c3a-8714ced162e2" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.ExplicitLayerOrderingIsStableAndIgnoresSpriteLayerDepth" computerName="DESKTOP-JT43V3D" duration="00:00:00.0161679" startTime="2026-09-24T07:55:56.5018213+03:00" endTime="2026-09-24T07:55:56.5018220+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b56d32a5-b304-4143-abe9-661bd4f0bf2c" />
+    <UnitTestResult executionId="f308aa54-5a7b-4192-8edc-f56f6e76dfee" testId="c337c479-682c-df33-4a1d-64ec84052bae" testName="Cerneala.Tests.Controls.RenderSurface2DSceneTests.ScenePropertyMutationInvalidatesAnOnDemandSurface" computerName="DESKTOP-JT43V3D" duration="00:00:00.0041873" startTime="2026-09-24T07:55:56.7104800+03:00" endTime="2026-09-24T07:55:56.7104805+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f308aa54-5a7b-4192-8edc-f56f6e76dfee" />
+    <UnitTestResult executionId="117e9b6c-e871-4e1d-aeea-425dad4e04a3" testId="cc5dcede-870f-d8d9-2e9e-cbd30ca6af36" testName="Cerneala.Tests.Controls.RenderSurface2DSceneTests.SceneItemsMaterializeTemplatesInSourceOrderAndTrackChanges" computerName="DESKTOP-JT43V3D" duration="00:00:00.0134815" startTime="2026-09-24T07:55:56.6918591+03:00" endTime="2026-09-24T07:55:56.6918596+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="117e9b6c-e871-4e1d-aeea-425dad4e04a3" />
+    <UnitTestResult executionId="b8bf74ac-e16c-455e-b8de-962f7d347ac9" testId="b2e7f09c-60e0-c807-8eeb-14e37a6808b8" testName="Cerneala.Tests.Controls.RenderSurface2DSceneTests.SceneNodesRespectUiElementVisibility" computerName="DESKTOP-JT43V3D" duration="00:00:00.0011799" startTime="2026-09-24T07:55:56.6648642+03:00" endTime="2026-09-24T07:55:56.6648647+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b8bf74ac-e16c-455e-b8de-962f7d347ac9" />
+    <UnitTestResult executionId="994cef6d-e16c-4d43-8526-cc75924d9f3f" testId="8bf94ab3-7f14-a98a-7399-8fc19dae205a" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.NonInvertibleSceneTransformStillRecordsConservativeContent" computerName="DESKTOP-JT43V3D" duration="00:00:00.0024854" startTime="2026-09-24T07:55:56.4853436+03:00" endTime="2026-09-24T07:55:56.4853440+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="994cef6d-e16c-4d43-8526-cc75924d9f3f" />
+    <UnitTestResult executionId="a74172ae-1281-48d1-a94f-0fc8f83f8158" testId="652f506c-856e-7aa5-7626-3e9979629030" testName="Cerneala.Tests.Controls.RenderSurface2DSceneTests.SpriteAspectAppliesSpritePropertiesThroughTheSceneLogicalTree" computerName="DESKTOP-JT43V3D" duration="00:00:00.0073352" startTime="2026-09-24T07:55:56.7012565+03:00" endTime="2026-09-24T07:55:56.7012570+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a74172ae-1281-48d1-a94f-0fc8f83f8158" />
+    <UnitTestResult executionId="a552dacb-4bbb-44e2-96e0-4f3a09bef7f8" testId="97c05e03-42c1-6708-eb94-05eb16f1f1e8" testName="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.ColliderOutsideSpriteVisualRemainsPickableWithoutReloadingImage(transformed: False)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0035223" startTime="2026-09-24T07:55:55.4269820+03:00" endTime="2026-09-24T07:55:55.4269823+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a552dacb-4bbb-44e2-96e0-4f3a09bef7f8">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: 0&#xD;
+Actual:   1</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.ColliderOutsideSpriteVisualRemainsPickableWithoutReloadingImage(Boolean transformed) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DIncrementalContractTests.cs:line 216&#xD;
+   at InvokeStub_SceneItems2DIncrementalContractTests.ColliderOutsideSpriteVisualRemainsPickableWithoutReloadingImage(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="19f71e4d-80a9-4437-b736-3371d8d717f7" testId="4da27dcb-f7d3-941d-a708-34dc4fad8404" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.UniformToFillComposesWithNegativeSceneTransform" computerName="DESKTOP-JT43V3D" duration="00:00:00.0009725" startTime="2026-09-24T07:55:56.6498975+03:00" endTime="2026-09-24T07:55:56.6498982+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="19f71e4d-80a9-4437-b736-3371d8d717f7" />
+    <UnitTestResult executionId="a141e57d-d5c0-4561-9f38-ea9e277e6409" testId="c76fc086-e1c5-e4d0-1b5e-53f5eafea292" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.GroupAspectAndMotionDriveTheTransformUsedByRendering" computerName="DESKTOP-JT43V3D" duration="00:00:00.0035114" startTime="2026-09-24T07:55:56.6416616+03:00" endTime="2026-09-24T07:55:56.6416622+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a141e57d-d5c0-4561-9f38-ea9e277e6409" />
+    <UnitTestResult executionId="9179f137-b18a-4e94-bf31-4a9a43cde49e" testId="83c7ac7c-c7a8-2291-9aed-65cea6888887" testName="Cerneala.Tests.Controls.RenderSurface2DSceneTests.SceneActivatesDrawingAndRecordsAfterImperativeDrawing" computerName="DESKTOP-JT43V3D" duration="00:00:00.0018855" startTime="2026-09-24T07:55:56.7127444+03:00" endTime="2026-09-24T07:55:56.7127448+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9179f137-b18a-4e94-bf31-4a9a43cde49e" />
+    <UnitTestResult executionId="aca303e3-3e51-4055-87a7-070ae1273834" testId="4b1a8500-7acf-3925-8cea-d45e7cd89e02" testName="Cerneala.Tests.Controls.RenderSurface2DSceneTests.SpritePrismBoundsApplyTheSceneViewBoxTransformExactlyOnce" computerName="DESKTOP-JT43V3D" duration="00:00:00.0152087" startTime="2026-09-24T07:55:56.7282071+03:00" endTime="2026-09-24T07:55:56.7282076+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="aca303e3-3e51-4055-87a7-070ae1273834" />
+    <UnitTestResult executionId="341d8e5e-d0a3-469d-a696-f920c2687e68" testId="a7284760-c7c2-3261-89ee-505498a5e67d" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.ReplacingAndDetachingSceneMaintainsLogicalLifecycle" computerName="DESKTOP-JT43V3D" duration="00:00:00.0045456" startTime="2026-09-24T07:55:56.6363060+03:00" endTime="2026-09-24T07:55:56.6363064+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="341d8e5e-d0a3-469d-a696-f920c2687e68" />
+    <UnitTestResult executionId="ea6e42fe-0480-46e8-a9ef-a56571b3103a" testId="215ae8ac-533b-a169-59a3-8d04d03b5797" testName="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.OffCameraSpriteKeepsMotionAndItsActualCollisionOwner(collection: False, startX: 1000)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0028773" startTime="2026-09-24T07:55:55.5196871+03:00" endTime="2026-09-24T07:55:55.5196876+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ea6e42fe-0480-46e8-a9ef-a56571b3103a" />
+    <UnitTestResult executionId="2b7ff1d2-5206-431c-9fd6-61a3516aa24a" testId="799e2c52-3fbe-e6e0-3deb-51a4bfa1a4e0" testName="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.ObservableMoveAndInsertionPreserveExistingNodesAndTemplateIndex" computerName="DESKTOP-JT43V3D" duration="00:00:00.0305121" startTime="2026-09-24T07:55:55.5827410+03:00" endTime="2026-09-24T07:55:55.5827414+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2b7ff1d2-5206-431c-9fd6-61a3516aa24a" />
+    <UnitTestResult executionId="f6022b77-6a28-464b-8e3c-d8d6b7034ec8" testId="6aace9c1-c08e-3850-c402-3b14e75ea296" testName="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.OffCameraSpriteKeepsMotionAndItsActualCollisionOwner(collection: True, startX: 1000)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0030273" startTime="2026-09-24T07:55:55.5519469+03:00" endTime="2026-09-24T07:55:55.5519473+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f6022b77-6a28-464b-8e3c-d8d6b7034ec8" />
+    <UnitTestResult executionId="68dd524d-7ecb-4d80-aec7-c801694f374c" testId="88e8c11d-9434-21fd-e5ef-2b50bf0e8d50" testName="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.ColliderOutsideSpriteVisualRemainsPickableWithoutReloadingImage(transformed: True)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0248388" startTime="2026-09-24T07:55:55.4215918+03:00" endTime="2026-09-24T07:55:55.4215922+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="68dd524d-7ecb-4d80-aec7-c801694f374c">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: 0&#xD;
+Actual:   1</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.ColliderOutsideSpriteVisualRemainsPickableWithoutReloadingImage(Boolean transformed) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DIncrementalContractTests.cs:line 216&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="146884b6-3c65-44ae-a737-23e69b206225" testId="17333d69-03e8-4da7-baf7-d127fd0715b9" testName="Cerneala.Tests.Controls.RenderSurface2DSceneTests.ContinuousStaticSceneKeepsItsPrismContentIdentityAcrossFrameTicks" computerName="DESKTOP-JT43V3D" duration="00:00:00.0225275" startTime="2026-09-24T07:55:56.7511370+03:00" endTime="2026-09-24T07:55:56.7511375+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="146884b6-3c65-44ae-a737-23e69b206225" />
+    <UnitTestResult executionId="e1c1624b-a96b-4403-9066-4125eb905efd" testId="5ecdfaa6-83b1-f174-ac57-40ecff68475e" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.LayerThenYAppliesTheParentSceneTransformToItsAnchor" computerName="DESKTOP-JT43V3D" duration="00:00:00.0004879" startTime="2026-09-24T07:55:56.6379716+03:00" endTime="2026-09-24T07:55:56.6379717+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e1c1624b-a96b-4403-9066-4125eb905efd" />
+    <UnitTestResult executionId="0d1f5d3e-bd2a-49e9-afba-f02ff26c75ee" testId="ba181e4b-8eb9-93c2-bb7e-3f95aa528f41" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.AspectControlsLayerAndOrderMode" computerName="DESKTOP-JT43V3D" duration="00:00:00.0067958" startTime="2026-09-24T07:55:56.6487112+03:00" endTime="2026-09-24T07:55:56.6487117+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0d1f5d3e-bd2a-49e9-afba-f02ff26c75ee" />
+    <UnitTestResult executionId="7dee157d-19ba-44c9-965b-aed8fd7be8ab" testId="3d827cee-0a8b-93d9-2674-82ee961b0bb7" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.NestedSceneGroupsComposeTransformsInsideViewBoxClip" computerName="DESKTOP-JT43V3D" duration="00:00:00.0084027" startTime="2026-09-24T07:55:56.6314171+03:00" endTime="2026-09-24T07:55:56.6314175+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7dee157d-19ba-44c9-965b-aed8fd7be8ab" />
+    <UnitTestResult executionId="fe0806b0-d810-4c23-b60b-23f7d1a3c196" testId="91b81e2a-4728-6bd8-95d9-228cd0ca240f" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.ViewBoxAndGroupTransformsDoNotMagnifySpriteOrGroupStyleSizes(groupScale: 2)" computerName="DESKTOP-JT43V3D" duration="00:00:00.6317064" startTime="2026-09-24T07:55:56.4761356+03:00" endTime="2026-09-24T07:55:56.4761360+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fe0806b0-d810-4c23-b60b-23f7d1a3c196" />
+    <UnitTestResult executionId="b665df2b-9d3c-4a4a-b3c9-95627f729bbb" testId="fdc86e3f-c7e2-d7a9-9bb8-e59ff50818be" testName="Cerneala.Tests.Controls.RenderSurface2DSceneTests.ContinuousSceneWithImperativeDrawingDoesNotAssumeItsContentIsUnchanged(useSubclass: True)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0033705" startTime="2026-09-24T07:55:56.6754975+03:00" endTime="2026-09-24T07:55:56.6754981+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b665df2b-9d3c-4a4a-b3c9-95627f729bbb" />
+    <UnitTestResult executionId="8633e3f3-a726-48fa-8496-51b824c6517e" testId="a01f8e39-8cf8-6785-b42e-5f045ad96157" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.LayerPrismCapturesOnlyThatLayersDescendants" computerName="DESKTOP-JT43V3D" duration="00:00:00.0035371" startTime="2026-09-24T07:55:56.6592352+03:00" endTime="2026-09-24T07:55:56.6592356+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8633e3f3-a726-48fa-8496-51b824c6517e" />
+    <UnitTestResult executionId="2f395499-5a93-426c-a528-022880f2752e" testId="dac56904-dd64-ef0e-562a-037beeb43861" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.GroupPrismUsesAggregateTransformedBoundsAndNestsChildPrism" computerName="DESKTOP-JT43V3D" duration="00:00:00.0042665" startTime="2026-09-24T07:55:56.5240388+03:00" endTime="2026-09-24T07:55:56.5240391+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2f395499-5a93-426c-a528-022880f2752e" />
+    <UnitTestResult executionId="3b9ea85e-8537-4005-94cf-50654a951635" testId="38b77d14-7c52-df0d-aaf2-67c7ec75ddb1" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.LayerThenYUsesSceneBoundsAndKeepsSourceOrderForTies" computerName="DESKTOP-JT43V3D" duration="00:00:00.0045956" startTime="2026-09-24T07:55:56.5194066+03:00" endTime="2026-09-24T07:55:56.5194068+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3b9ea85e-8537-4005-94cf-50654a951635" />
+    <UnitTestResult executionId="61dda7af-1904-4816-91aa-5cd6ab5406e0" testId="212f9205-615b-b767-fa98-e6b323b94739" testName="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.CollectionMaterializesAllOccurrencesAndPanDoesNotChangeMembership" computerName="DESKTOP-JT43V3D" duration="00:00:00.0370938" startTime="2026-09-24T07:55:55.6204448+03:00" endTime="2026-09-24T07:55:55.6204453+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="61dda7af-1904-4816-91aa-5cd6ab5406e0" />
+    <UnitTestResult executionId="c936a9af-940a-4d69-a8c6-60b29d1d1105" testId="c80d3213-d890-58a1-6f2c-e2030da3d36d" testName="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.PointerMissOutsideAnOffscreenSpriteDoesNotReloadItsImage(transformed: True)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0937409" startTime="2026-09-24T07:55:55.3905208+03:00" endTime="2026-09-24T07:55:55.3905212+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c936a9af-940a-4d69-a8c6-60b29d1d1105">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: 0&#xD;
+Actual:   1</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.PointerMissOutsideAnOffscreenSpriteDoesNotReloadItsImage(Boolean transformed) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DIncrementalContractTests.cs:line 180&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="52a90f79-5793-4c1d-b5df-3f066ba4755b" testId="c6e7e77e-9160-42bb-dce5-2b1322717416" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.MotionAnimatesSceneTransformOrigin" computerName="DESKTOP-JT43V3D" duration="00:00:00.0163379" startTime="2026-09-24T07:55:56.6198664+03:00" endTime="2026-09-24T07:55:56.6198669+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="52a90f79-5793-4c1d-b5df-3f066ba4755b" />
+    <UnitTestResult executionId="3160204e-0bc6-405c-86c5-61692262ae67" testId="db4fa62d-5d59-d58f-fe0f-874184d450b8" testName="Cerneala.Tests.Controls.RenderSurface2DSceneTests.ContinuousSceneWithImperativeDrawingDoesNotAssumeItsContentIsUnchanged(useSubclass: False)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0067002" startTime="2026-09-24T07:55:56.6718455+03:00" endTime="2026-09-24T07:55:56.6718460+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3160204e-0bc6-405c-86c5-61692262ae67" />
+    <UnitTestResult executionId="12da95cd-7aec-432f-a19b-914445d27451" testId="983bf8bd-50af-187c-f526-7b7e5bdab7c6" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.SceneRecordsChildrenInCollectionOrder" computerName="DESKTOP-JT43V3D" duration="00:00:00.0008103" startTime="2026-09-24T07:55:56.6373170+03:00" endTime="2026-09-24T07:55:56.6373173+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="12da95cd-7aec-432f-a19b-914445d27451" />
+    <UnitTestResult executionId="5649c197-80f2-40b3-9ffa-af2bcf0efd0f" testId="b6a1af3d-6440-2a45-fe01-1d6fafc868b9" testName="Cerneala.Tests.Controls.RenderSurface2DSceneTests.SpriteMotionAnimatesSpritePropertiesThroughTheSceneLogicalTree" computerName="DESKTOP-JT43V3D" duration="00:00:00.0013911" startTime="2026-09-24T07:55:56.6935207+03:00" endTime="2026-09-24T07:55:56.6935210+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5649c197-80f2-40b3-9ffa-af2bcf0efd0f" />
+    <UnitTestResult executionId="069b12a9-efdc-4455-b9ca-7b311200e48e" testId="246467c9-fee3-81d8-cebd-9d9079b3bf81" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.NestedScenesOrderIndependentlyAndReactToRuntimeLayerChanges" computerName="DESKTOP-JT43V3D" duration="00:00:00.0019439" startTime="2026-09-24T07:55:56.5262495+03:00" endTime="2026-09-24T07:55:56.5262498+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="069b12a9-efdc-4455-b9ca-7b311200e48e" />
+    <UnitTestResult executionId="f824307f-153d-4c42-bb35-a914a82be839" testId="ea979d94-4560-fc5b-0047-7179fe55f45a" testName="Cerneala.Tests.Controls.RenderSurface2DSceneTests.ViewBoxUniformCentersLogicalCoordinatesInsideSurfaceBounds" computerName="DESKTOP-JT43V3D" duration="00:00:00.0013561" startTime="2026-09-24T07:55:56.7043979+03:00" endTime="2026-09-24T07:55:56.7043984+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f824307f-153d-4c42-bb35-a914a82be839" />
+    <UnitTestResult executionId="46a2b456-5ee9-4edd-8478-1258b191fdcd" testId="f9eb3f14-2e51-3a4b-f8aa-24e97f3430b6" testName="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.OffscreenRealizedSpriteReleasesItsImageAndReloadsOnReturn" computerName="DESKTOP-JT43V3D" duration="00:00:00.0109699" startTime="2026-09-24T07:55:55.4399749+03:00" endTime="2026-09-24T07:55:55.4399753+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="46a2b456-5ee9-4edd-8478-1258b191fdcd">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: 0&#xD;
+Actual:   1</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.OffscreenRealizedSpriteReleasesItsImageAndReloadsOnReturn() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DIncrementalContractTests.cs:line 132&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="cb688297-6851-42f3-a457-d343f16a9cc9" testId="ef04c8da-51e6-653c-720f-81815322e180" testName="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.HiddenAncestorReleasesPresentationWithoutDetachingRealizedNodes" computerName="DESKTOP-JT43V3D" duration="00:00:00.0077654" startTime="2026-09-24T07:55:55.6291472+03:00" endTime="2026-09-24T07:55:55.6291477+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cb688297-6851-42f3-a457-d343f16a9cc9" />
+    <UnitTestResult executionId="6e432364-26c3-4b0b-9b2a-39006eebd99f" testId="7f5b9476-b2ac-62c9-4d56-a3f846b4901c" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.MotionOnSpriteYResortsLayerThenYInTheSameLogicalFrame" computerName="DESKTOP-JT43V3D" duration="00:00:00.0020631" startTime="2026-09-24T07:55:56.6631643+03:00" endTime="2026-09-24T07:55:56.6631652+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6e432364-26c3-4b0b-9b2a-39006eebd99f" />
+    <UnitTestResult executionId="cc317c3b-e6ee-4ab4-a818-a0fe22c1927d" testId="5711038d-b0b9-f116-e596-5866d801979e" testName="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.IdleFramesDoNotReenumerateOrPublishCollisionMutations" computerName="DESKTOP-JT43V3D" duration="00:00:00.6829882" startTime="2026-09-24T07:55:55.2465841+03:00" endTime="2026-09-24T07:55:55.2466512+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cc317c3b-e6ee-4ab4-a818-a0fe22c1927d" />
+    <UnitTestResult executionId="8ef125bd-e3e5-4162-acb6-c938299456bb" testId="ae145383-6c2c-10c0-cd8b-3f29a2384a01" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.UndocumentedUiTransformsDoNotCurrentlyAlterSpriteCommands" computerName="DESKTOP-JT43V3D" duration="00:00:00.0068927" startTime="2026-09-24T07:55:56.5111678+03:00" endTime="2026-09-24T07:55:56.5111682+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8ef125bd-e3e5-4162-acb6-c938299456bb" />
+    <UnitTestResult executionId="bc986b8e-1ddb-4ea6-bcc4-dbb9398abbd7" testId="8c3c89ee-77ec-903d-630d-11cb18a5beed" testName="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.OffCameraSpriteKeepsMotionAndItsActualCollisionOwner(collection: False, startX: 0)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0761365" startTime="2026-09-24T07:55:55.5165234+03:00" endTime="2026-09-24T07:55:55.5165238+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bc986b8e-1ddb-4ea6-bcc4-dbb9398abbd7" />
+    <UnitTestResult executionId="7b1ad167-f2c2-43c3-ad30-fa8f5fe63728" testId="cbfaeed3-d5b1-336b-2c1b-087c86724e34" testName="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.SceneTransformHelperUsesSceneOriginAndRoundTripsWorldToLocal" computerName="DESKTOP-JT43V3D" duration="00:00:00.0052677" startTime="2026-09-24T07:55:56.6553913+03:00" endTime="2026-09-24T07:55:56.6553919+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7b1ad167-f2c2-43c3-ad30-fa8f5fe63728" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.MotionOnLayerOpacityScopesItsSortedDescendants" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="a8e088ac-469c-e160-99db-f173468dafc1">
+      <Execution id="5701aa95-75b7-4691-ad80-940de69be83f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="MotionOnLayerOpacityScopesItsSortedDescendants" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.NestedScenesOrderIndependentlyAndReactToRuntimeLayerChanges" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="246467c9-fee3-81d8-cebd-9d9079b3bf81">
+      <Execution id="069b12a9-efdc-4455-b9ca-7b311200e48e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="NestedScenesOrderIndependentlyAndReactToRuntimeLayerChanges" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.ColliderOutsideSpriteVisualRemainsPickableWithoutReloadingImage(transformed: True)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="88e8c11d-9434-21fd-e5ef-2b50bf0e8d50">
+      <Execution id="68dd524d-7ecb-4d80-aec7-c801694f374c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests" name="ColliderOutsideSpriteVisualRemainsPickableWithoutReloadingImage" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.ReplacingAndDetachingSceneMaintainsLogicalLifecycle" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="a7284760-c7c2-3261-89ee-505498a5e67d">
+      <Execution id="341d8e5e-d0a3-469d-a696-f920c2687e68" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="ReplacingAndDetachingSceneMaintainsLogicalLifecycle" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.SceneTransformOriginIsAnExplicitSceneSpacePoint" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="6c2721b5-c155-c062-fc48-5f0e386cdff8">
+      <Execution id="2b313802-b855-4b9d-8ac7-f379531ad5be" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="SceneTransformOriginIsAnExplicitSceneSpacePoint" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.ObservableMoveAndInsertionPreserveExistingNodesAndTemplateIndex" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="799e2c52-3fbe-e6e0-3deb-51a4bfa1a4e0">
+      <Execution id="2b7ff1d2-5206-431c-9fd6-61a3516aa24a" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests" name="ObservableMoveAndInsertionPreserveExistingNodesAndTemplateIndex" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneTests.SceneItemsMaterializeTemplatesInSourceOrderAndTrackChanges" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="cc5dcede-870f-d8d9-2e9e-cbd30ca6af36">
+      <Execution id="117e9b6c-e871-4e1d-aeea-425dad4e04a3" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneTests" name="SceneItemsMaterializeTemplatesInSourceOrderAndTrackChanges" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.GroupAspectAndMotionDriveTheTransformUsedByRendering" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="c76fc086-e1c5-e4d0-1b5e-53f5eafea292">
+      <Execution id="a141e57d-d5c0-4561-9f38-ea9e277e6409" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="GroupAspectAndMotionDriveTheTransformUsedByRendering" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.MotionOnSpriteYResortsLayerThenYInTheSameLogicalFrame" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="7f5b9476-b2ac-62c9-4d56-a3f846b4901c">
+      <Execution id="6e432364-26c3-4b0b-9b2a-39006eebd99f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="MotionOnSpriteYResortsLayerThenYInTheSameLogicalFrame" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.SceneRecordsChildrenInCollectionOrder" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="983bf8bd-50af-187c-f526-7b7e5bdab7c6">
+      <Execution id="12da95cd-7aec-432f-a19b-914445d27451" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="SceneRecordsChildrenInCollectionOrder" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneTests.SpritePrismCapturesOnlyTheSpriteDrawUsingDestinationBounds" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="2c24463a-259b-89a4-6d22-a6336be13a76">
+      <Execution id="4c9fecaa-d00a-4095-8b90-d3ce0445ec99" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneTests" name="SpritePrismCapturesOnlyTheSpriteDrawUsingDestinationBounds" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.OffscreenRealizedSpriteReleasesItsImageAndReloadsOnReturn" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="f9eb3f14-2e51-3a4b-f8aa-24e97f3430b6">
+      <Execution id="46a2b456-5ee9-4edd-8478-1258b191fdcd" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests" name="OffscreenRealizedSpriteReleasesItsImageAndReloadsOnReturn" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.ColliderOutsideSpriteVisualRemainsPickableWithoutReloadingImage(transformed: False)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="97c05e03-42c1-6708-eb94-05eb16f1f1e8">
+      <Execution id="a552dacb-4bbb-44e2-96e0-4f3a09bef7f8" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests" name="ColliderOutsideSpriteVisualRemainsPickableWithoutReloadingImage" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneTests.SceneNodesRespectUiElementVisibility" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="b2e7f09c-60e0-c807-8eeb-14e37a6808b8">
+      <Execution id="b8bf74ac-e16c-455e-b8de-962f7d347ac9" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneTests" name="SceneNodesRespectUiElementVisibility" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.SceneTransformHelperUsesSceneOriginAndRoundTripsWorldToLocal" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="cbfaeed3-d5b1-336b-2c1b-087c86724e34">
+      <Execution id="7b1ad167-f2c2-43c3-ad30-fa8f5fe63728" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="SceneTransformHelperUsesSceneOriginAndRoundTripsWorldToLocal" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.UniformToFillComposesWithNegativeSceneTransform" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="4da27dcb-f7d3-941d-a708-34dc4fad8404">
+      <Execution id="19f71e4d-80a9-4437-b736-3371d8d717f7" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="UniformToFillComposesWithNegativeSceneTransform" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.GroupOpacityScopesOnlyItsDescendants" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="418434d5-0c03-ece2-347b-b3c67a2b9526">
+      <Execution id="e427bbc6-5fbd-4b6a-8822-59b7625070d8" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="GroupOpacityScopesOnlyItsDescendants" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneTests.ContinuousStaticSceneKeepsItsPrismContentIdentityAcrossFrameTicks" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="17333d69-03e8-4da7-baf7-d127fd0715b9">
+      <Execution id="146884b6-3c65-44ae-a737-23e69b206225" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneTests" name="ContinuousStaticSceneKeepsItsPrismContentIdentityAcrossFrameTicks" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneTests.SpriteAspectAppliesSpritePropertiesThroughTheSceneLogicalTree" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="652f506c-856e-7aa5-7626-3e9979629030">
+      <Execution id="a74172ae-1281-48d1-a94f-0fc8f83f8158" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneTests" name="SpriteAspectAppliesSpritePropertiesThroughTheSceneLogicalTree" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.OffCameraSpriteKeepsMotionAndItsActualCollisionOwner(collection: True, startX: 1000)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="6aace9c1-c08e-3850-c402-3b14e75ea296">
+      <Execution id="f6022b77-6a28-464b-8e3c-d8d6b7034ec8" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests" name="OffCameraSpriteKeepsMotionAndItsActualCollisionOwner" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.MotionAnimatesSceneTransformOrigin" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="c6e7e77e-9160-42bb-dce5-2b1322717416">
+      <Execution id="52a90f79-5793-4c1d-b5df-3f066ba4755b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="MotionAnimatesSceneTransformOrigin" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.UndocumentedUiTransformsDoNotCurrentlyAlterSpriteCommands" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="ae145383-6c2c-10c0-cd8b-3f29a2384a01">
+      <Execution id="8ef125bd-e3e5-4162-acb6-c938299456bb" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="UndocumentedUiTransformsDoNotCurrentlyAlterSpriteCommands" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneTests.SpritePrismBoundsApplyTheSceneViewBoxTransformExactlyOnce" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="4b1a8500-7acf-3925-8cea-d45e7cd89e02">
+      <Execution id="aca303e3-3e51-4055-87a7-070ae1273834" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneTests" name="SpritePrismBoundsApplyTheSceneViewBoxTransformExactlyOnce" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneTests.ContinuousSceneWithImperativeDrawingDoesNotAssumeItsContentIsUnchanged(useSubclass: True)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="fdc86e3f-c7e2-d7a9-9bb8-e59ff50818be">
+      <Execution id="b665df2b-9d3c-4a4a-b3c9-95627f729bbb" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneTests" name="ContinuousSceneWithImperativeDrawingDoesNotAssumeItsContentIsUnchanged" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneTests.SceneActivatesDrawingAndRecordsAfterImperativeDrawing" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="83c7ac7c-c7a8-2291-9aed-65cea6888887">
+      <Execution id="9179f137-b18a-4e94-bf31-4a9a43cde49e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneTests" name="SceneActivatesDrawingAndRecordsAfterImperativeDrawing" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneTests.ContinuousSceneWithImperativeDrawingDoesNotAssumeItsContentIsUnchanged(useSubclass: False)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="db4fa62d-5d59-d58f-fe0f-874184d450b8">
+      <Execution id="3160204e-0bc6-405c-86c5-61692262ae67" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneTests" name="ContinuousSceneWithImperativeDrawingDoesNotAssumeItsContentIsUnchanged" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.OffCameraSpriteKeepsMotionAndItsActualCollisionOwner(collection: True, startX: 0)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="1bbffd24-43c7-198b-b4e6-728b8ae9bd25">
+      <Execution id="a049ba46-ae12-4e6d-b382-3d95759b46b7" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests" name="OffCameraSpriteKeepsMotionAndItsActualCollisionOwner" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.CollectionMaterializesAllOccurrencesAndPanDoesNotChangeMembership" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="212f9205-615b-b767-fa98-e6b323b94739">
+      <Execution id="61dda7af-1904-4816-91aa-5cd6ab5406e0" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests" name="CollectionMaterializesAllOccurrencesAndPanDoesNotChangeMembership" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.GroupPrismUsesAggregateTransformedBoundsAndNestsChildPrism" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="dac56904-dd64-ef0e-562a-037beeb43861">
+      <Execution id="2f395499-5a93-426c-a528-022880f2752e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="GroupPrismUsesAggregateTransformedBoundsAndNestsChildPrism" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.OffCameraSpriteKeepsMotionAndItsActualCollisionOwner(collection: False, startX: 1000)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="215ae8ac-533b-a169-59a3-8d04d03b5797">
+      <Execution id="ea6e42fe-0480-46e8-a9ef-a56571b3103a" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests" name="OffCameraSpriteKeepsMotionAndItsActualCollisionOwner" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneTests.ScenePropertyMutationInvalidatesAnOnDemandSurface" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="c337c479-682c-df33-4a1d-64ec84052bae">
+      <Execution id="f308aa54-5a7b-4192-8edc-f56f6e76dfee" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneTests" name="ScenePropertyMutationInvalidatesAnOnDemandSurface" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.ViewBoxAndGroupTransformsDoNotMagnifySpriteOrGroupStyleSizes(groupScale: 1)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="ae0796e4-63bb-677c-d442-8ad74628f54e">
+      <Execution id="8a922f80-2742-47ff-8e7d-d8e66f26476c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="ViewBoxAndGroupTransformsDoNotMagnifySpriteOrGroupStyleSizes" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.GroupPrismAndTransformScopesCloseWhenAChildThrows" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="f19a3c62-ed37-c206-8a1e-7a94c68d66c2">
+      <Execution id="1cebd74b-3109-4f1b-8f28-57dda874e674" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="GroupPrismAndTransformScopesCloseWhenAChildThrows" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneTests.SpriteMotionAnimatesSpritePropertiesThroughTheSceneLogicalTree" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="b6a1af3d-6440-2a45-fe01-1d6fafc868b9">
+      <Execution id="5649c197-80f2-40b3-9ffa-af2bcf0efd0f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneTests" name="SpriteMotionAnimatesSpritePropertiesThroughTheSceneLogicalTree" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.PointerMissOutsideAnOffscreenSpriteDoesNotReloadItsImage(transformed: False)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="6a8fc8a9-ed75-d648-d2d3-727a13940469">
+      <Execution id="bb376560-e462-48cd-a2f0-80ebc6d25f04" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests" name="PointerMissOutsideAnOffscreenSpriteDoesNotReloadItsImage" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.LayerThenYAppliesTheParentSceneTransformToItsAnchor" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="5ecdfaa6-83b1-f174-ac57-40ecff68475e">
+      <Execution id="e1c1624b-a96b-4403-9066-4125eb905efd" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="LayerThenYAppliesTheParentSceneTransformToItsAnchor" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.ViewBoxAndGroupTransformsDoNotMagnifySpriteOrGroupStyleSizes(groupScale: 2)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="91b81e2a-4728-6bd8-95d9-228cd0ca240f">
+      <Execution id="fe0806b0-d810-4c23-b60b-23f7d1a3c196" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="ViewBoxAndGroupTransformsDoNotMagnifySpriteOrGroupStyleSizes" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneTests.ViewBoxUniformCentersLogicalCoordinatesInsideSurfaceBounds" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="ea979d94-4560-fc5b-0047-7179fe55f45a">
+      <Execution id="f824307f-153d-4c42-bb35-a914a82be839" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneTests" name="ViewBoxUniformCentersLogicalCoordinatesInsideSurfaceBounds" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.ExplicitLayerOrderingIsStableAndIgnoresSpriteLayerDepth" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="972bc130-406a-b21e-7c3a-8714ced162e2">
+      <Execution id="b56d32a5-b304-4143-abe9-661bd4f0bf2c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="ExplicitLayerOrderingIsStableAndIgnoresSpriteLayerDepth" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.IdleFramesDoNotReenumerateOrPublishCollisionMutations" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="5711038d-b0b9-f116-e596-5866d801979e">
+      <Execution id="cc317c3b-e6ee-4ab4-a818-a0fe22c1927d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests" name="IdleFramesDoNotReenumerateOrPublishCollisionMutations" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.AspectControlsLayerAndOrderMode" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="ba181e4b-8eb9-93c2-bb7e-3f95aa528f41">
+      <Execution id="0d1f5d3e-bd2a-49e9-afba-f02ff26c75ee" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="AspectControlsLayerAndOrderMode" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.LayerPrismCapturesOnlyThatLayersDescendants" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="a01f8e39-8cf8-6785-b42e-5f045ad96157">
+      <Execution id="8633e3f3-a726-48fa-8496-51b824c6517e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="LayerPrismCapturesOnlyThatLayersDescendants" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.OffCameraSpriteKeepsMotionAndItsActualCollisionOwner(collection: False, startX: 0)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="8c3c89ee-77ec-903d-630d-11cb18a5beed">
+      <Execution id="bc986b8e-1ddb-4ea6-bcc4-dbb9398abbd7" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests" name="OffCameraSpriteKeepsMotionAndItsActualCollisionOwner" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.NestedSceneGroupsComposeTransformsInsideViewBoxClip" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="3d827cee-0a8b-93d9-2674-82ee961b0bb7">
+      <Execution id="7dee157d-19ba-44c9-965b-aed8fd7be8ab" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="NestedSceneGroupsComposeTransformsInsideViewBoxClip" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.TemplatedSceneNodeKeepsAspectMotionPrismAndLifecycle" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="2c2e0672-1f6e-436a-c033-ef95dd98f19f">
+      <Execution id="670b0f01-73f6-4bcc-b1ae-45e433ae5700" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="TemplatedSceneNodeKeepsAspectMotionPrismAndLifecycle" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.PointerMissOutsideAnOffscreenSpriteDoesNotReloadItsImage(transformed: True)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="c80d3213-d890-58a1-6f2c-e2030da3d36d">
+      <Execution id="c936a9af-940a-4d69-a8c6-60b29d1d1105" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests" name="PointerMissOutsideAnOffscreenSpriteDoesNotReloadItsImage" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.LayerThenYUsesSceneBoundsAndKeepsSourceOrderForTies" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="38b77d14-7c52-df0d-aaf2-67c7ec75ddb1">
+      <Execution id="3b9ea85e-8537-4005-94cf-50654a951635" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="LayerThenYUsesSceneBoundsAndKeepsSourceOrderForTies" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.HiddenAncestorReleasesPresentationWithoutDetachingRealizedNodes" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="ef04c8da-51e6-653c-720f-81815322e180">
+      <Execution id="cb688297-6851-42f3-a457-d343f16a9cc9" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests" name="HiddenAncestorReleasesPresentationWithoutDetachingRealizedNodes" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests.NonInvertibleSceneTransformStillRecordsConservativeContent" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="8bf94ab3-7f14-a98a-7399-8fc19dae205a">
+      <Execution id="994cef6d-e16c-4d43-8526-cc75924d9f3f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.RenderSurface2DSceneFoundationContractTests" name="NonInvertibleSceneTransformStillRecordsConservativeContent" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="418434d5-0c03-ece2-347b-b3c67a2b9526" executionId="e427bbc6-5fbd-4b6a-8822-59b7625070d8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f19a3c62-ed37-c206-8a1e-7a94c68d66c2" executionId="1cebd74b-3109-4f1b-8f28-57dda874e674" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a8e088ac-469c-e160-99db-f173468dafc1" executionId="5701aa95-75b7-4691-ad80-940de69be83f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1bbffd24-43c7-198b-b4e6-728b8ae9bd25" executionId="a049ba46-ae12-4e6d-b382-3d95759b46b7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ae0796e4-63bb-677c-d442-8ad74628f54e" executionId="8a922f80-2742-47ff-8e7d-d8e66f26476c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2c24463a-259b-89a4-6d22-a6336be13a76" executionId="4c9fecaa-d00a-4095-8b90-d3ce0445ec99" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6a8fc8a9-ed75-d648-d2d3-727a13940469" executionId="bb376560-e462-48cd-a2f0-80ebc6d25f04" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2c2e0672-1f6e-436a-c033-ef95dd98f19f" executionId="670b0f01-73f6-4bcc-b1ae-45e433ae5700" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6c2721b5-c155-c062-fc48-5f0e386cdff8" executionId="2b313802-b855-4b9d-8ac7-f379531ad5be" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="972bc130-406a-b21e-7c3a-8714ced162e2" executionId="b56d32a5-b304-4143-abe9-661bd4f0bf2c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c337c479-682c-df33-4a1d-64ec84052bae" executionId="f308aa54-5a7b-4192-8edc-f56f6e76dfee" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cc5dcede-870f-d8d9-2e9e-cbd30ca6af36" executionId="117e9b6c-e871-4e1d-aeea-425dad4e04a3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b2e7f09c-60e0-c807-8eeb-14e37a6808b8" executionId="b8bf74ac-e16c-455e-b8de-962f7d347ac9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8bf94ab3-7f14-a98a-7399-8fc19dae205a" executionId="994cef6d-e16c-4d43-8526-cc75924d9f3f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="652f506c-856e-7aa5-7626-3e9979629030" executionId="a74172ae-1281-48d1-a94f-0fc8f83f8158" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="97c05e03-42c1-6708-eb94-05eb16f1f1e8" executionId="a552dacb-4bbb-44e2-96e0-4f3a09bef7f8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4da27dcb-f7d3-941d-a708-34dc4fad8404" executionId="19f71e4d-80a9-4437-b736-3371d8d717f7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c76fc086-e1c5-e4d0-1b5e-53f5eafea292" executionId="a141e57d-d5c0-4561-9f38-ea9e277e6409" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="83c7ac7c-c7a8-2291-9aed-65cea6888887" executionId="9179f137-b18a-4e94-bf31-4a9a43cde49e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4b1a8500-7acf-3925-8cea-d45e7cd89e02" executionId="aca303e3-3e51-4055-87a7-070ae1273834" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a7284760-c7c2-3261-89ee-505498a5e67d" executionId="341d8e5e-d0a3-469d-a696-f920c2687e68" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="215ae8ac-533b-a169-59a3-8d04d03b5797" executionId="ea6e42fe-0480-46e8-a9ef-a56571b3103a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="799e2c52-3fbe-e6e0-3deb-51a4bfa1a4e0" executionId="2b7ff1d2-5206-431c-9fd6-61a3516aa24a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6aace9c1-c08e-3850-c402-3b14e75ea296" executionId="f6022b77-6a28-464b-8e3c-d8d6b7034ec8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="88e8c11d-9434-21fd-e5ef-2b50bf0e8d50" executionId="68dd524d-7ecb-4d80-aec7-c801694f374c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="17333d69-03e8-4da7-baf7-d127fd0715b9" executionId="146884b6-3c65-44ae-a737-23e69b206225" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5ecdfaa6-83b1-f174-ac57-40ecff68475e" executionId="e1c1624b-a96b-4403-9066-4125eb905efd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ba181e4b-8eb9-93c2-bb7e-3f95aa528f41" executionId="0d1f5d3e-bd2a-49e9-afba-f02ff26c75ee" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3d827cee-0a8b-93d9-2674-82ee961b0bb7" executionId="7dee157d-19ba-44c9-965b-aed8fd7be8ab" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="91b81e2a-4728-6bd8-95d9-228cd0ca240f" executionId="fe0806b0-d810-4c23-b60b-23f7d1a3c196" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fdc86e3f-c7e2-d7a9-9bb8-e59ff50818be" executionId="b665df2b-9d3c-4a4a-b3c9-95627f729bbb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a01f8e39-8cf8-6785-b42e-5f045ad96157" executionId="8633e3f3-a726-48fa-8496-51b824c6517e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="dac56904-dd64-ef0e-562a-037beeb43861" executionId="2f395499-5a93-426c-a528-022880f2752e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="38b77d14-7c52-df0d-aaf2-67c7ec75ddb1" executionId="3b9ea85e-8537-4005-94cf-50654a951635" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="212f9205-615b-b767-fa98-e6b323b94739" executionId="61dda7af-1904-4816-91aa-5cd6ab5406e0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c80d3213-d890-58a1-6f2c-e2030da3d36d" executionId="c936a9af-940a-4d69-a8c6-60b29d1d1105" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c6e7e77e-9160-42bb-dce5-2b1322717416" executionId="52a90f79-5793-4c1d-b5df-3f066ba4755b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="db4fa62d-5d59-d58f-fe0f-874184d450b8" executionId="3160204e-0bc6-405c-86c5-61692262ae67" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="983bf8bd-50af-187c-f526-7b7e5bdab7c6" executionId="12da95cd-7aec-432f-a19b-914445d27451" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b6a1af3d-6440-2a45-fe01-1d6fafc868b9" executionId="5649c197-80f2-40b3-9ffa-af2bcf0efd0f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="246467c9-fee3-81d8-cebd-9d9079b3bf81" executionId="069b12a9-efdc-4455-b9ca-7b311200e48e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ea979d94-4560-fc5b-0047-7179fe55f45a" executionId="f824307f-153d-4c42-bb35-a914a82be839" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f9eb3f14-2e51-3a4b-f8aa-24e97f3430b6" executionId="46a2b456-5ee9-4edd-8478-1258b191fdcd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ef04c8da-51e6-653c-720f-81815322e180" executionId="cb688297-6851-42f3-a457-d343f16a9cc9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7f5b9476-b2ac-62c9-4d56-a3f846b4901c" executionId="6e432364-26c3-4b0b-9b2a-39006eebd99f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5711038d-b0b9-f116-e596-5866d801979e" executionId="cc317c3b-e6ee-4ab4-a818-a0fe22c1927d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ae145383-6c2c-10c0-cd8b-3f29a2384a01" executionId="8ef125bd-e3e5-4162-acb6-c938299456bb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8c3c89ee-77ec-903d-630d-11cb18a5beed" executionId="bc986b8e-1ddb-4ea6-bcc4-dbb9398abbd7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cbfaeed3-d5b1-336b-2c1b-087c86724e34" executionId="7b1ad167-f2c2-43c3-ad30-fa8f5fe63728" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="49" executed="49" passed="44" failed="5" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.64]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:02.61]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:02.67]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:03.70]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:03.70]       Expected: 0&#xD;
+[xUnit.net 00:00:03.70]       Actual:   1&#xD;
+[xUnit.net 00:00:03.70]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.70]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DIncrementalContractTests.cs(180,0): at Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.PointerMissOutsideAnOffscreenSpriteDoesNotReloadItsImage(Boolean transformed)&#xD;
+[xUnit.net 00:00:03.70]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:03.70]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:03.71]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:03.71]       Expected: 0&#xD;
+[xUnit.net 00:00:03.71]       Actual:   1&#xD;
+[xUnit.net 00:00:03.71]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.71]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DIncrementalContractTests.cs(180,0): at Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.PointerMissOutsideAnOffscreenSpriteDoesNotReloadItsImage(Boolean transformed)&#xD;
+[xUnit.net 00:00:03.71]            at InvokeStub_SceneItems2DIncrementalContractTests.PointerMissOutsideAnOffscreenSpriteDoesNotReloadItsImage(Object, Span`1)&#xD;
+[xUnit.net 00:00:03.71]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:03.74]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:03.74]       Expected: 0&#xD;
+[xUnit.net 00:00:03.74]       Actual:   1&#xD;
+[xUnit.net 00:00:03.74]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.74]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DIncrementalContractTests.cs(216,0): at Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.ColliderOutsideSpriteVisualRemainsPickableWithoutReloadingImage(Boolean transformed)&#xD;
+[xUnit.net 00:00:03.74]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:03.74]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:03.74]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:03.74]       Expected: 0&#xD;
+[xUnit.net 00:00:03.74]       Actual:   1&#xD;
+[xUnit.net 00:00:03.74]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.74]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DIncrementalContractTests.cs(216,0): at Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.ColliderOutsideSpriteVisualRemainsPickableWithoutReloadingImage(Boolean transformed)&#xD;
+[xUnit.net 00:00:03.74]            at InvokeStub_SceneItems2DIncrementalContractTests.ColliderOutsideSpriteVisualRemainsPickableWithoutReloadingImage(Object, Span`1)&#xD;
+[xUnit.net 00:00:03.74]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:03.75]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:03.75]       Expected: 0&#xD;
+[xUnit.net 00:00:03.75]       Actual:   1&#xD;
+[xUnit.net 00:00:03.76]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.76]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DIncrementalContractTests.cs(132,0): at Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.OffscreenRealizedSpriteReleasesItsImageAndReloadsOnReturn()&#xD;
+[xUnit.net 00:00:03.76]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:03.76]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:05.07]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T07:55:55.3833962+03:00">
+        <Text>[xUnit.net 00:00:03.70]     Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.PointerMissOutsideAnOffscreenSpriteDoesNotReloadItsImage(transformed: True) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T07:55:55.3938892+03:00">
+        <Text>[xUnit.net 00:00:03.71]     Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.PointerMissOutsideAnOffscreenSpriteDoesNotReloadItsImage(transformed: False) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T07:55:55.4207943+03:00">
+        <Text>[xUnit.net 00:00:03.74]     Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.ColliderOutsideSpriteVisualRemainsPickableWithoutReloadingImage(transformed: True) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T07:55:55.4261672+03:00">
+        <Text>[xUnit.net 00:00:03.74]     Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.ColliderOutsideSpriteVisualRemainsPickableWithoutReloadingImage(transformed: False) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T07:55:55.4393182+03:00">
+        <Text>[xUnit.net 00:00:03.75]     Cerneala.Tests.Controls.SceneItems2DIncrementalContractTests.OffscreenRealizedSpriteReleasesItsImageAndReloadsOnReturn [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

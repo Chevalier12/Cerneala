@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="1e0ee063-5398-4a4b-92e4-75b2c8d0ae9a" name="lauri@DESKTOP-JT43V3D 2026-09-24 21:45:25" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T21:45:25.7133786+03:00" queuing="2026-09-24T21:45:25.7133790+03:00" start="2026-09-24T21:45:16.2567631+03:00" finish="2026-09-24T21:45:25.7389410+03:00" />
+  <TestSettings name="default" id="dbb2fff9-6d0c-4118-a4c2-b329503911bf">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_21_45_25" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="2b9e4a42-0609-42e7-b997-deb2f47ea70d" testId="861b90fd-4e3e-cc69-42dc-84554f04b275" testName="Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset" computerName="DESKTOP-JT43V3D" duration="00:00:05.8897677" startTime="2026-09-24T21:45:25.3158771+03:00" endTime="2026-09-24T21:45:25.3159264+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2b9e4a42-0609-42e7-b997-deb2f47ea70d">
+      <Output>
+        <StdOut>Path-edge crop probe: ViewBox=DrawRect { X = 1850, Y = 1938, Width = 396, Height = 220, Right = 2246, Bottom = 2158 }, gameBounds=LayoutRect { X = 14.4, Y = 102.4, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 102.4 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750; vertical x=473/476 y=203 edge=#ffadb96a safe=#ff84c669; horizontal x=633 y=442/439 edge=#ff688653 safe=#ff84c669.</StdOut>
+        <ErrorInfo>
+          <Message>Opaque path tile 43 must join grass without edge lines. Vertical #ffadb96a vs #ff84c669; horizontal #ff688653 vs #ff84c669.</Message>
+          <StackTrace>   at Cerneala.Tests.SceneVillage.NativeVillageWindowTests.AssertVillagePathHasNoAtlasEdgeLinesAsync(Servo servo, Window window, VillageGameSurface surface, String screenshotPath, CancellationToken cancellationToken) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeVillageWindowTests.cs:line 477&#xD;
+   at Cerneala.Tests.SceneVillage.NativeVillageWindowTests.ExerciseWindowAsync(MainWindow window, VillageGameSurface surface, TextBlock status, String captureDirectory, CancellationToken cancellationToken) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeVillageWindowTests.cs:line 117&#xD;
+   at Cerneala.Tests.SceneVillage.NativeVillageWindowTests.&lt;&gt;c__DisplayClass2_1.&lt;&lt;RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset&gt;b__4&gt;d.MoveNext() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeVillageWindowTests.cs:line 72&#xD;
+--- End of stack trace from previous location ---&#xD;
+   at Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeVillageWindowTests.cs:line 90&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="861b90fd-4e3e-cc69-42dc-84554f04b275">
+      <Execution id="2b9e4a42-0609-42e7-b997-deb2f47ea70d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.NativeVillageWindowTests" name="RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="861b90fd-4e3e-cc69-42dc-84554f04b275" executionId="2b9e4a42-0609-42e7-b997-deb2f47ea70d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="1" executed="1" passed="0" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.21]   Discovering: Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:00.31]   Discovered:  Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:00.32]   Starting:    Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:06.46]       Opaque path tile 43 must join grass without edge lines. Vertical #ffadb96a vs #ff84c669; horizontal #ff688653 vs #ff84c669.&#xD;
+[xUnit.net 00:00:06.46]       Stack Trace:&#xD;
+[xUnit.net 00:00:06.46]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeVillageWindowTests.cs(477,0): at Cerneala.Tests.SceneVillage.NativeVillageWindowTests.AssertVillagePathHasNoAtlasEdgeLinesAsync(Servo servo, Window window, VillageGameSurface surface, String screenshotPath, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:06.46]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeVillageWindowTests.cs(117,0): at Cerneala.Tests.SceneVillage.NativeVillageWindowTests.ExerciseWindowAsync(MainWindow window, VillageGameSurface surface, TextBlock status, String captureDirectory, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:06.46]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeVillageWindowTests.cs(72,0): at Cerneala.Tests.SceneVillage.NativeVillageWindowTests.&lt;&gt;c__DisplayClass2_1.&lt;&lt;RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset&gt;b__4&gt;d.MoveNext()&#xD;
+[xUnit.net 00:00:06.46]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:06.46]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeVillageWindowTests.cs(90,0): at Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset()&#xD;
+[xUnit.net 00:00:06.46]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:06.46]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:06.46]       Output:&#xD;
+[xUnit.net 00:00:06.46]         Path-edge crop probe: ViewBox=DrawRect { X = 1850, Y = 1938, Width = 396, Height = 220, Right = 2246, Bottom = 2158 }, gameBounds=LayoutRect { X = 14.4, Y = 102.4, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 102.4 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750; vertical x=473/476 y=203 edge=#ffadb96a safe=#ff84c669; horizontal x=633 y=442/439 edge=#ff688653 safe=#ff84c669.&#xD;
+[xUnit.net 00:00:06.53]   Finished:    Cerneala.Tests.SceneVillage&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T21:45:25.3073508+03:00">
+        <Text>[xUnit.net 00:00:06.46]     Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-09-24T21:45:25.5601196+03:00">
+        <Text>Data collector 'Blame' message: All tests finished running, Sequence file will not be generated.</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

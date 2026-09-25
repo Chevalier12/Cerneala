@@ -1,0 +1,17 @@
+# Scene Village solution and Windows workflow integration
+
+Date: 2026-09-24. This is a separate Village task, not a continuation of the completed Scene2D collection plan. The application worker owns both new project directories; integration owns only `Cerneala.slnx`, `.github/workflows/scene-village-windows.yml`, and this evidence directory. No Core, renderer, package, prior plan, or documentation API file was edited here.
+
+## Minimal solution change
+
+Both new project files existed before the edit. Their project names and target frameworks were confirmed by direct XML reads: the application is `net8.0-windows` WinExe, and the dedicated xUnit test project is `net8.0-windows`. `Cerneala.slnx` adds exactly one app path inside `/Playground/` and one test path inside `/tests/`, without changing existing entries. `solution-static-check.txt` records successful XML parsing, 38 total project entries, exactly two Village entries, both paths present, and `dotnet sln Cerneala.slnx list` recognizing both. The project files may still be developed by their owner; the recorded hashes in `integration-input-hashes.txt` are a static integration-time snapshot, not a claim that their eventual source is frozen.
+
+The root `Cerneala.csproj` excludes `Playground\**` and `tests\**` from Core `Compile`, `EmbeddedResource`, `None`, and `.crn` `AdditionalFiles`; the new sibling directories do not enter its current SDK globs. No root project exclusion or workaround was added. `pre-village-integrity.txt` and `pre-village-git-status.txt` preserve the earlier dirty-worktree/solution baseline.
+
+## Windows-only CI routing
+
+The existing `desktop-backends.yml` push/PR filters do not match the new sibling app/test paths or `Cerneala.slnx`. Adding those filters there would also trigger its Ubuntu/macOS SDL matrix, contrary to this Windows-only testbed. Root therefore authorized a **new** path-filtered workflow, `.github/workflows/scene-village-windows.yml`, rather than an edit to that matrix.
+
+The new workflow triggers on push/PR changes to itself, `Cerneala.slnx`, or either Village directory. It has one `windows-latest` job: repository-established `actions/checkout@v4` and `actions/setup-dotnet@v4` using `global.json`; Release restore/build of the dedicated test project; then `dotnet test` of that project with `CERNEALA_SDL_NATIVE_TESTS=1`, serialized MSBuild, TRX under `artifacts/ci/scene-village/test-results`. It uploads that tree with repository-established `actions/upload-artifact@v4` even if tests fail. The app worker states its native tests will write any `Window.SaveScreenshot` captures under `artifacts/ci/scene-village/screenshots`; this path is not an OS screen capture. The workflow adds no Linux/macOS job, novel action, external asset download, or manual dispatch trigger.
+
+`workflow-static-check.txt` verifies two identical path-filter occurrences per trigger, exactly one Windows runner, the native opt-in/test command/upload path, and zero whitespace or non-Windows runner references. A formal YAML parser/actionlint was not available locally (bundled Python lacks PyYAML, bundled Node lacks `yaml`); this static check is **not** a CI execution. The solution XML/parser and `git diff --check -- Cerneala.slnx` passed. The actual hosted Windows runner, native SDL availability, screenshot contents, and test behavior remain unverified until the authorized local/CI gates execute. No CI was dispatched by this task.

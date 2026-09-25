@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="a3591f8f-d7ac-42fb-9d57-b63d0a5c795c" name="lauri@DESKTOP-JT43V3D 2026-09-24 15:20:21" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T15:20:21.1070976+03:00" queuing="2026-09-24T15:20:21.1070980+03:00" start="2026-09-24T15:20:17.7469349+03:00" finish="2026-09-24T15:20:21.1077893+03:00" />
+  <TestSettings name="default" id="89994b4c-5eac-4e3b-8010-106b6a6bcf5f">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_15_20_21" />
+  </TestSettings>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="0" executed="0" passed="0" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.26]   Discovering: Cerneala.Tests.Scene2DPackages&#xD;
+[xUnit.net 00:00:00.45]   Discovered:  Cerneala.Tests.Scene2DPackages&#xD;
+[xUnit.net 00:00:00.47]   Starting:    Cerneala.Tests.Scene2DPackages&#xD;
+[xUnit.net 00:00:00.51]   Finished:    Cerneala.Tests.Scene2DPackages&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-09-24T15:20:20.9686413+03:00">
+        <Text>No test matches the given testcase filter `FullyQualifiedName~ApiDocumentationManifestIsValidAndReferencesExistingFiles` in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

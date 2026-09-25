@@ -39,7 +39,7 @@ is already fully materialized. It reuses core validation and `FromModel` spatial
 metadata derivation, writes independent chunk payloads with complete used
 palettes, and stores nonspatial document/level/map metadata, entities and
 promotions separately. Unused source definitions remain accessible through
-explicit metadata leases; they are not deleted or kept in the resident catalog.
+explicit metadata loads; they are not deleted or kept in the resident package index.
 
 ### Prepared grid boundaries
 
@@ -51,7 +51,7 @@ Empty pieces are retained, so subdivision does not remove authored extent.
 Free-placement ranges keep their existing preparation behavior.
 
 This transformation affects only the prepared package. It does not mutate the
-input document, change importer output, or repartition `TileMapSource2D.FromModel`.
+input document, change importer output, or repartition `TileMap2D.FromModel`.
 Cell coordinates, tile IDs, flip bits, chunk revisions/properties and map-level
 transforms remain unchanged. Each piece carries only the palette it uses and has
 its own decoded-data charge. A 256-cell bound is not a byte limit: large properties
@@ -64,14 +64,14 @@ counts and query hit multiplicity can change, not the occupied geometry. Do not
 treat runtime chunk IDs as editor object IDs. Map metadata's
 [`GridChunks`](Cerneala.Scene2D.Packages.Scene2DPackageMetadata.md) retains every
 original chunk's extent, revision and properties, without cell arrays. It is an
-explicitly acquired payload, not extra resident catalog data. Existing validation
+explicitly loaded payload, not extra resident index data. Existing validation
 budgets still apply; preparation does not raise them to accommodate subdivision.
 
 Entity catalog headers contain identity, owning map, authored role and finite
 map-local authoring/collision bounds. Complete geometry, prototypes and properties
 remain in individual payloads. Templates, motion envelopes and simulation policy
-are supplied explicitly by the game at runtime through `CreateEntitySource`, not
-guessed by the writer. An entity whose transformed geometry cannot provide finite
+are supplied explicitly by the game when it loads entity values and realizes
+scene nodes, not guessed by the writer. An entity whose transformed geometry cannot provide finite
 spatial bounds is rejected rather than assigned empty bounds.
 
 The output consists of `catalog.c2d`, `payloads.c2d` and an `assets` directory.
@@ -113,8 +113,7 @@ not publisher authenticity.
 
 ### Decoded chunk data charges
 
-Prepared grid and free-placement headers declare
-[`DataResidencyBytes`](Cerneala.UI.Controls.TileMapChunkInfo2D.md#data-residency-charge)
+Prepared grid and free-placement headers declare an internal decoded-data charge
 before a runtime read. The typed encoder calculates this conservative admission
 charge from the decoder's data ownership, not from compressed or encoded file
 length. It includes cell/placement storage, used palettes and prototypes,
@@ -127,8 +126,8 @@ This is a source declaration for the optional warm working set, not a measured
 managed-heap, process-memory or GPU limit. Images, resident catalogs, transient
 read/decoding buffers and consumer-side bookkeeping have separate owners. Required
 camera and collision reads are not rejected because their charge exceeds the
-optional warm budget. This declaration neither loads images nor makes metadata
-leases part of automatic chunk preloading.
+optional warm budget. This declaration neither loads images nor makes direct
+metadata reads part of automatic chunk preloading.
 
 The current wire revision is **CPV2**. Regenerate earlier CPV1 prototype packages
 to include the entity selection headers. Changing only the game's template or

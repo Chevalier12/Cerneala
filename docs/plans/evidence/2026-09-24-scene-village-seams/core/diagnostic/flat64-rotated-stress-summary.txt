@@ -1,0 +1,5 @@
+flat64-rotated-stress-01 exit=1
+flat64-rotated-stress-02 exit=1
+flat64-rotated-stress-03 exit=1
+flat64-rotated-stress-04 exit=1
+flat64-rotated-stress-05 exit=1

@@ -185,7 +185,19 @@ public sealed class TileMapStreamingTests
         fixture.PumpUntil(() => task.IsCompleted);
         using SceneCollisionRegion2D region = await task;
         fixture.OnRelease = () => throw new IOException("release failed");
-        Exception? failure = Record.Exception(throughContext ? fixture.Dispose : region.Dispose);
+        Exception? failure;
+        if (throughContext)
+        {
+            // Context retirement stores map-owned release failures for the
+            // terminal map drain instead of interrupting tree detachment.
+            fixture.Dispose();
+            fixture.Scene.Children.Remove(fixture.Map);
+            failure = await Record.ExceptionAsync(() => fixture.Map.DisposeAsync().AsTask());
+        }
+        else
+        {
+            failure = Record.Exception(region.Dispose);
+        }
         Assert.NotNull(failure);
         AggregateException aggregate = Assert.IsType<AggregateException>(failure);
         Assert.Contains(aggregate.Flatten().InnerExceptions, error => error is IOException { Message: "release failed" });

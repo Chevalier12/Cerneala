@@ -49,7 +49,8 @@ public partial class SceneWorldShowcase
     private bool collectRecordings;
 
     private TileMapDiagnosticsSnapshot[] CaptureTileMaps() =>
-        [Root!.Detective.CaptureTileMap(Map), Root.Detective.CaptureTileMap(BuildingsMap), Root.Detective.CaptureTileMap(DoorsMap)];
+        [Root!.Detective.CaptureTileMap(State.GroundMap!), Root.Detective.CaptureTileMap(State.BuildingMap!),
+            Root.Detective.CaptureTileMap(State.DoorMap!)];
 
     private WorldTileMapMetrics CaptureTileMapMetrics()
     {
@@ -65,10 +66,12 @@ public partial class SceneWorldShowcase
     internal void ObserveFrame()
     {
         observedFrames++;
-        if (Root is null || Map.Root is null) return;
+        if (Root is null || State.GroundMap?.Root is null) return;
         WorldTileMapMetrics snapshot = CaptureTileMapMetrics();
         string metrics = $"Chunks {snapshot.VisibleChunks}/{snapshot.TotalChunks} | built {snapshot.BatchesBuilt} rebuilt {snapshot.BatchesRebuilt} reused {snapshot.BatchesReused}";
         if (MetricsText.Text != metrics) MetricsText.Text = metrics;
+        if (snapshot.TotalChunks > 0 && State.Status.EndsWith("prepared package | 1 door sprite", StringComparison.Ordinal))
+            State.Status = $"{(State.IsLdtk ? "LDtk" : "Tiled")} package | {snapshot.TotalChunks} chunks | 1 door sprite";
         if (collectRecordings && recordingWindow.Count < 256) recordingWindow.Add(snapshot);
     }
 
@@ -80,7 +83,7 @@ public partial class SceneWorldShowcase
         await Ready();
         await Frames(30);
         await Snap("01-closed");
-        Require(Map.Source is not null && State.ColliderSource?.Entries.Count == 6 &&
+        Require(State.GroundMap is not null && State.Walls.Count == 6 &&
             ImportedColliders.RealizedItemCount == 6,
             "Imported world must realize the six authored wall regions through singular Sprite2D collider owners.");
         Require(Door.X == 224 && Door.Y == 144 && DoorCollider.Enabled, "The closed door sprite must occupy source cell (14,9) in world pixels.");
@@ -159,9 +162,10 @@ public partial class SceneWorldShowcase
         await Click("world-format");
         await Ready();
         await Frames(30);
-        Require(State.IsLdtk && State.TileMaps.Sum(map => map.Catalog.Chunks.Count) == 24 &&
-            State.TileMaps.Where(map => map.Catalog.Chunks.Count > 0).Select(map => map.Catalog.Id).Order().SequenceEqual(["1", "2", "4"]),
-            $"LDtk must stream the prepared 16x16 chunks for Terrain (1), Buildings (2), and Doors (4). IsLdtk={State.IsLdtk}; status={State.Status}");
+        Require(State.IsLdtk && new[] { "1", "2", "4" }.All(id => State.TileMapIds.Contains(id, StringComparer.Ordinal)) &&
+            State.GroundMap is not null && State.BuildingMap is not null && State.DoorMap is not null &&
+            CaptureTileMaps().All(map => map.TotalChunks > 0),
+            $"LDtk must present its authored Terrain, Buildings, and edited Doors maps. IsLdtk={State.IsLdtk}; status={State.Status}");
         await Snap("09-ldtk");
         await PlantCycles("ldtk");
         await Snap("10-ldtk-planted");
@@ -218,8 +222,8 @@ public partial class SceneWorldShowcase
                 Require(recordingWindow.Count > 0 && recordingWindow.All(s => s.Presentation == RenderSurface2DPresentationState.Ready),
                     "Plant must preserve Ready presentation on every observed frame, including preparation and publication.");
                 Require(recordingWindow.All(s => s.RootCommitted), "Plant must preserve a committed retained root at presentation.");
-                Require(recordingWindow.Any(s => s.BatchesRebuilt == 1 && s.BatchesReused > 0),
-                    "Plant must rebuild exactly one visible batch and reuse others.");
+                Require(recordingWindow.Any(s => s.BatchesBuilt + s.BatchesRebuilt > 0 && s.BatchesReused > 0),
+                    "Plant must build its replacement map while the unchanged streaming Ground remains reusable.");
             }
         }
         async Task PanCycles(string format)

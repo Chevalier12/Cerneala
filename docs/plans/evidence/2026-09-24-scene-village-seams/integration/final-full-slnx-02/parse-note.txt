@@ -1,0 +1,6 @@
+Total=6378
+Passed=6372
+Failed=0
+Skipped=6
+TrxFiles=11
+Skipped counted from UnitTestResult outcome=NotExecuted; the TRX Counters.notExecuted field was 0 even for files containing skipped cases. Every file reconciled total=passed+failed+skipped=result rows.

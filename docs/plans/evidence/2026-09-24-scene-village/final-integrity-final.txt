@@ -1,0 +1,42 @@
+frozen_manifest_entries=23
+frozen_manifest_issues=0
+new_text_files=21
+new_text_issues=0
+git_diff_check_exit=0
+baseline_status_entries=606
+current_status_entries=816
+baseline_entries_removed=0
+new_status_entries=210
+outside_village_new_status_entries=27
+---manifest-issues---
+---baseline-removed---
+---outside-village-new---
+ M CLAUDE.md
+?? .claude/skills/algorithm-market/SKILL.md
+?? .claude/skills/algorithm-market/references/license-policy.md
+?? .claude/skills/cerneala-breaker/SKILL.md
+?? .claude/skills/cerneala-breaker/references/attack-techniques.md
+?? .claude/skills/cerneala-breaker/references/test-evidence.md
+?? .claude/skills/cerneala-checklist-plan/SKILL.md
+?? .claude/skills/cerneala-checklist-plan/references/semantic-audit.md
+?? .claude/skills/cerneala-fix-bug/SKILL.md
+?? .claude/skills/cerneala-implement-plan/SKILL.md
+?? .claude/skills/cerneala-performance-gate/SKILL.md
+?? .claude/skills/repo-cleanup/SKILL.md
+?? .claude/skills/writing-api-documentation/SKILL.md
+?? .claude/skills/writing-api-documentation/references/wpf-api-doc-formula.md
+?? claude-skills-import/algorithm-market/SKILL.md
+?? claude-skills-import/algorithm-market/references/license-policy.md
+?? claude-skills-import/cerneala-breaker/SKILL.md
+?? claude-skills-import/cerneala-breaker/references/attack-techniques.md
+?? claude-skills-import/cerneala-breaker/references/test-evidence.md
+?? claude-skills-import/cerneala-checklist-plan/SKILL.md
+?? claude-skills-import/cerneala-checklist-plan/references/semantic-audit.md
+?? claude-skills-import/cerneala-fix-bug/SKILL.md
+?? claude-skills-import/cerneala-implement-plan/SKILL.md
+?? claude-skills-import/cerneala-performance-gate/SKILL.md
+?? claude-skills-import/repo-cleanup/SKILL.md
+?? claude-skills-import/writing-api-documentation/SKILL.md
+?? claude-skills-import/writing-api-documentation/references/wpf-api-doc-formula.md
+filetree_sha256=4FB8AC1DB51A0CE471B599C9EE2BC8C5F02A3DD09679CA0CA03F9D4E5B045F38
+filetree_raw_lines=5737

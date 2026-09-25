@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="0f58a904-9f78-4ae8-b8c4-b3c5a3a90223" name="lauri@DESKTOP-JT43V3D 2026-09-24 10:10:40" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T10:10:40.2056223+03:00" queuing="2026-09-24T10:10:40.2056228+03:00" start="2026-09-24T10:10:33.4622367+03:00" finish="2026-09-24T10:10:40.2160590+03:00" />
+  <TestSettings name="default" id="8e3b7b07-80db-48b6-b7fd-d5984996eef4">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_10_10_40" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="c0b8ea7e-de24-4132-9bc6-c50b37415660" testId="1d0832cc-cf2a-4463-86b3-f3de1c27cb4e" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateEditAfterFailedSourceEnumerationKeepsOldTreeUnreadyUntilExplicitRefresh" computerName="DESKTOP-JT43V3D" duration="00:00:00.4082837" startTime="2026-09-24T10:10:39.9822770+03:00" endTime="2026-09-24T10:10:39.9823079+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c0b8ea7e-de24-4132-9bc6-c50b37415660" />
+    <UnitTestResult executionId="ed957889-7e3c-4fbe-908a-fec67b73c903" testId="407b3d2e-ff74-7374-0928-e929054b3e6d" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateEditAfterFailedRefreshCannotMarkStaleSameSourceSnapshotReady" computerName="DESKTOP-JT43V3D" duration="00:00:00.0171184" startTime="2026-09-24T10:10:40.0058315+03:00" endTime="2026-09-24T10:10:40.0058319+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ed957889-7e3c-4fbe-908a-fec67b73c903" />
+    <UnitTestResult executionId="4b463a59-f4d1-4345-8dcf-a13e869d0a3e" testId="3103edb0-6ff2-5c2a-bd48-692f92d53e33" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateEditAfterFailedRebindCommitsRequestedOneShotSnapshot" computerName="DESKTOP-JT43V3D" duration="00:00:00.0179453" startTime="2026-09-24T10:10:40.0248110+03:00" endTime="2026-09-24T10:10:40.0248114+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4b463a59-f4d1-4345-8dcf-a13e869d0a3e" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateEditAfterFailedSourceEnumerationKeepsOldTreeUnreadyUntilExplicitRefresh" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="1d0832cc-cf2a-4463-86b3-f3de1c27cb4e">
+      <Execution id="c0b8ea7e-de24-4132-9bc6-c50b37415660" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="TemplateEditAfterFailedSourceEnumerationKeepsOldTreeUnreadyUntilExplicitRefresh" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateEditAfterFailedRebindCommitsRequestedOneShotSnapshot" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="3103edb0-6ff2-5c2a-bd48-692f92d53e33">
+      <Execution id="4b463a59-f4d1-4345-8dcf-a13e869d0a3e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="TemplateEditAfterFailedRebindCommitsRequestedOneShotSnapshot" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateEditAfterFailedRefreshCannotMarkStaleSameSourceSnapshotReady" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="407b3d2e-ff74-7374-0928-e929054b3e6d">
+      <Execution id="ed957889-7e3c-4fbe-908a-fec67b73c903" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="TemplateEditAfterFailedRefreshCannotMarkStaleSameSourceSnapshotReady" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="1d0832cc-cf2a-4463-86b3-f3de1c27cb4e" executionId="c0b8ea7e-de24-4132-9bc6-c50b37415660" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="407b3d2e-ff74-7374-0928-e929054b3e6d" executionId="ed957889-7e3c-4fbe-908a-fec67b73c903" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3103edb0-6ff2-5c2a-bd48-692f92d53e33" executionId="4b463a59-f4d1-4345-8dcf-a13e869d0a3e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="3" executed="3" passed="3" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:01.52]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:03.29]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:03.31]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:03.95]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

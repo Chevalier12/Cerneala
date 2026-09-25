@@ -1,0 +1,41 @@
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:08.58]     Cerneala.Tests.Controls.SceneCollisionStreamingTests.OffCameraSimulatedActorsPinNearbyTerrainWithoutPinningTheGap [FAIL]
+  Failed Cerneala.Tests.Controls.SceneCollisionStreamingTests.OffCameraSimulatedActorsPinNearbyTerrainWithoutPinningTheGap [5 s]
+  Error Message:
+   Collision preparation did not finish within five seconds.
+  Stack Trace:
+     at Cerneala.Tests.Controls.SceneCollisionStreamingTests.Fixture.DrainUntil(Func`1 done) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneCollisionStreamingTests.cs:line 422
+   at Cerneala.Tests.Controls.SceneCollisionStreamingTests.OffCameraSimulatedActorsPinNearbyTerrainWithoutPinningTheGap() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneCollisionStreamingTests.cs:line 197
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:10.84]     Cerneala.Tests.Controls.TileMapSpatialResidencyTests.ModelPublicationInsideAnotherMaterializerDoesNotExposeRetiredTerrain [FAIL]
+  Failed Cerneala.Tests.Controls.TileMapSpatialResidencyTests.ModelPublicationInsideAnotherMaterializerDoesNotExposeRetiredTerrain [26 ms]
+  Error Message:
+   System.AggregateException : One or more errors occurred. (The requested scene-items snapshot has not committed.)
+---- System.InvalidOperationException : The requested scene-items snapshot has not committed.
+  Stack Trace:
+     at Cerneala.UI.Controls.SceneNode2D.AttachSimulationContext(SceneSimulationContext2D context) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneNode2D.cs:line 103
+   at Cerneala.UI.Controls.SceneNode2D.OnSceneChildrenChanged(Object sender, ElementTreeChange change) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneNode2D.cs:line 112
+   at Cerneala.UI.Elements.UIElementCollection.InsertCore(Int32 index, UIElement child, Boolean ownerManaged) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs:line 52
+   at System.Collections.ObjectModel.Collection`1.Add(T item)
+   at Cerneala.Tests.Controls.TileMapSpatialResidencyTests.ModelPublicationInsideAnotherMaterializerDoesNotExposeRetiredTerrain() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\TileMapSpatialResidencyTests.cs:line 722
+--- End of stack trace from previous location ---
+----- Inner Stack Trace -----
+   at Cerneala.UI.Controls.CollisionWorld2D.ThrowCollisionReadinessError() in C:\Users\lauri\Desktop\Cerneala\UI\Controls\CollisionWorld2D.Streaming.cs:line 102
+   at Cerneala.UI.Controls.CollisionWorld2D.EnsureCollisionCoverage(DrawRect bounds, Collider2D collider, CollisionQuery2D query) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\CollisionWorld2D.Streaming.cs:line 75
+   at Cerneala.UI.Controls.CollisionWorld2D.MoveAndCollide(Collider2D collider, Vector2 displacement, CollisionQuery2D query) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\CollisionWorld2D.cs:line 191
+   at Cerneala.Tests.Controls.TileMapSpatialResidencyTests.Fixture.Move() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\TileMapSpatialResidencyTests.cs:line 786
+   at Cerneala.Tests.Controls.TileMapSpatialResidencyTests.<>c__DisplayClass31_0.<ModelPublicationInsideAnotherMaterializerDoesNotExposeRetiredTerrain>b__0(ContentTemplateContext`1 _) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\TileMapSpatialResidencyTests.cs:line 718
+   at Cerneala.UI.Controls.Templates.ContentTemplate`1.<>c__DisplayClass1_0.<.ctor>b__0(ContentTemplateContext context) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\Templates\ContentTemplate.cs:line 77
+   at Cerneala.UI.Controls.Templates.ContentTemplate.Create(ContentTemplateContext context) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\Templates\ContentTemplate.cs:line 63
+   at Cerneala.UI.Controls.SceneItems2D.CreateNode(Object item) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 288
+   at Cerneala.UI.Controls.SceneItems2D.RequestSnapshot(Boolean reset, Boolean reenumerate, NotifyCollectionChangedEventArgs change) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 179
+--- End of stack trace from previous location ---
+   at Cerneala.UI.Controls.SceneItems2D.RequestSnapshot(Boolean reset, Boolean reenumerate, NotifyCollectionChangedEventArgs change) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 216
+   at Cerneala.UI.Controls.SceneItems2D.ApplyContextChange() in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 402
+   at Cerneala.UI.Controls.SceneItems2D.OnSimulationContextChanged(SceneSimulationContext2D previous) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 79
+   at Cerneala.UI.Controls.SceneNode2D.AttachSimulationContext(SceneSimulationContext2D context) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneNode2D.cs:line 88
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage2\map\core-collision-spatial-first.trx
+
+Failed!  - Failed:     2, Passed:    55, Skipped:     0, Total:    57, Duration: 8 s - Cerneala.Tests.dll (net8.0)

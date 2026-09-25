@@ -1,0 +1,41 @@
+<Project DefaultTargets="Compare">
+  <PropertyGroup>
+    <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../../../../'))</RepoRoot>
+    <SdkRoot>$([System.IO.Path]::GetFullPath('$(MSBuildSDKsPath)/..'))</SdkRoot>
+    <BaselineRoot>$(MSBuildThisFileDirectory)binary-baseline</BaselineRoot>
+    <TaskAssembly>$(SdkRoot)/Sdks/Microsoft.NET.Sdk/tools/net10.0/Microsoft.DotNet.ApiCompat.Task.dll</TaskAssembly>
+    <RoslynAssembliesPath>$(SdkRoot)/Roslyn/bincore</RoslynAssembliesPath>
+    <CoreBaseline>$(BaselineRoot)/Cerneala.dll</CoreBaseline>
+    <CoreCandidate>$(RepoRoot)/bin/Release/net8.0/Cerneala.dll</CoreCandidate>
+    <PackageBaseline>$(BaselineRoot)/Cerneala.Scene2D.Packages.dll</PackageBaseline>
+    <PackageCandidate>$(RepoRoot)/Cerneala.Scene2D.Packages/bin/Release/net8.0/Cerneala.Scene2D.Packages.dll</PackageCandidate>
+  </PropertyGroup>
+
+  <UsingTask TaskName="Microsoft.DotNet.ApiCompat.Task.ValidateAssembliesTask"
+             AssemblyFile="$(TaskAssembly)" />
+
+  <Target Name="Compare">
+    <Error Condition="!Exists('$(CoreBaseline)')" Text="Missing frozen Core baseline: $(CoreBaseline)" />
+    <Error Condition="!Exists('$(PackageBaseline)')" Text="Missing frozen Packages baseline: $(PackageBaseline)" />
+    <Error Condition="!Exists('$(CoreCandidate)')" Text="Missing Core candidate: $(CoreCandidate)" />
+    <Error Condition="!Exists('$(PackageCandidate)')" Text="Missing Packages candidate: $(PackageCandidate)" />
+
+    <ValidateAssembliesTask
+      LeftAssemblies="$(CoreBaseline)"
+      RightAssemblies="$(CoreCandidate)"
+      RoslynAssembliesPath="$(RoslynAssembliesPath)"
+      EnableStrictMode="true"
+      EnableRuleCannotChangeParameterName="true"
+      GenerateSuppressionFile="false"
+      RespectInternals="false" />
+
+    <ValidateAssembliesTask
+      LeftAssemblies="$(PackageBaseline)"
+      RightAssemblies="$(PackageCandidate)"
+      RoslynAssembliesPath="$(RoslynAssembliesPath)"
+      EnableStrictMode="true"
+      EnableRuleCannotChangeParameterName="true"
+      GenerateSuppressionFile="false"
+      RespectInternals="false" />
+  </Target>
+</Project>

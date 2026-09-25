@@ -1,0 +1,80 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  Cerneala.SceneVillage -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\bin\Release\net8.0-windows\Cerneala.SceneVillage.dll
+  Cerneala.Tests.SceneVillage -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:00.69]     Cerneala.Tests.SceneVillage.VillageModelTests.VillagerWalkClipsUseTheInspectedDirectionalCells [FAIL]
+[xUnit.net 00:00:00.73]     Cerneala.Tests.SceneVillage.VillageModelTests.VillageDecorationsUseCompleteInspectedAtlasCellsAndKeepTreeCollision [FAIL]
+  Failed Cerneala.Tests.SceneVillage.VillageModelTests.VillagerWalkClipsUseTheInspectedDirectionalCells [218 ms]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: DrawRect { X = 0, Y = 0, Width = 16, Height = 16, Right = 16, Bottom = 16 }
+Actual:   DrawRect { X = 32, Y = 0, Width = 16, Height = 16, Right = 48, Bottom = 16 }
+  Stack Trace:
+     at Cerneala.Tests.SceneVillage.VillageModelTests.VillagerWalkClipsUseTheInspectedDirectionalCells() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\VillageModelTests.cs:line 159
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+  Failed Cerneala.Tests.SceneVillage.VillageModelTests.VillageDecorationsUseCompleteInspectedAtlasCellsAndKeepTreeCollision [29 ms]
+  Error Message:
+   Assert.All() Failure: 12 out of 20 items in the collection did not pass.
+[1]:  Item:  DecorationSite { X = 1712, Y = 1680, TileIndex = 19 }
+      Error: Assert.Contains() Failure: Item not found in collection
+             Collection: [2, 5, 16, 27, 28]
+             Not found:  19
+[2]:  Item:  DecorationSite { X = 2384, Y = 1680, TileIndex = 15 }
+      Error: Assert.Contains() Failure: Item not found in collection
+             Collection: [2, 5, 16, 27, 28]
+             Not found:  15
+[6]:  Item:  DecorationSite { X = 2384, Y = 2384, TileIndex = 19 }
+      Error: Assert.Contains() Failure: Item not found in collection
+             Collection: [2, 5, 16, 27, 28]
+             Not found:  19
+[7]:  Item:  DecorationSite { X = 2416, Y = 2384, TileIndex = 15 }
+      Error: Assert.Contains() Failure: Item not found in collection
+             Collection: [2, 5, 16, 27, 28]
+             Not found:  15
+[8]:  Item:  DecorationSite { X = 1888, Y = 1784, TileIndex = 4 }
+      Error: Assert.Contains() Failure: Item not found in collection
+             Collection: [2, 5, 16, 27, 28]
+             Not found:  4
+[9]:  Item:  DecorationSite { X = 2176, Y = 1784, TileIndex = 7 }
+      Error: Assert.Contains() Failure: Item not found in collection
+             Collection: [2, 5, 16, 27, 28]
+             Not found:  7
+[10]: Item:  DecorationSite { X = 1888, Y = 2272, TileIndex = 8 }
+      Error: Assert.Contains() Failure: Item not found in collection
+             Collection: [2, 5, 16, 27, 28]
+             Not found:  8
+[11]: Item:  DecorationSite { X = 2176, Y = 2272, TileIndex = 4 }
+      Error: Assert.Contains() Failure: Item not found in collection
+             Collection: [2, 5, 16, 27, 28]
+             Not found:  4
+[12]: Item:  DecorationSite { X = 1824, Y = 1960, TileIndex = 17 }
+      Error: Assert.Contains() Failure: Item not found in collection
+             Collection: [2, 5, 16, 27, 28]
+             Not found:  17
+[13]: Item:  DecorationSite { X = 2224, Y = 1960, TileIndex = 7 }
+      Error: Assert.Contains() Failure: Item not found in collection
+             Collection: [2, 5, 16, 27, 28]
+             Not found:  7
+[14]: Item:  DecorationSite { X = 1824, Y = 2192, TileIndex = 8 }
+      Error: Assert.Contains() Failure: Item not found in collection
+             Collection: [2, 5, 16, 27, 28]
+             Not found:  8
+[15]: Item:  DecorationSite { X = 2224, Y = 2192, TileIndex = 17 }
+      Error: Assert.Contains() Failure: Item not found in collection
+             Collection: [2, 5, 16, 27, 28]
+             Not found:  17
+  Stack Trace:
+     at Cerneala.Tests.SceneVillage.VillageModelTests.VillageDecorationsUseCompleteInspectedAtlasCellsAndKeepTreeCollision() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\VillageModelTests.cs:line 179
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+Results File: C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\TestResults\audit-art-red-01.trx
+
+Failed!  - Failed:     2, Passed:     0, Skipped:     0, Total:     2, Duration: 262 ms - Cerneala.Tests.SceneVillage.dll (net8.0)

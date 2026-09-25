@@ -216,7 +216,7 @@ internal sealed class CernealaCompletionService
             if (ownerType?.MetadataName == "Cerneala.UI.Controls.Tile" || IsStaticTileCollider(model, parent)) { return; }
             foreach (ILanguageMemberSymbol member in ownerType?.GetMembers() ?? Array.Empty<ILanguageMemberSymbol>())
             {
-                if (member.Kind != LanguageMemberKind.Property || !member.CanRead || CernealaSemanticModel.IsTileMapContentMember(ownerType, member.Name))
+                if (member.Kind != LanguageMemberKind.Property || !member.CanRead || CernealaSemanticModel.IsRemovedTileMapSourceMember(ownerType, member.Name))
                 {
                     continue;
                 }
@@ -255,12 +255,8 @@ internal sealed class CernealaCompletionService
             (staticTileOwner || CernealaSemanticModel.IsLiveColliderOwner(colliderOwnerType));
         if (parentType?.MetadataName == "Cerneala.UI.Controls.TileMap2D" && parent?.Kind != SyntaxKind.PropertyElement)
         {
-            bool imported = parent!.Attributes.Any(static attribute => attribute.NameToken.Text == "Source");
-            if (!imported)
-            {
-                Add(result, "Tile", ElementInsertion(site, "Tile"), site.WordSpan,
-                    CernealaCompletionItemKind.Element, "Image placement", "00", "Cerneala.UI.Controls.Tile");
-            }
+            Add(result, "Tile", ElementInsertion(site, "Tile"), site.WordSpan,
+                CernealaCompletionItemKind.Element, "Image placement", "00", "Cerneala.UI.Controls.Tile");
             return;
         }
         ILanguageTypeSymbol? expected = null;
@@ -398,9 +394,7 @@ internal sealed class CernealaCompletionService
                 cancellationToken.ThrowIfCancellationRequested();
                 if (member.Kind is not (LanguageMemberKind.Property or LanguageMemberKind.Event) ||
                     member.IsStatic || used.Contains(member.Name) ||
-                    CernealaSemanticModel.IsTileMapContentMember(type, member.Name) && (member.Name != "Source" ||
-                        element?.Children.OfType<ElementSyntax>().Any(child =>
-                            model?.GetCompletionElementType(child)?.MetadataName == "Cerneala.UI.Controls.Tile") == true) ||
+                    CernealaSemanticModel.IsRemovedTileMapSourceMember(type, member.Name) ||
                     member.Kind == LanguageMemberKind.Property && !member.CanWrite)
                 {
                     continue;
@@ -870,7 +864,7 @@ internal sealed class CernealaCompletionService
             {
                 foreach (ILanguageMemberSymbol member in targetType?.GetMembers() ?? Array.Empty<ILanguageMemberSymbol>())
                 {
-                    if (member.Kind == LanguageMemberKind.Property && member.CanWrite && !CernealaSemanticModel.IsTileMapContentMember(targetType, member.Name))
+                    if (member.Kind == LanguageMemberKind.Property && member.CanWrite && !CernealaSemanticModel.IsRemovedTileMapSourceMember(targetType, member.Name))
                     {
                         Add(result, member.Name, member.Name + " = ", site.WordSpan,
                             CernealaCompletionItemKind.Property, member.ValueTypeMetadataName, "00",

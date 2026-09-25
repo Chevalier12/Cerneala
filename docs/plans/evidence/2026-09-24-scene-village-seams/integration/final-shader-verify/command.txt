@@ -1,0 +1,2 @@
+DefaultItemExcludesInProjectFolder=artifacts/**
+dotnet run --project .\Tools\Cerneala.SdlShaderCompiler\Cerneala.SdlShaderCompiler.csproj -c Release '-p:DefaultItemExcludesInProjectFolder=artifacts/**' -- --verify

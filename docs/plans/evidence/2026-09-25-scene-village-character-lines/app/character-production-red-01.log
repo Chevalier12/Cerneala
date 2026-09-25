@@ -1,0 +1,45 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  Cerneala.SceneVillage -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\bin\Release\net8.0-windows\Cerneala.SceneVillage.dll
+  Cerneala.Tests.SceneVillage -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:03.46]     Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.ProductionCharacterFramesHaveNoForeignMarksOnTransparentTopRows [FAIL]
+  Failed Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.ProductionCharacterFramesHaveNoForeignMarksOnTransparentTopRows [3 s]
+  Error Message:
+   Production character art includes 134 foreign pixels on source-transparent frame top rows.
+  Stack Trace:
+     at Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.AnalyzeProductionCharacterFrames(Window window, RenderSurface2D surface, ServoElement game, Sprite2D[,] poses, SKBitmap source, String capturePath) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeCharacterAtlasTests.cs:line 460
+   at Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.<>c__DisplayClass10_1.<<ProductionCharacterFramesHaveNoForeignMarksOnTransparentTopRows>b__3>d.MoveNext() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeCharacterAtlasTests.cs:line 335
+--- End of stack trace from previous location ---
+   at Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.ProductionCharacterFramesHaveNoForeignMarksOnTransparentTopRows() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\NativeCharacterAtlasTests.cs:line 353
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+  Standard Output Messages:
+ Production Down frame 0: sourceTopOpaque=0, rendered=3350, topNonBackground=0, sampling=Linear, physicalOrigin=(40,40).
+ Production Down frame 1: sourceTopOpaque=7, rendered=3452, topNonBackground=20, sampling=Linear, physicalOrigin=(240,40).
+ Production Down frame 2: sourceTopOpaque=0, rendered=3346, topNonBackground=0, sampling=Linear, physicalOrigin=(440,40).
+ Production Down frame 3: sourceTopOpaque=7, rendered=3452, topNonBackground=20, sampling=Linear, physicalOrigin=(640,40).
+ Production Up frame 0: sourceTopOpaque=0, rendered=3374, topNonBackground=15, sampling=Linear, physicalOrigin=(40,240).
+ Production Up frame 1: sourceTopOpaque=7, rendered=3461, topNonBackground=30, sampling=Linear, physicalOrigin=(240,240).
+ Production Up frame 2: sourceTopOpaque=0, rendered=3364, topNonBackground=15, sampling=Linear, physicalOrigin=(440,240).
+ Production Up frame 3: sourceTopOpaque=7, rendered=3461, topNonBackground=30, sampling=Linear, physicalOrigin=(640,240).
+ Production Left frame 0: sourceTopOpaque=0, rendered=3205, topNonBackground=26, sampling=Linear, physicalOrigin=(40,440).
+ Production Left frame 1: sourceTopOpaque=7, rendered=2867, topNonBackground=22, sampling=Linear, physicalOrigin=(240,440).
+ Production Left frame 2: sourceTopOpaque=0, rendered=3201, topNonBackground=26, sampling=Linear, physicalOrigin=(440,440).
+ Production Left frame 3: sourceTopOpaque=7, rendered=2867, topNonBackground=22, sampling=Linear, physicalOrigin=(640,440).
+ Production Right frame 0: sourceTopOpaque=0, rendered=3205, topNonBackground=26, sampling=Linear, physicalOrigin=(40,640).
+ Production Right frame 1: sourceTopOpaque=7, rendered=2867, topNonBackground=22, sampling=Linear, physicalOrigin=(240,640).
+ Production Right frame 2: sourceTopOpaque=0, rendered=3201, topNonBackground=26, sampling=Linear, physicalOrigin=(440,640).
+ Production Right frame 3: sourceTopOpaque=7, rendered=2867, topNonBackground=22, sampling=Linear, physicalOrigin=(640,640).
+ Production frame grid: foreign transparent-top pixels=134, physicalPerWorld=2.5/2.5, screenshot=1250x1063, ViewBox=DrawRect { X = -16, Y = -16, Width = 500, Height = 425.2, Right = 484, Bottom = 409.2 }.
+
+
+Results File: C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\TestResults\character-production-red-01.trx
+
+Failed!  - Failed:     1, Passed:     0, Skipped:     0, Total:     1, Duration: 3 s - Cerneala.Tests.SceneVillage.dll (net8.0)

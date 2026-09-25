@@ -3,7 +3,7 @@ using Cerneala.Drawing;
 namespace Cerneala.UI.Controls;
 
 /// <summary>Describes a spatial payload without materializing that payload.</summary>
-public sealed class SceneSpatialEntry2D
+internal sealed class SceneSpatialEntry2D
 {
     public SceneSpatialEntry2D(
         string id,
@@ -58,7 +58,7 @@ public sealed class SceneSpatialEntry2D
 }
 
 /// <summary>Owns one acquisition of a payload, not every use of that payload.</summary>
-public sealed class SceneSpatialLease2D<T> : IDisposable where T : class
+internal sealed class SceneSpatialLease2D<T> : IDisposable where T : class
 {
     private Acquisition? acquisition;
 
@@ -81,7 +81,7 @@ public sealed class SceneSpatialLease2D<T> : IDisposable where T : class
 }
 
 /// <summary>Separates an immutable spatial catalog from asynchronously acquired payloads.</summary>
-public interface ISceneSpatialSource2D<T> where T : class
+internal interface ISceneSpatialSource2D<T> where T : class
 {
     IReadOnlyList<SceneSpatialEntry2D> Entries { get; }
 
@@ -93,7 +93,7 @@ public interface ISceneSpatialSource2D<T> where T : class
 }
 
 /// <summary>Adapts application-owned data loading to the spatial-source contract.</summary>
-public sealed class SceneSpatialSource2D<T> : ISceneSpatialSource2D<T> where T : class
+internal sealed class SceneSpatialSource2D<T> : ISceneSpatialSource2D<T> where T : class
 {
     private readonly Func<SceneSpatialEntry2D, CancellationToken, ValueTask<SceneSpatialLease2D<T>>> load;
     private Catalog catalog;

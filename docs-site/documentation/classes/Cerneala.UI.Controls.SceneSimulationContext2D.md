@@ -8,7 +8,7 @@ Assembly/Project: `Cerneala`
 
 Source: `UI/Controls/SceneSimulationContext2D.cs`
 
-Owns spatial source preparation, collision interests, and scene mutation on one thread, independently of rendering.
+Owns map-data preparation, collision interests, and scene mutation on one thread, independently of rendering.
 
 ```csharp
 public sealed class SceneSimulationContext2D : IDisposable
@@ -39,7 +39,7 @@ if (preparing.IsCompletedSuccessfully)
 }
 ```
 
-For actual asynchronous sources, keep the normal loop running until preparation finishes and observe cancellation or failure as well as success. Do not replace that loop with a blocking wait on an unfinished task. In a game, retain the region lease for as long as its terrain is needed rather than reacquiring it on every tick.
+For package-backed asynchronous map data, keep the normal loop running until preparation finishes and observe cancellation or failure as well as success. Do not replace that loop with a blocking wait on an unfinished task. In a game, retain the region for as long as its terrain is needed rather than reacquiring it on every tick.
 
 ## Remarks
 
@@ -47,13 +47,13 @@ For actual asynchronous sources, keep the normal loop running until preparation 
 
 The public constructor requires a root `Scene2D` with no UI root, surface, parent, or existing simulation context. Its existing scene-node subtree adopts the context. Descendants added later adopt the same owner, and removing a subtree retires its spatial acquisitions and data observation. A scene cannot belong to two contexts. Dispose its independent context before reparenting it or attaching it to UI.
 
-The context reuses [UiRelay](Cerneala.UI.Relay.UiRelay.md), capturing the constructing thread. `Update` drains one bounded queue snapshot and refreshes spatial interests. Work posted during the drain waits for another update. Nested updates are rejected. Source callbacks publish templates and scene changes on this owner; direct off-thread property, child/template collection, and collision-query operations are rejected. Source metadata publication remains thread-safe under the source's own contract and is marshaled before materialization.
+The context reuses [UiRelay](Cerneala.UI.Relay.UiRelay.md), capturing the constructing thread. `Update` drains one bounded queue snapshot and refreshes map/collision interests. Work posted during the drain waits for another update. Nested updates are rejected. Scene-items collection notifications and template/tree changes belong on this owner; direct off-thread property, child/template collection, and collision-query operations are rejected. Asynchronous map completions return through the owner relay before changing scene state.
 
 An attached [RenderSurface2D](Cerneala.UI.Controls.RenderSurface2D.md) creates the same kind of context using the existing `UIRoot.Relay`. Its normal frame/arrangement path supplies the viewport and refreshes spatial interest. The host, not application calls to `Update` or `Dispose`, owns that attached context; detach or replace the surface's scene to retire it. [SceneNode2D.SimulationContext](Cerneala.UI.Controls.SceneNode2D.md) identifies the current owner without changing `UIElement.Root` or `IsAttached`.
 
 ### Without rendering
 
-An independent context has no visual viewport. [SceneItems2D](Cerneala.UI.Controls.SceneItems2D.md) selects simulated entries and explicit/simulated collision interests, not every catalog entry. Static terrain is prepared through [CollisionWorld2D.PrepareRegionAsync](Cerneala.UI.Controls.CollisionWorld2D.md). Queries never perform hidden I/O or treat missing collision data as empty.
+An independent context has no visual viewport. [SceneItems2D](Cerneala.UI.Controls.SceneItems2D.md) realizes every occurrence in its current enumerable snapshot; it does not choose entries from pre-realization spatial metadata. A marked, already-realized [Collider2D](Cerneala.UI.Controls.Collider2D.md) can retain nearby tile collision data around its own active geometry. Static terrain is also prepared through [CollisionWorld2D.PrepareRegionAsync](Cerneala.UI.Controls.CollisionWorld2D.md). Queries never perform hidden I/O or treat missing collision data as empty.
 
 Typed `UiPropertyBinding<T>`, generated property bindings, and generated conditional data values use the same owner relay and retire observation when their subtree leaves the context. Ordinary permanent node properties and caller-supplied game logic can update collider transforms without a renderer.
 
@@ -61,9 +61,9 @@ This is not a headless UI engine or an automatic physics loop. It does not creat
 
 ### Retirement
 
-Disposal must run on the owner thread and is idempotent. It invalidates region leases, cancels pending preparation, unsubscribes source/data observation, removes materialized nodes, and releases their acquisitions. Permanent authored children remain in the scene for explicit reuse. Late results cannot publish into a disposed or replacement context; uncooperative loaders may still finish, and their returned leases are retired without requiring another update of the old context.
+Disposal must run on the owner thread and is idempotent. It invalidates prepared regions, cancels pending map preparation, unsubscribes scene-items collection observation, removes materialized nodes, and releases their acquisitions. Permanent authored children remain in the scene for explicit reuse. Late map results cannot publish into a disposed or replacement context; uncooperative internal loaders may still finish and their results are retired without requiring another update of the old context.
 
-Disposal does not synchronously wait for arbitrary application loaders or prove collection of data still retained by the application/source. It does not shut down the general-purpose relay or execute user-posted work as an implicit cleanup step. Observe source preparation failures through `Preparation`/`PreparationError` and explicit region-preparation tasks.
+Disposal does not synchronously wait for arbitrary application work or prove collection of data still retained by the application or a model. It does not shut down the general-purpose relay or execute user-posted work as an implicit cleanup step. Observe map-data failures through `TileMap2D.Preparation`/`PreparationError` and explicit region-preparation tasks; `SceneItems2D` has no asynchronous preparation property.
 
 ## Constructors
 

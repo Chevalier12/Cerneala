@@ -1,4 +1,6 @@
 using System.Reflection;
+using System.Numerics;
+using System.Runtime.InteropServices;
 using Cerneala.Backends.SdlGpu;
 using Cerneala.Drawing;
 using Cerneala.Platforms.Sdl3;
@@ -21,6 +23,144 @@ public sealed class CerberusTests
         Assert.Equal(
             [0, 1, 2, 3, 4, 5],
             GetStorage(cerberus, "indices").Cast<int>().Take(6).ToArray());
+    }
+
+    [Fact]
+    public void ImageDomainLayoutMergesOnlyAdjacentCompatibleDrawsAndRebasesWithinItsOwnStream()
+    {
+        Cerberus cerberus = new();
+        cerberus.Begin(Target(1));
+        CerberusBatchKey ordinary = Key(texture: 1);
+        CerberusBatchKey imageDomain = ordinary with { PointClampImageDomain = true };
+
+        cerberus.Allocate(4, [0, 1, 2, 0, 2, 3], ordinary);
+        cerberus.AllocateImageDomain(4, [0, 1, 2, 0, 2, 3], imageDomain);
+        cerberus.AllocateImageDomain(4, [0, 1, 2, 0, 2, 3], imageDomain);
+        cerberus.Allocate(4, [0, 1, 2, 0, 2, 3], ordinary);
+
+        Assert.Equal(3, GetIntField(cerberus, "drawCount"));
+        Assert.Equal(8, GetIntField(cerberus, "vertexCount"));
+        Assert.Equal(8, GetIntField(cerberus, "imageDomainVertexCount"));
+        Assert.Equal(
+            [
+                0, 1, 2, 0, 2, 3,
+                0, 1, 2, 0, 2, 3,
+                4, 5, 6, 4, 6, 7,
+                0, 1, 2, 0, 2, 3
+            ],
+            GetStorage(cerberus, "indices").Cast<int>().Take(24).ToArray());
+    }
+
+    [Fact]
+    public void OrdinaryBatchesLeaveSelectedStorageEmptyUntilFirstImageDomainAllocation()
+    {
+        Cerberus cerberus = new();
+        Assert.Empty(GetStorage(cerberus, "imageDomainVertices"));
+
+        cerberus.Begin(Target(1));
+        CerberusBatchKey ordinary = Key(texture: 1);
+        CerberusBatchKey imageDomain = ordinary with { PointClampImageDomain = true };
+        cerberus.Allocate(4, [0, 1, 2, 0, 2, 3], ordinary);
+        Assert.Empty(GetStorage(cerberus, "imageDomainVertices"));
+
+        Span<SdlGpuImageDomainVertex> first = cerberus.AllocateImageDomain(
+            4, [0, 1, 2, 0, 2, 3], imageDomain);
+        Assert.Equal(4, first.Length);
+        Assert.Equal(4, GetStorage(cerberus, "imageDomainVertices").Length);
+
+        Span<SdlGpuImageDomainVertex> second = cerberus.AllocateImageDomain(
+            4, [0, 1, 2, 0, 2, 3], imageDomain);
+        Assert.Equal(4, second.Length);
+        Assert.Equal(8, GetStorage(cerberus, "imageDomainVertices").Length);
+        Assert.Equal(8, GetIntField(cerberus, "imageDomainVertexCount"));
+        Assert.Equal(2, GetIntField(cerberus, "drawCount"));
+        Assert.Equal(
+            [
+                0, 1, 2, 0, 2, 3,
+                0, 1, 2, 0, 2, 3,
+                4, 5, 6, 4, 6, 7
+            ],
+            GetStorage(cerberus, "indices").Cast<int>().Take(18).ToArray());
+    }
+
+    [Fact]
+    public void MixedImageDomainAndOrdinaryLayoutsUploadOnceAndBindInOriginalDrawOrder()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1, CaptureGpuBufferUploads = true };
+        nint window = api.CreateWindow("cerberus-domain-layout", 64, 48, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = Assert.IsType<SdlGpuWindowGraphicsSession>(
+            factory.Create(
+                new SdlWindowSurface(window, api.GetWindowId(window)),
+                64,
+                48,
+                coordinateScale: 1));
+        session.BeginFrame(Color.Transparent);
+        SdlGpuTextureResource texture = session.DrawingResources.GetOrCreateTexture(
+            session, new object(), 1, 1, [255, 255, 255, 255]);
+        CerberusBatchKey ordinary = Key(texture.Handle);
+        CerberusBatchKey imageDomain = ordinary with { PointClampImageDomain = true };
+        Cerberus cerberus = new();
+        cerberus.Begin(session.WindowRenderTarget);
+
+        Span<SdlGpuVertex> firstOrdinary = cerberus.Allocate(
+            4, [0, 1, 2, 0, 2, 3], ordinary);
+        for (int index = 0; index < firstOrdinary.Length; index++)
+        {
+            firstOrdinary[index] = new SdlGpuVertex(
+                new Vector2(10 + index, 20 + index),
+                new Vector2(index / 8f, index / 4f),
+                new Vector4(1, 0, 0, 1));
+        }
+        SdlGpuVertex[] firstExpected = firstOrdinary.ToArray();
+        Span<SdlGpuImageDomainVertex> selected = cerberus.AllocateImageDomain(
+            4, [0, 1, 2, 0, 2, 3], imageDomain);
+        for (int index = 0; index < selected.Length; index++)
+        {
+            selected[index] = new SdlGpuImageDomainVertex(
+                new Vector2(index, index),
+                Vector2.Zero,
+                Vector4.One,
+                new Vector4(0, 0, 1, 0),
+                new Vector4(1, 1, 0, 1));
+        }
+        SdlGpuImageDomainVertex[] selectedExpected = selected.ToArray();
+        Span<SdlGpuVertex> lastOrdinary = cerberus.Allocate(
+            4, [0, 1, 2, 0, 2, 3], ordinary);
+        for (int index = 0; index < lastOrdinary.Length; index++)
+        {
+            lastOrdinary[index] = new SdlGpuVertex(
+                new Vector2(30 + index, 40 + index),
+                new Vector2(index / 2f, index / 16f),
+                new Vector4(0, 1, 0, 1));
+        }
+        SdlGpuVertex[] ordinaryExpected = firstExpected.Concat(lastOrdinary.ToArray()).ToArray();
+
+        CerberusFlushMetrics metrics = cerberus.Flush(
+            new CerberusExecutionContext(session, session.DrawingResources));
+
+        Assert.Equal(3, metrics.DrawCallCount);
+        Assert.Equal((8 * 32) + (4 * 64), metrics.VertexBytes);
+        Assert.Equal(12, metrics.VertexCount);
+        Assert.Equal(3, metrics.PipelineBindCount);
+        Assert.Equal(2, api.GpuBufferUploads.Count);
+        string[] vertexBindings = api.GpuActions
+            .Where(static action => action.StartsWith("bind-vertex:", StringComparison.Ordinal))
+            .ToArray();
+        Assert.Equal(3, vertexBindings.Length);
+        Assert.EndsWith(":0", vertexBindings[0], StringComparison.Ordinal);
+        Assert.EndsWith(":256", vertexBindings[1], StringComparison.Ordinal);
+        Assert.EndsWith(":0", vertexBindings[2], StringComparison.Ordinal);
+        var vertexUpload = Assert.Single(api.GpuBufferUploads.Where(upload =>
+            api.GpuBuffers[upload.Buffer].CreateInfo.Usage == SdlGpuBufferUsage.Vertex));
+        ReadOnlySpan<byte> uploaded = api.GpuBuffers[vertexUpload.Buffer].Data.Span.Slice(
+            checked((int)vertexUpload.BufferOffset), checked((int)vertexUpload.Size));
+        byte[] ordinaryBytes = MemoryMarshal.AsBytes(ordinaryExpected.AsSpan()).ToArray();
+        byte[] selectedBytes = MemoryMarshal.AsBytes(selectedExpected.AsSpan()).ToArray();
+        Assert.Equal(ordinaryBytes.Length + selectedBytes.Length, uploaded.Length);
+        Assert.Equal(ordinaryBytes, uploaded[..ordinaryBytes.Length].ToArray());
+        Assert.Equal(selectedBytes, uploaded[ordinaryBytes.Length..].ToArray());
+        session.CompleteFrame(present: false);
     }
 
     [Fact]

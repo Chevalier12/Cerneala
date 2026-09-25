@@ -1,0 +1,2 @@
+DefaultItemExcludesInProjectFolder=artifacts/**
+dotnet test .\tests\Cerneala.Tests.VisualStudio\Cerneala.Tests.VisualStudio.csproj -c Release -m:1 --nologo -v:minimal --filter 'FullyQualifiedName~Stage6ReleaseHarnessTests.ApiDocumentationManifestIsValidAndReferencesExistingFiles' --results-directory 'docs/plans/evidence/2026-09-24-scene-village-seams/integration/final-manifest' --logger 'trx;LogFileName=seam-final-manifest.trx' '-p:DefaultItemExcludesInProjectFolder=artifacts/**'

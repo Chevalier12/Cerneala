@@ -1,0 +1,21 @@
+# Source generator Stage 2 case migration (draft; not verified)
+
+This is a case map, not a GREEN claim. The selected Stage 0 contract removes public `TileMap2D.Source` and the public spatial source/catalog/lease types; static tile markup remains supported through `TileMap2D.FromModel`. Source-generation tests may not retain dynamic `Source` binding as a hidden compatibility path.
+
+| Existing case | Former oracle | Stage 2 oracle |
+| --- | --- | --- |
+| `SceneItemsOneWayBindingsRequireReferenceAssignableSpatialSource` | Spatial source accepted; ordinary enumerable rejected | `SceneItemsOneWayBindingsAcceptEnumerableSources`: nongeneric/generic enumerable, observable collection, read-only list, and array accepted; non-enumerable `object` rejected. Unsafe TwoWay narrowing remains rejected. |
+| `RenderSurfaceOwnsDeclarativeSceneWithTemplatedItems` | Fixture property typed `ISceneSpatialSource2D<object>` | Fixture property typed `IEnumerable`; retain generated binding, scene, template, and runtime assertions. |
+| `SceneComponentSupportsRootAspectMotionPrismAndSceneTemplates` | Set spatial source with entries and leases | Set two ordinary string values; retain generated template node and component behavior assertions. |
+| `ImportedSourceBindingDoesNotRequireAParserInSourceGenerator` | Bind public `TileMap2D.Source` with importer not referenced | Bind imported-level-style `IEnumerable<string>` to `SceneItems2D.ItemsSource`; retain the no-importer-assembly reference assertion and sibling Aspect/Prism markup. This no longer claims dynamic map binding. |
+| `TileMapMarkupUsesRealAspectMotionPrismSyntaxAtSceneMapAndSpriteScopes` | Bind one map Source and assign another from complete models | Author static Tile children in both maps, require `FromModel` emission, and retain scene/map/sprite Aspect, Motion, Prism, Layer, image, and recording checks. The old model-flip example is not a SourceGen markup capability; model flip semantics belong to map model tests. |
+| `EqualCoordinatesRemainIndependentStaticTileDeclarations` | Inspect two placements by acquiring an internal chunk lease | Render two identical-position sprites through the public static map factory; retain empty logical child assertion. |
+| `TileAuthoringUsesImagesPixelPositionsAndOptionalIndependentSizesWithoutPerTileUiElements` | Inspect internal catalog image-size count | Require `FromModel` emission; retain exact image order and four destination rectangles as the public rendering oracle. |
+| `TileAuthoringRejectsMixingPlacementsWithBoundSource`, `TileAuthoringRejectsSourceAssignmentThroughAspect` | Source-specific mixing/Aspect diagnostics | Explicit rejection of the removed `Source` member in markup; no promise of old diagnostic wording. The existing alternative-map-markup theory retains `<TileMap2D.Source />` as a removed-property negative. |
+| `TileAuthoringKeepsMapLevelAspectMotionAndPrism` | Presence of tile, Prism and Motion output | Also require `FromModel` emission before runtime markup setup; preserve root-map Aspect/Prism coverage. |
+| `FreePlacementTileMarkupLowersOneColliderToAnImmutableDescriptor`, `StaticTileSegmentNormalizesNumericLiteralsBeforeConstructingPointText` | Inspect generated Tile descriptors through removed source lease | Require generated `FromModel` expression to contain the exact collider shape/options/normalized segment point text, compile and instantiate the generated map, and retain empty logical children. Core/map tests own runtime collision behavior. |
+| `UiMarkupGeneratorSingleLayerTileMapTests` | Already static Tile composition | Retain unchanged; no dynamic Source dependency. |
+
+The generator now computes the static Tile model initializer before the map is created. The generated `TileMap2D.FromModel(...)` instance receives runtime resources, markup properties, template-part registration, Aspect/Motion and Prism afterward. Empty maps still use `new()`. `GetDirectiveContent` remains the same cached parse; Prism syntax reporting remains at its prior point. This change is not yet covered by a completed SourceGen test run.
+
+Pending: compile and run focused SourceGen tests; inspect each failing case without weakening intended behavior; run affected SourceGen project suite. All Stage 2 checklist boxes remain unchecked.

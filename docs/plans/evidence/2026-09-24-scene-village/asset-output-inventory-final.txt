@@ -1,0 +1,8 @@
+source_asset_files=4
+output_asset_files=4
+source_only=0
+output_only=0
+old_villager_source_present=False
+old_villager_output_present=False
+source_names=ch003.png,CREDITS.md,Kenney-TinyTown-License.txt,tiny-town.png
+output_names=ch003.png,CREDITS.md,Kenney-TinyTown-License.txt,tiny-town.png

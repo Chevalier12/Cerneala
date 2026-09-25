@@ -1,0 +1,27 @@
+  Determining projects to restore...
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj (in 921 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\Cerneala.Language.csproj (in 919 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\Cerneala.SourceGen.csproj (in 919 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.csproj (in 920 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Cerneala.Platforms.Sdl3.csproj (in 1.07 sec).
+  2 of 7 projects are up-to-date for restore.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  Cerneala.SceneVillage -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\bin\Release\net8.0-windows\Cerneala.SceneVillage.dll
+  Cerneala.Tests.SceneVillage -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:02.49]     Cerneala.Tests.SceneVillage.VillageModelTests.VillageTreesUseTheWholeTwoCellArtworkWithoutMovingTheirTrunkColliders [FAIL]
+  Failed Cerneala.Tests.SceneVillage.VillageModelTests.VillageTreesUseTheWholeTwoCellArtworkWithoutMovingTheirTrunkColliders [689 ms]
+  Error Message:
+   Assert.Single() Failure: The collection was empty
+  Stack Trace:
+     at Cerneala.Tests.SceneVillage.VillageModelTests.VillageTreesUseTheWholeTwoCellArtworkWithoutMovingTheirTrunkColliders() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\VillageModelTests.cs:line 229
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+Results File: C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\TestResults\decoration-model-red-01.trx
+
+Failed!  - Failed:     1, Passed:     0, Skipped:     0, Total:     1, Duration: 689 ms - Cerneala.Tests.SceneVillage.dll (net8.0)

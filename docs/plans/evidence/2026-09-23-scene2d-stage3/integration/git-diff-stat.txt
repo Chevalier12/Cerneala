@@ -1,0 +1,205 @@
+warning: in the working copy of '.codex/config.toml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.codex/skills/cerneala-checklist-plan/SKILL.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'Cerneala.Language/Features/CernealaCompletionService.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'Cerneala.Language/Semantics/CernealaSemanticModel.Bindings.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'Cerneala.Language/Semantics/CernealaSemanticModel.Tiles.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'Cerneala.Language/Semantics/CernealaSemanticModel.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'Cerneala.Scene2D.Packages/Scene2DPackage.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'Cerneala.Scene2D.Packages/Scene2DPackageLevel.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'Cerneala.SourceGen/UiMarkupGenerator.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'Cerneala.VisualStudio/Cerneala.VisualStudio.csproj', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'Playground/Cerneala.Playground/SceneWorldConformance.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'Playground/Cerneala.Playground/SceneWorldPackage.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'Playground/Cerneala.Playground/SceneWorldShowcase.crn', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'Playground/Cerneala.Playground/SceneWorldShowcase.crn.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'Properties/AssemblyInfo.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'Tetrisish/Tests/TetrisGameTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'Tetrisish/TetrisSceneModel.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'UI/Controls/Collider2D.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'UI/Controls/CollisionWorld2D.Streaming.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'UI/Controls/ISceneSpatialParticipant2D.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'UI/Controls/RenderSurface2DFrame.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'UI/Controls/SceneItems2D.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'UI/Controls/SceneSpatialResidency2D.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'UI/Controls/SceneSpatialSource2D.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'UI/Controls/TileMap2D.Streaming.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'UI/Controls/TileMap2D.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'UI/Controls/TileMapCatalog2D.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'UI/Controls/TileMapSource2D.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'benchmarks/Cerneala.Benchmarks/README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'benchmarks/Cerneala.Benchmarks/SceneDebugOverlayBenchmarks.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'benchmarks/Cerneala.Benchmarks/SpriteAnimationBenchmarks.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.Scene2D.Importers.LdtkScene2DImporter.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.Scene2D.Importers.TiledScene2DImporter.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.Scene2D.Packages.Scene2DPackage.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.Scene2D.Packages.Scene2DPackageEntityInfo.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.Scene2D.Packages.Scene2DPackageGridChunkMetadata.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.Scene2D.Packages.Scene2DPackageLevel.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.Scene2D.Packages.Scene2DPackageMetadata.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.Scene2D.Packages.Scene2DPackageWriter.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.Collider2D.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.CollisionWorld2D.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.RenderSurface2D.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.RenderSurface2DPresentationState.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.Scene2D.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.Scene2DEntity.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.SceneCollisionRegion2D.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.SceneCollisionRegionNotReadyException.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.SceneItems2D.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.SceneNode2D.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.SceneSimulationContext2D.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.Sprite2D.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.Tile.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.TileChunk2D.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.TileDefinition2D.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.TileMap2D.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.TileMap2DModel.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.TileMapChunkData2D.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.TilePromotion2D.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/classes/Cerneala.UI.Controls.TileSet2D.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs-site/documentation/manifest.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.Language/CompletionTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.Scene2DPackages/ImportedPackageTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.Scene2DPackages/PackageValueCodecTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.Scene2DPackages/Scene2DPackageEntityTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.Scene2DPackages/Scene2DPackageGridGeometryTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.Scene2DPackages/Scene2DPackageGridTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.Scene2DPackages/Scene2DPackageTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.SdlGpu/Cerneala.Tests.SdlGpu.csproj', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.SdlGpu/NativeImageLeaseTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.SdlGpu/NativePackageGridSubdivisionTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.SdlGpu/NativePackageWarmStreamingTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.SdlGpu/NativeSceneImagePresentationTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.SdlGpu/NativeScenePresentationTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.SdlGpu/NativeScenePrismDomainTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.SdlGpu/NativeScenePrismStreamingTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.SdlGpu/Prism/ScenePrismAllocationTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorColliderOwnershipTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorSceneComponentTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorSceneImportStageZeroTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorSceneWorldBindingTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorTileAuthoringTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorTileMap2DStageZeroTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests/Controls/RenderSurface2DSceneFoundationContractTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests/Controls/RenderSurface2DSceneTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests/Controls/SceneCollisionStreamingTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests/Controls/SceneItems2DIncrementalContractTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests/Controls/ScenePresentationTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests/Controls/ScenePrismStreamingTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests/Controls/SceneSimulationContext2DTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests/Controls/TileMapSpatialResidencyTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests/Controls/TileMapStreamingTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Cerneala.Tests/Playground/SceneWorldShowcaseTests.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Shared/SceneDebugOverlayConformanceFixture.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Shared/SpriteAnimationConformanceFixture.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Shared/TileMapStage3CaptureFixture.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/Shared/TileMapStage5ConformanceFixture.cs', LF will be replaced by CRLF the next time Git touches it
+ .codex/config.toml                                 |  33 +-
+ .codex/skills/cerneala-checklist-plan/SKILL.md     |   6 +-
+ .../Features/CernealaCompletionService.cs          |  16 +-
+ .../Semantics/CernealaSemanticModel.Bindings.cs    |   4 +-
+ .../Semantics/CernealaSemanticModel.Tiles.cs       |   8 +-
+ .../Semantics/CernealaSemanticModel.cs             |  10 +-
+ Cerneala.Scene2D.Packages/Scene2DPackage.cs        | 136 +++-
+ Cerneala.Scene2D.Packages/Scene2DPackageLevel.cs   |  61 +-
+ Cerneala.SourceGen/UiMarkupGenerator.cs            |  28 +-
+ Cerneala.VisualStudio/Cerneala.VisualStudio.csproj |   8 +-
+ FileTree.md                                        | 450 +++++++++--
+ .../Cerneala.Playground/SceneWorldConformance.cs   |  20 +-
+ .../Cerneala.Playground/SceneWorldPackage.cs       | 286 +++----
+ .../Cerneala.Playground/SceneWorldShowcase.crn     |  20 +-
+ .../Cerneala.Playground/SceneWorldShowcase.crn.cs  | 146 ++--
+ Properties/AssemblyInfo.cs                         |   2 +
+ Tetrisish/Tests/TetrisGameTests.cs                 |  24 +-
+ Tetrisish/TetrisSceneModel.cs                      |  22 +-
+ UI/Controls/Collider2D.cs                          |  15 +
+ UI/Controls/CollisionWorld2D.Streaming.cs          |  60 +-
+ UI/Controls/ISceneSpatialParticipant2D.cs          |   1 -
+ UI/Controls/RenderSurface2DFrame.cs                |   2 +-
+ UI/Controls/SceneItems2D.cs                        | 899 +++++++++++----------
+ UI/Controls/SceneSpatialResidency2D.cs             |   4 +-
+ UI/Controls/SceneSpatialSource2D.cs                |   8 +-
+ UI/Controls/TileMap2D.Streaming.cs                 | 115 ++-
+ UI/Controls/TileMap2D.cs                           |  47 +-
+ UI/Controls/TileMapCatalog2D.cs                    |   4 +-
+ UI/Controls/TileMapSource2D.cs                     |   2 +-
+ benchmarks/Cerneala.Benchmarks/README.md           |  13 +-
+ .../SceneDebugOverlayBenchmarks.cs                 |   4 +-
+ .../SpriteAnimationBenchmarks.cs                   |   4 +-
+ ...rneala.Scene2D.Importers.LdtkScene2DImporter.md |   2 +-
+ ...neala.Scene2D.Importers.TiledScene2DImporter.md |   2 +-
+ .../Cerneala.Scene2D.Packages.Scene2DPackage.md    |  89 +-
+ ...la.Scene2D.Packages.Scene2DPackageEntityInfo.md |  20 +-
+ ...e2D.Packages.Scene2DPackageGridChunkMetadata.md |  16 +-
+ ...erneala.Scene2D.Packages.Scene2DPackageLevel.md | 130 ++-
+ ...eala.Scene2D.Packages.Scene2DPackageMetadata.md |  21 +-
+ ...rneala.Scene2D.Packages.Scene2DPackageWriter.md |  17 +-
+ .../classes/Cerneala.UI.Controls.Collider2D.md     |   6 +-
+ .../Cerneala.UI.Controls.CollisionWorld2D.md       |  16 +-
+ ...erneala.UI.Controls.ISceneSpatialSource2D_T_.md |  50 --
+ .../Cerneala.UI.Controls.RenderSurface2D.md        |  14 +-
+ ...UI.Controls.RenderSurface2DPresentationState.md |   6 +-
+ .../classes/Cerneala.UI.Controls.Scene2D.md        |   2 +-
+ .../classes/Cerneala.UI.Controls.Scene2DEntity.md  |   2 +-
+ .../Cerneala.UI.Controls.SceneCollisionRegion2D.md |   8 +-
+ ...ntrols.SceneCollisionRegionNotReadyException.md |   6 +-
+ .../classes/Cerneala.UI.Controls.SceneItems2D.md   |  92 +--
+ .../classes/Cerneala.UI.Controls.SceneNode2D.md    |  12 +-
+ ...erneala.UI.Controls.SceneSimulationContext2D.md |  12 +-
+ .../Cerneala.UI.Controls.SceneSpatialEntry2D.md    |  58 --
+ .../Cerneala.UI.Controls.SceneSpatialLease2D_T_.md |  49 --
+ ...Cerneala.UI.Controls.SceneSpatialRegion2D_T_.md |  41 -
+ ...neala.UI.Controls.SceneSpatialResidency2D_T_.md |  64 --
+ ...Cerneala.UI.Controls.SceneSpatialSource2D_T_.md |  63 --
+ .../classes/Cerneala.UI.Controls.Sprite2D.md       |   4 +-
+ .../classes/Cerneala.UI.Controls.Tile.md           |   4 +-
+ .../classes/Cerneala.UI.Controls.TileChunk2D.md    |   2 +-
+ .../Cerneala.UI.Controls.TileDefinition2D.md       |   2 +-
+ .../classes/Cerneala.UI.Controls.TileMap2D.md      |  66 +-
+ .../classes/Cerneala.UI.Controls.TileMap2DModel.md |  16 +-
+ .../Cerneala.UI.Controls.TileMapCatalog2D.md       |  80 --
+ .../Cerneala.UI.Controls.TileMapChunkData2D.md     |  44 +-
+ .../Cerneala.UI.Controls.TileMapChunkInfo2D.md     |  68 --
+ .../Cerneala.UI.Controls.TileMapSource2D.md        |  94 ---
+ .../Cerneala.UI.Controls.TilePromotion2D.md        |  24 +-
+ .../classes/Cerneala.UI.Controls.TileSet2D.md      |   4 +-
+ docs-site/documentation/manifest.json              |  65 +-
+ tests/Cerneala.Tests.Language/CompletionTests.cs   |   9 +-
+ .../ImportedPackageTests.cs                        |  37 +-
+ .../PackageValueCodecTests.cs                      |   4 +-
+ .../Scene2DPackageEntityTests.cs                   | 142 ++--
+ .../Scene2DPackageGridGeometryTests.cs             |  31 +-
+ .../Scene2DPackageGridTests.cs                     |  54 +-
+ .../Scene2DPackageTests.cs                         | 131 +--
+ .../Cerneala.Tests.SdlGpu.csproj                   |   1 +
+ .../Cerneala.Tests.SdlGpu/NativeImageLeaseTests.cs | 110 +--
+ .../NativePackageGridSubdivisionTests.cs           |  21 +-
+ .../NativePackageWarmStreamingTests.cs             |  57 +-
+ .../NativeSceneImagePresentationTests.cs           |  20 +-
+ .../NativeScenePresentationTests.cs                |  40 +-
+ .../NativeScenePrismDomainTests.cs                 |  52 +-
+ .../NativeScenePrismStreamingTests.cs              |  27 +-
+ .../Prism/ScenePrismAllocationTests.cs             |  22 +-
+ .../UiMarkupGeneratorColliderOwnershipTests.cs     |  38 +-
+ .../UiMarkupGeneratorSceneComponentTests.cs        |   4 +-
+ .../UiMarkupGeneratorSceneImportStageZeroTests.cs  |  18 +-
+ .../UiMarkupGeneratorSceneWorldBindingTests.cs     |  16 +-
+ .../UiMarkupGeneratorTests.cs                      |   2 +-
+ .../UiMarkupGeneratorTileAuthoringTests.cs         |  32 +-
+ .../UiMarkupGeneratorTileMap2DStageZeroTests.cs    |  76 +-
+ .../RenderSurface2DSceneFoundationContractTests.cs |  12 +-
+ .../Controls/RenderSurface2DSceneTests.cs          |  12 +-
+ .../Controls/SceneCollisionStreamingTests.cs       | 329 ++++----
+ .../SceneItems2DIncrementalContractTests.cs        | 491 ++++-------
+ .../Controls/ScenePresentationTests.cs             |  85 +-
+ .../Controls/ScenePrismStreamingTests.cs           | 262 +++---
+ .../Controls/SceneSimulationContext2DTests.cs      | 146 ++--
+ .../Controls/TileMapSpatialResidencyTests.cs       |  30 +-
+ .../Controls/TileMapStreamingTests.cs              |  14 +-
+ .../Playground/SceneWorldShowcaseTests.cs          | 319 +++-----
+ .../Shared/SceneDebugOverlayConformanceFixture.cs  |  13 +-
+ tests/Shared/SpriteAnimationConformanceFixture.cs  |  11 +-
+ tests/Shared/TileMapStage3CaptureFixture.cs        |   9 +-
+ tests/Shared/TileMapStage5ConformanceFixture.cs    |  29 +-
+ 107 files changed, 3157 insertions(+), 3278 deletions(-)

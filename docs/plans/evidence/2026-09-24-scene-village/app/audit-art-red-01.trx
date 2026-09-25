@@ -1,0 +1,176 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="26b69625-66ae-44d5-9b27-85a1adf6e945" name="lauri@DESKTOP-JT43V3D 2026-09-24 19:45:06" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T19:45:06.6637329+03:00" queuing="2026-09-24T19:45:06.6637333+03:00" start="2026-09-24T19:45:04.2930317+03:00" finish="2026-09-24T19:45:06.6785543+03:00" />
+  <TestSettings name="default" id="80848b62-d56e-44ee-a1cf-39ba0d6472ff">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_19_45_06" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="ae13c080-42cf-4a03-a5de-1a835aa2434a" testId="22ec08ca-2425-0e60-45c0-3173641d58e7" testName="Cerneala.Tests.SceneVillage.VillageModelTests.VillageDecorationsUseCompleteInspectedAtlasCellsAndKeepTreeCollision" computerName="DESKTOP-JT43V3D" duration="00:00:00.0298090" startTime="2026-09-24T19:45:06.3477532+03:00" endTime="2026-09-24T19:45:06.3477537+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ae13c080-42cf-4a03-a5de-1a835aa2434a">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.All() Failure: 12 out of 20 items in the collection did not pass.&#xD;
+[1]:  Item:  DecorationSite { X = 1712, Y = 1680, TileIndex = 19 }&#xD;
+      Error: Assert.Contains() Failure: Item not found in collection&#xD;
+             Collection: [2, 5, 16, 27, 28]&#xD;
+             Not found:  19&#xD;
+[2]:  Item:  DecorationSite { X = 2384, Y = 1680, TileIndex = 15 }&#xD;
+      Error: Assert.Contains() Failure: Item not found in collection&#xD;
+             Collection: [2, 5, 16, 27, 28]&#xD;
+             Not found:  15&#xD;
+[6]:  Item:  DecorationSite { X = 2384, Y = 2384, TileIndex = 19 }&#xD;
+      Error: Assert.Contains() Failure: Item not found in collection&#xD;
+             Collection: [2, 5, 16, 27, 28]&#xD;
+             Not found:  19&#xD;
+[7]:  Item:  DecorationSite { X = 2416, Y = 2384, TileIndex = 15 }&#xD;
+      Error: Assert.Contains() Failure: Item not found in collection&#xD;
+             Collection: [2, 5, 16, 27, 28]&#xD;
+             Not found:  15&#xD;
+[8]:  Item:  DecorationSite { X = 1888, Y = 1784, TileIndex = 4 }&#xD;
+      Error: Assert.Contains() Failure: Item not found in collection&#xD;
+             Collection: [2, 5, 16, 27, 28]&#xD;
+             Not found:  4&#xD;
+[9]:  Item:  DecorationSite { X = 2176, Y = 1784, TileIndex = 7 }&#xD;
+      Error: Assert.Contains() Failure: Item not found in collection&#xD;
+             Collection: [2, 5, 16, 27, 28]&#xD;
+             Not found:  7&#xD;
+[10]: Item:  DecorationSite { X = 1888, Y = 2272, TileIndex = 8 }&#xD;
+      Error: Assert.Contains() Failure: Item not found in collection&#xD;
+             Collection: [2, 5, 16, 27, 28]&#xD;
+             Not found:  8&#xD;
+[11]: Item:  DecorationSite { X = 2176, Y = 2272, TileIndex = 4 }&#xD;
+      Error: Assert.Contains() Failure: Item not found in collection&#xD;
+             Collection: [2, 5, 16, 27, 28]&#xD;
+             Not found:  4&#xD;
+[12]: Item:  DecorationSite { X = 1824, Y = 1960, TileIndex = 17 }&#xD;
+      Error: Assert.Contains() Failure: Item not found in collection&#xD;
+             Collection: [2, 5, 16, 27, 28]&#xD;
+             Not found:  17&#xD;
+[13]: Item:  DecorationSite { X = 2224, Y = 1960, TileIndex = 7 }&#xD;
+      Error: Assert.Contains() Failure: Item not found in collection&#xD;
+             Collection: [2, 5, 16, 27, 28]&#xD;
+             Not found:  7&#xD;
+[14]: Item:  DecorationSite { X = 1824, Y = 2192, TileIndex = 8 }&#xD;
+      Error: Assert.Contains() Failure: Item not found in collection&#xD;
+             Collection: [2, 5, 16, 27, 28]&#xD;
+             Not found:  8&#xD;
+[15]: Item:  DecorationSite { X = 2224, Y = 2192, TileIndex = 17 }&#xD;
+      Error: Assert.Contains() Failure: Item not found in collection&#xD;
+             Collection: [2, 5, 16, 27, 28]&#xD;
+             Not found:  17</Message>
+          <StackTrace>   at Cerneala.Tests.SceneVillage.VillageModelTests.VillageDecorationsUseCompleteInspectedAtlasCellsAndKeepTreeCollision() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\VillageModelTests.cs:line 179&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="7733f84f-1387-4e92-ac2b-fe2525539de9" testId="2b75e3aa-5a43-ca35-6e0c-c28146966f49" testName="Cerneala.Tests.SceneVillage.VillageModelTests.VillagerWalkClipsUseTheInspectedDirectionalCells" computerName="DESKTOP-JT43V3D" duration="00:00:00.2181712" startTime="2026-09-24T19:45:06.3033487+03:00" endTime="2026-09-24T19:45:06.3034182+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7733f84f-1387-4e92-ac2b-fe2525539de9">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: DrawRect { X = 0, Y = 0, Width = 16, Height = 16, Right = 16, Bottom = 16 }&#xD;
+Actual:   DrawRect { X = 32, Y = 0, Width = 16, Height = 16, Right = 48, Bottom = 16 }</Message>
+          <StackTrace>   at Cerneala.Tests.SceneVillage.VillageModelTests.VillagerWalkClipsUseTheInspectedDirectionalCells() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\VillageModelTests.cs:line 159&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageModelTests.VillagerWalkClipsUseTheInspectedDirectionalCells" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="2b75e3aa-5a43-ca35-6e0c-c28146966f49">
+      <Execution id="7733f84f-1387-4e92-ac2b-fe2525539de9" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageModelTests" name="VillagerWalkClipsUseTheInspectedDirectionalCells" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SceneVillage.VillageModelTests.VillageDecorationsUseCompleteInspectedAtlasCellsAndKeepTreeCollision" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="22ec08ca-2425-0e60-45c0-3173641d58e7">
+      <Execution id="ae13c080-42cf-4a03-a5de-1a835aa2434a" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.VillageModelTests" name="VillageDecorationsUseCompleteInspectedAtlasCellsAndKeepTreeCollision" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="22ec08ca-2425-0e60-45c0-3173641d58e7" executionId="ae13c080-42cf-4a03-a5de-1a835aa2434a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2b75e3aa-5a43-ca35-6e0c-c28146966f49" executionId="7733f84f-1387-4e92-ac2b-fe2525539de9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="2" executed="2" passed="0" failed="2" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.20]   Discovering: Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:00.32]   Discovered:  Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:00.33]   Starting:    Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:00.69]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:00.69]       Expected: DrawRect { X = 0, Y = 0, Width = 16, Height = 16, Right = 16, Bottom = 16 }&#xD;
+[xUnit.net 00:00:00.69]       Actual:   DrawRect { X = 32, Y = 0, Width = 16, Height = 16, Right = 48, Bottom = 16 }&#xD;
+[xUnit.net 00:00:00.69]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.69]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\VillageModelTests.cs(159,0): at Cerneala.Tests.SceneVillage.VillageModelTests.VillagerWalkClipsUseTheInspectedDirectionalCells()&#xD;
+[xUnit.net 00:00:00.69]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.69]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.73]       Assert.All() Failure: 12 out of 20 items in the collection did not pass.&#xD;
+[xUnit.net 00:00:00.73]       [1]:  Item:  DecorationSite { X = 1712, Y = 1680, TileIndex = 19 }&#xD;
+[xUnit.net 00:00:00.73]             Error: Assert.Contains() Failure: Item not found in collection&#xD;
+[xUnit.net 00:00:00.73]                    Collection: [2, 5, 16, 27, 28]&#xD;
+[xUnit.net 00:00:00.73]                    Not found:  19&#xD;
+[xUnit.net 00:00:00.73]       [2]:  Item:  DecorationSite { X = 2384, Y = 1680, TileIndex = 15 }&#xD;
+[xUnit.net 00:00:00.73]             Error: Assert.Contains() Failure: Item not found in collection&#xD;
+[xUnit.net 00:00:00.73]                    Collection: [2, 5, 16, 27, 28]&#xD;
+[xUnit.net 00:00:00.73]                    Not found:  15&#xD;
+[xUnit.net 00:00:00.73]       [6]:  Item:  DecorationSite { X = 2384, Y = 2384, TileIndex = 19 }&#xD;
+[xUnit.net 00:00:00.73]             Error: Assert.Contains() Failure: Item not found in collection&#xD;
+[xUnit.net 00:00:00.73]                    Collection: [2, 5, 16, 27, 28]&#xD;
+[xUnit.net 00:00:00.73]                    Not found:  19&#xD;
+[xUnit.net 00:00:00.73]       [7]:  Item:  DecorationSite { X = 2416, Y = 2384, TileIndex = 15 }&#xD;
+[xUnit.net 00:00:00.73]             Error: Assert.Contains() Failure: Item not found in collection&#xD;
+[xUnit.net 00:00:00.73]                    Collection: [2, 5, 16, 27, 28]&#xD;
+[xUnit.net 00:00:00.73]                    Not found:  15&#xD;
+[xUnit.net 00:00:00.73]       [8]:  Item:  DecorationSite { X = 1888, Y = 1784, TileIndex = 4 }&#xD;
+[xUnit.net 00:00:00.73]             Error: Assert.Contains() Failure: Item not found in collection&#xD;
+[xUnit.net 00:00:00.73]                    Collection: [2, 5, 16, 27, 28]&#xD;
+[xUnit.net 00:00:00.73]                    Not found:  4&#xD;
+[xUnit.net 00:00:00.73]       [9]:  Item:  DecorationSite { X = 2176, Y = 1784, TileIndex = 7 }&#xD;
+[xUnit.net 00:00:00.73]             Error: Assert.Contains() Failure: Item not found in collection&#xD;
+[xUnit.net 00:00:00.73]                    Collection: [2, 5, 16, 27, 28]&#xD;
+[xUnit.net 00:00:00.73]                    Not found:  7&#xD;
+[xUnit.net 00:00:00.73]       [10]: Item:  DecorationSite { X = 1888, Y = 2272, TileIndex = 8 }&#xD;
+[xUnit.net 00:00:00.73]             Error: Assert.Contains() Failure: Item not found in collection&#xD;
+[xUnit.net 00:00:00.73]                    Collection: [2, 5, 16, 27, 28]&#xD;
+[xUnit.net 00:00:00.74]                    Not found:  8&#xD;
+[xUnit.net 00:00:00.74]       [11]: Item:  DecorationSite { X = 2176, Y = 2272, TileIndex = 4 }&#xD;
+[xUnit.net 00:00:00.74]             Error: Assert.Contains() Failure: Item not found in collection&#xD;
+[xUnit.net 00:00:00.74]                    Collection: [2, 5, 16, 27, 28]&#xD;
+[xUnit.net 00:00:00.74]                    Not found:  4&#xD;
+[xUnit.net 00:00:00.74]       [12]: Item:  DecorationSite { X = 1824, Y = 1960, TileIndex = 17 }&#xD;
+[xUnit.net 00:00:00.74]             Error: Assert.Contains() Failure: Item not found in collection&#xD;
+[xUnit.net 00:00:00.74]                    Collection: [2, 5, 16, 27, 28]&#xD;
+[xUnit.net 00:00:00.74]                    Not found:  17&#xD;
+[xUnit.net 00:00:00.74]       [13]: Item:  DecorationSite { X = 2224, Y = 1960, TileIndex = 7 }&#xD;
+[xUnit.net 00:00:00.74]             Error: Assert.Contains() Failure: Item not found in collection&#xD;
+[xUnit.net 00:00:00.74]                    Collection: [2, 5, 16, 27, 28]&#xD;
+[xUnit.net 00:00:00.74]                    Not found:  7&#xD;
+[xUnit.net 00:00:00.74]       [14]: Item:  DecorationSite { X = 1824, Y = 2192, TileIndex = 8 }&#xD;
+[xUnit.net 00:00:00.74]             Error: Assert.Contains() Failure: Item not found in collection&#xD;
+[xUnit.net 00:00:00.74]                    Collection: [2, 5, 16, 27, 28]&#xD;
+[xUnit.net 00:00:00.74]                    Not found:  8&#xD;
+[xUnit.net 00:00:00.74]       [15]: Item:  DecorationSite { X = 2224, Y = 2192, TileIndex = 17 }&#xD;
+[xUnit.net 00:00:00.74]             Error: Assert.Contains() Failure: Item not found in collection&#xD;
+[xUnit.net 00:00:00.74]                    Collection: [2, 5, 16, 27, 28]&#xD;
+[xUnit.net 00:00:00.74]                    Not found:  17&#xD;
+[xUnit.net 00:00:00.74]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.74]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\VillageModelTests.cs(179,0): at Cerneala.Tests.SceneVillage.VillageModelTests.VillageDecorationsUseCompleteInspectedAtlasCellsAndKeepTreeCollision()&#xD;
+[xUnit.net 00:00:00.74]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.74]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.75]   Finished:    Cerneala.Tests.SceneVillage&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T19:45:06.2980924+03:00">
+        <Text>[xUnit.net 00:00:00.69]     Cerneala.Tests.SceneVillage.VillageModelTests.VillagerWalkClipsUseTheInspectedDirectionalCells [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T19:45:06.3421502+03:00">
+        <Text>[xUnit.net 00:00:00.73]     Cerneala.Tests.SceneVillage.VillageModelTests.VillageDecorationsUseCompleteInspectedAtlasCellsAndKeepTreeCollision [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

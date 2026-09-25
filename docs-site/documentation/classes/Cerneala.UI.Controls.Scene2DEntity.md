@@ -67,6 +67,6 @@ range or overflow after transformation; neither failure becomes an empty region.
 
 ## See also
 
-- [SceneSpatialEntry2D](Cerneala.UI.Controls.SceneSpatialEntry2D.md)
+- [SceneItems2D](Cerneala.UI.Controls.SceneItems2D.md)
 - [DrawRect](Cerneala.Drawing.DrawRect.md)
 - [Scene2DPackageEntityInfo](Cerneala.Scene2D.Packages.Scene2DPackageEntityInfo.md)

@@ -1,0 +1,127 @@
+[
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Gpu/Shaders/Drawing.frag.dxil",
+    "Length": 3868,
+    "SHA256": "8910334FD4816A5F64E6AA349D4E87554536D18AD0ACFA3B5FD373B3D6C62A54"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Gpu/Shaders/Drawing.frag.msl",
+    "Length": 544,
+    "SHA256": "652FFA65418EBF4C029A52B257F4E17B051E514AD0A6020390F9400E3612799B"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Gpu/Shaders/Drawing.frag.spv",
+    "Length": 888,
+    "SHA256": "FD48501A24FEA2D035F614BBF5537B0E039F067A8F61F983F2A357D53A2F0C42"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Gpu/Shaders/Drawing.vert.dxil",
+    "Length": 4080,
+    "SHA256": "813734C0ABD786C97E7F9A7EAC9426A5CED8A737FD6A4480332507A84E63E126"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Gpu/Shaders/Drawing.vert.msl",
+    "Length": 859,
+    "SHA256": "0030A12EBDDF97ADE714222757A60105FDE851549383033C674DAA08E3EF5037"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Gpu/Shaders/Drawing.vert.spv",
+    "Length": 1224,
+    "SHA256": "8D727191D3DF7CA75B76A7C300C015B02EFC3D12E78BB229EA780D9546D7D84B"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Gpu/Shaders/Surface3D.frag.dxil",
+    "Length": 4192,
+    "SHA256": "9A4B6301442D3AC805C77D01CA95E0F11A227B4BBA9877FBF0E66C1BB5F76BB3"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Gpu/Shaders/Surface3D.frag.msl",
+    "Length": 1231,
+    "SHA256": "1CC37AAE1A4C8E19C3458EE05A33D0D327E8E528F1A0D2D7D1245EF3153157BD"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Gpu/Shaders/Surface3D.frag.spv",
+    "Length": 2000,
+    "SHA256": "D8080B5AB11A8948DDDBFDD1D52645DEDEA578AE6CF610FBB54B03AD65474214"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Gpu/Shaders/Surface3D.vert.dxil",
+    "Length": 8240,
+    "SHA256": "BBD84F0F6C421A9FA2AAD4DEAB4BD177F4519F09F8A5A26BDAF33B81E3199893"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Gpu/Shaders/Surface3D.vert.msl",
+    "Length": 16334,
+    "SHA256": "9E65C41E46320D117C9F2C409926D936E3BF565A28B4E7A1A49317FCF9F73753"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Gpu/Shaders/Surface3D.vert.spv",
+    "Length": 10908,
+    "SHA256": "F55C8B57824CC485403617AFA9759E3002CF7701A3CF8DA4561132138FA4095F"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Prism/Shaders/Prism.vert.dxil",
+    "Length": 4036,
+    "SHA256": "8BD772E8DF5EBA4FF70A6C9DA445F78BE8918A8EA0A93BD554419F19243B8AB9"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Prism/Shaders/Prism.vert.msl",
+    "Length": 987,
+    "SHA256": "941094CF313201D3E65FD1BDD8B701D2C4E250256C8B6A3F78266D232ECD08D2"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Prism/Shaders/Prism.vert.spv",
+    "Length": 1584,
+    "SHA256": "25AD603950814E90E73549F445F666C60FDC382B2ED4360627E7525AD89C4761"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Prism/Shaders/PrismCatalog.frag.dxil",
+    "Length": 1766220,
+    "SHA256": "1E608405856AB78FF701F97B608B917F6026FFC798AF1E2A9B49EE6C8DA0DC0D"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Prism/Shaders/PrismCatalog.frag.msl",
+    "Length": 6599674,
+    "SHA256": "7DB35A4B60B704421BABDCE21F589709AEC4CEE9B12CBC39F3A615C87576BD55"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Prism/Shaders/PrismCatalog.frag.spv",
+    "Length": 3121340,
+    "SHA256": "C9ABC8FF1C20CA88DC1A5F0DA5C84D19576C70BA5B3E88F11F2D938AD9B45F70"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Prism/Shaders/PrismCopy.frag.dxil",
+    "Length": 4720,
+    "SHA256": "79A625E238FAD08F89E92900DE887319EDFAACB7AA38E6B55DADE6F345429312"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Prism/Shaders/PrismCopy.frag.msl",
+    "Length": 979,
+    "SHA256": "003FB15A90A96AD061D557F2382E8CCB6A01E1F4C48FF46F5BAF2A565104AF79"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Prism/Shaders/PrismCopy.frag.spv",
+    "Length": 1744,
+    "SHA256": "DEA1E2432A9A325903C4D85FF0984927F678ABC6B8FE1B5FC25D8C3A609633AB"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Prism/Shaders/PrismPresentation.frag.dxil",
+    "Length": 7328,
+    "SHA256": "2F4715AF29A635784EB1861F88D1E94F4EB559E975BD67A1BDFC403CCAE0756A"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Prism/Shaders/PrismPresentation.frag.msl",
+    "Length": 5974,
+    "SHA256": "3A9FCD3BEE4326F452DA53662B119C3A76E430EC7710B054B2ECAEFCC8A11F80"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Prism/Shaders/PrismPresentation.frag.spv",
+    "Length": 6112,
+    "SHA256": "345FAC3889A71BBBA06FE99906267782D398607D2AEBB07A86CF5B3D8867161D"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Shaders/artifacts.json",
+    "Length": 10331,
+    "SHA256": "E341AB3BD293D84ACE98ACF1BE418687B2A202BA10450F6A748087937D4C7D98"
+  }
+]

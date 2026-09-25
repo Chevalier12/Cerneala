@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="SceneItems2DCollectionCompileRed.cs" />
+    <ProjectReference Include="../../../../../Cerneala.csproj" />
+    <ProjectReference Include="../../../../../Tetrisish/Tetris.csproj" />
+  </ItemGroup>
+</Project>

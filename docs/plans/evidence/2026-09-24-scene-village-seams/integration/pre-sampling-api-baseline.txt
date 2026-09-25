@@ -1,0 +1,7 @@
+captured_at_utc=2026-09-24T19:04:29Z
+source=C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+dest=C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-24-scene-village-seams\integration\pre-sampling-api\Cerneala.dll
+sha256=EC8BEE87C67F0558E85B4D637903AA087C980931EDDE9DD4922B58498774D87B
+bytes=5481472
+prior_full_solution_evidence=docs/plans/evidence/2026-09-24-scene-village/full-slnx-final/exit.txt
+prior_full_solution_core_library_hash=EC8BEE87C67F0558E85B4D637903AA087C980931EDDE9DD4922B58498774D87B

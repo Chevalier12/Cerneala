@@ -1,0 +1,9 @@
+3B3CCEDC0E4AA2B690CBF369D4057B739A3F6D4ACA10FB679CF041CDAD5A634C C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-24-scene-village-seams\core\diagnostic\selected-candidate-01-bytes\artifacts.json
+32006FCFFF274720F43D1DF0B5370D366F6C6AA5E05D9EEE51981114F8A0A8CB C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-24-scene-village-seams\core\diagnostic\selected-candidate-01-bytes\DrawingImageDomain.frag.dxil
+09A7E480414FCDC21331614FFF8CE13F2857F01D644B148DDE0399001C572009 C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-24-scene-village-seams\core\diagnostic\selected-candidate-01-bytes\DrawingImageDomain.frag.hlsl
+032B0B90847878FC6037580A57C0E1EF860EA434D31872303291D29A26148FBC C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-24-scene-village-seams\core\diagnostic\selected-candidate-01-bytes\DrawingImageDomain.frag.msl
+6C0AB9FDC4536F16CA6CDF28270C1F234CD5205CCA1CE049697ECA8D5D134FAB C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-24-scene-village-seams\core\diagnostic\selected-candidate-01-bytes\DrawingImageDomain.frag.spv
+2B4387F24881504C25A3F65D23D8D9B2B2BBEF8D962F5B54415126D3E8B547EE C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-24-scene-village-seams\core\diagnostic\selected-candidate-01-bytes\DrawingImageDomain.vert.dxil
+7E95705BEEEA0FBC42A4253624452B0EE87180E393B4AE94A54038966EFB15F9 C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-24-scene-village-seams\core\diagnostic\selected-candidate-01-bytes\DrawingImageDomain.vert.hlsl
+68A0255BB69CB3894220B9E578C9208A15B108961C01ED5F9192ECDABFE14353 C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-24-scene-village-seams\core\diagnostic\selected-candidate-01-bytes\DrawingImageDomain.vert.msl
+8537BDD732961F292892D7792D13B71615800A10432A40F3296F370E16058E25 C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-24-scene-village-seams\core\diagnostic\selected-candidate-01-bytes\DrawingImageDomain.vert.spv

@@ -57,6 +57,8 @@ DrawCommand brushedFill = DrawCommand.FillRectangle(
 
 `DrawImageQuad` is a strictly 2D operation lowered to exactly two affine-textured triangles. It does not provide 3D perspective or perspective-correct texture mapping. `DrawNineSlice` creates one indexed mesh for nine source regions; opposing destination borders are proportionally reduced when the destination is smaller than their sum.
 
+For the SDL_GPU [Point + Clamp image-edge behavior](Cerneala.Drawing.DrawImageOptions.md#point-and-clamp-image-edges-on-sdl-gpu), a quad made from four positions and `DrawImageOptions` retains image-generated geometry provenance. A quad supplied as explicit `DrawVertex2D` vertices does not, even if it uses the same UVs. Nine-slice uses one outer image domain, not a separate edge domain for each of its nine cells. Arbitrary meshes and triangles remain outside this selected path.
+
 `BeginPrism` and `EndPrism` delimit a retained Prism capture scope. Only the begin command carries a typed `PrismDrawScope`; backends that do not implement Prism may ignore both delimiters while continuing to process the commands between them.
 
 The field-populating constructor is private, so callers normally create commands through the static factory methods. Because this is a struct, `default(DrawCommand)` is still possible; use the factory methods when a command should represent intentional drawing work.

@@ -1,0 +1,49 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Scene2D.Packages -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Packages\bin\Release\net8.0\Cerneala.Scene2D.Packages.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  Tetris -> C:\Users\lauri\Desktop\Cerneala\Tetrisish\bin\Release\net8.0\Cerneala.Tetris.dll
+  Cerneala.Tests.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)
+[xUnit.net 00:00:00.12]   Discovering: Cerneala.Tests.SdlGpu
+[xUnit.net 00:00:00.60]   Discovered:  Cerneala.Tests.SdlGpu
+[xUnit.net 00:00:00.61]   Starting:    Cerneala.Tests.SdlGpu
+[xUnit.net 00:00:01.57]     Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.ExactIntegerSourceBoundaryUsesCoveredSamplingButKeepsOrdinaryInterior [FAIL]
+[xUnit.net 00:00:01.57]       Assert.Equal() Failure: Values differ
+[xUnit.net 00:00:01.57]       Expected: Color { R = 0, G = 64, B = 0, A = 255 }
+[xUnit.net 00:00:01.57]       Actual:   Color { R = 127, G = 0, B = 127, A = 255 }
+[xUnit.net 00:00:01.57]       Stack Trace:
+[xUnit.net 00:00:01.57]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeDrawingInterpolationBoundaryTests.cs(239,0): at Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.ExactIntegerSourceBoundaryUsesCoveredSamplingButKeepsOrdinaryInterior()
+[xUnit.net 00:00:01.57]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+[xUnit.net 00:00:01.57]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:01.57]       Output:
+[xUnit.net 00:00:01.57]         Exact integer crop selected versus ordinary interior, guard Color { R = 255, G = 0, B = 255, A = 255 }: 0 differing pixels
+[xUnit.net 00:00:01.57]         Exact-center left edge at x=8.5, crop x=2: guard=Color { R = 255, G = 0, B = 255, A = 255 }, selected=Color { R = 127, G = 0, B = 127, A = 255 }, ordinary=Color { R = 127, G = 0, B = 127, A = 255 }, isolated=Color { R = 0, G = 64, B = 0, A = 255 }
+[xUnit.net 00:00:01.57]   Finished:    Cerneala.Tests.SdlGpu
+  Failed Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.ExactIntegerSourceBoundaryUsesCoveredSamplingButKeepsOrdinaryInterior [909 ms]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: Color { R = 0, G = 64, B = 0, A = 255 }
+Actual:   Color { R = 127, G = 0, B = 127, A = 255 }
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.ExactIntegerSourceBoundaryUsesCoveredSamplingButKeepsOrdinaryInterior() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeDrawingInterpolationBoundaryTests.cs:line 239
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+  Standard Output Messages:
+ Exact integer crop selected versus ordinary interior, guard Color { R = 255, G = 0, B = 255, A = 255 }: 0 differing pixels
+ Exact-center left edge at x=8.5, crop x=2: guard=Color { R = 255, G = 0, B = 255, A = 255 }, selected=Color { R = 127, G = 0, B = 127, A = 255 }, ordinary=Color { R = 127, G = 0, B = 127, A = 255 }, isolated=Color { R = 0, G = 64, B = 0, A = 255 }
+
+
+Results File: C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\TestResults\external-boundary-amendment-red-01.trx
+
+Test Run Failed.
+Total tests: 1
+     Failed: 1
+ Total time: 2.2613 Seconds

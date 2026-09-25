@@ -8,19 +8,19 @@ Assembly/Project: `Cerneala.Scene2D.Packages`
 
 Source: `Cerneala.Scene2D.Packages/Scene2DPackageMetadata.cs`
 
-Contains explicitly acquired document, level or map metadata outside the resident spatial catalog.
+Contains explicitly loaded document, level or map authoring metadata outside the resident package index.
 
 ```csharp
 public sealed class Scene2DPackageMetadata
 ```
 
-There is no public constructor. Obtain an instance through a package metadata lease.
+There is no public constructor. Obtain an instance through a package or level metadata-loading method.
 
 ## Examples
 
 ```csharp
-using var lease = await level.LoadMetadataAsync();
-if (lease.Value.Properties.TryGetValue("$source", out object? value) &&
+Scene2DPackageMetadata metadata = await level.LoadMetadataAsync();
+if (metadata.Properties.TryGetValue("$source", out object? value) &&
     value is SceneJsonValue2D json)
 {
     string originalJson = json.Value.GetRawText();
@@ -31,9 +31,10 @@ if (lease.Value.Properties.TryGetValue("$source", out object? value) &&
 
 Properties and collection membership are read-only snapshots. Opaque values are
 not universally immutable: for example, a stored byte array remains a byte array.
-The package does not retain this object after acquisition. Dispose the lease and
-release any separately retained values to allow collection. The getters perform
-no I/O and do not extend the lease.
+The package does not retain this object after returning it. The caller retains
+the value for as long as needed; package disposal does not invalidate its
+getters. Release references to it and any separately retained values to allow
+collection. The getters perform no I/O.
 
 Document metadata contains document properties and no tilesets. Level metadata
 contains level properties and the level's original source tilesets. Map metadata
@@ -43,7 +44,7 @@ revisions and properties in authored order, without cell arrays. These boundarie
 can differ from the prepared runtime pieces, which are at most 16 by 16 cells.
 The original grid identity can be derived from its extent using
 `grid:x:y:width:height`; no editor-specific identity is invented.
-Required chunk palettes are acquired independently and contain only definitions
+Required chunk palettes are loaded independently and contain only definitions
 used by that chunk.
 
 Document, level and free-placement metadata have no authored grid chunks.
@@ -55,7 +56,7 @@ an updated reader when acquiring newly prepared grid-map metadata.
 
 JSON content uses [SceneJsonValue2D](Cerneala.UI.Controls.SceneJsonValue2D.md).
 Shared object identities are preserved within one decoded payload; equal content
-with distinct identities is not merged. Independent acquisitions do not promise
+with distinct identities is not merged. Independent reads do not promise
 the same object identity.
 
 ## Properties
@@ -71,4 +72,4 @@ the same object identity.
 - [Scene2DPackage](Cerneala.Scene2D.Packages.Scene2DPackage.md)
 - [Scene2DPackageLevel](Cerneala.Scene2D.Packages.Scene2DPackageLevel.md)
 - [Scene2DPackageGridChunkMetadata](Cerneala.Scene2D.Packages.Scene2DPackageGridChunkMetadata.md)
-- [SceneSpatialLease2D&lt;T&gt;](Cerneala.UI.Controls.SceneSpatialLease2D_T_.md)
+- [TileMap2DModel](Cerneala.UI.Controls.TileMap2DModel.md)

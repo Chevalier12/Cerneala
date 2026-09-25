@@ -37,24 +37,17 @@ public sealed class NativeImageLeaseTests
         using WindowApplicationRuntime runtime = new(platform);
         ResourceId<ImageResource> nearId = new("Near"), farId = new("Far");
         TileColliderDescriptor2D collider = new(TileColliderShape2D.Box, width: 16, height: 16);
-        TileMap2D map = new()
-        {
-            Source = TileMapSource2D.FromModel(new TileMap2DModel("terrain", new DrawSize(16, 16),
+        TileMap2D map = TileMap2D.FromModel(new TileMap2DModel("terrain", new DrawSize(16, 16),
                 [new TileSet2D("near", nearId, [new TileDefinition2D(1, new(0, 0, 1, 1), collider: collider),
                     new TileDefinition2D(3, new(0, 0, 1, 1))]),
                  new TileSet2D("far", farId, [new TileDefinition2D(2, new(0, 0, 1, 1), collider: collider)])],
                 [new TileChunk2D(new(1, 1), 1, 1, [new TileCell2D(1)]),
                  new TileChunk2D(new(8, 1), 1, 1, [new TileCell2D(3)]),
-                 new TileChunk2D(new(126, 1), 1, 1, [new TileCell2D(2)])]))
-        };
-        Sprite2D npc = new() { X = 1984, Y = 16, Width = 16, Height = 16, Collider = new BoxCollider2D { Width = 16, Height = 16 } };
-        int npcLoads = 0, npcReleases = 0, moves = 0, camera = 0;
-        SceneSpatialSource2D<object> source = new(Catalog(), (_, _) =>
-        {
-            npcLoads++;
-            return ValueTask.FromResult(new SceneSpatialLease2D<object>(npc, _ => npcReleases++));
-        });
-        SceneItems2D actors = new() { ItemsSource = source };
+                 new TileChunk2D(new(126, 1), 1, 1, [new TileCell2D(2)])]));
+        Sprite2D npc = new() { X = 1984, Y = 16, Width = 16, Height = 16,
+            Collider = new BoxCollider2D { Width = 16, Height = 16, IsSimulated = true } };
+        int moves = 0, camera = 0;
+        SceneItems2D actors = new() { ItemsSource = new[] { npc } };
         Scene2D scene = new();
         scene.Children.Add(map);
         scene.Children.Add(actors);
@@ -80,16 +73,29 @@ public sealed class NativeImageLeaseTests
             MoveCollisionResult2D step = scene.CollisionWorld.MoveAndCollide(npc.Collider!, new(npc.X > 1984 ? -4 : 4, 0));
             Assert.Null(step.Collision);
             npc.X += step.Travel.X;
-            source.SetEntries(Catalog());
             moves++;
         });
         AddButton("grid-warm", 80, () => surface.ViewBox = new(surface.ViewBox!.Value.X == 0 ? 16 : 0, 0, 128, 96));
         Window window = new() { Title = "Grid spatial residency input", Width = 128, Height = 96, Content = surface };
         window.Resources.SetResource(nearId, new ImageResource(nearPath));
         window.Resources.SetResource(farId, new ImageResource(farPath));
+        SceneCollisionRegion2D? sweepRegion = null;
+        Task<SceneCollisionRegion2D>? preparingSweep = null;
+        Exception? testFailure = null;
         try
         {
             runtime.Show(window, modal: false);
+            // The actor's marked collider pins only its current 1984..2000 geometry.
+            // Keep the upcoming 100-unit collision sweep's wall resident explicitly.
+            using CancellationTokenSource preparationDeadline = new(TimeSpan.FromSeconds(10));
+            preparingSweep = scene.CollisionWorld.PrepareRegionAsync(new(1984, 16, 116, 16),
+                preparationDeadline.Token).AsTask();
+            Assert.True(SpinWait.SpinUntil(() =>
+            {
+                runtime.PumpOnce(TimeSpan.Zero);
+                return preparingSweep.IsCompleted;
+            }, TimeSpan.FromSeconds(15)), "The upcoming NPC collision sweep did not become ready.");
+            sweepRegion = preparingSweep.GetAwaiter().GetResult();
             byte[] reference = Capture(SKColors.Red);
             ImageResourceCache cache = Assert.IsType<ImageResourceCache>(window.Root!.ImageResourceCache);
             int initialLoads = cache.LoadCount;
@@ -127,19 +133,16 @@ public sealed class NativeImageLeaseTests
                 Assert.Equal(1984, npc.X);
                 Assert.Equal(unloadedLoads, cache.LoadCount);
                 Assert.Equal(0, cache.ResidentCount);
-                Assert.True(actors.TryGetRealizedNode("npc", out SceneNode2D? retainedNpc));
-                Assert.Same(npc, retainedNpc);
-                Assert.Equal(0, npcReleases);
+                Assert.Same(npc, Assert.Single(actors.LogicalChildren));
                 Click("grid-camera");
                 Assert.Equal(reference, Capture(SKColors.Red));
                 Assert.Equal(2, map.LogicalChildren.Count);
                 Assert.Equal(1, cache.ResidentCount);
                 Assert.Equal(initialLoads + (cycle + 1) * 2, cache.LoadCount);
             }
-            Assert.Equal(1, npcLoads);
             Assert.Equal(64, moves);
             runtime.Close(window, force: true);
-            Assert.Equal(1, npcReleases);
+            Assert.False(npc.IsAttached);
             Assert.Equal(0, cache.ResidentCount);
             Assert.Empty(map.LogicalChildren);
 
@@ -159,15 +162,33 @@ public sealed class NativeImageLeaseTests
                 Assert.True(input.IsCompletedSuccessfully, input.Exception?.ToString());
             }
         }
+        catch (Exception error) { testFailure = error; throw; }
         finally
         {
-            runtime.Close(window, force: true);
-            foreach (string name in new[] { "near.png", "far.png", "frame.png" }) { File.Delete(Path.Combine(directory, name)); }
-            Directory.Delete(directory);
+            List<Exception> cleanupFailures = [];
+            Attempt(() =>
+            {
+                if (sweepRegion is null && preparingSweep?.IsCompletedSuccessfully == true)
+                { sweepRegion = preparingSweep.GetAwaiter().GetResult(); }
+                sweepRegion?.Dispose();
+            });
+            Attempt(() => runtime.Close(window, force: true));
+            foreach (string name in new[] { "near.png", "far.png", "frame.png" })
+            { Attempt(() => File.Delete(Path.Combine(directory, name))); }
+            Attempt(() => Directory.Delete(directory));
+            if (cleanupFailures.Count > 0)
+            {
+                if (testFailure is not null) { cleanupFailures.Insert(0, testFailure); }
+                throw new AggregateException("Native grid residency teardown failed.", cleanupFailures);
+            }
+
+            void Attempt(Action cleanup)
+            {
+                try { cleanup(); }
+                catch (Exception error) { cleanupFailures.Add(error); }
+            }
         }
 
-        SceneSpatialEntry2D[] Catalog() =>
-            [new("npc", new(npc.X, 16, 16, 16), new DrawRect(1980, 16, 64, 16), isSimulated: true)];
         void AddButton(string id, float left, Action action)
         {
             Button button = new() { Width = 32, Height = 24, Command = new ActionCommand(_ => action()) };
@@ -196,7 +217,7 @@ public sealed class NativeImageLeaseTests
     [InlineData(false)]
     [InlineData(true)]
     [Trait("Category", "Native")]
-    public void SpatialCameraInputRetiresImagesAndStaticPayloadsButPreservesMovingNpcAcross32Cycles(bool invalidateBeforeCapture)
+    public void SpatialCameraInputRetiresImagesButPreservesEagerItemsAndMovingNpcAcross32Cycles(bool invalidateBeforeCapture)
     {
         string directory = Path.Combine(Path.GetTempPath(), $"Cerneala-native-spatial-leases-{Guid.NewGuid():N}");
         Directory.CreateDirectory(directory);
@@ -210,22 +231,14 @@ public sealed class NativeImageLeaseTests
         using WindowApplicationRuntime runtime = new(platform);
         ResourceId<ImageResource> npcImage = new("Npc");
         ResourceId<ImageResource> propImage = new("Prop");
-        int npcLoads = 0, npcReleases = 0, propLoads = 0, propReleases = 0, moves = 0, invalidatedCaptures = 0;
+        int moves = 0, invalidatedCaptures = 0;
         Sprite2D? npc = null;
-        SceneSpatialSource2D<object> source = new(Catalog(), (entry, _) =>
-        {
-            if (entry.Id == "npc") { npcLoads++; } else { propLoads++; }
-            return ValueTask.FromResult(new SceneSpatialLease2D<object>(entry.Id, _ =>
-            {
-                if (entry.Id == "npc") { npcReleases++; } else { propReleases++; }
-            }));
-        });
-        SceneItems2D items = new() { ItemsSource = source };
+        SceneItems2D items = new() { ItemsSource = new[] { "npc", "prop" } };
         items.Templates.Add(new ContentTemplate<string>("sprite", null, 0, context => new Sprite2D
         {
             X = context.Data == "npc" ? 16 : 48, Y = 16, Width = 16, Height = 16,
             Image = new ImageReference(context.Data == "npc" ? npcImage : propImage),
-            Collider = context.Data == "npc" ? new BoxCollider2D { Width = 16, Height = 16 } : null
+            Collider = context.Data == "npc" ? new BoxCollider2D { Width = 16, Height = 16, IsSimulated = true } : null
         }));
         Sprite2D wall = new() { X = 40, Y = 16, Collider = new BoxCollider2D { Width = 4, Height = 16 } };
         Scene2D scene = new();
@@ -259,7 +272,6 @@ public sealed class NativeImageLeaseTests
             MoveCollisionResult2D move = scene.CollisionWorld.MoveAndCollide(npc.Collider!, new(returning ? -4 : 4, 0));
             Assert.Null(move.Collision);
             npc.X += move.Travel.X;
-            source.SetEntries(Catalog());
             moves++;
         });
         Window window = new() { Title = "Spatial residency input", Width = 128, Height = 96, Content = surface };
@@ -269,8 +281,9 @@ public sealed class NativeImageLeaseTests
         {
             runtime.Show(window, modal: false);
             byte[] reference = Capture("visible.png", visible: true);
-            Assert.True(items.TryGetRealizedNode("npc", out SceneNode2D? initialNpc));
-            npc = Assert.IsType<Sprite2D>(initialNpc);
+            npc = Assert.IsType<Sprite2D>(items.LogicalChildren.First());
+            Sprite2D initialNpc = npc;
+            Assert.Equal(2, items.RealizedItemCount);
             ImageResourceCache cache = Assert.IsType<ImageResourceCache>(window.Root!.ImageResourceCache);
             Assert.Equal(2, cache.ResidentCount);
             int initialImageLoads = cache.LoadCount;
@@ -284,12 +297,9 @@ public sealed class NativeImageLeaseTests
                 }
                 Click("camera");
                 _ = Capture("away.png", visible: false);
-                Assert.Equal(1, items.RealizedItemCount);
-                Assert.True(items.TryGetRealizedNode("npc", out SceneNode2D? currentNpc));
-                Assert.Same(initialNpc, currentNpc);
+                Assert.Equal(2, items.RealizedItemCount);
+                Assert.Same(initialNpc, items.LogicalChildren.First());
                 Assert.True(npc.IsAttached);
-                Assert.Equal(iteration + 1, propReleases);
-                Assert.Equal(0, npcReleases);
                 Assert.Equal(0, cache.ResidentCount);
                 Assert.Throws<ObjectDisposedException>(() => previous.RgbaPixels);
                 int awayLoads = cache.LoadCount;
@@ -302,16 +312,14 @@ public sealed class NativeImageLeaseTests
                 Click("camera");
                 Assert.Equal(reference, Capture("visible.png", visible: true));
                 Assert.Equal(2, items.RealizedItemCount);
+                Assert.Same(initialNpc, items.LogicalChildren.First());
                 Assert.Equal(2, cache.ResidentCount);
                 Assert.Equal(initialImageLoads + (iteration + 1) * 2, cache.LoadCount);
-                Assert.Equal(iteration + 2, propLoads);
-                Assert.Equal(1, npcLoads);
             }
             Assert.Equal(64, moves);
             Assert.Equal(invalidateBeforeCapture ? 65 : 0, invalidatedCaptures);
             runtime.Close(window, force: true);
-            Assert.Equal(1, npcReleases);
-            Assert.Equal(propLoads, propReleases);
+            Assert.False(npc.IsAttached);
             Assert.Equal(0, cache.ResidentCount);
 
             void Click(string id)
@@ -334,12 +342,6 @@ public sealed class NativeImageLeaseTests
             }
             Directory.Delete(directory);
         }
-
-        SceneSpatialEntry2D[] Catalog() =>
-        [
-            new("npc", new DrawRect(npc?.X ?? 16, 16, 16, 16), isSimulated: true),
-            new("prop", new DrawRect(48, 16, 16, 16), collisionBounds: null)
-        ];
 
         void AddButton(string id, float left, Action action)
         {

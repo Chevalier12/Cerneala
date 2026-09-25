@@ -35,6 +35,8 @@ The batch does not own or dispose `Image`. Image changes participate in frame de
 
 Recording a retained batch reuses its immutable command options, including after garbage collection. The command options contain the shared sampling and address modes; each sprite's tint, opacity, source rectangle, and geometry are already represented by the batch mesh. Recording does not reapply those per-sprite values.
 
+On SDL_GPU, a batch using `Point` sampling and `Clamp` addressing applies the [image-edge behavior](Cerneala.Drawing.DrawImageOptions.md#point-and-clamp-image-edges-on-sdl-gpu) to each generated sprite quad's own outer geometry. Different atlas source rectangles remain in one batch; they do not require separate draw commands for this edge treatment. This does not turn the source rectangles into a universal nearest-texel clamp.
+
 ## Constructors
 
 | Name | Description |

@@ -1,0 +1,57 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Scene2D.Packages -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Packages\bin\Release\net8.0\Cerneala.Scene2D.Packages.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  Tetris -> C:\Users\lauri\Desktop\Cerneala\Tetrisish\bin\Release\net8.0\Cerneala.Tetris.dll
+  Cerneala.Tests.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)
+[xUnit.net 00:00:00.80]   Discovering: Cerneala.Tests.SdlGpu
+[xUnit.net 00:00:01.44]   Discovered:  Cerneala.Tests.SdlGpu
+[xUnit.net 00:00:01.45]   Starting:    Cerneala.Tests.SdlGpu
+[xUnit.net 00:00:02.96]     Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.VillageScaleFlippedBoundaryUsesCoveredSampling [FAIL]
+[xUnit.net 00:00:02.96]       Assert.Equal() Failure: Values differ
+[xUnit.net 00:00:02.96]       Expected: Color { R = 127, G = 127, B = 105, A = 255 }
+[xUnit.net 00:00:02.96]       Actual:   Color { R = 127, G = 127, B = 106, A = 255 }
+[xUnit.net 00:00:02.96]       Stack Trace:
+[xUnit.net 00:00:02.96]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeDrawingInterpolationBoundaryTests.cs(406,0): at Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.VillageScaleFlippedBoundaryUsesCoveredSampling()
+[xUnit.net 00:00:02.96]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+[xUnit.net 00:00:02.96]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:02.96]       Output:
+[xUnit.net 00:00:02.96]         Village-scale exact flipped right edge: selected=Color { R = 0, G = 127, B = 52, A = 255 }, isolated=Color { R = 0, G = 127, B = 52, A = 255 }
+[xUnit.net 00:00:02.96]         Village-scale ground left=Color { R = 0, G = 127, B = 52, A = 255 }, ground right=Color { R = 127, G = 0, B = 52, A = 255 }, join=Color { R = 127, G = 127, B = 105, A = 255 }, isolated join=Color { R = 127, G = 127, B = 105, A = 255 }
+[xUnit.net 00:00:02.96]         One-ULP x shift left=267.49997, right=347.49997: selected=Color { R = 0, G = 127, B = 52, A = 255 }, isolated=Color { R = 0, G = 127, B = 52, A = 255 }
+[xUnit.net 00:00:02.96]         One-ULP x shift left=267.50003, right=347.50003: selected=Color { R = 0, G = 127, B = 52, A = 255 }, isolated=Color { R = 0, G = 127, B = 52, A = 255 }
+[xUnit.net 00:00:02.96]         Village-scale scene transform edge: selected=Color { R = 127, G = 127, B = 106, A = 255 }, isolated=Color { R = 127, G = 127, B = 105, A = 255 }, viewTransform={ {M11:2.5 M12:0} {M21:0 M22:2.5} {M31:249.5 M32:170.5} }
+[xUnit.net 00:00:02.96]         Transformed top alone selected=Color { R = 127, G = 0, B = 54, A = 255 }, isolated=Color { R = 127, G = 0, B = 52, A = 255 }; physical quad selected=Color { R = 127, G = 127, B = 106, A = 255 }, isolated=Color { R = 127, G = 127, B = 105, A = 255 }
+[xUnit.net 00:00:02.97]   Finished:    Cerneala.Tests.SdlGpu
+  Failed Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.VillageScaleFlippedBoundaryUsesCoveredSampling [1 s]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: Color { R = 127, G = 127, B = 105, A = 255 }
+Actual:   Color { R = 127, G = 127, B = 106, A = 255 }
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.VillageScaleFlippedBoundaryUsesCoveredSampling() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeDrawingInterpolationBoundaryTests.cs:line 406
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+  Standard Output Messages:
+ Village-scale exact flipped right edge: selected=Color { R = 0, G = 127, B = 52, A = 255 }, isolated=Color { R = 0, G = 127, B = 52, A = 255 }
+ Village-scale ground left=Color { R = 0, G = 127, B = 52, A = 255 }, ground right=Color { R = 127, G = 0, B = 52, A = 255 }, join=Color { R = 127, G = 127, B = 105, A = 255 }, isolated join=Color { R = 127, G = 127, B = 105, A = 255 }
+ One-ULP x shift left=267.49997, right=347.49997: selected=Color { R = 0, G = 127, B = 52, A = 255 }, isolated=Color { R = 0, G = 127, B = 52, A = 255 }
+ One-ULP x shift left=267.50003, right=347.50003: selected=Color { R = 0, G = 127, B = 52, A = 255 }, isolated=Color { R = 0, G = 127, B = 52, A = 255 }
+ Village-scale scene transform edge: selected=Color { R = 127, G = 127, B = 106, A = 255 }, isolated=Color { R = 127, G = 127, B = 105, A = 255 }, viewTransform={ {M11:2.5 M12:0} {M21:0 M22:2.5} {M31:249.5 M32:170.5} }
+ Transformed top alone selected=Color { R = 127, G = 0, B = 54, A = 255 }, isolated=Color { R = 127, G = 0, B = 52, A = 255 }; physical quad selected=Color { R = 127, G = 127, B = 106, A = 255 }, isolated=Color { R = 127, G = 127, B = 105, A = 255 }
+
+
+Results File: C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\TestResults\branch-color-village-native-01.trx
+
+Test Run Failed.
+Total tests: 1
+     Failed: 1
+ Total time: 3.9867 Seconds

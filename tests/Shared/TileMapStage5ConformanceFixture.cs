@@ -62,22 +62,17 @@ internal sealed class TileMapStage5ConformanceFixture : IDisposable
         ];
         TileMapBounds2D bounds = new(0, 0, 16, 10);
         Scene2D mapGroup = new() { TranslateX = 4, TranslateY = 2 };
-        mapGroup.Children.Add(new TileMap2D
-        {
-            Source = TileMapSource2D.FromModel(new TileMap2DModel("Ground", new DrawSize(8, 8), sets, CreateGroundChunks(), bounds,
-                tint: new Color(226, 245, 232)))
-        });
+        mapGroup.Children.Add(TileMap2D.FromModel(new TileMap2DModel("Ground", new DrawSize(8, 8), sets, CreateGroundChunks(), bounds,
+            tint: new Color(226, 245, 232))));
         Scene2D structures = new()
         {
             TranslateX = 2, TranslateY = 1, ScaleX = 1.05f,
             TransformOrigin = new DrawPoint(64, 40), Opacity = 0.72f
         };
-        structures.Children.Add(new TileMap2D
-        {
-            Tint = new Color(255, 232, 220),
-            Source = TileMapSource2D.FromModel(new TileMap2DModel("Structures", new DrawSize(8, 8), sets, CreateStructureChunks(), bounds,
-                order: 10, tint: new Color(235, 224, 255)))
-        });
+        TileMap2D structuresMap = TileMap2D.FromModel(new TileMap2DModel("Structures", new DrawSize(8, 8), sets, CreateStructureChunks(), bounds,
+            order: 10, tint: new Color(235, 224, 255)));
+        structuresMap.Tint = new Color(255, 232, 220);
+        structures.Children.Add(structuresMap);
         Sprite2D promoted = new()
         {
             Image = new ImageReference(structuresId), Width = 8, Height = 8,
@@ -111,16 +106,14 @@ internal sealed class TileMapStage5ConformanceFixture : IDisposable
         scene.Children.Add(mapGroup);
         ResourceId<ImageResource> freeRed = new("FreeRed");
         ResourceId<ImageResource> freeBlue = new("FreeBlue");
-        scene.Children.Add(new TileMap2D
-        {
-            TranslateX = 2,
-            TranslateY = 3,
-            Source = TileMapSource2D.FromModel(new TileMap2DModel([
+        TileMap2D freeMap = TileMap2D.FromModel(new TileMap2DModel([
                 new Tile(new ImageReference(freeRed), 5, 5),
                 new Tile(new ImageReference(freeBlue), 10, 8),
                 new Tile(new ImageReference(freeRed), 12, 9, 4, 5)]),
-                new Dictionary<string, DrawSize> { [freeRed.Key] = new(13, 9), [freeBlue.Key] = new(7, 15) })
-        });
+            new Dictionary<string, DrawSize> { [freeRed.Key] = new(13, 9), [freeBlue.Key] = new(7, 15) });
+        freeMap.TranslateX = 2;
+        freeMap.TranslateY = 3;
+        scene.Children.Add(freeMap);
         RenderSurface2D surface = new()
         {
             Scene = scene,

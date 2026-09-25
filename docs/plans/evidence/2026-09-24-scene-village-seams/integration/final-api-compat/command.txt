@@ -1,0 +1,2 @@
+DefaultItemExcludesInProjectFolder=artifacts/**
+dotnet msbuild .\docs/plans/evidence/2026-09-24-scene-village-seams/integration/api-compat-core.proj -t:CompareCore -v:minimal

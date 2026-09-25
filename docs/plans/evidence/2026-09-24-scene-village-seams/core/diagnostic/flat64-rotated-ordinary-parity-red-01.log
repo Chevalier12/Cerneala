@@ -1,0 +1,30 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Scene2D.Packages -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Packages\bin\Release\net8.0\Cerneala.Scene2D.Packages.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  Tetris -> C:\Users\lauri\Desktop\Cerneala\Tetrisish\bin\Release\net8.0\Cerneala.Tetris.dll
+  Cerneala.Tests.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:01.63]     Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.RotatedFlippedPointImageKeepsItsSelectedAtlasRegion [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.RotatedFlippedPointImageKeepsItsSelectedAtlasRegion [949 ms]
+  Error Message:
+   Assert.Empty() Failure: Collection was not empty
+Collection: [PixelDifference { X = 4, Y = 0, Expected = Color { R = 79, G = 82, B = 12, A = 255 }, Actual = Color { R = 96, G = 0, B = 96, A = 255 } }]
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.RotatedFlippedPointImageKeepsItsSelectedAtlasRegion() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeDrawingInterpolationBoundaryTests.cs:line 661
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+  Standard Output Messages:
+ rotated and flipped Point atlas crop versus extracted: 1 differing pixels
+   (4,0) Color { R = 79, G = 82, B = 12, A = 255 } -> Color { R = 96, G = 0, B = 96, A = 255 }
+ Rotated near-edge true-interior center (4.5,0.5): selected=Color { R = 96, G = 0, B = 96, A = 255 }, ordinary=Color { R = 96, G = 0, B = 96, A = 255 }, extracted=Color { R = 79, G = 82, B = 12, A = 255 }
+
+
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-24-scene-village-seams\core\diagnostic\flat64-rotated-ordinary-parity-red-01.trx
+
+Failed!  - Failed:     1, Passed:     0, Skipped:     0, Total:     1, Duration: 949 ms - Cerneala.Tests.SdlGpu.dll (net8.0)

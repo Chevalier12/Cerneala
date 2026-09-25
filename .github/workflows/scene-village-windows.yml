@@ -1,0 +1,52 @@
+name: Scene Village Windows
+
+on:
+  push:
+    paths:
+      - ".github/workflows/scene-village-windows.yml"
+      - "Cerneala.slnx"
+      - "Playground/Cerneala.SceneVillage/**"
+      - "tests/Cerneala.Tests.SceneVillage/**"
+  pull_request:
+    paths:
+      - ".github/workflows/scene-village-windows.yml"
+      - "Cerneala.slnx"
+      - "Playground/Cerneala.SceneVillage/**"
+      - "tests/Cerneala.Tests.SceneVillage/**"
+
+permissions:
+  contents: read
+
+jobs:
+  scene-village-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore Village tests and application
+        shell: pwsh
+        run: dotnet restore ./tests/Cerneala.Tests.SceneVillage/Cerneala.Tests.SceneVillage.csproj
+
+      - name: Build Village tests and application
+        shell: pwsh
+        run: dotnet build ./tests/Cerneala.Tests.SceneVillage/Cerneala.Tests.SceneVillage.csproj -c Release --no-restore
+
+      - name: Test Village with Windows SDL native opt-in
+        shell: pwsh
+        env:
+          CERNEALA_SDL_NATIVE_TESTS: 1
+        run: dotnet test ./tests/Cerneala.Tests.SceneVillage/Cerneala.Tests.SceneVillage.csproj -c Release --no-build --no-restore -m:1 --logger "trx;LogFileName=scene-village.trx" --results-directory artifacts/ci/scene-village/test-results
+
+      - name: Upload Village TRX and Window.SaveScreenshot captures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scene-village-windows
+          if-no-files-found: warn
+          path: artifacts/ci/scene-village/**

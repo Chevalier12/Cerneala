@@ -1,0 +1,14 @@
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:07.85]     Cerneala.Tests.Controls.SceneCollisionStreamingTests.OffCameraSimulatedActorsPinNearbyTerrainWithoutPinningTheGap [FAIL]
+  Failed Cerneala.Tests.Controls.SceneCollisionStreamingTests.OffCameraSimulatedActorsPinNearbyTerrainWithoutPinningTheGap [5 s]
+  Error Message:
+   Collision preparation did not finish within five seconds: mapChildren=0, loads=0, collisionInterests=2.
+  Stack Trace:
+     at Cerneala.Tests.Controls.SceneCollisionStreamingTests.Fixture.DrainUntil(Func`1 done) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneCollisionStreamingTests.cs:line 422
+   at Cerneala.Tests.Controls.SceneCollisionStreamingTests.OffCameraSimulatedActorsPinNearbyTerrainWithoutPinningTheGap() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneCollisionStreamingTests.cs:line 197
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage2\map\simulated-instrument-red.trx
+
+Failed!  - Failed:     1, Passed:     0, Skipped:     0, Total:     1, Duration: 5 s - Cerneala.Tests.dll (net8.0)

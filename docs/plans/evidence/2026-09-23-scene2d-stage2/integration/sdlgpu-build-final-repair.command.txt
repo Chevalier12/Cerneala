@@ -1,0 +1,1 @@
+dotnet build .\tests\Cerneala.Tests.SdlGpu\Cerneala.Tests.SdlGpu.csproj -c Release -m:1 --nologo -v:minimal --no-restore '-p:DefaultItemExcludesInProjectFolder=artifacts/**'

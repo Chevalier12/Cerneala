@@ -1,0 +1,27 @@
+[
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Gpu/Shaders/Drawing.frag.hlsl",
+    "Length": 391,
+    "SHA256": "5ACD6758788F9A15F924968278081358AFA25E27180005BECA3AC5032B0E3D27"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Gpu/Shaders/Drawing.frag.spv",
+    "Length": 900,
+    "SHA256": "AE3B62F6E4819AB9F64280B5D4109C3248D200D0E6FA137FD9DAAD93BC04719C"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Gpu/Shaders/Drawing.frag.dxil",
+    "Length": 3876,
+    "SHA256": "E278103EA57B406EB503D89453EAD82E8CE07F0EB16ED32B8D8F3D00AFB36396"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Gpu/Shaders/Drawing.frag.msl",
+    "Length": 566,
+    "SHA256": "A29734CDE6E6CF3C67DCE52CB1128AD1B3148FE44B5DCA7902155022BD0F563A"
+  },
+  {
+    "Path": "Cerneala.Backends.SdlGpu/Shaders/artifacts.json",
+    "Length": 10331,
+    "SHA256": "FF12B435A45995EF09235B8C9D2AA60D0B39FB7AAB664F9B46DF8398C94BAEAD"
+  }
+]

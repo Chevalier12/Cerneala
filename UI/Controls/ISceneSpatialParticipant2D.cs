@@ -11,7 +11,6 @@ namespace Cerneala.UI.Controls;
 internal interface ISceneSpatialParticipant2D
 {
     SceneNode2D Node { get; }
-    IReadOnlyList<SceneSpatialEntry2D>? SimulationCatalog { get; }
     Task Preparation { get; }
     Task GetCollisionPreparation(DrawRect sceneBounds) => Preparation;
     void UpdateSpatialInterest(SceneBounds2D visibleBounds, IReadOnlyList<SceneBounds2D> collisionInterest,

@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Cerneala.SceneVillage</AssemblyName>
+    <RootNamespace>Cerneala.SceneVillage</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Cerneala.csproj" />
+    <ProjectReference Include="..\..\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj" />
+    <ProjectReference Include="..\..\Cerneala.SourceGen\Cerneala.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <AdditionalFiles Include="**\*.crn" Exclude="bin\**;obj\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Cerneala.Tests.SceneVillage" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\tiny-town.png;Assets\ch003.png;Assets\Kenney-TinyTown-License.txt;Assets\CREDITS.md"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

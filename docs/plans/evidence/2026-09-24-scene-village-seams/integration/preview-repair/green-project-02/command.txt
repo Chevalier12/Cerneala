@@ -1,0 +1,2 @@
+DefaultItemExcludesInProjectFolder=artifacts/**
+dotnet test .\tests\Cerneala.Tests.PreviewHost\Cerneala.Tests.PreviewHost.csproj -c Release -m:1 --nologo -v:minimal --results-directory 'docs/plans/evidence/2026-09-24-scene-village-seams/integration/preview-repair/green-project-02' --logger 'trx;LogFileName=preview-host-full-green-02.trx' '-p:DefaultItemExcludesInProjectFolder=artifacts/**'

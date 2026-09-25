@@ -1,0 +1,2 @@
+git diff --check exit=0 warnings=95 other-lines=0
+text-files-scanned=65 trailing-whitespace=0

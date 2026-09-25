@@ -1,0 +1,109 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="e9e59f07-4d3d-4e44-afe8-6d69c9829e27" name="lauri@DESKTOP-JT43V3D 2026-09-24 10:07:40" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T10:07:40.3341697+03:00" queuing="2026-09-24T10:07:40.3341701+03:00" start="2026-09-24T10:07:31.5316772+03:00" finish="2026-09-24T10:07:40.3507483+03:00" />
+  <TestSettings name="default" id="19e4490c-494a-401e-a469-fa1ed1811289">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_10_07_40" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="0d65975a-d313-4cc3-8497-99c060445593" testId="3103edb0-6ff2-5c2a-bd48-692f92d53e33" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateEditAfterFailedRebindCommitsRequestedOneShotSnapshot" computerName="DESKTOP-JT43V3D" duration="00:00:00.0107988" startTime="2026-09-24T10:07:40.0809252+03:00" endTime="2026-09-24T10:07:40.0809257+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0d65975a-d313-4cc3-8497-99c060445593">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: b&#xD;
+Actual:   1</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateEditAfterFailedRebindCommitsRequestedOneShotSnapshot() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 378&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="071be144-8391-44cd-a8df-c81ad729575a" testId="1d0832cc-cf2a-4463-86b3-f3de1c27cb4e" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateEditAfterFailedSourceEnumerationKeepsOldTreeUnreadyUntilExplicitRefresh" computerName="DESKTOP-JT43V3D" duration="00:00:00.9829164" startTime="2026-09-24T10:07:40.0061025+03:00" endTime="2026-09-24T10:07:40.0061911+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="071be144-8391-44cd-a8df-c81ad729575a">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Same() Failure: Values are not the same instance&#xD;
+Expected: TrackingNode { ArrangedBounds = LayoutRect { X = 0, Y = 0, Width = 0, Height = 0, Location = LayoutPoint { X = 0, Y = 0 }, Size = LayoutSize { Width = 0, Height = 0, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, Aspect = null, Bindings = BindingSubscriptionCollection { Count = 0 }, ClipToBounds = False, CommandBindings = [···], ··· }&#xD;
+Actual:   TrackingNode { ArrangedBounds = LayoutRect { X = 0, Y = 0, Width = 0, Height = 0, Location = LayoutPoint { X = 0, Y = 0 }, Size = LayoutSize { Width = 0, Height = 0, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, Aspect = null, Bindings = BindingSubscriptionCollection { Count = 0 }, ClipToBounds = False, CommandBindings = [···], ··· }</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateEditAfterFailedSourceEnumerationKeepsOldTreeUnreadyUntilExplicitRefresh() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 415&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="98e4896e-f17c-4785-bee2-ff7abf3216dd" testId="407b3d2e-ff74-7374-0928-e929054b3e6d" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateEditAfterFailedRefreshCannotMarkStaleSameSourceSnapshotReady" computerName="DESKTOP-JT43V3D" duration="00:00:00.0352264" startTime="2026-09-24T10:07:40.0634176+03:00" endTime="2026-09-24T10:07:40.0634181+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="98e4896e-f17c-4785-bee2-ff7abf3216dd">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Same() Failure: Values are not the same instance&#xD;
+Expected: TrackingNode { ArrangedBounds = LayoutRect { X = 0, Y = 0, Width = 0, Height = 0, Location = LayoutPoint { X = 0, Y = 0 }, Size = LayoutSize { Width = 0, Height = 0, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, Aspect = null, Bindings = BindingSubscriptionCollection { Count = 0 }, ClipToBounds = False, CommandBindings = [···], ··· }&#xD;
+Actual:   TrackingNode { ArrangedBounds = LayoutRect { X = 0, Y = 0, Width = 0, Height = 0, Location = LayoutPoint { X = 0, Y = 0 }, Size = LayoutSize { Width = 0, Height = 0, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, Aspect = null, Bindings = BindingSubscriptionCollection { Count = 0 }, ClipToBounds = False, CommandBindings = [···], ··· }</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateEditAfterFailedRefreshCannotMarkStaleSameSourceSnapshotReady() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 447&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateEditAfterFailedSourceEnumerationKeepsOldTreeUnreadyUntilExplicitRefresh" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="1d0832cc-cf2a-4463-86b3-f3de1c27cb4e">
+      <Execution id="071be144-8391-44cd-a8df-c81ad729575a" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="TemplateEditAfterFailedSourceEnumerationKeepsOldTreeUnreadyUntilExplicitRefresh" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateEditAfterFailedRebindCommitsRequestedOneShotSnapshot" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="3103edb0-6ff2-5c2a-bd48-692f92d53e33">
+      <Execution id="0d65975a-d313-4cc3-8497-99c060445593" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="TemplateEditAfterFailedRebindCommitsRequestedOneShotSnapshot" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateEditAfterFailedRefreshCannotMarkStaleSameSourceSnapshotReady" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="407b3d2e-ff74-7374-0928-e929054b3e6d">
+      <Execution id="98e4896e-f17c-4785-bee2-ff7abf3216dd" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="TemplateEditAfterFailedRefreshCannotMarkStaleSameSourceSnapshotReady" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="3103edb0-6ff2-5c2a-bd48-692f92d53e33" executionId="0d65975a-d313-4cc3-8497-99c060445593" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1d0832cc-cf2a-4463-86b3-f3de1c27cb4e" executionId="071be144-8391-44cd-a8df-c81ad729575a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="407b3d2e-ff74-7374-0928-e929054b3e6d" executionId="98e4896e-f17c-4785-bee2-ff7abf3216dd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="3" executed="3" passed="0" failed="3" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:02.54]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:04.44]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:04.46]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:05.67]       Assert.Same() Failure: Values are not the same instance&#xD;
+[xUnit.net 00:00:05.67]       Expected: TrackingNode { ArrangedBounds = LayoutRect { X = 0, Y = 0, Width = 0, Height = 0, Location = LayoutPoint { X = 0, Y = 0 }, Size = LayoutSize { Width = 0, Height = 0, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, Aspect = null, Bindings = BindingSubscriptionCollection { Count = 0 }, ClipToBounds = False, CommandBindings = [···], ··· }&#xD;
+[xUnit.net 00:00:05.67]       Actual:   TrackingNode { ArrangedBounds = LayoutRect { X = 0, Y = 0, Width = 0, Height = 0, Location = LayoutPoint { X = 0, Y = 0 }, Size = LayoutSize { Width = 0, Height = 0, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, Aspect = null, Bindings = BindingSubscriptionCollection { Count = 0 }, ClipToBounds = False, CommandBindings = [···], ··· }&#xD;
+[xUnit.net 00:00:05.67]       Stack Trace:&#xD;
+[xUnit.net 00:00:05.68]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(415,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateEditAfterFailedSourceEnumerationKeepsOldTreeUnreadyUntilExplicitRefresh()&#xD;
+[xUnit.net 00:00:05.68]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:05.68]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:05.73]       Assert.Same() Failure: Values are not the same instance&#xD;
+[xUnit.net 00:00:05.74]       Expected: TrackingNode { ArrangedBounds = LayoutRect { X = 0, Y = 0, Width = 0, Height = 0, Location = LayoutPoint { X = 0, Y = 0 }, Size = LayoutSize { Width = 0, Height = 0, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, Aspect = null, Bindings = BindingSubscriptionCollection { Count = 0 }, ClipToBounds = False, CommandBindings = [···], ··· }&#xD;
+[xUnit.net 00:00:05.74]       Actual:   TrackingNode { ArrangedBounds = LayoutRect { X = 0, Y = 0, Width = 0, Height = 0, Location = LayoutPoint { X = 0, Y = 0 }, Size = LayoutSize { Width = 0, Height = 0, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, Aspect = null, Bindings = BindingSubscriptionCollection { Count = 0 }, ClipToBounds = False, CommandBindings = [···], ··· }&#xD;
+[xUnit.net 00:00:05.74]       Stack Trace:&#xD;
+[xUnit.net 00:00:05.74]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(447,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateEditAfterFailedRefreshCannotMarkStaleSameSourceSnapshotReady()&#xD;
+[xUnit.net 00:00:05.74]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:05.74]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:05.75]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:05.75]       Expected: b&#xD;
+[xUnit.net 00:00:05.75]       Actual:   1&#xD;
+[xUnit.net 00:00:05.75]       Stack Trace:&#xD;
+[xUnit.net 00:00:05.75]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(378,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateEditAfterFailedRebindCommitsRequestedOneShotSnapshot()&#xD;
+[xUnit.net 00:00:05.75]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:05.76]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T10:07:39.9989319+03:00">
+        <Text>[xUnit.net 00:00:05.67]     Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateEditAfterFailedSourceEnumerationKeepsOldTreeUnreadyUntilExplicitRefresh [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T10:07:40.0625984+03:00">
+        <Text>[xUnit.net 00:00:05.73]     Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateEditAfterFailedRefreshCannotMarkStaleSameSourceSnapshotReady [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T10:07:40.0801519+03:00">
+        <Text>[xUnit.net 00:00:05.75]     Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateEditAfterFailedRebindCommitsRequestedOneShotSnapshot [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

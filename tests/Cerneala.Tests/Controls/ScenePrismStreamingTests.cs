@@ -3,6 +3,7 @@ using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Drawing.Prism.Graph;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Markup;
 using Cerneala.UI.Prism.Definitions;
@@ -34,7 +35,7 @@ public sealed class ScenePrismStreamingTests
         using Fixture fixture = new(filter: null, tileMap, declareDomain: false,
             composition: new("Declared style input", [new PrismLayerDefinition(new(1), "Style", styles: [new(style)])]));
         AssertDomainError(fixture);
-        Assert.Empty(fixture.Loads);
+        fixture.AssertLoads();
 
         DrawRect domain = new(1000, 1000, 10, 10);
         fixture.Scene.PrismInputDomain = domain;
@@ -44,25 +45,25 @@ public sealed class ScenePrismStreamingTests
         Assert.Null(fixture.Surface.PresentationError);
         Assert.Equal(domain, scope.Scope.ControlBounds);
         Assert.Equal(domain, scope.Scope.InputBounds);
-        Assert.Equal(["far"], fixture.Loads);
+        fixture.AssertLoads("far");
 
         fixture.Scene.PrismInputDomain = null;
         fixture.Tick();
         AssertDomainError(fixture);
-        Assert.Equal(["far"], fixture.Loads);
-        Assert.Equal(["far"], fixture.Releases);
+        fixture.AssertLoads("far");
+        fixture.AssertReleases("far");
 
         PrismStyleState state = fixture.Prism.GetLayerState(new(1)).Styles[0];
         state.Visible = false;
         fixture.Tick();
         fixture.Record();
         Assert.Equal(RenderSurface2DPresentationState.Ready, fixture.Surface.PresentationState);
-        Assert.Equal(["far", "near"], fixture.Loads);
+        fixture.AssertLoads("far", "near");
         state.Visible = true;
         fixture.Tick();
         AssertDomainError(fixture);
-        Assert.Equal(["far", "near"], fixture.Loads);
-        Assert.Equal(["far", "near"], fixture.Releases);
+        fixture.AssertLoads("far", "near");
+        fixture.AssertReleases("far", "near");
     }
 
     [Theory]
@@ -78,13 +79,13 @@ public sealed class ScenePrismStreamingTests
     {
         using Fixture fixture = new(filter, tileMap, declareDomain: false);
         AssertDomainError(fixture);
-        Assert.Empty(fixture.Loads);
+        fixture.AssertLoads();
 
         fixture.Scene.PrismInputDomain = new(0, 0, 10, 10);
         fixture.Tick();
         fixture.Record();
         Assert.Equal(RenderSurface2DPresentationState.Ready, fixture.Surface.PresentationState);
-        Assert.Equal(["near"], fixture.Loads);
+        fixture.AssertLoads("near");
     }
 
     [Theory]
@@ -96,23 +97,23 @@ public sealed class ScenePrismStreamingTests
     {
         using Fixture fixture = new(PrismFilterId.GaussianBlur, tileMap, declareDomain: false);
         PrismFilterState filter = fixture.Prism.GetLayerState(new(1)).Filters[0];
-        Assert.Equal(["near"], fixture.Loads);
+        fixture.AssertLoads("near");
         filter.SetValue(PrismCatalogGenerated.PrismFilterParameterKeys.GaussianBlur.EdgeModeKey,
             PrismCatalogRuntime.ResolveSymbol("EdgeMode", edge));
         fixture.Tick();
         AssertDomainError(fixture);
-        Assert.Equal(["near"], fixture.Loads);
-        Assert.Equal(["near"], fixture.Releases);
+        fixture.AssertLoads("near");
+        fixture.AssertReleases("near");
 
         fixture.Scene.PrismInputDomain = new(1000, 1000, 10, 10);
         fixture.Tick();
         fixture.Record();
         Assert.Equal(RenderSurface2DPresentationState.Ready, fixture.Surface.PresentationState);
-        Assert.Equal(["near", "far"], fixture.Loads);
+        fixture.AssertLoads("near", "far");
         fixture.Scene.PrismInputDomain = null;
         fixture.Tick();
         AssertDomainError(fixture);
-        Assert.Equal(["near", "far"], fixture.Releases);
+        fixture.AssertReleases("near", "far");
 
         filter.SetValue(PrismCatalogGenerated.PrismFilterParameterKeys.GaussianBlur.EdgeModeKey,
             PrismCatalogRuntime.ResolveSymbol("EdgeMode", "Clamp"));
@@ -120,7 +121,7 @@ public sealed class ScenePrismStreamingTests
         fixture.Record();
         Assert.Equal(RenderSurface2DPresentationState.Ready, fixture.Surface.PresentationState);
         Assert.Null(fixture.Surface.PresentationError);
-        Assert.Equal(["near", "far", "near"], fixture.Loads);
+        fixture.AssertLoads("near", "far", "near");
     }
 
     [Theory]
@@ -133,7 +134,7 @@ public sealed class ScenePrismStreamingTests
             [new PrismLayerDefinition(new(1), "Uncovered", filters: [new(PrismFilterId.AddNoise)])])]));
         fixture.Tick();
         AssertDomainError(fixture);
-        Assert.Equal(["near"], fixture.Loads);
+        fixture.AssertLoads("near");
         PrismGroupState group = fixture.Prism.GetGroupState(new(2));
         PrismLayerState layer = fixture.Prism.GetLayerState(new(1));
         Action[] hide = [() => group.Visible = false,
@@ -158,7 +159,8 @@ public sealed class ScenePrismStreamingTests
         fixture.Tick();
         fixture.Record();
         Assert.Equal(RenderSurface2DPresentationState.Ready, fixture.Surface.PresentationState);
-        Assert.All(fixture.Loads, id => Assert.Equal("near", id));
+        if (tileMap) { Assert.All(fixture.Loads, id => Assert.Equal("near", id)); }
+        else { fixture.AssertLoads(); }
     }
 
     [Theory]
@@ -171,8 +173,7 @@ public sealed class ScenePrismStreamingTests
         if (tileMap) { child = fixture.Map!; }
         else
         {
-            Assert.True(fixture.Items!.TryGetRealizedNode("far", out SceneNode2D? sprite));
-            child = sprite!;
+            child = fixture.ItemNode("far");
         }
         using IDisposable effect = GeneratedMarkup.AttachPrism(child, () => new PrismInstance(
             new("Nested style", [new PrismLayerDefinition(new(1), "Glow", styles: [new(PrismStyleId.OuterGlow)])])));
@@ -202,7 +203,7 @@ public sealed class ScenePrismStreamingTests
     [InlineData(PrismStyleId.GradientOverlay, true)]
     [InlineData(PrismStyleId.PatternOverlay, false)]
     [InlineData(PrismStyleId.PatternOverlay, true)]
-    public void PointwisePaintStylesKeepViewportInterestAndReleaseDistantPayloads(PrismStyleId style, bool tileMap)
+    public void PointwisePaintStylesKeepViewportInterestAndReleaseDistantMapPayloads(PrismStyleId style, bool tileMap)
     {
         using Fixture fixture = new(filter: null, tileMap, declareDomain: false);
         using IDisposable effect = GeneratedMarkup.AttachPrism(fixture.Scene, () => new PrismInstance(
@@ -211,7 +212,7 @@ public sealed class ScenePrismStreamingTests
         fixture.Record();
 
         Assert.Equal(RenderSurface2DPresentationState.Ready, fixture.Surface.PresentationState);
-        Assert.Equal(["near"], fixture.Loads);
+        fixture.AssertLoads("near");
         Assert.False(PrismInputDependency.RequiresWholeInput(fixture.Prism));
         Assert.True(PrismInputDependency.TryGetLocalInputOutset(fixture.Prism, 1,
             System.Numerics.Matrix3x2.Identity, out var support));
@@ -221,8 +222,8 @@ public sealed class ScenePrismStreamingTests
         fixture.Tick();
         var scope = Assert.Single(new PrismFrameAnalyzer().Analyze(fixture.Record()).Scopes);
         Assert.Equal(Fixture.WorldBounds, scope.Scope.ControlBounds);
-        Assert.Equal(["near", "far"], fixture.Loads);
-        Assert.Equal(["near"], fixture.Releases);
+        fixture.AssertLoads("near", "far");
+        fixture.AssertReleases("near");
     }
 
     [Theory]
@@ -242,7 +243,7 @@ public sealed class ScenePrismStreamingTests
         fixture.Record();
 
         Assert.Equal(RenderSurface2DPresentationState.Ready, fixture.Surface.PresentationState);
-        Assert.Equal(["near"], fixture.Loads);
+        fixture.AssertLoads("near");
         Assert.Equal(1, fixture.Root.ImageResourceCache!.ResidentCount);
         Assert.False(PrismInputDependency.RequiresWholeInput(fixture.Prism));
         Assert.True(PrismInputDependency.TryGetLocalInputOutset(fixture.Prism, 1,
@@ -255,8 +256,8 @@ public sealed class ScenePrismStreamingTests
         fixture.Surface.ViewBox = new(1000, 1000, 100, 100);
         fixture.Tick();
         fixture.Record();
-        Assert.Equal(["near", "far"], fixture.Loads);
-        Assert.Equal(["near"], fixture.Releases);
+        fixture.AssertLoads("near", "far");
+        fixture.AssertReleases("near");
         Assert.Equal(1, fixture.Root.ImageResourceCache.ResidentCount);
     }
 
@@ -273,8 +274,7 @@ public sealed class ScenePrismStreamingTests
         if (tileMap) { child = fixture.Map!; }
         else
         {
-            Assert.True(fixture.Items!.TryGetRealizedNode("near", out SceneNode2D? sprite));
-            child = sprite!;
+            child = fixture.ItemNode("near");
         }
         using IDisposable nested = GeneratedMarkup.AttachPrism(child, () => new PrismInstance(
             new("Bounded child", [new PrismLayerDefinition(new(1), "Blur", filters: [new(PrismFilterId.Blur)])])));
@@ -286,7 +286,7 @@ public sealed class ScenePrismStreamingTests
         Assert.Equal(globalParent ? Fixture.WorldBounds : new DrawRect(10, 20, 10, 10), scopes[0].Scope.InputBounds);
         Assert.Equal(tileMap ? new DrawRect(10, 20, 10, 10) : new DrawRect(0, 0, 10, 10), scopes[1].Scope.InputBounds);
         Assert.Equal(new DrawRect(10, 20, 10, 10), scopes[1].Bounds);
-        Assert.Equal(["near"], fixture.Loads);
+        fixture.AssertLoads("near");
     }
 
     [Fact]
@@ -333,7 +333,7 @@ public sealed class ScenePrismStreamingTests
             SceneSpatialInterest2D.ResolveInputBounds(fixture.Scene, SceneBounds2D.Known(new(0, 0, 50, 50))));
         Assert.Equal(new DrawRect(0, 0, 50.5f, 50.5f), scope.Scope.InputBounds);
         Assert.Equal(new DrawRect(0, 0, 101, 101), scope.Bounds);
-        Assert.Equal(["near"], fixture.Loads);
+        fixture.AssertLoads("near");
     }
 
     [Fact]
@@ -341,12 +341,12 @@ public sealed class ScenePrismStreamingTests
     {
         using Fixture fixture = new(PrismFilterId.Average, tileMap: true, declareDomain: false, entries:
         [new("near", new(0, 0, 10, 10)), new("neighbor", new(101.5f, 0, 10, 10)), new("far", new(1000, 1000, 10, 10))]);
-        Assert.Equal(["near"], fixture.Loads);
+        fixture.AssertLoads("near");
         using IDisposable nested = GeneratedMarkup.AttachPrism(fixture.Map!, () => new PrismInstance(
             new("Map filter", [new PrismLayerDefinition(new(1), "Average", filters: [new(PrismFilterId.Average)])])));
         fixture.Tick();
         var scopes = new PrismFrameAnalyzer().Analyze(fixture.Record()).Scopes;
-        Assert.Equal(["near", "neighbor"], fixture.Loads);
+        fixture.AssertLoads("near", "neighbor");
         Assert.Equal(2, scopes.Length);
         Assert.Equal(new DrawRect(0, 0, 101, 101), scopes[0].Scope.InputBounds);
         Assert.Equal(new DrawRect(0, 0, 102, 102), scopes[1].Scope.InputBounds);
@@ -360,14 +360,20 @@ public sealed class ScenePrismStreamingTests
     {
         using Fixture fixture = new(PrismFilterId.GaussianBlur, tileMap, declareDomain: false, entries:
         [new("near", new(0, 0, 10, 10)), new("neighbor", new(100.25f, 0, 10, 10)), new("far", new(1000, 1000, 10, 10))]);
-        Assert.Equal(["near", "neighbor"], fixture.Loads);
+        fixture.AssertLoads("near", "neighbor");
         fixture.Prism.GetLayerState(new(1)).Filters[0].SetValue(PrismCatalogGenerated.PrismFilterParameterKeys.GaussianBlur.RadiusKey, 0);
         fixture.Tick();
         var commands = fixture.Record();
         Assert.Equal(new DrawRect(0, 0, 100, 100), Assert.Single(new PrismFrameAnalyzer().Analyze(commands).Scopes).Scope.InputBounds);
         if (tileMap) { Assert.Equal(1, fixture.Map!.GetDiagnosticsSnapshot().DrawnTiles); } // Optional warm data is a separate bounded interest.
-        else { Assert.Equal(["neighbor"], fixture.Releases); Assert.Equal(1, fixture.Items!.RealizedItemCount); }
-        Assert.DoesNotContain("far", fixture.Loads);
+        else
+        {
+            fixture.AssertReleases();
+            Assert.Equal(3, fixture.Items!.RealizedItemCount);
+            Assert.Single(commands.Where(command => command.Kind == DrawCommandKind.DrawImage));
+        }
+        if (tileMap) { Assert.DoesNotContain("far", fixture.Loads); }
+        else { fixture.AssertLoads(); }
     }
 
     [Theory]
@@ -392,11 +398,11 @@ public sealed class ScenePrismStreamingTests
     {
         using Fixture fixture = new(PrismFilterId.Average, tileMap, declareDomain: false, entries:
         [new("near", new(0, 0, 10, 10)), new("neighbor", new(101.5f, 0, 10, 10)), new("far", new(1000, 1000, 10, 10))]);
-        Assert.Equal(["near"], fixture.Loads);
+        fixture.AssertLoads("near");
         fixture.Surface.Width = 50;
         fixture.Root.ProcessFrame(); // No later UpdateRenderTime to repair a wrong arrange-time region.
         var commands = fixture.Record();
-        Assert.Equal(["near", "neighbor"], fixture.Loads);
+        fixture.AssertLoads("near", "neighbor");
         Assert.Equal(RenderSurface2DPresentationState.Ready, fixture.Surface.PresentationState);
         Assert.Equal(SceneBounds2D.Known(new(-2, -1, 104, 102)),
             SceneSpatialInterest2D.ResolveInputBounds(fixture.Scene, SceneBounds2D.Known(new(0, 0, 100, 100))));
@@ -412,7 +418,7 @@ public sealed class ScenePrismStreamingTests
     [InlineData(PrismFilterId.HighPass, true)]
     [InlineData(PrismFilterId.Sharpen, false)]
     [InlineData(PrismFilterId.Sharpen, true)]
-    public void LocalNeighborhoodPreparesNearbyInputWithoutLoadingTheWholeCatalog(PrismFilterId filter, bool tileMap)
+    public void LocalNeighborhoodPreparesNearbyInputWithoutLoadingTheWholeMapCatalog(PrismFilterId filter, bool tileMap)
     {
         using Fixture fixture = new(filter, tileMap, declareDomain: false, entries:
         [
@@ -424,7 +430,7 @@ public sealed class ScenePrismStreamingTests
         DrawCommandList commands = fixture.Record();
 
         Assert.Equal(RenderSurface2DPresentationState.Ready, fixture.Surface.PresentationState);
-        Assert.Equal(["near", "neighbor"], fixture.Loads);
+        fixture.AssertLoads("near", "neighbor");
         var scope = Assert.Single(new PrismFrameAnalyzer().Analyze(commands).Scopes);
         DrawRect required = Assert.IsType<DrawRect>(scope.Scope.InputBounds);
         SceneBounds2D interest = SceneSpatialInterest2D.ResolveInputBounds(fixture.Scene,
@@ -448,7 +454,7 @@ public sealed class ScenePrismStreamingTests
 
         Assert.Equal(RenderSurface2DPresentationState.Error, fixture.Surface.PresentationState);
         Assert.Contains("PrismInputDomain", Assert.IsType<InvalidOperationException>(fixture.Surface.PresentationError).Message);
-        Assert.Empty(fixture.Loads);
+        fixture.AssertLoads();
     }
 
     [Theory]
@@ -457,21 +463,21 @@ public sealed class ScenePrismStreamingTests
     public void EnablingAutomaticLevelsRequiresADomainAndRecoversWhenOneIsDeclared(bool tileMap)
     {
         using Fixture fixture = new(PrismFilterId.Levels, tileMap, declareDomain: false);
-        Assert.Equal(["near"], fixture.Loads);
+        fixture.AssertLoads("near");
         fixture.Prism.GetLayerState(new(1)).Filters[0].SetValue(
             PrismCatalogGenerated.PrismFilterParameterKeys.Levels.AutoKey, true);
         fixture.Tick();
         Assert.Empty(fixture.Record());
         Assert.Equal(RenderSurface2DPresentationState.Error, fixture.Surface.PresentationState);
-        Assert.Equal(["near"], fixture.Loads);
-        Assert.Equal(["near"], fixture.Releases);
+        fixture.AssertLoads("near");
+        fixture.AssertReleases("near");
 
         fixture.Scene.PrismInputDomain = new(1000, 1000, 10, 10);
         fixture.Tick();
         fixture.Record();
         Assert.Equal(RenderSurface2DPresentationState.Ready, fixture.Surface.PresentationState);
         Assert.Null(fixture.Surface.PresentationError);
-        Assert.Equal(["near", "far"], fixture.Loads);
+        fixture.AssertLoads("near", "far");
     }
 
     [Fact]
@@ -496,8 +502,8 @@ public sealed class ScenePrismStreamingTests
         Assert.Equal(domain, scope.Scope.InputBounds);
         Assert.Equal(new DrawRect(2037, 2049, 20, 20), scope.Bounds);
         Assert.Equal(1, map.GetDiagnosticsSnapshot().DrawnTiles);
-        Assert.Equal(["near", "far"], fixture.Loads);
-        Assert.Equal(["near"], fixture.Releases);
+        fixture.AssertLoads("near", "far");
+        fixture.AssertReleases("near");
     }
 
     [Theory]
@@ -513,15 +519,15 @@ public sealed class ScenePrismStreamingTests
     [InlineData(PrismFilterId.Invert)]
     [InlineData(PrismFilterId.Posterize)]
     [InlineData(PrismFilterId.SelectiveColor)]
-    public void PointwiseSceneFilterLoadsOnlyTheVisiblePayload(PrismFilterId filter)
+    public void PointwiseSceneFilterRecordsOnlyVisibleEagerItems(PrismFilterId filter)
     {
         using Fixture fixture = new(filter);
 
         DrawCommandList commands = fixture.Record();
 
         Assert.Equal(RenderSurface2DPresentationState.Ready, fixture.Surface.PresentationState);
-        Assert.Equal(["near"], fixture.Loads);
-        Assert.Equal(1, fixture.Items!.RealizedItemCount);
+        fixture.AssertLoads("near");
+        Assert.Equal(2, fixture.Items!.RealizedItemCount);
         Assert.Single(commands.Where(command => command.Kind == DrawCommandKind.DrawImage));
         Assert.Equal(Fixture.WorldBounds,
             Assert.Single(new PrismFrameAnalyzer().Analyze(commands).Scopes).Scope.ControlBounds);
@@ -533,7 +539,7 @@ public sealed class ScenePrismStreamingTests
     public void GlobalDomainChangesReconcileDataAndRecordOffscreenInput(bool tileMap)
     {
         using Fixture fixture = new(PrismFilterId.Threshold, tileMap, declareDomain: false);
-        Assert.Empty(fixture.Loads);
+        fixture.AssertLoads();
         for (int index = 0; index < 16; index++)
         {
             float origin = index % 2 == 0 ? 1000 : 0;
@@ -542,8 +548,17 @@ public sealed class ScenePrismStreamingTests
             fixture.Tick();
             DrawCommandList commands = fixture.Record();
             Assert.Equal(RenderSurface2DPresentationState.Ready, fixture.Surface.PresentationState);
-            Assert.Equal(index + 1, fixture.Loads.Count);
-            Assert.Equal(index, fixture.Releases.Count);
+            if (tileMap)
+            {
+                Assert.Equal(index + 1, fixture.Loads.Count);
+                Assert.Equal(index, fixture.Releases.Count);
+            }
+            else
+            {
+                fixture.AssertLoads();
+                fixture.AssertReleases();
+                Assert.Single(commands.Where(command => command.Kind == DrawCommandKind.DrawImage));
+            }
             var scope = Assert.Single(new PrismFrameAnalyzer().Analyze(commands).Scopes);
             Assert.Equal(domain, scope.Scope.ControlBounds);
             Assert.Equal(domain, scope.Scope.InputBounds);
@@ -555,7 +570,8 @@ public sealed class ScenePrismStreamingTests
         fixture.Tick();
         Assert.Empty(fixture.Record());
         Assert.Equal(RenderSurface2DPresentationState.Error, fixture.Surface.PresentationState);
-        Assert.Equal(16, fixture.Releases.Count);
+        if (tileMap) { Assert.Equal(16, fixture.Releases.Count); }
+        else { fixture.AssertReleases(); }
     }
 
     [Fact]
@@ -579,15 +595,20 @@ public sealed class ScenePrismStreamingTests
         using Fixture fixture = new(PrismFilterId.Threshold, tileMap);
         ISceneSpatialParticipant2D source = tileMap ? fixture.Map! : fixture.Items!;
         source.UpdateSpatialInterest(SceneBounds2D.Empty, []);
-        Assert.Equal(2, fixture.Releases.Count);
+        if (tileMap) { Assert.Equal(2, fixture.Releases.Count); }
+        else
+        {
+            fixture.AssertReleases();
+            Assert.Equal(2, fixture.Items!.RealizedItemCount);
+        }
     }
 
     [Fact]
     public void NestedSpriteCaptureKeepsItsOwnBoundsInsideTheAncestorDomain()
     {
         using Fixture fixture = new(PrismFilterId.Threshold);
-        Assert.True(fixture.Items!.TryGetRealizedNode("far", out SceneNode2D? sprite));
-        using IDisposable effect = GeneratedMarkup.AttachPrism(sprite!, () => new PrismInstance(
+        Sprite2D sprite = fixture.ItemNode("far");
+        using IDisposable effect = GeneratedMarkup.AttachPrism(sprite, () => new PrismInstance(
             new("Nested pointwise", [new PrismLayerDefinition(new(1), "Color", filters: [new(PrismFilterId.Invert)])])));
         fixture.Tick();
         var scopes = new PrismFrameAnalyzer().Analyze(fixture.Record()).Scopes;
@@ -601,14 +622,14 @@ public sealed class ScenePrismStreamingTests
     public void NestedGlobalCompositionRequiresItsOwnDomain()
     {
         using Fixture fixture = new(PrismFilterId.Threshold);
-        Assert.True(fixture.Items!.TryGetRealizedNode("far", out SceneNode2D? sprite));
-        using IDisposable effect = GeneratedMarkup.AttachPrism(sprite!, () => new PrismInstance(
+        Sprite2D sprite = fixture.ItemNode("far");
+        using IDisposable effect = GeneratedMarkup.AttachPrism(sprite, () => new PrismInstance(
             new("Nested global", [new PrismLayerDefinition(new(1), "Analysis", filters: [new(PrismFilterId.Threshold)])])));
         fixture.Tick();
         Assert.Empty(fixture.Record());
         Assert.Equal(RenderSurface2DPresentationState.Error, fixture.Surface.PresentationState);
 
-        sprite!.PrismInputDomain = new(0, 0, 10, 10);
+        sprite.PrismInputDomain = new(0, 0, 10, 10);
         fixture.Tick();
         var scopes = new PrismFrameAnalyzer().Analyze(fixture.Record()).Scopes;
         Assert.Equal(RenderSurface2DPresentationState.Ready, fixture.Surface.PresentationState);
@@ -620,11 +641,11 @@ public sealed class ScenePrismStreamingTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void PointwisePrismRetiresDataWhenTheCameraMoves(bool tileMap)
+    public void PointwisePrismRetiresMapDataButKeepsEagerItemsWhenTheCameraMoves(bool tileMap)
     {
         using Fixture fixture = new(PrismFilterId.Invert, tileMap);
         fixture.Record();
-        Assert.Equal(["near"], fixture.Loads);
+        fixture.AssertLoads("near");
 
         for (int cycle = 0; cycle < 16; cycle++)
         {
@@ -634,22 +655,38 @@ public sealed class ScenePrismStreamingTests
             Assert.Equal(RenderSurface2DPresentationState.Ready, fixture.Surface.PresentationState);
             Assert.Equal(Fixture.WorldBounds,
                 Assert.Single(new PrismFrameAnalyzer().Analyze(far).Scopes).Scope.ControlBounds);
-            Assert.Equal(fixture.Loads.Count - 1, fixture.Releases.Count);
+            if (tileMap) { Assert.Equal(fixture.Loads.Count - 1, fixture.Releases.Count); }
+            else
+            {
+                fixture.AssertLoads();
+                fixture.AssertReleases();
+                Assert.Equal(2, fixture.Items!.RealizedItemCount);
+                Assert.Single(far.Where(command => command.Kind == DrawCommandKind.DrawImage));
+            }
 
             fixture.Surface.ViewBox = new(0, 0, 100, 100);
             fixture.Tick();
-            fixture.Record();
-            Assert.Equal(fixture.Loads.Count - 1, fixture.Releases.Count);
+            DrawCommandList near = fixture.Record();
+            if (tileMap) { Assert.Equal(fixture.Loads.Count - 1, fixture.Releases.Count); }
+            else { Assert.Single(near.Where(command => command.Kind == DrawCommandKind.DrawImage)); }
         }
-        Assert.Equal(33, fixture.Loads.Count);
-        Assert.Equal(32, fixture.Releases.Count);
+        if (tileMap)
+        {
+            Assert.Equal(33, fixture.Loads.Count);
+            Assert.Equal(32, fixture.Releases.Count);
+        }
+        else
+        {
+            fixture.AssertLoads();
+            fixture.AssertReleases();
+        }
     }
 
     [Fact]
-    public void LogicalSourceBoundsAndLayerOrderingDoNotDependOnRealization()
+    public void EagerLogicalBoundsAndLayerOrderingIncludeAllOccurrences()
     {
         using Fixture fixture = new(filter: null);
-        Assert.Equal(1, fixture.Items!.RealizedItemCount);
+        Assert.Equal(2, fixture.Items!.RealizedItemCount);
         Sprite2D sibling = new() { Image = new(new TestImage()), Width = 20, Height = 20 };
         fixture.Scene.Children.Add(sibling);
         fixture.Scene.OrderMode = SceneOrderMode.LayerThenY;
@@ -667,7 +704,7 @@ public sealed class ScenePrismStreamingTests
     {
         using Fixture fixture = new(filter);
         fixture.Record();
-        Assert.Equal(["near", "far"], fixture.Loads);
+        fixture.AssertLoads("near", "far");
         Assert.Equal(2, fixture.Items!.RealizedItemCount);
     }
 
@@ -679,29 +716,29 @@ public sealed class ScenePrismStreamingTests
         using Fixture fixture = new(PrismFilterId.Levels, tileMap);
         PrismInstance prism = fixture.Prism;
         PrismFilterState filter = prism.GetLayerState(new(1)).Filters[0];
-        Assert.Equal(["near"], fixture.Loads);
+        fixture.AssertLoads("near");
 
         filter.SetValue(PrismCatalogGenerated.PrismFilterParameterKeys.Levels.AutoKey, true);
         fixture.Tick();
         fixture.Record();
-        Assert.Equal(["near", "far"], fixture.Loads);
-        Assert.Empty(fixture.Releases);
+        fixture.AssertLoads("near", "far");
+        fixture.AssertReleases();
 
         filter.SetValue(PrismCatalogGenerated.PrismFilterParameterKeys.Levels.AutoKey, false);
         fixture.Tick();
         fixture.Record();
-        Assert.Equal(["far"], fixture.Releases);
+        fixture.AssertReleases("far");
         Assert.Equal(RenderSurface2DPresentationState.Ready, fixture.Surface.PresentationState);
 
         prism.ReplaceDefinition(new("Replacement", [new PrismGroupDefinition(new(2), "Group",
             [new PrismLayerDefinition(new(3), "Global", filters: [new(PrismFilterId.Threshold)])])]));
         fixture.Tick();
         fixture.Record();
-        Assert.Equal(["near", "far", "far"], fixture.Loads);
+        fixture.AssertLoads("near", "far", "far");
         prism.GetGroupState(new(2)).Visible = false;
         fixture.Tick();
         fixture.Record();
-        Assert.Equal(["far", "far"], fixture.Releases);
+        fixture.AssertReleases("far", "far");
     }
 
     [Theory]
@@ -722,8 +759,8 @@ public sealed class ScenePrismStreamingTests
         }
         fixture.Tick();
         fixture.Record();
-        Assert.Equal(["far"], fixture.Releases);
-        Assert.Equal(1, fixture.Items!.RealizedItemCount);
+        fixture.AssertReleases("far");
+        Assert.Equal(2, fixture.Items!.RealizedItemCount);
     }
 
     [Theory]
@@ -753,17 +790,27 @@ public sealed class ScenePrismStreamingTests
     }
 
     [Fact]
-    public void CatalogPublicationUpdatesLogicalBoundsWithoutLoadingOffscreenData()
+    public void CollectionReplacementUpdatesEagerLogicalBoundsWithoutRecordingOffscreenItems()
     {
         using Fixture fixture = new(PrismFilterId.Invert);
         SceneItems2D items = fixture.Items!;
         Assert.Equal(SceneBounds2D.Known(Fixture.WorldBounds), items.GetLocalBounds());
-        var source = Assert.IsType<SceneSpatialSource2D<object>>(items.ItemsSource);
-        source.SetEntries([new("near", new(0, 0, 10, 10), null), new("far", new(-100, 0, 10, 10), null)]);
+        System.Collections.ObjectModel.ObservableCollection<ItemModel> source = new()
+        {
+            new("near", new(0, 0, 10, 10)),
+            new("far", new(1000, 1000, 10, 10))
+        };
+        items.ItemsSource = source;
+        Assert.Equal(2, items.RealizedItemCount);
+        Sprite2D near = fixture.ItemNode("near");
+        Sprite2D oldFar = fixture.ItemNode("far");
+        source[1] = new("far", new(-100, 0, 10, 10));
+        Assert.Same(near, fixture.ItemNode("near"));
+        Assert.NotSame(oldFar, fixture.ItemNode("far"));
         Assert.Equal(SceneBounds2D.Known(new(-100, 0, 110, 10)), items.GetLocalBounds());
-        fixture.Record();
-        Assert.Equal(["near"], fixture.Loads);
-        source.SetEntries([]);
+        Assert.Single(fixture.Record().Where(command => command.Kind == DrawCommandKind.DrawImage));
+        Assert.Equal(2, items.RealizedItemCount);
+        source.Clear();
         Assert.Equal(SceneBounds2D.Empty, items.GetLocalBounds());
         items.ItemsSource = null;
         Assert.Equal(SceneBounds2D.Empty, items.GetLocalBounds());
@@ -780,7 +827,7 @@ public sealed class ScenePrismStreamingTests
         fixture.Tick();
         DrawCommandList commands = fixture.Record();
         Assert.Equal(RenderSurface2DPresentationState.Ready, fixture.Surface.PresentationState);
-        Assert.Equal(1, fixture.Items!.RealizedItemCount);
+        Assert.Equal(2, fixture.Items!.RealizedItemCount);
         Assert.Equal(Fixture.WorldBounds, Assert.Single(new PrismFrameAnalyzer().Analyze(commands).Scopes).Scope.ControlBounds);
     }
 
@@ -796,13 +843,8 @@ public sealed class ScenePrismStreamingTests
         fixture.Surface.Resources.SetResource(image, new ImageResource("npc.png"));
         Sprite2D npc = new() { X = 16, Y = 16, Width = 10, Height = 10, Image = new(image),
             Collider = new BoxCollider2D { Width = 10, Height = 10 } };
-        int loads = 0, releases = 0;
-        SceneItems2D actors = new() { ItemsSource = new SceneSpatialSource2D<object>(
-            [new("npc", new(0, 0, 64, 64), isSimulated: true)], (_, _) =>
-            {
-                loads++;
-                return ValueTask.FromResult(new SceneSpatialLease2D<object>(npc, _ => releases++));
-            }) };
+        SceneItems2D actors = new() { ItemsSource = new[] { "npc" } };
+        actors.Templates.Add(new ContentTemplate<string>("npc", null, 0, _ => npc));
         Sprite2D wall = new() { X = 40, Y = 16, Collider = new BoxCollider2D { Width = 4, Height = 10 } };
         fixture.Scene.Children.Add(actors);
         fixture.Scene.Children.Add(wall);
@@ -823,13 +865,11 @@ public sealed class ScenePrismStreamingTests
             npc.X += movement.Travel.X;
             fixture.Tick();
             Assert.Single(fixture.Record().Where(command => command.Kind == DrawCommandKind.DrawImage));
-            Assert.True(actors.TryGetRealizedNode("npc", out SceneNode2D? current));
-            Assert.Same(npc, current);
+            Assert.Same(npc, Assert.Single(actors.LogicalChildren));
             Assert.True(npc.IsAttached && npc.IsVisible && npc.Collider!.Enabled);
         }
         Assert.Equal(16, npc.X);
-        Assert.Equal(1, loads);
-        Assert.Equal(0, releases);
+        Assert.Equal(1, actors.RealizedItemCount);
         Assert.Equal(0, fixture.Root.ImageResourceCache.ResidentCount);
     }
 
@@ -838,6 +878,8 @@ public sealed class ScenePrismStreamingTests
         internal static readonly DrawRect WorldBounds = new(0, 0, 1010, 1010);
         private readonly IDisposable? effect;
         private int frames;
+        private readonly Dictionary<string, Sprite2D> itemNodes = [];
+        private readonly string[] itemIds;
         internal UIRoot Root { get; } = new(100, 100);
 
         internal Fixture(PrismFilterId? filter, bool tileMap = false, bool declareDomain = true,
@@ -849,12 +891,13 @@ public sealed class ScenePrismStreamingTests
                 new("near", new(0, 0, 10, 10), null),
                 new("far", new(1000, 1000, 10, 10), null)
             ];
+            itemIds = entries.Select(entry => entry.Id).ToArray();
             if (tileMap)
             {
                 ImageReference picture = new(new TestImage());
                 TileMapCatalog2D catalog = new("pointwise-map",
                     entries.Select(entry => new TileMapChunkInfo2D(entry, 1, [picture])));
-                Map = new() { Source = new(catalog, (_, info, _) =>
+                Map = TileMap2D.FromSource(new(catalog, (_, info, _) =>
                 {
                     SceneSpatialEntry2D entry = info.Spatial;
                     Loads.Add(entry.Id);
@@ -862,19 +905,22 @@ public sealed class ScenePrismStreamingTests
                         y: entry.Bounds.Y, width: 10, height: 10)]);
                     return ValueTask.FromResult(new SceneSpatialLease2D<TileMapChunkData2D>(data,
                         _ => Releases.Add(entry.Id)));
-                }) };
+                }));
                 Scene.Children.Add(Map);
             }
             else
             {
-                Items = new() { ItemsSource = new SceneSpatialSource2D<object>(entries, (entry, _) =>
+                Items = new();
+                Items.Templates.Add(new ContentTemplate<ItemModel>("sprite", null, 0, context =>
                 {
-                    Loads.Add(entry.Id);
+                    ItemModel item = context.Data!;
+                    Loads.Add(item.Id); // Eager template creation, not camera-driven acquisition.
                     Sprite2D sprite = new() { Image = new(new TestImage()),
-                        X = entry.Bounds.X, Y = entry.Bounds.Y, Width = 10, Height = 10 };
-                    return ValueTask.FromResult(new SceneSpatialLease2D<object>(sprite,
-                        _ => Releases.Add(entry.Id)));
-                }) };
+                        X = item.Bounds.X, Y = item.Bounds.Y, Width = 10, Height = 10 };
+                    itemNodes[item.Id] = sprite;
+                    return sprite;
+                }));
+                Items.ItemsSource = entries.Select(entry => new ItemModel(entry.Id, entry.Bounds)).ToArray();
                 Scene.Children.Add(Items);
             }
             if (composition is not null || filter is not null)
@@ -894,6 +940,14 @@ public sealed class ScenePrismStreamingTests
         internal RenderSurface2D Surface { get; } = new() { ViewBox = new(0, 0, 100, 100) };
         internal List<string> Loads { get; } = [];
         internal List<string> Releases { get; } = [];
+        internal Sprite2D ItemNode(string id) => itemNodes[id];
+        internal void AssertLoads(params string[] expectedMap)
+        {
+            Assert.Equal(Map is null ? itemIds : expectedMap, Loads);
+            if (Items is not null) { Assert.Equal(itemIds.Length, Items.RealizedItemCount); }
+        }
+        internal void AssertReleases(params string[] expectedMap) =>
+            Assert.Equal(Map is null ? Array.Empty<string>() : expectedMap, Releases);
         internal PrismInstance Prism
         {
             get
@@ -919,6 +973,8 @@ public sealed class ScenePrismStreamingTests
             effect?.Dispose();
         }
     }
+
+    private sealed record ItemModel(string Id, DrawRect Bounds);
 
     private sealed class TestImage : IDrawImage
     {

@@ -1,0 +1,66 @@
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Scene2D.Packages -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Packages\bin\Release\net8.0\Cerneala.Scene2D.Packages.dll
+  Verified 10 SDL shader artifacts from 'C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Shaders\manifest.json'.
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  Tetris -> C:\Users\lauri\Desktop\Cerneala\Tetrisish\bin\Release\net8.0\Cerneala.Tetris.dll
+  Cerneala.Tests.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:02.05]     Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.PointCropDoesNotSampleAtlasNeighborsAtFractionalSurfaceEdge [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.PointCropDoesNotSampleAtlasNeighborsAtFractionalSurfaceEdge [1 s]
+  Error Message:
+   Point sampling read unrelated atlas texels at 56 external-edge pixels.
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.PointCropDoesNotSampleAtlasNeighborsAtFractionalSurfaceEdge() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeDrawingInterpolationBoundaryTests.cs:line 126
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+  Standard Output Messages:
+ Parent window sample count: One
+ Point direct external right/bottom edges: 0 differing pixels
+ Point direct safe interior: 0 differing pixels
+ Point offscreen+composite external right/bottom edges: 56 differing pixels
+   (40,11) Color { R = 53, G = 9, B = 56, A = 255 } -> Color { R = 64, G = 0, B = 64, A = 255 }
+   (40,12) Color { R = 53, G = 12, B = 8, A = 255 } -> Color { R = 64, G = 0, B = 64, A = 255 }
+   (40,13) Color { R = 53, G = 12, B = 8, A = 255 } -> Color { R = 64, G = 0, B = 64, A = 255 }
+   (40,14) Color { R = 53, G = 16, B = 8, A = 255 } -> Color { R = 64, G = 0, B = 64, A = 255 }
+   (40,15) Color { R = 53, G = 16, B = 8, A = 255 } -> Color { R = 64, G = 0, B = 64, A = 255 }
+   (40,16) Color { R = 53, G = 19, B = 56, A = 255 } -> Color { R = 64, G = 0, B = 64, A = 255 }
+   (40,17) Color { R = 53, G = 19, B = 56, A = 255 } -> Color { R = 64, G = 0, B = 64, A = 255 }
+   (40,18) Color { R = 53, G = 22, B = 56, A = 255 } -> Color { R = 64, G = 0, B = 64, A = 255 }
+   (40,19) Color { R = 53, G = 22, B = 56, A = 255 } -> Color { R = 64, G = 0, B = 64, A = 255 }
+   (40,20) Color { R = 53, G = 25, B = 8, A = 255 } -> Color { R = 64, G = 0, B = 64, A = 255 }
+   (40,21) Color { R = 53, G = 25, B = 8, A = 255 } -> Color { R = 64, G = 0, B = 64, A = 255 }
+   (40,22) Color { R = 53, G = 29, B = 8, A = 255 } -> Color { R = 64, G = 0, B = 64, A = 255 }
+   (40,23) Color { R = 53, G = 29, B = 8, A = 255 } -> Color { R = 64, G = 0, B = 64, A = 255 }
+   (40,24) Color { R = 53, G = 32, B = 56, A = 255 } -> Color { R = 64, G = 0, B = 64, A = 255 }
+   (40,25) Color { R = 53, G = 32, B = 56, A = 255 } -> Color { R = 64, G = 0, B = 64, A = 255 }
+   (40,26) Color { R = 53, G = 35, B = 56, A = 255 } -> Color { R = 64, G = 0, B = 64, A = 255 }
+ Point offscreen+composite safe interior: 0 differing pixels
+ Linear direct external right/bottom edges: 0 differing pixels
+ Linear direct safe interior: 0 differing pixels
+ Linear offscreen+composite external right/bottom edges: 56 differing pixels
+   (40,11) Color { R = 53, G = 9, B = 50, A = 255 } -> Color { R = 59, G = 4, B = 59, A = 255 }
+   (40,12) Color { R = 53, G = 11, B = 26, A = 255 } -> Color { R = 59, G = 4, B = 49, A = 255 }
+   (40,13) Color { R = 53, G = 13, B = 8, A = 255 } -> Color { R = 59, G = 5, B = 42, A = 255 }
+   (40,14) Color { R = 53, G = 14, B = 8, A = 255 } -> Color { R = 59, G = 5, B = 42, A = 255 }
+   (40,15) Color { R = 53, G = 16, B = 13, A = 255 } -> Color { R = 59, G = 6, B = 44, A = 255 }
+   (40,16) Color { R = 53, G = 18, B = 37, A = 255 } -> Color { R = 59, G = 7, B = 53, A = 255 }
+   (40,17) Color { R = 53, G = 19, B = 56, A = 255 } -> Color { R = 59, G = 7, B = 61, A = 255 }
+   (40,18) Color { R = 53, G = 21, B = 56, A = 255 } -> Color { R = 59, G = 8, B = 61, A = 255 }
+   (40,19) Color { R = 53, G = 22, B = 50, A = 255 } -> Color { R = 59, G = 9, B = 59, A = 255 }
+   (40,20) Color { R = 53, G = 24, B = 26, A = 255 } -> Color { R = 59, G = 9, B = 49, A = 255 }
+   (40,21) Color { R = 53, G = 26, B = 8, A = 255 } -> Color { R = 59, G = 10, B = 42, A = 255 }
+   (40,22) Color { R = 53, G = 27, B = 8, A = 255 } -> Color { R = 59, G = 11, B = 42, A = 255 }
+   (40,23) Color { R = 53, G = 29, B = 13, A = 255 } -> Color { R = 59, G = 11, B = 44, A = 255 }
+   (40,24) Color { R = 53, G = 31, B = 37, A = 255 } -> Color { R = 59, G = 12, B = 53, A = 255 }
+   (40,25) Color { R = 53, G = 32, B = 56, A = 255 } -> Color { R = 59, G = 12, B = 61, A = 255 }
+   (40,26) Color { R = 53, G = 34, B = 56, A = 255 } -> Color { R = 59, G = 13, B = 61, A = 255 }
+ Linear offscreen+composite safe interior: 0 differing pixels
+
+
+Results File: C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\TestResults\pipeline-isolation-contiguous3-native.trx
+
+Failed!  - Failed:     1, Passed:     0, Skipped:     0, Total:     1, Duration: 1 s - Cerneala.Tests.SdlGpu.dll (net8.0)

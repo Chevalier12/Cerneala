@@ -85,6 +85,15 @@ public sealed class Sprite2D : SceneNode2D
                 RenderSurface2DSpriteFlip.None,
                 UiPropertyOptions.AffectsRender));
 
+    public static readonly UiProperty<DrawSamplingMode> SamplingProperty =
+        UiProperty<DrawSamplingMode>.Register(
+            nameof(Sampling),
+            typeof(Sprite2D),
+            new UiPropertyMetadata<DrawSamplingMode>(
+                DrawSamplingMode.Linear,
+                UiPropertyOptions.AffectsRender,
+                validateValue: static value => value is DrawSamplingMode.Point or DrawSamplingMode.Linear));
+
     public static readonly UiProperty<float> LayerDepthProperty =
         UiProperty<float>.Register(
             nameof(LayerDepth),
@@ -185,6 +194,12 @@ public sealed class Sprite2D : SceneNode2D
     {
         get => GetValue(FlipProperty);
         set => SetValue(FlipProperty, value);
+    }
+
+    public DrawSamplingMode Sampling
+    {
+        get => GetValue(SamplingProperty);
+        set => SetValue(SamplingProperty, value);
     }
 
     public float LayerDepth
@@ -293,15 +308,17 @@ public sealed class Sprite2D : SceneNode2D
         using ScenePrismScope prism = context.HasPrism(this)
             ? context.BeginPrism(this, bounds)
             : default;
-        context.Frame.DrawSprite(
+        context.Frame.DrawImage(
             source,
             destination,
-            effectiveSourceRect,
-            tint,
-            Rotation,
-            Origin,
-            effectiveFlip,
-            LayerDepth);
+            new DrawImageOptions(
+                source: effectiveSourceRect,
+                tint: tint,
+                rotation: Rotation,
+                origin: Origin,
+                flip: (DrawImageFlip)effectiveFlip,
+                layerDepth: LayerDepth,
+                sampling: Sampling));
     }
 
     internal override SceneBounds2D GetVisibleLocalBounds()

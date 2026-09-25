@@ -335,6 +335,14 @@ internal sealed class SdlGpuVertexInputDescription
         new SdlGpuVertexAttributeDescription(1, SdlGpuVertexFormat.Float2, 8),
         new SdlGpuVertexAttributeDescription(2, SdlGpuVertexFormat.Float4, 16));
 
+    internal static SdlGpuVertexInputDescription Drawing2DImageDomain { get; } = new(
+        64,
+        new SdlGpuVertexAttributeDescription(0, SdlGpuVertexFormat.Float2, 0),
+        new SdlGpuVertexAttributeDescription(1, SdlGpuVertexFormat.Float2, 8),
+        new SdlGpuVertexAttributeDescription(2, SdlGpuVertexFormat.Float4, 16),
+        new SdlGpuVertexAttributeDescription(3, SdlGpuVertexFormat.Float4, 32),
+        new SdlGpuVertexAttributeDescription(4, SdlGpuVertexFormat.Float4, 48));
+
     public SdlGpuVertexInputDescription(
         uint stride,
         params SdlGpuVertexAttributeDescription[] attributes)

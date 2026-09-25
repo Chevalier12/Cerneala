@@ -1,0 +1,21 @@
+  Determining projects to restore...
+  Restored C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage1\sceneitems-compile-red\SceneItems2DCollectionCompileRed.csproj (in 1.04 sec).
+  6 of 7 projects are up-to-date for restore.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  Tetris -> C:\Users\lauri\Desktop\Cerneala\Tetrisish\bin\Release\net8.0\Cerneala.Tetris.dll
+C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage1\sceneitems-compile-red\SceneItems2DCollectionCompileRed.cs(13,30): error CS0266: Cannot implicitly convert type 'System.Collections.IEnumerable' to 'Cerneala.UI.Controls.ISceneSpatialSource2D<object>'. An explicit conversion exists (are you missing a cast?) [C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage1\sceneitems-compile-red\SceneItems2DCollectionCompileRed.csproj]
+C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage1\sceneitems-compile-red\SceneItems2DCollectionCompileRed.cs(14,30): error CS0266: Cannot implicitly convert type 'System.Collections.ObjectModel.ObservableCollection<Cerneala.Tetris.TetrisSpriteModel>' to 'Cerneala.UI.Controls.ISceneSpatialSource2D<object>'. An explicit conversion exists (are you missing a cast?) [C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage1\sceneitems-compile-red\SceneItems2DCollectionCompileRed.csproj]
+
+Build FAILED.
+
+C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage1\sceneitems-compile-red\SceneItems2DCollectionCompileRed.cs(13,30): error CS0266: Cannot implicitly convert type 'System.Collections.IEnumerable' to 'Cerneala.UI.Controls.ISceneSpatialSource2D<object>'. An explicit conversion exists (are you missing a cast?) [C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage1\sceneitems-compile-red\SceneItems2DCollectionCompileRed.csproj]
+C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage1\sceneitems-compile-red\SceneItems2DCollectionCompileRed.cs(14,30): error CS0266: Cannot implicitly convert type 'System.Collections.ObjectModel.ObservableCollection<Cerneala.Tetris.TetrisSpriteModel>' to 'Cerneala.UI.Controls.ISceneSpatialSource2D<object>'. An explicit conversion exists (are you missing a cast?) [C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage1\sceneitems-compile-red\SceneItems2DCollectionCompileRed.csproj]
+    0 Warning(s)
+    2 Error(s)
+
+Time Elapsed 00:00:16.44
+EXIT_CODE=1

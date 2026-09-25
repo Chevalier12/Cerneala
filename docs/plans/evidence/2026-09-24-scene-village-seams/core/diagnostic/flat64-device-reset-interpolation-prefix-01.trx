@@ -1,0 +1,269 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="37cd91da-8596-4b7e-9170-fce170dcfe56" name="lauri@DESKTOP-JT43V3D 2026-09-25 06:07:35" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-25T06:07:35.5611990+03:00" queuing="2026-09-25T06:07:35.5611993+03:00" start="2026-09-25T06:07:32.0748653+03:00" finish="2026-09-25T06:07:41.9728531+03:00" />
+  <TestSettings name="default" id="1dc26eb3-fa1b-4855-8a76-3dbc83838ab0">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-25_06_07_35" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="37cd8691-5044-43cc-abbf-dd554fdc0e51" testId="786e8314-76a6-e73f-f5f1-51d06a9c957c" testName="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.FractionalAndSubtexelPointSourcesDoNotReadChangedAtlasGuards" computerName="DESKTOP-JT43V3D" duration="00:00:00.1029400" startTime="2026-09-25T06:07:40.4388881+03:00" endTime="2026-09-25T06:07:40.4388884+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="37cd8691-5044-43cc-abbf-dd554fdc0e51">
+      <Output>
+        <StdOut>Point source DrawRect { X = 2.25, Y = 2.25, Width = 15.5, Height = 15.5, Right = 17.75, Bottom = 17.75 } guard independence: 0 differing pixels&#xD;
+Point source DrawRect { X = 10.25, Y = 10.25, Width = 0.5, Height = 0.5, Right = 10.75, Bottom = 10.75 } guard independence: 0 differing pixels</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="05420cd1-aba7-40b0-b38a-0db88b92d104" testId="ec94923d-6525-96b5-5df3-5e36ed4ddca9" testName="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.OptionsQuadProvenanceSurvivesGeometryCopiesWithoutChangingPublicOptions" computerName="DESKTOP-JT43V3D" duration="00:00:00.0012710" startTime="2026-09-25T06:07:40.5367215+03:00" endTime="2026-09-25T06:07:40.5367217+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="05420cd1-aba7-40b0-b38a-0db88b92d104" />
+    <UnitTestResult executionId="00f4ba2a-c89b-48b7-b15e-eefebdb6863f" testId="7828682f-cabe-a3e1-6ccd-d215d1c16c39" testName="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.OptionsImageQuadAndWholeNineSliceUseTheirFullLogicalImageDomain" computerName="DESKTOP-JT43V3D" duration="00:00:01.0356023" startTime="2026-09-25T06:07:34.3304640+03:00" endTime="2026-09-25T06:07:34.3304825+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="00f4ba2a-c89b-48b7-b15e-eefebdb6863f">
+      <Output>
+        <StdOut>options-based image quad external edge: 0 differing pixels&#xD;
+options-based image quad internal cells/diagonal: 0 differing pixels&#xD;
+nine-slice whole selected image external edge: 0 differing pixels&#xD;
+nine-slice whole selected image internal cells/diagonal: 0 differing pixels</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="02bc1eea-7504-4ba7-a24e-afa2d9dc128b" testId="ad3939b2-968c-5a4e-1077-5ead9a510080" testName="Cerneala.Tests.SdlGpu.SdlGpuScreenshotRegionTests.RegionalPngCropsTheFullyRenderedFramebuffer(scale: 1.5)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1033049" startTime="2026-09-25T06:07:41.7792925+03:00" endTime="2026-09-25T06:07:41.7792929+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="02bc1eea-7504-4ba7-a24e-afa2d9dc128b" />
+    <UnitTestResult executionId="59b55e7b-23f9-447e-9e65-6d63f4954813" testId="fde9f875-b3ad-7eea-8910-5ead44949770" testName="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.PointCropDoesNotSampleAtlasNeighborsAtFractionalSurfaceEdge" computerName="DESKTOP-JT43V3D" duration="00:00:00.1091673" startTime="2026-09-25T06:07:40.2444745+03:00" endTime="2026-09-25T06:07:40.2444748+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="59b55e7b-23f9-447e-9e65-6d63f4954813">
+      <Output>
+        <StdOut>Parent window sample count: One&#xD;
+Point direct external right/bottom edges: 0 differing pixels&#xD;
+Point direct safe interior: 0 differing pixels&#xD;
+Point offscreen+composite external right/bottom edges: 0 differing pixels&#xD;
+Point offscreen+composite safe interior: 0 differing pixels&#xD;
+Linear direct external right/bottom edges: 0 differing pixels&#xD;
+Linear direct safe interior: 0 differing pixels&#xD;
+Linear offscreen+composite external right/bottom edges: 56 differing pixels&#xD;
+  (40,11) Color { R = 53, G = 9, B = 50, A = 255 } -&gt; Color { R = 59, G = 4, B = 59, A = 255 }&#xD;
+  (40,12) Color { R = 53, G = 11, B = 26, A = 255 } -&gt; Color { R = 59, G = 4, B = 49, A = 255 }&#xD;
+  (40,13) Color { R = 53, G = 13, B = 8, A = 255 } -&gt; Color { R = 59, G = 5, B = 42, A = 255 }&#xD;
+  (40,14) Color { R = 53, G = 14, B = 8, A = 255 } -&gt; Color { R = 59, G = 5, B = 42, A = 255 }&#xD;
+  (40,15) Color { R = 53, G = 16, B = 13, A = 255 } -&gt; Color { R = 59, G = 6, B = 44, A = 255 }&#xD;
+  (40,16) Color { R = 53, G = 18, B = 37, A = 255 } -&gt; Color { R = 59, G = 7, B = 53, A = 255 }&#xD;
+  (40,17) Color { R = 53, G = 19, B = 56, A = 255 } -&gt; Color { R = 59, G = 7, B = 61, A = 255 }&#xD;
+  (40,18) Color { R = 53, G = 21, B = 56, A = 255 } -&gt; Color { R = 59, G = 8, B = 61, A = 255 }&#xD;
+  (40,19) Color { R = 53, G = 22, B = 50, A = 255 } -&gt; Color { R = 59, G = 9, B = 59, A = 255 }&#xD;
+  (40,20) Color { R = 53, G = 24, B = 26, A = 255 } -&gt; Color { R = 59, G = 9, B = 49, A = 255 }&#xD;
+  (40,21) Color { R = 53, G = 26, B = 8, A = 255 } -&gt; Color { R = 59, G = 10, B = 42, A = 255 }&#xD;
+  (40,22) Color { R = 53, G = 27, B = 8, A = 255 } -&gt; Color { R = 59, G = 11, B = 42, A = 255 }&#xD;
+  (40,23) Color { R = 53, G = 29, B = 13, A = 255 } -&gt; Color { R = 59, G = 11, B = 44, A = 255 }&#xD;
+  (40,24) Color { R = 53, G = 31, B = 37, A = 255 } -&gt; Color { R = 59, G = 12, B = 53, A = 255 }&#xD;
+  (40,25) Color { R = 53, G = 32, B = 56, A = 255 } -&gt; Color { R = 59, G = 12, B = 61, A = 255 }&#xD;
+  (40,26) Color { R = 53, G = 34, B = 56, A = 255 } -&gt; Color { R = 59, G = 13, B = 61, A = 255 }&#xD;
+Linear offscreen+composite safe interior: 0 differing pixels</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="16228c69-f704-4c42-a454-a56aa5a2be33" testId="39664fb2-22c9-8e01-3ed6-4dd34d425681" testName="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.CollapsedNineSliceCellsKeepTheWholeOuterImageDomain" computerName="DESKTOP-JT43V3D" duration="00:00:00.7121131" startTime="2026-09-25T06:07:37.0081686+03:00" endTime="2026-09-25T06:07:37.0081689+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="16228c69-f704-4c42-a454-a56aa5a2be33">
+      <Output>
+        <StdOut>collapsed nine-slice cells atlas versus extracted: 0 differing pixels</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="6b4093a8-12ba-4b26-ae9d-e2ee59357737" testId="5d4d76a2-8339-848a-35b7-9d6ea599ddda" testName="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Native_device_creates_drawing_and_prism_pipelines_from_offline_artifacts" computerName="DESKTOP-JT43V3D" duration="00:00:00.0253184" startTime="2026-09-25T06:07:41.8207870+03:00" endTime="2026-09-25T06:07:41.8207873+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6b4093a8-12ba-4b26-ae9d-e2ee59357737">
+      <Output>
+        <ErrorInfo>
+          <Message>SDL GPU device creation failed: Could not create D3D12Device! Error Code: The GPU will not respond to more commands, most likely because some other application submitted invalid commands.&#xD;
+The calling application should re-create the device and continue. (0x887A0007)</Message>
+          <StackTrace>   at Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Native_device_creates_drawing_and_prism_pipelines_from_offline_artifacts() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlGpuShaderArtifactTests.cs:line 164&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="8918a988-08ec-442a-91c0-014860285b5f" testId="149fc708-35b4-1fd4-4720-b7bd6db79833" testName="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.VillageScaleFlippedBoundaryUsesCoveredSampling" computerName="DESKTOP-JT43V3D" duration="00:00:00.9526768" startTime="2026-09-25T06:07:40.1351882+03:00" endTime="2026-09-25T06:07:40.1351885+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8918a988-08ec-442a-91c0-014860285b5f">
+      <Output>
+        <StdOut>Village-scale exact flipped right edge: selected=Color { R = 66, G = 99, B = 52, A = 255 }, isolated=Color { R = 66, G = 99, B = 52, A = 255 }&#xD;
+Village-scale ground left=Color { R = 66, G = 99, B = 52, A = 255 }, ground right=Color { R = 66, G = 99, B = 52, A = 255 }, join=Color { R = 132, G = 198, B = 105, A = 255 }, isolated join=Color { R = 132, G = 198, B = 105, A = 255 }&#xD;
+One-ULP x shift left=267.49997, right=347.49997: centerFromRight=3.0517578125E-05, selected=Color { R = 66, G = 99, B = 52, A = 255 }, ordinary=Color { R = 117, G = 82, B = 54, A = 255 }, isolated=Color { R = 66, G = 99, B = 52, A = 255 }&#xD;
+One-ULP x shift left=267.50003, right=347.50003: centerFromRight=-3.0517578125E-05, selected=Color { R = 117, G = 82, B = 54, A = 255 }, ordinary=Color { R = 117, G = 82, B = 54, A = 255 }, isolated=Color { R = 66, G = 99, B = 52, A = 255 }&#xD;
+Village-scale scene transform edge: selected=Color { R = 132, G = 198, B = 105, A = 255 }, isolated=Color { R = 132, G = 198, B = 105, A = 255 }, viewTransform={ {M11:2.5 M12:0} {M21:0 M22:2.5} {M31:249.5 M32:170.5} }&#xD;
+Transformed top alone selected=Color { R = 66, G = 99, B = 52, A = 255 }, isolated=Color { R = 66, G = 99, B = 52, A = 255 }; physical quad selected=Color { R = 132, G = 198, B = 105, A = 255 }, isolated=Color { R = 132, G = 198, B = 105, A = 255 }</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="920b3775-828c-487f-9f31-78d780cdcfe9" testId="5dcbb850-a67a-8119-2e97-ff17801ff899" testName="Cerneala.Tests.SdlGpu.SdlGpuScreenshotRegionTests.RegionalPngCropsTheFullyRenderedFramebuffer(scale: 1)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1262420" startTime="2026-09-25T06:07:41.5809007+03:00" endTime="2026-09-25T06:07:41.5809020+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="920b3775-828c-487f-9f31-78d780cdcfe9" />
+    <UnitTestResult executionId="015981b3-8193-4e6e-b642-715449c36135" testId="cf3c0b0d-ea05-34cd-9dbf-99ad60de403a" testName="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.RotatedFlippedPointImagePreservesOrdinaryInteriorAndCoveredExterior" computerName="DESKTOP-JT43V3D" duration="00:00:00.7233339" startTime="2026-09-25T06:07:37.7316566+03:00" endTime="2026-09-25T06:07:37.7316569+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="015981b3-8193-4e6e-b642-715449c36135">
+      <Output>
+        <StdOut>rotated and flipped Point true interior versus ordinary: 0 differing pixels&#xD;
+rotated and flipped Point covered exterior versus extracted: 0 differing pixels</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="1c055bcb-78e7-4d89-a59c-d77da5a237f0" testId="da09d81c-6a7e-7a7f-f156-79781cc5cf98" testName="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.ExactUnflippedRightOuterBoundaryUsesCoveredSampling" computerName="DESKTOP-JT43V3D" duration="00:00:00.0963874" startTime="2026-09-25T06:07:40.5354042+03:00" endTime="2026-09-25T06:07:40.5354046+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1c055bcb-78e7-4d89-a59c-d77da5a237f0">
+      <Output>
+        <StdOut>Exact unflipped right edge at x=40.5: selected=Color { R = 0, G = 64, B = 0, A = 255 }, isolated=Color { R = 0, G = 64, B = 0, A = 255 }</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="b3c1ce8e-474a-45a4-bf08-954e043ab62d" testId="3c1e475a-7f10-df3f-3d95-bac475052c7b" testName="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.ExactIntegerSourceExternalBoundariesUseCoveredSamplingButKeepOrdinaryInterior" computerName="DESKTOP-JT43V3D" duration="00:00:00.5969246" startTime="2026-09-25T06:07:34.9271369+03:00" endTime="2026-09-25T06:07:34.9271373+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b3c1ce8e-474a-45a4-bf08-954e043ab62d">
+      <Output>
+        <StdOut>Exact integer crop selected versus ordinary interior, guard Color { R = 255, G = 0, B = 255, A = 255 }: 0 differing pixels&#xD;
+Exact-center left edge at (8.5, 24.5): guard=Color { R = 255, G = 0, B = 255, A = 255 }, selected=Color { R = 0, G = 64, B = 0, A = 255 }, ordinary=Color { R = 127, G = 0, B = 127, A = 255 }, isolated=Color { R = 0, G = 64, B = 0, A = 255 }&#xD;
+Exact-center right edge at (40.5, 24.5): guard=Color { R = 255, G = 0, B = 255, A = 255 }, selected=Color { R = 0, G = 64, B = 0, A = 255 }, ordinary=Color { R = 0, G = 64, B = 0, A = 255 }, isolated=Color { R = 0, G = 64, B = 0, A = 255 }&#xD;
+Exact-center top edge at (24.5, 8.5): guard=Color { R = 255, G = 0, B = 255, A = 255 }, selected=Color { R = 0, G = 64, B = 0, A = 255 }, ordinary=Color { R = 127, G = 0, B = 127, A = 255 }, isolated=Color { R = 0, G = 64, B = 0, A = 255 }&#xD;
+Exact-center bottom edge at (24.5, 40.5): guard=Color { R = 255, G = 0, B = 255, A = 255 }, selected=Color { R = 0, G = 64, B = 0, A = 255 }, ordinary=Color { R = 0, G = 64, B = 0, A = 255 }, isolated=Color { R = 0, G = 64, B = 0, A = 255 }&#xD;
+Exact integer crop selected versus ordinary interior, guard Color { R = 0, G = 255, B = 255, A = 255 }: 0 differing pixels&#xD;
+Exact-center left edge at (8.5, 24.5): guard=Color { R = 0, G = 255, B = 255, A = 255 }, selected=Color { R = 0, G = 64, B = 0, A = 255 }, ordinary=Color { R = 0, G = 127, B = 127, A = 255 }, isolated=Color { R = 0, G = 64, B = 0, A = 255 }&#xD;
+Exact-center right edge at (40.5, 24.5): guard=Color { R = 0, G = 255, B = 255, A = 255 }, selected=Color { R = 0, G = 64, B = 0, A = 255 }, ordinary=Color { R = 0, G = 64, B = 0, A = 255 }, isolated=Color { R = 0, G = 64, B = 0, A = 255 }&#xD;
+Exact-center top edge at (24.5, 8.5): guard=Color { R = 0, G = 255, B = 255, A = 255 }, selected=Color { R = 0, G = 64, B = 0, A = 255 }, ordinary=Color { R = 0, G = 127, B = 127, A = 255 }, isolated=Color { R = 0, G = 64, B = 0, A = 255 }&#xD;
+Exact-center bottom edge at (24.5, 40.5): guard=Color { R = 0, G = 255, B = 255, A = 255 }, selected=Color { R = 0, G = 64, B = 0, A = 255 }, ordinary=Color { R = 0, G = 64, B = 0, A = 255 }, isolated=Color { R = 0, G = 64, B = 0, A = 255 }</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="aab40467-378f-433b-be13-e339d55cd1d8" testId="af5747a9-b051-479b-5891-05a56013bdf0" testName="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.FiniteNearDegenerateOptionsQuadDoesNotAcquireBackendException" computerName="DESKTOP-JT43V3D" duration="00:00:00.0912232" startTime="2026-09-25T06:07:40.3358096+03:00" endTime="2026-09-25T06:07:40.3358099+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="aab40467-378f-433b-be13-e339d55cd1d8" />
+    <UnitTestResult executionId="0ed0c968-291c-410a-a15a-d09852a57664" testId="46a7f030-a467-5a7d-0a98-40daddea1182" testName="Cerneala.Tests.SdlGpu.SdlGpuPrismExecutorTests.NestedPrismPresentationRemainsVisibleAwayFromTheHostOrigin" computerName="DESKTOP-JT43V3D" duration="00:00:00.9157263" startTime="2026-09-25T06:07:41.4540830+03:00" endTime="2026-09-25T06:07:41.4540833+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0ed0c968-291c-410a-a15a-d09852a57664" />
+    <UnitTestResult executionId="b65cac97-c55d-4379-b675-f0f176647552" testId="5c6b0527-7283-a0be-ff3b-ae14fbcd4e08" testName="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.PointSpriteBatchKeepsEachAtlasSourceIsolatedWithoutSplittingTheBatch" computerName="DESKTOP-JT43V3D" duration="00:00:00.6936673" startTime="2026-09-25T06:07:36.2959093+03:00" endTime="2026-09-25T06:07:36.2959097+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b65cac97-c55d-4379-b675-f0f176647552">
+      <Output>
+        <StdOut>Point sprite batch with two distinct crop domains: 0 differing pixels</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="2b41d1ab-7125-45e3-93ed-a0811c3ca3e5" testId="37e4f3b5-6345-fd0e-bd6a-a2f25dc585df" testName="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.ExactFlippedOuterBoundaryUsesCoveredSampling" computerName="DESKTOP-JT43V3D" duration="00:00:00.7285442" startTime="2026-09-25T06:07:39.1824209+03:00" endTime="2026-09-25T06:07:39.1824212+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2b41d1ab-7125-45e3-93ed-a0811c3ca3e5">
+      <Output>
+        <StdOut>Exact flipped right edge at x=40.5: selected=Color { R = 0, G = 64, B = 0, A = 255 }, isolated=Color { R = 0, G = 64, B = 0, A = 255 }</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="bcbaa2e0-f1ae-4a4a-83eb-9f8bcfe06475" testId="093637ed-b2d3-bfbd-96bd-5aec593fcb66" testName="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.SelectedOptionsQuadsKeepOrdinaryCenterPixelsAcrossShapeVariants" computerName="DESKTOP-JT43V3D" duration="00:00:00.6748721" startTime="2026-09-25T06:07:35.6021330+03:00" endTime="2026-09-25T06:07:35.6021336+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bcbaa2e0-f1ae-4a4a-83eb-9f8bcfe06475">
+      <Output>
+        <StdOut>skewed shared diagonal selected versus ordinary center pixels: 0 differing pixels&#xD;
+skewed shared diagonal: compared=555, diagonalCenters=27&#xD;
+reflected selected versus ordinary center pixels: 0 differing pixels&#xD;
+reflected: compared=841, diagonalCenters=29&#xD;
+concave selected versus ordinary center pixels: 0 differing pixels&#xD;
+concave: compared=351, diagonalCenters=13&#xD;
+self-crossing selected versus ordinary center pixels: 0 differing pixels&#xD;
+self-crossing: compared=457, diagonalCenters=0&#xD;
+one collapsed triangle selected versus ordinary center pixels: 0 differing pixels&#xD;
+one collapsed triangle: compared=351, diagonalCenters=0</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="117eac2f-1d42-4ae6-ab58-1756c04cfef7" testId="8b164d70-9574-be8a-8c78-8537662100ba" testName="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.EquivalentImageMeshTriangulationsPreservePointSampledInteriorPixels" computerName="DESKTOP-JT43V3D" duration="00:00:00.7219510" startTime="2026-09-25T06:07:38.4537500+03:00" endTime="2026-09-25T06:07:38.4537503+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="117eac2f-1d42-4ae6-ab58-1756c04cfef7">
+      <Output>
+        <StdOut>Window sample count: Eight&#xD;
+Point standard versus alternate diagonal: 0 differing pixels&#xD;
+Point standard versus center fan: 0 differing pixels&#xD;
+Point standard versus 2x2 grid: 0 differing pixels&#xD;
+Linear standard versus alternate diagonal: 0 differing pixels&#xD;
+Linear standard versus center fan: 0 differing pixels&#xD;
+Linear standard versus 2x2 grid: 0 differing pixels</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="d96b8e4f-b3d9-4482-824c-3823286d1d4a" testId="422c4414-362d-a53f-3336-80b7f9d381af" testName="Cerneala.Tests.SdlGpu.SdlGpuScreenshotRegionTests.RegionalPngCropsTheFullyRenderedFramebuffer(scale: 2)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0949006" startTime="2026-09-25T06:07:41.6758746+03:00" endTime="2026-09-25T06:07:41.6758751+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d96b8e4f-b3d9-4482-824c-3823286d1d4a" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.FiniteNearDegenerateOptionsQuadDoesNotAcquireBackendException" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="af5747a9-b051-479b-5891-05a56013bdf0">
+      <Execution id="aab40467-378f-433b-be13-e339d55cd1d8" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests" name="FiniteNearDegenerateOptionsQuadDoesNotAcquireBackendException" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.CollapsedNineSliceCellsKeepTheWholeOuterImageDomain" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="39664fb2-22c9-8e01-3ed6-4dd34d425681">
+      <Execution id="16228c69-f704-4c42-a454-a56aa5a2be33" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests" name="CollapsedNineSliceCellsKeepTheWholeOuterImageDomain" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.VillageScaleFlippedBoundaryUsesCoveredSampling" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="149fc708-35b4-1fd4-4720-b7bd6db79833">
+      <Execution id="8918a988-08ec-442a-91c0-014860285b5f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests" name="VillageScaleFlippedBoundaryUsesCoveredSampling" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.OptionsQuadProvenanceSurvivesGeometryCopiesWithoutChangingPublicOptions" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="ec94923d-6525-96b5-5df3-5e36ed4ddca9">
+      <Execution id="05420cd1-aba7-40b0-b38a-0db88b92d104" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests" name="OptionsQuadProvenanceSurvivesGeometryCopiesWithoutChangingPublicOptions" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.RotatedFlippedPointImagePreservesOrdinaryInteriorAndCoveredExterior" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="cf3c0b0d-ea05-34cd-9dbf-99ad60de403a">
+      <Execution id="015981b3-8193-4e6e-b642-715449c36135" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests" name="RotatedFlippedPointImagePreservesOrdinaryInteriorAndCoveredExterior" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.ExactUnflippedRightOuterBoundaryUsesCoveredSampling" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="da09d81c-6a7e-7a7f-f156-79781cc5cf98">
+      <Execution id="1c055bcb-78e7-4d89-a59c-d77da5a237f0" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests" name="ExactUnflippedRightOuterBoundaryUsesCoveredSampling" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.PointSpriteBatchKeepsEachAtlasSourceIsolatedWithoutSplittingTheBatch" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="5c6b0527-7283-a0be-ff3b-ae14fbcd4e08">
+      <Execution id="b65cac97-c55d-4379-b675-f0f176647552" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests" name="PointSpriteBatchKeepsEachAtlasSourceIsolatedWithoutSplittingTheBatch" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.PointCropDoesNotSampleAtlasNeighborsAtFractionalSurfaceEdge" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="fde9f875-b3ad-7eea-8910-5ead44949770">
+      <Execution id="59b55e7b-23f9-447e-9e65-6d63f4954813" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests" name="PointCropDoesNotSampleAtlasNeighborsAtFractionalSurfaceEdge" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlGpuScreenshotRegionTests.RegionalPngCropsTheFullyRenderedFramebuffer(scale: 1)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="5dcbb850-a67a-8119-2e97-ff17801ff899">
+      <Execution id="920b3775-828c-487f-9f31-78d780cdcfe9" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlGpuScreenshotRegionTests" name="RegionalPngCropsTheFullyRenderedFramebuffer" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.SelectedOptionsQuadsKeepOrdinaryCenterPixelsAcrossShapeVariants" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="093637ed-b2d3-bfbd-96bd-5aec593fcb66">
+      <Execution id="bcbaa2e0-f1ae-4a4a-83eb-9f8bcfe06475" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests" name="SelectedOptionsQuadsKeepOrdinaryCenterPixelsAcrossShapeVariants" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlGpuPrismExecutorTests.NestedPrismPresentationRemainsVisibleAwayFromTheHostOrigin" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="46a7f030-a467-5a7d-0a98-40daddea1182">
+      <Execution id="0ed0c968-291c-410a-a15a-d09852a57664" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlGpuPrismExecutorTests" name="NestedPrismPresentationRemainsVisibleAwayFromTheHostOrigin" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlGpuScreenshotRegionTests.RegionalPngCropsTheFullyRenderedFramebuffer(scale: 2)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="422c4414-362d-a53f-3336-80b7f9d381af">
+      <Execution id="d96b8e4f-b3d9-4482-824c-3823286d1d4a" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlGpuScreenshotRegionTests" name="RegionalPngCropsTheFullyRenderedFramebuffer" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.ExactFlippedOuterBoundaryUsesCoveredSampling" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="37e4f3b5-6345-fd0e-bd6a-a2f25dc585df">
+      <Execution id="2b41d1ab-7125-45e3-93ed-a0811c3ca3e5" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests" name="ExactFlippedOuterBoundaryUsesCoveredSampling" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlGpuScreenshotRegionTests.RegionalPngCropsTheFullyRenderedFramebuffer(scale: 1.5)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="ad3939b2-968c-5a4e-1077-5ead9a510080">
+      <Execution id="02bc1eea-7504-4ba7-a24e-afa2d9dc128b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlGpuScreenshotRegionTests" name="RegionalPngCropsTheFullyRenderedFramebuffer" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.EquivalentImageMeshTriangulationsPreservePointSampledInteriorPixels" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="8b164d70-9574-be8a-8c78-8537662100ba">
+      <Execution id="117eac2f-1d42-4ae6-ab58-1756c04cfef7" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests" name="EquivalentImageMeshTriangulationsPreservePointSampledInteriorPixels" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.OptionsImageQuadAndWholeNineSliceUseTheirFullLogicalImageDomain" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="7828682f-cabe-a3e1-6ccd-d215d1c16c39">
+      <Execution id="00f4ba2a-c89b-48b7-b15e-eefebdb6863f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests" name="OptionsImageQuadAndWholeNineSliceUseTheirFullLogicalImageDomain" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.ExactIntegerSourceExternalBoundariesUseCoveredSamplingButKeepOrdinaryInterior" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="3c1e475a-7f10-df3f-3d95-bac475052c7b">
+      <Execution id="b3c1ce8e-474a-45a4-bf08-954e043ab62d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests" name="ExactIntegerSourceExternalBoundariesUseCoveredSamplingButKeepOrdinaryInterior" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Native_device_creates_drawing_and_prism_pipelines_from_offline_artifacts" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="5d4d76a2-8339-848a-35b7-9d6ea599ddda">
+      <Execution id="6b4093a8-12ba-4b26-ae9d-e2ee59357737" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests" name="Native_device_creates_drawing_and_prism_pipelines_from_offline_artifacts" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.FractionalAndSubtexelPointSourcesDoNotReadChangedAtlasGuards" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="786e8314-76a6-e73f-f5f1-51d06a9c957c">
+      <Execution id="37cd8691-5044-43cc-abbf-dd554fdc0e51" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests" name="FractionalAndSubtexelPointSourcesDoNotReadChangedAtlasGuards" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="786e8314-76a6-e73f-f5f1-51d06a9c957c" executionId="37cd8691-5044-43cc-abbf-dd554fdc0e51" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ec94923d-6525-96b5-5df3-5e36ed4ddca9" executionId="05420cd1-aba7-40b0-b38a-0db88b92d104" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7828682f-cabe-a3e1-6ccd-d215d1c16c39" executionId="00f4ba2a-c89b-48b7-b15e-eefebdb6863f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ad3939b2-968c-5a4e-1077-5ead9a510080" executionId="02bc1eea-7504-4ba7-a24e-afa2d9dc128b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fde9f875-b3ad-7eea-8910-5ead44949770" executionId="59b55e7b-23f9-447e-9e65-6d63f4954813" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="39664fb2-22c9-8e01-3ed6-4dd34d425681" executionId="16228c69-f704-4c42-a454-a56aa5a2be33" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5d4d76a2-8339-848a-35b7-9d6ea599ddda" executionId="6b4093a8-12ba-4b26-ae9d-e2ee59357737" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="149fc708-35b4-1fd4-4720-b7bd6db79833" executionId="8918a988-08ec-442a-91c0-014860285b5f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5dcbb850-a67a-8119-2e97-ff17801ff899" executionId="920b3775-828c-487f-9f31-78d780cdcfe9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cf3c0b0d-ea05-34cd-9dbf-99ad60de403a" executionId="015981b3-8193-4e6e-b642-715449c36135" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="da09d81c-6a7e-7a7f-f156-79781cc5cf98" executionId="1c055bcb-78e7-4d89-a59c-d77da5a237f0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3c1e475a-7f10-df3f-3d95-bac475052c7b" executionId="b3c1ce8e-474a-45a4-bf08-954e043ab62d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="af5747a9-b051-479b-5891-05a56013bdf0" executionId="aab40467-378f-433b-be13-e339d55cd1d8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="46a7f030-a467-5a7d-0a98-40daddea1182" executionId="0ed0c968-291c-410a-a15a-d09852a57664" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5c6b0527-7283-a0be-ff3b-ae14fbcd4e08" executionId="b65cac97-c55d-4379-b675-f0f176647552" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="37e4f3b5-6345-fd0e-bd6a-a2f25dc585df" executionId="2b41d1ab-7125-45e3-93ed-a0811c3ca3e5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="093637ed-b2d3-bfbd-96bd-5aec593fcb66" executionId="bcbaa2e0-f1ae-4a4a-83eb-9f8bcfe06475" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8b164d70-9574-be8a-8c78-8537662100ba" executionId="117eac2f-1d42-4ae6-ab58-1756c04cfef7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="422c4414-362d-a53f-3336-80b7f9d381af" executionId="d96b8e4f-b3d9-4482-824c-3823286d1d4a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="19" executed="19" passed="18" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.10]   Discovering: Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:00.67]   Discovered:  Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:00.68]   Starting:    Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:09.25]       SDL GPU device creation failed: Could not create D3D12Device! Error Code: The GPU will not respond to more commands, most likely because some other application submitted invalid commands.&#xD;
+[xUnit.net 00:00:09.25]       The calling application should re-create the device and continue. (0x887A0007)&#xD;
+[xUnit.net 00:00:09.26]       Stack Trace:&#xD;
+[xUnit.net 00:00:09.26]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlGpuShaderArtifactTests.cs(164,0): at Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Native_device_creates_drawing_and_prism_pipelines_from_offline_artifacts()&#xD;
+[xUnit.net 00:00:09.26]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:09.26]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:09.26]   Finished:    Cerneala.Tests.SdlGpu&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-25T06:07:41.8176980+03:00">
+        <Text>[xUnit.net 00:00:09.25]     Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Native_device_creates_drawing_and_prism_pipelines_from_offline_artifacts [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

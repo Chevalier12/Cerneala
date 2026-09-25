@@ -44,15 +44,14 @@ public readonly partial record struct DrawCommand
             layerDepth: layerDepth,
             sampling: sampling,
             addressMode: addressMode);
-        DrawMesh2D mesh = new(
-            [topLeft, topRight, bottomRight, bottomLeft],
-            [0, 1, 2, 0, 2, 3],
-            image: image);
-        return CreateMeshCommand(
-            DrawCommandKind.DrawImageQuad,
-            mesh,
+        return CreateImageQuadCommand(
             image,
-            options);
+            topLeft,
+            topRight,
+            bottomRight,
+            bottomLeft,
+            options,
+            optionsImageQuad: false);
     }
 
     public static DrawCommand DrawImageQuad(
@@ -67,15 +66,18 @@ public readonly partial record struct DrawCommand
         DrawPoint[] textureCoordinates =
             DrawImageGeometry.GetTextureCoordinates(image, options);
         Color tint = DrawImageGeometry.EffectiveTint(options);
-        return DrawImageQuad(
+        DrawImageOptions commandOptions = new(
+            layerDepth: options.LayerDepth,
+            sampling: options.Sampling,
+            addressMode: options.AddressMode);
+        return CreateImageQuadCommand(
             image,
             new DrawVertex2D(topLeft, tint, textureCoordinates[0]),
             new DrawVertex2D(topRight, tint, textureCoordinates[1]),
             new DrawVertex2D(bottomRight, tint, textureCoordinates[2]),
             new DrawVertex2D(bottomLeft, tint, textureCoordinates[3]),
-            options.Sampling,
-            options.AddressMode,
-            options.LayerDepth);
+            commandOptions,
+            optionsImageQuad: true);
     }
 
     public static DrawCommand DrawNineSlice(
@@ -273,6 +275,23 @@ public readonly partial record struct DrawCommand
             layerDepth: options.LayerDepth,
             imageOptions: options,
             mesh: mesh);
+
+    private static DrawCommand CreateImageQuadCommand(
+        IDrawImage image,
+        DrawVertex2D topLeft,
+        DrawVertex2D topRight,
+        DrawVertex2D bottomRight,
+        DrawVertex2D bottomLeft,
+        DrawImageOptions options,
+        bool optionsImageQuad)
+    {
+        DrawMesh2D mesh = DrawMesh2D.FromOwnedBuffers(
+            [topLeft, topRight, bottomRight, bottomLeft],
+            [0, 1, 2, 0, 2, 3],
+            image: image,
+            optionsImageQuad: optionsImageQuad);
+        return CreateMeshCommand(DrawCommandKind.DrawImageQuad, mesh, image, options);
+    }
 
     private static DrawMesh2D CreateNineSliceMesh(
         IDrawImage image,

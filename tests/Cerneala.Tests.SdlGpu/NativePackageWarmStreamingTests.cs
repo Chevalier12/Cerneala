@@ -38,15 +38,25 @@ public sealed class NativePackageWarmStreamingTests
     {
         string directory = Path.Combine(Path.GetTempPath(), "Cerneala-native-package-warm-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
+        Exception? runFailure = null;
         try { RunOwned(directory, free, oversized); }
+        catch (Exception error) { runFailure = error; throw; }
         finally
         {
-            string parent = Path.GetFullPath(Path.GetTempPath()).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
-            string resolved = Path.GetFullPath(directory);
-            if (!resolved.StartsWith(parent, StringComparison.OrdinalIgnoreCase) ||
-                !Path.GetFileName(resolved).StartsWith("Cerneala-native-package-warm-", StringComparison.Ordinal))
-            { throw new InvalidOperationException("Unsafe native fixture cleanup target."); }
-            Directory.Delete(resolved, recursive: true);
+            try
+            {
+                string parent = Path.GetFullPath(Path.GetTempPath()).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+                string resolved = Path.GetFullPath(directory);
+                if (!resolved.StartsWith(parent, StringComparison.OrdinalIgnoreCase) ||
+                    !Path.GetFileName(resolved).StartsWith("Cerneala-native-package-warm-", StringComparison.Ordinal))
+                { throw new InvalidOperationException("Unsafe native fixture cleanup target."); }
+                Directory.Delete(resolved, recursive: true);
+            }
+            catch (Exception cleanupFailure)
+            {
+                if (runFailure is not null) { throw new AggregateException(runFailure, cleanupFailure); }
+                throw;
+            }
         }
     }
 
@@ -54,16 +64,15 @@ public sealed class NativePackageWarmStreamingTests
     {
         string packagePath = WritePackage(directory, free, oversized);
         using Scene2DPackage package = Scene2DPackage.OpenAsync(packagePath).GetAwaiter().GetResult();
-        TileMapSource2D original = package.Levels[0].TileMaps[0];
+        TileMap2D packageMap = package.Levels[0].CreateTileMap(Assert.Single(package.Levels[0].TileMapIds));
+        TileMapSource2D original = packageMap.Source!;
         TileMapChunkInfo2D near = original.Catalog.Chunks[0], far = original.Catalog.Chunks[1];
         Assert.Equal(2, original.Catalog.Chunks.Count);
         Assert.Equal(oversized, far.DataResidencyBytes > TileMap2D.WarmCacheBudgetBytes);
         ConcurrentDictionary<string, int> loads = new(StringComparer.Ordinal);
         ConcurrentQueue<WeakReference> payloads = new();
         int released = 0;
-        TileMap2D map = new()
-        {
-            Source = new(original.Catalog, async (_, info, cancellation) =>
+        TileMap2D map = TileMap2D.FromSource(new TileMapSource2D(original.Catalog, async (_, info, cancellation) =>
             {
                 var lease = await original.LoadAsync(info.Spatial, cancellation).ConfigureAwait(false);
                 loads.AddOrUpdate(info.Spatial.Id, 1, static (_, count) => count + 1);
@@ -73,8 +82,7 @@ public sealed class NativePackageWarmStreamingTests
                     lease.Dispose();
                     Interlocked.Increment(ref released);
                 });
-            })
-        };
+            }));
         NativeSdlApi api = new();
         using SdlGpuWindowGraphicsSessionFactory graphics = new(api, useMultisampling: true);
         using SdlWindowPlatform platform = new(api, graphics, coordinateScaleOverride: 1);
@@ -96,6 +104,7 @@ public sealed class NativePackageWarmStreamingTests
         window.Resources.SetResource(atlas.ResourceId, resource);
         CountingLoader loader = new();
         string screenshot = Path.Combine(directory, "frame.png");
+        Exception? testFailure = null;
         try
         {
             runtime.Show(window, modal: false);
@@ -176,7 +185,29 @@ public sealed class NativePackageWarmStreamingTests
                 return bitmap.Bytes.AsSpan(0, bitmap.RowBytes * 64).ToArray();
             }
         }
-        finally { runtime.Close(window, force: true); }
+        catch (Exception error) { testFailure = error; throw; }
+        finally
+        {
+            List<Exception> cleanupFailures = [];
+            Attempt(() => runtime.Close(window, force: true));
+            // Close does not remove this map from the scene's logical collection.
+            // Retire that parent relationship on the owner thread before terminal disposal.
+            Attempt(() => scene.Children.Remove(map));
+            Attempt(() => map.DisposeAsync().AsTask().GetAwaiter().GetResult());
+            Attempt(() => packageMap.DisposeAsync().AsTask().GetAwaiter().GetResult());
+            Attempt(() => package.DisposeAsync().AsTask().GetAwaiter().GetResult());
+            if (cleanupFailures.Count > 0)
+            {
+                if (testFailure is not null) { cleanupFailures.Insert(0, testFailure); }
+                throw new AggregateException("Native package teardown failed.", cleanupFailures);
+            }
+
+            void Attempt(Action cleanup)
+            {
+                try { cleanup(); }
+                catch (Exception error) { cleanupFailures.Add(error); }
+            }
+        }
 
         int Count(TileMapChunkInfo2D info) => loads.GetValueOrDefault(info.Spatial.Id);
         void AddButton(string id, float x, float camera)

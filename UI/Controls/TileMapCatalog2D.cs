@@ -7,7 +7,7 @@ using static Cerneala.UI.Controls.Scene2DModelValidator;
 namespace Cerneala.UI.Controls;
 
 /// <summary>Describes one static chunk without retaining its cells or placements.</summary>
-public sealed class TileMapChunkInfo2D
+internal sealed class TileMapChunkInfo2D
 {
     private readonly HashSet<int> tileIds = [];
     private readonly HashSet<ImageReference> images = [];
@@ -96,7 +96,7 @@ public sealed class TileMapChunkInfo2D
 }
 
 /// <summary>An immutable map header and complete spatial catalog, not loaded cell data.</summary>
-public sealed class TileMapCatalog2D
+internal sealed class TileMapCatalog2D
 {
     private readonly Dictionary<string, TileMapChunkInfo2D> byId = new(StringComparer.Ordinal);
     private readonly Dictionary<ImageReference, DrawSize> directSizes = [];

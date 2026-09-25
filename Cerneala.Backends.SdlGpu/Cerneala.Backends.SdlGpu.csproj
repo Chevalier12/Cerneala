@@ -38,6 +38,7 @@
     <InternalsVisibleTo Include="Cerneala.Benchmarks" />
     <InternalsVisibleTo Include="Cerneala.Tests" />
     <InternalsVisibleTo Include="Cerneala.Tests.SdlGpu" />
+    <InternalsVisibleTo Include="Cerneala.Tests.SceneVillage" />
   </ItemGroup>
 
   <ItemGroup>
@@ -47,6 +48,12 @@
     <EmbeddedResource Include="Gpu\Shaders\Drawing.frag.dxil" />
     <EmbeddedResource Include="Gpu\Shaders\Drawing.frag.spv" />
     <EmbeddedResource Include="Gpu\Shaders\Drawing.frag.msl" />
+    <EmbeddedResource Include="Gpu\Shaders\DrawingImageDomain.vert.dxil" />
+    <EmbeddedResource Include="Gpu\Shaders\DrawingImageDomain.vert.spv" />
+    <EmbeddedResource Include="Gpu\Shaders\DrawingImageDomain.vert.msl" />
+    <EmbeddedResource Include="Gpu\Shaders\DrawingImageDomain.frag.dxil" />
+    <EmbeddedResource Include="Gpu\Shaders\DrawingImageDomain.frag.spv" />
+    <EmbeddedResource Include="Gpu\Shaders\DrawingImageDomain.frag.msl" />
     <EmbeddedResource Include="Gpu\Shaders\Surface3D.vert.dxil" />
     <EmbeddedResource Include="Gpu\Shaders\Surface3D.vert.spv" />
     <EmbeddedResource Include="Gpu\Shaders\Surface3D.vert.msl" />

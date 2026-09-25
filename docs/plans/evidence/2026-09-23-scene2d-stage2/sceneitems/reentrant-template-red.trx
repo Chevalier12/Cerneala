@@ -1,0 +1,101 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="2e93635f-11bd-4222-a1ce-80e87f6139ec" name="lauri@DESKTOP-JT43V3D 2026-09-24 10:23:31" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T10:23:31.9250235+03:00" queuing="2026-09-24T10:23:31.9250240+03:00" start="2026-09-24T10:23:26.8915277+03:00" finish="2026-09-24T10:23:31.9397690+03:00" />
+  <TestSettings name="default" id="70deb39e-3ca4-447c-966d-5d2ed5c65f16">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_10_23_31" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="6e81fec2-4836-483d-a71f-8cc6f1786e85" testId="348c68f4-f96d-e122-0874-068c31c8f095" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ReentrantExplicitRefreshStillEnumeratesAfterStructuralMutation" computerName="DESKTOP-JT43V3D" duration="00:00:00.0157913" startTime="2026-09-24T10:23:31.7519361+03:00" endTime="2026-09-24T10:23:31.7519365+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6e81fec2-4836-483d-a71f-8cc6f1786e85" />
+    <UnitTestResult executionId="48aac406-9862-42ca-8d39-a43b704c77e4" testId="60a7c273-d20d-5010-f3f3-df44c7bb7f1a" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ReentrantTemplateEditUsesTheCompletedOneShotSnapshot" computerName="DESKTOP-JT43V3D" duration="00:00:00.3533660" startTime="2026-09-24T10:23:31.7278955+03:00" endTime="2026-09-24T10:23:31.7279739+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="48aac406-9862-42ca-8d39-a43b704c77e4">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : One-shot source was enumerated again.</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.OneShotEnumerable`1.GetEnumerator() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 945&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.OneShotEnumerable`1.System.Collections.IEnumerable.GetEnumerator() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 948&#xD;
+   at Cerneala.UI.Controls.SceneItems2D.Enumerate(IEnumerable source) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 246&#xD;
+   at Cerneala.UI.Controls.SceneItems2D.RequestSnapshot(Boolean reset, Boolean reenumerate, NotifyCollectionChangedEventArgs change) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 170&#xD;
+--- End of stack trace from previous location ---&#xD;
+   at Cerneala.UI.Controls.SceneItems2D.RequestSnapshot(Boolean reset, Boolean reenumerate, NotifyCollectionChangedEventArgs change) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 234&#xD;
+   at Cerneala.UI.Controls.SceneItems2D.ApplyDeferredChanges() in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 444&#xD;
+   at Cerneala.UI.Controls.SceneItems2D.Commit(List`1 next, List`1 requested, IEnumerable source, List`1 candidates, Int64 version) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 385&#xD;
+   at Cerneala.UI.Controls.SceneItems2D.RequestSnapshot(Boolean reset, Boolean reenumerate, NotifyCollectionChangedEventArgs change) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 227&#xD;
+--- End of stack trace from previous location ---&#xD;
+   at Cerneala.UI.Controls.SceneItems2D.RequestSnapshot(Boolean reset, Boolean reenumerate, NotifyCollectionChangedEventArgs change) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 234&#xD;
+   at Cerneala.UI.Controls.SceneItems2D.OnPropertyChanged(UiPropertyChangedEventArgs args) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 89&#xD;
+   at Cerneala.UI.Core.UiObject.NotifyPropertyChanged[T](UiProperty`1 property, T oldValue, T newValue, UiPropertyValueSource valueSource, UiPropertyValueSource mutatingSource, UiPropertyValueSource oldEffectiveSource, Object oldSourceValue, Object newSourceValue, Boolean wasCoerced) in C:\Users\lauri\Desktop\Cerneala\UI\Core\UiObject.cs:line 237&#xD;
+   at Cerneala.UI.Core.UiObject.SetValueCore[T](UiProperty`1 property, T value, UiPropertyValueSource source) in C:\Users\lauri\Desktop\Cerneala\UI\Core\UiObject.cs:line 202&#xD;
+   at Cerneala.UI.Core.UiObject.SetValue[T](UiProperty`1 property, T value, UiPropertyValueSource source) in C:\Users\lauri\Desktop\Cerneala\UI\Core\UiObject.cs:line 89&#xD;
+   at Cerneala.UI.Core.UiObject.SetValue[T](UiProperty`1 property, T value) in C:\Users\lauri\Desktop\Cerneala\UI\Core\UiObject.cs:line 78&#xD;
+   at Cerneala.UI.Controls.SceneItems2D.set_ItemsSource(IEnumerable value) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 40&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+--- End of stack trace from previous location ---&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 908&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ReentrantTemplateEditUsesTheCompletedOneShotSnapshot() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 605&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ReentrantTemplateEditUsesTheCompletedOneShotSnapshot" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="60a7c273-d20d-5010-f3f3-df44c7bb7f1a">
+      <Execution id="48aac406-9862-42ca-8d39-a43b704c77e4" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="ReentrantTemplateEditUsesTheCompletedOneShotSnapshot" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ReentrantExplicitRefreshStillEnumeratesAfterStructuralMutation" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="348c68f4-f96d-e122-0874-068c31c8f095">
+      <Execution id="6e81fec2-4836-483d-a71f-8cc6f1786e85" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="ReentrantExplicitRefreshStillEnumeratesAfterStructuralMutation" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="348c68f4-f96d-e122-0874-068c31c8f095" executionId="6e81fec2-4836-483d-a71f-8cc6f1786e85" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="60a7c273-d20d-5010-f3f3-df44c7bb7f1a" executionId="48aac406-9862-42ca-8d39-a43b704c77e4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="2" executed="2" passed="1" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.49]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.81]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:01.83]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:02.34]       System.InvalidOperationException : One-shot source was enumerated again.&#xD;
+[xUnit.net 00:00:02.34]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.34]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(945,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.OneShotEnumerable`1.GetEnumerator()&#xD;
+[xUnit.net 00:00:02.34]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(948,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.OneShotEnumerable`1.System.Collections.IEnumerable.GetEnumerator()&#xD;
+[xUnit.net 00:00:02.34]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs(246,0): at Cerneala.UI.Controls.SceneItems2D.Enumerate(IEnumerable source)&#xD;
+[xUnit.net 00:00:02.34]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs(170,0): at Cerneala.UI.Controls.SceneItems2D.RequestSnapshot(Boolean reset, Boolean reenumerate, NotifyCollectionChangedEventArgs change)&#xD;
+[xUnit.net 00:00:02.34]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.34]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs(234,0): at Cerneala.UI.Controls.SceneItems2D.RequestSnapshot(Boolean reset, Boolean reenumerate, NotifyCollectionChangedEventArgs change)&#xD;
+[xUnit.net 00:00:02.34]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs(444,0): at Cerneala.UI.Controls.SceneItems2D.ApplyDeferredChanges()&#xD;
+[xUnit.net 00:00:02.34]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs(385,0): at Cerneala.UI.Controls.SceneItems2D.Commit(List`1 next, List`1 requested, IEnumerable source, List`1 candidates, Int64 version)&#xD;
+[xUnit.net 00:00:02.34]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs(227,0): at Cerneala.UI.Controls.SceneItems2D.RequestSnapshot(Boolean reset, Boolean reenumerate, NotifyCollectionChangedEventArgs change)&#xD;
+[xUnit.net 00:00:02.34]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.34]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs(234,0): at Cerneala.UI.Controls.SceneItems2D.RequestSnapshot(Boolean reset, Boolean reenumerate, NotifyCollectionChangedEventArgs change)&#xD;
+[xUnit.net 00:00:02.35]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs(89,0): at Cerneala.UI.Controls.SceneItems2D.OnPropertyChanged(UiPropertyChangedEventArgs args)&#xD;
+[xUnit.net 00:00:02.35]         C:\Users\lauri\Desktop\Cerneala\UI\Core\UiObject.cs(237,0): at Cerneala.UI.Core.UiObject.NotifyPropertyChanged[T](UiProperty`1 property, T oldValue, T newValue, UiPropertyValueSource valueSource, UiPropertyValueSource mutatingSource, UiPropertyValueSource oldEffectiveSource, Object oldSourceValue, Object newSourceValue, Boolean wasCoerced)&#xD;
+[xUnit.net 00:00:02.35]         C:\Users\lauri\Desktop\Cerneala\UI\Core\UiObject.cs(202,0): at Cerneala.UI.Core.UiObject.SetValueCore[T](UiProperty`1 property, T value, UiPropertyValueSource source)&#xD;
+[xUnit.net 00:00:02.35]         C:\Users\lauri\Desktop\Cerneala\UI\Core\UiObject.cs(89,0): at Cerneala.UI.Core.UiObject.SetValue[T](UiProperty`1 property, T value, UiPropertyValueSource source)&#xD;
+[xUnit.net 00:00:02.35]         C:\Users\lauri\Desktop\Cerneala\UI\Core\UiObject.cs(78,0): at Cerneala.UI.Core.UiObject.SetValue[T](UiProperty`1 property, T value)&#xD;
+[xUnit.net 00:00:02.35]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs(40,0): at Cerneala.UI.Controls.SceneItems2D.set_ItemsSource(IEnumerable value)&#xD;
+[xUnit.net 00:00:02.35]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.35]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.35]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.35]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(908,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SetSource(SceneItems2D items, IEnumerable source)&#xD;
+[xUnit.net 00:00:02.35]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(605,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ReentrantTemplateEditUsesTheCompletedOneShotSnapshot()&#xD;
+[xUnit.net 00:00:02.35]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.35]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.38]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T10:23:31.7191477+03:00">
+        <Text>[xUnit.net 00:00:02.34]     Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ReentrantTemplateEditUsesTheCompletedOneShotSnapshot [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

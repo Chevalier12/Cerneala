@@ -43,7 +43,8 @@ public sealed class DrawMesh2D
             Copy(indices, nameof(indices)),
             topology,
             image,
-            Interlocked.Increment(ref nextVersion))
+            Interlocked.Increment(ref nextVersion),
+            optionsImageQuad: false)
     {
     }
 
@@ -52,7 +53,8 @@ public sealed class DrawMesh2D
         int[] indices,
         DrawPrimitiveTopology topology,
         IDrawImage? image,
-        long version)
+        long version,
+        bool optionsImageQuad)
     {
         Validate(vertices, indices, topology, image);
         VertexArray = vertices;
@@ -63,6 +65,7 @@ public sealed class DrawMesh2D
         Image = image;
         Version = version;
         Bounds = CalculateBounds(vertices);
+        IsOptionsImageQuad = optionsImageQuad;
     }
 
     public IReadOnlyList<DrawVertex2D> Vertices => vertices;
@@ -81,18 +84,21 @@ public sealed class DrawMesh2D
 
     internal int[] IndexArray { get; }
 
+    internal bool IsOptionsImageQuad { get; }
+
     // Only for buffers created exclusively for this mesh. Callers relinquish
     // ownership and must not mutate them after this call. Public inputs are copied.
     internal static DrawMesh2D FromOwnedBuffers(
         DrawVertex2D[] vertices,
         int[] indices,
         DrawPrimitiveTopology topology = DrawPrimitiveTopology.TriangleList,
-        IDrawImage? image = null)
+        IDrawImage? image = null,
+        bool optionsImageQuad = false)
     {
         ArgumentNullException.ThrowIfNull(vertices);
         ArgumentNullException.ThrowIfNull(indices);
         return new DrawMesh2D(vertices, indices, topology, image,
-            Interlocked.Increment(ref nextVersion));
+            Interlocked.Increment(ref nextVersion), optionsImageQuad);
     }
 
     internal DrawMesh2D Transform(
@@ -115,7 +121,8 @@ public sealed class DrawMesh2D
             IndexArray,
             Topology,
             Image,
-            Version);
+            Version,
+            IsOptionsImageQuad);
     }
 
     internal DrawMesh2D WithImage(IDrawImage image)
@@ -126,7 +133,8 @@ public sealed class DrawMesh2D
             IndexArray,
             Topology,
             image,
-            Version);
+            Version,
+            IsOptionsImageQuad);
     }
 
     private static void Validate(

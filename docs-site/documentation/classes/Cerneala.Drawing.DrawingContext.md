@@ -208,6 +208,8 @@ Rounded rectangles use dedicated commands with proportionally normalized indepen
 
 Advanced image drawing accepts source rectangles and origins in source-image pixels together with tint, opacity, rotation, flip, depth, sampling, and addressing. Image quads use exactly two affine 2D triangles and do not promise perspective-correct mapping. Nine-slice drawing uses one deterministic mesh and proportionally fits opposing borders into undersized destinations.
 
+The SDL_GPU [Point + Clamp image-edge behavior](Cerneala.Drawing.DrawImageOptions.md#point-and-clamp-image-edges-on-sdl-gpu) has a narrower scope than these image and mesh APIs as a whole: image-generated quads, per-sprite batch quads, options-based image quads, and the outer nine-slice domain qualify; authored-vertex quads and arbitrary meshes do not.
+
 Meshes and immutable point, line, and sprite batches record one logical command each. Textured meshes and sprite batches retain but do not own their `IDrawImage`. `PrismImage` inputs are recorded through the same native Prism scope used by compatibility image drawing.
 
 `DrawTextLayout` records one immutable multi-line layout command. Build and retain layouts outside repeated frame callbacks; identical content, font/brush identities, constraints, options, and scale reuse the shared layout result. Drawing transforms rotate or scale the complete layout, and drawing clips apply without a separate text clipping API.

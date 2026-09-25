@@ -1,0 +1,1 @@
+dotnet test .\tests\Cerneala.Tests.SceneVillage\Cerneala.Tests.SceneVillage.csproj -c Release -m:1 -p:DefaultItemExcludesInProjectFolder=artifacts/** --logger trx;LogFileName=model-02.trx

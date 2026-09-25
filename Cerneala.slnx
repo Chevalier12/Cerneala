@@ -5,6 +5,7 @@
     <Project Path="Playground/Cerneala.ComboBoxLab/Cerneala.ComboBoxLab.csproj" />
     <Project Path="Playground/Cerneala.MenuLab/Cerneala.MenuLab.csproj" />
     <Project Path="Playground/Cerneala.Playground/Cerneala.Playground.csproj" />
+    <Project Path="Playground/Cerneala.SceneVillage/Cerneala.SceneVillage.csproj" />
   </Folder>
   <Folder Name="/benchmarks/">
     <Project Path="benchmarks/Cerneala.Benchmarks/Cerneala.Benchmarks.csproj" />
@@ -14,6 +15,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Cerneala.Tests.Scene2DImporters/Cerneala.Tests.Scene2DImporters.csproj" />
     <Project Path="tests/Cerneala.Tests.Scene2DPackages/Cerneala.Tests.Scene2DPackages.csproj" />
+    <Project Path="tests/Cerneala.Tests.SceneVillage/Cerneala.Tests.SceneVillage.csproj" />
     <Project Path="tests/Cerneala.Tests.Language/Cerneala.Tests.Language.csproj" />
     <Project Path="tests/Cerneala.Tests.LanguageServer/Cerneala.Tests.LanguageServer.csproj" />
     <Project Path="tests/Cerneala.Tests.PreviewHost/Cerneala.Tests.PreviewHost.csproj" />

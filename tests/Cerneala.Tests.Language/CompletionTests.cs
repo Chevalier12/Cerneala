@@ -41,12 +41,13 @@ public sealed class CompletionTests
     }
 
     [Fact]
-    public void BoundTileMapOffersItsSourceButNoInlineTileContent()
+    public void TileMapNeverOffersRemovedSourceAndStillOffersStaticTiles()
     {
         using CompletionFixture map = CompletionFixture.Create("<TileMap2D |caret| />");
-        Assert.Contains(map.Complete(), item => item.Label == "Source");
-        using CompletionFixture bound = CompletionFixture.Create("<TileMap2D Source=\"$DataContext\"><Ti|caret| /></TileMap2D>");
-        Assert.Empty(bound.Complete());
+        Assert.DoesNotContain(map.Complete(), item => item.Label == "Source");
+        using CompletionFixture invalidSource = CompletionFixture.Create(
+            "<TileMap2D Source=\"removed\"><Ti|caret| /></TileMap2D>");
+        Assert.Equal("Tile", Assert.Single(invalidSource.Complete()).Label);
     }
 
     [Fact]

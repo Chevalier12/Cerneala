@@ -17,8 +17,12 @@
     <VSSDKTargetPlatformRegRootSuffix>Exp</VSSDKTargetPlatformRegRootSuffix>
     <ServerPackageVersion>$(Version)</ServerPackageVersion>
     <BundledServerOutput>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\bundled-server\</BundledServerOutput>
+    <LanguageServerProjectFullPath>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '..\Cerneala.LanguageServer\Cerneala.LanguageServer.csproj'))</LanguageServerProjectFullPath>
+    <BundledServerExtensionsPath>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\bundled-server-restore\</BundledServerExtensionsPath>
     <PreviewHostPackageVersion>$(Version)</PreviewHostPackageVersion>
     <BundledPreviewHostOutput>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\bundled-preview-host\</BundledPreviewHostOutput>
+    <PreviewHostProjectFullPath>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '..\Cerneala.PreviewHost\Cerneala.PreviewHost.csproj'))</PreviewHostProjectFullPath>
+    <BundledPreviewHostExtensionsPath>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\bundled-preview-host-restore\</BundledPreviewHostExtensionsPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -71,7 +75,7 @@
       Projects="..\Cerneala.LanguageServer\Cerneala.LanguageServer.csproj"
       Targets="Restore;Publish"
       BuildInParallel="false"
-      Properties="Configuration=$(Configuration);RuntimeIdentifier=win-x64;SelfContained=true;PublishDir=$(BundledServerOutput)" />
+      Properties="Configuration=$(Configuration);RuntimeIdentifier=win-x64;SelfContained=true;PublishDir=$(BundledServerOutput);ProjectToOverrideProjectExtensionsPath=$(LanguageServerProjectFullPath);ProjectExtensionsPathForSpecifiedProject=$(BundledServerExtensionsPath)" />
     <ItemGroup>
       <_BundledServer Include="$(BundledServerOutput)**\*" Exclude="$(BundledServerOutput)**\*.pdb" />
       <VSIXSourceItem Include="@(_BundledServer)">
@@ -85,7 +89,7 @@
       Projects="..\Cerneala.PreviewHost\Cerneala.PreviewHost.csproj"
       Targets="Restore;Publish"
       BuildInParallel="false"
-      Properties="Configuration=$(Configuration);RuntimeIdentifier=win-x64;SelfContained=true;PublishDir=$(BundledPreviewHostOutput)" />
+      Properties="Configuration=$(Configuration);RuntimeIdentifier=win-x64;SelfContained=true;PublishDir=$(BundledPreviewHostOutput);ProjectToOverrideProjectExtensionsPath=$(PreviewHostProjectFullPath);ProjectExtensionsPathForSpecifiedProject=$(BundledPreviewHostExtensionsPath)" />
     <ItemGroup>
       <_BundledPreviewHost Include="$(BundledPreviewHostOutput)**\*" Exclude="$(BundledPreviewHostOutput)**\*.pdb" />
       <VSIXSourceItem Include="@(_BundledPreviewHost)">

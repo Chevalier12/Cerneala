@@ -1,0 +1,1 @@
+$env:DefaultItemExcludesInProjectFolder='artifacts/**'; dotnet msbuild .\Cerneala.slnx -t:Build -p:Configuration=Release -m:1 -v:minimal '-p:DefaultItemExcludesInProjectFolder=artifacts/**' '-bl:docs\plans\evidence\2026-09-23-scene2d-stage3\integration\solution-build-no-top-restore\solution-build-no-top-restore-correct-platform.binlog'

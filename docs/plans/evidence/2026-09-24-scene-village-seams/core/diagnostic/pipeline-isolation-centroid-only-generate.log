@@ -1,0 +1,1 @@
+Shader 'drawing-point-clamp-image-domain-fragment' reflection mismatch. Manifest=ReflectedBindings { Samplers = 1, StorageTextures = 0, StorageBuffers = 0, UniformBuffers = 0, Inputs = 3, Outputs = 1 }; reflected=ReflectedBindings { Samplers = 1, StorageTextures = 0, StorageBuffers = 0, UniformBuffers = 0, Inputs = 2, Outputs = 1 }.

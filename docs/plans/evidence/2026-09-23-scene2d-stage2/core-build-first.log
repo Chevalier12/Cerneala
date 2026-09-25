@@ -1,0 +1,13 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs(525,13): error CS1503: Argument 2: cannot convert from 'Cerneala.UI.Controls.SceneBounds2D' to 'Cerneala.Drawing.DrawRect' [C:\Users\lauri\Desktop\Cerneala\Cerneala.csproj]
+
+Build FAILED.
+
+C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs(525,13): error CS1503: Argument 2: cannot convert from 'Cerneala.UI.Controls.SceneBounds2D' to 'Cerneala.Drawing.DrawRect' [C:\Users\lauri\Desktop\Cerneala\Cerneala.csproj]
+    0 Warning(s)
+    1 Error(s)
+
+Time Elapsed 00:00:44.00

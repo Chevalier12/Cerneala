@@ -186,7 +186,7 @@ public sealed partial class UiMarkupGeneratorTests
 
             public sealed class SceneModel
             {
-                public Cerneala.UI.Controls.ISceneSpatialSource2D<object>? Items { get; }
+                public IEnumerable? Items { get; }
                 public Cerneala.UI.Resources.ImageReference? CurrentImage { get; set; }
                 public DrawRect CurrentDestination { get; set; }
             }

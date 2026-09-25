@@ -1,0 +1,5 @@
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage2\package\stage2-package-full-green.trx
+
+Passed!  - Failed:     0, Passed:   103, Skipped:     0, Total:   103, Duration: 8 s - Cerneala.Tests.Scene2DPackages.dll (net8.0)

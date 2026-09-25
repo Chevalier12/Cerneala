@@ -1,0 +1,31 @@
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  Cerneala.Scene2D.Packages -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Packages\bin\Release\net8.0\Cerneala.Scene2D.Packages.dll
+  Tetris -> C:\Users\lauri\Desktop\Cerneala\Tetrisish\bin\Release\net8.0\Cerneala.Tetris.dll
+  Cerneala.Tests.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:05.68]     Cerneala.Tests.SdlGpu.NativeImageLeaseTests.GridCameraInputRetiresAtlasesAndKeepsNpcTerrainAcross32Cycles [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeImageLeaseTests.GridCameraInputRetiresAtlasesAndKeepsNpcTerrainAcross32Cycles [3 s]
+  Error Message:
+   Expected 2 map collider children at initial view; actual=1; actors=1; npcAttached=True; npcActive=True; npcBounds=DrawRect { X = 1984, Y = 16, Width = 16, Height = 16, Right = 2000, Bottom = 32 }; interest=SceneBounds2D { }; mapColliders=DrawRect { X = 16, Y = 16, Width = 16, Height = 16, Right = 32, Bottom = 32 }; diagnostics=TileMap2DDiagnosticsSnapshot { TotalChunks = 3, CandidateChunks = 3, VisibleChunks = 1, CandidateTiles = 1, DrawnTiles = 1, BatchesBuilt = 0, BatchesRebuilt = 0, BatchesReused = 1, DrawCommands = 1, RetainedBytes = 8576, RetainedObjects = 12, TileInvalidations = 0 }
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeImageLeaseTests.GridCameraInputRetiresAtlasesAndKeepsNpcTerrainAcross32Cycles() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeImageLeaseTests.cs:line 91
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:08.55]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.LocalNeighborhoodInputMatchesCompleteDomainRendering [FAIL]
+Data collector 'Blame' message: All tests finished running, Sequence file will not be generated.
+  Failed Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.LocalNeighborhoodInputMatchesCompleteDomainRendering [2 s]
+  Error Message:
+   Expected 9 eager items before/after crop; source=1; filter=0; before=count=0; sourceSame=True; sourceCount=9; parentActors=True; attached=False; context=False; contextDisposed=; contextActors=False; surfaceActors=False; sceneIndex=1; narrow=False; spritesAttached=0; actorsContext=False; terrainContext=True; after=count=0; sourceSame=True; sourceCount=9; parentActors=True; attached=False; context=False; contextDisposed=; contextActors=False; surfaceActors=False; sceneIndex=1; narrow=True; spritesAttached=0; actorsContext=False; terrainContext=True
+  Stack Trace:
+     at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.Run(Boolean nestedSprites, Boolean localNeighborhood, Single density, PrismFilterId nestedFilter, Nullable`1 paintStyle, PrismMaskDefinition imageMask, Nullable`1 finiteDomainFilter, String edgeMode) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 241
+   at Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.LocalNeighborhoodInputMatchesCompleteDomainRendering() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeScenePrismDomainTests.cs:line 31
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage3\native-windows\native-migration\test-results\stage3-native-failures-instrumented.trx
+
+Failed!  - Failed:     2, Passed:     0, Skipped:     0, Total:     2, Duration: 6 s - Cerneala.Tests.SdlGpu.dll (net8.0)

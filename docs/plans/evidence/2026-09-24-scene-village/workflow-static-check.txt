@@ -1,0 +1,12 @@
+parser_note=No YAML library/actionlint available locally; this is structural validation, not hosted-runner execution.
+line_count=52
+whitespace_issues=0
+windows_runner_count=1
+non_windows_or_manual_trigger_refs=0
+native_optin_count=1
+test_command_count=1
+artifact_upload_path_count=1
+.github/workflows/scene-village-windows.yml=2
+Cerneala.slnx=2
+Playground/Cerneala.SceneVillage/**=2
+tests/Cerneala.Tests.SceneVillage/**=2

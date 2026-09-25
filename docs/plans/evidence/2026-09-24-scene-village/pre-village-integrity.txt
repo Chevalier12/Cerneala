@@ -1,0 +1,4 @@
+HEAD=443f100b86f8c4ca5f5e649651ac37c9cd5a330f
+Cerneala.slnx SHA256=A3D42DA4FFE1D86771B8FF2BB7EF5749ABADBB8840A36B5B04868DAD4D741CDA
+Playground/Cerneala.SceneVillage/Cerneala.SceneVillage.csproj exists=False
+tests/Cerneala.Tests.SceneVillage/Cerneala.Tests.SceneVillage.csproj exists=False

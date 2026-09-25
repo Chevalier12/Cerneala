@@ -34,6 +34,12 @@ public abstract class Collider2D : SceneNode2D
             typeof(Collider2D),
             new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsHitTest));
 
+    public static readonly UiProperty<bool> IsSimulatedProperty =
+        UiProperty<bool>.Register(
+            nameof(IsSimulated),
+            typeof(Collider2D),
+            new UiPropertyMetadata<bool>(false, UiPropertyOptions.None));
+
     public static readonly UiProperty<float> OffsetXProperty =
         UiProperty<float>.Register(
             nameof(OffsetX),
@@ -68,6 +74,13 @@ public abstract class Collider2D : SceneNode2D
     {
         get => GetValue(IsTriggerProperty);
         set => SetValue(IsTriggerProperty, value);
+    }
+
+    /// <summary>Retains nearby collision data around this collider's active geometry.</summary>
+    public bool IsSimulated
+    {
+        get => GetValue(IsSimulatedProperty);
+        set => SetValue(IsSimulatedProperty, value);
     }
 
     public float OffsetX
@@ -155,6 +168,7 @@ public abstract class Collider2D : SceneNode2D
     private bool IsCollisionProperty(UiProperty property) =>
         ReferenceEquals(property, EnabledProperty) ||
         ReferenceEquals(property, IsTriggerProperty) ||
+        ReferenceEquals(property, IsSimulatedProperty) ||
         ReferenceEquals(property, OffsetXProperty) ||
         ReferenceEquals(property, OffsetYProperty) ||
         ReferenceEquals(property, CollisionLayerProperty) ||
@@ -167,6 +181,7 @@ public abstract class Collider2D : SceneNode2D
     private SceneCollisionMutationKind GetMutationKind(UiProperty property)
     {
         if (ReferenceEquals(property, EnabledProperty) ||
+            ReferenceEquals(property, IsSimulatedProperty) ||
             ReferenceEquals(property, UIElement.IsVisibleProperty) ||
             ReferenceEquals(property, UIElement.VisibilityProperty))
         {

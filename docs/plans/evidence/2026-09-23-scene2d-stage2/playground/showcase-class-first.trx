@@ -1,0 +1,225 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="ee662965-ebf8-4770-9f5e-5843639c09b0" name="lauri@DESKTOP-JT43V3D 2026-09-24 08:24:34" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T08:24:34.3856763+03:00" queuing="2026-09-24T08:24:34.3856768+03:00" start="2026-09-24T08:24:28.9084069+03:00" finish="2026-09-24T08:24:37.6491746+03:00" />
+  <TestSettings name="default" id="24994792-49a4-4907-bc26-ff00586b2735">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_08_24_34" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="359adab5-2b2d-4a15-ba9c-bf534c695c3f" testId="b0e3e49d-0c65-0168-ad80-f7c9a1cadae7" testName="Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(platformCursor: False)" computerName="DESKTOP-JT43V3D" duration="00:00:00.5593610" startTime="2026-09-24T08:24:36.9506250+03:00" endTime="2026-09-24T08:24:36.9506254+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="359adab5-2b2d-4a15-ba9c-bf534c695c3f">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : Detach village maps before disposing their package.</Message>
+          <StackTrace>   at Cerneala.Playground.SceneWorldPackage.DisposeAfterDetachAsync() in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 156&#xD;
+   at Cerneala.Playground.SceneWorldState.Suspend() in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 379&#xD;
+   at Cerneala.Playground.SceneWorldShowcase.OnUnloaded(UiElementId sender, RoutedEventArgs args) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 45&#xD;
+   at Cerneala.UI.Elements.UIElement.RaiseLocalHandlers(RoutedEventArgs args) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.Events.cs:line 167&#xD;
+   at Cerneala.UI.Elements.UIElement.RaiseEvent(RoutedEventArgs args) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.Events.cs:line 119&#xD;
+   at Cerneala.UI.Elements.UIElement.DetachFromRoot() in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.cs:line 701&#xD;
+   at Cerneala.UI.Elements.ElementLifecycle.DetachSingle(UIRoot root, UIElement element) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs:line 114&#xD;
+   at Cerneala.UI.Elements.ElementLifecycle.DetachPostOrder(UIRoot root, UIElement current, HashSet`1 visited) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs:line 87&#xD;
+   at Cerneala.UI.Elements.ElementLifecycle.DetachSubtree(UIRoot root, UIElement element) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs:line 23&#xD;
+   at Cerneala.UI.Elements.UIElementCollection.RemoveCore(UIElement child, Boolean ownerManaged) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs:line 172&#xD;
+   at Cerneala.UI.Elements.UIElementCollection.Remove(UIElement child) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs:line 133&#xD;
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(Boolean platformCursor) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 399&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="44c9bd72-2813-4944-ae73-15f5c2c715e6" testId="742ac92e-e9d8-1da5-ce0b-e6ac6c6cc6f8" testName="Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(ldtk: True)" computerName="DESKTOP-JT43V3D" duration="00:00:00.3870998" startTime="2026-09-24T08:24:33.6915285+03:00" endTime="2026-09-24T08:24:33.6915289+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="44c9bd72-2813-4944-ae73-15f5c2c715e6" />
+    <UnitTestResult executionId="442fcb70-bda2-4b2b-be7d-a5394ce522f5" testId="52d9b975-c134-13f4-0f66-fe7b0fd6fa69" testName="Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(ldtk: False)" computerName="DESKTOP-JT43V3D" duration="00:00:00.4710963" startTime="2026-09-24T08:24:33.2928390+03:00" endTime="2026-09-24T08:24:33.2928910+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="442fcb70-bda2-4b2b-be7d-a5394ce522f5" />
+    <UnitTestResult executionId="f38c1239-2f58-4f3b-bad7-bff3c589e376" testId="8aae5292-35db-c304-a776-14c50ace0a14" testName="Cerneala.Tests.Playground.SceneWorldShowcaseTests.ConstructionDoesNotOpenAnEditorDocumentAndFailedPackageOpenLeavesStateEmpty" computerName="DESKTOP-JT43V3D" duration="00:00:00.0098349" startTime="2026-09-24T08:24:37.2846282+03:00" endTime="2026-09-24T08:24:37.2846289+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f38c1239-2f58-4f3b-bad7-bff3c589e376" />
+    <UnitTestResult executionId="52318cdb-a372-4481-83eb-5782ed216c78" testId="16b3ba54-2e8b-189b-a7e2-51bbd5b53cc0" testName="Cerneala.Tests.Playground.SceneWorldShowcaseTests.DetachingDuringAnAsynchronousOpenRetiresTheOperationWithoutPumpingTheOldRootAndAllowsReattach" computerName="DESKTOP-JT43V3D" duration="00:00:00.0585646" startTime="2026-09-24T08:24:37.0155995+03:00" endTime="2026-09-24T08:24:37.0156005+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="52318cdb-a372-4481-83eb-5782ed216c78">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : Detach village maps before disposing their package.</Message>
+          <StackTrace>   at Cerneala.Playground.SceneWorldPackage.DisposeAfterDetachAsync() in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 156&#xD;
+   at Cerneala.Playground.SceneWorldState.Suspend() in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 379&#xD;
+   at Cerneala.Playground.SceneWorldShowcase.OnUnloaded(UiElementId sender, RoutedEventArgs args) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 45&#xD;
+   at Cerneala.UI.Elements.UIElement.RaiseLocalHandlers(RoutedEventArgs args) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.Events.cs:line 167&#xD;
+   at Cerneala.UI.Elements.UIElement.RaiseEvent(RoutedEventArgs args) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.Events.cs:line 119&#xD;
+   at Cerneala.UI.Elements.UIElement.DetachFromRoot() in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.cs:line 701&#xD;
+   at Cerneala.UI.Elements.ElementLifecycle.DetachSingle(UIRoot root, UIElement element) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs:line 114&#xD;
+   at Cerneala.UI.Elements.ElementLifecycle.DetachPostOrder(UIRoot root, UIElement current, HashSet`1 visited) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs:line 87&#xD;
+   at Cerneala.UI.Elements.ElementLifecycle.DetachSubtree(UIRoot root, UIElement element) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs:line 23&#xD;
+   at Cerneala.UI.Elements.UIElementCollection.RemoveCore(UIElement child, Boolean ownerManaged) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs:line 172&#xD;
+   at Cerneala.UI.Elements.UIElementCollection.Remove(UIElement child) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs:line 133&#xD;
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.DetachingDuringAnAsynchronousOpenRetiresTheOperationWithoutPumpingTheOldRootAndAllowsReattach() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 433&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="38942ca5-ac41-45bb-8a2b-5fd2426da50a" testId="ab82b985-4f5b-7ba9-6c94-6e4295be2d88" testName="Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantUsesACompleteEditedModelWithoutChangingGrassOrAuthoredNeighbors(ldtk: False)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0524701" startTime="2026-09-24T08:24:37.2323710+03:00" endTime="2026-09-24T08:24:37.2323715+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="38942ca5-ac41-45bb-8a2b-5fd2426da50a" />
+    <UnitTestResult executionId="6bd160fc-fe49-4e68-8aeb-90fdca581887" testId="f80c3d5f-b2a4-b35d-b1d0-22675c038a3f" testName="Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantStateSurvivesPlayerResetButFormatReloadDiscardsIt(ldtk: True)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0288218" startTime="2026-09-24T08:24:33.8593070+03:00" endTime="2026-09-24T08:24:33.8593075+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6bd160fc-fe49-4e68-8aeb-90fdca581887" />
+    <UnitTestResult executionId="9ebe58bf-9fa0-4b7d-bd10-8750aafb3827" testId="21d6331e-c1c3-c4ae-5b29-038c0cec4902" testName="Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantUsesACompleteEditedModelWithoutChangingGrassOrAuthoredNeighbors(ldtk: True)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0409246" startTime="2026-09-24T08:24:37.2743671+03:00" endTime="2026-09-24T08:24:37.2743676+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9ebe58bf-9fa0-4b7d-bd10-8750aafb3827" />
+    <UnitTestResult executionId="c2844b4c-bef5-4722-97ee-fbc711405e74" testId="d2662c7e-f1bc-c020-9c1d-cfa7c2fcaed7" testName="Cerneala.Tests.Playground.SceneWorldShowcaseTests.CancelledPlantDoesNotAdvanceTheNextSuccessfulModelEdit(ldtk: True)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0306315" startTime="2026-09-24T08:24:37.3162520+03:00" endTime="2026-09-24T08:24:37.3162524+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c2844b4c-bef5-4722-97ee-fbc711405e74" />
+    <UnitTestResult executionId="3e59f0a5-e7db-4b72-b01a-d58dd155d628" testId="498eb1d6-9429-98fb-823c-e7542067e37d" testName="Cerneala.Tests.Playground.SceneWorldShowcaseTests.ShowcaseNavigationSelectsSceneWorldThroughServoClick" computerName="DESKTOP-JT43V3D" duration="00:00:00.1627823" startTime="2026-09-24T08:24:37.1788930+03:00" endTime="2026-09-24T08:24:37.1788936+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3e59f0a5-e7db-4b72-b01a-d58dd155d628" />
+    <UnitTestResult executionId="423b088e-fbf6-4813-aa42-b80e1db9b481" testId="dc77bdab-0fc9-41c7-f61a-4877bff03949" testName="Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantStateSurvivesPlayerResetButFormatReloadDiscardsIt(ldtk: False)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1134481" startTime="2026-09-24T08:24:33.8284098+03:00" endTime="2026-09-24T08:24:33.8284100+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="423b088e-fbf6-4813-aa42-b80e1db9b481" />
+    <UnitTestResult executionId="fde6806e-a467-4750-b1f8-dfc5c8e1f03b" testId="1835def0-93ab-a8ca-ae9f-dc3b6f753f23" testName="Cerneala.Tests.Playground.SceneWorldShowcaseTests.CancelledPlantDoesNotAdvanceTheNextSuccessfulModelEdit(ldtk: False)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0772472" startTime="2026-09-24T08:24:37.4044042+03:00" endTime="2026-09-24T08:24:37.4044046+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fde6806e-a467-4750-b1f8-dfc5c8e1f03b" />
+    <UnitTestResult executionId="35c27c13-3bd7-4cbe-8653-3755e0551de2" testId="26fe4775-1b5a-ba64-514b-f255313aa70c" testName="Cerneala.Tests.Playground.SceneWorldShowcaseTests.DisposingTheStateClosesItsPackageAndRejectsFutureLoads" computerName="DESKTOP-JT43V3D" duration="00:00:00.0421907" startTime="2026-09-24T08:24:37.4539976+03:00" endTime="2026-09-24T08:24:37.4539982+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="35c27c13-3bd7-4cbe-8653-3755e0551de2" />
+    <UnitTestResult executionId="dcf1d228-99cb-4635-85ba-6a2e9b61ed53" testId="b3a43f37-7b07-05c5-21fd-7d9509deaf9e" testName="Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(platformCursor: True)" computerName="DESKTOP-JT43V3D" duration="00:00:02.4852173" startTime="2026-09-24T08:24:36.3858688+03:00" endTime="2026-09-24T08:24:36.3858691+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="dcf1d228-99cb-4635-85ba-6a2e9b61ed53">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : Detach village maps before disposing their package.</Message>
+          <StackTrace>   at Cerneala.Playground.SceneWorldPackage.DisposeAfterDetachAsync() in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 156&#xD;
+   at Cerneala.Playground.SceneWorldState.Suspend() in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 379&#xD;
+   at Cerneala.Playground.SceneWorldShowcase.OnUnloaded(UiElementId sender, RoutedEventArgs args) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 45&#xD;
+   at Cerneala.UI.Elements.UIElement.RaiseLocalHandlers(RoutedEventArgs args) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.Events.cs:line 167&#xD;
+   at Cerneala.UI.Elements.UIElement.RaiseEvent(RoutedEventArgs args) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.Events.cs:line 119&#xD;
+   at Cerneala.UI.Elements.UIElement.DetachFromRoot() in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.cs:line 701&#xD;
+   at Cerneala.UI.Elements.ElementLifecycle.DetachSingle(UIRoot root, UIElement element) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs:line 114&#xD;
+   at Cerneala.UI.Elements.ElementLifecycle.DetachPostOrder(UIRoot root, UIElement current, HashSet`1 visited) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs:line 87&#xD;
+   at Cerneala.UI.Elements.ElementLifecycle.DetachSubtree(UIRoot root, UIElement element) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs:line 23&#xD;
+   at Cerneala.UI.Elements.UIElementCollection.RemoveCore(UIElement child, Boolean ownerManaged) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs:line 172&#xD;
+   at Cerneala.UI.Elements.UIElementCollection.Remove(UIElement child) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs:line 133&#xD;
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(Boolean platformCursor) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 399&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantStateSurvivesPlayerResetButFormatReloadDiscardsIt(ldtk: False)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="dc77bdab-0fc9-41c7-f61a-4877bff03949">
+      <Execution id="423b088e-fbf6-4813-aa42-b80e1db9b481" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Playground.SceneWorldShowcaseTests" name="PlantStateSurvivesPlayerResetButFormatReloadDiscardsIt" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Playground.SceneWorldShowcaseTests.DisposingTheStateClosesItsPackageAndRejectsFutureLoads" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="26fe4775-1b5a-ba64-514b-f255313aa70c">
+      <Execution id="35c27c13-3bd7-4cbe-8653-3755e0551de2" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Playground.SceneWorldShowcaseTests" name="DisposingTheStateClosesItsPackageAndRejectsFutureLoads" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Playground.SceneWorldShowcaseTests.DetachingDuringAnAsynchronousOpenRetiresTheOperationWithoutPumpingTheOldRootAndAllowsReattach" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="16b3ba54-2e8b-189b-a7e2-51bbd5b53cc0">
+      <Execution id="52318cdb-a372-4481-83eb-5782ed216c78" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Playground.SceneWorldShowcaseTests" name="DetachingDuringAnAsynchronousOpenRetiresTheOperationWithoutPumpingTheOldRootAndAllowsReattach" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Playground.SceneWorldShowcaseTests.CancelledPlantDoesNotAdvanceTheNextSuccessfulModelEdit(ldtk: True)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="d2662c7e-f1bc-c020-9c1d-cfa7c2fcaed7">
+      <Execution id="c2844b4c-bef5-4722-97ee-fbc711405e74" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Playground.SceneWorldShowcaseTests" name="CancelledPlantDoesNotAdvanceTheNextSuccessfulModelEdit" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantUsesACompleteEditedModelWithoutChangingGrassOrAuthoredNeighbors(ldtk: True)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="21d6331e-c1c3-c4ae-5b29-038c0cec4902">
+      <Execution id="9ebe58bf-9fa0-4b7d-bd10-8750aafb3827" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Playground.SceneWorldShowcaseTests" name="PlantUsesACompleteEditedModelWithoutChangingGrassOrAuthoredNeighbors" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantUsesACompleteEditedModelWithoutChangingGrassOrAuthoredNeighbors(ldtk: False)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="ab82b985-4f5b-7ba9-6c94-6e4295be2d88">
+      <Execution id="38942ca5-ac41-45bb-8a2b-5fd2426da50a" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Playground.SceneWorldShowcaseTests" name="PlantUsesACompleteEditedModelWithoutChangingGrassOrAuthoredNeighbors" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(ldtk: True)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="742ac92e-e9d8-1da5-ce0b-e6ac6c6cc6f8">
+      <Execution id="44c9bd72-2813-4944-ae73-15f5c2c715e6" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Playground.SceneWorldShowcaseTests" name="ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Playground.SceneWorldShowcaseTests.ShowcaseNavigationSelectsSceneWorldThroughServoClick" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="498eb1d6-9429-98fb-823c-e7542067e37d">
+      <Execution id="3e59f0a5-e7db-4b72-b01a-d58dd155d628" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Playground.SceneWorldShowcaseTests" name="ShowcaseNavigationSelectsSceneWorldThroughServoClick" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(platformCursor: False)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="b0e3e49d-0c65-0168-ad80-f7c9a1cadae7">
+      <Execution id="359adab5-2b2d-4a15-ba9c-bf534c695c3f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Playground.SceneWorldShowcaseTests" name="CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Playground.SceneWorldShowcaseTests.CancelledPlantDoesNotAdvanceTheNextSuccessfulModelEdit(ldtk: False)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="1835def0-93ab-a8ca-ae9f-dc3b6f753f23">
+      <Execution id="fde6806e-a467-4750-b1f8-dfc5c8e1f03b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Playground.SceneWorldShowcaseTests" name="CancelledPlantDoesNotAdvanceTheNextSuccessfulModelEdit" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Playground.SceneWorldShowcaseTests.PlantStateSurvivesPlayerResetButFormatReloadDiscardsIt(ldtk: True)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="f80c3d5f-b2a4-b35d-b1d0-22675c038a3f">
+      <Execution id="6bd160fc-fe49-4e68-8aeb-90fdca581887" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Playground.SceneWorldShowcaseTests" name="PlantStateSurvivesPlayerResetButFormatReloadDiscardsIt" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(platformCursor: True)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="b3a43f37-7b07-05c5-21fd-7d9509deaf9e">
+      <Execution id="dcf1d228-99cb-4635-85ba-6a2e9b61ed53" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Playground.SceneWorldShowcaseTests" name="CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Playground.SceneWorldShowcaseTests.ConstructionDoesNotOpenAnEditorDocumentAndFailedPackageOpenLeavesStateEmpty" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="8aae5292-35db-c304-a776-14c50ace0a14">
+      <Execution id="f38c1239-2f58-4f3b-bad7-bff3c589e376" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Playground.SceneWorldShowcaseTests" name="ConstructionDoesNotOpenAnEditorDocumentAndFailedPackageOpenLeavesStateEmpty" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(ldtk: False)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="52d9b975-c134-13f4-0f66-fe7b0fd6fa69">
+      <Execution id="442fcb70-bda2-4b2b-be7d-a5394ce522f5" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Playground.SceneWorldShowcaseTests" name="ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="b0e3e49d-0c65-0168-ad80-f7c9a1cadae7" executionId="359adab5-2b2d-4a15-ba9c-bf534c695c3f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="742ac92e-e9d8-1da5-ce0b-e6ac6c6cc6f8" executionId="44c9bd72-2813-4944-ae73-15f5c2c715e6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="52d9b975-c134-13f4-0f66-fe7b0fd6fa69" executionId="442fcb70-bda2-4b2b-be7d-a5394ce522f5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8aae5292-35db-c304-a776-14c50ace0a14" executionId="f38c1239-2f58-4f3b-bad7-bff3c589e376" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="16b3ba54-2e8b-189b-a7e2-51bbd5b53cc0" executionId="52318cdb-a372-4481-83eb-5782ed216c78" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ab82b985-4f5b-7ba9-6c94-6e4295be2d88" executionId="38942ca5-ac41-45bb-8a2b-5fd2426da50a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f80c3d5f-b2a4-b35d-b1d0-22675c038a3f" executionId="6bd160fc-fe49-4e68-8aeb-90fdca581887" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="21d6331e-c1c3-c4ae-5b29-038c0cec4902" executionId="9ebe58bf-9fa0-4b7d-bd10-8750aafb3827" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d2662c7e-f1bc-c020-9c1d-cfa7c2fcaed7" executionId="c2844b4c-bef5-4722-97ee-fbc711405e74" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="498eb1d6-9429-98fb-823c-e7542067e37d" executionId="3e59f0a5-e7db-4b72-b01a-d58dd155d628" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="dc77bdab-0fc9-41c7-f61a-4877bff03949" executionId="423b088e-fbf6-4813-aa42-b80e1db9b481" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1835def0-93ab-a8ca-ae9f-dc3b6f753f23" executionId="fde6806e-a467-4750-b1f8-dfc5c8e1f03b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="26fe4775-1b5a-ba64-514b-f255313aa70c" executionId="35c27c13-3bd7-4cbe-8653-3755e0551de2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b3a43f37-7b07-05c5-21fd-7d9509deaf9e" executionId="dcf1d228-99cb-4635-85ba-6a2e9b61ed53" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="14" executed="14" passed="11" failed="3" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.65]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:02.44]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:02.46]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:06.16]       System.InvalidOperationException : Detach village maps before disposing their package.&#xD;
+[xUnit.net 00:00:06.16]       Stack Trace:&#xD;
+[xUnit.net 00:00:06.16]         C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs(156,0): at Cerneala.Playground.SceneWorldPackage.DisposeAfterDetachAsync()&#xD;
+[xUnit.net 00:00:06.16]         C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs(379,0): at Cerneala.Playground.SceneWorldState.Suspend()&#xD;
+[xUnit.net 00:00:06.16]         C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs(45,0): at Cerneala.Playground.SceneWorldShowcase.OnUnloaded(UiElementId sender, RoutedEventArgs args)&#xD;
+[xUnit.net 00:00:06.16]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.Events.cs(167,0): at Cerneala.UI.Elements.UIElement.RaiseLocalHandlers(RoutedEventArgs args)&#xD;
+[xUnit.net 00:00:06.16]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.Events.cs(119,0): at Cerneala.UI.Elements.UIElement.RaiseEvent(RoutedEventArgs args)&#xD;
+[xUnit.net 00:00:06.16]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.cs(701,0): at Cerneala.UI.Elements.UIElement.DetachFromRoot()&#xD;
+[xUnit.net 00:00:06.16]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs(114,0): at Cerneala.UI.Elements.ElementLifecycle.DetachSingle(UIRoot root, UIElement element)&#xD;
+[xUnit.net 00:00:06.16]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs(87,0): at Cerneala.UI.Elements.ElementLifecycle.DetachPostOrder(UIRoot root, UIElement current, HashSet`1 visited)&#xD;
+[xUnit.net 00:00:06.16]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs(23,0): at Cerneala.UI.Elements.ElementLifecycle.DetachSubtree(UIRoot root, UIElement element)&#xD;
+[xUnit.net 00:00:06.16]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs(172,0): at Cerneala.UI.Elements.UIElementCollection.RemoveCore(UIElement child, Boolean ownerManaged)&#xD;
+[xUnit.net 00:00:06.16]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs(133,0): at Cerneala.UI.Elements.UIElementCollection.Remove(UIElement child)&#xD;
+[xUnit.net 00:00:06.16]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs(399,0): at Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(Boolean platformCursor)&#xD;
+[xUnit.net 00:00:06.16]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:06.72]       System.InvalidOperationException : Detach village maps before disposing their package.&#xD;
+[xUnit.net 00:00:06.72]       Stack Trace:&#xD;
+[xUnit.net 00:00:06.72]         C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs(156,0): at Cerneala.Playground.SceneWorldPackage.DisposeAfterDetachAsync()&#xD;
+[xUnit.net 00:00:06.72]         C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs(379,0): at Cerneala.Playground.SceneWorldState.Suspend()&#xD;
+[xUnit.net 00:00:06.72]         C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs(45,0): at Cerneala.Playground.SceneWorldShowcase.OnUnloaded(UiElementId sender, RoutedEventArgs args)&#xD;
+[xUnit.net 00:00:06.72]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.Events.cs(167,0): at Cerneala.UI.Elements.UIElement.RaiseLocalHandlers(RoutedEventArgs args)&#xD;
+[xUnit.net 00:00:06.72]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.Events.cs(119,0): at Cerneala.UI.Elements.UIElement.RaiseEvent(RoutedEventArgs args)&#xD;
+[xUnit.net 00:00:06.72]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.cs(701,0): at Cerneala.UI.Elements.UIElement.DetachFromRoot()&#xD;
+[xUnit.net 00:00:06.72]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs(114,0): at Cerneala.UI.Elements.ElementLifecycle.DetachSingle(UIRoot root, UIElement element)&#xD;
+[xUnit.net 00:00:06.72]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs(87,0): at Cerneala.UI.Elements.ElementLifecycle.DetachPostOrder(UIRoot root, UIElement current, HashSet`1 visited)&#xD;
+[xUnit.net 00:00:06.72]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs(23,0): at Cerneala.UI.Elements.ElementLifecycle.DetachSubtree(UIRoot root, UIElement element)&#xD;
+[xUnit.net 00:00:06.72]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs(172,0): at Cerneala.UI.Elements.UIElementCollection.RemoveCore(UIElement child, Boolean ownerManaged)&#xD;
+[xUnit.net 00:00:06.72]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs(133,0): at Cerneala.UI.Elements.UIElementCollection.Remove(UIElement child)&#xD;
+[xUnit.net 00:00:06.72]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs(399,0): at Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(Boolean platformCursor)&#xD;
+[xUnit.net 00:00:06.73]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:06.79]       System.InvalidOperationException : Detach village maps before disposing their package.&#xD;
+[xUnit.net 00:00:06.79]       Stack Trace:&#xD;
+[xUnit.net 00:00:06.79]         C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs(156,0): at Cerneala.Playground.SceneWorldPackage.DisposeAfterDetachAsync()&#xD;
+[xUnit.net 00:00:06.79]         C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs(379,0): at Cerneala.Playground.SceneWorldState.Suspend()&#xD;
+[xUnit.net 00:00:06.79]         C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs(45,0): at Cerneala.Playground.SceneWorldShowcase.OnUnloaded(UiElementId sender, RoutedEventArgs args)&#xD;
+[xUnit.net 00:00:06.79]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.Events.cs(167,0): at Cerneala.UI.Elements.UIElement.RaiseLocalHandlers(RoutedEventArgs args)&#xD;
+[xUnit.net 00:00:06.79]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.Events.cs(119,0): at Cerneala.UI.Elements.UIElement.RaiseEvent(RoutedEventArgs args)&#xD;
+[xUnit.net 00:00:06.79]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.cs(701,0): at Cerneala.UI.Elements.UIElement.DetachFromRoot()&#xD;
+[xUnit.net 00:00:06.79]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs(114,0): at Cerneala.UI.Elements.ElementLifecycle.DetachSingle(UIRoot root, UIElement element)&#xD;
+[xUnit.net 00:00:06.79]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs(87,0): at Cerneala.UI.Elements.ElementLifecycle.DetachPostOrder(UIRoot root, UIElement current, HashSet`1 visited)&#xD;
+[xUnit.net 00:00:06.79]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs(23,0): at Cerneala.UI.Elements.ElementLifecycle.DetachSubtree(UIRoot root, UIElement element)&#xD;
+[xUnit.net 00:00:06.79]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs(172,0): at Cerneala.UI.Elements.UIElementCollection.RemoveCore(UIElement child, Boolean ownerManaged)&#xD;
+[xUnit.net 00:00:06.79]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs(133,0): at Cerneala.UI.Elements.UIElementCollection.Remove(UIElement child)&#xD;
+[xUnit.net 00:00:06.79]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs(433,0): at Cerneala.Tests.Playground.SceneWorldShowcaseTests.DetachingDuringAnAsynchronousOpenRetiresTheOperationWithoutPumpingTheOldRootAndAllowsReattach()&#xD;
+[xUnit.net 00:00:06.79]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:07.24]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T08:24:36.3805231+03:00">
+        <Text>[xUnit.net 00:00:06.15]     Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(platformCursor: True) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T08:24:36.9485097+03:00">
+        <Text>[xUnit.net 00:00:06.72]     Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(platformCursor: False) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T08:24:37.0115600+03:00">
+        <Text>[xUnit.net 00:00:06.79]     Cerneala.Tests.Playground.SceneWorldShowcaseTests.DetachingDuringAnAsynchronousOpenRetiresTheOperationWithoutPumpingTheOldRootAndAllowsReattach [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

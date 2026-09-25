@@ -1,0 +1,47 @@
+source_hash_entries=22
+source_missing=0
+source_hash_mismatch=0
+new_text_files=20
+new_text_issues=0
+git_diff_check_exit=0
+filetree_sha256=2C1F2C8114F1A0CAF2CAC1F1B5D0070CF1B05A882BE6A2DDA0A135EDA17F76B9
+filetree_raw_lines=5652
+filetree_app_files=16
+filetree_test_files=5
+test_dir_extra_generated_TestResults_trx=8
+baseline_status_entries=606
+current_status_entries=734
+baseline_entries_removed=0
+new_status_entries=128
+unexpected_new_status_entries=27
+---missing---
+---hash-mismatch---
+---removed-status---
+---unexpected-new-status---
+ M CLAUDE.md
+?? .claude/skills/algorithm-market/SKILL.md
+?? .claude/skills/algorithm-market/references/license-policy.md
+?? .claude/skills/cerneala-breaker/SKILL.md
+?? .claude/skills/cerneala-breaker/references/attack-techniques.md
+?? .claude/skills/cerneala-breaker/references/test-evidence.md
+?? .claude/skills/cerneala-checklist-plan/SKILL.md
+?? .claude/skills/cerneala-checklist-plan/references/semantic-audit.md
+?? .claude/skills/cerneala-fix-bug/SKILL.md
+?? .claude/skills/cerneala-implement-plan/SKILL.md
+?? .claude/skills/cerneala-performance-gate/SKILL.md
+?? .claude/skills/repo-cleanup/SKILL.md
+?? .claude/skills/writing-api-documentation/SKILL.md
+?? .claude/skills/writing-api-documentation/references/wpf-api-doc-formula.md
+?? claude-skills-import/algorithm-market/SKILL.md
+?? claude-skills-import/algorithm-market/references/license-policy.md
+?? claude-skills-import/cerneala-breaker/SKILL.md
+?? claude-skills-import/cerneala-breaker/references/attack-techniques.md
+?? claude-skills-import/cerneala-breaker/references/test-evidence.md
+?? claude-skills-import/cerneala-checklist-plan/SKILL.md
+?? claude-skills-import/cerneala-checklist-plan/references/semantic-audit.md
+?? claude-skills-import/cerneala-fix-bug/SKILL.md
+?? claude-skills-import/cerneala-implement-plan/SKILL.md
+?? claude-skills-import/cerneala-performance-gate/SKILL.md
+?? claude-skills-import/repo-cleanup/SKILL.md
+?? claude-skills-import/writing-api-documentation/SKILL.md
+?? claude-skills-import/writing-api-documentation/references/wpf-api-doc-formula.md

@@ -1,0 +1,59 @@
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:06.15]     Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(platformCursor: True) [FAIL]
+  Failed Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(platformCursor: True) [2 s]
+  Error Message:
+   System.InvalidOperationException : Detach village maps before disposing their package.
+  Stack Trace:
+     at Cerneala.Playground.SceneWorldPackage.DisposeAfterDetachAsync() in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 156
+   at Cerneala.Playground.SceneWorldState.Suspend() in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 379
+   at Cerneala.Playground.SceneWorldShowcase.OnUnloaded(UiElementId sender, RoutedEventArgs args) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 45
+   at Cerneala.UI.Elements.UIElement.RaiseLocalHandlers(RoutedEventArgs args) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.Events.cs:line 167
+   at Cerneala.UI.Elements.UIElement.RaiseEvent(RoutedEventArgs args) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.Events.cs:line 119
+   at Cerneala.UI.Elements.UIElement.DetachFromRoot() in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.cs:line 701
+   at Cerneala.UI.Elements.ElementLifecycle.DetachSingle(UIRoot root, UIElement element) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs:line 114
+   at Cerneala.UI.Elements.ElementLifecycle.DetachPostOrder(UIRoot root, UIElement current, HashSet`1 visited) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs:line 87
+   at Cerneala.UI.Elements.ElementLifecycle.DetachSubtree(UIRoot root, UIElement element) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs:line 23
+   at Cerneala.UI.Elements.UIElementCollection.RemoveCore(UIElement child, Boolean ownerManaged) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs:line 172
+   at Cerneala.UI.Elements.UIElementCollection.Remove(UIElement child) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs:line 133
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(Boolean platformCursor) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 399
+--- End of stack trace from previous location ---
+[xUnit.net 00:00:06.72]     Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(platformCursor: False) [FAIL]
+[xUnit.net 00:00:06.79]     Cerneala.Tests.Playground.SceneWorldShowcaseTests.DetachingDuringAnAsynchronousOpenRetiresTheOperationWithoutPumpingTheOldRootAndAllowsReattach [FAIL]
+  Failed Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(platformCursor: False) [559 ms]
+  Error Message:
+   System.InvalidOperationException : Detach village maps before disposing their package.
+  Stack Trace:
+     at Cerneala.Playground.SceneWorldPackage.DisposeAfterDetachAsync() in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 156
+   at Cerneala.Playground.SceneWorldState.Suspend() in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 379
+   at Cerneala.Playground.SceneWorldShowcase.OnUnloaded(UiElementId sender, RoutedEventArgs args) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 45
+   at Cerneala.UI.Elements.UIElement.RaiseLocalHandlers(RoutedEventArgs args) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.Events.cs:line 167
+   at Cerneala.UI.Elements.UIElement.RaiseEvent(RoutedEventArgs args) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.Events.cs:line 119
+   at Cerneala.UI.Elements.UIElement.DetachFromRoot() in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.cs:line 701
+   at Cerneala.UI.Elements.ElementLifecycle.DetachSingle(UIRoot root, UIElement element) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs:line 114
+   at Cerneala.UI.Elements.ElementLifecycle.DetachPostOrder(UIRoot root, UIElement current, HashSet`1 visited) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs:line 87
+   at Cerneala.UI.Elements.ElementLifecycle.DetachSubtree(UIRoot root, UIElement element) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs:line 23
+   at Cerneala.UI.Elements.UIElementCollection.RemoveCore(UIElement child, Boolean ownerManaged) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs:line 172
+   at Cerneala.UI.Elements.UIElementCollection.Remove(UIElement child) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs:line 133
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.CompiledWorldMarkupRunsItsEffectsAnimationsAndInputContracts(Boolean platformCursor) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 399
+--- End of stack trace from previous location ---
+  Failed Cerneala.Tests.Playground.SceneWorldShowcaseTests.DetachingDuringAnAsynchronousOpenRetiresTheOperationWithoutPumpingTheOldRootAndAllowsReattach [58 ms]
+  Error Message:
+   System.InvalidOperationException : Detach village maps before disposing their package.
+  Stack Trace:
+     at Cerneala.Playground.SceneWorldPackage.DisposeAfterDetachAsync() in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 156
+   at Cerneala.Playground.SceneWorldState.Suspend() in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 379
+   at Cerneala.Playground.SceneWorldShowcase.OnUnloaded(UiElementId sender, RoutedEventArgs args) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldShowcase.crn.cs:line 45
+   at Cerneala.UI.Elements.UIElement.RaiseLocalHandlers(RoutedEventArgs args) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.Events.cs:line 167
+   at Cerneala.UI.Elements.UIElement.RaiseEvent(RoutedEventArgs args) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.Events.cs:line 119
+   at Cerneala.UI.Elements.UIElement.DetachFromRoot() in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.cs:line 701
+   at Cerneala.UI.Elements.ElementLifecycle.DetachSingle(UIRoot root, UIElement element) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs:line 114
+   at Cerneala.UI.Elements.ElementLifecycle.DetachPostOrder(UIRoot root, UIElement current, HashSet`1 visited) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs:line 87
+   at Cerneala.UI.Elements.ElementLifecycle.DetachSubtree(UIRoot root, UIElement element) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs:line 23
+   at Cerneala.UI.Elements.UIElementCollection.RemoveCore(UIElement child, Boolean ownerManaged) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs:line 172
+   at Cerneala.UI.Elements.UIElementCollection.Remove(UIElement child) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs:line 133
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.DetachingDuringAnAsynchronousOpenRetiresTheOperationWithoutPumpingTheOldRootAndAllowsReattach() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 433
+--- End of stack trace from previous location ---
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage2\playground\showcase-class-first.trx
+
+Failed!  - Failed:     3, Passed:    11, Skipped:     0, Total:    14, Duration: 4 s - Cerneala.Tests.dll (net8.0)

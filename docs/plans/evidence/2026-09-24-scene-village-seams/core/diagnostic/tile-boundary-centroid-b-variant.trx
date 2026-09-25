@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="a2c07fef-9a18-400d-8781-dc3f55b488a4" name="lauri@DESKTOP-JT43V3D 2026-09-24 22:54:41" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T22:54:41.3075037+03:00" queuing="2026-09-24T22:54:41.3075040+03:00" start="2026-09-24T22:54:30.7644418+03:00" finish="2026-09-24T22:54:41.3126812+03:00" />
+  <TestSettings name="default" id="3fa92d78-8228-413e-b448-44ca7ac848e7">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_22_54_41" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="43951138-6cd9-4c0c-84e6-e506bc6f47a6" testId="a458bda3-8067-7191-2bd5-8aa856b6ce70" testName="Cerneala.Tests.SceneVillage.NativeVillageTileBoundaryTests.OpaquePointSampledAtlasTileJoinsOpaqueGroundAtFractionalCameraPosition" computerName="DESKTOP-JT43V3D" duration="00:00:09.2146011" startTime="2026-09-24T22:54:41.1430886+03:00" endTime="2026-09-24T22:54:41.1431086+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="43951138-6cd9-4c0c-84e6-e506bc6f47a6">
+      <Output>
+        <StdOut>Point boundary: ViewBox=DrawRect { X = -100, Y = -68.05, Width = 396, Height = 220, Right = 296, Bottom = 151.95 }, bounds=LayoutRect { X = 14.4, Y = 80, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 80 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, x=308, y=350, phase=0.125, above=#ff84c669, edge=#ff84c669, below=#ff84c669.&#xD;
+Linear boundary: ViewBox=DrawRect { X = -100, Y = -68.05, Width = 396, Height = 220, Right = 296, Bottom = 151.95 }, bounds=LayoutRect { X = 14.4, Y = 80, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 80 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, x=548, y=350, phase=0.125, above=#ff78aa5f, edge=#ff80bc66, below=#ff84c669.&#xD;
+Uniform boundary: ViewBox=DrawRect { X = -100, Y = -68.05, Width = 396, Height = 220, Right = 296, Bottom = 151.95 }, bounds=LayoutRect { X = 14.4, Y = 80, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 80 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, x=788, y=350, phase=0.125, above=#ff84c669, edge=#ff84c669, below=#ff84c669.&#xD;
+App-owned tile-boundary capture: C:\Users\lauri\Desktop\Cerneala\artifacts\ci\scene-village\screenshots\tile-boundary-20260924-195432121\phase-0.125.png&#xD;
+Point boundary: ViewBox=DrawRect { X = -100, Y = -68.11, Width = 396, Height = 220, Right = 296, Bottom = 151.89 }, bounds=LayoutRect { X = 14.4, Y = 80, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 80 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, x=308, y=350, phase=0.275, above=#ff84c669, edge=#ff84c669, below=#ff84c669.&#xD;
+Linear boundary: ViewBox=DrawRect { X = -100, Y = -68.11, Width = 396, Height = 220, Right = 296, Bottom = 151.89 }, bounds=LayoutRect { X = 14.4, Y = 80, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 80 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, x=548, y=350, phase=0.275, above=#ff7aaf61, edge=#ff7cb262, below=#ff84c669.&#xD;
+Uniform boundary: ViewBox=DrawRect { X = -100, Y = -68.11, Width = 396, Height = 220, Right = 296, Bottom = 151.89 }, bounds=LayoutRect { X = 14.4, Y = 80, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 80 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, x=788, y=350, phase=0.275, above=#ff84c669, edge=#ff84c669, below=#ff84c669.&#xD;
+App-owned tile-boundary capture: C:\Users\lauri\Desktop\Cerneala\artifacts\ci\scene-village\screenshots\tile-boundary-20260924-195434403\phase-0.275.png&#xD;
+Point boundary: ViewBox=DrawRect { X = -100, Y = -68.15, Width = 396, Height = 220, Right = 296, Bottom = 151.85 }, bounds=LayoutRect { X = 14.4, Y = 80, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 80 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, x=308, y=350, phase=0.375, above=#ff84c669, edge=#ff84c669, below=#ff84c669.&#xD;
+Linear boundary: ViewBox=DrawRect { X = -100, Y = -68.15, Width = 396, Height = 220, Right = 296, Bottom = 151.85 }, bounds=LayoutRect { X = 14.4, Y = 80, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 80 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, x=548, y=350, phase=0.375, above=#ff7bb262, edge=#ff77a95f, below=#ff84c669.&#xD;
+Uniform boundary: ViewBox=DrawRect { X = -100, Y = -68.15, Width = 396, Height = 220, Right = 296, Bottom = 151.85 }, bounds=LayoutRect { X = 14.4, Y = 80, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 80 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, x=788, y=350, phase=0.375, above=#ff84c669, edge=#ff84c669, below=#ff84c669.&#xD;
+App-owned tile-boundary capture: C:\Users\lauri\Desktop\Cerneala\artifacts\ci\scene-village\screenshots\tile-boundary-20260924-195435655\phase-0.375.png&#xD;
+Point boundary: ViewBox=DrawRect { X = -100, Y = -68.2, Width = 396, Height = 220, Right = 296, Bottom = 151.8 }, bounds=LayoutRect { X = 14.4, Y = 80, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 80 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, x=308, y=350, phase=0.500, above=#ff84c669, edge=#ff84c669, below=#ff84c669.&#xD;
+Linear boundary: ViewBox=DrawRect { X = -100, Y = -68.2, Width = 396, Height = 220, Right = 296, Bottom = 151.8 }, bounds=LayoutRect { X = 14.4, Y = 80, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 80 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, x=548, y=350, phase=0.500, above=#ff7db663, edge=#ff74a15c, below=#ff84c669.&#xD;
+Uniform boundary: ViewBox=DrawRect { X = -100, Y = -68.2, Width = 396, Height = 220, Right = 296, Bottom = 151.8 }, bounds=LayoutRect { X = 14.4, Y = 80, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 80 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, x=788, y=350, phase=0.500, above=#ff84c669, edge=#ff84c669, below=#ff84c669.&#xD;
+App-owned tile-boundary capture: C:\Users\lauri\Desktop\Cerneala\artifacts\ci\scene-village\screenshots\tile-boundary-20260924-195437403\phase-0.500.png&#xD;
+Point boundary: ViewBox=DrawRect { X = -100, Y = -68.25, Width = 396, Height = 220, Right = 296, Bottom = 151.75 }, bounds=LayoutRect { X = 14.4, Y = 80, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 80 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, x=308, y=350, phase=0.625, above=#ff84c669, edge=#ff84c669, below=#ff84c669.&#xD;
+Linear boundary: ViewBox=DrawRect { X = -100, Y = -68.25, Width = 396, Height = 220, Right = 296, Bottom = 151.75 }, bounds=LayoutRect { X = 14.4, Y = 80, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 80 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, x=548, y=350, phase=0.625, above=#ff7fba65, edge=#ff719a59, below=#ff84c669.&#xD;
+Uniform boundary: ViewBox=DrawRect { X = -100, Y = -68.25, Width = 396, Height = 220, Right = 296, Bottom = 151.75 }, bounds=LayoutRect { X = 14.4, Y = 80, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 80 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, x=788, y=350, phase=0.625, above=#ff84c669, edge=#ff84c669, below=#ff84c669.&#xD;
+App-owned tile-boundary capture: C:\Users\lauri\Desktop\Cerneala\artifacts\ci\scene-village\screenshots\tile-boundary-20260924-195438661\phase-0.625.png&#xD;
+Point boundary: ViewBox=DrawRect { X = -100, Y = -68.35, Width = 396, Height = 220, Right = 296, Bottom = 151.65 }, bounds=LayoutRect { X = 14.4, Y = 80, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 80 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, x=308, y=350, phase=0.875, above=#ff84c669, edge=#ff84c669, below=#ff84c669.&#xD;
+Linear boundary: ViewBox=DrawRect { X = -100, Y = -68.35, Width = 396, Height = 220, Right = 296, Bottom = 151.65 }, bounds=LayoutRect { X = 14.4, Y = 80, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 80 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, x=548, y=350, phase=0.875, above=#ff82c268, edge=#ff6c9056, below=#ff84c669.&#xD;
+Uniform boundary: ViewBox=DrawRect { X = -100, Y = -68.35, Width = 396, Height = 220, Right = 296, Bottom = 151.65 }, bounds=LayoutRect { X = 14.4, Y = 80, Width = 792, Height = 440, Location = LayoutPoint { X = 14.4, Y = 80 }, Size = LayoutSize { Width = 792, Height = 440, IsWidthUnconstrained = False, IsHeightUnconstrained = False } }, screenshot=1025x750, x=788, y=350, phase=0.875, above=#ff84c669, edge=#ff84c669, below=#ff84c669.&#xD;
+App-owned tile-boundary capture: C:\Users\lauri\Desktop\Cerneala\artifacts\ci\scene-village\screenshots\tile-boundary-20260924-195439850\phase-0.875.png</StdOut>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SceneVillage.NativeVillageTileBoundaryTests.OpaquePointSampledAtlasTileJoinsOpaqueGroundAtFractionalCameraPosition" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.scenevillage\bin\release\net8.0-windows\cerneala.tests.scenevillage.dll" id="a458bda3-8067-7191-2bd5-8aa856b6ce70">
+      <Execution id="43951138-6cd9-4c0c-84e6-e506bc6f47a6" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SceneVillage.NativeVillageTileBoundaryTests" name="OpaquePointSampledAtlasTileJoinsOpaqueGroundAtFractionalCameraPosition" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="a458bda3-8067-7191-2bd5-8aa856b6ce70" executionId="43951138-6cd9-4c0c-84e6-e506bc6f47a6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="1" executed="1" passed="1" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.11]   Discovering: Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:00.17]   Discovered:  Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:00.17]   Starting:    Cerneala.Tests.SceneVillage&#xD;
+[xUnit.net 00:00:09.45]   Finished:    Cerneala.Tests.SceneVillage&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

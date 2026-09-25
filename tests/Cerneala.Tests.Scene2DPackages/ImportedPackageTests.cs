@@ -33,9 +33,11 @@ public sealed class ImportedPackageTests
         {
             await Scene2DPackageWriter.WriteAsync(output, document, imported.AssetRootDirectory!, imported.ReferencedFiles);
             using Scene2DPackage package = await Scene2DPackage.OpenAsync(output);
+            PackageIndex index = (PackageIndex)PackageValueCodec.Decode(
+                File.ReadAllBytes(Path.Combine(output, PackageFiles.CatalogName))[..^32])!;
             Assert.Equal(document.Levels.Count, package.Levels.Count);
-            using var metadata = await package.LoadMetadataAsync();
-            EqualPayload(new Scene2DPackageMetadata(document.Properties, []), metadata.Value);
+            Scene2DPackageMetadata metadata = await package.LoadMetadataAsync();
+            EqualPayload(new Scene2DPackageMetadata(document.Properties, []), metadata);
             foreach (string dependency in imported.ReferencedFiles)
             {
                 Assert.Equal(await File.ReadAllBytesAsync(Path.Combine(fixtures, dependency)), await File.ReadAllBytesAsync(package.GetFilePath(dependency)));
@@ -50,38 +52,39 @@ public sealed class ImportedPackageTests
                 Assert.Equal(expected.WorldOffset, actual.WorldOffset);
                 Assert.Equal(expected.TileSize, actual.TileSize);
                 Assert.Equal(expected.Bounds, actual.Bounds);
-                using var levelMetadata = await actual.LoadMetadataAsync();
-                EqualPayload(new Scene2DPackageMetadata(expected.Properties, expected.TileSets), levelMetadata.Value);
-                Assert.Equal(expected.TileMaps.Count, actual.TileMaps.Count);
+                Scene2DPackageMetadata levelMetadata = await actual.LoadMetadataAsync();
+                EqualPayload(new Scene2DPackageMetadata(expected.Properties, expected.TileSets), levelMetadata);
+                Assert.Equal(expected.TileMaps.Select(static map => map.Id), actual.TileMapIds);
                 for (int mapIndex = 0; mapIndex < expected.TileMaps.Count; mapIndex++)
                 {
                     TileMap2DModel model = expected.TileMaps[mapIndex];
-                    TileMapSource2D source = actual.TileMaps[mapIndex];
+                    PackageMap prepared = index.Levels[levelIndex].Maps[mapIndex];
                     TileMapSource2D inMemory = TileMapSource2D.FromModel(model, sizes);
-                    Assert.Equal(inMemory.Entries.Count, source.Entries.Count);
-                    using var mapMetadata = await actual.LoadMapMetadataAsync(model.Id);
+                    Assert.Equal(inMemory.Entries.Count, prepared.Catalog.Chunks.Count);
+                    Scene2DPackageMetadata mapMetadata = await actual.LoadMapMetadataAsync(model.Id);
                     EqualPayload(new Scene2DPackageMetadata(model.Properties, model.TileSets,
                         model.Chunks.Select(static chunk => new Scene2DPackageGridChunkMetadata(
-                            new(chunk.Origin.X, chunk.Origin.Y, chunk.Width, chunk.Height), chunk.Version, chunk.Properties))), mapMetadata.Value);
-                    for (int chunk = 0; chunk < source.Entries.Count; chunk++)
+                            new(chunk.Origin.X, chunk.Origin.Y, chunk.Width, chunk.Height), chunk.Version, chunk.Properties))), mapMetadata);
+                    for (int chunk = 0; chunk < prepared.Chunks.Length; chunk++)
                     {
-                        EqualPayload(inMemory.Entries[chunk], source.Entries[chunk]);
+                        EqualPayload(inMemory.Entries[chunk], prepared.Catalog.Chunks[chunk].Spatial);
                         using var originalData = await inMemory.LoadAsync(inMemory.Entries[chunk]);
-                        using var packageData = await source.LoadAsync(source.Entries[chunk]);
-                        EqualPayload(originalData.Value, packageData.Value);
+                        TileMapChunkData2D packageData = await package.LoadAsync<TileMapChunkData2D>(
+                            prepared.Chunks[chunk], CancellationToken.None);
+                        EqualPayload(originalData.Value, packageData);
                     }
                 }
                 Assert.Equal(expected.Entities.Select(static entity => entity.Id), actual.EntityIds);
                 foreach (Scene2DEntity entity in expected.Entities)
                 {
-                    using var lease = await actual.LoadEntityAsync(entity.Id);
-                    EqualPayload(entity, lease.Value);
+                    Scene2DEntity loaded = await actual.LoadEntityAsync(entity.Id);
+                    EqualPayload(entity, loaded);
                 }
                 Assert.Equal(expected.Promotions.Select(static promotion => promotion.Cell), actual.PromotionCells);
                 foreach (TilePromotion2D promotion in expected.Promotions)
                 {
-                    using var lease = await actual.LoadPromotionAsync(promotion.Cell);
-                    EqualPayload(promotion, lease.Value);
+                    TilePromotion2D loaded = await actual.LoadPromotionAsync(promotion.Cell);
+                    EqualPayload(promotion, loaded);
                 }
             }
         }

@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="57c2aa23-3900-4f70-a786-1afc8c3c7094" name="lauri@DESKTOP-JT43V3D 2026-09-24 08:10:12" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T08:10:12.7355237+03:00" queuing="2026-09-24T08:10:12.7355241+03:00" start="2026-09-24T08:10:02.7641096+03:00" finish="2026-09-24T08:10:12.7437634+03:00" />
+  <TestSettings name="default" id="68af806d-8cee-4a74-811b-73efa29b2852">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_08_10_12" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="54634597-99ef-4b87-90fb-c6f210a6c358" testId="395d3734-d146-c4db-501c-c2f46782160d" testName="Cerneala.Tests.Controls.SceneCollisionStreamingTests.OffCameraSimulatedActorsPinNearbyTerrainWithoutPinningTheGap" computerName="DESKTOP-JT43V3D" duration="00:00:05.4861783" startTime="2026-09-24T08:10:12.5859608+03:00" endTime="2026-09-24T08:10:12.5860111+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="54634597-99ef-4b87-90fb-c6f210a6c358">
+      <Output>
+        <ErrorInfo>
+          <Message>Collision preparation did not finish within five seconds: mapChildren=0, loads=0, collisionInterests=2.</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneCollisionStreamingTests.Fixture.DrainUntil(Func`1 done) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneCollisionStreamingTests.cs:line 422&#xD;
+   at Cerneala.Tests.Controls.SceneCollisionStreamingTests.OffCameraSimulatedActorsPinNearbyTerrainWithoutPinningTheGap() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneCollisionStreamingTests.cs:line 197&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Controls.SceneCollisionStreamingTests.OffCameraSimulatedActorsPinNearbyTerrainWithoutPinningTheGap" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="395d3734-d146-c4db-501c-c2f46782160d">
+      <Execution id="54634597-99ef-4b87-90fb-c6f210a6c358" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneCollisionStreamingTests" name="OffCameraSimulatedActorsPinNearbyTerrainWithoutPinningTheGap" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="395d3734-d146-c4db-501c-c2f46782160d" executionId="54634597-99ef-4b87-90fb-c6f210a6c358" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="1" executed="1" passed="0" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.57]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:02.17]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:02.21]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:07.85]       Collision preparation did not finish within five seconds: mapChildren=0, loads=0, collisionInterests=2.&#xD;
+[xUnit.net 00:00:07.85]       Stack Trace:&#xD;
+[xUnit.net 00:00:07.85]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneCollisionStreamingTests.cs(422,0): at Cerneala.Tests.Controls.SceneCollisionStreamingTests.Fixture.DrainUntil(Func`1 done)&#xD;
+[xUnit.net 00:00:07.85]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneCollisionStreamingTests.cs(197,0): at Cerneala.Tests.Controls.SceneCollisionStreamingTests.OffCameraSimulatedActorsPinNearbyTerrainWithoutPinningTheGap()&#xD;
+[xUnit.net 00:00:07.85]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:07.85]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:07.87]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T08:10:12.5817134+03:00">
+        <Text>[xUnit.net 00:00:07.85]     Cerneala.Tests.Controls.SceneCollisionStreamingTests.OffCameraSimulatedActorsPinNearbyTerrainWithoutPinningTheGap [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

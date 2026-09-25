@@ -4,7 +4,7 @@ using Cerneala.Drawing;
 namespace Cerneala.UI.Controls;
 
 /// <summary>Shares spatial acquisitions until the last interested region releases them.</summary>
-public sealed class SceneSpatialResidency2D<T> : IDisposable, IAsyncDisposable where T : class
+internal sealed class SceneSpatialResidency2D<T> : IDisposable, IAsyncDisposable where T : class
 {
     private readonly object gate = new();
     private readonly ISceneSpatialSource2D<T> source;
@@ -394,7 +394,7 @@ public sealed class SceneSpatialResidency2D<T> : IDisposable, IAsyncDisposable w
 }
 
 /// <summary>A prepared snapshot that pins its payloads until disposed.</summary>
-public sealed class SceneSpatialRegion2D<T> : IDisposable where T : class
+internal sealed class SceneSpatialRegion2D<T> : IDisposable where T : class
 {
     private readonly ISceneSpatialSource2D<T> source;
     private readonly IReadOnlyList<SceneSpatialEntry2D> catalog;

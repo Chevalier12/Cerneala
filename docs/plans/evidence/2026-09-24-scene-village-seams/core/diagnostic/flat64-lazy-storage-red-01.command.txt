@@ -1,0 +1,2 @@
+$env:DefaultItemExcludesInProjectFolder='artifacts/**'
+dotnet test tests/Cerneala.Tests.SdlGpu/Cerneala.Tests.SdlGpu.csproj -c Release --filter 'FullyQualifiedName~OrdinaryBatchesLeaveSelectedStorageEmptyUntilFirstImageDomainAllocation' --logger 'trx;LogFileName=flat64-lazy-storage-red-01.trx' --results-directory 'docs/plans/evidence/2026-09-24-scene-village-seams/core/diagnostic' '-p:DefaultItemExcludesInProjectFolder=artifacts/**'

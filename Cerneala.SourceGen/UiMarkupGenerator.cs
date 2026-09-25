@@ -2919,9 +2919,16 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
 
             ValidateStaticAnimationState(element);
 
+            DirectiveParseResult parsedContent = GetDirectiveContent(
+                element,
+                DirectiveContentKind.Elements |
+                DirectiveContentKind.Templates |
+                DirectiveContentKind.Prism);
+            bool isTileMap = ResolveElementTypeSymbol(element.Name.LocalName)?.ToDisplayString() == "Cerneala.UI.Controls.TileMap2D";
+            string? tileMapInitializer = isTileMap ? BuildTileMapInitializer(element, parsedContent) : null;
             if (!initializeComponentRoot)
             {
-                currentLines.Add(typeName + " " + variable + " = new();");
+                currentLines.Add(typeName + " " + variable + " = " + (tileMapInitializer ?? "new()") + ";");
             }
             EmitRuntimeResources(element, variable);
             if (!string.IsNullOrWhiteSpace(requestedName) && templateContext?.RegisterParts == true)
@@ -2957,11 +2964,6 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             {
                 RegisterNamedElement(requestedName!.Trim(), variable, typeName, element);
             }
-            DirectiveParseResult parsedContent = GetDirectiveContent(
-                element,
-                DirectiveContentKind.Elements |
-                DirectiveContentKind.Templates |
-                DirectiveContentKind.Prism);
             if (ReportPrismSyntaxDiagnostics(parsedContent))
             {
                 return variable;
@@ -3062,15 +3064,11 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 }
                 EmitItemsControlItemsPanelElement(element, variable);
 
-                if (ResolveElementTypeSymbol(element.Name.LocalName)?.ToDisplayString() == "Cerneala.UI.Controls.TileMap2D")
-                {
-                    EmitTileMapContent(element, variable, parsedContent);
-                }
-                else if (parsedContent.HasDirectives)
+                if (!isTileMap && parsedContent.HasDirectives)
                 {
                     EmitReactiveContent(element, variable, parsedContent);
                 }
-                else
+                else if (!isTileMap)
                 {
                     foreach (DirectiveNode node in parsedContent.Nodes)
                     {
@@ -3114,7 +3112,7 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
             return variable;
         }
 
-        private void EmitTileMapContent(MarkupElement map, string variable, DirectiveParseResult content)
+        private string? BuildTileMapInitializer(MarkupElement map, DirectiveParseResult content)
         {
             List<string> placements = new();
             Dictionary<string, string> imageSizes = new(StringComparer.Ordinal);
@@ -3154,8 +3152,10 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 string metadata = imageSizes.Count == 0 ? string.Empty :
                     ", new global::System.Collections.Generic.Dictionary<string, global::Cerneala.Drawing.DrawSize>(global::System.StringComparer.Ordinal) { " +
                     string.Join(", ", imageSizes.Select(pair => "[(" + pair.Key + ").ResourceId!.Value.Key] = " + pair.Value)) + " }";
-                currentLines.Add(variable + ".Source = global::Cerneala.UI.Controls.TileMapSource2D.FromModel(new global::Cerneala.UI.Controls.TileMap2DModel(new global::Cerneala.UI.Controls.Tile[] { " + string.Join(", ", placements) + " })" + metadata + ");");
+                return "global::Cerneala.UI.Controls.TileMap2D.FromModel(new global::Cerneala.UI.Controls.TileMap2DModel(new global::Cerneala.UI.Controls.Tile[] { " + string.Join(", ", placements) + " })" + metadata + ")";
             }
+
+            return null;
         }
 
         private string EmitTileColliderDescriptor(MarkupElement element)

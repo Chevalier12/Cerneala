@@ -9,6 +9,7 @@ using Cerneala.UI.Data;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Markup;
 using Cerneala.UI.Relay;
+using Cerneala.UI.Resources;
 
 namespace Cerneala.Tests.Controls;
 using Scene2D = global::Cerneala.UI.Controls.Scene2D;
@@ -27,8 +28,8 @@ public sealed class SceneSimulationContext2DTests
         Assert.True(first.IsReady);
         Assert.True(second.IsReady);
         Assert.Equal(1, fixture.Loads);
-        Assert.True(fixture.Items.TryGetRealizedNode("wall", out SceneNode2D? wall));
-        Assert.Null(wall!.Root);
+        Collider2D wall = Assert.IsAssignableFrom<Collider2D>(Assert.Single(fixture.Map.LogicalChildren));
+        Assert.Null(wall.Root);
         Assert.Null(wall.Surface);
         Assert.False(wall.IsAttached);
         Assert.False(wall.IsInitialized);
@@ -41,28 +42,34 @@ public sealed class SceneSimulationContext2DTests
         second.Dispose();
         Assert.Equal(1, fixture.Releases);
         Assert.Null(wall.SimulationContext);
-        Assert.Equal(0, fixture.Items.RealizedItemCount);
+        Assert.Empty(fixture.Map.LogicalChildren);
         Assert.False(first.IsReady);
         Assert.False(second.IsReady);
         Assert.Throws<SceneCollisionRegionNotReadyException>(() => fixture.Cast());
     }
 
     [Fact]
-    public async Task WorkerCompletionPublishesTemplatesOnlyOnTheSimulationOwner()
+    public async Task WorkerCompletionPublishesMapCollidersOnlyOnTheSimulationOwner()
     {
-        TaskCompletionSource<SceneSpatialLease2D<object>> completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        TaskCompletionSource<SceneSpatialLease2D<TileMapChunkData2D>> completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
         using Fixture fixture = new((_, _) => new(completion.Task));
         int ownerThread = Environment.CurrentManagedThreadId;
+        int publicationThread = -1, loadedEvents = 0;
+        fixture.Map.LogicalChildren.Changed += (_, _) => publicationThread = Environment.CurrentManagedThreadId;
+        fixture.Map.Loaded += (_, _) => loadedEvents++;
         Task<SceneCollisionRegion2D> preparing = fixture.BeginPrepare();
         Assert.False(preparing.IsCompleted);
-        Worker(() => completion.SetResult(new("wall")));
-        Assert.Equal(0, fixture.Items.RealizedItemCount);
+        Worker(() => completion.SetResult(Fixture.NewLease()));
+        Assert.Empty(fixture.Map.LogicalChildren);
         Assert.Throws<SceneCollisionRegionNotReadyException>(() => fixture.Cast());
         fixture.PumpUntil(() => preparing.IsCompleted);
         using SceneCollisionRegion2D region = await preparing;
         Assert.True(region.IsReady);
-        Assert.Equal(ownerThread, fixture.FactoryThread);
-        Assert.Equal(0, fixture.LoadedEvents);
+        Collider2D wall = Assert.IsAssignableFrom<Collider2D>(Assert.Single(fixture.Map.LogicalChildren));
+        Assert.Equal(ownerThread, publicationThread);
+        Assert.Equal(0, loadedEvents);
+        Assert.Same(fixture.Context, wall.SimulationContext);
+        Assert.Null(wall.Root);
         Assert.NotNull(fixture.Cast().Collision);
     }
 
@@ -71,7 +78,7 @@ public sealed class SceneSimulationContext2DTests
     {
         using Fixture fixture = new();
         using SceneCollisionRegion2D region = fixture.Prepare();
-        Worker(() => fixture.Source.SetEntries([]));
+        Worker(() => fixture.Source.SetCatalog(Fixture.Catalog()));
         Assert.False(region.IsReady);
         Assert.Throws<SceneCollisionRegionNotReadyException>(() => fixture.Cast());
         Assert.Equal(1, fixture.Loads);
@@ -98,7 +105,7 @@ public sealed class SceneSimulationContext2DTests
             () => fixture.Scene.LogicalChildren.Remove(fixture.Actor),
             () => fixture.Items.Templates.Clear(),
             () => fixture.Items.Refresh(),
-            () => fixture.Items.TryGetRealizedNode("wall", out _),
+            () => fixture.Items.ItemsSource = new[] { "replacement" },
             () => fixture.Cast(),
             () => fixture.Scene.CollisionWorld.GetDiagnosticsSnapshot(),
             () => fixture.Context.Update(),
@@ -182,14 +189,14 @@ public sealed class SceneSimulationContext2DTests
         for (int iteration = 0; iteration < 32; iteration++)
         {
             int released = 0;
-            TaskCompletionSource<SceneSpatialLease2D<object>> completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            TaskCompletionSource<SceneSpatialLease2D<TileMapChunkData2D>> completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
             using Fixture fixture = new((_, _) => new(completion.Task));
             Task<SceneCollisionRegion2D> preparing = fixture.BeginPrepare();
             fixture.Context.Dispose();
-            completion.SetResult(new("wall", _ => Interlocked.Increment(ref released)));
+            completion.SetResult(Fixture.NewLease(release: _ => Interlocked.Increment(ref released)));
             Assert.True(SpinWait.SpinUntil(() => preparing.IsCompleted && Volatile.Read(ref released) == 1, TimeSpan.FromSeconds(5)));
             Assert.True(preparing.IsCanceled, preparing.Exception?.ToString());
-            Assert.Equal(0, fixture.Items.RealizedItemCount);
+            Assert.Empty(fixture.Map.LogicalChildren);
             Assert.Null(fixture.Items.SimulationContext);
             Assert.Throws<ObjectDisposedException>(() => fixture.Context.Update());
         }
@@ -204,7 +211,7 @@ public sealed class SceneSimulationContext2DTests
         Assert.False(region.IsReady);
         fixture.Context.Update();
         Assert.Equal(1, fixture.Releases);
-        Assert.Equal(0, fixture.Items.RealizedItemCount);
+        Assert.Empty(fixture.Map.LogicalChildren);
     }
 
     [Fact]
@@ -212,7 +219,7 @@ public sealed class SceneSimulationContext2DTests
     {
         using Fixture fixture = new();
         using SceneCollisionRegion2D old = fixture.Prepare();
-        Worker(() => fixture.Source.SetEntries([new("wall", new(2020, 0, 10, 10), version: 2)]));
+        Worker(() => fixture.Source.SetCatalog(Fixture.Catalog(Fixture.Info("wall", 2020, version: 2))));
         fixture.Context.Dispose();
         using SceneSimulationContext2D next = new(fixture.Scene);
         Task<SceneCollisionRegion2D> preparing = fixture.Scene.CollisionWorld.PrepareRegionAsync(Fixture.Region).AsTask();
@@ -222,8 +229,8 @@ public sealed class SceneSimulationContext2DTests
         Assert.Equal(2, fixture.Loads);
         fixture.Context.Relay.Drain();
         Assert.Equal(2, fixture.Loads);
-        Assert.Equal(1, fixture.Items.RealizedItemCount);
-        Assert.Same(next, fixture.Items.SimulationContext);
+        Assert.Single(fixture.Map.LogicalChildren);
+        Assert.Same(next, fixture.Map.SimulationContext);
         Assert.False(old.IsReady);
     }
 
@@ -326,34 +333,32 @@ public sealed class SceneSimulationContext2DTests
     }
 
     [Fact]
-    public void NestedSimulatedMaterializersRetainOnlyNearbyTerrainWithoutAnyViewport()
+    public void NestedSimulatedCollidersRetainOnlyNearbyTerrainWithoutAnyViewport()
     {
         using Fixture fixture = new();
-        fixture.Source.SetEntries([new("wall", new(2000, 0, 100, 100)), new("gap", new(5000, 0, 100, 100))]);
-        SceneItems2D actors = new()
+        fixture.Source.SetCatalog(Fixture.Catalog(Fixture.Info("wall", 2020), Fixture.Info("gap", 5000)));
+        Sprite2D npc = new()
         {
-            ItemsSource = new SceneSpatialSource2D<object>([new("npc", new(2000, 0, 10, 10), isSimulated: true)],
-                (_, _) => ValueTask.FromResult(new SceneSpatialLease2D<object>(new Sprite2D
-                { X = 2000, Collider = new BoxCollider2D { Width = 10, Height = 10 } })))
+            X = 2020, // The simulated collider's actual bounds overlap the private wall chunk.
+            Collider = new BoxCollider2D { Width = 10, Height = 10, IsSimulated = true }
         };
+        SceneItems2D actors = new() { ItemsSource = new[] { "npc" } };
+        actors.Templates.Add(new ContentTemplate<string>("npc", null, 0, _ => npc));
         Scene2D group = new();
         group.Children.Add(actors);
-        SceneItems2D outer = new()
-        {
-            ItemsSource = new SceneSpatialSource2D<object>([new("group", new(9000, 0, 10, 10), collisionBounds: null, isSimulated: true)],
-                (_, _) => ValueTask.FromResult(new SceneSpatialLease2D<object>(group)))
-        };
+        SceneItems2D outer = new() { ItemsSource = new[] { "group" } };
+        outer.Templates.Add(new ContentTemplate<string>("group", null, 0, _ => group));
         fixture.Scene.Children.Add(outer);
-        fixture.Context.Update();
+        fixture.PumpUntil(() => fixture.Map.LogicalChildren.Count == 1);
         Assert.Same(fixture.Context, actors.SimulationContext);
         Assert.Equal(1, actors.RealizedItemCount);
-        Assert.Equal(1, fixture.Items.RealizedItemCount);
-        Assert.False(fixture.Items.TryGetRealizedNode("gap", out _));
+        Assert.Single(fixture.Map.LogicalChildren);
+        Assert.Equal(1, fixture.Loads);
         Assert.Throws<SceneCollisionRegionNotReadyException>(() => fixture.Scene.CollisionWorld.Raycast(new(5000, 5), Vector2.UnitX, 100));
         fixture.Scene.Children.Remove(outer);
-        fixture.Context.Update();
+        fixture.PumpUntil(() => fixture.Map.LogicalChildren.Count == 0);
         Assert.Equal(0, actors.RealizedItemCount);
-        Assert.Equal(0, fixture.Items.RealizedItemCount);
+        Assert.Empty(fixture.Map.LogicalChildren);
         Assert.Equal(1, fixture.Releases);
     }
 
@@ -361,9 +366,9 @@ public sealed class SceneSimulationContext2DTests
     public async Task RequiredFailureIsReportedAndExplicitPreparationCanRetry()
     {
         int attempts = 0;
-        using Fixture fixture = new((entry, _) => ++attempts == 1
-            ? ValueTask.FromException<SceneSpatialLease2D<object>>(new IOException("headless terrain"))
-            : ValueTask.FromResult(new SceneSpatialLease2D<object>(entry.Id)));
+        using Fixture fixture = new((_, _) => ++attempts == 1
+            ? ValueTask.FromException<SceneSpatialLease2D<TileMapChunkData2D>>(new IOException("headless terrain"))
+            : ValueTask.FromResult(Fixture.NewLease()));
         Task<SceneCollisionRegion2D> first = fixture.BeginPrepare();
         fixture.PumpUntil(() => first.IsCompleted);
         await Assert.ThrowsAsync<IOException>(async () => await first);
@@ -405,22 +410,22 @@ public sealed class SceneSimulationContext2DTests
     [Fact]
     public void WorkerPublishedRetirementErrorsRemainObservableOnTheOwner()
     {
-        using Fixture fixture = new((entry, _) => ValueTask.FromResult(
-            new SceneSpatialLease2D<object>(entry.Id, _ => throw new IOException("release failed"))));
+        using Fixture fixture = new((_, _) => ValueTask.FromResult(
+            Fixture.NewLease(release: _ => throw new IOException("release failed"))));
         using SceneCollisionRegion2D region = fixture.Prepare();
-        Worker(() => fixture.Source.SetEntries([]));
+        Worker(() => fixture.Source.SetCatalog(Fixture.Catalog()));
         AggregateException failure = Assert.Throws<AggregateException>(() => fixture.Context.Update());
         Assert.Contains(failure.Flatten().InnerExceptions, error => error is IOException { Message: "release failed" });
-        Assert.Equal(0, fixture.Items.RealizedItemCount);
+        Assert.Empty(fixture.Map.LogicalChildren);
     }
 
     [Fact]
     public void AFailingNodeBindingCleanupDoesNotKeepItsPayloadOrSiblingOwnership()
     {
         using Fixture fixture = new();
+        SceneNode2D wall = fixture.AddCollectionWall();
         using SceneCollisionRegion2D region = fixture.Prepare();
-        Assert.True(fixture.Items.TryGetRealizedNode("wall", out SceneNode2D? wall));
-        wall!.Bindings.Add(new ThrowingLifetime());
+        wall.Bindings.Add(new ThrowingLifetime());
         AggregateException failure = Assert.Throws<AggregateException>(() => fixture.Context.Dispose());
         Assert.Contains(failure.Flatten().InnerExceptions, error => error is IOException { Message: "binding cleanup" });
         Assert.False(region.IsReady);
@@ -439,12 +444,9 @@ public sealed class SceneSimulationContext2DTests
         Scene2D scene = new();
         Sprite2D actor = new() { X = 2000, Collider = new BoxCollider2D { Width = 10, Height = 10 } };
         TileColliderDescriptor2D shape = new(TileColliderShape2D.Box, width: 10, height: 10);
-        TileMap2D map = new()
-        {
-            Source = TileMapTestSource.Create(new("terrain", new DrawSize(10, 10),
-                [new TileSet2D("palette", new("NotLoadedAtlas"), [new TileDefinition2D(1, new(0, 0, 10, 10), collider: shape)])],
-                [new TileChunk2D(new(202, 0), 1, 1, [new TileCell2D(1)])]))
-        };
+        TileMap2D map = TileMap2D.FromModel(new("terrain", new DrawSize(10, 10),
+            [new TileSet2D("palette", new("NotLoadedAtlas"), [new TileDefinition2D(1, new(0, 0, 10, 10), collider: shape)])],
+            [new TileChunk2D(new(202, 0), 1, 1, [new TileCell2D(1)])]));
         scene.Children.Add(map);
         scene.Children.Add(actor);
         Assert.Throws<SceneCollisionRegionNotReadyException>(() => scene.CollisionWorld.MoveAndCollide(actor.Collider!, new(50, 0)));
@@ -481,29 +483,51 @@ public sealed class SceneSimulationContext2DTests
         internal static readonly DrawRect Region = new(2000, 0, 100, 10);
         internal readonly Scene2D Scene = new();
         internal readonly SceneItems2D Items = new();
+        internal readonly TileMap2D Map = new();
         internal readonly Sprite2D Actor = new() { X = 2000, Collider = new BoxCollider2D { Width = 10, Height = 10 } };
-        internal readonly SceneSpatialSource2D<object> Source;
+        internal readonly TileMapSource2D Source;
         internal readonly SceneSimulationContext2D Context;
-        internal int Loads, Releases, FactoryThread, LoadedEvents;
+        internal int Loads, Releases;
 
-        internal Fixture(Func<SceneSpatialEntry2D, CancellationToken, ValueTask<SceneSpatialLease2D<object>>>? load = null)
+        internal Fixture(Func<TileMapChunkInfo2D, CancellationToken, ValueTask<SceneSpatialLease2D<TileMapChunkData2D>>>? load = null)
         {
-            Source = new([new("wall", new(2020, 0, 10, 10))], (entry, token) =>
+            Source = new(Catalog(Info("wall", 2020)), (_, info, token) =>
             {
                 Loads++;
-                return load is null ? ValueTask.FromResult(new SceneSpatialLease2D<object>(entry.Id, _ => Releases++)) : load(entry, token);
+                return load is null ? ValueTask.FromResult(NewLease(info, _ => Releases++)) : load(info, token);
             });
-            Items.ItemsSource = Source;
+            Map.Source = Source;
+            Items.ItemsSource = Array.Empty<string>();
             Items.Templates.Add(new ContentTemplate<string>("wall", null, 0, _ =>
-            {
-                FactoryThread = Environment.CurrentManagedThreadId;
-                Sprite2D sprite = new() { X = 2020, Collider = new BoxCollider2D { Width = 10, Height = 10 } };
-                sprite.Loaded += (_, _) => LoadedEvents++;
-                return sprite;
-            }));
+                new Sprite2D { X = 2020, Width = 10, Height = 10 }));
+            Scene.Children.Add(Map);
             Scene.Children.Add(Items);
             Scene.Children.Add(Actor);
             Context = new(Scene);
+        }
+
+        internal static TileMapChunkInfo2D Info(string id, int x, int version = 1)
+        {
+            SceneSpatialEntry2D spatial = new(id, new(x, 0, 10, 10), new DrawRect(x, 0, 10, 10), version: version);
+            return new(spatial, 1, [new(new ResourceId<ImageResource>("NeverDecodedAtlas"))], 1);
+        }
+
+        internal static TileMapCatalog2D Catalog(params TileMapChunkInfo2D[] chunks) => new("terrain", chunks);
+
+        internal static SceneSpatialLease2D<TileMapChunkData2D> NewLease(TileMapChunkInfo2D? info = null,
+            Action<TileMapChunkData2D>? release = null)
+        {
+            info ??= Info("wall", 2020);
+            TileColliderDescriptor2D shape = new(TileColliderShape2D.Box, width: 10, height: 10);
+            TileMapChunkData2D data = new([new Tile(new(new ResourceId<ImageResource>("NeverDecodedAtlas")),
+                shape, info.Spatial.Bounds.X, info.Spatial.Bounds.Y, 10, 10)]);
+            return new(data, release);
+        }
+
+        internal SceneNode2D AddCollectionWall()
+        {
+            Items.ItemsSource = new[] { "wall" };
+            return Assert.IsAssignableFrom<SceneNode2D>(Assert.Single(Items.LogicalChildren));
         }
 
         internal MoveCollisionResult2D Cast() => Scene.CollisionWorld.MoveAndCollide(Actor.Collider!, new(50, 0));

@@ -1,0 +1,3 @@
+$env:DefaultItemExcludesInProjectFolder = 'artifacts/**'
+Remove-Item Env:CERNEALA_SDL_NATIVE_TESTS -ErrorAction SilentlyContinue
+dotnet test .\tests\Cerneala.Tests.SceneVillage\Cerneala.Tests.SceneVillage.csproj -c Release -m:1 '-p:DefaultItemExcludesInProjectFolder=artifacts/**' --filter 'FullyQualifiedName~VillagerWalkClipsUseTheInspectedDirectionalCells' --logger 'trx;LogFileName=asset-switch-red-01.trx'

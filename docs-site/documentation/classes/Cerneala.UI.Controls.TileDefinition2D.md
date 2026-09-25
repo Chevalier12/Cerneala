@@ -29,7 +29,7 @@ var wall = new TileDefinition2D(
 
 IDs must be positive and source rectangles must have positive dimensions. The owning map model rejects IDs shared by multiple tilesets.
 
-`Properties` is copied and `Collider` references an immutable descriptor. Replacing a definition is the supported way to change imported collision metadata. In a streamed map, definitions are obtained through the acquired chunk's [TileMapChunkData2D](Cerneala.UI.Controls.TileMapChunkData2D.md), not the resident catalog. Publishing a replacement definition requires a new payload revision for every affected chunk, including changes to properties that influence collision coalescing.
+`Properties` is copied and `Collider` references an immutable descriptor. Replacing a definition in a new immutable model is the supported way to change imported collision metadata. The public [TileMap2DModel](Cerneala.UI.Controls.TileMap2DModel.md) exposes the complete tileset palette; a prepared package keeps used definitions in its private chunk payloads and offers complete authored metadata through explicit reads. An existing map node is not mutated when a definition or its properties change; create a replacement model and map node.
 
 Each definition owns zero or one descriptor by construction. The owning map additionally bounds collider expansion across repeated cells before any collision adapters are created; see [Scene2DModelValidator](Cerneala.UI.Controls.Scene2DModelValidator.md).
 

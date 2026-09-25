@@ -1,0 +1,10 @@
+182B70945892F88C7D502D2493B914B4EE38571777D56CC5BF382BC122BE8416 C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\Shaders\DrawingImageDomain.vert.hlsl
+09A7E480414FCDC21331614FFF8CE13F2857F01D644B148DDE0399001C572009 C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\Shaders\DrawingImageDomain.frag.hlsl
+1A4A00786D8A488F5A48091938DFA6458CCDBA1CB87DB89F49E716A72953D90A C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\Shaders\DrawingImageDomain.vert.dxil
+32006FCFFF274720F43D1DF0B5370D366F6C6AA5E05D9EEE51981114F8A0A8CB C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\Shaders\DrawingImageDomain.frag.dxil
+16735CFAA63EB8E38810BAF5254A118F20AA443F0768AB1AC7F994F4D5937013 C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\Shaders\DrawingImageDomain.vert.spv
+6C0AB9FDC4536F16CA6CDF28270C1F234CD5205CCA1CE049697ECA8D5D134FAB C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\Shaders\DrawingImageDomain.frag.spv
+68A0255BB69CB3894220B9E578C9208A15B108961C01ED5F9192ECDABFE14353 C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\Shaders\DrawingImageDomain.vert.msl
+032B0B90847878FC6037580A57C0E1EF860EA434D31872303291D29A26148FBC C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\Shaders\DrawingImageDomain.frag.msl
+C64FD906192DEAABBDCF203ADD67BB3FD2FA294CBBFF58EA3639290735888B2C C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Shaders\manifest.json
+5B9B2E3B6FB03928FC9AB328DF7CC59E47E6902069FB6DC941BD3EDD3DA1AB9B C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Shaders\artifacts.json

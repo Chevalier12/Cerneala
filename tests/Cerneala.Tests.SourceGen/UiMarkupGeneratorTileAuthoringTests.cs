@@ -5,6 +5,7 @@ using System.Reflection;
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Resources;
 using Microsoft.CodeAnalysis;
 using Xunit;
 
@@ -54,7 +55,7 @@ public sealed partial class UiMarkupGeneratorTests
 
         TileMap2D map = Assert.IsType<TileMap2D>(Assert.Single(Assert.IsType<Scene2D>(surface.Scene).Children));
         Assert.Empty(map.LogicalChildren);
-        Assert.Equal(2, map.Source!.Catalog.ImageSizes.Count);
+        Assert.Contains("TileMap2D.FromModel", Assert.Single(result.GeneratedSources).SourceText.ToString());
 
         DrawSpriteBatch[] batches = RecordSurface(surface)
             .Where(command => command.Kind == DrawCommandKind.DrawSpriteBatch)
@@ -92,24 +93,25 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
     }
 
-    [Theory]
-    [InlineData("<TileMap2D Source=\"$DataContext\"><Tile Image=\"$Grass\" ImageWidth=\"32\" ImageHeight=\"32\" /></TileMap2D>")]
-    public void TileAuthoringRejectsMixingPlacementsWithBoundSource(string mapMarkup)
+    [Fact]
+    public void TileAuthoringRejectsRemovedSourceProperty()
     {
         string markup = """
-            <RenderSurface2D DataType="Cerneala.UI.Controls.TileMapSource2D"
+            <RenderSurface2D
                 xmlns:r="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
               <RenderSurface2D.Resources><r:ImageResource Name="Grass" Source="grass.png" /></RenderSurface2D.Resources>
               <RenderSurface2D.Scene><Scene2D>
-            """ + mapMarkup + "</Scene2D></RenderSurface2D.Scene></RenderSurface2D>";
+                <TileMap2D Source="removed"><Tile Image="$Grass" ImageWidth="32" ImageHeight="32" /></TileMap2D>
+              </Scene2D></RenderSurface2D.Scene>
+            </RenderSurface2D>
+            """;
         GeneratorRunResult result = RunGenerator("MixedTileAuthoring.crn", markup, out _);
-        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI005" &&
-            diagnostic.GetMessage().Contains("cannot be combined", StringComparison.Ordinal));
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         Assert.Empty(result.GeneratedSources);
     }
 
     [Fact]
-    public void TileAuthoringRejectsSourceAssignmentThroughAspect()
+    public void TileAuthoringRejectsRemovedSourceAssignmentThroughAspect()
     {
         const string markup = """
             <TileMap2D>
@@ -117,8 +119,7 @@ public sealed partial class UiMarkupGeneratorTests
             </TileMap2D>
             """;
         GeneratorRunResult result = RunGenerator("TileAspectSource.crn", markup, out _);
-        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI005" &&
-            diagnostic.GetMessage().Contains("cannot be assigned through Aspect", StringComparison.Ordinal));
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         Assert.Empty(result.GeneratedSources);
     }
 
@@ -126,7 +127,7 @@ public sealed partial class UiMarkupGeneratorTests
     public void TileAuthoringKeepsMapLevelAspectMotionAndPrism()
     {
         const string markup = """
-            <TileMap2D xmlns:r="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
+            <TileMap2D Layer="7" xmlns:r="clr-namespace:Cerneala.UI.Resources;assembly=Cerneala">
               <TileMap2D.Resources><r:ImageResource Name="Art" Source="art.png" /></TileMap2D.Resources>
               <TileMap2D.Aspect>
                 @on Loaded { @animate with Tween(100ms) { @from { Opacity = 0.5; } @to { Opacity = 1; } } }
@@ -141,7 +142,14 @@ public sealed partial class UiMarkupGeneratorTests
         string generated = Assert.Single(result.GeneratedSources).SourceText.ToString();
         Assert.Contains("AttachPrism", generated);
         Assert.Contains("AttachMotionSession", generated);
+        Assert.Contains("TileMap2D.FromModel", generated);
         Assert.Contains("new global::Cerneala.UI.Controls.Tile(", generated);
+        Assembly assembly = EmitBindingTestAssembly(compilation);
+        TileMap2D map = Assert.IsType<TileMap2D>(InvokeBindingTestCreate(
+            assembly, "Cerneala.GeneratedUi.TileEffectsFactory"));
+        Assert.Equal(7, map.Layer);
+        Assert.True(map.Resources.TryGetResource(new ResourceId<ImageResource>("Art"), out ImageResource? art));
+        Assert.Equal("art.png", art!.Path);
     }
 
     [Theory]

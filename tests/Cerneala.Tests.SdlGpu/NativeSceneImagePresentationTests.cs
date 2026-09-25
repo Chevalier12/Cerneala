@@ -44,20 +44,15 @@ public sealed class NativeSceneImagePresentationTests
         Sprite2D npc = new()
         {
             X = 16, Y = 16, Width = 16, Height = 16, Tint = Color.Red,
-            Collider = new BoxCollider2D { Width = 16, Height = 16 }
+            Collider = new BoxCollider2D { Width = 16, Height = 16, IsSimulated = true }
         };
         using IDisposable effect = GeneratedMarkup.AttachPrism(npc,
             () => new PrismInstance(new PrismCompositionDefinition("cold-atlas",
                 [new PrismLayerDefinition(new PrismNodeId(1), "content",
                     filters: [new PrismFilterDefinition(PrismFilterId.Invert)],
                     mask: new(new PrismResourceId("Atlas")))])));
-        int npcLoads = 0, npcReleases = 0, moves = 0;
-        SceneSpatialSource2D<object> source = new(NpcCatalog(), (_, _) =>
-        {
-            npcLoads++;
-            return ValueTask.FromResult(new SceneSpatialLease2D<object>(npc, _ => npcReleases++));
-        });
-        SceneItems2D actors = new() { ItemsSource = source };
+        int moves = 0;
+        SceneItems2D actors = new() { ItemsSource = new[] { npc } };
         Scene2D scene = new();
         scene.Children.Add(actors);
         scene.Children.Add(new Sprite2D { X = 80, Y = 16, Width = 16, Height = 16, Image = new(borrowed), Tint = Color.Blue });
@@ -87,7 +82,6 @@ public sealed class NativeSceneImagePresentationTests
             MoveCollisionResult2D step = scene.CollisionWorld.MoveAndCollide(npc.Collider!, new(npc.X > 16 ? -4 : 4, 0));
             Assert.Null(step.Collision);
             npc.X += step.Travel.X;
-            source.SetEntries(NpcCatalog());
             moves++;
         });
         AddButton("complete", 64, loader.Complete);
@@ -146,11 +140,10 @@ public sealed class NativeSceneImagePresentationTests
             Wait(() => surface.PresentationState == RenderSurface2DPresentationState.Ready);
             Assert.Null(surface.PresentationError);
             Assert.Equal(128, moves);
-            Assert.Equal(1, npcLoads);
             Assert.Equal(33, loader.AsyncLoads);
             Assert.Equal(0, loader.SyncLoads);
             runtime.Close(window, force: true);
-            Assert.Equal(1, npcReleases);
+            Assert.False(npc.IsAttached);
             Assert.Equal(0, cache.ResidentCount);
             Assert.Equal(0, cache.PendingLoadCount);
 
@@ -165,10 +158,8 @@ public sealed class NativeSceneImagePresentationTests
                 Click("move");
                 Click("move");
                 Assert.Equal(16, npc.X);
-                Assert.True(actors.TryGetRealizedNode("npc", out SceneNode2D? retained));
-                Assert.Same(npc, retained);
+                Assert.Same(npc, Assert.Single(actors.LogicalChildren));
                 Assert.True(npc.IsAttached && npc.IsVisible && npc.Collider!.Enabled);
-                Assert.Equal(0, npcReleases);
             }
         }
         finally
@@ -180,7 +171,6 @@ public sealed class NativeSceneImagePresentationTests
             Directory.Delete(directory);
         }
 
-        SceneSpatialEntry2D[] NpcCatalog() => [new("npc", new(npc.X, 16, 16, 16), isSimulated: true)];
         void AddButton(string id, float x, Action action)
         {
             Button button = new() { Width = 28, Height = 24, Command = new ActionCommand(_ => action()) };

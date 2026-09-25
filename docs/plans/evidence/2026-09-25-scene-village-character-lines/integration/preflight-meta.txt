@@ -1,0 +1,3 @@
+UTC=2026-09-25T15:59:08.0707025Z
+HEAD=443f100b86f8c4ca5f5e649651ac37c9cd5a330f
+Scope=22 app/test source/assets plus selected Core Sprite/drawing/SDL backend/shader sources and compiled DLLs; no TestResults/bin/obj app outputs

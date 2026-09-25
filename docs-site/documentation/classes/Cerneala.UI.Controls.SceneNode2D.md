@@ -35,7 +35,7 @@ Scene nodes are logical children, not visual layout children. They reuse inherit
 
 Owned scene nodes also participate in the same retained input route as visual UI elements: `UIRoot` -> visual ancestors -> `RenderSurface2D` -> scene groups -> routed target. They reuse inherited mouse, wheel, capture, focus, keyboard, text, command, `Handled`, and `handledEventsToo` behavior. This logical input subtree does not add the nodes to `VisualChildren` or UI layout.
 
-Changing or animating a UI property on an owned node invalidates the surface. A node's local Aspect is processed when the node attaches and when the Aspect is invalidated. `IsVisible` and `Visibility` control participation in scene recording. The built-in concrete nodes are `Scene2D`, `SceneItems2D`, and `Sprite2D`.
+Changing or animating a UI property on an owned node invalidates the surface. A node's local Aspect is processed when the node attaches and when the Aspect is invalidated. `IsVisible` and `Visibility` control participation in scene recording. Built-in concrete nodes include `Scene2D`, `SceneItems2D`, `Sprite2D`, and `TileMap2D`.
 
 `SceneNode2D` is a framework base for the built-in scene node types. Its recording contract is internal, so applications compose the provided nodes rather than implement new recording primitives outside the Cerneala assembly. Applications can derive from `Scene2D` to package that composition, including a paired `.crn` + `.crn.cs` component used as `<local:HouseView />`; see [Scene2D](Cerneala.UI.Controls.Scene2D.md).
 
@@ -68,15 +68,15 @@ An ancestor's declaration does not satisfy a separate nested composition that
 requires its own domain, even when the nested owner is a single sprite.
 A missing domain sets the surface's `PresentationState` to `Error` with an
 `InvalidOperationException` naming `PrismInputDomain`; it does not silently load
-the entire catalog. Declaring a valid domain allows ordinary preparation and
+an entire prepared map. Declaring a valid domain allows ordinary preparation and
 readiness checks to resume. Hidden layers, groups, filters and styles do not
 require it; zero-opacity layers, groups and filters are also inactive. A style's
 own effect-specific opacity parameter does not remove the domain requirement.
 An independent, nonvisual simulation context does not prepare Prism presentation.
 
 The complete declared input is prepared and recorded, including required
-off-camera payloads and images. Source selection transforms that domain into
-each descendant materializer's coordinates. Backend input capture is independent
+off-camera map payloads and images. Scene input selection transforms that domain into
+each descendant node's coordinates. Backend input capture is independent
 of the final surface/camera clip: clipping happens after the effect, so narrowing
 the camera does not change an input-wide distribution. Nested scopes retain their
 own logical coordinate basis. Changing the domain re-evaluates presentation
@@ -84,7 +84,7 @@ interest; clearing a required domain reports the error again. Simulation and
 explicit collision interests remain independent and can retain data outside it.
 
 An ancestor's declaration selects necessary descendant content; it does not
-replace each descendant composition's own source boundary. A nested scope with
+replace each descendant composition's own input boundary. A nested scope with
 known content bounds captures only their intersection with the required input.
 A declaration on that nested scope's own non-pointwise owner defines its complete
 input instead, including any deliberately declared transparent area.
@@ -110,7 +110,7 @@ When a recorded frame includes node-owned Prism scopes in a scene containing
 `SceneItems2D` or `TileMap2D`, SDL_GPU surface-allocation failure propagates as an
 `InvalidOperationException` instead of drawing the remaining commands without
 their composition. The failure includes requested, current and hard-limit byte
-counts; it occurs during backend rendering, not asynchronous source preparation.
+counts; it occurs during backend rendering, not asynchronous map/image preparation.
 Nested scopes retain this policy, which applies to Prism execution for that
 frame. Frames without these spatial-scene scopes keep their existing allocation
 fallback. The policy does not cover an effect attached only to an ordinary UI

@@ -1,0 +1,255 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="52fe0592-cfdb-4a75-846b-f24b01361a11" name="lauri@DESKTOP-JT43V3D 2026-09-24 07:49:19" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T07:49:19.0339106+03:00" queuing="2026-09-24T07:49:19.0339110+03:00" start="2026-09-24T07:49:10.2885051+03:00" finish="2026-09-24T07:49:19.5033565+03:00" />
+  <TestSettings name="default" id="729b5398-8bd0-4793-a25a-4b5bdb33d1af">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_07_49_19" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="225d6fa6-dad0-4cdf-bb21-33bec2dcf001" testId="573779be-99e9-a9c4-205a-47a41d4fa4d6" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.OneShotPlainSourceIsNotConsumedAgainByAttachOrReattach" computerName="DESKTOP-JT43V3D" duration="00:00:00.0237707" startTime="2026-09-24T07:49:18.9021637+03:00" endTime="2026-09-24T07:49:18.9021641+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="225d6fa6-dad0-4cdf-bb21-33bec2dcf001" />
+    <UnitTestResult executionId="2cbd50d2-3b95-477c-9af7-52a7f441c7de" testId="7dc201ee-7967-53d2-a219-978e3ee7da80" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.OneSceneNodeCannotRepresentTwoOccurrences" computerName="DESKTOP-JT43V3D" duration="00:00:00.0016828" startTime="2026-09-24T07:49:19.0976993+03:00" endTime="2026-09-24T07:49:19.0976996+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2cbd50d2-3b95-477c-9af7-52a7f441c7de" />
+    <UnitTestResult executionId="b9c75311-0723-41bf-9586-5db7e1a7b364" testId="20bcfb6d-edac-5e32-0441-732ccb4bb01a" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ItemsSourceAcceptsPlainAndObservableEnumerables" computerName="DESKTOP-JT43V3D" duration="00:00:00.0047433" startTime="2026-09-24T07:49:19.0258076+03:00" endTime="2026-09-24T07:49:19.0258080+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b9c75311-0723-41bf-9586-5db7e1a7b364" />
+    <UnitTestResult executionId="659c0a3a-ed45-4fc7-9cb7-5cba04daeb3e" testId="889149b0-5dc5-222c-96ba-8cbbbe9e8ca0" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ObservableNotificationsEnumeratePostEventStateOnceAndInvalidIndicesReset" computerName="DESKTOP-JT43V3D" duration="00:00:00.0151957" startTime="2026-09-24T07:49:19.1383600+03:00" endTime="2026-09-24T07:49:19.1383605+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="659c0a3a-ed45-4fc7-9cb7-5cba04daeb3e" />
+    <UnitTestResult executionId="da7c128c-ad2f-4670-b9c1-a6f9685e2ad5" testId="f663ff0e-00f1-5871-6d2e-72bcf6e6a559" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SuccessfulStructuralReentryStopsBeforeAttachingLaterStaleCandidates" computerName="DESKTOP-JT43V3D" duration="00:00:00.0062025" startTime="2026-09-24T07:49:19.0207408+03:00" endTime="2026-09-24T07:49:19.0207413+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="da7c128c-ad2f-4670-b9c1-a6f9685e2ad5" />
+    <UnitTestResult executionId="f1d89c18-b05a-4eee-87b1-d2083a58713d" testId="83bedcbe-33cd-364c-82ac-b7199961f3b0" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.FailedPreflightPreservesOldColliderButDoesNotReportRequestedSourceReady" computerName="DESKTOP-JT43V3D" duration="00:00:00.0248275" startTime="2026-09-24T07:49:19.1227410+03:00" endTime="2026-09-24T07:49:19.1227414+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f1d89c18-b05a-4eee-87b1-d2083a58713d" />
+    <UnitTestResult executionId="96314e7d-1a91-40a6-8a5f-ee7a3c022ae3" testId="65bf7c38-f069-6668-7c02-1d531172d89b" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ObservableSourceResnapshotsOnReattachAndOwnerRelayCanApplyDetachedChanges" computerName="DESKTOP-JT43V3D" duration="00:00:00.0150391" startTime="2026-09-24T07:49:19.1537424+03:00" endTime="2026-09-24T07:49:19.1537427+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="96314e7d-1a91-40a6-8a5f-ee7a3c022ae3" />
+    <UnitTestResult executionId="0a2fdd8d-fc13-4faa-9482-410b1a0334a2" testId="16984204-ff0d-7821-2749-1bf091b3eb55" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ObservableDeltasKeepUnaffectedOccurrenceNodesEvenForDuplicateReferences" computerName="DESKTOP-JT43V3D" duration="00:00:00.0059590" startTime="2026-09-24T07:49:19.0958236+03:00" endTime="2026-09-24T07:49:19.0958240+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0a2fdd8d-fc13-4faa-9482-410b1a0334a2" />
+    <UnitTestResult executionId="6b751d0b-050c-45b2-9903-3b33d0414296" testId="e71ecd0d-369d-87df-26ac-2d777e6e44de" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.OccurrenceDataContextAndTemplateIndexStayBoundToValueNotPosition" computerName="DESKTOP-JT43V3D" duration="00:00:00.0012907" startTime="2026-09-24T07:49:19.3199819+03:00" endTime="2026-09-24T07:49:19.3199821+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6b751d0b-050c-45b2-9903-3b33d0414296" />
+    <UnitTestResult executionId="1c41b0c9-a121-47ff-bc1b-25290b049255" testId="4203fd26-a843-38b6-54bf-1c790378227e" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.PlainSourceIsSnapshottedOnceAndRefreshIsTheExplicitResetBoundary" computerName="DESKTOP-JT43V3D" duration="00:00:00.0037637" startTime="2026-09-24T07:49:19.3239305+03:00" endTime="2026-09-24T07:49:19.3239313+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1c41b0c9-a121-47ff-bc1b-25290b049255" />
+    <UnitTestResult executionId="865fcbf6-c2e5-4f50-b5d3-44e28505c311" testId="26668bcf-d43d-ccdc-a594-33036c269549" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.AttachedSourceMutationAssignmentAndRefreshRejectOffOwnerCalls" computerName="DESKTOP-JT43V3D" duration="00:00:00.0634187" startTime="2026-09-24T07:49:19.0895884+03:00" endTime="2026-09-24T07:49:19.0895888+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="865fcbf6-c2e5-4f50-b5d3-44e28505c311" />
+    <UnitTestResult executionId="e35933b0-8b9a-41f8-924a-5484b6cc7c40" testId="058b480c-eb50-c685-0fbe-d93362735543" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(fault: Changed)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0037467" startTime="2026-09-24T07:49:18.9723635+03:00" endTime="2026-09-24T07:49:18.9723644+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e35933b0-8b9a-41f8-924a-5484b6cc7c40" />
+    <UnitTestResult executionId="4163d728-c0b5-4b7e-a26c-2cdfa57f84cd" testId="ea0f8253-6870-fcc2-e332-0eaa9d65aec1" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.NullIsARealOccurrenceWithItsOwnNullCapableTemplate" computerName="DESKTOP-JT43V3D" duration="00:00:00.0052789" startTime="2026-09-24T07:49:18.9158413+03:00" endTime="2026-09-24T07:49:18.9158417+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4163d728-c0b5-4b7e-a26c-2cdfa57f84cd" />
+    <UnitTestResult executionId="cca80a9b-e9a0-4df1-9c3e-566b1e8c2b88" testId="24f61d35-7c77-b5f8-affd-17ecc0fad953" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralFaultCannotPublishReadyCollisionPreparation" computerName="DESKTOP-JT43V3D" duration="00:00:01.0068126" startTime="2026-09-24T07:49:18.8673873+03:00" endTime="2026-09-24T07:49:18.8674212+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cca80a9b-e9a0-4df1-9c3e-566b1e8c2b88" />
+    <UnitTestResult executionId="946d97be-732c-403e-8dd2-115299491ac5" testId="313f0569-00bb-a03c-ef64-e32105e58012" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ReentrantSourceChangeDuringStructuralCallbackCannotPublishLateGenerationAfterFault" computerName="DESKTOP-JT43V3D" duration="00:00:00.0034255" startTime="2026-09-24T07:49:19.3164001+03:00" endTime="2026-09-24T07:49:19.3164005+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="946d97be-732c-403e-8dd2-115299491ac5" />
+    <UnitTestResult executionId="25284ebd-c013-4385-a0b3-a0353b63882c" testId="68dd57cc-3454-c973-f9b7-4fec83a56e17" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateProducedSceneNodeReceivesRealClickAndKeyInput" computerName="DESKTOP-JT43V3D" duration="00:00:00.1470070" startTime="2026-09-24T07:49:19.3098925+03:00" endTime="2026-09-24T07:49:19.3098929+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="25284ebd-c013-4385-a0b3-a0353b63882c" />
+    <UnitTestResult executionId="d1fb3dbe-8a92-4563-ba7c-7ad465c71892" testId="9cc93c4e-b345-3f81-6bb0-6bd00001fc69" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ReentrantFactorySourceChangeCannotPublishItsStaleCandidate" computerName="DESKTOP-JT43V3D" duration="00:00:00.0058077" startTime="2026-09-24T07:49:18.9219116+03:00" endTime="2026-09-24T07:49:18.9219125+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d1fb3dbe-8a92-4563-ba7c-7ad465c71892" />
+    <UnitTestResult executionId="32ac7c31-6446-43b2-a2dd-fa2f66adc774" testId="65c56c08-b6d3-f29d-d50f-0f2eb4cc86c0" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.NullWithoutNullCapableTemplateFailsWithoutNullDereference" computerName="DESKTOP-JT43V3D" duration="00:00:00.0080601" startTime="2026-09-24T07:49:18.9520114+03:00" endTime="2026-09-24T07:49:18.9520118+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="32ac7c31-6446-43b2-a2dd-fa2f66adc774">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Throws() Failure: Exception type was not an exact match&#xD;
+Expected: typeof(System.InvalidOperationException)&#xD;
+Actual:   typeof(System.AggregateException)&#xD;
+---- System.AggregateException : One or more errors occurred. (One or more errors occurred. (No content template matches this collection item in SceneItems2D.))&#xD;
+-------- System.AggregateException : One or more errors occurred. (No content template matches this collection item in SceneItems2D.)&#xD;
+------------ System.InvalidOperationException : No content template matches this collection item in SceneItems2D.</Message>
+          <StackTrace>   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.NullWithoutNullCapableTemplateFailsWithoutNullDereference() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 263&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+----- Inner Stack Trace -----&#xD;
+   at Cerneala.UI.Controls.SceneNode2D.AttachSimulationContext(SceneSimulationContext2D context) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneNode2D.cs:line 103&#xD;
+   at Cerneala.UI.Controls.SceneSimulationContext2D..ctor(Scene2D scene, UiRelay relay, RenderSurface2D surface) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneSimulationContext2D.cs:line 40&#xD;
+   at Cerneala.UI.Controls.SceneSimulationContext2D..ctor(Scene2D scene, RenderSurface2D surface) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneSimulationContext2D.cs:line 21&#xD;
+   at Cerneala.UI.Controls.RenderSurface2D.OnAttached() in C:\Users\lauri\Desktop\Cerneala\UI\Controls\RenderSurface2D.cs:line 303&#xD;
+   at Cerneala.UI.Elements.UIElement.AttachToRoot(UIRoot root, UiElementId id) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.cs:line 679&#xD;
+   at Cerneala.UI.Elements.ElementLifecycle.AttachSingle(UIRoot root, UIElement element) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs:line 102&#xD;
+   at Cerneala.UI.Elements.ElementLifecycle.AttachPreOrder(UIRoot root, UIElement current, HashSet`1 visited) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs:line 61&#xD;
+   at Cerneala.UI.Elements.ElementLifecycle.AttachSubtree(UIRoot root, UIElement element) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs:line 13&#xD;
+   at Cerneala.UI.Elements.UIElementCollection.InsertCore(Int32 index, UIElement child, Boolean ownerManaged) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs:line 48&#xD;
+   at Cerneala.UI.Elements.UIElementCollection.Insert(Int32 index, UIElement child) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs:line 31&#xD;
+   at Cerneala.UI.Elements.UIElementCollection.Add(UIElement child) in C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs:line 26&#xD;
+   at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.CollectionFixture.Attach() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs:line 855&#xD;
+----- Inner Stack Trace -----&#xD;
+   at Cerneala.UI.Controls.SceneNode2D.AttachSimulationContext(SceneSimulationContext2D context) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneNode2D.cs:line 103&#xD;
+   at Cerneala.UI.Controls.SceneNode2D.AttachSimulationContext(SceneSimulationContext2D context) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneNode2D.cs:line 97&#xD;
+----- Inner Stack Trace -----&#xD;
+   at Cerneala.UI.Controls.SceneItems2D.CreateNode(Object item) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 294&#xD;
+   at Cerneala.UI.Controls.SceneItems2D.RequestSnapshot(Boolean reset, Boolean reenumerate, NotifyCollectionChangedEventArgs change) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 179&#xD;
+--- End of stack trace from previous location ---&#xD;
+   at Cerneala.UI.Controls.SceneItems2D.RequestSnapshot(Boolean reset, Boolean reenumerate, NotifyCollectionChangedEventArgs change) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 216&#xD;
+   at Cerneala.UI.Controls.SceneItems2D.ApplyContextChange() in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 402&#xD;
+   at Cerneala.UI.Controls.SceneItems2D.OnSimulationContextChanged(SceneSimulationContext2D previous) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs:line 79&#xD;
+   at Cerneala.UI.Controls.SceneNode2D.AttachSimulationContext(SceneSimulationContext2D context) in C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneNode2D.cs:line 88</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="92316603-0530-4eaa-8a25-ab5ecd18e132" testId="86540aee-475c-5bf3-50a1-aa9dbf01435e" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ContextDetachDuringStructuralCallbackRetiresPartialGenerationBeforeReattach" computerName="DESKTOP-JT43V3D" duration="00:00:00.0155876" startTime="2026-09-24T07:49:19.0142459+03:00" endTime="2026-09-24T07:49:19.0142464+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="92316603-0530-4eaa-8a25-ab5ecd18e132" />
+    <UnitTestResult executionId="3ea04bea-0d8c-4b80-b172-f06126ebe020" testId="693342d2-3468-168d-c950-3020724b63be" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(fault: Detach)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0112733" startTime="2026-09-24T07:49:18.9642592+03:00" endTime="2026-09-24T07:49:18.9642615+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3ea04bea-0d8c-4b80-b172-f06126ebe020" />
+    <UnitTestResult executionId="1262374f-a585-4a91-9ce3-0fa7da78a690" testId="b4c08637-bf04-05ad-8462-77293efc623c" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplatePreflightFailureKeepsCommittedTreeAndNewSourceCanNotifyRetry" computerName="DESKTOP-JT43V3D" duration="00:00:00.0026260" startTime="2026-09-24T07:49:19.3127780+03:00" endTime="2026-09-24T07:49:19.3127781+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1262374f-a585-4a91-9ce3-0fa7da78a690" />
+    <UnitTestResult executionId="5eef8417-571e-4644-b570-c48f94a6ff2f" testId="ed5f1090-31ea-e1cd-c883-0ce8c07111fd" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(fault: Attach)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0037459" startTime="2026-09-24T07:49:18.9683102+03:00" endTime="2026-09-24T07:49:18.9683106+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5eef8417-571e-4644-b570-c48f94a6ff2f" />
+    <UnitTestResult executionId="7441cfba-d7e6-4b13-ad3b-61a7d8fc0fe1" testId="eddd04b3-e8d8-3f8d-097a-eb606b986353" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.NeverAdoptedCandidateCleanupErrorIsReportedWithPrimaryPreflightFailure" computerName="DESKTOP-JT43V3D" duration="00:00:00.0050482" startTime="2026-09-24T07:49:19.1624544+03:00" endTime="2026-09-24T07:49:19.1624550+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7441cfba-d7e6-4b13-ad3b-61a7d8fc0fe1" />
+    <UnitTestResult executionId="83afbc03-ef64-4ba3-b6f1-5df679aaee75" testId="a986d112-2dcb-d598-a393-9522d3928502" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ResetSourceReplacementAndTemplateReplacementRecreateOccurrences" computerName="DESKTOP-JT43V3D" duration="00:00:00.0019412" startTime="2026-09-24T07:49:19.3185276+03:00" endTime="2026-09-24T07:49:19.3185279+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="83afbc03-ef64-4ba3-b6f1-5df679aaee75" />
+    <UnitTestResult executionId="ffde953d-cb56-4b09-9302-2783423bb691" testId="43522937-beb0-9490-30b7-832f08aa168a" testName="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.EnumerationFailurePreservesCommittedTreeAndRefreshCanRetry" computerName="DESKTOP-JT43V3D" duration="00:00:00.0072383" startTime="2026-09-24T07:49:18.9103443+03:00" endTime="2026-09-24T07:49:18.9103447+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ffde953d-cb56-4b09-9302-2783423bb691" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralFaultCannotPublishReadyCollisionPreparation" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="24f61d35-7c77-b5f8-affd-17ecc0fad953">
+      <Execution id="cca80a9b-e9a0-4df1-9c3e-566b1e8c2b88" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="StructuralFaultCannotPublishReadyCollisionPreparation" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ObservableNotificationsEnumeratePostEventStateOnceAndInvalidIndicesReset" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="889149b0-5dc5-222c-96ba-8cbbbe9e8ca0">
+      <Execution id="659c0a3a-ed45-4fc7-9cb7-5cba04daeb3e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="ObservableNotificationsEnumeratePostEventStateOnceAndInvalidIndicesReset" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplateProducedSceneNodeReceivesRealClickAndKeyInput" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="68dd57cc-3454-c973-f9b7-4fec83a56e17">
+      <Execution id="25284ebd-c013-4385-a0b3-a0353b63882c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="TemplateProducedSceneNodeReceivesRealClickAndKeyInput" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.PlainSourceIsSnapshottedOnceAndRefreshIsTheExplicitResetBoundary" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="4203fd26-a843-38b6-54bf-1c790378227e">
+      <Execution id="1c41b0c9-a121-47ff-bc1b-25290b049255" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="PlainSourceIsSnapshottedOnceAndRefreshIsTheExplicitResetBoundary" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ReentrantSourceChangeDuringStructuralCallbackCannotPublishLateGenerationAfterFault" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="313f0569-00bb-a03c-ef64-e32105e58012">
+      <Execution id="946d97be-732c-403e-8dd2-115299491ac5" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="ReentrantSourceChangeDuringStructuralCallbackCannotPublishLateGenerationAfterFault" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ObservableSourceResnapshotsOnReattachAndOwnerRelayCanApplyDetachedChanges" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="65bf7c38-f069-6668-7c02-1d531172d89b">
+      <Execution id="96314e7d-1a91-40a6-8a5f-ee7a3c022ae3" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="ObservableSourceResnapshotsOnReattachAndOwnerRelayCanApplyDetachedChanges" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.NeverAdoptedCandidateCleanupErrorIsReportedWithPrimaryPreflightFailure" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="eddd04b3-e8d8-3f8d-097a-eb606b986353">
+      <Execution id="7441cfba-d7e6-4b13-ad3b-61a7d8fc0fe1" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="NeverAdoptedCandidateCleanupErrorIsReportedWithPrimaryPreflightFailure" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ContextDetachDuringStructuralCallbackRetiresPartialGenerationBeforeReattach" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="86540aee-475c-5bf3-50a1-aa9dbf01435e">
+      <Execution id="92316603-0530-4eaa-8a25-ab5ecd18e132" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="ContextDetachDuringStructuralCallbackRetiresPartialGenerationBeforeReattach" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.TemplatePreflightFailureKeepsCommittedTreeAndNewSourceCanNotifyRetry" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="b4c08637-bf04-05ad-8462-77293efc623c">
+      <Execution id="1262374f-a585-4a91-9ce3-0fa7da78a690" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="TemplatePreflightFailureKeepsCommittedTreeAndNewSourceCanNotifyRetry" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.EnumerationFailurePreservesCommittedTreeAndRefreshCanRetry" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="43522937-beb0-9490-30b7-832f08aa168a">
+      <Execution id="ffde953d-cb56-4b09-9302-2783423bb691" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="EnumerationFailurePreservesCommittedTreeAndRefreshCanRetry" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.NullIsARealOccurrenceWithItsOwnNullCapableTemplate" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="ea0f8253-6870-fcc2-e332-0eaa9d65aec1">
+      <Execution id="4163d728-c0b5-4b7e-a26c-2cdfa57f84cd" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="NullIsARealOccurrenceWithItsOwnNullCapableTemplate" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.SuccessfulStructuralReentryStopsBeforeAttachingLaterStaleCandidates" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="f663ff0e-00f1-5871-6d2e-72bcf6e6a559">
+      <Execution id="da7c128c-ad2f-4670-b9c1-a6f9685e2ad5" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="SuccessfulStructuralReentryStopsBeforeAttachingLaterStaleCandidates" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.OneSceneNodeCannotRepresentTwoOccurrences" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="7dc201ee-7967-53d2-a219-978e3ee7da80">
+      <Execution id="2cbd50d2-3b95-477c-9af7-52a7f441c7de" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="OneSceneNodeCannotRepresentTwoOccurrences" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.NullWithoutNullCapableTemplateFailsWithoutNullDereference" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="65c56c08-b6d3-f29d-d50f-0f2eb4cc86c0">
+      <Execution id="32ac7c31-6446-43b2-a2dd-fa2f66adc774" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="NullWithoutNullCapableTemplateFailsWithoutNullDereference" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ItemsSourceAcceptsPlainAndObservableEnumerables" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="20bcfb6d-edac-5e32-0441-732ccb4bb01a">
+      <Execution id="b9c75311-0723-41bf-9586-5db7e1a7b364" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="ItemsSourceAcceptsPlainAndObservableEnumerables" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.AttachedSourceMutationAssignmentAndRefreshRejectOffOwnerCalls" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="26668bcf-d43d-ccdc-a594-33036c269549">
+      <Execution id="865fcbf6-c2e5-4f50-b5d3-44e28505c311" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="AttachedSourceMutationAssignmentAndRefreshRejectOffOwnerCalls" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.OccurrenceDataContextAndTemplateIndexStayBoundToValueNotPosition" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="e71ecd0d-369d-87df-26ac-2d777e6e44de">
+      <Execution id="6b751d0b-050c-45b2-9903-3b33d0414296" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="OccurrenceDataContextAndTemplateIndexStayBoundToValueNotPosition" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.FailedPreflightPreservesOldColliderButDoesNotReportRequestedSourceReady" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="83bedcbe-33cd-364c-82ac-b7199961f3b0">
+      <Execution id="f1d89c18-b05a-4eee-87b1-d2083a58713d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="FailedPreflightPreservesOldColliderButDoesNotReportRequestedSourceReady" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ObservableDeltasKeepUnaffectedOccurrenceNodesEvenForDuplicateReferences" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="16984204-ff0d-7821-2749-1bf091b3eb55">
+      <Execution id="0a2fdd8d-fc13-4faa-9482-410b1a0334a2" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="ObservableDeltasKeepUnaffectedOccurrenceNodesEvenForDuplicateReferences" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(fault: Attach)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="ed5f1090-31ea-e1cd-c883-0ce8c07111fd">
+      <Execution id="5eef8417-571e-4644-b570-c48f94a6ff2f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(fault: Changed)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="058b480c-eb50-c685-0fbe-d93362735543">
+      <Execution id="e35933b0-8b9a-41f8-924a-5484b6cc7c40" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ReentrantFactorySourceChangeCannotPublishItsStaleCandidate" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="9cc93c4e-b345-3f81-6bb0-6bd00001fc69">
+      <Execution id="d1fb3dbe-8a92-4563-ba7c-7ad465c71892" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="ReentrantFactorySourceChangeCannotPublishItsStaleCandidate" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.ResetSourceReplacementAndTemplateReplacementRecreateOccurrences" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="a986d112-2dcb-d598-a393-9522d3928502">
+      <Execution id="83afbc03-ef64-4ba3-b6f1-5df679aaee75" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="ResetSourceReplacementAndTemplateReplacementRecreateOccurrences" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership(fault: Detach)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="693342d2-3468-168d-c950-3020724b63be">
+      <Execution id="3ea04bea-0d8c-4b80-b172-f06126ebe020" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="StructuralCallbackFaultIsTerminalAndCountMatchesActualMembership" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.OneShotPlainSourceIsNotConsumedAgainByAttachOrReattach" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="573779be-99e9-a9c4-205a-47a41d4fa4d6">
+      <Execution id="225d6fa6-dad0-4cdf-bb21-33bec2dcf001" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests" name="OneShotPlainSourceIsNotConsumedAgainByAttachOrReattach" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="573779be-99e9-a9c4-205a-47a41d4fa4d6" executionId="225d6fa6-dad0-4cdf-bb21-33bec2dcf001" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7dc201ee-7967-53d2-a219-978e3ee7da80" executionId="2cbd50d2-3b95-477c-9af7-52a7f441c7de" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="20bcfb6d-edac-5e32-0441-732ccb4bb01a" executionId="b9c75311-0723-41bf-9586-5db7e1a7b364" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="889149b0-5dc5-222c-96ba-8cbbbe9e8ca0" executionId="659c0a3a-ed45-4fc7-9cb7-5cba04daeb3e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f663ff0e-00f1-5871-6d2e-72bcf6e6a559" executionId="da7c128c-ad2f-4670-b9c1-a6f9685e2ad5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="83bedcbe-33cd-364c-82ac-b7199961f3b0" executionId="f1d89c18-b05a-4eee-87b1-d2083a58713d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="65bf7c38-f069-6668-7c02-1d531172d89b" executionId="96314e7d-1a91-40a6-8a5f-ee7a3c022ae3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="16984204-ff0d-7821-2749-1bf091b3eb55" executionId="0a2fdd8d-fc13-4faa-9482-410b1a0334a2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e71ecd0d-369d-87df-26ac-2d777e6e44de" executionId="6b751d0b-050c-45b2-9903-3b33d0414296" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4203fd26-a843-38b6-54bf-1c790378227e" executionId="1c41b0c9-a121-47ff-bc1b-25290b049255" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="26668bcf-d43d-ccdc-a594-33036c269549" executionId="865fcbf6-c2e5-4f50-b5d3-44e28505c311" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="058b480c-eb50-c685-0fbe-d93362735543" executionId="e35933b0-8b9a-41f8-924a-5484b6cc7c40" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ea0f8253-6870-fcc2-e332-0eaa9d65aec1" executionId="4163d728-c0b5-4b7e-a26c-2cdfa57f84cd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="24f61d35-7c77-b5f8-affd-17ecc0fad953" executionId="cca80a9b-e9a0-4df1-9c3e-566b1e8c2b88" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="313f0569-00bb-a03c-ef64-e32105e58012" executionId="946d97be-732c-403e-8dd2-115299491ac5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="68dd57cc-3454-c973-f9b7-4fec83a56e17" executionId="25284ebd-c013-4385-a0b3-a0353b63882c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9cc93c4e-b345-3f81-6bb0-6bd00001fc69" executionId="d1fb3dbe-8a92-4563-ba7c-7ad465c71892" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="65c56c08-b6d3-f29d-d50f-0f2eb4cc86c0" executionId="32ac7c31-6446-43b2-a2dd-fa2f66adc774" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="86540aee-475c-5bf3-50a1-aa9dbf01435e" executionId="92316603-0530-4eaa-8a25-ab5ecd18e132" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="693342d2-3468-168d-c950-3020724b63be" executionId="3ea04bea-0d8c-4b80-b172-f06126ebe020" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b4c08637-bf04-05ad-8462-77293efc623c" executionId="1262374f-a585-4a91-9ce3-0fa7da78a690" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ed5f1090-31ea-e1cd-c883-0ce8c07111fd" executionId="5eef8417-571e-4644-b570-c48f94a6ff2f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="eddd04b3-e8d8-3f8d-097a-eb606b986353" executionId="7441cfba-d7e6-4b13-ad3b-61a7d8fc0fe1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a986d112-2dcb-d598-a393-9522d3928502" executionId="83afbc03-ef64-4ba3-b6f1-5df679aaee75" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="43522937-beb0-9490-30b7-832f08aa168a" executionId="ffde953d-cb56-4b09-9302-2783423bb691" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="25" executed="25" passed="24" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:03.03]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:04.47]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:04.49]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:05.78]       Assert.Throws() Failure: Exception type was not an exact match&#xD;
+[xUnit.net 00:00:05.78]       Expected: typeof(System.InvalidOperationException)&#xD;
+[xUnit.net 00:00:05.78]       Actual:   typeof(System.AggregateException)&#xD;
+[xUnit.net 00:00:05.78]       ---- System.AggregateException : One or more errors occurred. (One or more errors occurred. (No content template matches this collection item in SceneItems2D.))&#xD;
+[xUnit.net 00:00:05.78]       -------- System.AggregateException : One or more errors occurred. (No content template matches this collection item in SceneItems2D.)&#xD;
+[xUnit.net 00:00:05.78]       ------------ System.InvalidOperationException : No content template matches this collection item in SceneItems2D.&#xD;
+[xUnit.net 00:00:05.78]       Stack Trace:&#xD;
+[xUnit.net 00:00:05.78]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(263,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.NullWithoutNullCapableTemplateFailsWithoutNullDereference()&#xD;
+[xUnit.net 00:00:05.78]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:05.78]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:05.78]         ----- Inner Stack Trace -----&#xD;
+[xUnit.net 00:00:05.78]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneNode2D.cs(103,0): at Cerneala.UI.Controls.SceneNode2D.AttachSimulationContext(SceneSimulationContext2D context)&#xD;
+[xUnit.net 00:00:05.78]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneSimulationContext2D.cs(40,0): at Cerneala.UI.Controls.SceneSimulationContext2D..ctor(Scene2D scene, UiRelay relay, RenderSurface2D surface)&#xD;
+[xUnit.net 00:00:05.78]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneSimulationContext2D.cs(21,0): at Cerneala.UI.Controls.SceneSimulationContext2D..ctor(Scene2D scene, RenderSurface2D surface)&#xD;
+[xUnit.net 00:00:05.78]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\RenderSurface2D.cs(303,0): at Cerneala.UI.Controls.RenderSurface2D.OnAttached()&#xD;
+[xUnit.net 00:00:05.78]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElement.cs(679,0): at Cerneala.UI.Elements.UIElement.AttachToRoot(UIRoot root, UiElementId id)&#xD;
+[xUnit.net 00:00:05.78]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs(102,0): at Cerneala.UI.Elements.ElementLifecycle.AttachSingle(UIRoot root, UIElement element)&#xD;
+[xUnit.net 00:00:05.78]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs(61,0): at Cerneala.UI.Elements.ElementLifecycle.AttachPreOrder(UIRoot root, UIElement current, HashSet`1 visited)&#xD;
+[xUnit.net 00:00:05.78]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\ElementLifecycle.cs(13,0): at Cerneala.UI.Elements.ElementLifecycle.AttachSubtree(UIRoot root, UIElement element)&#xD;
+[xUnit.net 00:00:05.78]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs(48,0): at Cerneala.UI.Elements.UIElementCollection.InsertCore(Int32 index, UIElement child, Boolean ownerManaged)&#xD;
+[xUnit.net 00:00:05.78]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs(31,0): at Cerneala.UI.Elements.UIElementCollection.Insert(Int32 index, UIElement child)&#xD;
+[xUnit.net 00:00:05.78]         C:\Users\lauri\Desktop\Cerneala\UI\Elements\UIElementCollection.cs(26,0): at Cerneala.UI.Elements.UIElementCollection.Add(UIElement child)&#xD;
+[xUnit.net 00:00:05.78]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Controls\SceneItems2DSimpleCollectionContractTests.cs(855,0): at Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.CollectionFixture.Attach()&#xD;
+[xUnit.net 00:00:05.78]         ----- Inner Stack Trace -----&#xD;
+[xUnit.net 00:00:05.78]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneNode2D.cs(103,0): at Cerneala.UI.Controls.SceneNode2D.AttachSimulationContext(SceneSimulationContext2D context)&#xD;
+[xUnit.net 00:00:05.78]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneNode2D.cs(97,0): at Cerneala.UI.Controls.SceneNode2D.AttachSimulationContext(SceneSimulationContext2D context)&#xD;
+[xUnit.net 00:00:05.78]         ----- Inner Stack Trace -----&#xD;
+[xUnit.net 00:00:05.78]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs(294,0): at Cerneala.UI.Controls.SceneItems2D.CreateNode(Object item)&#xD;
+[xUnit.net 00:00:05.78]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs(179,0): at Cerneala.UI.Controls.SceneItems2D.RequestSnapshot(Boolean reset, Boolean reenumerate, NotifyCollectionChangedEventArgs change)&#xD;
+[xUnit.net 00:00:05.78]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:05.78]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs(216,0): at Cerneala.UI.Controls.SceneItems2D.RequestSnapshot(Boolean reset, Boolean reenumerate, NotifyCollectionChangedEventArgs change)&#xD;
+[xUnit.net 00:00:05.78]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs(402,0): at Cerneala.UI.Controls.SceneItems2D.ApplyContextChange()&#xD;
+[xUnit.net 00:00:05.78]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneItems2D.cs(79,0): at Cerneala.UI.Controls.SceneItems2D.OnSimulationContextChanged(SceneSimulationContext2D previous)&#xD;
+[xUnit.net 00:00:05.79]         C:\Users\lauri\Desktop\Cerneala\UI\Controls\SceneNode2D.cs(88,0): at Cerneala.UI.Controls.SceneNode2D.AttachSimulationContext(SceneSimulationContext2D context)&#xD;
+[xUnit.net 00:00:06.16]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T07:49:18.9430331+03:00">
+        <Text>[xUnit.net 00:00:05.78]     Cerneala.Tests.Controls.SceneItems2DSimpleCollectionContractTests.NullWithoutNullCapableTemplateFailsWithoutNullDereference [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

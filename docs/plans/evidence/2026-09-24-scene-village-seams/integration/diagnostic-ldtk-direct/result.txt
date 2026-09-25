@@ -1,0 +1,4 @@
+Exit=0
+DestinationExistsAfter=True
+ParentEntriesAfter=ldtk,tiled
+UTC=2026-09-25T04:09:10.1578238Z

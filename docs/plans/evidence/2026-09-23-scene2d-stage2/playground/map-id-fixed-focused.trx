@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="6943e1f6-327a-43aa-8516-c4baca7a94de" name="lauri@DESKTOP-JT43V3D 2026-09-24 08:24:11" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T08:24:11.6514381+03:00" queuing="2026-09-24T08:24:11.6514386+03:00" start="2026-09-24T08:24:04.9809940+03:00" finish="2026-09-24T08:24:11.6616399+03:00" />
+  <TestSettings name="default" id="2266f6be-1924-4f16-b6fd-780b3f0dba71">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_08_24_11" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="fa40db54-69c2-4b8a-88ab-def0076107fa" testId="52d9b975-c134-13f4-0f66-fe7b0fd6fa69" testName="Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(ldtk: False)" computerName="DESKTOP-JT43V3D" duration="00:00:00.5252265" startTime="2026-09-24T08:24:11.1198734+03:00" endTime="2026-09-24T08:24:11.1199251+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fa40db54-69c2-4b8a-88ab-def0076107fa" />
+    <UnitTestResult executionId="7956f4aa-cf2a-43f5-91e2-fbad60bb81ef" testId="742ac92e-e9d8-1da5-ce0b-e6ac6c6cc6f8" testName="Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(ldtk: True)" computerName="DESKTOP-JT43V3D" duration="00:00:00.3531173" startTime="2026-09-24T08:24:11.4832878+03:00" endTime="2026-09-24T08:24:11.4832882+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7956f4aa-cf2a-43f5-91e2-fbad60bb81ef" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(ldtk: True)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="742ac92e-e9d8-1da5-ce0b-e6ac6c6cc6f8">
+      <Execution id="7956f4aa-cf2a-43f5-91e2-fbad60bb81ef" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Playground.SceneWorldShowcaseTests" name="ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(ldtk: False)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="52d9b975-c134-13f4-0f66-fe7b0fd6fa69">
+      <Execution id="fa40db54-69c2-4b8a-88ab-def0076107fa" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Playground.SceneWorldShowcaseTests" name="ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="52d9b975-c134-13f4-0f66-fe7b0fd6fa69" executionId="fa40db54-69c2-4b8a-88ab-def0076107fa" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="742ac92e-e9d8-1da5-ce0b-e6ac6c6cc6f8" executionId="7956f4aa-cf2a-43f5-91e2-fbad60bb81ef" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="2" executed="2" passed="2" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:01.02]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:02.56]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:02.58]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:03.62]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

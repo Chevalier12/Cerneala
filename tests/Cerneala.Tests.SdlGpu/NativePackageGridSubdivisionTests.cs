@@ -54,14 +54,15 @@ public sealed class NativePackageGridSubdivisionTests
         Scene2DPackageWriter.WriteAsync(packageDirectory, document, directory).GetAwaiter().GetResult();
         File.Delete(atlasPath); // Both references must use the autonomous package resource.
         using Scene2DPackage package = Scene2DPackage.OpenAsync(packageDirectory).GetAwaiter().GetResult();
-        TileMapSource2D prepared = package.Levels[0].TileMaps[0], authored = TileMapSource2D.FromModel(model);
-        Assert.Single(authored.Entries);
-        Assert.Equal(6, prepared.Entries.Count);
+        TileMap2D prepared = package.Levels[0].CreateTileMap("map");
+        TileMap2D authored = TileMap2D.FromModel(model);
+        Assert.Single(authored.Source!.Entries);
+        Assert.Equal(6, prepared.Source!.Entries.Count);
         NativeSdlApi api = new();
         using SdlGpuWindowGraphicsSessionFactory graphics = new(api, useMultisampling: true);
         using SdlWindowPlatform platform = new(api, graphics, coordinateScaleOverride: 1);
         using WindowApplicationRuntime runtime = new(platform);
-        TileMap2D map = new() { Source = authored };
+        TileMap2D map = authored;
         var scene = new global::Cerneala.UI.Controls.Scene2D();
         scene.Children.Add(map);
         DrawRect[] views = [new(-280, -150, 192, 160), new(-64, 64, 192, 160), new(-64, 64, 288, 240), new(210, 110, 288, 240), new(2000, 0, 192, 160)];
@@ -75,7 +76,8 @@ public sealed class NativePackageGridSubdivisionTests
         Button next = new() { Width = 80, Height = 24, Command = new ActionCommand(_ =>
         {
             stage++;
-            map.Source = stage % 2 == 0 ? authored : prepared;
+            map = stage % 2 == 0 ? authored : prepared;
+            scene.Children[0] = map;
             surface.ViewBox = views[stage / 2];
         }) };
         ServoApi.SetId(next, "next-grid-view");
@@ -118,7 +120,14 @@ public sealed class NativePackageGridSubdivisionTests
                 return bitmap.Bytes.AsSpan(0, bitmap.RowBytes * 128).ToArray();
             }
         }
-        finally { runtime.Close(window, force: true); }
+        finally
+        {
+            runtime.Close(window, force: true);
+            scene.Children.Clear();
+            authored.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            prepared.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            package.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        }
 
         void Wait(Func<bool> done) => Assert.True(SpinWait.SpinUntil(() =>
         {

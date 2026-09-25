@@ -1,0 +1,35 @@
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Scene2D.Packages -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Packages\bin\Release\net8.0\Cerneala.Scene2D.Packages.dll
+  Verified 10 SDL shader artifacts from 'C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Shaders\manifest.json'.
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  Tetris -> C:\Users\lauri\Desktop\Cerneala\Tetrisish\bin\Release\net8.0\Cerneala.Tetris.dll
+  Cerneala.Tests.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:01.66]     Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.PointCropDoesNotSampleAtlasNeighborsAtFractionalSurfaceEdge [FAIL]
+  Failed Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.PointCropDoesNotSampleAtlasNeighborsAtFractionalSurfaceEdge [832 ms]
+  Error Message:
+   System.InvalidOperationException : SDL GPU drawing pipeline creation (SdlGpuPipelineKey { ColorFormat = B8G8R8A8Unorm, SampleCount = One, Topology = TriangleList, BlendMode = Normal, StencilMode = Disabled, ColorWriteMask = All, AlphaMask = False, PrismPresentation = False, PointClampImageDomain = True }) failed: Could not create graphics pipeline state! Error Code: The parameter is incorrect. (0x80070057)
+  Stack Trace:
+     at Cerneala.Backends.SdlGpu.SdlGpuDrawingResources.RequireHandle(IntPtr handle, String operation) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingResources.cs:line 1537
+   at Cerneala.Backends.SdlGpu.SdlGpuDrawingResources.GetPipeline(SdlGpuTextureFormat colorFormat, SdlGpuSampleCount sampleCount, DrawPrimitiveTopology topology, DrawBlendMode blendMode, SdlGpuStencilMode stencilMode, SdlGpuColorWriteMask colorWriteMask, Boolean alphaMask, Boolean prismPresentation, Boolean pointClampImageDomain) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingResources.cs:line 168
+   at Cerneala.Backends.SdlGpu.Cerberus.Flush(CerberusExecutionContext context) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\Cerberus.cs:line 209
+   at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.FlushBatches() in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingBackend.cs:line 221
+   at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.Render(DrawCommandList commands, DrawingFrameContext& frameContext) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Gpu\SdlGpuDrawingBackend.cs:line 154
+   at Cerneala.Backends.SdlGpu.SdlGpuDrawingBackend.Cerneala.Drawing.IDrawingBackend.Render(DrawCommandList commands, DrawingFrameContext& frameContext)
+   at Cerneala.Tests.Drawing.SdlGpu.SdlDrawingFixture.Render(SdlGpuWindowGraphicsSession session, DrawCommandList commands, Nullable`1 clearColor, PrismBackdropSourceToken backdropSource) in C:\Users\lauri\Desktop\Cerneala\tests\Shared\SdlDrawingFixture.cs:line 61
+   at Cerneala.Tests.Drawing.SdlGpu.SdlDrawingFixture.Render(DrawCommandList commands, Nullable`1 clearColor) in C:\Users\lauri\Desktop\Cerneala\tests\Shared\SdlDrawingFixture.cs:line 44
+   at Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.RenderImage(SdlDrawingFixture fixture, SdlGpuImage image, Nullable`1 source, DrawSamplingMode sampling, Boolean offscreen, Nullable`1 destination) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeDrawingInterpolationBoundaryTests.cs:line 322
+   at Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.PointCropDoesNotSampleAtlasNeighborsAtFractionalSurfaceEdge() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\NativeDrawingInterpolationBoundaryTests.cs:line 97
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+  Standard Output Messages:
+ Parent window sample count: One
+
+
+Results File: C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\TestResults\pipeline-isolation-matched-centroid-native.trx
+
+Failed!  - Failed:     1, Passed:     0, Skipped:     0, Total:     1, Duration: 832 ms - Cerneala.Tests.SdlGpu.dll (net8.0)

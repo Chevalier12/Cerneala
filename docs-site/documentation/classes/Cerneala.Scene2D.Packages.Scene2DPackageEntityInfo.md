@@ -8,7 +8,7 @@ Assembly/Project: `Cerneala.Scene2D.Packages`
 
 Source: `Cerneala.Scene2D.Packages/Scene2DPackageEntityInfo.cs`
 
-Exposes the resident identity, role and authoring geometry of a separately leased package entity.
+Exposes the resident identity, role and authoring geometry of a separately stored package entity.
 
 ```csharp
 public sealed class Scene2DPackageEntityInfo
@@ -27,14 +27,14 @@ pivot metadata, map offsets and level offsets are not.
 
 An authored Point has zero area even if the game draws a large sprite at that
 position. `CollisionBounds` describes only the authored descriptor, not a collider
-later added by a template. The game explicitly declares template/movement bounds,
-collision envelopes and simulation participation with
-`Scene2DPackageLevel.CreateEntitySource`. The package does not interpret `Spawn`
-as an active NPC, approximate unknown template bounds, or inspect entity properties
-to make that decision.
+later added by a template. The package does not interpret `Spawn` as an active
+NPC, approximate unknown template bounds, or inspect entity properties to make
+that decision. The application selects which IDs to load and which values to
+place in a scene-items collection; it marks an already-realized actor collider
+explicitly when that geometry should retain nearby terrain.
 
-The complete entity remains available through `LoadEntityAsync(Id)` or a lease
-from the adapted source. Loading checks identity, map, role and both authored
+The complete entity remains available through `Scene2DPackageLevel.LoadEntityAsync(Id)`.
+Loading checks identity, map, role and both authored
 bounds against the header before returning the entity.
 
 ## Properties
@@ -51,4 +51,4 @@ bounds against the header before returning the entity.
 
 - [Scene2DEntity](Cerneala.UI.Controls.Scene2DEntity.md)
 - [Scene2DPackageLevel](Cerneala.Scene2D.Packages.Scene2DPackageLevel.md)
-- [SceneSpatialEntry2D](Cerneala.UI.Controls.SceneSpatialEntry2D.md)
+- [SceneItems2D](Cerneala.UI.Controls.SceneItems2D.md)

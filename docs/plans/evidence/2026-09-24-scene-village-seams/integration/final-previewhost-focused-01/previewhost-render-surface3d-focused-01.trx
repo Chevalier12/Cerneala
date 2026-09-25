@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="49a55fd0-a11c-4fd9-be93-67169e0c98f9" name="lauri@DESKTOP-JT43V3D 2026-09-25 07:43:36" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-25T07:43:36.9437932+03:00" queuing="2026-09-25T07:43:36.9437936+03:00" start="2026-09-25T07:43:36.0454542+03:00" finish="2026-09-25T07:43:36.9494564+03:00" />
+  <TestSettings name="default" id="3fd6a746-7615-4314-8e16-43c12ad8f7bc">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-25_07_43_36" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="6f8cdefb-b0db-4e9b-9179-9f5d298fe369" testId="d425a241-3c71-42da-67b3-74ac7b86adff" testName="Cerneala.Tests.PreviewHost.RenderSurface3DPreviewTests.PreviewInstantiatesPairedThreeDimensionalSurfaceWithSampleGeometry" computerName="DESKTOP-JT43V3D" duration="00:00:00.0289587" startTime="2026-09-25T07:43:36.8132952+03:00" endTime="2026-09-25T07:43:36.8133331+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6f8cdefb-b0db-4e9b-9179-9f5d298fe369">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Strings differ&#xD;
+           ↓ (pos 0)&#xD;
+Expected: "Cerneala.SdlGpuSmoke.RenderSurface3DPrevi"···&#xD;
+Actual:   "RenderSurface3DPreview"&#xD;
+           ↑ (pos 0)</Message>
+          <StackTrace>   at Cerneala.Tests.PreviewHost.RenderSurface3DPreviewTests.PreviewInstantiatesPairedThreeDimensionalSurfaceWithSampleGeometry() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\RenderSurface3DPreviewTests.cs:line 18&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.PreviewHost.RenderSurface3DPreviewTests.PreviewInstantiatesPairedThreeDimensionalSurfaceWithSampleGeometry" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.previewhost\bin\release\net10.0-windows\cerneala.tests.previewhost.dll" id="d425a241-3c71-42da-67b3-74ac7b86adff">
+      <Execution id="6f8cdefb-b0db-4e9b-9179-9f5d298fe369" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Release\net10.0-windows\Cerneala.Tests.PreviewHost.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.PreviewHost.RenderSurface3DPreviewTests" name="PreviewInstantiatesPairedThreeDimensionalSurfaceWithSampleGeometry" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="d425a241-3c71-42da-67b3-74ac7b86adff" executionId="6f8cdefb-b0db-4e9b-9179-9f5d298fe369" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="1" executed="1" passed="0" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 10.0.11)&#xD;
+[xUnit.net 00:00:00.09]   Discovering: Cerneala.Tests.PreviewHost&#xD;
+[xUnit.net 00:00:00.13]   Discovered:  Cerneala.Tests.PreviewHost&#xD;
+[xUnit.net 00:00:00.14]   Starting:    Cerneala.Tests.PreviewHost&#xD;
+[xUnit.net 00:00:00.23]       Assert.Equal() Failure: Strings differ&#xD;
+[xUnit.net 00:00:00.23]                  ↓ (pos 0)&#xD;
+[xUnit.net 00:00:00.23]       Expected: "Cerneala.SdlGpuSmoke.RenderSurface3DPrevi"···&#xD;
+[xUnit.net 00:00:00.23]       Actual:   "RenderSurface3DPreview"&#xD;
+[xUnit.net 00:00:00.23]                  ↑ (pos 0)&#xD;
+[xUnit.net 00:00:00.23]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.23]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\RenderSurface3DPreviewTests.cs(18,0): at Cerneala.Tests.PreviewHost.RenderSurface3DPreviewTests.PreviewInstantiatesPairedThreeDimensionalSurfaceWithSampleGeometry()&#xD;
+[xUnit.net 00:00:00.23]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:00.24]   Finished:    Cerneala.Tests.PreviewHost&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-25T07:43:36.8103430+03:00">
+        <Text>[xUnit.net 00:00:00.23]     Cerneala.Tests.PreviewHost.RenderSurface3DPreviewTests.PreviewInstantiatesPairedThreeDimensionalSurfaceWithSampleGeometry [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

@@ -14,13 +14,13 @@ Preserves an original authored grid chunk's extent, revision and properties with
 public sealed class Scene2DPackageGridChunkMetadata
 ```
 
-There is no public constructor. Obtain instances from an acquired map metadata payload.
+There is no public constructor. Obtain instances from a loaded map metadata value.
 
 ## Examples
 
 ```csharp
-using var lease = await level.LoadMapMetadataAsync(mapId);
-foreach (Scene2DPackageGridChunkMetadata original in lease.Value.GridChunks)
+Scene2DPackageMetadata metadata = await level.LoadMapMetadataAsync(mapId);
+foreach (Scene2DPackageGridChunkMetadata original in metadata.GridChunks)
 {
     TileMapBounds2D authoredExtent = original.Cells;
     long authoredRevision = original.Version;
@@ -35,12 +35,12 @@ chunks that were not subdivided. Coordinates are integer map-grid coordinates,
 not pixels or scene/world coordinates. Each generated piece inherits its original
 chunk's revision and properties; this metadata does not duplicate its cells.
 
-Instances live in explicitly acquired map metadata, not in the resident spatial
-catalog. Getters do not perform I/O. Collection membership and the property
+Instances live in explicitly loaded map metadata, not in the resident package
+index. Getters do not perform I/O. Collection membership and the property
 dictionary are read-only snapshots, but opaque values such as byte arrays are
-not universally immutable. Dispose the metadata lease and release any separately
-retained references to permit collection. Shared object identity is preserved
-within one payload, not across independent chunk/metadata acquisitions.
+not universally immutable. Release references to the metadata value and any
+separately retained objects to permit collection. Shared object identity is preserved
+within one payload, not across independent chunk/metadata reads.
 
 Earlier CPV2 packages did not store this collection and cannot supply missing
 authored boundaries retroactively. Regenerate them to obtain it.

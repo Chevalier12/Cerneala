@@ -1,0 +1,1 @@
+dotnet build .\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj -c Release -m:1

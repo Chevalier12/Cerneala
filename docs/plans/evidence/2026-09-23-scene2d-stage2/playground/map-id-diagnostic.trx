@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="5af2701a-9a88-4bab-9d7a-d27741274ade" name="lauri@DESKTOP-JT43V3D 2026-09-24 08:21:10" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T08:21:10.5604950+03:00" queuing="2026-09-24T08:21:10.5604956+03:00" start="2026-09-24T08:21:03.1117568+03:00" finish="2026-09-24T08:21:10.5897317+03:00" />
+  <TestSettings name="default" id="5acc346b-b3b7-4122-8d50-46a5caf5f400">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_08_21_10" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="0dee7484-7b65-4fdc-9287-9e4cb6e90a71" testId="742ac92e-e9d8-1da5-ce0b-e6ac6c6cc6f8" testName="Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(ldtk: True)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1424724" startTime="2026-09-24T08:21:10.0966313+03:00" endTime="2026-09-24T08:21:10.0966318+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0dee7484-7b65-4fdc-9287-9e4cb6e90a71">
+      <Output>
+        <ErrorInfo>
+          <Message>System.IO.InvalidDataException : The village requires zero level offset and authored Ground, Buildings and Doors maps in order. Actual offset: DrawPoint { X = 0, Y = 0 }; map IDs: [1,2,4,3].</Message>
+          <StackTrace>   at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 57&#xD;
+   at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 96&#xD;
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(Boolean ldtk) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 47&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="0b523502-0bba-4eb2-afc3-434b45bb6ecf" testId="52d9b975-c134-13f4-0f66-fe7b0fd6fa69" testName="Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(ldtk: False)" computerName="DESKTOP-JT43V3D" duration="00:00:00.2329591" startTime="2026-09-24T08:21:09.9070256+03:00" endTime="2026-09-24T08:21:09.9070817+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0b523502-0bba-4eb2-afc3-434b45bb6ecf">
+      <Output>
+        <ErrorInfo>
+          <Message>System.IO.InvalidDataException : The village requires zero level offset and authored Ground, Buildings and Doors maps in order. Actual offset: DrawPoint { X = 0, Y = 0 }; map IDs: [1,2,4,3].</Message>
+          <StackTrace>   at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 57&#xD;
+   at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token) in C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs:line 96&#xD;
+   at Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(Boolean ldtk) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs:line 47&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(ldtk: True)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="742ac92e-e9d8-1da5-ce0b-e6ac6c6cc6f8">
+      <Execution id="0dee7484-7b65-4fdc-9287-9e4cb6e90a71" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Playground.SceneWorldShowcaseTests" name="ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(ldtk: False)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests\bin\release\net8.0-windows\cerneala.tests.dll" id="52d9b975-c134-13f4-0f66-fe7b0fd6fa69">
+      <Execution id="0b523502-0bba-4eb2-afc3-434b45bb6ecf" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Playground.SceneWorldShowcaseTests" name="ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="742ac92e-e9d8-1da5-ce0b-e6ac6c6cc6f8" executionId="0dee7484-7b65-4fdc-9287-9e4cb6e90a71" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="52d9b975-c134-13f4-0f66-fe7b0fd6fa69" executionId="0b523502-0bba-4eb2-afc3-434b45bb6ecf" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="2" executed="2" passed="0" failed="2" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:01.86]   Discovering: Cerneala.Tests&#xD;
+[xUnit.net 00:00:04.42]   Discovered:  Cerneala.Tests&#xD;
+[xUnit.net 00:00:04.44]   Starting:    Cerneala.Tests&#xD;
+[xUnit.net 00:00:04.97]       System.IO.InvalidDataException : The village requires zero level offset and authored Ground, Buildings and Doors maps in order. Actual offset: DrawPoint { X = 0, Y = 0 }; map IDs: [1,2,4,3].&#xD;
+[xUnit.net 00:00:04.97]       Stack Trace:&#xD;
+[xUnit.net 00:00:04.97]         C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs(57,0): at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token)&#xD;
+[xUnit.net 00:00:04.97]         C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs(96,0): at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token)&#xD;
+[xUnit.net 00:00:04.97]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs(47,0): at Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(Boolean ldtk)&#xD;
+[xUnit.net 00:00:04.97]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:05.16]       System.IO.InvalidDataException : The village requires zero level offset and authored Ground, Buildings and Doors maps in order. Actual offset: DrawPoint { X = 0, Y = 0 }; map IDs: [1,2,4,3].&#xD;
+[xUnit.net 00:00:05.17]       Stack Trace:&#xD;
+[xUnit.net 00:00:05.17]         C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs(57,0): at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token)&#xD;
+[xUnit.net 00:00:05.17]         C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldPackage.cs(96,0): at Cerneala.Playground.SceneWorldPackage.OpenAsync(String path, CancellationToken token)&#xD;
+[xUnit.net 00:00:05.17]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Playground\SceneWorldShowcaseTests.cs(47,0): at Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(Boolean ldtk)&#xD;
+[xUnit.net 00:00:05.17]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:05.18]   Finished:    Cerneala.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T08:21:09.9012169+03:00">
+        <Text>[xUnit.net 00:00:04.97]     Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(ldtk: False) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-24T08:21:10.0894859+03:00">
+        <Text>[xUnit.net 00:00:05.16]     Cerneala.Tests.Playground.SceneWorldShowcaseTests.ImportedWallOwnersPreserveTileDrawingAndTheSixAuthoredCollisionRegions(ldtk: True) [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

@@ -63,7 +63,7 @@ public sealed class TileMapChunkData2D
 }
 
 /// <summary>Publishes metadata atomically and validates asynchronously acquired static chunks.</summary>
-public sealed class TileMapSource2D : ISceneSpatialSource2D<TileMapChunkData2D>
+internal sealed class TileMapSource2D : ISceneSpatialSource2D<TileMapChunkData2D>
 {
     private readonly Func<TileMapCatalog2D, TileMapChunkInfo2D, CancellationToken, ValueTask<SceneSpatialLease2D<TileMapChunkData2D>>> load;
     private TileMapCatalog2D catalog;

@@ -150,10 +150,13 @@ Run without concurrent builds, indexers, profilers, tests or other benchmarks.
 The deterministic three-map fixture uses 64 target warmup and 512 measured operations.
 Its CPU samples include source publication/camera updates, the root frame pump,
 surface readiness preparation, map recording and all optional batch preparation.
-The maintained fixture uses in-memory `TileMapSource2D` adapters and an explicitly
-asynchronous image-loader stub that completes inline. Required preparation is
-inside the measured operation, not a preload before the clock. Final command
-recording still calls the scene directly: this is not the native input/layout/
+The maintained fixture uses internal in-memory `TileMapSource2D` adapters through
+the benchmark assembly's friend access to Core. Its `SetCatalog` publication
+deliberately measures a private one-chunk transition; it is not an application-
+facing map source API or a measurement of public `FromModel` node-replacement
+editing. An explicitly asynchronous image-loader stub completes inline. Required
+preparation is inside the measured operation, not a preload before the clock.
+Final command recording still calls the scene directly: this is not the native input/layout/
 submission/presentation path, package I/O, actual image decoding or GPU timing.
 
 The current report schema is `cerneala-tilemap-stage4-v5-separated-phases`. All original
@@ -201,7 +204,7 @@ opening, cold image decoding, and GPU presentation. Use three fresh default-runt
 Release processes for a validation set and keep every result, including failures.
 Historical v4 reports retain their original protocol and are not directly
 comparable speedup measurements against v5. Earlier v5 results used the former
-direct `Model` control path; they do not verify the migrated `Source` workload.
+direct `Model` control path; they do not verify this internal source-publication workload.
 
 The maintained v5 runner reports the process-wide completed-JIT delta as a
 diagnostic. The user explicitly removed the agent-added zero-JIT rejection

@@ -1,0 +1,3 @@
+CERNEALA_SDL_NATIVE_TESTS=1
+DefaultItemExcludesInProjectFolder=artifacts/**
+dotnet test .\Cerneala.slnx -c Release -m:1 --nologo -v:minimal --results-directory 'docs/plans/evidence/2026-09-24-scene-village-seams/integration/final-full-slnx-02' --logger 'trx;LogFilePrefix=seam-final-full-02' '-p:DefaultItemExcludesInProjectFolder=artifacts/**'

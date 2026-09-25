@@ -60,8 +60,41 @@ internal sealed class SdlGpuGeometryUploadArena : IDisposable
                 nameof(vertices));
         }
 
+        return UploadGeometryCore(session, MemoryMarshal.AsBytes(vertices), indices);
+    }
+
+    public SdlGpuGeometryBinding UploadGeometryBytes(
+        SdlGpuWindowGraphicsSession session,
+        ReadOnlySpan<byte> vertexBytes,
+        ReadOnlySpan<int> indices)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(session);
+        if (activeSlotIndex < 0)
+        {
+            throw new InvalidOperationException(
+                "SDL GPU geometry uploads require an active frame slot.");
+        }
+        if (vertexBytes.IsEmpty || indices.IsEmpty)
+        {
+            throw new ArgumentException("GPU geometry cannot be empty.");
+        }
+        if (vertexBytes.Length % BufferOffsetAlignment != 0)
+        {
+            throw new ArgumentException(
+                "GPU vertex bytes must be aligned to four bytes.",
+                nameof(vertexBytes));
+        }
+
+        return UploadGeometryCore(session, vertexBytes, indices);
+    }
+
+    private SdlGpuGeometryBinding UploadGeometryCore(
+        SdlGpuWindowGraphicsSession session,
+        ReadOnlySpan<byte> vertexBytes,
+        ReadOnlySpan<int> indices)
+    {
         FrameSlot slot = slots[activeSlotIndex];
-        ReadOnlySpan<byte> vertexBytes = MemoryMarshal.AsBytes(vertices);
         ReadOnlySpan<byte> indexBytes = MemoryMarshal.AsBytes(indices);
         uint vertexByteCount = checked((uint)vertexBytes.Length);
         uint indexByteCount = checked((uint)indexBytes.Length);

@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="492ddd37-3b81-4acf-b555-3039c1705a6b" name="lauri@DESKTOP-JT43V3D 2026-09-25 06:57:05" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-25T06:57:05.4892786+03:00" queuing="2026-09-25T06:57:05.4892789+03:00" start="2026-09-25T06:57:04.4148903+03:00" finish="2026-09-25T06:57:05.4943451+03:00" />
+  <TestSettings name="default" id="3dfc064b-f76c-453c-96dc-e64dc2c89e5c">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-25_06_57_05" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="3de0769a-a9fd-4724-ace5-8c4bb392944d" testId="a3bf865b-e271-9bb6-9fb1-ef21b8592754" testName="Cerneala.Tests.SdlGpu.CerberusTests.OrdinaryBatchesLeaveSelectedStorageEmptyUntilFirstImageDomainAllocation" computerName="DESKTOP-JT43V3D" duration="00:00:00.0058296" startTime="2026-09-25T06:57:05.3727021+03:00" endTime="2026-09-25T06:57:05.3727312+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3de0769a-a9fd-4724-ace5-8c4bb392944d">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: 0&#xD;
+Actual:   1024</Message>
+          <StackTrace>   at Cerneala.Tests.SdlGpu.CerberusTests.OrdinaryBatchesLeaveSelectedStorageEmptyUntilFirstImageDomainAllocation() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\CerberusTests.cs:line 58&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SdlGpu.CerberusTests.OrdinaryBatchesLeaveSelectedStorageEmptyUntilFirstImageDomainAllocation" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="a3bf865b-e271-9bb6-9fb1-ef21b8592754">
+      <Execution id="3de0769a-a9fd-4724-ace5-8c4bb392944d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.CerberusTests" name="OrdinaryBatchesLeaveSelectedStorageEmptyUntilFirstImageDomainAllocation" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="a3bf865b-e271-9bb6-9fb1-ef21b8592754" executionId="3de0769a-a9fd-4724-ace5-8c4bb392944d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="1" executed="1" passed="0" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.14]   Discovering: Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:00.30]   Discovered:  Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:00.30]   Starting:    Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:00.36]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:00.36]       Expected: 0&#xD;
+[xUnit.net 00:00:00.36]       Actual:   1024&#xD;
+[xUnit.net 00:00:00.36]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.36]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\CerberusTests.cs(58,0): at Cerneala.Tests.SdlGpu.CerberusTests.OrdinaryBatchesLeaveSelectedStorageEmptyUntilFirstImageDomainAllocation()&#xD;
+[xUnit.net 00:00:00.36]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.36]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.36]   Finished:    Cerneala.Tests.SdlGpu&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-09-25T06:57:05.3700177+03:00">
+        <Text>[xUnit.net 00:00:00.35]     Cerneala.Tests.SdlGpu.CerberusTests.OrdinaryBatchesLeaveSelectedStorageEmptyUntilFirstImageDomainAllocation [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

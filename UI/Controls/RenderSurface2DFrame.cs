@@ -404,7 +404,7 @@ public sealed partial class RenderSurface2DFrame
         active = false;
         try
         {
-            if (warmPreparation is not null) { preparationSurface!.CompleteWarmPreparation(warmPreparation); }
+            if (warmPreparation is { Count: > 0 }) { preparationSurface!.CompleteWarmPreparation(warmPreparation); }
         }
         finally
         {

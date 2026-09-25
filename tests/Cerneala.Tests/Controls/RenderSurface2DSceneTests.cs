@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Collections.ObjectModel;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Graph;
@@ -8,7 +9,6 @@ using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Core;
-using Cerneala.UI.Data;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Markup;
@@ -326,7 +326,7 @@ public sealed class RenderSurface2DSceneTests
     public void SceneItemsMaterializeTemplatesInSourceOrderAndTrackChanges()
     {
         TestImage image = new();
-        ObservableList<TestSprite> items =
+        ObservableCollection<TestSprite> items =
         [
             new TestSprite(new DrawRect(1, 0, 1, 1)),
             new TestSprite(new DrawRect(2, 0, 1, 1))
@@ -341,12 +341,7 @@ public sealed class RenderSurface2DSceneTests
                 Image = new(image),
                 X = context.Data!.Destination.X, Y = context.Data!.Destination.Y, Width = context.Data!.Destination.Width, Height = context.Data!.Destination.Height
             }));
-        SceneSpatialSource2D<object> source = new([], (entry, _) => ValueTask.FromResult(
-            new SceneSpatialLease2D<object>(items.Single(item => item.Destination.X.ToString(System.Globalization.CultureInfo.InvariantCulture) == entry.Id))));
-        void Publish() => source.SetEntries(items.Select(item => new SceneSpatialEntry2D(
-            item.Destination.X.ToString(System.Globalization.CultureInfo.InvariantCulture), item.Destination, isSimulated: true)));
-        Publish();
-        sceneItems.ItemsSource = source;
+        sceneItems.ItemsSource = items;
         Scene2D scene = new();
         scene.Children.Add(sceneItems);
         RenderSurface2D surface = new() { Scene = scene };
@@ -360,7 +355,6 @@ public sealed class RenderSurface2DSceneTests
                 .Select(command => command.Rect));
 
         items.Insert(1, new TestSprite(new DrawRect(3, 0, 1, 1)));
-        Publish();
 
         DrawCommandList second = Record(surface, new DrawRect(0, 0, 10, 10));
         Assert.Equal(

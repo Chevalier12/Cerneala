@@ -18,8 +18,8 @@ public enum RenderSurface2DPresentationState
 
 | Name | Value | Description |
 | --- | --- | --- |
-| `Loading` | `0` | Required visible spatial coverage or sprite/Prism images are not ready. Scene submission and scene input are withheld. |
-| `Ready` | `1` | The current coverage check found no missing required spatial identities or sprite/Prism images. |
+| `Loading` | `0` | Required map chunks or sprite/Prism/atlas images are not ready. Scene submission and scene input are withheld. |
+| `Ready` | `1` | The current coverage check found no missing required map data or scene images. |
 | `Error` | `2` | A preparation failure prevents required visible coverage; see the surface's `PresentationError`. |
 
 ## Remarks
@@ -28,7 +28,7 @@ public enum RenderSurface2DPresentationState
 
 Loading or failure withholds the entire retained scene rather than progressively drawing ready siblings or retaining a stale scene image. Imperative surface drawing, ordinary UI, and attached animation/simulation remain independent. Existing scene pointer capture and keyboard focus become unroutable; they are not automatically restored on recovery.
 
-The current implementation checks `SceneItems2D` payload/template coverage, asynchronous `Sprite2D` images, and live scene Prism image resources. Source-backed tile presentation and asynchronous tile atlas preparation are not yet integrated. `Ready` is not a promise about these unfinished paths, all offscreen simulation data, a later catalog/camera/image revision, or collision-query coverage. Use the collision world's explicit region-preparation contract for required distant queries. A pending or failed offscreen load alone does not turn a ready visible scene into `Loading` or `Error`; unknown natural bounds and Prism effect influence can conservatively require off-camera input.
+The current implementation checks realized `SceneItems2D` children, required `TileMap2D` chunks and atlases (from complete models or prepared packages), asynchronous `Sprite2D` images, and live scene Prism image resources. `SceneItems2D` commits its ordinary collection snapshot synchronously; it has no viewport payload loader. `Ready` does not promise all offscreen map data, a later map/camera/image revision, or collision-query coverage. Use the collision world's explicit region-preparation contract for required distant queries. A pending or failed offscreen load alone does not turn a ready visible scene into `Loading` or `Error`; unknown natural bounds and Prism effect influence can conservatively require off-camera input.
 
 ## See also
 

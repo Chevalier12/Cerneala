@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="8e439bbc-2cd6-49cf-91e5-e8215654a1e9" name="lauri@DESKTOP-JT43V3D 2026-09-25 05:46:51" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-25T05:46:51.4620526+03:00" queuing="2026-09-25T05:46:51.4620529+03:00" start="2026-09-25T05:46:49.8964178+03:00" finish="2026-09-25T05:46:51.4689905+03:00" />
+  <TestSettings name="default" id="7a00e35b-aacc-4dc1-a8d6-5c4b4bc682e9">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-25_05_46_51" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="3f383c8c-cd7f-46ea-9031-f50b080a6cd0" testId="5a502e65-4b0c-c9c4-359f-4a4b9eb745c6" testName="Cerneala.Tests.SdlGpu.CerberusTests.MixedImageDomainAndOrdinaryLayoutsUploadOnceAndBindInOriginalDrawOrder" computerName="DESKTOP-JT43V3D" duration="00:00:00.1729549" startTime="2026-09-25T05:46:51.3353413+03:00" endTime="2026-09-25T05:46:51.3353609+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3f383c8c-cd7f-46ea-9031-f50b080a6cd0" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SdlGpu.CerberusTests.MixedImageDomainAndOrdinaryLayoutsUploadOnceAndBindInOriginalDrawOrder" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="5a502e65-4b0c-c9c4-359f-4a4b9eb745c6">
+      <Execution id="3f383c8c-cd7f-46ea-9031-f50b080a6cd0" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.CerberusTests" name="MixedImageDomainAndOrdinaryLayoutsUploadOnceAndBindInOriginalDrawOrder" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="5a502e65-4b0c-c9c4-359f-4a4b9eb745c6" executionId="3f383c8c-cd7f-46ea-9031-f50b080a6cd0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="1" executed="1" passed="1" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.13]   Discovering: Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:00.34]   Discovered:  Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:00.35]   Starting:    Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:00.58]   Finished:    Cerneala.Tests.SdlGpu&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

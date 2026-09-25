@@ -24,8 +24,8 @@ public sealed partial class Scene2DPackageTests
         TileMap2DModel model = new("map", new(10, 10), [set], [new(new(-17, -9), 33, 19, cells)], offset: new(2, 3));
         await fixture.WriteAsync(new([new Scene2DLevel("level", [model])], [new(new("atlas"), "nested/atlas.bin", new(20, 10))]));
         using Scene2DPackage package = await Scene2DPackage.OpenAsync(fixture.Output);
-        TileMap2D expected = new() { Source = TileMapSource2D.FromModel(model) };
-        TileMap2D actual = new() { Source = package.Levels[0].TileMaps[0] };
+        TileMap2D expected = TileMap2D.FromModel(model);
+        TileMap2D actual = package.Levels[0].CreateTileMap("map");
         var before = new global::Cerneala.UI.Controls.Scene2D();
         var after = new global::Cerneala.UI.Controls.Scene2D();
         before.Children.Add(expected);
@@ -88,13 +88,13 @@ public sealed partial class Scene2DPackageTests
         using Scene2DPackage? package = targetKind == 0 ? await Scene2DPackage.OpenAsync(fixture.Output) : null;
         var before = new global::Cerneala.UI.Controls.Scene2D();
         var after = new global::Cerneala.UI.Controls.Scene2D();
-        before.Children.Add(new TileMap2D { Source = TileMapSource2D.FromModel(model) });
-        if (targetKind == 0) { after.Children.Add(new TileMap2D { Source = package!.Levels[0].TileMaps[0] }); }
+        before.Children.Add(TileMap2D.FromModel(model));
+        if (targetKind == 0) { after.Children.Add(package!.Levels[0].CreateTileMap("map")); }
         else if (targetKind == 1)
         {
             TileChunk2D[] independent = Enumerable.Range(0, 4).Select(index => new TileChunk2D(new(-32 + index * 16, 0),
                 16, 1, Enumerable.Repeat(new TileCell2D(1), 16))).ToArray();
-            after.Children.Add(new TileMap2D { Source = TileMapSource2D.FromModel(new("map", new(10, 10), [set], independent)) });
+            after.Children.Add(TileMap2D.FromModel(new("map", new(10, 10), [set], independent)));
         }
         else
         {
@@ -163,20 +163,21 @@ public sealed partial class Scene2DPackageTests
         using Scene2DPackage package = await Scene2DPackage.OpenAsync(fixture.Output);
         Scene2DLevel original = Assert.Single(imported.Document!.Levels);
         Scene2DPackageLevel prepared = Assert.Single(package.Levels);
+        PackageMap[] maps = fixture.ReadIndex().Levels[0].Maps;
         Assert.Equal(ldtk ? 3 : 65, original.TileMaps.Sum(map => map.Chunks.Count));
-        Assert.Equal(ldtk ? 24 : 65, prepared.TileMaps.Sum(map => map.Entries.Count));
-        Assert.Equal(original.TileMaps.Count, prepared.TileMaps.Count);
-        foreach (TileMapSource2D source in prepared.TileMaps)
+        Assert.Equal(ldtk ? 24 : 65, maps.Sum(map => map.Chunks.Length));
+        Assert.Equal(original.TileMaps.Count, prepared.TileMapIds.Count);
+        foreach (PackageMap map in maps)
         {
-            TileMap2DModel model = Assert.Single(original.TileMaps.Where(map => map.Id == source.Catalog.Id));
-            using var metadata = await prepared.LoadMapMetadataAsync(model.Id);
-            Assert.Equal(model.Chunks.Count, metadata.Value.GridChunks.Count);
-            Assert.Equal(PackageValueCodec.Encode(model.Properties), PackageValueCodec.Encode(metadata.Value.Properties));
+            TileMap2DModel model = Assert.Single(original.TileMaps.Where(item => item.Id == map.Catalog.Id));
+            Scene2DPackageMetadata metadata = await prepared.LoadMapMetadataAsync(model.Id);
+            Assert.Equal(model.Chunks.Count, metadata.GridChunks.Count);
+            Assert.Equal(PackageValueCodec.Encode(model.Properties), PackageValueCodec.Encode(metadata.Properties));
             HashSet<TileCoordinate2D> visited = [];
-            foreach (SceneSpatialEntry2D entry in source.Entries)
+            foreach (PackageBlock block in map.Chunks)
             {
-                using var lease = await source.LoadAsync(entry);
-                TileChunk2D chunk = lease.Value.Grid!;
+                TileMapChunkData2D data = await package.LoadAsync<TileMapChunkData2D>(block, CancellationToken.None);
+                TileChunk2D chunk = data.Grid!;
                 Assert.InRange(chunk.Width, 1, ldtk ? 16 : 8);
                 Assert.InRange(chunk.Height, 1, ldtk ? 16 : 8);
                 for (int y = 0; y < chunk.Height; y++)

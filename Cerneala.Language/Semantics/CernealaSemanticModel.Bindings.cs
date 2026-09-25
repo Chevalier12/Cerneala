@@ -568,9 +568,9 @@ internal sealed partial class CernealaSemanticModel
             string propertyName = assignment.Name.Contains('.')
                 ? assignment.Name.Substring(assignment.Name.LastIndexOf('.') + 1)
                 : assignment.Name;
-            if (IsTileMapContentMember(aspect.TargetType, propertyName))
+            if (IsRemovedTileMapSourceMember(aspect.TargetType, propertyName))
             {
-                AddShapeDiagnostic(assignment.NameSpan, "TileMap2D.Source cannot be assigned through Aspect; use a Source binding or direct Tile declarations.");
+                AddDiagnostic("CERNEALAUI003", assignment.NameSpan, aspect.TargetType.Name, propertyName);
                 continue;
             }
             ILanguageMemberSymbol? member = FindProperty(aspect.TargetType, propertyName);

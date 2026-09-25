@@ -1,0 +1,3 @@
+scope=ignored under stage3 evidence and Cerneala.VisualStudio
+ignored_paths=1448
+temp_candidates=0

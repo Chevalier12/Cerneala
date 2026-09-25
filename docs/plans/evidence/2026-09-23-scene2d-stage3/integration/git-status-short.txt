@@ -1,0 +1,128 @@
+ M .codex/config.toml
+ M .codex/skills/cerneala-checklist-plan/SKILL.md
+ M Cerneala.Language/Features/CernealaCompletionService.cs
+ M Cerneala.Language/Semantics/CernealaSemanticModel.Bindings.cs
+ M Cerneala.Language/Semantics/CernealaSemanticModel.Tiles.cs
+ M Cerneala.Language/Semantics/CernealaSemanticModel.cs
+ M Cerneala.Scene2D.Packages/Scene2DPackage.cs
+ M Cerneala.Scene2D.Packages/Scene2DPackageLevel.cs
+ M Cerneala.SourceGen/UiMarkupGenerator.cs
+ M Cerneala.VisualStudio/Cerneala.VisualStudio.csproj
+ M FileTree.md
+ M Playground/Cerneala.Playground/SceneWorldConformance.cs
+ M Playground/Cerneala.Playground/SceneWorldPackage.cs
+ M Playground/Cerneala.Playground/SceneWorldShowcase.crn
+ M Playground/Cerneala.Playground/SceneWorldShowcase.crn.cs
+ M Properties/AssemblyInfo.cs
+ M Tetrisish/Tests/TetrisGameTests.cs
+ M Tetrisish/TetrisSceneModel.cs
+ M UI/Controls/Collider2D.cs
+ M UI/Controls/CollisionWorld2D.Streaming.cs
+ M UI/Controls/ISceneSpatialParticipant2D.cs
+ M UI/Controls/RenderSurface2DFrame.cs
+ M UI/Controls/SceneItems2D.cs
+ M UI/Controls/SceneSpatialResidency2D.cs
+ M UI/Controls/SceneSpatialSource2D.cs
+ M UI/Controls/TileMap2D.Streaming.cs
+ M UI/Controls/TileMap2D.cs
+ M UI/Controls/TileMapCatalog2D.cs
+ M UI/Controls/TileMapSource2D.cs
+ M benchmarks/Cerneala.Benchmarks/README.md
+ M benchmarks/Cerneala.Benchmarks/SceneDebugOverlayBenchmarks.cs
+ M benchmarks/Cerneala.Benchmarks/SpriteAnimationBenchmarks.cs
+ M docs-site/documentation/classes/Cerneala.Scene2D.Importers.LdtkScene2DImporter.md
+ M docs-site/documentation/classes/Cerneala.Scene2D.Importers.TiledScene2DImporter.md
+ M docs-site/documentation/classes/Cerneala.Scene2D.Packages.Scene2DPackage.md
+ M docs-site/documentation/classes/Cerneala.Scene2D.Packages.Scene2DPackageEntityInfo.md
+ M docs-site/documentation/classes/Cerneala.Scene2D.Packages.Scene2DPackageGridChunkMetadata.md
+ M docs-site/documentation/classes/Cerneala.Scene2D.Packages.Scene2DPackageLevel.md
+ M docs-site/documentation/classes/Cerneala.Scene2D.Packages.Scene2DPackageMetadata.md
+ M docs-site/documentation/classes/Cerneala.Scene2D.Packages.Scene2DPackageWriter.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.Collider2D.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.CollisionWorld2D.md
+ D docs-site/documentation/classes/Cerneala.UI.Controls.ISceneSpatialSource2D_T_.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.RenderSurface2D.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.RenderSurface2DPresentationState.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.Scene2D.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.Scene2DEntity.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.SceneCollisionRegion2D.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.SceneCollisionRegionNotReadyException.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.SceneItems2D.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.SceneNode2D.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.SceneSimulationContext2D.md
+ D docs-site/documentation/classes/Cerneala.UI.Controls.SceneSpatialEntry2D.md
+ D docs-site/documentation/classes/Cerneala.UI.Controls.SceneSpatialLease2D_T_.md
+ D docs-site/documentation/classes/Cerneala.UI.Controls.SceneSpatialRegion2D_T_.md
+ D docs-site/documentation/classes/Cerneala.UI.Controls.SceneSpatialResidency2D_T_.md
+ D docs-site/documentation/classes/Cerneala.UI.Controls.SceneSpatialSource2D_T_.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.Sprite2D.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.Tile.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.TileChunk2D.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.TileDefinition2D.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.TileMap2D.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.TileMap2DModel.md
+ D docs-site/documentation/classes/Cerneala.UI.Controls.TileMapCatalog2D.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.TileMapChunkData2D.md
+ D docs-site/documentation/classes/Cerneala.UI.Controls.TileMapChunkInfo2D.md
+ D docs-site/documentation/classes/Cerneala.UI.Controls.TileMapSource2D.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.TilePromotion2D.md
+ M docs-site/documentation/classes/Cerneala.UI.Controls.TileSet2D.md
+ M docs-site/documentation/manifest.json
+ M tests/Cerneala.Tests.Language/CompletionTests.cs
+ M tests/Cerneala.Tests.Scene2DPackages/ImportedPackageTests.cs
+ M tests/Cerneala.Tests.Scene2DPackages/PackageValueCodecTests.cs
+ M tests/Cerneala.Tests.Scene2DPackages/Scene2DPackageEntityTests.cs
+ M tests/Cerneala.Tests.Scene2DPackages/Scene2DPackageGridGeometryTests.cs
+ M tests/Cerneala.Tests.Scene2DPackages/Scene2DPackageGridTests.cs
+ M tests/Cerneala.Tests.Scene2DPackages/Scene2DPackageTests.cs
+ M tests/Cerneala.Tests.SdlGpu/Cerneala.Tests.SdlGpu.csproj
+ M tests/Cerneala.Tests.SdlGpu/NativeImageLeaseTests.cs
+ M tests/Cerneala.Tests.SdlGpu/NativePackageGridSubdivisionTests.cs
+ M tests/Cerneala.Tests.SdlGpu/NativePackageWarmStreamingTests.cs
+ M tests/Cerneala.Tests.SdlGpu/NativeSceneImagePresentationTests.cs
+ M tests/Cerneala.Tests.SdlGpu/NativeScenePresentationTests.cs
+ M tests/Cerneala.Tests.SdlGpu/NativeScenePrismDomainTests.cs
+ M tests/Cerneala.Tests.SdlGpu/NativeScenePrismStreamingTests.cs
+ M tests/Cerneala.Tests.SdlGpu/Prism/ScenePrismAllocationTests.cs
+ M tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorColliderOwnershipTests.cs
+ M tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorSceneComponentTests.cs
+ M tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorSceneImportStageZeroTests.cs
+ M tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorSceneWorldBindingTests.cs
+ M tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorTests.cs
+ M tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorTileAuthoringTests.cs
+ M tests/Cerneala.Tests.SourceGen/UiMarkupGeneratorTileMap2DStageZeroTests.cs
+ M tests/Cerneala.Tests/Controls/RenderSurface2DSceneFoundationContractTests.cs
+ M tests/Cerneala.Tests/Controls/RenderSurface2DSceneTests.cs
+ M tests/Cerneala.Tests/Controls/SceneCollisionStreamingTests.cs
+ M tests/Cerneala.Tests/Controls/SceneItems2DIncrementalContractTests.cs
+ M tests/Cerneala.Tests/Controls/ScenePresentationTests.cs
+ M tests/Cerneala.Tests/Controls/ScenePrismStreamingTests.cs
+ M tests/Cerneala.Tests/Controls/SceneSimulationContext2DTests.cs
+ M tests/Cerneala.Tests/Controls/TileMapSpatialResidencyTests.cs
+ M tests/Cerneala.Tests/Controls/TileMapStreamingTests.cs
+ M tests/Cerneala.Tests/Playground/SceneWorldShowcaseTests.cs
+ M tests/Shared/SceneDebugOverlayConformanceFixture.cs
+ M tests/Shared/SpriteAnimationConformanceFixture.cs
+ M tests/Shared/TileMapStage3CaptureFixture.cs
+ M tests/Shared/TileMapStage5ConformanceFixture.cs
+?? Cerneala.Scene2D.Packages/IScene2DPackageRangeReader.cs
+?? Cerneala.Scene2D.Packages/LocalPackageRangeReader.cs
+?? Cerneala.Scene2D.Packages/Scene2DPackageLevel.Model.cs
+?? Playground/Cerneala.Playground/Properties/
+?? docs-site/documentation/classes/Cerneala.Scene2D.Packages.IScene2DPackageRangeReader.md
+?? docs-site/documentation/classes/Cerneala.Scene2D.Packages.Scene2DPackagePart.md
+?? docs/plans/2026-09-23-scene2d-simple-collections-and-internal-spatial.md
+?? docs/plans/2026-09-24-scene2d-stage0-contract-proposal.md
+?? docs/plans/evidence/2026-09-23-scene2d-stage0/
+?? docs/plans/evidence/2026-09-23-scene2d-stage1/
+?? docs/plans/evidence/2026-09-23-scene2d-stage2/
+?? docs/plans/evidence/2026-09-23-scene2d-stage3/
+?? tests/Cerneala.Tests.Language/TileMapSourceSemanticTests.cs
+?? tests/Cerneala.Tests.Scene2DPackages/Scene2DPublicBoundaryContractTests.cs
+?? tests/Cerneala.Tests.Scene2DPackages/Stage0PackageContractTests.cs
+?? tests/Cerneala.Tests.SdlGpu/NativePackageLifecycleTests.cs
+?? tests/Cerneala.Tests.SdlGpu/NativeTetrisWindowTests.cs
+?? tests/Cerneala.Tests/Controls/Collider2DSimulationInterestContractTests.cs
+?? tests/Cerneala.Tests/Controls/SceneItems2DSimpleCollectionContractTests.cs
+?? tests/Cerneala.Tests/Controls/TileMap2DDrainContractTests.cs
+?? tests/Cerneala.Tests/Controls/TileMap2DFactoryTests.cs

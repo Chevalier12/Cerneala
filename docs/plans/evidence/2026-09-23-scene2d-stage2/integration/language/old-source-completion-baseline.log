@@ -1,0 +1,14 @@
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:06.35]     Cerneala.Tests.Language.CompletionTests.BoundTileMapOffersItsSourceButNoInlineTileContent [FAIL]
+  Failed Cerneala.Tests.Language.CompletionTests.BoundTileMapOffersItsSourceButNoInlineTileContent [5 s]
+  Error Message:
+   Assert.Contains() Failure: Filter not matched in collection
+Collection: [CernealaCompletionItem { Label = Aspect, InsertText = Aspect="", ReplacementSpan = [11..11), Kind = Property, Detail = Cerneala attribute, SortText = 00Aspect, TypeMetadataName = , MemberName =  }, CernealaCompletionItem { Label = DataType, InsertText = DataType="", ReplacementSpan = [11..11), Kind = Property, Detail = Cerneala attribute, SortText = 00DataType, TypeMetadataName = , MemberName =  }, CernealaCompletionItem { Label = Name, InsertText = Name="", ReplacementSpan = [11..11), Kind = Property, Detail = Cerneala attribute, SortText = 00Name, TypeMetadataName = , MemberName =  }, CernealaCompletionItem { Label = xmlns, InsertText = xmlns="clr-namespace:Cerneala.UI.Controls;assembly=Cerneala", ReplacementSpan = [11..11), Kind = Property, Detail = default CLR namespace, SortText = 00xmlns, TypeMetadataName = , MemberName =  }, CernealaCompletionItem { Label = xmlns:alias, InsertText = xmlns:alias="clr-namespace:", ReplacementSpan = [11..11), Kind = Property, Detail = CLR namespace alias, SortText = 00xmlns:alias, TypeMetadataName = , MemberName =  }, ···]
+  Stack Trace:
+     at Cerneala.Tests.Language.CompletionTests.BoundTileMapOffersItsSourceButNoInlineTileContent() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\CompletionTests.cs:line 47
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage2\integration\language\old-source-completion-baseline.trx
+
+Failed!  - Failed:     1, Passed:     0, Skipped:     0, Total:     1, Duration: 5 s - Cerneala.Tests.Language.dll (net8.0)

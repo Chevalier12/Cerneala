@@ -1,0 +1,36 @@
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Tests.Language -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:08.13]     Cerneala.Tests.Language.TileMapSourceSemanticTests.RemovedMapSourceIsDiagnosedAsAnUnknownMemberWithoutBindingAdvice(markup: "<TileMap2D><TileMap2D.Aspect>@default { Source = n"···) [FAIL]
+  Failed Cerneala.Tests.Language.TileMapSourceSemanticTests.RemovedMapSourceIsDiagnosedAsAnUnknownMemberWithoutBindingAdvice(markup: "<TileMap2D><TileMap2D.Aspect>@default { Source = n"···) [6 s]
+  Error Message:
+   Assert.Contains() Failure: Filter not matched in collection
+Collection: [LanguageDiagnostic { Arguments = ["World.crn", "TileMap2D.Source cannot be assigned through Aspect"···], Descriptor = LanguageDiagnosticDescriptor { BuildSeverity = Error, Category = "Cerneala.UiMarkup", EditorSeverity = Error, Id = "CERNEALAUI005", MessageFormat = "Markup file '{0}' has invalid document shape: {1}", ··· }, Id = "CERNEALAUI005", Message = "Markup file 'World.crn' has invalid document shape"···, Severity = Error, ··· }]
+  Stack Trace:
+     at Cerneala.Tests.Language.TileMapSourceSemanticTests.RemovedMapSourceIsDiagnosedAsAnUnknownMemberWithoutBindingAdvice(String markup) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TileMapSourceSemanticTests.cs:line 36
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+[xUnit.net 00:00:08.99]     Cerneala.Tests.Language.TileMapSourceSemanticTests.RemovedMapSourceIsDiagnosedAsAnUnknownMemberWithoutBindingAdvice(markup: "<TileMap2D><TileMap2D.Source /></TileMap2D>") [FAIL]
+  Failed Cerneala.Tests.Language.TileMapSourceSemanticTests.RemovedMapSourceIsDiagnosedAsAnUnknownMemberWithoutBindingAdvice(markup: "<TileMap2D><TileMap2D.Source /></TileMap2D>") [391 ms]
+  Error Message:
+   Assert.Contains() Failure: Filter not matched in collection
+Collection: [LanguageDiagnostic { Arguments = ["World.crn", "TileMap2D markup uses direct Tile declarations or "···], Descriptor = LanguageDiagnosticDescriptor { BuildSeverity = Error, Category = "Cerneala.UiMarkup", EditorSeverity = Error, Id = "CERNEALAUI005", MessageFormat = "Markup file '{0}' has invalid document shape: {1}", ··· }, Id = "CERNEALAUI005", Message = "Markup file 'World.crn' has invalid document shape"···, Severity = Error, ··· }]
+  Stack Trace:
+     at Cerneala.Tests.Language.TileMapSourceSemanticTests.RemovedMapSourceIsDiagnosedAsAnUnknownMemberWithoutBindingAdvice(String markup) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TileMapSourceSemanticTests.cs:line 36
+   at InvokeStub_TileMapSourceSemanticTests.RemovedMapSourceIsDiagnosedAsAnUnknownMemberWithoutBindingAdvice(Object, Span`1)
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+[xUnit.net 00:00:13.43]     Cerneala.Tests.Language.TileMapSourceSemanticTests.InvalidMapSourceAttributeDoesNotHideStaticTileSemantics [FAIL]
+  Failed Cerneala.Tests.Language.TileMapSourceSemanticTests.InvalidMapSourceAttributeDoesNotHideStaticTileSemantics [325 ms]
+  Error Message:
+   Assert.Contains() Failure: Filter not matched in collection
+Collection: [CernealaSemanticSymbol { ContentPropertyName = null, DefinitionLocation = null, IsWritable = False, Kind = RootType, MemberSymbol = null, ··· }]
+  Stack Trace:
+     at Cerneala.Tests.Language.TileMapSourceSemanticTests.InvalidMapSourceAttributeDoesNotHideStaticTileSemantics() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\TileMapSourceSemanticTests.cs:line 51
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+Results File: C:\Users\lauri\Desktop\Cerneala\docs\plans\evidence\2026-09-23-scene2d-stage2\integration\language\language-source-red.trx
+
+Failed!  - Failed:     3, Passed:     4, Skipped:     0, Total:     7, Duration: 11 s - Cerneala.Tests.Language.dll (net8.0)

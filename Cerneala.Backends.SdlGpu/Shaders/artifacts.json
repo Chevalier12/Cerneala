@@ -2,8 +2,8 @@
   "toolVersion": "2",
   "shaderCrossVersion": "3.0.0",
   "shaderCrossPackageVersion": "3.0.0.9",
-  "manifestHash": "8AF0ADC75DC8CDB7388641669A4A335FE13DD26CD50B60D581E276D7CC661224",
-  "sourceHash": "4CFC205969A53CF5A11F6EFC99FBD326AA72F851837F4EB463EB491406CDE422",
+  "manifestHash": "994289D3405DF1316D9396D9AFA3B17DF688D9B1A74FC898A34143A2F7278D3E",
+  "sourceHash": "59ABCDBDC8E6CE251C18B468F0A06038C5AE8B507A5E97A9616F75AA502F7A64",
   "shaders": [
     {
       "logicalName": "surface-3d-vertex",
@@ -215,6 +215,98 @@
         "spirv": "FD48501A24FEA2D035F614BBF5537B0E039F067A8F61F983F2A357D53A2F0C42",
         "dxil": "8910334FD4816A5F64E6AA349D4E87554536D18AD0ACFA3B5FD373B3D6C62A54",
         "msl": "652FFA65418EBF4C029A52B257F4E17B051E514AD0A6020390F9400E3612799B"
+      }
+    },
+    {
+      "logicalName": "drawing-point-clamp-image-domain-vertex",
+      "stage": "Vertex",
+      "entryPoint": "main",
+      "variants": [
+        "point-clamp-image-domain"
+      ],
+      "bindings": {
+        "samplers": 0,
+        "storageTextures": 0,
+        "storageBuffers": 0,
+        "uniformBuffers": 1,
+        "inputs": 5,
+        "outputs": 5
+      },
+      "layout": {
+        "uniformBuffers": [
+          {
+            "name": "FrameUniforms",
+            "slot": 0
+          }
+        ],
+        "samplers": [],
+        "storageTextures": [],
+        "storageBuffers": [],
+        "vertexInputs": [
+          {
+            "semantic": "TEXCOORD0",
+            "location": 0,
+            "format": "Float2"
+          },
+          {
+            "semantic": "TEXCOORD1",
+            "location": 1,
+            "format": "Float2"
+          },
+          {
+            "semantic": "TEXCOORD2",
+            "location": 2,
+            "format": "Float4"
+          },
+          {
+            "semantic": "TEXCOORD3",
+            "location": 3,
+            "format": "Float3"
+          },
+          {
+            "semantic": "TEXCOORD4",
+            "location": 4,
+            "format": "Float2"
+          }
+        ]
+      },
+      "outputs": {
+        "spirv": "F9D4AE2B7FE5D882322487EE5899ED2EA26EC7DB878E95224B2C94F5AA2CBE7D",
+        "dxil": "0109A0C71E5C78919D566391AD7D72A30606293890A777F7288468F900B8A040",
+        "msl": "5F3D11515F2359173F149704BDCDDBD8C3EF61EB2E3A3315A6E0377A94016C49"
+      }
+    },
+    {
+      "logicalName": "drawing-point-clamp-image-domain-fragment",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [
+        "point-clamp-image-domain"
+      ],
+      "bindings": {
+        "samplers": 1,
+        "storageTextures": 0,
+        "storageBuffers": 0,
+        "uniformBuffers": 0,
+        "inputs": 5,
+        "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [],
+        "samplers": [
+          {
+            "name": "DrawingTexture/DrawingSampler",
+            "slot": 0
+          }
+        ],
+        "storageTextures": [],
+        "storageBuffers": [],
+        "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "9720A0AF8CF5912F947D70020FF6CA377FFD2C623E8A77B62219FF835C59DA5E",
+        "dxil": "E65F0B2B5EB2BD33652136ADCF91B6DCC9F3DFC3D18AEB760F691D8C8547A8FC",
+        "msl": "451A727FEC2F70731BC5880FBF18546D780407C6B74A268FA4B4144428E25C9F"
       }
     },
     {

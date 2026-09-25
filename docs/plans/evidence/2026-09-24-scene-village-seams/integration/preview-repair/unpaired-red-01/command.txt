@@ -1,0 +1,2 @@
+DefaultItemExcludesInProjectFolder=artifacts/**
+dotnet test .\tests\Cerneala.Tests.PreviewHost\Cerneala.Tests.PreviewHost.csproj -c Release -m:1 --nologo -v:minimal --filter 'FullyQualifiedName~PreviewCompilerFastPathTargetTypeTests.UnpairedSavedMarkupKeepsTheExistingBuildOutputReuseContract' --results-directory 'docs/plans/evidence/2026-09-24-scene-village-seams/integration/preview-repair/unpaired-red-01' --logger 'trx;LogFileName=preview-unpaired-red-01.trx' '-p:DefaultItemExcludesInProjectFolder=artifacts/**'

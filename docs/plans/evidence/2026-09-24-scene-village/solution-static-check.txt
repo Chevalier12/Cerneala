@@ -1,0 +1,7 @@
+solution_project_count=38
+village_entries=2
+missing_village_projects=0
+Playground/Cerneala.SceneVillage/Cerneala.SceneVillage.csproj
+tests/Cerneala.Tests.SceneVillage/Cerneala.Tests.SceneVillage.csproj
+Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj
+tests\Cerneala.Tests.SceneVillage\Cerneala.Tests.SceneVillage.csproj

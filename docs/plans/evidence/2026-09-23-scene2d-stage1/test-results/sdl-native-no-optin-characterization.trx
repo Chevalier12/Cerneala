@@ -1,0 +1,132 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="dd742621-0b8a-4f43-898a-9f282deb20fc" name="lauri@DESKTOP-JT43V3D 2026-09-24 03:11:44" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-24T03:11:44.8626528+03:00" queuing="2026-09-24T03:11:44.8626533+03:00" start="2026-09-24T03:11:39.0395133+03:00" finish="2026-09-24T03:11:44.8753690+03:00" />
+  <TestSettings name="default" id="5e2ec301-cad1-4f28-a96c-833b00516cb4">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-09-24_03_11_44" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="575a4b9a-1363-4176-a7a5-bb80dd42afb1" testId="9018ddf5-210b-3a03-6167-c8ea737468a3" testName="Cerneala.Tests.SdlGpu.NativeScenePrismStreamingTests.PointwiseSceneAndMapStreamingMatchEagerPixelsAcrossCameraAndFilterChanges" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-09-24T03:11:44.6665171+03:00" endTime="2026-09-24T03:11:44.6665173+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="575a4b9a-1363-4176-a7a5-bb80dd42afb1">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="1fd39b04-da45-48b6-baa9-d51e5eb41615" testId="a1cdceae-cf40-7b0f-fa46-b16bf9400d98" testName="Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.GridPackageBudgetRejectsOptionalButNotRequiredData" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-09-24T03:11:44.6662803+03:00" endTime="2026-09-24T03:11:44.6662805+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1fd39b04-da45-48b6-baa9-d51e5eb41615">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="1ddcf249-7760-4cc9-9f35-4e5c29c8235a" testId="354d35ff-d7da-53f5-0be3-7f9d64fdcfc4" testName="Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.PlacementPackageBudgetRejectsOptionalButNotRequiredData" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-09-24T03:11:44.6657966+03:00" endTime="2026-09-24T03:11:44.6657967+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1ddcf249-7760-4cc9-9f35-4e5c29c8235a">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="a97279c5-2bb1-49af-af83-40119907edfb" testId="61911775-5879-3184-b03a-5d476337f39b" testName="Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.GridPackagePreloadsWithinBudgetAndReleasesDataAndImages" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-09-24T03:11:44.6648578+03:00" endTime="2026-09-24T03:11:44.6648580+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a97279c5-2bb1-49af-af83-40119907edfb">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="540c503e-8a96-4891-acad-1e5752b33e18" testId="56871365-1cea-7a89-fb45-8bd3cc44feb0" testName="Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.PlacementPackagePreloadsWithinBudgetAndReleasesDataAndImages" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-09-24T03:11:44.6660315+03:00" endTime="2026-09-24T03:11:44.6660316+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="540c503e-8a96-4891-acad-1e5752b33e18">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="571c641b-fb87-4920-bab3-56fbccd2274d" testId="e22c7ca8-cc87-991c-0370-a622b9acaa99" testName="Cerneala.Tests.SdlGpu.NativePackageGridSubdivisionTests.PreparedGridMatchesAuthoredPixelsAcrossBoundariesFlipsAndZoom" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-09-24T03:11:44.6578243+03:00" endTime="2026-09-24T03:11:44.6578724+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="571c641b-fb87-4920-bab3-56fbccd2274d">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.GridPackagePreloadsWithinBudgetAndReleasesDataAndImages" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="61911775-5879-3184-b03a-5d476337f39b">
+      <Execution id="a97279c5-2bb1-49af-af83-40119907edfb" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests" name="GridPackagePreloadsWithinBudgetAndReleasesDataAndImages" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.PlacementPackagePreloadsWithinBudgetAndReleasesDataAndImages" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="56871365-1cea-7a89-fb45-8bd3cc44feb0">
+      <Execution id="540c503e-8a96-4891-acad-1e5752b33e18" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests" name="PlacementPackagePreloadsWithinBudgetAndReleasesDataAndImages" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.PlacementPackageBudgetRejectsOptionalButNotRequiredData" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="354d35ff-d7da-53f5-0be3-7f9d64fdcfc4">
+      <Execution id="1ddcf249-7760-4cc9-9f35-4e5c29c8235a" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests" name="PlacementPackageBudgetRejectsOptionalButNotRequiredData" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.GridPackageBudgetRejectsOptionalButNotRequiredData" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="a1cdceae-cf40-7b0f-fa46-b16bf9400d98">
+      <Execution id="1fd39b04-da45-48b6-baa9-d51e5eb41615" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests" name="GridPackageBudgetRejectsOptionalButNotRequiredData" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativePackageGridSubdivisionTests.PreparedGridMatchesAuthoredPixelsAcrossBoundariesFlipsAndZoom" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="e22c7ca8-cc87-991c-0370-a622b9acaa99">
+      <Execution id="571c641b-fb87-4920-bab3-56fbccd2274d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativePackageGridSubdivisionTests" name="PreparedGridMatchesAuthoredPixelsAcrossBoundariesFlipsAndZoom" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeScenePrismStreamingTests.PointwiseSceneAndMapStreamingMatchEagerPixelsAcrossCameraAndFilterChanges" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="9018ddf5-210b-3a03-6167-c8ea737468a3">
+      <Execution id="575a4b9a-1363-4176-a7a5-bb80dd42afb1" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeScenePrismStreamingTests" name="PointwiseSceneAndMapStreamingMatchEagerPixelsAcrossCameraAndFilterChanges" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="9018ddf5-210b-3a03-6167-c8ea737468a3" executionId="575a4b9a-1363-4176-a7a5-bb80dd42afb1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a1cdceae-cf40-7b0f-fa46-b16bf9400d98" executionId="1fd39b04-da45-48b6-baa9-d51e5eb41615" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="354d35ff-d7da-53f5-0be3-7f9d64fdcfc4" executionId="1ddcf249-7760-4cc9-9f35-4e5c29c8235a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="61911775-5879-3184-b03a-5d476337f39b" executionId="a97279c5-2bb1-49af-af83-40119907edfb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="56871365-1cea-7a89-fb45-8bd3cc44feb0" executionId="540c503e-8a96-4891-acad-1e5752b33e18" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e22c7ca8-cc87-991c-0370-a622b9acaa99" executionId="571c641b-fb87-4920-bab3-56fbccd2274d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="6" executed="0" passed="0" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:02.36]   Discovering: Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:02.73]   Discovered:  Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:02.75]   Starting:    Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:02.87]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.&#xD;
+[xUnit.net 00:00:02.88]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.&#xD;
+[xUnit.net 00:00:02.88]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.&#xD;
+[xUnit.net 00:00:02.88]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.&#xD;
+[xUnit.net 00:00:02.88]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.&#xD;
+[xUnit.net 00:00:02.88]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.&#xD;
+[xUnit.net 00:00:02.88]   Finished:    Cerneala.Tests.SdlGpu&#xD;
+Test 'Cerneala.Tests.SdlGpu.NativePackageGridSubdivisionTests.PreparedGridMatchesAuthoredPixelsAcrossBoundariesFlipsAndZoom' was skipped in the test run.&#xD;
+Test 'Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.GridPackagePreloadsWithinBudgetAndReleasesDataAndImages' was skipped in the test run.&#xD;
+Test 'Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.PlacementPackageBudgetRejectsOptionalButNotRequiredData' was skipped in the test run.&#xD;
+Test 'Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.PlacementPackagePreloadsWithinBudgetAndReleasesDataAndImages' was skipped in the test run.&#xD;
+Test 'Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.GridPackageBudgetRejectsOptionalButNotRequiredData' was skipped in the test run.&#xD;
+Test 'Cerneala.Tests.SdlGpu.NativeScenePrismStreamingTests.PointwiseSceneAndMapStreamingMatchEagerPixelsAcrossCameraAndFilterChanges' was skipped in the test run.&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-09-24T03:11:44.7263112+03:00">
+        <Text>[xUnit.net 00:00:02.87]     Cerneala.Tests.SdlGpu.NativePackageGridSubdivisionTests.PreparedGridMatchesAuthoredPixelsAcrossBoundariesFlipsAndZoom [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-09-24T03:11:44.7272201+03:00">
+        <Text>[xUnit.net 00:00:02.88]     Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.GridPackagePreloadsWithinBudgetAndReleasesDataAndImages [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-09-24T03:11:44.7272736+03:00">
+        <Text>[xUnit.net 00:00:02.88]     Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.PlacementPackageBudgetRejectsOptionalButNotRequiredData [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-09-24T03:11:44.7273262+03:00">
+        <Text>[xUnit.net 00:00:02.88]     Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.PlacementPackagePreloadsWithinBudgetAndReleasesDataAndImages [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-09-24T03:11:44.7275418+03:00">
+        <Text>[xUnit.net 00:00:02.88]     Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.GridPackageBudgetRejectsOptionalButNotRequiredData [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-09-24T03:11:44.7278005+03:00">
+        <Text>[xUnit.net 00:00:02.88]     Cerneala.Tests.SdlGpu.NativeScenePrismStreamingTests.PointwiseSceneAndMapStreamingMatchEagerPixelsAcrossCameraAndFilterChanges [SKIP]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

@@ -1,0 +1,44 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn(24,97): error CERNEALAUI004: Markup property 'Button.Padding' has invalid value '10,6' [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn(25,103): error CERNEALAUI004: Markup property 'Button.Padding' has invalid value '10,6' [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn(26,107): error CERNEALAUI004: Markup property 'Button.Padding' has invalid value '10,6' [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn(27,98): error CERNEALAUI004: Markup property 'Button.Padding' has invalid value '10,6' [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn(28,106): error CERNEALAUI004: Markup property 'Button.Padding' has invalid value '10,6' [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn(29,107): error CERNEALAUI004: Markup property 'Button.Padding' has invalid value '10,6' [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn(30,114): error CERNEALAUI004: Markup property 'Button.Padding' has invalid value '10,6' [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn.cs(19,13): error CS0103: The name 'GameSurface' does not exist in the current context [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn.cs(25,13): error CS0103: The name 'GameSurface' does not exist in the current context [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn.cs(32,41): error CS0103: The name 'GameSurface' does not exist in the current context [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn.cs(40,9): error CS0103: The name 'GameSurface' does not exist in the current context [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn.cs(65,9): error CS0103: The name 'GameSurface' does not exist in the current context [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn.cs(72,9): error CS0103: The name 'GameSurface' does not exist in the current context [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn.cs(78,24): error CS0103: The name 'GameSurface' does not exist in the current context [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn.cs(85,9): error CS0103: The name 'StatusText' does not exist in the current context [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+
+Build FAILED.
+
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn(24,97): error CERNEALAUI004: Markup property 'Button.Padding' has invalid value '10,6' [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn(25,103): error CERNEALAUI004: Markup property 'Button.Padding' has invalid value '10,6' [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn(26,107): error CERNEALAUI004: Markup property 'Button.Padding' has invalid value '10,6' [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn(27,98): error CERNEALAUI004: Markup property 'Button.Padding' has invalid value '10,6' [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn(28,106): error CERNEALAUI004: Markup property 'Button.Padding' has invalid value '10,6' [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn(29,107): error CERNEALAUI004: Markup property 'Button.Padding' has invalid value '10,6' [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn(30,114): error CERNEALAUI004: Markup property 'Button.Padding' has invalid value '10,6' [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn.cs(19,13): error CS0103: The name 'GameSurface' does not exist in the current context [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn.cs(25,13): error CS0103: The name 'GameSurface' does not exist in the current context [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn.cs(32,41): error CS0103: The name 'GameSurface' does not exist in the current context [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn.cs(40,9): error CS0103: The name 'GameSurface' does not exist in the current context [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn.cs(65,9): error CS0103: The name 'GameSurface' does not exist in the current context [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn.cs(72,9): error CS0103: The name 'GameSurface' does not exist in the current context [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn.cs(78,24): error CS0103: The name 'GameSurface' does not exist in the current context [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\MainWindow.crn.cs(85,9): error CS0103: The name 'StatusText' does not exist in the current context [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj]
+    0 Warning(s)
+    15 Error(s)
+
+Time Elapsed 00:01:09.46

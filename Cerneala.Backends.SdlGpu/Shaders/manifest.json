@@ -165,6 +165,54 @@
       }
     },
     {
+      "logicalName": "drawing-point-clamp-image-domain-vertex",
+      "source": "../Gpu/Shaders/DrawingImageDomain.vert.hlsl",
+      "stage": "Vertex",
+      "entryPoint": "main",
+      "variants": [ "point-clamp-image-domain" ],
+      "bindings": {
+        "samplers": 0, "storageTextures": 0, "storageBuffers": 0,
+        "uniformBuffers": 1, "inputs": 5, "outputs": 5
+      },
+      "layout": {
+        "uniformBuffers": [ { "name": "FrameUniforms", "slot": 0 } ],
+        "samplers": [], "storageTextures": [], "storageBuffers": [],
+        "vertexInputs": [
+          { "semantic": "TEXCOORD0", "location": 0, "format": "Float2" },
+          { "semantic": "TEXCOORD1", "location": 1, "format": "Float2" },
+          { "semantic": "TEXCOORD2", "location": 2, "format": "Float4" },
+          { "semantic": "TEXCOORD3", "location": 3, "format": "Float3" },
+          { "semantic": "TEXCOORD4", "location": 4, "format": "Float2" }
+        ]
+      },
+      "outputs": {
+        "spirv": "../Gpu/Shaders/DrawingImageDomain.vert.spv",
+        "dxil": "../Gpu/Shaders/DrawingImageDomain.vert.dxil",
+        "msl": "../Gpu/Shaders/DrawingImageDomain.vert.msl"
+      }
+    },
+    {
+      "logicalName": "drawing-point-clamp-image-domain-fragment",
+      "source": "../Gpu/Shaders/DrawingImageDomain.frag.hlsl",
+      "stage": "Fragment",
+      "entryPoint": "main",
+      "variants": [ "point-clamp-image-domain" ],
+      "bindings": {
+        "samplers": 1, "storageTextures": 0, "storageBuffers": 0,
+        "uniformBuffers": 0, "inputs": 5, "outputs": 1
+      },
+      "layout": {
+        "uniformBuffers": [],
+        "samplers": [ { "name": "DrawingTexture/DrawingSampler", "slot": 0 } ],
+        "storageTextures": [], "storageBuffers": [], "vertexInputs": []
+      },
+      "outputs": {
+        "spirv": "../Gpu/Shaders/DrawingImageDomain.frag.spv",
+        "dxil": "../Gpu/Shaders/DrawingImageDomain.frag.dxil",
+        "msl": "../Gpu/Shaders/DrawingImageDomain.frag.msl"
+      }
+    },
+    {
       "logicalName": "prism-fullscreen-vertex",
       "source": "../Prism/Shaders/Prism.vert.hlsl",
       "stage": "Vertex",
