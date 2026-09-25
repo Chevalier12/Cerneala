@@ -4,6 +4,33 @@ Generated from `.`.
 
 ```text
 ./
+|-- .claude/
+|   +-- skills/
+|       |-- algorithm-market/
+|       |   |-- references/
+|       |   |   +-- license-policy.md
+|       |   +-- SKILL.md
+|       |-- cerneala-breaker/
+|       |   |-- references/
+|       |   |   |-- attack-techniques.md
+|       |   |   +-- test-evidence.md
+|       |   +-- SKILL.md
+|       |-- cerneala-checklist-plan/
+|       |   |-- references/
+|       |   |   +-- semantic-audit.md
+|       |   +-- SKILL.md
+|       |-- cerneala-fix-bug/
+|       |   +-- SKILL.md
+|       |-- cerneala-implement-plan/
+|       |   +-- SKILL.md
+|       |-- cerneala-performance-gate/
+|       |   +-- SKILL.md
+|       |-- repo-cleanup/
+|       |   +-- SKILL.md
+|       +-- writing-api-documentation/
+|           |-- references/
+|           |   +-- wpf-api-doc-formula.md
+|           +-- SKILL.md
 |-- .codex-remote-attachments/
 |   +-- 01a067bb-bc3c-7b52-9a11-ae58e29091de/
 |       +-- df456dc8-3416-4ee2-b99c-218f297b11a2/
@@ -13,7 +40,8 @@ Generated from `.`.
 |   +-- workflows/
 |       |-- desktop-backends.yml
 |       |-- pages.yml
-|       +-- prism-shaders.yml
+|       |-- prism-shaders.yml
+|       +-- scene-village-windows.yml
 |-- .kilo/
 |   |-- .gitignore
 |   |-- agent-manager.json
@@ -416,6 +444,14 @@ Generated from `.`.
 |   |   |   |-- Drawing.vert.hlsl
 |   |   |   |-- Drawing.vert.msl
 |   |   |   |-- Drawing.vert.spv
+|   |   |   |-- DrawingImageDomain.frag.dxil
+|   |   |   |-- DrawingImageDomain.frag.hlsl
+|   |   |   |-- DrawingImageDomain.frag.msl
+|   |   |   |-- DrawingImageDomain.frag.spv
+|   |   |   |-- DrawingImageDomain.vert.dxil
+|   |   |   |-- DrawingImageDomain.vert.hlsl
+|   |   |   |-- DrawingImageDomain.vert.msl
+|   |   |   |-- DrawingImageDomain.vert.spv
 |   |   |   |-- Surface3D.frag.dxil
 |   |   |   |-- Surface3D.frag.hlsl
 |   |   |   |-- Surface3D.frag.msl
@@ -435,6 +471,7 @@ Generated from `.`.
 |   |   |-- SdlGpuDrawingResources.cs
 |   |   |-- SdlGpuGeometryCache.cs
 |   |   |-- SdlGpuGeometryUploadArena.cs
+|   |   |-- SdlGpuImageDomainGeometry.cs
 |   |   |-- SdlGpuImageLoader.cs
 |   |   |-- SdlGpuPresentationOptions.cs
 |   |   |-- SdlGpuPrismFrameCounters.cs
@@ -603,6 +640,8 @@ Generated from `.`.
 |   +-- TiledScene2DImporter.cs
 |-- Cerneala.Scene2D.Packages/
 |   |-- Cerneala.Scene2D.Packages.csproj
+|   |-- IScene2DPackageRangeReader.cs
+|   |-- LocalPackageRangeReader.cs
 |   |-- PackageFiles.cs
 |   |-- PackageIndex.cs
 |   |-- PackageValueCodec.cs
@@ -610,6 +649,7 @@ Generated from `.`.
 |   |-- Scene2DPackageEntityInfo.cs
 |   |-- Scene2DPackageGridChunkMetadata.cs
 |   |-- Scene2DPackageLevel.cs
+|   |-- Scene2DPackageLevel.Model.cs
 |   |-- Scene2DPackageMetadata.cs
 |   +-- Scene2DPackageWriter.cs
 |-- Cerneala.SourceGen/
@@ -720,6 +760,32 @@ Generated from `.`.
 |   |-- RetainedModelChapterView.crn.cs
 |   |-- WelcomeChapterView.crn
 |   +-- WelcomeChapterView.crn.cs
+|-- claude-skills-import/
+|   |-- algorithm-market/
+|   |   |-- references/
+|   |   |   +-- license-policy.md
+|   |   +-- SKILL.md
+|   |-- cerneala-breaker/
+|   |   |-- references/
+|   |   |   |-- attack-techniques.md
+|   |   |   +-- test-evidence.md
+|   |   +-- SKILL.md
+|   |-- cerneala-checklist-plan/
+|   |   |-- references/
+|   |   |   +-- semantic-audit.md
+|   |   +-- SKILL.md
+|   |-- cerneala-fix-bug/
+|   |   +-- SKILL.md
+|   |-- cerneala-implement-plan/
+|   |   +-- SKILL.md
+|   |-- cerneala-performance-gate/
+|   |   +-- SKILL.md
+|   |-- repo-cleanup/
+|   |   +-- SKILL.md
+|   +-- writing-api-documentation/
+|       |-- references/
+|       |   +-- wpf-api-doc-formula.md
+|       +-- SKILL.md
 |-- docs/
 |   |-- assets/
 |   |   +-- cerneala-architecture.png
@@ -1008,61 +1074,1475 @@ Generated from `.`.
 |   |   |   |   |-- namespace-experiment.log
 |   |   |   |   |-- README.md
 |   |   |   |   +-- release-build.log
-|   |   |   +-- 2026-09-05-inline-aspect-syntax/
-|   |   |       |-- full-suite/
-|   |   |       |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_40_28_net8.0.trx
-|   |   |       |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_40_33_net10.0.trx
-|   |   |       |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_40_37_net8.0.trx
-|   |   |       |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_40_40_net8.0.trx
-|   |   |       |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_42_45_net8.0.trx
-|   |   |       |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_42_47_net8.0.trx
-|   |   |       |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_43_06_net10.0.trx
-|   |   |       |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_43_14_net10.0.trx
-|   |   |       |   +-- lauri_DESKTOP-JT43V3D_2026-09-05_15_44_03_net8.0.trx
-|   |   |       |-- native/
-|   |   |       |   |-- 01-closed-player.png
-|   |   |       |   |-- 01-closed.json
-|   |   |       |   |-- 01-closed.png
-|   |   |       |   |-- 02-door-contact-player.png
-|   |   |       |   |-- 02-door-contact.json
-|   |   |       |   |-- 02-door-contact.png
-|   |   |       |   |-- 03-open-house-player.png
-|   |   |       |   |-- 03-open-house.json
-|   |   |       |   |-- 03-open-house.png
-|   |   |       |   |-- 04-fence-contact-player.png
-|   |   |       |   |-- 04-fence-contact.json
-|   |   |       |   |-- 04-fence-contact.png
-|   |   |       |   |-- 05-attack-completed-player.png
-|   |   |       |   |-- 05-attack-completed.json
-|   |   |       |   |-- 05-attack-completed.png
-|   |   |       |   |-- 06-pan-player.png
-|   |   |       |   |-- 06-pan.json
-|   |   |       |   |-- 06-pan.png
-|   |   |       |   |-- 07-local-mutation-player.png
-|   |   |       |   |-- 07-local-mutation.json
-|   |   |       |   |-- 07-local-mutation.png
-|   |   |       |   |-- 08-debug-player.png
-|   |   |       |   |-- 08-debug.json
-|   |   |       |   |-- 08-debug.png
-|   |   |       |   |-- 09-ldtk-player.png
-|   |   |       |   |-- 09-ldtk.json
-|   |   |       |   |-- 09-ldtk.png
-|   |   |       |   |-- results.json
-|   |   |       |   |-- stderr.log
-|   |   |       |   +-- stdout.log
-|   |   |       |-- full-suite.log
-|   |   |       |-- index.json
-|   |   |       |-- language-green.trx
-|   |   |       |-- language-suite.trx
-|   |   |       |-- language-valid-red.trx
-|   |   |       |-- README.md
-|   |   |       |-- sdl-build.log
-|   |   |       |-- sourcegen-green.trx
-|   |   |       |-- sourcegen-suite.trx
-|   |   |       |-- sourcegen-valid-red.trx
-|   |   |       |-- suite-summary.json
-|   |   |       |-- tetris.trx
-|   |   |       +-- world-runtime.trx
+|   |   |   |-- 2026-09-05-inline-aspect-syntax/
+|   |   |   |   |-- full-suite/
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_40_28_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_40_33_net10.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_40_37_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_40_40_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_42_45_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_42_47_net8.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_43_06_net10.0.trx
+|   |   |   |   |   |-- lauri_DESKTOP-JT43V3D_2026-09-05_15_43_14_net10.0.trx
+|   |   |   |   |   +-- lauri_DESKTOP-JT43V3D_2026-09-05_15_44_03_net8.0.trx
+|   |   |   |   |-- native/
+|   |   |   |   |   |-- 01-closed-player.png
+|   |   |   |   |   |-- 01-closed.json
+|   |   |   |   |   |-- 01-closed.png
+|   |   |   |   |   |-- 02-door-contact-player.png
+|   |   |   |   |   |-- 02-door-contact.json
+|   |   |   |   |   |-- 02-door-contact.png
+|   |   |   |   |   |-- 03-open-house-player.png
+|   |   |   |   |   |-- 03-open-house.json
+|   |   |   |   |   |-- 03-open-house.png
+|   |   |   |   |   |-- 04-fence-contact-player.png
+|   |   |   |   |   |-- 04-fence-contact.json
+|   |   |   |   |   |-- 04-fence-contact.png
+|   |   |   |   |   |-- 05-attack-completed-player.png
+|   |   |   |   |   |-- 05-attack-completed.json
+|   |   |   |   |   |-- 05-attack-completed.png
+|   |   |   |   |   |-- 06-pan-player.png
+|   |   |   |   |   |-- 06-pan.json
+|   |   |   |   |   |-- 06-pan.png
+|   |   |   |   |   |-- 07-local-mutation-player.png
+|   |   |   |   |   |-- 07-local-mutation.json
+|   |   |   |   |   |-- 07-local-mutation.png
+|   |   |   |   |   |-- 08-debug-player.png
+|   |   |   |   |   |-- 08-debug.json
+|   |   |   |   |   |-- 08-debug.png
+|   |   |   |   |   |-- 09-ldtk-player.png
+|   |   |   |   |   |-- 09-ldtk.json
+|   |   |   |   |   |-- 09-ldtk.png
+|   |   |   |   |   |-- results.json
+|   |   |   |   |   |-- stderr.log
+|   |   |   |   |   +-- stdout.log
+|   |   |   |   |-- full-suite.log
+|   |   |   |   |-- index.json
+|   |   |   |   |-- language-green.trx
+|   |   |   |   |-- language-suite.trx
+|   |   |   |   |-- language-valid-red.trx
+|   |   |   |   |-- README.md
+|   |   |   |   |-- sdl-build.log
+|   |   |   |   |-- sourcegen-green.trx
+|   |   |   |   |-- sourcegen-suite.trx
+|   |   |   |   |-- sourcegen-valid-red.trx
+|   |   |   |   |-- suite-summary.json
+|   |   |   |   |-- tetris.trx
+|   |   |   |   +-- world-runtime.trx
+|   |   |   |-- 2026-09-23-scene2d-stage0/
+|   |   |   |   |-- caller-inventory.md
+|   |   |   |   |-- contract-and-platform-matrix.md
+|   |   |   |   +-- worktree-baseline.md
+|   |   |   |-- 2026-09-23-scene2d-stage1/
+|   |   |   |   |-- binary-baseline/
+|   |   |   |   |   |-- Cerneala.dll
+|   |   |   |   |   +-- Cerneala.Scene2D.Packages.dll
+|   |   |   |   |-- core-red/
+|   |   |   |   |   |-- command-final.txt
+|   |   |   |   |   |-- command-final2.txt
+|   |   |   |   |   |-- command-final3.txt
+|   |   |   |   |   |-- command-final4.txt
+|   |   |   |   |   |-- command-final5.txt
+|   |   |   |   |   |-- command-final6.txt
+|   |   |   |   |   |-- command.txt
+|   |   |   |   |   |-- core-red-final.trx
+|   |   |   |   |   |-- core-red-final2.trx
+|   |   |   |   |   |-- core-red-final3.trx
+|   |   |   |   |   |-- core-red-final4.trx
+|   |   |   |   |   |-- core-red-final5.trx
+|   |   |   |   |   |-- core-red-final6.trx
+|   |   |   |   |   |-- core-red.trx
+|   |   |   |   |   |-- dotnet-test-final.log
+|   |   |   |   |   |-- dotnet-test-final2.log
+|   |   |   |   |   |-- dotnet-test-final3.log
+|   |   |   |   |   |-- dotnet-test-final4.log
+|   |   |   |   |   |-- dotnet-test-final5.log
+|   |   |   |   |   |-- dotnet-test-final6.log
+|   |   |   |   |   |-- dotnet-test.log
+|   |   |   |   |   |-- red-classification-final4.csv
+|   |   |   |   |   |-- red-classification-final5.csv
+|   |   |   |   |   |-- red-classification-final6.csv
+|   |   |   |   |   +-- repair-notes.md
+|   |   |   |   |-- cpv2-precutover/
+|   |   |   |   |   |-- assets/
+|   |   |   |   |   |   |-- nested/
+|   |   |   |   |   |   |   +-- atlas.bin
+|   |   |   |   |   |   +-- scripts/
+|   |   |   |   |   |       +-- quest.txt
+|   |   |   |   |   |-- catalog.c2d
+|   |   |   |   |   +-- payloads.c2d
+|   |   |   |   |-- package-red/
+|   |   |   |   |   |-- baseline-producer.log
+|   |   |   |   |   |-- baseline-producer.trx
+|   |   |   |   |   |-- final-map-exception-red.md
+|   |   |   |   |   |-- package-contract-red-audit-rerun-classification.csv
+|   |   |   |   |   |-- package-contract-red-audit-rerun.log
+|   |   |   |   |   |-- package-contract-red-audit-rerun.trx
+|   |   |   |   |   |-- package-contract-red-final-exceptions-classification.csv
+|   |   |   |   |   |-- package-contract-red-final-exceptions.log
+|   |   |   |   |   |-- package-contract-red-final-exceptions.trx
+|   |   |   |   |   |-- package-contract-red.log
+|   |   |   |   |   |-- package-contract-red.trx
+|   |   |   |   |   |-- package-red.md
+|   |   |   |   |   +-- precutover-cpv2.md
+|   |   |   |   |-- sceneitems-compile-red/
+|   |   |   |   |   |-- SceneItems2DCollectionCompileRed.cs
+|   |   |   |   |   +-- SceneItems2DCollectionCompileRed.csproj
+|   |   |   |   |-- test-results/
+|   |   |   |   |   |-- core-characterization.trx
+|   |   |   |   |   |-- importers-characterization.trx
+|   |   |   |   |   |-- packages-characterization.trx
+|   |   |   |   |   |-- sdl-native-no-optin-characterization.trx
+|   |   |   |   |   |-- sourcegen-characterization.trx
+|   |   |   |   |   +-- tetris-characterization.trx
+|   |   |   |   |-- additional-files-artifact-excluded.json
+|   |   |   |   |-- api-compat-baseline-selfcompare.log
+|   |   |   |   |-- api-compat.proj
+|   |   |   |   |-- baseline-and-characterization.md
+|   |   |   |   |-- baseline-build-package-release-artifact-excluded.log
+|   |   |   |   |-- baseline-build-package-release.log
+|   |   |   |   |-- compile-items-after-isolated-probe.json
+|   |   |   |   |-- compile-items-artifact-excluded.json
+|   |   |   |   |-- compile-items-default.json
+|   |   |   |   |-- compile-items-removed.txt
+|   |   |   |   |-- core-characterization.log
+|   |   |   |   |-- importers-characterization.log
+|   |   |   |   |-- isolated-compile-red.md
+|   |   |   |   |-- packages-characterization.log
+|   |   |   |   |-- sceneitems-compile-red.log
+|   |   |   |   |-- sdl-native-no-optin-characterization.log
+|   |   |   |   |-- sourcegen-characterization.log
+|   |   |   |   |-- stage1-evidence-ledger.md
+|   |   |   |   |-- stage1-integrity-current.txt
+|   |   |   |   +-- tetris-characterization.log
+|   |   |   |-- 2026-09-23-scene2d-stage2/
+|   |   |   |   |-- integration/
+|   |   |   |   |   |-- language/
+|   |   |   |   |   |   |-- language-full-final.command.txt
+|   |   |   |   |   |   |-- language-full-final.log
+|   |   |   |   |   |   |-- language-full-final.trx
+|   |   |   |   |   |   |-- language-full-green.command.txt
+|   |   |   |   |   |   |-- language-full-green.log
+|   |   |   |   |   |   |-- language-full-green.trx
+|   |   |   |   |   |   |-- language-source-cutover.md
+|   |   |   |   |   |   |-- language-source-green-focused.command.txt
+|   |   |   |   |   |   |-- language-source-green-focused.log
+|   |   |   |   |   |   |-- language-source-green-focused.trx
+|   |   |   |   |   |   |-- language-source-red.command.txt
+|   |   |   |   |   |   |-- language-source-red.log
+|   |   |   |   |   |   |-- language-source-red.trx
+|   |   |   |   |   |   |-- old-source-completion-baseline.command.txt
+|   |   |   |   |   |   |-- old-source-completion-baseline.log
+|   |   |   |   |   |   |-- old-source-completion-baseline.trx
+|   |   |   |   |   |   |-- sourcegen-after-language.command.txt
+|   |   |   |   |   |   |-- sourcegen-after-language.log
+|   |   |   |   |   |   |-- sourcegen-after-language.trx
+|   |   |   |   |   |   |-- tile-completion-red.command.txt
+|   |   |   |   |   |   |-- tile-completion-red.log
+|   |   |   |   |   |   +-- tile-completion-red.trx
+|   |   |   |   |   |-- api-compat-after-public-retention.command.txt
+|   |   |   |   |   |-- api-compat-after-public-retention.log
+|   |   |   |   |   |-- api-compat-core-final-repair.command.txt
+|   |   |   |   |   |-- api-compat-core-final-repair.exitcode.txt
+|   |   |   |   |   |-- api-compat-core-final-repair.log
+|   |   |   |   |   |-- api-compat-current.command.txt
+|   |   |   |   |   |-- api-compat-current.log
+|   |   |   |   |   |-- api-compat-exact-classification.tsv
+|   |   |   |   |   |-- api-compat-packages-after-public-retention.command.txt
+|   |   |   |   |   |-- api-compat-packages-after-public-retention.log
+|   |   |   |   |   |-- api-compat-packages-final-repair.command.txt
+|   |   |   |   |   |-- api-compat-packages-final-repair.exitcode.txt
+|   |   |   |   |   |-- api-compat-packages-final-repair.log
+|   |   |   |   |   |-- api-compat-packages.command.txt
+|   |   |   |   |   |-- api-compat-packages.log
+|   |   |   |   |   |-- api-compat-packages.proj
+|   |   |   |   |   |-- api-compat-review.md
+|   |   |   |   |   |-- benchmarks-build-first.command.txt
+|   |   |   |   |   |-- benchmarks-build-first.log
+|   |   |   |   |   |-- core-affected-after-audit-repair.command.txt
+|   |   |   |   |   |-- core-affected-after-audit-repair.log
+|   |   |   |   |   |-- core-affected-after-audit-repair.trx
+|   |   |   |   |   |-- core-affected-final-repair.command.txt
+|   |   |   |   |   |-- core-affected-final-repair.log
+|   |   |   |   |   |-- core-affected-final-repair.trx
+|   |   |   |   |   |-- core-affected.command.txt
+|   |   |   |   |   |-- core-affected.log
+|   |   |   |   |   |-- core-affected.trx
+|   |   |   |   |   |-- importers-current.command.txt
+|   |   |   |   |   |-- importers-current.log
+|   |   |   |   |   |-- importers-current.trx
+|   |   |   |   |   |-- manifest-after-payload-page.command.txt
+|   |   |   |   |   |-- manifest-after-payload-page.log
+|   |   |   |   |   |-- manifest-after-payload-page.trx
+|   |   |   |   |   |-- manifest-current.command.txt
+|   |   |   |   |   |-- manifest-current.log
+|   |   |   |   |   |-- manifest-current.trx
+|   |   |   |   |   |-- manifest-final-repair.command.txt
+|   |   |   |   |   |-- manifest-final-repair.log
+|   |   |   |   |   |-- manifest-final-repair.trx
+|   |   |   |   |   |-- packages-after-public-retention.command.txt
+|   |   |   |   |   |-- packages-after-public-retention.log
+|   |   |   |   |   |-- packages-after-public-retention.trx
+|   |   |   |   |   |-- packages-current.command.txt
+|   |   |   |   |   |-- packages-current.log
+|   |   |   |   |   |-- packages-current.trx
+|   |   |   |   |   |-- packages-final-repair.command.txt
+|   |   |   |   |   |-- packages-final-repair.log
+|   |   |   |   |   |-- packages-final-repair.trx
+|   |   |   |   |   |-- sdlgpu-build-final-repair.command.txt
+|   |   |   |   |   |-- sdlgpu-build-final-repair.log
+|   |   |   |   |   |-- sdlgpu-build-first.command.txt
+|   |   |   |   |   |-- sdlgpu-build-first.log
+|   |   |   |   |   |-- shared-scene-focused-classification.md
+|   |   |   |   |   |-- shared-scene-focused.command.txt
+|   |   |   |   |   |-- shared-scene-focused.log
+|   |   |   |   |   |-- shared-scene-focused.trx
+|   |   |   |   |   |-- sourcegen-after-audit-repair.command.txt
+|   |   |   |   |   |-- sourcegen-after-audit-repair.log
+|   |   |   |   |   |-- sourcegen-after-audit-repair.trx
+|   |   |   |   |   |-- sourcegen-final-repair.command.txt
+|   |   |   |   |   |-- sourcegen-final-repair.log
+|   |   |   |   |   |-- sourcegen-final-repair.trx
+|   |   |   |   |   |-- sourcegen-full-final.command.txt
+|   |   |   |   |   |-- sourcegen-full-final.log
+|   |   |   |   |   |-- sourcegen-full-final.trx
+|   |   |   |   |   |-- sourcegen-full-first.command.txt
+|   |   |   |   |   |-- sourcegen-full-first.log
+|   |   |   |   |   |-- sourcegen-full-first.trx
+|   |   |   |   |   |-- sourcegen-imported-focused.command.txt
+|   |   |   |   |   |-- sourcegen-imported-focused.log
+|   |   |   |   |   |-- sourcegen-imported-focused.trx
+|   |   |   |   |   |-- stage2-final-mechanical.log
+|   |   |   |   |   |-- stage2-final-repair-git-diff-check.log
+|   |   |   |   |   |-- stage2-final-repair-mechanical-summary.txt
+|   |   |   |   |   |-- stage2-integrated-verification.md
+|   |   |   |   |   |-- tetris-after-audit-repair.command.txt
+|   |   |   |   |   |-- tetris-after-audit-repair.log
+|   |   |   |   |   |-- tetris-after-audit-repair.trx
+|   |   |   |   |   |-- tetris-current.command.txt
+|   |   |   |   |   |-- tetris-current.log
+|   |   |   |   |   |-- tetris-current.trx
+|   |   |   |   |   |-- tetris-final-repair.command.txt
+|   |   |   |   |   |-- tetris-final-repair.log
+|   |   |   |   |   +-- tetris-final-repair.trx
+|   |   |   |   |-- map/
+|   |   |   |   |   |-- collision-two-repair-first.log
+|   |   |   |   |   |-- collision-two-repair-first.trx
+|   |   |   |   |   |-- core-collision-spatial-first.log
+|   |   |   |   |   |-- core-collision-spatial-first.trx
+|   |   |   |   |   |-- core-map-owned-focused-green.log
+|   |   |   |   |   |-- core-map-owned-focused-green.trx
+|   |   |   |   |   |-- core-map-spatial-broad-green.log
+|   |   |   |   |   |-- core-map-spatial-broad-green.trx
+|   |   |   |   |   |-- core-map-spatial-broad.log
+|   |   |   |   |   |-- core-map-spatial-broad.trx
+|   |   |   |   |   |-- core-marker-drain-final.log
+|   |   |   |   |   |-- core-marker-drain-final.trx
+|   |   |   |   |   |-- core-marker-drain-release.log
+|   |   |   |   |   |-- core-marker-drain-release.trx
+|   |   |   |   |   |-- core-marker-drain.log
+|   |   |   |   |   |-- core-marker-drain.trx
+|   |   |   |   |   |-- core-tests-collision-repair-build.log
+|   |   |   |   |   |-- core-tests-release-observable-build.log
+|   |   |   |   |   |-- core-tests-sim-instrument-build.log
+|   |   |   |   |   |-- map-owner-verification.md
+|   |   |   |   |   |-- release-observable-repair.log
+|   |   |   |   |   |-- release-observable-repair.trx
+|   |   |   |   |   |-- simulated-instrument-red.log
+|   |   |   |   |   +-- simulated-instrument-red.trx
+|   |   |   |   |-- native-migration/
+|   |   |   |   |   +-- contract-mapping.md
+|   |   |   |   |-- package/
+|   |   |   |   |   |-- chunkdata-public-green.log
+|   |   |   |   |   |-- chunkdata-public-green.trx
+|   |   |   |   |   |-- chunkdata-public-red.log
+|   |   |   |   |   |-- chunkdata-public-red.trx
+|   |   |   |   |   |-- fixture-rerun.log
+|   |   |   |   |   |-- full-first.log
+|   |   |   |   |   |-- full-green.log
+|   |   |   |   |   |-- old-test-migration.md
+|   |   |   |   |   |-- stage0-focused.log
+|   |   |   |   |   |-- stage2-package-fixture-rerun.trx
+|   |   |   |   |   |-- stage2-package-full-first.trx
+|   |   |   |   |   |-- stage2-package-full-green.trx
+|   |   |   |   |   |-- stage2-package-stage0.trx
+|   |   |   |   |   +-- verification.md
+|   |   |   |   |-- playground/
+|   |   |   |   |   |-- map-id-diagnostic.command.txt
+|   |   |   |   |   |-- map-id-diagnostic.log
+|   |   |   |   |   |-- map-id-diagnostic.trx
+|   |   |   |   |   |-- map-id-fixed-focused.command.txt
+|   |   |   |   |   |-- map-id-fixed-focused.log
+|   |   |   |   |   |-- map-id-fixed-focused.trx
+|   |   |   |   |   |-- showcase-class-first.command.txt
+|   |   |   |   |   |-- showcase-class-first.log
+|   |   |   |   |   |-- showcase-class-first.trx
+|   |   |   |   |   |-- showcase-detach-fixed-focused.command.txt
+|   |   |   |   |   |-- showcase-detach-fixed-focused.log
+|   |   |   |   |   +-- showcase-detach-fixed-focused.trx
+|   |   |   |   |-- sceneitems/
+|   |   |   |   |   |-- frame-discard-green-narrow.log
+|   |   |   |   |   |-- frame-discard-green-narrow.trx
+|   |   |   |   |   |-- frame-discard-shared-classes.log
+|   |   |   |   |   |-- frame-discard-shared-classes.trx
+|   |   |   |   |   |-- legacy-test-migration.md
+|   |   |   |   |   |-- offscreen-cache-green-focused.log
+|   |   |   |   |   |-- offscreen-cache-green-focused.trx
+|   |   |   |   |   |-- offscreen-cache-red.log
+|   |   |   |   |   |-- offscreen-cache-red.trx
+|   |   |   |   |   |-- reentrant-template-green-focused.log
+|   |   |   |   |   |-- reentrant-template-green-focused.trx
+|   |   |   |   |   |-- reentrant-template-owned-green.log
+|   |   |   |   |   |-- reentrant-template-owned-green.trx
+|   |   |   |   |   |-- reentrant-template-red.log
+|   |   |   |   |   |-- reentrant-template-red.trx
+|   |   |   |   |   |-- sceneitems-legacy-render-first.log
+|   |   |   |   |   |-- sceneitems-legacy-render-first.trx
+|   |   |   |   |   |-- sceneitems-null-correction.log
+|   |   |   |   |   |-- sceneitems-null-correction.trx
+|   |   |   |   |   |-- sceneitems-owned-green.log
+|   |   |   |   |   |-- sceneitems-owned-green.trx
+|   |   |   |   |   |-- sceneitems-simple-first.log
+|   |   |   |   |   |-- sceneitems-simple-first.trx
+|   |   |   |   |   |-- sceneitems-simple-green.log
+|   |   |   |   |   |-- sceneitems-simple-green.trx
+|   |   |   |   |   |-- template-recovery-green-focused.log
+|   |   |   |   |   |-- template-recovery-green-focused.trx
+|   |   |   |   |   |-- template-recovery-owned-green.log
+|   |   |   |   |   |-- template-recovery-owned-green.trx
+|   |   |   |   |   |-- template-recovery-red.log
+|   |   |   |   |   |-- template-recovery-red.trx
+|   |   |   |   |   |-- template-recovery-scene-green.log
+|   |   |   |   |   |-- template-recovery-scene-green.trx
+|   |   |   |   |   |-- tetris-game-first.log
+|   |   |   |   |   |-- tetris-game-first.trx
+|   |   |   |   |   +-- verification.md
+|   |   |   |   |-- sourcegen/
+|   |   |   |   |   +-- old-test-migration.md
+|   |   |   |   |-- core-build-first.command.txt
+|   |   |   |   |-- core-build-first.log
+|   |   |   |   |-- core-build-second.command.txt
+|   |   |   |   |-- core-build-second.log
+|   |   |   |   |-- core-tests-build-first.command.txt
+|   |   |   |   |-- core-tests-build-first.log
+|   |   |   |   |-- core-tests-build-second.command.txt
+|   |   |   |   |-- core-tests-build-second.log
+|   |   |   |   |-- core-tests-build-third.command.txt
+|   |   |   |   |-- core-tests-build-third.log
+|   |   |   |   |-- interface-freeze.md
+|   |   |   |   |-- packages-build-first.command.txt
+|   |   |   |   |-- packages-build-first.log
+|   |   |   |   |-- playground-build-first.command.txt
+|   |   |   |   |-- playground-build-first.log
+|   |   |   |   |-- playground-build-second.command.txt
+|   |   |   |   |-- playground-build-second.log
+|   |   |   |   |-- tetris-build-first.command.txt
+|   |   |   |   +-- tetris-build-first.log
+|   |   |   |-- 2026-09-23-scene2d-stage3/
+|   |   |   |   |-- integration/
+|   |   |   |   |   |-- full-slnx/
+|   |   |   |   |   |   |-- command.txt
+|   |   |   |   |   |   |-- exit.txt
+|   |   |   |   |   |   |-- full-slnx_net10.0_20260924123052.trx
+|   |   |   |   |   |   |-- full-slnx_net10.0_20260924123226.trx
+|   |   |   |   |   |   |-- full-slnx_net8.0_20260924122630.trx
+|   |   |   |   |   |   |-- full-slnx_net8.0_20260924123234.trx
+|   |   |   |   |   |   |-- full-slnx_net8.0_20260924123244.trx
+|   |   |   |   |   |   |-- full-slnx_net8.0_20260924124547.trx
+|   |   |   |   |   |   |-- full-slnx_net8.0_20260924124743.trx
+|   |   |   |   |   |   |-- full-slnx_net8.0_20260924125300.trx
+|   |   |   |   |   |   |-- full-slnx_net8.0_20260924125304.trx
+|   |   |   |   |   |   +-- full-slnx.log
+|   |   |   |   |   |-- full-slnx-current/
+|   |   |   |   |   |   |-- command.txt
+|   |   |   |   |   |   |-- exit.txt
+|   |   |   |   |   |   |-- full-slnx-current_net10.0_20260924132027.trx
+|   |   |   |   |   |   |-- full-slnx-current_net10.0_20260924132204.trx
+|   |   |   |   |   |   |-- full-slnx-current_net8.0_20260924131719.trx
+|   |   |   |   |   |   |-- full-slnx-current_net8.0_20260924132211.trx
+|   |   |   |   |   |   |-- full-slnx-current_net8.0_20260924132222.trx
+|   |   |   |   |   |   |-- full-slnx-current_net8.0_20260924133500.trx
+|   |   |   |   |   |   |-- full-slnx-current_net8.0_20260924133652.trx
+|   |   |   |   |   |   |-- full-slnx-current_net8.0_20260924134158.trx
+|   |   |   |   |   |   |-- full-slnx-current_net8.0_20260924134202.trx
+|   |   |   |   |   |   +-- full-slnx-current.log
+|   |   |   |   |   |-- full-slnx-final-isolation/
+|   |   |   |   |   |   |-- command.txt
+|   |   |   |   |   |   |-- exit.txt
+|   |   |   |   |   |   |-- full-slnx-final-isolation_net10.0_20260924154235.trx
+|   |   |   |   |   |   |-- full-slnx-final-isolation_net10.0_20260924154418.trx
+|   |   |   |   |   |   |-- full-slnx-final-isolation_net10.0_20260924160433.trx
+|   |   |   |   |   |   |-- full-slnx-final-isolation_net8.0_20260924153748.trx
+|   |   |   |   |   |   |-- full-slnx-final-isolation_net8.0_20260924154427.trx
+|   |   |   |   |   |   |-- full-slnx-final-isolation_net8.0_20260924154440.trx
+|   |   |   |   |   |   |-- full-slnx-final-isolation_net8.0_20260924160111.trx
+|   |   |   |   |   |   |-- full-slnx-final-isolation_net8.0_20260924160324.trx
+|   |   |   |   |   |   |-- full-slnx-final-isolation_net8.0_20260924161139.trx
+|   |   |   |   |   |   |-- full-slnx-final-isolation_net8.0_20260924161149.trx
+|   |   |   |   |   |   +-- full-slnx-final-isolation.log
+|   |   |   |   |   |-- full-slnx-vs-filter/
+|   |   |   |   |   |   |-- command.txt
+|   |   |   |   |   |   |-- exit.txt
+|   |   |   |   |   |   |-- full-slnx-vs-filter_net10.0_20260924135627.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter_net10.0_20260924135631.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter_net8.0_20260924135624.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter_net8.0_20260924135634.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter_net8.0_20260924135637.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter_net8.0_20260924135640.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter_net8.0_20260924135643.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter_net8.0_20260924135650.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter_net8.0_20260924135653.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter.binlog
+|   |   |   |   |   |   +-- full-slnx-vs-filter.log
+|   |   |   |   |   |-- full-slnx-vs-filter-isolated/
+|   |   |   |   |   |   |-- command.txt
+|   |   |   |   |   |   |-- exit.txt
+|   |   |   |   |   |   |-- full-slnx-vs-filter-isolated_net10.0_20260924152005.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter-isolated_net10.0_20260924152010.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter-isolated_net8.0_20260924152001.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter-isolated_net8.0_20260924152013.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter-isolated_net8.0_20260924152021.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter-isolated_net8.0_20260924152025.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter-isolated_net8.0_20260924152027.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter-isolated_net8.0_20260924152053.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter-isolated_net8.0_20260924152056.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter-isolated.binlog
+|   |   |   |   |   |   +-- full-slnx-vs-filter-isolated.log
+|   |   |   |   |   |-- full-slnx-vs-filter-isolated-both/
+|   |   |   |   |   |   |-- command.txt
+|   |   |   |   |   |   |-- exit.txt
+|   |   |   |   |   |   |-- full-slnx-vs-filter-isolated-both_net10.0_20260924152312.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter-isolated-both_net10.0_20260924152317.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter-isolated-both_net10.0_20260924152436.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter-isolated-both_net8.0_20260924152307.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter-isolated-both_net8.0_20260924152320.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter-isolated-both_net8.0_20260924152323.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter-isolated-both_net8.0_20260924152328.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter-isolated-both_net8.0_20260924152332.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter-isolated-both_net8.0_20260924152441.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter-isolated-both_net8.0_20260924152444.trx
+|   |   |   |   |   |   |-- full-slnx-vs-filter-isolated-both.binlog
+|   |   |   |   |   |   +-- full-slnx-vs-filter-isolated-both.log
+|   |   |   |   |   |-- solution-build-no-top-restore/
+|   |   |   |   |   |   |-- command-correct-platform.txt
+|   |   |   |   |   |   |-- command.txt
+|   |   |   |   |   |   |-- exit-correct-platform.txt
+|   |   |   |   |   |   |-- exit.txt
+|   |   |   |   |   |   |-- solution-build-no-top-restore-correct-platform.binlog
+|   |   |   |   |   |   |-- solution-build-no-top-restore-correct-platform.log
+|   |   |   |   |   |   |-- solution-build-no-top-restore.binlog
+|   |   |   |   |   |   +-- solution-build-no-top-restore.log
+|   |   |   |   |   |-- vs-global-probe/
+|   |   |   |   |   |   |-- building-solution-file.binlog
+|   |   |   |   |   |   |-- building-solution-file.command.txt
+|   |   |   |   |   |   |-- building-solution-file.exit.txt
+|   |   |   |   |   |   |-- building-solution-file.log
+|   |   |   |   |   |   +-- building-solution-file.trx
+|   |   |   |   |   |-- api-compat-core.command.txt
+|   |   |   |   |   |-- api-compat-core.exit.txt
+|   |   |   |   |   |-- api-compat-core.log
+|   |   |   |   |   |-- api-compat-packages.command.txt
+|   |   |   |   |   |-- api-compat-packages.exit.txt
+|   |   |   |   |   |-- api-compat-packages.log
+|   |   |   |   |   |-- core-compile-items-baseline.command.txt
+|   |   |   |   |   |-- core-compile-items-baseline.exit.txt
+|   |   |   |   |   |-- core-compile-items-baseline.json
+|   |   |   |   |   |-- core-compile-items-diff.txt
+|   |   |   |   |   |-- core-compile-items-excluded.command.txt
+|   |   |   |   |   |-- core-compile-items-excluded.exit.txt
+|   |   |   |   |   |-- core-compile-items-excluded.json
+|   |   |   |   |   |-- core-sdl-conformance-native.command.txt
+|   |   |   |   |   |-- core-sdl-conformance-native.exit.txt
+|   |   |   |   |   |-- core-sdl-conformance-native.log
+|   |   |   |   |   |-- core-sdl-conformance-native.trx
+|   |   |   |   |   |-- current-input-hashes.txt
+|   |   |   |   |   |-- final-filetree-hash.txt
+|   |   |   |   |   |-- final-git-diff-check.exit.txt
+|   |   |   |   |   |-- final-git-diff-check.txt
+|   |   |   |   |   |-- final-ignored-temp-scan.txt
+|   |   |   |   |   |-- final-integrity.md
+|   |   |   |   |   |-- final-markdown-mechanical.txt
+|   |   |   |   |   |-- final-tracked-diff-names.txt
+|   |   |   |   |   |-- final-untracked-paths.txt
+|   |   |   |   |   |-- final-untracked-temp-candidates.txt
+|   |   |   |   |   |-- git-diff-check-final.exit.txt
+|   |   |   |   |   |-- git-diff-check-final.txt
+|   |   |   |   |   |-- git-diff-check.exit.txt
+|   |   |   |   |   |-- git-diff-check.txt
+|   |   |   |   |   |-- git-diff-stat.txt
+|   |   |   |   |   |-- git-status-short.txt
+|   |   |   |   |   |-- language-server-env-full.command.txt
+|   |   |   |   |   |-- language-server-env-full.exit.txt
+|   |   |   |   |   |-- language-server-env-full.log
+|   |   |   |   |   |-- language-server-env-full.trx
+|   |   |   |   |   |-- language-server-structure-env-probe.command.txt
+|   |   |   |   |   |-- language-server-structure-env-probe.exit.txt
+|   |   |   |   |   |-- language-server-structure-env-probe.log
+|   |   |   |   |   |-- language-server-structure-env-probe.trx
+|   |   |   |   |   |-- manifest.command.txt
+|   |   |   |   |   |-- manifest.exit.txt
+|   |   |   |   |   |-- manifest.log
+|   |   |   |   |   |-- manifest.trx
+|   |   |   |   |   |-- package-lifecycle-final-fixture.command.txt
+|   |   |   |   |   |-- package-lifecycle-final-fixture.exit.txt
+|   |   |   |   |   |-- package-lifecycle-final-fixture.log
+|   |   |   |   |   |-- package-lifecycle-final-fixture.trx
+|   |   |   |   |   |-- sdlgpu-all-native-after-fixtures.command.txt
+|   |   |   |   |   |-- sdlgpu-all-native-after-fixtures.exit.txt
+|   |   |   |   |   |-- sdlgpu-all-native-after-fixtures.log
+|   |   |   |   |   |-- sdlgpu-all-native-after-fixtures.trx
+|   |   |   |   |   |-- sdlgpu-all-native.command.txt
+|   |   |   |   |   |-- sdlgpu-all-native.exit.txt
+|   |   |   |   |   |-- sdlgpu-all-native.log
+|   |   |   |   |   |-- sdlgpu-all-native.trx
+|   |   |   |   |   |-- untracked-files-current.txt
+|   |   |   |   |   |-- untracked-markdown-whitespace.txt
+|   |   |   |   |   |-- untracked-temp-suspects.txt
+|   |   |   |   |   |-- visualstudio-targeted.binlog
+|   |   |   |   |   |-- visualstudio-targeted.command.txt
+|   |   |   |   |   |-- visualstudio-targeted.exit.txt
+|   |   |   |   |   |-- visualstudio-targeted.log
+|   |   |   |   |   |-- visualstudio-targeted.trx
+|   |   |   |   |   |-- vsix-contents-after-isolation.command.txt
+|   |   |   |   |   |-- vsix-contents-after-isolation.exit.txt
+|   |   |   |   |   |-- vsix-contents-after-isolation.log
+|   |   |   |   |   |-- vsix-contents-after-isolation.trx
+|   |   |   |   |   |-- vsix-isolation-before.txt
+|   |   |   |   |   +-- vsix-isolation-both-before.txt
+|   |   |   |   |-- native-windows/
+|   |   |   |   |   +-- native-migration/
+|   |   |   |   |       |-- test-results/
+|   |   |   |   |       |   |-- 1534c8a1-bb94-4d47-aa6e-c828240e4e08/
+|   |   |   |   |       |   |-- 2e8e33ab-9e23-4d91-870d-289000344bc3/
+|   |   |   |   |       |   |-- 5357f4c0-d4b2-4bfc-bd44-39e716e0444b/
+|   |   |   |   |       |   |-- acd76d56-836c-4c5c-b41d-02f6326f5eaa/
+|   |   |   |   |       |   |-- b3dc2d7e-352d-4aa3-a4a0-96a478c016f8/
+|   |   |   |   |       |   |-- ff92da54-a9f7-4291-8981-743e6e5d345e/
+|   |   |   |   |       |   |-- scene2d-stage3-new-native-windows-rerun1.trx
+|   |   |   |   |       |   |-- scene2d-stage3-required-six-native-windows.trx
+|   |   |   |   |       |   |-- stage3-native-affected-classes.trx
+|   |   |   |   |       |   |-- stage3-native-failures-instrumented.trx
+|   |   |   |   |       |   |-- stage3-native-failures-repaired-focused.trx
+|   |   |   |   |       |   +-- stage3-native-failures-uninstrumented.trx
+|   |   |   |   |       |-- fixture-repair-ledger.md
+|   |   |   |   |       |-- run-ledger.md
+|   |   |   |   |       |-- scene2d-stage3-new-native-windows-rerun1.log
+|   |   |   |   |       |-- scene2d-stage3-new-native-windows.log
+|   |   |   |   |       |-- scene2d-stage3-required-six-native-windows.log
+|   |   |   |   |       |-- stage3-native-affected-classes.log
+|   |   |   |   |       |-- stage3-native-failures-instrumented.log
+|   |   |   |   |       |-- stage3-native-failures-repaired-focused.log
+|   |   |   |   |       +-- stage3-native-failures-uninstrumented.log
+|   |   |   |   |-- sceneitems/
+|   |   |   |   |   |-- narrow-command.txt
+|   |   |   |   |   |-- narrow.log
+|   |   |   |   |   |-- owned-command.txt
+|   |   |   |   |   |-- owned.log
+|   |   |   |   |   |-- stage3-sceneitems-narrow.trx
+|   |   |   |   |   |-- stage3-sceneitems-owned.trx
+|   |   |   |   |   +-- verification.md
+|   |   |   |   |-- core-focused.command.txt
+|   |   |   |   |-- core-focused.exit.txt
+|   |   |   |   |-- core-focused.log
+|   |   |   |   |-- core-focused.trx
+|   |   |   |   |-- importers.command.txt
+|   |   |   |   |-- importers.exit.txt
+|   |   |   |   |-- importers.log
+|   |   |   |   |-- importers.trx
+|   |   |   |   |-- platform-availability.md
+|   |   |   |   +-- stage3-verification.md
+|   |   |   |-- 2026-09-24-scene-village/
+|   |   |   |   |-- app/
+|   |   |   |   |   |-- app-build-01.command.txt
+|   |   |   |   |   |-- app-build-01.exit.txt
+|   |   |   |   |   |-- app-build-01.log
+|   |   |   |   |   |-- app-build-02.command.txt
+|   |   |   |   |   |-- app-build-02.exit.txt
+|   |   |   |   |   |-- app-build-02.log
+|   |   |   |   |   |-- app-build-03.command.txt
+|   |   |   |   |   |-- app-build-03.exit.txt
+|   |   |   |   |   |-- app-build-03.log
+|   |   |   |   |   |-- asset-final-01.command.txt
+|   |   |   |   |   |-- asset-final-01.exit.txt
+|   |   |   |   |   |-- asset-final-01.log
+|   |   |   |   |   |-- asset-switch-green-01.command.txt
+|   |   |   |   |   |-- asset-switch-green-01.exit.txt
+|   |   |   |   |   |-- asset-switch-green-01.log
+|   |   |   |   |   |-- asset-switch-red-01.command.txt
+|   |   |   |   |   |-- asset-switch-red-01.exit.txt
+|   |   |   |   |   |-- asset-switch-red-01.log
+|   |   |   |   |   |-- audit-art-green-01.command.txt
+|   |   |   |   |   |-- audit-art-green-01.exit.txt
+|   |   |   |   |   |-- audit-art-green-01.log
+|   |   |   |   |   |-- audit-art-green-01.trx
+|   |   |   |   |   |-- audit-art-red-01.command.txt
+|   |   |   |   |   |-- audit-art-red-01.exit.txt
+|   |   |   |   |   |-- audit-art-red-01.log
+|   |   |   |   |   |-- audit-art-red-01.trx
+|   |   |   |   |   |-- audit-final-01.command.txt
+|   |   |   |   |   |-- audit-final-01.exit.txt
+|   |   |   |   |   |-- audit-final-01.log
+|   |   |   |   |   |-- audit-final-01.trx
+|   |   |   |   |   |-- audit-final-02-screenshots.sha256.txt
+|   |   |   |   |   |-- audit-final-02-source.sha256.txt
+|   |   |   |   |   |-- audit-final-02.command.txt
+|   |   |   |   |   |-- audit-final-02.exit.txt
+|   |   |   |   |   |-- audit-final-02.log
+|   |   |   |   |   |-- audit-final-02.trx
+|   |   |   |   |   |-- audit-layout-green-01.command.txt
+|   |   |   |   |   |-- audit-layout-green-01.exit.txt
+|   |   |   |   |   |-- audit-layout-green-01.log
+|   |   |   |   |   |-- audit-layout-green-01.trx
+|   |   |   |   |   |-- audit-red-01.command.txt
+|   |   |   |   |   |-- audit-red-01.exit.txt
+|   |   |   |   |   |-- audit-red-01.log
+|   |   |   |   |   |-- audit-red-01.trx
+|   |   |   |   |   |-- audit-red-02.command.txt
+|   |   |   |   |   |-- audit-red-02.exit.txt
+|   |   |   |   |   |-- audit-red-02.log
+|   |   |   |   |   |-- audit-red-02.trx
+|   |   |   |   |   |-- mirror-focus-01.command.txt
+|   |   |   |   |   |-- mirror-focus-01.exit.txt
+|   |   |   |   |   |-- mirror-focus-01.log
+|   |   |   |   |   |-- mirror-focus-01.trx
+|   |   |   |   |   |-- mirror-native-01-screenshots.sha256.txt
+|   |   |   |   |   |-- mirror-native-01-source.sha256.txt
+|   |   |   |   |   |-- mirror-native-01.command.txt
+|   |   |   |   |   |-- mirror-native-01.exit.txt
+|   |   |   |   |   |-- mirror-native-01.log
+|   |   |   |   |   |-- mirror-native-01.trx
+|   |   |   |   |   |-- mirror-red-01.command.txt
+|   |   |   |   |   |-- mirror-red-01.exit.txt
+|   |   |   |   |   |-- mirror-red-01.log
+|   |   |   |   |   |-- mirror-red-01.trx
+|   |   |   |   |   |-- model-01.command.txt
+|   |   |   |   |   |-- model-01.exit.txt
+|   |   |   |   |   |-- model-01.log
+|   |   |   |   |   |-- model-02.command.txt
+|   |   |   |   |   |-- model-02.exit.txt
+|   |   |   |   |   |-- model-02.log
+|   |   |   |   |   |-- native-01.command.txt
+|   |   |   |   |   |-- native-01.exit.txt
+|   |   |   |   |   |-- native-01.log
+|   |   |   |   |   |-- native-02.command.txt
+|   |   |   |   |   |-- native-02.exit.txt
+|   |   |   |   |   |-- native-02.log
+|   |   |   |   |   |-- native-03.command.txt
+|   |   |   |   |   |-- native-03.exit.txt
+|   |   |   |   |   |-- native-03.log
+|   |   |   |   |   |-- native-04.command.txt
+|   |   |   |   |   |-- native-04.exit.txt
+|   |   |   |   |   |-- native-04.log
+|   |   |   |   |   |-- native-05.command.txt
+|   |   |   |   |   |-- native-05.exit.txt
+|   |   |   |   |   |-- native-05.log
+|   |   |   |   |   |-- native-05.trx
+|   |   |   |   |   |-- pre-native-01.command.txt
+|   |   |   |   |   |-- pre-native-01.exit.txt
+|   |   |   |   |   |-- pre-native-01.log
+|   |   |   |   |   |-- pre-native-02.command.txt
+|   |   |   |   |   |-- pre-native-02.exit.txt
+|   |   |   |   |   |-- pre-native-02.log
+|   |   |   |   |   |-- scene-village-belohlavek-contact-20260924.png
+|   |   |   |   |   |-- scene-village-full-villager-contact-20260924.png
+|   |   |   |   |   |-- scene-village-town-cells-inspect-20260924.png
+|   |   |   |   |   |-- scene-village-villager-cells-inspect-20260924.png
+|   |   |   |   |   +-- verification.md
+|   |   |   |   |-- full-slnx/
+|   |   |   |   |   |-- command.txt
+|   |   |   |   |   |-- exit.txt
+|   |   |   |   |   |-- full-slnx.log
+|   |   |   |   |   |-- trx-integrity.txt
+|   |   |   |   |   |-- trx-skips.csv
+|   |   |   |   |   |-- trx-summary.csv
+|   |   |   |   |   |-- village-full_net10.0_20260924183453.trx
+|   |   |   |   |   |-- village-full_net10.0_20260924183634.trx
+|   |   |   |   |   |-- village-full_net10.0_20260924190055.trx
+|   |   |   |   |   |-- village-full_net8.0_20260924183042.trx
+|   |   |   |   |   |-- village-full_net8.0_20260924183647.trx
+|   |   |   |   |   |-- village-full_net8.0_20260924183701.trx
+|   |   |   |   |   |-- village-full_net8.0_20260924183816.trx
+|   |   |   |   |   |-- village-full_net8.0_20260924185723.trx
+|   |   |   |   |   |-- village-full_net8.0_20260924185952.trx
+|   |   |   |   |   |-- village-full_net8.0_20260924190802.trx
+|   |   |   |   |   +-- village-full_net8.0_20260924190813.trx
+|   |   |   |   |-- full-slnx-final/
+|   |   |   |   |   |-- command.txt
+|   |   |   |   |   |-- exit.txt
+|   |   |   |   |   |-- full-slnx-final.log
+|   |   |   |   |   |-- trx-integrity.txt
+|   |   |   |   |   |-- trx-skips.csv
+|   |   |   |   |   |-- trx-summary.csv
+|   |   |   |   |   |-- village-final_net10.0_20260924203416.trx
+|   |   |   |   |   |-- village-final_net10.0_20260924203613.trx
+|   |   |   |   |   |-- village-final_net10.0_20260924210022.trx
+|   |   |   |   |   |-- village-final_net8.0_20260924202835.trx
+|   |   |   |   |   |-- village-final_net8.0_20260924203629.trx
+|   |   |   |   |   |-- village-final_net8.0_20260924203641.trx
+|   |   |   |   |   |-- village-final_net8.0_20260924203735.trx
+|   |   |   |   |   |-- village-final_net8.0_20260924205635.trx
+|   |   |   |   |   |-- village-final_net8.0_20260924205937.trx
+|   |   |   |   |   |-- village-final_net8.0_20260924210804.trx
+|   |   |   |   |   +-- village-final_net8.0_20260924210810.trx
+|   |   |   |   |-- asset-output-inventory-final.txt
+|   |   |   |   |-- binary-hashes-final.csv
+|   |   |   |   |-- built-asset-copy-hashes-final.csv
+|   |   |   |   |-- built-asset-copy-hashes.csv
+|   |   |   |   |-- core-package-binary-hashes.csv
+|   |   |   |   |-- current-git-status.txt
+|   |   |   |   |-- final-git-diff-check-final.txt
+|   |   |   |   |-- final-git-diff-check.txt
+|   |   |   |   |-- final-git-status-final.txt
+|   |   |   |   |-- final-git-status.txt
+|   |   |   |   |-- final-integrity-final.txt
+|   |   |   |   |-- final-integrity.txt
+|   |   |   |   |-- final-run-screenshot-hashes.csv
+|   |   |   |   |-- full-run-screenshot-hashes.csv
+|   |   |   |   |-- git-diff-check.exit.txt
+|   |   |   |   |-- git-diff-check.txt
+|   |   |   |   |-- integration-baseline.md
+|   |   |   |   |-- integration-changes.md
+|   |   |   |   |-- integration-input-hashes.txt
+|   |   |   |   |-- integration-verification-final.md
+|   |   |   |   |-- integration-verification.md
+|   |   |   |   |-- new-text-mechanical-scan-final.txt
+|   |   |   |   |-- new-text-mechanical-scan.txt
+|   |   |   |   |-- pre-village-git-status.txt
+|   |   |   |   |-- pre-village-integrity.txt
+|   |   |   |   |-- pre-village-solution-diff.txt
+|   |   |   |   |-- solution-diff-check.exit.txt
+|   |   |   |   |-- solution-diff-check.txt
+|   |   |   |   |-- solution-static-check.txt
+|   |   |   |   |-- village-source-file-hashes-final.txt
+|   |   |   |   |-- village-source-file-hashes.txt
+|   |   |   |   |-- workflow-static-check.txt
+|   |   |   |   +-- worktree-status-delta.txt
+|   |   |   |-- 2026-09-24-scene-village-seams/
+|   |   |   |   |-- app/
+|   |   |   |   |   |-- baseline-app-source.sha256.txt
+|   |   |   |   |   |-- baseline-backend-rebuild-05.command.txt
+|   |   |   |   |   |-- baseline-backend-rebuild-05.exit.txt
+|   |   |   |   |   |-- baseline-backend-rebuild-05.log
+|   |   |   |   |   |-- diagnosis.md
+|   |   |   |   |   |-- point-boundary-red-01.command.txt
+|   |   |   |   |   |-- point-boundary-red-01.exit.txt
+|   |   |   |   |   |-- point-boundary-red-01.log
+|   |   |   |   |   |-- portable-fixture-red-06.exit.txt
+|   |   |   |   |   |-- portable-fixture-red-06.log
+|   |   |   |   |   |-- portable-fixture-red-07.exit.txt
+|   |   |   |   |   |-- portable-fixture-red-07.log
+|   |   |   |   |   |-- portable-fixture-red-08.command.txt
+|   |   |   |   |   |-- portable-fixture-red-08.exit.txt
+|   |   |   |   |   |-- portable-fixture-red-08.log
+|   |   |   |   |   |-- portable-fixture-red-08.trx
+|   |   |   |   |   |-- seam-green-01.command.txt
+|   |   |   |   |   |-- seam-green-01.exit.txt
+|   |   |   |   |   |-- seam-green-01.log
+|   |   |   |   |   |-- seam-probe-02.command.txt
+|   |   |   |   |   |-- seam-probe-02.exit.txt
+|   |   |   |   |   |-- seam-probe-02.log
+|   |   |   |   |   |-- seam-probe-02.trx
+|   |   |   |   |   |-- seam-red-01.command.txt
+|   |   |   |   |   |-- seam-red-01.exit.txt
+|   |   |   |   |   |-- seam-red-01.log
+|   |   |   |   |   |-- seam-red-01.trx
+|   |   |   |   |   |-- seam-red-03.command.txt
+|   |   |   |   |   |-- seam-red-03.exit.txt
+|   |   |   |   |   |-- seam-red-03.log
+|   |   |   |   |   |-- seam-red-03.trx
+|   |   |   |   |   |-- tile-boundary-controls-red-02.exit.txt
+|   |   |   |   |   |-- tile-boundary-controls-red-02.log
+|   |   |   |   |   |-- tile-boundary-controls-red-02.trx
+|   |   |   |   |   |-- tile-boundary-controls-red-03.exit.txt
+|   |   |   |   |   |-- tile-boundary-controls-red-03.log
+|   |   |   |   |   |-- tile-boundary-controls-red-03.trx
+|   |   |   |   |   |-- tile-boundary-phase-red-04.command.txt
+|   |   |   |   |   |-- tile-boundary-phase-red-04.exit.txt
+|   |   |   |   |   |-- tile-boundary-phase-red-04.log
+|   |   |   |   |   |-- tile-boundary-phase-red-04.trx
+|   |   |   |   |   |-- tile-boundary-red-01.exit.txt
+|   |   |   |   |   |-- tile-boundary-red-01.log
+|   |   |   |   |   +-- tile-boundary-red-01.trx
+|   |   |   |   |-- core/
+|   |   |   |   |   |-- diagnostic/
+|   |   |   |   |   |   |-- baseline-bytes/
+|   |   |   |   |   |   |   |-- artifacts.json
+|   |   |   |   |   |   |   |-- Drawing.frag.dxil
+|   |   |   |   |   |   |   |-- Drawing.frag.hlsl
+|   |   |   |   |   |   |   |-- Drawing.frag.msl
+|   |   |   |   |   |   |   +-- Drawing.frag.spv
+|   |   |   |   |   |   |-- branch-color-probe-backup/
+|   |   |   |   |   |   |   |-- artifacts.json
+|   |   |   |   |   |   |   |-- DrawingImageDomain.frag.dxil
+|   |   |   |   |   |   |   |-- DrawingImageDomain.frag.hlsl
+|   |   |   |   |   |   |   |-- DrawingImageDomain.frag.msl
+|   |   |   |   |   |   |   +-- DrawingImageDomain.frag.spv
+|   |   |   |   |   |   |-- centroid-bytes/
+|   |   |   |   |   |   |   |-- artifacts.json
+|   |   |   |   |   |   |   |-- Drawing.frag.dxil
+|   |   |   |   |   |   |   |-- Drawing.frag.hlsl
+|   |   |   |   |   |   |   |-- Drawing.frag.msl
+|   |   |   |   |   |   |   +-- Drawing.frag.spv
+|   |   |   |   |   |   |-- flat64-prechange/
+|   |   |   |   |   |   |   |-- CerberusTests.cs
+|   |   |   |   |   |   |   |-- DrawingImageDomain.frag.hlsl
+|   |   |   |   |   |   |   |-- DrawingImageDomain.vert.hlsl
+|   |   |   |   |   |   |   |-- SdlGpuImageDomainGeometry.cs
+|   |   |   |   |   |   |   +-- SdlGpuImageDomainGeometryTests.cs
+|   |   |   |   |   |   |-- force-covered-probe-backup/
+|   |   |   |   |   |   |   |-- artifacts.json
+|   |   |   |   |   |   |   |-- DrawingImageDomain.frag.dxil
+|   |   |   |   |   |   |   |-- DrawingImageDomain.frag.hlsl
+|   |   |   |   |   |   |   |-- DrawingImageDomain.frag.msl
+|   |   |   |   |   |   |   +-- DrawingImageDomain.frag.spv
+|   |   |   |   |   |   |-- observational-count/
+|   |   |   |   |   |   |   |-- portable-fixture-centroid-msaa-probe-10.exit.txt
+|   |   |   |   |   |   |   |-- portable-fixture-centroid-msaa-probe-10.log
+|   |   |   |   |   |   |   |-- SdlGpuDrawingBackend.cs.baseline-bytes
+|   |   |   |   |   |   |   |-- source-baseline.sha256.txt
+|   |   |   |   |   |   |   +-- source-probe.sha256.txt
+|   |   |   |   |   |   |-- selected-candidate-01-bytes/
+|   |   |   |   |   |   |   |-- artifacts.json
+|   |   |   |   |   |   |   |-- DrawingImageDomain.frag.dxil
+|   |   |   |   |   |   |   |-- DrawingImageDomain.frag.hlsl
+|   |   |   |   |   |   |   |-- DrawingImageDomain.frag.msl
+|   |   |   |   |   |   |   |-- DrawingImageDomain.frag.spv
+|   |   |   |   |   |   |   |-- DrawingImageDomain.vert.dxil
+|   |   |   |   |   |   |   |-- DrawingImageDomain.vert.hlsl
+|   |   |   |   |   |   |   |-- DrawingImageDomain.vert.msl
+|   |   |   |   |   |   |   +-- DrawingImageDomain.vert.spv
+|   |   |   |   |   |   |-- baseline-a-backend-release.sha256.txt
+|   |   |   |   |   |   |-- branch-color-backend-rebuild-01.log
+|   |   |   |   |   |   |-- branch-color-probe-baseline.sha256.txt
+|   |   |   |   |   |   |-- branch-color-restored-backend-rebuild-01.log
+|   |   |   |   |   |   |-- branch-color-restored-shader-verify-01.log
+|   |   |   |   |   |   |-- branch-color-restored-village-red-01.log
+|   |   |   |   |   |   |-- branch-color-shader-generate-01.log
+|   |   |   |   |   |   |-- branch-color-village-native-01.log
+|   |   |   |   |   |   |-- centroid-b-backend-release.sha256.txt
+|   |   |   |   |   |   |-- device-reset-probe-backup.cs
+|   |   |   |   |   |   |-- edge-sign-backend-rebuild-01.log
+|   |   |   |   |   |   |-- edge-sign-probe-variant.sha256.txt
+|   |   |   |   |   |   |-- edge-sign-shader-generate-01.log
+|   |   |   |   |   |   |-- edge-sign-village-native-01.log
+|   |   |   |   |   |   |-- exact-center-crop-diagnostic-01.log
+|   |   |   |   |   |   |-- exact-flipped-edge-red-01.log
+|   |   |   |   |   |   |-- exact-integer-center-parity-01.exit.txt
+|   |   |   |   |   |   |-- exact-integer-center-parity-01.log
+|   |   |   |   |   |   |-- exact-unflipped-right-diagnostic-01.log
+|   |   |   |   |   |   |-- external-boundary-amendment-diagnosis.md
+|   |   |   |   |   |   |-- external-boundary-amendment-red-01.log
+|   |   |   |   |   |   |-- external-boundary-focused-01.log
+|   |   |   |   |   |   |-- external-boundary-geometry-contract-01.log
+|   |   |   |   |   |   |-- external-boundary-mirror-red-01.log
+|   |   |   |   |   |   |-- external-boundary-shader-generate-01.log
+|   |   |   |   |   |   |-- external-boundary-village-01.log
+|   |   |   |   |   |   |-- finite-near-degenerate-red-01.exit.txt
+|   |   |   |   |   |   |-- finite-near-degenerate-red-01.log
+|   |   |   |   |   |   |-- five-edge-extended-native-01.exit.txt
+|   |   |   |   |   |   |-- five-edge-extended-native-01.log
+|   |   |   |   |   |   |-- five-edge-extreme-geometry-01.log
+|   |   |   |   |   |   |-- five-edge-full-sdl-native-01.log
+|   |   |   |   |   |   |-- five-edge-geometry-red-01.exit.txt
+|   |   |   |   |   |   |-- five-edge-geometry-red-01.log
+|   |   |   |   |   |   |-- five-edge-layout-unit-01.exit.txt
+|   |   |   |   |   |   |-- five-edge-layout-unit-01.log
+|   |   |   |   |   |   |-- five-edge-native-focused-01.exit.txt
+|   |   |   |   |   |   |-- five-edge-native-focused-01.log
+|   |   |   |   |   |   |-- five-edge-portable-village-green-01.log
+|   |   |   |   |   |   |-- five-edge-rotated-flip-native-01.exit.txt
+|   |   |   |   |   |   |-- five-edge-rotated-flip-native-01.log
+|   |   |   |   |   |   |-- five-edge-shader-generate-01.exit.txt
+|   |   |   |   |   |   |-- five-edge-shader-generate-01.log
+|   |   |   |   |   |   |-- five-edge-shader-verify-01.log
+|   |   |   |   |   |   |-- flat64-audit-repair-focused-01.command.txt
+|   |   |   |   |   |   |-- flat64-audit-repair-focused-01.exit.txt
+|   |   |   |   |   |   |-- flat64-audit-repair-focused-01.log
+|   |   |   |   |   |   |-- flat64-audit-repair-focused-01.trx
+|   |   |   |   |   |   |-- flat64-device-bisect-prefix07.filter.txt
+|   |   |   |   |   |   |-- flat64-device-bisect-prefix07.log
+|   |   |   |   |   |   |-- flat64-device-bisect-prefix07.trx
+|   |   |   |   |   |   |-- flat64-device-bisect-prefix08.filter.txt
+|   |   |   |   |   |   |-- flat64-device-bisect-prefix08.log
+|   |   |   |   |   |   |-- flat64-device-bisect-prefix08.trx
+|   |   |   |   |   |   |-- flat64-device-bisect-prefix09.filter.txt
+|   |   |   |   |   |   |-- flat64-device-bisect-prefix09.log
+|   |   |   |   |   |   |-- flat64-device-bisect-prefix09.trx
+|   |   |   |   |   |   |-- flat64-device-bisect-prefix10.filter.txt
+|   |   |   |   |   |   |-- flat64-device-bisect-prefix10.log
+|   |   |   |   |   |   |-- flat64-device-bisect-prefix10.trx
+|   |   |   |   |   |   |-- flat64-device-direct-only-pair-01.log
+|   |   |   |   |   |   |-- flat64-device-direct-only-pair-01.trx
+|   |   |   |   |   |   |-- flat64-device-reset-interpolation-prefix-01.log
+|   |   |   |   |   |   |-- flat64-device-reset-interpolation-prefix-01.trx
+|   |   |   |   |   |   |-- flat64-device-reset-local-sequence-01.log
+|   |   |   |   |   |   |-- flat64-device-reset-local-sequence-01.trx
+|   |   |   |   |   |   |-- flat64-device-sequential-pair-01.command.txt
+|   |   |   |   |   |   |-- flat64-device-sequential-pair-01.exit.txt
+|   |   |   |   |   |   |-- flat64-device-sequential-pair-01.log
+|   |   |   |   |   |   |-- flat64-device-sequential-pair-01.trx
+|   |   |   |   |   |   |-- flat64-device-stage00-pair.log
+|   |   |   |   |   |   |-- flat64-device-stage00-pair.trx
+|   |   |   |   |   |   |-- flat64-device-stage01-pair.log
+|   |   |   |   |   |   |-- flat64-device-stage01-pair.trx
+|   |   |   |   |   |   |-- flat64-device-transformed-pair-01.log
+|   |   |   |   |   |   |-- flat64-device-transformed-pair-01.trx
+|   |   |   |   |   |   |-- flat64-device-two-empty-fixtures-01.log
+|   |   |   |   |   |   |-- flat64-device-two-empty-fixtures-01.trx
+|   |   |   |   |   |   |-- flat64-device-two-sequential-fixtures-01.log
+|   |   |   |   |   |   |-- flat64-device-two-sequential-fixtures-01.trx
+|   |   |   |   |   |   |-- flat64-device-village-artifact-pair-01.log
+|   |   |   |   |   |   |-- flat64-device-village-artifact-pair-01.trx
+|   |   |   |   |   |   |-- flat64-final-source-artifact.sha256.txt
+|   |   |   |   |   |   |-- flat64-four-edges-01.log
+|   |   |   |   |   |   |-- flat64-four-edges-01.trx
+|   |   |   |   |   |   |-- flat64-full-sdl-native-01.log
+|   |   |   |   |   |   |-- flat64-full-sdl-native-01.trx
+|   |   |   |   |   |   |-- flat64-full-sdl-native-02.log
+|   |   |   |   |   |   |-- flat64-full-sdl-native-02.trx
+|   |   |   |   |   |   |-- flat64-full-sdl-native-03.command.txt
+|   |   |   |   |   |   |-- flat64-full-sdl-native-03.exit.txt
+|   |   |   |   |   |   |-- flat64-full-sdl-native-03.log
+|   |   |   |   |   |   |-- flat64-full-sdl-native-03.trx
+|   |   |   |   |   |   |-- flat64-geometry-unit-01.log
+|   |   |   |   |   |   |-- flat64-geometry-unit-01.trx
+|   |   |   |   |   |   |-- flat64-interpolation-focused-01.log
+|   |   |   |   |   |   |-- flat64-interpolation-focused-01.trx
+|   |   |   |   |   |   |-- flat64-interpolation-focused-02.log
+|   |   |   |   |   |   |-- flat64-interpolation-focused-02.trx
+|   |   |   |   |   |   |-- flat64-lazy-storage-green-01.command.txt
+|   |   |   |   |   |   |-- flat64-lazy-storage-green-01.exit.txt
+|   |   |   |   |   |   |-- flat64-lazy-storage-green-01.log
+|   |   |   |   |   |   |-- flat64-lazy-storage-green-01.trx
+|   |   |   |   |   |   |-- flat64-lazy-storage-red-01.command.txt
+|   |   |   |   |   |   |-- flat64-lazy-storage-red-01.exit.txt
+|   |   |   |   |   |   |-- flat64-lazy-storage-red-01.log
+|   |   |   |   |   |   |-- flat64-lazy-storage-red-01.trx
+|   |   |   |   |   |   |-- flat64-mixed-upload-bytes-01.log
+|   |   |   |   |   |   |-- flat64-mixed-upload-bytes-01.trx
+|   |   |   |   |   |   |-- flat64-native-descriptor-01.log
+|   |   |   |   |   |   |-- flat64-native-descriptor-01.trx
+|   |   |   |   |   |   |-- flat64-native-warm-01.command.txt
+|   |   |   |   |   |   |-- flat64-native-warm-01.exit.txt
+|   |   |   |   |   |   |-- flat64-native-warm-01.log
+|   |   |   |   |   |   |-- flat64-native-warm-02.command.txt
+|   |   |   |   |   |   |-- flat64-native-warm-02.exit.txt
+|   |   |   |   |   |   |-- flat64-native-warm-02.log
+|   |   |   |   |   |   |-- flat64-native-warm-02.trx
+|   |   |   |   |   |   |-- flat64-native-warm-device-pair-01.command.txt
+|   |   |   |   |   |   |-- flat64-native-warm-device-pair-01.exit.txt
+|   |   |   |   |   |   |-- flat64-native-warm-device-pair-01.log
+|   |   |   |   |   |   |-- flat64-native-warm-device-pair-01.trx
+|   |   |   |   |   |   |-- flat64-one-ulp-parity-01.log
+|   |   |   |   |   |   |-- flat64-one-ulp-parity-01.trx
+|   |   |   |   |   |   |-- flat64-payload-01.log
+|   |   |   |   |   |   |-- flat64-payload-01.trx
+|   |   |   |   |   |   |-- flat64-pipeline-after-full-02.log
+|   |   |   |   |   |   |-- flat64-pipeline-after-full-02.trx
+|   |   |   |   |   |   |-- flat64-pipeline-isolated-01.log
+|   |   |   |   |   |   |-- flat64-pipeline-isolated-01.trx
+|   |   |   |   |   |   |-- flat64-pre-gen-artifacts.sha256.txt
+|   |   |   |   |   |   |-- flat64-representation-red-01.log
+|   |   |   |   |   |   |-- flat64-representation-red-01.trx
+|   |   |   |   |   |   |-- flat64-rotated-ordinary-parity-red-01.log
+|   |   |   |   |   |   |-- flat64-rotated-ordinary-parity-red-01.trx
+|   |   |   |   |   |   |-- flat64-rotated-stress-01.log
+|   |   |   |   |   |   |-- flat64-rotated-stress-01.trx
+|   |   |   |   |   |   |-- flat64-rotated-stress-02.log
+|   |   |   |   |   |   |-- flat64-rotated-stress-02.trx
+|   |   |   |   |   |   |-- flat64-rotated-stress-03.log
+|   |   |   |   |   |   |-- flat64-rotated-stress-03.trx
+|   |   |   |   |   |   |-- flat64-rotated-stress-04.log
+|   |   |   |   |   |   |-- flat64-rotated-stress-04.trx
+|   |   |   |   |   |   |-- flat64-rotated-stress-05.log
+|   |   |   |   |   |   |-- flat64-rotated-stress-05.trx
+|   |   |   |   |   |   |-- flat64-rotated-stress-summary.txt
+|   |   |   |   |   |   |-- flat64-rotated-y-outside-probe-01.log
+|   |   |   |   |   |   |-- flat64-rotated-y-outside-probe-01.trx
+|   |   |   |   |   |   |-- flat64-shader-generate-01.log
+|   |   |   |   |   |   |-- flat64-shader-verify-01.command.txt
+|   |   |   |   |   |   |-- flat64-shader-verify-01.exit.txt
+|   |   |   |   |   |   |-- flat64-shader-verify-01.log
+|   |   |   |   |   |   |-- flat64-shape-union-oracle-01.log
+|   |   |   |   |   |   |-- flat64-shape-union-oracle-01.trx
+|   |   |   |   |   |   |-- flat64-village-scale-focused-01.log
+|   |   |   |   |   |   |-- flat64-village-scale-focused-01.trx
+|   |   |   |   |   |   |-- flat64-village-sixphase-01.log
+|   |   |   |   |   |   |-- flat64-village-sixphase-01.trx
+|   |   |   |   |   |   |-- flat64-warm-fake-cpu-01.log
+|   |   |   |   |   |   |-- flat64-warm-fake-cpu-01.trx
+|   |   |   |   |   |   |-- force-covered-backend-rebuild-01.log
+|   |   |   |   |   |   |-- force-covered-probe-baseline.sha256.txt
+|   |   |   |   |   |   |-- force-covered-probe-variant.sha256.txt
+|   |   |   |   |   |   |-- force-covered-restored-backend-rebuild-01.log
+|   |   |   |   |   |   |-- force-covered-restored-shader-verify-01.log
+|   |   |   |   |   |   |-- force-covered-restored-village-red-01.log
+|   |   |   |   |   |   |-- force-covered-shader-generate-01.log
+|   |   |   |   |   |   |-- force-covered-village-native-01.log
+|   |   |   |   |   |   |-- generated-baseline-inventory.json
+|   |   |   |   |   |   |-- generated-centroid-diff.json
+|   |   |   |   |   |   |-- image-domain-expanded-red-a-01.log
+|   |   |   |   |   |   |-- image-domain-expanded-red-a-02.log
+|   |   |   |   |   |   |-- image-domain-geometry-red-a-01.exit.txt
+|   |   |   |   |   |   |-- image-domain-geometry-red-a-01.log
+|   |   |   |   |   |   |-- image-domain-layout-unit-green-candidate-01.exit.txt
+|   |   |   |   |   |   |-- image-domain-layout-unit-green-candidate-01.log
+|   |   |   |   |   |   |-- image-domain-layout-unit-red-a-01.log
+|   |   |   |   |   |   |-- image-domain-matched-centroid-generate.exit.txt
+|   |   |   |   |   |   |-- image-domain-matched-centroid-generate.log
+|   |   |   |   |   |   |-- image-domain-matched-centroid-native.exit.txt
+|   |   |   |   |   |   |-- image-domain-matched-centroid-native.log
+|   |   |   |   |   |   |-- image-domain-native-candidate-01.exit.txt
+|   |   |   |   |   |   |-- image-domain-native-candidate-01.log
+|   |   |   |   |   |   |-- image-domain-shader-generate-01.exit.txt
+|   |   |   |   |   |   |-- image-domain-shader-generate-01.log
+|   |   |   |   |   |   |-- logical-domain-a-contract-red-06.exit.txt
+|   |   |   |   |   |   |-- logical-domain-a-contract-red-06.log
+|   |   |   |   |   |   |-- logical-domain-a-final-rebuild-09.exit.txt
+|   |   |   |   |   |   |-- logical-domain-a-final-rebuild-09.log
+|   |   |   |   |   |   |-- logical-domain-a-initial-01.exit.txt
+|   |   |   |   |   |   |-- logical-domain-a-initial-01.log
+|   |   |   |   |   |   |-- logical-domain-a-restored-rebuild-05.exit.txt
+|   |   |   |   |   |   |-- logical-domain-a-restored-rebuild-05.log
+|   |   |   |   |   |   |-- logical-domain-a-restored-verify-04.exit.txt
+|   |   |   |   |   |   |-- logical-domain-a-restored-verify-04.log
+|   |   |   |   |   |   |-- logical-domain-a-testcopy-build-10.exit.txt
+|   |   |   |   |   |   |-- logical-domain-a-testcopy-build-10.log
+|   |   |   |   |   |   |-- logical-domain-b-contract-rebuild-07.exit.txt
+|   |   |   |   |   |   |-- logical-domain-b-contract-rebuild-07.log
+|   |   |   |   |   |   |-- logical-domain-b-contract-red-08.exit.txt
+|   |   |   |   |   |   |-- logical-domain-b-contract-red-08.log
+|   |   |   |   |   |   |-- logical-domain-b-initial-03.exit.txt
+|   |   |   |   |   |   |-- logical-domain-b-initial-03.log
+|   |   |   |   |   |   |-- logical-domain-b-rebuild-02.exit.txt
+|   |   |   |   |   |   |-- logical-domain-b-rebuild-02.log
+|   |   |   |   |   |   |-- logical-domain-contract-test.sha256.txt
+|   |   |   |   |   |   |-- logical-domain.md
+|   |   |   |   |   |   |-- original-a-current-backend-release.sha256.txt
+|   |   |   |   |   |   |-- original-drawing-artifacts-before-selected-01.sha256.txt
+|   |   |   |   |   |   |-- pipeline-dump-candidate01-ps.txt
+|   |   |   |   |   |   |-- pipeline-dump-candidate01-vs.txt
+|   |   |   |   |   |   |-- pipeline-dump-contiguous3-ps.txt
+|   |   |   |   |   |   |-- pipeline-dump-contiguous3-vs.txt
+|   |   |   |   |   |   |-- pipeline-isolation-centroid-only-debug-native.exit.txt
+|   |   |   |   |   |   |-- pipeline-isolation-centroid-only-debug-native.log
+|   |   |   |   |   |   |-- pipeline-isolation-centroid-only-generate-02.exit.txt
+|   |   |   |   |   |   |-- pipeline-isolation-centroid-only-generate-02.log
+|   |   |   |   |   |   |-- pipeline-isolation-centroid-only-generate.exit.txt
+|   |   |   |   |   |   |-- pipeline-isolation-centroid-only-generate.log
+|   |   |   |   |   |   |-- pipeline-isolation-centroid-only-native.exit.txt
+|   |   |   |   |   |   |-- pipeline-isolation-centroid-only-native.log
+|   |   |   |   |   |   |-- pipeline-isolation-contiguous3-generate.exit.txt
+|   |   |   |   |   |   |-- pipeline-isolation-contiguous3-generate.log
+|   |   |   |   |   |   |-- pipeline-isolation-contiguous3-native.exit.txt
+|   |   |   |   |   |   |-- pipeline-isolation-contiguous3-native.log
+|   |   |   |   |   |   |-- pipeline-isolation-fragment-baseline-generate.exit.txt
+|   |   |   |   |   |   |-- pipeline-isolation-fragment-baseline-generate.log
+|   |   |   |   |   |   |-- pipeline-isolation-fragment-baseline-native.exit.txt
+|   |   |   |   |   |   |-- pipeline-isolation-fragment-baseline-native.log
+|   |   |   |   |   |   |-- pipeline-isolation-matched-centroid-generate.exit.txt
+|   |   |   |   |   |   |-- pipeline-isolation-matched-centroid-generate.log
+|   |   |   |   |   |   |-- pipeline-isolation-matched-centroid-native.exit.txt
+|   |   |   |   |   |   |-- pipeline-isolation-matched-centroid-native.log
+|   |   |   |   |   |   |-- provenance-core-build-01.log
+|   |   |   |   |   |   |-- rotated-y-probe-backup.cs
+|   |   |   |   |   |   |-- selected-candidate-01-bytes.sha256.txt
+|   |   |   |   |   |   |-- selected-candidate-current-01.sha256.txt
+|   |   |   |   |   |   |-- shader-compiler-centroid-generate.log
+|   |   |   |   |   |   |-- shader-compiler-verify-restored.log
+|   |   |   |   |   |   |-- target-baseline-hashes.json
+|   |   |   |   |   |   |-- target-centroid-hashes.json
+|   |   |   |   |   |   |-- tile-boundary-centroid-a-baseline.exit.txt
+|   |   |   |   |   |   |-- tile-boundary-centroid-a-baseline.log
+|   |   |   |   |   |   |-- tile-boundary-centroid-a-baseline.trx
+|   |   |   |   |   |   |-- tile-boundary-centroid-b-variant.exit.txt
+|   |   |   |   |   |   |-- tile-boundary-centroid-b-variant.log
+|   |   |   |   |   |   |-- tile-boundary-centroid-b-variant.trx
+|   |   |   |   |   |   |-- village-exact-coordinate-red-01.log
+|   |   |   |   |   |   |-- village-scale-flipped-diagnostic-01.log
+|   |   |   |   |   |   |-- village-scale-layered-diagnostic-01.log
+|   |   |   |   |   |   |-- village-transform-isolation-01.log
+|   |   |   |   |   |   |-- village-transform-repro-01.log
+|   |   |   |   |   |   |-- village-ulp-shift-diagnostic-01.log
+|   |   |   |   |   |   |-- warm-baseline-a-01.log
+|   |   |   |   |   |   +-- warm-baseline-a-02.log
+|   |   |   |   |   |-- portable-fixture-centroid-final-11.exit.txt
+|   |   |   |   |   |-- portable-fixture-centroid-final-11.log
+|   |   |   |   |   |-- portable-fixture-centroid-green-09.exit.txt
+|   |   |   |   |   |-- portable-fixture-centroid-green-09.log
+|   |   |   |   |   |-- README.md
+|   |   |   |   |   |-- shader-centroid-gates.md
+|   |   |   |   |   |-- shader-compiler-build-baseline.log
+|   |   |   |   |   |-- shader-compiler-verify-baseline.log
+|   |   |   |   |   |-- shader-failures-baseline-a-focused-16.exit.txt
+|   |   |   |   |   |-- shader-failures-baseline-a-focused-16.log
+|   |   |   |   |   |-- shader-failures-baseline-a-rebuild-15.exit.txt
+|   |   |   |   |   |-- shader-failures-baseline-a-rebuild-15.log
+|   |   |   |   |   |-- shader-failures-centroid-b-focused-14.exit.txt
+|   |   |   |   |   |-- shader-failures-centroid-b-focused-14.log
+|   |   |   |   |   |-- shader-failures-centroid-b-restored-rebuild-17.exit.txt
+|   |   |   |   |   |-- shader-failures-centroid-b-restored-rebuild-17.log
+|   |   |   |   |   |-- shader-failures-centroid-b-testcopy-build-18.exit.txt
+|   |   |   |   |   |-- shader-failures-centroid-b-testcopy-build-18.log
+|   |   |   |   |   |-- shader-full-sdl-13.exit.txt
+|   |   |   |   |   |-- shader-full-sdl-13.log
+|   |   |   |   |   |-- shader-native-pipeline-12.exit.txt
+|   |   |   |   |   |-- shader-native-pipeline-12.log
+|   |   |   |   |   |-- shader-original-restored-rebuild-20.exit.txt
+|   |   |   |   |   |-- shader-original-restored-rebuild-20.log
+|   |   |   |   |   |-- shader-original-restored-verify-19.exit.txt
+|   |   |   |   |   |-- shader-original-restored-verify-19.log
+|   |   |   |   |   |-- shader-permanent-backend-rebuild.exit.txt
+|   |   |   |   |   |-- shader-permanent-backend-rebuild.log
+|   |   |   |   |   |-- shader-permanent-clean-backend-rebuild.exit.txt
+|   |   |   |   |   |-- shader-permanent-clean-backend-rebuild.log
+|   |   |   |   |   |-- shader-permanent-generate.exit.txt
+|   |   |   |   |   |-- shader-permanent-generate.log
+|   |   |   |   |   |-- shader-permanent-verify.exit.txt
+|   |   |   |   |   |-- shader-permanent-verify.log
+|   |   |   |   |   |-- sprite-sampling-affected-core.log
+|   |   |   |   |   |-- sprite-sampling-affected-core.trx
+|   |   |   |   |   |-- sprite-sampling-affected-sourcegen.log
+|   |   |   |   |   |-- sprite-sampling-affected-sourcegen.trx
+|   |   |   |   |   |-- sprite-sampling-core-green.log
+|   |   |   |   |   |-- sprite-sampling-core-green.trx
+|   |   |   |   |   |-- sprite-sampling-core-red-valid.log
+|   |   |   |   |   |-- sprite-sampling-core-red.log
+|   |   |   |   |   |-- sprite-sampling-sourcegen-green.log
+|   |   |   |   |   |-- sprite-sampling-sourcegen-green.trx
+|   |   |   |   |   +-- sprite-sampling-sourcegen-red-valid.log
+|   |   |   |   +-- integration/
+|   |   |   |       |-- diagnostic-ldtk-direct/
+|   |   |   |       |   |-- command-and-inputs.txt
+|   |   |   |       |   |-- output.log
+|   |   |   |       |   +-- result.txt
+|   |   |   |       |-- final-api-compat/
+|   |   |   |       |   |-- classification.md
+|   |   |   |       |   |-- command.txt
+|   |   |   |       |   |-- exit.txt
+|   |   |   |       |   +-- output.log
+|   |   |   |       |-- final-core133/
+|   |   |   |       |   |-- command.txt
+|   |   |   |       |   |-- exit.txt
+|   |   |   |       |   +-- output.log
+|   |   |   |       |-- final-core133-retry01/
+|   |   |   |       |   |-- command.txt
+|   |   |   |       |   |-- exit.txt
+|   |   |   |       |   |-- output.log
+|   |   |   |       |   +-- seam-final-core133-retry01.trx
+|   |   |   |       |-- final-full-slnx-01/
+|   |   |   |       |   |-- command.txt
+|   |   |   |       |   |-- exit.txt
+|   |   |   |       |   |-- output.log
+|   |   |   |       |   |-- parse-note.txt
+|   |   |   |       |   |-- seam-final-full_net10.0_20260925071826.trx
+|   |   |   |       |   |-- seam-final-full_net10.0_20260925071905.trx
+|   |   |   |       |   |-- seam-final-full_net10.0_20260925072828.trx
+|   |   |   |       |   |-- seam-final-full_net8.0_20260925071631.trx
+|   |   |   |       |   |-- seam-final-full_net8.0_20260925071911.trx
+|   |   |   |       |   |-- seam-final-full_net8.0_20260925071918.trx
+|   |   |   |       |   |-- seam-final-full_net8.0_20260925071946.trx
+|   |   |   |       |   |-- seam-final-full_net8.0_20260925072715.trx
+|   |   |   |       |   |-- seam-final-full_net8.0_20260925072820.trx
+|   |   |   |       |   |-- seam-final-full_net8.0_20260925073124.trx
+|   |   |   |       |   |-- seam-final-full_net8.0_20260925073127.trx
+|   |   |   |       |   |-- trx-failures.txt
+|   |   |   |       |   |-- trx-skips.csv
+|   |   |   |       |   +-- trx-summary.csv
+|   |   |   |       |-- final-full-slnx-02/
+|   |   |   |       |   |-- command.txt
+|   |   |   |       |   |-- exit.txt
+|   |   |   |       |   |-- output.log
+|   |   |   |       |   |-- parse-note.txt
+|   |   |   |       |   |-- seam-final-full-02_net10.0_20260925103202.trx
+|   |   |   |       |   |-- seam-final-full-02_net10.0_20260925103258.trx
+|   |   |   |       |   |-- seam-final-full-02_net10.0_20260925104443.trx
+|   |   |   |       |   |-- seam-final-full-02_net8.0_20260925102925.trx
+|   |   |   |       |   |-- seam-final-full-02_net8.0_20260925103306.trx
+|   |   |   |       |   |-- seam-final-full-02_net8.0_20260925103315.trx
+|   |   |   |       |   |-- seam-final-full-02_net8.0_20260925103355.trx
+|   |   |   |       |   |-- seam-final-full-02_net8.0_20260925104308.trx
+|   |   |   |       |   |-- seam-final-full-02_net8.0_20260925104430.trx
+|   |   |   |       |   |-- seam-final-full-02_net8.0_20260925104834.trx
+|   |   |   |       |   |-- seam-final-full-02_net8.0_20260925104838.trx
+|   |   |   |       |   |-- trx-failures.txt
+|   |   |   |       |   |-- trx-skips.csv
+|   |   |   |       |   +-- trx-summary.csv
+|   |   |   |       |-- final-manifest/
+|   |   |   |       |   |-- command.txt
+|   |   |   |       |   |-- exit.txt
+|   |   |   |       |   |-- output.log
+|   |   |   |       |   +-- seam-final-manifest.trx
+|   |   |   |       |-- final-previewhost-focused-01/
+|   |   |   |       |   |-- command.txt
+|   |   |   |       |   |-- exit.txt
+|   |   |   |       |   |-- output.log
+|   |   |   |       |   +-- previewhost-render-surface3d-focused-01.trx
+|   |   |   |       |-- final-shader-verify/
+|   |   |   |       |   |-- command.txt
+|   |   |   |       |   |-- exit.txt
+|   |   |   |       |   +-- output.log
+|   |   |   |       |-- final-village-native/
+|   |   |   |       |   |-- command.txt
+|   |   |   |       |   |-- exit.txt
+|   |   |   |       |   |-- output.log
+|   |   |   |       |   +-- seam-final-village-native.trx
+|   |   |   |       |-- pre-sampling-api/
+|   |   |   |       |   +-- Cerneala.dll
+|   |   |   |       |-- preview-repair/
+|   |   |   |       |   |-- green-focused-01/
+|   |   |   |       |   |   |-- command.txt
+|   |   |   |       |   |   |-- exit.txt
+|   |   |   |       |   |   +-- output.log
+|   |   |   |       |   |-- green-focused-02/
+|   |   |   |       |   |   |-- command.txt
+|   |   |   |       |   |   |-- exit.txt
+|   |   |   |       |   |   |-- output.log
+|   |   |   |       |   |   +-- preview-fastpath-green-focused-02.trx
+|   |   |   |       |   |-- green-focused-03/
+|   |   |   |       |   |   |-- command.txt
+|   |   |   |       |   |   |-- exit.txt
+|   |   |   |       |   |   |-- output.log
+|   |   |   |       |   |   +-- preview-focused-green-03.trx
+|   |   |   |       |   |-- green-project-01/
+|   |   |   |       |   |   |-- command.txt
+|   |   |   |       |   |   |-- exit.txt
+|   |   |   |       |   |   |-- output.log
+|   |   |   |       |   |   +-- preview-host-full-green-01.trx
+|   |   |   |       |   |-- green-project-02/
+|   |   |   |       |   |   |-- command.txt
+|   |   |   |       |   |   |-- exit.txt
+|   |   |   |       |   |   |-- output.log
+|   |   |   |       |   |   +-- preview-host-full-green-02.trx
+|   |   |   |       |   |-- green-visualstudio-01/
+|   |   |   |       |   |   |-- command.txt
+|   |   |   |       |   |   |-- exit.txt
+|   |   |   |       |   |   |-- output.log
+|   |   |   |       |   |   +-- preview-dependent-visualstudio-01.trx
+|   |   |   |       |   |-- red-01/
+|   |   |   |       |   |   |-- command.txt
+|   |   |   |       |   |   |-- exit.txt
+|   |   |   |       |   |   |-- output.log
+|   |   |   |       |   |   +-- preview-fastpath-red.trx
+|   |   |   |       |   |-- red-02/
+|   |   |   |       |   |   |-- command.txt
+|   |   |   |       |   |   |-- exit.txt
+|   |   |   |       |   |   |-- output.log
+|   |   |   |       |   |   +-- preview-fastpath-red-02.trx
+|   |   |   |       |   |-- red-03/
+|   |   |   |       |   |   |-- command.txt
+|   |   |   |       |   |   |-- exit.txt
+|   |   |   |       |   |   |-- output.log
+|   |   |   |       |   |   +-- preview-fastpath-red-03.trx
+|   |   |   |       |   |-- unpaired-red-01/
+|   |   |   |       |   |   |-- command.txt
+|   |   |   |       |   |   |-- exit.txt
+|   |   |   |       |   |   |-- output.log
+|   |   |   |       |   |   +-- preview-unpaired-red-01.trx
+|   |   |   |       |   +-- verification.md
+|   |   |   |       |-- api-compat-core.proj
+|   |   |   |       |-- decision-and-gates.md
+|   |   |   |       |-- final-core34-validation.txt
+|   |   |   |       |-- final-full-slnx-02-inputs-after.txt
+|   |   |   |       |-- final-full-slnx-02-inputs.txt
+|   |   |   |       |-- final-gates-git-status-after.txt
+|   |   |   |       |-- final-gates-git-status-before.txt
+|   |   |   |       |-- final-gates-inputs-before.txt
+|   |   |   |       |-- final-integrity.txt
+|   |   |   |       |-- final-scoped-diffcheck.txt
+|   |   |   |       |-- final-verification.md
+|   |   |   |       |-- final-worktree-status.txt
+|   |   |   |       |-- pre-sampling-api-baseline.txt
+|   |   |   |       |-- pre-seam-git-status.txt
+|   |   |   |       |-- pre-seam-integrity.txt
+|   |   |   |       |-- verification-protocol.md
+|   |   |   |       +-- workflow-exception-filetree.md
+|   |   |   |-- 2026-09-25-scene-surface-scale/
+|   |   |   |   +-- integration/
+|   |   |   |       |-- full-slnx-01/
+|   |   |   |       |   |-- command.txt
+|   |   |   |       |   |-- exit.txt
+|   |   |   |       |   |-- nonpassed.csv
+|   |   |   |       |   |-- output.log
+|   |   |   |       |   |-- surface-scale-full-01_net10.0_20260925233548.trx
+|   |   |   |       |   |-- surface-scale-full-01_net10.0_20260925233654.trx
+|   |   |   |       |   |-- surface-scale-full-01_net10.0_20260925235029.trx
+|   |   |   |       |   |-- surface-scale-full-01_net8.0_20260925233310.trx
+|   |   |   |       |   |-- surface-scale-full-01_net8.0_20260925233704.trx
+|   |   |   |       |   |-- surface-scale-full-01_net8.0_20260925233716.trx
+|   |   |   |       |   |-- surface-scale-full-01_net8.0_20260925233837.trx
+|   |   |   |       |   |-- surface-scale-full-01_net8.0_20260925234822.trx
+|   |   |   |       |   |-- surface-scale-full-01_net8.0_20260925234949.trx
+|   |   |   |       |   |-- surface-scale-full-01_net8.0_20260925235441.trx
+|   |   |   |       |   |-- surface-scale-full-01_net8.0_20260925235446.trx
+|   |   |   |       |   +-- trx-summary.csv
+|   |   |   |       |-- contract-proposal.md
+|   |   |   |       |-- decoration-center-01-command.txt
+|   |   |   |       |-- decoration-center-01-exit.txt
+|   |   |   |       |-- decoration-center-01.log
+|   |   |   |       |-- decoration-center-01.trx
+|   |   |   |       |-- decoration-center-02-command.txt
+|   |   |   |       |-- decoration-center-02-exit.txt
+|   |   |   |       |-- decoration-center-02.log
+|   |   |   |       |-- decoration-center-02.trx
+|   |   |   |       |-- filetree-before-sha256.txt
+|   |   |   |       |-- final-verification.md
+|   |   |   |       |-- full-inputs-after.csv
+|   |   |   |       |-- full-inputs-before.csv
+|   |   |   |       |-- full-status-before.txt
+|   |   |   |       |-- model-01-command.txt
+|   |   |   |       |-- model-01-exit.txt
+|   |   |   |       |-- model-01.log
+|   |   |   |       |-- model-01.trx
+|   |   |   |       |-- model-02-command.txt
+|   |   |   |       |-- model-02-exit.txt
+|   |   |   |       |-- model-02.log
+|   |   |   |       |-- model-02.trx
+|   |   |   |       |-- model-03-command.txt
+|   |   |   |       |-- model-03-exit.txt
+|   |   |   |       |-- model-03.log
+|   |   |   |       |-- model-03.trx
+|   |   |   |       |-- native-scale-01-command.txt
+|   |   |   |       |-- native-scale-01-exit.txt
+|   |   |   |       |-- native-scale-01.log
+|   |   |   |       |-- native-scale-02-command.txt
+|   |   |   |       |-- native-scale-02-exit.txt
+|   |   |   |       |-- native-scale-02.log
+|   |   |   |       |-- native-scale-02.trx
+|   |   |   |       |-- native-scale-03-command.txt
+|   |   |   |       |-- native-scale-03-exit.txt
+|   |   |   |       |-- native-scale-03.log
+|   |   |   |       |-- native-scale-03.trx
+|   |   |   |       |-- native-scale-04-command.txt
+|   |   |   |       |-- native-scale-04-exit.txt
+|   |   |   |       |-- native-scale-04.log
+|   |   |   |       |-- native-scale-04.trx
+|   |   |   |       |-- native-scale-fractional-01-command.txt
+|   |   |   |       |-- native-scale-fractional-01-exit.txt
+|   |   |   |       |-- native-scale-fractional-01.log
+|   |   |   |       |-- native-scale-fractional-01.trx
+|   |   |   |       |-- native-scale-source-01-command.txt
+|   |   |   |       |-- native-scale-source-01-exit.txt
+|   |   |   |       |-- native-scale-source-01.log
+|   |   |   |       |-- native-scale-source-01.trx
+|   |   |   |       |-- native-scale-source-02-command.txt
+|   |   |   |       |-- native-scale-source-02-exit.txt
+|   |   |   |       |-- native-scale-source-02.log
+|   |   |   |       |-- native-scale-source-02.trx
+|   |   |   |       |-- preflight-meta.txt
+|   |   |   |       |-- preflight-status.txt
+|   |   |   |       |-- red-01-command.txt
+|   |   |   |       |-- red-01-exit.txt
+|   |   |   |       |-- red-01.log
+|   |   |   |       |-- red-01.trx
+|   |   |   |       |-- village-full-01-command.txt
+|   |   |   |       |-- village-full-01-exit.txt
+|   |   |   |       |-- village-full-01.log
+|   |   |   |       |-- village-full-01.trx
+|   |   |   |       |-- village-full-02-command.txt
+|   |   |   |       |-- village-full-02-exit.txt
+|   |   |   |       |-- village-full-02.log
+|   |   |   |       |-- village-full-02.trx
+|   |   |   |       |-- village-native-repair-01-command.txt
+|   |   |   |       |-- village-native-repair-01-exit.txt
+|   |   |   |       |-- village-native-repair-01.log
+|   |   |   |       +-- village-native-repair-01.trx
+|   |   |   |-- 2026-09-25-scene-village-character-lines/
+|   |   |   |   |-- app/
+|   |   |   |   |   |-- character-diagnostic-01.log
+|   |   |   |   |   |-- character-model-green-01.log
+|   |   |   |   |   |-- character-model-red-01.log
+|   |   |   |   |   |-- character-production-green-01.log
+|   |   |   |   |   |-- character-production-red-01.log
+|   |   |   |   |   |-- character-village-full-01.log
+|   |   |   |   |   |-- inspect_up_hands_band.py
+|   |   |   |   |   |-- up-hands-01.raw.txt
+|   |   |   |   |   |-- up-hands-02.raw.txt
+|   |   |   |   |   +-- verification.md
+|   |   |   |   +-- integration/
+|   |   |   |       |-- full-slnx-01/
+|   |   |   |       |   |-- character-final-full-01_net10.0_20260925200020.trx
+|   |   |   |       |   |-- character-final-full-01_net10.0_20260925200131.trx
+|   |   |   |       |   |-- character-final-full-01_net10.0_20260925201702.trx
+|   |   |   |       |   |-- character-final-full-01_net8.0_20260925195635.trx
+|   |   |   |       |   |-- character-final-full-01_net8.0_20260925200143.trx
+|   |   |   |       |   |-- character-final-full-01_net8.0_20260925200156.trx
+|   |   |   |       |   |-- character-final-full-01_net8.0_20260925200307.trx
+|   |   |   |       |   |-- character-final-full-01_net8.0_20260925201507.trx
+|   |   |   |       |   |-- character-final-full-01_net8.0_20260925201644.trx
+|   |   |   |       |   |-- character-final-full-01_net8.0_20260925202220.trx
+|   |   |   |       |   |-- character-final-full-01_net8.0_20260925202224.trx
+|   |   |   |       |   |-- command.txt
+|   |   |   |       |   |-- exit.txt
+|   |   |   |       |   |-- input-mismatches.txt
+|   |   |   |       |   |-- inputs-after.sha256.txt
+|   |   |   |       |   |-- inputs-before.sha256.txt
+|   |   |   |       |   |-- output.log
+|   |   |   |       |   |-- parse-note.txt
+|   |   |   |       |   |-- preflight-delta.txt
+|   |   |   |       |   |-- status-after.txt
+|   |   |   |       |   |-- status-before.txt
+|   |   |   |       |   |-- trx-failures.txt
+|   |   |   |       |   |-- trx-skips.csv
+|   |   |   |       |   +-- trx-summary.csv
+|   |   |   |       |-- capture-hashes.txt
+|   |   |   |       |-- final-integrity.txt
+|   |   |   |       |-- final-status.txt
+|   |   |   |       |-- final-verification.md
+|   |   |   |       |-- preflight-inputs.sha256.txt
+|   |   |   |       |-- preflight-meta.txt
+|   |   |   |       |-- preflight-scoped-status.txt
+|   |   |   |       |-- preflight-status.txt
+|   |   |   |       +-- workflow-exception-filetree.md
+|   |   |   |-- 2026-09-25-scene-village-decoration-art/
+|   |   |   |   |-- app/
+|   |   |   |   |   |-- model-green-01.log
+|   |   |   |   |   |-- model-red-01.log
+|   |   |   |   |   |-- native-green-01.log
+|   |   |   |   |   |-- native-red-01.log
+|   |   |   |   |   |-- native-red-02.log
+|   |   |   |   |   |-- native-shape-green-01.log
+|   |   |   |   |   |-- verification.md
+|   |   |   |   |   |-- village-full-01.log
+|   |   |   |   |   +-- village-full-02.log
+|   |   |   |   +-- integration/
+|   |   |   |       |-- full-slnx-01/
+|   |   |   |       |   |-- command.txt
+|   |   |   |       |   |-- decoration-final-full-01_net10.0_20260925134416.trx
+|   |   |   |       |   |-- decoration-final-full-01_net10.0_20260925134531.trx
+|   |   |   |       |   |-- decoration-final-full-01_net10.0_20260925140711.trx
+|   |   |   |       |   |-- decoration-final-full-01_net8.0_20260925134106.trx
+|   |   |   |       |   |-- decoration-final-full-01_net8.0_20260925134543.trx
+|   |   |   |       |   |-- decoration-final-full-01_net8.0_20260925134554.trx
+|   |   |   |       |   |-- decoration-final-full-01_net8.0_20260925134648.trx
+|   |   |   |       |   |-- decoration-final-full-01_net8.0_20260925140418.trx
+|   |   |   |       |   |-- decoration-final-full-01_net8.0_20260925140646.trx
+|   |   |   |       |   |-- decoration-final-full-01_net8.0_20260925141419.trx
+|   |   |   |       |   |-- decoration-final-full-01_net8.0_20260925141427.trx
+|   |   |   |       |   |-- exit.txt
+|   |   |   |       |   |-- input-mismatches.txt
+|   |   |   |       |   |-- inputs-after.sha256.txt
+|   |   |   |       |   |-- inputs-before.sha256.txt
+|   |   |   |       |   |-- output.log
+|   |   |   |       |   |-- parse-note.txt
+|   |   |   |       |   |-- status-after.txt
+|   |   |   |       |   |-- status-before.txt
+|   |   |   |       |   |-- trx-failures.txt
+|   |   |   |       |   |-- trx-skips.csv
+|   |   |   |       |   +-- trx-summary.csv
+|   |   |   |       |-- final-integrity.txt
+|   |   |   |       |-- final-status.txt
+|   |   |   |       |-- final-verification.md
+|   |   |   |       |-- preflight-app-files.sha256.txt
+|   |   |   |       |-- preflight-app-status.txt
+|   |   |   |       |-- preflight-meta.txt
+|   |   |   |       +-- preflight-status.txt
+|   |   |   +-- 2026-09-25-scene-village-remaining-vegetation/
+|   |   |       +-- integration/
+|   |   |           |-- preflight-app-status.txt
+|   |   |           |-- preflight-meta.txt
+|   |   |           |-- preflight-source-assets.sha256.txt
+|   |   |           +-- preflight-status.txt
 |   |   |-- 2026-07-10-inline-component-template-markup.md
 |   |   |-- 2026-07-10-window-windowsdx-migration.md
 |   |   |-- 2026-07-11-background-and-borderbrush-brush-migration.md
@@ -1117,7 +2597,9 @@ Generated from `.`.
 |   |   |-- 2026-09-21-rendersurface3d-control.md
 |   |   |-- 2026-09-21-rendersurface3d-gpu-foundation.md
 |   |   |-- 2026-09-21-rendersurface3d-plan-index.md
-|   |   +-- 2026-09-22-sdlgpu-retained-submit-prerequisite.md
+|   |   |-- 2026-09-22-sdlgpu-retained-submit-prerequisite.md
+|   |   |-- 2026-09-23-scene2d-simple-collections-and-internal-spatial.md
+|   |   +-- 2026-09-24-scene2d-stage0-contract-proposal.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
@@ -1480,11 +2962,13 @@ Generated from `.`.
 |   |   |   |-- Cerneala.Scene2D.Importers.Scene2DImportOptions.md
 |   |   |   |-- Cerneala.Scene2D.Importers.Scene2DImportResult.md
 |   |   |   |-- Cerneala.Scene2D.Importers.TiledScene2DImporter.md
+|   |   |   |-- Cerneala.Scene2D.Packages.IScene2DPackageRangeReader.md
 |   |   |   |-- Cerneala.Scene2D.Packages.Scene2DPackage.md
 |   |   |   |-- Cerneala.Scene2D.Packages.Scene2DPackageEntityInfo.md
 |   |   |   |-- Cerneala.Scene2D.Packages.Scene2DPackageGridChunkMetadata.md
 |   |   |   |-- Cerneala.Scene2D.Packages.Scene2DPackageLevel.md
 |   |   |   |-- Cerneala.Scene2D.Packages.Scene2DPackageMetadata.md
+|   |   |   |-- Cerneala.Scene2D.Packages.Scene2DPackagePart.md
 |   |   |   |-- Cerneala.Scene2D.Packages.Scene2DPackageReadOptions.md
 |   |   |   |-- Cerneala.Scene2D.Packages.Scene2DPackageWriter.md
 |   |   |   |-- Cerneala.SourceGen.UiMarkupGenerator.GenerationScope.md
@@ -1625,7 +3109,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.InkCanvas.md
 |   |   |   |-- Cerneala.UI.Controls.InkCanvasStrokeCollectedEventArgs.md
 |   |   |   |-- Cerneala.UI.Controls.IScene2DDebugNavigationGrid.md
-|   |   |   |-- Cerneala.UI.Controls.ISceneSpatialSource2D_T_.md
 |   |   |   |-- Cerneala.UI.Controls.IScrollInfo.md
 |   |   |   |-- Cerneala.UI.Controls.ISelectableItemContainer.md
 |   |   |   |-- Cerneala.UI.Controls.Items.ItemCollection.md
@@ -1696,11 +3179,6 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.SceneNode2D.md
 |   |   |   |-- Cerneala.UI.Controls.SceneOrderMode.md
 |   |   |   |-- Cerneala.UI.Controls.SceneSimulationContext2D.md
-|   |   |   |-- Cerneala.UI.Controls.SceneSpatialEntry2D.md
-|   |   |   |-- Cerneala.UI.Controls.SceneSpatialLease2D_T_.md
-|   |   |   |-- Cerneala.UI.Controls.SceneSpatialRegion2D_T_.md
-|   |   |   |-- Cerneala.UI.Controls.SceneSpatialResidency2D_T_.md
-|   |   |   |-- Cerneala.UI.Controls.SceneSpatialSource2D_T_.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollBarVisibility.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollChangedEventArgs.md
 |   |   |   |-- Cerneala.UI.Controls.ScrollContentPresenter.md
@@ -1769,10 +3247,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Controls.TileMap2D.md
 |   |   |   |-- Cerneala.UI.Controls.TileMap2DModel.md
 |   |   |   |-- Cerneala.UI.Controls.TileMapBounds2D.md
-|   |   |   |-- Cerneala.UI.Controls.TileMapCatalog2D.md
 |   |   |   |-- Cerneala.UI.Controls.TileMapChunkData2D.md
-|   |   |   |-- Cerneala.UI.Controls.TileMapChunkInfo2D.md
-|   |   |   |-- Cerneala.UI.Controls.TileMapSource2D.md
 |   |   |   |-- Cerneala.UI.Controls.TilePromotion2D.md
 |   |   |   |-- Cerneala.UI.Controls.TileSet2D.md
 |   |   |   |-- Cerneala.UI.Controls.ToolTip.md
@@ -2981,6 +4456,8 @@ Generated from `.`.
 |   |   +-- README.md
 |   |-- Cerneala.Playground/
 |   |   |-- automation/
+|   |   |-- Properties/
+|   |   |   +-- AssemblyInfo.cs
 |   |   |-- SceneWorldAssets/
 |   |   |   |-- New-Assets.ps1
 |   |   |   |-- README.md
@@ -3000,6 +4477,24 @@ Generated from `.`.
 |   |   |-- SceneWorldShowcase.crn
 |   |   |-- SceneWorldShowcase.crn.cs
 |   |   +-- SvgWindow.cs
+|   |-- Cerneala.SceneVillage/
+|   |   |-- Assets/
+|   |   |   |-- ch003.png
+|   |   |   |-- CREDITS.md
+|   |   |   |-- Kenney-TinyTown-License.txt
+|   |   |   +-- tiny-town.png
+|   |   |-- App.crn
+|   |   |-- App.crn.cs
+|   |   |-- Cerneala.SceneVillage.csproj
+|   |   |-- MainWindow.crn
+|   |   |-- MainWindow.crn.cs
+|   |   |-- README.md
+|   |   |-- VillageArt.cs
+|   |   |-- VillageCamera.cs
+|   |   |-- VillageGameSurface.cs
+|   |   |-- VillageInput.cs
+|   |   |-- VillageLayout.cs
+|   |   +-- VillageStress.cs
 |   +-- CernealaOracle/
 |       |-- BackendRegistration.cs
 |       |-- CernealaOracle.csproj
@@ -3197,6 +4692,7 @@ Generated from `.`.
 |   |   |   |-- ButtonTests.cs
 |   |   |   |-- CanvasTests.cs
 |   |   |   |-- CheckBoxTests.cs
+|   |   |   |-- Collider2DSimulationInterestContractTests.cs
 |   |   |   |-- ColliderOwnershipTests.cs
 |   |   |   |-- CollisionStageFourInputTests.cs
 |   |   |   |-- CollisionStageOneContractTests.cs
@@ -3248,6 +4744,7 @@ Generated from `.`.
 |   |   |   |-- SceneImportGeometryTests.cs
 |   |   |   |-- SceneImportStageZeroContractTests.cs
 |   |   |   |-- SceneItems2DIncrementalContractTests.cs
+|   |   |   |-- SceneItems2DSimpleCollectionContractTests.cs
 |   |   |   |-- SceneJsonValue2DTests.cs
 |   |   |   |-- SceneModelValidationTests.cs
 |   |   |   |-- ScenePresentationTests.cs
@@ -3263,6 +4760,7 @@ Generated from `.`.
 |   |   |   |-- SliderTests.cs
 |   |   |   |-- Sprite2DAuthoringTests.cs
 |   |   |   |-- Sprite2DImageResourceTests.cs
+|   |   |   |-- Sprite2DSamplingContractTests.cs
 |   |   |   |-- SpriteAnimationIntegrationTests.cs
 |   |   |   |-- SpriteAnimationSamplerTests.cs
 |   |   |   |-- SpriteAnimationSchedulingTests.cs
@@ -3285,6 +4783,8 @@ Generated from `.`.
 |   |   |   |-- TextBoxTwoWayBindingTests.cs
 |   |   |   |-- TileMap2DCacheContractTests.cs
 |   |   |   |-- TileMap2DContractTests.cs
+|   |   |   |-- TileMap2DDrainContractTests.cs
+|   |   |   |-- TileMap2DFactoryTests.cs
 |   |   |   |-- TileMap2DStageZeroContractTests.cs
 |   |   |   |-- TileMapConstructionContractTests.cs
 |   |   |   |-- TileMapIdentityValidationTests.cs
@@ -3771,7 +5271,8 @@ Generated from `.`.
 |   |   |-- SemanticWorkspaceTests.cs
 |   |   |-- SourceGeneratorDiagnosticBaselineTests.cs
 |   |   |-- SourceTextTests.cs
-|   |   +-- StructureTests.cs
+|   |   |-- StructureTests.cs
+|   |   +-- TileMapSourceSemanticTests.cs
 |   |-- Cerneala.Tests.LanguageServer/
 |   |   |-- Diagnostics/
 |   |   |   +-- diagnostic-catalog-golden.json
@@ -3789,6 +5290,7 @@ Generated from `.`.
 |   |   +-- WorkspaceTests.cs
 |   |-- Cerneala.Tests.PreviewHost/
 |   |   |-- Cerneala.Tests.PreviewHost.csproj
+|   |   |-- PreviewCompilerFastPathTargetTypeTests.cs
 |   |   |-- PreviewHostTests.cs
 |   |   +-- RenderSurface3DPreviewTests.cs
 |   |-- Cerneala.Tests.Scene2DImporters/
@@ -3808,7 +5310,19 @@ Generated from `.`.
 |   |   |-- Scene2DPackageEntityTests.cs
 |   |   |-- Scene2DPackageGridGeometryTests.cs
 |   |   |-- Scene2DPackageGridTests.cs
-|   |   +-- Scene2DPackageTests.cs
+|   |   |-- Scene2DPackageTests.cs
+|   |   |-- Scene2DPublicBoundaryContractTests.cs
+|   |   +-- Stage0PackageContractTests.cs
+|   |-- Cerneala.Tests.SceneVillage/
+|   |   |-- Cerneala.Tests.SceneVillage.csproj
+|   |   |-- NativeCharacterAtlasTests.cs
+|   |   |-- NativeVillageScaleTests.cs
+|   |   |-- NativeVillageTileBoundaryTests.cs
+|   |   |-- NativeVillageWindowTests.cs
+|   |   |-- VillageModelTests.cs
+|   |   |-- VillageNativeFactAttribute.cs
+|   |   |-- VillageScaleContractTests.cs
+|   |   +-- xunit.runner.json
 |   |-- Cerneala.Tests.SdlGpu/
 |   |   |-- Prism/
 |   |   |   |-- PrismAdditionalKernelGpuTests.cs
@@ -3869,9 +5383,12 @@ Generated from `.`.
 |   |   |-- FakeSdlApi.cs
 |   |   |-- GraphixManagedDependencyTests.cs
 |   |   |-- GraphixNativeDependencyTests.cs
+|   |   |-- NativeDrawingInterpolationBoundaryTests.cs
 |   |   |-- NativeDrawingSmokeTests.cs
+|   |   |-- NativeImageDomainWarmMeasurements.cs
 |   |   |-- NativeImageLeaseTests.cs
 |   |   |-- NativePackageGridSubdivisionTests.cs
+|   |   |-- NativePackageLifecycleTests.cs
 |   |   |-- NativePackageWarmStreamingTests.cs
 |   |   |-- NativeRenderSurface3DTests.cs
 |   |   |-- NativeSceneImagePresentationTests.cs
@@ -3879,6 +5396,7 @@ Generated from `.`.
 |   |   |-- NativeScenePrismDomainTests.cs
 |   |   |-- NativeScenePrismStreamingTests.cs
 |   |   |-- NativeSdlLifetimeTests.cs
+|   |   |-- NativeTetrisWindowTests.cs
 |   |   |-- NativeUiImagePresentationTests.cs
 |   |   |-- RectanglePixelBoundaryMigrationTests.cs
 |   |   |-- RenderSurface2DPresentationTests.cs
@@ -3899,6 +5417,9 @@ Generated from `.`.
 |   |   |-- SdlGpuGeometryCacheTests.cs
 |   |   |-- SdlGpuGeometryUploadArenaTests.cs
 |   |   |-- SdlGpuGradientCacheTests.cs
+|   |   |-- SdlGpuImageDomainGeometryTests.cs
+|   |   |-- SdlGpuImageDomainPayloadTests.cs
+|   |   |-- SdlGpuImageDomainWarmBaselineTests.cs
 |   |   |-- SdlGpuImageLifetimeTests.cs
 |   |   |-- SdlGpuNativePipelineDescriptorTests.cs
 |   |   |-- SdlGpuPrismBuiltinTextureAllocationTests.cs
@@ -3961,6 +5482,7 @@ Generated from `.`.
 |   |   |-- UiMarkupGeneratorSingleLayerTileMapTests.cs
 |   |   |-- UiMarkupGeneratorSpriteAnimationStageZeroTests.cs
 |   |   |-- UiMarkupGeneratorSpriteAuthoringTests.cs
+|   |   |-- UiMarkupGeneratorSpriteSamplingTests.cs
 |   |   |-- UiMarkupGeneratorTests.cs
 |   |   |-- UiMarkupGeneratorTileAuthoringTests.cs
 |   |   +-- UiMarkupGeneratorTileMap2DStageZeroTests.cs
