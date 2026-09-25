@@ -23,10 +23,10 @@ A clean Markdown file is not evidence that a plan is correct. Mechanical validat
 - Follow the repository `AGENTS.md` instructions.
 - Run `Tools/scripts/New-FileTree.ps1`, then read `FileTree.md` before inspecting structure.
 - Use direct file reads and `rg` for text.
-- Use semantic-query evidence from the current relevant source state; inspect warnings, workspace scope, and truncation. Do not plan against stale data or treat text matches as semantic reference evidence. Report unavailable required queries as blockers.
+- Build a current-source caller inventory with direct reads and scoped `rg` searches. Inspect each candidate use in context, record search scope and unresolved coverage, and do not treat a text match as proof of symbol identity or absence of other callers. Semantic tooling may help when available, but is not a prerequisite.
 - Inspect the relevant production code, tests, public API docs, and at least one current plan for local conventions.
 - Identify existing extension points before proposing new abstractions.
-- Read the complete definition of the primary type being changed and trace its ownership cone: all semantic callers, factories/composers, resource owners, lifecycle/disposal paths, failure paths, platform/native adapters, and at least one consumer outside the most recently discussed subsystem when one exists.
+- Read the complete definition of the primary type being changed and trace its ownership cone: current callers and uses, factories/composers, resource owners, lifecycle/disposal paths, failure paths, platform/native adapters, and at least one consumer outside the most recently discussed subsystem when one exists.
 - Before changing or removing a shared method/type in the plan, enumerate every current call site and state how each caller migrates or why it is intentionally unchanged.
 - For shader, native interop, serialization, memory layout, generated-code, cache, or multi-window work, inspect the concrete low-level implementation rather than inferring capability from the high-level API.
 - Surface nearby design defects only when they affect the plan; put unrelated smells in a separate note rather than expanding scope.
@@ -103,7 +103,7 @@ For each stage:
 ### 8. Run a semantic audit of the draft
 
 - Reread every plan file completely after drafting.
-- Re-run semantic reference searches for every shared type/member the plan moves, changes, renames, or deletes. Verify that the file inventory and migration tasks cover every caller.
+- Recheck the definitions and scoped call-site searches for every shared type/member the plan moves, changes, renames, or deletes. Inspect matches in context, verify that the file inventory and migration tasks cover identified callers, and record any unresolved coverage instead of claiming text search proves completeness.
 - Compare objectives, non-goals, tasks, gates, risks, platform policy, and definition of done for contradictions.
 - Verify that every baseline claim still matches the repository and that every future capability is marked as planned or gated by discovery.
 - Verify that every RED is actually RED on the current implementation, while characterization tests remain GREEN.

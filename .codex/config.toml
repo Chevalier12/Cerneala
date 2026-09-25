@@ -91,6 +91,24 @@ When context is compacted or summarized, treat the latest user request as curren
 
 Do not repeat work that is already complete merely because context was compacted.
 
+## Root-led agent orchestration for every task
+
+The root parent is the user-facing coordinator: clarify material decisions, split and schedule work, own scope and architecture decisions, synthesize reports, make acceptance decisions, and report results. Delegate task work through collaboration agents, not new user-visible Codex tasks. Obtain task and repository facts through agents rather than directly searching or reading project files (including plans), editing files or checklists, running builds, tests, or harnesses, or auditing changes. Mandatory reads of higher-priority instructions, tool metadata, and applicable skills are narrow exceptions, not permission for parent implementation. These root duties do not limit the worker delegation rules below.
+
+Use explicit, self-contained assignments and fork_turns: "none" whenever overriding a model or reasoning effort. The required roles are:
+
+- File discovery and reads: gpt-6-luna at max reasoning effort. The root or an implementation worker may spawn multiple Luna agents for read-only search, file discovery, source and plan reads, and evidence gathering. Luna agents do not edit, run mutating checks, or spawn further agents. Direct communication between an implementation worker and its Luna agents is allowed.
+- Implementation and writes: gpt-6-sol at max reasoning effort. The root may spawn multiple Sol workers for concrete, independent tasks with named, disjoint file and output ownership. Each Sol may spawn multiple Luna agents for read-only exploration in its assigned scope, but no child Sol or Astra. A Sol is the sole writer of its assigned source, tests, documentation, configuration, plans, and checklists, and runs its mutating builds, tests, harnesses, and checks.
+- Independent audit: gpt-6-astra at high reasoning effort. The root creates or reuses exactly one shared read-only auditor role across the entire task tree; the root's model does not itself count as that auditor. Replace an unavailable auditor only after the prior one has stopped, never with overlapping auditors. The auditor independently reviews actual current source, diff, and raw verification evidence, may run genuinely read-only checks, and never edits files. Route checks that mutate artifacts to the owning Sol.
+
+Do not silently substitute an unavailable model or effort, or present an implementation report as an independent audit. Trivial read-only requests need appropriate read-only agent work, not an implementation worker or a forced audit. Respect actual runtime and resource limits rather than assuming unlimited concurrency; reserve capacity or finish exploration before spawning the shared auditor when necessary.
+
+For multi-worker changes, the root assigns dependencies and one integration owner; for checklist plans, it assigns one checklist owner. Parallel workers must not write the same file or shared output, and overlapping builds, tests, or harnesses that contend on generated artifacts must be serialized. Coordinate cross-worker interfaces and integration before acceptance; worker ownership does not authorize scope or architecture changes. Preserve existing user edits and all Cerneala safety and verification gates.
+
+For changes, reach a quiescent handoff with all writers, descendants, builds, tests, and other background jobs stopped before the shared auditor reviews the integrated current source, diff, raw verification evidence, cross-worker interactions, and plan conformity. Send findings to the owning Sol, then have the same auditor re-audit repairs. Do not advance before applicable gates pass and the durable checkpoint is audited. For checklist plans, keep one stage atomic: the designated Sol updates a verified stage's checklist only after audit acceptance, and the auditor checks that checkpoint before the next stage. On a user stop or pause, interrupt every active agent and descendant, stop their jobs, preserve partial work, and report any job that cannot be stopped or accounted for. Use supported long completion waits rather than short polling.
+
+This orchestration changes who performs the work, not Cerneala's safety, scope, RED-first, verification, canonical documentation, or user-approval boundaries. It grants no blanket permission to publish with Git or perform unrelated destructive work.
+
 ## Collaboration mode override
 
 Cerneala does not use an autonomy-first "reasonable assumptions and keep going" policy for material engineering decisions.
@@ -484,7 +502,7 @@ Adapt to the request type.
 
 ## Answer, explain, review, or report status
 
-Inspect the relevant repository state and provide an evidence-backed answer.
+Have a read-only agent inspect the relevant repository state, then provide an evidence-backed answer.
 
 These requests do not authorize external writes, PR changes, messages, releases, or unrelated mutations.
 
@@ -492,7 +510,7 @@ Read-only diagnostic checks are allowed when relevant.
 
 ## Diagnose
 
-Determine and explain the observed failure.
+Have the appropriate worker determine the observed failure, then explain the evidence.
 
 Do not implement a fix unless the user asks for a fix or the task explicitly includes implementation.
 
@@ -500,9 +518,9 @@ Follow the evidence-first reproduction workflow.
 
 ## Change or build
 
-Implement only the requested, justified scope.
+Delegate implementation of only the requested, justified scope to the implementation worker.
 
-Verify proportionally to risk and according to any repository plan or skill.
+Require verification proportional to risk and according to any repository plan or skill.
 
 Continue until the requested result is achieved or a real blocker requires user direction.
 
@@ -640,5 +658,12 @@ service_tier = "default"
 
 approval_policy = "on-request"
 model_verbosity = "medium"
+
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 16
+max_depth = 2
+
 [features]
 context_management.experimental_mode = true
+multi_agent_v2.multi_agent_mode_hint_text = ""
