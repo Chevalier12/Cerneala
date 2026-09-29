@@ -20,6 +20,16 @@ internal interface ISceneSpatialParticipant2D
 
 internal static class SceneSpatialInterest2D
 {
+    internal static bool HasWholeInputEffect(SceneNode2D node, bool includeAncestors)
+    {
+        for (SceneNode2D? owner = node; owner is not null; owner = includeAncestors ? owner.LogicalParent as SceneNode2D : null)
+        {
+            if (PrismAttachment.TryGetRenderState(owner, out PrismInstance? instance, out _) &&
+                PrismInputDependency.RequiresWholeInput(instance!)) { return true; }
+        }
+        return false;
+    }
+
     internal static SceneBounds2D ResolveInputBounds(SceneNode2D node, SceneBounds2D viewport,
         bool includeSelf = true, DrawRect? surfaceBounds = null) =>
         viewport.Kind == SceneBoundsKind.Empty ? viewport :

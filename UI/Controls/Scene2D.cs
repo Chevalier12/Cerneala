@@ -29,11 +29,15 @@ public class Scene2D : SceneNode2D
     private readonly List<SceneOrderEntry> effectiveOrder = [];
     private readonly CollisionWorld2D ownedCollisionWorld;
     private long collisionMutationVersion;
+    private long localTransformVersion = -1;
+    private Matrix3x2 localTransform;
+    private readonly SceneChildBoundsIndex2D childBounds = new();
 
     public Scene2D()
     {
         ownedCollisionWorld = new CollisionWorld2D(this);
         Children = new ChildCollection(this);
+        LogicalChildren.Changed += (_, _) => childBounds.Invalidate();
     }
 
     public Collection<SceneNode2D> Children { get; }
@@ -130,17 +134,50 @@ public class Scene2D : SceneNode2D
             using ScenePrismScope prism = childContext.HasPrism(this)
                 ? childContext.BeginPrism(this, GetVisibleLocalBounds())
                 : default;
+            // Without an enclosing effect a clearly offscreen sprite records
+            // nothing, so it is not visited at all.
+            Span<SceneChildBoundsIndex2D.Entry> indexed = HasPrismInScope(childContext)
+                ? default
+                : childBounds.Refresh(this);
+            SceneBounds2D visible = childContext.GetConservativeVisibleLocalBounds();
+            if (OrderMode == SceneOrderMode.Source && indexed.Length > 0 && indexed.Length == Children.Count &&
+                !childBounds.HasOverlay)
+            {
+                // Source order is slot order; the query skips only entries
+                // that are prunable and clearly outside. A debug overlay
+                // observes the full recorded order, so it keeps that path.
+                foreach (int slot in childBounds.Query(visible))
+                {
+                    ref SceneChildBoundsIndex2D.Entry entry = ref indexed[slot];
+                    if (entry.IsOverlay ||
+                        (entry.CanPrune && SceneChildBoundsIndex2D.IsClearlyOutside(entry.VisibleBounds, visible)))
+                    {
+                        continue;
+                    }
+                    entry.MayHoldResources = true;
+                    entry.Node.Record(childContext);
+                }
+                RecordOverlays(childContext);
+                return;
+            }
+
             IReadOnlyList<SceneOrderEntry> ordered = GetEffectiveOrder(childContext);
             for (int index = 0; index < ordered.Count; index++)
             {
-                SceneOrderEntry entry = ordered[index];
-                entry.Node.Record(childContext);
+                SceneNode2D node = ordered[index].Node;
+                int slot = ordered[index].SourceIndex;
+                if ((uint)slot < (uint)indexed.Length && ReferenceEquals(indexed[slot].Node, node))
+                {
+                    ref SceneChildBoundsIndex2D.Entry indexedEntry = ref indexed[slot];
+                    if (indexedEntry.CanPrune && SceneChildBoundsIndex2D.IsClearlyOutside(indexedEntry.VisibleBounds, visible))
+                    {
+                        continue;
+                    }
+                    indexedEntry.MayHoldResources = true;
+                }
+                node.Record(childContext);
             }
-            // Debug presentation is a post-pass, never a gameplay order entry.
-            for (int index = 0; index < Children.Count; index++)
-            {
-                if (Children[index] is Scene2DDebugOverlay overlay) { overlay.Record(childContext); }
-            }
+            RecordOverlays(childContext);
         }
         finally
         {
@@ -156,22 +193,101 @@ public class Scene2D : SceneNode2D
         }
     }
 
-    internal override void ReleaseRenderCaches()
+    // Debug presentation is a post-pass, never a gameplay order entry.
+    private void RecordOverlays(Scene2DRecordContext childContext)
     {
-        ReleaseImageResources();
-        foreach (SceneNode2D child in Children)
+        for (int index = 0; index < Children.Count; index++)
         {
-            child.ReleaseRenderCaches();
+            if (Children[index] is Scene2DDebugOverlay overlay) { overlay.Record(childContext); }
         }
     }
 
-    internal override Matrix3x2 GetLocalTransform() =>
-        SceneGeometry2D.CreateLocalTransform(this);
+    internal override void ReleaseRenderCaches()
+    {
+        ReleaseOwnImageResources();
+        for (int index = 0; index < Children.Count; index++)
+        {
+            Children[index].ReleaseRenderCaches();
+        }
+    }
+
+    // Every child traversal composes this transform; derive it once per
+    // property-store version instead of re-reading ten properties per child.
+    internal override Matrix3x2 GetLocalTransform()
+    {
+        long version = PropertyValueVersion;
+        if (localTransformVersion != version)
+        {
+            localTransform = SceneGeometry2D.CreateLocalTransform(this);
+            localTransformVersion = version;
+        }
+        return localTransform;
+    }
+
+    internal override void CheckPresentation(ScenePresentationContext2D context)
+    {
+        if (!UIElementVisibility.ParticipatesInRendering(this) || Opacity <= 0) { return; }
+        CheckPrismPresentation(context);
+        SceneBounds2D visible = context.GetChildVisibleBounds(this);
+        Span<SceneChildBoundsIndex2D.Entry> entries = childBounds.Refresh(this);
+        // Entries the query omits are prunable, clearly outside and hold nothing.
+        foreach (int slot in childBounds.Query(visible))
+        {
+            ref SceneChildBoundsIndex2D.Entry entry = ref entries[slot];
+            if (entry.CanPrune && SceneChildBoundsIndex2D.IsClearlyOutside(entry.PresentationBounds, visible))
+            {
+                // The child's own check would cull and release it.
+                SceneChildBoundsIndex2D.Release(ref entry, Surface);
+                continue;
+            }
+
+            entry.MayHoldResources = true;
+            if (!SceneChildBoundsIndex2D.IsPresentationSettled(ref entry, visible, Surface))
+            {
+                entry.Node.CheckPresentation(context);
+            }
+        }
+    }
+
+    internal override void OnChildGeometryChanged(SceneNode2D child) => childBounds.MarkDirty(child);
+
+    internal IReadOnlyList<SceneNode2D> GetInputCandidates(DrawPoint point, IReadOnlySet<SceneNode2D>? colliderPaths) =>
+        childBounds.CollectInputCandidates(this, point, colliderPaths);
+
+    private bool HasPrismInScope(Scene2DRecordContext context)
+    {
+        for (UIElement? owner = this; owner is SceneNode2D node; owner = owner.LogicalParent)
+        {
+            if (context.HasPrism(node)) { return true; }
+        }
+        return false;
+    }
 
     internal IReadOnlyList<SceneOrderEntry> GetEffectiveOrder(
         Scene2DRecordContext context)
     {
         effectiveOrder.Clear();
+        SceneOrderMode orderMode = OrderMode;
+        Span<SceneChildBoundsIndex2D.Entry> indexed = orderMode == SceneOrderMode.Source
+            ? childBounds.Refresh(this)
+            : default;
+        if (orderMode == SceneOrderMode.Source && indexed.Length == Children.Count)
+        {
+            // Source order needs no bounds; layers come from the index rather
+            // than from every child object.
+            for (int index = 0; index < indexed.Length; index++)
+            {
+                ref SceneChildBoundsIndex2D.Entry entry = ref indexed[index];
+                if (entry.IsOverlay) { continue; }
+                effectiveOrder.Add(new SceneOrderEntry(
+                    entry.Node,
+                    index,
+                    entry.IsLive ? entry.Node.OrderLayer : entry.Layer,
+                    0));
+            }
+            return effectiveOrder;
+        }
+
         for (int index = 0; index < Children.Count; index++)
         {
             SceneNode2D child = Children[index];
@@ -179,16 +295,16 @@ public class Scene2D : SceneNode2D
             effectiveOrder.Add(new SceneOrderEntry(
                 child,
                 index,
-                child.Layer,
-                OrderMode == SceneOrderMode.LayerThenY
+                child.OrderLayer,
+                orderMode == SceneOrderMode.LayerThenY
                     ? GetSceneYAnchor(child, context)
                     : 0));
         }
 
-        if (OrderMode != SceneOrderMode.Source)
+        if (orderMode != SceneOrderMode.Source)
         {
             effectiveOrder.Sort(
-                OrderMode == SceneOrderMode.LayerThenY
+                orderMode == SceneOrderMode.LayerThenY
                     ? SceneOrderEntryComparer.LayerThenY
                     : SceneOrderEntryComparer.Layer);
         }
@@ -206,8 +322,9 @@ public class Scene2D : SceneNode2D
         }
 
         SceneBounds2D result = SceneBounds2D.Empty;
-        foreach (SceneNode2D child in Children)
+        for (int index = 0; index < Children.Count; index++)
         {
+            SceneNode2D child = Children[index];
             if (child is Scene2DDebugOverlay) { continue; }
             SceneBounds2D childBounds = SceneGeometry2D.TransformBounds(
                 child.GetLocalBounds(),

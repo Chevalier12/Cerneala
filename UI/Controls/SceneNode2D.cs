@@ -16,6 +16,8 @@ public abstract class SceneNode2D : UIElement, IInputSubtreeHost, IInputCoordina
 {
     private InvalidOperationException? missingPrismDomainError;
     private PrismInputDependency.LocalInputCache? prismInputCache;
+    private long orderLayerVersion = -1;
+    private int orderLayer;
 
     internal bool TryGetLocalPrismInputOutset(PrismInstance instance, out Vector2 outset) =>
         (prismInputCache ??= new()).TryGet(instance, Root?.Scale ?? 1,
@@ -144,12 +146,52 @@ public abstract class SceneNode2D : UIElement, IInputSubtreeHost, IInputCoordina
 
     internal virtual bool AdvanceAnimation(TimeSpan frameTime) => false;
 
+    // Whether a new animation frame can change what presentation must prepare.
+    internal virtual bool AnimationFrameAffectsPresentation => true;
+
+    // A node that can follow a surface clock is visited only when its
+    // presentation can change, instead of being advanced on every frame.
+    internal virtual bool CanScheduleAnimation => false;
+
+    internal virtual void AttachAnimationClock(SpriteAnimationClock? clock) { }
+
+    // Clock ticks at which the scheduled presentation can next change.
+    internal virtual long NextAnimationChangeTicks => long.MaxValue;
+
+    internal virtual bool AdvanceScheduledAnimation() => false;
+
+    internal bool IsAnimationScheduled { get; set; }
+
+    internal int AnimationScheduleVersion { get; set; }
+
+    // A scheduled node whose frame changes only its own drawing, so while it
+    // is culled nothing observes them. Its clock keeps advancing; it is not
+    // visited per change until it is drawn again.
+    internal virtual bool CanParkAnimation => false;
+
+    internal bool IsAnimationParked { get; set; }
+
     internal void RefreshAnimationRegistration() => Surface?.RefreshAnimationRegistration(this);
 
     public int Layer
     {
         get => GetValue(LayerProperty);
         set => SetValue(LayerProperty, value);
+    }
+
+    // Ordering reads every sibling layer on each traversal.
+    internal int OrderLayer
+    {
+        get
+        {
+            long version = PropertyValueVersion;
+            if (orderLayerVersion != version)
+            {
+                orderLayer = Layer;
+                orderLayerVersion = version;
+            }
+            return orderLayer;
+        }
     }
 
     internal virtual void AttachSurface(RenderSurface2D? surface)
@@ -165,7 +207,11 @@ public abstract class SceneNode2D : UIElement, IInputSubtreeHost, IInputCoordina
     {
         if (!UIElementVisibility.ParticipatesInRendering(this) || Opacity <= 0) { return; }
         CheckPrismPresentation(context);
-        foreach (SceneNode2D child in EnumerateSceneChildren()) { child.CheckPresentation(context); }
+        UIElementCollection children = LogicalChildren;
+        for (int index = 0; index < children.Count; index++)
+        {
+            if (children[index] is SceneNode2D child) { child.CheckPresentation(context); }
+        }
     }
 
     internal void CheckPrismPresentation(ScenePresentationContext2D context)
@@ -186,6 +232,7 @@ public abstract class SceneNode2D : UIElement, IInputSubtreeHost, IInputCoordina
 
     private bool CheckPrismInputDomain(ScenePresentationContext2D context, PrismInstance instance)
     {
+        context.ObservePrism(instance);
         if (SimulationContext is { SpatialItems.Count: > 0 } && PrismInputDomain is null &&
             PrismInputDependency.RequiresWholeInput(instance) && !TryGetLocalPrismInputOutset(instance, out _))
         {
@@ -201,16 +248,31 @@ public abstract class SceneNode2D : UIElement, IInputSubtreeHost, IInputCoordina
 
     internal virtual void ReleaseRenderCaches()
     {
-        ReleaseImageResources();
-        foreach (SceneNode2D child in EnumerateSceneChildren())
+        ReleaseOwnImageResources();
+        UIElementCollection children = LogicalChildren;
+        for (int index = 0; index < children.Count; index++)
         {
-            child.ReleaseRenderCaches();
+            if (children[index] is SceneNode2D child) { child.ReleaseRenderCaches(); }
         }
     }
 
+    // Presentation readiness assumes held images; releasing any makes it stale.
+    private protected void ReleaseOwnImageResources()
+    {
+        if (HoldsImageResources)
+        {
+            Surface?.InvalidatePresentation();
+            Surface?.NoteSceneImageRelease();
+        }
+        ReleaseImageResources();
+    }
+
+    // Traversals test every node; types with a property snapshot answer cheaply.
+    internal virtual bool IsSceneRendered => UIElementVisibility.ParticipatesInRendering(this);
+
     internal SceneBounds2D GetLocalBounds()
     {
-        return UIElementVisibility.ParticipatesInRendering(this)
+        return IsSceneRendered
             ? GetVisibleLocalBounds()
             : SceneBounds2D.Empty;
     }
@@ -278,8 +340,25 @@ public abstract class SceneNode2D : UIElement, IInputSubtreeHost, IInputCoordina
     public override void Invalidate(InvalidationRequest request)
     {
         base.Invalidate(request);
+        // A change can make frame changes observable (effects, bounds).
+        if (IsAnimationParked) { Surface?.UnparkAnimation(this); }
         ProcessPendingAspect();
+        NotifyContainerGeometryChanged();
         Surface?.InvalidateFrame();
+    }
+
+    // Position of this node in its container's bounds index, or -1.
+    internal int ContainerSlot { get; set; } = -1;
+
+    internal virtual void OnChildGeometryChanged(SceneNode2D child) { }
+
+    // Indexed containers cache the bounds of this node's branch.
+    internal void NotifyContainerGeometryChanged()
+    {
+        for (SceneNode2D node = this; node.LogicalParent is SceneNode2D parent; node = parent)
+        {
+            parent.OnChildGeometryChanged(node);
+        }
     }
 
     private void ProcessPendingAspect()

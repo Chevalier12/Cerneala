@@ -416,9 +416,16 @@ public sealed partial class RenderSurface2DFrame
             return;
         }
 
-        foreach (DrawCommand command in commands)
+        // Read each command in place; a scene frame holds thousands of large
+        // commands. Tracking must not mutate the list it visits.
+        long version = commands.Version;
+        for (int index = 0; index < commands.Count; index++)
         {
-            DrawCommandMetadata.TrackImageDependencies(command, trackImageDependency);
+            DrawCommandMetadata.TrackImageDependencies(commands.ItemRef(index), trackImageDependency);
+            if (commands.Version != version)
+            {
+                throw new InvalidOperationException("Image dependency tracking changed the frame's commands.");
+            }
         }
     }
 

@@ -13,6 +13,13 @@ public sealed partial class RenderSurface2DFrame
         drawingContext.DrawImage(image, destination, options);
     }
 
+    // Replays a command a scene node recorded earlier with the same inputs.
+    internal void AddRecordedCommand(in DrawCommand command, RetainedCommandKey key)
+    {
+        EnsureActive();
+        drawingContext.AddRetainedCommand(command, key);
+    }
+
     public void DrawImageQuad(
         IDrawImage image,
         DrawVertex2D topLeft,

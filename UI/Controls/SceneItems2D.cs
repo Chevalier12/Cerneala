@@ -32,8 +32,13 @@ public sealed class SceneItems2D : SceneNode2D, ISceneSpatialParticipant2D
     private bool deferredReenumerate;
     private bool deferredContextChange;
     private bool terminalFault;
+    private readonly SceneChildBoundsIndex2D childBounds = new(parksAnimations: true);
 
-    public SceneItems2D() => Templates = new TemplateCollection(RebuildTemplates, VerifyCollectionAccess);
+    public SceneItems2D()
+    {
+        Templates = new TemplateCollection(RebuildTemplates, VerifyCollectionAccess);
+        LogicalChildren.Changed += (_, _) => childBounds.Invalidate();
+    }
 
     public IEnumerable? ItemsSource
     {
@@ -463,6 +468,8 @@ public sealed class SceneItems2D : SceneNode2D, ISceneSpatialParticipant2D
 
     private int IndexOfNode(SceneNode2D node)
     {
+        // Newly realized nodes are not members until insertion sets their parent.
+        if (!ReferenceEquals(node.LogicalParent, this)) { return -1; }
         for (int index = 0; index < LogicalChildren.Count; index++)
         {
             if (ReferenceEquals(LogicalChildren[index], node)) { return index; }
@@ -573,11 +580,45 @@ public sealed class SceneItems2D : SceneNode2D, ISceneSpatialParticipant2D
         }
         SceneBounds2D visible = SceneSpatialInterest2D.ResolveInputBounds(this,
             context.GetConservativeVisibleLocalBounds(), includeSelf: false, surfaceBounds: context.Frame.Bounds);
-        foreach (SceneNode2D child in LogicalChildren.OfType<SceneNode2D>())
+        RenderSurface2D? surface = Surface;
+        // An effect in scope may consume culled children, so their frame
+        // changes stay observed while one is present.
+        bool canPark = surface is not null && !HasPrismInScope(context);
+        Span<SceneChildBoundsIndex2D.Entry> entries = childBounds.Refresh(this);
+        foreach (int slot in childBounds.Query(visible, includeParkedAnimations: !canPark))
         {
-            if (Intersects(visible, child)) { child.Record(context); }
-            else { child.ReleaseRenderCaches(); }
+            ref SceneChildBoundsIndex2D.Entry entry = ref entries[slot];
+            if (Intersects(visible, entry))
+            {
+                entry.MayHoldResources = true;
+                entry.ParkEvaluated = false;
+                entry.AnimationParkHint = false;
+                if (entry.Node.IsAnimationParked) { surface?.UnparkAnimation(entry.Node); }
+                entry.Node.Record(context);
+                continue;
+            }
+
+            Release(ref entry);
+            if (!entry.ParkEvaluated)
+            {
+                entry.ParkEvaluated = true;
+                if (canPark) { entry.AnimationParkHint = surface!.TryParkAnimation(entry.Node); }
+            }
+            if (!canPark && entry.AnimationParkHint)
+            {
+                entry.AnimationParkHint = false;
+                surface?.UnparkAnimation(entry.Node);
+            }
         }
+    }
+
+    private bool HasPrismInScope(Scene2DRecordContext context)
+    {
+        for (UIElement? owner = this; owner is SceneNode2D node; owner = owner.LogicalParent)
+        {
+            if (context.HasPrism(node)) { return true; }
+        }
+        return false;
     }
 
     internal override void CheckPresentation(ScenePresentationContext2D context)
@@ -585,10 +626,20 @@ public sealed class SceneItems2D : SceneNode2D, ISceneSpatialParticipant2D
         if (!UIElementVisibility.ParticipatesInRendering(this) || Opacity <= 0) { return; }
         CheckPrismPresentation(context);
         SceneBounds2D visible = context.GetVisibleBounds(this);
-        foreach (SceneNode2D child in LogicalChildren.OfType<SceneNode2D>())
+        SceneBounds2D childVisible = context.GetChildVisibleBounds(this);
+        Span<SceneChildBoundsIndex2D.Entry> entries = childBounds.Refresh(this);
+        foreach (int slot in childBounds.Query(visible, includeParkedAnimations: false))
         {
-            if (Intersects(visible, child)) { child.CheckPresentation(context); }
-            else { child.ReleaseRenderCaches(); }
+            ref SceneChildBoundsIndex2D.Entry entry = ref entries[slot];
+            if (Intersects(visible, entry))
+            {
+                entry.MayHoldResources = true;
+                if (!SceneChildBoundsIndex2D.IsPresentationSettled(ref entry, childVisible, Surface))
+                {
+                    entry.Node.CheckPresentation(context);
+                }
+            }
+            else { Release(ref entry); }
         }
     }
 
@@ -602,36 +653,49 @@ public sealed class SceneItems2D : SceneNode2D, ISceneSpatialParticipant2D
                 includeSelf: false, surfaceBounds: surfaceBounds);
         }
         bool visible = !context.IsHeadless && UIElementVisibility.ParticipatesInRendering(this) && Opacity > 0;
-        foreach (SceneNode2D child in LogicalChildren.OfType<SceneNode2D>())
+        // Only entries that may hold images need a release; the query visits
+        // every such entry and those near the interest.
+        Span<SceneChildBoundsIndex2D.Entry> entries = childBounds.Refresh(this);
+        foreach (int slot in childBounds.Query(visible ? visibleBounds : SceneBounds2D.Empty,
+            includeParkedAnimations: false))
         {
-            if (!visible || !Intersects(visibleBounds, child)) { child.ReleaseRenderCaches(); }
+            ref SceneChildBoundsIndex2D.Entry entry = ref entries[slot];
+            if (!visible || !Intersects(visibleBounds, entry)) { Release(ref entry); }
         }
     }
 
     internal IReadOnlyList<SceneNode2D> GetInputCandidates(DrawPoint point, IReadOnlySet<SceneNode2D>? colliderPaths) =>
-        LogicalChildren.OfType<SceneNode2D>()
-            .Where(static node => node.ParticipatesInInputRoute)
-            .ToArray();
+        childBounds.CollectInputCandidates(this, point, colliderPaths);
 
     internal override SceneBounds2D GetVisibleLocalBounds()
     {
         SceneBounds2D bounds = SceneBounds2D.Empty;
-        foreach (SceneNode2D child in LogicalChildren.OfType<SceneNode2D>())
+        foreach (ref SceneChildBoundsIndex2D.Entry entry in childBounds.Refresh(this))
         {
-            bounds = SceneGeometry2D.Union(bounds,
-                SceneGeometry2D.TransformBounds(child.GetLocalBounds(), child.GetLocalTransform()));
+            bounds = SceneGeometry2D.Union(bounds, GetVisibleBounds(entry));
             if (bounds.Kind == SceneBoundsKind.Unknown) { break; }
         }
         return bounds;
     }
 
-    private static bool Intersects(SceneBounds2D visible, SceneNode2D child)
+    internal override void OnChildGeometryChanged(SceneNode2D child) => childBounds.MarkDirty(child);
+
+    private static SceneBounds2D GetVisibleBounds(in SceneChildBoundsIndex2D.Entry entry) => entry.IsLive
+        ? SceneGeometry2D.TransformBounds(entry.Node.GetLocalBounds(), entry.Node.GetLocalTransform())
+        : entry.VisibleBounds;
+
+    private static bool Intersects(SceneBounds2D visible, in SceneChildBoundsIndex2D.Entry entry)
     {
-        SceneBounds2D bounds = SceneGeometry2D.TransformBounds(child.GetLocalBounds(), child.GetLocalTransform());
+        SceneBounds2D bounds = GetVisibleBounds(entry);
         return visible.Kind != SceneBoundsKind.Empty && bounds.Kind != SceneBoundsKind.Empty &&
             (bounds.Kind == SceneBoundsKind.Unknown ||
              ScenePresentationContext2D.Intersects(visible, bounds.Bounds));
     }
+
+    // A culled child that has not been presented or recorded since its last
+    // release holds nothing to release.
+    private void Release(ref SceneChildBoundsIndex2D.Entry entry) =>
+        SceneChildBoundsIndex2D.Release(ref entry, Surface);
 
     private sealed class Occurrence(object? value)
     {

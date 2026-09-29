@@ -221,6 +221,33 @@ internal static class SpriteAnimationSampler
             completed);
     }
 
+    // Samples at unscaled elapsed ticks and reports the elapsed-tick range
+    // [start, end) over which that same frame remains current.
+    internal static SpriteAnimationFrame SampleWithRange(
+        SpriteAnimationClip clip,
+        long elapsedTicks,
+        out long rangeStart,
+        out long rangeEnd)
+    {
+        SpriteAnimationSample sample = Sample(clip, TimeSpan.FromTicks(elapsedTicks), playbackRate: 1);
+        long durationTicks = clip.Duration.Ticks;
+        if (!clip.IsLooping && elapsedTicks >= durationTicks)
+        {
+            // A completed clip holds its final frame for any later time.
+            rangeStart = durationTicks;
+            rangeEnd = long.MaxValue;
+            return sample.Frame;
+        }
+
+        long clipTicks = clip.IsLooping ? elapsedTicks % durationTicks : elapsedTicks;
+        ReadOnlySpan<long> frameEnds = clip.FrameEndTicks;
+        long frameStart = sample.FrameIndex == 0 ? 0 : frameEnds[sample.FrameIndex - 1];
+        long frameEnd = frameEnds[sample.FrameIndex];
+        rangeStart = elapsedTicks - (clipTicks - frameStart);
+        rangeEnd = elapsedTicks + (frameEnd - clipTicks);
+        return sample.Frame;
+    }
+
     internal static long ScaleTicks(long elapsedTicks, double playbackRate)
     {
         if (elapsedTicks == 0 || playbackRate == 0)
@@ -263,12 +290,22 @@ internal sealed class SpriteAnimationPlayback
     private string? state;
     private SpriteAnimationClip? clip;
     private long elapsedTicks;
+    private SpriteAnimationClip? sampledClip;
+    private long sampledStart;
+    private long sampledEnd;
+    private SpriteAnimationFrame? sampledFrame;
+    // While a clock drives this playback at rate one, its elapsed time trails
+    // the clock by the ticks since the last synchronization.
+    private SpriteAnimationClock? clock;
+    private long syncedClockTicks;
+    private SpriteAnimationFrame? reportedFrame;
 
     internal void Synchronize(
         SpriteAnimationSet? nextAnimations,
         string? nextState,
         SpriteAnimationStateChangeMode stateChangeMode)
     {
+        Sync();
         if (!ReferenceEquals(animations, nextAnimations))
         {
             animations = nextAnimations;
@@ -315,6 +352,7 @@ internal sealed class SpriteAnimationPlayback
         {
             throw new ArgumentOutOfRangeException(nameof(playbackRate));
         }
+        Sync();
         if (clip is null || isPaused || playbackRate == 0 || !CanChangePresentation)
         {
             return false;
@@ -326,22 +364,91 @@ internal sealed class SpriteAnimationPlayback
         return !FramesHaveSamePresentation(previousFrame, CurrentFrame);
     }
 
-    internal SpriteAnimationFrame? CurrentFrame =>
-        clip is null
-            ? null
-            : SpriteAnimationSampler.Sample(clip, TimeSpan.FromTicks(elapsedTicks), playbackRate: 1).Frame;
+    // Attaches or detaches the clock that drives this playback at rate one.
+    // Time already accrued from a previous clock is kept.
+    internal void AttachClock(SpriteAnimationClock? next)
+    {
+        Sync();
+        clock = next;
+        syncedClockTicks = next?.Ticks ?? 0;
+        reportedFrame = CurrentFrame;
+    }
 
-    internal bool IsActive(double playbackRate, bool isPaused) =>
-        clip is not null &&
-        !isPaused &&
-        playbackRate > 0 &&
-        double.IsFinite(playbackRate) &&
-        CanChangePresentation;
+    // Clock ticks at which the presentation can next change, or MaxValue.
+    internal long NextChangeClockTicks
+    {
+        get
+        {
+            Sync();
+            if (clock is null || !CanChangePresentation)
+            {
+                return long.MaxValue;
+            }
+
+            _ = CurrentFrame;
+            long nextElapsed = clip!.IsLooping
+                ? sampledEnd
+                : Math.Min(sampledEnd, clip.LastPresentationChangeTicks);
+            long remaining = Math.Max(1, nextElapsed - elapsedTicks);
+            return remaining > long.MaxValue - clock.Ticks ? long.MaxValue : clock.Ticks + remaining;
+        }
+    }
+
+    // Reports whether the clock-driven frame differs from the one last reported,
+    // exactly as a per-frame advance would at the frame the boundary is crossed.
+    internal bool AdvanceToClock()
+    {
+        SpriteAnimationFrame? current = CurrentFrame;
+        bool changed = !FramesHaveSamePresentation(reportedFrame, current);
+        reportedFrame = current;
+        return changed;
+    }
+
+    // Geometry, culling and recording read the frame several times per frame;
+    // sample the immutable clip once per playback position.
+    internal SpriteAnimationFrame? CurrentFrame
+    {
+        get
+        {
+            Sync();
+            if (clip is null)
+            {
+                return null;
+            }
+
+            if (!ReferenceEquals(sampledClip, clip) || elapsedTicks < sampledStart || elapsedTicks >= sampledEnd)
+            {
+                sampledFrame = SpriteAnimationSampler.SampleWithRange(clip, elapsedTicks, out sampledStart, out sampledEnd);
+                sampledClip = clip;
+            }
+
+            return sampledFrame;
+        }
+    }
+
+    internal bool IsActive(double playbackRate, bool isPaused)
+    {
+        Sync();
+        return clip is not null &&
+            !isPaused &&
+            playbackRate > 0 &&
+            double.IsFinite(playbackRate) &&
+            CanChangePresentation;
+    }
 
     private bool CanChangePresentation =>
         clip is not null && clip.LastPresentationChangeTicks > 0 &&
         elapsedTicks < long.MaxValue &&
         (clip.IsLooping || elapsedTicks < clip.LastPresentationChangeTicks);
+
+    private void Sync()
+    {
+        if (clock is not null && clock.Ticks != syncedClockTicks)
+        {
+            elapsedTicks = SaturatingAdd(elapsedTicks, clock.Ticks - syncedClockTicks);
+            syncedClockTicks = clock.Ticks;
+        }
+    }
 
     private static SpriteAnimationClip? ResolveClip(SpriteAnimationSet? animations, string? state) =>
         animations is not null && state is not null && animations.TryGetClip(state, out SpriteAnimationClip? resolved)
@@ -357,4 +464,13 @@ internal sealed class SpriteAnimationPlayback
 
     private static long SaturatingAdd(long left, long right) =>
         right > long.MaxValue - left ? long.MaxValue : left + right;
+}
+
+// Render time accumulated by one surface for the playbacks it schedules.
+internal sealed class SpriteAnimationClock
+{
+    internal long Ticks { get; private set; }
+
+    internal void Advance(long ticks) =>
+        Ticks = ticks > long.MaxValue - Ticks ? long.MaxValue : Ticks + ticks;
 }

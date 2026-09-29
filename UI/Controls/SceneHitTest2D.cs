@@ -177,14 +177,20 @@ internal static class SceneHitTest2D
             return items.GetInputCandidates(localPoint, colliderPaths);
         }
 
-        List<SceneNode2D> children = owner.LogicalChildren
-            .OfType<SceneNode2D>()
-            .Where(static child => child.ParticipatesInInputRoute)
-            .ToList();
+        IReadOnlyList<SceneNode2D> candidates = owner is Scene2D indexed && SceneGeometry2D.TryTransformToLocal(
+            new DrawPoint(scenePoint.X, scenePoint.Y), ownerToScene, out DrawPoint ownerPoint)
+                ? indexed.GetInputCandidates(ownerPoint, colliderPaths)
+                : owner.LogicalChildren
+                    .OfType<SceneNode2D>()
+                    .Where(static child => child.ParticipatesInInputRoute)
+                    .ToList();
         if (owner is not Scene2D scene || scene.OrderMode == SceneOrderMode.Source)
         {
-            return children;
+            return candidates;
         }
+
+        // Pruning preserves relative source order, so ordering is unchanged.
+        List<SceneNode2D> children = candidates as List<SceneNode2D> ?? [.. candidates];
 
         Dictionary<SceneNode2D, int> sourceIndices = new(
             ReferenceEqualityComparer.Instance);

@@ -176,6 +176,61 @@ public sealed class SpriteAnimationSchedulingTests
         root.VisualChildren.Remove(surface);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ParkedItemsReactivateWhenAnEnclosingEffectAppears(bool ancestorEffect)
+    {
+        Sprite2D sprite = Sprite(Animations());
+        sprite.X = 1000;
+        SceneItems2D items = new() { ItemsSource = new[] { sprite } };
+        Scene2D scene = new();
+        scene.Children.Add(items);
+        RenderSurface2D surface = new() { Scene = scene };
+        UIRoot root = new();
+        root.VisualChildren.Add(surface);
+        try
+        {
+            Record(surface);
+            Assert.True(sprite.IsAnimationParked);
+            TimeSensitiveRenderInvalidator.Invalidate(root, TimeSpan.FromMilliseconds(100));
+            Record(surface);
+            Assert.True(sprite.IsAnimationParked);
+
+            using IDisposable prism = GeneratedMarkup.AttachPrism(ancestorEffect ? scene : items,
+                () => new PrismInstance(PrismTestData.Composition("Reactivate", PrismTestData.Layer(1, "Content"))));
+            Record(surface);
+            Assert.False(sprite.IsAnimationParked);
+            sprite.X = 0;
+            Assert.Equal(16f, Record(surface).Single(IsImage).ImageSource!.Value.X);
+        }
+        finally { root.VisualChildren.Remove(surface); }
+    }
+
+    [Fact]
+    public void ParkedItemReturningToViewportUsesCurrentAnimationFrame()
+    {
+        Sprite2D sprite = Sprite(Animations());
+        sprite.X = 1000;
+        SceneItems2D items = new() { ItemsSource = new[] { sprite } };
+        Scene2D scene = new();
+        scene.Children.Add(items);
+        RenderSurface2D surface = new() { Scene = scene };
+        UIRoot root = new();
+        root.VisualChildren.Add(surface);
+        try
+        {
+            Record(surface);
+            Assert.True(sprite.IsAnimationParked);
+            TimeSensitiveRenderInvalidator.Invalidate(root, TimeSpan.FromMilliseconds(200));
+            Record(surface);
+            surface.ViewBox = new DrawRect(1000, 0, 64, 64);
+            Assert.Equal(32f, Record(surface).Single(IsImage).ImageSource!.Value.X);
+            Assert.False(sprite.IsAnimationParked);
+        }
+        finally { root.VisualChildren.Remove(surface); }
+    }
+
     private sealed class ClockOverlay : UIElement, ITimeSensitiveRenderElement
     {
         internal int Ticks { get; private set; }

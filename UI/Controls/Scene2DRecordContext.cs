@@ -32,7 +32,18 @@ internal readonly struct Scene2DRecordContext
         LocalToSceneTransform = localToSceneTransform;
         LocalToSurfaceTransform = localToSurfaceTransform;
         VisibleSurfaceBounds = visibleSurfaceBounds;
+        // Every child culls against these bounds; invert once per owner.
+        visibleLocalBounds = visibleSurfaceBounds.Width <= 0 || visibleSurfaceBounds.Height <= 0
+            ? SceneBounds2D.Empty
+            : SceneGeometry2D.TryTransformBoundsToLocal(
+                visibleSurfaceBounds,
+                localToSurfaceTransform,
+                out DrawRect visibleLocal)
+                    ? SceneBounds2D.Known(visibleLocal)
+                    : SceneBounds2D.Unknown;
     }
+
+    private readonly SceneBounds2D visibleLocalBounds;
 
     internal RenderSurface2D Surface { get; }
 
@@ -70,20 +81,7 @@ internal readonly struct Scene2DRecordContext
         return Frame.HasPrism(owner);
     }
 
-    internal SceneBounds2D GetConservativeVisibleLocalBounds()
-    {
-        if (VisibleSurfaceBounds.Width <= 0 || VisibleSurfaceBounds.Height <= 0)
-        {
-            return SceneBounds2D.Empty;
-        }
-
-        return SceneGeometry2D.TryTransformBoundsToLocal(
-            VisibleSurfaceBounds,
-            LocalToSurfaceTransform,
-            out DrawRect visibleLocalBounds)
-                ? SceneBounds2D.Known(visibleLocalBounds)
-                : SceneBounds2D.Unknown;
-    }
+    internal SceneBounds2D GetConservativeVisibleLocalBounds() => visibleLocalBounds;
 
     internal bool IntersectsVisibleLocalBounds(SceneBounds2D localBounds)
     {

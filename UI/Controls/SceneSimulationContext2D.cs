@@ -72,6 +72,10 @@ public sealed class SceneSimulationContext2D : IDisposable
     internal void BeginTreeChange() => treeChanges++;
     internal void EndTreeChange() => treeChanges--;
 
+    // A participant registers only after its own subtree attached, so while a
+    // tree change is open SpatialItems may omit one that is already live.
+    internal bool IsTreeChanging => treeChanges != 0;
+
     internal void Register(ISceneSpatialParticipant2D items)
     {
         if (!spatialItems.Contains(items)) { spatialItems.Add(items); refreshPending = true; }

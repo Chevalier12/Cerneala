@@ -7,6 +7,9 @@ namespace Cerneala.UI.Controls;
 
 public abstract class Collider2D : SceneNode2D
 {
+    private long simulatedVersion = -1;
+    private bool isSimulated;
+
     internal override void ValidateParentChange(UIElement? parent, ElementChildRole role, bool ownerManaged)
     {
         UIElement? candidate = parent ?? LogicalParent;
@@ -81,6 +84,21 @@ public abstract class Collider2D : SceneNode2D
     {
         get => GetValue(IsSimulatedProperty);
         set => SetValue(IsSimulatedProperty, value);
+    }
+
+    // Interest collection scans every collider whenever any collider moves.
+    internal bool IsSimulatedForInterest
+    {
+        get
+        {
+            long version = PropertyValueVersion;
+            if (simulatedVersion != version)
+            {
+                isSimulated = IsSimulated;
+                simulatedVersion = version;
+            }
+            return isSimulated;
+        }
     }
 
     public float OffsetX

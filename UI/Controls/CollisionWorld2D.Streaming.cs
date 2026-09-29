@@ -80,6 +80,16 @@ public sealed partial class CollisionWorld2D
     private string? FindUnpreparedCollisionEntry(DrawRect bounds)
     {
         DrawRect expanded = IncludeContactFringe(bounds);
+        if (RegisteredSpatialItems is { } registered)
+        {
+            bool unprepared = false;
+            for (int index = 0; index < registered.Count && !unprepared; index++)
+            {
+                unprepared = registered[index].GetUnpreparedCollisionEntry(expanded) is not null;
+            }
+            if (!unprepared) { return null; }
+        }
+        // Report the first unprepared entry in scene order.
         foreach (ISceneSpatialParticipant2D items in EnumerateSpatialItems(owner))
         {
             string? missing = items.GetUnpreparedCollisionEntry(expanded);
@@ -90,6 +100,16 @@ public sealed partial class CollisionWorld2D
 
     private Exception? FindCollisionReadinessError()
     {
+        if (RegisteredSpatialItems is { } registered)
+        {
+            bool failed = false;
+            for (int index = 0; index < registered.Count && !failed; index++)
+            {
+                failed = registered[index] is SceneItems2D { CollisionReadinessError: not null };
+            }
+            if (!failed) { return null; }
+        }
+        // Report the first failure in scene order.
         foreach (ISceneSpatialParticipant2D items in EnumerateSpatialItems(owner))
         {
             if (items is SceneItems2D { CollisionReadinessError: { } error }) { return error; }
@@ -122,11 +142,25 @@ public sealed partial class CollisionWorld2D
         {
             if (!region.IsDisposed) { interests.Add(SceneBounds2D.Known(IncludeContactFringe(region.Bounds))); }
         }
-        foreach (Collider2D collider in EnumerateColliders(owner))
+        if (initialized && observedVersion == Version)
         {
-            if (collider.IsSimulated && collider.TryGetActiveSceneGeometry(out ColliderGeometry2D geometry))
+            // Current entries already hold every collider's active geometry.
+            foreach (CollisionEntry2D entry in entriesByCollider.Values)
             {
-                interests.Add(SceneBounds2D.Known(IncludeContactFringe(geometry.SceneBounds)));
+                if (entry.Collider.IsSimulatedForInterest)
+                {
+                    interests.Add(SceneBounds2D.Known(IncludeContactFringe(entry.Geometry.SceneBounds)));
+                }
+            }
+        }
+        else
+        {
+            foreach (Collider2D collider in EnumerateColliders(owner))
+            {
+                if (collider.IsSimulated && collider.TryGetActiveSceneGeometry(out ColliderGeometry2D geometry))
+                {
+                    interests.Add(SceneBounds2D.Known(IncludeContactFringe(geometry.SceneBounds)));
+                }
             }
         }
         observedSpatialInterestVersion = spatialInterestVersion;
@@ -168,6 +202,15 @@ public sealed partial class CollisionWorld2D
         observedCollisionMutationVersion = -1;
         foreach (SceneCollisionRegion2D region in previous) { region.Invalidate(); }
     }
+
+    // Outside a tree change, the owner's simulation context has registered
+    // every spatial participant in its scene. Movement queries check that set
+    // instead of walking each node.
+    private IReadOnlyList<ISceneSpatialParticipant2D>? RegisteredSpatialItems =>
+        owner.SimulationContext is { IsDisposed: false, IsTreeChanging: false } context &&
+        ReferenceEquals(context.Scene, owner)
+            ? context.SpatialItems
+            : null;
 
     private static IEnumerable<ISceneSpatialParticipant2D> EnumerateSpatialItems(SceneNode2D node)
     {

@@ -97,7 +97,9 @@ public sealed partial class TileMap2D : SceneNode2D, ISceneSpatialParticipant2D,
         SceneBounds2D visible = context.GetVisibleBounds(this);
         CheckPrismPresentation(context);
         if (visible.Kind == SceneBoundsKind.Empty) { return; }
-        if (!ReferenceEquals(observedSource, Source) || !ReferenceEquals(appliedCatalog, Source.Catalog))
+        TileMapCatalog2D sourceCatalog = Source.Catalog;
+        context.ObserveCatalog(Source, sourceCatalog);
+        if (!ReferenceEquals(observedSource, Source) || !ReferenceEquals(appliedCatalog, sourceCatalog))
         {
             context.Require();
             return;
@@ -178,6 +180,11 @@ public sealed partial class TileMap2D : SceneNode2D, ISceneSpatialParticipant2D,
 
     internal override void ReleaseRenderCaches()
     {
+        if (HoldsImageResources || resolvedAtlases.Count > 0)
+        {
+            Surface?.InvalidatePresentation();
+            Surface?.NoteSceneImageRelease();
+        }
         long generation = sourceGeneration;
         List<Exception>? failures = null;
         try { ClearTileCache(); }

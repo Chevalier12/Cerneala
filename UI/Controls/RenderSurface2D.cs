@@ -67,11 +67,25 @@ public partial class RenderSurface2D : ContentControl,
         new(ReferenceEqualityComparer.Instance);
     private HashSet<IDrawImageInvalidationSource> pendingImageDependencies =
         new(ReferenceEqualityComparer.Instance);
+    // Set only while a frame reports its image dependencies.
+    private IDrawImage? lastTrackedImage;
     private RenderSurface2DDrawEventHandler? draw;
     private long frameVersion = 1;
     private long contentVersion = 1;
     private TimeSpan currentFrameTime;
     private readonly List<SceneNode2D> activeAnimations = [];
+    // Clock-driven animations, bucketed by the clock tick at which their
+    // presentation can next change. Nodes sharing a frame boundary share a
+    // bucket, so only the nodes due on a frame are visited.
+    private readonly SpriteAnimationClock animationClock = new();
+    private readonly SortedDictionary<long, List<(SceneNode2D Node, int Version)>> scheduledAnimations = [];
+    private readonly Stack<List<(SceneNode2D Node, int Version)>> scheduleBucketPool = new();
+    // Scheduled nodes not in any bucket while culled; see TryParkAnimation.
+    private readonly HashSet<SceneNode2D> parkedAnimations = new(ReferenceEqualityComparer.Instance);
+    private int scheduledAnimationCount;
+    // The bucket last appended to; cleared whenever a bucket is retired.
+    private long lastScheduledDue;
+    private List<(SceneNode2D Node, int Version)>? lastScheduledBucket;
     private SceneSimulationContext2D? simulationContext;
     internal const int WarmPreparationTileBudget = 256;
     private int nextWarmPreparationIndex;
@@ -124,9 +138,9 @@ public partial class RenderSurface2D : ContentControl,
 
     public void InvalidateFrame() => InvalidateFrame(contentChanged: true);
 
-    private void InvalidateFrame(bool contentChanged)
+    private void InvalidateFrame(bool contentChanged, bool presentationChanged = true)
     {
-        AdvanceFrameVersion(contentChanged);
+        AdvanceFrameVersion(contentChanged, presentationChanged);
         IncrementRenderVersion();
         Invalidate(InvalidationFlags.Render, "RenderSurface2D frame changed");
     }
@@ -177,6 +191,7 @@ public partial class RenderSurface2D : ContentControl,
         RefreshSpatialItems(ArrangedBounds.Width, ArrangedBounds.Height);
         CheckPresentation(GetPresentationBounds());
         bool animationChanged = false;
+        bool presentationChanged = false;
         if (IsAttached)
         {
             for (int index = activeAnimations.Count - 1; index >= 0; index--)
@@ -186,11 +201,49 @@ public partial class RenderSurface2D : ContentControl,
                 {
                     node.IncrementRenderVersion();
                     animationChanged = true;
+                    presentationChanged |= node.AnimationFrameAffectsPresentation;
                 }
                 if (!node.HasActiveAnimation)
                 {
                     RemoveAnimationRegistration(node);
                 }
+            }
+
+            // Advanced where per-frame playbacks advance, after presentation.
+            animationClock.Advance(frameTime.Ticks);
+            while (scheduledAnimations.Count > 0)
+            {
+                KeyValuePair<long, List<(SceneNode2D Node, int Version)>> due = scheduledAnimations.First();
+                if (due.Key > animationClock.Ticks)
+                {
+                    break;
+                }
+
+                scheduledAnimations.Remove(due.Key);
+                lastScheduledBucket = null;
+                foreach ((SceneNode2D node, int version) in due.Value)
+                {
+                    if (!node.IsAnimationScheduled || node.AnimationScheduleVersion != version)
+                    {
+                        continue;
+                    }
+                    if (node.AdvanceScheduledAnimation())
+                    {
+                        node.IncrementRenderVersion();
+                        animationChanged = true;
+                        presentationChanged |= node.AnimationFrameAffectsPresentation;
+                    }
+                    if (!node.HasActiveAnimation)
+                    {
+                        RemoveAnimationRegistration(node);
+                    }
+                    else
+                    {
+                        Schedule(node);
+                    }
+                }
+                due.Value.Clear();
+                scheduleBucketPool.Push(due.Value);
             }
         }
         if (!animationChanged &&
@@ -200,12 +253,16 @@ public partial class RenderSurface2D : ContentControl,
         }
 
         // Continuous scene recording is not itself a content mutation. Imperative
-        // callbacks may depend on time or external state, so remain conservative.
-        InvalidateFrame(animationChanged || draw is not null);
+        // callbacks may depend on time or external state, so remain conservative
+        // about content; scene readiness only changes when the scene does.
+        InvalidateFrame(animationChanged || draw is not null, presentationChanged);
         return true;
     }
 
-    internal int ActiveAnimationCount => activeAnimations.Count;
+    internal int ActiveAnimationCount => activeAnimations.Count + scheduledAnimationCount;
+
+    internal int ScheduledAnimationCount => scheduledAnimationCount;
+
 
     internal void CompleteWarmPreparation(IReadOnlyList<TileMap2D.WarmPreparationRequest> requests)
     {
@@ -275,14 +332,121 @@ public partial class RenderSurface2D : ContentControl,
         {
             RemoveAnimationRegistration(node);
         }
-        else if (node.ActiveAnimationIndex < 0)
+        else if (node.CanScheduleAnimation)
         {
-            node.ActiveAnimationIndex = activeAnimations.Count;
-            activeAnimations.Add(node);
+            RemoveFrameAnimation(node);
+            if (!node.IsAnimationScheduled)
+            {
+                node.IsAnimationScheduled = true;
+                scheduledAnimationCount++;
+            }
+            // (Re)anchor to the clock; a state change already reported itself.
+            node.AttachAnimationClock(animationClock);
+            Schedule(node);
+        }
+        else
+        {
+            Unschedule(node);
+            if (node.ActiveAnimationIndex < 0)
+            {
+                node.ActiveAnimationIndex = activeAnimations.Count;
+                activeAnimations.Add(node);
+            }
         }
     }
 
     internal void RemoveAnimationRegistration(SceneNode2D node)
+    {
+        Unschedule(node);
+        RemoveFrameAnimation(node);
+    }
+
+    // Stops visiting a culled node's frame changes. Its clock still advances,
+    // so the frame it draws when visible again is current.
+    internal bool TryParkAnimation(SceneNode2D node)
+    {
+        if (!node.IsAnimationScheduled || node.IsAnimationParked || !node.CanParkAnimation)
+        {
+            return false;
+        }
+        node.IsAnimationParked = true;
+        // Retires the node's pending bucket entry.
+        node.AnimationScheduleVersion++;
+        parkedAnimations.Add(node);
+        return true;
+    }
+
+    // Resumes per-change visits before the node is drawn or observed again.
+    internal void UnparkAnimation(SceneNode2D node)
+    {
+        if (!node.IsAnimationParked)
+        {
+            return;
+        }
+        ClearParked(node);
+        if (node.AdvanceScheduledAnimation())
+        {
+            node.IncrementRenderVersion();
+        }
+        if (!node.HasActiveAnimation)
+        {
+            RemoveAnimationRegistration(node);
+        }
+        else
+        {
+            Schedule(node);
+        }
+    }
+
+    internal int ParkedAnimationCount => parkedAnimations.Count;
+
+    private void ClearParked(SceneNode2D node)
+    {
+        if (node.IsAnimationParked)
+        {
+            node.IsAnimationParked = false;
+            parkedAnimations.Remove(node);
+        }
+    }
+
+    private void Schedule(SceneNode2D node)
+    {
+        ClearParked(node);
+        int version = node.AnimationScheduleVersion + 1;
+        node.AnimationScheduleVersion = version;
+        // A node that cannot change still sits in the last bucket so detaching
+        // the surface can find it.
+        long due = node.NextAnimationChangeTicks;
+        // Nodes that share a frame boundary are rescheduled together.
+        List<(SceneNode2D Node, int Version)>? bucket = lastScheduledDue == due ? lastScheduledBucket : null;
+        if (bucket is null)
+        {
+            if (!scheduledAnimations.TryGetValue(due, out bucket))
+            {
+                bucket = scheduleBucketPool.Count > 0 ? scheduleBucketPool.Pop() : [];
+                scheduledAnimations.Add(due, bucket);
+            }
+            lastScheduledDue = due;
+            lastScheduledBucket = bucket;
+        }
+        bucket.Add((node, version));
+    }
+
+    private void Unschedule(SceneNode2D node)
+    {
+        if (!node.IsAnimationScheduled)
+        {
+            return;
+        }
+        ClearParked(node);
+        node.IsAnimationScheduled = false;
+        node.AnimationScheduleVersion++;
+        scheduledAnimationCount--;
+        // Keep the time accrued so far; a detached node does not progress.
+        node.AttachAnimationClock(null);
+    }
+
+    private void RemoveFrameAnimation(SceneNode2D node)
     {
         int index = node.ActiveAnimationIndex;
         if (index < 0)
@@ -315,6 +479,24 @@ public partial class RenderSurface2D : ContentControl,
             node.ActiveAnimationIndex = -1;
         }
         activeAnimations.Clear();
+        foreach (List<(SceneNode2D Node, int Version)> bucket in scheduledAnimations.Values)
+        {
+            foreach ((SceneNode2D node, int version) in bucket)
+            {
+                if (node.IsAnimationScheduled && node.AnimationScheduleVersion == version)
+                {
+                    Unschedule(node);
+                }
+            }
+            bucket.Clear();
+            scheduleBucketPool.Push(bucket);
+        }
+        scheduledAnimations.Clear();
+        lastScheduledBucket = null;
+        foreach (SceneNode2D node in parkedAnimations.ToArray())
+        {
+            Unschedule(node);
+        }
         DisposeManagedSession();
         base.OnDetached();
     }
@@ -442,6 +624,7 @@ public partial class RenderSurface2D : ContentControl,
     {
         using Cerneala.UI.Resources.ImageResourceLeaseSet.Scope imageUsage = frameImages.Begin();
         pendingImageDependencies.Clear();
+        lastTrackedImage = null;
         RenderSurface2DFrame frame = new(
             commands,
             bounds,
@@ -469,10 +652,12 @@ public partial class RenderSurface2D : ContentControl,
                 }
             }
             frame.Complete();
+            lastTrackedImage = null;
             CommitImageDependencies();
         }
         catch (Exception failure)
         {
+            lastTrackedImage = null;
             pendingImageDependencies.Clear();
             try { frame.Abort(); }
             catch (Exception cleanupFailure) { throw new AggregateException(failure, cleanupFailure); }
@@ -497,6 +682,9 @@ public partial class RenderSurface2D : ContentControl,
         {
             previous.Dispose();
             Scene?.ReleaseRenderCaches();
+            // Released scene images must be prepared again before input or drawing.
+            presentationVersion++;
+            SceneImageReleaseGeneration++;
         }
 
         if (state is not null)
@@ -598,6 +786,10 @@ public partial class RenderSurface2D : ContentControl,
 
     private void TrackImageDependency(IDrawImage image)
     {
+        // Tracking is idempotent within a frame; a run of commands drawing one
+        // atlas depends on it once.
+        if (ReferenceEquals(image, lastTrackedImage)) { return; }
+        lastTrackedImage = image;
         frameImages.Retain(image, Root?.ImageResourceCache);
         if (image is IDrawImageInvalidationSource dependency)
         {
@@ -636,8 +828,37 @@ public partial class RenderSurface2D : ContentControl,
         }
     }
 
-    private void AdvanceFrameVersion(bool contentChanged = true)
+    internal void InvalidatePresentation() => presentationVersion++;
+
+    // Advances when scene images are released other than through a container's
+    // own per-child bookkeeping, which invalidates every remembered settled check.
+    internal long SceneImageReleaseGeneration { get; private set; }
+
+    private int trackedReleaseDepth;
+
+    internal void NoteSceneImageRelease()
     {
+        if (trackedReleaseDepth == 0)
+        {
+            SceneImageReleaseGeneration++;
+        }
+    }
+
+    // Releases one indexed leaf whose container clears its settled state itself.
+    internal void ReleaseTrackedLeaf(SceneNode2D leaf)
+    {
+        trackedReleaseDepth++;
+        try { leaf.ReleaseRenderCaches(); }
+        finally { trackedReleaseDepth--; }
+    }
+
+    private void AdvanceFrameVersion(bool contentChanged = true, bool presentationChanged = true)
+    {
+        if (presentationChanged)
+        {
+            presentationVersion++;
+        }
+
         frameVersion = frameVersion == long.MaxValue
             ? 1
             : frameVersion + 1;
@@ -654,6 +875,8 @@ public partial class RenderSurface2D : ContentControl,
     private void DisposeManagedSession()
     {
         Scene?.ReleaseRenderCaches();
+        presentationVersion++;
+        SceneImageReleaseGeneration++;
         foreach (IDrawImageInvalidationSource dependency in imageDependencies)
         {
             dependency.ContentChanged -= OnImageContentChanged;
