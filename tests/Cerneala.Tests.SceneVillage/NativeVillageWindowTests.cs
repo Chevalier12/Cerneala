@@ -345,7 +345,7 @@ public sealed class NativeVillageWindowTests
         int animatedPixelChanges = CountChangedGamePixels(staticPath, animatedPath);
         for (int attempt = 1; animatedPixelChanges < 50 && attempt <= 6; attempt++)
         {
-            await Task.Delay(150, cancellationToken);
+            await Task.Delay(AnimationCaptureDelay(attempt), cancellationToken);
             await WaitForFramesAsync(window, 2, cancellationToken);
             string nextPath = Path.Combine(captureDirectory, $"animated-10000-{attempt}.png");
             await servo.SaveScreenshotAsync(nextPath, cancellationToken);
@@ -618,6 +618,17 @@ public sealed class NativeVillageWindowTests
         Assert.True(verticalEdge == verticalSafe && horizontalEdge == horizontalSafe,
             $"Opaque path tile 43 must join grass without edge lines. Vertical {verticalEdge} vs {verticalSafe}; horizontal {horizontalEdge} vs {horizontalSafe}.");
         Assert.Equal(grass, horizontalBoundary);
+    }
+
+    internal static TimeSpan AnimationCaptureDelay(int attempt)
+    {
+        Assert.InRange(attempt, 1, 6);
+        Assert.True(VillageArt.VillagerAnimations.TryGetClip("WalkDown", out var clip));
+        // A fixed delay plus PNG readback can repeatedly select neutral poses:
+        // WalkDown's columns 1 and 3 are visually identical to Idle. Sweep the
+        // six retry delays in quarter-frame increments instead of phase-locking
+        // to capture cost. Keep the same seven-capture limit and pixel assertion.
+        return TimeSpan.FromTicks(clip!.Frames[0].Duration.Ticks * (attempt - 1) / 4);
     }
 
     private static int CountChangedGamePixels(string firstPath, string secondPath)
