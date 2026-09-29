@@ -4,7 +4,11 @@ public class UiObject
 {
     private readonly UiPropertyStore propertyStore = new();
 
-    internal long PropertyValueVersion => propertyStore.ValueVersion;
+    // Kept on the object itself so hot per-node caches can validate a snapshot
+    // without touching the separately allocated store.
+    private long propertyValueVersion;
+
+    internal long PropertyValueVersion => propertyValueVersion;
 
     public event EventHandler<UiPropertyChangedEventArgs>? PropertyChanged;
 
@@ -28,6 +32,7 @@ public class UiObject
         property.ValidateUntyped(coerced);
         ValidatePropertyMutation(property, coerced);
         propertyStore.SetFrameworkDefault(property, coerced);
+        propertyValueVersion++;
         T newValue = GetValue(property);
         if (!property.Metadata.EqualityComparer.Equals(oldValue, newValue))
         {
@@ -119,6 +124,7 @@ public class UiObject
         UiPropertyValueSource oldSource = GetValueSource(property);
         object? oldSourceValue = GetSourceValue(property, source);
         propertyStore.ClearValue(property, source);
+        propertyValueVersion++;
         T newValue = GetValue(property);
         UiPropertyValueSource newSource = GetValueSource(property);
         if (!property.Metadata.EqualityComparer.Equals(oldValue, newValue))
@@ -150,6 +156,7 @@ public class UiObject
         property.ValidateUntyped(coerced);
         ValidatePropertyMutation(property, coerced);
         propertyStore.SetValue(property, source, coerced);
+        propertyValueVersion++;
         object? newValue = GetValue(property);
         UiPropertyValueSource newSource = GetValueSource(property);
         if (!property.AreEqualUntyped(oldValue, newValue))
@@ -178,6 +185,7 @@ public class UiObject
         UiPropertyValueSource oldSource = GetValueSource(property);
         object? oldSourceValue = GetSourceValue(property, source);
         propertyStore.ClearValue(property, source);
+        propertyValueVersion++;
         object? newValue = GetValue(property);
         UiPropertyValueSource newSource = GetValueSource(property);
         if (!property.AreEqualUntyped(oldValue, newValue))
@@ -208,6 +216,7 @@ public class UiObject
         ValidatePropertyMutation(property, coerced);
 
         propertyStore.SetValue(property, source, coerced);
+        propertyValueVersion++;
         T newValue = GetValue(property);
         UiPropertyValueSource newSource = GetValueSource(property);
         if (!property.Metadata.EqualityComparer.Equals(oldValue, newValue))
