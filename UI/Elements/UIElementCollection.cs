@@ -287,6 +287,9 @@ public sealed class UIElementCollection : IReadOnlyList<UIElement>
 
     private int IndexOfReference(UIElement child)
     {
+        // Membership requires the parent for this collection's role. New or
+        // differently parented nodes cannot occur in the list.
+        if (!ReferenceEquals(GetParent(child), owner)) { return -1; }
         for (int i = 0; i < children.Count; i++)
         {
             if (ReferenceEquals(children[i], child))
