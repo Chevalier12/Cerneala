@@ -119,10 +119,12 @@ internal sealed class ImageResourceLeaseSet
         }
     }
 
+    internal int Count => leases.Count;
+
     internal void Clear()
     {
         used.Clear();
-        ReleaseUnused();
+        if (leases.Count != 0) { ReleaseUnused(); }
     }
 
     private void End()

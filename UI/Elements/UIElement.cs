@@ -26,8 +26,15 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     internal ImageResourceLeaseSet PrismImageLeases => prismImageLeases ??= new();
 
+    internal bool HoldsImageResources =>
+        sourceImageLeases?.Count > 0 || prismImageLeases?.Count > 0;
+
+    // Advances whenever this element releases the images it holds.
+    internal int ImageReleaseGeneration { get; private set; }
+
     internal void ReleaseImageResources()
     {
+        ImageReleaseGeneration++;
         try { sourceImageLeases?.Clear(); }
         finally { prismImageLeases?.Clear(); }
     }
@@ -599,6 +606,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
 
     private void OnElementResourceChanged(object? sender, ResourceChangedEventArgs args)
     {
+        Root?.AdvanceImageResolutionEpoch();
         InvalidationFlags flags = InvalidationFlags.Resource | InvalidationFlags.Aspect | InvalidationFlags.Subtree;
 
         UIRoot? root = Root;
@@ -633,6 +641,8 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     internal void SetLogicalParent(UIElement? parent)
     {
         LogicalParent = parent;
+        // Resource lookup walks logical, then visual, ancestry.
+        Root?.AdvanceImageResolutionEpoch();
     }
 
     internal virtual void ValidateParentChange(UIElement? parent, ElementChildRole role, bool ownerManaged)
@@ -642,6 +652,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     internal void SetVisualParent(UIElement? parent)
     {
         VisualParent = parent;
+        Root?.AdvanceImageResolutionEpoch();
         if (parent is not null)
         {
             retainedVisualParent = null;
@@ -668,6 +679,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
     internal void AttachToRoot(UIRoot root, UiElementId id)
     {
         Root = root ?? throw new ArgumentNullException(nameof(root));
+        root.AdvanceImageResolutionEpoch();
         ElementId = id;
         attachmentGeneration++;
         AttachElementAspectBehavior();
@@ -710,6 +722,7 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         Root?.RetainedRenderCache.ReleaseElement(this);
         Bindings.Clear();
         ElementId = null;
+        Root?.AdvanceImageResolutionEpoch();
         Root = null;
     }
 

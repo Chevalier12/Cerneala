@@ -25,6 +25,16 @@ public sealed class ImageResourceCache : IDisposable, IAsyncDisposable
         loadSlots = new(maximumConcurrentLoads);
     }
 
+    private long resolutionGeneration = ImageResourceResolutionEpoch.Next();
+
+    // Advances when an identity is forgotten, a load settles (published,
+    // failed or cancelled), or an image stops being resident: anything that
+    // can change what resolution or geometry observes.
+    internal long ResolutionGeneration => Volatile.Read(ref resolutionGeneration);
+
+    private void AdvanceResolutionGeneration() =>
+        Volatile.Write(ref resolutionGeneration, ImageResourceResolutionEpoch.Next());
+
     public int LoadCount { get { lock (gate) { return loadCount; } } }
 
     public int ResidentCount { get { lock (gate) { return images.Count; } } }
@@ -116,6 +126,7 @@ public sealed class ImageResourceCache : IDisposable, IAsyncDisposable
         lock (gate)
         {
             entries.Remove(resource.Identity);
+            AdvanceResolutionGeneration();
         }
     }
 
@@ -125,6 +136,7 @@ public sealed class ImageResourceCache : IDisposable, IAsyncDisposable
         lock (gate)
         {
             entries.Clear();
+            AdvanceResolutionGeneration();
         }
     }
 
@@ -134,6 +146,7 @@ public sealed class ImageResourceCache : IDisposable, IAsyncDisposable
         {
             disposed = true;
             entries.Clear();
+            AdvanceResolutionGeneration();
             DisposeSlotsIfIdle();
         }
     }
@@ -182,6 +195,18 @@ public sealed class ImageResourceCache : IDisposable, IAsyncDisposable
             return !disposed && entries.TryGetValue(resource.Identity, out Entry? entry) &&
                 entry.Ready.Task.IsCompletedSuccessfully && entry.Image is not null
                     ? Retain(entry) : null;
+        }
+    }
+
+    // Geometry observation only reads a completed image's dimensions. It takes
+    // no reference, so it cannot keep an otherwise unused image resident.
+    internal IDrawImage? TryPeekResident(ImageResource resource)
+    {
+        lock (gate)
+        {
+            return !disposed && entries.TryGetValue(resource.Identity, out Entry? entry) &&
+                entry.Ready.Task.IsCompletedSuccessfully
+                    ? entry.Image : null;
         }
     }
 
@@ -284,6 +309,9 @@ public sealed class ImageResourceCache : IDisposable, IAsyncDisposable
         {
             pendingLoads--;
             entry.Finished = true;
+            // Advanced only once the outcome is observable, so a check that saw
+            // the load pending cannot be remembered under the new generation.
+            AdvanceResolutionGeneration();
             if (entry.References == 0 && !entry.Releasing) { entry.Cancellation.Dispose(); }
             EndOperation();
         }
@@ -318,6 +346,7 @@ public sealed class ImageResourceCache : IDisposable, IAsyncDisposable
             if (entries.TryGetValue(entry.Identity, out Entry? current) && ReferenceEquals(current, entry))
             {
                 entries.Remove(entry.Identity);
+                AdvanceResolutionGeneration();
             }
             released = entry.Image;
             entry.Image = null;

@@ -168,6 +168,14 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public ImageResourceCache? ImageResourceCache { get; private set; }
 
+    private long imageResolutionEpoch = ImageResourceResolutionEpoch.Next();
+
+    // See ImageResolutionStamp; advanced from any thread that changes an input.
+    internal long ImageResolutionEpoch => Volatile.Read(ref imageResolutionEpoch);
+
+    internal void AdvanceImageResolutionEpoch() =>
+        Volatile.Write(ref imageResolutionEpoch, ImageResourceResolutionEpoch.Next());
+
     public UiFrameScheduler Scheduler { get; }
 
     public UiRelay Relay { get; }
@@ -197,6 +205,7 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
         resourceChangedSubscription = null;
 
         ResourceProvider = provider;
+        AdvanceImageResolutionEpoch();
         if (provider is IObservableResourceProvider observableProvider)
         {
             resourceChangedSubscription = new ResourceChangedSubscription(this, observableProvider);
@@ -235,6 +244,7 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
 
         ImageLoader = loader;
         ImageResourceCache = cache;
+        AdvanceImageResolutionEpoch();
         Invalidate(InvalidationFlags.Resource | InvalidationFlags.Render | InvalidationFlags.Subtree, "Root image loader changed");
     }
 

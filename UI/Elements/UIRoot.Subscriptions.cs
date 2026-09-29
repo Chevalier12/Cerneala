@@ -106,6 +106,8 @@ public sealed partial class UIRoot
                 return;
             }
 
+            root.AdvanceImageResolutionEpoch();
+
             if (root.Relay.CheckAccess())
             {
                 ApplyChange(args);

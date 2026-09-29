@@ -60,6 +60,10 @@ internal static class ImageResourceResolver
         InvalidationFlags effects, Action<UIElement>? onPrepared)
     {
         ImageResourceCache? cache = owner.Root?.ImageResourceCache;
+        if (access == ImageResourceAccess.PeekResident)
+        {
+            return new(resource.HasEmbeddedImage ? resource.Resolve() : cache?.TryPeekResident(resource), version);
+        }
         ImageResourceLeaseSet leases = acquisitions ?? owner.SourceImageLeases;
         if (access == ImageResourceAccess.Prepare)
         {
@@ -119,4 +123,5 @@ internal readonly record struct ImageResourceResolution(
     bool IsPending = false,
     Exception? Error = null);
 
-internal enum ImageResourceAccess { Synchronous, ResidentOnly, Prepare }
+// PeekResident reads a completed image without acquiring it, for geometry only.
+internal enum ImageResourceAccess { Synchronous, ResidentOnly, Prepare, PeekResident }
