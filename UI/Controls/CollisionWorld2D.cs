@@ -209,7 +209,8 @@ public sealed partial class CollisionWorld2D
                     source.Geometry,
                     displacement,
                     target.Geometry,
-                    out NarrowPhaseContact2D contact))
+                    out NarrowPhaseContact2D contact,
+                    includeNonblockingInitialContact: collider.IsTrigger || target.Collider.IsTrigger))
                 {
                     continue;
                 }

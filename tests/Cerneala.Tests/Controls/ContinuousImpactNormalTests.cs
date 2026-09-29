@@ -95,7 +95,7 @@ public sealed class ContinuousImpactNormalTests
     [InlineData(0)]
     [InlineData(20)]
     [InlineData(-20)]
-    public void InitialTouchRetainsStaticContactNormalIncludingZeroAndSeparatingMovement(float dy)
+    public void InitialCornerTouchAllowsNonpenetratingMovementAndKeepsStaticOverlap(float dy)
     {
         Scene2D scene = new();
         BoxCollider2D target = new() { Width = 160, Height = 10 };
@@ -107,6 +107,13 @@ public sealed class ContinuousImpactNormalTests
         MoveCollisionResult2D result = scene.CollisionWorld.MoveAndCollide(actor, new Vector2(0, dy));
 
         Assert.Equal(Vector2.UnitX, overlap.Normal);
+        if (dy != 0)
+        {
+            Assert.Null(result.Collision);
+            Assert.Equal(new Vector2(0, dy), result.Travel);
+            return;
+        }
+
         Assert.NotNull(result.Collision);
         Assert.Equal(overlap.Normal, result.Collision.Normal);
         Assert.Equal(overlap.Point, result.Collision.Point);

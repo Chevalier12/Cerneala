@@ -120,11 +120,19 @@ internal static class CollisionNarrowPhase2D
         ColliderGeometry2D moving,
         Vector2 displacement,
         ColliderGeometry2D target,
-        out NarrowPhaseContact2D contact)
+        out NarrowPhaseContact2D contact,
+        bool includeNonblockingInitialContact = false)
     {
         float displacementLength = displacement.Length();
         if (TryContact(moving, target, out NarrowPhaseContact2D initial))
         {
+            if (!includeNonblockingInitialContact && displacement != Vector2.Zero &&
+                HasNonclosingContactPlane(moving, target, displacement, initial.Normal))
+            {
+                contact = default;
+                return false;
+            }
+
             contact = initial;
             return true;
         }
@@ -212,6 +220,103 @@ internal static class CollisionNarrowPhase2D
         }
 
         contact = default;
+        return false;
+    }
+
+    private static bool HasNonclosingContactPlane(
+        ColliderGeometry2D moving,
+        ColliderGeometry2D target,
+        Vector2 displacement,
+        Vector2 contactNormal)
+    {
+        // A supporting plane with no inward motion separates these convex shapes
+        // for the entire translation. Checking support, not just the static normal,
+        // distinguishes touching (within the existing epsilon) from penetration.
+        if (IsNonclosingContactAxis(moving, target, displacement, contactNormal) ||
+            IsNonclosingContactAxis(moving, target, displacement, displacement) ||
+            IsNonclosingContactAxis(moving, target, displacement, new Vector2(-displacement.Y, displacement.X)))
+        {
+            return true;
+        }
+
+        // At a polygon corner the static normal is only one of the contact axes.
+        if (HasNonclosingEdge(moving, target, displacement, moving) ||
+            HasNonclosingEdge(moving, target, displacement, target))
+        {
+            return true;
+        }
+
+        // Affine circles retain their support-mapped geometry. A GJK contact
+        // simplex supplies boundary axes even when its static fallback is axial.
+        if (moving.LocalShape.Kind == ColliderShapeKind2D.Circle ||
+            target.LocalShape.Kind == ColliderShapeKind2D.Circle)
+        {
+            DistanceResult distance = GetDistance(moving, target);
+            for (int index = 0; index < distance.Simplex.Count; index++)
+            {
+                Vector2 edge = distance.Simplex[(index + 1) % distance.Simplex.Count].Point -
+                    distance.Simplex[index].Point;
+                if (IsNonclosingContactAxis(moving, target, displacement, new Vector2(-edge.Y, edge.X)))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static bool HasNonclosingEdge(
+        ColliderGeometry2D moving,
+        ColliderGeometry2D target,
+        Vector2 displacement,
+        ColliderGeometry2D geometry)
+    {
+        if (geometry.LocalShape.Kind == ColliderShapeKind2D.Circle)
+        {
+            return false;
+        }
+
+        Vector2[] vertices = GetWorldPolygonVertices(geometry);
+        for (int index = 0; index < vertices.Length; index++)
+        {
+            Vector2 edge = vertices[(index + 1) % vertices.Length] - vertices[index];
+            if (IsNonclosingContactAxis(moving, target, displacement, new Vector2(-edge.Y, edge.X)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsNonclosingContactAxis(
+        ColliderGeometry2D moving,
+        ColliderGeometry2D target,
+        Vector2 displacement,
+        Vector2 axis)
+    {
+        if (axis.LengthSquared() <= Epsilon * Epsilon)
+        {
+            return false;
+        }
+
+        axis = Vector2.Normalize(axis);
+        for (int side = 0; side < 2; side++, axis = -axis)
+        {
+            if (Vector2.Dot(displacement, axis) < 0)
+            {
+                continue;
+            }
+
+            Vector2 nearestMoving = Support(moving, -axis, Vector2.Zero);
+            Vector2 furthestTarget = Support(target, axis, Vector2.Zero);
+            if (Vector2.Dot(nearestMoving - furthestTarget, axis) >= -Epsilon)
+            {
+                return true;
+            }
+        }
+
         return false;
     }
 
