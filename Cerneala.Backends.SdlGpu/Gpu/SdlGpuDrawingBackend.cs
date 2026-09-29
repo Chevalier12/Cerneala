@@ -101,6 +101,10 @@ internal sealed partial class SdlGpuDrawingBackend :
 
     internal DrawingBackendFrameTiming LastFrameTiming { get; private set; }
 
+    private SdlGpuImage? lastImageTextureSource;
+    private SdlGpuCommandBufferToken lastImageTextureToken;
+    private SdlGpuTextureResource? lastImageTexture;
+
     internal SdlGpuDrawingFrameCounters LastFrameCounters { get; private set; }
 
     internal SdlGpuPrismFrameCounters LastFramePrismCounters { get; private set; }
@@ -355,7 +359,8 @@ internal sealed partial class SdlGpuDrawingBackend :
     {
         for (int index = start; index < end; index++)
         {
-            DrawCommand command = commands[index];
+            // Read in place: scene frames replay thousands of large commands.
+            ref readonly DrawCommand command = ref commands.ItemRef(index);
             RenderState state = rangeState.State;
             SdlGpuRenderTarget target = rangeState.Target;
             switch (command.Kind)
@@ -584,7 +589,7 @@ internal sealed partial class SdlGpuDrawingBackend :
     }
 
     private void AddImage(
-        DrawCommand command,
+        in DrawCommand command,
         RenderState state,
         Cerberus batches)
     {
@@ -618,45 +623,37 @@ internal sealed partial class SdlGpuDrawingBackend :
             ? stackalloc SdlGpuVertex[4]
             : batches.Allocate(4, QuadIndices, key);
         DrawRect destination = command.Rect;
+        // One pass resolves the source, origin and rotation for all corners.
+        Span<DrawPoint> corners = stackalloc DrawPoint[4];
+        DrawImageGeometry.WriteDestinationCorners(image, destination, options, corners);
+        // All four corners share these values; preserve the same vertex math.
+        Vector4 premultipliedTint = PremultiplyVertexColor(tint, state.Opacity);
+        Matrix3x2 transform = state.Transform;
+        float coordinateScale = CurrentScale.Value;
         vertices[0] = CreateVertex(
-            DrawImageGeometry.TransformDestinationPoint(image, destination, options, 0, 0),
+            corners[0],
             new DrawPoint(left, top),
-            tint,
-            state.Transform,
-            state.Opacity);
+            premultipliedTint,
+            transform,
+            coordinateScale);
         vertices[1] = CreateVertex(
-            DrawImageGeometry.TransformDestinationPoint(
-                image,
-                destination,
-                options,
-                destination.Width,
-                0),
+            corners[1],
             new DrawPoint(right, top),
-            tint,
-            state.Transform,
-            state.Opacity);
+            premultipliedTint,
+            transform,
+            coordinateScale);
         vertices[2] = CreateVertex(
-            DrawImageGeometry.TransformDestinationPoint(
-                image,
-                destination,
-                options,
-                destination.Width,
-                destination.Height),
+            corners[2],
             new DrawPoint(right, bottom),
-            tint,
-            state.Transform,
-            state.Opacity);
+            premultipliedTint,
+            transform,
+            coordinateScale);
         vertices[3] = CreateVertex(
-            DrawImageGeometry.TransformDestinationPoint(
-                image,
-                destination,
-                options,
-                0,
-                destination.Height),
+            corners[3],
             new DrawPoint(left, bottom),
-            tint,
-            state.Transform,
-            state.Opacity);
+            premultipliedTint,
+            transform,
+            coordinateScale);
         if (imageDomain)
         {
             Span<SdlGpuImageDomainVertex> selected =
@@ -1596,7 +1593,8 @@ internal sealed partial class SdlGpuDrawingBackend :
     {
         SdlGpuCommandBufferToken token = session.ActiveCommandBufferToken;
         IReadOnlyList<DrawCommandStateEntry>? retainedEntries = surface.GetRetainedEntries(token);
-        PrismFrameAnalysis analysis = new PrismFrameAnalyzer().Analyze(surface.Commands, retainedEntries);
+        PrismFrameAnalysis analysis = new PrismFrameAnalyzer().Analyze(
+            surface.Commands, retainedEntries, surface.RentEntryBuffer());
         if (analysis.Scopes.IsDefaultOrEmpty)
         {
             surface.PrismExecutor.ProcessInvalidations(analysis, surface.PrismCacheInvalidations);
@@ -1665,7 +1663,8 @@ internal sealed partial class SdlGpuDrawingBackend :
             session,
             token,
             analysis.StateAnalysis.Entries,
-            clearColor);
+            clearColor,
+            analysis.StateAnalysis.Buffer);
         return true;
     }
 
@@ -1976,12 +1975,25 @@ internal sealed partial class SdlGpuDrawingBackend :
             throw new InvalidOperationException(
                 "SDL_GPU image drawing requires an image created by SdlGpuImageLoader.");
         }
-        return resources.GetOrCreateTexture(
+
+        // Consecutive quads usually share one atlas. Its texture is already
+        // resolved and pinned for the active command buffer.
+        bool recording = session.TryGetActiveCommandBufferToken(out SdlGpuCommandBufferToken token);
+        if (recording && ReferenceEquals(sdlImage, lastImageTextureSource) && token == lastImageTextureToken)
+        {
+            return lastImageTexture!;
+        }
+
+        SdlGpuTextureResource texture = resources.GetOrCreateTexture(
             session,
             sdlImage,
             sdlImage.Width,
             sdlImage.Height,
             sdlImage.RgbaPixels.Span);
+        lastImageTextureSource = recording ? sdlImage : null;
+        lastImageTextureToken = token;
+        lastImageTexture = texture;
+        return texture;
     }
 
     private static byte[] RasterizeBrush(
@@ -2499,6 +2511,11 @@ internal sealed partial class SdlGpuDrawingBackend :
         private long pendingFrameVersion = long.MinValue;
         private IReadOnlyList<DrawCommandStateEntry>? pendingRetainedEntries;
         private Color pendingClearColor;
+        // Arrays backing this surface's analyzed entries. One retained by
+        // neither the submitted nor the pending frame is refilled, not reallocated.
+        private DrawCommandStateEntry[]? submittedEntryBuffer;
+        private DrawCommandStateEntry[]? pendingEntryBuffer;
+        private readonly List<DrawCommandStateEntry[]> entryBuffers = new(3);
         private bool pendingInvalidated;
 
         public int PixelWidth => Target.PixelWidth;
@@ -2533,13 +2550,42 @@ internal sealed partial class SdlGpuDrawingBackend :
             pendingFrameVersion = frameVersion;
         }
 
+        // Never null: an empty buffer still marks the analysis as recycled, so a
+        // replacement is sized with room to grow.
+        public DrawCommandStateEntry[] RentEntryBuffer()
+        {
+            foreach (DrawCommandStateEntry[] buffer in entryBuffers)
+            {
+                if (!ReferenceEquals(buffer, submittedEntryBuffer) && !ReferenceEquals(buffer, pendingEntryBuffer))
+                {
+                    return buffer;
+                }
+            }
+            return [];
+        }
+
         public void PublishPending(
             SdlGpuWindowGraphicsSession session,
             SdlGpuCommandBufferToken token,
             IReadOnlyList<DrawCommandStateEntry> retainedEntries,
-            Color clearColor)
+            Color clearColor,
+            DrawCommandStateEntry[]? entryBuffer = null)
         {
             EnsurePending(session, token);
+            // A replay invalidates pending state before publication. Revalidated
+            // entries still own their array even when that pending link was cleared.
+            entryBuffer ??= (retainedEntries as DrawCommandStateEntries)?.Array;
+            pendingEntryBuffer = entryBuffer;
+            if (entryBuffer is { Length: > 0 } && !entryBuffers.Contains(entryBuffer))
+            {
+                if (entryBuffers.Count == entryBuffers.Capacity)
+                {
+                    int free = entryBuffers.FindIndex(buffer =>
+                        !ReferenceEquals(buffer, submittedEntryBuffer) && !ReferenceEquals(buffer, pendingEntryBuffer));
+                    if (free >= 0) { entryBuffers.RemoveAt(free); }
+                }
+                if (entryBuffers.Count < entryBuffers.Capacity) { entryBuffers.Add(entryBuffer); }
+            }
             pendingRetainedEntries = retainedEntries;
             pendingClearColor = clearColor;
             pendingInvalidated = false;
@@ -2551,6 +2597,7 @@ internal sealed partial class SdlGpuDrawingBackend :
         {
             EnsurePending(session, token);
             pendingRetainedEntries = null;
+            pendingEntryBuffer = null;
             pendingFrameVersion = long.MinValue;
             pendingInvalidated = true;
         }
@@ -2566,11 +2613,13 @@ internal sealed partial class SdlGpuDrawingBackend :
             {
                 submittedFrameVersion = long.MinValue;
                 submittedRetainedEntries = null;
+                submittedEntryBuffer = null;
             }
             else
             {
                 submittedFrameVersion = pendingFrameVersion;
                 submittedRetainedEntries = pendingRetainedEntries;
+                submittedEntryBuffer = pendingEntryBuffer;
                 submittedClearColor = pendingClearColor;
             }
             ClearPending();
@@ -2606,6 +2655,7 @@ internal sealed partial class SdlGpuDrawingBackend :
                 pendingToken = token;
                 pendingFrameVersion = submittedFrameVersion;
                 pendingRetainedEntries = submittedRetainedEntries;
+                pendingEntryBuffer = submittedEntryBuffer;
                 pendingClearColor = submittedClearColor;
                 pendingInvalidated = false;
                 session.RegisterCommandBufferParticipant(this);
@@ -2617,6 +2667,7 @@ internal sealed partial class SdlGpuDrawingBackend :
             pendingToken = default;
             pendingFrameVersion = long.MinValue;
             pendingRetainedEntries = null;
+            pendingEntryBuffer = null;
             pendingClearColor = default;
             pendingInvalidated = false;
         }
