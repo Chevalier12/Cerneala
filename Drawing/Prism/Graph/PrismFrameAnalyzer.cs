@@ -13,7 +13,8 @@ internal sealed class PrismFrameAnalyzer
 
     public PrismFrameAnalysis Analyze(
         DrawCommandList commands,
-        IReadOnlyList<DrawCommandStateEntry>? previousStateEntries = null)
+        IReadOnlyList<DrawCommandStateEntry>? previousStateEntries = null,
+        DrawCommandStateEntry[]? entryBuffer = null)
     {
         ArgumentNullException.ThrowIfNull(commands);
         if (previousAnalysis is PrismFrameAnalysis retainedAnalysis &&
@@ -26,7 +27,7 @@ internal sealed class PrismFrameAnalyzer
         int commandCount = commands.Count;
         DrawCommandStateAnalysis stateAnalysis =
             new DrawCommandStateAnalyzer().Analyze(
-                commands, previousStateEntries ?? previousAnalysis?.StateAnalysis.Entries);
+                commands, previousStateEntries ?? previousAnalysis?.StateAnalysis.Entries, entryBuffer);
         List<ScopeBuilder> scopes = [];
         List<OpenScope> openScopes = [];
         ImmutableArray<int>.Builder backdropScopeIndices = ImmutableArray.CreateBuilder<int>();
@@ -35,7 +36,7 @@ internal sealed class PrismFrameAnalyzer
 
         for (int commandIndex = 0; commandIndex < commandCount; commandIndex++)
         {
-            DrawCommand command = commands[commandIndex];
+            ref readonly DrawCommand command = ref commands.ItemRef(commandIndex);
             switch (command.Kind)
             {
                 case DrawCommandKind.BeginPrism:

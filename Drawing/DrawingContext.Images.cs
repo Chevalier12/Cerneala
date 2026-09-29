@@ -9,6 +9,14 @@ public sealed partial class DrawingContext
         DrawRect destination,
         DrawImageOptions options)
     {
+        ArgumentNullException.ThrowIfNull(image);
+        if (image is not PrismImage)
+        {
+            // Scene recording issues one of these per sprite; skip the closure.
+            _commands.Add(DrawCommand.DrawImage(image, destination, options));
+            return;
+        }
+
         AddImageBackedCommand(
             image,
             resolved => DrawCommand.DrawImage(

@@ -7,6 +7,47 @@ namespace Cerneala.Tests.Drawing;
 
 public sealed class DrawingStateTests
 {
+    [Theory]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(16)]
+    public void RetainedMetadataResynchronizesAfterInsertedRunAndRemovedCommand(int insertedCount)
+    {
+        FakeDrawImage image = new();
+        object[] owners = Enumerable.Range(0, 100).Select(_ => new object()).ToArray();
+        DrawCommand[] retained = Enumerable.Range(0, owners.Length)
+            .Select(index => DrawCommand.DrawImage(image, new DrawRect(index * 16, 0, 16, 32), Color.White))
+            .ToArray();
+        DrawCommandList commands = new();
+        for (int index = 0; index < owners.Length; index++)
+        {
+            commands.AddRetained(retained[index], new RetainedCommandKey(owners[index], 1));
+        }
+        DrawCommandStateAnalyzer analyzer = new();
+        DrawCommandStateAnalysis previous = analyzer.Analyze(commands);
+
+        commands.Clear();
+        for (int index = 0; index < insertedCount; index++)
+        {
+            commands.AddRetained(DrawCommand.DrawImage(image, new DrawRect(-16 * (index + 1), 0, 16, 32), Color.White),
+                new RetainedCommandKey(new object(), 1));
+        }
+        // The first old command leaves visibility while a run enters ahead of
+        // the unchanged tail. A miss must not disable later nearby matching.
+        for (int index = 1; index < owners.Length; index++)
+        {
+            commands.AddRetained(retained[index], new RetainedCommandKey(owners[index], 1));
+        }
+
+        DrawCommandStateAnalysis current = analyzer.Analyze(commands, previous.Entries);
+        for (int index = 1; index < owners.Length; index++)
+        {
+            Assert.Same(previous.Entries[index].Metadata, current.Entries[insertedCount + index - 1].Metadata);
+            Assert.Equal(previous.Entries[index].Bounds, current.Entries[insertedCount + index - 1].Bounds);
+        }
+    }
+
     [Fact]
     public void AnalyzerAllocatesOneOwnedEntrySnapshotAndKeepsItImmutable()
     {

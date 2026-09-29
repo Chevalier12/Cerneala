@@ -1,5 +1,7 @@
 using Cerneala.Drawing.Prism;
 using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Cerneala.Drawing;
 
@@ -95,6 +97,18 @@ public readonly partial record struct DrawCommand
             ? 0
             : renderSurface3DResourceEpoch ?? renderSurface3D.ResourceEpoch;
     }
+
+    // Scenes re-submit unchanged commands every frame. Copies of one command
+    // are bit-for-bit identical, which implies value equality, and comparing
+    // the bits is far cheaper than comparing every member. A false result only
+    // means the member-wise comparison must decide.
+    internal static bool AreBitwiseIdentical(in DrawCommand left, in DrawCommand right) =>
+        MemoryMarshal.CreateReadOnlySpan(
+                ref Unsafe.As<DrawCommand, byte>(ref Unsafe.AsRef(in left)),
+                Unsafe.SizeOf<DrawCommand>())
+            .SequenceEqual(MemoryMarshal.CreateReadOnlySpan(
+                ref Unsafe.As<DrawCommand, byte>(ref Unsafe.AsRef(in right)),
+                Unsafe.SizeOf<DrawCommand>()));
 
     public DrawCommandKind Kind { get; }
 

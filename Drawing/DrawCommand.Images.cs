@@ -9,7 +9,16 @@ public readonly partial record struct DrawCommand
     {
         ArgumentNullException.ThrowIfNull(options);
         _ = DrawImageGeometry.ResolveSource(image, options);
-        return new DrawCommand(
+        return FromImageSnapshot(image, destination, options);
+    }
+
+    // Rebuilds the value of an already captured image command. In particular,
+    // reading retained identity must not query a resized or disposed image.
+    internal static DrawCommand FromImageSnapshot(
+        IDrawImage image,
+        DrawRect destination,
+        DrawImageOptions options) =>
+        new(
             DrawCommandKind.DrawImage,
             destination,
             DrawImageGeometry.EffectiveTint(options),
@@ -28,7 +37,6 @@ public readonly partial record struct DrawCommand
             imageFlip: options.Flip,
             layerDepth: options.LayerDepth,
             imageOptions: options);
-    }
 
     public static DrawCommand DrawImageQuad(
         IDrawImage image,

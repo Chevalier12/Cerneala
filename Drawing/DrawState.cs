@@ -155,6 +155,22 @@ public readonly record struct DrawCommandStateEntry(
     int MatchingCommandIndex)
 {
     internal DrawCommandMetadata? Metadata { get; init; }
+
+    // Copies of the metadata's reuse key, so the next analysis can match an
+    // unchanged retained command without reading its metadata object.
+    internal RetainedCommandKey RetainedKey { get; init; }
+
+    internal int ImageWidth { get; init; }
+
+    internal int ImageHeight { get; init; }
+}
+
+// Read-only entries over the analyzer's array; later analyses read the
+// array directly rather than through the collection interfaces.
+internal sealed class DrawCommandStateEntries(DrawCommandStateEntry[] array, int count)
+    : ReadOnlyCollection<DrawCommandStateEntry>(new ArraySegment<DrawCommandStateEntry>(array, 0, count))
+{
+    internal DrawCommandStateEntry[] Array { get; } = array;
 }
 
 public sealed class DrawCommandStateAnalysis
@@ -162,11 +178,17 @@ public sealed class DrawCommandStateAnalysis
     internal DrawCommandStateAnalysis(
         DrawCommandList commands,
         long commandListVersion,
-        DrawCommandStateEntry[] ownedEntries)
-        : this(commands, commandListVersion, new ReadOnlyCollection<DrawCommandStateEntry>(ownedEntries))
+        DrawCommandStateEntry[] ownedEntries,
+        int count)
+        : this(commands, commandListVersion, new DrawCommandStateEntries(ownedEntries, count))
     {
-        // The analyzer transfers its fresh array after completing every entry.
+        // The analyzer transfers its filled array after completing every entry.
+        Buffer = ownedEntries;
     }
+
+    // The array backing freshly analyzed entries, which the owner of this
+    // analysis may recycle once nothing retains the entries.
+    internal DrawCommandStateEntry[]? Buffer { get; }
 
     internal DrawCommandStateAnalysis(
         DrawCommandList commands,
@@ -202,21 +224,109 @@ public sealed class DrawCommandStateAnalyzer
 {
     public DrawCommandStateAnalysis Analyze(DrawCommandList commands) => Analyze(commands, previousEntries: null);
 
+    // Scenes re-record their visible content every frame, so commands enter
+    // and leave the list as the camera moves. Pair each command with the next
+    // identical earlier command rather than only the one at the same position,
+    // so one insertion or removal does not re-derive every later snapshot.
+    private struct PreviousCommandCursor(DrawCommandStateEntry[]? entries, int count, int start)
+    {
+        private const int Window = 64;
+        private int next = start;
+
+        internal DrawCommandMetadata Skip(DrawCommandMetadata metadata)
+        {
+            next++;
+            return metadata;
+        }
+
+        // The previous entry to derive this command's snapshot from, or -1.
+        // Locate a retained owner's prior command even when its version changed.
+        // Resolve still checks the full key before reusing metadata; finding a
+        // predecessor is not proof that its content is unchanged.
+        internal int Find(in DrawCommand command, RetainedCommandKey key, int index)
+        {
+            if (entries is null)
+            {
+                return -1;
+            }
+
+            // A run entering visibility can precede a removed command. Keep
+            // looking within the bounded window after misses, otherwise the
+            // unchanged, shifted tail never gets a chance to resynchronize.
+            int limit = Math.Min(count, next + Window);
+            for (int candidate = next; candidate < limit; candidate++)
+            {
+                ref readonly DrawCommandStateEntry entry = ref entries[candidate];
+                if (entry.Metadata is DrawCommandMetadata metadata &&
+                    (key.IsSet
+                        ? ReferenceEquals(key.Owner, entry.RetainedKey.Owner)
+                        : metadata.MatchesBits(command)))
+                {
+                    next = candidate + 1;
+                    return candidate;
+                }
+            }
+
+            if (index >= count || entries[index].Metadata is null)
+            {
+                return -1;
+            }
+            // An owner match at the same position resynchronizes the cursor
+            // after a run of changed commands.
+            if (key.IsSet && ReferenceEquals(key.Owner, entries[index].RetainedKey.Owner))
+            {
+                next = index + 1;
+            }
+            return index;
+        }
+    }
+
+    // A previous entry's snapshot when a retained key vouches for it (exactly
+    // Create's keyed reuse), otherwise a snapshot derived from it.
+    private static DrawCommandMetadata Resolve(
+        in DrawCommand command,
+        RetainedCommandKey key,
+        DrawCommandStateEntry[]? previousEntries,
+        int previousIndex)
+    {
+        if (previousIndex < 0)
+        {
+            return DrawCommandMetadata.Create(command, null, key);
+        }
+
+        ref readonly DrawCommandStateEntry previous = ref previousEntries![previousIndex];
+        return DrawCommandMetadata.MatchesRetained(command, key, previous.RetainedKey, previous.ImageWidth, previous.ImageHeight)
+            ? previous.Metadata!
+            : DrawCommandMetadata.Create(command, previous.Metadata, key);
+    }
+
     internal DrawCommandStateAnalysis Analyze(
         DrawCommandList commands,
-        IReadOnlyList<DrawCommandStateEntry>? previousEntries)
+        IReadOnlyList<DrawCommandStateEntry>? previousEntries,
+        DrawCommandStateEntry[]? buffer = null)
     {
         ArgumentNullException.ThrowIfNull(commands);
         long version = commands.Version;
         int commandCount = commands.Count;
         int revalidatedCount = 0;
         DrawCommandMetadata? firstChangedMetadata = null;
-        if (previousEntries is not null && previousEntries.Count == commandCount)
+        // Analyzer output exposes its array; read it without interface dispatch.
+        int previousCount = previousEntries?.Count ?? 0;
+        DrawCommandStateEntry[]? previousArray = previousEntries switch
+        {
+            null => null,
+            DrawCommandStateEntries owned => owned.Array,
+            _ => previousEntries.ToArray()
+        };
+        if (previousArray is not null && previousCount == commandCount)
         {
             for (; revalidatedCount < commandCount; revalidatedCount++)
             {
-                DrawCommandMetadata? previous = previousEntries[revalidatedCount].Metadata;
-                DrawCommandMetadata current = DrawCommandMetadata.Create(commands[revalidatedCount], previous);
+                DrawCommandMetadata? previous = previousArray[revalidatedCount].Metadata;
+                DrawCommandMetadata current = previous is null
+                    ? DrawCommandMetadata.Create(commands.ItemRef(revalidatedCount), null, commands.GetRetainedKey(revalidatedCount))
+                    : Resolve(commands.ItemRef(revalidatedCount), commands.GetRetainedKey(revalidatedCount),
+                        previousArray, revalidatedCount);
                 EnsureUnchanged(commands, version, commandCount);
                 if (!ReferenceEquals(current, previous))
                 {
@@ -226,29 +336,37 @@ public sealed class DrawCommandStateAnalyzer
             }
             if (revalidatedCount == commandCount)
             {
-                return new DrawCommandStateAnalysis(commands, version, previousEntries);
+                return new DrawCommandStateAnalysis(commands, version, previousEntries!);
             }
         }
 
-        DrawCommandStateEntry[] entries = new DrawCommandStateEntry[commandCount];
+        // A recycled buffer avoids a large-object allocation on every frame; a
+        // recycling caller's replacement leaves room for the list to grow.
+        DrawCommandStateEntry[] entries = buffer is null
+            ? new DrawCommandStateEntry[commandCount]
+            : buffer.Length >= commandCount
+                ? buffer
+                : new DrawCommandStateEntry[commandCount + (commandCount / 4)];
+        Array.Clear(entries, commandCount, entries.Length - commandCount);
         List<OpenState> stack = [];
         List<Matrix3x2> transforms = [Matrix3x2.Identity];
         List<DrawRect?> clips = [null];
         List<float> opacities = [1];
         List<DrawBlendMode> blends = [DrawBlendMode.Normal];
 
+        PreviousCommandCursor cursor = new(previousArray, previousCount, revalidatedCount);
         for (int index = 0; index < commands.Count; index++)
         {
-            DrawCommand command = commands[index];
-            DrawCommandMetadata? previous = previousEntries is not null && index < previousEntries.Count
-                ? previousEntries[index].Metadata : null;
+            ref readonly DrawCommand command = ref commands.ItemRef(index);
+            DrawCommandKind commandKind = command.Kind;
             // The equivalent prefix and first changed command were already
             // visited above. Do not invoke mutable resource descriptors twice.
+            RetainedCommandKey key = commands.GetRetainedKey(index);
             DrawCommandMetadata metadata = index < revalidatedCount
-                ? previous!
+                ? previousArray![index].Metadata!
                 : index == revalidatedCount && firstChangedMetadata is not null
-                    ? firstChangedMetadata
-                    : DrawCommandMetadata.Create(command, previous);
+                    ? cursor.Skip(firstChangedMetadata)
+                    : Resolve(command, key, previousArray, cursor.Find(command, key, index));
             Matrix3x2 transform = transforms[^1];
             DrawRect? clip = clips[^1];
             DrawRect? bounds = metadata.Bounds is DrawRect localBounds
@@ -268,7 +386,10 @@ public sealed class DrawCommandStateAnalyzer
                 metadata.IsContextSensitive,
                 MatchingCommandIndex: -1)
             {
-                Metadata = metadata
+                Metadata = metadata,
+                RetainedKey = metadata.RetainedKey,
+                ImageWidth = metadata.ImageWidth,
+                ImageHeight = metadata.ImageHeight
             };
 
             if (!metadata.IsContextSensitive && bounds is DrawRect drawnBounds)
@@ -361,7 +482,7 @@ public sealed class DrawCommandStateAnalyzer
                         DrawCommandKind.PushClip or
                         DrawCommandKind.PushPathClip))
                 {
-                    throw Mismatch(command.Kind, index, stack);
+                    throw Mismatch(commandKind, index, stack);
                 }
                 CompleteScope(index);
                 clips.RemoveAt(clips.Count - 1);
@@ -369,7 +490,7 @@ public sealed class DrawCommandStateAnalyzer
 
             void CloseLayer()
             {
-                CloseSimple(command.Kind, DrawCommandKind.PushLayer);
+                CloseSimple(commandKind, DrawCommandKind.PushLayer);
                 opacities.RemoveAt(opacities.Count - 1);
                 blends.RemoveAt(blends.Count - 1);
             }
@@ -411,7 +532,7 @@ public sealed class DrawCommandStateAnalyzer
         }
         EnsureUnchanged(commands, version, commandCount);
 
-        return new DrawCommandStateAnalysis(commands, version, entries);
+        return new DrawCommandStateAnalysis(commands, version, entries, commandCount);
     }
 
     private static void EnsureUnchanged(DrawCommandList commands, long version, int count)

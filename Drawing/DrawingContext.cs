@@ -186,6 +186,16 @@ public sealed partial class DrawingContext
                 layerDepth));
     }
 
+    internal void AddCommand(DrawCommand command)
+    {
+        _commands.Add(command);
+    }
+
+    internal void AddRetainedCommand(in DrawCommand command, RetainedCommandKey key)
+    {
+        _commands.AddRetained(command, key);
+    }
+
     internal void DrawRenderSurface2D(
         IRenderSurface2DSource surface,
         DrawRect destination,

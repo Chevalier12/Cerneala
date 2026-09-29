@@ -3,18 +3,16 @@ using Cerneala.Drawing.Prism;
 
 namespace Cerneala.Drawing;
 
-internal sealed class DrawCommandMetadata
+internal abstract class DrawCommandMetadata
 {
     private DrawCommandMetadata(
         DrawRect? bounds,
         IReadOnlyList<object> resources,
-        bool isContextSensitive,
-        DrawCommand retainedIdentity)
+        bool isContextSensitive)
     {
         Bounds = bounds;
         Resources = resources;
         IsContextSensitive = isContextSensitive;
-        RetainedIdentity = retainedIdentity;
     }
 
     internal DrawRect? Bounds { get; }
@@ -23,27 +21,183 @@ internal sealed class DrawCommandMetadata
 
     internal bool IsContextSensitive { get; }
 
-    internal DrawCommand RetainedIdentity { get; }
+    internal abstract DrawCommand RetainedIdentity { get; }
 
-    internal static DrawCommandMetadata Create(DrawCommand command, DrawCommandMetadata? previous = null)
+    internal abstract bool MatchesBits(in DrawCommand command);
+
+    internal bool HasSameIdentity(DrawCommandMetadata other)
     {
+        if (ReferenceEquals(this, other)) { return true; }
+        DrawCommand identity = other.RetainedIdentity;
+        return MatchesBits(identity) || RetainedIdentity.Equals(identity);
+    }
+
+    // Plain image identity is determined by the captured image reference,
+    // destination value and immutable options, not the image's current contents.
+    // Internal mesh-enriched commands retain the complete general payload.
+    private static bool IsPlainImage(in DrawCommand command) =>
+        command.Kind == DrawCommandKind.DrawImage &&
+        command.Image is not null && command.ImageOptions is not null &&
+        command.Mesh is null && command.PointBatch is null &&
+        command.LineBatch is null && command.SpriteBatch is null &&
+        command.PrismScope is null;
+
+    private static DrawCommandMetadata Capture(
+        DrawRect? bounds,
+        IReadOnlyList<object> resources,
+        bool isContextSensitive,
+        in DrawCommand command) =>
+        IsPlainImage(command)
+            ? new ImageMetadata(bounds, resources, isContextSensitive,
+                command.Image!, command.Rect, command.ImageOptions!)
+            : new GeneralMetadata(bounds, resources, isContextSensitive, command);
+
+    private sealed class GeneralMetadata(
+        DrawRect? bounds,
+        IReadOnlyList<object> resources,
+        bool isContextSensitive,
+        DrawCommand identity) : DrawCommandMetadata(bounds, resources, isContextSensitive)
+    {
+        private readonly DrawCommand identity = identity;
+        internal override DrawCommand RetainedIdentity => identity;
+        internal override bool MatchesBits(in DrawCommand command) =>
+            DrawCommand.AreBitwiseIdentical(identity, command);
+    }
+
+    private sealed class ImageMetadata(
+        DrawRect? bounds,
+        IReadOnlyList<object> resources,
+        bool isContextSensitive,
+        IDrawImage image,
+        DrawRect destination,
+        DrawImageOptions options) : DrawCommandMetadata(bounds, resources, isContextSensitive)
+    {
+        internal override DrawCommand RetainedIdentity =>
+            DrawCommand.FromImageSnapshot(image, destination, options);
+
+        internal override bool MatchesBits(in DrawCommand command) =>
+            IsPlainImage(command) && ReferenceEquals(image, command.Image) &&
+            ReferenceEquals(options, command.ImageOptions) &&
+            BitConverter.SingleToInt32Bits(destination.X) == BitConverter.SingleToInt32Bits(command.Rect.X) &&
+            BitConverter.SingleToInt32Bits(destination.Y) == BitConverter.SingleToInt32Bits(command.Rect.Y) &&
+            BitConverter.SingleToInt32Bits(destination.Width) == BitConverter.SingleToInt32Bits(command.Rect.Width) &&
+            BitConverter.SingleToInt32Bits(destination.Height) == BitConverter.SingleToInt32Bits(command.Rect.Height);
+    }
+
+    private int imageWidth = -1;
+    private RetainedCommandKey retainedKey;
+
+    internal RetainedCommandKey RetainedKey => retainedKey;
+    private int imageHeight = -1;
+
+    internal int ImageWidth => imageWidth;
+
+    internal int ImageHeight => imageHeight;
+
+    // Whether a keyed reuse of these values is valid for the command: the
+    // same check Create applies before returning the previous snapshot.
+    internal static bool MatchesRetained(
+        in DrawCommand command,
+        RetainedCommandKey key,
+        RetainedCommandKey previousKey,
+        int previousWidth,
+        int previousHeight) =>
+        key.Matches(previousKey) &&
+        command.Image is IDrawImage image &&
+        previousWidth == image.Width &&
+        previousHeight == image.Height;
+
+    internal static DrawCommandMetadata Create(
+        in DrawCommand command,
+        DrawCommandMetadata? previous = null,
+        RetainedCommandKey key = default)
+    {
+        // Analysis revalidates every command each frame; the common reuse
+        // paths stay free of the large command temporaries the general path
+        // needs, which the runtime would otherwise zero on every call.
+        if (previous is not null &&
+            command.Image is IDrawImage image &&
+            previous.imageWidth == image.Width &&
+            previous.imageHeight == image.Height)
+        {
+            // A retained owner vouches that an equal key is an identical
+            // command; only an image resized in place could change its bounds.
+            if (key.Matches(previous.retainedKey))
+            {
+                return previous;
+            }
+
+            if (command.Kind == DrawCommandKind.DrawImage &&
+                command.PrismScope is null &&
+                previous.MatchesBits(command))
+            {
+                return previous.WithKey(key);
+            }
+        }
+
+        return CreateCore(command, previous, key);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static DrawCommandMetadata CreateCore(
+        in DrawCommand command,
+        DrawCommandMetadata? previous,
+        RetainedCommandKey key)
+    {
+        // A retained owner that recorded a new version reports a changed
+        // command; comparing the large command values would only confirm it.
+        // Deriving a fresh snapshot is always correct, merely unshared.
+        bool ownerReportedChange = previous is not null && key.IsSet &&
+            ReferenceEquals(key.Owner, previous.retainedKey.Owner);
+
+        // Scenes re-record unchanged image commands every frame. An identical
+        // effect-free image command over an image of unchanged size has the
+        // same bounds and dependencies, so its snapshot can be shared directly.
+        if (previous is not null && !ownerReportedChange &&
+            command.Kind == DrawCommandKind.DrawImage &&
+            command.PrismScope is null &&
+            command.Image is IDrawImage image &&
+            previous.imageWidth == image.Width &&
+            previous.imageHeight == image.Height &&
+            (previous.MatchesBits(command) ||
+             previous.RetainedIdentity.Equals(command)))
+        {
+            return previous.WithKey(key);
+        }
+
         IReadOnlyList<object> resources = VisitResources(command, trackImage: null, previous?.Resources);
         DrawRect? bounds = ResolveBounds(command);
         bool isContextSensitive = IsContextSensitiveKind(command.Kind);
         // Commands may reference mutable brushes and images. Rediscover their
         // dependencies and bounds before sharing an immutable metadata snapshot.
-        if (previous is not null && previous.Bounds == bounds &&
+        if (previous is not null && !ownerReportedChange && previous.Bounds == bounds &&
             previous.IsContextSensitive == isContextSensitive &&
-            previous.RetainedIdentity.Equals(command) &&
+            (previous.MatchesBits(command) || previous.RetainedIdentity.Equals(command)) &&
             SameResources(previous.Resources, resources))
         {
-            return previous;
+            return previous.WithKey(key);
         }
-        return new DrawCommandMetadata(
+        DrawCommandMetadata captured = Capture(
             bounds,
             resources,
             isContextSensitive,
             command);
+        captured.imageWidth = command.Image?.Width ?? -1;
+        captured.imageHeight = command.Image?.Height ?? -1;
+        captured.retainedKey = key;
+        return captured;
+    }
+
+    // An identical command recorded under a new retained key keeps its data;
+    // the snapshot adopts the key so later frames can match it directly.
+    private DrawCommandMetadata WithKey(RetainedCommandKey key)
+    {
+        if (!key.IsSet || key.Matches(retainedKey)) { return this; }
+        DrawCommandMetadata captured = Capture(Bounds, Resources, IsContextSensitive, RetainedIdentity);
+        captured.imageWidth = imageWidth;
+        captured.imageHeight = imageHeight;
+        captured.retainedKey = key;
+        return captured;
     }
 
     private static bool SameResources(IReadOnlyList<object> previous, IReadOnlyList<object> current)
@@ -58,7 +212,7 @@ internal sealed class DrawCommandMetadata
     }
 
     private static IReadOnlyList<object> VisitResources(
-        DrawCommand command,
+        in DrawCommand command,
         Action<IDrawImage>? trackImage,
         IReadOnlyList<object>? previousResources = null)
     {
@@ -106,7 +260,7 @@ internal sealed class DrawCommandMetadata
                         ? Array.AsReadOnly(new[] { firstResource })
                         : Array.Empty<object>();
 
-        void AddCommandResources(DrawCommand current)
+        void AddCommandResources(in DrawCommand current)
         {
             Add(current.Image);
             Add(current.Font);
@@ -214,7 +368,7 @@ internal sealed class DrawCommandMetadata
         }
     }
 
-    internal static void TrackImageDependencies(DrawCommand command, Action<IDrawImage> track)
+    internal static void TrackImageDependencies(in DrawCommand command, Action<IDrawImage> track)
     {
         ArgumentNullException.ThrowIfNull(track);
         // Dependency tracking shares resource discovery with state analysis,
@@ -317,15 +471,42 @@ internal sealed class DrawCommandMetadata
             return command.Rect;
         }
 
-        DrawPoint[] corners = DrawImageGeometry.GetDestinationCorners(
+        // Analysis visits every image command each frame; keep it allocation-free.
+        Span<DrawPoint> corners = stackalloc DrawPoint[4];
+        DrawImageGeometry.WriteDestinationCorners(
             command.Image,
             command.Rect,
-            command.ImageOptions);
-        float left = corners.Min(point => point.X);
-        float top = corners.Min(point => point.Y);
-        float right = corners.Max(point => point.X);
-        float bottom = corners.Max(point => point.Y);
+            command.ImageOptions,
+            corners);
+        float left = Minimum(corners, x: true);
+        float top = Minimum(corners, x: false);
+        float right = Maximum(corners, x: true);
+        float bottom = Maximum(corners, x: false);
         return new DrawRect(left, top, right - left, bottom - top);
+    }
+
+    // Enumerable.Min semantics: any NaN yields NaN.
+    private static float Minimum(ReadOnlySpan<DrawPoint> points, bool x)
+    {
+        float value = x ? points[0].X : points[0].Y;
+        for (int index = 1; index < points.Length && !float.IsNaN(value); index++)
+        {
+            float current = x ? points[index].X : points[index].Y;
+            if (current < value || float.IsNaN(current)) { value = current; }
+        }
+        return value;
+    }
+
+    // Enumerable.Max semantics: NaN is ignored unless every value is NaN.
+    private static float Maximum(ReadOnlySpan<DrawPoint> points, bool x)
+    {
+        float value = float.NaN;
+        foreach (DrawPoint point in points)
+        {
+            float current = x ? point.X : point.Y;
+            if (float.IsNaN(value) || current > value) { value = float.IsNaN(current) ? value : current; }
+        }
+        return value;
     }
 
     private static DrawRect ExpandStroke(DrawRect bounds, DrawPen? pen)
