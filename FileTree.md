@@ -4,6 +4,33 @@ Generated from `.`.
 
 ```text
 ./
+|-- .agents/
+|   +-- skills/
+|       |-- algorithm-market/
+|       |   |-- references/
+|       |   |   +-- license-policy.md
+|       |   +-- SKILL.md
+|       |-- cerneala-breaker/
+|       |   |-- references/
+|       |   |   |-- attack-techniques.md
+|       |   |   +-- test-evidence.md
+|       |   +-- SKILL.md
+|       |-- cerneala-checklist-plan/
+|       |   |-- references/
+|       |   |   +-- semantic-audit.md
+|       |   +-- SKILL.md
+|       |-- cerneala-fix-bug/
+|       |   +-- SKILL.md
+|       |-- cerneala-implement-plan/
+|       |   +-- SKILL.md
+|       |-- cerneala-performance-gate/
+|       |   +-- SKILL.md
+|       |-- repo-cleanup/
+|       |   +-- SKILL.md
+|       +-- writing-api-documentation/
+|           |-- references/
+|           |   +-- wpf-api-doc-formula.md
+|           +-- SKILL.md
 |-- .claude/
 |   +-- skills/
 |       |-- algorithm-market/
@@ -31,9 +58,6 @@ Generated from `.`.
 |           |-- references/
 |           |   +-- wpf-api-doc-formula.md
 |           +-- SKILL.md
-|-- .codex-remote-attachments/
-|   +-- 01a067bb-bc3c-7b52-9a11-ae58e29091de/
-|       +-- df456dc8-3416-4ee2-b99c-218f297b11a2/
 |-- .config/
 |   +-- dotnet-tools.json
 |-- .github/
@@ -54,8 +78,6 @@ Generated from `.`.
 |           |   +-- visual-direction.html
 |           +-- state/
 |               +-- server-stopped
-|-- BenchmarkDotNet.Artifacts/
-|   +-- results/
 |-- benchmarks/
 |   |-- Cerneala.Benchmarks/
 |   |   |-- results/
@@ -364,7 +386,6 @@ Generated from `.`.
 |       |   +-- README.md
 |       |-- 2026-07-17-presentation-frame-budget/
 |       |   +-- README.md
-|       |-- 2026-08-11-aspect-mutation/
 |       |-- 2026-08-27-aspect-unification/
 |       |   |-- baseline-bdn/
 |       |   |   |-- results/
@@ -570,7 +591,6 @@ Generated from `.`.
 |   |   |-- SourceText.cs
 |   |   |-- TextChange.cs
 |   |   +-- TextSpan.cs
-|   |-- tmp/
 |   |-- Cerneala.Language.csproj
 |   +-- CernealaDocumentPath.cs
 |-- Cerneala.LanguageServer/
@@ -673,10 +693,6 @@ Generated from `.`.
 |   |   +-- PrismOperationSourceEmitter.cs
 |   |-- Properties/
 |   |   +-- AssemblyInfo.cs
-|   |-- tests/
-|   |   +-- CodexPresentationHarness/
-|   |       +-- generated/
-|   |-- tmp/
 |   |-- Cerneala.SourceGen.csproj
 |   |-- MarkupDom.cs
 |   |-- MotionMarkupLanguage.cs
@@ -725,10 +741,6 @@ Generated from `.`.
 |-- CernealaPresentation/
 |   |-- Properties/
 |   |   +-- AssemblyInfo.cs
-|   |-- tests/
-|   |   +-- CodexPresentationHarness/
-|   |       +-- generated/
-|   |-- tmp/
 |   |-- App.crn
 |   |-- App.crn.cs
 |   |-- AspectChapterView.crn
@@ -1612,12 +1624,6 @@ Generated from `.`.
 |   |   |   |   |-- native-windows/
 |   |   |   |   |   +-- native-migration/
 |   |   |   |   |       |-- test-results/
-|   |   |   |   |       |   |-- 1534c8a1-bb94-4d47-aa6e-c828240e4e08/
-|   |   |   |   |       |   |-- 2e8e33ab-9e23-4d91-870d-289000344bc3/
-|   |   |   |   |       |   |-- 5357f4c0-d4b2-4bfc-bd44-39e716e0444b/
-|   |   |   |   |       |   |-- acd76d56-836c-4c5c-b41d-02f6326f5eaa/
-|   |   |   |   |       |   |-- b3dc2d7e-352d-4aa3-a4a0-96a478c016f8/
-|   |   |   |   |       |   |-- ff92da54-a9f7-4291-8981-743e6e5d345e/
 |   |   |   |   |       |   |-- scene2d-stage3-new-native-windows-rerun1.trx
 |   |   |   |   |       |   |-- scene2d-stage3-required-six-native-windows.trx
 |   |   |   |   |       |   |-- stage3-native-affected-classes.trx
@@ -2386,9 +2392,11 @@ Generated from `.`.
 |   |   |   |       |-- decoration-center-02.log
 |   |   |   |       |-- decoration-center-02.trx
 |   |   |   |       |-- filetree-before-sha256.txt
+|   |   |   |       |-- filetree-final-sha256.txt
 |   |   |   |       |-- final-verification.md
 |   |   |   |       |-- full-inputs-after.csv
 |   |   |   |       |-- full-inputs-before.csv
+|   |   |   |       |-- full-status-after.txt
 |   |   |   |       |-- full-status-before.txt
 |   |   |   |       |-- model-01-command.txt
 |   |   |   |       |-- model-01-exit.txt
@@ -2429,12 +2437,14 @@ Generated from `.`.
 |   |   |   |       |-- native-scale-source-02-exit.txt
 |   |   |   |       |-- native-scale-source-02.log
 |   |   |   |       |-- native-scale-source-02.trx
+|   |   |   |       |-- new-text-whitespace.txt
 |   |   |   |       |-- preflight-meta.txt
 |   |   |   |       |-- preflight-status.txt
 |   |   |   |       |-- red-01-command.txt
 |   |   |   |       |-- red-01-exit.txt
 |   |   |   |       |-- red-01.log
 |   |   |   |       |-- red-01.trx
+|   |   |   |       |-- tracked-diff-check.txt
 |   |   |   |       |-- village-full-01-command.txt
 |   |   |   |       |-- village-full-01-exit.txt
 |   |   |   |       |-- village-full-01.log
@@ -2684,7 +2694,6 @@ Generated from `.`.
 |   +-- wpf-event-coverage.md
 |-- docs-site/
 |   |-- assets/
-|   |   |-- mascot-concepts/
 |   |   |-- cerneala-mascot-void-suction-well.png
 |   |   |-- cerneala-mascot-void-suction-well.svg
 |   |   |-- cerneala-mascot-void-suction-well.svg.cerneala.png
@@ -3858,20 +3867,6 @@ Generated from `.`.
 |   |-- wpf-compendium.html
 |   +-- wpf-compendium.js
 |-- Drawing/
-|   |-- MonoGame/
-|   |   +-- Prism/
-|   |       |-- Execution/
-|   |       |-- Kernels/
-|   |       |-- Shaders/
-|   |       |   |-- Blends/
-|   |       |   |-- Color/
-|   |       |   |-- Common/
-|   |       |   |-- Composition/
-|   |       |   |-- Filters/
-|   |       |   |   +-- Catalog/
-|   |       |   |-- Pipeline/
-|   |       |   +-- Styles/
-|   |       +-- Surfaces/
 |   |-- Paths/
 |   |   |-- DrawEllipseCoverage.cs
 |   |   |-- DrawEllipseRowTessellator.cs
@@ -4446,7 +4441,6 @@ Generated from `.`.
 |   |   |-- MainWindow.crn
 |   |   +-- MainWindow.crn.cs
 |   |-- Cerneala.MenuLab/
-|   |   |-- automation/
 |   |   |-- .gitignore
 |   |   |-- BackendRegistration.cs
 |   |   |-- Cerneala.MenuLab.csproj
@@ -4455,7 +4449,6 @@ Generated from `.`.
 |   |   |-- MenuLabViewModel.cs
 |   |   +-- README.md
 |   |-- Cerneala.Playground/
-|   |   |-- automation/
 |   |   |-- Properties/
 |   |   |   +-- AssemblyInfo.cs
 |   |   |-- SceneWorldAssets/
@@ -4504,7 +4497,6 @@ Generated from `.`.
 |   +-- AssemblyInfo.cs
 |-- Shared/
 |   +-- PreviewProtocol.cs
-|-- spikes/
 |-- tests/
 |   |-- Baselines/
 |   |   +-- Conformance/
@@ -4712,6 +4704,7 @@ Generated from `.`.
 |   |   |   |-- DecoratorTests.cs
 |   |   |   |-- ElementAspectTests.cs
 |   |   |   |-- ImageTests.cs
+|   |   |   |-- InitialContactMovementTests.cs
 |   |   |   |-- InkCanvasTests.cs
 |   |   |   |-- ItemContainerGeneratorTests.cs
 |   |   |   |-- ItemContainerRecyclePoolTests.cs
@@ -4735,6 +4728,7 @@ Generated from `.`.
 |   |   |   |-- RenderSurface3DStageZeroCharacterizationTests.cs
 |   |   |   |-- RenderSurface3DTests.cs
 |   |   |   |-- SceneBoundedCopyTests.cs
+|   |   |   |-- SceneChildBoundsIndexTests.cs
 |   |   |   |-- SceneCollisionStreamingTests.cs
 |   |   |   |-- SceneComponentRuntimeTests.cs
 |   |   |   |-- SceneDebugOverlayTests.cs
@@ -4765,6 +4759,7 @@ Generated from `.`.
 |   |   |   |-- SpriteAnimationSamplerTests.cs
 |   |   |   |-- SpriteAnimationSchedulingTests.cs
 |   |   |   |-- SpriteAnimationStageZeroContractTests.cs
+|   |   |   |-- SpriteResourceProviderCompatibilityTests.cs
 |   |   |   |-- StackPanelTests.cs
 |   |   |   |-- SvgImageTests.cs
 |   |   |   |-- TabControlTests.cs
@@ -4801,11 +4796,7 @@ Generated from `.`.
 |   |   |   |-- UserControlTests.cs
 |   |   |   |-- WindowRenderingTests.cs
 |   |   |   +-- WpfEventSurfaceTests.cs
-|   |   |-- Docs/
 |   |   |-- Drawing/
-|   |   |   |-- MonoGame/
-|   |   |   |   +-- Prism/
-|   |   |   |       +-- Cache/
 |   |   |   |-- Paths/
 |   |   |   |   |-- DrawPathTests.cs
 |   |   |   |   |-- DrawStrokeTests.cs
@@ -4887,7 +4878,6 @@ Generated from `.`.
 |   |   |   |   |-- PrismWatercolorFilterTests.cs
 |   |   |   |   |-- PrismWaterPaperFilterTests.cs
 |   |   |   |   +-- PrismWindFilterTests.cs
-|   |   |   |-- SdlGpu/
 |   |   |   |-- AdvancedDrawCommandTests.cs
 |   |   |   |-- ColorTests.cs
 |   |   |   |-- CompleteDrawingApiBaselineTests.cs
@@ -4900,6 +4890,8 @@ Generated from `.`.
 |   |   |   |-- DrawingShapeTests.cs
 |   |   |   |-- DrawingStateTests.cs
 |   |   |   |-- DrawingTextLayoutTests.cs
+|   |   |   |-- ImageMetadataSnapshotTests.cs
+|   |   |   |-- RetainedCommandVersionAlignmentTests.cs
 |   |   |   |-- SdlGpuConformanceArtifacts.cs
 |   |   |   |-- SdlGpuConformanceArtifactsTests.cs
 |   |   |   |-- SdlGpuDrawingConformanceTests.cs
@@ -5006,7 +4998,6 @@ Generated from `.`.
 |   |   |   |   |-- AspectVariantTests.cs
 |   |   |   |   |-- DefaultAspectPackageTests.cs
 |   |   |   |   +-- ThemeTokenBridgeTests.cs
-|   |   |   |-- Automation/
 |   |   |   |-- Controls/
 |   |   |   |   |-- Shapes/
 |   |   |   |   |   |-- ShapePrimitiveTests.cs
@@ -5043,6 +5034,7 @@ Generated from `.`.
 |   |   |   |   |-- RoutedEventTraceTests.cs
 |   |   |   |   +-- TileMapDiagnosticsTests.cs
 |   |   |   |-- Elements/
+|   |   |   |   |-- CollectionMembershipRoleTests.cs
 |   |   |   |   |-- ElementHandlerStoreTests.cs
 |   |   |   |   |-- ElementLifecycleTests.cs
 |   |   |   |   |-- ElementTreeWalkerTests.cs
@@ -5148,7 +5140,6 @@ Generated from `.`.
 |   |   |   |   |   +-- LayoutMotionCoordinatorTests.cs
 |   |   |   |   |-- Presence/
 |   |   |   |   |   +-- PresenceCoordinatorTests.cs
-|   |   |   |   |-- Prism/
 |   |   |   |   |-- Properties/
 |   |   |   |   |   +-- MotionPropertyBindingTests.cs
 |   |   |   |   |-- Specs/
@@ -5316,9 +5307,11 @@ Generated from `.`.
 |   |-- Cerneala.Tests.SceneVillage/
 |   |   |-- Cerneala.Tests.SceneVillage.csproj
 |   |   |-- NativeCharacterAtlasTests.cs
+|   |   |-- NativeVillageFrameRateGateTests.cs
 |   |   |-- NativeVillageScaleTests.cs
 |   |   |-- NativeVillageTileBoundaryTests.cs
 |   |   |-- NativeVillageWindowTests.cs
+|   |   |-- VillageAnimationCaptureSamplingTests.cs
 |   |   |-- VillageModelTests.cs
 |   |   |-- VillageNativeFactAttribute.cs
 |   |   |-- VillageScaleContractTests.cs
@@ -5396,6 +5389,7 @@ Generated from `.`.
 |   |   |-- NativeScenePrismDomainTests.cs
 |   |   |-- NativeScenePrismStreamingTests.cs
 |   |   |-- NativeSdlLifetimeTests.cs
+|   |   |-- NativeServoHeldKeyTests.cs
 |   |   |-- NativeTetrisWindowTests.cs
 |   |   |-- NativeUiImagePresentationTests.cs
 |   |   |-- RectanglePixelBoundaryMigrationTests.cs
@@ -5429,6 +5423,7 @@ Generated from `.`.
 |   |   |-- SdlGpuSampledTextureReuseTests.cs
 |   |   |-- SdlGpuScreenshotRegionTests.cs
 |   |   |-- SdlGpuShaderArtifactTests.cs
+|   |   |-- SdlGpuSurfaceBufferOwnershipTests.cs
 |   |   |-- SdlGpuSurfaceDamageAllocationTests.cs
 |   |   |-- SdlGpuSurfaceRetainedTests.cs
 |   |   |-- SdlGpuTextAtlasAllocatorTests.cs
@@ -5449,7 +5444,6 @@ Generated from `.`.
 |   |   |-- Prism/
 |   |   |   |-- PrismCatalogCompilerTests.cs
 |   |   |   +-- PrismMarkupContractTests.cs
-|   |   |-- tmp/
 |   |   |-- Cerneala.Tests.SourceGen.csproj
 |   |   |-- PresentationMarkupRegressionTests.cs
 |   |   |-- UiMarkupGeneratorApplicationTests.cs
@@ -5611,7 +5605,6 @@ Generated from `.`.
 |   |-- TetrisGameSurface.cs
 |   |-- TetrisSceneModel.cs
 |   +-- TetrominoAtlas.cs
-|-- tmp/
 |-- Tools/
 |   |-- Cerneala.Scene2D.PackageCompiler/
 |   |   |-- Cerneala.Scene2D.PackageCompiler.csproj
@@ -5626,20 +5619,17 @@ Generated from `.`.
 |   |-- PrismAudit/
 |   |   |-- PrismAudit.csproj
 |   |   +-- Program.cs
-|   |-- scripts/
-|   |   |-- Archive-Repo.ps1
-|   |   |-- Archive-Repo.Tests.ps1
-|   |   |-- Build-CernealaVisualStudioRelease.ps1
-|   |   |-- Invoke-SdlGpuSmoke.ps1
-|   |   |-- Measure-PrismOuterGlowColdStart.ps1
-|   |   |-- New-FileTree.ps1
-|   |   |-- New-PrismFilterReference.ps1
-|   |   |-- Publish-SdlGpuSmoke.ps1
-|   |   |-- SdlGpuSmoke.Common.ps1
-|   |   +-- Test-PrismMotionBlur144Hz.ps1
-|   |-- spikes/
-|   +-- temp/
-|       +-- Stage1RuntimeFixture/
+|   +-- scripts/
+|       |-- Archive-Repo.ps1
+|       |-- Archive-Repo.Tests.ps1
+|       |-- Build-CernealaVisualStudioRelease.ps1
+|       |-- Invoke-SdlGpuSmoke.ps1
+|       |-- Measure-PrismOuterGlowColdStart.ps1
+|       |-- New-FileTree.ps1
+|       |-- New-PrismFilterReference.ps1
+|       |-- Publish-SdlGpuSmoke.ps1
+|       |-- SdlGpuSmoke.Common.ps1
+|       +-- Test-PrismMotionBlur144Hz.ps1
 |-- UI/
 |   |-- Accessibility/
 |   |   |-- AccessibleName.cs
@@ -5849,6 +5839,7 @@ Generated from `.`.
 |   |   |-- Scene2DDocument.cs
 |   |   |-- Scene2DModelValidator.cs
 |   |   |-- Scene2DRecordContext.cs
+|   |   |-- SceneChildBoundsIndex2D.cs
 |   |   |-- SceneGeometry2D.cs
 |   |   |-- SceneHitTest2D.cs
 |   |   |-- SceneItems2D.cs
@@ -5986,7 +5977,6 @@ Generated from `.`.
 |   |   |-- UIRoot.cs
 |   |   +-- UIRoot.Subscriptions.cs
 |   |-- Hosting/
-|   |   |-- MonoGame/
 |   |   |-- Windowing/
 |   |   |   |-- ApplicationBackendAttribute.cs
 |   |   |   |-- DesignPreviewSession.cs
@@ -5995,7 +5985,6 @@ Generated from `.`.
 |   |   |   |-- WindowApplicationRuntime.cs
 |   |   |   |-- WindowingBackendRegistry.cs
 |   |   |   +-- WindowScreenshotRegion.cs
-|   |   |-- Windows/
 |   |   |-- BackdropFrameCounters.cs
 |   |   |-- IUiBackend.cs
 |   |   |-- IUiClock.cs
@@ -6011,7 +6000,6 @@ Generated from `.`.
 |   |   |-- StrokeCollectionChangedEventArgs.cs
 |   |   +-- StrokeCollectionChangeKind.cs
 |   |-- Input/
-|   |   |-- MonoGame/
 |   |   |-- ActionCommand.cs
 |   |   |-- CanExecuteRoutedEventArgs.cs
 |   |   |-- ClickTracker.cs
@@ -6262,7 +6250,6 @@ Generated from `.`.
 |   |   |   |-- PresenceCoordinator.cs
 |   |   |   |-- PresenceOptions.cs
 |   |   |   +-- PresenceState.cs
-|   |   |-- Prism/
 |   |   |-- Properties/
 |   |   |   |-- AnimatablePropertyRegistry.cs
 |   |   |   |-- MotionClearBehavior.cs
@@ -6383,7 +6370,6 @@ Generated from `.`.
 |   |   |-- RetainedRenderer.cs
 |   |   +-- TimeSensitiveRenderInvalidator.cs
 |   |-- Resources/
-|   |   |-- MonoGame/
 |   |   |-- FontResource.cs
 |   |   |-- IAsyncImageLoader.cs
 |   |   |-- IImageLoader.cs
@@ -6392,6 +6378,7 @@ Generated from `.`.
 |   |   |-- ImageResourceCache.cs
 |   |   |-- ImageResourceLease.cs
 |   |   |-- ImageResourceLeaseSet.cs
+|   |   |-- ImageResourceResolutionEpoch.cs
 |   |   |-- ImageResourceResolver.cs
 |   |   |-- IObservableResourceProvider.cs
 |   |   |-- IResourceProvider.cs
