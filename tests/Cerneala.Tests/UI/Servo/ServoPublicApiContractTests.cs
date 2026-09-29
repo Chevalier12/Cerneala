@@ -39,6 +39,7 @@ public sealed class ServoPublicApiContractTests
             "DragAsync",
             "ScrollAsync",
             "PressKeyAsync",
+            "HoldKeyAsync",
             "SendTextAsync",
             "TypeIntoAsync",
             "ReplaceTextAsync",
@@ -59,6 +60,9 @@ public sealed class ServoPublicApiContractTests
                 Assert.Equal(typeof(CancellationToken), method.GetParameters()[^1].ParameterType);
             });
         }
+
+        Assert.NotNull(servo.GetMethod("HoldKeyAsync", [
+            typeof(Cerneala.UI.Input.InputKey), typeof(TimeSpan), modifiers, typeof(CancellationToken)]));
 
         Assert.NotNull(target.GetMethod("ById", BindingFlags.Public | BindingFlags.Static));
         Assert.NotNull(target.GetMethod("ByName", BindingFlags.Public | BindingFlags.Static));

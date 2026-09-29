@@ -15,6 +15,7 @@ public sealed class Servo
 
 ```csharp
 using Cerneala.UI.Accessibility;
+using Cerneala.UI.Input;
 using Cerneala.UI.Servo;
 
 var servo = new Servo(window);
@@ -27,6 +28,12 @@ await servo.SaveScreenshotAsync("artifacts/window.png");
 await servo.SaveScreenshotAsync(
     ServoTarget.ById("confirmation"),
     "artifacts/confirmation.png");
+
+var walkingServo = new Servo(window, new ServoOptions
+{
+    DefaultTimeout = TimeSpan.FromSeconds(10)
+});
+await walkingServo.HoldKeyAsync(InputKey.D, TimeSpan.FromSeconds(2));
 ```
 
 ## Remarks
@@ -46,6 +53,10 @@ The bounds center must hit the target or a descendant on the current input route
 Input sequences are serialized per window or host. `TypeIntoAsync` composes a click and text input. `ReplaceTextAsync` composes a click, `Control+A`, and text input rather than assigning a control property.
 
 Every operation uses `ServoOptions.DefaultTimeout`. Expiration throws `ServoTimeoutException`; caller cancellation remains `OperationCanceledException`. Waits reevaluate after retained frame boundaries and release their transient subscriptions on every completion path. Async `WaitUntilAsync` predicates may issue Servo queries and do not hold the input serialization gate. `WaitForIdleAsync` requires the relay, scheduler, input context, and Motion system to be idle; continuous Motion therefore times out.
+
+`HoldKeyAsync` requires a `Window`-owned Servo; a direct `UiHost` Servo rejects it with `NotSupportedException` before sending input. The duration must be positive. The key and any requested left-side Shift, Control, or Alt modifiers follow the same focused-element routing as `PressKeyAsync`; `PressKeyAsync` remains a tap. The monotonic hold interval starts when the Window runtime completes Servo input for the key-down frame, **after** `Window.FrameRendered` callbacks have returned. It is not a physical display/scanout timestamp. Subsequent Servo-owned window frames keep the same down state without synthesizing repeated `KeyDown` events. Key-up is delivered in the first input frame begun at or after the requested minimum **monotonic wall-clock** duration, followed by modifier release; frame scheduling can make the actual interval longer.
+
+`DefaultTimeout` applies to the whole operation, including serialization wait, key-down delivery, hold interval, and ordinary release. Configure it longer than the requested duration with margin for frame scheduling. Cancellation or timeout can shorten the hold. If the owner processes cleanup before the additional `DefaultTimeout` cleanup deadline, Servo routes the release before the task settles. If the Window is hidden or its viewport becomes non-renderable during a hold, Servo faults the hold and routes a release through the retained input host without presenting another frame; an already requested cancellation or timeout keeps its result. During that offscreen release, reentrant Show or Close requests from input callbacks are deferred until the retained update finishes. If the owner pump stops or is delayed beyond that deadline after input started, cancellation, timeout, or failure initiates cleanup but cannot dispatch it from a background thread. The task settles after at most one additional `DefaultTimeout` cleanup interval, with the reset left ahead of subsequent Servo input for the next owner update. A closed/destroyed or persistently faulted owner cannot promise delivery of a release; close discards its pending Servo input. Servo does not reserve or alter input supplied independently to a direct `UiHost`.
 
 Screenshots are supported only by the `Window` constructor and use the application-owned `Window.SaveScreenshot` pipeline. A target screenshot resolves the target fresh, requires effective visibility and a non-empty framebuffer intersection, and crops the fully rendered window after drawing. Disabled and non-hit-testable targets remain capturable. A `UiHost`-only Servo throws `NotSupportedException` for both screenshot overloads.
 
@@ -76,6 +87,7 @@ Screenshots are supported only by the `Window` constructor and use the applicati
 | `DragAsync(ServoTarget, ServoPoint, int, CancellationToken)` | Drags from the current target center to an absolute client-DIP destination. |
 | `ScrollAsync(ServoTarget, int, CancellationToken)` | Sends a wheel delta at the current target center. |
 | `PressKeyAsync(InputKey, ServoModifiers, CancellationToken)` | Sends a key chord to the currently focused element. |
+| `HoldKeyAsync(InputKey, TimeSpan, ServoModifiers, CancellationToken)` | Holds a key chord across Window frames for at least the specified wall-clock duration, then releases it. |
 | `SendTextAsync(string, CancellationToken)` | Sends Unicode text elements to the currently focused element. |
 | `TypeIntoAsync(ServoTarget, string, CancellationToken)` | Clicks a target and sends text to it. |
 | `ReplaceTextAsync(ServoTarget, string, CancellationToken)` | Clicks a target, selects all with `Control+A`, and sends replacement text. |

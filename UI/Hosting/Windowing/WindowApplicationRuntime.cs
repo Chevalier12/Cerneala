@@ -147,6 +147,18 @@ internal sealed class WindowApplicationRuntime : IDisposable
         }
 
         window.SetShown(true);
+        if (context.IsDrainingServoCleanup)
+        {
+            context.DeferShow();
+            return;
+        }
+
+        PresentShownWindow(context);
+    }
+
+    private void PresentShownWindow(WindowContext context)
+    {
+        Window window = context.Window;
         try
         {
             bool rendered = Render(context, TimeSpan.Zero);
@@ -194,6 +206,9 @@ internal sealed class WindowApplicationRuntime : IDisposable
         {
             SetActiveWindow(null);
         }
+
+        context.AbortHeldServoInput(new ServoException(
+            "The Servo Window was hidden before held input completed."));
     }
 
     public void Activate(Window window)
@@ -213,6 +228,15 @@ internal sealed class WindowApplicationRuntime : IDisposable
         ArgumentNullException.ThrowIfNull(window);
         if (window.IsClosed)
         {
+            return true;
+        }
+
+        if (contexts.TryGetValue(window, out WindowContext? drainingContext) &&
+            drainingContext.IsDrainingServoCleanup)
+        {
+            if (drainingContext.IsCloseDeferred) return true;
+            if (!force && !window.RaiseClosing()) return false;
+            drainingContext.DeferClose();
             return true;
         }
 
@@ -546,6 +570,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
                 context.PlatformWindow.Viewport.Width <= 0 ||
                 context.PlatformWindow.Viewport.Height <= 0)
             {
+                context.DrainServoCleanupWithoutPresentation();
                 continue;
             }
 
@@ -705,7 +730,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
     private bool Render(WindowContext context, TimeSpan elapsedTime, bool renderTimeAlreadyAdvanced = false)
     {
-        if (context.IsRendering)
+        if (context.IsRendering || context.IsDrainingServoCleanup)
         {
             context.RenderRequested = true;
             return false;
@@ -726,6 +751,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
                 frame = UpdateServoInput(
                     context, elapsedTime, renderTimeAlreadyAdvanced,
                     out servoRequest, out inputCollectionTime);
+                if (servoRequest is not null) servoRequest.InputApplied = true;
                 retainedUpdateTime = Stopwatch.GetElapsedTime(retainedUpdateStarted) - inputCollectionTime;
             }
             else
@@ -821,6 +847,13 @@ internal sealed class WindowApplicationRuntime : IDisposable
         finally
         {
             context.IsRendering = false;
+            if (IsLiveContext(context) &&
+                (!context.Window.IsShown ||
+                 context.PlatformWindow.Viewport.Width <= 0 ||
+                 context.PlatformWindow.Viewport.Height <= 0))
+            {
+                context.DrainServoCleanupWithoutPresentation();
+            }
             if (IsLiveContext(context) &&
                 (context.ServoInputOperations.Count > 0 ||
                  context.ServoScreenshotRequests.Count > 0))
@@ -982,6 +1015,11 @@ internal sealed class WindowApplicationRuntime : IDisposable
         public void BoundsChanged(UiViewport viewport, float left, float top, WindowState state)
         {
             WindowContext context = Context ?? throw new InvalidOperationException("Window callback arrived before host initialization.");
+            if (viewport.Width <= 0 || viewport.Height <= 0)
+            {
+                context.AbortHeldServoInput(new ServoException(
+                    "The Servo Window lost its renderable viewport before held input completed."));
+            }
             context.OverrideViewport = viewport;
             window.SetPlatformBounds(left, top, state);
             context.RenderRequested = true;
@@ -1011,6 +1049,11 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
     private sealed class WindowContext : IDisposable
     {
+        private enum DeferredLifecycleAction { None, Show, Close }
+
+        private readonly WindowApplicationRuntime runtime;
+        private DeferredLifecycleAction deferredLifecycleAction;
+
         public WindowContext(
             WindowApplicationRuntime runtime,
             Window window,
@@ -1018,6 +1061,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
             UIRoot root,
             UiHost host)
         {
+            this.runtime = runtime;
             Window = window;
             PlatformWindow = platformWindow;
             Root = root;
@@ -1050,6 +1094,10 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
         public bool IsRendering { get; set; }
 
+        public bool IsDrainingServoCleanup { get; private set; }
+
+        public bool IsCloseDeferred => deferredLifecycleAction == DeferredLifecycleAction.Close;
+
         public int ModalDisableCount { get; set; }
 
         public UiViewport? OverrideViewport { get; set; }
@@ -1057,6 +1105,68 @@ internal sealed class WindowApplicationRuntime : IDisposable
         public Queue<ServoInputOperation> ServoInputOperations { get; } = new();
 
         public Queue<ServoScreenshotRequest> ServoScreenshotRequests { get; } = new();
+
+        public void DeferShow()
+        {
+            if (!IsCloseDeferred) deferredLifecycleAction = DeferredLifecycleAction.Show;
+        }
+
+        public void DeferClose() => deferredLifecycleAction = DeferredLifecycleAction.Close;
+
+        public void AbortHeldServoInput(Exception exception)
+        {
+            if (!ServoInputOperations.TryPeek(out ServoInputOperation? operation))
+            {
+                return;
+            }
+
+            bool needsCleanup = operation.AbortHeld(exception);
+            RemoveCompletedServoOperation(operation);
+            if (needsCleanup && !IsRendering) DrainServoCleanupWithoutPresentation();
+        }
+
+        public void DrainServoCleanupWithoutPresentation()
+        {
+            if (IsRendering || IsDrainingServoCleanup ||
+                !ServoInputOperations.TryPeek(out ServoInputOperation? operation) ||
+                !operation.HasPendingCleanup)
+            {
+                return;
+            }
+
+            IsDrainingServoCleanup = true;
+            try
+            {
+                ServoInputFrameRequest? request = operation.GetNextFrame();
+                if (request is null || !request.IsCleanup) return;
+                try
+                {
+                    // Visibility and a renderable surface are gone, but the owner can
+                    // still route the release through the retained input host.
+                    Host.Update(request.Step.Frame, Host.Viewport, TimeSpan.Zero);
+                    request.InputApplied = true;
+                    CompleteServoInputFrame(request);
+                }
+                catch (Exception exception)
+                {
+                    FailServoInputFrame(request, exception);
+                }
+            }
+            finally
+            {
+                IsDrainingServoCleanup = false;
+                DeferredLifecycleAction deferred = deferredLifecycleAction;
+                deferredLifecycleAction = DeferredLifecycleAction.None;
+                if (deferred == DeferredLifecycleAction.Close)
+                {
+                    runtime.Close(Window, force: true);
+                }
+                else if (deferred == DeferredLifecycleAction.Show && Window.IsShown)
+                {
+                    runtime.PresentShownWindow(this);
+                }
+            }
+        }
 
         public ServoInputFrameRequest? TryBeginServoInputFrame()
         {
@@ -1111,7 +1221,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
         private void RemoveCompletedServoOperation(ServoInputOperation operation)
         {
-            if (!operation.Task.IsCompleted)
+            if (!operation.IsDrained)
             {
                 return;
             }
@@ -1135,7 +1245,13 @@ internal sealed class WindowApplicationRuntime : IDisposable
         private ServoInputStep? cleanupStep;
         private ServoInputStep? lastAttempted;
         private Exception? failure;
+        // 0 = queued without input, 1 = owner claimed input, 2 = ended before input.
         private int started;
+        private int completionStarted;
+        private int cleanupDeadlineStarted;
+        private bool drained;
+        private long holdCommittedAt;
+        private bool holdStarted;
 
         public ServoInputOperation(
             ServoInputSequence sequence,
@@ -1150,14 +1266,44 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
         public Task Task => completion.Task;
 
+        public bool IsDrained => Volatile.Read(ref drained);
+
+        public bool HasPendingCleanup => cleanupStep is not null;
+
+        public bool AbortHeld(Exception exception)
+        {
+            if (sequence.HeldStepIndex < 0 || IsDrained) return false;
+            ArgumentNullException.ThrowIfNull(exception);
+            // A caller cancellation or operation timeout already chose the
+            // result; visibility loss must still route its pending reset.
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                Interlocked.CompareExchange(ref failure, exception, null);
+            }
+            if (Interlocked.CompareExchange(ref started, 2, 0) == 0)
+            {
+                Volatile.Write(ref drained, true);
+                Complete();
+                return false;
+            }
+
+            if (Volatile.Read(ref started) == 2) return false;
+
+            nextIndex = sequence.Steps.Count;
+            ServoInputStep last = lastAttempted ?? sequence.Steps[0];
+            cleanupStep ??= ServoInputSequence.CreateResetStep(last.Pointer, last.Keyboard);
+            StartCleanupDeadline();
+            return true;
+        }
+
         public ServoInputFrameRequest? GetNextFrame()
         {
-            if (Task.IsCompleted)
+            if (IsDrained)
             {
                 return null;
             }
 
-            if (cancellationToken.IsCancellationRequested && Volatile.Read(ref started) != 0)
+            if (cancellationToken.IsCancellationRequested && Volatile.Read(ref started) == 1)
             {
                 nextIndex = sequence.Steps.Count;
                 ServoInputStep last = lastAttempted ?? sequence.Steps[0];
@@ -1172,11 +1318,22 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
             if (nextIndex >= sequence.Steps.Count)
             {
+                Volatile.Write(ref drained, true);
                 Complete();
                 return null;
             }
 
-            Interlocked.Exchange(ref started, 1);
+            if (holdStarted &&
+                nextIndex == sequence.HeldStepIndex + 1 &&
+                Stopwatch.GetElapsedTime(holdCommittedAt) < sequence.HoldDuration)
+            {
+                return new ServoInputFrameRequest(
+                    this, sequence.HoldContinuationStep, IsCleanup: false, IsHoldContinuation: true);
+            }
+
+            // Cancellation may have won after the checks above, including
+            // while a lazy sequence materialized its first step.
+            if (Interlocked.CompareExchange(ref started, 1, 0) == 2) return null;
             ServoInputStep step = sequence.Steps[nextIndex++];
             lastAttempted = step;
             return new ServoInputFrameRequest(this, step, IsCleanup: false);
@@ -1184,27 +1341,56 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
         public void CompleteFrame(ServoInputFrameRequest request)
         {
+            if (IsDrained) return;
             if (!request.IsCleanup && cancellationToken.IsCancellationRequested)
             {
                 nextIndex = sequence.Steps.Count;
                 cleanupStep = ServoInputSequence.CreateResetStep(
                     request.Step.Pointer,
                     request.Step.Keyboard);
+                StartCleanupDeadline();
                 return;
+            }
+
+            if (!request.IsCleanup && cleanupStep is not null) return;
+
+            if (request.IsHoldContinuation)
+            {
+                return;
+            }
+
+            if (!request.IsCleanup &&
+                sequence.HeldStepIndex >= 0 &&
+                nextIndex == sequence.HeldStepIndex + 1)
+            {
+                holdCommittedAt = Stopwatch.GetTimestamp();
+                holdStarted = true;
             }
 
             if (request.IsCleanup || nextIndex >= sequence.Steps.Count)
             {
+                Volatile.Write(ref drained, true);
                 Complete();
             }
         }
 
         public void FailFrame(ServoInputFrameRequest request, Exception exception)
         {
-            failure ??= exception;
+            Interlocked.CompareExchange(ref failure, exception, null);
             if (request.IsCleanup)
             {
-                Complete();
+                // Existing tap/drag actions have no held-input cleanup deadline.
+                // Their failed reset remains a bounded fault, not a queued retry.
+                if (request.InputApplied || sequence.CleanupTimeout <= TimeSpan.Zero)
+                {
+                    Volatile.Write(ref drained, true);
+                    Complete();
+                }
+                else
+                {
+                    cleanupStep = request.Step;
+                    StartCleanupDeadline();
+                }
                 return;
             }
 
@@ -1212,21 +1398,24 @@ internal sealed class WindowApplicationRuntime : IDisposable
             cleanupStep = ServoInputSequence.CreateResetStep(
                 request.Step.Pointer,
                 request.Step.Keyboard);
+            StartCleanupDeadline();
         }
 
         public void Fail(Exception exception)
         {
             ArgumentNullException.ThrowIfNull(exception);
-            failure ??= exception;
+            Interlocked.CompareExchange(ref failure, exception, null);
+            Volatile.Write(ref drained, true);
             Complete();
         }
 
         private void Complete()
         {
+            if (Interlocked.Exchange(ref completionStarted, 1) != 0) return;
             cancellationRegistration.Dispose();
-            if (failure is not null)
+            if (Volatile.Read(ref failure) is Exception exception)
             {
-                completion.TrySetException(failure);
+                completion.TrySetException(exception);
             }
             else if (cancellationToken.IsCancellationRequested)
             {
@@ -1240,10 +1429,32 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
         private void OnCancellationRequested()
         {
-            if (Volatile.Read(ref started) == 0)
+            if (Interlocked.CompareExchange(ref started, 2, 0) == 0)
             {
-                completion.TrySetCanceled(cancellationToken);
+                Volatile.Write(ref drained, true);
+                Complete();
             }
+            else if (Volatile.Read(ref started) == 1)
+            {
+                StartCleanupDeadline();
+            }
+        }
+
+        private void StartCleanupDeadline()
+        {
+            if (sequence.CleanupTimeout <= TimeSpan.Zero ||
+                Interlocked.Exchange(ref cleanupDeadlineStarted, 1) != 0)
+            {
+                return;
+            }
+
+            _ = CompleteAfterCleanupDeadlineAsync();
+        }
+
+        private async Task CompleteAfterCleanupDeadlineAsync()
+        {
+            await Task.Delay(sequence.CleanupTimeout).ConfigureAwait(false);
+            if (!IsDrained) Complete();
         }
     }
 
@@ -1319,7 +1530,11 @@ internal sealed class WindowApplicationRuntime : IDisposable
     private sealed record ServoInputFrameRequest(
         ServoInputOperation Operation,
         ServoInputStep Step,
-        bool IsCleanup);
+        bool IsCleanup,
+        bool IsHoldContinuation = false)
+    {
+        public bool InputApplied { get; set; }
+    }
 
     private sealed class ReferenceEqualityComparer : IEqualityComparer<Window>
     {

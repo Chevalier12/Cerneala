@@ -20,5 +20,12 @@ internal interface IServoInputDriver
 
     Task PressKeyAsync(InputKey key, ServoModifiers modifiers, CancellationToken cancellationToken);
 
+    Task HoldKeyAsync(
+        InputKey key,
+        TimeSpan duration,
+        ServoModifiers modifiers,
+        TimeSpan cleanupTimeout,
+        CancellationToken cancellationToken);
+
     Task SendTextAsync(string text, CancellationToken cancellationToken);
 }

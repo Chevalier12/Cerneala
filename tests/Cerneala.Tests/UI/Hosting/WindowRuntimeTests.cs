@@ -1,4 +1,6 @@
+using System.Collections;
 using System.Diagnostics;
+using System.Reflection;
 using Cerneala.Drawing;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
@@ -519,6 +521,637 @@ public sealed class WindowRuntimeTests : IDisposable
     }
 
     [Fact]
+    public void ServoHoldCancellationBetweenDrainCheckAndFirstModifierStepCannotDispatchInput()
+    {
+        using CancellationTokenSource cancellation = new();
+        PointerSnapshot pointer = PointerSnapshot.Empty;
+        KeyboardSnapshot empty = KeyboardSnapshot.Empty;
+        KeyboardSnapshot control = KeyboardSnapshot.FromDownKeys([InputKey.LeftCtrl]);
+        KeyboardSnapshot chord = KeyboardSnapshot.FromDownKeys([InputKey.LeftCtrl, InputKey.A]);
+        static ServoInputStep Step(PointerSnapshot pointer, KeyboardSnapshot before, KeyboardSnapshot after) =>
+            new(new InputFrame(pointer, pointer, before, after, []), pointer, after);
+        InterruptingServoSteps steps = new([
+            Step(pointer, empty, control),
+            Step(pointer, control, chord),
+            Step(pointer, chord, control),
+            Step(pointer, control, empty)
+        ]);
+        ServoInputSequence sequence = new(
+            steps, heldStepIndex: 1, holdDuration: TimeSpan.FromSeconds(1),
+            cleanupTimeout: TimeSpan.FromMilliseconds(250));
+        Type operationType = typeof(WindowApplicationRuntime).GetNestedType(
+            "ServoInputOperation", BindingFlags.NonPublic)!;
+        object operation = Activator.CreateInstance(
+            operationType, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+            binder: null, args: [sequence, cancellation.Token], culture: null)!;
+        Task completion = (Task)operationType.GetProperty("Task")!.GetValue(operation)!;
+
+        // Count is read after GetNextFrame's drain/cancel checks but before
+        // the first modifier-down step claims ownership.
+        steps.InterruptOnNextCount(cancellation.Cancel);
+        object? request = operationType.GetMethod("GetNextFrame")!.Invoke(operation, null);
+
+        Assert.True(completion.IsCanceled);
+        Assert.Null(request);
+    }
+
+    [Fact]
+    public void ServoWindowTapPersistentResetFailureDoesNotKeepSerializationGate()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        TextBox editor = new() { Width = 200, Height = 40 };
+        ServoApi.SetId(editor, "editor");
+        Window window = new() { Content = editor };
+        window.Show();
+        ServoApi servo = new(window, new ServoOptions { DefaultTimeout = TimeSpan.FromMilliseconds(500) });
+        Task focus = servo.ClickAsync(ServoTarget.ById("editor"));
+        PumpUntilCompleted(runtime, focus);
+        CompleteSynchronously(focus);
+
+        bool failReset = true;
+        int resetAttempts = 0;
+        bool nextSawCleanModifiers = false;
+        editor.AddHandler(InputEvents.KeyDownEvent, (_, args) =>
+        {
+            KeyEventArgs key = Assert.IsType<KeyEventArgs>(args);
+            if (key.Key == InputKey.A) throw new InvalidOperationException("Injected tap failure.");
+            if (key.Key == InputKey.B) nextSawCleanModifiers = !key.IsControlDown;
+        }, handledEventsToo: true);
+        editor.AddHandler(InputEvents.PreviewKeyUpEvent, (_, _) =>
+        {
+            if (failReset)
+            {
+                resetAttempts++;
+                throw new InvalidOperationException("Injected persistent tap cleanup failure.");
+            }
+        }, handledEventsToo: true);
+
+        Task failed = servo.PressKeyAsync(InputKey.A, ServoModifiers.Control);
+        Stopwatch deadline = Stopwatch.StartNew();
+        while (!failed.IsCompleted && deadline.Elapsed < TimeSpan.FromSeconds(2))
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+            Thread.Sleep(1);
+        }
+
+        Assert.True(failed.IsCompleted, "A persistent tap reset failure retained the Servo serialization gate.");
+        Assert.Throws<InvalidOperationException>(() => CompleteSynchronously(failed));
+        Assert.True(resetAttempts >= 1);
+        failReset = false;
+        Task next = servo.PressKeyAsync(InputKey.B);
+        PumpUntilCompleted(runtime, next);
+        CompleteSynchronously(next);
+        Assert.True(nextSawCleanModifiers);
+    }
+
+    [Fact]
+    public async Task ServoWindowHoldKeepsOneChordDownAcrossPresentedFramesThenReleases()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        TextBox editor = new() { Width = 200, Height = 40 };
+        ServoApi.SetId(editor, "editor");
+        Window window = new() { Content = editor };
+        window.Show();
+        ServoApi servo = new(window);
+        Task focus = servo.ClickAsync(ServoTarget.ById("editor"));
+        PumpUntilCompleted(runtime, focus);
+        await focus;
+
+        int keyDownCount = 0;
+        int keyUpCount = 0;
+        int heldFrames = 0;
+        long firstHeldFrame = 0;
+        long firstReleasedFrame = 0;
+        bool nextKeySawRelease = false;
+        editor.AddHandler(InputEvents.KeyDownEvent, (_, args) =>
+        {
+            KeyEventArgs key = Assert.IsType<KeyEventArgs>(args);
+            if (key.Key == InputKey.A)
+            {
+                keyDownCount++;
+                Assert.True(key.IsControlDown);
+                Assert.True(key.IsShiftDown);
+            }
+            else if (key.Key == InputKey.B)
+            {
+                nextKeySawRelease = firstReleasedFrame != 0;
+                Assert.False(key.IsControlDown);
+                Assert.False(key.IsShiftDown);
+            }
+        }, handledEventsToo: true);
+        editor.AddHandler(InputEvents.KeyUpEvent, (_, args) =>
+        {
+            if (Assert.IsType<KeyEventArgs>(args).Key == InputKey.A) keyUpCount++;
+        }, handledEventsToo: true);
+        window.FrameRendered += (_, _) =>
+        {
+            if (window.LastFrame!.Input.Keyboard.IsDown(InputKey.A))
+            {
+                heldFrames++;
+                if (firstHeldFrame == 0) firstHeldFrame = Stopwatch.GetTimestamp();
+            }
+            else if (firstHeldFrame != 0 && firstReleasedFrame == 0)
+            {
+                firstReleasedFrame = Stopwatch.GetTimestamp();
+            }
+        };
+
+        TimeSpan duration = TimeSpan.FromMilliseconds(120);
+        Task hold = servo.HoldKeyAsync(InputKey.A, duration, ServoModifiers.Control | ServoModifiers.Shift);
+        Task next = servo.PressKeyAsync(InputKey.B);
+        Stopwatch deadline = Stopwatch.StartNew();
+        while (!Task.WhenAll(hold, next).IsCompleted && deadline.Elapsed < TimeSpan.FromSeconds(3))
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+            Thread.Sleep(1);
+        }
+
+        Assert.True(Task.WhenAll(hold, next).IsCompleted, "The held key or serialized next action did not finish.");
+        await Task.WhenAll(hold, next);
+        Assert.True(heldFrames >= 3, $"Expected multiple held input frames, got {heldFrames}.");
+        Assert.True(firstReleasedFrame != 0);
+        Assert.True(Stopwatch.GetElapsedTime(firstHeldFrame, firstReleasedFrame) >= duration);
+        Assert.Equal(1, keyDownCount);
+        Assert.Equal(1, keyUpCount);
+        Assert.True(nextKeySawRelease);
+        Assert.False(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+        Assert.False(window.LastFrame.Input.Keyboard.IsDown(InputKey.LeftCtrl));
+        Assert.False(window.LastFrame.Input.Keyboard.IsDown(InputKey.LeftShift));
+    }
+
+    [Fact]
+    public async Task ServoWindowHoldCancellationReleasesBeforeTaskSettles()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        TextBox editor = new() { Width = 200, Height = 40 };
+        ServoApi.SetId(editor, "editor");
+        Window window = new() { Content = editor };
+        window.Show();
+        ServoApi servo = new(window);
+        Task focus = servo.ClickAsync(ServoTarget.ById("editor"));
+        PumpUntilCompleted(runtime, focus);
+        await focus;
+
+        using CancellationTokenSource beforeStart = new();
+        beforeStart.Cancel();
+        int presentsBefore = Assert.Single(platform.Windows).Session.PresentCount;
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            servo.HoldKeyAsync(InputKey.A, TimeSpan.FromSeconds(1), cancellationToken: beforeStart.Token));
+        Assert.Equal(presentsBefore, platform.Windows[0].Session.PresentCount);
+
+        using CancellationTokenSource cancellation = new();
+        Task hold = servo.HoldKeyAsync(
+            InputKey.A, TimeSpan.FromSeconds(2), ServoModifiers.Control, cancellation.Token);
+        for (int frame = 0; frame < 4 && !window.LastFrame!.Input.Keyboard.IsDown(InputKey.A); frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+        Assert.True(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+        Assert.True(window.LastFrame.Input.Keyboard.IsDown(InputKey.LeftCtrl));
+
+        cancellation.Cancel();
+        Assert.False(hold.IsCompleted);
+        PumpUntilCompleted(runtime, hold);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => hold);
+        Assert.False(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+        Assert.False(window.LastFrame.Input.Keyboard.IsDown(InputKey.LeftCtrl));
+
+        Task next = servo.PressKeyAsync(InputKey.B);
+        PumpUntilCompleted(runtime, next);
+        await next;
+        Assert.False(window.LastFrame!.Input.Keyboard.IsDown(InputKey.B));
+    }
+
+    [Fact]
+    public async Task ServoWindowHoldFailureResetsModifiersAndValidationDoesNotPresentInput()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        TextBox editor = new() { Width = 200, Height = 40 };
+        ServoApi.SetId(editor, "editor");
+        Window window = new() { Content = editor };
+        window.Show();
+        ServoApi servo = new(window);
+        int presentsBefore = Assert.Single(platform.Windows).Session.PresentCount;
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+            servo.HoldKeyAsync(InputKey.A, TimeSpan.Zero));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+            servo.HoldKeyAsync(InputKey.A, TimeSpan.FromMilliseconds(-1)));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+            servo.HoldKeyAsync(InputKey.None, TimeSpan.FromMilliseconds(10)));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+            servo.HoldKeyAsync(InputKey.A, TimeSpan.FromMilliseconds(10), (ServoModifiers)int.MaxValue));
+        Assert.Equal(presentsBefore, platform.Windows[0].Session.PresentCount);
+
+        Task focus = servo.ClickAsync(ServoTarget.ById("editor"));
+        PumpUntilCompleted(runtime, focus);
+        await focus;
+        int heldFrames = 0;
+        KeyEventArgs? nextKey = null;
+        editor.AddHandler(InputEvents.KeyDownEvent, (_, args) =>
+        {
+            KeyEventArgs key = Assert.IsType<KeyEventArgs>(args);
+            if (key.Key == InputKey.B) nextKey = key;
+        }, handledEventsToo: true);
+        window.FrameRendered += (_, _) =>
+        {
+            if (window.LastFrame!.Input.Keyboard.IsDown(InputKey.A) && ++heldFrames == 2)
+            {
+                throw new InvalidOperationException("Injected held-frame failure.");
+            }
+        };
+
+        Task failed = servo.HoldKeyAsync(
+            InputKey.A, TimeSpan.FromSeconds(1), ServoModifiers.Control | ServoModifiers.Shift);
+        PumpUntilCompleted(runtime, failed);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => failed);
+        Assert.True(heldFrames >= 2);
+        Assert.False(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+        Assert.False(window.LastFrame.Input.Keyboard.IsDown(InputKey.LeftCtrl));
+        Assert.False(window.LastFrame.Input.Keyboard.IsDown(InputKey.LeftShift));
+
+        Task next = servo.PressKeyAsync(InputKey.B);
+        PumpUntilCompleted(runtime, next);
+        await next;
+        Assert.NotNull(nextKey);
+        Assert.False(nextKey.IsControlDown);
+        Assert.False(nextKey.IsShiftDown);
+    }
+
+    [Fact]
+    public async Task ServoWindowHoldTimeoutReleasesAndCloseFailsWithoutWaitingForAnotherFrame()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Window window = new() { Content = new TextBox { Width = 200, Height = 40 } };
+        window.Show();
+        ServoApi servo = new(window, new ServoOptions
+        {
+            DefaultTimeout = TimeSpan.FromMilliseconds(250)
+        });
+
+        Task timedOut = servo.HoldKeyAsync(InputKey.A, TimeSpan.FromSeconds(2));
+        for (int frame = 0; frame < 4 && !window.LastFrame!.Input.Keyboard.IsDown(InputKey.A); frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+        Assert.True(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+        Thread.Sleep(300);
+        Assert.False(timedOut.IsCompleted);
+        PumpUntilCompleted(runtime, timedOut);
+        await Assert.ThrowsAsync<ServoTimeoutException>(() => timedOut);
+        Assert.False(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+
+        Task closing = servo.HoldKeyAsync(InputKey.A, TimeSpan.FromSeconds(2));
+        for (int frame = 0; frame < 4 && !window.LastFrame!.Input.Keyboard.IsDown(InputKey.A); frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+        Assert.True(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+        window.Close();
+        Assert.True(window.IsClosed);
+        Assert.True(platform.Windows[0].Destroyed);
+        Assert.False(runtime.PumpOnce(TimeSpan.FromMilliseconds(16)));
+        await Assert.ThrowsAsync<ServoException>(() => closing);
+        await Assert.ThrowsAsync<ServoException>(() => servo.PressKeyAsync(InputKey.B));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ServoWindowHoldCannotRemainOwnedAfterVisibilityOrViewportLoss(bool hide)
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        TextBox editor = new() { Width = 200, Height = 40 };
+        ServoApi.SetId(editor, "editor");
+        Window window = new() { Content = editor };
+        window.Show();
+        ServoApi servo = new(window);
+        Task focus = servo.ClickAsync(ServoTarget.ById("editor"));
+        PumpUntilCompleted(runtime, focus);
+        await focus;
+
+        int released = 0;
+        bool nextSawRelease = false;
+        editor.AddHandler(InputEvents.KeyUpEvent, (_, args) =>
+        {
+            if (Assert.IsType<KeyEventArgs>(args).Key == InputKey.A) released++;
+        }, handledEventsToo: true);
+        editor.AddHandler(InputEvents.KeyDownEvent, (_, args) =>
+        {
+            if (Assert.IsType<KeyEventArgs>(args).Key == InputKey.B)
+            {
+                nextSawRelease = released == 1 &&
+                    !Assert.IsType<KeyEventArgs>(args).IsControlDown;
+            }
+        }, handledEventsToo: true);
+
+        Task hold = servo.HoldKeyAsync(InputKey.A, TimeSpan.FromSeconds(2), ServoModifiers.Control);
+        for (int frame = 0; frame < 4 && !window.LastFrame!.Input.Keyboard.IsDown(InputKey.A); frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+        Assert.True(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+
+        if (hide) window.Hide();
+        else platform.Windows[0].ReportBounds(new UiViewport(0, 0), 0, 0, WindowState.Normal);
+        Stopwatch completionDeadline = Stopwatch.StartNew();
+        while (!hold.IsCompleted && completionDeadline.Elapsed < TimeSpan.FromSeconds(2))
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+            Thread.Sleep(1);
+        }
+
+        Assert.True(hold.IsCompleted, "Visibility/viewport loss left a started Servo hold owned by a non-rendering Window.");
+        await Assert.ThrowsAsync<ServoException>(() => hold);
+        Assert.Equal(1, released);
+
+        if (hide) window.Show();
+        else platform.Windows[0].ReportBounds(new UiViewport(800, 600), 0, 0, WindowState.Normal);
+        Task next = servo.PressKeyAsync(InputKey.B);
+        PumpUntilCompleted(runtime, next);
+        await next;
+        Assert.True(nextSawRelease);
+        Assert.False(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ServoWindowHoldCancellationKeepsItsResultThroughVisibilityOrViewportLoss(bool hide)
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Window window = new() { Content = new TextBox { Width = 200, Height = 40 } };
+        window.Show();
+        ServoApi servo = new(window);
+        using CancellationTokenSource cancellation = new();
+        Task hold = servo.HoldKeyAsync(InputKey.A, TimeSpan.FromSeconds(2),
+            cancellationToken: cancellation.Token);
+        for (int frame = 0; frame < 4 && !window.LastFrame!.Input.Keyboard.IsDown(InputKey.A); frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+        Assert.True(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+
+        cancellation.Cancel();
+        if (hide) window.Hide();
+        else platform.Windows[0].ReportBounds(new UiViewport(0, 0), 0, 0, WindowState.Normal);
+        Stopwatch completionDeadline = Stopwatch.StartNew();
+        while (!hold.IsCompleted && completionDeadline.Elapsed < TimeSpan.FromSeconds(2))
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+            Thread.Sleep(1);
+        }
+        Assert.True(hold.IsCompleted);
+        Assert.ThrowsAny<OperationCanceledException>(() => CompleteSynchronously(hold));
+
+        if (hide) window.Show();
+        else platform.Windows[0].ReportBounds(new UiViewport(800, 600), 0, 0, WindowState.Normal);
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        Assert.False(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+    }
+
+    [Fact]
+    public void ServoWindowHoldTimeoutKeepsItsResultWhenViewportCollapsesBeforeReset()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        Window window = new() { Content = new TextBox { Width = 200, Height = 40 } };
+        window.Show();
+        ServoApi servo = new(window, new ServoOptions { DefaultTimeout = TimeSpan.FromMilliseconds(250) });
+        Task hold = servo.HoldKeyAsync(InputKey.A, TimeSpan.FromSeconds(2));
+        for (int frame = 0; frame < 4 && !window.LastFrame!.Input.Keyboard.IsDown(InputKey.A); frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+        Assert.True(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+
+        Thread.Sleep(300);
+        platform.Windows[0].ReportBounds(new UiViewport(0, 0), 0, 0, WindowState.Normal);
+        Stopwatch completionDeadline = Stopwatch.StartNew();
+        while (!hold.IsCompleted && completionDeadline.Elapsed < TimeSpan.FromSeconds(2))
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+            Thread.Sleep(1);
+        }
+        Assert.True(hold.IsCompleted);
+        Assert.Throws<ServoTimeoutException>(() => CompleteSynchronously(hold));
+        platform.Windows[0].ReportBounds(new UiViewport(800, 600), 0, 0, WindowState.Normal);
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        Assert.False(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+    }
+
+    [Fact]
+    public async Task ServoWindowHoldCancellationWithoutPumpSettlesAndResetsBeforeNextAction()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        TextBox editor = new() { Width = 200, Height = 40 };
+        ServoApi.SetId(editor, "editor");
+        Window window = new() { Content = editor };
+        window.Show();
+        ServoApi servo = new(window, new ServoOptions { DefaultTimeout = TimeSpan.FromMilliseconds(250) });
+        Task focus = servo.ClickAsync(ServoTarget.ById("editor"));
+        PumpUntilCompleted(runtime, focus);
+        await focus;
+
+        int released = 0;
+        bool nextSawRelease = false;
+        editor.AddHandler(InputEvents.KeyUpEvent, (_, args) =>
+        {
+            if (Assert.IsType<KeyEventArgs>(args).Key == InputKey.A) released++;
+        }, handledEventsToo: true);
+        editor.AddHandler(InputEvents.KeyDownEvent, (_, args) =>
+        {
+            if (Assert.IsType<KeyEventArgs>(args).Key == InputKey.B) nextSawRelease = released == 1;
+        }, handledEventsToo: true);
+        using CancellationTokenSource cancellation = new();
+        Task hold = servo.HoldKeyAsync(InputKey.A, TimeSpan.FromSeconds(2), cancellationToken: cancellation.Token);
+        for (int frame = 0; frame < 4 && !window.LastFrame!.Input.Keyboard.IsDown(InputKey.A); frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+        Assert.True(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+
+        cancellation.Cancel();
+        Assert.True(SpinWait.SpinUntil(() => hold.IsCompleted, TimeSpan.FromSeconds(2)),
+            "Cancellation did not settle after the owner stopped pumping.");
+        Assert.ThrowsAny<OperationCanceledException>(() => CompleteSynchronously(hold));
+        Task next = servo.PressKeyAsync(InputKey.B);
+        PumpUntilCompleted(runtime, next);
+        await next;
+        Assert.True(nextSawRelease);
+        Assert.False(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+    }
+
+    [Fact]
+    public async Task ServoWindowHoldTimeoutWithoutPumpSettlesAndResetsBeforeNextAction()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        TextBox editor = new() { Width = 200, Height = 40 };
+        ServoApi.SetId(editor, "editor");
+        Window window = new() { Content = editor };
+        window.Show();
+        ServoApi servo = new(window, new ServoOptions { DefaultTimeout = TimeSpan.FromMilliseconds(250) });
+        Task focus = servo.ClickAsync(ServoTarget.ById("editor"));
+        PumpUntilCompleted(runtime, focus);
+        await focus;
+
+        int released = 0;
+        bool nextSawRelease = false;
+        editor.AddHandler(InputEvents.KeyUpEvent, (_, args) =>
+        {
+            if (Assert.IsType<KeyEventArgs>(args).Key == InputKey.A) released++;
+        }, handledEventsToo: true);
+        editor.AddHandler(InputEvents.KeyDownEvent, (_, args) =>
+        {
+            if (Assert.IsType<KeyEventArgs>(args).Key == InputKey.B) nextSawRelease = released == 1;
+        }, handledEventsToo: true);
+
+        Task hold = servo.HoldKeyAsync(InputKey.A, TimeSpan.FromSeconds(2));
+        for (int frame = 0; frame < 4 && !window.LastFrame!.Input.Keyboard.IsDown(InputKey.A); frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+        Assert.True(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+
+        Assert.True(SpinWait.SpinUntil(() => hold.IsCompleted, TimeSpan.FromSeconds(2)),
+            "Timeout did not settle after the owner stopped pumping.");
+        Assert.Throws<ServoTimeoutException>(() => CompleteSynchronously(hold));
+        Task next = servo.PressKeyAsync(InputKey.B);
+        PumpUntilCompleted(runtime, next);
+        await next;
+        Assert.True(nextSawRelease);
+        Assert.False(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+    }
+
+    [Fact]
+    public async Task ServoWindowHoldCleanupFailureRetainsResetBeforeNextAction()
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        TextBox editor = new() { Width = 200, Height = 40 };
+        ServoApi.SetId(editor, "editor");
+        Window window = new() { Content = editor };
+        window.Show();
+        ServoApi servo = new(window);
+        Task focus = servo.ClickAsync(ServoTarget.ById("editor"));
+        PumpUntilCompleted(runtime, focus);
+        await focus;
+
+        int releaseAttempts = 0;
+        int released = 0;
+        bool nextSawRelease = false;
+        editor.AddHandler(InputEvents.PreviewKeyUpEvent, (_, args) =>
+        {
+            if (Assert.IsType<KeyEventArgs>(args).Key == InputKey.A && ++releaseAttempts == 1)
+            {
+                throw new InvalidOperationException("Injected one-shot cleanup failure.");
+            }
+        }, handledEventsToo: true);
+        editor.AddHandler(InputEvents.KeyUpEvent, (_, args) =>
+        {
+            if (Assert.IsType<KeyEventArgs>(args).Key == InputKey.A) released++;
+        }, handledEventsToo: true);
+        editor.AddHandler(InputEvents.KeyDownEvent, (_, args) =>
+        {
+            if (Assert.IsType<KeyEventArgs>(args).Key == InputKey.B) nextSawRelease = released == 1;
+        }, handledEventsToo: true);
+
+        using CancellationTokenSource cancellation = new();
+        Task hold = servo.HoldKeyAsync(InputKey.A, TimeSpan.FromSeconds(2), cancellationToken: cancellation.Token);
+        for (int frame = 0; frame < 4 && !window.LastFrame!.Input.Keyboard.IsDown(InputKey.A); frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+        Assert.True(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+        cancellation.Cancel();
+        PumpUntilCompleted(runtime, hold);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => hold);
+        Assert.True(releaseAttempts >= 2);
+        Assert.Equal(1, released);
+
+        Task next = servo.PressKeyAsync(InputKey.B);
+        PumpUntilCompleted(runtime, next);
+        await next;
+        Assert.True(nextSawRelease);
+        Assert.False(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+    }
+
+    [Theory]
+    [InlineData("hide")]
+    [InlineData("close")]
+    [InlineData("reshow")]
+    public void ServoHoldCleanupKeyUpLifecycleReentryDoesNotRepeatReleaseOrUpdateClosedHost(string action)
+    {
+        FakeWindowPlatform platform = new();
+        WindowApplicationRuntime runtime = Install(platform);
+        TextBox editor = new() { Width = 200, Height = 40 };
+        ServoApi.SetId(editor, "editor");
+        Window window = new() { Content = editor };
+        window.Show();
+        ServoApi servo = new(window, new ServoOptions { DefaultTimeout = TimeSpan.FromSeconds(2) });
+        Task focus = servo.ClickAsync(ServoTarget.ById("editor"));
+        PumpUntilCompleted(runtime, focus);
+        CompleteSynchronously(focus);
+
+        UiHost host = GetRuntimeHost(runtime, window);
+        int updatesAfterClose = 0;
+        host.FrameUpdated += (_, _) =>
+        {
+            if (window.IsClosed) updatesAfterClose++;
+        };
+        int keyUpCalls = 0;
+        editor.AddHandler(InputEvents.KeyUpEvent, (_, args) =>
+        {
+            if (Assert.IsType<KeyEventArgs>(args).Key != InputKey.A) return;
+            if (++keyUpCalls > 3)
+            {
+                throw new InvalidOperationException("Bounded recursive cleanup in test.");
+            }
+
+            if (action == "close") window.Close();
+            else
+            {
+                window.Hide();
+                if (action == "reshow") window.Show();
+            }
+        }, handledEventsToo: true);
+
+        Task hold = servo.HoldKeyAsync(InputKey.A, TimeSpan.FromSeconds(1));
+        for (int frame = 0; frame < 4 && !window.LastFrame!.Input.Keyboard.IsDown(InputKey.A); frame++)
+        {
+            runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        }
+        Assert.True(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+
+        window.Hide();
+        Assert.Equal(1, keyUpCalls);
+        Assert.Equal(0, updatesAfterClose);
+        Assert.True(SpinWait.SpinUntil(() => hold.IsCompleted, TimeSpan.FromSeconds(2)));
+        Assert.Throws<ServoException>(() => CompleteSynchronously(hold));
+        if (action == "close")
+        {
+            Assert.True(window.IsClosed);
+        }
+        else
+        {
+            if (!window.IsShown) window.Show();
+            Task next = servo.PressKeyAsync(InputKey.B);
+            PumpUntilCompleted(runtime, next);
+            CompleteSynchronously(next);
+            Assert.False(window.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+            Assert.Equal(1, keyUpCalls);
+        }
+    }
+
+    [Fact]
     public void RuntimeUsesNativePlatformCursorWhenNoServicesOverrideIsProvided()
     {
         FakeWindowPlatform platform = new();
@@ -943,6 +1576,38 @@ public sealed class WindowRuntimeTests : IDisposable
     private static void CompleteSynchronously(Task operation)
     {
         operation.GetAwaiter().GetResult();
+    }
+
+    private static UiHost GetRuntimeHost(WindowApplicationRuntime runtime, Window window)
+    {
+        IDictionary contexts = (IDictionary)typeof(WindowApplicationRuntime)
+            .GetField("contexts", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .GetValue(runtime)!;
+        object context = contexts[window]!;
+        return (UiHost)context.GetType().GetProperty("Host")!.GetValue(context)!;
+    }
+
+    private sealed class InterruptingServoSteps(IReadOnlyList<ServoInputStep> steps)
+        : IReadOnlyList<ServoInputStep>
+    {
+        private Action? onNextCount;
+
+        public int Count
+        {
+            get
+            {
+                Interlocked.Exchange(ref onNextCount, null)?.Invoke();
+                return steps.Count;
+            }
+        }
+
+        public ServoInputStep this[int index] => steps[index];
+
+        public void InterruptOnNextCount(Action interrupt) => onNextCount = interrupt;
+
+        public IEnumerator<ServoInputStep> GetEnumerator() => steps.GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
     private sealed class FakeWindowPlatform : IWindowPlatform

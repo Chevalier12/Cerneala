@@ -155,6 +155,31 @@ public sealed class Servo
             cancellationToken);
     }
 
+    public Task HoldKeyAsync(
+        InputKey key,
+        TimeSpan duration,
+        ServoModifiers modifiers = ServoModifiers.None,
+        CancellationToken cancellationToken = default)
+    {
+        if (duration <= TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(duration));
+        }
+
+        if (context.Window is null)
+        {
+            return Task.FromException(new NotSupportedException(
+                "Held Servo key input requires a Window-owned frame runtime."));
+        }
+
+        return RunAsync(
+            token => context.ExecuteInputAsync(
+                (_, input, operationToken) => input.HoldKeyAsync(
+                    key, duration, modifiers, Options.DefaultTimeout, operationToken),
+                token),
+            cancellationToken);
+    }
+
     public Task SendTextAsync(
         string text,
         CancellationToken cancellationToken = default)

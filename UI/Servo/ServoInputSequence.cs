@@ -7,9 +7,31 @@ internal sealed class ServoInputSequence
     private IReadOnlyList<ServoInputStep>? steps;
     private readonly Func<IReadOnlyList<ServoInputStep>>? createSteps;
 
-    internal ServoInputSequence(IReadOnlyList<ServoInputStep> steps)
+    internal ServoInputSequence(
+        IReadOnlyList<ServoInputStep> steps,
+        int heldStepIndex = -1,
+        TimeSpan holdDuration = default,
+        TimeSpan cleanupTimeout = default)
     {
         this.steps = steps ?? throw new ArgumentNullException(nameof(steps));
+        if (heldStepIndex >= 0)
+        {
+            if (heldStepIndex >= steps.Count - 1 ||
+                holdDuration <= TimeSpan.Zero ||
+                cleanupTimeout <= TimeSpan.Zero)
+            {
+                throw new ArgumentOutOfRangeException(nameof(heldStepIndex));
+            }
+
+            HeldStepIndex = heldStepIndex;
+            HoldDuration = holdDuration;
+            CleanupTimeout = cleanupTimeout;
+            ServoInputStep held = steps[heldStepIndex];
+            HoldContinuationStep = new ServoInputStep(
+                new InputFrame(held.Pointer, held.Pointer, held.Keyboard, held.Keyboard, []),
+                held.Pointer,
+                held.Keyboard);
+        }
     }
 
     internal ServoInputSequence(Func<IReadOnlyList<ServoInputStep>> createSteps)
@@ -20,6 +42,14 @@ internal sealed class ServoInputSequence
     // Target-dependent steps are materialized by the input owner after scheduled layout,
     // not when an action is queued from a relay or a presented-frame callback.
     internal IReadOnlyList<ServoInputStep> Steps => steps ??= createSteps!();
+
+    internal int HeldStepIndex { get; } = -1;
+
+    internal TimeSpan HoldDuration { get; }
+
+    internal TimeSpan CleanupTimeout { get; }
+
+    internal ServoInputStep HoldContinuationStep { get; }
 
     internal static ServoInputStep CreateResetStep(
         PointerSnapshot pointer,

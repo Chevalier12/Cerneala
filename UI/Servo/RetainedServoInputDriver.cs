@@ -118,6 +118,38 @@ internal sealed class RetainedServoInputDriver : IServoInputDriver
         return DispatchAsync(steps, cancellationToken);
     }
 
+    public Task HoldKeyAsync(
+        InputKey key,
+        TimeSpan duration,
+        ServoModifiers modifiers,
+        TimeSpan cleanupTimeout,
+        CancellationToken cancellationToken)
+    {
+        if (duration <= TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(duration));
+        }
+
+        if (dispatchSequence is null)
+        {
+            throw new NotSupportedException("Held Servo key input requires a Window-owned frame runtime.");
+        }
+
+        ValidateKey(key);
+        ValidateModifiers(modifiers);
+        cancellationToken.ThrowIfCancellationRequested();
+        InputKey[] modifierKeys = ModifierKeys(modifiers);
+        List<ServoInputStep> steps = [];
+        AppendKeyboard(steps, modifierKeys);
+        AppendKeyboard(steps, [.. modifierKeys, key]);
+        AppendKeyboard(steps, modifierKeys);
+        AppendKeyboard(steps, []);
+        return DispatchAsync(
+            new ServoInputSequence(
+                steps, heldStepIndex: 1, holdDuration: duration, cleanupTimeout: cleanupTimeout),
+            cancellationToken);
+    }
+
     public Task SendTextAsync(string text, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(text);

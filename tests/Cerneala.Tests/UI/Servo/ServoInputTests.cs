@@ -243,6 +243,20 @@ public sealed class ServoInputTests
             () => servo.TypeIntoAsync(ServoTarget.ById("target"), null!));
     }
 
+    [Fact]
+    public async Task HeldKeyRejectsDirectHostBeforeProducingInput()
+    {
+        UiHost host = CreateHost(new TextBox { Width = 200, Height = 40 });
+        ServoApi servo = new(host);
+        UiFrame before = host.LastFrame!;
+
+        await Assert.ThrowsAsync<NotSupportedException>(() =>
+            servo.HoldKeyAsync(InputKey.A, TimeSpan.FromMilliseconds(10)));
+
+        Assert.Same(before, host.LastFrame);
+        Assert.False(host.LastFrame!.Input.Keyboard.IsDown(InputKey.A));
+    }
+
     private static UiHost CreateHost(UIElement content, float width = 320, float height = 160)
     {
         UIRoot root = new(width, height);
