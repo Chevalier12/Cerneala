@@ -71,6 +71,15 @@ Generated from `.`.
 |   |-- agent-manager.json
 |   |-- package-lock.json
 |   +-- package.json
+|-- .local/
+|   |-- broker-output/
+|   |   |-- 201ada4fa8da4cc5bfbb9230d5f81cb0/
+|   |   |-- 2d947e24bf1e4570a1e135179d182f57/
+|   |   |-- 43968ff3125f4371a27ae197fa64ca9f/
+|   |   |-- abdf85b8057f46088cda9526c5887fe8/
+|   |   |-- b9f4f49dc66e46628d37888ce0eaeb00/
+|   |   +-- cc60f45f3ade40d2b3084c71c7760487/
+|   +-- cernealex-locks/
 |-- .superpowers/
 |   +-- brainstorm/
 |       +-- manual-1783588990/
@@ -5624,6 +5633,7 @@ Generated from `.`.
 |       |-- Archive-Repo.ps1
 |       |-- Archive-Repo.Tests.ps1
 |       |-- Build-CernealaVisualStudioRelease.ps1
+|       |-- Cerneala.BuildInputs.Tests.ps1
 |       |-- Invoke-SdlGpuSmoke.ps1
 |       |-- Measure-PrismOuterGlowColdStart.ps1
 |       |-- New-FileTree.ps1

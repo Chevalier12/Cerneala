@@ -17,6 +17,7 @@ on:
       - "docs-site/documentation/classes/**"
       - "docs-site/documentation/manifest.json"
       - "Tools/scripts/*SdlGpuSmoke*.ps1"
+      - "Tools/scripts/Cerneala.BuildInputs.Tests.ps1"
       - "NuGet.Config"
       - "global.json"
       - "benchmarks/Cerneala.Benchmarks/Cerneala.Benchmarks.csproj"
@@ -50,6 +51,7 @@ on:
       - "docs-site/documentation/classes/**"
       - "docs-site/documentation/manifest.json"
       - "Tools/scripts/*SdlGpuSmoke*.ps1"
+      - "Tools/scripts/Cerneala.BuildInputs.Tests.ps1"
       - "NuGet.Config"
       - "global.json"
       - "benchmarks/Cerneala.Benchmarks/Cerneala.Benchmarks.csproj"
@@ -328,6 +330,10 @@ jobs:
         run: |
           dotnet tool restore
           dotnet restore ./Cerneala.slnx
+
+      - name: Verify core build input exclusions
+        shell: pwsh
+        run: ./Tools/scripts/Cerneala.BuildInputs.Tests.ps1
 
       - name: Build complete solution
         shell: pwsh
