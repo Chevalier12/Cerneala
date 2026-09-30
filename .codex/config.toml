@@ -106,8 +106,6 @@ Final answers are self-contained: result/change, decisive evidence, verification
 include_collaboration_mode_instructions = false
 
 personality = "pragmatic"
-
-approval_policy = "on-request"
 model_verbosity = "medium"
 
 [agents]
