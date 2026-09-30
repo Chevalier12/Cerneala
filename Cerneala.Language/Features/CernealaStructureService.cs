@@ -60,7 +60,7 @@ internal sealed class CernealaStructureService
             }
         }
 
-        foreach (TextSyntax text in DescendantNodes(document.Syntax).OfType<TextSyntax>().Where(text =>
+        foreach (TextSyntax text in document.Syntax.DescendantNodes().OfType<TextSyntax>().Where(text =>
             text.Token.Text.IndexOf('@') >= 0))
         {
             EmbeddedParseResult<DirectiveDocumentSyntax> parsed = DirectiveSyntaxParser.Parse(
@@ -823,23 +823,6 @@ internal sealed class CernealaStructureService
         int colon = name.LastIndexOf(':');
         int separator = Math.Max(dot, colon);
         return separator < 0 ? name : name.Substring(separator + 1);
-    }
-
-    private static IEnumerable<SyntaxNode> DescendantNodes(SyntaxNode node)
-    {
-        foreach (SyntaxNode child in node switch
-        {
-            DocumentSyntax document => document.Children,
-            ElementSyntax element => element.Children,
-            _ => Array.Empty<SyntaxNode>()
-        })
-        {
-            yield return child;
-            foreach (SyntaxNode descendant in DescendantNodes(child))
-            {
-                yield return descendant;
-            }
-        }
     }
 
     private sealed record TokenCandidate(

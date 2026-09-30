@@ -13,6 +13,23 @@ internal abstract class SyntaxNode
     public SyntaxKind Kind { get; }
 
     public TextSpan Span { get; }
+
+    public IEnumerable<SyntaxNode> DescendantNodes()
+    {
+        foreach (SyntaxNode child in this switch
+        {
+            DocumentSyntax document => document.Children,
+            ElementSyntax element => element.Children,
+            _ => Array.Empty<SyntaxNode>()
+        })
+        {
+            yield return child;
+            foreach (SyntaxNode descendant in child.DescendantNodes())
+            {
+                yield return descendant;
+            }
+        }
+    }
 }
 
 internal sealed class DocumentSyntax : SyntaxNode

@@ -5263,6 +5263,7 @@ Generated from `.`.
 |   |   |-- SourceGeneratorDiagnosticBaselineTests.cs
 |   |   |-- SourceTextTests.cs
 |   |   |-- StructureTests.cs
+|   |   |-- SyntaxTraversalTests.cs
 |   |   +-- TileMapSourceSemanticTests.cs
 |   |-- Cerneala.Tests.LanguageServer/
 |   |   |-- Diagnostics/

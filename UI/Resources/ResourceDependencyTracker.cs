@@ -8,7 +8,7 @@ public sealed class ResourceDependencyTracker
     private readonly Dictionary<ResourceKey, Dictionary<UIElement, ResourceDependency>> dependenciesByResource = new();
     private readonly Dictionary<UIElement, long> ownerVersions = new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<ResourceKey, long> resourceVersions = new();
-    private readonly HashSet<IObservableResourceProvider> trackedProviders = new(ResourceProviderReferenceEqualityComparer.Instance);
+    private readonly HashSet<IObservableResourceProvider> trackedProviders = new(ReferenceEqualityComparer.Instance);
     private long nextOwnerVersion;
 
     public void Track(IObservableResourceProvider provider)
@@ -135,36 +135,6 @@ public sealed class ResourceDependencyTracker
         public static ResourceKey From<T>(ResourceId<T> id)
         {
             return new ResourceKey(typeof(T), id.Key);
-        }
-    }
-
-    private sealed class ReferenceEqualityComparer : IEqualityComparer<UIElement>
-    {
-        public static ReferenceEqualityComparer Instance { get; } = new();
-
-        public bool Equals(UIElement? x, UIElement? y)
-        {
-            return ReferenceEquals(x, y);
-        }
-
-        public int GetHashCode(UIElement obj)
-        {
-            return System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(obj);
-        }
-    }
-
-    private sealed class ResourceProviderReferenceEqualityComparer : IEqualityComparer<IObservableResourceProvider>
-    {
-        public static ResourceProviderReferenceEqualityComparer Instance { get; } = new();
-
-        public bool Equals(IObservableResourceProvider? x, IObservableResourceProvider? y)
-        {
-            return ReferenceEquals(x, y);
-        }
-
-        public int GetHashCode(IObservableResourceProvider obj)
-        {
-            return System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(obj);
         }
     }
 }

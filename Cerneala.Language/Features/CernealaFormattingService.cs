@@ -58,7 +58,7 @@ internal sealed class CernealaFormattingService
         firstLine = Math.Max(0, firstLine);
         lastLine = Math.Max(firstLine, Math.Min(lastLine, lines.Length - 1));
         ElementSyntax[] elements = document.Syntax.DescendantElements().ToArray();
-        SyntaxNode[] nodes = DescendantNodes(document.Syntax).ToArray();
+        SyntaxNode[] nodes = document.Syntax.DescendantNodes().ToArray();
         StringBuilder replacement = new();
         bool changed = false;
         for (int lineIndex = firstLine; lineIndex <= lastLine; lineIndex++)
@@ -227,23 +227,6 @@ internal sealed class CernealaFormattingService
         }
 
         return lines.ToArray();
-    }
-
-    private static IEnumerable<SyntaxNode> DescendantNodes(SyntaxNode node)
-    {
-        foreach (SyntaxNode child in node switch
-        {
-            DocumentSyntax document => document.Children,
-            ElementSyntax element => element.Children,
-            _ => Array.Empty<SyntaxNode>()
-        })
-        {
-            yield return child;
-            foreach (SyntaxNode descendant in DescendantNodes(child))
-            {
-                yield return descendant;
-            }
-        }
     }
 
     private readonly record struct TextLineInfo(int Start, int ContentLength, int End);
