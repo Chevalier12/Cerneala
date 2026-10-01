@@ -7,6 +7,7 @@
     <Project Path="Playground/Cerneala.MenuLab/Cerneala.MenuLab.csproj" />
     <Project Path="Playground/Cerneala.Playground/Cerneala.Playground.csproj" />
     <Project Path="Playground/Cerneala.SceneVillage/Cerneala.SceneVillage.csproj" />
+    <Project Path="Playground/Cerneala.SolarSystem/Cerneala.SolarSystem.csproj" />
   </Folder>
   <Folder Name="/benchmarks/">
     <Project Path="benchmarks/Cerneala.Benchmarks/Cerneala.Benchmarks.csproj" />

@@ -1,0 +1,1134 @@
+<!-- Palette, gradients, starfields and shading brushes for the orrery. Gradient centres and radii are in pixels of the element they fill. -->
+<Application
+    StartupWindow="MainWindow"
+    ShutdownMode="OnMainWindowClose">
+    <Application.Resources>
+        <!-- Palette -->
+        <SolidColorBrush Name="SpaceBrush" Color="#FF03040A" />
+        <SolidColorBrush Name="ClearBrush" Color="#00000000" />
+        <SolidColorBrush Name="WhiteBrush" Color="#FFFFFFFF" />
+        <SolidColorBrush Name="HudTextBrush" Color="#CCE6ECF5" />
+        <SolidColorBrush Name="HudDimBrush" Color="#8098A3B8" />
+        <SolidColorBrush Name="AccentBrush" Color="#FFFFC870" />
+        <SolidColorBrush Name="AccentWashBrush" Color="#33FFC870" />
+        <SolidColorBrush Name="CoolBrush" Color="#FF8FD6FF" />
+        <SolidColorBrush Name="GlassBrush" Color="#B80A0F1C" />
+        <SolidColorBrush Name="GlassButtonBrush" Color="#590E1526" />
+        <SolidColorBrush Name="GlassHotBrush" Color="#991A2540" />
+        <SolidColorBrush Name="GlassLineBrush" Color="#2EFFFFFF" />
+        <SolidColorBrush Name="OrbitBrush" Color="#1FBFD4FF" />
+        <SolidColorBrush Name="OrbitHotBrush" Color="#8CFFD79A" />
+        <SolidColorBrush Name="HoverBrush" Color="#CCFFFFFF" />
+        <SolidColorBrush Name="SelectBrush" Color="#FFFFC870" />
+
+        <!-- The Sun: a corona that fades into space, a warm glow, a streak, and the photosphere. -->
+        <RadialGradientBrush Name="CoronaBrush" Center="550,550" RadiusX="550" RadiusY="550">
+            <GradientStop Offset="0" Color="#66FFB45C" />
+            <GradientStop Offset="0.1" Color="#40FFA048" />
+            <GradientStop Offset="0.28" Color="#1AFF8A38" />
+            <GradientStop Offset="0.55" Color="#08FF7030" />
+            <GradientStop Offset="1" Color="#00FF6020" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="SunGlowBrush" Center="190,190" RadiusX="190" RadiusY="190">
+            <GradientStop Offset="0" Color="#FFFFF6D8" />
+            <GradientStop Offset="0.3" Color="#E6FFD27A" />
+            <GradientStop Offset="0.55" Color="#59FFA04A" />
+            <GradientStop Offset="1" Color="#00FF8A30" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="StreakBrush" Center="520,5" RadiusX="520" RadiusY="5">
+            <GradientStop Offset="0" Color="#B3FFE7B8" />
+            <GradientStop Offset="0.4" Color="#33FFC890" />
+            <GradientStop Offset="1" Color="#00FFB070" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="PhotosphereBrush" Center="66,66" RadiusX="66" RadiusY="66">
+            <GradientStop Offset="0" Color="#FFFFFDF2" />
+            <GradientStop Offset="0.45" Color="#FFFFE7A0" />
+            <GradientStop Offset="0.82" Color="#FFFFB547" />
+            <GradientStop Offset="1" Color="#FFF07A26" />
+        </RadialGradientBrush>
+
+        <!-- Planet surfaces: albedo only. Day and night come from the shade overlays below. -->
+        <RadialGradientBrush Name="MercurySurface" Center="5,5" RadiusX="5" RadiusY="5">
+            <GradientStop Offset="0" Color="#FFD9D3CB" /><GradientStop Offset="0.7" Color="#FFA39C93" /><GradientStop Offset="1" Color="#FF6E6861" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="VenusSurface" Center="9,9" RadiusX="9" RadiusY="9">
+            <GradientStop Offset="0" Color="#FFFFF5DA" /><GradientStop Offset="0.7" Color="#FFEBCB8E" /><GradientStop Offset="1" Color="#FFBF9558" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="EarthSurface" Center="9.5,9.5" RadiusX="9.5" RadiusY="9.5">
+            <GradientStop Offset="0" Color="#FF5FAEF5" /><GradientStop Offset="0.75" Color="#FF2A66BC" /><GradientStop Offset="1" Color="#FF16407E" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="MarsSurface" Center="6.5,6.5" RadiusX="6.5" RadiusY="6.5">
+            <GradientStop Offset="0" Color="#FFF0A57C" /><GradientStop Offset="0.7" Color="#FFC65C33" /><GradientStop Offset="1" Color="#FF86331A" />
+        </RadialGradientBrush>
+        <LinearGradientBrush Name="JupiterSurface" StartPoint="0,0" EndPoint="0,52">
+            <GradientStop Offset="0" Color="#FFB89E82" />
+            <GradientStop Offset="0.12" Color="#FFE8D9C0" />
+            <GradientStop Offset="0.2" Color="#FFC2875C" />
+            <GradientStop Offset="0.28" Color="#FFF3E6CF" />
+            <GradientStop Offset="0.38" Color="#FFD7A577" />
+            <GradientStop Offset="0.46" Color="#FFF6EBD6" />
+            <GradientStop Offset="0.55" Color="#FFB97A50" />
+            <GradientStop Offset="0.63" Color="#FFEEDCC0" />
+            <GradientStop Offset="0.72" Color="#FFC99568" />
+            <GradientStop Offset="0.82" Color="#FFE9D7BC" />
+            <GradientStop Offset="0.9" Color="#FFB8987A" />
+            <GradientStop Offset="1" Color="#FF8F7A66" />
+        </LinearGradientBrush>
+        <LinearGradientBrush Name="SaturnSurface" StartPoint="0,0" EndPoint="0,44">
+            <GradientStop Offset="0" Color="#FFC9B48C" />
+            <GradientStop Offset="0.18" Color="#FFF2E2B8" />
+            <GradientStop Offset="0.32" Color="#FFDCC294" />
+            <GradientStop Offset="0.5" Color="#FFF6E8C4" />
+            <GradientStop Offset="0.64" Color="#FFD8BB88" />
+            <GradientStop Offset="0.8" Color="#FFEEDCB0" />
+            <GradientStop Offset="1" Color="#FFAE9670" />
+        </LinearGradientBrush>
+        <RadialGradientBrush Name="UranusSurface" Center="14,14" RadiusX="14" RadiusY="14">
+            <GradientStop Offset="0" Color="#FFDDFCFF" /><GradientStop Offset="0.7" Color="#FF96DCE8" /><GradientStop Offset="1" Color="#FF5AA4B6" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="NeptuneSurface" Center="13.5,13.5" RadiusX="13.5" RadiusY="13.5">
+            <GradientStop Offset="0" Color="#FF9DBEFF" /><GradientStop Offset="0.7" Color="#FF4068DA" /><GradientStop Offset="1" Color="#FF22348C" />
+        </RadialGradientBrush>
+        <SolidColorBrush Name="MoonSurface" Color="#FFD3CEC6" />
+        <SolidColorBrush Name="ContinentBrush" Color="#CC5E8F4A" />
+        <SolidColorBrush Name="CloudBrush" Color="#B3FFFFFF" />
+        <SolidColorBrush Name="SpotBrush" Color="#D9C0563A" />
+        <SolidColorBrush Name="PolarBrush" Color="#E6FFF6F0" />
+        <SolidColorBrush Name="CraterBrush" Color="#4D2E2A26" />
+        <SolidColorBrush Name="StormBrush" Color="#991B2466" />
+        <SolidColorBrush Name="RingInnerBrush" Color="#99C9B48A" />
+        <SolidColorBrush Name="RingMainBrush" Color="#D9E3D1A8" />
+        <SolidColorBrush Name="RingOuterBrush" Color="#66BBA97F" />
+        <SolidColorBrush Name="FaintRingBrush" Color="#409FE8F0" />
+
+        <!-- Flare ghosts -->
+        <RadialGradientBrush Name="GhostWarmBrush" Center="40,40" RadiusX="40" RadiusY="40">
+            <GradientStop Offset="0" Color="#00FFC080" /><GradientStop Offset="0.7" Color="#1AFFC080" /><GradientStop Offset="0.9" Color="#33FFD8A0" /><GradientStop Offset="1" Color="#00FFD8A0" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="GhostCoolBrush" Center="70,70" RadiusX="70" RadiusY="70">
+            <GradientStop Offset="0" Color="#148FD6FF" /><GradientStop Offset="0.8" Color="#0F8FD6FF" /><GradientStop Offset="1" Color="#008FD6FF" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="GhostDotBrush" Center="12,12" RadiusX="12" RadiusY="12">
+            <GradientStop Offset="0" Color="#66FFE6C0" /><GradientStop Offset="1" Color="#00FFE6C0" />
+        </RadialGradientBrush>
+
+        <!-- Nebula clouds and the frame vignette -->
+        <RadialGradientBrush Name="NebulaVioletBrush" Center="760,460" RadiusX="760" RadiusY="460">
+            <GradientStop Offset="0" Color="#7A5B3A9E" /><GradientStop Offset="0.45" Color="#333A2470" /><GradientStop Offset="1" Color="#001A1040" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="NebulaTealBrush" Center="560,340" RadiusX="560" RadiusY="340">
+            <GradientStop Offset="0" Color="#661E6C80" /><GradientStop Offset="0.5" Color="#240E3C4C" /><GradientStop Offset="1" Color="#00061C24" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="NebulaRoseBrush" Center="560,340" RadiusX="560" RadiusY="340">
+            <GradientStop Offset="0" Color="#66B0446E" /><GradientStop Offset="0.5" Color="#26701E48" /><GradientStop Offset="1" Color="#00300A20" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="VignetteBrush" Center="680,382" RadiusX="940" RadiusY="640">
+            <GradientStop Offset="0" Color="#00000000" /><GradientStop Offset="0.55" Color="#00000000" /><GradientStop Offset="1" Color="#D9000000" />
+        </RadialGradientBrush>
+        <DrawingBrush Name="StarsFarBrush" ContentBounds="0,0,600,600" TileMode="Tile" Viewport="0,0,600,600" Stretch="None" AlignmentX="Left" AlignmentY="Top">
+            <FillEllipse Rect="273.5,542.3,1.49,1.49" Color="#60BFD6FF" />
+            <FillEllipse Rect="202.7,197.6,1.18,1.18" Color="#7ABFD6FF" />
+            <FillEllipse Rect="408.6,539.4,0.74,0.74" Color="#84FFFFFF" />
+            <FillEllipse Rect="166.7,327.4,1.28,1.28" Color="#AEFFFFFF" />
+            <FillEllipse Rect="234.4,301.4,1.14,1.14" Color="#90FFFFFF" />
+            <FillEllipse Rect="431.8,158.4,0.77,0.77" Color="#84FFE2BE" />
+            <FillEllipse Rect="136.0,121.8,0.70,0.70" Color="#B9FFFFFF" />
+            <FillEllipse Rect="423.4,288.7,0.89,0.89" Color="#56FFFFFF" />
+            <FillEllipse Rect="412.3,405.3,0.76,0.76" Color="#93FFFFFF" />
+            <FillEllipse Rect="116.2,348.4,0.88,0.88" Color="#5BFFFFFF" />
+            <FillEllipse Rect="224.9,238.6,1.15,1.15" Color="#56BFD6FF" />
+            <FillEllipse Rect="424.6,264.9,0.83,0.83" Color="#A3FFFFFF" />
+            <FillEllipse Rect="373.8,303.4,1.01,1.01" Color="#5CFFC4A6" />
+            <FillEllipse Rect="312.6,456.6,0.72,0.72" Color="#6DFFFFFF" />
+            <FillEllipse Rect="441.4,594.2,0.78,0.78" Color="#B0FFFFFF" />
+            <FillEllipse Rect="449.2,393.1,0.63,0.63" Color="#7DFFFFFF" />
+            <FillEllipse Rect="261.2,396.0,1.40,1.40" Color="#5DBFD6FF" />
+            <FillEllipse Rect="549.2,47.4,1.24,1.24" Color="#57FFFFFF" />
+            <FillEllipse Rect="474.7,516.2,0.67,0.67" Color="#7CFFFFFF" />
+            <FillEllipse Rect="29.6,278.9,1.02,1.02" Color="#5DFFFFFF" />
+            <FillEllipse Rect="38.0,90.6,0.82,0.82" Color="#7AFFE2BE" />
+            <FillEllipse Rect="208.8,3.4,1.20,1.20" Color="#59BFD6FF" />
+            <FillEllipse Rect="89.2,223.0,1.23,1.23" Color="#ADFFFFFF" />
+            <FillEllipse Rect="289.6,535.3,1.29,1.29" Color="#B2FFFFFF" />
+            <FillEllipse Rect="88.7,549.5,1.14,1.14" Color="#92FFFFFF" />
+            <FillEllipse Rect="519.8,554.8,1.00,1.00" Color="#75FFFFFF" />
+            <FillEllipse Rect="229.5,431.7,0.66,0.66" Color="#66BFD6FF" />
+            <FillEllipse Rect="467.9,402.6,0.95,0.95" Color="#BBFFFFFF" />
+            <FillEllipse Rect="106.3,327.6,1.08,1.08" Color="#83FFFFFF" />
+            <FillEllipse Rect="273.6,52.5,0.62,0.62" Color="#79FFE2BE" />
+            <FillEllipse Rect="195.5,565.9,0.63,0.63" Color="#7FBFD6FF" />
+            <FillEllipse Rect="92.4,206.7,0.78,0.78" Color="#6DBFD6FF" />
+            <FillEllipse Rect="571.1,196.7,0.68,0.68" Color="#7AFFFFFF" />
+            <FillEllipse Rect="131.5,145.3,0.74,0.74" Color="#67FFFFFF" />
+            <FillEllipse Rect="274.3,535.5,1.21,1.21" Color="#B4FFFFFF" />
+            <FillEllipse Rect="230.1,102.4,0.84,0.84" Color="#9AFFE2BE" />
+            <FillEllipse Rect="396.8,360.5,1.18,1.18" Color="#7DFFFFFF" />
+            <FillEllipse Rect="233.8,63.5,1.13,1.13" Color="#7EFFE2BE" />
+            <FillEllipse Rect="8.4,401.0,0.61,0.61" Color="#B3FFE2BE" />
+            <FillEllipse Rect="423.2,237.5,1.29,1.29" Color="#9FFFFFFF" />
+            <FillEllipse Rect="42.3,129.0,1.10,1.10" Color="#BFFFE2BE" />
+            <FillEllipse Rect="360.1,404.2,1.08,1.08" Color="#86FFFFFF" />
+            <FillEllipse Rect="403.7,134.7,0.69,0.69" Color="#85FFFFFF" />
+            <FillEllipse Rect="356.3,154.3,0.98,0.98" Color="#B1FFE2BE" />
+            <FillEllipse Rect="63.3,55.0,1.25,1.25" Color="#61FFFFFF" />
+            <FillEllipse Rect="498.7,148.5,1.00,1.00" Color="#B2BFD6FF" />
+            <FillEllipse Rect="204.0,61.2,1.25,1.25" Color="#7DFFFFFF" />
+            <FillEllipse Rect="119.4,97.8,1.02,1.02" Color="#8BFFE2BE" />
+            <FillEllipse Rect="188.9,485.1,1.03,1.03" Color="#AFFFFFFF" />
+            <FillEllipse Rect="289.9,520.7,1.17,1.17" Color="#6EFFC4A6" />
+            <FillEllipse Rect="461.8,441.4,0.73,0.73" Color="#58BFD6FF" />
+            <FillEllipse Rect="426.7,366.6,0.61,0.61" Color="#6FFFFFFF" />
+            <FillEllipse Rect="420.6,69.8,0.99,0.99" Color="#98FFFFFF" />
+            <FillEllipse Rect="80.6,483.0,0.60,0.60" Color="#83FFFFFF" />
+            <FillEllipse Rect="344.5,141.7,0.98,0.98" Color="#7EFFFFFF" />
+            <FillEllipse Rect="146.7,13.2,1.61,1.61" Color="#B6FFFFFF" />
+            <FillEllipse Rect="145.0,79.7,1.10,1.10" Color="#5DFFFFFF" />
+            <FillEllipse Rect="279.5,215.6,1.62,1.62" Color="#6AFFFFFF" />
+            <FillEllipse Rect="482.1,572.5,1.23,1.23" Color="#B0FFFFFF" />
+            <FillEllipse Rect="73.0,215.7,0.73,0.73" Color="#62FFFFFF" />
+            <FillEllipse Rect="268.8,176.4,0.94,0.94" Color="#50FFE2BE" />
+            <FillEllipse Rect="309.7,526.2,1.10,1.10" Color="#7BFFFFFF" />
+            <FillEllipse Rect="369.3,279.8,0.80,0.80" Color="#66FFFFFF" />
+            <FillEllipse Rect="304.0,92.3,1.26,1.26" Color="#74FFFFFF" />
+            <FillEllipse Rect="111.9,428.8,1.03,1.03" Color="#ADFFFFFF" />
+            <FillEllipse Rect="404.5,538.9,1.09,1.09" Color="#96FFFFFF" />
+            <FillEllipse Rect="583.2,132.4,0.75,0.75" Color="#97FFFFFF" />
+            <FillEllipse Rect="176.3,5.7,1.97,1.97" Color="#99FFFFFF" />
+            <FillEllipse Rect="95.0,392.4,1.24,1.24" Color="#7CFFFFFF" />
+            <FillEllipse Rect="262.8,433.5,1.18,1.18" Color="#9BFFFFFF" />
+            <FillEllipse Rect="417.3,583.7,0.64,0.64" Color="#61BFD6FF" />
+            <FillEllipse Rect="136.0,151.5,0.68,0.68" Color="#69FFFFFF" />
+            <FillEllipse Rect="322.6,472.3,0.95,0.95" Color="#69FFC4A6" />
+            <FillEllipse Rect="570.0,112.5,0.90,0.90" Color="#A9BFD6FF" />
+            <FillEllipse Rect="557.5,405.3,1.39,1.39" Color="#54FFC4A6" />
+            <FillEllipse Rect="366.0,336.2,1.25,1.25" Color="#5FFFFFFF" />
+            <FillEllipse Rect="502.4,140.2,0.62,0.62" Color="#B3FFE2BE" />
+            <FillEllipse Rect="280.8,140.1,1.14,1.14" Color="#5FFFFFFF" />
+            <FillEllipse Rect="51.8,66.6,1.48,1.48" Color="#6EBFD6FF" />
+            <FillEllipse Rect="114.5,344.7,0.92,0.92" Color="#90BFD6FF" />
+            <FillEllipse Rect="192.1,552.7,0.69,0.69" Color="#72FFFFFF" />
+            <FillEllipse Rect="336.1,528.5,0.82,0.82" Color="#A4FFC4A6" />
+            <FillEllipse Rect="427.3,399.5,0.94,0.94" Color="#7CBFD6FF" />
+            <FillEllipse Rect="529.6,142.2,1.06,1.06" Color="#65BFD6FF" />
+            <FillEllipse Rect="120.3,318.7,0.75,0.75" Color="#58FFE2BE" />
+            <FillEllipse Rect="204.0,423.9,0.93,0.93" Color="#58FFFFFF" />
+            <FillEllipse Rect="199.0,428.3,1.27,1.27" Color="#B6FFE2BE" />
+            <FillEllipse Rect="168.2,459.1,0.69,0.69" Color="#94BFD6FF" />
+            <FillEllipse Rect="273.2,29.2,0.86,0.86" Color="#B6FFFFFF" />
+            <FillEllipse Rect="135.4,180.6,0.77,0.77" Color="#9DFFFFFF" />
+            <FillEllipse Rect="497.7,162.3,0.99,0.99" Color="#7CFFC4A6" />
+            <FillEllipse Rect="55.0,159.9,1.29,1.29" Color="#9DFFFFFF" />
+            <FillEllipse Rect="137.7,391.6,1.17,1.17" Color="#59FFFFFF" />
+            <FillEllipse Rect="114.7,61.5,1.12,1.12" Color="#60FFC4A6" />
+            <FillEllipse Rect="314.0,539.9,1.18,1.18" Color="#81FFE2BE" />
+            <FillEllipse Rect="87.4,490.0,0.75,0.75" Color="#5FBFD6FF" />
+            <FillEllipse Rect="96.4,576.9,0.88,0.88" Color="#A7FFFFFF" />
+            <FillEllipse Rect="54.4,533.7,0.60,0.60" Color="#68FFFFFF" />
+            <FillEllipse Rect="471.9,351.5,0.75,0.75" Color="#8DFFE2BE" />
+            <FillEllipse Rect="369.1,313.8,0.83,0.83" Color="#7FBFD6FF" />
+            <FillEllipse Rect="192.1,526.7,1.16,1.16" Color="#52BFD6FF" />
+            <FillEllipse Rect="463.9,54.4,0.89,0.89" Color="#6AFFE2BE" />
+            <FillEllipse Rect="399.2,210.5,0.93,0.93" Color="#58BFD6FF" />
+            <FillEllipse Rect="106.7,322.2,0.75,0.75" Color="#9CFFFFFF" />
+            <FillEllipse Rect="59.8,535.6,0.90,0.90" Color="#85FFFFFF" />
+            <FillEllipse Rect="254.6,96.3,0.97,0.97" Color="#60FFFFFF" />
+            <FillEllipse Rect="31.3,30.3,0.96,0.96" Color="#83FFE2BE" />
+            <FillEllipse Rect="202.7,326.5,0.75,0.75" Color="#59FFFFFF" />
+            <FillEllipse Rect="211.8,329.1,1.01,1.01" Color="#70FFFFFF" />
+            <FillEllipse Rect="231.1,270.8,1.18,1.18" Color="#81FFFFFF" />
+            <FillEllipse Rect="298.0,37.1,1.26,1.26" Color="#8EFFFFFF" />
+            <FillEllipse Rect="362.9,574.3,1.17,1.17" Color="#ACFFFFFF" />
+            <FillEllipse Rect="283.5,558.6,0.61,0.61" Color="#72FFFFFF" />
+            <FillEllipse Rect="314.8,187.2,0.97,0.97" Color="#70FFFFFF" />
+            <FillEllipse Rect="340.6,558.3,0.85,0.85" Color="#73FFFFFF" />
+            <FillEllipse Rect="402.5,382.8,0.82,0.82" Color="#59FFFFFF" />
+            <FillEllipse Rect="329.7,574.6,1.12,1.12" Color="#A0FFFFFF" />
+            <FillEllipse Rect="83.8,230.0,0.73,0.73" Color="#8ABFD6FF" />
+            <FillEllipse Rect="557.7,486.4,0.61,0.61" Color="#B6FFFFFF" />
+            <FillEllipse Rect="130.1,583.6,1.22,1.22" Color="#9DFFFFFF" />
+            <FillEllipse Rect="586.4,414.5,1.17,1.17" Color="#96FFFFFF" />
+            <FillEllipse Rect="33.2,316.4,0.81,0.81" Color="#62BFD6FF" />
+            <FillEllipse Rect="91.7,440.7,0.62,0.62" Color="#5CFFFFFF" />
+            <FillEllipse Rect="262.6,255.9,0.87,0.87" Color="#B5FFFFFF" />
+            <FillEllipse Rect="86.9,58.0,1.29,1.29" Color="#A3FFFFFF" />
+            <FillEllipse Rect="267.7,572.8,1.11,1.11" Color="#5EFFFFFF" />
+            <FillEllipse Rect="592.1,224.6,1.17,1.17" Color="#56BFD6FF" />
+            <FillEllipse Rect="423.4,452.8,0.66,0.66" Color="#A7FFFFFF" />
+            <FillEllipse Rect="297.5,320.8,0.90,0.90" Color="#90FFFFFF" />
+            <FillEllipse Rect="584.0,318.0,0.71,0.71" Color="#9EBFD6FF" />
+            <FillEllipse Rect="373.9,343.2,1.03,1.03" Color="#A8FFFFFF" />
+            <FillEllipse Rect="252.3,186.8,1.11,1.11" Color="#B7FFFFFF" />
+            <FillEllipse Rect="532.1,166.7,1.74,1.74" Color="#74FFFFFF" />
+            <FillEllipse Rect="432.6,475.4,1.12,1.12" Color="#9AFFFFFF" />
+            <FillEllipse Rect="109.1,430.3,1.29,1.29" Color="#A8FFFFFF" />
+            <FillEllipse Rect="467.3,515.4,1.21,1.21" Color="#A3FFFFFF" />
+            <FillEllipse Rect="414.5,177.6,0.97,0.97" Color="#50FFFFFF" />
+            <FillEllipse Rect="136.8,511.7,1.25,1.25" Color="#ADFFFFFF" />
+            <FillEllipse Rect="25.1,332.4,1.19,1.19" Color="#A7FFFFFF" />
+            <FillEllipse Rect="315.4,15.3,0.88,0.88" Color="#90FFFFFF" />
+            <FillEllipse Rect="159.9,392.1,1.22,1.22" Color="#80FFFFFF" />
+            <FillEllipse Rect="151.4,3.0,1.20,1.20" Color="#A2FFFFFF" />
+            <FillEllipse Rect="120.0,1.5,1.11,1.11" Color="#B0FFFFFF" />
+            <FillEllipse Rect="209.7,358.8,0.86,0.86" Color="#B1FFFFFF" />
+            <FillEllipse Rect="294.6,179.4,1.11,1.11" Color="#81FFFFFF" />
+            <FillEllipse Rect="554.8,50.4,0.85,0.85" Color="#54BFD6FF" />
+            <FillEllipse Rect="398.3,350.4,0.92,0.92" Color="#BEBFD6FF" />
+            <FillEllipse Rect="80.4,128.1,0.83,0.83" Color="#ACFFFFFF" />
+            <FillEllipse Rect="576.5,576.2,0.80,0.80" Color="#98FFFFFF" />
+            <FillEllipse Rect="77.6,205.9,0.78,0.78" Color="#B7BFD6FF" />
+            <FillEllipse Rect="226.0,193.8,0.71,0.71" Color="#97FFE2BE" />
+            <FillEllipse Rect="225.6,109.0,1.23,1.23" Color="#8CFFFFFF" />
+            <FillEllipse Rect="82.9,203.6,1.23,1.23" Color="#6BBFD6FF" />
+            <FillEllipse Rect="289.6,89.1,1.15,1.15" Color="#4FBFD6FF" />
+            <FillEllipse Rect="511.7,281.6,1.28,1.28" Color="#ABFFFFFF" />
+            <FillEllipse Rect="206.5,318.0,1.22,1.22" Color="#7EFFFFFF" />
+            <FillEllipse Rect="111.7,539.3,1.67,1.67" Color="#70FFE2BE" />
+            <FillEllipse Rect="511.1,223.7,1.28,1.28" Color="#54FFFFFF" />
+            <FillEllipse Rect="216.0,50.1,0.82,0.82" Color="#8CFFFFFF" />
+            <FillEllipse Rect="324.9,194.5,1.69,1.69" Color="#75FFE2BE" />
+            <FillEllipse Rect="489.5,561.3,0.86,0.86" Color="#6EFFFFFF" />
+            <FillEllipse Rect="211.1,424.1,0.77,0.77" Color="#9EFFE2BE" />
+            <FillEllipse Rect="119.2,179.0,1.20,1.20" Color="#61FFFFFF" />
+            <FillEllipse Rect="200.5,590.1,0.74,0.74" Color="#5EFFFFFF" />
+            <FillEllipse Rect="332.6,554.6,0.66,0.66" Color="#B2FFFFFF" />
+            <FillEllipse Rect="389.9,560.3,1.22,1.22" Color="#89FFFFFF" />
+            <FillEllipse Rect="482.0,247.4,1.37,1.37" Color="#5BFFFFFF" />
+            <FillEllipse Rect="126.1,59.5,0.96,0.96" Color="#66FFFFFF" />
+            <FillEllipse Rect="491.7,372.9,0.75,0.75" Color="#5BFFFFFF" />
+            <FillEllipse Rect="166.7,544.1,1.24,1.24" Color="#AFFFFFFF" />
+            <FillEllipse Rect="292.3,552.2,1.22,1.22" Color="#ABFFFFFF" />
+            <FillEllipse Rect="218.6,191.0,1.03,1.03" Color="#B7BFD6FF" />
+            <FillEllipse Rect="278.0,384.7,0.68,0.68" Color="#82FFFFFF" />
+            <FillEllipse Rect="347.9,532.0,1.09,1.09" Color="#9DFFFFFF" />
+            <FillEllipse Rect="108.5,532.4,1.03,1.03" Color="#4FBFD6FF" />
+            <FillEllipse Rect="103.1,190.0,1.02,1.02" Color="#89FFFFFF" />
+            <FillEllipse Rect="473.1,486.0,0.74,0.74" Color="#85FFC4A6" />
+            <FillEllipse Rect="251.7,399.9,0.81,0.81" Color="#87FFFFFF" />
+            <FillEllipse Rect="555.2,440.2,0.81,0.81" Color="#65FFFFFF" />
+            <FillEllipse Rect="367.5,574.0,1.23,1.23" Color="#70FFFFFF" />
+            <FillEllipse Rect="541.9,141.1,0.75,0.75" Color="#9FFFFFFF" />
+            <FillEllipse Rect="154.0,390.6,1.29,1.29" Color="#7FFFFFFF" />
+            <FillEllipse Rect="294.0,167.7,1.13,1.13" Color="#90FFFFFF" />
+            <FillEllipse Rect="454.7,503.3,0.68,0.68" Color="#90FFFFFF" />
+            <FillEllipse Rect="148.6,176.8,0.74,0.74" Color="#7CFFFFFF" />
+            <FillEllipse Rect="169.5,140.7,0.74,0.74" Color="#91FFFFFF" />
+            <FillEllipse Rect="110.6,567.8,0.88,0.88" Color="#9BFFFFFF" />
+            <FillEllipse Rect="501.9,33.0,0.66,0.66" Color="#BDFFC4A6" />
+            <FillEllipse Rect="245.9,485.7,0.87,0.87" Color="#AEFFFFFF" />
+            <FillEllipse Rect="78.2,95.6,1.16,1.16" Color="#50FFFFFF" />
+            <FillEllipse Rect="232.7,435.2,0.76,0.76" Color="#81FFE2BE" />
+            <FillEllipse Rect="176.2,432.9,1.01,1.01" Color="#B2FFFFFF" />
+            <FillEllipse Rect="153.2,30.3,1.03,1.03" Color="#A3FFFFFF" />
+            <FillEllipse Rect="531.0,553.2,1.24,1.24" Color="#B5FFFFFF" />
+            <FillEllipse Rect="237.8,546.8,0.68,0.68" Color="#7FFFE2BE" />
+            <FillEllipse Rect="20.0,200.4,1.05,1.05" Color="#A0BFD6FF" />
+            <FillEllipse Rect="114.7,387.2,0.82,0.82" Color="#82FFFFFF" />
+            <FillEllipse Rect="445.8,533.3,0.62,0.62" Color="#63FFFFFF" />
+            <FillEllipse Rect="373.5,111.6,0.68,0.68" Color="#69FFFFFF" />
+            <FillEllipse Rect="465.3,362.5,1.27,1.27" Color="#92BFD6FF" />
+            <FillEllipse Rect="48.4,48.0,1.16,1.16" Color="#56FFFFFF" />
+            <FillEllipse Rect="262.5,153.0,0.94,0.94" Color="#A0FFFFFF" />
+            <FillEllipse Rect="408.1,255.3,1.13,1.13" Color="#B3FFE2BE" />
+            <FillEllipse Rect="116.8,425.0,0.63,0.63" Color="#A8FFFFFF" />
+            <FillEllipse Rect="589.8,88.8,1.01,1.01" Color="#77FFFFFF" />
+            <FillEllipse Rect="450.9,74.1,0.76,0.76" Color="#AEFFFFFF" />
+            <FillEllipse Rect="346.6,58.5,0.87,0.87" Color="#7BFFFFFF" />
+            <FillEllipse Rect="8.8,135.3,0.77,0.77" Color="#7EFFFFFF" />
+            <FillEllipse Rect="243.6,318.8,0.74,0.74" Color="#8DFFFFFF" />
+            <FillEllipse Rect="526.0,232.1,1.21,1.21" Color="#85FFFFFF" />
+            <FillEllipse Rect="546.5,9.2,1.06,1.06" Color="#50BFD6FF" />
+            <FillEllipse Rect="245.0,533.9,1.05,1.05" Color="#52FFFFFF" />
+            <FillEllipse Rect="496.0,171.7,1.07,1.07" Color="#81FFFFFF" />
+            <FillEllipse Rect="10.8,594.9,1.07,1.07" Color="#B9FFFFFF" />
+            <FillEllipse Rect="88.7,226.2,0.61,0.61" Color="#69FFFFFF" />
+            <FillEllipse Rect="275.6,565.7,1.24,1.24" Color="#7FBFD6FF" />
+            <FillEllipse Rect="495.2,597.7,1.30,1.30" Color="#8FFFFFFF" />
+            <FillEllipse Rect="293.7,276.8,1.01,1.01" Color="#B0FFFFFF" />
+            <FillEllipse Rect="374.7,563.0,0.98,0.98" Color="#9EBFD6FF" />
+            <FillEllipse Rect="236.3,46.6,1.03,1.03" Color="#BFFFFFFF" />
+            <FillEllipse Rect="226.5,384.6,1.21,1.21" Color="#BDBFD6FF" />
+            <FillEllipse Rect="302.7,458.0,0.94,0.94" Color="#6EFFE2BE" />
+            <FillEllipse Rect="469.9,128.2,0.68,0.68" Color="#7CFFFFFF" />
+            <FillEllipse Rect="494.9,313.5,0.84,0.84" Color="#ACFFFFFF" />
+            <FillEllipse Rect="169.7,201.3,0.70,0.70" Color="#72FFFFFF" />
+            <FillEllipse Rect="140.8,291.2,1.07,1.07" Color="#5BFFC4A6" />
+            <FillEllipse Rect="199.3,261.3,0.90,0.90" Color="#BDBFD6FF" />
+            <FillEllipse Rect="176.9,239.6,0.68,0.68" Color="#ACBFD6FF" />
+            <FillEllipse Rect="154.2,456.7,0.84,0.84" Color="#A1FFFFFF" />
+            <FillEllipse Rect="261.8,427.4,0.96,0.96" Color="#86BFD6FF" />
+        </DrawingBrush>
+        <DrawingBrush Name="StarsMidBrush" ContentBounds="0,0,820,820" TileMode="Tile" Viewport="0,0,820,820" Stretch="None" AlignmentX="Left" AlignmentY="Top">
+            <FillEllipse Rect="691.3,382.4,1.67,1.67" Color="#B6FFFFFF" />
+            <FillEllipse Rect="673.9,618.2,1.19,1.19" Color="#8EFFFFFF" />
+            <FillEllipse Rect="66.7,322.8,1.40,1.40" Color="#B0FFE2BE" />
+            <FillEllipse Rect="714.7,401.8,1.27,1.27" Color="#D8BFD6FF" />
+            <FillEllipse Rect="579.7,767.9,1.86,1.86" Color="#DAFFFFFF" />
+            <FillEllipse Rect="446.9,462.5,1.61,1.61" Color="#C0FFFFFF" />
+            <FillEllipse Rect="230.7,13.9,1.72,1.72" Color="#85BFD6FF" />
+            <FillEllipse Rect="27.4,40.5,1.25,1.25" Color="#85FFFFFF" />
+            <FillEllipse Rect="67.3,69.5,1.35,1.35" Color="#99BFD6FF" />
+            <FillEllipse Rect="562.1,635.9,1.72,1.72" Color="#AEFFE2BE" />
+            <FillEllipse Rect="66.4,178.9,1.85,1.85" Color="#7CFFFFFF" />
+            <FillEllipse Rect="623.1,263.3,1.79,1.79" Color="#97FFFFFF" />
+            <FillEllipse Rect="47.6,627.5,1.88,1.88" Color="#8BBFD6FF" />
+            <FillEllipse Rect="128.8,729.8,1.03,1.03" Color="#B1FFFFFF" />
+            <FillEllipse Rect="144.4,304.8,1.47,1.47" Color="#CBFFFFFF" />
+            <FillEllipse Rect="444.0,9.2,1.07,1.07" Color="#7AFFFFFF" />
+            <FillEllipse Rect="654.2,252.5,1.64,1.64" Color="#86FFE2BE" />
+            <FillEllipse Rect="777.4,497.1,1.05,1.05" Color="#80BFD6FF" />
+            <FillEllipse Rect="31.7,559.8,1.77,1.77" Color="#C8FFFFFF" />
+            <FillEllipse Rect="595.6,362.2,1.76,1.76" Color="#C3FFFFFF" />
+            <FillEllipse Rect="93.2,277.5,1.49,1.49" Color="#8FBFD6FF" />
+            <FillEllipse Rect="176.6,138.1,1.84,1.84" Color="#C8BFD6FF" />
+            <FillEllipse Rect="600.1,715.5,1.18,1.18" Color="#D3FFFFFF" />
+            <FillEllipse Rect="394.4,101.5,1.62,1.62" Color="#90FFFFFF" />
+            <FillEllipse Rect="460.2,764.2,1.35,1.35" Color="#DABFD6FF" />
+            <FillEllipse Rect="297.4,258.8,1.15,1.15" Color="#CAFFFFFF" />
+            <FillEllipse Rect="674.0,771.9,1.15,1.15" Color="#C0BFD6FF" />
+            <FillEllipse Rect="238.0,725.0,1.75,1.75" Color="#AABFD6FF" />
+            <FillEllipse Rect="183.0,208.7,1.79,1.79" Color="#C9FFFFFF" />
+            <FillEllipse Rect="203.6,312.9,1.00,1.00" Color="#E0FFFFFF" />
+            <FillEllipse Rect="52.7,170.0,1.40,1.40" Color="#74BFD6FF" />
+            <FillEllipse Rect="790.2,54.4,1.71,1.71" Color="#C4BFD6FF" />
+            <FillEllipse Rect="197.3,272.3,1.58,1.58" Color="#94FFC4A6" />
+            <FillEllipse Rect="743.2,445.8,1.40,1.40" Color="#79FFFFFF" />
+            <FillEllipse Rect="678.0,476.1,1.71,1.71" Color="#97FFC4A6" />
+            <FillEllipse Rect="623.6,788.1,1.38,1.38" Color="#ACFFFFFF" />
+            <FillEllipse Rect="769.4,107.0,1.08,1.08" Color="#7EFFFFFF" />
+            <FillEllipse Rect="438.3,86.4,1.05,1.05" Color="#B8BFD6FF" />
+            <FillEllipse Rect="112.1,768.2,1.49,1.49" Color="#DFFFFFFF" />
+            <FillEllipse Rect="770.5,332.4,1.86,1.86" Color="#A3BFD6FF" />
+            <FillEllipse Rect="468.8,516.0,1.30,1.30" Color="#BDFFFFFF" />
+            <FillEllipse Rect="203.4,463.7,1.32,1.32" Color="#8FFFFFFF" />
+            <FillEllipse Rect="328.6,257.3,1.33,1.33" Color="#ABFFE2BE" />
+            <FillEllipse Rect="246.5,672.8,1.11,1.11" Color="#78FFFFFF" />
+            <FillEllipse Rect="692.9,249.2,1.18,1.18" Color="#74FFFFFF" />
+            <FillEllipse Rect="168.2,686.3,1.66,1.66" Color="#CEFFFFFF" />
+            <FillEllipse Rect="131.6,506.4,1.02,1.02" Color="#C9FFFFFF" />
+            <FillEllipse Rect="344.5,391.4,1.68,1.68" Color="#B4FFFFFF" />
+            <FillEllipse Rect="333.5,568.0,1.05,1.05" Color="#93FFFFFF" />
+            <FillEllipse Rect="135.9,758.4,1.72,1.72" Color="#A4BFD6FF" />
+            <FillEllipse Rect="553.8,532.1,1.70,1.70" Color="#D2FFFFFF" />
+            <FillEllipse Rect="418.6,419.7,1.41,1.41" Color="#94BFD6FF" />
+            <FillEllipse Rect="761.5,313.4,1.08,1.08" Color="#7ABFD6FF" />
+            <FillEllipse Rect="746.2,176.2,1.20,1.20" Color="#8FFFFFFF" />
+            <FillEllipse Rect="323.3,377.4,1.88,1.88" Color="#77FFE2BE" />
+            <FillEllipse Rect="809.9,811.3,1.65,1.65" Color="#B2FFFFFF" />
+            <FillEllipse Rect="115.0,697.4,1.22,1.22" Color="#76BFD6FF" />
+            <FillEllipse Rect="282.2,275.3,1.11,1.11" Color="#B8FFFFFF" />
+            <FillEllipse Rect="365.7,80.6,1.73,1.73" Color="#C3FFFFFF" />
+            <FillEllipse Rect="657.9,249.4,1.23,1.23" Color="#A7FFFFFF" />
+            <FillEllipse Rect="403.7,182.3,1.16,1.16" Color="#CDFFE2BE" />
+            <FillEllipse Rect="783.8,190.7,1.07,1.07" Color="#83FFFFFF" />
+            <FillEllipse Rect="568.6,716.1,1.83,1.83" Color="#7EFFFFFF" />
+            <FillEllipse Rect="354.9,504.8,1.02,1.02" Color="#BDFFFFFF" />
+            <FillEllipse Rect="320.7,227.4,1.76,1.76" Color="#C7FFFFFF" />
+            <FillEllipse Rect="531.0,283.4,1.80,1.80" Color="#C1BFD6FF" />
+            <FillEllipse Rect="616.3,118.9,1.49,1.49" Color="#90FFFFFF" />
+            <FillEllipse Rect="225.7,402.6,1.74,1.74" Color="#86FFC4A6" />
+            <FillEllipse Rect="622.3,80.5,1.02,1.02" Color="#93FFFFFF" />
+            <FillEllipse Rect="282.2,713.2,1.32,1.32" Color="#9EBFD6FF" />
+            <FillEllipse Rect="296.9,217.0,1.73,1.73" Color="#9AFFE2BE" />
+            <FillEllipse Rect="569.3,541.7,1.28,1.28" Color="#99FFE2BE" />
+            <FillEllipse Rect="490.9,755.6,1.86,1.86" Color="#CEBFD6FF" />
+            <FillEllipse Rect="370.7,51.6,1.31,1.31" Color="#91FFFFFF" />
+            <FillEllipse Rect="540.0,36.4,1.84,1.84" Color="#E4BFD6FF" />
+            <FillEllipse Rect="422.2,480.3,1.62,1.62" Color="#9AFFFFFF" />
+            <FillEllipse Rect="198.1,58.8,1.13,1.13" Color="#88FFFFFF" />
+            <FillEllipse Rect="41.3,459.1,1.57,1.57" Color="#84FFFFFF" />
+            <FillEllipse Rect="624.7,228.6,1.00,1.00" Color="#AFBFD6FF" />
+            <FillEllipse Rect="443.9,10.0,1.64,1.64" Color="#99FFFFFF" />
+            <FillEllipse Rect="487.2,470.9,1.49,1.49" Color="#E2FFFFFF" />
+            <FillEllipse Rect="445.6,121.6,1.61,1.61" Color="#CCFFE2BE" />
+            <FillEllipse Rect="133.9,705.6,1.74,1.74" Color="#A4FFFFFF" />
+            <FillEllipse Rect="531.4,217.1,1.27,1.27" Color="#77FFFFFF" />
+            <FillEllipse Rect="120.0,396.8,1.32,1.32" Color="#D7FFFFFF" />
+            <FillEllipse Rect="182.6,570.7,1.82,1.82" Color="#AFFFFFFF" />
+            <FillEllipse Rect="312.3,318.7,3.03,3.03" Color="#D7FFFFFF" />
+            <FillEllipse Rect="540.7,429.0,1.77,1.77" Color="#A7FFE2BE" />
+            <FillEllipse Rect="257.6,520.9,1.78,1.78" Color="#C4FFFFFF" />
+            <FillEllipse Rect="181.1,38.3,1.81,1.81" Color="#8CFFFFFF" />
+            <FillEllipse Rect="402.6,778.5,1.46,1.46" Color="#8EFFFFFF" />
+            <FillEllipse Rect="611.3,195.7,1.01,1.01" Color="#D6FFFFFF" />
+            <FillEllipse Rect="403.6,710.8,1.47,1.47" Color="#A2FFE2BE" />
+            <FillEllipse Rect="780.7,732.8,1.80,1.80" Color="#BABFD6FF" />
+            <FillEllipse Rect="346.2,213.8,1.25,1.25" Color="#CFFFE2BE" />
+            <FillEllipse Rect="687.7,670.1,1.63,1.63" Color="#D7FFFFFF" />
+            <FillEllipse Rect="504.5,15.8,1.26,1.26" Color="#ADFFC4A6" />
+            <FillEllipse Rect="805.4,772.4,1.45,1.45" Color="#80FFFFFF" />
+            <FillEllipse Rect="706.5,30.3,2.28,2.28" Color="#85FFFFFF" />
+            <FillEllipse Rect="475.6,384.2,1.55,1.55" Color="#C0FFFFFF" />
+            <FillEllipse Rect="265.3,407.5,1.20,1.20" Color="#B0FFFFFF" />
+            <FillEllipse Rect="27.6,665.8,1.48,1.48" Color="#B5FFFFFF" />
+            <FillEllipse Rect="265.2,511.6,1.51,1.51" Color="#A0FFFFFF" />
+            <FillEllipse Rect="130.3,508.3,1.03,1.03" Color="#CEFFFFFF" />
+            <FillEllipse Rect="646.0,372.7,1.35,1.35" Color="#8BFFE2BE" />
+            <FillEllipse Rect="185.6,531.3,1.09,1.09" Color="#CFFFFFFF" />
+            <FillEllipse Rect="76.0,53.4,1.61,1.61" Color="#A2FFFFFF" />
+            <FillEllipse Rect="366.1,285.0,1.69,1.69" Color="#A9FFE2BE" />
+            <FillEllipse Rect="186.1,485.2,1.05,1.05" Color="#A4FFC4A6" />
+            <FillEllipse Rect="787.3,448.9,1.73,1.73" Color="#80FFFFFF" />
+        </DrawingBrush>
+        <DrawingBrush Name="StarsNearBrush" ContentBounds="0,0,1040,1040" TileMode="Tile" Viewport="0,0,1040,1040" Stretch="None" AlignmentX="Left" AlignmentY="Top">
+            <FillEllipse Rect="654.8,473.0,1.67,1.67" Color="#F7FFFFFF" />
+            <FillEllipse Rect="575.3,951.0,3.49,3.49" Color="#D7FFFFFF" />
+            <FillEllipse Rect="914.9,142.9,1.68,1.68" Color="#CBFFFFFF" />
+            <FillEllipse Rect="760.7,960.3,2.41,2.41" Color="#BCFFFFFF" />
+            <FillEllipse Rect="773.7,636.4,1.99,1.99" Color="#EAFFFFFF" />
+            <FillEllipse Rect="182.3,950.4,2.62,2.62" Color="#D8FFFFFF" />
+            <FillEllipse Rect="705.0,1002.5,2.42,2.42" Color="#F7FFFFFF" />
+            <FillEllipse Rect="430.6,392.8,1.95,1.95" Color="#F8BFD6FF" />
+            <FillEllipse Rect="735.3,409.4,2.51,2.51" Color="#D3BFD6FF" />
+            <FillEllipse Rect="444.9,697.5,2.32,2.32" Color="#B1FFFFFF" />
+            <FillEllipse Rect="246.9,701.5,1.78,1.78" Color="#ACFFFFFF" />
+            <FillEllipse Rect="162.6,534.3,1.81,1.81" Color="#CFFFFFFF" />
+            <FillEllipse Rect="759.2,765.8,1.91,1.91" Color="#DFFFFFFF" />
+            <FillEllipse Rect="413.8,735.2,2.25,2.25" Color="#F2FFFFFF" />
+            <FillEllipse Rect="715.9,155.6,1.80,1.80" Color="#C2FFFFFF" />
+            <FillEllipse Rect="483.7,95.8,4.36,4.36" Color="#EFBFD6FF" />
+            <FillEllipse Rect="404.3,65.6,2.51,2.51" Color="#B8FFFFFF" />
+            <FillEllipse Rect="677.7,922.7,2.66,2.66" Color="#B2FFFFFF" />
+            <FillEllipse Rect="512.1,668.7,1.95,1.95" Color="#B1FFE2BE" />
+            <FillEllipse Rect="20.1,604.9,1.83,1.83" Color="#D3FFFFFF" />
+            <FillEllipse Rect="869.8,751.0,3.83,3.83" Color="#D9FFFFFF" />
+            <FillEllipse Rect="928.2,718.7,2.02,2.02" Color="#FDBFD6FF" />
+            <FillEllipse Rect="775.6,649.3,2.07,2.07" Color="#F0FFFFFF" />
+            <FillEllipse Rect="325.3,926.5,1.60,1.60" Color="#F2FFFFFF" />
+            <FillEllipse Rect="911.3,296.0,2.73,2.73" Color="#F6FFFFFF" />
+            <FillEllipse Rect="111.9,800.6,1.62,1.62" Color="#CABFD6FF" />
+            <FillEllipse Rect="694.9,209.6,2.72,2.72" Color="#D6FFFFFF" />
+            <FillEllipse Rect="918.8,486.5,2.68,2.68" Color="#BCFFFFFF" />
+            <FillEllipse Rect="634.2,430.3,2.12,2.12" Color="#DAFFE2BE" />
+            <FillEllipse Rect="179.3,407.4,1.97,1.97" Color="#ECFFE2BE" />
+            <FillEllipse Rect="268.8,534.6,2.29,2.29" Color="#E2FFFFFF" />
+            <FillEllipse Rect="82.0,596.3,2.70,2.70" Color="#E3FFFFFF" />
+            <FillEllipse Rect="771.5,350.4,2.72,2.72" Color="#FEFFE2BE" />
+            <FillEllipse Rect="45.9,239.1,2.27,2.27" Color="#F2FFFFFF" />
+            <FillEllipse Rect="616.4,917.2,2.52,2.52" Color="#CFFFFFFF" />
+            <FillEllipse Rect="382.8,401.0,2.80,2.80" Color="#DEFFFFFF" />
+            <FillEllipse Rect="964.1,83.7,2.46,2.46" Color="#D7FFFFFF" />
+            <FillEllipse Rect="903.7,973.5,2.28,2.28" Color="#D1FFFFFF" />
+            <FillEllipse Rect="810.0,954.4,2.18,2.18" Color="#F0FFC4A6" />
+            <FillEllipse Rect="224.0,952.5,1.89,1.89" Color="#E8BFD6FF" />
+            <FillEllipse Rect="164.2,464.2,2.96,2.96" Color="#D9BFD6FF" />
+            <FillEllipse Rect="176.7,283.6,1.96,1.96" Color="#DDFFFFFF" />
+        </DrawingBrush>
+        <DrawingBrush Name="BeltBrush" ContentBounds="0,0,900,900">
+            <FillEllipse Rect="225.8,809.3,1.63,1.63" Color="#DBB8AE9C" />
+            <FillEllipse Rect="862.8,316.6,1.47,1.47" Color="#63B8AE9C" />
+            <FillEllipse Rect="46.0,495.3,0.97,0.97" Color="#CB9C9184" />
+            <FillEllipse Rect="50.4,496.0,2.20,2.20" Color="#74CFC3AE" />
+            <FillEllipse Rect="496.4,883.2,0.99,0.99" Color="#5E8D8577" />
+            <FillEllipse Rect="295.2,855.5,1.11,1.11" Color="#C8B8AE9C" />
+            <FillEllipse Rect="573.9,32.8,2.31,2.31" Color="#A5B8AE9C" />
+            <FillEllipse Rect="861.9,550.1,2.39,2.39" Color="#E48D8577" />
+            <FillEllipse Rect="439.8,862.0,1.61,1.61" Color="#9D9C9184" />
+            <FillEllipse Rect="376.3,50.1,1.68,1.68" Color="#65B8AE9C" />
+            <FillEllipse Rect="858.0,620.3,1.70,1.70" Color="#E3B8AE9C" />
+            <FillEllipse Rect="764.3,207.9,1.48,1.48" Color="#678D8577" />
+            <FillEllipse Rect="487.8,892.0,2.06,2.06" Color="#6EB8AE9C" />
+            <FillEllipse Rect="745.9,717.3,2.24,2.24" Color="#DAB8AE9C" />
+            <FillEllipse Rect="38.7,365.3,0.98,0.98" Color="#E3B8AE9C" />
+            <FillEllipse Rect="41.1,471.4,0.95,0.95" Color="#D1B8AE9C" />
+            <FillEllipse Rect="784.5,209.6,1.88,1.88" Color="#CCB8AE9C" />
+            <FillEllipse Rect="63.2,574.4,2.60,2.60" Color="#778D8577" />
+            <FillEllipse Rect="174.9,736.9,1.27,1.27" Color="#5FCFC3AE" />
+            <FillEllipse Rect="855.7,372.2,1.55,1.55" Color="#DA8D8577" />
+            <FillEllipse Rect="331.5,864.5,2.34,2.34" Color="#B08D8577" />
+            <FillEllipse Rect="881.3,496.8,1.30,1.30" Color="#76B8AE9C" />
+            <FillEllipse Rect="865.3,332.1,1.63,1.63" Color="#688D8577" />
+            <FillEllipse Rect="767.8,697.5,1.97,1.97" Color="#D4B8AE9C" />
+            <FillEllipse Rect="332.5,838.5,2.59,2.59" Color="#B69C9184" />
+            <FillEllipse Rect="257.8,70.2,1.17,1.17" Color="#8ACFC3AE" />
+            <FillEllipse Rect="108.7,711.7,0.93,0.93" Color="#5F9C9184" />
+            <FillEllipse Rect="860.0,612.5,2.40,2.40" Color="#D18D8577" />
+            <FillEllipse Rect="844.9,339.5,1.67,1.67" Color="#A1B8AE9C" />
+            <FillEllipse Rect="874.0,406.4,2.34,2.34" Color="#A49C9184" />
+            <FillEllipse Rect="245.3,842.7,1.83,1.83" Color="#908D8577" />
+            <FillEllipse Rect="812.9,684.7,1.84,1.84" Color="#80B8AE9C" />
+            <FillEllipse Rect="303.0,65.5,0.99,0.99" Color="#BB9C9184" />
+            <FillEllipse Rect="468.7,48.0,1.72,1.72" Color="#A39C9184" />
+            <FillEllipse Rect="817.5,656.4,2.27,2.27" Color="#AE9C9184" />
+            <FillEllipse Rect="321.9,865.3,1.61,1.61" Color="#A49C9184" />
+            <FillEllipse Rect="548.8,832.8,1.86,1.86" Color="#D68D8577" />
+            <FillEllipse Rect="62.7,262.9,0.81,0.81" Color="#719C9184" />
+            <FillEllipse Rect="706.3,107.9,1.21,1.21" Color="#B19C9184" />
+            <FillEllipse Rect="859.1,453.5,2.58,2.58" Color="#BEB8AE9C" />
+            <FillEllipse Rect="224.6,793.5,1.32,1.32" Color="#E38D8577" />
+            <FillEllipse Rect="375.5,855.0,2.60,2.60" Color="#9E8D8577" />
+            <FillEllipse Rect="190.9,111.7,2.38,2.38" Color="#669C9184" />
+            <FillEllipse Rect="206.4,810.0,1.74,1.74" Color="#A4B8AE9C" />
+            <FillEllipse Rect="880.6,464.5,2.30,2.30" Color="#C58D8577" />
+            <FillEllipse Rect="183.3,107.7,1.06,1.06" Color="#CFB8AE9C" />
+            <FillEllipse Rect="773.4,191.0,2.20,2.20" Color="#C18D8577" />
+            <FillEllipse Rect="574.0,69.6,1.99,1.99" Color="#848D8577" />
+            <FillEllipse Rect="337.4,875.9,1.67,1.67" Color="#998D8577" />
+            <FillEllipse Rect="785.4,171.6,1.88,1.88" Color="#AB9C9184" />
+            <FillEllipse Rect="504.4,854.0,1.92,1.92" Color="#9DCFC3AE" />
+            <FillEllipse Rect="878.4,544.6,1.89,1.89" Color="#909C9184" />
+            <FillEllipse Rect="423.2,38.8,1.67,1.67" Color="#86B8AE9C" />
+            <FillEllipse Rect="16.0,371.3,2.14,2.14" Color="#DC8D8577" />
+            <FillEllipse Rect="32.9,490.4,1.59,1.59" Color="#6EB8AE9C" />
+            <FillEllipse Rect="534.8,17.4,1.01,1.01" Color="#B4CFC3AE" />
+            <FillEllipse Rect="79.7,633.5,0.84,0.84" Color="#C39C9184" />
+            <FillEllipse Rect="568.5,829.3,2.54,2.54" Color="#B0CFC3AE" />
+            <FillEllipse Rect="414.4,879.9,1.44,1.44" Color="#609C9184" />
+            <FillEllipse Rect="608.4,855.3,1.02,1.02" Color="#659C9184" />
+            <FillEllipse Rect="123.2,717.6,1.80,1.80" Color="#74CFC3AE" />
+            <FillEllipse Rect="139.8,144.4,0.95,0.95" Color="#7E8D8577" />
+            <FillEllipse Rect="637.8,72.5,2.25,2.25" Color="#C59C9184" />
+            <FillEllipse Rect="227.2,828.2,2.34,2.34" Color="#968D8577" />
+            <FillEllipse Rect="590.3,844.1,1.97,1.97" Color="#88B8AE9C" />
+            <FillEllipse Rect="619.2,843.8,1.87,1.87" Color="#9ECFC3AE" />
+            <FillEllipse Rect="351.1,848.6,1.32,1.32" Color="#7ECFC3AE" />
+            <FillEllipse Rect="39.7,429.1,1.63,1.63" Color="#E2B8AE9C" />
+            <FillEllipse Rect="316.5,35.1,1.71,1.71" Color="#AFB8AE9C" />
+            <FillEllipse Rect="43.3,267.6,1.51,1.51" Color="#5F9C9184" />
+            <FillEllipse Rect="225.7,102.2,1.63,1.63" Color="#B0B8AE9C" />
+            <FillEllipse Rect="284.2,830.1,2.26,2.26" Color="#B8CFC3AE" />
+            <FillEllipse Rect="649.0,813.8,2.33,2.33" Color="#7CB8AE9C" />
+            <FillEllipse Rect="268.0,73.0,0.83,0.83" Color="#D1B8AE9C" />
+            <FillEllipse Rect="56.8,652.5,2.03,2.03" Color="#ADB8AE9C" />
+            <FillEllipse Rect="580.0,48.0,1.25,1.25" Color="#C49C9184" />
+            <FillEllipse Rect="260.5,836.3,1.82,1.82" Color="#938D8577" />
+            <FillEllipse Rect="643.2,86.1,1.35,1.35" Color="#C3B8AE9C" />
+            <FillEllipse Rect="880.7,490.8,2.09,2.09" Color="#B3B8AE9C" />
+            <FillEllipse Rect="116.6,194.5,1.51,1.51" Color="#BC9C9184" />
+            <FillEllipse Rect="437.4,11.8,2.50,2.50" Color="#DF8D8577" />
+            <FillEllipse Rect="76.1,600.1,2.07,2.07" Color="#5CB8AE9C" />
+            <FillEllipse Rect="487.5,45.4,1.12,1.12" Color="#94CFC3AE" />
+            <FillEllipse Rect="508.5,880.2,0.93,0.93" Color="#64CFC3AE" />
+            <FillEllipse Rect="842.7,266.5,1.90,1.90" Color="#7E9C9184" />
+            <FillEllipse Rect="761.6,745.2,2.51,2.51" Color="#67B8AE9C" />
+            <FillEllipse Rect="31.7,586.6,1.27,1.27" Color="#85CFC3AE" />
+            <FillEllipse Rect="37.1,612.4,2.58,2.58" Color="#AAB8AE9C" />
+            <FillEllipse Rect="343.5,856.4,1.34,1.34" Color="#CC8D8577" />
+            <FillEllipse Rect="735.4,139.6,1.58,1.58" Color="#DC8D8577" />
+            <FillEllipse Rect="807.8,695.1,1.96,1.96" Color="#8C9C9184" />
+            <FillEllipse Rect="812.1,645.4,1.45,1.45" Color="#7EB8AE9C" />
+            <FillEllipse Rect="271.3,71.5,1.79,1.79" Color="#86B8AE9C" />
+            <FillEllipse Rect="80.0,243.7,2.24,2.24" Color="#AE9C9184" />
+            <FillEllipse Rect="726.0,768.4,1.89,1.89" Color="#96CFC3AE" />
+            <FillEllipse Rect="235.0,798.3,1.89,1.89" Color="#84B8AE9C" />
+            <FillEllipse Rect="284.0,49.5,1.60,1.60" Color="#6A9C9184" />
+            <FillEllipse Rect="760.7,718.0,2.43,2.43" Color="#A39C9184" />
+            <FillEllipse Rect="201.4,773.2,1.14,1.14" Color="#5EB8AE9C" />
+            <FillEllipse Rect="855.7,448.2,2.33,2.33" Color="#C7CFC3AE" />
+            <FillEllipse Rect="831.3,262.4,1.64,1.64" Color="#94B8AE9C" />
+            <FillEllipse Rect="461.0,856.4,1.88,1.88" Color="#92B8AE9C" />
+            <FillEllipse Rect="276.8,49.5,2.07,2.07" Color="#E5CFC3AE" />
+            <FillEllipse Rect="805.6,651.1,1.59,1.59" Color="#C4CFC3AE" />
+            <FillEllipse Rect="417.9,859.3,1.81,1.81" Color="#82B8AE9C" />
+            <FillEllipse Rect="579.4,62.4,1.28,1.28" Color="#B7B8AE9C" />
+            <FillEllipse Rect="557.5,842.4,1.28,1.28" Color="#AB9C9184" />
+            <FillEllipse Rect="835.6,603.5,2.15,2.15" Color="#71B8AE9C" />
+            <FillEllipse Rect="696.2,131.1,2.44,2.44" Color="#70CFC3AE" />
+            <FillEllipse Rect="876.8,523.9,2.28,2.28" Color="#CACFC3AE" />
+            <FillEllipse Rect="308.3,844.6,1.93,1.93" Color="#E39C9184" />
+            <FillEllipse Rect="274.6,62.3,2.47,2.47" Color="#68CFC3AE" />
+            <FillEllipse Rect="835.9,617.7,1.70,1.70" Color="#8B9C9184" />
+            <FillEllipse Rect="66.6,605.8,1.81,1.81" Color="#A9CFC3AE" />
+            <FillEllipse Rect="154.1,768.6,1.94,1.94" Color="#81CFC3AE" />
+            <FillEllipse Rect="370.2,844.0,2.33,2.33" Color="#638D8577" />
+            <FillEllipse Rect="663.5,103.1,2.48,2.48" Color="#E3B8AE9C" />
+            <FillEllipse Rect="762.1,763.9,1.21,1.21" Color="#949C9184" />
+            <FillEllipse Rect="61.7,577.3,1.23,1.23" Color="#65B8AE9C" />
+            <FillEllipse Rect="832.9,619.6,1.37,1.37" Color="#5E9C9184" />
+            <FillEllipse Rect="862.3,444.1,2.54,2.54" Color="#E19C9184" />
+            <FillEllipse Rect="15.3,469.2,2.22,2.22" Color="#8D8D8577" />
+            <FillEllipse Rect="300.5,835.6,1.60,1.60" Color="#B99C9184" />
+            <FillEllipse Rect="24.6,381.1,1.80,1.80" Color="#938D8577" />
+            <FillEllipse Rect="210.6,109.4,1.08,1.08" Color="#7AB8AE9C" />
+            <FillEllipse Rect="348.8,34.9,2.31,2.31" Color="#E58D8577" />
+            <FillEllipse Rect="712.2,93.8,2.48,2.48" Color="#929C9184" />
+            <FillEllipse Rect="401.2,882.2,1.81,1.81" Color="#E1B8AE9C" />
+            <FillEllipse Rect="788.6,192.2,2.27,2.27" Color="#CA8D8577" />
+            <FillEllipse Rect="780.3,698.9,1.68,1.68" Color="#8F9C9184" />
+            <FillEllipse Rect="56.0,310.8,2.54,2.54" Color="#CBCFC3AE" />
+            <FillEllipse Rect="283.3,62.9,1.39,1.39" Color="#BE8D8577" />
+            <FillEllipse Rect="701.3,811.2,2.38,2.38" Color="#BE9C9184" />
+            <FillEllipse Rect="137.6,732.0,1.91,1.91" Color="#7BCFC3AE" />
+            <FillEllipse Rect="797.1,173.9,2.01,2.01" Color="#699C9184" />
+            <FillEllipse Rect="575.2,857.3,1.09,1.09" Color="#5B9C9184" />
+            <FillEllipse Rect="846.4,330.9,1.64,1.64" Color="#CE8D8577" />
+            <FillEllipse Rect="883.2,369.7,2.52,2.52" Color="#A09C9184" />
+            <FillEllipse Rect="855.5,514.6,1.19,1.19" Color="#CBCFC3AE" />
+            <FillEllipse Rect="734.5,758.9,1.95,1.95" Color="#C88D8577" />
+            <FillEllipse Rect="43.2,278.4,1.40,1.40" Color="#848D8577" />
+            <FillEllipse Rect="85.1,233.9,2.04,2.04" Color="#5C8D8577" />
+            <FillEllipse Rect="744.9,134.0,1.29,1.29" Color="#AEB8AE9C" />
+            <FillEllipse Rect="855.5,481.1,1.51,1.51" Color="#759C9184" />
+            <FillEllipse Rect="169.5,145.1,1.71,1.71" Color="#CFCFC3AE" />
+            <FillEllipse Rect="22.8,384.1,1.62,1.62" Color="#AB9C9184" />
+            <FillEllipse Rect="595.3,866.5,1.27,1.27" Color="#8B8D8577" />
+            <FillEllipse Rect="153.3,759.6,2.35,2.35" Color="#D0CFC3AE" />
+            <FillEllipse Rect="160.5,145.1,1.66,1.66" Color="#9F9C9184" />
+            <FillEllipse Rect="856.0,386.1,1.17,1.17" Color="#7D8D8577" />
+            <FillEllipse Rect="308.0,841.8,2.55,2.55" Color="#CCB8AE9C" />
+            <FillEllipse Rect="781.2,203.2,2.28,2.28" Color="#5FB8AE9C" />
+            <FillEllipse Rect="870.1,415.8,1.54,1.54" Color="#B6B8AE9C" />
+            <FillEllipse Rect="812.7,676.8,1.49,1.49" Color="#6CCFC3AE" />
+            <FillEllipse Rect="248.9,61.1,2.15,2.15" Color="#5A9C9184" />
+            <FillEllipse Rect="255.8,69.1,2.29,2.29" Color="#5F8D8577" />
+            <FillEllipse Rect="510.2,16.3,1.25,1.25" Color="#B59C9184" />
+            <FillEllipse Rect="784.3,685.5,1.96,1.96" Color="#C9CFC3AE" />
+            <FillEllipse Rect="281.3,48.3,1.93,1.93" Color="#ACCFC3AE" />
+            <FillEllipse Rect="78.7,663.0,1.74,1.74" Color="#CBCFC3AE" />
+            <FillEllipse Rect="44.4,332.5,2.15,2.15" Color="#8D8D8577" />
+            <FillEllipse Rect="108.5,716.5,1.05,1.05" Color="#DBB8AE9C" />
+            <FillEllipse Rect="143.4,171.8,0.91,0.91" Color="#DF9C9184" />
+            <FillEllipse Rect="611.1,59.8,1.17,1.17" Color="#64B8AE9C" />
+            <FillEllipse Rect="178.2,769.1,2.22,2.22" Color="#73CFC3AE" />
+            <FillEllipse Rect="692.8,81.3,0.90,0.90" Color="#82CFC3AE" />
+            <FillEllipse Rect="785.7,197.0,1.33,1.33" Color="#DDB8AE9C" />
+            <FillEllipse Rect="855.3,567.4,1.96,1.96" Color="#C98D8577" />
+            <FillEllipse Rect="82.6,678.7,1.52,1.52" Color="#C0B8AE9C" />
+            <FillEllipse Rect="830.8,626.7,0.81,0.81" Color="#968D8577" />
+            <FillEllipse Rect="36.8,479.1,0.83,0.83" Color="#9DCFC3AE" />
+            <FillEllipse Rect="869.6,438.3,1.99,1.99" Color="#A2CFC3AE" />
+            <FillEllipse Rect="671.4,108.8,1.83,1.83" Color="#BECFC3AE" />
+            <FillEllipse Rect="132.1,189.9,1.60,1.60" Color="#729C9184" />
+            <FillEllipse Rect="864.7,418.8,1.57,1.57" Color="#869C9184" />
+            <FillEllipse Rect="70.2,569.5,1.15,1.15" Color="#B3B8AE9C" />
+            <FillEllipse Rect="476.8,869.7,0.89,0.89" Color="#C1B8AE9C" />
+            <FillEllipse Rect="72.8,284.6,2.36,2.36" Color="#DD9C9184" />
+            <FillEllipse Rect="644.7,77.5,0.91,0.91" Color="#D18D8577" />
+            <FillEllipse Rect="873.2,496.2,2.20,2.20" Color="#C6B8AE9C" />
+            <FillEllipse Rect="220.6,812.8,1.39,1.39" Color="#908D8577" />
+            <FillEllipse Rect="64.4,286.0,2.48,2.48" Color="#DFB8AE9C" />
+            <FillEllipse Rect="322.3,23.6,2.17,2.17" Color="#B69C9184" />
+            <FillEllipse Rect="59.3,579.8,1.41,1.41" Color="#A28D8577" />
+            <FillEllipse Rect="211.7,801.7,1.42,1.42" Color="#B68D8577" />
+            <FillEllipse Rect="849.3,321.6,1.54,1.54" Color="#939C9184" />
+            <FillEllipse Rect="871.2,465.9,1.12,1.12" Color="#A78D8577" />
+            <FillEllipse Rect="708.9,790.3,2.49,2.49" Color="#999C9184" />
+            <FillEllipse Rect="870.8,328.4,2.11,2.11" Color="#83CFC3AE" />
+            <FillEllipse Rect="855.5,577.4,1.38,1.38" Color="#7FB8AE9C" />
+            <FillEllipse Rect="682.5,791.6,1.53,1.53" Color="#8A9C9184" />
+            <FillEllipse Rect="695.0,126.0,1.95,1.95" Color="#708D8577" />
+            <FillEllipse Rect="622.8,79.4,0.84,0.84" Color="#D29C9184" />
+            <FillEllipse Rect="546.8,858.0,1.80,1.80" Color="#7F8D8577" />
+            <FillEllipse Rect="769.1,738.9,1.33,1.33" Color="#C4B8AE9C" />
+            <FillEllipse Rect="796.6,218.6,2.32,2.32" Color="#5ECFC3AE" />
+            <FillEllipse Rect="30.0,554.9,2.40,2.40" Color="#A48D8577" />
+            <FillEllipse Rect="508.6,871.6,2.33,2.33" Color="#749C9184" />
+            <FillEllipse Rect="679.3,88.4,1.09,1.09" Color="#C2CFC3AE" />
+            <FillEllipse Rect="178.8,130.4,1.81,1.81" Color="#6B9C9184" />
+            <FillEllipse Rect="131.3,710.7,0.84,0.84" Color="#8B8D8577" />
+            <FillEllipse Rect="286.1,834.9,1.91,1.91" Color="#A59C9184" />
+            <FillEllipse Rect="430.3,21.2,1.02,1.02" Color="#AACFC3AE" />
+            <FillEllipse Rect="787.8,183.5,1.87,1.87" Color="#B3B8AE9C" />
+            <FillEllipse Rect="40.6,513.1,1.10,1.10" Color="#879C9184" />
+            <FillEllipse Rect="35.4,344.3,2.08,2.08" Color="#9F9C9184" />
+            <FillEllipse Rect="804.8,670.0,1.20,1.20" Color="#BCB8AE9C" />
+            <FillEllipse Rect="38.2,403.1,2.34,2.34" Color="#D4B8AE9C" />
+            <FillEllipse Rect="209.2,776.0,1.49,1.49" Color="#7E9C9184" />
+            <FillEllipse Rect="470.5,867.3,1.19,1.19" Color="#60B8AE9C" />
+            <FillEllipse Rect="561.8,851.4,0.94,0.94" Color="#918D8577" />
+            <FillEllipse Rect="36.3,503.7,2.49,2.49" Color="#658D8577" />
+            <FillEllipse Rect="170.0,143.0,1.61,1.61" Color="#73B8AE9C" />
+            <FillEllipse Rect="510.0,12.2,1.40,1.40" Color="#7A8D8577" />
+            <FillEllipse Rect="683.7,109.5,2.59,2.59" Color="#5ACFC3AE" />
+            <FillEllipse Rect="585.1,57.5,1.47,1.47" Color="#D28D8577" />
+            <FillEllipse Rect="33.0,509.3,2.50,2.50" Color="#E5CFC3AE" />
+            <FillEllipse Rect="52.6,597.0,1.49,1.49" Color="#92B8AE9C" />
+            <FillEllipse Rect="499.1,33.7,2.56,2.56" Color="#8CB8AE9C" />
+            <FillEllipse Rect="689.7,98.9,1.17,1.17" Color="#889C9184" />
+            <FillEllipse Rect="164.9,764.3,0.94,0.94" Color="#93B8AE9C" />
+            <FillEllipse Rect="15.7,354.1,1.37,1.37" Color="#CD8D8577" />
+            <FillEllipse Rect="833.1,612.8,1.23,1.23" Color="#D69C9184" />
+            <FillEllipse Rect="714.3,135.5,2.22,2.22" Color="#D4CFC3AE" />
+            <FillEllipse Rect="883.6,482.6,2.51,2.51" Color="#9ACFC3AE" />
+            <FillEllipse Rect="133.9,186.5,2.41,2.41" Color="#CCCFC3AE" />
+            <FillEllipse Rect="854.9,382.0,2.23,2.23" Color="#67CFC3AE" />
+            <FillEllipse Rect="130.2,189.8,2.22,2.22" Color="#6BCFC3AE" />
+            <FillEllipse Rect="265.9,852.9,1.04,1.04" Color="#9E9C9184" />
+            <FillEllipse Rect="502.2,36.4,1.88,1.88" Color="#5D9C9184" />
+            <FillEllipse Rect="198.7,100.9,2.11,2.11" Color="#70CFC3AE" />
+            <FillEllipse Rect="332.9,53.1,1.59,1.59" Color="#BAB8AE9C" />
+            <FillEllipse Rect="402.0,870.8,1.87,1.87" Color="#6D8D8577" />
+            <FillEllipse Rect="426.9,33.7,0.88,0.88" Color="#6DCFC3AE" />
+            <FillEllipse Rect="111.3,702.6,2.38,2.38" Color="#E58D8577" />
+            <FillEllipse Rect="589.5,45.5,1.72,1.72" Color="#9ACFC3AE" />
+            <FillEllipse Rect="32.9,343.2,1.31,1.31" Color="#BB8D8577" />
+            <FillEllipse Rect="98.5,687.3,2.03,2.03" Color="#C69C9184" />
+            <FillEllipse Rect="582.9,849.5,1.30,1.30" Color="#B4B8AE9C" />
+            <FillEllipse Rect="494.4,26.3,1.41,1.41" Color="#7C9C9184" />
+            <FillEllipse Rect="230.9,76.8,2.18,2.18" Color="#76B8AE9C" />
+            <FillEllipse Rect="38.2,400.5,2.50,2.50" Color="#CD8D8577" />
+            <FillEllipse Rect="31.4,587.1,1.78,1.78" Color="#618D8577" />
+            <FillEllipse Rect="789.5,705.0,1.25,1.25" Color="#C28D8577" />
+            <FillEllipse Rect="26.8,532.0,0.81,0.81" Color="#8AB8AE9C" />
+            <FillEllipse Rect="65.7,250.2,1.45,1.45" Color="#B1B8AE9C" />
+            <FillEllipse Rect="22.2,505.5,2.44,2.44" Color="#CE9C9184" />
+            <FillEllipse Rect="406.0,40.7,2.19,2.19" Color="#E4CFC3AE" />
+            <FillEllipse Rect="66.4,583.3,0.97,0.97" Color="#B39C9184" />
+            <FillEllipse Rect="860.5,561.7,1.99,1.99" Color="#819C9184" />
+            <FillEllipse Rect="746.6,164.7,1.56,1.56" Color="#E1CFC3AE" />
+            <FillEllipse Rect="812.8,241.7,1.88,1.88" Color="#B69C9184" />
+            <FillEllipse Rect="146.0,714.4,2.00,2.00" Color="#79B8AE9C" />
+            <FillEllipse Rect="881.7,484.4,1.57,1.57" Color="#838D8577" />
+            <FillEllipse Rect="415.9,848.0,2.45,2.45" Color="#6D8D8577" />
+            <FillEllipse Rect="371.7,861.4,1.67,1.67" Color="#C78D8577" />
+            <FillEllipse Rect="549.5,866.2,0.86,0.86" Color="#BAB8AE9C" />
+            <FillEllipse Rect="76.0,620.1,2.50,2.50" Color="#8ACFC3AE" />
+            <FillEllipse Rect="25.1,455.8,1.27,1.27" Color="#CD9C9184" />
+            <FillEllipse Rect="18.6,492.6,1.40,1.40" Color="#DB9C9184" />
+            <FillEllipse Rect="23.5,363.6,2.43,2.43" Color="#B0B8AE9C" />
+            <FillEllipse Rect="760.8,204.0,2.49,2.49" Color="#DFCFC3AE" />
+            <FillEllipse Rect="414.6,44.0,0.86,0.86" Color="#6ECFC3AE" />
+            <FillEllipse Rect="59.2,278.0,1.45,1.45" Color="#CBB8AE9C" />
+            <FillEllipse Rect="220.5,96.5,1.84,1.84" Color="#C18D8577" />
+            <FillEllipse Rect="473.5,43.4,1.53,1.53" Color="#7FB8AE9C" />
+            <FillEllipse Rect="259.9,810.5,1.67,1.67" Color="#B39C9184" />
+            <FillEllipse Rect="306.7,60.9,2.56,2.56" Color="#B79C9184" />
+            <FillEllipse Rect="296.3,61.8,0.99,0.99" Color="#B0CFC3AE" />
+            <FillEllipse Rect="714.3,789.6,2.27,2.27" Color="#AECFC3AE" />
+            <FillEllipse Rect="172.7,778.2,1.84,1.84" Color="#8CB8AE9C" />
+            <FillEllipse Rect="488.8,34.5,2.04,2.04" Color="#DDB8AE9C" />
+            <FillEllipse Rect="844.0,534.9,1.83,1.83" Color="#649C9184" />
+            <FillEllipse Rect="664.0,88.0,2.52,2.52" Color="#61B8AE9C" />
+            <FillEllipse Rect="415.6,34.6,1.46,1.46" Color="#728D8577" />
+            <FillEllipse Rect="379.2,847.6,2.33,2.33" Color="#A18D8577" />
+            <FillEllipse Rect="745.4,156.7,2.56,2.56" Color="#69B8AE9C" />
+            <FillEllipse Rect="63.1,314.0,1.50,1.50" Color="#C19C9184" />
+            <FillEllipse Rect="246.8,77.5,2.37,2.37" Color="#A2B8AE9C" />
+            <FillEllipse Rect="163.6,770.6,2.50,2.50" Color="#5BCFC3AE" />
+            <FillEllipse Rect="873.7,348.8,1.73,1.73" Color="#BBB8AE9C" />
+            <FillEllipse Rect="648.4,819.1,2.40,2.40" Color="#B8CFC3AE" />
+            <FillEllipse Rect="680.0,73.9,0.99,0.99" Color="#67B8AE9C" />
+            <FillEllipse Rect="875.7,398.6,1.35,1.35" Color="#648D8577" />
+            <FillEllipse Rect="891.9,479.9,2.13,2.13" Color="#A19C9184" />
+            <FillEllipse Rect="47.4,572.9,1.88,1.88" Color="#758D8577" />
+            <FillEllipse Rect="391.0,38.4,1.82,1.82" Color="#D1CFC3AE" />
+            <FillEllipse Rect="302.9,827.9,1.93,1.93" Color="#A49C9184" />
+            <FillEllipse Rect="33.2,341.7,1.50,1.50" Color="#B2CFC3AE" />
+            <FillEllipse Rect="330.9,23.2,2.10,2.10" Color="#639C9184" />
+            <FillEllipse Rect="816.5,261.8,1.82,1.82" Color="#7BCFC3AE" />
+            <FillEllipse Rect="734.8,144.0,2.14,2.14" Color="#B5B8AE9C" />
+            <FillEllipse Rect="869.7,521.9,1.72,1.72" Color="#DE8D8577" />
+            <FillEllipse Rect="168.2,770.3,2.27,2.27" Color="#9ACFC3AE" />
+            <FillEllipse Rect="867.8,353.0,0.81,0.81" Color="#BE9C9184" />
+            <FillEllipse Rect="735.6,771.8,1.20,1.20" Color="#9F8D8577" />
+            <FillEllipse Rect="844.1,277.3,2.51,2.51" Color="#D69C9184" />
+            <FillEllipse Rect="233.2,824.6,1.54,1.54" Color="#A88D8577" />
+            <FillEllipse Rect="333.1,55.0,2.49,2.49" Color="#B08D8577" />
+            <FillEllipse Rect="878.3,440.4,1.83,1.83" Color="#ACB8AE9C" />
+            <FillEllipse Rect="115.1,703.4,2.42,2.42" Color="#819C9184" />
+            <FillEllipse Rect="707.3,781.2,1.46,1.46" Color="#C68D8577" />
+            <FillEllipse Rect="692.8,790.2,1.02,1.02" Color="#919C9184" />
+            <FillEllipse Rect="840.8,280.8,1.26,1.26" Color="#6C9C9184" />
+            <FillEllipse Rect="55.4,606.2,2.22,2.22" Color="#D19C9184" />
+            <FillEllipse Rect="165.3,784.4,1.54,1.54" Color="#A1CFC3AE" />
+            <FillEllipse Rect="861.7,548.3,1.30,1.30" Color="#BA9C9184" />
+            <FillEllipse Rect="673.2,818.3,2.17,2.17" Color="#DACFC3AE" />
+            <FillEllipse Rect="285.9,75.0,2.32,2.32" Color="#5C8D8577" />
+            <FillEllipse Rect="187.1,790.4,2.51,2.51" Color="#B1CFC3AE" />
+            <FillEllipse Rect="295.7,72.3,1.23,1.23" Color="#CD8D8577" />
+            <FillEllipse Rect="715.3,130.7,1.34,1.34" Color="#80B8AE9C" />
+            <FillEllipse Rect="872.1,314.7,2.25,2.25" Color="#C1CFC3AE" />
+            <FillEllipse Rect="785.7,685.5,2.18,2.18" Color="#639C9184" />
+            <FillEllipse Rect="249.8,87.5,1.09,1.09" Color="#5BCFC3AE" />
+            <FillEllipse Rect="860.4,448.7,1.91,1.91" Color="#918D8577" />
+            <FillEllipse Rect="842.0,641.9,2.44,2.44" Color="#CB8D8577" />
+            <FillEllipse Rect="47.5,277.5,1.48,1.48" Color="#65B8AE9C" />
+            <FillEllipse Rect="550.1,833.5,1.73,1.73" Color="#DBB8AE9C" />
+            <FillEllipse Rect="302.2,832.2,1.91,1.91" Color="#BB8D8577" />
+            <FillEllipse Rect="634.5,819.0,1.19,1.19" Color="#BCB8AE9C" />
+            <FillEllipse Rect="845.2,311.3,1.75,1.75" Color="#7FCFC3AE" />
+            <FillEllipse Rect="519.8,862.7,1.71,1.71" Color="#AC8D8577" />
+            <FillEllipse Rect="730.3,119.1,2.58,2.58" Color="#669C9184" />
+            <FillEllipse Rect="273.2,821.7,1.70,1.70" Color="#D7B8AE9C" />
+            <FillEllipse Rect="807.7,191.0,1.72,1.72" Color="#DACFC3AE" />
+            <FillEllipse Rect="618.1,838.1,1.52,1.52" Color="#9E9C9184" />
+            <FillEllipse Rect="859.3,311.1,1.41,1.41" Color="#B58D8577" />
+            <FillEllipse Rect="109.9,709.2,1.21,1.21" Color="#83CFC3AE" />
+            <FillEllipse Rect="411.3,32.5,1.95,1.95" Color="#729C9184" />
+            <FillEllipse Rect="180.8,152.8,1.34,1.34" Color="#C69C9184" />
+            <FillEllipse Rect="113.2,239.4,2.07,2.07" Color="#71CFC3AE" />
+            <FillEllipse Rect="44.3,324.3,1.76,1.76" Color="#B08D8577" />
+            <FillEllipse Rect="867.9,364.3,1.70,1.70" Color="#99CFC3AE" />
+            <FillEllipse Rect="647.9,814.0,2.33,2.33" Color="#CA9C9184" />
+            <FillEllipse Rect="18.6,450.4,1.19,1.19" Color="#809C9184" />
+            <FillEllipse Rect="878.5,469.5,2.24,2.24" Color="#60B8AE9C" />
+            <FillEllipse Rect="718.0,786.5,2.14,2.14" Color="#768D8577" />
+            <FillEllipse Rect="803.4,203.2,1.96,1.96" Color="#6CCFC3AE" />
+            <FillEllipse Rect="664.6,801.1,1.21,1.21" Color="#6F8D8577" />
+            <FillEllipse Rect="518.2,861.8,1.95,1.95" Color="#AC9C9184" />
+            <FillEllipse Rect="536.8,859.9,2.28,2.28" Color="#BB9C9184" />
+            <FillEllipse Rect="372.4,839.6,1.55,1.55" Color="#B0CFC3AE" />
+            <FillEllipse Rect="867.1,536.7,2.35,2.35" Color="#99CFC3AE" />
+            <FillEllipse Rect="136.7,162.2,1.95,1.95" Color="#CFCFC3AE" />
+            <FillEllipse Rect="886.3,463.6,2.59,2.59" Color="#79B8AE9C" />
+            <FillEllipse Rect="709.8,807.9,1.06,1.06" Color="#ABB8AE9C" />
+            <FillEllipse Rect="639.0,61.9,0.99,0.99" Color="#B48D8577" />
+            <FillEllipse Rect="115.2,187.4,1.96,1.96" Color="#CF9C9184" />
+            <FillEllipse Rect="890.8,447.0,1.05,1.05" Color="#DEB8AE9C" />
+            <FillEllipse Rect="44.2,581.0,1.85,1.85" Color="#BEB8AE9C" />
+            <FillEllipse Rect="23.2,449.2,1.67,1.67" Color="#97B8AE9C" />
+            <FillEllipse Rect="511.8,36.3,1.22,1.22" Color="#708D8577" />
+            <FillEllipse Rect="600.5,65.8,1.13,1.13" Color="#BFCFC3AE" />
+            <FillEllipse Rect="506.2,874.5,1.89,1.89" Color="#5CB8AE9C" />
+            <FillEllipse Rect="75.0,664.6,1.90,1.90" Color="#70B8AE9C" />
+            <FillEllipse Rect="714.7,786.8,1.30,1.30" Color="#76CFC3AE" />
+            <FillEllipse Rect="33.6,407.8,1.79,1.79" Color="#D88D8577" />
+            <FillEllipse Rect="741.4,770.2,1.61,1.61" Color="#928D8577" />
+            <FillEllipse Rect="247.0,810.1,2.40,2.40" Color="#D59C9184" />
+            <FillEllipse Rect="767.6,718.2,1.80,1.80" Color="#CBB8AE9C" />
+            <FillEllipse Rect="788.1,676.6,1.45,1.45" Color="#E08D8577" />
+            <FillEllipse Rect="725.8,749.0,1.95,1.95" Color="#B18D8577" />
+            <FillEllipse Rect="631.3,54.6,2.08,2.08" Color="#82B8AE9C" />
+            <FillEllipse Rect="671.2,822.2,1.83,1.83" Color="#CF8D8577" />
+            <FillEllipse Rect="116.0,687.6,1.56,1.56" Color="#61CFC3AE" />
+            <FillEllipse Rect="658.4,88.4,1.40,1.40" Color="#AE9C9184" />
+            <FillEllipse Rect="76.3,636.5,1.45,1.45" Color="#B78D8577" />
+            <FillEllipse Rect="844.5,606.1,1.47,1.47" Color="#7B9C9184" />
+            <FillEllipse Rect="103.7,185.6,2.00,2.00" Color="#7E9C9184" />
+            <FillEllipse Rect="71.9,294.9,0.85,0.85" Color="#97CFC3AE" />
+            <FillEllipse Rect="770.6,174.0,0.96,0.96" Color="#B4B8AE9C" />
+            <FillEllipse Rect="578.1,46.4,1.63,1.63" Color="#76B8AE9C" />
+            <FillEllipse Rect="847.5,285.4,2.21,2.21" Color="#738D8577" />
+            <FillEllipse Rect="725.9,757.0,2.13,2.13" Color="#64B8AE9C" />
+            <FillEllipse Rect="814.1,266.1,2.56,2.56" Color="#C78D8577" />
+            <FillEllipse Rect="827.8,220.8,1.75,1.75" Color="#BFB8AE9C" />
+            <FillEllipse Rect="19.1,531.5,2.17,2.17" Color="#A19C9184" />
+            <FillEllipse Rect="817.4,676.2,2.22,2.22" Color="#7C9C9184" />
+            <FillEllipse Rect="564.3,36.2,1.33,1.33" Color="#8BCFC3AE" />
+            <FillEllipse Rect="855.9,281.3,0.95,0.95" Color="#9D9C9184" />
+            <FillEllipse Rect="76.2,636.1,1.39,1.39" Color="#88B8AE9C" />
+            <FillEllipse Rect="844.4,573.8,1.84,1.84" Color="#C99C9184" />
+            <FillEllipse Rect="879.1,416.3,1.35,1.35" Color="#958D8577" />
+            <FillEllipse Rect="371.3,28.6,1.05,1.05" Color="#B3B8AE9C" />
+            <FillEllipse Rect="684.2,783.8,1.29,1.29" Color="#A39C9184" />
+            <FillEllipse Rect="840.2,524.3,1.66,1.66" Color="#CBCFC3AE" />
+            <FillEllipse Rect="46.8,567.0,1.59,1.59" Color="#CDB8AE9C" />
+            <FillEllipse Rect="48.1,453.5,1.29,1.29" Color="#71B8AE9C" />
+            <FillEllipse Rect="217.8,88.3,1.59,1.59" Color="#8B9C9184" />
+            <FillEllipse Rect="386.9,876.6,2.33,2.33" Color="#BEB8AE9C" />
+            <FillEllipse Rect="561.3,50.9,1.24,1.24" Color="#81B8AE9C" />
+            <FillEllipse Rect="790.1,182.9,2.03,2.03" Color="#A1CFC3AE" />
+            <FillEllipse Rect="75.2,213.0,1.05,1.05" Color="#67CFC3AE" />
+            <FillEllipse Rect="830.8,249.2,2.00,2.00" Color="#7FCFC3AE" />
+            <FillEllipse Rect="221.2,789.9,2.45,2.45" Color="#839C9184" />
+            <FillEllipse Rect="201.9,771.1,2.46,2.46" Color="#C08D8577" />
+            <FillEllipse Rect="323.5,851.0,2.04,2.04" Color="#DBB8AE9C" />
+            <FillEllipse Rect="818.3,258.2,1.79,1.79" Color="#629C9184" />
+            <FillEllipse Rect="839.0,261.2,1.93,1.93" Color="#9FCFC3AE" />
+            <FillEllipse Rect="850.5,299.4,2.02,2.02" Color="#92B8AE9C" />
+            <FillEllipse Rect="476.3,41.5,2.59,2.59" Color="#929C9184" />
+            <FillEllipse Rect="398.6,866.3,1.12,1.12" Color="#C1B8AE9C" />
+            <FillEllipse Rect="244.8,74.5,1.13,1.13" Color="#8DB8AE9C" />
+            <FillEllipse Rect="836.8,295.2,0.99,0.99" Color="#82B8AE9C" />
+            <FillEllipse Rect="642.1,835.8,2.16,2.16" Color="#5BCFC3AE" />
+            <FillEllipse Rect="795.0,663.5,1.53,1.53" Color="#8CB8AE9C" />
+            <FillEllipse Rect="543.8,51.2,1.71,1.71" Color="#C38D8577" />
+            <FillEllipse Rect="45.7,497.5,1.11,1.11" Color="#939C9184" />
+            <FillEllipse Rect="29.8,539.2,2.25,2.25" Color="#BCB8AE9C" />
+            <FillEllipse Rect="813.3,699.5,1.23,1.23" Color="#C2B8AE9C" />
+            <FillEllipse Rect="532.6,882.8,2.59,2.59" Color="#A08D8577" />
+            <FillEllipse Rect="515.3,865.4,1.40,1.40" Color="#878D8577" />
+            <FillEllipse Rect="199.6,786.0,1.15,1.15" Color="#E4B8AE9C" />
+            <FillEllipse Rect="431.1,33.9,0.90,0.90" Color="#8B8D8577" />
+            <FillEllipse Rect="551.6,33.0,2.56,2.56" Color="#BAB8AE9C" />
+            <FillEllipse Rect="124.9,747.8,1.86,1.86" Color="#B7CFC3AE" />
+            <FillEllipse Rect="37.2,516.9,1.43,1.43" Color="#748D8577" />
+            <FillEllipse Rect="104.1,210.3,2.41,2.41" Color="#999C9184" />
+            <FillEllipse Rect="71.8,677.4,1.95,1.95" Color="#9F9C9184" />
+            <FillEllipse Rect="105.5,231.1,1.96,1.96" Color="#768D8577" />
+            <FillEllipse Rect="653.0,806.3,2.09,2.09" Color="#DF9C9184" />
+            <FillEllipse Rect="742.0,771.6,1.16,1.16" Color="#BECFC3AE" />
+            <FillEllipse Rect="30.8,390.3,1.62,1.62" Color="#DE8D8577" />
+            <FillEllipse Rect="776.8,183.4,2.22,2.22" Color="#79CFC3AE" />
+            <FillEllipse Rect="111.4,693.7,1.71,1.71" Color="#E28D8577" />
+            <FillEllipse Rect="677.2,817.9,1.22,1.22" Color="#D59C9184" />
+            <FillEllipse Rect="35.1,314.6,1.82,1.82" Color="#77B8AE9C" />
+            <FillEllipse Rect="299.5,833.9,0.81,0.81" Color="#BCCFC3AE" />
+            <FillEllipse Rect="470.9,34.5,2.26,2.26" Color="#BA8D8577" />
+            <FillEllipse Rect="22.3,486.9,2.17,2.17" Color="#79B8AE9C" />
+            <FillEllipse Rect="776.2,183.0,1.18,1.18" Color="#779C9184" />
+            <FillEllipse Rect="86.6,260.3,1.62,1.62" Color="#C89C9184" />
+            <FillEllipse Rect="109.7,166.9,1.33,1.33" Color="#688D8577" />
+            <FillEllipse Rect="575.8,37.6,2.39,2.39" Color="#8D9C9184" />
+            <FillEllipse Rect="404.1,867.0,2.58,2.58" Color="#DB9C9184" />
+            <FillEllipse Rect="861.1,411.0,1.23,1.23" Color="#D6B8AE9C" />
+            <FillEllipse Rect="224.7,97.3,1.14,1.14" Color="#83B8AE9C" />
+            <FillEllipse Rect="233.7,806.0,1.86,1.86" Color="#C0CFC3AE" />
+            <FillEllipse Rect="502.6,31.8,2.28,2.28" Color="#AF8D8577" />
+            <FillEllipse Rect="666.7,101.2,1.26,1.26" Color="#CBB8AE9C" />
+            <FillEllipse Rect="41.6,375.5,0.92,0.92" Color="#8F9C9184" />
+            <FillEllipse Rect="832.6,610.6,1.20,1.20" Color="#B4CFC3AE" />
+            <FillEllipse Rect="91.0,234.9,2.44,2.44" Color="#CECFC3AE" />
+            <FillEllipse Rect="566.8,33.6,1.00,1.00" Color="#9BB8AE9C" />
+            <FillEllipse Rect="456.9,871.0,2.51,2.51" Color="#D3CFC3AE" />
+            <FillEllipse Rect="862.4,585.3,2.55,2.55" Color="#5ECFC3AE" />
+            <FillEllipse Rect="564.5,848.2,1.59,1.59" Color="#C5CFC3AE" />
+            <FillEllipse Rect="648.9,818.7,0.88,0.88" Color="#719C9184" />
+            <FillEllipse Rect="132.9,209.3,1.47,1.47" Color="#A79C9184" />
+            <FillEllipse Rect="698.3,116.5,2.57,2.57" Color="#C3CFC3AE" />
+            <FillEllipse Rect="208.5,767.0,2.27,2.27" Color="#C98D8577" />
+            <FillEllipse Rect="746.1,153.4,2.08,2.08" Color="#BEB8AE9C" />
+            <FillEllipse Rect="32.2,555.3,1.82,1.82" Color="#5F9C9184" />
+            <FillEllipse Rect="113.8,209.7,1.21,1.21" Color="#92B8AE9C" />
+            <FillEllipse Rect="361.4,51.4,0.92,0.92" Color="#E2CFC3AE" />
+            <FillEllipse Rect="284.9,74.8,1.43,1.43" Color="#ACCFC3AE" />
+            <FillEllipse Rect="783.1,686.3,1.79,1.79" Color="#69CFC3AE" />
+            <FillEllipse Rect="71.5,668.2,1.76,1.76" Color="#838D8577" />
+            <FillEllipse Rect="830.7,305.9,1.61,1.61" Color="#8E9C9184" />
+            <FillEllipse Rect="546.4,50.3,1.97,1.97" Color="#8E9C9184" />
+            <FillEllipse Rect="802.7,657.4,1.10,1.10" Color="#DDB8AE9C" />
+            <FillEllipse Rect="755.3,158.2,1.00,1.00" Color="#5FB8AE9C" />
+            <FillEllipse Rect="450.4,21.3,1.93,1.93" Color="#6E8D8577" />
+            <FillEllipse Rect="600.9,854.9,1.18,1.18" Color="#B98D8577" />
+            <FillEllipse Rect="636.5,848.3,1.88,1.88" Color="#8D8D8577" />
+            <FillEllipse Rect="822.2,587.4,1.39,1.39" Color="#B29C9184" />
+            <FillEllipse Rect="117.9,227.1,0.80,0.80" Color="#7ACFC3AE" />
+            <FillEllipse Rect="868.2,377.6,1.16,1.16" Color="#85B8AE9C" />
+            <FillEllipse Rect="32.2,434.2,2.06,2.06" Color="#708D8577" />
+            <FillEllipse Rect="18.5,502.6,0.93,0.93" Color="#A1B8AE9C" />
+            <FillEllipse Rect="238.1,799.6,1.28,1.28" Color="#82B8AE9C" />
+            <FillEllipse Rect="45.5,316.3,0.98,0.98" Color="#8FB8AE9C" />
+            <FillEllipse Rect="372.5,875.6,2.07,2.07" Color="#A8CFC3AE" />
+            <FillEllipse Rect="720.9,146.0,1.92,1.92" Color="#DAB8AE9C" />
+            <FillEllipse Rect="264.6,47.6,2.57,2.57" Color="#DB8D8577" />
+            <FillEllipse Rect="387.2,37.9,1.56,1.56" Color="#6FCFC3AE" />
+            <FillEllipse Rect="812.6,289.2,2.52,2.52" Color="#D5B8AE9C" />
+            <FillEllipse Rect="370.9,28.1,2.08,2.08" Color="#76B8AE9C" />
+            <FillEllipse Rect="55.5,323.6,2.55,2.55" Color="#89B8AE9C" />
+            <FillEllipse Rect="503.1,853.5,1.89,1.89" Color="#878D8577" />
+            <FillEllipse Rect="430.4,32.4,1.48,1.48" Color="#60CFC3AE" />
+            <FillEllipse Rect="712.6,113.7,2.19,2.19" Color="#A5CFC3AE" />
+            <FillEllipse Rect="800.0,230.4,2.42,2.42" Color="#869C9184" />
+            <FillEllipse Rect="859.6,370.9,1.98,1.98" Color="#948D8577" />
+            <FillEllipse Rect="874.9,450.3,1.35,1.35" Color="#CE9C9184" />
+            <FillEllipse Rect="24.4,455.5,2.55,2.55" Color="#78CFC3AE" />
+            <FillEllipse Rect="771.8,712.3,1.80,1.80" Color="#A08D8577" />
+            <FillEllipse Rect="419.8,868.4,1.67,1.67" Color="#A98D8577" />
+            <FillEllipse Rect="360.7,28.5,1.77,1.77" Color="#85CFC3AE" />
+            <FillEllipse Rect="247.3,804.7,1.99,1.99" Color="#D4CFC3AE" />
+            <FillEllipse Rect="847.7,283.8,1.07,1.07" Color="#678D8577" />
+            <FillEllipse Rect="797.1,703.2,1.45,1.45" Color="#BC8D8577" />
+            <FillEllipse Rect="698.0,790.1,1.87,1.87" Color="#BDB8AE9C" />
+            <FillEllipse Rect="108.0,665.4,2.37,2.37" Color="#9F8D8577" />
+            <FillEllipse Rect="843.1,277.1,2.03,2.03" Color="#E2CFC3AE" />
+            <FillEllipse Rect="600.1,35.7,2.33,2.33" Color="#60CFC3AE" />
+            <FillEllipse Rect="378.0,36.7,2.24,2.24" Color="#628D8577" />
+            <FillEllipse Rect="415.7,869.4,2.40,2.40" Color="#6B9C9184" />
+            <FillEllipse Rect="17.4,350.5,1.29,1.29" Color="#CD9C9184" />
+            <FillEllipse Rect="233.0,797.6,1.33,1.33" Color="#A08D8577" />
+            <FillEllipse Rect="770.3,160.9,2.60,2.60" Color="#ABCFC3AE" />
+            <FillEllipse Rect="74.9,583.3,1.39,1.39" Color="#9CCFC3AE" />
+            <FillEllipse Rect="822.6,578.0,1.99,1.99" Color="#909C9184" />
+            <FillEllipse Rect="447.7,30.7,2.11,2.11" Color="#60CFC3AE" />
+            <FillEllipse Rect="433.8,25.8,1.10,1.10" Color="#91B8AE9C" />
+            <FillEllipse Rect="206.6,806.3,1.85,1.85" Color="#DD9C9184" />
+            <FillEllipse Rect="859.3,392.7,1.61,1.61" Color="#B6CFC3AE" />
+            <FillEllipse Rect="364.0,871.7,1.42,1.42" Color="#BFCFC3AE" />
+            <FillEllipse Rect="846.2,267.4,0.86,0.86" Color="#C49C9184" />
+            <FillEllipse Rect="855.7,308.0,0.96,0.96" Color="#C08D8577" />
+            <FillEllipse Rect="39.6,515.0,2.53,2.53" Color="#69B8AE9C" />
+            <FillEllipse Rect="377.1,36.5,2.22,2.22" Color="#C48D8577" />
+            <FillEllipse Rect="796.1,711.1,2.55,2.55" Color="#708D8577" />
+            <FillEllipse Rect="45.5,594.3,1.28,1.28" Color="#889C9184" />
+            <FillEllipse Rect="186.4,136.0,1.18,1.18" Color="#DECFC3AE" />
+            <FillEllipse Rect="605.3,833.7,2.25,2.25" Color="#7ACFC3AE" />
+            <FillEllipse Rect="857.1,445.4,1.24,1.24" Color="#E5CFC3AE" />
+            <FillEllipse Rect="688.0,90.3,2.47,2.47" Color="#C39C9184" />
+            <FillEllipse Rect="855.1,468.2,1.94,1.94" Color="#B69C9184" />
+            <FillEllipse Rect="175.3,140.4,2.31,2.31" Color="#72CFC3AE" />
+            <FillEllipse Rect="76.3,238.0,1.10,1.10" Color="#DB9C9184" />
+            <FillEllipse Rect="47.0,589.7,0.84,0.84" Color="#888D8577" />
+            <FillEllipse Rect="560.1,69.9,1.29,1.29" Color="#81B8AE9C" />
+            <FillEllipse Rect="636.9,810.7,2.27,2.27" Color="#83B8AE9C" />
+            <FillEllipse Rect="88.2,263.0,1.05,1.05" Color="#D09C9184" />
+            <FillEllipse Rect="634.5,73.1,2.35,2.35" Color="#BBB8AE9C" />
+            <FillEllipse Rect="13.7,534.7,1.97,1.97" Color="#B0B8AE9C" />
+            <FillEllipse Rect="312.4,867.2,1.94,1.94" Color="#898D8577" />
+            <FillEllipse Rect="854.0,348.9,2.13,2.13" Color="#C99C9184" />
+            <FillEllipse Rect="865.5,430.8,0.95,0.95" Color="#978D8577" />
+            <FillEllipse Rect="724.5,120.0,2.08,2.08" Color="#A4CFC3AE" />
+            <FillEllipse Rect="367.1,30.7,1.17,1.17" Color="#B7B8AE9C" />
+            <FillEllipse Rect="590.5,836.3,2.06,2.06" Color="#BECFC3AE" />
+            <FillEllipse Rect="351.9,54.1,2.16,2.16" Color="#CDCFC3AE" />
+            <FillEllipse Rect="21.4,391.7,2.07,2.07" Color="#B69C9184" />
+            <FillEllipse Rect="749.4,183.1,2.17,2.17" Color="#928D8577" />
+            <FillEllipse Rect="672.0,809.6,1.53,1.53" Color="#BA8D8577" />
+            <FillEllipse Rect="570.5,32.0,1.89,1.89" Color="#5EB8AE9C" />
+            <FillEllipse Rect="188.2,111.0,2.11,2.11" Color="#E28D8577" />
+            <FillEllipse Rect="283.4,52.0,1.09,1.09" Color="#D4CFC3AE" />
+            <FillEllipse Rect="507.4,860.3,1.57,1.57" Color="#968D8577" />
+            <FillEllipse Rect="817.6,661.7,1.93,1.93" Color="#668D8577" />
+            <FillEllipse Rect="579.9,861.0,2.55,2.55" Color="#62CFC3AE" />
+            <FillEllipse Rect="87.8,233.5,1.42,1.42" Color="#5E8D8577" />
+            <FillEllipse Rect="56.6,345.1,1.24,1.24" Color="#9ACFC3AE" />
+            <FillEllipse Rect="819.3,625.3,1.01,1.01" Color="#71B8AE9C" />
+            <FillEllipse Rect="842.6,536.4,2.10,2.10" Color="#B38D8577" />
+            <FillEllipse Rect="505.4,55.3,1.02,1.02" Color="#5F8D8577" />
+            <FillEllipse Rect="173.1,140.4,2.57,2.57" Color="#C89C9184" />
+            <FillEllipse Rect="102.7,711.1,1.57,1.57" Color="#AF9C9184" />
+            <FillEllipse Rect="164.2,155.3,1.80,1.80" Color="#C68D8577" />
+            <FillEllipse Rect="776.1,191.0,2.43,2.43" Color="#B58D8577" />
+            <FillEllipse Rect="330.2,46.1,1.60,1.60" Color="#E4B8AE9C" />
+            <FillEllipse Rect="51.0,580.3,2.08,2.08" Color="#B98D8577" />
+            <FillEllipse Rect="372.3,31.7,0.90,0.90" Color="#B98D8577" />
+            <FillEllipse Rect="240.5,786.2,1.96,1.96" Color="#D6B8AE9C" />
+            <FillEllipse Rect="209.2,779.1,1.31,1.31" Color="#C1CFC3AE" />
+            <FillEllipse Rect="246.3,844.4,1.40,1.40" Color="#B28D8577" />
+            <FillEllipse Rect="38.0,357.6,2.49,2.49" Color="#C98D8577" />
+        </DrawingBrush>
+
+        <RadialGradientBrush Name="Shade6Brush" Center="1.8,3" RadiusX="5.88" RadiusY="5.88">
+            <GradientStop Offset="0" Color="#00000000" /><GradientStop Offset="0.42" Color="#0A000000" /><GradientStop Offset="0.7" Color="#B8020308" /><GradientStop Offset="1" Color="#F5020308" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="Shade10Brush" Center="3,5" RadiusX="9.8" RadiusY="9.8">
+            <GradientStop Offset="0" Color="#00000000" /><GradientStop Offset="0.42" Color="#0A000000" /><GradientStop Offset="0.7" Color="#B8020308" /><GradientStop Offset="1" Color="#F5020308" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="Shade13Brush" Center="3.9,6.5" RadiusX="12.74" RadiusY="12.74">
+            <GradientStop Offset="0" Color="#00000000" /><GradientStop Offset="0.42" Color="#0A000000" /><GradientStop Offset="0.7" Color="#B8020308" /><GradientStop Offset="1" Color="#F5020308" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="Shade18Brush" Center="5.4,9" RadiusX="17.64" RadiusY="17.64">
+            <GradientStop Offset="0" Color="#00000000" /><GradientStop Offset="0.42" Color="#0A000000" /><GradientStop Offset="0.7" Color="#B8020308" /><GradientStop Offset="1" Color="#F5020308" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="Shade19Brush" Center="5.7,9.5" RadiusX="18.62" RadiusY="18.62">
+            <GradientStop Offset="0" Color="#00000000" /><GradientStop Offset="0.42" Color="#00000000" /><GradientStop Offset="0.7" Color="#FF000000" /><GradientStop Offset="1" Color="#FF000000" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="Shade27Brush" Center="8.1,13.5" RadiusX="26.46" RadiusY="26.46">
+            <GradientStop Offset="0" Color="#00000000" /><GradientStop Offset="0.42" Color="#0A000000" /><GradientStop Offset="0.7" Color="#B8020308" /><GradientStop Offset="1" Color="#F5020308" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="Shade28Brush" Center="8.4,14" RadiusX="27.44" RadiusY="27.44">
+            <GradientStop Offset="0" Color="#00000000" /><GradientStop Offset="0.42" Color="#0A000000" /><GradientStop Offset="0.7" Color="#B8020308" /><GradientStop Offset="1" Color="#F5020308" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="Shade44Brush" Center="13.2,22" RadiusX="43.12" RadiusY="43.12">
+            <GradientStop Offset="0" Color="#00000000" /><GradientStop Offset="0.42" Color="#0A000000" /><GradientStop Offset="0.7" Color="#B8020308" /><GradientStop Offset="1" Color="#F5020308" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="Shade52Brush" Center="15.6,26" RadiusX="50.96" RadiusY="50.96">
+            <GradientStop Offset="0" Color="#00000000" /><GradientStop Offset="0.42" Color="#0A000000" /><GradientStop Offset="0.7" Color="#B8020308" /><GradientStop Offset="1" Color="#F5020308" />
+        </RadialGradientBrush>
+
+
+        <!-- Atmospheres: a soft rim that starts at the disc edge (1 / 2.4 of the radius) and fades out. -->
+        <RadialGradientBrush Name="MercuryAtmosphereBrush" Center="12,12" RadiusX="12" RadiusY="12">
+            <GradientStop Offset="0" Color="#00BFBFBF" /><GradientStop Offset="0.38" Color="#00BFBFBF" /><GradientStop Offset="0.42" Color="#A6BFBFBF" /><GradientStop Offset="0.58" Color="#3DBFBFBF" /><GradientStop Offset="1" Color="#00BFBFBF" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="VenusAtmosphereBrush" Center="21.5,21.5" RadiusX="21.5" RadiusY="21.5">
+            <GradientStop Offset="0" Color="#00FFE2A0" /><GradientStop Offset="0.38" Color="#00FFE2A0" /><GradientStop Offset="0.42" Color="#A6FFE2A0" /><GradientStop Offset="0.58" Color="#3DFFE2A0" /><GradientStop Offset="1" Color="#00FFE2A0" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="EarthAtmosphereBrush" Center="23,23" RadiusX="23" RadiusY="23">
+            <GradientStop Offset="0" Color="#006FB6FF" /><GradientStop Offset="0.38" Color="#006FB6FF" /><GradientStop Offset="0.42" Color="#A66FB6FF" /><GradientStop Offset="0.58" Color="#3D6FB6FF" /><GradientStop Offset="1" Color="#006FB6FF" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="MarsAtmosphereBrush" Center="15.5,15.5" RadiusX="15.5" RadiusY="15.5">
+            <GradientStop Offset="0" Color="#00FF9A6A" /><GradientStop Offset="0.38" Color="#00FF9A6A" /><GradientStop Offset="0.42" Color="#A6FF9A6A" /><GradientStop Offset="0.58" Color="#3DFF9A6A" /><GradientStop Offset="1" Color="#00FF9A6A" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="JupiterAtmosphereBrush" Center="62.5,62.5" RadiusX="62.5" RadiusY="62.5">
+            <GradientStop Offset="0" Color="#00FFD9A8" /><GradientStop Offset="0.38" Color="#00FFD9A8" /><GradientStop Offset="0.42" Color="#A6FFD9A8" /><GradientStop Offset="0.58" Color="#3DFFD9A8" /><GradientStop Offset="1" Color="#00FFD9A8" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="SaturnAtmosphereBrush" Center="53,53" RadiusX="53" RadiusY="53">
+            <GradientStop Offset="0" Color="#00FFE7B0" /><GradientStop Offset="0.38" Color="#00FFE7B0" /><GradientStop Offset="0.42" Color="#A6FFE7B0" /><GradientStop Offset="0.58" Color="#3DFFE7B0" /><GradientStop Offset="1" Color="#00FFE7B0" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="UranusAtmosphereBrush" Center="33.5,33.5" RadiusX="33.5" RadiusY="33.5">
+            <GradientStop Offset="0" Color="#009FF3FF" /><GradientStop Offset="0.38" Color="#009FF3FF" /><GradientStop Offset="0.42" Color="#A69FF3FF" /><GradientStop Offset="0.58" Color="#3D9FF3FF" /><GradientStop Offset="1" Color="#009FF3FF" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="NeptuneAtmosphereBrush" Center="32.5,32.5" RadiusX="32.5" RadiusY="32.5">
+            <GradientStop Offset="0" Color="#007E98FF" /><GradientStop Offset="0.38" Color="#007E98FF" /><GradientStop Offset="0.42" Color="#A67E98FF" /><GradientStop Offset="0.58" Color="#3D7E98FF" /><GradientStop Offset="1" Color="#007E98FF" />
+        </RadialGradientBrush>
+    </Application.Resources>
+</Application>

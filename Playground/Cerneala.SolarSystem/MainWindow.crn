@@ -1,0 +1,777 @@
+<!--
+    The orrery. Everything visible is declared here: the starfield, the nebula, the Sun, every planet,
+    the hover and selection states, the HUD and the information card.
+
+    MainWindow.crn.cs only does what markup cannot: it advances the simulated clock (Motion has no
+    time scale), turns each orbit to its body's mean longitude, and drives the camera (zoom about the
+    cursor, drag to pan, follow the selected body). Gradient centres and radii are in pixels of the
+    element they fill.
+-->
+<Window
+    Title="Solar System · Cerneala"
+    Width="1360"
+    Height="765"
+    ResizeMode="CanMinimize"
+    WindowStartupLocation="CenterScreen"
+    ContentRendered="OnContentRendered"
+    Background="$SpaceBrush"
+    Padding="0">
+    <Window.Resources>
+        <!-- Type and controls -->
+        <Aspect TargetType="TextBlock">
+            @default
+            {
+                FontFamily = "Segoe UI";
+                FontSize = 14;
+                Foreground = $HudTextBrush;
+            }
+        </Aspect>
+        <Aspect Name="Caption" TargetType="TextBlock">
+            @default
+            {
+                FontFamily = "Segoe UI Semibold";
+                FontSize = 10;
+                Foreground = $HudDimBrush;
+            }
+        </Aspect>
+        <Aspect Name="Readout" TargetType="TextBlock">
+            @default
+            {
+                FontFamily = "Segoe UI Light";
+                FontSize = 17;
+                Foreground = $WhiteBrush;
+                TextWrapping = "Wrap";
+            }
+        </Aspect>
+        <Aspect TargetType="Button">
+            @default
+            {
+                FontFamily = "Segoe UI Semibold";
+                FontSize = 10;
+                Foreground = $HudTextBrush;
+                Background = $GlassButtonBrush;
+                BorderBrush = $GlassLineBrush;
+                BorderThickness = "1";
+                Padding = "14,8,14,8";
+            }
+            @when IsMouseOver
+            {
+                Background = $GlassHotBrush;
+                Foreground = $WhiteBrush;
+            }
+        </Aspect>
+        <Aspect Name="PlanetHit" TargetType="Button">
+            @default
+            {
+                Background = $ClearBrush;
+                BorderBrush = $ClearBrush;
+                BorderThickness = "0";
+                Padding = "0";
+            }
+            @template
+            {
+                <Grid />
+            }
+        </Aspect>
+
+        <!-- Ambient life: twinkling star layers, the breathing Sun. -->
+        <MotionClip Name="Ambience" TargetType="Grid">
+            @parallel
+            {
+                @animate with PingPong(Tween(2600ms, EaseInOut), forever) { @from { $StarsNear.Opacity = 1; } @to { $StarsNear.Opacity = 0.55; } }
+                @animate with PingPong(Tween(4100ms, EaseInOut), forever) { @from { $StarsMid.Opacity = 0.95; } @to { $StarsMid.Opacity = 0.6; } }
+                @animate with PingPong(Tween(3200ms, EaseInOut), forever) { @from { $SunGlow.Scale = 0.95; } @to { $SunGlow.Scale = 1.06; } }
+                @animate with PingPong(Tween(5200ms, EaseInOut), forever) { @from { $Corona.Scale = 0.97; } @to { $Corona.Scale = 1.04; } }
+                @animate with PingPong(Tween(2300ms, EaseInOut), forever) { @from { $SunDisc.prism.Light.Bloom = 18; } @to { $SunDisc.prism.Light.Bloom = 34; } }
+                @animate with PingPong(Tween(3700ms, EaseInOut), forever) { @from { $Streak.Opacity = 0.55; } @to { $Streak.Opacity = 1; } }
+            }
+        </MotionClip>
+        <Aspect Name="Director" TargetType="Grid">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Ambience as Playback;
+                }
+            }
+        </Aspect>
+    </Window.Resources>
+
+    <Grid
+        Name="Viewport"
+        Aspect="$Director"
+        ClipToBounds="True"
+        MouseWheel="OnWheel"
+        MouseLeftButtonDown="OnPointerDown"
+        MouseMove="OnPointerMove"
+        MouseLeftButtonUp="OnPointerUp">
+
+        <!-- Deep space. The window code pans these layers for parallax. -->
+        <Canvas>
+            <Border Name="StarsFar" Width="3200" Height="2000" Background="$StarsFarBrush" IsHitTestVisible="False" />
+            <Grid Name="Nebula" Width="3200" Height="2000" IsHitTestVisible="False">
+                <Ellipse Width="1520" Height="920" Fill="$NebulaVioletBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="1560,180,0,0" Rotation="-0.35" />
+                <Ellipse Width="1520" Height="920" Fill="$NebulaVioletBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="1900,560,0,0" Rotation="0.55" Opacity="0.5" />
+                <Ellipse Width="1120" Height="680" Fill="$NebulaTealBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="380,1060,0,0" Rotation="0.4" />
+                <Ellipse Width="1120" Height="680" Fill="$NebulaRoseBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="2140,1180,0,0" Rotation="-0.2" Opacity="0.55" />
+            </Grid>
+            <Border Name="StarsMid" Width="3200" Height="2000" Background="$StarsMidBrush" IsHitTestVisible="False" />
+            <Border Name="StarsNear" Width="3200" Height="2000" Background="$StarsNearBrush" IsHitTestVisible="False" />
+
+            <!-- The system. 2400 x 2400 with the Sun at its centre; the camera scales and moves it. -->
+            <Grid Name="Universe" Width="2400" Height="2400" RenderTransformOrigin="0,0">
+                <!-- Orbits -->
+            <Ellipse Name="MercuryPath" Width="300" Height="300" Stroke="$OrbitBrush" StrokeThickness="1.2" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                <Ellipse.Aspect>
+                    @when $MercuryHit.IsMouseOver or $DataContext.IsMercurySelected
+                    {
+                        Stroke = $OrbitHotBrush;
+                    }
+                </Ellipse.Aspect>
+            </Ellipse>
+            <Ellipse Name="VenusPath" Width="410" Height="410" Stroke="$OrbitBrush" StrokeThickness="1.2" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                <Ellipse.Aspect>
+                    @when $VenusHit.IsMouseOver or $DataContext.IsVenusSelected
+                    {
+                        Stroke = $OrbitHotBrush;
+                    }
+                </Ellipse.Aspect>
+            </Ellipse>
+            <Ellipse Name="EarthPath" Width="530" Height="530" Stroke="$OrbitBrush" StrokeThickness="1.2" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                <Ellipse.Aspect>
+                    @when $EarthHit.IsMouseOver or $DataContext.IsEarthSelected
+                    {
+                        Stroke = $OrbitHotBrush;
+                    }
+                </Ellipse.Aspect>
+            </Ellipse>
+            <Ellipse Name="MarsPath" Width="660" Height="660" Stroke="$OrbitBrush" StrokeThickness="1.2" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                <Ellipse.Aspect>
+                    @when $MarsHit.IsMouseOver or $DataContext.IsMarsSelected
+                    {
+                        Stroke = $OrbitHotBrush;
+                    }
+                </Ellipse.Aspect>
+            </Ellipse>
+            <Ellipse Name="JupiterPath" Width="1080" Height="1080" Stroke="$OrbitBrush" StrokeThickness="1.2" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                <Ellipse.Aspect>
+                    @when $JupiterHit.IsMouseOver or $DataContext.IsJupiterSelected
+                    {
+                        Stroke = $OrbitHotBrush;
+                    }
+                </Ellipse.Aspect>
+            </Ellipse>
+            <Ellipse Name="SaturnPath" Width="1380" Height="1380" Stroke="$OrbitBrush" StrokeThickness="1.2" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                <Ellipse.Aspect>
+                    @when $SaturnHit.IsMouseOver or $DataContext.IsSaturnSelected
+                    {
+                        Stroke = $OrbitHotBrush;
+                    }
+                </Ellipse.Aspect>
+            </Ellipse>
+            <Ellipse Name="UranusPath" Width="1680" Height="1680" Stroke="$OrbitBrush" StrokeThickness="1.2" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                <Ellipse.Aspect>
+                    @when $UranusHit.IsMouseOver or $DataContext.IsUranusSelected
+                    {
+                        Stroke = $OrbitHotBrush;
+                    }
+                </Ellipse.Aspect>
+            </Ellipse>
+            <Ellipse Name="NeptunePath" Width="1960" Height="1960" Stroke="$OrbitBrush" StrokeThickness="1.2" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                <Ellipse.Aspect>
+                    @when $NeptuneHit.IsMouseOver or $DataContext.IsNeptuneSelected
+                    {
+                        Stroke = $OrbitHotBrush;
+                    }
+                </Ellipse.Aspect>
+            </Ellipse>
+
+
+                <!-- Asteroid belt -->
+                <Border Name="Belt" Width="900" Height="900" Background="$BeltBrush" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
+
+                <!-- The Sun -->
+                <Grid Width="1100" Height="1100" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Ellipse Name="Corona" Width="1100" Height="1100" Fill="$CoronaBrush" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5" />
+                    <Ellipse Name="Streak" Width="1040" Height="10" Fill="$StreakBrush" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
+                    <Ellipse Name="SunGlow" Width="380" Height="380" Fill="$SunGlowBrush" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5" />
+                    <Ellipse Name="SunDisc" Width="132" Height="132" Fill="$PhotosphereBrush" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                        @prism
+                        {
+                            @layer Light
+                            {
+                                @parameter Bloom: float = 24;
+                                @style OuterGlow { BlendMode = Normal; Color = #FFFFB347; Opacity = 0.9; Size = Bloom; }
+                            }
+                        }
+                    </Ellipse>
+                    <Ellipse Width="150" Height="150" Stroke="$SelectBrush" StrokeThickness="1.4" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False">
+                        <Ellipse.Aspect>
+                            @when $DataContext.IsSunSelected
+                            {
+                                @if value == true { @animate with PingPong(Tween(1100ms, EaseInOut), forever) { @from { Opacity = 1; } @to { Opacity = 0.3; } } }
+                                @if value == false { @animate with Tween(300ms, EaseOut) { @to { Opacity = 0; } } }
+                            }
+                        </Ellipse.Aspect>
+                    </Ellipse>
+                    <Ellipse Width="140" Height="140" Stroke="$HoverBrush" StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.Aspect>
+                            @when $SunHit.IsMouseOver
+                            {
+                                @if $SunHit.IsMouseOver == true { @parallel { @animate with Tween(200ms, EaseOut) { @to { Opacity = 1; } } @animate with Spring(420, 24) { @from { Scale = 1.45; } @to { Scale = 1; } } } }
+                                @if $SunHit.IsMouseOver == false { @animate with Tween(260ms, EaseOut) { @to { Opacity = 0; } } }
+                            }
+                        </Ellipse.Aspect>
+                    </Ellipse>
+                </Grid>
+
+                <!-- Planets -->
+            <!-- Mercury -->
+            <Grid Name="MercuryOrbit" Width="500" Height="200" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid Width="200" Height="200" HorizontalAlignment="Right">
+                <Ellipse Width="44" Height="44" Stroke="$SelectBrush" StrokeThickness="1.4" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False">
+                    <Ellipse.Aspect>
+                        @when $DataContext.IsMercurySelected
+                        {
+                            @if value == true { @animate with PingPong(Tween(1100ms, EaseInOut), forever) { @from { Opacity = 1; } @to { Opacity = 0.3; } } }
+                            @if value == false { @animate with Tween(300ms, EaseOut) { @to { Opacity = 0; } } }
+                        }
+                    </Ellipse.Aspect>
+                </Ellipse>
+                <Grid Name="MercuryBody" IsHitTestVisible="False">
+                    <Ellipse Name="MercuryAtmosphere" Width="24" Height="24" Fill="$MercuryAtmosphereBrush" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.7" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.Aspect>
+                            @when $MercuryHit.IsMouseOver
+                            {
+                                @if $MercuryHit.IsMouseOver == true { @parallel { @animate with Tween(260ms, EaseOut) { @to { Opacity = 1; } } @animate with Spring(320, 22) { @to { Scale = 1.3; } } } }
+                                @if $MercuryHit.IsMouseOver == false { @parallel { @animate with Tween(400ms, EaseOut) { @to { Opacity = 0.7; } } @animate with Tween(400ms, EaseOut) { @to { Scale = 1; } } } }
+                            }
+                        </Ellipse.Aspect>
+                    </Ellipse>
+                    <Ellipse Name="MercuryDisc" Width="10" Height="10" Fill="$MercurySurface" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Ellipse Width="2.6" Height="2.6" Fill="$CraterBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="-1.5" TranslateY="-1.6" IsHitTestVisible="False" />
+                        <Ellipse Width="1.8" Height="1.8" Fill="$CraterBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="2" TranslateY="1.4" IsHitTestVisible="False" />
+                </Grid>
+                <Ellipse Width="10" Height="10" Fill="$Shade10Brush" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
+                <Ellipse Width="32" Height="32" Stroke="$HoverBrush" StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+                    <Ellipse.Aspect>
+                        @when $MercuryHit.IsMouseOver
+                        {
+                            @if $MercuryHit.IsMouseOver == true { @parallel { @animate with Tween(200ms, EaseOut) { @to { Opacity = 1; } } @animate with Spring(420, 24) { @from { Scale = 1.45; } @to { Scale = 1; } } } }
+                            @if $MercuryHit.IsMouseOver == false { @animate with Tween(260ms, EaseOut) { @to { Opacity = 0; } } }
+                        }
+                    </Ellipse.Aspect>
+                </Ellipse>
+                </Grid>
+            </Grid>
+            <!-- Venus -->
+            <Grid Name="VenusOrbit" Width="610" Height="200" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid Width="200" Height="200" HorizontalAlignment="Right">
+                <Ellipse Width="52" Height="52" Stroke="$SelectBrush" StrokeThickness="1.4" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False">
+                    <Ellipse.Aspect>
+                        @when $DataContext.IsVenusSelected
+                        {
+                            @if value == true { @animate with PingPong(Tween(1100ms, EaseInOut), forever) { @from { Opacity = 1; } @to { Opacity = 0.3; } } }
+                            @if value == false { @animate with Tween(300ms, EaseOut) { @to { Opacity = 0; } } }
+                        }
+                    </Ellipse.Aspect>
+                </Ellipse>
+                <Grid Name="VenusBody" IsHitTestVisible="False">
+                    <Ellipse Name="VenusAtmosphere" Width="43" Height="43" Fill="$VenusAtmosphereBrush" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.7" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.Aspect>
+                            @when $VenusHit.IsMouseOver
+                            {
+                                @if $VenusHit.IsMouseOver == true { @parallel { @animate with Tween(260ms, EaseOut) { @to { Opacity = 1; } } @animate with Spring(320, 22) { @to { Scale = 1.3; } } } }
+                                @if $VenusHit.IsMouseOver == false { @parallel { @animate with Tween(400ms, EaseOut) { @to { Opacity = 0.7; } } @animate with Tween(400ms, EaseOut) { @to { Scale = 1; } } } }
+                            }
+                        </Ellipse.Aspect>
+                    </Ellipse>
+                    <Ellipse Name="VenusDisc" Width="18" Height="18" Fill="$VenusSurface" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Grid>
+                <Ellipse Width="18" Height="18" Fill="$Shade18Brush" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
+                <Ellipse Width="40" Height="40" Stroke="$HoverBrush" StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+                    <Ellipse.Aspect>
+                        @when $VenusHit.IsMouseOver
+                        {
+                            @if $VenusHit.IsMouseOver == true { @parallel { @animate with Tween(200ms, EaseOut) { @to { Opacity = 1; } } @animate with Spring(420, 24) { @from { Scale = 1.45; } @to { Scale = 1; } } } }
+                            @if $VenusHit.IsMouseOver == false { @animate with Tween(260ms, EaseOut) { @to { Opacity = 0; } } }
+                        }
+                    </Ellipse.Aspect>
+                </Ellipse>
+                </Grid>
+            </Grid>
+            <!-- Earth -->
+            <Grid Name="EarthOrbit" Width="730" Height="200" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid Width="200" Height="200" HorizontalAlignment="Right">
+                <Ellipse Width="53" Height="53" Stroke="$SelectBrush" StrokeThickness="1.4" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False">
+                    <Ellipse.Aspect>
+                        @when $DataContext.IsEarthSelected
+                        {
+                            @if value == true { @animate with PingPong(Tween(1100ms, EaseInOut), forever) { @from { Opacity = 1; } @to { Opacity = 0.3; } } }
+                            @if value == false { @animate with Tween(300ms, EaseOut) { @to { Opacity = 0; } } }
+                        }
+                    </Ellipse.Aspect>
+                </Ellipse>
+                <Grid Name="EarthBody" IsHitTestVisible="False">
+                    <Ellipse Name="EarthAtmosphere" Width="46" Height="46" Fill="$EarthAtmosphereBrush" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.7" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.Aspect>
+                            @when $EarthHit.IsMouseOver
+                            {
+                                @if $EarthHit.IsMouseOver == true { @parallel { @animate with Tween(260ms, EaseOut) { @to { Opacity = 1; } } @animate with Spring(320, 22) { @to { Scale = 1.3; } } } }
+                                @if $EarthHit.IsMouseOver == false { @parallel { @animate with Tween(400ms, EaseOut) { @to { Opacity = 0.7; } } @animate with Tween(400ms, EaseOut) { @to { Scale = 1; } } } }
+                            }
+                        </Ellipse.Aspect>
+                    </Ellipse>
+                    <Ellipse Name="EarthDisc" Width="19" Height="19" Fill="$EarthSurface" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Ellipse Width="7" Height="5" Fill="$ContinentBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="-3" TranslateY="-2.5" IsHitTestVisible="False" />
+                        <Ellipse Width="5" Height="7" Fill="$ContinentBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="3.5" TranslateY="2" IsHitTestVisible="False" />
+                        <Ellipse Width="11" Height="2" Fill="$CloudBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="-1" TranslateY="4.6" Rotation="-0.2" IsHitTestVisible="False" />
+                        <Ellipse Width="8" Height="1.6" Fill="$CloudBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="2" TranslateY="-5.4" Rotation="0.15" IsHitTestVisible="False" />
+                </Grid>
+                <Ellipse Width="19" Height="19" Fill="$Shade19Brush" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
+                <Grid Name="MoonOrbit" Width="62" Height="8" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                    <Grid Width="8" Height="8" HorizontalAlignment="Right">
+                        <Ellipse Width="5" Height="5" Fill="$MoonSurface" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Ellipse Name="MoonShade" Width="6" Height="6" Fill="$Shade6Brush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                </Grid>
+                <Ellipse Width="41" Height="41" Stroke="$HoverBrush" StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+                    <Ellipse.Aspect>
+                        @when $EarthHit.IsMouseOver
+                        {
+                            @if $EarthHit.IsMouseOver == true { @parallel { @animate with Tween(200ms, EaseOut) { @to { Opacity = 1; } } @animate with Spring(420, 24) { @from { Scale = 1.45; } @to { Scale = 1; } } } }
+                            @if $EarthHit.IsMouseOver == false { @animate with Tween(260ms, EaseOut) { @to { Opacity = 0; } } }
+                        }
+                    </Ellipse.Aspect>
+                </Ellipse>
+                </Grid>
+            </Grid>
+            <!-- Mars -->
+            <Grid Name="MarsOrbit" Width="860" Height="200" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid Width="200" Height="200" HorizontalAlignment="Right">
+                <Ellipse Width="47" Height="47" Stroke="$SelectBrush" StrokeThickness="1.4" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False">
+                    <Ellipse.Aspect>
+                        @when $DataContext.IsMarsSelected
+                        {
+                            @if value == true { @animate with PingPong(Tween(1100ms, EaseInOut), forever) { @from { Opacity = 1; } @to { Opacity = 0.3; } } }
+                            @if value == false { @animate with Tween(300ms, EaseOut) { @to { Opacity = 0; } } }
+                        }
+                    </Ellipse.Aspect>
+                </Ellipse>
+                <Grid Name="MarsBody" IsHitTestVisible="False">
+                    <Ellipse Name="MarsAtmosphere" Width="31" Height="31" Fill="$MarsAtmosphereBrush" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.7" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.Aspect>
+                            @when $MarsHit.IsMouseOver
+                            {
+                                @if $MarsHit.IsMouseOver == true { @parallel { @animate with Tween(260ms, EaseOut) { @to { Opacity = 1; } } @animate with Spring(320, 22) { @to { Scale = 1.3; } } } }
+                                @if $MarsHit.IsMouseOver == false { @parallel { @animate with Tween(400ms, EaseOut) { @to { Opacity = 0.7; } } @animate with Tween(400ms, EaseOut) { @to { Scale = 1; } } } }
+                            }
+                        </Ellipse.Aspect>
+                    </Ellipse>
+                    <Ellipse Name="MarsDisc" Width="13" Height="13" Fill="$MarsSurface" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Ellipse Width="5" Height="2.2" Fill="$PolarBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateY="-5.2" IsHitTestVisible="False" />
+                </Grid>
+                <Ellipse Width="13" Height="13" Fill="$Shade13Brush" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
+                <Ellipse Width="35" Height="35" Stroke="$HoverBrush" StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+                    <Ellipse.Aspect>
+                        @when $MarsHit.IsMouseOver
+                        {
+                            @if $MarsHit.IsMouseOver == true { @parallel { @animate with Tween(200ms, EaseOut) { @to { Opacity = 1; } } @animate with Spring(420, 24) { @from { Scale = 1.45; } @to { Scale = 1; } } } }
+                            @if $MarsHit.IsMouseOver == false { @animate with Tween(260ms, EaseOut) { @to { Opacity = 0; } } }
+                        }
+                    </Ellipse.Aspect>
+                </Ellipse>
+                </Grid>
+            </Grid>
+            <!-- Jupiter -->
+            <Grid Name="JupiterOrbit" Width="1280" Height="200" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid Width="200" Height="200" HorizontalAlignment="Right">
+                <Ellipse Width="86" Height="86" Stroke="$SelectBrush" StrokeThickness="1.4" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False">
+                    <Ellipse.Aspect>
+                        @when $DataContext.IsJupiterSelected
+                        {
+                            @if value == true { @animate with PingPong(Tween(1100ms, EaseInOut), forever) { @from { Opacity = 1; } @to { Opacity = 0.3; } } }
+                            @if value == false { @animate with Tween(300ms, EaseOut) { @to { Opacity = 0; } } }
+                        }
+                    </Ellipse.Aspect>
+                </Ellipse>
+                <Grid Name="JupiterBody" IsHitTestVisible="False">
+                    <Ellipse Name="JupiterAtmosphere" Width="125" Height="125" Fill="$JupiterAtmosphereBrush" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.7" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.Aspect>
+                            @when $JupiterHit.IsMouseOver
+                            {
+                                @if $JupiterHit.IsMouseOver == true { @parallel { @animate with Tween(260ms, EaseOut) { @to { Opacity = 1; } } @animate with Spring(320, 22) { @to { Scale = 1.3; } } } }
+                                @if $JupiterHit.IsMouseOver == false { @parallel { @animate with Tween(400ms, EaseOut) { @to { Opacity = 0.7; } } @animate with Tween(400ms, EaseOut) { @to { Scale = 1; } } } }
+                            }
+                        </Ellipse.Aspect>
+                    </Ellipse>
+                    <Ellipse Name="JupiterDisc" Width="52" Height="52" Fill="$JupiterSurface" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Ellipse Width="10" Height="6" Fill="$SpotBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="9" TranslateY="9" IsHitTestVisible="False" />
+                </Grid>
+                <Ellipse Width="52" Height="52" Fill="$Shade52Brush" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
+                <Ellipse Width="74" Height="74" Stroke="$HoverBrush" StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+                    <Ellipse.Aspect>
+                        @when $JupiterHit.IsMouseOver
+                        {
+                            @if $JupiterHit.IsMouseOver == true { @parallel { @animate with Tween(200ms, EaseOut) { @to { Opacity = 1; } } @animate with Spring(420, 24) { @from { Scale = 1.45; } @to { Scale = 1; } } } }
+                            @if $JupiterHit.IsMouseOver == false { @animate with Tween(260ms, EaseOut) { @to { Opacity = 0; } } }
+                        }
+                    </Ellipse.Aspect>
+                </Ellipse>
+                </Grid>
+            </Grid>
+            <!-- Saturn -->
+            <Grid Name="SaturnOrbit" Width="1580" Height="200" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid Width="200" Height="200" HorizontalAlignment="Right">
+                <Ellipse Width="78" Height="78" Stroke="$SelectBrush" StrokeThickness="1.4" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False">
+                    <Ellipse.Aspect>
+                        @when $DataContext.IsSaturnSelected
+                        {
+                            @if value == true { @animate with PingPong(Tween(1100ms, EaseInOut), forever) { @from { Opacity = 1; } @to { Opacity = 0.3; } } }
+                            @if value == false { @animate with Tween(300ms, EaseOut) { @to { Opacity = 0; } } }
+                        }
+                    </Ellipse.Aspect>
+                </Ellipse>
+                <Grid Name="SaturnBody" IsHitTestVisible="False">
+                        <Grid Rotation="-0.38" IsHitTestVisible="False">
+                            <Ellipse Width="132" Height="40" Stroke="$RingOuterBrush" StrokeThickness="3" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Ellipse Width="114" Height="34" Stroke="$RingMainBrush" StrokeThickness="8" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Ellipse Width="90" Height="27" Stroke="$RingInnerBrush" StrokeThickness="4" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
+                    <Ellipse Name="SaturnAtmosphere" Width="106" Height="106" Fill="$SaturnAtmosphereBrush" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.7" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.Aspect>
+                            @when $SaturnHit.IsMouseOver
+                            {
+                                @if $SaturnHit.IsMouseOver == true { @parallel { @animate with Tween(260ms, EaseOut) { @to { Opacity = 1; } } @animate with Spring(320, 22) { @to { Scale = 1.3; } } } }
+                                @if $SaturnHit.IsMouseOver == false { @parallel { @animate with Tween(400ms, EaseOut) { @to { Opacity = 0.7; } } @animate with Tween(400ms, EaseOut) { @to { Scale = 1; } } } }
+                            }
+                        </Ellipse.Aspect>
+                    </Ellipse>
+                    <Ellipse Name="SaturnDisc" Width="44" Height="44" Fill="$SaturnSurface" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Grid Rotation="-0.38" IsHitTestVisible="False">
+                            <Path Width="132" Height="40" Data="M 0 20 A 66 20 0 0 0 132 20" Stroke="$RingOuterBrush" StrokeThickness="3" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Path Width="114" Height="34" Data="M 0 17 A 57 17 0 0 0 114 17" Stroke="$RingMainBrush" StrokeThickness="8" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Path Width="90" Height="27" Data="M 0 13.5 A 45 13.5 0 0 0 90 13.5" Stroke="$RingInnerBrush" StrokeThickness="4" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>                </Grid>
+                <Ellipse Width="44" Height="44" Fill="$Shade44Brush" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
+                <Ellipse Width="66" Height="66" Stroke="$HoverBrush" StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+                    <Ellipse.Aspect>
+                        @when $SaturnHit.IsMouseOver
+                        {
+                            @if $SaturnHit.IsMouseOver == true { @parallel { @animate with Tween(200ms, EaseOut) { @to { Opacity = 1; } } @animate with Spring(420, 24) { @from { Scale = 1.45; } @to { Scale = 1; } } } }
+                            @if $SaturnHit.IsMouseOver == false { @animate with Tween(260ms, EaseOut) { @to { Opacity = 0; } } }
+                        }
+                    </Ellipse.Aspect>
+                </Ellipse>
+                </Grid>
+            </Grid>
+            <!-- Uranus -->
+            <Grid Name="UranusOrbit" Width="1880" Height="200" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid Width="200" Height="200" HorizontalAlignment="Right">
+                <Ellipse Width="62" Height="62" Stroke="$SelectBrush" StrokeThickness="1.4" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False">
+                    <Ellipse.Aspect>
+                        @when $DataContext.IsUranusSelected
+                        {
+                            @if value == true { @animate with PingPong(Tween(1100ms, EaseInOut), forever) { @from { Opacity = 1; } @to { Opacity = 0.3; } } }
+                            @if value == false { @animate with Tween(300ms, EaseOut) { @to { Opacity = 0; } } }
+                        }
+                    </Ellipse.Aspect>
+                </Ellipse>
+                <Grid Name="UranusBody" IsHitTestVisible="False">
+                    <Ellipse Name="UranusAtmosphere" Width="67" Height="67" Fill="$UranusAtmosphereBrush" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.7" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.Aspect>
+                            @when $UranusHit.IsMouseOver
+                            {
+                                @if $UranusHit.IsMouseOver == true { @parallel { @animate with Tween(260ms, EaseOut) { @to { Opacity = 1; } } @animate with Spring(320, 22) { @to { Scale = 1.3; } } } }
+                                @if $UranusHit.IsMouseOver == false { @parallel { @animate with Tween(400ms, EaseOut) { @to { Opacity = 0.7; } } @animate with Tween(400ms, EaseOut) { @to { Scale = 1; } } } }
+                            }
+                        </Ellipse.Aspect>
+                    </Ellipse>
+                    <Ellipse Name="UranusDisc" Width="28" Height="28" Fill="$UranusSurface" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Ellipse Width="64" Height="14" Stroke="$FaintRingBrush" StrokeThickness="1.2" HorizontalAlignment="Center" VerticalAlignment="Center" Rotation="1.48" IsHitTestVisible="False" />
+                </Grid>
+                <Ellipse Width="28" Height="28" Fill="$Shade28Brush" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
+                <Ellipse Width="50" Height="50" Stroke="$HoverBrush" StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+                    <Ellipse.Aspect>
+                        @when $UranusHit.IsMouseOver
+                        {
+                            @if $UranusHit.IsMouseOver == true { @parallel { @animate with Tween(200ms, EaseOut) { @to { Opacity = 1; } } @animate with Spring(420, 24) { @from { Scale = 1.45; } @to { Scale = 1; } } } }
+                            @if $UranusHit.IsMouseOver == false { @animate with Tween(260ms, EaseOut) { @to { Opacity = 0; } } }
+                        }
+                    </Ellipse.Aspect>
+                </Ellipse>
+                </Grid>
+            </Grid>
+            <!-- Neptune -->
+            <Grid Name="NeptuneOrbit" Width="2160" Height="200" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid Width="200" Height="200" HorizontalAlignment="Right">
+                <Ellipse Width="61" Height="61" Stroke="$SelectBrush" StrokeThickness="1.4" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False">
+                    <Ellipse.Aspect>
+                        @when $DataContext.IsNeptuneSelected
+                        {
+                            @if value == true { @animate with PingPong(Tween(1100ms, EaseInOut), forever) { @from { Opacity = 1; } @to { Opacity = 0.3; } } }
+                            @if value == false { @animate with Tween(300ms, EaseOut) { @to { Opacity = 0; } } }
+                        }
+                    </Ellipse.Aspect>
+                </Ellipse>
+                <Grid Name="NeptuneBody" IsHitTestVisible="False">
+                    <Ellipse Name="NeptuneAtmosphere" Width="65" Height="65" Fill="$NeptuneAtmosphereBrush" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.7" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.Aspect>
+                            @when $NeptuneHit.IsMouseOver
+                            {
+                                @if $NeptuneHit.IsMouseOver == true { @parallel { @animate with Tween(260ms, EaseOut) { @to { Opacity = 1; } } @animate with Spring(320, 22) { @to { Scale = 1.3; } } } }
+                                @if $NeptuneHit.IsMouseOver == false { @parallel { @animate with Tween(400ms, EaseOut) { @to { Opacity = 0.7; } } @animate with Tween(400ms, EaseOut) { @to { Scale = 1; } } } }
+                            }
+                        </Ellipse.Aspect>
+                    </Ellipse>
+                    <Ellipse Name="NeptuneDisc" Width="27" Height="27" Fill="$NeptuneSurface" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Ellipse Width="6" Height="3.5" Fill="$StormBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="-5" TranslateY="4" IsHitTestVisible="False" />
+                </Grid>
+                <Ellipse Width="27" Height="27" Fill="$Shade27Brush" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
+                <Ellipse Width="49" Height="49" Stroke="$HoverBrush" StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+                    <Ellipse.Aspect>
+                        @when $NeptuneHit.IsMouseOver
+                        {
+                            @if $NeptuneHit.IsMouseOver == true { @parallel { @animate with Tween(200ms, EaseOut) { @to { Opacity = 1; } } @animate with Spring(420, 24) { @from { Scale = 1.45; } @to { Scale = 1; } } } }
+                            @if $NeptuneHit.IsMouseOver == false { @animate with Tween(260ms, EaseOut) { @to { Opacity = 0; } } }
+                        }
+                    </Ellipse.Aspect>
+                </Ellipse>
+                </Grid>
+            </Grid>
+
+            </Grid>
+
+            <!-- Lens ghosts, placed by the window code along the line from the Sun through the frame centre. -->
+            <Ellipse Name="GhostA" Width="80" Height="80" Fill="$GhostWarmBrush" Opacity="0" />
+            <Ellipse Name="GhostB" Width="140" Height="140" Fill="$GhostCoolBrush" Opacity="0" />
+            <Ellipse Name="GhostC" Width="24" Height="24" Fill="$GhostDotBrush" Opacity="0" />
+            <Ellipse Name="GhostD" Width="80" Height="80" Fill="$GhostWarmBrush" Opacity="0" />
+
+            <!-- Labels live in screen space so they stay readable at any zoom. -->
+            <TextBlock Name="SunLabel" Text="SUN" FontFamily="Segoe UI Semibold" FontSize="10" IsHitTestVisible="False">
+                <TextBlock.Aspect>
+                    @default { Opacity = 0.62; Foreground = $HudTextBrush; }
+                    @when $SunHit.IsMouseOver or $DataContext.IsSunSelected
+                    {
+                        Opacity = 1;
+                        Foreground = $AccentBrush;
+                    }
+                </TextBlock.Aspect>
+            </TextBlock>
+            <TextBlock Name="MercuryLabel" Text="MERCURY" FontFamily="Segoe UI Semibold" FontSize="10" IsHitTestVisible="False">
+                <TextBlock.Aspect>
+                    @default { Opacity = 0.62; Foreground = $HudTextBrush; }
+                    @when $MercuryHit.IsMouseOver or $DataContext.IsMercurySelected
+                    {
+                        Opacity = 1;
+                        Foreground = $AccentBrush;
+                    }
+                </TextBlock.Aspect>
+            </TextBlock>
+            <TextBlock Name="VenusLabel" Text="VENUS" FontFamily="Segoe UI Semibold" FontSize="10" IsHitTestVisible="False">
+                <TextBlock.Aspect>
+                    @default { Opacity = 0.62; Foreground = $HudTextBrush; }
+                    @when $VenusHit.IsMouseOver or $DataContext.IsVenusSelected
+                    {
+                        Opacity = 1;
+                        Foreground = $AccentBrush;
+                    }
+                </TextBlock.Aspect>
+            </TextBlock>
+            <TextBlock Name="EarthLabel" Text="EARTH" FontFamily="Segoe UI Semibold" FontSize="10" IsHitTestVisible="False">
+                <TextBlock.Aspect>
+                    @default { Opacity = 0.62; Foreground = $HudTextBrush; }
+                    @when $EarthHit.IsMouseOver or $DataContext.IsEarthSelected
+                    {
+                        Opacity = 1;
+                        Foreground = $AccentBrush;
+                    }
+                </TextBlock.Aspect>
+            </TextBlock>
+            <TextBlock Name="MarsLabel" Text="MARS" FontFamily="Segoe UI Semibold" FontSize="10" IsHitTestVisible="False">
+                <TextBlock.Aspect>
+                    @default { Opacity = 0.62; Foreground = $HudTextBrush; }
+                    @when $MarsHit.IsMouseOver or $DataContext.IsMarsSelected
+                    {
+                        Opacity = 1;
+                        Foreground = $AccentBrush;
+                    }
+                </TextBlock.Aspect>
+            </TextBlock>
+            <TextBlock Name="JupiterLabel" Text="JUPITER" FontFamily="Segoe UI Semibold" FontSize="10" IsHitTestVisible="False">
+                <TextBlock.Aspect>
+                    @default { Opacity = 0.62; Foreground = $HudTextBrush; }
+                    @when $JupiterHit.IsMouseOver or $DataContext.IsJupiterSelected
+                    {
+                        Opacity = 1;
+                        Foreground = $AccentBrush;
+                    }
+                </TextBlock.Aspect>
+            </TextBlock>
+            <TextBlock Name="SaturnLabel" Text="SATURN" FontFamily="Segoe UI Semibold" FontSize="10" IsHitTestVisible="False">
+                <TextBlock.Aspect>
+                    @default { Opacity = 0.62; Foreground = $HudTextBrush; }
+                    @when $SaturnHit.IsMouseOver or $DataContext.IsSaturnSelected
+                    {
+                        Opacity = 1;
+                        Foreground = $AccentBrush;
+                    }
+                </TextBlock.Aspect>
+            </TextBlock>
+            <TextBlock Name="UranusLabel" Text="URANUS" FontFamily="Segoe UI Semibold" FontSize="10" IsHitTestVisible="False">
+                <TextBlock.Aspect>
+                    @default { Opacity = 0.62; Foreground = $HudTextBrush; }
+                    @when $UranusHit.IsMouseOver or $DataContext.IsUranusSelected
+                    {
+                        Opacity = 1;
+                        Foreground = $AccentBrush;
+                    }
+                </TextBlock.Aspect>
+            </TextBlock>
+            <TextBlock Name="NeptuneLabel" Text="NEPTUNE" FontFamily="Segoe UI Semibold" FontSize="10" IsHitTestVisible="False">
+                <TextBlock.Aspect>
+                    @default { Opacity = 0.62; Foreground = $HudTextBrush; }
+                    @when $NeptuneHit.IsMouseOver or $DataContext.IsNeptuneSelected
+                    {
+                        Opacity = 1;
+                        Foreground = $AccentBrush;
+                    }
+                </TextBlock.Aspect>
+            </TextBlock>
+
+            <!-- Hit areas live in screen space: a constant minimum size at any zoom, positioned by the window code. -->
+            <Canvas Name="HitLayer">
+                <Button Name="SunHit" Aspect="$PlanetHit" Width="150" Height="150" Command="$DataContext.SelectCommand:OneWay" CommandParameter="Sun" />
+                <Button Name="MercuryHit" Aspect="$PlanetHit" Width="40" Height="40" Command="$DataContext.SelectCommand:OneWay" CommandParameter="Mercury" />
+                <Button Name="VenusHit" Aspect="$PlanetHit" Width="40" Height="40" Command="$DataContext.SelectCommand:OneWay" CommandParameter="Venus" />
+                <Button Name="EarthHit" Aspect="$PlanetHit" Width="40" Height="40" Command="$DataContext.SelectCommand:OneWay" CommandParameter="Earth" />
+                <Button Name="MarsHit" Aspect="$PlanetHit" Width="40" Height="40" Command="$DataContext.SelectCommand:OneWay" CommandParameter="Mars" />
+                <Button Name="JupiterHit" Aspect="$PlanetHit" Width="40" Height="40" Command="$DataContext.SelectCommand:OneWay" CommandParameter="Jupiter" />
+                <Button Name="SaturnHit" Aspect="$PlanetHit" Width="40" Height="40" Command="$DataContext.SelectCommand:OneWay" CommandParameter="Saturn" />
+                <Button Name="UranusHit" Aspect="$PlanetHit" Width="40" Height="40" Command="$DataContext.SelectCommand:OneWay" CommandParameter="Uranus" />
+                <Button Name="NeptuneHit" Aspect="$PlanetHit" Width="40" Height="40" Command="$DataContext.SelectCommand:OneWay" CommandParameter="Neptune" />
+            </Canvas>
+        </Canvas>
+
+        <!-- Frame -->
+        <Border Background="$VignetteBrush" IsHitTestVisible="False" />
+
+        <!-- Title -->
+        <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top" Margin="36,28,0,0" IsHitTestVisible="False">
+            <TextBlock Text="THE SOLAR SYSTEM" FontFamily="Segoe UI Light" FontSize="28" Foreground="$WhiteBrush" />
+            <TextBlock Text="LIVE ORRERY  ·  MEAN POSITIONS FOR TODAY  ·  CIRCULAR ORBITS" Aspect="$Caption" Margin="2,6,0,0" />
+        </StackPanel>
+
+        <Button
+            Name="OverviewButton"
+            Content="OVERVIEW"
+            Command="$DataContext.ClearSelectionCommand:OneWay"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Top"
+            Margin="0,32,36,0" />
+
+        <!-- Clock and playback speed -->
+        <Border Background="$GlassBrush" BorderBrush="$GlassLineBrush" BorderThickness="1" Padding="22,14,22,14" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,28">
+            <StackPanel Orientation="Horizontal">
+                <StackPanel VerticalAlignment="Center" Margin="0,0,26,0" Width="190">
+                    <TextBlock Text="$DataContext.DateText:OneWay" FontFamily="Segoe UI Light" FontSize="22" Foreground="$WhiteBrush" />
+                    <TextBlock Text="$DataContext.OffsetText:OneWay" Aspect="$Caption" Margin="1,2,0,0" />
+                </StackPanel>
+                <Button Name="SpeedPause" Content="PAUSE" Command="$DataContext.SetSpeedCommand:OneWay" CommandParameter="0" Margin="0,0,6,0" VerticalAlignment="Center">
+                    <Button.Aspect>
+                        @when $DataContext.IsPaused { Background = $AccentWashBrush; Foreground = $AccentBrush; BorderBrush = $AccentBrush; }
+                    </Button.Aspect>
+                </Button>
+                <Button Content="1 DAY / S" Command="$DataContext.SetSpeedCommand:OneWay" CommandParameter="1" Margin="0,0,6,0" VerticalAlignment="Center">
+                    <Button.Aspect>
+                        @when $DataContext.IsSpeedDay { Background = $AccentWashBrush; Foreground = $AccentBrush; BorderBrush = $AccentBrush; }
+                    </Button.Aspect>
+                </Button>
+                <Button Content="1 WEEK / S" Command="$DataContext.SetSpeedCommand:OneWay" CommandParameter="7" Margin="0,0,6,0" VerticalAlignment="Center">
+                    <Button.Aspect>
+                        @when $DataContext.IsSpeedWeek { Background = $AccentWashBrush; Foreground = $AccentBrush; BorderBrush = $AccentBrush; }
+                    </Button.Aspect>
+                </Button>
+                <Button Name="SpeedMonth" Content="1 MONTH / S" Command="$DataContext.SetSpeedCommand:OneWay" CommandParameter="30" Margin="0,0,6,0" VerticalAlignment="Center">
+                    <Button.Aspect>
+                        @when $DataContext.IsSpeedMonth { Background = $AccentWashBrush; Foreground = $AccentBrush; BorderBrush = $AccentBrush; }
+                    </Button.Aspect>
+                </Button>
+                <Button Content="1 YEAR / S" Command="$DataContext.SetSpeedCommand:OneWay" CommandParameter="365" VerticalAlignment="Center">
+                    <Button.Aspect>
+                        @when $DataContext.IsSpeedYear { Background = $AccentWashBrush; Foreground = $AccentBrush; BorderBrush = $AccentBrush; }
+                    </Button.Aspect>
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <!-- Hints and scale note -->
+        <StackPanel HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="36,0,0,34" IsHitTestVisible="False">
+            <TextBlock Text="SCROLL  TO ZOOM" Aspect="$Caption" />
+            <TextBlock Text="DRAG  TO PAN" Aspect="$Caption" Margin="0,5,0,0" />
+            <TextBlock Text="CLICK  A BODY TO FOLLOW IT" Aspect="$Caption" Margin="0,5,0,0" />
+        </StackPanel>
+        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,36,34" IsHitTestVisible="False">
+            <TextBlock Text="DISTANCES AND SIZES NOT TO SCALE" Aspect="$Caption" HorizontalAlignment="Right" />
+            <TextBlock Text="BUILT WITH CERNEALA" Aspect="$Caption" Foreground="$AccentBrush" HorizontalAlignment="Right" Margin="0,5,0,0" />
+        </StackPanel>
+
+        <!-- Information card -->
+        <Border
+            Name="InfoCard"
+            Width="330"
+            Background="$GlassBrush"
+            BorderBrush="$GlassLineBrush"
+            BorderThickness="1"
+            Padding="28,26,28,28"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Center"
+            Margin="0,0,36,0"
+            Opacity="0"
+            TranslateX="40"
+            IsHitTestVisible="$DataContext.HasSelection:OneWay">
+            <Border.Aspect>
+                @when $DataContext.HasSelection
+                {
+                    @if value == true
+                    {
+                        @parallel
+                        {
+                            @animate with Tween(360ms, EaseOut) { @to { Opacity = 1; } }
+                            @animate with Spring(300, 26) { @to { TranslateX = 0; } }
+                        }
+                    }
+                    @if value == false
+                    {
+                        @parallel
+                        {
+                            @animate with Tween(240ms, EaseIn) { @to { Opacity = 0; } }
+                            @animate with Tween(240ms, EaseIn) { @to { TranslateX = 40; } }
+                        }
+                    }
+                }
+            </Border.Aspect>
+            <StackPanel>
+                <TextBlock Text="$DataContext.SelectedKind:OneWay" Aspect="$Caption" Foreground="$AccentBrush" />
+                <TextBlock Text="$DataContext.SelectedName:OneWay" FontFamily="Segoe UI Light" FontSize="44" Foreground="$WhiteBrush" Margin="0,4,0,0" />
+                <Border Height="1" Background="$GlassLineBrush" Margin="0,14,0,16" />
+                <TextBlock Text="DISTANCE FROM THE SUN" Aspect="$Caption" />
+                <TextBlock Text="$DataContext.SelectedDistance:OneWay" Aspect="$Readout" Margin="0,3,0,12" />
+                <TextBlock Text="ONE YEAR" Aspect="$Caption" />
+                <TextBlock Text="$DataContext.SelectedYear:OneWay" Aspect="$Readout" Margin="0,3,0,12" />
+                <TextBlock Text="ONE ROTATION" Aspect="$Caption" />
+                <TextBlock Text="$DataContext.SelectedDay:OneWay" Aspect="$Readout" Margin="0,3,0,12" />
+                <TextBlock Text="RADIUS" Aspect="$Caption" />
+                <TextBlock Text="$DataContext.SelectedRadius:OneWay" Aspect="$Readout" Margin="0,3,0,12" />
+                <TextBlock Text="MOONS" Aspect="$Caption" />
+                <TextBlock Text="$DataContext.SelectedMoons:OneWay" Aspect="$Readout" Margin="0,3,0,12" />
+                <TextBlock Text="TEMPERATURE" Aspect="$Caption" />
+                <TextBlock Text="$DataContext.SelectedTemperature:OneWay" Aspect="$Readout" Margin="0,3,0,0" />
+                <Border Height="1" Background="$GlassLineBrush" Margin="0,16,0,14" />
+                <TextBlock Text="$DataContext.SelectedFact:OneWay" FontFamily="Segoe UI" FontSize="14" Foreground="$CoolBrush" TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
