@@ -40,7 +40,7 @@ MotionHandle handle = opacity.AnimateTo(
 MotionFrame frame = new(
     TimeSpan.FromMilliseconds(150),
     TimeSpan.FromMilliseconds(150),
-    frameIndex: 1,
+    FrameIndex: 1,
     MotionFrameReason.Manual,
     MotionFramePhase.BeforeRender);
 

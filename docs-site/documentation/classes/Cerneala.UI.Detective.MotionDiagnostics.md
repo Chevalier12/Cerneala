@@ -53,7 +53,7 @@ bool needsAnotherFrame = snapshot.NeedsAnotherFrame;
 
 ## Remarks
 
-`MotionDiagnostics` is created by `MotionSystem` and exposed through `MotionSystem.Diagnostics`. It keeps a reusable `MotionTrace`, the current diagnostic phase list, warnings, layout snapshot capture counts, and the number of motions skipped by reduced-motion handling.
+`MotionDiagnostics` is created by `MotionSystem` and publicly exposed through `UIRoot.Detective.Motion`. The owning system's `Diagnostics` property is internal. It keeps a reusable `MotionTrace`, the current diagnostic phase list, warnings, layout snapshot capture counts, and the number of motions skipped by reduced-motion handling.
 
 Trace event recording is opt-in. `Record` returns without changing the trace when `IsEnabled` is `false`; when enabled, it appends a `MotionTraceEvent` with the supplied `MotionTraceEventKind` and optional debug name. `MotionTrace.Clear` clears the accumulated trace events.
 

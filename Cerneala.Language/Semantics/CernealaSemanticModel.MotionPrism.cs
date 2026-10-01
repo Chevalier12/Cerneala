@@ -273,7 +273,7 @@ internal sealed partial class CernealaSemanticModel
         DirectiveRegion[] regions = parsed.Syntax.Directives
             .Select(directive => CreateDirectiveRegion(text, offset, directive))
             .ToArray();
-        return new MotionProgram(text, offset, parsed.Syntax, regions, primaryDiagnostic is not null);
+        return new MotionProgram(offset, parsed.Syntax, regions, primaryDiagnostic is not null);
     }
 
     private void BindMotionParameters(MotionProgram program, MotionClipDefinition clip)
@@ -479,7 +479,7 @@ internal sealed partial class CernealaSemanticModel
             }
             else if (region.Keyword is "@run" or "@cancel")
             {
-                BindMotionCommand(source, region, clip, handles, isAspect);
+                BindMotionCommand(source, region, handles);
             }
         }
 
@@ -631,9 +631,7 @@ internal sealed partial class CernealaSemanticModel
     private void BindMotionCommand(
         ElementSyntax source,
         DirectiveRegion region,
-        MotionClipDefinition? currentClip,
-        IReadOnlyDictionary<string, TextSpan> handles,
-        bool isAspect)
+        IReadOnlyDictionary<string, TextSpan> handles)
     {
         string header = document.Text.Substring(region.HeaderSpan).Trim().TrimEnd(';').Trim();
         if (region.Keyword == "@cancel")
@@ -657,11 +655,6 @@ internal sealed partial class CernealaSemanticModel
             return;
         }
 
-        if (!isAspect && currentClip is not null)
-        {
-            // Nested clips are valid; resolution uses the resource scope of the clip.
-        }
-
         int dollar = header.IndexOf('$');
         if (dollar < 0)
         {
@@ -677,6 +670,7 @@ internal sealed partial class CernealaSemanticModel
 
         string name = header.Substring(dollar + 1, nameEnd - dollar - 1);
         TextSpan nameSpan = FindSubspan(region.HeaderSpan, "$" + name);
+        // Nested clips are valid; resolve against the source's resource scope.
         ResourceDefinition? resource = FindResource(source, name);
         if (resource is null || !motionClips.TryGetValue(resource, out MotionClipDefinition? clip))
         {
@@ -793,25 +787,6 @@ internal sealed partial class CernealaSemanticModel
                 clip,
                 prismOnly: false,
                 allowExplicitBinding: owner.Keyword == "@to");
-        }
-    }
-
-    private void ValidateMotionOption(AssignmentSyntax assignment)
-    {
-        string value = document.Text.Substring(assignment.ValueSpan).Trim();
-        bool valid = assignment.Name switch
-        {
-            "retarget" => value is "Restart" or "PreserveProgress",
-            "holdOnComplete" => bool.TryParse(value, out _),
-            "debugName" => value.Length >= 2 && value[0] == '"' && value[value.Length - 1] == '"',
-            _ => false
-        };
-        if (!valid)
-        {
-            AddMotionDiagnostic(
-                "CERNEALAUI020",
-                assignment.NameSpan,
-                "Unsupported or invalid Motion option '" + assignment.Name + "'. Supported options are retarget, holdOnComplete and debugName.");
         }
     }
 
@@ -2255,20 +2230,16 @@ internal sealed partial class CernealaSemanticModel
     private sealed class MotionProgram
     {
         public MotionProgram(
-            string text,
             int offset,
             DirectiveDocumentSyntax syntax,
             IReadOnlyList<DirectiveRegion> regions,
             bool hasSyntaxErrors)
         {
-            Text = text;
             Offset = offset;
             Syntax = syntax;
             Regions = regions;
             HasSyntaxErrors = hasSyntaxErrors;
         }
-
-        public string Text { get; }
 
         public int Offset { get; }
 

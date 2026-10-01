@@ -17,13 +17,20 @@ public sealed class ObjectMotionFacade
 ## Examples
 
 ```csharp
-OuterGlowStyle glow = new() { Size = 3f };
+using System;
+using Cerneala.Drawing.Prism;
+using Cerneala.UI.Motion;
+using Cerneala.UI.Motion.Core;
+using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
-MotionHandle handle = glow.Motion()
+OuterGlowStyle glow = new() { Size = 3f };
+object target = glow;
+
+MotionHandle handle = target.Motion()
     .Animate(OuterGlowStyle.SizeProperty)
     .From(3f)
     .To(18f)
-    .Start(pulse);
+    .Start(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(240)));
 ```
 
 ## Remarks

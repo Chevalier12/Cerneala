@@ -34,7 +34,7 @@ using Cerneala.UI.Motion.Core;
 
 sealed class OneShotNode : MotionNode
 {
-    protected internal override MotionNodeTickResult Tick(MotionFrame frame)
+    protected override MotionNodeTickResult Tick(MotionFrame frame)
     {
         return new MotionNodeTickResult(ValuesChanged: 1, Completed: true);
     }

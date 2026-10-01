@@ -21,21 +21,21 @@ Type parameters:
 
 ## Examples
 
-Animate a player property without declaring a separate `MotionProperty`:
+Animate an effect property without declaring a separate `MotionProperty`:
 
 ```csharp
 using System;
-using Cerneala.Drawing;
+using Cerneala.Drawing.Prism;
 using Cerneala.UI.Motion;
 using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
-Player player = new() { Position = new DrawPoint(40, 80) };
+OuterGlowStyle glow = new() { Size = 3f };
 
-player.Motion()
-    .Animate(current => current.Position)
-    .From(new DrawPoint(40, 80))
-    .To(new DrawPoint(360, 80))
-    .Start(MotionFactory.Tween<DrawPoint>(TimeSpan.FromMilliseconds(240)));
+glow.Motion()
+    .Animate(current => current.Size)
+    .From(3f)
+    .To(18f)
+    .Start(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(240)));
 ```
 
 ## Remarks

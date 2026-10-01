@@ -92,7 +92,6 @@ public sealed partial class UiMarkupGenerator
 
         private bool TryResolvePrismMotionTarget(
             MarkupElement applicationElement,
-            AspectResource aspect,
             MotionAssignmentSyntax assignment,
             out ResolvedMotionTarget? target,
             out PropertySpec? property)
@@ -112,7 +111,6 @@ public sealed partial class UiMarkupGenerator
 
             if (!TryResolvePrismMotionOwner(
                     applicationElement,
-                    aspect,
                     assignment,
                     segments[0],
                     out ResolvedMotionTargetKind targetKind,
@@ -231,7 +229,6 @@ public sealed partial class UiMarkupGenerator
 
         private bool TryResolvePrismMotionOwner(
             MarkupElement applicationElement,
-            AspectResource aspect,
             MotionAssignmentSyntax assignment,
             string ownerSegment,
             out ResolvedMotionTargetKind targetKind,

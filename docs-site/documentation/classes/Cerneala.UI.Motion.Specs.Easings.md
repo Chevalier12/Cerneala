@@ -21,11 +21,17 @@ Inheritance:
 Use the linear preset when a tween should advance proportionally with elapsed time:
 
 ```csharp
+using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Interpolation;
 using Cerneala.UI.Motion.Specs;
 
 TweenSpec<float> spec = Motion.Tween<float>(TimeSpan.FromMilliseconds(100), Easings.Linear);
-MotionSampler<float> sampler = spec.CreateSampler(0, 10, new FloatMixer(), new MotionSpecContext());
+MotionSpecContext context = new(
+    ReducedMotionPolicy.Default,
+    new ValueMixerRegistry(),
+    Diagnostics: null,
+    Now: TimeSpan.Zero);
+MotionSampler<float> sampler = spec.CreateSampler(0, 10, new FloatMixer(), context);
 
 sampler.Advance(TimeSpan.FromMilliseconds(50));
 float value = sampler.Current; // 5

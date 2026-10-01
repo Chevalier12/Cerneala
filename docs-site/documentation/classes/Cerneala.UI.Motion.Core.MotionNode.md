@@ -31,7 +31,7 @@ graph.Register(node);
 MotionFrame frame = new(
     TimeSpan.FromMilliseconds(16),
     TimeSpan.FromMilliseconds(16),
-    frameIndex: 1,
+    FrameIndex: 1,
     MotionFrameReason.Manual,
     MotionFramePhase.BeforeRender);
 
@@ -39,7 +39,7 @@ MotionFrameResult result = graph.Tick(frame);
 
 sealed class OneShotNode : MotionNode
 {
-    protected internal override MotionNodeTickResult Tick(MotionFrame frame)
+    protected override MotionNodeTickResult Tick(MotionFrame frame)
     {
         return new MotionNodeTickResult(ValuesChanged: 1, Completed: true);
     }

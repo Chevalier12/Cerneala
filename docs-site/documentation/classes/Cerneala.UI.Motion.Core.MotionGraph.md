@@ -32,7 +32,7 @@ opacity.AnimateTo(1d, Motion.Tween<double>(TimeSpan.FromMilliseconds(150)));
 MotionFrame frame = new(
     TimeSpan.FromMilliseconds(150),
     TimeSpan.FromMilliseconds(150),
-    frameIndex: 1,
+    FrameIndex: 1,
     MotionFrameReason.Manual,
     MotionFramePhase.BeforeRender);
 

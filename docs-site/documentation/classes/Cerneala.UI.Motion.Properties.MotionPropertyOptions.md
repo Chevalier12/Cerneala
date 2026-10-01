@@ -59,7 +59,7 @@ registry.Register(
 
 `MotionPropertyOptions` is the metadata value stored by `AnimatablePropertyRegistry` for each animatable `UiProperty`. It records the mixer type associated with the property value, the default motion spec to use when callers do not provide one, the invalidation category required by animation writes, and whether the property is safe for implicit animation.
 
-Motion transactions consult the animatable property registry before animating a property mutation. When a property is registered, the transaction pipeline uses the registered `DefaultSpec` if no transaction-level spec is supplied, and it uses the invalidation category when animated values are written back through the motion property pipeline.
+Motion transactions consult the registry as an allow-list, but use `MotionTransactionOptions.DefaultSpec`, not the registered default. Generated markup property-motion sessions read the registered `DefaultSpec` when their caller omits a spec. Property bindings resolve the mixer through `ValueMixerRegistry` and classify invalidation directly from the `UiProperty` metadata rather than consuming `MixerType` or `InvalidationCategory` here. `IsSafeForImplicitAnimation` is descriptive metadata; the current transaction path does not enforce it as an eligibility check.
 
 The constructor requires non-null `mixerType` and `defaultSpec` arguments. The class is immutable after construction.
 
@@ -76,7 +76,7 @@ The constructor requires non-null `mixerType` and `defaultSpec` arguments. The c
 | `MixerType` | `Type` | Gets the value mixer type associated with the animated property value. |
 | `DefaultSpec` | `MotionSpec` | Gets the default motion specification used when no overriding spec is supplied. |
 | `InvalidationCategory` | `MotionPropertyInvalidationCategory` | Gets the invalidation category associated with animation writes for the property. |
-| `IsSafeForImplicitAnimation` | `bool` | Gets a value indicating whether the property may be animated implicitly by registry-driven motion features. |
+| `IsSafeForImplicitAnimation` | `bool` | Gets the registered safety metadata for implicit animation; this flag is not enforced by the current transaction path. |
 
 ## Exceptions
 

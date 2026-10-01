@@ -35,7 +35,7 @@ opacity.AnimateTo(1d, Motion.Tween<double>(TimeSpan.FromMilliseconds(100)));
 MotionFrameResult result = graph.Tick(new MotionFrame(
     TimeSpan.FromMilliseconds(16),
     TimeSpan.FromMilliseconds(16),
-    frameIndex: 1,
+    FrameIndex: 1,
     MotionFrameReason.Manual,
     MotionFramePhase.BeforeRender));
 

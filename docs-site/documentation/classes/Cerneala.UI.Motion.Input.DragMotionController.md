@@ -88,7 +88,7 @@ axis, bounds, resistance, snapping, or Decay-release options.
 | --- | --- | --- |
 | `MotionElementFacade.Drag()` | `InvalidOperationException` | The element is not attached to a `UIRoot`, so no root motion system is available for the controller. |
 | `PointerCaptureLost` | `ArgumentNullException` | `settleSpec` is `null`. |
-| `End` | `ArgumentNullException` | `settleSpec` is `null`; this is thrown by the underlying `MotionValue<float>.AnimateTo` call. |
+| `End` | `ArgumentNullException` | `settleSpec` is `null`; the controller validates it before changing state or starting either axis. |
 | Input methods | `ObjectDisposedException` | The controller has already been disposed. |
 
 ## Applies to

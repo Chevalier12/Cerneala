@@ -954,7 +954,6 @@ public static partial class GeneratedMarkup
     {
         private readonly MotionSystem motion;
         private readonly UIElement target;
-        private readonly Func<PrismInstance, T> getValue;
         private readonly Action<PrismInstance, T> setValue;
         private readonly T baseValue;
         private readonly MotionValue<T> value;
@@ -978,7 +977,6 @@ public static partial class GeneratedMarkup
             this.motion = motion;
             this.target = target;
             Instance = instance;
-            this.getValue = getValue;
             this.setValue = setValue;
             baseValue = getValue(instance);
             value = motion.Graph.CreateValue(baseValue, mixer);

@@ -22,12 +22,16 @@ Inheritance:
 Animate one of the built-in motion shortcut properties:
 
 ```csharp
+using System;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Motion;
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Specs;
 
+UIRoot root = new();
 Border panel = new();
+root.VisualChildren.Add(panel);
 
 MotionHandle handle = panel.Motion()
     .Opacity
@@ -38,10 +42,15 @@ Bind a shortcut property to scroll progress:
 
 ```csharp
 using Cerneala.UI.Controls;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Motion;
+using Cerneala.UI.Motion.Input;
 
+UIRoot root = new();
 ScrollViewer scrollViewer = new();
 Border header = new();
+root.VisualChildren.Add(scrollViewer);
+root.VisualChildren.Add(header);
 
 ScrollTimeline timeline = scrollViewer.Motion().ScrollTimeline();
 

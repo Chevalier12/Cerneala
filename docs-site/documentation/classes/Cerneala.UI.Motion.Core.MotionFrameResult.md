@@ -55,7 +55,7 @@ using Cerneala.UI.Motion.Core;
 MotionFrame frame = new(
     TimeSpan.Zero,
     TimeSpan.Zero,
-    frameIndex: 0,
+    FrameIndex: 0,
     MotionFrameReason.Manual,
     MotionFramePhase.BeforeRender);
 

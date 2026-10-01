@@ -34,8 +34,7 @@ root.VisualChildren.Add(target);
 
 MotionHandle handle = target.Motion()
     .Opacity
-    .To(0.5f)
-    .With(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(150)));
+    .To(0.5f, MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(150)));
 ```
 
 Animate a property on an ordinary object without declaring a separate Motion descriptor or attaching it to the UI tree:

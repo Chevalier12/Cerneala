@@ -176,14 +176,7 @@ public sealed class MotionValue<T> : MotionValue
             return changed;
         }
 
-        int sampledChanged = ApplySample(expectedSampler.Current) ? 1 : 0;
-        if (!ReferenceEquals(activeHandle, expectedHandle) ||
-            !ReferenceEquals(sampler, expectedSampler))
-        {
-            return sampledChanged;
-        }
-
-        return sampledChanged;
+        return ApplySample(expectedSampler.Current) ? 1 : 0;
     }
 
     private void CancelHandle(MotionHandle? handle, MotionCancelBehavior behavior, bool fireEvent)

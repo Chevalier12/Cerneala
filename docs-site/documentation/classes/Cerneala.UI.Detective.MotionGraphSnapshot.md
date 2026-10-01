@@ -1,4 +1,4 @@
-# MotionGraphSnapshot Class
+# MotionGraphSnapshot Struct
 
 ## Definition
 Namespace: `Cerneala.UI.Detective`
@@ -52,7 +52,7 @@ bool needsFrame = snapshot.NeedsAnotherFrame;
 
 `ActiveNodeCount` includes nodes already active in the graph plus nodes pending registration. `NeedsAnotherFrame` is copied from `MotionSystem.HasActiveMotion`, which is true when the graph has active motion or the property store has pending writes.
 
-The current `CreateSnapshot` implementation sets `ValuesSampledThisFrame` and `PropertiesWrittenThisFrame` to `0`; per-frame sampling and write counts are reported through `MotionFrameResult` and retained frame diagnostics instead.
+`ValuesSampledThisFrame` and `PropertiesWrittenThisFrame` copy the sampled-node and property-write counts from the owning system's most recent `MotionFrameResult`. `ActivePropertyBindings` counts bindings that are animating or have a pending sample; retained idle bindings are excluded.
 
 The primary constructor does not validate counter values. Direct construction is useful for tests and diagnostic formatting code that already has known counter values.
 
@@ -67,7 +67,7 @@ The primary constructor does not validate counter values. Direct construction is
 | Name | Type | Description |
 | --- | --- | --- |
 | `ActiveNodeCount` | `int` | Gets the number of active or pending motion graph nodes at capture time. |
-| `ActivePropertyBindings` | `int` | Gets the number of registered motion property bindings at capture time. |
+| `ActivePropertyBindings` | `int` | Gets the number of motion property bindings that are animating or have a pending sample at capture time. |
 | `ActiveLayoutMotions` | `int` | Gets the number of active layout motion bindings at capture time. |
 | `ActivePresenceExits` | `int` | Gets the number of active presence exit animations at capture time. |
 | `ValuesSampledThisFrame` | `int` | Gets the number of motion values sampled for the represented frame. |

@@ -14,6 +14,15 @@ namespace Cerneala.Tests.UI.Motion.Input;
 public sealed class MotionInputTimelineTests
 {
     [Fact]
+    public void DragControllerRejectsNullElement()
+    {
+        ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            new DragMotionController(null!));
+
+        Assert.Equal("element", exception.ParamName);
+    }
+
+    [Fact]
     public void PointerPressAndReleaseRetargetScaleMotion()
     {
         ManualMotionClock clock = new();

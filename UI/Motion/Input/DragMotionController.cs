@@ -7,7 +7,6 @@ namespace Cerneala.UI.Motion.Input;
 
 public sealed class DragMotionController : IDisposable
 {
-    private readonly UIElement element;
     private readonly VelocityTracker velocity = new();
     private float originX;
     private float originY;
@@ -21,7 +20,7 @@ public sealed class DragMotionController : IDisposable
 
     internal DragMotionController(UIElement element)
     {
-        this.element = element ?? throw new ArgumentNullException(nameof(element));
+        ArgumentNullException.ThrowIfNull(element);
         MotionSystem motion = element.Root?.Motion ?? throw new InvalidOperationException("Element must be attached before drag motion can be created.");
         DragX = motion.Graph.CreateValue(element.TranslateX);
         DragY = motion.Graph.CreateValue(element.TranslateY);

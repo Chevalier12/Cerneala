@@ -17,15 +17,19 @@ public static class MotionProperty
 ## Examples
 
 ```csharp
+using System;
+using Cerneala.Drawing.Prism;
 using Cerneala.UI.Motion;
+using MotionFactory = Cerneala.UI.Motion.Specs.Motion;
 
-MotionProperty<Marker, float> ScaleProperty = MotionProperty.Create<Marker, float>(
-    "Scale",
-    marker => marker.Scale,
-    (marker, value) => marker.Scale = value);
+MotionProperty<OuterGlowStyle, float> sizeProperty = MotionProperty.Create<OuterGlowStyle, float>(
+    nameof(OuterGlowStyle.Size),
+    effect => effect.Size,
+    (effect, value) => effect.Size = value);
 
-Marker marker = new() { Scale = 1f };
-marker.Motion().Animate(ScaleProperty).To(1.5f).Start(spec);
+OuterGlowStyle glow = new() { Size = 3f };
+glow.Motion().Animate(sizeProperty).To(18f)
+    .Start(MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(240)));
 ```
 
 ## Remarks

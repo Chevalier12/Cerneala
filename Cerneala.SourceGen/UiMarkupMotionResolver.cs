@@ -13,21 +13,15 @@ public sealed partial class UiMarkupGenerator
     {
         private sealed class MotionSpecResource
         {
-            public MotionSpecResource(string name, string kind, IReadOnlyList<string> arguments, MarkupElement source)
+            public MotionSpecResource(string kind, IReadOnlyList<string> arguments)
             {
-                Name = name;
                 Kind = kind;
                 Arguments = arguments;
-                Source = source;
             }
-
-            public string Name { get; }
 
             public string Kind { get; }
 
             public IReadOnlyList<string> Arguments { get; }
-
-            public MarkupElement Source { get; }
         }
 
         private sealed class MotionClipResource
@@ -542,7 +536,7 @@ public sealed partial class UiMarkupGenerator
                 arguments.Add("global::Cerneala.UI.Motion.Specs.SpringVelocityMode." + velocityMode);
             }
 
-            MotionSpecResource spec = new(name, resource.Name.LocalName, arguments, resource);
+            MotionSpecResource spec = new(resource.Name.LocalName, arguments);
             scope.NamedResources.Add(name, new NamedSymbol(name, NamedSymbolKind.MotionSpec, spec));
         }
 
@@ -1879,14 +1873,12 @@ public sealed partial class UiMarkupGenerator
                     "global::System.EventHandler<global::Cerneala.UI.Controls.ScrollChangedEventArgs> " + handlerName +
                     " = (sender, args) => " + timelineName + "?.Update();");
 
-                List<string> bindingNames = [];
                 List<string> attachLines = [timelineName + " = global::Cerneala.UI.Motion.MotionExtensions.Motion(" + sourceCode + ").ScrollTimeline();", timelineName + ".Update();"];
                 List<string> detachLines = [sourceCode + ".ScrollChanged -= " + handlerName + ";"];
                 for (int index = 0; index < scroll.Properties.Count; index++)
                 {
                     ResolvedMotionScrollProperty property = scroll.Properties[index];
                     string bindingName = "motionScrollBinding" + id + "_" + index.ToString(CultureInfo.InvariantCulture);
-                    bindingNames.Add(bindingName);
                     currentPostLines.Add("global::Cerneala.UI.Motion.Input.ScrollMotionBinding<float>? " + bindingName + " = null;");
                     string progress = scroll.Syntax.Axis == MotionScrollAxis.Vertical ? "Progress" : "HorizontalProgress";
                     string mapping = timelineName + "." + progress + ".Map(" +
@@ -2307,7 +2299,6 @@ public sealed partial class UiMarkupGenerator
             {
                 return TryResolvePrismMotionTarget(
                     applicationElement,
-                    aspect,
                     assignment,
                     out target,
                     out property);
