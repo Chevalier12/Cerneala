@@ -132,6 +132,12 @@ the same key. The controller subscribes only while its owner is attached,
 re-resolves the nearest value after matching application-provider changes, and
 marshals a cross-thread provider notification through the root Relay.
 
+Disposing the lifetime returned by `AttachResource<T>` unsubscribes the
+controller and stops further target updates from that attachment. Its callbacks
+already queued through Relay become no-ops when the lifetime is disposed before
+they execute. Disposal is idempotent and does not clear the previously written
+target value.
+
 Property-binding and condition observation use the current owner's relay when
 available. Owner-thread notifications remain synchronous; worker notifications
 are coalesced before refreshing the source and writing the target. Without a

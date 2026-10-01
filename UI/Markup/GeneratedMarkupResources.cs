@@ -92,6 +92,11 @@ public static partial class GeneratedMarkup
 
         public void ApplyAvailableValue()
         {
+            if (disposed)
+            {
+                return;
+            }
+
             if (owner.TryFindResource(key, out T resource) ||
                 Application.Current?.Resources.TryGetResource(key, out resource) == true)
             {

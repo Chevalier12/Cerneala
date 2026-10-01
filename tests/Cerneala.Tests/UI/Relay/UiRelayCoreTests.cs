@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Relay;
 
@@ -240,6 +241,55 @@ public sealed class UiRelayCoreTests
         Assert.Equal(cancellation.Token, exception.CancellationToken);
     }
 
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(false, false)]
+    public async Task AsyncOverloadsPreserveReturnedTaskCancellationToken(
+        bool completedBeforeDrain,
+        bool hasOperationToken)
+    {
+        UiRelay relay = new();
+        using CancellationTokenSource submissionCancellation = new();
+        using CancellationTokenSource operationCancellation = new();
+        CancellationToken operationToken = hasOperationToken ? operationCancellation.Token : default;
+        TaskCompletionSource<int> completion = new();
+        if (completedBeforeDrain)
+        {
+            completion.SetCanceled(operationToken);
+        }
+
+        Task parameterless = relay.InvokeAsync((Func<Task>)(() => completion.Task), submissionCancellation.Token);
+        Task tokenAware = relay.InvokeAsync(token =>
+        {
+            Assert.Equal(submissionCancellation.Token, token);
+            return completion.Task;
+        }, submissionCancellation.Token);
+        Task<int> result = relay.InvokeAsync<int>(() => completion.Task, submissionCancellation.Token);
+        Task[] operations = [parameterless, tokenAware, result];
+
+        UiRelayDrainResult drain = relay.Drain();
+
+        Assert.Equal(3, drain.Executed);
+        Assert.Equal(0, drain.Canceled);
+        Assert.Equal(0, drain.Faulted);
+        Assert.Equal(0, relay.PendingCount);
+        if (!completedBeforeDrain)
+        {
+            Assert.All(operations, operation => Assert.False(operation.IsCompleted));
+            completion.SetCanceled(operationToken);
+        }
+
+        foreach (Task operation in operations)
+        {
+            OperationCanceledException exception = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => operation);
+            Assert.True(operation.IsCanceled);
+            Assert.Equal(operationToken, exception.CancellationToken);
+            Assert.NotEqual(submissionCancellation.Token, exception.CancellationToken);
+        }
+    }
+
     [Fact]
     public async Task CancellationBetweenDequeueAndRunWinsRaceSafely()
     {
@@ -416,6 +466,51 @@ public sealed class UiRelayCoreTests
         CollectGarbage();
 
         Assert.False(captured.IsAlive);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void CanceledWorkDoesNotRetainCapturedStateBeforeOrAfterDrain(bool cancelBeforeEnqueue)
+    {
+        UiRelay relay = new();
+        using CancellationTokenSource cancellation = new();
+        if (cancelBeforeEnqueue)
+        {
+            cancellation.Cancel();
+        }
+
+        (WeakReference callback, WeakReference context) = EnqueueCancelableCapturedObjects(relay, cancellation.Token);
+        cancellation.Cancel();
+
+        Assert.Equal(cancelBeforeEnqueue ? 0 : 1, relay.PendingCount);
+        CollectGarbage();
+        Assert.False(callback.IsAlive);
+        Assert.False(context.IsAlive);
+
+        UiRelayDrainResult drain = relay.Drain();
+        Assert.Equal(cancelBeforeEnqueue ? 0 : 1, drain.Canceled);
+        Assert.Equal(0, drain.Executed);
+        Assert.Equal(0, relay.PendingCount);
+        CollectGarbage();
+        Assert.False(callback.IsAlive);
+        Assert.False(context.IsAlive);
+        GC.KeepAlive(relay);
+        GC.KeepAlive(cancellation);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static (WeakReference Callback, WeakReference Context) EnqueueCancelableCapturedObjects(
+        UiRelay relay,
+        CancellationToken cancellationToken)
+    {
+        object capturedCallback = new();
+        object capturedContext = new();
+        AsyncLocal<object?> ambient = new() { Value = capturedContext };
+        (WeakReference, WeakReference) references = (new(capturedCallback), new(capturedContext));
+        _ = relay.InvokeAsync(() => GC.KeepAlive(capturedCallback), cancellationToken);
+        ambient.Value = null;
+        return references;
     }
 
     private static WeakReference EnqueueCapturedObject(UiRelay relay)

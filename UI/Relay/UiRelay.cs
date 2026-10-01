@@ -166,12 +166,26 @@ public sealed class UiRelay : IUiThreadAccess
     {
         if (!item.ShouldEnqueue)
         {
-            item.CompleteSkippedEnqueue();
+            item.ReleaseExecutionResources();
             return;
         }
 
         Interlocked.Increment(ref pendingCount);
         queue.Enqueue(item);
+    }
+
+    private static CancellationToken GetCanceledTaskToken(Task operation)
+    {
+        try
+        {
+            operation.GetAwaiter().GetResult();
+        }
+        catch (OperationCanceledException exception)
+        {
+            return exception.CancellationToken;
+        }
+
+        return default;
     }
 
     private enum UiRelayWorkItemState
@@ -207,6 +221,7 @@ public sealed class UiRelay : IUiThreadAccess
 
         protected void RegisterCancellation()
         {
+            // A pre-canceled token calls Cancel inline; concrete callback and completion state must be initialized first.
             if (cancellationToken.CanBeCanceled)
             {
                 cancellationRegistration = cancellationToken.UnsafeRegister(
@@ -228,8 +243,7 @@ public sealed class UiRelay : IUiThreadAccess
                     (int)UiRelayWorkItemState.Running,
                     (int)UiRelayWorkItemState.Pending) != (int)UiRelayWorkItemState.Pending)
             {
-                DisposeCancellationRegistration();
-                ReleaseExecutionReferences();
+                ReleaseExecutionResources();
                 return UiRelayExecutionResult.CanceledResult;
             }
 
@@ -256,12 +270,11 @@ public sealed class UiRelay : IUiThreadAccess
             finally
             {
                 Volatile.Write(ref state, (int)UiRelayWorkItemState.Completed);
-                DisposeCancellationRegistration();
-                ReleaseExecutionReferences();
+                ReleaseExecutionResources();
             }
         }
 
-        internal void CompleteSkippedEnqueue()
+        internal void ReleaseExecutionResources()
         {
             DisposeCancellationRegistration();
             ReleaseExecutionReferences();
@@ -334,11 +347,95 @@ public sealed class UiRelay : IUiThreadAccess
         }
     }
 
-    private sealed class ActionWorkItem : UiRelayWorkItem
+    private abstract class InvocationWorkItem : UiRelayWorkItem
     {
         private readonly Task task;
-        private Action? callback;
         private TaskCompletionSource? completion;
+
+        protected InvocationWorkItem(ExecutionContext? executionContext, CancellationToken cancellationToken)
+            : base(executionContext, cancellationToken)
+        {
+            completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            task = completion.Task;
+        }
+
+        public Task Task => task;
+
+        protected TaskCompletionSource Completion => completion!;
+
+        protected TaskCompletionSource TakeCompletion()
+        {
+            TaskCompletionSource target = completion!;
+            completion = null;
+            return target;
+        }
+
+        protected sealed override void CompleteCanceled(CancellationToken token)
+        {
+            completion!.TrySetCanceled(token);
+        }
+
+        protected sealed override Exception? CompleteFault(Exception exception)
+        {
+            completion!.TrySetException(exception);
+            return null;
+        }
+
+        protected sealed override void ReleaseCallbackReferences()
+        {
+            ReleaseInvocationCallback();
+            completion = null;
+        }
+
+        protected abstract void ReleaseInvocationCallback();
+    }
+
+    private abstract class InvocationWorkItem<T> : UiRelayWorkItem
+    {
+        private readonly Task<T> task;
+        private TaskCompletionSource<T>? completion;
+
+        protected InvocationWorkItem(ExecutionContext? executionContext, CancellationToken cancellationToken)
+            : base(executionContext, cancellationToken)
+        {
+            completion = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+            task = completion.Task;
+        }
+
+        public Task<T> Task => task;
+
+        protected TaskCompletionSource<T> Completion => completion!;
+
+        protected TaskCompletionSource<T> TakeCompletion()
+        {
+            TaskCompletionSource<T> target = completion!;
+            completion = null;
+            return target;
+        }
+
+        protected sealed override void CompleteCanceled(CancellationToken token)
+        {
+            completion!.TrySetCanceled(token);
+        }
+
+        protected sealed override Exception? CompleteFault(Exception exception)
+        {
+            completion!.TrySetException(exception);
+            return null;
+        }
+
+        protected sealed override void ReleaseCallbackReferences()
+        {
+            ReleaseInvocationCallback();
+            completion = null;
+        }
+
+        protected abstract void ReleaseInvocationCallback();
+    }
+
+    private sealed class ActionWorkItem : InvocationWorkItem
+    {
+        private Action? callback;
 
         public ActionWorkItem(
             Action callback,
@@ -347,42 +444,24 @@ public sealed class UiRelay : IUiThreadAccess
             : base(executionContext, cancellationToken)
         {
             this.callback = callback;
-            completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            task = completion.Task;
             RegisterCancellation();
         }
-
-        public Task Task => task;
 
         protected override void InvokeCore()
         {
             callback!();
-            completion!.TrySetResult();
+            Completion.TrySetResult();
         }
 
-        protected override void CompleteCanceled(CancellationToken token)
-        {
-            completion!.TrySetCanceled(token);
-        }
-
-        protected override Exception? CompleteFault(Exception exception)
-        {
-            completion!.TrySetException(exception);
-            return null;
-        }
-
-        protected override void ReleaseCallbackReferences()
+        protected override void ReleaseInvocationCallback()
         {
             callback = null;
-            completion = null;
         }
     }
 
-    private sealed class FuncWorkItem<T> : UiRelayWorkItem
+    private sealed class FuncWorkItem<T> : InvocationWorkItem<T>
     {
-        private readonly Task<T> task;
         private Func<T>? callback;
-        private TaskCompletionSource<T>? completion;
 
         public FuncWorkItem(
             Func<T> callback,
@@ -391,42 +470,24 @@ public sealed class UiRelay : IUiThreadAccess
             : base(executionContext, cancellationToken)
         {
             this.callback = callback;
-            completion = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
-            task = completion.Task;
             RegisterCancellation();
         }
 
-        public Task<T> Task => task;
-
         protected override void InvokeCore()
         {
-            completion!.TrySetResult(callback!());
+            Completion.TrySetResult(callback!());
         }
 
-        protected override void CompleteCanceled(CancellationToken token)
-        {
-            completion!.TrySetCanceled(token);
-        }
-
-        protected override Exception? CompleteFault(Exception exception)
-        {
-            completion!.TrySetException(exception);
-            return null;
-        }
-
-        protected override void ReleaseCallbackReferences()
+        protected override void ReleaseInvocationCallback()
         {
             callback = null;
-            completion = null;
         }
     }
 
-    private sealed class AsyncWorkItem : UiRelayWorkItem
+    private sealed class AsyncWorkItem : InvocationWorkItem
     {
-        private readonly Task task;
         private Func<Task>? callback;
         private Func<CancellationToken, Task>? cancellableCallback;
-        private TaskCompletionSource? completion;
 
         public AsyncWorkItem(
             Func<Task> callback,
@@ -435,8 +496,6 @@ public sealed class UiRelay : IUiThreadAccess
             : base(executionContext, cancellationToken)
         {
             this.callback = callback;
-            completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            task = completion.Task;
             RegisterCancellation();
         }
 
@@ -447,12 +506,8 @@ public sealed class UiRelay : IUiThreadAccess
             : base(executionContext, cancellationToken)
         {
             cancellableCallback = callback;
-            completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            task = completion.Task;
             RegisterCancellation();
         }
-
-        public Task Task => task;
 
         protected override void InvokeCore()
         {
@@ -461,8 +516,7 @@ public sealed class UiRelay : IUiThreadAccess
                 : cancellableCallback!(CancellationToken);
             operation = operation
                 ?? throw new InvalidOperationException("The asynchronous Relay callback returned null.");
-            TaskCompletionSource target = completion!;
-            completion = null;
+            TaskCompletionSource target = TakeCompletion();
             if (operation.IsCompleted)
             {
                 CompleteFromTask(operation, target);
@@ -477,39 +531,17 @@ public sealed class UiRelay : IUiThreadAccess
                 TaskScheduler.Default);
         }
 
-        protected override void CompleteCanceled(CancellationToken token)
-        {
-            completion!.TrySetCanceled(token);
-        }
-
-        protected override Exception? CompleteFault(Exception exception)
-        {
-            completion!.TrySetException(exception);
-            return null;
-        }
-
-        protected override void ReleaseCallbackReferences()
+        protected override void ReleaseInvocationCallback()
         {
             callback = null;
             cancellableCallback = null;
-            completion = null;
         }
 
         private static void CompleteFromTask(Task operation, TaskCompletionSource completion)
         {
             if (operation.IsCanceled)
             {
-                CancellationToken cancellationToken = default;
-                try
-                {
-                    operation.GetAwaiter().GetResult();
-                }
-                catch (OperationCanceledException exception)
-                {
-                    cancellationToken = exception.CancellationToken;
-                }
-
-                completion.TrySetCanceled(cancellationToken);
+                completion.TrySetCanceled(GetCanceledTaskToken(operation));
             }
             else if (operation.Exception is not null)
             {
@@ -522,11 +554,9 @@ public sealed class UiRelay : IUiThreadAccess
         }
     }
 
-    private sealed class AsyncFuncWorkItem<T> : UiRelayWorkItem
+    private sealed class AsyncFuncWorkItem<T> : InvocationWorkItem<T>
     {
-        private readonly Task<T> task;
         private Func<Task<T>>? callback;
-        private TaskCompletionSource<T>? completion;
 
         public AsyncFuncWorkItem(
             Func<Task<T>> callback,
@@ -535,19 +565,14 @@ public sealed class UiRelay : IUiThreadAccess
             : base(executionContext, cancellationToken)
         {
             this.callback = callback;
-            completion = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
-            task = completion.Task;
             RegisterCancellation();
         }
-
-        public Task<T> Task => task;
 
         protected override void InvokeCore()
         {
             Task<T> operation = callback!()
                 ?? throw new InvalidOperationException("The asynchronous Relay callback returned null.");
-            TaskCompletionSource<T> target = completion!;
-            completion = null;
+            TaskCompletionSource<T> target = TakeCompletion();
             if (operation.IsCompleted)
             {
                 CompleteFromTask(operation, target);
@@ -562,38 +587,16 @@ public sealed class UiRelay : IUiThreadAccess
                 TaskScheduler.Default);
         }
 
-        protected override void CompleteCanceled(CancellationToken token)
-        {
-            completion!.TrySetCanceled(token);
-        }
-
-        protected override Exception? CompleteFault(Exception exception)
-        {
-            completion!.TrySetException(exception);
-            return null;
-        }
-
-        protected override void ReleaseCallbackReferences()
+        protected override void ReleaseInvocationCallback()
         {
             callback = null;
-            completion = null;
         }
 
         private static void CompleteFromTask(Task<T> operation, TaskCompletionSource<T> completion)
         {
             if (operation.IsCanceled)
             {
-                CancellationToken cancellationToken = default;
-                try
-                {
-                    operation.GetAwaiter().GetResult();
-                }
-                catch (OperationCanceledException exception)
-                {
-                    cancellationToken = exception.CancellationToken;
-                }
-
-                completion.TrySetCanceled(cancellationToken);
+                completion.TrySetCanceled(GetCanceledTaskToken(operation));
             }
             else if (operation.Exception is not null)
             {

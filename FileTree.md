@@ -5182,6 +5182,7 @@ Generated from `.`.
 |   |   |   |   |-- RelayStageZeroTests.cs
 |   |   |   |   |-- UiRelayCoreTests.cs
 |   |   |   |   |-- UiRelayHostingIntegrationTests.cs
+|   |   |   |   |-- UiRelayInvocationCompletionTests.cs
 |   |   |   |   |-- UiRelayStressAndAllocationTests.cs
 |   |   |   |   |-- UiRelaySynchronizationContextTests.cs
 |   |   |   |   +-- UiThreadAffinityTests.cs
