@@ -324,6 +324,34 @@ public sealed class MotionPrismSemanticTests
         diagnostic.Id.StartsWith("CERNEALAUI02", StringComparison.Ordinal) ||
         diagnostic.Id.StartsWith("PRISM", StringComparison.Ordinal);
 
+    [Theory]
+    [InlineData("LinearSrgb")]
+    [InlineData("Srgb")]
+    [InlineData("DisplayP3")]
+    [InlineData("InvalidProfile")]
+    [InlineData("true")]
+    [InlineData("12")]
+    [InlineData("null")]
+    [InlineData("(1, 2)")]
+    public void PrismCompositionAttributeAndBlockValuesHaveTheSameSemanticResult(string value)
+    {
+        string attribute = "<Border><Border.Resources><PrismComposition Name=\"Fx\" WorkingColorProfile=\"" +
+            value + "\">@layer Card { }</PrismComposition></Border.Resources></Border>";
+        string block = "<Border><Border.Resources><PrismComposition Name=\"Fx\">WorkingColorProfile = " +
+            value + "; @layer Card { }</PrismComposition></Border.Resources></Border>";
+        CernealaSemanticModel attributeModel = Model("Attribute.crn", attribute);
+        CernealaSemanticModel blockModel = Model("Block.crn", block);
+
+        Assert.Equal(
+            blockModel.Diagnostics.Select(diagnostic => diagnostic.Id),
+            attributeModel.Diagnostics.Select(diagnostic => diagnostic.Id));
+        Assert.Equal(
+            blockModel.Symbols.Where(symbol => symbol.Kind == CernealaSemanticSymbolKind.PrismValue)
+                .Select(symbol => (symbol.Name, symbol.ValueType, symbol.Value)),
+            attributeModel.Symbols.Where(symbol => symbol.Kind == CernealaSemanticSymbolKind.PrismValue)
+                .Select(symbol => (symbol.Name, symbol.ValueType, symbol.Value)));
+    }
+
     private static string MotionAspectMarkup(string body) => $$"""
         <Border Aspect="$Motion">
           <Border.Resources>

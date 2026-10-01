@@ -330,6 +330,73 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Contains("prismObservation", generated, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("$DataContext.Opacity", false)]
+    [InlineData("$DataContext.Opacity:OneWay", true)]
+    [InlineData("$DataContext.Opacity:TwoWay", true)]
+    public void PrismNodeNumberValuesEmitTypedReferencesAndBindings(string value, bool isBinding)
+    {
+        const string inputSource = """
+            using System.ComponentModel;
+            namespace TestInput;
+
+            public sealed class PrismBindingViewModel : INotifyPropertyChanged
+            {
+                private float opacity = 0.4f;
+                public event PropertyChangedEventHandler? PropertyChanged;
+                public float Opacity
+                {
+                    get => opacity;
+                    set
+                    {
+                        opacity = value;
+                        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Opacity)));
+                    }
+                }
+            }
+            """;
+        string markup = $$"""
+            <Border DataType="TestInput.PrismBindingViewModel">
+              @prism
+              {
+                @layer Surface
+                {
+                  Opacity = {{value}};
+                  @filter Blur { Radius = 4; }
+                }
+              }
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGeneratorWithInput(
+            "PrismNodeNumberBinding.crn",
+            markup,
+            inputSource,
+            out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        string generated = SingleGeneratedSource(result);
+        Assert.Contains(".Opacity = value", generated, StringComparison.Ordinal);
+        Assert.Contains(
+            "(float)value!",
+            generated,
+            StringComparison.Ordinal);
+        if (isBinding)
+        {
+            Assert.Contains("AttachPrismValueBinding(", generated, StringComparison.Ordinal);
+            Assert.DoesNotContain("ApplyPrismValueReference(", generated, StringComparison.Ordinal);
+            Assert.Contains(
+                value.EndsWith(":TwoWay", StringComparison.Ordinal) ? "BindingMode.TwoWay" : "BindingMode.OneWay",
+                generated,
+                StringComparison.Ordinal);
+        }
+        else
+        {
+            Assert.Contains("ApplyPrismValueReference(", generated, StringComparison.Ordinal);
+            Assert.DoesNotContain("AttachPrismValueBinding(", generated, StringComparison.Ordinal);
+        }
+    }
+
     [Fact]
     public void PrismQuotedDollarValueRemainsALiteralInsteadOfBinding()
     {

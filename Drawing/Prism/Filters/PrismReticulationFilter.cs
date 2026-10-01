@@ -66,7 +66,8 @@ internal static class PrismReticulationFilter
                     highlightWidth,
                     shadowWidth,
                     shadowWeight);
-                float ridge = 1 - SmoothStep(0, ridgeWidth, gap);
+                float ridge = 1 - PrismCatalogFilterMath.SmoothStep(
+                    0, ridgeWidth, gap);
                 float inkStrength = float.Lerp(
                     backgroundLevel * 0.38f,
                     foregroundLevel * 0.95f,
@@ -134,18 +135,6 @@ internal static class PrismReticulationFilter
         }
 
         return MathF.Sqrt(secondNearest) - MathF.Sqrt(nearest);
-    }
-
-    private static float SmoothStep(
-        float edge0,
-        float edge1,
-        float value)
-    {
-        float t = Math.Clamp(
-            (value - edge0) / (edge1 - edge0),
-            0,
-            1);
-        return t * t * (3 - (2 * t));
     }
 
     private static uint DecodeSeed(Vector4 value) =>

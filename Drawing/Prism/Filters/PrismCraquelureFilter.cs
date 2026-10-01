@@ -50,12 +50,14 @@ internal static class PrismCraquelureFilter
                     (y + 0.5f) / cellSize);
                 pattern += DomainWarp(pattern, seed);
                 float edgeDistance = VoronoiEdgeDistance(pattern, seed);
-                float crack = 1 - SmoothStep(
+                float crack = 1 - PrismCatalogFilterMath.SmoothStep(
                     MathF.Max(crackWidth - smoothness, 0),
                     crackWidth + antialias,
                     edgeDistance);
-                float rim = SmoothStep(rimNear, rimPeak, edgeDistance) *
-                    (1 - SmoothStep(rimPeak, rimFar, edgeDistance));
+                float rim = PrismCatalogFilterMath.SmoothStep(
+                    rimNear, rimPeak, edgeDistance) *
+                    (1 - PrismCatalogFilterMath.SmoothStep(
+                        rimPeak, rimFar, edgeDistance));
                 Vector3 straight = new(
                     color.X / color.W,
                     color.Y / color.W,
@@ -204,15 +206,6 @@ internal static class PrismCraquelureFilter
     private static float Fade(float value) =>
         value * value * value *
         ((value * ((value * 6) - 15)) + 10);
-
-    private static float SmoothStep(
-        float edge0,
-        float edge1,
-        float value)
-    {
-        float t = Math.Clamp((value - edge0) / (edge1 - edge0), 0, 1);
-        return t * t * (3 - (2 * t));
-    }
 
     private static uint DecodeSeed(Vector4 value) =>
         ((uint)value.Y << 16) |

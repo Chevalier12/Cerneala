@@ -273,7 +273,6 @@ internal sealed class PrismFrameAnalyzer
         {
             EstimateNode(
                 node,
-                includeBackdrop,
                 ref capabilities,
                 ref surfaceCount);
         }
@@ -283,7 +282,6 @@ internal sealed class PrismFrameAnalyzer
 
     private static void EstimateNode(
         PrismNodeDefinition node,
-        bool includeBackdrop,
         ref PrismGraphCapabilities capabilities,
         ref int surfaceCount)
     {
@@ -324,7 +322,6 @@ internal sealed class PrismFrameAnalyzer
                 {
                     EstimateNode(
                         child,
-                        includeBackdrop,
                         ref capabilities,
                         ref surfaceCount);
                 }

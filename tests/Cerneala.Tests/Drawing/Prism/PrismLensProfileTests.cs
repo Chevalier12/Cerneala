@@ -1,5 +1,7 @@
 using System.Collections.Immutable;
 using System.Numerics;
+using System.Text;
+using System.Text.Json;
 using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Drawing.Prism.ColorManagement;
@@ -250,6 +252,34 @@ public sealed class PrismLensProfileTests
             expected,
             loaded.Ghosts[0].Regions[0].SensorX.Evaluate(input),
             6);
+    }
+
+    [Theory]
+    [InlineData("unknown-property")]
+    [InlineData("wrong-case")]
+    [InlineData("invalid-grid")]
+    public void JsonStringAndStreamReadersRejectInvalidProfilesWithoutClosingTheStream(string mutation)
+    {
+        string json = PrismLensProfileJson.Serialize(ChromaticProfile(), indented: false);
+        _ = PrismLensProfileJson.Parse(json);
+        string invalidJson = mutation switch
+        {
+            "unknown-property" => json.Insert(1, "\"unknown\":0,"),
+            "wrong-case" => json.Replace("\"ghosts\"", "\"Ghosts\"", StringComparison.Ordinal),
+            "invalid-grid" => json.Replace("\"pupilGridSize\":9", "\"pupilGridSize\":1", StringComparison.Ordinal),
+            _ => throw new ArgumentOutOfRangeException(nameof(mutation))
+        };
+        Assert.NotEqual(json, invalidJson);
+
+        JsonException parseError = Assert.Throws<JsonException>(() => PrismLensProfileJson.Parse(invalidJson));
+        using MemoryStream stream = new(Encoding.UTF8.GetBytes(invalidJson));
+        JsonException loadError = Assert.Throws<JsonException>(() => PrismLensProfileJson.Load(stream));
+        Assert.True(stream.CanRead);
+        if (mutation == "invalid-grid")
+        {
+            Assert.IsType<ArgumentOutOfRangeException>(parseError.InnerException);
+            Assert.IsType<ArgumentOutOfRangeException>(loadError.InnerException);
+        }
     }
 
     private static PrismLensProfileResource ChromaticProfile()

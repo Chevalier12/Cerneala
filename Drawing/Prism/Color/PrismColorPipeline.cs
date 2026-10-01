@@ -56,7 +56,11 @@ internal static class PrismColorPipeline
             linear,
             targetProfile);
 
-        return Associate(converted, source.Alpha);
+        return PrismPremultipliedColor.FromStraight(
+            converted.Red,
+            converted.Green,
+            converted.Blue,
+            source.Alpha);
     }
 
     private static PrismColorChannels DecodeProfile(
@@ -156,17 +160,6 @@ internal static class PrismColorPipeline
             Math.Clamp(value.Red, 0, 1),
             Math.Clamp(value.Green, 0, 1),
             Math.Clamp(value.Blue, 0, 1));
-    }
-
-    private static PrismPremultipliedColor Associate(
-        PrismColorChannels value,
-        double alpha)
-    {
-        return new PrismPremultipliedColor(
-            value.Red * alpha,
-            value.Green * alpha,
-            value.Blue * alpha,
-            alpha);
     }
 
     private static double DecodeSrgb(double value)

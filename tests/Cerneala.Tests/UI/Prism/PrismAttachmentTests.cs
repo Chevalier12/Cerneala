@@ -145,6 +145,74 @@ public sealed class PrismAttachmentTests
         Assert.Same(second, GeneratedMarkup.GetPrismInstance(secondElement));
     }
 
+    [Fact]
+    public void FailedBindingFactoryDisposesPartialBindingsAndRemovesAttachment()
+    {
+        UIRoot root = new();
+        UIElement element = new();
+        root.VisualChildren.Add(element);
+        Assert.True(element.IsAttached);
+        List<int> disposalOrder = [];
+        InvalidOperationException failure = new("Injected binding factory failure.");
+
+        InvalidOperationException actual = Assert.Throws<InvalidOperationException>(() =>
+            GeneratedMarkup.AttachPrism(
+                element,
+                () => new PrismInstance(CreateDefinition()),
+                new Func<PrismInstance, IDisposable>[]
+                {
+                    _ => new CallbackDisposable(() => disposalOrder.Add(1)),
+                    _ => new CallbackDisposable(() => disposalOrder.Add(2)),
+                    _ => throw failure
+                }));
+
+        Assert.Same(failure, actual);
+        Assert.Equal(new[] { 2, 1 }, disposalOrder);
+        Assert.False(GeneratedMarkup.TryGetPrismInstance(element, out _));
+        Assert.False(PrismAttachment.TryGetRenderState(element, out _, out _));
+        using IDisposable replacement = GeneratedMarkup.AttachPrism(
+            element,
+            () => new PrismInstance(CreateDefinition()));
+        Assert.True(GeneratedMarkup.TryGetPrismInstance(element, out _));
+    }
+
+    [Fact]
+    public void ThrowingBindingDisposalStillReleasesAllBindingsAndTheAttachment()
+    {
+        UIRoot root = new();
+        UIElement element = new();
+        root.VisualChildren.Add(element);
+        Assert.True(element.IsAttached);
+        List<int> disposalOrder = [];
+        InvalidOperationException failure = new("Injected binding disposal failure.");
+        IDisposable lifetime = GeneratedMarkup.AttachPrism(
+            element,
+            () => new PrismInstance(CreateDefinition()),
+            new Func<PrismInstance, IDisposable>[]
+            {
+                _ => new CallbackDisposable(() => disposalOrder.Add(1)),
+                _ => new CallbackDisposable(() => disposalOrder.Add(2)),
+                _ => new CallbackDisposable(() =>
+                {
+                    disposalOrder.Add(3);
+                    throw failure;
+                })
+            });
+
+        AggregateException actual = Assert.Throws<AggregateException>(lifetime.Dispose);
+
+        Assert.Contains(failure, actual.Flatten().InnerExceptions);
+        Assert.Equal(new[] { 3, 2, 1 }, disposalOrder);
+        Assert.False(GeneratedMarkup.TryGetPrismInstance(element, out _));
+        Assert.False(PrismAttachment.TryGetRenderState(element, out _, out _));
+        lifetime.Dispose();
+        Assert.Equal(new[] { 3, 2, 1 }, disposalOrder);
+        using IDisposable replacement = GeneratedMarkup.AttachPrism(
+            element,
+            () => new PrismInstance(CreateDefinition()));
+        Assert.True(GeneratedMarkup.TryGetPrismInstance(element, out _));
+    }
+
     [Theory]
     [InlineData(NonRenderableMode.IsVisibleFalse)]
     [InlineData(NonRenderableMode.Hidden)]

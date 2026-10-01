@@ -13,6 +13,30 @@ namespace Cerneala.Tests.Drawing.Prism;
 
 public sealed class PrismStylePipelineTests
 {
+    [Fact]
+    public void StrokePaintKindCodesPreserveDeclaredSymbolsAndColorFallback()
+    {
+        Assert.Equal(PrismStylePaintKind.Color, PrismStylePlanner.PaintKindCode(
+            PrismCatalogRuntime.ResolveSymbol("FillType", "Color")));
+        Assert.Equal(PrismStylePaintKind.Gradient, PrismStylePlanner.PaintKindCode(
+            PrismCatalogRuntime.ResolveSymbol("FillType", "Gradient")));
+        Assert.Equal(PrismStylePaintKind.Pattern, PrismStylePlanner.PaintKindCode(
+            PrismCatalogRuntime.ResolveSymbol("FillType", "Pattern")));
+
+        int[] unknownSymbols =
+        [
+            0,
+            -1,
+            int.MinValue,
+            int.MaxValue,
+            PrismCatalogRuntime.ResolveSymbol("FillType", "UnknownPaint")
+        ];
+        foreach (int symbol in unknownSymbols)
+        {
+            Assert.Equal(PrismStylePaintKind.Color, PrismStylePlanner.PaintKindCode(symbol));
+        }
+    }
+
     [Theory]
     [InlineData(PrismStyleId.OuterGlow, 4f, 1f, 1f)]
     [InlineData(PrismStyleId.OuterGlow, 4f, 1.25f, 1f)]

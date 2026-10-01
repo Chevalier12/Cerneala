@@ -172,7 +172,7 @@ internal static class PrismPlasterFilter
                         -vertical * normalStrength,
                         1));
                 float shade = (Vector3.Dot(normal, light) - light.Z) * 0.75f;
-                float surface = SmoothStep(
+                float surface = PrismCatalogFilterMath.SmoothStep(
                     threshold - transition,
                     threshold + transition,
                     heightValue);
@@ -291,11 +291,5 @@ internal static class PrismPlasterFilter
             ((color.Z / color.W) * 0.0722f),
             0,
             1);
-    }
-
-    private static float SmoothStep(float edge0, float edge1, float value)
-    {
-        float t = Math.Clamp((value - edge0) / (edge1 - edge0), 0, 1);
-        return t * t * (3 - (2 * t));
     }
 }

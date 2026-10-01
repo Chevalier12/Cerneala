@@ -65,24 +65,16 @@ public sealed partial class UiMarkupGenerator
         private sealed class ResolvedPrismMotionTarget
         {
             public ResolvedPrismMotionTarget(
-                BoundPrismApplication application,
-                BoundPrismNode node,
                 BoundPrismValueType valueType,
                 IReadOnlyList<PrismMotionAccessor> accessors,
                 int propertyId,
                 string? elementCode)
             {
-                Application = application;
-                Node = node;
                 ValueType = valueType;
                 Accessors = accessors;
                 PropertyId = propertyId;
                 ElementCode = elementCode;
             }
-
-            public BoundPrismApplication Application { get; }
-
-            public BoundPrismNode Node { get; }
 
             public BoundPrismValueType ValueType { get; }
 
@@ -225,8 +217,6 @@ public sealed partial class UiMarkupGenerator
             int propertyId = unchecked((int)Fnv1a32(
                 prismApplication.Composition.Name + "|" + propertyPath));
             ResolvedPrismMotionTarget prismTarget = new(
-                prismApplication,
-                node,
                 valueType,
                 accessors,
                 propertyId,

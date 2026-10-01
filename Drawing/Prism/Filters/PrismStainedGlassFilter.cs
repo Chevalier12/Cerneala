@@ -25,18 +25,18 @@ internal static class PrismStainedGlassFilter
         int height)
     {
         float cellSize = Math.Clamp(
-            Option(plan, "CellSize", 2),
+            PrismCatalogFilterMath.Option(plan, "CellSize", 2),
             2,
             16384);
         float borderThickness = Math.Clamp(
-            Option(plan, "BorderThickness", 0),
+            PrismCatalogFilterMath.Option(plan, "BorderThickness", 0),
             0,
             1024);
         float lightIntensity = Math.Clamp(
-            Option(plan, "LightIntensity", 0),
+            PrismCatalogFilterMath.Option(plan, "LightIntensity", 0),
             0,
             10);
-        Vector4 borderColor = OptionVector(
+        Vector4 borderColor = PrismCatalogFilterMath.OptionVector(
             plan,
             "BorderColor",
             new Vector4(0, 0, 0, 1));
@@ -64,7 +64,7 @@ internal static class PrismStainedGlassFilter
         Vector4[] output = new Vector4[source.Length];
         Vector2 lightDirection = Vector2.Normalize(
             new Vector2(-0.65f, -0.75f));
-        Vector3 borderStraight = Unpremultiply(borderColor);
+        Vector3 borderStraight = PrismCatalogFilterMath.Unpremultiply(borderColor);
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
@@ -89,8 +89,8 @@ internal static class PrismStainedGlassFilter
                     label.X,
                     label.Y);
                 Vector3 straight = sampled.W <= 0
-                    ? Unpremultiply(original)
-                    : Unpremultiply(sampled);
+                    ? PrismCatalogFilterMath.Unpremultiply(original)
+                    : PrismCatalogFilterMath.Unpremultiply(sampled);
                 Vector2 local =
                     (new Vector2(x, y) - label) / cellSize;
                 float facet = Vector2.Dot(local, lightDirection);
@@ -333,31 +333,11 @@ internal static class PrismStainedGlassFilter
         candidate.Y < current.Y ||
         candidate.Y == current.Y && candidate.X < current.X;
 
-    private static float Option(
-        PrismCatalogFilterPlan plan,
-        string name,
-        float fallback) =>
-        plan.TryGetOption(name, out Vector4 value)
-            ? value.X
-            : fallback;
-
-    private static Vector4 OptionVector(
-        PrismCatalogFilterPlan plan,
-        string name,
-        Vector4 fallback) =>
-        plan.TryGetOption(name, out Vector4 value)
-            ? value
-            : fallback;
-
     private static uint Seed(PrismCatalogFilterPlan plan)
     {
-        Vector4 value = OptionVector(plan, "Seed", Vector4.Zero);
+        Vector4 value = PrismCatalogFilterMath.OptionVector(
+            plan, "Seed", Vector4.Zero);
         return ((uint)value.Y << 16) |
             ((uint)value.X & 0xffffu);
     }
-
-    private static Vector3 Unpremultiply(Vector4 color) =>
-        color.W <= 0
-            ? Vector3.Zero
-            : new Vector3(color.X, color.Y, color.Z) / color.W;
 }

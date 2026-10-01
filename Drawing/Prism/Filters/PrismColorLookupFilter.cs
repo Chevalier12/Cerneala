@@ -16,12 +16,4 @@ internal static class PrismColorLookupFilter
                 PrismAdjustmentMath.Clamp01(color),
                 PrismHaldInterpolation.Trilinear);
 
-    internal static Vector3 ApplyLookup(
-        Vector3 color,
-        Func<Vector3, Vector3> lookup,
-        float intensity) =>
-        Vector3.Lerp(
-            color,
-            lookup(PrismAdjustmentMath.Clamp01(color)),
-            intensity);
 }

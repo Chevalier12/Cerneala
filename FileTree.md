@@ -3933,8 +3933,7 @@ Generated from `.`.
 |   |   |   |-- PrismScRgbStyle.cs
 |   |   |   +-- PrismSrgbStyle.cs
 |   |   |-- Execution/
-|   |   |   |-- PrismExecutionDiagnostics.cs
-|   |   |   +-- PrismGraphFallbackTracker.cs
+|   |   |   +-- PrismExecutionDiagnostics.cs
 |   |   |-- Filters/
 |   |   |   |-- Assets/
 |   |   |   |   +-- bluenoise.bin
@@ -4125,7 +4124,6 @@ Generated from `.`.
 |   |   |   |-- PrismRasterPlanner.cs
 |   |   |   +-- PrismRetainedCacheKey.cs
 |   |   |-- Kernels/
-|   |   |   +-- PrismKernelKind.cs
 |   |   |-- Masking/
 |   |   |   |-- PrismClippingStyle.cs
 |   |   |   |-- PrismMaskMath.cs
@@ -4358,8 +4356,7 @@ Generated from `.`.
 |   |   |   |-- PrismStrokeStyle.cs
 |   |   |   +-- PrismStylePlanner.cs
 |   |   |-- Surfaces/
-|   |   |   |-- PrismSurfaceAllocationException.cs
-|   |   |   +-- PrismSurfaceMemoryAccountant.cs
+|   |   |   +-- PrismSurfaceAllocationException.cs
 |   |   |-- BackdropAlphaMode.cs
 |   |   |-- BackdropFrameMetadata.cs
 |   |   |-- BackdropFrameRequest.cs
@@ -4824,6 +4821,7 @@ Generated from `.`.
 |   |   |   |   |-- PrismChromaticAberrationFilterTests.cs
 |   |   |   |   |-- PrismChromeFilterTests.cs
 |   |   |   |   |-- PrismCloudsCatalogContractTests.cs
+|   |   |   |   |-- PrismColdStartWarmupTests.cs
 |   |   |   |   |-- PrismColorBlendStyleCoverageTests.cs
 |   |   |   |   |-- PrismColorFilterTests.cs
 |   |   |   |   |-- PrismColorMatrixFilterTests.cs
@@ -4834,10 +4832,12 @@ Generated from `.`.
 |   |   |   |   |-- PrismCrosshatchFilterTests.cs
 |   |   |   |   |-- PrismCustomConvolutionFilterTests.cs
 |   |   |   |   |-- PrismDarkStrokesFilterTests.cs
+|   |   |   |   |-- PrismDiffuseGlowCharacterizationTests.cs
 |   |   |   |   |-- PrismDissolveBlendTests.cs
 |   |   |   |   |-- PrismDistortionFilterTests.cs
 |   |   |   |   |-- PrismEmbossFilterTests.cs
 |   |   |   |   |-- PrismEnumValidationTests.cs
+|   |   |   |   |-- PrismFrameAnalyzerTests.cs
 |   |   |   |   |-- PrismFrescoFilterTests.cs
 |   |   |   |   |-- PrismGlowingEdgesFilterTests.cs
 |   |   |   |   |-- PrismGradientOverlayPipelineTests.cs
@@ -5427,7 +5427,9 @@ Generated from `.`.
 |   |   |-- SdlGpuImageLifetimeTests.cs
 |   |   |-- SdlGpuNativePipelineDescriptorTests.cs
 |   |   |-- SdlGpuPrismBuiltinTextureAllocationTests.cs
+|   |   |-- SdlGpuPrismExecutionColdStartWarmupTests.cs
 |   |   |-- SdlGpuPrismExecutorTests.cs
+|   |   |-- SdlGpuPrismFrameCountersTests.cs
 |   |   |-- SdlGpuPrismUniformAllocationTests.cs
 |   |   |-- SdlGpuRenderSurface3DDiagnosticsTests.cs
 |   |   |-- SdlGpuSampledTextureReuseTests.cs
@@ -6473,6 +6475,7 @@ Generated from `.`.
 |-- Motion_Audit_09022026.md
 |-- NuGet.Config
 |-- Prism_Audit_09022026.md
+|-- PrismChecklist.md
 |-- README.md
 |-- Relay_Audit_09022026.md
 |-- ROADMAP.md

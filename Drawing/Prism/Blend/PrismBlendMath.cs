@@ -130,9 +130,7 @@ internal static class PrismBlendMath
         PrismBlendColor sourceStraight = Unassociate(source);
         PrismBlendColor backdropStraight = Unassociate(backdrop);
         PrismBlendColor blended = Blend(
-            mode == PrismBlendMode.PassThrough
-                ? PrismBlendMode.Normal
-                : mode,
+            mode,
             backdropStraight,
             sourceStraight);
         double overlap = source.Alpha * backdrop.Alpha;
@@ -172,9 +170,7 @@ internal static class PrismBlendMath
         PrismBlendColor sourceStraight = Unassociate(source);
         PrismBlendColor originalStraight = Unassociate(originalBackdrop);
         PrismBlendColor blended = Blend(
-            mode == PrismBlendMode.PassThrough
-                ? PrismBlendMode.Normal
-                : mode,
+            mode,
             originalStraight,
             sourceStraight);
         double previousGroupAlpha = ResolveGroupAlpha(

@@ -81,6 +81,90 @@ public sealed class PrismDefinitionContractTests
     }
 
     [Fact]
+    public void DefinitionCollectionsSnapshotCallerOwnedLists()
+    {
+        PrismFilterDefinition filter = new(PrismFilterId.Blur);
+        PrismStyleDefinition style = new(PrismStyleId.DropShadow);
+        List<PrismFilterDefinition> layerFilters = [filter];
+        List<PrismStyleDefinition> layerStyles = [style];
+        PrismLayerDefinition layer = new(new(1), "Content", layerFilters, layerStyles);
+        List<PrismNodeDefinition> children = [layer];
+        List<PrismFilterDefinition> groupFilters = [filter];
+        List<PrismStyleDefinition> groupStyles = [style];
+        PrismGroupDefinition group = new(new(2), "Effects", children, groupFilters, groupStyles);
+        List<PrismNodeDefinition> nodes = [group];
+        PrismCompositionDefinition composition = new("Snapshot", nodes);
+
+        layerFilters.Clear();
+        layerStyles.Clear();
+        children.Clear();
+        groupFilters.Clear();
+        groupStyles.Clear();
+        nodes.Clear();
+
+        Assert.Same(filter, Assert.Single(layer.Filters));
+        Assert.Same(style, Assert.Single(layer.Styles));
+        Assert.Same(layer, Assert.Single(group.Children));
+        Assert.Same(filter, Assert.Single(group.Filters));
+        Assert.Same(style, Assert.Single(group.Styles));
+        Assert.Same(group, Assert.Single(composition.Nodes));
+        Assert.True(composition.TryGetNamedNode("Effects.Content", out PrismNodeId content));
+        Assert.Equal(layer.Id, content);
+    }
+
+    [Fact]
+    public void SourceMetadataDoesNotAffectSemanticEqualityOrHashing()
+    {
+        PrismSourceSpan firstSpan = new(1, 2, "First.crn");
+        PrismSourceSpan secondSpan = new(30, 40, "Second.crn");
+        PrismCompositionDefinition first = WithSource(firstSpan);
+        PrismCompositionDefinition second = WithSource(secondSpan);
+        PrismGroupDefinition firstGroup = Assert.IsType<PrismGroupDefinition>(Assert.Single(first.Nodes));
+        PrismGroupDefinition secondGroup = Assert.IsType<PrismGroupDefinition>(Assert.Single(second.Nodes));
+        PrismNodeDefinition firstLayer = Assert.Single(firstGroup.Children);
+        PrismNodeDefinition secondLayer = Assert.Single(secondGroup.Children);
+
+        Assert.Equal(firstSpan, first.SourceSpan);
+        Assert.Equal(firstSpan, firstGroup.SourceSpan);
+        Assert.Equal(firstSpan, firstLayer.SourceSpan);
+        Assert.Equal(secondSpan, second.SourceSpan);
+        Assert.Equal(secondSpan, secondGroup.SourceSpan);
+        Assert.Equal(secondSpan, secondLayer.SourceSpan);
+        Assert.Equal(first, second);
+        Assert.Equal(firstGroup, secondGroup);
+        Assert.Equal(firstLayer, secondLayer);
+        Assert.Equal(first.GetHashCode(), second.GetHashCode());
+        Assert.Equal(firstGroup.GetHashCode(), secondGroup.GetHashCode());
+        Assert.Equal(firstLayer.GetHashCode(), secondLayer.GetHashCode());
+
+        static PrismCompositionDefinition WithSource(PrismSourceSpan sourceSpan)
+        {
+            PrismLayerDefinition layer = new(new(1), "Content",
+                filters: [new(PrismFilterId.Blur)], sourceSpan: sourceSpan);
+            PrismGroupDefinition group = new(new(2), "Effects", [layer], sourceSpan: sourceSpan);
+            return new("Metadata", [group], sourceSpan: sourceSpan);
+        }
+    }
+
+    [Fact]
+    public void NamesAreScopedByGroupWhileNodeIdsAreGlobal()
+    {
+        PrismGroupDefinition left = new(new(10), "Left", [Layer(1, "Content")]);
+        PrismGroupDefinition right = new(new(20), "Right", [Layer(2, "Content")]);
+        PrismCompositionDefinition composition = new("Addresses", [left, right]);
+
+        Assert.True(composition.TryGetNamedNode("Left.Content", out PrismNodeId leftId));
+        Assert.True(composition.TryGetNamedNode("Right.Content", out PrismNodeId rightId));
+        Assert.Equal(new(1), leftId);
+        Assert.Equal(new(2), rightId);
+        Assert.False(composition.TryGetNamedNode("left.Content", out _));
+        Assert.Throws<ArgumentException>(() => new PrismCompositionDefinition("DuplicateIds",
+            [left, new PrismGroupDefinition(new(20), "Right", [Layer(1, "Other")])]));
+        Assert.Throws<ArgumentException>(() => new PrismCompositionDefinition("DuplicateLocalNames",
+            [new PrismGroupDefinition(new(10), "Left", [Layer(1, "Content"), Layer(2, "Content")])]));
+    }
+
+    [Fact]
     public void DiagnosticSnapshotIsDeterministic()
     {
         string first = CompositionSnapshot().ToDiagnosticString().ReplaceLineEndings("\n");

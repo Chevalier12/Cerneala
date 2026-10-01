@@ -1386,12 +1386,7 @@ internal static class PrismCatalogFilterPlanner
                 ("Wind", 0),
                 ("Blast", 1),
                 ("Stagger", 2));
-            float methodScale = method switch
-            {
-                1 => 5.5f,
-                2 => 4.5f,
-                _ => 4
-            };
+            float methodScale = PrismWindFilter.MethodLengthScale(method);
             float radius = Math.Clamp(
                 MathF.Abs(values.Number("Strength")) *
                     deviceScale *

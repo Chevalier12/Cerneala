@@ -460,12 +460,7 @@ internal static class PrismCatalogInkMath
             float response =
                 ((sharpen + 1) * narrowLuminance) -
                 (sharpen * extendedLuminance);
-            float thresholded = response >= epsilon
-                ? 1
-                : Math.Clamp(
-                    1 + MathF.Tanh(phi * (response - epsilon)),
-                    0,
-                    1);
+            float thresholded = XDogThreshold(response, epsilon, phi);
             float edgeMask = 1 - thresholded;
             Vector3 straight = Vector3.Clamp(
                 Unpremultiply(source[index]),
@@ -606,12 +601,7 @@ internal static class PrismCatalogInkMath
             float response =
                 ((sharpen + 1) * narrowLuminance) -
                 (sharpen * extendedLuminance);
-            float thresholded = response >= epsilon
-                ? 1
-                : Math.Clamp(
-                    1 + MathF.Tanh(phi * (response - epsilon)),
-                    0,
-                    1);
+            float thresholded = XDogThreshold(response, epsilon, phi);
             float accent = 1 - thresholded;
             Vector3 straight = Vector3.Clamp(
                 Unpremultiply(source[index]),
@@ -685,12 +675,7 @@ internal static class PrismCatalogInkMath
             float response =
                 ((sharpen + 1) * narrowLuminance) -
                 (sharpen * extendedLuminance);
-            float thresholded = response >= epsilon
-                ? 1
-                : Math.Clamp(
-                    1 + MathF.Tanh(24 * (response - epsilon)),
-                    0,
-                    1);
+            float thresholded = XDogThreshold(response, epsilon, 24);
             Vector3 straight = Vector3.Clamp(
                 Unpremultiply(source[index]),
                 Vector3.Zero,
@@ -777,12 +762,7 @@ internal static class PrismCatalogInkMath
             float response =
                 ((sharpen + 1) * narrowLuminance) -
                 (sharpen * extendedLuminance);
-            float thresholded = response >= epsilon
-                ? 1
-                : Math.Clamp(
-                    1 + MathF.Tanh(phi * (response - epsilon)),
-                    0,
-                    1);
+            float thresholded = XDogThreshold(response, epsilon, phi);
             Vector3 straight = Vector3.Clamp(
                 Unpremultiply(source[index]),
                 Vector3.Zero,
@@ -891,12 +871,7 @@ internal static class PrismCatalogInkMath
                 float response =
                     ((sharpen + 1) * narrowLuminance) -
                     (sharpen * extendedLuminance);
-                float thresholded = response >= epsilon
-                    ? 1
-                    : Math.Clamp(
-                        1 + MathF.Tanh(phi * (response - epsilon)),
-                        0,
-                        1);
+                float thresholded = XDogThreshold(response, epsilon, phi);
                 float inkEdge = 1 - thresholded;
                 float tone = Math.Clamp(
                     ((narrowLuminance - 0.5f) * tonalContrast) + 0.5f,
@@ -1089,6 +1064,17 @@ internal static class PrismCatalogInkMath
         squaredSums[sector] += luminance * luminance * weight;
         weights[sector] += weight;
     }
+
+    private static float XDogThreshold(
+        float response,
+        float epsilon,
+        float phi) =>
+        response >= epsilon
+            ? 1
+            : Math.Clamp(
+                1 + MathF.Tanh(phi * (response - epsilon)),
+                0,
+                1);
 
     private static (Vector2[] Narrow, Vector2[] Extended) XDogLuminance(
         Vector4[] source,

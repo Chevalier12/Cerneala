@@ -1109,7 +1109,7 @@ internal sealed partial class CernealaSemanticModel
             }
 
             string value = Unquote(attribute.ValueToken.Text);
-            PrismValueModelSyntax syntax = new(value, ClassifyPrismValue(value), AttributeContentSpan(attribute));
+            PrismValueModelSyntax syntax = new(value, PrismSyntaxParser.ClassifyValue(value), AttributeContentSpan(attribute));
             if (BindPrismValue(resource.Element, syntax, property, scope: null))
             {
                 ILanguageTypeSymbol? type = ResolvePrismType(property.ValueType);
@@ -2250,50 +2250,6 @@ internal sealed partial class CernealaSemanticModel
         }
 
         return true;
-    }
-
-    private static PrismValueModelKind ClassifyPrismValue(string value)
-    {
-        if (value == "null")
-        {
-            return PrismValueModelKind.NullLiteral;
-        }
-
-        if (value.StartsWith("$", StringComparison.Ordinal))
-        {
-            if (value.IndexOf('.') >= 0)
-            {
-                return value.IndexOf(':') >= 0
-                    ? PrismValueModelKind.Binding
-                    : PrismValueModelKind.DirectReference;
-            }
-
-            return PrismValueModelKind.ResourceReference;
-        }
-
-        if (value.StartsWith("#", StringComparison.Ordinal))
-        {
-            return PrismValueModelKind.ColorLiteral;
-        }
-
-        if (value.Length >= 2 && value[0] is '\'' or '"' && value[value.Length - 1] == value[0])
-        {
-            return PrismValueModelKind.StringLiteral;
-        }
-
-        if (value.StartsWith("(", StringComparison.Ordinal) && value.EndsWith(")", StringComparison.Ordinal))
-        {
-            return PrismValueModelKind.TupleLiteral;
-        }
-
-        if (bool.TryParse(value, out _))
-        {
-            return PrismValueModelKind.BooleanLiteral;
-        }
-
-        return double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out _)
-            ? PrismValueModelKind.NumberLiteral
-            : PrismValueModelKind.Identifier;
     }
 
     private sealed class MotionProgram

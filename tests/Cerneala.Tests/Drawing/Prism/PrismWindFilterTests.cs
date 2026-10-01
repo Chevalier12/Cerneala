@@ -42,6 +42,41 @@ public sealed class PrismWindFilterTests
         Assert.Equal(0, plan.GetOption("Direction").X);
     }
 
+    [Theory]
+    [InlineData("Wind", 1, 12)]
+    [InlineData("Blast", 1, 16.5f)]
+    [InlineData("Stagger", 1, 13.5f)]
+    [InlineData("Wind", 8, 64)]
+    [InlineData("Blast", 8, 64)]
+    [InlineData("Stagger", 8, 64)]
+    public void PlannerScalesEachMethodAndCapsIntegrationRadius(
+        string method,
+        float strength,
+        float expectedRadius)
+    {
+        PrismCatalogFilterPlan plan = CreatePlan(
+            "FromRight",
+            strength,
+            seed: 17,
+            pixelScale: 2,
+            effectiveTransform: Matrix3x2.CreateScale(1.5f),
+            method: method);
+
+        Assert.Equal(3, plan.Passes.Length);
+        Assert.All(
+            plan.Passes.Where(pass =>
+                pass.Kind == PrismCatalogFilterPassKind.Iteration),
+            pass =>
+            {
+                Assert.Equal(expectedRadius, pass.RadiusX);
+                Assert.Equal(expectedRadius, pass.RadiusY);
+                Assert.Equal(0, pass.BoundsRadiusX);
+                Assert.Equal(0, pass.BoundsRadiusY);
+            });
+        Assert.Equal(2, plan.Passes.Count(pass =>
+            pass.Kind == PrismCatalogFilterPassKind.Iteration));
+    }
+
     [Fact]
     public void CpuReferenceIsDeterministicSeededDirectionalAndAssociated()
     {
@@ -104,12 +139,13 @@ public sealed class PrismWindFilterTests
         float strength,
         int seed,
         float pixelScale = 1,
-        Matrix3x2? effectiveTransform = null) =>
+        Matrix3x2? effectiveTransform = null,
+        string method = "Wind") =>
         PrismCatalogFilterPlanner.Create(
             PrismFilterId.Wind,
             [
                 Symbol(0, "Direction", direction),
-                Symbol(1, "Method", "Wind"),
+                Symbol(1, "Method", method),
                 new PrismGraphParameter(
                     2,
                     PrismGraphParameterValueKind.Integer,

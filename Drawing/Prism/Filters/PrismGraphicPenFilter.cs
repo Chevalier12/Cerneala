@@ -52,12 +52,12 @@ internal static class PrismGraphicPenFilter
                     continue;
                 }
 
-                float line = SmoothStep(
+                float line = PrismCatalogFilterMath.SmoothStep(
                     edgeThreshold * 0.3f,
                     edgeThreshold,
                     MathF.Max(-flow.Response[index], 0));
                 float darkness = 1 - flow.Luminance[index];
-                float tone = SmoothStep(
+                float tone = PrismCatalogFilterMath.SmoothStep(
                     toneThreshold,
                     toneThreshold + 0.22f,
                     darkness);
@@ -93,14 +93,17 @@ internal static class PrismGraphicPenFilter
         float row = MathF.Floor(across / spacing);
         float rowCenter = (row + 0.5f) * spacing;
         float acrossDistance = MathF.Abs(across - rowCenter);
-        float widthMask = 1 - SmoothStep(0.45f, 1.05f, acrossDistance);
+        float widthMask = 1 - PrismCatalogFilterMath.SmoothStep(
+            0.45f,
+            1.05f,
+            acrossDistance);
 
         float gap = MathF.Max(2.5f, strokeLength * 0.3f);
         float period = strokeLength + gap;
-        float phase = Fraction(row * 0.6180339f) * period;
-        float segmentCoordinate = Fraction((along + phase) / period);
+        float phase = PrismCatalogFilterMath.Fraction(row * 0.6180339f) * period;
+        float segmentCoordinate = PrismCatalogFilterMath.Fraction((along + phase) / period);
         float alongDistance = MathF.Abs(segmentCoordinate - 0.5f) * period;
-        float segmentMask = 1 - SmoothStep(
+        float segmentMask = 1 - PrismCatalogFilterMath.SmoothStep(
             MathF.Max((strokeLength * 0.5f) - 0.75f, 0),
             (strokeLength * 0.5f) + 0.75f,
             alongDistance);
@@ -117,14 +120,5 @@ internal static class PrismGraphicPenFilter
             3 => Vector2.UnitY,
             _ => new Vector2(diagonal, diagonal)
         };
-    }
-
-    private static float Fraction(float value) =>
-        value - MathF.Floor(value);
-
-    private static float SmoothStep(float start, float end, float value)
-    {
-        float amount = Math.Clamp((value - start) / (end - start), 0, 1);
-        return amount * amount * (3 - (2 * amount));
     }
 }

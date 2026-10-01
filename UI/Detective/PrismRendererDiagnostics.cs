@@ -93,42 +93,6 @@ public readonly struct PrismRendererDiagnostics
             explicitRemovalEvictionCount;
     }
 
-    internal static PrismRendererDiagnostics Empty(
-        bool retainedCacheEnabled) =>
-        new(
-            retainedCacheEnabled,
-            0,
-            0,
-            0,
-            PrismCacheMissReason.None,
-            0,
-            0,
-            0,
-            0,
-            PrismCacheEvictionReason.None,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            PrismDependencyChange.None,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0);
-
     public bool RetainedCacheEnabled { get; }
 
     public long FinalHitCount { get; }

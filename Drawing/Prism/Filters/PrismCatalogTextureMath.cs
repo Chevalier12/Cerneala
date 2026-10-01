@@ -675,9 +675,6 @@ internal static class PrismCatalogTextureMath
             1);
     }
 
-    private static float Fraction(float value) =>
-        value - MathF.Floor(value);
-
     internal static Vector4 PolynomialAnisotropicKuwahara(
         Vector4[] source,
         int width,

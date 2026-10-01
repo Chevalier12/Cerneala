@@ -84,26 +84,6 @@ internal static class PrismRecursiveWangBlueNoise
         return Pack(points);
     }
 
-    internal static List<PrismRecursiveWangPoint> Generate(
-        ReadOnlySpan<byte> tileset,
-        int pointCount)
-    {
-        if (pointCount <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(pointCount));
-        }
-
-        TileSet parsed = Parse(tileset);
-        Tile root = parsed.Tiles
-            .Where(tile => tile.North == tile.South &&
-                tile.East == tile.West)
-            .OrderByDescending(tile => tile.SubPoints.Length)
-            .FirstOrDefault() ??
-            throw new InvalidDataException(
-                "The Recursive Wang tileset has no toroidal root tile.");
-        return Generate(parsed, root, pointCount);
-    }
-
     internal static uint Hash(uint value)
     {
         value ^= value >> 16;

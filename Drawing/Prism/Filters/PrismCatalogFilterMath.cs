@@ -441,7 +441,6 @@ internal static class PrismCatalogFilterMath
                     height,
                     x,
                     y,
-                    primaryResource,
                     auxiliaryResource,
                     lightingResource),
             PrismCatalogFilterPrimitive.Video =>
@@ -864,19 +863,6 @@ internal static class PrismCatalogFilterMath
             MathF.Round(value.X * scale) / scale,
             MathF.Round(value.Y * scale) / scale,
             MathF.Round(value.Z * scale) / scale);
-    }
-
-    private static Vector3 RotateHue(
-        Vector3 color,
-        float degrees)
-    {
-        float angle = degrees * (MathF.PI / 180);
-        float cosine = MathF.Cos(angle);
-        float sine = MathF.Sin(angle);
-        Vector3 axis = Vector3.Normalize(Vector3.One);
-        return (color * cosine) +
-            (Vector3.Cross(axis, color) * sine) +
-            (axis * Vector3.Dot(axis, color) * (1 - cosine));
     }
 
     internal static float Luminance(Vector4 color) =>

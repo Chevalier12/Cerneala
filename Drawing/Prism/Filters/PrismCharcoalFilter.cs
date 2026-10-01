@@ -350,11 +350,11 @@ internal static class PrismCharcoalFilter
             for (int x = 0; x < width; x++)
             {
                 int index = (y * width) + x;
-                float line = SmoothStep(
+                float line = PrismCatalogFilterMath.SmoothStep(
                     edgeThreshold * 0.35f,
                     edgeThreshold,
                     MathF.Abs(flowDog[index]));
-                float tone = 1 - SmoothStep(
+                float tone = 1 - PrismCatalogFilterMath.SmoothStep(
                     toneThreshold - 0.24f,
                     toneThreshold + 0.24f,
                     luminance[index]);
@@ -440,12 +440,6 @@ internal static class PrismCharcoalFilter
             values[(y1 * width) + x1],
             horizontal);
         return Vector2.Lerp(top, bottom, vertical);
-    }
-
-    private static float SmoothStep(float start, float end, float value)
-    {
-        float amount = Math.Clamp((value - start) / (end - start), 0, 1);
-        return amount * amount * (3 - (2 * amount));
     }
 
     private static float Hash(int x, int y)

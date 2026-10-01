@@ -48,11 +48,11 @@ internal static class PrismDiffuseFilter
 
         float centerLuminance = Luminance(center);
         float gradientX = 0.5f * (
-            Luminance(Sample(source, width, height, x + stepX, y)) -
-            Luminance(Sample(source, width, height, x - stepX, y)));
+            Luminance(PrismCatalogFilterMath.SamplePixelBilinear(source, width, height, x + stepX, y)) -
+            Luminance(PrismCatalogFilterMath.SamplePixelBilinear(source, width, height, x - stepX, y)));
         float gradientY = 0.5f * (
-            Luminance(Sample(source, width, height, x, y + stepY)) -
-            Luminance(Sample(source, width, height, x, y - stepY)));
+            Luminance(PrismCatalogFilterMath.SamplePixelBilinear(source, width, height, x, y + stepY)) -
+            Luminance(PrismCatalogFilterMath.SamplePixelBilinear(source, width, height, x, y - stepY)));
         Vector2 localNormal = NormalizeOrZero(
             new Vector2(gradientX, gradientY));
         (Vector2 tensorNormal, float coherence) =
@@ -90,13 +90,13 @@ internal static class PrismDiffuseFilter
             direction = Rotate(direction, jitter);
         }
 
-        Vector4 negative = Sample(
+        Vector4 negative = PrismCatalogFilterMath.SamplePixelBilinear(
             source,
             width,
             height,
             x - (direction.X * stepX),
             y - (direction.Y * stepY));
-        Vector4 positive = Sample(
+        Vector4 positive = PrismCatalogFilterMath.SamplePixelBilinear(
             source,
             width,
             height,
@@ -181,11 +181,11 @@ internal static class PrismDiffuseFilter
         ref Vector3 tensor)
     {
         float gradientX = 0.5f * (
-            Luminance(Sample(source, width, height, x + stepX, y)) -
-            Luminance(Sample(source, width, height, x - stepX, y)));
+            Luminance(PrismCatalogFilterMath.SamplePixelBilinear(source, width, height, x + stepX, y)) -
+            Luminance(PrismCatalogFilterMath.SamplePixelBilinear(source, width, height, x - stepX, y)));
         float gradientY = 0.5f * (
-            Luminance(Sample(source, width, height, x, y + stepY)) -
-            Luminance(Sample(source, width, height, x, y - stepY)));
+            Luminance(PrismCatalogFilterMath.SamplePixelBilinear(source, width, height, x, y + stepY)) -
+            Luminance(PrismCatalogFilterMath.SamplePixelBilinear(source, width, height, x, y - stepY)));
         tensor.X += weight * gradientX * gradientX;
         tensor.Y += weight * gradientX * gradientY;
         tensor.Z += weight * gradientY * gradientY;
@@ -219,32 +219,6 @@ internal static class PrismDiffuseFilter
             0,
             1);
         return (direction, coherence);
-    }
-
-    private static Vector4 Sample(
-        Vector4[] source,
-        int width,
-        int height,
-        float x,
-        float y)
-    {
-        float clampedX = Math.Clamp(x, 0, width - 1);
-        float clampedY = Math.Clamp(y, 0, height - 1);
-        int left = (int)MathF.Floor(clampedX);
-        int top = (int)MathF.Floor(clampedY);
-        int right = Math.Min(left + 1, width - 1);
-        int bottom = Math.Min(top + 1, height - 1);
-        float horizontal = clampedX - left;
-        float vertical = clampedY - top;
-        Vector4 first = Vector4.Lerp(
-            source[(top * width) + left],
-            source[(top * width) + right],
-            horizontal);
-        Vector4 second = Vector4.Lerp(
-            source[(bottom * width) + left],
-            source[(bottom * width) + right],
-            horizontal);
-        return Vector4.Lerp(first, second, vertical);
     }
 
     private static Vector3 Unpremultiply(Vector4 color) =>

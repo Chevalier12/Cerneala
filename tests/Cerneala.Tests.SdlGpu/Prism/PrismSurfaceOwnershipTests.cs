@@ -568,6 +568,41 @@ public sealed class PrismSurfaceOwnershipTests
         using (SdlGpuPrismSurfaceLease reusable = fixture.Rent()) { Assert.Same(previous, reusable.Target); }
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void RepeatedPendingPromotionKeepsTheOriginalTarget(bool sameLease)
+    {
+        using Fixture fixture = new();
+        PrismRetainedCacheKey key = Key(70);
+        fixture.Session.BeginFrame(Color.Transparent);
+        using SdlGpuPrismSurfaceLease original = fixture.Rent();
+        fixture.Resources.Promote(fixture.Session, key, original);
+        using SdlGpuPrismSurfaceLease contender = sameLease ? original : fixture.Rent();
+
+        fixture.Resources.Promote(fixture.Session, key, contender);
+
+        Assert.Equal(1, fixture.Resources.RetainedCount);
+        Assert.True(original.IsRetained);
+        Assert.Equal(sameLease, contender.IsRetained);
+        Assert.True(fixture.Resources.TryAcquireRetained(
+            fixture.Session, key, fixture.Session.WindowIdentity, out SdlGpuPrismSurfaceLease pending));
+        using (pending)
+        {
+            Assert.Same(original.Target, pending.Target);
+        }
+        original.Dispose();
+        contender.Dispose();
+        fixture.Session.CompleteFrame(present: false);
+        using (SdlGpuPrismSurfaceLease submitted = fixture.Acquire(key))
+        {
+            Assert.Same(original.Target, submitted.Target);
+        }
+        fixture.Resources.Invalidate(PrismCacheInvalidation.All);
+        Assert.Equal(0, fixture.Resources.RetainedCount);
+        Assert.Equal(fixture.Resources.TotalBytes, fixture.Resources.FreeBytes);
+    }
+
     [Fact]
     public void InvalidatedPendingPromotionIsNotReusedOrResurrectedAtSubmit()
     {

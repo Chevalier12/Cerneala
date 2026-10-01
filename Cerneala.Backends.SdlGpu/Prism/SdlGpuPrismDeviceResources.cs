@@ -253,13 +253,8 @@ internal sealed class SdlGpuPrismDeviceResources :
         RequireActiveLease(lease);
         SdlGpuCommandBufferToken token = session.ActiveCommandBufferToken;
         PendingRetainedKey pendingKey = new(key, token);
-        if (pendingRetained.TryGetValue(pendingKey, out RetainedEntry? existingPending))
+        if (pendingRetained.ContainsKey(pendingKey))
         {
-            if (ReferenceEquals(existingPending.Target, lease.Target))
-            {
-                return;
-            }
-
             return;
         }
 
@@ -956,7 +951,7 @@ internal sealed class SdlGpuPrismDeviceResources :
                 $"SDL_GPU Prism byte accounting does not support '{format}'.")
         };
         long colorBytes = checked(colorPixels * colorBytesPerPixel);
-        return checked(colorPixels * colorBytesPerPixel);
+        return colorBytes;
     }
 
     private readonly record struct SurfaceKey(

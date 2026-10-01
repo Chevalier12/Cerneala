@@ -61,8 +61,7 @@ public sealed partial class UiMarkupGenerator
                     element,
                     elementVariable,
                     property,
-                    "prismInstance.Composition." + property.Schema.Name,
-                    isCatalogParameter: false);
+                    "prismInstance.Composition." + property.Schema.Name);
             }
 
             foreach (BoundPrismNode node in application.Composition.Nodes)
@@ -94,8 +93,7 @@ public sealed partial class UiMarkupGenerator
                     element,
                     elementVariable,
                     property,
-                    state + "." + property.Schema.Name,
-                    isCatalogParameter: false);
+                    state + "." + property.Schema.Name);
             }
 
             for (int index = 0; index < node.Filters.Count; index++)
@@ -132,8 +130,7 @@ public sealed partial class UiMarkupGenerator
                         element,
                         elementVariable,
                         property,
-                        state + ".Mask!." + property.Schema.Name,
-                        isCatalogParameter: false);
+                        state + ".Mask!." + property.Schema.Name);
                 }
             }
 
@@ -171,8 +168,7 @@ public sealed partial class UiMarkupGenerator
                         element,
                         elementVariable,
                         property,
-                        state + "." + property.Schema.Name,
-                        isCatalogParameter: false);
+                        state + "." + property.Schema.Name);
                     continue;
                 }
 
@@ -206,8 +202,7 @@ public sealed partial class UiMarkupGenerator
             MarkupElement element,
             string elementVariable,
             BoundPrismProperty property,
-            string targetExpression,
-            bool isCatalogParameter)
+            string targetExpression)
         {
             AddPrismBindingFactory(
                 factories,
@@ -217,7 +212,7 @@ public sealed partial class UiMarkupGenerator
                 property,
                 targetExpression,
                 targetExpression + " = value",
-                isCatalogParameter);
+                isCatalogParameter: false);
         }
 
         private void AddPrismBindingFactory(

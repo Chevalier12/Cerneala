@@ -144,7 +144,7 @@ internal static class PrismGrainFilter
             float dy =
                 (pixelY - centerY) / (radiusY * radiusScale);
             float distance = MathF.Sqrt((dx * dx) + (dy * dy));
-            float coverage = 1 - SmoothStep(
+            float coverage = 1 - PrismCatalogFilterMath.SmoothStep(
                 1 - softness,
                 1 + softness,
                 distance);
@@ -169,12 +169,6 @@ internal static class PrismGrainFilter
         value = unchecked(value * 0x846ca68bu);
         value ^= value >> 16;
         return value;
-    }
-
-    private static float SmoothStep(float edge0, float edge1, float value)
-    {
-        float t = Math.Clamp((value - edge0) / (edge1 - edge0), 0, 1);
-        return t * t * (3 - (2 * t));
     }
 
     private static uint DecodeSeed(Vector4 value) =>

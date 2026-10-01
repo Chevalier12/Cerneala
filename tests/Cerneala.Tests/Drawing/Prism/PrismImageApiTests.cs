@@ -290,6 +290,52 @@ public sealed class PrismImageApiTests
     }
 
     [Fact]
+    public void ObserversShareInputSubscriptionsUntilLastRemovalAndCanReattach()
+    {
+        ObservableTestImage source = new(8, 8);
+        BlurFilter blur = new();
+        using PrismImage image = global::Cerneala.Drawing.Prism.Prism.Apply(source, blur);
+        IDrawImageInvalidationSource invalidationSource = image;
+        int firstChanges = 0;
+        int secondChanges = 0;
+        EventHandler first = (_, _) => firstChanges++;
+        EventHandler second = (_, _) => secondChanges++;
+
+        Assert.Equal(0, source.SubscriberCount);
+        invalidationSource.ContentChanged += first;
+        Assert.Equal(1, source.SubscriberCount);
+        invalidationSource.ContentChanged += second;
+        Assert.Equal(1, source.SubscriberCount);
+        source.RaiseContentChanged();
+        blur.Radius = 2;
+        Assert.Equal(2, firstChanges);
+        Assert.Equal(2, secondChanges);
+
+        invalidationSource.ContentChanged -= first;
+        Assert.Equal(1, source.SubscriberCount);
+        source.RaiseContentChanged();
+        blur.Radius = 3;
+        Assert.Equal(2, firstChanges);
+        Assert.Equal(4, secondChanges);
+
+        invalidationSource.ContentChanged -= second;
+        Assert.Equal(0, source.SubscriberCount);
+        source.RaiseContentChanged();
+        blur.Radius = 4;
+        Assert.Equal(2, firstChanges);
+        Assert.Equal(4, secondChanges);
+
+        invalidationSource.ContentChanged += first;
+        Assert.Equal(1, source.SubscriberCount);
+        source.RaiseContentChanged();
+        blur.Radius = 5;
+        Assert.Equal(4, firstChanges);
+        Assert.Equal(4, secondChanges);
+        invalidationSource.ContentChanged -= first;
+        Assert.Equal(0, source.SubscriberCount);
+    }
+
+    [Fact]
     public void DisposeStopsObservationAndRejectsFutureDraws()
     {
         ObservableTestImage source = new(8, 8);
@@ -348,6 +394,8 @@ public sealed class PrismImageApiTests
         public int Height { get; } = height;
 
         public event EventHandler? ContentChanged;
+
+        public int SubscriberCount => ContentChanged?.GetInvocationList().Length ?? 0;
 
         public void RaiseContentChanged() =>
             ContentChanged?.Invoke(this, EventArgs.Empty);

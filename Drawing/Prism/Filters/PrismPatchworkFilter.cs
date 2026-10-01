@@ -72,13 +72,13 @@ internal static class PrismPatchworkFilter
             return tile;
         }
 
-        float depth = (Hash(
+        float depth = (PrismCatalogFilterMath.Hash(
             cellX,
             cellY,
             seed ^ 0xa511e9b3u) * 2) - 1;
         float normalizedX = ((localX / squareSize) * 2) - 1;
         float normalizedY = ((localY / squareSize) * 2) - 1;
-        float edge = SmoothStep(
+        float edge = PrismCatalogFilterMath.SmoothStep(
             0.5f,
             1,
             MathF.Max(MathF.Abs(normalizedX), MathF.Abs(normalizedY)));
@@ -95,32 +95,6 @@ internal static class PrismPatchworkFilter
             Vector3.Zero,
             Vector3.One);
         return new Vector4(straight * tile.W, tile.W);
-    }
-
-    private static float SmoothStep(
-        float edge0,
-        float edge1,
-        float value)
-    {
-        float t = Math.Clamp(
-            (value - edge0) / (edge1 - edge0),
-            0,
-            1);
-        return t * t * (3 - (2 * t));
-    }
-
-    private static float Hash(int x, int y, uint seed)
-    {
-        uint value =
-            unchecked((uint)x * 0x9e3779b9u) ^
-            unchecked((uint)y * 0x85ebca6bu) ^
-            seed;
-        value ^= value >> 16;
-        value *= 0x7feb352du;
-        value ^= value >> 15;
-        value *= 0x846ca68bu;
-        value ^= value >> 16;
-        return (value & 0x00ffffffu) / 16777215f;
     }
 
     private static uint UnpackInteger(Vector4 value) =>

@@ -147,8 +147,6 @@ internal static class PrismStylePlanner
         PrismCatalogRuntime.ResolveSymbol("Origin", "Edge");
     private static readonly int UpSymbol =
         PrismCatalogRuntime.ResolveSymbol("Direction", "Up");
-    private static readonly int ColorSymbol =
-        PrismCatalogRuntime.ResolveSymbol("FillType", "Color");
     private static readonly int GradientSymbol =
         PrismCatalogRuntime.ResolveSymbol("FillType", "Gradient");
     private static readonly int PatternSymbol =
@@ -382,9 +380,7 @@ internal static class PrismStylePlanner
         {
             return PrismStylePaintKind.Pattern;
         }
-        return symbol == ColorSymbol
-            ? PrismStylePaintKind.Color
-            : PrismStylePaintKind.Color;
+        return PrismStylePaintKind.Color;
     }
 
     internal static int GradientMethodCode(int symbol) =>

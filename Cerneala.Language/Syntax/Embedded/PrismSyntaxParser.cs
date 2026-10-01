@@ -15,6 +15,53 @@ internal static class PrismSyntaxParser
         string text,
         int absoluteOffset = 0) => new ModelParser(text, absoluteOffset).ParseApplications();
 
+    internal static PrismValueModelKind ClassifyValue(string value)
+    {
+        if (value == "null")
+        {
+            return PrismValueModelKind.NullLiteral;
+        }
+
+        if (value.StartsWith("$", StringComparison.Ordinal))
+        {
+            if (value.IndexOf('.') >= 0)
+            {
+                return value.IndexOf(':') >= 0
+                    ? PrismValueModelKind.Binding
+                    : PrismValueModelKind.DirectReference;
+            }
+
+            return PrismValueModelKind.ResourceReference;
+        }
+
+        if (value.StartsWith("#", StringComparison.Ordinal))
+        {
+            return PrismValueModelKind.ColorLiteral;
+        }
+
+        if (value.Length >= 2 && value[0] is '\'' or '"' && value[value.Length - 1] == value[0])
+        {
+            return PrismValueModelKind.StringLiteral;
+        }
+
+        if (value.StartsWith("(", StringComparison.Ordinal) && value.EndsWith(")", StringComparison.Ordinal))
+        {
+            return PrismValueModelKind.TupleLiteral;
+        }
+
+        if (bool.TryParse(value, out _))
+        {
+            return PrismValueModelKind.BooleanLiteral;
+        }
+
+        if (double.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _))
+        {
+            return PrismValueModelKind.NumberLiteral;
+        }
+
+        return PrismValueModelKind.Identifier;
+    }
+
     private sealed class ModelParser
     {
         private readonly string text;
@@ -483,52 +530,5 @@ internal static class PrismSyntaxParser
                 message,
                 new TextSpan(absoluteOffset + Math.Min(relativeStart, text.Length), Math.Max(0, Math.Min(length, text.Length - Math.Min(relativeStart, text.Length)))),
                 transient));
-
-        private static PrismValueModelKind ClassifyValue(string value)
-        {
-            if (value == "null")
-            {
-                return PrismValueModelKind.NullLiteral;
-            }
-
-            if (value.StartsWith("$", StringComparison.Ordinal))
-            {
-                if (value.IndexOf('.') >= 0)
-                {
-                    return value.IndexOf(':') >= 0
-                        ? PrismValueModelKind.Binding
-                        : PrismValueModelKind.DirectReference;
-                }
-
-                return PrismValueModelKind.ResourceReference;
-            }
-
-            if (value.StartsWith("#", StringComparison.Ordinal))
-            {
-                return PrismValueModelKind.ColorLiteral;
-            }
-
-            if (value.Length >= 2 && value[0] is '\'' or '"' && value[value.Length - 1] == value[0])
-            {
-                return PrismValueModelKind.StringLiteral;
-            }
-
-            if (value.StartsWith("(", StringComparison.Ordinal) && value.EndsWith(")", StringComparison.Ordinal))
-            {
-                return PrismValueModelKind.TupleLiteral;
-            }
-
-            if (bool.TryParse(value, out _))
-            {
-                return PrismValueModelKind.BooleanLiteral;
-            }
-
-            if (double.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _))
-            {
-                return PrismValueModelKind.NumberLiteral;
-            }
-
-            return PrismValueModelKind.Identifier;
-        }
     }
 }

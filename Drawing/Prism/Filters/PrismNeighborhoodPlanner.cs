@@ -1458,47 +1458,6 @@ internal static class PrismNeighborhoodPlanner
         return spatialSigma * numerator / denominator;
     }
 
-    private static PrismNeighborhoodPlan RadiusPlan(
-        PrismFilterId filter,
-        PrismNeighborhoodOperation operation,
-        PrismBlendMode blendMode,
-        float radius,
-        int sampleCount,
-        int edgeMode,
-        bool separable,
-        bool? noOp = null,
-        bool expandBounds = true)
-    {
-        Vector4 options =
-            new(radius, sampleCount, edgeMode, 0);
-        return separable
-            ? SeparableRadiusPlan(
-                filter,
-                operation,
-                blendMode,
-                radius,
-                sampleCount,
-                edgeMode,
-                sourceWidth: 2,
-                sourceHeight: 2,
-                options,
-                noOp ?? radius == 0,
-                expandBounds)
-            : Plan(
-                filter,
-                operation,
-                blendMode,
-                radius,
-                radius,
-                sampleCount,
-                expandBounds ? radius : 0,
-                expandBounds ? radius : 0,
-                noOp ?? radius == 0) with
-            {
-                Options0 = options
-            };
-    }
-
     private static PrismNeighborhoodPlan SeparableRadiusPlan(
         PrismFilterId filter,
         PrismNeighborhoodOperation operation,

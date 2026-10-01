@@ -111,7 +111,7 @@ internal static class PrismNotePaperFilter
                 float grain = FractalNoise(x / wavelength, y / wavelength) - 0.5f;
                 float tone = Luminance(blurred[index]) +
                     (grain * grainAmplitude);
-                float surface = SmoothStep(
+                float surface = PrismCatalogFilterMath.SmoothStep(
                     threshold - 0.12f,
                     threshold + 0.12f,
                     tone);
@@ -180,7 +180,8 @@ internal static class PrismNotePaperFilter
                     (illumination - LightDirection.Z) *
                     relief *
                     1.8f;
-                float surface = SmoothStep(0.28f, 0.72f, heightValue);
+                float surface = PrismCatalogFilterMath.SmoothStep(
+                    0.28f, 0.72f, heightValue);
                 Vector3 color = Vector3.Clamp(
                     Vector3.Lerp(background, foreground, surface) +
                         new Vector3(shade),
@@ -257,7 +258,4 @@ internal static class PrismNotePaperFilter
 
     private static float SmoothCurve(float value) =>
         value * value * (3 - (2 * value));
-
-    private static float SmoothStep(float edge0, float edge1, float value) =>
-        SmoothCurve(Math.Clamp((value - edge0) / (edge1 - edge0), 0, 1));
 }

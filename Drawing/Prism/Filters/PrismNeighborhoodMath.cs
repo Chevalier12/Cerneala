@@ -337,7 +337,6 @@ internal static class PrismNeighborhoodMath
                     resource),
             PrismNeighborhoodOperation.MotionBlur =>
                 PrismMotionBlurFilter.Apply(
-                    plan,
                     pass,
                     source,
                     width,
@@ -955,7 +954,7 @@ internal static class PrismNeighborhoodMath
         float threshold)
     {
         Vector4 center = source[(y * width) + x];
-        float centerLuminance = LuminanceStraight(center);
+        float centerLuminance = Luminance(center);
         Vector4 fallback = center;
         Span<Vector4> values = stackalloc Vector4[49];
         int boundedRadius = Math.Clamp(maximumRadius, 1, 3);
@@ -979,13 +978,13 @@ internal static class PrismNeighborhoodMath
             Span<Vector4> window = values[..count];
             window.Sort(
                 static (left, right) =>
-                    LuminanceStraight(left).CompareTo(
-                        LuminanceStraight(right)));
+                    Luminance(left).CompareTo(
+                        Luminance(right)));
             Vector4 median = window[count / 2];
             fallback = median;
-            float minimum = LuminanceStraight(window[0]);
-            float medianLuminance = LuminanceStraight(median);
-            float maximum = LuminanceStraight(window[^1]);
+            float minimum = Luminance(window[0]);
+            float medianLuminance = Luminance(median);
+            float maximum = Luminance(window[^1]);
             if (medianLuminance <= minimum ||
                 medianLuminance >= maximum)
             {
@@ -1002,7 +1001,7 @@ internal static class PrismNeighborhoodMath
         }
 
         return MathF.Abs(
-            centerLuminance - LuminanceStraight(fallback)) > threshold
+            centerLuminance - Luminance(fallback)) > threshold
                 ? PreserveCoverage(center, fallback)
                 : center;
     }
@@ -1042,8 +1041,8 @@ internal static class PrismNeighborhoodMath
                         radius,
                         out _);
                     bool detected = MathF.Abs(
-                        LuminanceStraight(center) -
-                        LuminanceStraight(median)) > threshold;
+                        Luminance(center) -
+                        Luminance(median)) > threshold;
                     impulses[index] |= detected;
                     output[index] = detected
                         ? PreserveCoverage(center, median)
@@ -1167,13 +1166,10 @@ internal static class PrismNeighborhoodMath
         }
         samples[..count].Sort(
             static (left, right) =>
-                LuminanceStraight(left).CompareTo(
-                    LuminanceStraight(right)));
+                Luminance(left).CompareTo(
+                    Luminance(right)));
         return samples[(count - 1) / 2];
     }
-
-    private static float LuminanceStraight(Vector4 color) =>
-        Vector3.Dot(Unpremultiply(color), LuminanceWeights);
 
     private static Vector4 PreserveCoverage(
         Vector4 center,
@@ -1672,22 +1668,6 @@ internal static class PrismNeighborhoodMath
         return MathF.Sqrt(Math.Clamp(headroom / maximum, 0, 1));
     }
 
-    private static Vector4 Sharpen(
-        Vector4 center,
-        Vector4 blurred,
-        float amount,
-        float threshold)
-    {
-        float difference = MathF.Abs(
-            Vector3.Dot(
-                Unpremultiply(center) -
-                    Unpremultiply(blurred),
-                LuminanceWeights));
-        return difference < threshold
-            ? center
-            : center + ((center - blurred) * amount);
-    }
-
     internal static Vector4 UnsharpHighBoost(
         Vector4 original,
         Vector4 blurred,
@@ -1940,7 +1920,7 @@ internal static class PrismNeighborhoodMath
                     1);
                 float gate =
                     Math.Clamp((boundary - local) * 12, 0, 1) *
-                    (1 - ReduceNoiseSmoothStep(0.12f, 0.35f, boundary)) *
+                    (1 - SmoothStep(0.12f, 0.35f, boundary)) *
                     alphaWeight;
                 Vector3 straight = Vector3.Clamp(
                     Vector3.Lerp(
@@ -2047,18 +2027,6 @@ internal static class PrismNeighborhoodMath
         (0.25f *
             (MathF.Abs(first.Y - second.Y) +
                 MathF.Abs(first.Z - second.Z)));
-
-    private static float ReduceNoiseSmoothStep(
-        float low,
-        float high,
-        float value)
-    {
-        float amount = Math.Clamp(
-            (value - low) / MathF.Max(high - low, 0.000001f),
-            0,
-            1);
-        return amount * amount * (3 - (2 * amount));
-    }
 
     internal static Vector4 Sample(
         Vector4[] source,

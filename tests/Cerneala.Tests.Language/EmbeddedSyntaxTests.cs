@@ -170,4 +170,35 @@ public sealed class EmbeddedSyntaxTests
         Assert.Contains(catalog.Symbols, symbol => symbol.Symbol == "Blur" && symbol.Kind == "filter");
         Assert.All(catalog.Symbols, symbol => Assert.True(symbol.StableId > 0));
     }
+
+    [Theory]
+    [InlineData("null", (int)PrismValueModelKind.NullLiteral)]
+    [InlineData("$Image", (int)PrismValueModelKind.ResourceReference)]
+    [InlineData("$self.Opacity", (int)PrismValueModelKind.DirectReference)]
+    [InlineData("$self.Opacity:OneWay", (int)PrismValueModelKind.Binding)]
+    [InlineData("#FF123456", (int)PrismValueModelKind.ColorLiteral)]
+    [InlineData("\"literal\"", (int)PrismValueModelKind.StringLiteral)]
+    [InlineData("'literal'", (int)PrismValueModelKind.StringLiteral)]
+    [InlineData("\"$self.Opacity\"", (int)PrismValueModelKind.StringLiteral)]
+    [InlineData("(1, 2)", (int)PrismValueModelKind.TupleLiteral)]
+    [InlineData("true", (int)PrismValueModelKind.BooleanLiteral)]
+    [InlineData("FALSE", (int)PrismValueModelKind.BooleanLiteral)]
+    [InlineData("-12", (int)PrismValueModelKind.NumberLiteral)]
+    [InlineData("1.25e-3", (int)PrismValueModelKind.NumberLiteral)]
+    [InlineData("Radius", (int)PrismValueModelKind.Identifier)]
+    [InlineData("", (int)PrismValueModelKind.Identifier)]
+    public void PrismModelValuesPreserveClassificationTextAndAbsoluteSpan(string value, int expectedKind)
+    {
+        const string prefix = "Value = ";
+        EmbeddedParseResult<PrismCompositionModelSyntax> parsed =
+            PrismSyntaxParser.ParseComposition(prefix + value + ";", absoluteOffset: 17);
+
+        Assert.Empty(parsed.Diagnostics);
+        PrismValueModelSyntax actual = Assert.IsType<PrismAssignmentModelSyntax>(
+            Assert.Single(parsed.Syntax.Members)).Value;
+        Assert.Equal((PrismValueModelKind)expectedKind, actual.Kind);
+        Assert.Equal(value, actual.Text);
+        Assert.Equal(17 + prefix.Length, actual.Span.Start);
+        Assert.Equal(value.Length, actual.Span.Length);
+    }
 }

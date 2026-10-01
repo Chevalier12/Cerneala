@@ -82,6 +82,52 @@ public sealed class PrismInstanceTests
         Assert.Throws<InvalidOperationException>(() => color.GetValue<float>(exposure));
     }
 
+    [Theory]
+    [InlineData(float.NaN)]
+    [InlineData(float.PositiveInfinity)]
+    [InlineData(-2f)]
+    [InlineData(2f)]
+    public void InvalidCatalogNumbersLeaveValuesAndVersionsUnchanged(float value)
+    {
+        PrismInstance instance = new(new PrismCompositionDefinition(
+            "ValidatedNumbers",
+            [new PrismLayerDefinition(new PrismNodeId(1), "Content",
+                filters: [new PrismFilterDefinition(PrismFilterId.BrightnessContrast)])]));
+        PrismFilterState filter = instance.GetLayerState(new PrismNodeId(1)).Filters[0];
+        PrismCatalogParameterInfo brightness = Parameter(filter, "Brightness");
+        float original = filter.GetValue<float>(brightness);
+        PrismValueVersion valueVersion = instance.ValueVersion;
+        PrismStructuralVersion structuralVersion = instance.StructuralVersion;
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => filter.SetValue(brightness, value));
+
+        Assert.Equal(original, filter.GetValue<float>(brightness));
+        Assert.Equal(valueVersion, instance.ValueVersion);
+        Assert.Equal(structuralVersion, instance.StructuralVersion);
+    }
+
+    [Fact]
+    public void RequiredCatalogResourceRejectsDefaultWithoutReplacingTheCurrentValue()
+    {
+        PrismInstance instance = new(new PrismCompositionDefinition(
+            "ValidatedResource",
+            [new PrismLayerDefinition(new PrismNodeId(1), "Content",
+                filters: [new PrismFilterDefinition(PrismFilterId.Curves)])]));
+        PrismFilterState filter = instance.GetLayerState(new PrismNodeId(1)).Filters[0];
+        PrismCatalogParameterInfo curves = Parameter(filter, "Curves");
+        Assert.True(curves.IsRequired);
+        PrismResourceId original = new("CurveResource");
+        filter.SetValue(curves, original);
+        Assert.Equal(original, filter.GetValue<PrismResourceId>(curves));
+        PrismValueVersion valueVersion = instance.ValueVersion;
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            filter.SetValue(curves, default(PrismResourceId)));
+
+        Assert.Equal(original, filter.GetValue<PrismResourceId>(curves));
+        Assert.Equal(valueVersion, instance.ValueVersion);
+    }
+
     [Fact]
     public void InstancesShareDefinitionWithoutSharingValues()
     {

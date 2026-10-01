@@ -277,7 +277,6 @@ public static partial class GeneratedMarkup
 
 internal sealed class PrismValueBindingController<T> : IDisposable
 {
-    private readonly UIElement owner;
     private readonly PrismInstance instance;
     private readonly MarkupObservation observation;
     private readonly Func<PrismInstance, T> getValue;
@@ -302,7 +301,6 @@ internal sealed class PrismValueBindingController<T> : IDisposable
         Func<object?, T> projection,
         string description)
     {
-        this.owner = owner;
         this.instance = instance;
         this.observation = observation;
         this.getValue = getValue;

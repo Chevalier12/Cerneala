@@ -327,7 +327,7 @@ internal static class PrismWindFilter
         return 0.35f + (lane * 0.65f);
     }
 
-    private static float MethodLengthScale(int method) =>
+    internal static float MethodLengthScale(int method) =>
         method switch
         {
             1 => 5.5f,

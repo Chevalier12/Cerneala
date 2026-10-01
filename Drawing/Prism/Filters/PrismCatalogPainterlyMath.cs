@@ -641,8 +641,4 @@ internal static class PrismCatalogPainterlyMath
             1);
     }
 
-    private static float StraightLuminance(Vector3 color) =>
-        Vector3.Dot(
-            color,
-            new Vector3(0.2126f, 0.7152f, 0.0722f));
 }

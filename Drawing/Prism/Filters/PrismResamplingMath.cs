@@ -768,12 +768,12 @@ internal static class PrismResamplingMath
             fraction * fraction *
             (new Vector2(3) - (2 * fraction));
         float top = float.Lerp(
-            Hash(x, y, 0x6a09e667u),
-            Hash(x + 1, y, 0x6a09e667u),
+            PrismCatalogFilterMath.Hash(x, y, 0x6a09e667u),
+            PrismCatalogFilterMath.Hash(x + 1, y, 0x6a09e667u),
             blend.X);
         float bottom = float.Lerp(
-            Hash(x, y + 1, 0x6a09e667u),
-            Hash(x + 1, y + 1, 0x6a09e667u),
+            PrismCatalogFilterMath.Hash(x, y + 1, 0x6a09e667u),
+            PrismCatalogFilterMath.Hash(x + 1, y + 1, 0x6a09e667u),
             blend.X);
         return float.Lerp(top, bottom, blend.Y);
     }
@@ -1891,7 +1891,7 @@ internal static class PrismResamplingMath
         int x,
         int y)
     {
-        float noise = Hash(x, y, 9173) - 0.5f;
+        float noise = PrismCatalogFilterMath.Hash(x, y, 9173) - 0.5f;
         Vector3 straight = Vector3.Clamp(
             Unpremultiply(center) +
                 new Vector3(
@@ -2698,24 +2698,6 @@ internal static class PrismResamplingMath
         value ^= value >> 16;
         return (value & 0x00ffffffu) /
             16777216f;
-    }
-
-    private static float Hash(
-        int x,
-        int y,
-        uint seed)
-    {
-        uint value =
-            unchecked((uint)x * 0x9e3779b9u) ^
-            unchecked((uint)y * 0x85ebca6bu) ^
-            seed;
-        value ^= value >> 16;
-        value *= 0x7feb352du;
-        value ^= value >> 15;
-        value *= 0x846ca68bu;
-        value ^= value >> 16;
-        return (value & 0x00ffffffu) /
-            16777215f;
     }
 
     private static uint Seed(float low, float high) =>

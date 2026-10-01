@@ -1792,11 +1792,6 @@ internal sealed class PrismGraphOptimizer
         return plan.Passes[node.CatalogFilterPassIndex];
     }
 
-    private static DrawRect Inflate(DrawRect bounds, float amount)
-    {
-        return Inflate(bounds, amount, amount);
-    }
-
     private static DrawRect Inflate(
         DrawRect bounds,
         float horizontal,
@@ -1815,15 +1810,6 @@ internal sealed class PrismGraphOptimizer
             bounds.Y - vertical,
             bounds.Right + horizontal,
             bounds.Bottom + vertical);
-    }
-
-    private static DrawRect Translate(DrawRect bounds, float x, float y)
-    {
-        return CreateBounds(
-            bounds.X + x,
-            bounds.Y + y,
-            bounds.Right + x,
-            bounds.Bottom + y);
     }
 
     private static DrawRect Union(DrawRect left, DrawRect right)

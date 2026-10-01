@@ -15,7 +15,6 @@ internal static class PrismCatalogProceduralMath
         int height,
         int x,
         int y,
-        Func<Vector2, Vector4>? primaryResource,
         Func<Vector2, Vector4>? auxiliaryResource,
         PrismLightingResource? lightingResource)
     {

@@ -144,10 +144,9 @@ internal sealed class PrismRuntimeGraph
             definition.GlobalLightAltitude);
 
         Dictionary<PrismNodeId, PrismNodeState> nodes = new(definition.Nodes.Length);
-        PrismNodeState[] roots = new PrismNodeState[definition.Nodes.Length];
         for (int index = 0; index < definition.Nodes.Length; index++)
         {
-            roots[index] = BuildNode(
+            _ = BuildNode(
                 owner,
                 definition.Nodes[index],
                 defaults,

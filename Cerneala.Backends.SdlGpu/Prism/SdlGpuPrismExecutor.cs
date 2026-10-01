@@ -46,7 +46,6 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
     private bool[] requiredNodes = [];
     private bool[] fallbackDependentNodes = [];
     private readonly List<SdlGpuPrismSurfaceLease> frameLeases = [];
-    private readonly HashSet<SdlGpuPrismSurfaceLease> promotedLeases = [];
     private readonly HashSet<PrismGraphNodeId> mipmappedNodes = [];
     private readonly HashSet<PrismRetainedCacheKey> currentRetainedKeys = [];
     private readonly HashSet<PrismCacheOwnerToken> currentOwners = [];
@@ -200,7 +199,6 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                     if (cacheKey is PrismRetainedCacheKey key && !fallbackDependent)
                     {
                         deviceResources.Promote(session, key, lease);
-                        promotedLeases.Add(lease);
                     }
                 }
 
@@ -254,7 +252,6 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             }
             frameLeases.Clear();
             retainedHits.Clear();
-            promotedLeases.Clear();
             surfaces.Clear();
             mipmappedNodes.Clear();
             diagnostics.CompleteExecution(
@@ -823,7 +820,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                     node.AnalysisScopeIndex,
                     PrismFallbackReason.MissingResource,
                     $"Gradient resource '{stylePlan.Resource}' is not available.");
-                RenderKernel(target, content, content, 0, 1, node, null);
+                RenderKernel(target, content, content, 0, 1, node);
                 return;
             }
 
@@ -849,7 +846,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                     out resourceAvailable) &&
                 stylePlan.ResourceRequired)
             {
-                RenderKernel(target, content, content, 0, 1, node, null);
+                RenderKernel(target, content, content, 0, 1, node);
                 return;
             }
             styleTexture = resolved;
@@ -1118,7 +1115,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                 adjustment.Parameters8, adjustment.Parameters9);
             if (adjustment.ResourceRequired && !available)
             {
-                RenderKernel(target, source, source, 0, 1, node, null);
+                RenderKernel(target, source, source, 0, 1, node);
                 return;
             }
             if (filter == PrismFilterId.ColorLookup && available &&
@@ -1131,7 +1128,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
                     diagnostics.Record(node.Id, node.AnalysisScopeIndex,
                         PrismFallbackReason.UnsupportedCapability,
                         "ColorLookup requires a square Hald LUT whose side is level cubed (level >= 2).");
-                    RenderKernel(target, source, source, 0, 1, node, null);
+                    RenderKernel(target, source, source, 0, 1, node);
                     return;
                 }
                 Vector4 header = uniforms[23];
@@ -1147,7 +1144,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         {
             diagnostics.Record(node.Id, node.AnalysisScopeIndex,
                 PrismFallbackReason.MissingKernel, node.DiagnosticName);
-            RenderKernel(target, source, source, 0, 1, node, null);
+            RenderKernel(target, source, source, 0, 1, node);
             return;
         }
         RenderPrepared(target, source, textures[1]);
@@ -1225,7 +1222,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
             return;
         }
         nint source = GetSurface(input).SampleTexture;
-        RenderKernel(target, source, source, kernelId, opacity, node, null);
+        RenderKernel(target, source, source, kernelId, opacity, node);
     }
 
     private void RenderTwoInput(
@@ -1246,7 +1243,7 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         }
         nint source = GetSurface(sourceIndex).SampleTexture;
         nint secondary = GetSurface(secondaryIndex).SampleTexture;
-        RenderKernel(target, source, secondary, kernelId, 1, node, null);
+        RenderKernel(target, source, secondary, kernelId, 1, node);
     }
 
     private void RenderKernel(
@@ -1255,13 +1252,11 @@ internal sealed class SdlGpuPrismExecutor : IDisposable
         nint secondary,
         int kernelId,
         float opacity,
-        PrismGraphNode? node,
-        Action<SdlGpuPrismUniforms>? configure)
+        PrismGraphNode? node)
     {
         try
         {
             PrepareBaseUniforms(source, secondary, kernelId, opacity);
-            configure?.Invoke(uniforms);
             RenderPrepared(target, source, secondary);
         }
         catch (Exception exception)

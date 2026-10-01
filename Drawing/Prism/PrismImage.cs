@@ -238,10 +238,7 @@ public sealed class PrismImage : IDrawImage, IDrawImageInvalidationSource, IDisp
 
     private bool IsDisposed => Volatile.Read(ref disposed) != 0;
 
-    private void OnPipelineChanged(object? sender, EventArgs args) =>
-        RaiseContentChanged();
-
-    private void OnSourceContentChanged(object? sender, EventArgs args) =>
+    private void OnInputContentChanged(object? sender, EventArgs args) =>
         RaiseContentChanged();
 
     private void RaiseContentChanged()
@@ -266,10 +263,10 @@ public sealed class PrismImage : IDrawImage, IDrawImageInvalidationSource, IDisp
             return;
         }
 
-        Pipeline.Changed += OnPipelineChanged;
+        Pipeline.Changed += OnInputContentChanged;
         if (Source is IDrawImageInvalidationSource sourceInvalidation)
         {
-            sourceInvalidation.ContentChanged += OnSourceContentChanged;
+            sourceInvalidation.ContentChanged += OnInputContentChanged;
         }
         invalidationSourcesAttached = true;
     }
@@ -281,10 +278,10 @@ public sealed class PrismImage : IDrawImage, IDrawImageInvalidationSource, IDisp
             return;
         }
 
-        Pipeline.Changed -= OnPipelineChanged;
+        Pipeline.Changed -= OnInputContentChanged;
         if (Source is IDrawImageInvalidationSource sourceInvalidation)
         {
-            sourceInvalidation.ContentChanged -= OnSourceContentChanged;
+            sourceInvalidation.ContentChanged -= OnInputContentChanged;
         }
         invalidationSourcesAttached = false;
     }
