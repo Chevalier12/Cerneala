@@ -4,33 +4,6 @@ Generated from `.`.
 
 ```text
 ./
-|-- .agents/
-|   +-- skills/
-|       |-- algorithm-market/
-|       |   |-- references/
-|       |   |   +-- license-policy.md
-|       |   +-- SKILL.md
-|       |-- cerneala-breaker/
-|       |   |-- references/
-|       |   |   |-- attack-techniques.md
-|       |   |   +-- test-evidence.md
-|       |   +-- SKILL.md
-|       |-- cerneala-checklist-plan/
-|       |   |-- references/
-|       |   |   +-- semantic-audit.md
-|       |   +-- SKILL.md
-|       |-- cerneala-fix-bug/
-|       |   +-- SKILL.md
-|       |-- cerneala-implement-plan/
-|       |   +-- SKILL.md
-|       |-- cerneala-performance-gate/
-|       |   +-- SKILL.md
-|       |-- repo-cleanup/
-|       |   +-- SKILL.md
-|       +-- writing-api-documentation/
-|           |-- references/
-|           |   +-- wpf-api-doc-formula.md
-|           +-- SKILL.md
 |-- .claude/
 |   +-- skills/
 |       |-- algorithm-market/
@@ -4446,6 +4419,31 @@ Generated from `.`.
 |   |   |-- Cerneala.ComboBoxLab.csproj
 |   |   |-- MainWindow.crn
 |   |   +-- MainWindow.crn.cs
+|   |-- Cerneala.InvestorReel/
+|   |   |-- App.crn
+|   |   |-- App.crn.cs
+|   |   |-- BackendRegistration.cs
+|   |   |-- Cerneala.InvestorReel.csproj
+|   |   |-- InkScene.crn
+|   |   |-- InkScene.crn.cs
+|   |   |-- PageScene.crn
+|   |   |-- PageScene.crn.cs
+|   |   |-- PaperScene.crn
+|   |   |-- PaperScene.crn.cs
+|   |   |-- README.md
+|   |   |-- ReelWindow.Capture.cs
+|   |   |-- ReelWindow.crn
+|   |   |-- ReelWindow.crn.cs
+|   |   |-- RuleScene.crn
+|   |   |-- RuleScene.crn.cs
+|   |   |-- ScoreScene.crn
+|   |   |-- ScoreScene.crn.cs
+|   |   |-- SealScene.crn
+|   |   |-- SealScene.crn.cs
+|   |   |-- SketchScene.crn
+|   |   |-- SketchScene.crn.cs
+|   |   |-- StackScene.crn
+|   |   +-- StackScene.crn.cs
 |   |-- Cerneala.MenuLab/
 |   |   |-- .gitignore
 |   |   |-- BackendRegistration.cs
@@ -4494,6 +4492,15 @@ Generated from `.`.
 |   |   |-- VillageInput.cs
 |   |   |-- VillageLayout.cs
 |   |   +-- VillageStress.cs
+|   |-- Cerneala.SolarSystem/
+|   |   |-- App.crn
+|   |   |-- App.crn.cs
+|   |   |-- BackendRegistration.cs
+|   |   |-- Cerneala.SolarSystem.csproj
+|   |   |-- MainWindow.Automation.cs
+|   |   |-- MainWindow.crn
+|   |   |-- MainWindow.crn.cs
+|   |   +-- SolarSystemViewModel.cs
 |   +-- CernealaOracle/
 |       |-- BackendRegistration.cs
 |       |-- CernealaOracle.csproj
