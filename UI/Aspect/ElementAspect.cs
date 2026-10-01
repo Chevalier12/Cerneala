@@ -13,7 +13,6 @@ internal interface IElementAspectConsumer
 public sealed class ElementAspect
 {
     private readonly List<ElementAspectValue> defaultValues;
-    private readonly IReadOnlyList<ElementAspectCondition> conditions;
     private readonly List<WeakReference<IElementAspectConsumer>> consumers = [];
     private readonly Func<UIElement, IDisposable?>? behaviorFactory;
     private AspectPackage package;
@@ -58,12 +57,11 @@ public sealed class ElementAspect
         }
 
         DefaultValues = this.defaultValues.AsReadOnly();
-        this.conditions = Array.AsReadOnly((conditions ?? throw new ArgumentNullException(nameof(conditions))).Select(
+        Conditions = Array.AsReadOnly((conditions ?? throw new ArgumentNullException(nameof(conditions))).Select(
             condition => condition ?? throw new ArgumentException("Element aspect conditions cannot contain null.", nameof(conditions))).ToArray());
-        Conditions = this.conditions;
-        ConditionKeys = Array.AsReadOnly(this.conditions.Select(condition => condition.Key).ToArray());
+        ConditionKeys = Array.AsReadOnly(Conditions.Select(condition => condition.Key).ToArray());
         this.behaviorFactory = behaviorFactory;
-        IsConditional = isConditional || this.conditions.Count > 0;
+        IsConditional = isConditional || Conditions.Count > 0;
         package = CreatePackage();
     }
 
@@ -186,7 +184,7 @@ public sealed class ElementAspect
     private AspectPackage CreatePackage()
     {
         AspectPackageBuilder builder = AspectPackage.Create(Name ?? "ElementAspect").Origin(Origin);
-        if (defaultValues.Count == 0 && conditions.Count == 0)
+        if (defaultValues.Count == 0 && Conditions.Count == 0)
         {
             return builder;
         }
@@ -203,7 +201,7 @@ public sealed class ElementAspect
                     declarationOrder: 0));
             }
 
-            foreach (ElementAspectCondition condition in conditions)
+            foreach (ElementAspectCondition condition in Conditions)
             {
                 components.AddRule(new AspectRuleSet(
                     (Name ?? "ElementAspect") + ".condition." + condition.Order,

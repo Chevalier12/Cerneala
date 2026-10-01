@@ -419,3 +419,209 @@ se justifica in jurnal; gate indisponibil nu este GREEN.
   product failures sau gate-uri mascate. Nu revendica validare umana, alte
   platforme/RID, masuratori performance noi sau pixel parity exhaustiv. Datoriile
   docs separate din loturile 1/6/7 raman consemnate, fara redesign runtime.
+
+### A doua trecere — cleanup nou (2026-10-01)
+
+Aceasta este o inspectie noua, ceruta explicit dupa prima trecere, nu reutilizarea
+bifelor 61/61 ca dovada a unui nou audit exhaustiv. Acceptarea de mai sus apartine
+primei treceri; a doua trecere este finalizata cu acceptare automata Windows.
+
+- Scope inspectat: engine/processor, invalidare, ElementAspect, contexte/slot-uri,
+  rezultate, condition nodes, environment, registry/catalog, token/value paths,
+  consumers de template/UIElement, scheduler si testele/documentatia relevante.
+  Luna a explorat read-only authoring/builders/packages/conditions/dependencies
+  si a raportat referinte exacte si limite; parintele a confruntat candidatii cu
+  sursa actuala. Nu se revendica reinspectarea exhaustiva a tuturor celor 61 de
+  fisiere, backend-urilor, generatorului sau consumatorilor externi/reflection.
+- Cleanup runtime: eliminat campul privat ElementAspect.conditions care pastra
+  aceeasi referinta ca proprietatea publica get-only Conditions. Constructorul,
+  ConditionKeys, IsConditional si rebuilding-ul package folosesc un singur snapshot.
+  Nu sunt schimbate API public/protected, exception order, collection identity,
+  defaults mutabile, cascade, condition order, behavior sau lifetime ownership.
+- Doua characterization tests permanente au trecut pe implementarea nemodificata,
+  apoi din nou dupa cleanup: default view ramane live si read-only, conditional
+  snapshots supravietuiesc reconstruirii package, Signal active/inactive aplica
+  valorile corecte; scheduler callback vede flag-ul Aspect deja curatat si poate
+  reprograma acelasi element pentru frame-ul urmator. Nu este bug fix si nu se
+  inventeaza RED. Stimuli sunt public property/key/callback APIs, nu input nativ.
+- Corectate trei pagini API canonice: ElementAspect.DefaultValues live view,
+  derived hierarchy/signal facts in AspectConditionNode, clear-before-callback
+  si exception restoration in AspectQueue. Workflow writing-api-documentation
+  complet aplicat; manifest entries existente/unice, fara rename/pagini noi.
+  Datoria anterioara privind importuri lipsa in AspectSlot era incorecta:
+  Button este in Cerneala.UI.Controls, iar exemplele importa deja acel namespace.
+  Pagina AspectSlot ramane nemodificata.
+- Candidati pastrati deliberat: All/Any au reducer/diagnostic diferite; un nou
+  layer pentru cele doua secvente mici nu are beneficiu proportional. Typed si
+  untyped Set au validari distincte; snapshot helpers au null policies diferite;
+  FromPackages si Compose au seed/source contracts diferite. Culorile default din
+  Theme si Aspect nu sunt legate printr-un owner comun fara contract aprobat.
+  AspectRef alias si Token dependency payload sunt public extensibility, nu cod
+  privat mort. Computed dependencies sunt un copied array documentat; schimbarea
+  contractului de expunere nu este cleanup behavior-preserving.
+- Dovezi noi sub artifacts/aspect-cleanup-pass2 (ignorate de Git):
+  baseline.trx 131 passed; characterization.trx 2 passed inainte de productie;
+  focused-green.trx 133 passed; affected-green.trx 273 passed, toate 0 fail/skip.
+  Focused: dotnet test tests/Cerneala.Tests/Cerneala.Tests.csproj -c Release
+  --no-restore --filter 'FullyQualifiedName~Cerneala.Tests.UI.Aspect|FullyQualifiedName~ElementAspectTests|FullyQualifiedName~UiFrameSchedulerTests|FullyQualifiedName~ModernAspectTraceTests'.
+  Affected: acelasi proiect -c Release --no-build --no-restore, filter
+  'FullyQualifiedName~Cerneala.Tests.UI.Invalidation|FullyQualifiedName~Cerneala.Tests.UI.Detective|FullyQualifiedName~UiThreadAffinityTests|FullyQualifiedName~ModernAspectArchitectureTests|FullyQualifiedName~Template'.
+  Fiecare TRX/outcome a fost parsat de parinte, nu numai consola rezumata.
+- BuildInputs.Tests trecut: archived inputs=0 in toate cele patru categorii.
+  dotnet build Cerneala.slnx -c Release --no-restore -m:1 trecut cu zero erori,
+  un warning CS0108 existent in generated InvestorReel InkScene.Drop (markup
+  InkScene.crn:72); nu a fost suprimat ori reparat in afara scope-ului.
+- Cele trei exemple C# din paginile editate compilate, nu executate, cu csc
+  SDK10.0.400/ref-pack net8.0/8.0.30 si Cerneala Release curent: exit0, fara
+  diagnostics. Prima compilare pe ref-pack net10 a dat CS1701; rezultatul este
+  pastrat separat, apoi ref-pack-ul corect net8 a fost folosit. Fisierele .cs/.dll
+  temporare unice din artifacts au fost eliminate exact, fara production globs.
+- Review intermediar parinte al sursei/diff-ului/testelor/raw logs/docs trecut.
+  Fara pretentii noi performance, pixel parity sau validare umana; runtime edit
+  schimba numai referinta privata redundanta, nu algoritmul/rendering/input.
+  Exploratorul este terminal, fara job-uri proprii in afara suitei complete.
+- [x] Acceptare finala noua: full solution tests, formatter scoped, review si
+  checkpoint complet, fara excluderi noi.
+- Suita noua: dotnet test Cerneala.slnx -c Release --no-build --no-restore -m:1
+  --logger trx --results-directory artifacts/aspect-cleanup-pass2/full-suite,
+  CERNEALA_SDL_NATIVE_TESTS=1 si CERNEALA_SDL_CONFORMANCE_ARTIFACTS=path absolut
+  artifacts/aspect-cleanup-pass2/full-suite-captures: exit0. Parintele a parsat
+  cele 11 TRX: 6556 cazuri, 6549 Passed, 0 failed, 7 NotExecuted. Core 4260,
+  SDL961 si SourceGen614 passed; manifest test trecut in VisualStudio47.
+  Toate cele 133 focused outcomes sunt Passed si in suita completa.
+  Setul celor sapte skips este identic cu prima trecere (comparatie de nume),
+  nu gate-uri trecute ori waivers noi. Capturi de conformance au fost generate
+  de suite; nu se revendica inspectie vizuala manuala sau parity exhaustiv nou.
+- Formatter: dotnet format whitespace Cerneala.slnx --verify-no-changes
+  --no-restore --include UI/Aspect/ElementAspect.cs
+  tests/Cerneala.Tests/Controls/ElementAspectTests.cs
+  tests/Cerneala.Tests/UI/Invalidation/UiFrameSchedulerTests.cs: exit0, zero edits.
+  Workspace-loading warning investigat prin --verbosity diagnostic: doua
+  project references fara metadata pentru Cerneala.Language; proiectele core
+  si tests sunt incarcate. Rerun diagnostic exit0, zero fisiere formatate.
+  Nu se revendica verificarea formatterului unrestricted sau analiza semantica
+  completa dintr-un workspace cu warnings; gate-ul cerut este whitespace scoped.
+- Review final parinte: sursa actuala, fiecare hunk propriu, characterization
+  pre/post, raw full results, build warning, docs/manifest si limitele scope-ului
+  confruntate. git diff --check trecut; FileTree regenerat fara delta noua fata
+  de hunks-urile straine deja prezente. Nicio schimbare generator/API public,
+  benchmark/algorithm sau golden; fara staging/commit/push. Temporarele eliminate,
+  toate job-urile/exploratorul terminale; fara validare umana/cross-platform noua.
+
+### A treia trecere — lookup de dependente (2026-10-01)
+
+- Inspectie noua, limitata: authoring/builders, packages/catalog, token/default
+  values, condition nodes, environment/variants/state, engine/processor si
+  diagnostic projections. Luna read-only a explorat runtime/cache/behavior
+  lifecycle si testele relevante; parintele a confruntat sursa/callers/docs.
+  Nu este un audit exhaustiv nou al celor 61 de fisiere sau al generatorului.
+- Candidat concret: AspectInvalidationGraph.TryGetDependencies produce deja un
+  set gol nou la miss; AspectEngine.GetDependencies ignora acel out value si
+  construieste alt set gol. Acelasi fallback este implementat in doi owners.
+  Lot implementat: engine returneaza rezultatul grafului in ambele cazuri; graful
+  pastreaza ownership-ul lookup-ului si al fallback-ului, fara helper nou.
+  Contract pastrat: owner-thread/null guards, hit identity, fresh miss identity,
+  read-only collections, versions zero, Resolve fara tracking si Clear untrack.
+  Nu sunt schimbate API public/protected, cascade, cache keys sau lifetimes.
+- Baseline nou: focused 133 Passed, 0 fail/skip; baseline.trx/log in
+  artifacts/aspect-cleanup-pass3. Characterization permanent adaugat pentru
+  miss/Resolve/Apply/hit/Clear si read-only output: 1 Passed pe productia
+  nemodificata, apoi Passed si in focused-green dupa schimbare. Nu este RED.
+- Experiment CSI izolat: runtime10.0.11, 20000 warmup si 100000 lookups/round,
+  trei rounds, GC.GetAllocatedBytesForCurrentThread. Engine miss=14400000 bytes
+  fiecare round; graph miss=7200056/7200000/7200000; engine hit=0 in cele trei
+  rounds. Rezultat local, nu frame-time/all-platform/zero-allocation general.
+  Script temporar exclus prin artifacts, timeout30s; proces terminat normal.
+- Candidati respinsi: dependencies pentru invalidare/motion/trace au scope
+  diferit; raw/resolved token trace values sunt contract documentat; cache-key
+  compare/store sunt operatii distincte; disposal cu reuse filter si disposal
+  integral au contracte diferite. Nu se inventeaza abstractii sau bug fixes.
+- [x] Caracterizare pre/post si focused/affected gates: focused-green 134 Passed,
+  affected-green 273 Passed, 0 fail/skip; counters si outcomes TRX confruntate.
+  Comenzile focused/affected sunt identice cu trecerea2, rezultate in pass3.
+  Review parinte: hunk-ul runtime foloseste out fallback-ul non-null deja
+  contractat de graph; guards, instanta noua la miss si identity la hit pastrate.
+  Dupa schimbare, CSI engine miss=7200000 bytes/100000 calls in toate cele trei
+  rounds (72 bytes/call fata de 144 inainte), graph miss=7200000, engine hit=0.
+  Masurare local runtime10.0.11, nu buget frame/runtime8 sau gain CPU/GPU.
+  Scriptul .csx eliminat exact; sursa reproductibila pastrata ca .txt si loguri.
+- [x] Build, BuildInputs, full solution tests, scoped formatter, cleanup si
+  review/checkpoint parinte; fara excluderi noi.
+  BuildInputs.Tests: legitimate inputs preserved, archived=0 in toate cele
+  patru categorii. Build rulat separat dupa corectarea verificarii auxiliare
+  LASTEXITCODE (scriptul foloseste Process API, nu native exit state):
+  dotnet build Cerneala.slnx -c Release --no-restore -m:1, exit0, 0 warnings/errors.
+  Formatter whitespace cu --verify-no-changes --no-restore --include numai
+  AspectEngine.cs si AspectEngineTests.cs, --verbosity diagnostic: exit0,
+  Formatted0/2282. Aceleasi doua Language metadata-reference workspace warnings;
+  proiectele core/tests incarcate. Nu este gate unrestricted de analiza semantica.
+- Full nou: dotnet test Cerneala.slnx -c Release --no-build --no-restore -m:1
+  --logger trx --results-directory artifacts/aspect-cleanup-pass3/full-suite,
+  CERNEALA_SDL_NATIVE_TESTS=1, CERNEALA_SDL_CONFORMANCE_ARTIFACTS=path absolut
+  artifacts/aspect-cleanup-pass3/full-suite-captures: exit0. Cele 11 TRX/outcomes
+  parsate: 6557 cazuri, 6550 Passed, 0 failed, 7 NotExecuted; core4261,
+  SDL961, SourceGen614. Toate134 focused outcomes sunt Passed si in full.
+  Setul celor sapte skips identic cu pass2: patru opaque/translucent cases,
+  native ownership/input/lifetimes, Language completion P95 si Village cadence.
+  Nu au fost activate alte opt-ins/dezactivate teste sau introduse waivers.
+  Full-suite-summary.json, log si TRX pastrate; capturi native conformance exista.
+- Review final parinte: sursa actuala, hunk-ul engine, testul de caracterizare,
+  call paths Processor/standalone invalidation, contractul grafului, docs,
+  raw pre/post allocations si TRX, interactiunea cu lotul2 confruntate.
+  API public/protected si comportamentul documentat neschimbate; nu sunt necesare
+  pagini/manifest noi. git diff --check trecut; FileTree regenerat neschimbat.
+  Temporarul .csx eliminat; CSI, suitele, build-ul, formatter-ul si exploratorul
+  terminale. Parserul de rezultate auxiliare, al carui handle nu fusese afisat,
+  confirmat terminat prin process inventory si verificarea focused/full repetata
+  cu lookup HashSet. Fara job-uri proprii ramase, staging, commit sau push.
+  Modificarile anterioare si straine intacte. Nu se revendica validare umana,
+  pixel parity manuala/cross-platform sau masuratori noi de frame-time/CPU/GPU.
+
+### A patra trecere — consumer/lifecycle si signal atomicity (2026-10-01)
+
+- Inspectie noua limitata: ElementAspect consumers, environment children,
+  standalone invalidation, condition keys, processor behavior/cache si template
+  registrations/lifetimes, cu direct callers/tests/docs. Luna read-only a
+  explorat consumers/environment/invalidation/signals; parintele a confruntat
+  sursa si a detinut experimentele/concluziile. Fara audit exhaustiv nou.
+- Nu este justificata o abstractie noua pentru weak refs: validarea consumerilor
+  precede mutatia, invalidarea urmeaza publicarea package; environment notification
+  necesita snapshot puternic inainte de callbacks, registration pruning nu.
+  Filtered behavior retirement si disposal integral au contracte diferite;
+  cache-key comparison/storage nu sunt aceeasi operatie. Fara refactor fortat.
+- Defect observat separat de cleanup: AspectConditionKey.SetActive scrie
+  State.Active la linia38, apoi cere invalidare la linia39. Pentru un element
+  rooted, UIElement.Invalidate delega la UIRoot.Invalidate, unde Relay.VerifyAccess
+  respinge worker-ul inainte de queue/dirty propagation. Key nu are preflight
+  owner-access sau rollback. Invariant owner al starii este key, guard-ul queue
+  este root; cauza demonstrata este ordinea write-before-rejected-invalidation,
+  nu resolverul/cascade sau weak-reference collection.
+- Ipoteza falsificabila: worker SetActive(true) pe element rooted cu key false
+  arunca, dar retine true fara queue work; retry pe owner devine no-op. Falsifier:
+  key ramane false dupa exceptie sau exista Aspect work programat. Experiment
+  izolat cu public APIs, root+UIElement, default opacity0.4, conditional0.8,
+  settle maxim10 frames, Thread.Join10s, proces timeout30s. CSI/runtime10.0.11
+  si harness compilat cu csc/net8 refs, runtime8.0.30: fiecare 5/5 trials a dat
+  InvalidOperationException, active=true, queued=0, AspectDirty=false,
+  ownerRetryChanged=false, nextAspectElements=0, opacity0.4. Invalidare explicita
+  pe owner rezolva opacity0.8 in fiecare trial, distingand key/scheduling failure
+  de engine failure. Detached worker control: fara exceptie, active=true,
+  AspectDirty=true. Sustinut in aceste conditii, fara pretentie de toate races.
+- Raw evidence/reproducer sources ca .txt in artifacts/aspect-cleanup-pass4:
+  condition-signal-thread.log/err, condition-signal-thread-source.txt;
+  condition-signal-net8.log/err, condition-signal-net8-compile.log,
+  condition-signal-net8-source.txt.
+  Ambele procese exit0; net8 compile fara diagnostics. .csx/.cs/.dll/runtimeconfig
+  temporare eliminate exact, numai in artifacts exclus din production globs.
+- Nu s-a modificat productie/test API/docs si nu s-a adaugat un regression test
+  permanent care sa canonizeze defectul. Thread affinity/failure atomicity pentru
+  key nu sunt explicite in pagina canonica; cerere de acord separat pentru
+  respingerea off-thread inainte de mutatie, pastrand detached configuration.
+  Testele existente inspectate nu acopera acest caz; suita completa pass3 nu
+  este prezentata drept verificare noua pass4. Fara build/full suite noi, fiind
+  numai investigatie, nu patch. Reparatia si RED/verification raman neautorizate.
+- Review parinte: source path, guards, caller contracts, raw outputs, input
+  conditions si limite confruntate. git diff --check trecut, schimbarile pass2/3
+  intacte; FileTree reflecta arhiva InvestorReel creata extern si disparitia
+  arhivei SolarSystem externe, fara operatii ale agentului asupra acestor fisiere.
+  Explorator/procese terminale, fara temporare executabile, staging/commit/push.

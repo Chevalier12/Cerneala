@@ -17,6 +17,56 @@ namespace Cerneala.Tests.UI.Aspect;
 public sealed class AspectEngineTests
 {
     [Fact]
+    public void DependencyLookupTracksOnlyAppliedResultsAndReturnsFreshEmptySetsOtherwise()
+    {
+        Button button = new();
+        AspectEngine engine = new();
+        AspectToken<Cerneala.UI.Media.Brush?> token = AspectToken.Create<Cerneala.UI.Media.Brush?>("lookup.background");
+        AspectCatalog catalog = CatalogWith(Rule("token", new AspectDeclaration(Control.BackgroundProperty, token.Ref())));
+        AspectEnvironment environment = new("lookup");
+        environment.Set(token, new Cerneala.UI.Media.SolidColorBrush(Color.White));
+
+        AspectDependencySet firstMiss = AssertEmptyLookup();
+        Assert.NotSame(firstMiss, AssertEmptyLookup());
+        Assert.Throws<NotSupportedException>(() => ((IList<AspectToken>)firstMiss.Tokens).Add(token));
+        Assert.Throws<ArgumentNullException>(() => engine.GetDependencies(null!));
+
+        ResolvedAspect resolved = engine.Resolve(button, catalog, environment);
+        Assert.Equal([token], resolved.Dependencies.Tokens);
+        AssertEmptyLookup();
+
+        AspectApplicationResult applied = engine.Apply(button, catalog, environment);
+        Assert.Same(applied.ResolvedAspect.Dependencies, engine.GetDependencies(button));
+        Assert.Same(applied.ResolvedAspect.Dependencies, engine.GetDependencies(button));
+        Assert.Equal(catalog.Version, engine.GetDependencies(button).CatalogVersion);
+        Assert.Equal(environment.Version, engine.GetDependencies(button).EnvironmentVersion);
+        Assert.Empty(engine.GetDependencies(new Button()).Tokens);
+
+        engine.Clear(button);
+        AspectDependencySet cleared = AssertEmptyLookup();
+        Assert.NotSame(firstMiss, cleared);
+        Assert.NotSame(applied.ResolvedAspect.Dependencies, cleared);
+        Assert.Equal([token], applied.ResolvedAspect.Dependencies.Tokens);
+        Assert.Null(button.Background);
+        engine.Clear(button);
+        Assert.NotSame(cleared, AssertEmptyLookup());
+
+        AspectDependencySet AssertEmptyLookup()
+        {
+            AspectDependencySet dependencies = engine.GetDependencies(button);
+            Assert.Empty(dependencies.Tokens);
+            Assert.Empty(dependencies.States);
+            Assert.Empty(dependencies.Variants);
+            Assert.Empty(dependencies.Properties);
+            Assert.Empty(dependencies.Data);
+            Assert.Null(dependencies.Slot);
+            Assert.Equal(0, dependencies.CatalogVersion);
+            Assert.Equal(0, dependencies.EnvironmentVersion);
+            return dependencies;
+        }
+    }
+
+    [Fact]
     public void EngineAppliesResolvedAspectValuesToElement()
     {
         Button button = new();

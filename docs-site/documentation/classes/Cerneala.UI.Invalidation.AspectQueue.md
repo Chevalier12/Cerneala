@@ -47,7 +47,7 @@ The queue deduplicates elements by reference. Calling `Enqueue` repeatedly with 
 
 `Snapshot` defensively removes queued elements whose `Root` is no longer the owning root, then returns the remaining elements in visual tree pre-order. It uses the root's shared `ElementQueueOrderIndex`, so the visual tree is indexed once per `TreeVersion` and the snapshot sorts only queued entries. Presence-exiting elements that still belong to the root remain after traversed elements in relative enqueue order.
 
-Taking a snapshot does not clear valid work. `UiFrameScheduler` consumes aspect work during the `FramePhase.Aspect` phase by taking a snapshot, removing each element before processing it, clearing the `InvalidationFlags.Aspect` dirty flag after successful processing, and re-enqueueing the element if processing throws.
+Taking a snapshot does not clear valid work. `UiFrameScheduler` consumes aspect work during the `FramePhase.Aspect` phase by taking a snapshot, then removing each element and clearing its `InvalidationFlags.Aspect` dirty flag before invoking the processor. This lets the callback invalidate the same element again: newly queued work and its dirty flag survive for a later frame. If processing throws, the scheduler restores the flags it cleared, re-enqueues the element, and rethrows the exception.
 
 `HasWork` and `Count` read the queue dictionary directly. They do not allocate, prune entries, walk the tree, or sort a snapshot. Normal lifecycle detach removes pending entries actively; `Snapshot` keeps defensive pruning for stale entries that bypassed that lifecycle path.
 

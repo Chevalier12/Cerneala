@@ -16,8 +16,10 @@ internal abstract class AspectConditionNode
 Inheritance:
 `object` -> `AspectConditionNode`
 
-Derived:
-`StateAspectCondition`, `VariantAspectCondition`, `PropertyAspectCondition<TValue>`, `DataAspectCondition<TData>`, `DataAspectCondition<TData, TValue>`, `AllAspectCondition`, `AnyAspectCondition`, `NotAspectCondition`, `PredicateAspectCondition`
+Directly derived:
+`StateAspectCondition`, `VariantAspectCondition`, `PropertyAspectCondition<TValue>`, `DataAspectConditionBase`, `AllAspectCondition`, `AnyAspectCondition`, `NotAspectCondition`, `PredicateAspectCondition`, `SignalAspectCondition`
+
+`DataAspectCondition<TData>` and `DataAspectCondition<TData, TValue>` derive through `DataAspectConditionBase`.
 
 ## Examples
 
@@ -48,7 +50,7 @@ if (result.Matches)
 
 Each node returns an `AspectConditionResult` containing whether the condition matched, the dependencies that should invalidate the result when relevant inputs change, and diagnostic text. Compound nodes preserve child results so diagnostics can show how `All`, `Any`, and `Not` conditions were resolved.
 
-Specificity is calculated by each concrete node. State, variant, property, data, and predicate nodes each increment the matching specificity category; compound nodes add one compound point and then add the specificity of their children.
+Specificity is calculated by each concrete node. State, variant, property, data, and predicate nodes each increment the matching specificity category; compound nodes add one compound point and then add the specificity of their children. `SignalAspectCondition`, created by `AspectCondition.Signal`, reads per-element `AspectConditionKey` state and contributes predicate specificity and a predicate dependency carrying the key's name.
 
 ## Properties
 

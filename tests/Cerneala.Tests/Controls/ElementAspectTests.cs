@@ -55,6 +55,60 @@ public sealed class ElementAspectTests
     }
 
     [Fact]
+    public void DefaultViewStaysLiveWhileConditionalSnapshotsSurvivePackageRebuilds()
+    {
+        List<ElementAspectValue> defaults = [new(UIElement.OpacityProperty, 0.4f)];
+        List<ElementAspectValue> conditionalValues = [new(UIElement.OpacityProperty, 0.8f)];
+        AspectConditionKey key = new("active");
+        ElementAspectCondition condition = new(key, conditionalValues, 0);
+        List<ElementAspectCondition> conditions = [condition];
+        ElementAspect aspect = new("editable", typeof(Button), defaults, conditions);
+        IReadOnlyList<ElementAspectValue> defaultView = aspect.DefaultValues;
+        IReadOnlyList<ElementAspectCondition> conditionSnapshot = aspect.Conditions;
+        defaults.Clear();
+        conditionalValues.Clear();
+        conditions.Clear();
+        Assert.Single(defaultView);
+        Assert.Same(condition, Assert.Single(conditionSnapshot));
+        Assert.Equal(0.8f, Assert.Single(condition.Values).Value);
+        Assert.Same(key, Assert.Single(aspect.ConditionKeys));
+        Assert.Throws<NotSupportedException>(() =>
+            Assert.IsAssignableFrom<IList<ElementAspectValue>>(defaultView).Clear());
+        Assert.Throws<NotSupportedException>(() =>
+            Assert.IsAssignableFrom<IList<ElementAspectCondition>>(conditionSnapshot).Clear());
+
+        UIRoot root = new();
+        Button button = new() { Aspect = aspect };
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+        Assert.Equal(0.4f, button.Opacity);
+
+        Assert.True(aspect.SetValue(UIElement.OpacityProperty, 0.6f));
+        Assert.True(aspect.SetValue(UIElement.WidthProperty, 120f));
+        root.ProcessFrame();
+        Assert.Same(defaultView, aspect.DefaultValues);
+        Assert.Equal(2, defaultView.Count);
+        Assert.Equal(0.6f, defaultView[0].Value);
+        Assert.Equal(120f, button.Width);
+        Assert.Equal(0.6f, button.Opacity);
+
+        Assert.True(key.SetActive(button, true));
+        root.ProcessFrame();
+        Assert.Equal(0.8f, button.Opacity);
+
+        Assert.True(aspect.SetValue(UIElement.OpacityProperty, 0.7f));
+        root.ProcessFrame();
+        Assert.Same(conditionSnapshot, aspect.Conditions);
+        Assert.Same(condition, Assert.Single(aspect.Conditions));
+        Assert.Equal(0.8f, button.Opacity);
+
+        Assert.True(key.SetActive(button, false));
+        root.ProcessFrame();
+        Assert.Equal(0.7f, button.Opacity);
+        Assert.False(root.ProcessFrame().HasWork);
+    }
+
+    [Fact]
     public void AspectRejectsAnElementOutsideItsDeclaredTargetType()
     {
         ElementAspect aspect = new(

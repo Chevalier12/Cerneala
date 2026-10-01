@@ -340,9 +340,8 @@ public sealed class AspectEngine
     {
         threadAccess.VerifyAccess();
         ArgumentNullException.ThrowIfNull(element);
-        return invalidationGraph.TryGetDependencies(element, out AspectDependencySet dependencySet)
-            ? dependencySet
-            : new AspectDependencySet();
+        invalidationGraph.TryGetDependencies(element, out AspectDependencySet dependencySet);
+        return dependencySet;
     }
 
     public void Clear(UIElement element)

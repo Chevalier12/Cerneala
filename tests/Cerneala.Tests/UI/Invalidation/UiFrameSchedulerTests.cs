@@ -144,6 +144,47 @@ public sealed class UiFrameSchedulerTests
     }
 
     [Fact]
+    public void AspectCallbackCanRequeueTheSameElementForTheNextFrame()
+    {
+        UIRoot root = new();
+        UIElement child = new();
+        root.VisualChildren.Add(child);
+        root.ProcessFrame();
+        child.Invalidate(InvalidationFlags.Aspect, "initial aspect work");
+        int calls = 0;
+
+        root.ProcessFrame(new FramePhaseProcessors
+        {
+            Aspect = element =>
+            {
+                Assert.Same(child, element);
+                Assert.False(element.DirtyState.Has(InvalidationFlags.Aspect));
+                Assert.Equal(0, root.AspectQueue.Count);
+                calls++;
+                element.Invalidate(InvalidationFlags.Aspect, "nested aspect work");
+            }
+        });
+
+        Assert.Equal(1, calls);
+        Assert.True(child.DirtyState.Has(InvalidationFlags.Aspect));
+        Assert.Equal(1, root.AspectQueue.Count);
+        FrameStats next = root.ProcessFrame(new FramePhaseProcessors
+        {
+            Aspect = element =>
+            {
+                Assert.Same(child, element);
+                calls++;
+            }
+        });
+
+        Assert.Equal(2, calls);
+        Assert.Equal(1, next.AspectElements);
+        Assert.False(child.DirtyState.Has(InvalidationFlags.Aspect));
+        Assert.Equal(0, root.AspectQueue.Count);
+        Assert.False(root.ProcessFrame().HasWork);
+    }
+
+    [Fact]
     public void SuccessfulDerivedPhaseClearsOriginalSpecializedDirtyFlags()
     {
         UIRoot root = new();

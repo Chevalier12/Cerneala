@@ -45,7 +45,7 @@ An inline markup Aspect places its body directly inside the owning property elem
 ## Remarks
 `<Type.Aspect>` already declares the inline Aspect and infers its target from the owning element. Its body accepts defaults, conditions, Motion and a component template directly. A nested `<Aspect>` wrapper, including `<Aspect />`, is illegal and reports `CERNEALAUI005` at the redundant element name in both editor and build analysis. Remove only that wrapper when migrating existing markup. Named and default `<Aspect TargetType="...">` declarations inside resources remain unchanged.
 
-Assignments are copied and exposed through a read-only list, and a property may appear only once. The default constructor targets `UIElement`; the named overload records an optional resource name and an explicit target type. Assigning an aspect validates the target and every default and conditional property before the property-store mutation is committed. A rejected replacement therefore leaves the previous `UIElement.Aspect` value and its registrations intact.
+Constructor inputs are copied, and a property may appear only once within the defaults or within each conditional group. `DefaultValues` is a live read-only view of the aspect's default assignments, not an immutable snapshot: a previously obtained view reflects additions and replacements made by `SetValue`. `Conditions`, each conditional group's values, and `ConditionKeys` are read-only snapshots that do not change when defaults are edited. The default constructor targets `UIElement`; the named overload records an optional resource name and an explicit target type. Assigning an aspect validates the target and every default and conditional property before the property-store mutation is committed. A rejected replacement therefore leaves the previous `UIElement.Aspect` value and its registrations intact.
 
 `ElementAspect` does not write UI properties directly. It projects its assignments into an `AspectPackage` consumed with the root, application, and scoped packages by `AspectProcessor`. Winning values are published through the canonical `AspectBase` source. Replacing or clearing `UIElement.Aspect` invalidates the element's Aspect work; detach clears engine output, and reattach resolves the current aspect again.
 
@@ -68,7 +68,7 @@ The full generated-code constructor accepts immutable `ElementAspectCondition` e
 | `Name` | Optional diagnostic/resource name; blank input is normalized to `null`. |
 | `TargetType` | Element type accepted by this aspect. |
 | `Origin` | Immutable code/markup authoring metadata reported by diagnostics. |
-| `DefaultValues` | Read-only snapshot of current default property assignments. |
+| `DefaultValues` | Live read-only view of default property assignments; reflects subsequent `SetValue` edits. |
 | `IsConditional` | Whether condition processing is required. |
 | `Conditions` | Immutable conditional declaration groups. |
 | `ConditionKeys` | Condition keys in the same order as `Conditions`. |
