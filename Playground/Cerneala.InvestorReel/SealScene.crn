@@ -1,0 +1,77 @@
+<!-- viii · the seal: a vermilion chop is pressed onto the page, and the last words are written beside it. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Fleck" Duration="340ms" Easing="EaseOut" />
+        <Tween Name="Word" Duration="700ms" Easing="EaseOut" />
+        <MotionClip Name="Entrance" TargetType="reel:SealScene">
+            @sequence
+            {
+                @animate with Tween(500ms, Linear) { @from { $Seal.Opacity = 0; } @to { $Seal.Opacity = 0; } }
+
+                <!-- The stamp comes down. -->
+                @parallel
+                {
+                    @animate with Tween(160ms, EaseIn) { @from { $Seal.Opacity = 0; } @to { $Seal.Opacity = 1; } }
+                    @animate with Spring(360, 22) { @from { $Seal.Scale = 1.9; } @to { $Seal.Scale = 1; } }
+                    @animate with Spring(360, 22) { @from { $Seal.Rotation = -0.3; } @to { $Seal.Rotation = -0.07; } }
+                    @stagger target $Flecks each 24ms
+                    {
+                        @animate with $Fleck { @from { Opacity = 0; Scale = 0.2; } @to { Opacity = 1; Scale = 1; } }
+                    }
+                }
+                @stagger target $Closing each 260ms
+                {
+                    @animate with $Word { @from { Opacity = 0; TranslateX = -20; } @to { Opacity = 1; TranslateX = 0; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:SealScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="40,0,0,40">
+        <Grid Width="300" Height="300" VerticalAlignment="Center">
+            <Grid Name="Flecks">
+                <Ellipse Width="12" Height="12" Fill="$VermilionBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="-138" TranslateY="-96" Opacity="0" RenderTransformOrigin="0.5,0.5" />
+                <Ellipse Width="7" Height="7" Fill="$VermilionBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="132" TranslateY="-120" Opacity="0" RenderTransformOrigin="0.5,0.5" />
+                <Ellipse Width="16" Height="16" Fill="$VermilionBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="146" TranslateY="84" Opacity="0" RenderTransformOrigin="0.5,0.5" />
+                <Ellipse Width="6" Height="6" Fill="$VermilionBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="-150" TranslateY="62" Opacity="0" RenderTransformOrigin="0.5,0.5" />
+                <Ellipse Width="9" Height="9" Fill="$InkBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="40" TranslateY="-146" Opacity="0" RenderTransformOrigin="0.5,0.5" />
+                <Ellipse Width="5" Height="5" Fill="$VermilionBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="-70" TranslateY="140" Opacity="0" RenderTransformOrigin="0.5,0.5" />
+            </Grid>
+            <Border Name="Seal" Width="230" Height="230" Background="$VermilionBrush" Padding="12" HorizontalAlignment="Center" VerticalAlignment="Center" Rotation="-0.07" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                @prism
+                {
+                    @layer Ink
+                    {
+                        @filter Grain { Intensity = 22; Contrast = 40; }
+                    }
+                }
+                <Border BorderBrush="$PaperBrush" BorderThickness="3">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock Text="CER" FontFamily="Sitka Banner" FontSize="50" Foreground="$PaperBrush" HorizontalAlignment="Center" />
+                        <TextBlock Text="NEA" FontFamily="Sitka Banner" FontSize="50" Foreground="$PaperBrush" HorizontalAlignment="Center" Margin="0,-14,0,0" />
+                        <TextBlock Text="LA" FontFamily="Sitka Banner" FontSize="50" Foreground="$PaperBrush" HorizontalAlignment="Center" Margin="0,-14,0,0" />
+                    </StackPanel>
+                </Border>
+            </Border>
+        </Grid>
+
+        <StackPanel Name="Closing" VerticalAlignment="Center" Margin="80,0,0,0">
+            <TextBlock Text="Write interfaces." Aspect="$Display" FontSize="92" Opacity="0" />
+            <TextBlock Text="Cerneala is a retained UI framework for C#." Aspect="$Lede" FontSize="28" Foreground="$InkBrush" Margin="0,12,0,0" Opacity="0" />
+            <TextBlock Text="markup  ·  aspect  ·  motion  ·  prism" Aspect="$Note" FontSize="28" Margin="0,22,0,0" Opacity="0" />
+            <TextBlock Text="EVERYTHING YOU JUST WATCHED IS .CRN MARKUP. EVERY SCENE'S CODE-BEHIND IS EMPTY." Aspect="$Caps" FontSize="13" Margin="0,30,0,0" Opacity="0" />
+        </StackPanel>
+    </StackPanel>
+</UserControl>

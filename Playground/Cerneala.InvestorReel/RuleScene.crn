@@ -1,0 +1,244 @@
+<!-- iii · one rule, every element: a single Aspect restyles twelve tiles in one wave, then again when the rule changes. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Appear" Duration="420ms" Easing="EaseOut" />
+        <Tween Name="Wave" Duration="520ms" Easing="EaseOut" />
+        <Tween Name="Swap" Duration="420ms" Easing="EaseInOut" />
+        <Aspect Name="Tag" TargetType="TextBlock">
+            @default { FontFamily = "Consolas"; FontSize = 18; Foreground = $IndigoBrush; }
+        </Aspect>
+        <Aspect Name="Plain" TargetType="TextBlock">
+            @default { FontFamily = "Consolas"; FontSize = 18; Foreground = $InkSoftBrush; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:RuleScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(700ms, EaseOut) { @from { $Kicker.Opacity = 0; $Kicker.TranslateX = -18; } @to { $Kicker.Opacity = 1; $Kicker.TranslateX = 0; } }
+                    @animate with Tween(900ms, EaseOut) { @from { $Headline.Opacity = 0; $Headline.TranslateY = 24; } @to { $Headline.Opacity = 1; $Headline.TranslateY = 0; } }
+                    @animate with Tween(800ms, EaseOut) { @from { $RuleSheet.Opacity = 0; $RuleSheet.TranslateX = -30; } @to { $RuleSheet.Opacity = 1; $RuleSheet.TranslateX = 0; } }
+                    @stagger target $Drafts each 35ms
+                    {
+                        @animate with $Appear { @from { Opacity = 0; Scale = 0.94; } @to { Opacity = 1; Scale = 1; } }
+                    }
+                }
+
+                <!-- Apply the rule: one wave across every tile. -->
+                @parallel
+                {
+                    @animate with $Swap { @from { $ApplyMark.Opacity = 0; } @to { $ApplyMark.Opacity = 1; } }
+                    @stagger target $Indigo each 55ms
+                    {
+                        @animate with $Wave { @from { Opacity = 0; Scale = 0.9; } @to { Opacity = 1; Scale = 1; } }
+                    }
+                }
+                @animate with Tween(900ms, Linear) { @from { $Count.Opacity = 0; } @to { $Count.Opacity = 1; } }
+
+                <!-- Change one token in the rule: the whole set follows. -->
+                @sequence
+                {
+                    @animate with $Swap { @from { $Strike.ScaleX = 0; } @to { $Strike.ScaleX = 1; } }
+                    @animate with $Swap { @from { $IndigoValues.Opacity = 1; $VermilionValues.Opacity = 0; } @to { $IndigoValues.Opacity = 0; $VermilionValues.Opacity = 1; } }
+                }
+                @stagger target $Vermilion each 55ms
+                {
+                    @animate with $Wave { @from { Opacity = 0; Scale = 0.9; } @to { Opacity = 1; Scale = 1; } }
+                }
+                @animate with Tween(800ms, EaseOut) { @from { $Moral.Opacity = 0; $Moral.TranslateY = 12; } @to { $Moral.Opacity = 1; $Moral.TranslateY = 0; } }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:RuleScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="170,110,120,110">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="520" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="2">
+            <TextBlock Name="Kicker" Text="one rule, every element" Aspect="$Note" Opacity="0" />
+            <TextBlock Name="Headline" Text="Change the rule, not the elements." Aspect="$Display" Margin="0,6,0,0" Opacity="0" />
+        </StackPanel>
+
+        <Border Name="RuleSheet" Grid.Row="1" Grid.Column="0" Aspect="$Sheet" Padding="34,28,34,30" Margin="0,40,0,0" VerticalAlignment="Top" Opacity="0">
+            <StackPanel>
+                <Grid Height="22" Margin="0,0,0,16">
+                    <TextBlock Text="ASPECT" Aspect="$Caps" />
+                    <TextBlock Name="ApplyMark" Text="applied to 12" Aspect="$Note" FontSize="20" HorizontalAlignment="Right" Opacity="0" />
+                </Grid>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&lt;Aspect " Aspect="$Tag" />
+                    <TextBlock Text="Name=&quot;Tile&quot;" Aspect="$Plain" />
+                    <TextBlock Text="&gt;" Aspect="$Tag" />
+                </StackPanel>
+                <TextBlock Text="@default" Aspect="$Tag" Foreground="$VermilionBrush" Margin="28,6,0,0" />
+                <TextBlock Text="{" Aspect="$Plain" Margin="28,0,0,0" />
+                <Grid Height="52" Margin="56,0,0,0">
+                    <StackPanel Name="IndigoValues">
+                        <Grid Height="26">
+                            <TextBlock Text="Background = \$IndigoWash;" Aspect="$Plain" />
+                            <Border Name="Strike" Height="2" Width="290" Background="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Center" ScaleX="0" RenderTransformOrigin="0,0.5" />
+                        </Grid>
+                        <TextBlock Text="BorderBrush = \$Indigo;" Aspect="$Plain" />
+                    </StackPanel>
+                    <StackPanel Name="VermilionValues" Opacity="0">
+                        <TextBlock Text="Background = \$VermilionWash;" Aspect="$Plain" Foreground="$VermilionBrush" />
+                        <TextBlock Text="BorderBrush = \$Vermilion;" Aspect="$Plain" Foreground="$VermilionBrush" />
+                    </StackPanel>
+                </Grid>
+                <TextBlock Text="}" Aspect="$Plain" Margin="28,0,0,0" />
+                <TextBlock Text="&lt;/Aspect&gt;" Aspect="$Tag" />
+                <TextBlock Name="Count" Text="12 elements · 1 rule · 0 edits to them" Aspect="$Caps" FontSize="13" Margin="0,22,0,0" Opacity="0" />
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="1" Grid.Column="1" Width="700" Height="336" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,40,0,0">
+            <Grid Name="Drafts" Width="700" Height="336">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                <Grid.RowDefinitions><RowDefinition Height="*" /><RowDefinition Height="*" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                <Border Grid.Row="0" Grid.Column="0" Background="$PaperBrush" BorderBrush="$PaperShadeBrush" BorderThickness="1" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$PaperShadeBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Invoices" FontSize="18" Foreground="$GraphiteBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="1" Background="$PaperBrush" BorderBrush="$PaperShadeBrush" BorderThickness="1" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$PaperShadeBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Clients" FontSize="18" Foreground="$GraphiteBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="2" Background="$PaperBrush" BorderBrush="$PaperShadeBrush" BorderThickness="1" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$PaperShadeBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Reports" FontSize="18" Foreground="$GraphiteBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="3" Background="$PaperBrush" BorderBrush="$PaperShadeBrush" BorderThickness="1" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$PaperShadeBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Inbox" FontSize="18" Foreground="$GraphiteBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="0" Background="$PaperBrush" BorderBrush="$PaperShadeBrush" BorderThickness="1" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$PaperShadeBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Calendar" FontSize="18" Foreground="$GraphiteBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="1" Background="$PaperBrush" BorderBrush="$PaperShadeBrush" BorderThickness="1" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$PaperShadeBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Notes" FontSize="18" Foreground="$GraphiteBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="2" Background="$PaperBrush" BorderBrush="$PaperShadeBrush" BorderThickness="1" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$PaperShadeBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Files" FontSize="18" Foreground="$GraphiteBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="3" Background="$PaperBrush" BorderBrush="$PaperShadeBrush" BorderThickness="1" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$PaperShadeBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Team" FontSize="18" Foreground="$GraphiteBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="2" Grid.Column="0" Background="$PaperBrush" BorderBrush="$PaperShadeBrush" BorderThickness="1" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$PaperShadeBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Billing" FontSize="18" Foreground="$GraphiteBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="2" Grid.Column="1" Background="$PaperBrush" BorderBrush="$PaperShadeBrush" BorderThickness="1" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$PaperShadeBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Ledger" FontSize="18" Foreground="$GraphiteBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="2" Grid.Column="2" Background="$PaperBrush" BorderBrush="$PaperShadeBrush" BorderThickness="1" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$PaperShadeBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Tasks" FontSize="18" Foreground="$GraphiteBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="2" Grid.Column="3" Background="$PaperBrush" BorderBrush="$PaperShadeBrush" BorderThickness="1" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$PaperShadeBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Settings" FontSize="18" Foreground="$GraphiteBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+            </Grid>
+            <Grid Name="Indigo" Width="700" Height="336">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                <Grid.RowDefinitions><RowDefinition Height="*" /><RowDefinition Height="*" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                <Border Grid.Row="0" Grid.Column="0" Background="$IndigoWashBrush" BorderBrush="$IndigoBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Invoices" FontSize="18" Foreground="$IndigoBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="1" Background="$IndigoWashBrush" BorderBrush="$IndigoBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Clients" FontSize="18" Foreground="$IndigoBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="2" Background="$IndigoWashBrush" BorderBrush="$IndigoBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Reports" FontSize="18" Foreground="$IndigoBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="3" Background="$IndigoWashBrush" BorderBrush="$IndigoBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Inbox" FontSize="18" Foreground="$IndigoBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="0" Background="$IndigoWashBrush" BorderBrush="$IndigoBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Calendar" FontSize="18" Foreground="$IndigoBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="1" Background="$IndigoWashBrush" BorderBrush="$IndigoBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Notes" FontSize="18" Foreground="$IndigoBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="2" Background="$IndigoWashBrush" BorderBrush="$IndigoBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Files" FontSize="18" Foreground="$IndigoBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="3" Background="$IndigoWashBrush" BorderBrush="$IndigoBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Team" FontSize="18" Foreground="$IndigoBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="2" Grid.Column="0" Background="$IndigoWashBrush" BorderBrush="$IndigoBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Billing" FontSize="18" Foreground="$IndigoBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="2" Grid.Column="1" Background="$IndigoWashBrush" BorderBrush="$IndigoBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Ledger" FontSize="18" Foreground="$IndigoBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="2" Grid.Column="2" Background="$IndigoWashBrush" BorderBrush="$IndigoBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Tasks" FontSize="18" Foreground="$IndigoBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="2" Grid.Column="3" Background="$IndigoWashBrush" BorderBrush="$IndigoBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Settings" FontSize="18" Foreground="$IndigoBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+            </Grid>
+            <Grid Name="Vermilion" Width="700" Height="336">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                <Grid.RowDefinitions><RowDefinition Height="*" /><RowDefinition Height="*" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                <Border Grid.Row="0" Grid.Column="0" Background="$VermilionWashBrush" BorderBrush="$VermilionBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Invoices" FontSize="18" Foreground="$VermilionBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="1" Background="$VermilionWashBrush" BorderBrush="$VermilionBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Clients" FontSize="18" Foreground="$VermilionBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="2" Background="$VermilionWashBrush" BorderBrush="$VermilionBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Reports" FontSize="18" Foreground="$VermilionBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="3" Background="$VermilionWashBrush" BorderBrush="$VermilionBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Inbox" FontSize="18" Foreground="$VermilionBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="0" Background="$VermilionWashBrush" BorderBrush="$VermilionBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Calendar" FontSize="18" Foreground="$VermilionBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="1" Background="$VermilionWashBrush" BorderBrush="$VermilionBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Notes" FontSize="18" Foreground="$VermilionBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="2" Background="$VermilionWashBrush" BorderBrush="$VermilionBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Files" FontSize="18" Foreground="$VermilionBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="3" Background="$VermilionWashBrush" BorderBrush="$VermilionBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Team" FontSize="18" Foreground="$VermilionBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="2" Grid.Column="0" Background="$VermilionWashBrush" BorderBrush="$VermilionBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Billing" FontSize="18" Foreground="$VermilionBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="2" Grid.Column="1" Background="$VermilionWashBrush" BorderBrush="$VermilionBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Ledger" FontSize="18" Foreground="$VermilionBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="2" Grid.Column="2" Background="$VermilionWashBrush" BorderBrush="$VermilionBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Tasks" FontSize="18" Foreground="$VermilionBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+                <Border Grid.Row="2" Grid.Column="3" Background="$VermilionWashBrush" BorderBrush="$VermilionBrush" BorderThickness="2" Margin="7" Padding="16,14,16,14" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Grid><Border Width="14" Height="14" Background="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Top" /><TextBlock Text="Settings" FontSize="18" Foreground="$VermilionBrush" VerticalAlignment="Bottom" /></Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <TextBlock
+            Name="Moral"
+            Grid.Row="2"
+            Grid.ColumnSpan="2"
+            Text="Aspect is Cerneala's style system: styles, states and templates, resolved by one cascade."
+            Aspect="$Lede"
+            Opacity="0" />
+    </Grid>
+</UserControl>

@@ -1,0 +1,79 @@
+<Application
+    StartupWindow="ReelWindow"
+    ShutdownMode="OnMainWindowClose">
+    <Application.Resources>
+        <!-- Paper and ink. Every scene resolves these through $Name. -->
+        <SolidColorBrush Name="PaperBrush" Color="#FFF3EEE4" />
+        <SolidColorBrush Name="PaperDeepBrush" Color="#FFE9E2D4" />
+        <SolidColorBrush Name="PaperShadeBrush" Color="#FFD6CCBA" />
+        <SolidColorBrush Name="InkBrush" Color="#FF16181F" />
+        <SolidColorBrush Name="InkSoftBrush" Color="#FF40444F" />
+        <SolidColorBrush Name="GraphiteBrush" Color="#FF857F70" />
+        <SolidColorBrush Name="IndigoBrush" Color="#FF26348F" />
+        <SolidColorBrush Name="IndigoWashBrush" Color="#FFDDDDEA" />
+        <SolidColorBrush Name="VermilionBrush" Color="#FFD2402A" />
+        <SolidColorBrush Name="VermilionWashBrush" Color="#FFF3DAD1" />
+        <SolidColorBrush Name="OchreBrush" Color="#FFC28A2C" />
+        <SolidColorBrush Name="OchreWashBrush" Color="#FFF1E3C6" />
+
+        <!-- Type: a Sitka family for print, Ink Free for the editor's hand, Consolas for code. -->
+        <Aspect TargetType="TextBlock">
+            @default
+            {
+                FontFamily = "Sitka Text";
+                FontSize = 18;
+                Foreground = $InkBrush;
+            }
+        </Aspect>
+        <Aspect Name="Display" TargetType="TextBlock">
+            @default
+            {
+                FontFamily = "Sitka Banner";
+                FontSize = 64;
+                Foreground = $InkBrush;
+            }
+        </Aspect>
+        <Aspect Name="Lede" TargetType="TextBlock">
+            @default
+            {
+                FontFamily = "Sitka Text";
+                FontSize = 22;
+                Foreground = $InkSoftBrush;
+                TextWrapping = "Wrap";
+            }
+        </Aspect>
+        <Aspect Name="Note" TargetType="TextBlock">
+            @default
+            {
+                FontFamily = "Ink Free";
+                FontSize = 24;
+                Foreground = $VermilionBrush;
+            }
+        </Aspect>
+        <Aspect Name="Caps" TargetType="TextBlock">
+            @default
+            {
+                FontFamily = "Sitka Small";
+                FontSize = 13;
+                Foreground = $GraphiteBrush;
+            }
+        </Aspect>
+        <Aspect Name="Code" TargetType="TextBlock">
+            @default
+            {
+                FontFamily = "Consolas";
+                FontSize = 17;
+                Foreground = $InkBrush;
+            }
+        </Aspect>
+        <Aspect Name="Sheet" TargetType="Border">
+            @default
+            {
+                Background = $PaperDeepBrush;
+                BorderBrush = $PaperShadeBrush;
+                BorderThickness = "1";
+                Padding = "28,24,28,24";
+            }
+        </Aspect>
+    </Application.Resources>
+</Application>

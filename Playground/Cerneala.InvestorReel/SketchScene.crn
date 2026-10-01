@@ -1,0 +1,185 @@
+<!-- ii · a sketch becomes a screen: markup is written on the left while a pen sketch on the right turns into the real card. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <SolidColorBrush Name="CardBrush" Color="#FFFCF8F1" />
+        <Tween Name="Line" Duration="360ms" Easing="EaseOut" />
+        <Tween Name="Stroke" Duration="260ms" Easing="EaseInOut" />
+        <Aspect Name="Tag" TargetType="TextBlock">
+            @default { FontFamily = "Consolas"; FontSize = 18; Foreground = $IndigoBrush; }
+        </Aspect>
+        <Aspect Name="Attr" TargetType="TextBlock">
+            @default { FontFamily = "Consolas"; FontSize = 18; Foreground = $GraphiteBrush; }
+        </Aspect>
+        <Aspect Name="Value" TargetType="TextBlock">
+            @default { FontFamily = "Consolas"; FontSize = 18; Foreground = $VermilionBrush; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:SketchScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(700ms, EaseOut) { @from { $Kicker.Opacity = 0; $Kicker.TranslateX = -18; } @to { $Kicker.Opacity = 1; $Kicker.TranslateX = 0; } }
+                    @animate with Tween(900ms, EaseOut) { @from { $Headline.Opacity = 0; $Headline.TranslateY = 24; } @to { $Headline.Opacity = 1; $Headline.TranslateY = 0; } }
+                    @animate with Tween(800ms, EaseOut) { @from { $Manuscript.Opacity = 0; } @to { $Manuscript.Opacity = 1; } }
+                }
+                @parallel
+                {
+                    @stagger target $CodeLines each 120ms
+                    {
+                        @animate with $Line { @from { Opacity = 0; TranslateX = -10; } @to { Opacity = 1; TranslateX = 0; } }
+                    }
+                    @sequence
+                    {
+                        @animate with $Stroke { @from { $EdgeTop.ScaleX = 0; } @to { $EdgeTop.ScaleX = 1; } }
+                        @animate with $Stroke { @from { $EdgeRight.ScaleY = 0; } @to { $EdgeRight.ScaleY = 1; } }
+                        @animate with $Stroke { @from { $EdgeBottom.ScaleX = 0; } @to { $EdgeBottom.ScaleX = 1; } }
+                        @animate with $Stroke { @from { $EdgeLeft.ScaleY = 0; } @to { $EdgeLeft.ScaleY = 1; } }
+                        @stagger target $Scribbles each 140ms
+                        {
+                            @animate with $Stroke { @from { ScaleX = 0; } @to { ScaleX = 1; } }
+                        }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(700ms, EaseOut) { @from { $Aside.Opacity = 0; $Aside.TranslateY = 10; } @to { $Aside.Opacity = 1; $Aside.TranslateY = 0; } }
+                    @animate with Tween(600ms, Emphasized) { @from { $Arrow.ScaleX = 0; } @to { $Arrow.ScaleX = 1; } }
+                }
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Card.Opacity = 0; $Card.TranslateY = 18; } @to { $Card.Opacity = 1; $Card.TranslateY = 0; } }
+                    @animate with Tween(900ms, EaseOut) { @from { $Wireframe.Opacity = 1; } @to { $Wireframe.Opacity = 0.18; } }
+                    @animate with Tween(1200ms, EaseOut) { @from { $Card.prism.Lift.ShadowDistance = 0; } @to { $Card.prism.Lift.ShadowDistance = 14; } }
+                }
+                @animate with Tween(700ms, EaseOut) { @from { $Colophon.Opacity = 0; } @to { $Colophon.Opacity = 1; } }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:SketchScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="170,110,120,110">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="640" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="2">
+            <TextBlock Name="Kicker" Text="a sketch becomes a screen" Aspect="$Note" Opacity="0" />
+            <TextBlock Name="Headline" Text="Describe it once." Aspect="$Display" Margin="0,6,0,0" Opacity="0" />
+        </StackPanel>
+
+        <!-- The manuscript: real .crn, written line by line. -->
+        <Border Name="Manuscript" Grid.Row="1" Grid.Column="0" Aspect="$Sheet" Padding="34,28,34,30" Margin="0,36,0,0" VerticalAlignment="Top" Opacity="0">
+            <StackPanel>
+                <TextBlock Text="OrderCard.crn" Aspect="$Caps" Margin="0,0,0,16" />
+                <StackPanel Name="CodeLines">
+                    <StackPanel Orientation="Horizontal" Opacity="0">
+                        <TextBlock Text="&lt;Border " Aspect="$Tag" />
+                        <TextBlock Text="Aspect=" Aspect="$Attr" />
+                        <TextBlock Text="&quot;\$Card&quot;" Aspect="$Value" />
+                        <TextBlock Text="&gt;" Aspect="$Tag" />
+                    </StackPanel>
+                    <TextBlock Text="&lt;StackPanel&gt;" Aspect="$Tag" Margin="28,0,0,0" Opacity="0" />
+                    <StackPanel Orientation="Horizontal" Margin="56,0,0,0" Opacity="0">
+                        <TextBlock Text="&lt;TextBlock " Aspect="$Tag" />
+                        <TextBlock Text="Text=" Aspect="$Attr" />
+                        <TextBlock Text="&quot;Order 1042&quot;" Aspect="$Value" />
+                        <TextBlock Text=" /&gt;" Aspect="$Tag" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="56,0,0,0" Opacity="0">
+                        <TextBlock Text="&lt;TextBlock " Aspect="$Tag" />
+                        <TextBlock Text="Text=" Aspect="$Attr" />
+                        <TextBlock Text="&quot;Indigo ink × 2&quot;" Aspect="$Value" />
+                        <TextBlock Text=" /&gt;" Aspect="$Tag" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="56,0,0,0" Opacity="0">
+                        <TextBlock Text="&lt;TextBlock " Aspect="$Tag" />
+                        <TextBlock Text="Text=" Aspect="$Attr" />
+                        <TextBlock Text="&quot;Fine nib × 1&quot;" Aspect="$Value" />
+                        <TextBlock Text=" /&gt;" Aspect="$Tag" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="56,0,0,0" Opacity="0">
+                        <TextBlock Text="&lt;Button " Aspect="$Tag" />
+                        <TextBlock Text="Content=" Aspect="$Attr" />
+                        <TextBlock Text="&quot;Pay 64 lei&quot;" Aspect="$Value" />
+                        <TextBlock Text=" /&gt;" Aspect="$Tag" />
+                    </StackPanel>
+                    <TextBlock Text="&lt;/StackPanel&gt;" Aspect="$Tag" Margin="28,0,0,0" Opacity="0" />
+                    <TextBlock Text="&lt;/Border&gt;" Aspect="$Tag" Opacity="0" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- The margin note and its arrow. -->
+        <StackPanel Name="Aside" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="36,70,0,0" Opacity="0">
+            <TextBlock Text="the compiler" Aspect="$Note" />
+            <TextBlock Text="writes the C#" Aspect="$Note" />
+        </StackPanel>
+        <Border Name="Arrow" Grid.Row="1" Grid.Column="1" Width="120" Height="2" Background="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="36,160,0,0" ScaleX="0" RenderTransformOrigin="0,0.5" />
+
+        <!-- The sketch, and the screen it becomes. -->
+        <Grid Grid.Row="1" Grid.Column="1" Width="420" Height="300" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,56,20,0">
+            <Grid Name="Wireframe">
+                <Border Name="EdgeTop" Height="2" Background="$InkBrush" VerticalAlignment="Top" ScaleX="0" RenderTransformOrigin="0,0.5" />
+                <Border Name="EdgeRight" Width="2" Background="$InkBrush" HorizontalAlignment="Right" ScaleY="0" RenderTransformOrigin="0.5,0" />
+                <Border Name="EdgeBottom" Height="2" Background="$InkBrush" VerticalAlignment="Bottom" ScaleX="0" RenderTransformOrigin="1,0.5" />
+                <Border Name="EdgeLeft" Width="2" Background="$InkBrush" HorizontalAlignment="Left" ScaleY="0" RenderTransformOrigin="0.5,1" />
+                <StackPanel Name="Scribbles" Margin="34,34,34,0">
+                    <Border Width="190" Height="16" Background="$InkSoftBrush" HorizontalAlignment="Left" ScaleX="0" RenderTransformOrigin="0,0.5" />
+                    <Border Width="250" Height="7" Background="$PaperShadeBrush" HorizontalAlignment="Left" Margin="0,30,0,0" ScaleX="0" RenderTransformOrigin="0,0.5" />
+                    <Border Width="210" Height="7" Background="$PaperShadeBrush" HorizontalAlignment="Left" Margin="0,18,0,0" ScaleX="0" RenderTransformOrigin="0,0.5" />
+                    <Border Width="160" Height="44" BorderBrush="$InkBrush" BorderThickness="2" HorizontalAlignment="Left" Margin="0,40,0,0" ScaleX="0" RenderTransformOrigin="0,0.5" />
+                </StackPanel>
+            </Grid>
+            <Border Name="Card" Background="$CardBrush" BorderBrush="$PaperShadeBrush" BorderThickness="1" Padding="34,30,34,30" Opacity="0">
+                @prism
+                {
+                    @layer Lift
+                    {
+                        @parameter ShadowDistance: float = 0;
+                        @style DropShadow { Color = #FF16181F; Opacity = 0.22; UseGlobalLight = false; Angle = 90; Distance = ShadowDistance; Size = 22; }
+                    }
+                }
+                <StackPanel>
+                    <TextBlock Text="Order 1042" FontFamily="Sitka Banner" FontSize="38" />
+                    <Grid Height="30" Margin="0,18,0,0">
+                        <TextBlock Text="Indigo ink" FontSize="19" Foreground="$InkSoftBrush" />
+                        <TextBlock Text="× 2" FontSize="19" Foreground="$InkSoftBrush" HorizontalAlignment="Right" />
+                    </Grid>
+                    <Grid Height="30">
+                        <TextBlock Text="Fine nib" FontSize="19" Foreground="$InkSoftBrush" />
+                        <TextBlock Text="× 1" FontSize="19" Foreground="$InkSoftBrush" HorizontalAlignment="Right" />
+                    </Grid>
+                    <Border Background="$VermilionBrush" Padding="22,10,22,10" HorizontalAlignment="Left" Margin="0,26,0,0">
+                        <TextBlock Text="Pay 64 lei" FontSize="19" Foreground="$CardBrush" />
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <TextBlock
+            Name="Colophon"
+            Grid.Row="2"
+            Grid.ColumnSpan="2"
+            Text=".CRN MARKUP   ·   COMPILED BY A SOURCE GENERATOR   ·   TYPED NAMES   ·   NO PARSER AT RUNTIME"
+            Aspect="$Caps"
+            FontSize="14"
+            Opacity="0" />
+    </Grid>
+</UserControl>

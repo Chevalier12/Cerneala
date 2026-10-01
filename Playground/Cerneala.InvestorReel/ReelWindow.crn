@@ -1,0 +1,209 @@
+<!--
+    ReelWindow is the director. It owns no C# logic.
+
+    One MotionClip ("Reel") plays the chapters in order. Between chapters an ink blot floods
+    the page from a different corner, the chapter underneath is swapped, and the blot ebbs away.
+    A single ink line runs along the foot of the page for the length of the film.
+
+    Each chapter is a UserControl with its own MotionClip. It sits inside a named host Grid here,
+    and plays by itself when the host makes it visible.
+-->
+<Window
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Title="Cerneala"
+    Width="1280"
+    Height="720"
+    ResizeMode="CanMinimize"
+    WindowStartupLocation="CenterScreen"
+    ContentRendered="OnContentRendered"
+    Background="$PaperBrush"
+    Padding="0">
+    <Window.Resources>
+        <Tween Name="Flood" Duration="460ms" Easing="EaseIn" />
+        <Tween Name="Ebb" Duration="700ms" Easing="EaseOut" />
+
+        <MotionClip Name="Reel" TargetType="Grid">
+            @parallel
+            {
+                <!-- The ink line along the foot of the page: one stroke for the whole film. -->
+                @animate with Tween(78s, Linear) { @from { $InkLine.ScaleX = 0; $Nib.TranslateX = 0; } @to { $InkLine.ScaleX = 1; $Nib.TranslateX = 1300; } }
+
+                @sequence
+                {
+                <!-- i · a drop of ink -->
+                @set { $InkHost.Visibility = Visible; $Numeral.Text = "i"; $Folio.Text = "i"; }
+                @keyframes duration 9s
+                {
+                    @animate 0%..8% with EaseOut { @from { $Numeral.Opacity = 0; $Numeral.TranslateY = -14; } @to { $Numeral.Opacity = 1; $Numeral.TranslateY = 0; } }
+                }
+
+                <!-- ii · a sketch becomes a screen -->
+                @set { $Blot.TranslateX = 500; $Blot.TranslateY = 250; }
+                @animate with $Flood { @from { $Blot.Scale = 0; $Blot.Opacity = 1; } @to { $Blot.Scale = 8; $Blot.Opacity = 1; } }
+                @set { $InkHost.Visibility = Collapsed; $SketchHost.Visibility = Visible; $Numeral.Text = "ii"; $Folio.Text = "ii"; }
+                @parallel
+                {
+                    @animate with $Ebb { @from { $Blot.Opacity = 1; } @to { $Blot.Opacity = 0; } }
+                    @keyframes duration 11s
+                    {
+                        @animate 0%..8% with EaseOut { @from { $Numeral.Opacity = 0; $Numeral.TranslateY = -14; } @to { $Numeral.Opacity = 1; $Numeral.TranslateY = 0; } }
+                    }
+                }
+
+                <!-- iii · one rule, every element -->
+                @set { $Blot.TranslateX = -520; $Blot.TranslateY = -230; }
+                @animate with $Flood { @from { $Blot.Scale = 0; $Blot.Opacity = 1; } @to { $Blot.Scale = 8; $Blot.Opacity = 1; } }
+                @set { $SketchHost.Visibility = Collapsed; $RuleHost.Visibility = Visible; $Numeral.Text = "iii"; $Folio.Text = "iii"; }
+                @parallel
+                {
+                    @animate with $Ebb { @from { $Blot.Opacity = 1; } @to { $Blot.Opacity = 0; } }
+                    @keyframes duration 10s
+                    {
+                        @animate 0%..8% with EaseOut { @from { $Numeral.Opacity = 0; $Numeral.TranslateY = -14; } @to { $Numeral.Opacity = 1; $Numeral.TranslateY = 0; } }
+                    }
+                }
+
+                <!-- iv · movement, written as a score -->
+                @set { $Blot.TranslateX = 560; $Blot.TranslateY = -260; }
+                @animate with $Flood { @from { $Blot.Scale = 0; $Blot.Opacity = 1; } @to { $Blot.Scale = 8; $Blot.Opacity = 1; } }
+                @set { $RuleHost.Visibility = Collapsed; $ScoreHost.Visibility = Visible; $Numeral.Text = "iv"; $Folio.Text = "iv"; }
+                @parallel
+                {
+                    @animate with $Ebb { @from { $Blot.Opacity = 1; } @to { $Blot.Opacity = 0; } }
+                    @keyframes duration 11s
+                    {
+                        @animate 0%..8% with EaseOut { @from { $Numeral.Opacity = 0; $Numeral.TranslateY = -14; } @to { $Numeral.Opacity = 1; $Numeral.TranslateY = 0; } }
+                    }
+                }
+
+                <!-- v · paper, lifted by light -->
+                @set { $Blot.TranslateX = -480; $Blot.TranslateY = 280; }
+                @animate with $Flood { @from { $Blot.Scale = 0; $Blot.Opacity = 1; } @to { $Blot.Scale = 8; $Blot.Opacity = 1; } }
+                @set { $ScoreHost.Visibility = Collapsed; $PaperHost.Visibility = Visible; $Numeral.Text = "v"; $Folio.Text = "v"; }
+                @parallel
+                {
+                    @animate with $Ebb { @from { $Blot.Opacity = 1; } @to { $Blot.Opacity = 0; } }
+                    @keyframes duration 12s
+                    {
+                        @animate 0%..8% with EaseOut { @from { $Numeral.Opacity = 0; $Numeral.TranslateY = -14; } @to { $Numeral.Opacity = 1; $Numeral.TranslateY = 0; } }
+                    }
+                }
+
+                <!-- vi · change a word, not the page -->
+                @set { $Blot.TranslateX = 0; $Blot.TranslateY = 330; }
+                @animate with $Flood { @from { $Blot.Scale = 0; $Blot.Opacity = 1; } @to { $Blot.Scale = 8; $Blot.Opacity = 1; } }
+                @set { $PaperHost.Visibility = Collapsed; $PageHost.Visibility = Visible; $Numeral.Text = "vi"; $Folio.Text = "vi"; }
+                @parallel
+                {
+                    @animate with $Ebb { @from { $Blot.Opacity = 1; } @to { $Blot.Opacity = 0; } }
+                    @keyframes duration 10s
+                    {
+                        @animate 0%..8% with EaseOut { @from { $Numeral.Opacity = 0; $Numeral.TranslateY = -14; } @to { $Numeral.Opacity = 1; $Numeral.TranslateY = 0; } }
+                    }
+                }
+
+                <!-- vii · one stack, one language -->
+                @set { $Blot.TranslateX = 420; $Blot.TranslateY = 0; }
+                @animate with $Flood { @from { $Blot.Scale = 0; $Blot.Opacity = 1; } @to { $Blot.Scale = 8; $Blot.Opacity = 1; } }
+                @set { $PageHost.Visibility = Collapsed; $StackHost.Visibility = Visible; $Numeral.Text = "vii"; $Folio.Text = "vii"; }
+                @parallel
+                {
+                    @animate with $Ebb { @from { $Blot.Opacity = 1; } @to { $Blot.Opacity = 0; } }
+                    @keyframes duration 9s
+                    {
+                        @animate 0%..8% with EaseOut { @from { $Numeral.Opacity = 0; $Numeral.TranslateY = -14; } @to { $Numeral.Opacity = 1; $Numeral.TranslateY = 0; } }
+                    }
+                }
+
+                <!-- viii · the seal -->
+                @set { $Blot.TranslateX = 0; $Blot.TranslateY = 0; }
+                @animate with $Flood { @from { $Blot.Scale = 0; $Blot.Opacity = 1; } @to { $Blot.Scale = 8; $Blot.Opacity = 1; } }
+                @set { $StackHost.Visibility = Collapsed; $SealHost.Visibility = Visible; $Numeral.Text = "viii"; $Folio.Text = "viii"; }
+                @parallel
+                {
+                    @animate with $Ebb { @from { $Blot.Opacity = 1; } @to { $Blot.Opacity = 0; } }
+                    @keyframes duration 4s
+                    {
+                        @animate 0%..8% with EaseOut { @from { $Numeral.Opacity = 0; $Numeral.TranslateY = -14; } @to { $Numeral.Opacity = 1; $Numeral.TranslateY = 0; } }
+                    }
+                }
+                }
+            }
+        </MotionClip>
+
+        <Aspect Name="Director" TargetType="Grid">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Reel as Playback;
+                }
+            }
+        </Aspect>
+    </Window.Resources>
+
+    <!-- The film is composed on a fixed 1600x900 page, scaled to fit the 1280x720 window. -->
+    <Canvas>
+    <Grid
+        Name="Stage"
+        Aspect="$Director"
+        Width="1600"
+        Height="900"
+        Scale="0.8"
+        RenderTransformOrigin="0,0"
+        ClipToBounds="True">
+
+        <!-- The page: a notebook margin rule. -->
+        <Border Width="1" Background="$VermilionBrush" HorizontalAlignment="Left" Margin="104,0,0,0" Opacity="0.45" />
+
+        <!-- Chapters -->
+        <Grid Name="InkHost" Visibility="Collapsed"><reel:InkScene /></Grid>
+        <Grid Name="SketchHost" Visibility="Collapsed"><reel:SketchScene /></Grid>
+        <Grid Name="RuleHost" Visibility="Collapsed"><reel:RuleScene /></Grid>
+        <Grid Name="ScoreHost" Visibility="Collapsed"><reel:ScoreScene /></Grid>
+        <Grid Name="PaperHost" Visibility="Collapsed"><reel:PaperScene /></Grid>
+        <Grid Name="PageHost" Visibility="Collapsed"><reel:PageScene /></Grid>
+        <Grid Name="StackHost" Visibility="Collapsed"><reel:StackScene /></Grid>
+        <Grid Name="SealHost" Visibility="Collapsed"><reel:SealScene /></Grid>
+
+        <!-- Margin furniture -->
+        <TextBlock
+            Name="Numeral"
+            Text="i"
+            FontFamily="Sitka Banner"
+            FontSize="34"
+            Foreground="$VermilionBrush"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            Margin="44,40,0,0"
+            Opacity="0" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,42,72,0">
+            <TextBlock Text="cerneala" FontFamily="Sitka Banner" FontSize="26" Foreground="$InkBrush" />
+            <Ellipse Width="7" Height="7" Fill="$VermilionBrush" VerticalAlignment="Bottom" Margin="3,0,0,8" />
+        </StackPanel>
+
+        <Grid Height="12" VerticalAlignment="Bottom" Margin="150,0,140,46">
+            <Border Height="1" Background="$PaperShadeBrush" VerticalAlignment="Center" />
+            <Border Name="InkLine" Height="2" Background="$InkBrush" VerticalAlignment="Center" ScaleX="0" RenderTransformOrigin="0,0.5" />
+            <Ellipse Name="Nib" Width="10" Height="10" Fill="$InkBrush" HorizontalAlignment="Left" VerticalAlignment="Center" />
+        </Grid>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,64,40">
+            <TextBlock Text="— " Aspect="$Caps" FontSize="15" />
+            <TextBlock Name="Folio" Text="i" Aspect="$Caps" FontSize="15" />
+            <TextBlock Text=" —" Aspect="$Caps" FontSize="15" />
+        </StackPanel>
+
+        <!-- The ink blot that floods the page between chapters. -->
+        <Ellipse
+            Name="Blot"
+            Width="500"
+            Height="500"
+            Fill="$InkBrush"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Scale="0"
+            RenderTransformOrigin="0.5,0.5" />
+    </Grid>
+    </Canvas>
+</Window>

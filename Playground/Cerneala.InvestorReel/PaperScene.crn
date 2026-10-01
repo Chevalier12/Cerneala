@@ -1,0 +1,215 @@
+<!-- v · paper, lifted by light: cut-outs rise off the page on animated Prism shadows, beside three filtered proofs. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Place" Duration="480ms" Easing="EaseOut" />
+        <Tween Name="Rise" Duration="1500ms" Easing="EaseOut" />
+        <Tween Name="Late" Duration="800ms" Delay="1600ms" Easing="EaseOut" />
+        <MotionClip Name="Entrance" TargetType="reel:PaperScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(700ms, EaseOut) { @from { $Kicker.Opacity = 0; $Kicker.TranslateX = -18; } @to { $Kicker.Opacity = 1; $Kicker.TranslateX = 0; } }
+                    @animate with Tween(900ms, EaseOut) { @from { $Headline.Opacity = 0; $Headline.TranslateY = 24; } @to { $Headline.Opacity = 1; $Headline.TranslateY = 0; } }
+                    @animate with Tween(800ms, EaseOut) { @from { $Board.Opacity = 0; } @to { $Board.Opacity = 1; } }
+                }
+                <!-- The cut-outs are laid down flat. -->
+                @stagger target $Cutouts each 110ms
+                {
+                    @animate with $Place { @from { Opacity = 0; Scale = 1.08; } @to { Opacity = 1; Scale = 1; } }
+                }
+                <!-- Then light lifts them off the page, each to its own height. -->
+                @parallel
+                {
+                    @animate with $Rise { @from { $Sun.prism.Shadow.Lift = 0; } @to { $Sun.prism.Shadow.Lift = 26; } }
+                    @animate with $Rise { @from { $Pillar.prism.Shadow.Lift = 0; } @to { $Pillar.prism.Shadow.Lift = 16; } }
+                    @animate with $Rise { @from { $Arch.prism.Shadow.Lift = 0; } @to { $Arch.prism.Shadow.Lift = 34; } }
+                    @animate with $Rise { @from { $Pebble.prism.Shadow.Lift = 0; } @to { $Pebble.prism.Shadow.Lift = 12; } }
+                    @animate with $Rise { @from { $Blade.prism.Shadow.Lift = 0; } @to { $Blade.prism.Shadow.Lift = 20; } }
+                    @animate with Tween(900ms, EaseOut) { @from { $LiftNote.Opacity = 0; $LiftNote.TranslateX = -10; } @to { $LiftNote.Opacity = 1; $LiftNote.TranslateX = 0; } }
+                    @stagger target $Proofs each 160ms
+                    {
+                        @animate with $Place { @from { Opacity = 0; TranslateX = 30; } @to { Opacity = 1; TranslateX = 0; } }
+                    }
+                }
+                @parallel
+                {
+                    @animate with PingPong(Tween(1800ms, EaseInOut), forever) { @from { $Arch.prism.Shadow.Lift = 34; } @to { $Arch.prism.Shadow.Lift = 18; } }
+                    @animate with PingPong(Tween(2300ms, EaseInOut), forever) { @from { $Sun.prism.Shadow.Lift = 26; } @to { $Sun.prism.Shadow.Lift = 38; } }
+                    @animate with PingPong(Tween(1500ms, EaseInOut), forever) { @from { $SumiArt.prism.Fx.Stroke = 4; } @to { $SumiArt.prism.Fx.Stroke = 14; } }
+                    @animate with $Late { @from { $Caption.Opacity = 0; } @to { $Caption.Opacity = 1; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:PaperScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="170,110,120,110">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="340" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="2">
+            <TextBlock Name="Kicker" Text="paper, lifted by light" Aspect="$Note" Opacity="0" />
+            <TextBlock Name="Headline" Text="Effects, layered like paper." Aspect="$Display" Margin="0,6,0,0" Opacity="0" />
+        </StackPanel>
+
+        <!-- The collage board -->
+        <Border Name="Board" Grid.Row="1" Grid.Column="0" Width="820" Height="440" Background="$PaperDeepBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,34,0,0" Opacity="0">
+            <Grid>
+                <Grid Name="Cutouts">
+                    <Ellipse Name="Sun" Width="230" Height="230" Fill="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="70,60,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                        @prism
+                        {
+                            @layer Shadow
+                            {
+                                @parameter Lift: float = 0;
+                                @style DropShadow { Color = #FF16181F; Opacity = 0.28; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                            }
+                        }
+                    </Ellipse>
+                    <Border Name="Pillar" Width="110" Height="290" Background="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="330,90,0,0" Rotation="0.08" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                        @prism
+                        {
+                            @layer Shadow
+                            {
+                                @parameter Lift: float = 0;
+                                @style DropShadow { Color = #FF16181F; Opacity = 0.28; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                            }
+                        }
+                    </Border>
+                    <Ellipse Name="Arch" Width="260" Height="130" Fill="$OchreBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="480,250,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                        @prism
+                        {
+                            @layer Shadow
+                            {
+                                @parameter Lift: float = 0;
+                                @style DropShadow { Color = #FF16181F; Opacity = 0.28; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                            }
+                        }
+                        </Ellipse>
+                    <Ellipse Name="Pebble" Width="70" Height="70" Fill="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="600,90,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                        @prism
+                        {
+                            @layer Shadow
+                            {
+                                @parameter Lift: float = 0;
+                                @style DropShadow { Color = #FF16181F; Opacity = 0.28; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                            }
+                        }
+                    </Ellipse>
+                    <Border Name="Blade" Width="420" Height="14" Background="$InkBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="120,330,0,0" Rotation="-0.12" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                        @prism
+                        {
+                            @layer Shadow
+                            {
+                                @parameter Lift: float = 0;
+                                @style DropShadow { Color = #FF16181F; Opacity = 0.28; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                            }
+                        }
+                    </Border>
+                </Grid>
+                <StackPanel Name="LiftNote" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,26,30,0" Opacity="0">
+                    <TextBlock Text="@style DropShadow" Aspect="$Code" FontSize="16" HorizontalAlignment="Right" />
+                    <TextBlock Text="Distance = Lift;  Lift: 0 → 34" Aspect="$Code" FontSize="14" Foreground="$GraphiteBrush" HorizontalAlignment="Right" Margin="0,4,0,0" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Three proofs of the same drawing -->
+        <StackPanel Name="Proofs" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,34,0,0">
+                <StackPanel Margin="0,0,0,10" Opacity="0">
+                    <Border Width="300" Height="108" BorderBrush="$PaperShadeBrush" BorderThickness="1" ClipToBounds="True">
+                        <Grid Name="SumiArt">
+                            @prism
+                            {
+                                @layer Fx
+                                {
+                                    @parameter Stroke: float = 4;
+                                    @filter SumiE { StrokeWidth = Stroke; StrokePressure = 2; Contrast = 2; }
+                                }
+                            }
+                            <Border Background="$PaperBrush" />
+                            <Ellipse Width="46" Height="46" Fill="$VermilionBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,20,48,0" />
+                            <Border Width="150" Height="150" Background="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10,0,0,-100" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
+                            <Border Width="120" Height="120" Background="$InkBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="120,0,0,-84" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
+                            <Border Height="2" Background="$InkSoftBrush" VerticalAlignment="Bottom" Margin="0,0,0,26" />
+                        </Grid>
+                    </Border>
+                    <Grid Width="300" Height="24" Margin="0,8,0,0">
+                        <TextBlock Text="@filter SumiE" Aspect="$Code" FontSize="15" />
+                        <TextBlock Text="stroke 4 to 14" Aspect="$Caps" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                    </Grid>
+                </StackPanel>
+                <StackPanel Margin="0,0,0,10" Opacity="0">
+                    <Border Width="300" Height="108" BorderBrush="$PaperShadeBrush" BorderThickness="1" ClipToBounds="True">
+                        <Grid Name="OutlineArt">
+                            @prism
+                            {
+                                @layer Fx
+                                {
+                                    @filter InkOutlines { StrokeLength = 4; DarkIntensity = 20; LightIntensity = 10; }
+                                }
+                            }
+                            <Border Background="$PaperBrush" />
+                            <Ellipse Width="46" Height="46" Fill="$VermilionBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,20,48,0" />
+                            <Border Width="150" Height="150" Background="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10,0,0,-100" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
+                            <Border Width="120" Height="120" Background="$InkBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="120,0,0,-84" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
+                            <Border Height="2" Background="$InkSoftBrush" VerticalAlignment="Bottom" Margin="0,0,0,26" />
+                        </Grid>
+                    </Border>
+                    <Grid Width="300" Height="24" Margin="0,8,0,0">
+                        <TextBlock Text="@filter InkOutlines" Aspect="$Code" FontSize="15" />
+                        <TextBlock Text="length 4" Aspect="$Caps" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                    </Grid>
+                </StackPanel>
+                <StackPanel Margin="0,0,0,10" Opacity="0">
+                    <Border Width="300" Height="108" BorderBrush="$PaperShadeBrush" BorderThickness="1" ClipToBounds="True">
+                        <Grid Name="WashArt">
+                            @prism
+                            {
+                                @layer Fx
+                                {
+                                    @filter Watercolor { BrushDetail = 9; ShadowIntensity = 1; Texture = 3; }
+                                }
+                            }
+                            <Border Background="$PaperBrush" />
+                            <Ellipse Width="46" Height="46" Fill="$VermilionBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,20,48,0" />
+                            <Border Width="150" Height="150" Background="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10,0,0,-100" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
+                            <Border Width="120" Height="120" Background="$InkBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="120,0,0,-84" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
+                            <Border Height="2" Background="$InkSoftBrush" VerticalAlignment="Bottom" Margin="0,0,0,26" />
+                        </Grid>
+                    </Border>
+                    <Grid Width="300" Height="24" Margin="0,8,0,0">
+                        <TextBlock Text="@filter Watercolor" Aspect="$Code" FontSize="15" />
+                        <TextBlock Text="detail 9" Aspect="$Caps" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                    </Grid>
+                </StackPanel>
+        </StackPanel>
+
+        <TextBlock
+            Name="Caption"
+            Grid.Row="2"
+            Grid.ColumnSpan="2"
+            Text="Prism: 134 filters, 10 layer styles and 28 blend modes. Declared in markup, rendered on the GPU."
+            Aspect="$Lede"
+            Opacity="0" />
+    </Grid>
+</UserControl>

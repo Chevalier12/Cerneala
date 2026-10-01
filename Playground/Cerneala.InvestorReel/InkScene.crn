@@ -1,0 +1,111 @@
+<!-- i · a drop of ink: it falls, splashes, and the word rises out of the pool. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Fleck" Duration="380ms" Easing="EaseOut" />
+        <Tween Name="Letter" Duration="640ms" Easing="EaseOut" />
+        <MotionClip Name="Entrance" TargetType="reel:InkScene">
+            @sequence
+            {
+                @animate with Tween(640ms, EaseIn) { @from { $Drop.TranslateY = -460; } @to { $Drop.TranslateY = 0; } }
+                @parallel
+                {
+                    @animate with Tween(110ms, Sharp) { @from { $Drop.ScaleX = 1; $Drop.ScaleY = 1; } @to { $Drop.ScaleX = 2.2; $Drop.ScaleY = 0.3; } }
+                    @animate with Tween(260ms, EaseOut) { @from { $Drop.Opacity = 1; } @to { $Drop.Opacity = 0; } }
+                    @animate with Spring(240, 15) { @from { $Pool.Scale = 0; } @to { $Pool.Scale = 1; } }
+                    @animate with Tween(1100ms, EaseOut) { @from { $Ripple.Scale = 0.3; $Ripple.Opacity = 0.9; } @to { $Ripple.Scale = 2.6; $Ripple.Opacity = 0; } }
+                    @animate with Tween(1400ms, EaseOut) { @from { $RippleWide.Scale = 0.3; $RippleWide.Opacity = 0.5; } @to { $RippleWide.Scale = 3.6; $RippleWide.Opacity = 0; } }
+                    @stagger target $Spatter each 28ms
+                    {
+                        @animate with $Fleck { @from { Opacity = 0; Scale = 0.2; } @to { Opacity = 1; Scale = 1; } }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseInOut) { @from { $Pool.Scale = 1; $Pool.Opacity = 1; } @to { $Pool.Scale = 2.4; $Pool.Opacity = 0; } }
+                    @stagger target $Spatter each 20ms
+                    {
+                        @animate with $Fleck { @from { Opacity = 1; } @to { Opacity = 0; } }
+                    }
+                    @stagger target $Word each 75ms
+                    {
+                        @animate with $Letter { @from { Opacity = 0; TranslateY = 46; } @to { Opacity = 1; TranslateY = 0; } }
+                    }
+                }
+                @animate with Tween(700ms, EaseOut) { @from { $Gloss.Opacity = 0; $Gloss.TranslateX = -16; } @to { $Gloss.Opacity = 1; $Gloss.TranslateX = 0; } }
+                @parallel
+                {
+                    @animate with Tween(900ms, Emphasized) { @from { $Rule.ScaleX = 0; } @to { $Rule.ScaleX = 1; } }
+                    @animate with Tween(800ms, EaseOut) { @from { $Promise.Opacity = 0; $Promise.TranslateY = 14; } @to { $Promise.Opacity = 1; $Promise.TranslateY = 0; } }
+                }
+                @animate with Tween(700ms, EaseOut) { @from { $Traits.Opacity = 0; } @to { $Traits.Opacity = 1; } }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:InkScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid>
+        <!-- The splash, centred on the word. -->
+        <Grid Width="700" Height="360" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,120">
+            <Ellipse Name="RippleWide" Width="160" Height="70" Stroke="$InkSoftBrush" StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" Scale="0" Opacity="0" RenderTransformOrigin="0.5,0.5" />
+            <Ellipse Name="Ripple" Width="140" Height="60" Stroke="$InkBrush" StrokeThickness="2" HorizontalAlignment="Center" VerticalAlignment="Center" Scale="0" Opacity="0" RenderTransformOrigin="0.5,0.5" />
+            <Ellipse Name="Pool" Width="120" Height="120" Fill="$InkBrush" HorizontalAlignment="Center" VerticalAlignment="Center" Scale="0" RenderTransformOrigin="0.5,0.5" />
+            <Grid Name="Spatter">
+                <Ellipse Width="14" Height="14" Fill="$InkBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="-118" TranslateY="-44" Opacity="0" RenderTransformOrigin="0.5,0.5" />
+                <Ellipse Width="9" Height="9" Fill="$InkBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="104" TranslateY="-62" Opacity="0" RenderTransformOrigin="0.5,0.5" />
+                <Ellipse Width="18" Height="18" Fill="$InkBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="146" TranslateY="22" Opacity="0" RenderTransformOrigin="0.5,0.5" />
+                <Ellipse Width="7" Height="7" Fill="$InkBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="-170" TranslateY="30" Opacity="0" RenderTransformOrigin="0.5,0.5" />
+                <Ellipse Width="11" Height="11" Fill="$VermilionBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="40" TranslateY="-96" Opacity="0" RenderTransformOrigin="0.5,0.5" />
+                <Ellipse Width="6" Height="6" Fill="$InkBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="-60" TranslateY="84" Opacity="0" RenderTransformOrigin="0.5,0.5" />
+                <Ellipse Width="12" Height="12" Fill="$InkBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="72" TranslateY="78" Opacity="0" RenderTransformOrigin="0.5,0.5" />
+            </Grid>
+            <Ellipse Name="Drop" Width="28" Height="34" Fill="$InkBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateY="-460" RenderTransformOrigin="0.5,1" />
+        </Grid>
+
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,40">
+            <StackPanel Name="Word" Orientation="Horizontal" HorizontalAlignment="Center">
+                <TextBlock Text="c" Aspect="$Display" FontSize="168" Opacity="0" />
+                <TextBlock Text="e" Aspect="$Display" FontSize="168" Opacity="0" />
+                <TextBlock Text="r" Aspect="$Display" FontSize="168" Opacity="0" />
+                <TextBlock Text="n" Aspect="$Display" FontSize="168" Opacity="0" />
+                <TextBlock Text="e" Aspect="$Display" FontSize="168" Opacity="0" />
+                <TextBlock Text="a" Aspect="$Display" FontSize="168" Opacity="0" />
+                <TextBlock Text="l" Aspect="$Display" FontSize="168" Opacity="0" />
+                <TextBlock Text="a" Aspect="$Display" FontSize="168" Opacity="0" />
+                <Ellipse Width="26" Height="26" Fill="$VermilionBrush" VerticalAlignment="Bottom" Margin="10,0,0,58" Opacity="0" />
+            </StackPanel>
+            <StackPanel Name="Gloss" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,0" Opacity="0">
+                <TextBlock Text="cher · nea · la" Aspect="$Note" FontSize="30" />
+                <TextBlock Text="   —   Romanian for ink" Aspect="$Note" FontSize="30" Foreground="$GraphiteBrush" />
+            </StackPanel>
+            <Border Name="Rule" Width="120" Height="2" Background="$InkBrush" HorizontalAlignment="Center" Margin="0,40,0,0" ScaleX="0" />
+            <TextBlock
+                Name="Promise"
+                Text="A new way to write desktop software in C#."
+                Aspect="$Lede"
+                FontSize="30"
+                Foreground="$InkBrush"
+                HorizontalAlignment="Center"
+                Margin="0,30,0,0"
+                Opacity="0" />
+            <TextBlock
+                Name="Traits"
+                Text="RETAINED   ·   MARKUP FIRST   ·   GPU RENDERED"
+                Aspect="$Caps"
+                FontSize="14"
+                HorizontalAlignment="Center"
+                Margin="0,22,0,0"
+                Opacity="0" />
+        </StackPanel>
+    </Grid>
+</UserControl>

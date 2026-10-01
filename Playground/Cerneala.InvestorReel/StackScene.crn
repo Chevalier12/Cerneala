@@ -1,0 +1,143 @@
+<!-- vii · one stack, one language: five sheets fan out of a single pile, resting on the GPU. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Aspect Name="Leaf" TargetType="Border">
+            @default
+            {
+                Background = $PaperBrush;
+                BorderBrush = $PaperShadeBrush;
+                BorderThickness = "1";
+                Height = 84;
+                VerticalAlignment = "Top";
+            }
+        </Aspect>
+        <Aspect Name="LeafTitle" TargetType="TextBlock">
+            @default
+            {
+                FontFamily = "Sitka Banner";
+                FontSize = 32;
+                Foreground = $InkBrush;
+                Width = 150;
+                VerticalAlignment = "Center";
+            }
+        </Aspect>
+        <Aspect Name="LeafText" TargetType="TextBlock">
+            @default
+            {
+                FontFamily = "Sitka Text";
+                FontSize = 20;
+                Foreground = $InkSoftBrush;
+                VerticalAlignment = "Center";
+            }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:StackScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(700ms, EaseOut) { @from { $Kicker.Opacity = 0; $Kicker.TranslateX = -18; } @to { $Kicker.Opacity = 1; $Kicker.TranslateX = 0; } }
+                    @animate with Tween(900ms, EaseOut) { @from { $Headline.Opacity = 0; $Headline.TranslateY = 24; } @to { $Headline.Opacity = 1; $Headline.TranslateY = 0; } }
+                    @animate with Tween(600ms, EaseOut) { @from { $Pile.Opacity = 0; $Pile.TranslateY = 30; } @to { $Pile.Opacity = 1; $Pile.TranslateY = 0; } }
+                }
+                @animate with Tween(500ms, Linear) { @from { $Pile.Scale = 1; } @to { $Pile.Scale = 1; } }
+
+                <!-- The pile fans out, each sheet on its own spring. -->
+                @parallel
+                {
+                    @animate with Spring(260, 20) { @from { $SheetMarkup.TranslateY = 6; $SheetMarkup.Rotation = 0.04; } @to { $SheetMarkup.TranslateY = 100; $SheetMarkup.Rotation = 0; } }
+                    @animate with Spring(220, 18) { @from { $SheetAspect.TranslateY = 12; $SheetAspect.Rotation = -0.03; } @to { $SheetAspect.TranslateY = 200; $SheetAspect.Rotation = 0; } }
+                    @animate with Spring(190, 16) { @from { $SheetMotion.TranslateY = 18; $SheetMotion.Rotation = 0.05; } @to { $SheetMotion.TranslateY = 300; $SheetMotion.Rotation = 0; } }
+                    @animate with Spring(160, 14) { @from { $SheetPrism.TranslateY = 24; $SheetPrism.Rotation = -0.04; } @to { $SheetPrism.TranslateY = 400; $SheetPrism.Rotation = 0; } }
+                    @animate with Spring(300, 24) { @from { $SheetCode.Rotation = -0.02; } @to { $SheetCode.Rotation = 0; } }
+                }
+                @parallel
+                {
+                    @animate with Tween(700ms, EaseOut) { @from { $Ground.Opacity = 0; $Ground.TranslateY = 30; } @to { $Ground.Opacity = 1; $Ground.TranslateY = 0; } }
+                    @animate with Tween(800ms, EaseOut) { @from { $Aside.Opacity = 0; $Aside.TranslateX = 20; } @to { $Aside.Opacity = 1; $Aside.TranslateX = 0; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:StackScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="170,110,120,90">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="760" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="2">
+            <TextBlock Name="Kicker" Text="one stack, one language" Aspect="$Note" Opacity="0" />
+            <TextBlock Name="Headline" Text="Everything, in one place." Aspect="$Display" Margin="0,6,0,0" Opacity="0" />
+        </StackPanel>
+
+        <!-- Declared bottom sheet first, so C# lies on top of the pile. -->
+        <Grid Name="Pile" Grid.Row="1" Grid.Column="0" Width="720" Height="560" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,30,0,0" Opacity="0" RenderTransformOrigin="0.5,0">
+            <Border Name="Ground" Height="60" Background="$InkBrush" VerticalAlignment="Top" Margin="0,494,0,0" Opacity="0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="28,0,0,0">
+                    <TextBlock Text="SDL_GPU" FontFamily="Consolas" FontSize="20" Foreground="$PaperBrush" Width="150" />
+                    <TextBlock Text="native GPU rendering underneath it all" FontSize="19" Foreground="$PaperShadeBrush" />
+                </StackPanel>
+            </Border>
+            <Border Name="SheetPrism" Aspect="$Leaf" TranslateY="24" Rotation="-0.04" RenderTransformOrigin="0.5,0.5">
+                <StackPanel Orientation="Horizontal">
+                    <Border Width="10" Background="$InkSoftBrush" Margin="0,0,24,0" />
+                    <TextBlock Text="Prism" Aspect="$LeafTitle" />
+                    <TextBlock Text="Filters, layer styles and blend modes." Aspect="$LeafText" />
+                </StackPanel>
+            </Border>
+            <Border Name="SheetMotion" Aspect="$Leaf" TranslateY="18" Rotation="0.05" RenderTransformOrigin="0.5,0.5">
+                <StackPanel Orientation="Horizontal">
+                    <Border Width="10" Background="$VermilionBrush" Margin="0,0,24,0" />
+                    <TextBlock Text="Motion" Aspect="$LeafTitle" />
+                    <TextBlock Text="Tweens, springs, keyframes and stagger." Aspect="$LeafText" />
+                </StackPanel>
+            </Border>
+            <Border Name="SheetAspect" Aspect="$Leaf" TranslateY="12" Rotation="-0.03" RenderTransformOrigin="0.5,0.5">
+                <StackPanel Orientation="Horizontal">
+                    <Border Width="10" Background="$OchreBrush" Margin="0,0,24,0" />
+                    <TextBlock Text="Aspect" Aspect="$LeafTitle" />
+                    <TextBlock Text="Styles, states and templates." Aspect="$LeafText" />
+                </StackPanel>
+            </Border>
+            <Border Name="SheetMarkup" Aspect="$Leaf" TranslateY="6" Rotation="0.04" RenderTransformOrigin="0.5,0.5">
+                <StackPanel Orientation="Horizontal">
+                    <Border Width="10" Background="$IndigoBrush" Margin="0,0,24,0" />
+                    <TextBlock Text=".crn" Aspect="$LeafTitle" />
+                    <TextBlock Text="Views as typed, compiled markup." Aspect="$LeafText" />
+                </StackPanel>
+            </Border>
+            <Border Name="SheetCode" Aspect="$Leaf" Rotation="-0.02" RenderTransformOrigin="0.5,0.5">
+                <StackPanel Orientation="Horizontal">
+                    <Border Width="10" Background="$InkBrush" Margin="0,0,24,0" />
+                    <TextBlock Text="C#" Aspect="$LeafTitle" />
+                    <TextBlock Text="Your logic, your types, your tools." Aspect="$LeafText" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <StackPanel Name="Aside" Grid.Row="1" Grid.Column="1" VerticalAlignment="Top" Margin="40,120,0,0" Opacity="0">
+            <TextBlock Text="one compiler" Aspect="$Note" FontSize="30" />
+            <TextBlock Text="one runtime" Aspect="$Note" FontSize="30" Margin="0,6,0,0" />
+            <TextBlock Text="one language" Aspect="$Note" FontSize="30" Margin="0,6,0,0" />
+            <Border Width="140" Height="2" Background="$VermilionBrush" HorizontalAlignment="Left" Margin="0,20,0,0" />
+            <TextBlock Text="No browser engine. No second" Aspect="$Lede" FontSize="20" Margin="0,20,0,0" />
+            <TextBlock Text="language for the interface." Aspect="$Lede" FontSize="20" />
+        </StackPanel>
+    </Grid>
+</UserControl>

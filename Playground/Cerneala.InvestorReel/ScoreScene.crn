@@ -1,0 +1,210 @@
+<!-- iv · movement, written as a score: four measures, four motion models, and a playhead reading them. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Ink" Duration="500ms" Easing="EaseOut" />
+        <Tween Name="Arpeggio" Duration="420ms" Easing="EaseOut" />
+        <Tween Name="Late" Duration="800ms" Delay="2400ms" Easing="EaseOut" />
+        <!-- The playhead starts 300ms in and crosses 1248px in 6200ms, so its arrival at any x is known. -->
+        <Aspect Name="StaffLine" TargetType="Border">
+            @default { Height = 1; Background = $InkSoftBrush; VerticalAlignment = "Top"; }
+        </Aspect>
+        <Aspect Name="BarLine" TargetType="Border">
+            @default { Width = 1; Height = 88; Background = $InkSoftBrush; HorizontalAlignment = "Left"; VerticalAlignment = "Top"; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:ScoreScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(700ms, EaseOut) { @from { $Kicker.Opacity = 0; $Kicker.TranslateX = -18; } @to { $Kicker.Opacity = 1; $Kicker.TranslateX = 0; } }
+                    @animate with Tween(900ms, EaseOut) { @from { $Headline.Opacity = 0; $Headline.TranslateY = 24; } @to { $Headline.Opacity = 1; $Headline.TranslateY = 0; } }
+                    @animate with Tween(900ms, Emphasized) { @from { $Staff.ScaleX = 0; } @to { $Staff.ScaleX = 1; } }
+                }
+                @stagger target $Measures each 120ms
+                {
+                    @animate with $Ink { @from { Opacity = 0; TranslateY = 10; } @to { Opacity = 1; TranslateY = 0; } }
+                }
+                @parallel
+                {
+                    <!-- Tween: an eased glide, looping. -->
+                    @sequence
+                    {
+                        @animate with $Ink { @from { $TweenNote.Opacity = 0; } @to { $TweenNote.Opacity = 1; } }
+                        @animate with PingPong(Tween(1100ms, EaseInOut), forever) { @from { $TweenNote.TranslateX = 0; } @to { $TweenNote.TranslateX = 200; } }
+                    }
+
+                    <!-- Spring: dropped onto the line, it overshoots and settles. -->
+                    @sequence
+                    {
+                        @parallel
+                        {
+                            @animate with Tween(200ms, Linear) { @from { $SpringNote.Opacity = 0; } @to { $SpringNote.Opacity = 1; } }
+                            @animate with Spring(170, 8) { @from { $SpringNote.TranslateY = -150; } @to { $SpringNote.TranslateY = 0; } }
+                        }
+                        @animate with Tween(420ms, EaseOut) { @from { $SpringNote.TranslateY = current; } @to { $SpringNote.TranslateY = -110; } }
+                        @animate with Spring(170, 8) { @from { $SpringNote.TranslateY = current; } @to { $SpringNote.TranslateY = 0; } }
+                    }
+
+                    <!-- Keyframes: one timeline, many positions. -->
+                    @sequence
+                    {
+                        @animate with $Ink { @from { $KeyNote.Opacity = 0; } @to { $KeyNote.Opacity = 1; } }
+                        @keyframes duration 2600ms
+                        {
+                            @animate 0%..100% with Linear { @from { $KeyNote.TranslateX = 0; } @to { $KeyNote.TranslateX = 210; } }
+                            @animate 0%..25% with EaseOut { @from { $KeyNote.TranslateY = 0; } @to { $KeyNote.TranslateY = -44; } }
+                            @animate 25%..50% with EaseInOut { @from { $KeyNote.TranslateY = -44; } @to { $KeyNote.TranslateY = -11; } }
+                            @animate 50%..75% with EaseInOut { @from { $KeyNote.TranslateY = -11; } @to { $KeyNote.TranslateY = -66; } }
+                            @animate 75%..100% with EaseIn { @from { $KeyNote.TranslateY = -66; } @to { $KeyNote.TranslateY = 0; } }
+                        }
+                        @keyframes duration 2600ms
+                        {
+                            @animate 0%..100% with Linear { @from { $KeyNote.TranslateX = 210; } @to { $KeyNote.TranslateX = 0; } }
+                            @animate 0%..50% with EaseOut { @from { $KeyNote.TranslateY = 0; } @to { $KeyNote.TranslateY = -55; } }
+                            @animate 50%..100% with EaseIn { @from { $KeyNote.TranslateY = -55; } @to { $KeyNote.TranslateY = 0; } }
+                        }
+                    }
+
+                    <!-- Stagger: one rule, fanned out as an arpeggio. -->
+                    @stagger target $Arp each 90ms
+                    {
+                        @animate with $Arpeggio { @from { Opacity = 0; TranslateY = 18; } @to { Opacity = 1; TranslateY = 0; } }
+                    }
+
+                    <!-- Each note answers as the playhead reaches it: 149ms apart, one note every 30px. -->
+
+                    @sequence { @animate with Tween(5060ms, Linear) { @from { $Note1.Rotation = 0; } @to { $Note1.Rotation = 0; } } @animate with PingPong(Tween(190ms, EaseOut), 2) { @from { $Note1.Scale = current; } @to { $Note1.Scale = 1.5; } } }
+                    @sequence { @animate with Tween(5209ms, Linear) { @from { $Note2.Rotation = 0; } @to { $Note2.Rotation = 0; } } @animate with PingPong(Tween(190ms, EaseOut), 2) { @from { $Note2.Scale = current; } @to { $Note2.Scale = 1.5; } } }
+                    @sequence { @animate with Tween(5358ms, Linear) { @from { $Note3.Rotation = 0; } @to { $Note3.Rotation = 0; } } @animate with PingPong(Tween(190ms, EaseOut), 2) { @from { $Note3.Scale = current; } @to { $Note3.Scale = 1.5; } } }
+                    @sequence { @animate with Tween(5507ms, Linear) { @from { $Note4.Rotation = 0; } @to { $Note4.Rotation = 0; } } @animate with PingPong(Tween(190ms, EaseOut), 2) { @from { $Note4.Scale = current; } @to { $Note4.Scale = 1.5; } } }
+                    @sequence { @animate with Tween(5656ms, Linear) { @from { $Note5.Rotation = 0; } @to { $Note5.Rotation = 0; } } @animate with PingPong(Tween(190ms, EaseOut), 2) { @from { $Note5.Scale = current; } @to { $Note5.Scale = 1.5; } } }
+                    @sequence { @animate with Tween(5805ms, Linear) { @from { $Note6.Rotation = 0; } @to { $Note6.Rotation = 0; } } @animate with PingPong(Tween(190ms, EaseOut), 2) { @from { $Note6.Scale = current; } @to { $Note6.Scale = 1.5; } } }
+                    @sequence { @animate with Tween(5954ms, Linear) { @from { $Note7.Rotation = 0; } @to { $Note7.Rotation = 0; } } @animate with PingPong(Tween(190ms, EaseOut), 2) { @from { $Note7.Scale = current; } @to { $Note7.Scale = 1.5; } } }
+                    @sequence { @animate with Tween(6103ms, Linear) { @from { $Note8.Rotation = 0; } @to { $Note8.Rotation = 0; } } @animate with PingPong(Tween(190ms, EaseOut), 2) { @from { $Note8.Scale = current; } @to { $Note8.Scale = 1.5; } } }
+                    @sequence
+                    {
+                        @animate with Tween(2540ms, Linear) { @from { $SpringNote.Scale = 1; } @to { $SpringNote.Scale = 1; } }
+                        @animate with PingPong(Tween(190ms, EaseOut), 2) { @from { $SpringNote.Scale = current; } @to { $SpringNote.Scale = 1.5; } }
+                    }
+
+
+                    <!-- The playhead reads the score. -->
+                    @sequence
+                    {
+                        @animate with Tween(300ms, EaseOut) { @from { $Playhead.Opacity = 0; } @to { $Playhead.Opacity = 0.85; } }
+                        @animate with Tween(6200ms, Linear) { @from { $Playhead.TranslateX = 0; } @to { $Playhead.TranslateX = 1248; } }
+                    }
+
+                    @animate with $Late { @from { $Caption.Opacity = 0; } @to { $Caption.Opacity = 1; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:ScoreScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="170,110,120,110">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Name="Kicker" Text="movement, written as a score" Aspect="$Note" Opacity="0" />
+            <TextBlock Name="Headline" Text="Motion you can read." Aspect="$Display" Margin="0,6,0,0" Opacity="0" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" HorizontalAlignment="Left" Margin="0,40,0,0">
+            <Grid Width="1250" Height="250">
+                <!-- The staff -->
+                <Grid Name="Staff" ScaleX="0" RenderTransformOrigin="0,0.5">
+                    <Border Aspect="$StaffLine" Margin="0,86,0,0" />
+                    <Border Aspect="$StaffLine" Margin="0,108,0,0" />
+                    <Border Aspect="$StaffLine" Margin="0,130,0,0" />
+                    <Border Aspect="$StaffLine" Margin="0,152,0,0" />
+                    <Border Aspect="$StaffLine" Margin="0,174,0,0" />
+                    <Border Aspect="$BarLine" Width="3" Background="$VermilionBrush" Margin="0,86,0,0" />
+                    <Border Aspect="$BarLine" Margin="312,86,0,0" />
+                    <Border Aspect="$BarLine" Margin="625,86,0,0" />
+                    <Border Aspect="$BarLine" Margin="937,86,0,0" />
+                    <Border Aspect="$BarLine" Width="3" Background="$InkBrush" Margin="1247,86,0,0" />
+                </Grid>
+
+                <!-- Measure 1: tween -->
+                <Grid Name="TweenNote" Width="30" Height="84" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="50,56,0,0" Opacity="0">
+                    <Ellipse Width="27" Height="20" Fill="$InkBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Rotation="-0.35" RenderTransformOrigin="0.5,0.5" />
+                    <Border Width="2" Height="72" Background="$InkBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,4,0" />
+                </Grid>
+
+                <!-- Measure 2: spring -->
+                <Grid Name="SpringNote" Width="30" Height="84" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="455,67,0,0" Opacity="0" RenderTransformOrigin="0.5,1">
+                    <Ellipse Width="27" Height="20" Fill="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Rotation="-0.35" RenderTransformOrigin="0.5,0.5" />
+                    <Border Width="2" Height="72" Background="$VermilionBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,4,0" />
+                </Grid>
+
+                <!-- Measure 3: keyframes -->
+                <Grid Name="KeyNote" Width="30" Height="84" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="670,100,0,0" Opacity="0">
+                    <Ellipse Width="27" Height="20" Fill="$OchreBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Rotation="-0.35" RenderTransformOrigin="0.5,0.5" />
+                    <Border Width="2" Height="72" Background="$OchreBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,4,0" />
+                </Grid>
+
+                <!-- Measure 4: stagger -->
+                <StackPanel Name="Arp" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="975,0,0,0">
+                    <Grid Name="Note1" Width="24" Height="70" Margin="0,111,6,0" VerticalAlignment="Top" Opacity="0" RenderTransformOrigin="0.5,1"><Ellipse Width="20" Height="15" Fill="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Rotation="-0.35" RenderTransformOrigin="0.5,0.5" /><Border Width="2" Height="60" Background="$IndigoBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,3,0" /></Grid>
+                    <Grid Name="Note2" Width="24" Height="70" Margin="0,100,6,0" VerticalAlignment="Top" Opacity="0" RenderTransformOrigin="0.5,1"><Ellipse Width="20" Height="15" Fill="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Rotation="-0.35" RenderTransformOrigin="0.5,0.5" /><Border Width="2" Height="60" Background="$IndigoBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,3,0" /></Grid>
+                    <Grid Name="Note3" Width="24" Height="70" Margin="0,89,6,0" VerticalAlignment="Top" Opacity="0" RenderTransformOrigin="0.5,1"><Ellipse Width="20" Height="15" Fill="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Rotation="-0.35" RenderTransformOrigin="0.5,0.5" /><Border Width="2" Height="60" Background="$IndigoBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,3,0" /></Grid>
+                    <Grid Name="Note4" Width="24" Height="70" Margin="0,78,6,0" VerticalAlignment="Top" Opacity="0" RenderTransformOrigin="0.5,1"><Ellipse Width="20" Height="15" Fill="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Rotation="-0.35" RenderTransformOrigin="0.5,0.5" /><Border Width="2" Height="60" Background="$IndigoBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,3,0" /></Grid>
+                    <Grid Name="Note5" Width="24" Height="70" Margin="0,67,6,0" VerticalAlignment="Top" Opacity="0" RenderTransformOrigin="0.5,1"><Ellipse Width="20" Height="15" Fill="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Rotation="-0.35" RenderTransformOrigin="0.5,0.5" /><Border Width="2" Height="60" Background="$IndigoBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,3,0" /></Grid>
+                    <Grid Name="Note6" Width="24" Height="70" Margin="0,56,6,0" VerticalAlignment="Top" Opacity="0" RenderTransformOrigin="0.5,1"><Ellipse Width="20" Height="15" Fill="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Rotation="-0.35" RenderTransformOrigin="0.5,0.5" /><Border Width="2" Height="60" Background="$IndigoBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,3,0" /></Grid>
+                    <Grid Name="Note7" Width="24" Height="70" Margin="0,45,6,0" VerticalAlignment="Top" Opacity="0" RenderTransformOrigin="0.5,1"><Ellipse Width="20" Height="15" Fill="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Rotation="-0.35" RenderTransformOrigin="0.5,0.5" /><Border Width="2" Height="60" Background="$IndigoBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,3,0" /></Grid>
+                    <Grid Name="Note8" Width="24" Height="70" Margin="0,34,6,0" VerticalAlignment="Top" Opacity="0" RenderTransformOrigin="0.5,1"><Ellipse Width="20" Height="15" Fill="$IndigoBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Rotation="-0.35" RenderTransformOrigin="0.5,0.5" /><Border Width="2" Height="60" Background="$IndigoBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,3,0" /></Grid>
+                </StackPanel>
+
+                <Border Name="Playhead" Width="2" Height="150" Background="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,56,0,0" Opacity="0" />
+            </Grid>
+
+            <Grid Name="Measures" Width="1250" Height="60" Margin="0,4,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="20,0,0,0" Opacity="0">
+                    <TextBlock Text="TWEEN" Aspect="$Caps" Foreground="$InkBrush" />
+                    <TextBlock Text="Tween(1100ms, EaseInOut)" Aspect="$Code" FontSize="15" Foreground="$GraphiteBrush" Margin="0,6,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="20,0,0,0" Opacity="0">
+                    <TextBlock Text="SPRING" Aspect="$Caps" Foreground="$VermilionBrush" />
+                    <TextBlock Text="Spring(170, 8)" Aspect="$Code" FontSize="15" Foreground="$GraphiteBrush" Margin="0,6,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Margin="20,0,0,0" Opacity="0">
+                    <TextBlock Text="KEYFRAMES" Aspect="$Caps" Foreground="$OchreBrush" />
+                    <TextBlock Text="@keyframes duration 2600ms" Aspect="$Code" FontSize="15" Foreground="$GraphiteBrush" Margin="0,6,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="3" Margin="20,0,0,0" Opacity="0">
+                    <TextBlock Text="STAGGER" Aspect="$Caps" Foreground="$IndigoBrush" />
+                    <TextBlock Text="@stagger each 90ms" Aspect="$Code" FontSize="15" Foreground="$GraphiteBrush" Margin="0,6,0,0" />
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+
+        <TextBlock
+            Name="Caption"
+            Grid.Row="2"
+            Text="Every movement in this film is notation like this: declared in markup, played by the runtime."
+            Aspect="$Lede"
+            Opacity="0" />
+    </Grid>
+</UserControl>

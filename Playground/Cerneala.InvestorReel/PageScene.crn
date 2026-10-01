@@ -1,0 +1,115 @@
+<!-- vi · change a word, not the page: one figure in a manuscript is corrected; only it is redrawn. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Write" Duration="520ms" Easing="EaseOut" />
+        <Tween Name="Dim" Duration="700ms" Easing="EaseInOut" />
+        <Aspect Name="Prose" TargetType="TextBlock">
+            @default
+            {
+                FontFamily = "Sitka Text";
+                FontSize = 30;
+                Foreground = $InkBrush;
+            }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:PageScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(700ms, EaseOut) { @from { $Kicker.Opacity = 0; $Kicker.TranslateX = -18; } @to { $Kicker.Opacity = 1; $Kicker.TranslateX = 0; } }
+                    @animate with Tween(900ms, EaseOut) { @from { $Headline.Opacity = 0; $Headline.TranslateY = 24; } @to { $Headline.Opacity = 1; $Headline.TranslateY = 0; } }
+                    @animate with Tween(800ms, EaseOut) { @from { $Manuscript.Opacity = 0; $Manuscript.TranslateY = 20; } @to { $Manuscript.Opacity = 1; $Manuscript.TranslateY = 0; } }
+                }
+                @stagger target $Paragraph each 220ms
+                {
+                    @animate with $Write { @from { Opacity = 0; TranslateY = 8; } @to { Opacity = 1; TranslateY = 0; } }
+                }
+                @animate with Tween(700ms, Linear) { @from { $FrameLabel.Opacity = 0; } @to { $FrameLabel.Opacity = 1; } }
+
+                <!-- Frame N + 1: one figure changes. -->
+                @parallel
+                {
+                    @animate with $Dim { @from { $LineOne.Opacity = 1; $LineTwo.Opacity = 1; $LineThreeHead.Opacity = 1; $LineThreeTail.Opacity = 1; $LineFour.Opacity = 1; } @to { $LineOne.Opacity = 0.32; $LineTwo.Opacity = 0.32; $LineThreeHead.Opacity = 0.32; $LineThreeTail.Opacity = 0.32; $LineFour.Opacity = 0.32; } }
+                    @animate with Tween(420ms, EaseOut) { @from { $Wash.ScaleX = 0; } @to { $Wash.ScaleX = 1; } }
+                    @animate with Tween(700ms, EaseOut) { @from { $FrameLabel.Opacity = 1; $NextLabel.Opacity = 0; } @to { $FrameLabel.Opacity = 0; $NextLabel.Opacity = 1; } }
+                }
+                @animate with Tween(260ms, Sharp) { @from { $Strike.ScaleX = 0; } @to { $Strike.ScaleX = 1; } }
+                @animate with Tween(600ms, EaseOut) { @from { $Correction.Opacity = 0; $Correction.TranslateY = 10; $Correction.Rotation = -0.08; } @to { $Correction.Opacity = 1; $Correction.TranslateY = 0; $Correction.Rotation = -0.04; } }
+                @parallel
+                {
+                    @animate with Tween(600ms, EaseOut) { @from { $RedrawnNote.Opacity = 0; $RedrawnNote.TranslateY = 10; } @to { $RedrawnNote.Opacity = 1; $RedrawnNote.TranslateY = 0; } }
+                    @animate with Tween(600ms, EaseOut) { @from { $KeptNote.Opacity = 0; } @to { $KeptNote.Opacity = 1; } }
+                }
+                @animate with Tween(800ms, EaseOut) { @from { $Lede.Opacity = 0; $Lede.TranslateY = 12; } @to { $Lede.Opacity = 1; $Lede.TranslateY = 0; } }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:PageScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="170,110,120,110">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Name="Kicker" Text="change a word, not the page" Aspect="$Note" Opacity="0" />
+            <TextBlock Name="Headline" Text="Only what changes is redrawn." Aspect="$Display" Margin="0,6,0,0" Opacity="0" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,40,0,0">
+            <Border Name="Manuscript" Aspect="$Sheet" Width="980" HorizontalAlignment="Left" VerticalAlignment="Top" Padding="56,40,56,46" Opacity="0">
+                <StackPanel>
+                    <Grid Height="22" Margin="0,0,0,26">
+                        <TextBlock Text="THE LEDGER, FOLIO 12" Aspect="$Caps" />
+                        <TextBlock Name="FrameLabel" Text="FRAME N" Aspect="$Caps" HorizontalAlignment="Right" Opacity="0" />
+                        <TextBlock Name="NextLabel" Text="FRAME N + 1" Aspect="$Caps" Foreground="$VermilionBrush" HorizontalAlignment="Right" Opacity="0" />
+                    </Grid>
+                    <StackPanel Name="Paragraph">
+                        <TextBlock Name="LineOne" Text="The ledger opened at dawn. Forty invoices were" Aspect="$Prose" Margin="0,0,0,30" Opacity="0" />
+                        <TextBlock Name="LineTwo" Text="reconciled before noon, and the balance stood" Aspect="$Prose" Margin="0,0,0,30" Opacity="0" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,30" Opacity="0">
+                            <TextBlock Name="LineThreeHead" Text="at " Aspect="$Prose" />
+                            <Grid Width="96" Height="42">
+                                <Border Name="Wash" Background="$VermilionWashBrush" Margin="-6,0,-6,0" ScaleX="0" RenderTransformOrigin="0,0.5" />
+                                <TextBlock Text="1,204" Aspect="$Prose" HorizontalAlignment="Center" />
+                                <Border Name="Strike" Height="3" Background="$VermilionBrush" VerticalAlignment="Center" Margin="0,4,0,0" ScaleX="0" RenderTransformOrigin="0,0.5" />
+                                <TextBlock Name="Correction" Text="1,268" Aspect="$Note" FontSize="32" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-38,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5" />
+                            </Grid>
+                            <TextBlock Name="LineThreeTail" Text=" lei when the clerk closed the book," Aspect="$Prose" />
+                        </StackPanel>
+                        <TextBlock Name="LineFour" Text="and every other line on the page stayed as it was." Aspect="$Prose" Opacity="0" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Name="RedrawnNote" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="1010,150,0,0" Opacity="0">
+                <TextBlock Text="redrawn" Aspect="$Note" FontSize="30" />
+                <Border Width="60" Height="2" Background="$VermilionBrush" HorizontalAlignment="Left" Margin="0,6,0,0" />
+            </StackPanel>
+            <StackPanel Name="KeptNote" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="1010,250,0,0" Opacity="0">
+                <TextBlock Text="kept from" Aspect="$Note" FontSize="26" Foreground="$GraphiteBrush" />
+                <TextBlock Text="the last frame" Aspect="$Note" FontSize="26" Foreground="$GraphiteBrush" />
+            </StackPanel>
+        </Grid>
+
+        <TextBlock
+            Name="Lede"
+            Grid.Row="2"
+            Text="Cerneala keeps a retained tree between frames. A change redoes only the work it requires; unchanged drawing is reused."
+            Aspect="$Lede"
+            Opacity="0" />
+    </Grid>
+</UserControl>
