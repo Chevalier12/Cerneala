@@ -27,8 +27,6 @@ public sealed class AspectProcessor
 
     public AspectEngine Engine => engine;
 
-    internal AspectEnvironment Environment => GetEnvironment(root);
-
     public void Process(UIElement element)
     {
         root.Relay.VerifyAccess();

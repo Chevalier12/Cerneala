@@ -6462,6 +6462,7 @@ Generated from `.`.
 |-- AGENTS_DEPRECATED.md
 |-- architecture.md
 |-- Aspect_Audit_09022026.md
+|-- AspectChecklist.md
 |-- AUDIT_FIX_PLAN.md
 |-- Cerneala.csproj
 |-- Cerneala.slnx

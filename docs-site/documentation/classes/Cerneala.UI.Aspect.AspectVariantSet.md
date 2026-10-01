@@ -26,6 +26,7 @@ Create a variant key, store a value, and read it back with the typed API:
 ```csharp
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 
 AspectVariantKey<Button, ButtonKind> key = AspectVariantKey.For<Button, ButtonKind>("kind");
 
@@ -41,6 +42,7 @@ Use a control's variant set through `SetAspectVariant` so aspect processing is i
 
 ```csharp
 using Cerneala.UI.Controls;
+using Cerneala.UI.Controls.Buttons;
 
 Button button = new();
 button.SetAspectVariant(ButtonVariants.Kind, ButtonKind.Primary);
@@ -55,7 +57,7 @@ The set is immutable from the public API. `Set` copies the current key/value dic
 
 Typed keys carry an owner type and value type. The typed `Set<TControl, TValue>` overload accepts the typed key and value directly. The untyped `Set(AspectVariantKey, object?)` overload validates non-null values against `key.ValueType` and throws `ArgumentException` when the value type does not match. Both `Set` and `TryGet` throw `ArgumentNullException` for a null key.
 
-`TryGet` returns `true` only when the key exists and the stored value can be returned as `TValue`. A stored `null` value can be read successfully when `TValue` can be null. Equality compares the same keys and values, regardless of dictionary enumeration order; `GetHashCode` orders entries by key text for stable order-independent hashing.
+`TryGet` returns `true` only when the key exists and the stored value can be returned as `TValue`. A stored `null` value can be read successfully when `TValue` can be null. Equality compares the same keys and values, regardless of dictionary enumeration order. `GetHashCode` combines each key/value pair, aggregates those hashes with XOR, and combines the aggregate with the entry count, making it independent of insertion order without sorting entries.
 
 ## Properties
 

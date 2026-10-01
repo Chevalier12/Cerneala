@@ -29,7 +29,7 @@ AspectRuleSet borderRule = new(
     AspectLayer.App,
     new AspectTarget(typeof(Border)),
     [new AspectDeclaration(Control.BorderBrushProperty, DefaultAspectTokens.Brush.Border.Ref())],
-    priority: 0);
+    declarationOrder: 0);
 ```
 
 Read a default token value from the default environment:
@@ -65,7 +65,7 @@ AspectPackage package = AspectPackage.Create("App")
 
 The token names are stable semantic names such as `color.background`, `brush.background`, `brush.border`, `spacing.control-padding`, and `motion.normal`. Rules can refer to the tokens through `AspectToken<T>.Ref()` so the final value is read from the active `AspectEnvironment` during aspect resolution.
 
-The default package uses several of these tokens directly: button rules use `Brush.Background` and `Stroke.ControlBorderThickness`, border rules use `Brush.Surface` and `Brush.Border`, and the default environment provides values for all tokens listed below.
+The default button rule uses `Stroke.ControlBorderThickness` from this catalog; its background, foreground, border brush, and padding come from `ButtonTokens`. The default border rule uses `Brush.Border` and does not set a background. The default environment provides values for all tokens listed below, including tokens that these built-in rules do not reference directly.
 
 ## Nested Classes
 
