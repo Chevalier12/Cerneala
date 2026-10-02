@@ -1,0 +1,213 @@
+<!-- 05 · PRISM_FX: three neon pieces are lifted on animated glow, beside three filtered proofs of one image. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Place" Duration="380ms" Easing="EaseOut" />
+        <Tween Name="Power" Duration="1400ms" Easing="EaseOut" />
+        <Aspect Name="ProofLabel" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 15; Foreground = $CyTextBrush; }
+        </Aspect>
+        <Aspect Name="ProofNote" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 13; Foreground = $CyDimBrush; HorizontalAlignment = "Right"; VerticalAlignment = "Center"; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:CyberPrismScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(300ms, Linear) { @from { $Kicker.Opacity = 0; } @to { $Kicker.Opacity = 1; } }
+                    @animate with Tween(160ms, Linear) { @from { $Headline.Opacity = 0; } @to { $Headline.Opacity = 1; } }
+                    @animate with PingPong(Tween(45ms, Linear), 6) { @from { $Headline.TranslateX = 0; } @to { $Headline.TranslateX = 12; } }
+                    @animate with Tween(500ms, EaseOut) { @from { $Board.Opacity = 0; } @to { $Board.Opacity = 1; } }
+                }
+                @stagger target $Pieces each 120ms
+                {
+                    @animate with $Place { @from { Opacity = 0; TranslateY = 16; } @to { Opacity = 1; TranslateY = 0; } }
+                }
+                <!-- Then the light comes on: each piece glows to its own strength. -->
+                @parallel
+                {
+                    @animate with $Power { @from { $Sun.prism.Neon.Lift = 0; } @to { $Sun.prism.Neon.Lift = 40; } }
+                    @animate with $Power { @from { $Core.prism.Neon.Lift = 0; } @to { $Core.prism.Neon.Lift = 18; } }
+                    @animate with $Power { @from { $Diamond.prism.Neon.Lift = 0; } @to { $Diamond.prism.Neon.Lift = 28; } }
+                    @animate with Tween(600ms, EaseOut) { @from { $Readings.Opacity = 0; } @to { $Readings.Opacity = 1; } }
+                    @animate with Tween(800ms, EaseOut) { @from { $LiftNote.Opacity = 0; $LiftNote.TranslateX = -10; } @to { $LiftNote.Opacity = 1; $LiftNote.TranslateX = 0; } }
+                    @stagger target $Proofs each 160ms
+                    {
+                        @animate with $Place { @from { Opacity = 0; TranslateX = 30; } @to { Opacity = 1; TranslateX = 0; } }
+                    }
+                }
+                @parallel
+                {
+                    @animate with PingPong(Tween(1400ms, EaseInOut), forever) { @from { $Sun.prism.Neon.Lift = 40; } @to { $Sun.prism.Neon.Lift = 22; } }
+                    @animate with PingPong(Tween(1200ms, EaseInOut), forever) { @from { $EdgeArt.prism.Fx.Width = 1; } @to { $EdgeArt.prism.Fx.Width = 5; } }
+                    @animate with PingPong(Tween(1600ms, EaseInOut), forever) { @from { $ShardArt.prism.Fx.Cell = 4; } @to { $ShardArt.prism.Fx.Cell = 16; } }
+                    @animate with PingPong(Tween(900ms, EaseInOut), forever) { @from { $SplitArt.prism.Fx.Split = 2; } @to { $SplitArt.prism.Fx.Split = 14; } }
+                    @animate with Tween(800ms, EaseOut) { @from { $Caption.Opacity = 0; } @to { $Caption.Opacity = 1; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:CyberPrismScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="140,120,140,110">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Name="Kicker" Text="&gt; prism --layers" Aspect="$CyTag" Opacity="0" />
+            <Grid Name="Headline" Margin="0,8,0,0" Opacity="0">
+                <TextBlock Text="EFFECTS, LAYERED IN LIGHT." Aspect="$CyDisplay" Foreground="$CyMagentaBrush" TranslateX="3" Opacity="0.85" />
+                <TextBlock Text="EFFECTS, LAYERED IN LIGHT." Aspect="$CyDisplay" Foreground="$CyCyanBrush" TranslateX="-3" Opacity="0.85" />
+                <TextBlock Text="EFFECTS, LAYERED IN LIGHT." Aspect="$CyDisplay" />
+            </Grid>
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,30,0,0">
+            <!-- The source image -->
+            <Border Name="Board" Width="820" Height="420" Background="$CyVoidBrush" BorderBrush="$CyGridBrush" BorderThickness="1" HorizontalAlignment="Left" VerticalAlignment="Top" ClipToBounds="True" Opacity="0">
+                <Grid>
+                    <!-- Three lit pieces, spaced so that no two glow layers overlap. -->
+                    <Border Height="1" Background="$CyGridBrush" VerticalAlignment="Top" Margin="0,350,0,0" />
+                    <Border Height="1" Background="$CyGridBrush" VerticalAlignment="Top" Margin="0,372,0,0" />
+                    <Border Height="1" Background="$CyGridBrush" VerticalAlignment="Top" Margin="0,398,0,0" />
+                    <Grid Name="Pieces">
+                        <Ellipse Name="Sun" Width="190" Height="190" Fill="$CyMagentaBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="60,80,0,0" Opacity="0">
+                            @prism
+                            {
+                                @layer Neon
+                                {
+                                    @parameter Lift: float = 0;
+                                    @style DropShadow { Color = #FFFF2E97; Opacity = 0.85; UseGlobalLight = false; Angle = 90; Distance = Lift; Size = Lift; }
+                                }
+                            }
+                        </Ellipse>
+                        <Border Name="Core" Width="160" Height="160" Background="$CyNightBrush" BorderBrush="$CyCyanBrush" BorderThickness="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="330,95,0,0" Opacity="0">
+                            @prism
+                            {
+                                @layer Neon
+                                {
+                                    @parameter Lift: float = 0;
+                                    @style DropShadow { Color = #FF19F0FF; Opacity = 0.85; UseGlobalLight = false; Angle = 90; Distance = Lift; Size = Lift; }
+                                }
+                            }
+                        </Border>
+                        <Border Name="Diamond" Width="140" Height="140" Background="$CyNightBrush" BorderBrush="$CyVioletBrush" BorderThickness="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="600,105,0,0" Rotation="0.785" RenderTransformOrigin="0.5,0.5" Opacity="0">
+                            @prism
+                            {
+                                @layer Neon
+                                {
+                                    @parameter Lift: float = 0;
+                                    @style DropShadow { Color = #FF7A5CFF; Opacity = 0.85; UseGlobalLight = false; Angle = 90; Distance = Lift; Size = Lift; }
+                                }
+                            }
+                        </Border>
+                    </Grid>
+                    <Grid Name="Readings" Opacity="0">
+                        <TextBlock Text="LIFT 0 → 40" FontFamily="Cascadia Mono" FontSize="14" Foreground="$CyMagentaBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="104,306,0,0" />
+                        <TextBlock Text="LIFT 0 → 18" FontFamily="Cascadia Mono" FontSize="14" Foreground="$CyCyanBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="364,306,0,0" />
+                        <TextBlock Text="LIFT 0 → 28" FontFamily="Cascadia Mono" FontSize="14" Foreground="$CyVioletBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="624,306,0,0" />
+                    </Grid>
+                    <StackPanel Name="LiftNote" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,22,24,0" Opacity="0">
+                        <TextBlock Text="@style DropShadow" FontFamily="Cascadia Mono" FontSize="15" Foreground="$CyTextBrush" HorizontalAlignment="Right" />
+                        <TextBlock Text="Distance = Lift; Size = Lift;" FontFamily="Cascadia Mono" FontSize="13" Foreground="$CyDimBrush" HorizontalAlignment="Right" Margin="0,4,0,0" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Three proofs of the same image -->
+            <StackPanel Name="Proofs" HorizontalAlignment="Right" VerticalAlignment="Top">
+                <StackPanel Margin="0,0,0,10" Opacity="0">
+                    <Border Width="440" Height="100" BorderBrush="$CyGridBrush" BorderThickness="1" ClipToBounds="True">
+                        <Grid Name="EdgeArt">
+                            @prism
+                            {
+                                @layer Fx
+                                {
+                                    @parameter Width: float = 1;
+                                    @filter GlowingEdges { EdgeWidth = Width; EdgeBrightness = 9; Smoothness = 4; }
+                                }
+                            }
+                            <Border Background="$CyNightBrush" />
+                            <Ellipse Width="70" Height="70" Fill="$CyMagentaBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,8,0,0" />
+                            <Border Width="120" Height="120" Background="$CyGridBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="80,60,0,0" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
+                            <Border Width="100" Height="100" Background="$CyGridBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="260,70,0,0" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
+                            <Border Height="3" Background="$CyCyanBrush" VerticalAlignment="Top" Margin="0,82,0,0" />
+                        </Grid>
+                    </Border>
+                    <Grid Width="440" Height="24" Margin="0,6,0,0">
+                        <TextBlock Text="@filter GlowingEdges" Aspect="$ProofLabel" />
+                        <TextBlock Text="width 1 → 5" Aspect="$ProofNote" />
+                    </Grid>
+                </StackPanel>
+                <StackPanel Margin="0,0,0,10" Opacity="0">
+                    <Border Width="440" Height="100" BorderBrush="$CyGridBrush" BorderThickness="1" ClipToBounds="True">
+                        <Grid Name="ShardArt">
+                            @prism
+                            {
+                                @layer Fx
+                                {
+                                    @parameter Cell: float = 4;
+                                    @filter Crystallize { CellSize = Cell; }
+                                }
+                            }
+                            <Border Background="$CyNightBrush" />
+                            <Ellipse Width="70" Height="70" Fill="$CyMagentaBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,8,0,0" />
+                            <Border Width="120" Height="120" Background="$CyCyanDimBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="80,60,0,0" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
+                            <Border Width="100" Height="100" Background="$CyVioletBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="260,70,0,0" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
+                            <Border Height="3" Background="$CyCyanBrush" VerticalAlignment="Top" Margin="0,82,0,0" />
+                        </Grid>
+                    </Border>
+                    <Grid Width="440" Height="24" Margin="0,6,0,0">
+                        <TextBlock Text="@filter Crystallize" Aspect="$ProofLabel" />
+                        <TextBlock Text="cell 4 → 16" Aspect="$ProofNote" />
+                    </Grid>
+                </StackPanel>
+                <StackPanel Margin="0,0,0,10" Opacity="0">
+                    <Border Width="440" Height="100" BorderBrush="$CyGridBrush" BorderThickness="1" ClipToBounds="True">
+                        <Grid Name="SplitArt">
+                            @prism
+                            {
+                                @layer Fx
+                                {
+                                    @parameter Split: float = 2;
+                                    @filter ChromaticAberration { Amount = Split; }
+                                    @filter Scanlines { Frequency = 60; Thickness = 1; LineOpacity = 0.4; }
+                                }
+                            }
+                            <Border Background="$CyNightBrush" />
+                            <Ellipse Width="70" Height="70" Fill="$CyMagentaBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,8,0,0" />
+                            <Border Width="120" Height="120" Background="$CyCyanDimBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="80,60,0,0" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
+                            <Border Width="100" Height="100" Background="$CyVioletBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="260,70,0,0" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
+                            <Border Height="3" Background="$CyCyanBrush" VerticalAlignment="Top" Margin="0,82,0,0" />
+                        </Grid>
+                    </Border>
+                    <Grid Width="440" Height="24" Margin="0,6,0,0">
+                        <TextBlock Text="@filter ChromaticAberration" Aspect="$ProofLabel" />
+                        <TextBlock Text="split 2 → 14" Aspect="$ProofNote" />
+                    </Grid>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+
+        <TextBlock
+            Name="Caption"
+            Grid.Row="2"
+            Text="// Prism: 134 filters, 10 layer styles and 28 blend modes. Declared in markup, rendered on the GPU."
+            Aspect="$CyLede"
+            Opacity="0" />
+    </Grid>
+</UserControl>

@@ -1,0 +1,214 @@
+<!-- 02 · COMPILE: markup streams into a terminal; the generator turns it into a card that a scan line materialises. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Line" Duration="220ms" Easing="Linear" />
+        <Tween Name="Chip" Duration="260ms" Easing="EaseOut" />
+        <Aspect Name="CodeLine" TargetType="StackPanel">
+            @default { Orientation = "Horizontal"; Height = 30; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="Tag" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 18; Foreground = $CyCyanBrush; }
+        </Aspect>
+        <Aspect Name="Attr" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 18; Foreground = $CyTextBrush; }
+        </Aspect>
+        <Aspect Name="Str" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 18; Foreground = $CyMagentaBrush; }
+        </Aspect>
+        <Aspect Name="Row" TargetType="Grid">
+            @default { Height = 34; Margin = "0,10,0,0"; }
+        </Aspect>
+        <Aspect Name="RowText" TargetType="TextBlock">
+            @default { FontFamily = "Bahnschrift Light"; FontSize = 21; Foreground = $CyTextBrush; }
+        </Aspect>
+        <Aspect Name="ChipBox" TargetType="Border">
+            @default { BorderBrush = $CyCyanDimBrush; BorderThickness = "1"; Padding = "14,6,14,7"; Margin = "0,0,12,0"; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="ChipText" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 14; Foreground = $CyCyanBrush; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:CyberSketchScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(300ms, Linear) { @from { $Kicker.Opacity = 0; } @to { $Kicker.Opacity = 1; } }
+                    @animate with Tween(160ms, Linear) { @from { $Headline.Opacity = 0; } @to { $Headline.Opacity = 1; } }
+                    @animate with PingPong(Tween(45ms, Linear), 6) { @from { $Headline.TranslateX = 0; } @to { $Headline.TranslateX = 12; } }
+                    @animate with Tween(400ms, EaseOut) { @from { $Terminal.Opacity = 0; $Terminal.TranslateX = -24; } @to { $Terminal.Opacity = 1; $Terminal.TranslateX = 0; } }
+                }
+                @stagger target $Code each 120ms
+                {
+                    @animate with $Line { @from { Opacity = 0; TranslateX = -8; } @to { Opacity = 1; TranslateX = 0; } }
+                }
+
+                <!-- The generator: markup in, C# out. -->
+                @parallel
+                {
+                    @animate with Tween(300ms, EaseOut) { @from { $Generator.Opacity = 0; } @to { $Generator.Opacity = 1; } }
+                    @animate with Tween(700ms, EaseInOut) { @from { $Packet.TranslateX = 0; $Packet.Opacity = 1; } @to { $Packet.TranslateX = 150; $Packet.Opacity = 1; } }
+                }
+                @parallel
+                {
+                    @animate with Tween(200ms, Linear) { @from { $Packet.Opacity = 1; } @to { $Packet.Opacity = 0; } }
+                    @animate with Tween(300ms, Linear) { @from { $Wire.Opacity = 0; } @to { $Wire.Opacity = 1; } }
+                }
+
+                <!-- A scan line materialises the card from its wireframe. -->
+                @parallel
+                {
+                    @animate with Tween(100ms, Linear) { @from { $Scan.Opacity = 0; } @to { $Scan.Opacity = 1; } }
+                    @animate with Tween(1300ms, EaseInOut) { @from { $Scan.TranslateY = 0; } @to { $Scan.TranslateY = 360; } }
+                    @animate with Tween(1300ms, EaseInOut) { @from { $Shroud.ScaleY = 1; } @to { $Shroud.ScaleY = 0; } }
+                }
+                @parallel
+                {
+                    @animate with Tween(200ms, Linear) { @from { $Scan.Opacity = 1; } @to { $Scan.Opacity = 0; } }
+                    @animate with Tween(300ms, Linear) { @from { $Wire.Opacity = 1; } @to { $Wire.Opacity = 0.25; } }
+                    @animate with PingPong(Tween(180ms, EaseOut), 2) { @from { $PayButton.Scale = 1; } @to { $PayButton.Scale = 1.08; } }
+                    @animate with Tween(600ms, EaseOut) { @from { $Writes.Opacity = 0; $Writes.TranslateY = 8; } @to { $Writes.Opacity = 1; $Writes.TranslateY = 0; } }
+                }
+                @stagger target $Chips each 110ms
+                {
+                    @animate with $Chip { @from { Opacity = 0; TranslateY = 8; } @to { Opacity = 1; TranslateY = 0; } }
+                }
+
+                <!-- The generator keeps running. -->
+                @animate with Repeat(Tween(1100ms, EaseInOut), forever) { @from { $Packet.TranslateX = 0; $Packet.Opacity = 0.8; } @to { $Packet.TranslateX = 150; $Packet.Opacity = 0.8; } }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:CyberSketchScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="140,120,140,110">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Name="Kicker" Text="&gt; describe_it_once.crn" Aspect="$CyTag" Opacity="0" />
+            <Grid Name="Headline" Margin="0,8,0,0" Opacity="0">
+                <TextBlock Text="DESCRIBE IT ONCE." Aspect="$CyDisplay" Foreground="$CyMagentaBrush" TranslateX="3" Opacity="0.85" />
+                <TextBlock Text="DESCRIBE IT ONCE." Aspect="$CyDisplay" Foreground="$CyCyanBrush" TranslateX="-3" Opacity="0.85" />
+                <TextBlock Text="DESCRIBE IT ONCE." Aspect="$CyDisplay" />
+            </Grid>
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,30,0,0">
+            <!-- The terminal -->
+            <Border Name="Terminal" Aspect="$CyPanel" Width="600" Height="356" HorizontalAlignment="Left" VerticalAlignment="Top" Padding="0" Opacity="0">
+                <Grid>
+                    <Border Height="38" Background="$CyGridBrush" VerticalAlignment="Top" />
+                    <TextBlock Text="OrderCard.crn" FontFamily="Cascadia Mono" FontSize="14" Foreground="$CyTextBrush" VerticalAlignment="Top" Margin="20,10,0,0" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,14,16,0">
+                        <Ellipse Width="9" Height="9" Fill="$CyMagentaBrush" Margin="0,0,6,0" />
+                        <Ellipse Width="9" Height="9" Fill="$CyYellowBrush" Margin="0,0,6,0" />
+                        <Ellipse Width="9" Height="9" Fill="$CyCyanBrush" />
+                    </StackPanel>
+                    <StackPanel Name="Code" Margin="24,56,0,0">
+                        <StackPanel Aspect="$CodeLine">
+                            <TextBlock Text="&lt;Border " Aspect="$Tag" />
+                            <TextBlock Text="Aspect=" Aspect="$Attr" />
+                            <TextBlock Text="&quot;\$Card&quot;" Aspect="$Str" />
+                            <TextBlock Text="&gt;" Aspect="$Tag" />
+                        </StackPanel>
+                        <StackPanel Aspect="$CodeLine" Margin="26,0,0,0">
+                            <TextBlock Text="&lt;StackPanel&gt;" Aspect="$Tag" />
+                        </StackPanel>
+                        <StackPanel Aspect="$CodeLine" Margin="52,0,0,0">
+                            <TextBlock Text="&lt;TextBlock " Aspect="$Tag" />
+                            <TextBlock Text="Text=" Aspect="$Attr" />
+                            <TextBlock Text="&quot;Order 1042&quot;" Aspect="$Str" />
+                            <TextBlock Text=" /&gt;" Aspect="$Tag" />
+                        </StackPanel>
+                        <StackPanel Aspect="$CodeLine" Margin="52,0,0,0">
+                            <TextBlock Text="&lt;TextBlock " Aspect="$Tag" />
+                            <TextBlock Text="Text=" Aspect="$Attr" />
+                            <TextBlock Text="&quot;Indigo ink × 2&quot;" Aspect="$Str" />
+                            <TextBlock Text=" /&gt;" Aspect="$Tag" />
+                        </StackPanel>
+                        <StackPanel Aspect="$CodeLine" Margin="52,0,0,0">
+                            <TextBlock Text="&lt;TextBlock " Aspect="$Tag" />
+                            <TextBlock Text="Text=" Aspect="$Attr" />
+                            <TextBlock Text="&quot;Fine nib × 1&quot;" Aspect="$Str" />
+                            <TextBlock Text=" /&gt;" Aspect="$Tag" />
+                        </StackPanel>
+                        <StackPanel Aspect="$CodeLine" Margin="52,0,0,0">
+                            <TextBlock Text="&lt;Button " Aspect="$Tag" />
+                            <TextBlock Text="Content=" Aspect="$Attr" />
+                            <TextBlock Text="&quot;Pay 64 lei&quot;" Aspect="$Str" />
+                            <TextBlock Text=" /&gt;" Aspect="$Tag" />
+                        </StackPanel>
+                        <StackPanel Aspect="$CodeLine" Margin="26,0,0,0">
+                            <TextBlock Text="&lt;/StackPanel&gt;" Aspect="$Tag" />
+                        </StackPanel>
+                        <StackPanel Aspect="$CodeLine">
+                            <TextBlock Text="&lt;/Border&gt;" Aspect="$Tag" />
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- The generator -->
+            <Grid Name="Generator" Width="200" Height="80" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="620,130,0,0" Opacity="0">
+                <Border Height="2" Background="$CyCyanDimBrush" VerticalAlignment="Center" Margin="10,0,10,0" />
+                <Border Name="Packet" Width="16" Height="16" Background="$CyMagentaBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,0,0,0" />
+                <TextBlock Text="SOURCE GENERATOR" FontFamily="Cascadia Mono" FontSize="12" Foreground="$CyDimBrush" HorizontalAlignment="Center" VerticalAlignment="Top" />
+                <TextBlock Text="→ C#" FontFamily="Cascadia Mono" FontSize="14" Foreground="$CyCyanBrush" HorizontalAlignment="Center" VerticalAlignment="Bottom" />
+            </Grid>
+
+            <!-- The card: wireframe, then solid -->
+            <Grid Width="460" Height="360" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,0,0">
+                <Border Background="$CyPanelBrush" BorderBrush="$CyCyanBrush" BorderThickness="1.5" Padding="36,30,36,30">
+                    <StackPanel>
+                        <TextBlock Text="ORDER 1042" FontFamily="Bahnschrift" FontSize="40" Foreground="$CyTextBrush" />
+                        <Border Height="1" Background="$CyCyanDimBrush" Margin="0,14,0,4" />
+                        <Grid Aspect="$Row">
+                            <TextBlock Text="Indigo ink" Aspect="$RowText" />
+                            <TextBlock Text="× 2" Aspect="$RowText" Foreground="$CyCyanBrush" HorizontalAlignment="Right" />
+                        </Grid>
+                        <Grid Aspect="$Row">
+                            <TextBlock Text="Fine nib" Aspect="$RowText" />
+                            <TextBlock Text="× 1" Aspect="$RowText" Foreground="$CyCyanBrush" HorizontalAlignment="Right" />
+                        </Grid>
+                        <Border Name="PayButton" Height="56" Background="$CyMagentaBrush" Margin="0,40,0,0" RenderTransformOrigin="0.5,0.5">
+                            <TextBlock Text="PAY 64 LEI" FontFamily="Bahnschrift" FontSize="22" Foreground="$CyVoidBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </StackPanel>
+                </Border>
+                <Border Name="Shroud" Background="$CyVoidBrush" RenderTransformOrigin="0.5,1" />
+                <Grid Name="Wire" Opacity="0">
+                    <Border BorderBrush="$CyCyanBrush" BorderThickness="1" />
+                    <Border Height="1" Background="$CyCyanDimBrush" VerticalAlignment="Top" Margin="0,90,0,0" />
+                    <Border Height="1" Background="$CyCyanDimBrush" VerticalAlignment="Top" Margin="0,180,0,0" />
+                    <Border Height="1" Background="$CyCyanDimBrush" VerticalAlignment="Top" Margin="0,270,0,0" />
+                    <Border Width="1" Background="$CyCyanDimBrush" HorizontalAlignment="Left" Margin="115,0,0,0" />
+                    <Border Width="1" Background="$CyCyanDimBrush" HorizontalAlignment="Left" Margin="230,0,0,0" />
+                    <Border Width="1" Background="$CyCyanDimBrush" HorizontalAlignment="Left" Margin="345,0,0,0" />
+                </Grid>
+                <Border Name="Scan" Height="3" Background="$CyCyanBrush" VerticalAlignment="Top" Opacity="0" />
+            </Grid>
+            <TextBlock Name="Writes" Text="the compiler writes the C#" FontFamily="Cascadia Mono" FontSize="16" Foreground="$CyMagentaBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,376,0,0" Opacity="0" />
+        </Grid>
+
+        <StackPanel Name="Chips" Grid.Row="2" Orientation="Horizontal">
+            <Border Aspect="$ChipBox"><TextBlock Text=".CRN MARKUP" Aspect="$ChipText" /></Border>
+            <Border Aspect="$ChipBox"><TextBlock Text="COMPILED BY A SOURCE GENERATOR" Aspect="$ChipText" /></Border>
+            <Border Aspect="$ChipBox"><TextBlock Text="TYPED NAMES" Aspect="$ChipText" /></Border>
+            <Border Aspect="$ChipBox"><TextBlock Text="NO PARSER AT RUNTIME" Aspect="$ChipText" /></Border>
+        </StackPanel>
+    </Grid>
+</UserControl>

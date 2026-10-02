@@ -1,0 +1,289 @@
+<!-- ix · the desk: a .crn editor with diagnostics and completion, beside a live preview that changes in place. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Type" Duration="360ms" Easing="EaseOut" />
+        <Tween Name="Quick" Duration="220ms" Easing="EaseOut" />
+        <Tween Name="Step" Duration="240ms" Easing="EaseInOut" />
+        <Aspect Name="Ln" TargetType="TextBlock">
+            @default { FontFamily = "Consolas"; FontSize = 17; Foreground = $GraphiteBrush; Width = 40; Opacity = 0.7; }
+        </Aspect>
+        <Aspect Name="Tag" TargetType="TextBlock">
+            @default { FontFamily = "Consolas"; FontSize = 17; Foreground = $IndigoBrush; }
+        </Aspect>
+        <Aspect Name="Plain" TargetType="TextBlock">
+            @default { FontFamily = "Consolas"; FontSize = 17; Foreground = $InkBrush; }
+        </Aspect>
+        <Aspect Name="Lit" TargetType="TextBlock">
+            @default { FontFamily = "Consolas"; FontSize = 17; Foreground = $VermilionBrush; }
+        </Aspect>
+        <Aspect Name="Line" TargetType="StackPanel">
+            @default { Orientation = "Horizontal"; Height = 26; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="Mode" TargetType="TextBlock">
+            @default { FontFamily = "Sitka Small"; FontSize = 14; Foreground = $GraphiteBrush; Width = 76; VerticalAlignment = "Center"; }
+        </Aspect>
+        <Aspect Name="Pick" TargetType="StackPanel">
+            @default { Orientation = "Horizontal"; Height = 28; Margin = "12,0,12,0"; }
+        </Aspect>
+        <Aspect Name="Feature" TargetType="TextBlock">
+            @default { FontFamily = "Sitka Small"; FontSize = 13; Foreground = $GraphiteBrush; Margin = "0,0,22,0"; Opacity = 0; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:EditorScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(700ms, EaseOut) { @from { $Kicker.Opacity = 0; $Kicker.TranslateX = -18; } @to { $Kicker.Opacity = 1; $Kicker.TranslateX = 0; } }
+                    @animate with Tween(900ms, EaseOut) { @from { $Headline.Opacity = 0; $Headline.TranslateY = 24; } @to { $Headline.Opacity = 1; $Headline.TranslateY = 0; } }
+                    @animate with Tween(700ms, EaseOut) { @from { $Editor.Opacity = 0; $Editor.TranslateY = 26; } @to { $Editor.Opacity = 1; $Editor.TranslateY = 0; } }
+                    @animate with Tween(800ms, EaseOut) { @from { $Preview.Opacity = 0; $Preview.TranslateX = 30; } @to { $Preview.Opacity = 1; $Preview.TranslateX = 0; } }
+                    @animate with Tween(900ms, EaseInOut) { @from { $ModeMark.TranslateX = 152; } @to { $ModeMark.TranslateX = 76; } }
+                }
+                @stagger target $Code each 80ms
+                {
+                    @animate with $Type { @from { Opacity = 0; TranslateX = -8; } @to { Opacity = 1; TranslateX = 0; } }
+                }
+
+                <!-- A typo is caught as you type, with the fix spelled out. -->
+                @animate with Tween(360ms, EaseOut) { @from { $Squiggle.Opacity = 1; $Squiggle.ScaleX = 0; } @to { $Squiggle.Opacity = 1; $Squiggle.ScaleX = 1; } }
+                @animate with Tween(320ms, EaseOut) { @from { $Diagnostic.Opacity = 0; $Diagnostic.TranslateY = -6; } @to { $Diagnostic.Opacity = 1; $Diagnostic.TranslateY = 0; } }
+                @animate with Tween(1100ms, Linear) { @from { $Diagnostic.Scale = 1; } @to { $Diagnostic.Scale = 1; } }
+                @parallel
+                {
+                    @animate with $Quick { @from { $Typo.Opacity = 1; } @to { $Typo.Opacity = 0; } }
+                    @animate with $Quick { @from { $Fixed.Opacity = 0; } @to { $Fixed.Opacity = 1; } }
+                    @animate with $Quick { @from { $Squiggle.Opacity = 1; } @to { $Squiggle.Opacity = 0; } }
+                    @animate with $Quick { @from { $Diagnostic.Opacity = 1; } @to { $Diagnostic.Opacity = 0; } }
+                }
+
+                <!-- Completion knows every brush in scope. -->
+                @animate with $Quick { @from { $Completion.Opacity = 0; $Completion.TranslateY = -6; } @to { $Completion.Opacity = 1; $Completion.TranslateY = 0; } }
+                @animate with Tween(300ms, Linear) { @from { $Highlight.TranslateY = 0; } @to { $Highlight.TranslateY = 0; } }
+                @animate with $Step { @from { $Highlight.TranslateY = 0; } @to { $Highlight.TranslateY = 28; } }
+                @animate with $Step { @from { $Highlight.TranslateY = 28; } @to { $Highlight.TranslateY = 56; } }
+                @animate with $Step { @from { $Highlight.TranslateY = 56; } @to { $Highlight.TranslateY = 84; } }
+                @animate with Tween(260ms, Linear) { @from { $Highlight.TranslateY = 84; } @to { $Highlight.TranslateY = 84; } }
+
+                <!-- Accept: the value changes and the preview follows, in place, with no rebuild. -->
+                @parallel
+                {
+                    @animate with $Quick { @from { $Completion.Opacity = 1; } @to { $Completion.Opacity = 0; } }
+                    @animate with $Quick { @from { $OldValue.Opacity = 1; } @to { $OldValue.Opacity = 0; } }
+                    @animate with $Quick { @from { $NewValue.Opacity = 0; } @to { $NewValue.Opacity = 1; } }
+                }
+                @parallel
+                {
+                    @animate with Tween(600ms, EaseInOut) { @from { $BarOld.Opacity = 1; } @to { $BarOld.Opacity = 0; } }
+                    @animate with Tween(600ms, EaseInOut) { @from { $BarNew.Opacity = 0; } @to { $BarNew.Opacity = 1; } }
+                    @animate with Tween(800ms, EaseOut) { @from { $Flash.Opacity = 1; } @to { $Flash.Opacity = 0; } }
+                    @animate with Tween(700ms, EaseOut) { @from { $Reloaded.Opacity = 0; $Reloaded.TranslateY = 8; } @to { $Reloaded.Opacity = 1; $Reloaded.TranslateY = 0; } }
+                }
+
+                @stagger target $Features each 90ms
+                {
+                    @animate with $Type { @from { Opacity = 0; TranslateY = 8; } @to { Opacity = 1; TranslateY = 0; } }
+                }
+                @animate with Tween(800ms, EaseOut) { @from { $Caption.Opacity = 0; } @to { $Caption.Opacity = 1; } }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:EditorScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="170,110,120,110">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="760" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="2">
+            <TextBlock Name="Kicker" Text="the desk" Aspect="$Note" Opacity="0" />
+            <TextBlock Name="Headline" Text="Write it. See it. Same second." Aspect="$Display" Margin="0,6,0,0" Opacity="0" />
+        </StackPanel>
+
+        <!-- The editor. -->
+        <Border Name="Editor" Grid.Row="1" Grid.Column="0" Aspect="$Sheet" Padding="0" Width="730" Height="360" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,30,0,0" Opacity="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="46" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Background="$PaperShadeBrush" Opacity="0.5" />
+                <TextBlock Grid.Row="0" Text="LedgerView.crn" FontFamily="Consolas" FontSize="15" Foreground="$InkBrush" VerticalAlignment="Center" Margin="24,0,0,0" />
+                <Grid Grid.Row="0" Width="228" Height="46" HorizontalAlignment="Right" Margin="0,0,16,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Design" Aspect="$Mode" />
+                        <TextBlock Text="Split" Aspect="$Mode" Foreground="$InkBrush" />
+                        <TextBlock Text="Code" Aspect="$Mode" />
+                    </StackPanel>
+                    <Border Name="ModeMark" Width="40" Height="2" Background="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="0,0,0,10" TranslateX="152" />
+                </Grid>
+
+                <Grid Grid.Row="1" Width="690" Height="290" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,16,0,0">
+                    <StackPanel Name="Code">
+                        <StackPanel Aspect="$Line">
+                            <TextBlock Text="1" Aspect="$Ln" />
+                            <TextBlock Text="&lt;Border " Aspect="$Tag" />
+                            <TextBlock Text="Aspect=" Aspect="$Plain" />
+                            <TextBlock Text="&quot;\$Card&quot;" Aspect="$Lit" />
+                        </StackPanel>
+                        <StackPanel Aspect="$Line">
+                            <TextBlock Text="2" Aspect="$Ln" />
+                            <Grid Margin="72,0,0,0">
+                                <StackPanel Name="Typo" Orientation="Horizontal">
+                                    <TextBlock Text="Paddin=" Aspect="$Plain" />
+                                    <TextBlock Text="&quot;24&quot;" Aspect="$Lit" />
+                                    <TextBlock Text="&gt;" Aspect="$Tag" />
+                                </StackPanel>
+                                <StackPanel Name="Fixed" Orientation="Horizontal" Opacity="0">
+                                    <TextBlock Text="Padding=" Aspect="$Plain" />
+                                    <TextBlock Text="&quot;24&quot;" Aspect="$Lit" />
+                                    <TextBlock Text="&gt;" Aspect="$Tag" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                        <StackPanel Aspect="$Line">
+                            <TextBlock Text="3" Aspect="$Ln" />
+                            <TextBlock Text="&lt;StackPanel&gt;" Aspect="$Tag" Margin="24,0,0,0" />
+                        </StackPanel>
+                        <StackPanel Aspect="$Line">
+                            <TextBlock Text="4" Aspect="$Ln" />
+                            <TextBlock Text="&lt;TextBlock " Aspect="$Tag" Margin="48,0,0,0" />
+                            <TextBlock Text="Text=" Aspect="$Plain" />
+                            <TextBlock Text="&quot;Balance&quot;" Aspect="$Lit" />
+                            <TextBlock Text=" /&gt;" Aspect="$Tag" />
+                        </StackPanel>
+                        <StackPanel Aspect="$Line">
+                            <TextBlock Text="5" Aspect="$Ln" />
+                            <TextBlock Text="&lt;Border " Aspect="$Tag" Margin="48,0,0,0" />
+                            <TextBlock Text="Height=" Aspect="$Plain" />
+                            <TextBlock Text="&quot;10&quot;" Aspect="$Lit" />
+                        </StackPanel>
+                        <StackPanel Aspect="$Line">
+                            <TextBlock Text="6" Aspect="$Ln" />
+                            <TextBlock Text="Background=" Aspect="$Plain" Margin="128,0,0,0" />
+                            <TextBlock Text="&quot;" Aspect="$Lit" />
+                            <Grid>
+                                <StackPanel Name="OldValue" Orientation="Horizontal">
+                                    <TextBlock Text="\$Ochre&quot;" Aspect="$Lit" />
+                                    <TextBlock Text=" /&gt;" Aspect="$Tag" />
+                                </StackPanel>
+                                <StackPanel Name="NewValue" Orientation="Horizontal" Opacity="0">
+                                    <TextBlock Text="\$Vermilion&quot;" Aspect="$Lit" />
+                                    <TextBlock Text=" /&gt;" Aspect="$Tag" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                        <StackPanel Aspect="$Line">
+                            <TextBlock Text="7" Aspect="$Ln" />
+                            <TextBlock Text="&lt;/StackPanel&gt;" Aspect="$Tag" Margin="24,0,0,0" />
+                        </StackPanel>
+                        <StackPanel Aspect="$Line">
+                            <TextBlock Text="8" Aspect="$Ln" />
+                            <TextBlock Text="&lt;/Border&gt;" Aspect="$Tag" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Line 2, columns 9-14: the misspelt property. Consolas 17 advances 9.35px per glyph. -->
+                    <Path
+                        Name="Squiggle"
+                        Width="57"
+                        Height="5"
+                        Data="M 0 4 L 3 1 L 6 4 L 9 1 L 12 4 L 15 1 L 18 4 L 21 1 L 24 4 L 27 1 L 30 4 L 33 1 L 36 4 L 39 1 L 42 4 L 45 1 L 48 4 L 51 1 L 54 4 L 57 1"
+                        Stroke="$VermilionBrush"
+                        StrokeThickness="1.5"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Margin="112,46,0,0"
+                        RenderTransformOrigin="0,0.5"
+                        Opacity="0" />
+                    <Border Name="Diagnostic" Background="$InkBrush" Padding="14,8,14,9" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="112,58,0,0" Opacity="0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Unknown property 'Paddin' on Border." FontFamily="Sitka Text" FontSize="15" Foreground="$PaperBrush" />
+                            <TextBlock Text="Did you mean Padding?" FontFamily="Sitka Text" FontSize="15" Foreground="$OchreWashBrush" Margin="8,0,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Line 6, column 14: completion for the brush value. -->
+                    <Border Name="Completion" Width="210" Background="$PaperBrush" BorderBrush="$GraphiteBrush" BorderThickness="1" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="272,158,0,0" Opacity="0">
+                        <Grid Height="120" Margin="0,4,0,4">
+                            <Border Name="Highlight" Height="28" Background="$IndigoWashBrush" VerticalAlignment="Top" />
+                            <StackPanel>
+                                <StackPanel Aspect="$Pick">
+                                    <Ellipse Width="12" Height="12" Fill="$InkBrush" VerticalAlignment="Center" Margin="0,0,12,0" />
+                                    <TextBlock Text="\$Ink" Aspect="$Plain" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Aspect="$Pick">
+                                    <Ellipse Width="12" Height="12" Fill="$IndigoBrush" VerticalAlignment="Center" Margin="0,0,12,0" />
+                                    <TextBlock Text="\$Indigo" Aspect="$Plain" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Aspect="$Pick">
+                                    <Ellipse Width="12" Height="12" Fill="$OchreBrush" VerticalAlignment="Center" Margin="0,0,12,0" />
+                                    <TextBlock Text="\$Ochre" Aspect="$Plain" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Aspect="$Pick">
+                                    <Ellipse Width="12" Height="12" Fill="$VermilionBrush" VerticalAlignment="Center" Margin="0,0,12,0" />
+                                    <TextBlock Text="\$Vermilion" Aspect="$Plain" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- The live preview, rendered by the real runtime. -->
+        <StackPanel Name="Preview" Grid.Row="1" Grid.Column="1" VerticalAlignment="Top" Margin="40,30,0,0" Opacity="0">
+            <TextBlock Text="LIVE PREVIEW · 100%" Aspect="$Caps" Margin="0,0,0,12" />
+            <Border Aspect="$Sheet" Padding="0" Width="420" HorizontalAlignment="Left">
+                <Grid>
+                    <Border Name="Flash" Background="$VermilionWashBrush" Opacity="0" />
+                    <StackPanel Margin="40,34,40,40">
+                        <TextBlock Text="Balance" FontFamily="Sitka Banner" FontSize="40" Foreground="$InkBrush" />
+                        <Grid Height="10" Margin="0,16,0,0">
+                            <Border Name="BarOld" Background="$OchreBrush" />
+                            <Border Name="BarNew" Background="$VermilionBrush" Opacity="0" />
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <TextBlock Name="Reloaded" Text="hot reload: no rebuild, state kept" Aspect="$Note" FontSize="24" Margin="0,16,0,0" Opacity="0" />
+        </StackPanel>
+
+        <StackPanel Name="Features" Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,16">
+            <TextBlock Text="COMPLETION" Aspect="$Feature" />
+            <TextBlock Text="HOVER" Aspect="$Feature" />
+            <TextBlock Text="GO TO DEFINITION" Aspect="$Feature" />
+            <TextBlock Text="RENAME" Aspect="$Feature" />
+            <TextBlock Text="DIAGNOSTICS" Aspect="$Feature" />
+            <TextBlock Text="SEMANTIC COLOUR" Aspect="$Feature" />
+            <TextBlock Text="FORMATTING" Aspect="$Feature" />
+            <TextBlock Text="CODE ACTIONS" Aspect="$Feature" />
+        </StackPanel>
+
+        <TextBlock
+            Name="Caption"
+            Grid.Row="3"
+            Grid.ColumnSpan="2"
+            Text="A language server for .crn and a Live Preview in Visual Studio. The preview is built by your project's own generator and drawn by the real runtime."
+            Aspect="$Lede"
+            Opacity="0" />
+    </Grid>
+</UserControl>

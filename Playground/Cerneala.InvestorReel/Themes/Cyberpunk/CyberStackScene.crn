@@ -1,0 +1,147 @@
+<!-- 11 · STACK: six isometric slabs build the stack from the GPU up, each lit in its own colour. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <SolidColorBrush Name="TopFaceBrush" Color="#F00E1124" />
+        <SolidColorBrush Name="LeftFaceBrush" Color="#FF090A15" />
+        <SolidColorBrush Name="RightFaceBrush" Color="#FF0C0E1D" />
+        <SolidColorBrush Name="BaseFaceBrush" Color="#FF0B3A44" />
+        <RadialGradientBrush Name="BaseHaloBrush" Center="210,60" RadiusX="210" RadiusY="60">
+            <GradientStop Offset="0" Color="#5519F0FF" />
+            <GradientStop Offset="1" Color="#0019F0FF" />
+        </RadialGradientBrush>
+        <Tween Name="Drop" Duration="420ms" Easing="EaseOut" />
+        <Aspect Name="Slab" TargetType="Grid">
+            @default { Width = 360; Height = 90; HorizontalAlignment = "Left"; VerticalAlignment = "Top"; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="SlabLabel" TargetType="TextBlock">
+            @default { FontFamily = "Bahnschrift"; FontSize = 22; HorizontalAlignment = "Center"; VerticalAlignment = "Top"; Margin = "0,21,0,0"; }
+        </Aspect>
+        <Aspect Name="Row" TargetType="StackPanel">
+            @default { Orientation = "Horizontal"; Height = 82; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="RowName" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 17; Width = 110; Margin = "0,24,0,0"; }
+        </Aspect>
+        <Aspect Name="RowText" TargetType="TextBlock">
+            @default { FontFamily = "Bahnschrift Light"; FontSize = 20; Foreground = $CyTextBrush; Margin = "0,22,0,0"; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:CyberStackScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(300ms, Linear) { @from { $Kicker.Opacity = 0; } @to { $Kicker.Opacity = 1; } }
+                    @animate with Tween(160ms, Linear) { @from { $Headline.Opacity = 0; } @to { $Headline.Opacity = 1; } }
+                    @animate with PingPong(Tween(45ms, Linear), 6) { @from { $Headline.TranslateX = 0; } @to { $Headline.TranslateX = 12; } }
+                }
+                <!-- From the GPU up. -->
+                @parallel
+                {
+                    @stagger target $Slabs each 220ms
+                    {
+                        @animate with $Drop { @from { Opacity = 0; TranslateY = -70; } @to { Opacity = 1; TranslateY = 0; } }
+                    }
+                    @stagger target $Rows each 220ms
+                    {
+                        @animate with $Drop { @from { Opacity = 0; TranslateX = -16; } @to { Opacity = 1; TranslateX = 0; } }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(700ms, EaseOut) { @from { $Manifesto.Opacity = 0; $Manifesto.TranslateX = 20; } @to { $Manifesto.Opacity = 1; $Manifesto.TranslateX = 0; } }
+                    @animate with PingPong(Tween(1200ms, EaseInOut), forever) { @from { $BaseGlow.Opacity = 0.5; } @to { $BaseGlow.Opacity = 1; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:CyberStackScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="140,120,140,110">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Name="Kicker" Text="&gt; ls /stack" Aspect="$CyTag" Opacity="0" />
+            <Grid Name="Headline" Margin="0,8,0,0" Opacity="0">
+                <TextBlock Text="EVERYTHING, IN ONE PLACE." Aspect="$CyDisplay" Foreground="$CyMagentaBrush" TranslateX="3" Opacity="0.85" />
+                <TextBlock Text="EVERYTHING, IN ONE PLACE." Aspect="$CyDisplay" Foreground="$CyCyanBrush" TranslateX="-3" Opacity="0.85" />
+                <TextBlock Text="EVERYTHING, IN ONE PLACE." Aspect="$CyDisplay" />
+            </Grid>
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,24,0,0">
+            <!-- Declared bottom first, so each slab rests on the one below. -->
+            <Grid Name="Slabs" Width="360" Height="500" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,0,0,0">
+                <Grid Aspect="$Slab" Margin="0,410,0,0">
+                    <Ellipse Name="BaseGlow" Width="420" Height="120" Fill="$BaseHaloBrush" Margin="-30,-15,-30,-15" Opacity="0.5" />
+                    <Path Data="M 0 35 L 180 70 L 180 90 L 0 55 Z" Fill="$LeftFaceBrush" Stroke="$CyCyanBrush" StrokeThickness="1.5" />
+                    <Path Data="M 180 70 L 360 35 L 360 55 L 180 90 Z" Fill="$RightFaceBrush" Stroke="$CyCyanBrush" StrokeThickness="1.5" />
+                    <Path Data="M 0 35 L 180 0 L 360 35 L 180 70 Z" Fill="$BaseFaceBrush" Stroke="$CyCyanBrush" StrokeThickness="2" />
+                    <TextBlock Text="SDL_GPU" Aspect="$SlabLabel" Foreground="$CyCyanBrush" />
+                </Grid>
+                <Grid Aspect="$Slab" Margin="0,328,0,0">
+                    <Path Data="M 0 35 L 180 70 L 180 90 L 0 55 Z" Fill="$LeftFaceBrush" Stroke="$CyVioletBrush" StrokeThickness="1.5" />
+                    <Path Data="M 180 70 L 360 35 L 360 55 L 180 90 Z" Fill="$RightFaceBrush" Stroke="$CyVioletBrush" StrokeThickness="1.5" />
+                    <Path Data="M 0 35 L 180 0 L 360 35 L 180 70 Z" Fill="$TopFaceBrush" Stroke="$CyVioletBrush" StrokeThickness="2" />
+                    <TextBlock Text="PRISM" Aspect="$SlabLabel" Foreground="$CyVioletBrush" />
+                </Grid>
+                <Grid Aspect="$Slab" Margin="0,246,0,0">
+                    <Path Data="M 0 35 L 180 70 L 180 90 L 0 55 Z" Fill="$LeftFaceBrush" Stroke="$CyMagentaBrush" StrokeThickness="1.5" />
+                    <Path Data="M 180 70 L 360 35 L 360 55 L 180 90 Z" Fill="$RightFaceBrush" Stroke="$CyMagentaBrush" StrokeThickness="1.5" />
+                    <Path Data="M 0 35 L 180 0 L 360 35 L 180 70 Z" Fill="$TopFaceBrush" Stroke="$CyMagentaBrush" StrokeThickness="2" />
+                    <TextBlock Text="MOTION" Aspect="$SlabLabel" Foreground="$CyMagentaBrush" />
+                </Grid>
+                <Grid Aspect="$Slab" Margin="0,164,0,0">
+                    <Path Data="M 0 35 L 180 70 L 180 90 L 0 55 Z" Fill="$LeftFaceBrush" Stroke="$CyYellowBrush" StrokeThickness="1.5" />
+                    <Path Data="M 180 70 L 360 35 L 360 55 L 180 90 Z" Fill="$RightFaceBrush" Stroke="$CyYellowBrush" StrokeThickness="1.5" />
+                    <Path Data="M 0 35 L 180 0 L 360 35 L 180 70 Z" Fill="$TopFaceBrush" Stroke="$CyYellowBrush" StrokeThickness="2" />
+                    <TextBlock Text="ASPECT" Aspect="$SlabLabel" Foreground="$CyYellowBrush" />
+                </Grid>
+                <Grid Aspect="$Slab" Margin="0,82,0,0">
+                    <Path Data="M 0 35 L 180 70 L 180 90 L 0 55 Z" Fill="$LeftFaceBrush" Stroke="$CyCyanBrush" StrokeThickness="1.5" />
+                    <Path Data="M 180 70 L 360 35 L 360 55 L 180 90 Z" Fill="$RightFaceBrush" Stroke="$CyCyanBrush" StrokeThickness="1.5" />
+                    <Path Data="M 0 35 L 180 0 L 360 35 L 180 70 Z" Fill="$TopFaceBrush" Stroke="$CyCyanBrush" StrokeThickness="2" />
+                    <TextBlock Text=".CRN" Aspect="$SlabLabel" Foreground="$CyCyanBrush" />
+                </Grid>
+                <Grid Aspect="$Slab" Margin="0,0,0,0">
+                    <Path Data="M 0 35 L 180 70 L 180 90 L 0 55 Z" Fill="$LeftFaceBrush" Stroke="$CyTextBrush" StrokeThickness="1.5" />
+                    <Path Data="M 180 70 L 360 35 L 360 55 L 180 90 Z" Fill="$RightFaceBrush" Stroke="$CyTextBrush" StrokeThickness="1.5" />
+                    <Path Data="M 0 35 L 180 0 L 360 35 L 180 70 Z" Fill="$TopFaceBrush" Stroke="$CyTextBrush" StrokeThickness="2" />
+                    <TextBlock Text="C#" Aspect="$SlabLabel" Foreground="$CyTextBrush" />
+                </Grid>
+            </Grid>
+
+            <!-- What each layer is, read top to bottom; revealed bottom first to match the build. -->
+            <Grid Name="Rows" Width="470" Height="500" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="420,0,0,0">
+                <StackPanel Aspect="$Row" VerticalAlignment="Top" Margin="0,410,0,0"><TextBlock Text="SDL_GPU" Aspect="$RowName" Foreground="$CyCyanBrush" /><TextBlock Text="native GPU rendering underneath it all." Aspect="$RowText" /></StackPanel>
+                <StackPanel Aspect="$Row" VerticalAlignment="Top" Margin="0,328,0,0"><TextBlock Text="PRISM" Aspect="$RowName" Foreground="$CyVioletBrush" /><TextBlock Text="filters, layer styles and blend modes." Aspect="$RowText" /></StackPanel>
+                <StackPanel Aspect="$Row" VerticalAlignment="Top" Margin="0,246,0,0"><TextBlock Text="MOTION" Aspect="$RowName" Foreground="$CyMagentaBrush" /><TextBlock Text="tweens, springs, keyframes and stagger." Aspect="$RowText" /></StackPanel>
+                <StackPanel Aspect="$Row" VerticalAlignment="Top" Margin="0,164,0,0"><TextBlock Text="ASPECT" Aspect="$RowName" Foreground="$CyYellowBrush" /><TextBlock Text="styles, states and templates." Aspect="$RowText" /></StackPanel>
+                <StackPanel Aspect="$Row" VerticalAlignment="Top" Margin="0,82,0,0"><TextBlock Text=".CRN" Aspect="$RowName" Foreground="$CyCyanBrush" /><TextBlock Text="views as typed, compiled markup." Aspect="$RowText" /></StackPanel>
+                <StackPanel Aspect="$Row" VerticalAlignment="Top" Margin="0,0,0,0"><TextBlock Text="C#" Aspect="$RowName" Foreground="$CyTextBrush" /><TextBlock Text="your logic, your types, your tools." Aspect="$RowText" /></StackPanel>
+            </Grid>
+
+            <StackPanel Name="Manifesto" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,90,0,0" Opacity="0">
+                <TextBlock Text="ONE COMPILER" FontFamily="Bahnschrift" FontSize="34" Foreground="$CyMagentaBrush" />
+                <TextBlock Text="ONE RUNTIME" FontFamily="Bahnschrift" FontSize="34" Foreground="$CyMagentaBrush" Margin="0,4,0,0" />
+                <TextBlock Text="ONE LANGUAGE" FontFamily="Bahnschrift" FontSize="34" Foreground="$CyMagentaBrush" Margin="0,4,0,0" />
+                <Border Width="120" Height="3" Background="$CyCyanBrush" HorizontalAlignment="Left" Margin="0,22,0,0" />
+                <TextBlock Text="NO BROWSER ENGINE." FontFamily="Cascadia Mono" FontSize="16" Foreground="$CyTextBrush" Margin="0,22,0,0" />
+                <TextBlock Text="NO SECOND LANGUAGE FOR THE INTERFACE." FontFamily="Cascadia Mono" FontSize="16" Foreground="$CyTextBrush" Margin="0,6,0,0" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

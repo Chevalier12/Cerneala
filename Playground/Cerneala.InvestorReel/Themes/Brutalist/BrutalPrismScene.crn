@@ -1,0 +1,198 @@
+<!-- 05 · EFFECTS: hard offset shadows push the poster's pieces off the page; three raw print filters proof the same poster. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Slam" Duration="150ms" Easing="EaseIn" />
+        <Tween Name="Cut" Duration="60ms" Easing="Linear" />
+        <Tween Name="Push" Duration="700ms" Easing="Linear" />
+        <Aspect Name="ProofLabel" TargetType="TextBlock">
+            @default { FontFamily = "Courier New"; FontSize = 16; Foreground = $BrBlackBrush; VerticalAlignment = "Center"; }
+        </Aspect>
+        <Aspect Name="ProofNote" TargetType="TextBlock">
+            @default { FontFamily = "Courier New"; FontSize = 14; Foreground = $BrBlackBrush; HorizontalAlignment = "Right"; VerticalAlignment = "Center"; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:BrutalPrismScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with $Cut { @from { $Tape.Opacity = 0; } @to { $Tape.Opacity = 1; } }
+                    @animate with $Cut { @from { $Headline.Opacity = 0; } @to { $Headline.Opacity = 1; } }
+                    @animate with $Slam { @from { $Headline.TranslateX = -90; } @to { $Headline.TranslateX = 0; } }
+                    @animate with $Cut { @from { $Poster.Opacity = 0; } @to { $Poster.Opacity = 1; } }
+                }
+                @stagger target $Pieces each 140ms
+                {
+                    @animate with $Cut { @from { Opacity = 0; } @to { Opacity = 1; } }
+                }
+                <!-- The shadows push the pieces off the page, mechanically. -->
+                @parallel
+                {
+                    @animate with $Push { @from { $Disc.prism.Hard.Push = 0; } @to { $Disc.prism.Hard.Push = 22; } }
+                    @animate with $Push { @from { $Slab.prism.Hard.Push = 0; } @to { $Slab.prism.Hard.Push = 14; } }
+                    @animate with $Push { @from { $Bar.prism.Hard.Push = 0; } @to { $Bar.prism.Hard.Push = 30; } }
+                    @animate with $Cut { @from { $PushNote.Opacity = 0; } @to { $PushNote.Opacity = 1; } }
+                }
+                @stagger target $Proofs each 180ms
+                {
+                    @animate with $Slam { @from { Opacity = 1; TranslateX = 600; } @to { Opacity = 1; TranslateX = 0; } }
+                }
+                @parallel
+                {
+                    @animate with PingPong(Tween(900ms, Linear), forever) { @from { $DotArt.prism.Fx.Dot = 1; } @to { $DotArt.prism.Fx.Dot = 4; } }
+                    @animate with PingPong(Tween(1100ms, Linear), forever) { @from { $CutArt.prism.Fx.Cutoff = 0.3; } @to { $CutArt.prism.Fx.Cutoff = 0.7; } }
+                    @animate with PingPong(Tween(1300ms, Linear), forever) { @from { $CopyArt.prism.Fx.Dark = 4; } @to { $CopyArt.prism.Fx.Dark = 16; } }
+                    @animate with $Cut { @from { $Caption.Opacity = 0; } @to { $Caption.Opacity = 1; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:BrutalPrismScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="160,124,140,110">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <Border Name="Tape" Background="$BrBlackBrush" Padding="12,4,12,5" HorizontalAlignment="Left" Opacity="0">
+                <TextBlock Text="[05] PRISM / STYLES / FILTERS" FontFamily="Courier New" FontSize="16" Foreground="$BrWhiteBrush" />
+            </Border>
+            <TextBlock Name="Headline" Text="EFFECTS, LAYERED." Aspect="$BrDisplay" Margin="0,4,0,0" Opacity="0" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,16,0,0">
+            <!-- The poster -->
+            <Border Name="Poster" Width="640" Height="410" Background="$BrWhiteBrush" BorderBrush="$BrBlackBrush" BorderThickness="4" HorizontalAlignment="Left" VerticalAlignment="Top" Opacity="0">
+                <Grid ClipToBounds="True">
+                    <Grid Name="Pieces">
+                        <Ellipse Name="Disc" Width="180" Height="180" Fill="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="36,36,0,0" Opacity="0">
+                            @prism
+                            {
+                                @layer Hard
+                                {
+                                    @parameter Push: float = 0;
+                                    @style DropShadow { Color = #FFFF4A14; Opacity = 1; UseGlobalLight = false; Angle = 135; Distance = Push; Size = 0; }
+                                }
+                            }
+                        </Ellipse>
+                        <Border Name="Slab" Width="150" Height="220" Background="$BrOrangeBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="270,40,0,0" Opacity="0">
+                            @prism
+                            {
+                                @layer Hard
+                                {
+                                    @parameter Push: float = 0;
+                                    @style DropShadow { Color = #FF0B0B0B; Opacity = 1; UseGlobalLight = false; Angle = 135; Distance = Push; Size = 0; }
+                                }
+                            }
+                        </Border>
+                        <Border Name="Bar" Width="300" Height="52" Background="$BrBlueBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="36,300,0,0" Opacity="0">
+                            @prism
+                            {
+                                @layer Hard
+                                {
+                                    @parameter Push: float = 0;
+                                    @style DropShadow { Color = #FF0B0B0B; Opacity = 1; UseGlobalLight = false; Angle = 135; Distance = Push; Size = 0; }
+                                }
+                            }
+                        </Border>
+                    </Grid>
+                    <TextBlock Text="PRISM" FontFamily="Impact" FontSize="120" Foreground="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="622,40,0,0" Width="300" Rotation="1.5708" RenderTransformOrigin="0,0" />
+                    <StackPanel Name="PushNote" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,20,18" Opacity="0">
+                        <TextBlock Text="@style DropShadow" FontFamily="Courier New" FontSize="16" Foreground="$BrBlackBrush" HorizontalAlignment="Right" />
+                        <TextBlock Text="Size = 0; Distance = Push;" FontFamily="Courier New" FontSize="14" Foreground="$BrBlackBrush" HorizontalAlignment="Right" Margin="0,4,0,0" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Three proofs of one poster -->
+            <StackPanel Name="Proofs" HorizontalAlignment="Right" VerticalAlignment="Top">
+                <StackPanel Margin="0,0,0,8" Opacity="0">
+                    <Border Width="440" Height="100" BorderBrush="$BrBlackBrush" BorderThickness="3" ClipToBounds="True">
+                        <Grid Name="DotArt">
+                            @prism
+                            {
+                                @layer Fx
+                                {
+                                    @parameter Dot: float = 1;
+                                    @filter HalftonePattern { Size = Dot; Contrast = 6; }
+                                }
+                            }
+                            <Border Background="$BrWhiteBrush" />
+                            <Ellipse Width="76" Height="76" Fill="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="40,0,0,0" />
+                            <Border Width="70" Height="90" Background="$BrOrangeBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="150,0,0,0" />
+                            <Border Width="150" Height="26" Background="$BrBlueBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="250,0,0,0" />
+                        </Grid>
+                    </Border>
+                    <Grid Width="440" Height="26" Margin="0,4,0,0">
+                        <TextBlock Text="@filter HalftonePattern" Aspect="$ProofLabel" />
+                        <TextBlock Text="SIZE 1 TO 4" Aspect="$ProofNote" />
+                    </Grid>
+                </StackPanel>
+                <StackPanel Margin="0,0,0,8" Opacity="0">
+                    <Border Width="440" Height="100" BorderBrush="$BrBlackBrush" BorderThickness="3" ClipToBounds="True">
+                        <Grid Name="CutArt">
+                            @prism
+                            {
+                                @layer Fx
+                                {
+                                    @parameter Cutoff: float = 0.5;
+                                    @filter Threshold { Level = Cutoff; }
+                                }
+                            }
+                            <Border Background="$BrWhiteBrush" />
+                            <Ellipse Width="76" Height="76" Fill="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="40,0,0,0" />
+                            <Border Width="70" Height="90" Background="$BrOrangeBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="150,0,0,0" />
+                            <Border Width="150" Height="26" Background="$BrBlueBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="250,0,0,0" />
+                        </Grid>
+                    </Border>
+                    <Grid Width="440" Height="26" Margin="0,4,0,0">
+                        <TextBlock Text="@filter Threshold" Aspect="$ProofLabel" />
+                        <TextBlock Text="LEVEL 0.3 TO 0.7" Aspect="$ProofNote" />
+                    </Grid>
+                </StackPanel>
+                <StackPanel Margin="0,0,0,8" Opacity="0">
+                    <Border Width="440" Height="100" BorderBrush="$BrBlackBrush" BorderThickness="3" ClipToBounds="True">
+                        <Grid Name="CopyArt">
+                            @prism
+                            {
+                                @layer Fx
+                                {
+                                    @parameter Dark: float = 8;
+                                    @filter Photocopy { Detail = 3; Darkness = Dark; }
+                                }
+                            }
+                            <Border Background="$BrWhiteBrush" />
+                            <Ellipse Width="76" Height="76" Fill="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="40,0,0,0" />
+                            <Border Width="70" Height="90" Background="$BrOrangeBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="150,0,0,0" />
+                            <Border Width="150" Height="26" Background="$BrBlueBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="250,0,0,0" />
+                        </Grid>
+                    </Border>
+                    <Grid Width="440" Height="26" Margin="0,4,0,0">
+                        <TextBlock Text="@filter Photocopy" Aspect="$ProofLabel" />
+                        <TextBlock Text="DARKNESS 4 TO 16" Aspect="$ProofNote" />
+                    </Grid>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+
+        <TextBlock
+            Name="Caption"
+            Grid.Row="2"
+            Text="PRISM: 134 FILTERS, 10 LAYER STYLES AND 28 BLEND MODES. DECLARED IN MARKUP, RENDERED ON THE GPU."
+            Aspect="$BrLede"
+            Opacity="0" />
+    </Grid>
+</UserControl>

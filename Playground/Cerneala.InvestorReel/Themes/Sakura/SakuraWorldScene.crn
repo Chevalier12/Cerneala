@@ -1,0 +1,172 @@
+<!-- 八 · a garden is a view: a garden tile map is laid row by row; a little wanderer hops a stone ledge and finds a gold leaf. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Lay" Duration="600ms" Easing="EaseOut" />
+        <Tween Name="Mark" Duration="700ms" Easing="EaseOut" />
+        <SolidColorBrush Name="ShadowBrush" Color="#145A2742" />
+        <SolidColorBrush Name="VoidTileBrush" Color="#FFEEF1E3" />
+        <SolidColorBrush Name="StoneBrush" Color="#FFCBBFB8" />
+        <SolidColorBrush Name="VoidLineBrush" Color="#FFFFF9F3" />
+        <SolidColorBrush Name="WaterTileBrush" Color="#FFD9E6EE" />
+        <Aspect Name="E" TargetType="Border">
+            @default { Width = 48; Height = 48; Background = $VoidTileBrush; BorderBrush = $VoidLineBrush; BorderThickness = "1"; }
+        </Aspect>
+        <Aspect Name="S" TargetType="Border">
+            @default { Width = 48; Height = 48; Background = $StoneBrush; BorderBrush = $VoidLineBrush; BorderThickness = "1"; }
+        </Aspect>
+        <Aspect Name="W" TargetType="Border">
+            @default { Width = 48; Height = 48; Background = $WaterTileBrush; BorderBrush = $VoidLineBrush; BorderThickness = "1"; }
+        </Aspect>
+        <Aspect Name="MapRow" TargetType="StackPanel">
+            @default { Orientation = "Horizontal"; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="Part" TargetType="StackPanel">
+            @default { Orientation = "Horizontal"; Margin = "0,0,0,6"; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="PartName" TargetType="TextBlock">
+            @default { FontFamily = "Gabriola"; FontSize = 32; Foreground = $SkPlumBrush; Width = 160; VerticalAlignment = "Center"; }
+        </Aspect>
+        <Aspect Name="PartText" TargetType="TextBlock">
+            @default { FontFamily = "Palatino Linotype"; FontSize = 18; Foreground = $SkSumiBrush; VerticalAlignment = "Center"; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:SakuraWorldScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Kicker.Opacity = 0; } @to { $Kicker.Opacity = 1; } }
+                    @animate with Tween(1000ms, EaseOut) { @from { $Headline.Opacity = 0; $Headline.TranslateY = 16; } @to { $Headline.Opacity = 1; $Headline.TranslateY = 0; } }
+                    @animate with Tween(900ms, EaseOut) { @from { $Frame.Opacity = 0; } @to { $Frame.Opacity = 1; } }
+                }
+                @stagger target $Map each 120ms
+                {
+                    @animate with $Lay { @from { Opacity = 0; TranslateY = 10; } @to { Opacity = 1; TranslateY = 0; } }
+                }
+                @parallel
+                {
+                    @stagger target $Colliders each 160ms
+                    {
+                        @animate with $Mark { @from { Opacity = 0; Scale = 1.25; } @to { Opacity = 1; Scale = 1; } }
+                    }
+
+                    @sequence
+                    {
+                        @parallel
+                        {
+                            @animate with Tween(150ms, Linear) { @from { $Runner.Opacity = 0; } @to { $Runner.Opacity = 1; } }
+                            @animate with Spring(220, 12) { @from { $Runner.TranslateY = -90; } @to { $Runner.TranslateY = 0; } }
+                        }
+                        @keyframes duration 4200ms
+                        {
+                            @animate 0%..40% with EaseInOut { @from { $Runner.TranslateX = 0; } @to { $Runner.TranslateX = 192; } }
+                            @animate 40%..60% with EaseOut { @from { $Runner.TranslateY = 0; } @to { $Runner.TranslateY = -96; } }
+                            @animate 60%..100% with EaseInOut { @from { $Runner.TranslateX = 192; } @to { $Runner.TranslateX = 290; } }
+                        }
+                        <!-- Contact: the circle collider answers. -->
+                        @parallel
+                        {
+                            @animate with PingPong(Tween(180ms, EaseOut), 2) { @from { $Chip.Scale = 1; } @to { $Chip.Scale = 1.6; } }
+                            @animate with Tween(480ms, EaseOut) { @from { $ChipRing.Opacity = 1; $ChipRing.Scale = 1; } @to { $ChipRing.Opacity = 0; $ChipRing.Scale = 2.6; } }
+                            @animate with Tween(600ms, EaseOut) { @from { $Hit.Opacity = 0; $Hit.TranslateY = 8; } @to { $Hit.Opacity = 1; $Hit.TranslateY = 0; } }
+                        }
+                        @animate with Tween(800ms, EaseOut) { @from { $Caption.Opacity = 0; } @to { $Caption.Opacity = 1; } }
+                    }
+
+                    @sequence
+                    {
+                        @animate with Tween(800ms, Linear) { @from { $Visor.Opacity = 1; } @to { $Visor.Opacity = 1; } }
+                        @animate with PingPong(Tween(400ms, Linear), forever) { @from { $Visor.Opacity = 1; } @to { $Visor.Opacity = 0.4; } }
+                    }
+
+                    @stagger target $Parts each 180ms
+                    {
+                        @animate with $Mark { @from { Opacity = 0; TranslateX = 24; } @to { Opacity = 1; TranslateX = 0; } }
+                    }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:SakuraWorldScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="150,226,150,120">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="660" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="2">
+            <TextBlock Name="Kicker" Text="SCENE2D  ·  GARDEN.TMX" Aspect="$SkCaps" Opacity="0" />
+            <TextBlock Name="Headline" Text="A game world is just another view." Aspect="$SkDisplay" FontSize="76" Margin="0,-6,0,0" Opacity="0" />
+        </StackPanel>
+
+        <Border Name="Frame" Grid.Row="1" Grid.Column="0" Background="$SkCreamBrush" BorderBrush="$SkPetalPaleBrush" BorderThickness="1" Padding="16" Width="610" Height="322" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,8,0,0" Opacity="0">
+            <Grid Width="576" Height="288">
+                <StackPanel Name="Map">
+                    <StackPanel Aspect="$MapRow"><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$W" /><Border Aspect="$W" /><Border Aspect="$W" /></StackPanel>
+                    <StackPanel Aspect="$MapRow"><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$W" /><Border Aspect="$W" /></StackPanel>
+                    <StackPanel Aspect="$MapRow"><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$W" /></StackPanel>
+                    <StackPanel Aspect="$MapRow"><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$S" /><Border Aspect="$S" /><Border Aspect="$S" /><Border Aspect="$S" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /></StackPanel>
+                    <StackPanel Aspect="$MapRow"><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /><Border Aspect="$E" /></StackPanel>
+                    <StackPanel Aspect="$MapRow"><Border Aspect="$S" /><Border Aspect="$S" /><Border Aspect="$S" /><Border Aspect="$S" /><Border Aspect="$S" /><Border Aspect="$S" /><Border Aspect="$S" /><Border Aspect="$S" /><Border Aspect="$S" /><Border Aspect="$S" /><Border Aspect="$S" /><Border Aspect="$S" /></StackPanel>
+                </StackPanel>
+
+                <Grid Name="Colliders">
+                    <Grid Width="192" Height="48" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="192,144,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                        <Border BorderBrush="$SkPetalDeepBrush" BorderThickness="2" />
+                        <TextBlock Text="BoxCollider2D" FontFamily="Yu Gothic Light" FontSize="12" Foreground="$SkPetalDeepBrush" Margin="8,17,0,0" VerticalAlignment="Top" />
+                    </Grid>
+                    <Grid Width="576" Height="48" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,240,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                        <Border BorderBrush="$SkPetalDeepBrush" BorderThickness="2" />
+                    </Grid>
+                    <Grid Width="56" Height="56" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="330,98,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse Stroke="$SkPetalDeepBrush" StrokeThickness="2" />
+                        <TextBlock Text="CircleCollider2D" FontFamily="Yu Gothic Light" FontSize="12" Foreground="$SkPetalDeepBrush" Margin="-44,-20,0,0" VerticalAlignment="Top" />
+                    </Grid>
+                </Grid>
+
+                <Border Name="ChipRing" Width="24" Height="24" BorderBrush="$SkGoldBrush" BorderThickness="2" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="346,114,0,0" Rotation="0.785" Opacity="0" RenderTransformOrigin="0.5,0.5" />
+                <Border Name="Chip" Width="20" Height="20" Background="$SkGoldBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="348,116,0,0" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
+
+                <Grid Name="Runner" Width="32" Height="44" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="40,196,0,0" Opacity="0">
+                    <Rectangle Width="26" Height="40" RadiusX="12" RadiusY="12" Fill="$SkPlumBrush" HorizontalAlignment="Center" VerticalAlignment="Bottom" />
+                    <Border Name="Visor" Width="16" Height="5" Background="$SkPetalBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="4,12,0,0" />
+                </Grid>
+
+                <TextBlock Name="Hit" Text="found it" FontFamily="Gabriola" FontSize="30" Foreground="$SkPetalDeepBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="400,104,0,0" Opacity="0" />
+            </Grid>
+        </Border>
+
+        <StackPanel Name="Parts" Grid.Row="1" Grid.Column="1" VerticalAlignment="Top" Margin="40,6,0,0">
+            <StackPanel Aspect="$Part"><TextBlock Text="Scene2D" Aspect="$PartName" /><TextBlock Text="camera, layers and a world, in markup" Aspect="$PartText" /></StackPanel>
+            <StackPanel Aspect="$Part"><TextBlock Text="Sprite2D" Aspect="$PartName" /><TextBlock Text="sprites with frame animations" Aspect="$PartText" /></StackPanel>
+            <StackPanel Aspect="$Part"><TextBlock Text="TileMap2D" Aspect="$PartName" /><TextBlock Text="streamed, cached, with tile collision" Aspect="$PartText" /></StackPanel>
+            <StackPanel Aspect="$Part"><TextBlock Text="Colliders" Aspect="$PartName" /><TextBlock Text="box, circle, polygon, segment" Aspect="$PartText" /></StackPanel>
+            <StackPanel Aspect="$Part"><TextBlock Text="Importers" Aspect="$PartName" /><TextBlock Text="Tiled and LDtk maps come straight in" Aspect="$PartText" /></StackPanel>
+            <StackPanel Aspect="$Part"><TextBlock Text="Packages" Aspect="$PartName" /><TextBlock Text="chunked scenes, loaded as you move" Aspect="$PartText" /></StackPanel>
+        </StackPanel>
+
+        <TextBlock
+            Name="Caption"
+            Grid.Row="2"
+            Grid.ColumnSpan="2"
+            Text="Maps, sprites and physics live in the same tree as your buttons. Same renderer, same tools, no second engine."
+            Aspect="$SkLede"
+            Opacity="0" />
+    </Grid>
+</UserControl>

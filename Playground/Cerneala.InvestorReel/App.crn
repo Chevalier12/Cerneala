@@ -2,7 +2,7 @@
     StartupWindow="ReelWindow"
     ShutdownMode="OnMainWindowClose">
     <Application.Resources>
-        <!-- Paper and ink. Every scene resolves these through $Name. -->
+        <!-- Ink & Paper, the original film. Every scene resolves these through $Name. -->
         <SolidColorBrush Name="PaperBrush" Color="#FFF3EEE4" />
         <SolidColorBrush Name="PaperDeepBrush" Color="#FFE9E2D4" />
         <SolidColorBrush Name="PaperShadeBrush" Color="#FFD6CCBA" />
@@ -73,6 +73,251 @@
                 BorderBrush = $PaperShadeBrush;
                 BorderThickness = "1";
                 Padding = "28,24,28,24";
+            }
+        </Aspect>
+        <Aspect Name="InkButton" TargetType="Button">
+            @default
+            {
+                FontFamily = "Sitka Small";
+                FontSize = 15;
+                Foreground = $InkBrush;
+                Background = $PaperBrush;
+                BorderBrush = $InkBrush;
+                BorderThickness = "1.5";
+                Padding = "26,12,26,13";
+            }
+            @when IsMouseOver
+            {
+                Foreground = $PaperBrush;
+                Background = $InkBrush;
+            }
+            @template
+            {
+            <Border
+                Background="$owner.Background"
+                BorderBrush="$owner.BorderBrush"
+                BorderThickness="$owner.BorderThickness"
+                Padding="$owner.Padding">
+                <ContentPresenter
+                    Content="$owner.Content"
+                    FontFamily="$owner.FontFamily"
+                    FontSize="$owner.FontSize"
+                    Foreground="$owner.Foreground"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
+            </Border>
+            }
+        </Aspect>
+
+        <!-- The shell: the theme picker's dark room. -->
+        <SolidColorBrush Name="ShellBrush" Color="#FF0D0D10" />
+        <SolidColorBrush Name="ShellRaisedBrush" Color="#FF16161B" />
+        <SolidColorBrush Name="ShellLineBrush" Color="#FF2A2A32" />
+        <SolidColorBrush Name="ShellTextBrush" Color="#FFF1EFEA" />
+        <SolidColorBrush Name="ShellDimBrush" Color="#FF8B8A92" />
+
+        <!-- Cyberpunk: a rain-wet city at night, neon on glass, a HUD over everything. -->
+        <SolidColorBrush Name="CyVoidBrush" Color="#FF05050A" />
+        <SolidColorBrush Name="CyNightBrush" Color="#FF0B0A18" />
+        <SolidColorBrush Name="CyPanelBrush" Color="#FA0B0D1A" />
+        <SolidColorBrush Name="CyGridBrush" Color="#FF1B2244" />
+        <SolidColorBrush Name="CyCyanBrush" Color="#FF19F0FF" />
+        <SolidColorBrush Name="CyCyanDimBrush" Color="#FF0F7F8C" />
+        <SolidColorBrush Name="CyCyanWashBrush" Color="#2E19F0FF" />
+        <SolidColorBrush Name="CyMagentaBrush" Color="#FFFF2E97" />
+        <SolidColorBrush Name="CyMagentaWashBrush" Color="#33FF2E97" />
+        <SolidColorBrush Name="CyYellowBrush" Color="#FFF5EE2F" />
+        <SolidColorBrush Name="CyVioletBrush" Color="#FF7A5CFF" />
+        <SolidColorBrush Name="CyTextBrush" Color="#FFE3EDFF" />
+        <SolidColorBrush Name="CyDimBrush" Color="#FF67749A" />
+        <SolidColorBrush Name="CyTowerBrush" Color="#FF19143A" />
+        <SolidColorBrush Name="CyTowerFarBrush" Color="#FF100D26" />
+        <SolidColorBrush Name="CyRainBrush" Color="#5579B8FF" />
+        <Aspect Name="CyDisplay" TargetType="TextBlock">
+            @default { FontFamily = "Bahnschrift"; FontSize = 72; Foreground = $CyTextBrush; }
+        </Aspect>
+        <Aspect Name="CyLede" TargetType="TextBlock">
+            @default { FontFamily = "Bahnschrift Light"; FontSize = 22; Foreground = $CyTextBrush; TextWrapping = "Wrap"; }
+        </Aspect>
+        <Aspect Name="CyHud" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 14; Foreground = $CyDimBrush; }
+        </Aspect>
+        <Aspect Name="CyTag" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 16; Foreground = $CyMagentaBrush; }
+        </Aspect>
+        <Aspect Name="CyCode" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 17; Foreground = $CyTextBrush; }
+        </Aspect>
+        <Aspect Name="CyPanel" TargetType="Border">
+            @default { Background = $CyPanelBrush; BorderBrush = $CyCyanDimBrush; BorderThickness = "1"; Padding = "26,22,26,22"; }
+        </Aspect>
+        <Aspect Name="CyButton" TargetType="Button">
+            @default
+            {
+                FontFamily = "Cascadia Mono";
+                FontSize = 17;
+                Foreground = $CyCyanBrush;
+                Background = $CyPanelBrush;
+                BorderBrush = $CyCyanBrush;
+                BorderThickness = "1.5";
+                Padding = "28,13,28,14";
+            }
+            @when IsMouseOver
+            {
+                Foreground = $CyVoidBrush;
+                Background = $CyCyanBrush;
+            }
+            @template
+            {
+            <Border
+                Background="$owner.Background"
+                BorderBrush="$owner.BorderBrush"
+                BorderThickness="$owner.BorderThickness"
+                Padding="$owner.Padding">
+                <ContentPresenter
+                    Content="$owner.Content"
+                    FontFamily="$owner.FontFamily"
+                    FontSize="$owner.FontSize"
+                    Foreground="$owner.Foreground"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
+            </Border>
+            }
+        </Aspect>
+
+        <!-- Brutalist: raw concrete, black rules, one signal orange. Nothing is softened. -->
+        <SolidColorBrush Name="BrConcreteBrush" Color="#FFE6E4DE" />
+        <SolidColorBrush Name="BrWhiteBrush" Color="#FFFFFFFF" />
+        <SolidColorBrush Name="BrBlackBrush" Color="#FF0B0B0B" />
+        <SolidColorBrush Name="BrOrangeBrush" Color="#FFFF4A14" />
+        <SolidColorBrush Name="BrBlueBrush" Color="#FF1A35FF" />
+        <SolidColorBrush Name="BrGreyBrush" Color="#FF85837D" />
+        <SolidColorBrush Name="BrLineBrush" Color="#FFBEBBB3" />
+        <Aspect Name="BrDisplay" TargetType="TextBlock">
+            @default { FontFamily = "Impact"; FontSize = 96; Foreground = $BrBlackBrush; }
+        </Aspect>
+        <Aspect Name="BrMono" TargetType="TextBlock">
+            @default { FontFamily = "Courier New"; FontSize = 20; Foreground = $BrBlackBrush; }
+        </Aspect>
+        <Aspect Name="BrCaps" TargetType="TextBlock">
+            @default { FontFamily = "Courier New"; FontSize = 15; Foreground = $BrBlackBrush; }
+        </Aspect>
+        <Aspect Name="BrLede" TargetType="TextBlock">
+            @default { FontFamily = "Courier New"; FontSize = 22; Foreground = $BrBlackBrush; TextWrapping = "Wrap"; }
+        </Aspect>
+        <Aspect Name="BrHeavy" TargetType="TextBlock">
+            @default { FontFamily = "Segoe UI Black"; FontSize = 30; Foreground = $BrBlackBrush; }
+        </Aspect>
+        <Aspect Name="BrBox" TargetType="Border">
+            @default { Background = $BrWhiteBrush; BorderBrush = $BrBlackBrush; BorderThickness = "4"; Padding = "26,22,26,22"; }
+        </Aspect>
+        <Aspect Name="BrButton" TargetType="Button">
+            @default
+            {
+                FontFamily = "Impact";
+                FontSize = 30;
+                Foreground = $BrWhiteBrush;
+                Background = $BrBlackBrush;
+                BorderBrush = $BrBlackBrush;
+                BorderThickness = "4";
+                Padding = "34,10,34,12";
+            }
+            @when IsMouseOver
+            {
+                Foreground = $BrBlackBrush;
+                Background = $BrOrangeBrush;
+            }
+            @template
+            {
+            <Border
+                Background="$owner.Background"
+                BorderBrush="$owner.BorderBrush"
+                BorderThickness="$owner.BorderThickness"
+                Padding="$owner.Padding">
+                <ContentPresenter
+                    Content="$owner.Content"
+                    FontFamily="$owner.FontFamily"
+                    FontSize="$owner.FontSize"
+                    Foreground="$owner.Foreground"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
+            </Border>
+            }
+        </Aspect>
+
+        <!-- Sakura: spring in a quiet garden. Blossom pinks, plum ink, moss and a little gold. -->
+        <LinearGradientBrush Name="SkSkyBrush" StartPoint="0,0" EndPoint="0,900">
+            <GradientStop Offset="0" Color="#FFFDF3F3" />
+            <GradientStop Offset="0.65" Color="#FFFBEAEE" />
+            <GradientStop Offset="1" Color="#FFF6DDE5" />
+        </LinearGradientBrush>
+        <SolidColorBrush Name="SkCreamBrush" Color="#FFFFF9F3" />
+        <SolidColorBrush Name="SkPetalBrush" Color="#FFF5B3C6" />
+        <SolidColorBrush Name="SkPetalDeepBrush" Color="#FFE7859F" />
+        <SolidColorBrush Name="SkPetalPaleBrush" Color="#FFFCE1E8" />
+        <SolidColorBrush Name="SkPlumBrush" Color="#FF5A2742" />
+        <SolidColorBrush Name="SkSumiBrush" Color="#FF332A2E" />
+        <SolidColorBrush Name="SkBarkBrush" Color="#FF6A4549" />
+        <SolidColorBrush Name="SkMossBrush" Color="#FF7F8C5C" />
+        <SolidColorBrush Name="SkMossPaleBrush" Color="#FFDDE3CB" />
+        <SolidColorBrush Name="SkWaterBrush" Color="#FFD9E6EE" />
+        <SolidColorBrush Name="SkGoldBrush" Color="#FFC39A52" />
+        <SolidColorBrush Name="SkMistBrush" Color="#FF9C8A90" />
+        <Aspect Name="SkDisplay" TargetType="TextBlock">
+            @default { FontFamily = "Gabriola"; FontSize = 86; Foreground = $SkPlumBrush; }
+        </Aspect>
+        <Aspect Name="SkLede" TargetType="TextBlock">
+            @default { FontFamily = "Palatino Linotype"; FontSize = 21; Foreground = $SkSumiBrush; TextWrapping = "Wrap"; }
+        </Aspect>
+        <Aspect Name="SkNote" TargetType="TextBlock">
+            @default { FontFamily = "Gabriola"; FontSize = 32; Foreground = $SkPetalDeepBrush; }
+        </Aspect>
+        <Aspect Name="SkCaps" TargetType="TextBlock">
+            @default { FontFamily = "Yu Gothic Light"; FontSize = 13; Foreground = $SkMistBrush; }
+        </Aspect>
+        <Aspect Name="SkKanji" TargetType="TextBlock">
+            @default { FontFamily = "Yu Gothic Light"; FontSize = 40; Foreground = $SkPlumBrush; }
+        </Aspect>
+        <Aspect Name="SkCode" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 16; Foreground = $SkPlumBrush; }
+        </Aspect>
+        <Aspect Name="SkCard" TargetType="Border">
+            @default { Background = $SkCreamBrush; BorderBrush = $SkPetalPaleBrush; BorderThickness = "1"; Padding = "28,24,28,24"; }
+        </Aspect>
+        <Aspect Name="SkButton" TargetType="Button">
+            @default
+            {
+                FontFamily = "Palatino Linotype";
+                FontSize = 19;
+                Foreground = $SkPlumBrush;
+                Background = $SkCreamBrush;
+                BorderBrush = $SkPetalDeepBrush;
+                BorderThickness = "1.5";
+                Padding = "30,12,30,13";
+            }
+            @when IsMouseOver
+            {
+                Foreground = $SkCreamBrush;
+                Background = $SkPetalDeepBrush;
+            }
+            @template
+            {
+            <Grid>
+                <Rectangle
+                    RadiusX="24"
+                    RadiusY="24"
+                    Fill="$owner.Background"
+                    Stroke="$owner.BorderBrush"
+                    StrokeThickness="1.5" />
+                <ContentPresenter
+                    Content="$owner.Content"
+                    FontFamily="$owner.FontFamily"
+                    FontSize="$owner.FontSize"
+                    Foreground="$owner.Foreground"
+                    Margin="$owner.Padding"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
+            </Grid>
             }
         </Aspect>
     </Application.Resources>

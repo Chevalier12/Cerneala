@@ -1,0 +1,106 @@
+<!-- 一 · a petal on water: one petal drifts down onto a still pond; the ripples open, and the name rises out of the water. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <RadialGradientBrush Name="PondBrush" Center="330,60" RadiusX="330" RadiusY="60">
+            <GradientStop Offset="0" Color="#CCD9E6EE" />
+            <GradientStop Offset="0.7" Color="#66D9E6EE" />
+            <GradientStop Offset="1" Color="#00D9E6EE" />
+        </RadialGradientBrush>
+        <Tween Name="Letter" Duration="900ms" Easing="EaseOut" />
+        <Aspect Name="Glyph" TargetType="TextBlock">
+            @default { FontFamily = "Gabriola"; FontSize = 210; Foreground = $SkPlumBrush; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="Ring" TargetType="Ellipse">
+            @default { Width = 200; Height = 40; Stroke = $SkMistBrush; StrokeThickness = 1.5; HorizontalAlignment = "Center"; VerticalAlignment = "Center"; Opacity = 0; RenderTransformOrigin = "0.5,0.5"; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:SakuraOpenScene">
+            @sequence
+            {
+                @animate with Tween(900ms, EaseOut) { @from { $Pond.Opacity = 0; } @to { $Pond.Opacity = 1; } }
+                <!-- The petal drifts down, swaying. -->
+                @parallel
+                {
+                    @animate with Tween(300ms, Linear) { @from { $Petal.Opacity = 0; } @to { $Petal.Opacity = 1; } }
+                    @keyframes duration 2800ms
+                    {
+                        @animate 0%..100% with EaseIn { @from { $Petal.TranslateY = -420; } @to { $Petal.TranslateY = 0; } }
+                        @animate 0%..35% with EaseInOut { @from { $Petal.TranslateX = 0; } @to { $Petal.TranslateX = -70; } }
+                        @animate 35%..70% with EaseInOut { @from { $Petal.TranslateX = -70; } @to { $Petal.TranslateX = 46; } }
+                        @animate 70%..100% with EaseInOut { @from { $Petal.TranslateX = 46; } @to { $Petal.TranslateX = 0; } }
+                        @animate 0%..100% with Linear { @from { $Petal.Rotation = 0; } @to { $Petal.Rotation = 4.2; } }
+                    }
+                }
+                <!-- It touches the water. -->
+                @parallel
+                {
+                    @animate with Tween(1600ms, EaseOut) { @from { $RingA.Scale = 0.2; $RingA.Opacity = 0.9; } @to { $RingA.Scale = 3; $RingA.Opacity = 0; } }
+                    @sequence
+                    {
+                        @animate with Tween(260ms, Linear) { @from { $RingB.Opacity = 0; } @to { $RingB.Opacity = 0; } }
+                        @animate with Tween(1700ms, EaseOut) { @from { $RingB.Scale = 0.2; $RingB.Opacity = 0.7; } @to { $RingB.Scale = 3.6; $RingB.Opacity = 0; } }
+                    }
+                    @sequence
+                    {
+                        @animate with Tween(520ms, Linear) { @from { $RingC.Opacity = 0; } @to { $RingC.Opacity = 0; } }
+                        @animate with Tween(1800ms, EaseOut) { @from { $RingC.Scale = 0.2; $RingC.Opacity = 0.5; } @to { $RingC.Scale = 4.2; $RingC.Opacity = 0; } }
+                    }
+                    @animate with Tween(1400ms, EaseInOut) { @from { $Petal.Opacity = 1; } @to { $Petal.Opacity = 0.75; } }
+                    @stagger target $Word each 110ms
+                    {
+                        @animate with $Letter { @from { Opacity = 0; TranslateY = 40; } @to { Opacity = 1; TranslateY = 0; } }
+                    }
+                }
+                @animate with Tween(900ms, EaseOut) { @from { $Gloss.Opacity = 0; $Gloss.TranslateY = 10; } @to { $Gloss.Opacity = 1; $Gloss.TranslateY = 0; } }
+                @parallel
+                {
+                    @animate with Tween(1100ms, EaseInOut) { @from { $Stroke.ScaleX = 0; } @to { $Stroke.ScaleX = 1; } }
+                    @animate with Tween(1000ms, EaseOut) { @from { $Promise.Opacity = 0; $Promise.TranslateY = 12; } @to { $Promise.Opacity = 1; $Promise.TranslateY = 0; } }
+                }
+                @animate with Tween(900ms, EaseOut) { @from { $Traits.Opacity = 0; } @to { $Traits.Opacity = 1; } }
+                @animate with PingPong(Tween(2400ms, EaseInOut), forever) { @from { $Petal.TranslateX = 0; } @to { $Petal.TranslateX = 14; } }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:SakuraOpenScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid>
+        <!-- The pond and the petal -->
+        <Grid Width="660" Height="420" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,180,0,0">
+            <Ellipse Name="Pond" Width="660" Height="120" Fill="$PondBrush" VerticalAlignment="Bottom" Margin="0,0,0,40" Opacity="0" />
+            <Grid Width="660" Height="120" VerticalAlignment="Bottom" Margin="0,0,0,40">
+                <Ellipse Name="RingA" Aspect="$Ring" />
+                <Ellipse Name="RingB" Aspect="$Ring" />
+                <Ellipse Name="RingC" Aspect="$Ring" />
+            </Grid>
+            <Ellipse Name="Petal" Width="16" Height="22" Fill="$SkPetalDeepBrush" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,90" Opacity="0" RenderTransformOrigin="0.5,0.5" />
+        </Grid>
+
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,250,0,0">
+            <StackPanel Name="Word" Orientation="Horizontal" HorizontalAlignment="Center">
+                <TextBlock Text="c" Aspect="$Glyph" />
+                <TextBlock Text="e" Aspect="$Glyph" />
+                <TextBlock Text="r" Aspect="$Glyph" />
+                <TextBlock Text="n" Aspect="$Glyph" />
+                <TextBlock Text="e" Aspect="$Glyph" />
+                <TextBlock Text="a" Aspect="$Glyph" />
+                <TextBlock Text="l" Aspect="$Glyph" />
+                <TextBlock Text="a" Aspect="$Glyph" />
+            </StackPanel>
+            <TextBlock Name="Gloss" Text="cher · nea · la   —   Romanian for ink" FontFamily="Gabriola" FontSize="38" Foreground="$SkPetalDeepBrush" HorizontalAlignment="Center" Margin="0,-30,0,0" Opacity="0" />
+            <Border Name="Stroke" Width="160" Height="3" Background="$SkPlumBrush" HorizontalAlignment="Center" Margin="0,22,0,0" ScaleX="0" />
+            <TextBlock Name="Promise" Text="A new way to write desktop software in C#." FontFamily="Palatino Linotype" FontSize="32" Foreground="$SkSumiBrush" HorizontalAlignment="Center" Margin="0,28,0,0" Opacity="0" />
+            <TextBlock Name="Traits" Text="RETAINED    ·    MARKUP FIRST    ·    GPU RENDERED" FontFamily="Yu Gothic Light" FontSize="15" Foreground="$SkMistBrush" HorizontalAlignment="Center" Margin="0,22,0,0" Opacity="0" />
+        </StackPanel>
+    </Grid>
+</UserControl>

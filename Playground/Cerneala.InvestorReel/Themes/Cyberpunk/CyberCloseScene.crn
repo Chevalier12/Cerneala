@@ -1,0 +1,74 @@
+<!-- 12 · END_OF_LINE: the last words tear onto the screen, and a prompt asks what to run next. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    DataType="Cerneala.InvestorReel.ShellViewModel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <RadialGradientBrush Name="BloomBrush" Center="700,110" RadiusX="700" RadiusY="110">
+            <GradientStop Offset="0" Color="#38FF2E97" />
+            <GradientStop Offset="1" Color="#00FF2E97" />
+        </RadialGradientBrush>
+        <Tween Name="Line" Duration="420ms" Easing="EaseOut" />
+        <MotionClip Name="Entrance" TargetType="reel:CyberCloseScene">
+            @sequence
+            {
+                @animate with Tween(400ms, Linear) { @from { $Words.Opacity = 0; } @to { $Words.Opacity = 0; } }
+                @parallel
+                {
+                    @animate with Tween(160ms, EaseOut) { @from { $Words.Opacity = 0; $Words.Scale = 1.2; } @to { $Words.Opacity = 1; $Words.Scale = 1; } }
+                    @animate with PingPong(Tween(55ms, Linear), 8) { @from { $SplitCyan.TranslateX = -4; } @to { $SplitCyan.TranslateX = -24; } }
+                    @animate with PingPong(Tween(65ms, Linear), 6) { @from { $SplitMagenta.TranslateX = 4; } @to { $SplitMagenta.TranslateX = 20; } }
+                }
+                @stagger target $Closing each 240ms
+                {
+                    @animate with $Line { @from { Opacity = 0; TranslateY = 10; } @to { Opacity = 1; TranslateY = 0; } }
+                }
+
+                <!-- End of line: ask what to run next. -->
+                @animate with Tween(1200ms, Linear) { @from { $Words.Opacity = 1; } @to { $Words.Opacity = 1; } }
+                @set { $Choices.Visibility = Visible; }
+                @animate with $Line { @from { $Choices.Opacity = 0; $Choices.TranslateY = 12; } @to { $Choices.Opacity = 1; $Choices.TranslateY = 0; } }
+                @parallel
+                {
+                    @animate with PingPong(Tween(520ms, Linear), forever) { @from { $Caret.Opacity = 1; } @to { $Caret.Opacity = 0; } }
+                    @animate with PingPong(Tween(1800ms, EaseInOut), forever) { @from { $SplitCyan.TranslateX = -4; } @to { $SplitCyan.TranslateX = -7; } }
+                    @animate with PingPong(Tween(2200ms, EaseInOut), forever) { @from { $SplitMagenta.TranslateX = 4; } @to { $SplitMagenta.TranslateX = 7; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:CyberCloseScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,30">
+        <Grid Name="Words" Width="1400" Height="220" HorizontalAlignment="Center" Opacity="0" RenderTransformOrigin="0.5,0.5">
+            <Ellipse Width="1400" Height="220" Fill="$BloomBrush" />
+            <TextBlock Name="SplitMagenta" Text="WRITE INTERFACES." FontFamily="Bahnschrift" FontSize="132" Foreground="$CyMagentaBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="4" Opacity="0.9" />
+            <TextBlock Name="SplitCyan" Text="WRITE INTERFACES." FontFamily="Bahnschrift" FontSize="132" Foreground="$CyCyanBrush" HorizontalAlignment="Center" VerticalAlignment="Center" TranslateX="-4" Opacity="0.9" />
+            <TextBlock Text="WRITE INTERFACES." FontFamily="Bahnschrift" FontSize="132" Foreground="$CyTextBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Grid>
+        <StackPanel Name="Closing" HorizontalAlignment="Center">
+            <TextBlock Text="CERNEALA IS A RETAINED UI FRAMEWORK FOR C#." FontFamily="Bahnschrift Light" FontSize="32" Foreground="$CyTextBrush" HorizontalAlignment="Center" Opacity="0" />
+            <TextBlock Text="markup :: aspect :: motion :: prism" FontFamily="Cascadia Mono" FontSize="22" Foreground="$CyCyanBrush" HorizontalAlignment="Center" Margin="0,18,0,0" Opacity="0" />
+            <TextBlock Text="EVERYTHING YOU JUST WATCHED IS .CRN MARKUP. EVERY SCENE'S CODE-BEHIND IS EMPTY." FontFamily="Cascadia Mono" FontSize="13" Foreground="$CyDimBrush" HorizontalAlignment="Center" Margin="0,26,0,0" Opacity="0" />
+        </StackPanel>
+        <StackPanel Name="Choices" HorizontalAlignment="Center" Margin="0,54,0,0" Visibility="Collapsed" Opacity="0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <TextBlock Text="&gt; run it again in another style?" FontFamily="Cascadia Mono" FontSize="18" Foreground="$CyMagentaBrush" />
+                <Border Name="Caret" Width="10" Height="20" Background="$CyMagentaBrush" Margin="6,0,0,0" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
+                <Button Content="[ CHOOSE ANOTHER THEME ]" Aspect="$CyButton" Command="$DataContext.HomeCommand:OneWay" Servo.Id="reel-home" Margin="0,0,16,0" />
+                <Button Content="[ EXIT ]" Aspect="$CyButton" Command="$DataContext.ExitCommand:OneWay" Servo.Id="reel-exit" />
+            </StackPanel>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

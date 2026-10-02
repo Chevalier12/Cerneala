@@ -1089,7 +1089,7 @@
             <GradientStop Offset="0" Color="#00000000" /><GradientStop Offset="0.42" Color="#0A000000" /><GradientStop Offset="0.7" Color="#B8020308" /><GradientStop Offset="1" Color="#F5020308" />
         </RadialGradientBrush>
         <RadialGradientBrush Name="Shade19Brush" Center="5.7,9.5" RadiusX="18.62" RadiusY="18.62">
-            <GradientStop Offset="0" Color="#00000000" /><GradientStop Offset="0.42" Color="#00000000" /><GradientStop Offset="0.7" Color="#FF000000" /><GradientStop Offset="1" Color="#FF000000" />
+            <GradientStop Offset="0" Color="#00000000" /><GradientStop Offset="0.42" Color="#0A000000" /><GradientStop Offset="0.7" Color="#B8020308" /><GradientStop Offset="1" Color="#F5020308" />
         </RadialGradientBrush>
         <RadialGradientBrush Name="Shade27Brush" Center="8.1,13.5" RadiusX="26.46" RadiusY="26.46">
             <GradientStop Offset="0" Color="#00000000" /><GradientStop Offset="0.42" Color="#0A000000" /><GradientStop Offset="0.7" Color="#B8020308" /><GradientStop Offset="1" Color="#F5020308" />

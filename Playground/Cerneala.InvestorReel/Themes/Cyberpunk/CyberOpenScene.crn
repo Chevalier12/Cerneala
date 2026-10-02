@@ -1,0 +1,120 @@
+<!-- 01 · BOOT: a terminal boots the runtime, then the name tears onto the screen in three colours. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <RadialGradientBrush Name="BloomBrush" Center="600,120" RadiusX="600" RadiusY="120">
+            <GradientStop Offset="0" Color="#4019F0FF" />
+            <GradientStop Offset="1" Color="#0019F0FF" />
+        </RadialGradientBrush>
+        <Tween Name="Type" Duration="200ms" Easing="Linear" />
+        <Tween Name="Chip" Duration="260ms" Easing="EaseOut" />
+        <Aspect Name="BootLine" TargetType="StackPanel">
+            @default { Orientation = "Horizontal"; Margin = "0,0,0,8"; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="Prompt" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 18; Foreground = $CyTextBrush; Width = 520; }
+        </Aspect>
+        <Aspect Name="Ok" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 18; Foreground = $CyCyanBrush; }
+        </Aspect>
+        <Aspect Name="ChipBox" TargetType="Border">
+            @default { BorderBrush = $CyCyanBrush; BorderThickness = "1"; Background = $CyCyanWashBrush; Padding = "16,7,16,8"; Margin = "0,0,14,0"; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="ChipText" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 15; Foreground = $CyCyanBrush; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:CyberOpenScene">
+            @sequence
+            {
+                @animate with Tween(300ms, Linear) { @from { $Cursor.Opacity = 0; } @to { $Cursor.Opacity = 1; } }
+                @stagger target $Boot each 260ms
+                {
+                    @animate with $Type { @from { Opacity = 0; TranslateX = -10; } @to { Opacity = 1; TranslateX = 0; } }
+                }
+                @animate with Tween(500ms, Linear) { @from { $Cursor.Opacity = 1; } @to { $Cursor.Opacity = 0; } }
+
+                <!-- The name tears in. -->
+                @parallel
+                {
+                    @animate with Tween(260ms, EaseIn) { @from { $Boot.Opacity = 1; } @to { $Boot.Opacity = 0.22; } }
+                    @animate with Tween(180ms, EaseOut) { @from { $Word.Opacity = 0; $Word.Scale = 1.18; } @to { $Word.Opacity = 1; $Word.Scale = 1; } }
+                    @animate with PingPong(Tween(55ms, Linear), 8) { @from { $SplitCyan.TranslateX = -4; } @to { $SplitCyan.TranslateX = -26; } }
+                    @animate with PingPong(Tween(70ms, Linear), 6) { @from { $SplitMagenta.TranslateX = 4; } @to { $SplitMagenta.TranslateX = 22; } }
+                    @animate with PingPong(Tween(60ms, Linear), 4) { @from { $Tear.Opacity = 0; $Tear.TranslateX = 0; } @to { $Tear.Opacity = 0.9; $Tear.TranslateX = 60; } }
+                }
+                @parallel
+                {
+                    @animate with Tween(500ms, EaseOut) { @from { $Gloss.Opacity = 0; $Gloss.TranslateY = 10; } @to { $Gloss.Opacity = 1; $Gloss.TranslateY = 0; } }
+                    @animate with Tween(700ms, EaseOut) { @from { $Underline.ScaleX = 0; } @to { $Underline.ScaleX = 1; } }
+                }
+                @animate with Tween(600ms, EaseOut) { @from { $Promise.Opacity = 0; $Promise.TranslateY = 12; } @to { $Promise.Opacity = 1; $Promise.TranslateY = 0; } }
+                @stagger target $Chips each 140ms
+                {
+                    @animate with $Chip { @from { Opacity = 0; TranslateY = 10; } @to { Opacity = 1; TranslateY = 0; } }
+                }
+
+                <!-- Idle: the split keeps breathing. -->
+                @parallel
+                {
+                    @animate with PingPong(Tween(1700ms, EaseInOut), forever) { @from { $SplitCyan.TranslateX = -4; } @to { $SplitCyan.TranslateX = -7; } }
+                    @animate with PingPong(Tween(2300ms, EaseInOut), forever) { @from { $SplitMagenta.TranslateX = 4; } @to { $SplitMagenta.TranslateX = 7; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:CyberOpenScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="140,120,140,110">
+        <!-- Boot log -->
+        <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,10,0,0">
+            <StackPanel Name="Boot">
+                <StackPanel Aspect="$BootLine">
+                    <TextBlock Text="&gt; boot cerneala.runtime" Aspect="$Prompt" />
+                    <TextBlock Text="[ OK ]" Aspect="$Ok" />
+                </StackPanel>
+                <StackPanel Aspect="$BootLine">
+                    <TextBlock Text="&gt; load markup · aspect · motion · prism" Aspect="$Prompt" />
+                    <TextBlock Text="[ OK ]" Aspect="$Ok" />
+                </StackPanel>
+                <StackPanel Aspect="$BootLine">
+                    <TextBlock Text="&gt; attach gpu :: sdl_gpu" Aspect="$Prompt" />
+                    <TextBlock Text="[ ONLINE ]" Aspect="$Ok" Foreground="$CyMagentaBrush" />
+                </StackPanel>
+                <StackPanel Aspect="$BootLine">
+                    <TextBlock Text="&gt; render first frame" Aspect="$Prompt" />
+                    <TextBlock Text="[ READY ]" Aspect="$Ok" Foreground="$CyYellowBrush" />
+                </StackPanel>
+            </StackPanel>
+            <Border Name="Cursor" Width="11" Height="20" Background="$CyCyanBrush" HorizontalAlignment="Left" Margin="0,2,0,0" Opacity="0" />
+        </StackPanel>
+
+        <!-- The name -->
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,60,0,0">
+            <Grid Name="Word" Width="1200" Height="240" HorizontalAlignment="Center" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                <Ellipse Width="1200" Height="240" Fill="$BloomBrush" />
+                <TextBlock Name="SplitMagenta" Text="CERNEALA" FontFamily="Bahnschrift" FontSize="190" Foreground="$CyMagentaBrush" HorizontalAlignment="Center" TranslateX="4" Opacity="0.9" />
+                <TextBlock Name="SplitCyan" Text="CERNEALA" FontFamily="Bahnschrift" FontSize="190" Foreground="$CyCyanBrush" HorizontalAlignment="Center" TranslateX="-4" Opacity="0.9" />
+                <TextBlock Text="CERNEALA" FontFamily="Bahnschrift" FontSize="190" Foreground="$CyTextBrush" HorizontalAlignment="Center" />
+                <Border Name="Tear" Height="18" Background="$CyVoidBrush" VerticalAlignment="Center" Margin="0,30,0,0" Opacity="0" />
+            </Grid>
+            <Border Name="Underline" Width="300" Height="3" Background="$CyMagentaBrush" HorizontalAlignment="Center" Margin="0,4,0,0" ScaleX="0" />
+            <TextBlock Name="Gloss" Text="cher · nea · la   —   romanian for ink" FontFamily="Cascadia Mono" FontSize="20" Foreground="$CyDimBrush" HorizontalAlignment="Center" Margin="0,22,0,0" Opacity="0" />
+            <TextBlock Name="Promise" Text="A NEW WAY TO WRITE DESKTOP SOFTWARE IN C#." FontFamily="Bahnschrift Light" FontSize="34" Foreground="$CyTextBrush" HorizontalAlignment="Center" Margin="0,40,0,0" Opacity="0" />
+            <StackPanel Name="Chips" Orientation="Horizontal" HorizontalAlignment="Center" Margin="14,28,0,0">
+                <Border Aspect="$ChipBox"><TextBlock Text="RETAINED" Aspect="$ChipText" /></Border>
+                <Border Aspect="$ChipBox"><TextBlock Text="MARKUP FIRST" Aspect="$ChipText" /></Border>
+                <Border Aspect="$ChipBox"><TextBlock Text="GPU RENDERED" Aspect="$ChipText" /></Border>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

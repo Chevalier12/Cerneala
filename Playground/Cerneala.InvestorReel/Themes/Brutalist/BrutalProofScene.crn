@@ -1,0 +1,226 @@
+<!-- 10 · PROOF: a Servo script clicks a real button, step by numbered step; Detective prints the frame it caused. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Arrive" Duration="120ms" Easing="EaseIn" />
+        <Tween Name="Next" Duration="90ms" Easing="Linear" />
+        <Aspect Name="Script" TargetType="TextBlock">
+            @default { FontFamily = "Courier New"; FontSize = 17; Foreground = $BrBlackBrush; Height = 30; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="Field" TargetType="Border">
+            @default { Width = 392; Height = 36; Background = $BrWhiteBrush; BorderBrush = $BrBlackBrush; BorderThickness = "3"; Padding = "12,0,12,0"; HorizontalAlignment = "Left"; VerticalAlignment = "Top"; }
+        </Aspect>
+        <Aspect Name="FieldText" TargetType="TextBlock">
+            @default { FontFamily = "Courier New"; FontSize = 18; Foreground = $BrBlackBrush; VerticalAlignment = "Center"; }
+        </Aspect>
+        <Aspect Name="Counter" TargetType="Border">
+            @default { Width = 146; Background = $BrWhiteBrush; BorderBrush = $BrBlackBrush; BorderThickness = "4"; Padding = "16,12,12,14"; Margin = "0,0,12,0"; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="CounterValue" TargetType="TextBlock">
+            @default { FontFamily = "Impact"; FontSize = 52; Foreground = $BrBlackBrush; }
+        </Aspect>
+        <Aspect Name="CounterName" TargetType="TextBlock">
+            @default { FontFamily = "Courier New"; FontSize = 12; Foreground = $BrBlackBrush; Margin = "0,2,0,0"; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:BrutalProofScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(60ms, Linear) { @from { $Kicker.Opacity = 0; } @to { $Kicker.Opacity = 1; } }
+                    @animate with Tween(60ms, Linear) { @from { $Headline.Opacity = 0; } @to { $Headline.Opacity = 1; } }
+                    @animate with Tween(150ms, EaseIn) { @from { $Headline.TranslateX = -90; } @to { $Headline.TranslateX = 0; } }
+                    @animate with Tween(700ms, EaseOut) { @from { $App.Opacity = 0; $App.TranslateY = 26; } @to { $App.Opacity = 1; $App.TranslateY = 0; } }
+                    @animate with Tween(800ms, EaseOut) { @from { $ScriptSheet.Opacity = 0; $ScriptSheet.TranslateX = 30; } @to { $ScriptSheet.Opacity = 1; $ScriptSheet.TranslateX = 0; } }
+                }
+                @stagger target $Lines each 100ms
+                {
+                    @animate with $Arrive { @from { Opacity = 0; TranslateX = -10; } @to { Opacity = 1; TranslateX = 0; } }
+                }
+
+                <!-- Line 1: the button gets a stable id, and Servo finds it by that id. -->
+                @parallel
+                {
+                    @animate with $Next { @from { $Marker.Opacity = 0; } @to { $Marker.Opacity = 1; } }
+                    @animate with $Arrive { @from { $Target.Opacity = 0; $Target.Scale = 1.15; } @to { $Target.Opacity = 1; $Target.Scale = 1; } }
+                    @animate with $Arrive { @from { $TargetId.Opacity = 0; $TargetId.TranslateY = 6; } @to { $TargetId.Opacity = 1; $TargetId.TranslateY = 0; } }
+                }
+                @animate with Tween(300ms, Linear) { @from { $Marker.TranslateY = 0; } @to { $Marker.TranslateY = 0; } }
+
+                <!-- Line 2: a real click, through the real input pipeline. -->
+                @animate with $Next { @from { $Marker.TranslateY = 0; } @to { $Marker.TranslateY = 30; } }
+                @parallel
+                {
+                    @animate with Tween(200ms, Linear) { @from { $Cursor.Opacity = 0; } @to { $Cursor.Opacity = 1; } }
+                    @animate with Tween(900ms, EaseInOut) { @from { $Cursor.TranslateX = 300; $Cursor.TranslateY = 120; } @to { $Cursor.TranslateX = 84; $Cursor.TranslateY = 248; } }
+                }
+                @parallel
+                {
+                    @animate with PingPong(Tween(110ms, EaseOut), 2) { @from { $SaveButton.Scale = 1; } @to { $SaveButton.Scale = 0.93; } }
+                    @animate with Tween(520ms, EaseOut) { @from { $Ripple.Opacity = 0.7; $Ripple.Scale = 0.3; } @to { $Ripple.Opacity = 0; $Ripple.Scale = 2.2; } }
+                }
+                @parallel
+                {
+                    @animate with Tween(260ms, EaseOut) { @from { $Unsaved.Opacity = 1; } @to { $Unsaved.Opacity = 0; } }
+                    @animate with Tween(260ms, EaseOut) { @from { $Saved.Opacity = 0; $Saved.TranslateY = 6; } @to { $Saved.Opacity = 1; $Saved.TranslateY = 0; } }
+                    @animate with Tween(400ms, EaseOut) { @from { $Target.Opacity = 1; } @to { $Target.Opacity = 0; } }
+                    @animate with Tween(400ms, EaseOut) { @from { $TargetId.Opacity = 1; } @to { $TargetId.Opacity = 0.5; } }
+                }
+
+                <!-- Line 3: wait for the frame to settle, not for a guess. -->
+                @animate with $Next { @from { $Marker.TranslateY = 30; } @to { $Marker.TranslateY = 60; } }
+                @animate with Tween(400ms, Linear) { @from { $Marker.Opacity = 1; } @to { $Marker.Opacity = 1; } }
+
+                <!-- Line 4: keep the evidence. -->
+                @animate with $Next { @from { $Marker.TranslateY = 60; } @to { $Marker.TranslateY = 90; } }
+                @animate with Tween(560ms, EaseOut) { @from { $Shutter.Opacity = 0.85; } @to { $Shutter.Opacity = 0; } }
+
+                <!-- Detective reads back the frame the click produced. -->
+                @animate with Tween(500ms, EaseOut) { @from { $FrameTitle.Opacity = 0; $FrameTitle.TranslateY = 8; } @to { $FrameTitle.Opacity = 1; $FrameTitle.TranslateY = 0; } }
+                @stagger target $Counters each 120ms
+                {
+                    @animate with $Arrive { @from { Opacity = 0; TranslateY = 14; } @to { Opacity = 1; TranslateY = 0; } }
+                }
+                @animate with Tween(600ms, EaseOut) { @from { $Trace.Opacity = 0; $Trace.TranslateX = -10; } @to { $Trace.Opacity = 1; $Trace.TranslateX = 0; } }
+                @animate with Tween(800ms, EaseOut) { @from { $Caption.Opacity = 0; } @to { $Caption.Opacity = 1; } }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:BrutalProofScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="160,124,140,110">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="500" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="2">
+            <Border Name="Kicker" Background="$BrBlackBrush" Padding="12,4,12,5" HorizontalAlignment="Left" Opacity="0">
+                <TextBlock Text="[10] SERVO / DETECTIVE" FontFamily="Courier New" FontSize="16" Foreground="$BrWhiteBrush" />
+            </Border>
+            <TextBlock Name="Headline" Text="TESTS THAT CLICK. TOOLS THAT EXPLAIN." Aspect="$BrDisplay" FontSize="84" Margin="0,4,0,0" Opacity="0" />
+        </StackPanel>
+
+        <!-- The app under test. -->
+        <Border Name="App" Grid.Row="1" Grid.Column="0" Background="$BrWhiteBrush" BorderBrush="$BrBlackBrush" BorderThickness="4" Padding="0" Width="442" Height="302" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,30,0,0" Opacity="0">
+            <Grid Width="440" Height="300">
+                <Border Height="40" Background="$BrBlackBrush" VerticalAlignment="Top" />
+                <TextBlock Text="ACCOUNT" FontFamily="Impact" FontSize="20" Foreground="$BrWhiteBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="24,8,0,0" />
+
+                <TextBlock Text="NAME" FontFamily="Courier New" FontSize="13" Foreground="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="24,60,0,0" />
+                <Border Aspect="$Field" Margin="24,80,0,0">
+                    <TextBlock Text="Ada Lovelace" Aspect="$FieldText" />
+                </Border>
+                <TextBlock Text="EMAIL" FontFamily="Courier New" FontSize="13" Foreground="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="24,132,0,0" />
+                <Border Aspect="$Field" Margin="24,152,0,0">
+                    <TextBlock Text="ada@analytical.engine" Aspect="$FieldText" />
+                </Border>
+
+                <TextBlock Name="TargetId" Text="SERVO.ID = SAVE-ACCOUNT" FontFamily="Courier New" FontSize="13" Foreground="$BrOrangeBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="18,202,0,0" Opacity="0" />
+                <Border Name="SaveButton" Width="120" Height="40" Background="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="24,228,0,0" RenderTransformOrigin="0.5,0.5">
+                    <TextBlock Text="SAVE" FontFamily="Impact" FontSize="22" Foreground="$BrWhiteBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <Border Name="Target" Width="134" Height="54" BorderBrush="$BrOrangeBrush" BorderThickness="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="17,221,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5" />
+                <TextBlock Name="Unsaved" Text="UNSAVED CHANGES" FontFamily="Courier New" FontSize="15" Foreground="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="168,238,0,0" />
+                <TextBlock Name="Saved" Text="SAVED." FontFamily="Impact" FontSize="30" Foreground="$BrOrangeBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="168,232,0,0" Opacity="0" />
+
+                <Ellipse Name="Ripple" Width="40" Height="40" Fill="$BrOrangeBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="64,228,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5" />
+                <Path
+                    Name="Cursor"
+                    Width="19"
+                    Height="26"
+                    Data="M 0 0 L 0 22 L 6 16 L 10 25 L 14 23 L 10 15 L 18 15 Z"
+                    Fill="$BrBlackBrush"
+                    Stroke="$BrWhiteBrush"
+                    StrokeThickness="1.5"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    Opacity="0" />
+                <Border Name="Shutter" Background="$BrWhiteBrush" Opacity="0" />
+            </Grid>
+        </Border>
+
+        <!-- The Servo script, with the line being executed. -->
+        <StackPanel Grid.Row="1" Grid.Column="1" VerticalAlignment="Top" Margin="0,30,0,0">
+            <Border Name="ScriptSheet" Background="$BrWhiteBrush" BorderBrush="$BrBlackBrush" BorderThickness="4" Padding="18,20,30,22" HorizontalAlignment="Left" Opacity="0">
+                <StackPanel>
+                    <TextBlock Text="SAVEACCOUNTTEST.CS" FontFamily="Impact" FontSize="20" Foreground="$BrBlackBrush" Margin="0,0,0,12" />
+                    <Grid>
+                        <Border Name="Marker" Width="8" Height="24" Background="$BrOrangeBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,1,0,0" Opacity="0" />
+                        <StackPanel Name="Lines" Margin="16,0,0,0">
+                            <TextBlock Text="Servo.SetId(save, &quot;save-account&quot;);" Aspect="$Script" />
+                            <TextBlock Text="await servo.ClickAsync(ServoTarget.ById(&quot;save-account&quot;));" Aspect="$Script" />
+                            <TextBlock Text="await servo.WaitForIdleAsync();" Aspect="$Script" />
+                            <TextBlock Text="await servo.SaveScreenshotAsync(&quot;after-save.png&quot;);" Aspect="$Script" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Name="FrameTitle" Orientation="Horizontal" Margin="0,30,0,12" Opacity="0">
+                <TextBlock Text="DETECTIVE.CAPTUREFRAME()" FontFamily="Impact" FontSize="22" Foreground="$BrBlackBrush" />
+                <TextBlock Text="THE FRAME AFTER THE CLICK / SAMPLE" FontFamily="Courier New" FontSize="14" Foreground="$BrBlackBrush" Margin="18,2,0,0" />
+            </StackPanel>
+            <StackPanel Name="Counters" Orientation="Horizontal">
+                <Border Aspect="$Counter">
+                    <StackPanel>
+                        <TextBlock Text="4" Aspect="$CounterValue" />
+                        <TextBlock Text="MeasuredElements" Aspect="$CounterName" />
+                    </StackPanel>
+                </Border>
+                <Border Aspect="$Counter">
+                    <StackPanel>
+                        <TextBlock Text="4" Aspect="$CounterValue" />
+                        <TextBlock Text="ArrangedElements" Aspect="$CounterName" />
+                    </StackPanel>
+                </Border>
+                <Border Aspect="$Counter">
+                    <StackPanel>
+                        <TextBlock Text="12" Aspect="$CounterValue" />
+                        <TextBlock Text="RenderedElements" Aspect="$CounterName" />
+                    </StackPanel>
+                </Border>
+                <Border Aspect="$Counter">
+                    <StackPanel>
+                        <TextBlock Text="38" Aspect="$CounterValue" Foreground="$BrOrangeBrush" />
+                        <TextBlock Text="ReusedCaches" Aspect="$CounterName" />
+                    </StackPanel>
+                </Border>
+                <Border Aspect="$Counter">
+                    <StackPanel>
+                        <TextBlock Text="1" Aspect="$CounterValue" />
+                        <TextBlock Text="MotionFrames" Aspect="$CounterName" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+            <StackPanel Name="Trace" Orientation="Horizontal" Margin="0,20,0,0" Opacity="0">
+                <TextBlock Text="Detective.TraceAspect(save, Background)" FontFamily="Courier New" FontSize="17" Foreground="$BrBlackBrush" />
+                <Border Background="$BrOrangeBrush" Padding="8,2,8,3" Margin="16,-3,0,0"><TextBlock Text="WHY THIS VALUE?" FontFamily="Impact" FontSize="18" Foreground="$BrBlackBrush" /></Border>
+            </StackPanel>
+        </StackPanel>
+
+        <TextBlock
+            Name="Caption"
+            Grid.Row="2"
+            Grid.ColumnSpan="2"
+            Text="SERVO AUTOMATES THE APP IN-PROCESS THROUGH THE REAL INPUT PIPELINE, WAITING ON FRAMES INSTEAD OF SLEEPS. DETECTIVE EXPLAINS EVERY FRAME."
+            Aspect="$BrLede"
+            FontSize="19"
+            Opacity="0" />
+    </Grid>
+</UserControl>

@@ -1,0 +1,147 @@
+<!-- 二 · a sketch in bloom: markup is written on a paper scroll, and beside it a pencil outline blooms into the real card. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <SolidColorBrush Name="ShadowBrush" Color="#145A2742" />
+        <Tween Name="Ink" Duration="500ms" Easing="EaseOut" />
+        <Tween Name="Bloom" Duration="900ms" Easing="EaseOut" />
+        <Aspect Name="CodeLine" TargetType="StackPanel">
+            @default { Orientation = "Horizontal"; Height = 30; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="Tag" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 16; Foreground = $SkPlumBrush; VerticalAlignment = "Center"; }
+        </Aspect>
+        <Aspect Name="Attr" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 16; Foreground = $SkMossBrush; VerticalAlignment = "Center"; }
+        </Aspect>
+        <Aspect Name="Str" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 16; Foreground = $SkPetalDeepBrush; VerticalAlignment = "Center"; }
+        </Aspect>
+        <Aspect Name="Row" TargetType="Grid">
+            @default { Height = 32; Margin = "0,6,0,0"; }
+        </Aspect>
+        <Aspect Name="RowText" TargetType="TextBlock">
+            @default { FontFamily = "Palatino Linotype"; FontSize = 19; Foreground = $SkSumiBrush; VerticalAlignment = "Center"; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:SakuraSketchScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Kicker.Opacity = 0; } @to { $Kicker.Opacity = 1; } }
+                    @animate with Tween(1000ms, EaseOut) { @from { $Headline.Opacity = 0; $Headline.TranslateY = 16; } @to { $Headline.Opacity = 1; $Headline.TranslateY = 0; } }
+                    @animate with Tween(900ms, EaseOut) { @from { $Scroll.Opacity = 0; $Scroll.TranslateY = 20; } @to { $Scroll.Opacity = 1; $Scroll.TranslateY = 0; } }
+                }
+                @stagger target $Code each 150ms
+                {
+                    @animate with $Ink { @from { Opacity = 0; TranslateX = -8; } @to { Opacity = 1; TranslateX = 0; } }
+                }
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseInOut) { @from { $Arrow.Opacity = 0; $Arrow.TranslateX = -20; } @to { $Arrow.Opacity = 1; $Arrow.TranslateX = 0; } }
+                    @animate with Tween(800ms, EaseOut) { @from { $Sketch.Opacity = 0; } @to { $Sketch.Opacity = 1; } }
+                }
+                <!-- The outline blooms into the card. -->
+                @parallel
+                {
+                    @animate with $Bloom { @from { $Card.Opacity = 0; $Card.Scale = 0.96; } @to { $Card.Opacity = 1; $Card.Scale = 1; } }
+                    @animate with $Bloom { @from { $Sketch.Opacity = 1; } @to { $Sketch.Opacity = 0; } }
+                    @animate with Spring(140, 10) { @from { $Flower.Scale = 0; } @to { $Flower.Scale = 2.4; } }
+                }
+                @animate with Tween(900ms, EaseOut) { @from { $Caption.Opacity = 0; } @to { $Caption.Opacity = 1; } }
+                @animate with PingPong(Tween(2600ms, EaseInOut), forever) { @from { $Flower.Rotation = -0.08; } @to { $Flower.Rotation = 0.08; } }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:SakuraSketchScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="150,226,150,120">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Name="Kicker" Text="MARKUP  ·  ORDERCARD.CRN" Aspect="$SkCaps" Opacity="0" />
+            <TextBlock Name="Headline" Text="Describe it once." Aspect="$SkDisplay" FontSize="76" Margin="0,-6,0,0" Opacity="0" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,6,0,0">
+            <!-- The scroll -->
+            <Grid Name="Scroll" Width="600" Height="320" HorizontalAlignment="Left" VerticalAlignment="Top" Opacity="0">
+                <Border Background="$ShadowBrush" Margin="6,10,-6,-10" />
+                <Border Aspect="$SkCard" Padding="34,26,30,26">
+                    <StackPanel Name="Code">
+                        <StackPanel Aspect="$CodeLine"><TextBlock Text="&lt;Border " Aspect="$Tag" /><TextBlock Text="Aspect=" Aspect="$Attr" /><TextBlock Text="&quot;\$Card&quot;" Aspect="$Str" /><TextBlock Text="&gt;" Aspect="$Tag" /></StackPanel>
+                        <StackPanel Aspect="$CodeLine" Margin="22,0,0,0"><TextBlock Text="&lt;StackPanel&gt;" Aspect="$Tag" /></StackPanel>
+                        <StackPanel Aspect="$CodeLine" Margin="44,0,0,0"><TextBlock Text="&lt;TextBlock " Aspect="$Tag" /><TextBlock Text="Text=" Aspect="$Attr" /><TextBlock Text="&quot;Order 1042&quot;" Aspect="$Str" /><TextBlock Text=" /&gt;" Aspect="$Tag" /></StackPanel>
+                        <StackPanel Aspect="$CodeLine" Margin="44,0,0,0"><TextBlock Text="&lt;TextBlock " Aspect="$Tag" /><TextBlock Text="Text=" Aspect="$Attr" /><TextBlock Text="&quot;Indigo ink × 2&quot;" Aspect="$Str" /><TextBlock Text=" /&gt;" Aspect="$Tag" /></StackPanel>
+                        <StackPanel Aspect="$CodeLine" Margin="44,0,0,0"><TextBlock Text="&lt;TextBlock " Aspect="$Tag" /><TextBlock Text="Text=" Aspect="$Attr" /><TextBlock Text="&quot;Fine nib × 1&quot;" Aspect="$Str" /><TextBlock Text=" /&gt;" Aspect="$Tag" /></StackPanel>
+                        <StackPanel Aspect="$CodeLine" Margin="44,0,0,0"><TextBlock Text="&lt;Button " Aspect="$Tag" /><TextBlock Text="Content=" Aspect="$Attr" /><TextBlock Text="&quot;Pay 64 lei&quot;" Aspect="$Str" /><TextBlock Text=" /&gt;" Aspect="$Tag" /></StackPanel>
+                        <StackPanel Aspect="$CodeLine" Margin="22,0,0,0"><TextBlock Text="&lt;/StackPanel&gt;" Aspect="$Tag" /></StackPanel>
+                        <StackPanel Aspect="$CodeLine"><TextBlock Text="&lt;/Border&gt;" Aspect="$Tag" /></StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- A brush arrow and a note -->
+            <Grid Name="Arrow" Width="200" Height="120" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="620,90,0,0" Opacity="0">
+                <Path Data="M 10 70 C 60 30 120 30 170 56" Stroke="$SkPlumBrush" StrokeThickness="2.5" />
+                <Path Data="M 154 42 L 172 57 L 150 64" Stroke="$SkPlumBrush" StrokeThickness="2.5" />
+                <TextBlock Text="the compiler" FontFamily="Gabriola" FontSize="28" Foreground="$SkPetalDeepBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-6,0,0" />
+                <TextBlock Text="writes the C#" FontFamily="Gabriola" FontSize="28" Foreground="$SkPetalDeepBrush" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,0" />
+            </Grid>
+
+            <!-- The card: a pencil outline, then the real thing -->
+            <Grid Width="440" Height="320" HorizontalAlignment="Right" VerticalAlignment="Top">
+                <Grid Name="Sketch" Opacity="0">
+                    <Border BorderBrush="$SkMistBrush" BorderThickness="1.5" />
+                    <Border Width="220" Height="40" BorderBrush="$SkMistBrush" BorderThickness="1" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="36,32,0,0" />
+                    <Border Height="1" Background="$SkMistBrush" VerticalAlignment="Top" Margin="36,112,36,0" />
+                    <Border Height="1" Background="$SkMistBrush" VerticalAlignment="Top" Margin="36,152,36,0" />
+                    <Border Width="368" Height="52" BorderBrush="$SkMistBrush" BorderThickness="1" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="36,216,0,0" />
+                </Grid>
+                <Grid Name="Card" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                    <Border Background="$ShadowBrush" Margin="6,10,-6,-10" />
+                    <Border Aspect="$SkCard" Padding="36,22,36,26">
+                        <StackPanel>
+                            <TextBlock Text="Order 1042" FontFamily="Gabriola" FontSize="54" Foreground="$SkPlumBrush" />
+                            <Grid Aspect="$Row">
+                                <TextBlock Text="Indigo ink" Aspect="$RowText" />
+                                <TextBlock Text="× 2" Aspect="$RowText" Foreground="$SkMistBrush" HorizontalAlignment="Right" />
+                            </Grid>
+                            <Grid Aspect="$Row">
+                                <TextBlock Text="Fine nib" Aspect="$RowText" />
+                                <TextBlock Text="× 1" Aspect="$RowText" Foreground="$SkMistBrush" HorizontalAlignment="Right" />
+                            </Grid>
+                            <Grid Height="54" Margin="0,30,0,0">
+                                <Rectangle RadiusX="27" RadiusY="27" Fill="$SkPetalDeepBrush" />
+                                <TextBlock Text="Pay 64 lei" FontFamily="Palatino Linotype" FontSize="20" Foreground="$SkCreamBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    <Grid Name="Flower" Width="24" Height="24" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-10,-8,0" Scale="0" RenderTransformOrigin="0.5,0.5"><reel:Blossom /></Grid>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <TextBlock
+            Name="Caption"
+            Grid.Row="2"
+            Text=".CRN MARKUP    ·    COMPILED BY A SOURCE GENERATOR    ·    TYPED NAMES    ·    NO PARSER AT RUNTIME"
+            Aspect="$SkCaps"
+            FontSize="15"
+            Opacity="0" />
+    </Grid>
+</UserControl>

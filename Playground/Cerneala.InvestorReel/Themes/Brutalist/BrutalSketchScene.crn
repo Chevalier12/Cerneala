@@ -1,0 +1,149 @@
+<!-- 02 · SKETCH: raw markup on the left, a hard arrow, and on the right the card goes from outline boxes to solid. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Slam" Duration="150ms" Easing="EaseIn" />
+        <Tween Name="Cut" Duration="70ms" Easing="Linear" />
+        <Aspect Name="CodeLine" TargetType="StackPanel">
+            @default { Orientation = "Horizontal"; Height = 34; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="Num" TargetType="TextBlock">
+            @default { FontFamily = "Impact"; FontSize = 22; Foreground = $BrGreyBrush; Width = 44; VerticalAlignment = "Center"; }
+        </Aspect>
+        <Aspect Name="Tag" TargetType="TextBlock">
+            @default { FontFamily = "Courier New"; FontSize = 19; Foreground = $BrBlueBrush; VerticalAlignment = "Center"; }
+        </Aspect>
+        <Aspect Name="Attr" TargetType="TextBlock">
+            @default { FontFamily = "Courier New"; FontSize = 19; Foreground = $BrBlackBrush; VerticalAlignment = "Center"; }
+        </Aspect>
+        <Aspect Name="Str" TargetType="TextBlock">
+            @default { FontFamily = "Courier New"; FontSize = 19; Foreground = $BrOrangeBrush; VerticalAlignment = "Center"; }
+        </Aspect>
+        <Aspect Name="Outline" TargetType="Border">
+            @default { BorderBrush = $BrBlackBrush; BorderThickness = "3"; HorizontalAlignment = "Left"; VerticalAlignment = "Top"; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:BrutalSketchScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with $Cut { @from { $Tape.Opacity = 0; } @to { $Tape.Opacity = 1; } }
+                    @animate with $Cut { @from { $Headline.Opacity = 0; } @to { $Headline.Opacity = 1; } }
+                    @animate with $Slam { @from { $Headline.TranslateX = -90; } @to { $Headline.TranslateX = 0; } }
+                }
+                @animate with $Cut { @from { $Source.Opacity = 0; } @to { $Source.Opacity = 1; } }
+                @stagger target $Code each 110ms
+                {
+                    @animate with $Cut { @from { Opacity = 0; } @to { Opacity = 1; } }
+                }
+
+                <!-- The generator writes the C#. -->
+                @parallel
+                {
+                    @animate with $Cut { @from { $Arrow.Opacity = 0; } @to { $Arrow.Opacity = 1; } }
+                    @animate with $Slam { @from { $Arrow.TranslateX = -60; } @to { $Arrow.TranslateX = 0; } }
+                }
+                @animate with $Cut { @from { $Card.Opacity = 0; } @to { $Card.Opacity = 1; } }
+                @stagger target $Wires each 120ms
+                {
+                    @animate with $Cut { @from { Opacity = 0; } @to { Opacity = 1; } }
+                }
+                @animate with Tween(300ms, Linear) { @from { $Card.Opacity = 1; } @to { $Card.Opacity = 1; } }
+                @stagger target $Solids each 160ms
+                {
+                    @animate with $Cut { @from { Opacity = 0; } @to { Opacity = 1; } }
+                }
+                @parallel
+                {
+                    @animate with $Cut { @from { $Wires.Opacity = 1; } @to { $Wires.Opacity = 0; } }
+                    @animate with $Cut { @from { $Strip.Opacity = 0; } @to { $Strip.Opacity = 1; } }
+                    @animate with $Slam { @from { $Strip.TranslateY = 40; } @to { $Strip.TranslateY = 0; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:BrutalSketchScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="160,124,140,110">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <Border Name="Tape" Background="$BrBlackBrush" Padding="12,4,12,5" HorizontalAlignment="Left" Opacity="0">
+                <TextBlock Text="[02] ORDERCARD.CRN" FontFamily="Courier New" FontSize="16" Foreground="$BrWhiteBrush" />
+            </Border>
+            <TextBlock Name="Headline" Text="DESCRIBE IT ONCE." Aspect="$BrDisplay" Margin="0,4,0,0" Opacity="0" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,18,0,0">
+            <!-- The source -->
+            <Grid Name="Source" Width="600" Height="380" HorizontalAlignment="Left" VerticalAlignment="Top" Opacity="0">
+                <Border Background="$BrBlackBrush" Margin="14,14,-14,-14" />
+                <Border Aspect="$BrBox" Padding="20,18,20,18">
+                    <StackPanel Name="Code">
+                        <StackPanel Aspect="$CodeLine"><TextBlock Text="01" Aspect="$Num" /><TextBlock Text="&lt;Border " Aspect="$Tag" /><TextBlock Text="Aspect=" Aspect="$Attr" /><TextBlock Text="&quot;\$Card&quot;" Aspect="$Str" /><TextBlock Text="&gt;" Aspect="$Tag" /></StackPanel>
+                        <StackPanel Aspect="$CodeLine"><TextBlock Text="02" Aspect="$Num" /><TextBlock Text="  &lt;StackPanel&gt;" Aspect="$Tag" /></StackPanel>
+                        <StackPanel Aspect="$CodeLine"><TextBlock Text="03" Aspect="$Num" /><TextBlock Text="    &lt;TextBlock " Aspect="$Tag" /><TextBlock Text="Text=" Aspect="$Attr" /><TextBlock Text="&quot;Order 1042&quot;" Aspect="$Str" /><TextBlock Text="/&gt;" Aspect="$Tag" /></StackPanel>
+                        <StackPanel Aspect="$CodeLine"><TextBlock Text="04" Aspect="$Num" /><TextBlock Text="    &lt;TextBlock " Aspect="$Tag" /><TextBlock Text="Text=" Aspect="$Attr" /><TextBlock Text="&quot;Indigo ink × 2&quot;" Aspect="$Str" /><TextBlock Text="/&gt;" Aspect="$Tag" /></StackPanel>
+                        <StackPanel Aspect="$CodeLine"><TextBlock Text="05" Aspect="$Num" /><TextBlock Text="    &lt;TextBlock " Aspect="$Tag" /><TextBlock Text="Text=" Aspect="$Attr" /><TextBlock Text="&quot;Fine nib × 1&quot;" Aspect="$Str" /><TextBlock Text="/&gt;" Aspect="$Tag" /></StackPanel>
+                        <StackPanel Aspect="$CodeLine"><TextBlock Text="06" Aspect="$Num" /><TextBlock Text="    &lt;Button " Aspect="$Tag" /><TextBlock Text="Content=" Aspect="$Attr" /><TextBlock Text="&quot;Pay 64 lei&quot;" Aspect="$Str" /><TextBlock Text="/&gt;" Aspect="$Tag" /></StackPanel>
+                        <StackPanel Aspect="$CodeLine"><TextBlock Text="07" Aspect="$Num" /><TextBlock Text="  &lt;/StackPanel&gt;" Aspect="$Tag" /></StackPanel>
+                        <StackPanel Aspect="$CodeLine"><TextBlock Text="08" Aspect="$Num" /><TextBlock Text="&lt;/Border&gt;" Aspect="$Tag" /></StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- The generator -->
+            <StackPanel Name="Arrow" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="640,130,0,0" Opacity="0">
+                <Path Width="130" Height="70" Data="M 0 20 L 88 20 L 88 0 L 130 35 L 88 70 L 88 50 L 0 50 Z" Fill="$BrBlackBrush" />
+                <Border Background="$BrOrangeBrush" Padding="8,3,8,4" Margin="0,12,0,0" HorizontalAlignment="Left">
+                    <TextBlock Text="GENERATOR" FontFamily="Courier New" FontSize="15" Foreground="$BrBlackBrush" />
+                </Border>
+                <TextBlock Text="WRITES THE C#" FontFamily="Courier New" FontSize="15" Foreground="$BrBlackBrush" Margin="0,6,0,0" />
+            </StackPanel>
+
+            <!-- The card -->
+            <Grid Name="Card" Width="460" Height="380" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,14,0" Opacity="0">
+                <Border Background="$BrBlackBrush" Margin="14,14,-14,-14" />
+                <Border Background="$BrWhiteBrush" BorderBrush="$BrBlackBrush" BorderThickness="4" />
+                <Grid Name="Wires" Margin="34,30,34,30">
+                    <Border Aspect="$Outline" Width="300" Height="62" Opacity="0" />
+                    <Border Aspect="$Outline" Width="388" Height="36" Margin="0,100,0,0" Opacity="0" />
+                    <Border Aspect="$Outline" Width="388" Height="36" Margin="0,150,0,0" Opacity="0" />
+                    <Border Aspect="$Outline" Width="388" Height="74" Margin="0,236,0,0" Opacity="0" />
+                </Grid>
+                <Grid Name="Solids" Margin="34,30,34,30">
+                    <TextBlock Text="ORDER 1042" FontFamily="Impact" FontSize="56" Foreground="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,-6,0,0" Opacity="0" />
+                    <Grid Height="36" VerticalAlignment="Top" Margin="0,100,0,0" Opacity="0">
+                        <TextBlock Text="INDIGO INK" FontFamily="Courier New" FontSize="22" Foreground="$BrBlackBrush" VerticalAlignment="Center" />
+                        <TextBlock Text="× 2" FontFamily="Courier New" FontSize="22" Foreground="$BrBlackBrush" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid Height="36" VerticalAlignment="Top" Margin="0,150,0,0" Opacity="0">
+                        <TextBlock Text="FINE NIB" FontFamily="Courier New" FontSize="22" Foreground="$BrBlackBrush" VerticalAlignment="Center" />
+                        <TextBlock Text="× 1" FontFamily="Courier New" FontSize="22" Foreground="$BrBlackBrush" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                    </Grid>
+                    <Border Height="74" Background="$BrOrangeBrush" BorderBrush="$BrBlackBrush" BorderThickness="4" VerticalAlignment="Top" Margin="0,236,0,0" Opacity="0">
+                        <TextBlock Text="PAY 64 LEI" FontFamily="Impact" FontSize="36" Foreground="$BrBlackBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <Border Name="Strip" Grid.Row="2" Background="$BrBlackBrush" Padding="18,10,18,11" HorizontalAlignment="Left" Opacity="0">
+            <TextBlock Text=".CRN MARKUP / COMPILED BY A SOURCE GENERATOR / TYPED NAMES / NO PARSER AT RUNTIME" FontFamily="Courier New" FontSize="18" Foreground="$BrWhiteBrush" />
+        </Border>
+    </Grid>
+</UserControl>

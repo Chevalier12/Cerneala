@@ -1,0 +1,195 @@
+<!-- 五 · effects, like washes: paper cut-outs of a spring view rise on soft shadows, beside three washed proofs of the same view. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <SolidColorBrush Name="ShadowBrush" Color="#145A2742" />
+        <Tween Name="Place" Duration="700ms" Easing="EaseOut" />
+        <Tween Name="Rise" Duration="1800ms" Easing="EaseOut" />
+        <Aspect Name="ProofLabel" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 14; Foreground = $SkPlumBrush; VerticalAlignment = "Center"; }
+        </Aspect>
+        <Aspect Name="ProofNote" TargetType="TextBlock">
+            @default { FontFamily = "Gabriola"; FontSize = 22; Foreground = $SkPetalDeepBrush; HorizontalAlignment = "Right"; VerticalAlignment = "Center"; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:SakuraPrismScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Kicker.Opacity = 0; } @to { $Kicker.Opacity = 1; } }
+                    @animate with Tween(1000ms, EaseOut) { @from { $Headline.Opacity = 0; $Headline.TranslateY = 16; } @to { $Headline.Opacity = 1; $Headline.TranslateY = 0; } }
+                    @animate with Tween(900ms, EaseOut) { @from { $Board.Opacity = 0; } @to { $Board.Opacity = 1; } }
+                }
+                @stagger target $Cutouts each 160ms
+                {
+                    @animate with $Place { @from { Opacity = 0; Scale = 1.06; } @to { Opacity = 1; Scale = 1; } }
+                }
+                <!-- Light lifts them off the paper, each to its own height. -->
+                @parallel
+                {
+                    @animate with $Rise { @from { $Sun.prism.Soft.Lift = 0; } @to { $Sun.prism.Soft.Lift = 22; } }
+                    @animate with $Rise { @from { $Peak.prism.Soft.Lift = 0; } @to { $Peak.prism.Soft.Lift = 30; } }
+                    @animate with $Rise { @from { $Hill.prism.Soft.Lift = 0; } @to { $Hill.prism.Soft.Lift = 14; } }
+                    @animate with Tween(900ms, EaseOut) { @from { $LiftNote.Opacity = 0; } @to { $LiftNote.Opacity = 1; } }
+                    @stagger target $Proofs each 200ms
+                    {
+                        @animate with $Place { @from { Opacity = 0; TranslateX = 24; } @to { Opacity = 1; TranslateX = 0; } }
+                    }
+                }
+                @parallel
+                {
+                    @animate with PingPong(Tween(2400ms, EaseInOut), forever) { @from { $Peak.prism.Soft.Lift = 30; } @to { $Peak.prism.Soft.Lift = 16; } }
+                    @animate with PingPong(Tween(2000ms, EaseInOut), forever) { @from { $FiberArt.prism.Fx.Fiber = 6; } @to { $FiberArt.prism.Fx.Fiber = 26; } }
+                    @animate with PingPong(Tween(1800ms, EaseInOut), forever) { @from { $GlowArt.prism.Fx.Glow = 0.05; } @to { $GlowArt.prism.Fx.Glow = 0.45; } }
+                    @animate with PingPong(Tween(1600ms, EaseInOut), forever) { @from { $MistArt.prism.Fx.Mist = 0; } @to { $MistArt.prism.Fx.Mist = 7; } }
+                    @animate with Tween(1000ms, EaseOut) { @from { $Caption.Opacity = 0; } @to { $Caption.Opacity = 1; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:SakuraPrismScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="150,226,150,120">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Name="Kicker" Text="PRISM  ·  STYLES AND FILTERS" Aspect="$SkCaps" Opacity="0" />
+            <TextBlock Name="Headline" Text="Effects, layered like petals." Aspect="$SkDisplay" FontSize="76" Margin="0,-6,0,0" Opacity="0" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,6,0,0">
+            <!-- The view, as paper cut-outs. No two lifted pieces overlap. -->
+            <Grid Name="Board" Width="680" Height="318" HorizontalAlignment="Left" VerticalAlignment="Top" Opacity="0">
+                <Border Background="$ShadowBrush" Margin="6,10,-6,-10" />
+                <Border Background="$SkCreamBrush" BorderBrush="$SkPetalPaleBrush" BorderThickness="1" />
+                <Grid Name="Cutouts" ClipToBounds="True">
+                    <Ellipse Name="Sun" Width="150" Height="150" Fill="$SkPetalBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="460,40,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                        @prism
+                        {
+                            @layer Soft
+                            {
+                                @parameter Lift: float = 0;
+                                @style DropShadow { Color = #FF5A2742; Opacity = 0.22; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                            }
+                        }
+                    </Ellipse>
+                    <Border Name="Peak" Width="200" Height="200" Background="$SkPlumBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="110,100,0,0" Rotation="0.785" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                        @prism
+                        {
+                            @layer Soft
+                            {
+                                @parameter Lift: float = 0;
+                                @style DropShadow { Color = #FF5A2742; Opacity = 0.22; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                            }
+                        }
+                    </Border>
+                    <Ellipse Name="Hill" Width="260" Height="110" Fill="$SkMossBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="400,226,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                        @prism
+                        {
+                            @layer Soft
+                            {
+                                @parameter Lift: float = 0;
+                                @style DropShadow { Color = #FF5A2742; Opacity = 0.22; UseGlobalLight = false; Angle = 120; Distance = Lift; Size = Lift; }
+                            }
+                        }
+                    </Ellipse>
+                </Grid>
+                <StackPanel Name="LiftNote" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="24,20,0,0" Opacity="0">
+                    <TextBlock Text="@style DropShadow" FontFamily="Cascadia Mono" FontSize="14" Foreground="$SkPlumBrush" />
+                    <TextBlock Text="Distance = Lift; Size = Lift;" FontFamily="Cascadia Mono" FontSize="12" Foreground="$SkMistBrush" Margin="0,4,0,0" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Three washed proofs of one view -->
+            <StackPanel Name="Proofs" HorizontalAlignment="Right" VerticalAlignment="Top">
+                <StackPanel Margin="0,0,0,6" Opacity="0">
+                    <Border Width="440" Height="78" BorderBrush="$SkPetalPaleBrush" BorderThickness="1" ClipToBounds="True">
+                        <Grid Name="FiberArt">
+                            @prism
+                            {
+                                @layer Fx
+                                {
+                                    @parameter Fiber: float = 6;
+                                    @filter WaterPaper { FiberLength = Fiber; Brightness = 60; Contrast = 70; }
+                                }
+                            }
+                            <Border Background="$SkCreamBrush" />
+                            <Ellipse Width="60" Height="60" Fill="$SkPetalBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="320,8,0,0" />
+                            <Border Width="90" Height="90" Background="$SkPlumBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="60,44,0,0" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
+                            <Ellipse Width="150" Height="50" Fill="$SkMossBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="220,60,0,0" />
+                        </Grid>
+                    </Border>
+                    <Grid Width="440" Height="26" Margin="0,2,0,0">
+                        <TextBlock Text="@filter WaterPaper" Aspect="$ProofLabel" />
+                        <TextBlock Text="fibres 6 to 26" Aspect="$ProofNote" />
+                    </Grid>
+                </StackPanel>
+                <StackPanel Margin="0,0,0,6" Opacity="0">
+                    <Border Width="440" Height="78" BorderBrush="$SkPetalPaleBrush" BorderThickness="1" ClipToBounds="True">
+                        <Grid Name="GlowArt">
+                            @prism
+                            {
+                                @layer Fx
+                                {
+                                    @parameter Glow: float = 0.05;
+                                    @filter DiffuseGlow { GlowAmount = Glow; ClearAmount = 0.2; Grain = 2; }
+                                }
+                            }
+                            <Border Background="$SkCreamBrush" />
+                            <Ellipse Width="60" Height="60" Fill="$SkPetalBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="320,8,0,0" />
+                            <Border Width="90" Height="90" Background="$SkPlumBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="60,44,0,0" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
+                            <Ellipse Width="150" Height="50" Fill="$SkMossBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="220,60,0,0" />
+                        </Grid>
+                    </Border>
+                    <Grid Width="440" Height="26" Margin="0,2,0,0">
+                        <TextBlock Text="@filter DiffuseGlow" Aspect="$ProofLabel" />
+                        <TextBlock Text="glow 0.05 to 0.45" Aspect="$ProofNote" />
+                    </Grid>
+                </StackPanel>
+                <StackPanel Margin="0,0,0,6" Opacity="0">
+                    <Border Width="440" Height="78" BorderBrush="$SkPetalPaleBrush" BorderThickness="1" ClipToBounds="True">
+                        <Grid Name="MistArt">
+                            @prism
+                            {
+                                @layer Fx
+                                {
+                                    @parameter Mist: float = 0;
+                                    @filter GaussianBlur { Radius = Mist; }
+                                }
+                            }
+                            <Border Background="$SkCreamBrush" />
+                            <Ellipse Width="60" Height="60" Fill="$SkPetalBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="320,8,0,0" />
+                            <Border Width="90" Height="90" Background="$SkPlumBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="60,44,0,0" Rotation="0.785" RenderTransformOrigin="0.5,0.5" />
+                            <Ellipse Width="150" Height="50" Fill="$SkMossBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="220,60,0,0" />
+                        </Grid>
+                    </Border>
+                    <Grid Width="440" Height="26" Margin="0,2,0,0">
+                        <TextBlock Text="@filter GaussianBlur" Aspect="$ProofLabel" />
+                        <TextBlock Text="mist 0 to 7" Aspect="$ProofNote" />
+                    </Grid>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+
+        <TextBlock
+            Name="Caption"
+            Grid.Row="2"
+            Text="Prism: 134 filters, 10 layer styles and 28 blend modes. Declared in markup, rendered on the GPU."
+            Aspect="$SkLede"
+            Opacity="0" />
+    </Grid>
+</UserControl>

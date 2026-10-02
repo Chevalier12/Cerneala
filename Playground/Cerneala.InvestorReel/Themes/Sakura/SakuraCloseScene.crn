@@ -1,0 +1,64 @@
+<!-- 十二 · the last blossom: one large blossom opens, the closing words are written beside it, and the film asks what next. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    DataType="Cerneala.InvestorReel.ShellViewModel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Line" Duration="900ms" Easing="EaseOut" />
+        <MotionClip Name="Entrance" TargetType="reel:SakuraCloseScene">
+            @sequence
+            {
+                @animate with Tween(500ms, Linear) { @from { $Flower.Opacity = 0; } @to { $Flower.Opacity = 0; } }
+                <!-- The last blossom opens. -->
+                @parallel
+                {
+                    @animate with Tween(600ms, EaseOut) { @from { $Flower.Opacity = 0; } @to { $Flower.Opacity = 1; } }
+                    @animate with Spring(90, 9) { @from { $Flower.Scale = 0.2; } @to { $Flower.Scale = 9; } }
+                    @animate with Tween(2400ms, EaseOut) { @from { $Flower.Rotation = -0.6; } @to { $Flower.Rotation = 0; } }
+                }
+                @stagger target $Closing each 320ms
+                {
+                    @animate with $Line { @from { Opacity = 0; TranslateY = 12; } @to { Opacity = 1; TranslateY = 0; } }
+                }
+
+                <!-- The film is over: ask, gently. -->
+                @animate with Tween(1400ms, Linear) { @from { $Flower.Opacity = 1; } @to { $Flower.Opacity = 1; } }
+                @set { $Choices.Visibility = Visible; }
+                @animate with $Line { @from { $Choices.Opacity = 0; $Choices.TranslateY = 12; } @to { $Choices.Opacity = 1; $Choices.TranslateY = 0; } }
+                @animate with PingPong(Tween(3200ms, EaseInOut), forever) { @from { $Flower.Rotation = 0; } @to { $Flower.Rotation = 0.06; } }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:SakuraCloseScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid Name="Flower" Width="24" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="380,420,0,0" Scale="0.2" Opacity="0" RenderTransformOrigin="0.5,0.5">
+            <reel:Blossom />
+        </Grid>
+
+        <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top" Margin="660,250,0,0">
+            <StackPanel Name="Closing">
+                <TextBlock Text="Write interfaces." FontFamily="Gabriola" FontSize="124" Foreground="$SkPlumBrush" Opacity="0" />
+                <TextBlock Text="Cerneala is a retained UI framework for C#." FontFamily="Palatino Linotype" FontSize="28" Foreground="$SkSumiBrush" Margin="0,-10,0,0" Opacity="0" />
+                <TextBlock Text="markup  ·  aspect  ·  motion  ·  prism" FontFamily="Gabriola" FontSize="36" Foreground="$SkPetalDeepBrush" Margin="0,8,0,0" Opacity="0" />
+                <TextBlock Text="EVERYTHING YOU JUST WATCHED IS .CRN MARKUP. EVERY SCENE'S CODE-BEHIND IS EMPTY." Aspect="$SkCaps" Margin="0,14,0,0" Opacity="0" />
+            </StackPanel>
+            <StackPanel Name="Choices" Margin="0,40,0,0" Visibility="Collapsed" Opacity="0">
+                <TextBlock Text="watch it once more, in another light?" Aspect="$SkNote" FontSize="34" />
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                    <Button Content="Choose another theme" Aspect="$SkButton" Command="$DataContext.HomeCommand:OneWay" Servo.Id="reel-home" Margin="0,0,16,0" />
+                    <Button Content="Exit" Aspect="$SkButton" Command="$DataContext.ExitCommand:OneWay" Servo.Id="reel-exit" />
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

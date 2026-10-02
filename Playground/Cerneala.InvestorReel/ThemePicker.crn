@@ -1,0 +1,313 @@
+<!--
+    The opening screen. Four live posters, one per version of the film. Each poster is a button
+    bound to the shell's PlayCommand; the parameter names the theme.
+-->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    DataType="Cerneala.InvestorReel.ShellViewModel"
+    Aspect="$PickerMotion">
+    <UserControl.Resources>
+        <RadialGradientBrush Name="RoomGlowBrush" Center="800,430" RadiusX="900" RadiusY="560">
+            <GradientStop Offset="0" Color="#FF1C1B24" />
+            <GradientStop Offset="1" Color="#000D0D10" />
+        </RadialGradientBrush>
+        <LinearGradientBrush Name="SakuraCardBrush" StartPoint="0,0" EndPoint="0,400">
+            <GradientStop Offset="0" Color="#FFFDF2F3" />
+            <GradientStop Offset="1" Color="#FFF7DCE4" />
+        </LinearGradientBrush>
+        <LinearGradientBrush Name="CyberHorizonBrush" StartPoint="0,170" EndPoint="0,400">
+            <GradientStop Offset="0" Color="#0005050A" />
+            <GradientStop Offset="0.7" Color="#552A0F4A" />
+            <GradientStop Offset="1" Color="#99FF2E97" />
+        </LinearGradientBrush>
+        <Tween Name="Rise" Duration="640ms" Easing="EaseOut" />
+
+        <Aspect Name="ThemeCard" TargetType="Button">
+            @default
+            {
+                Background = $ShellBrush;
+                BorderThickness = "0";
+                Padding = "0";
+            }
+            @template
+            {
+            <ContentPresenter Content="$owner.Content" />
+            }
+            @when IsMouseOver
+            {
+                @if IsMouseOver == true
+                {
+                    @animate with Spring(320, 22) { @from { TranslateY = current; } @to { TranslateY = -16; } }
+                }
+                @if IsMouseOver == false
+                {
+                    @animate with Tween(260ms, EaseOut) { @from { TranslateY = current; } @to { TranslateY = 0; } }
+                }
+            }
+        </Aspect>
+        <Aspect Name="CardTitle" TargetType="TextBlock">
+            @default { FontFamily = "Segoe UI Semibold"; FontSize = 21; Foreground = $ShellTextBrush; Margin = "2,22,0,0"; }
+        </Aspect>
+        <Aspect Name="CardBlurb" TargetType="TextBlock">
+            @default { FontFamily = "Segoe UI"; FontSize = 15; Foreground = $ShellDimBrush; Margin = "2,6,0,0"; TextWrapping = "Wrap"; }
+        </Aspect>
+        <Aspect Name="Rain" TargetType="Border">
+            @default { Width = 1; Height = 34; Background = $CyRainBrush; HorizontalAlignment = "Left"; VerticalAlignment = "Top"; }
+        </Aspect>
+
+        <MotionClip Name="Entrance" TargetType="reel:ThemePicker">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Wordmark.Opacity = 0; } @to { $Wordmark.Opacity = 1; } }
+                    @animate with Tween(1000ms, EaseOut) { @from { $Headline.Opacity = 0; $Headline.TranslateY = 20; } @to { $Headline.Opacity = 1; $Headline.TranslateY = 0; } }
+                    @animate with Tween(1000ms, EaseOut) { @from { $Subline.Opacity = 0; } @to { $Subline.Opacity = 1; } }
+                    @animate with Tween(500ms, EaseOut) { @from { $Loader.Opacity = 0; } @to { $Loader.Opacity = 1; } }
+                }
+                <!-- A short load, then the four worlds rise. -->
+                @animate with Tween(900ms, EaseInOut) { @from { $LoaderFill.ScaleX = 0; } @to { $LoaderFill.ScaleX = 1; } }
+                @parallel
+                {
+                    @animate with Tween(400ms, EaseOut) { @from { $Loader.Opacity = 1; } @to { $Loader.Opacity = 0; } }
+                    @stagger target $Cards each 130ms
+                    {
+                        @animate with $Rise { @from { Opacity = 0; TranslateY = 46; } @to { Opacity = 1; TranslateY = 0; } }
+                    }
+                }
+                @animate with Tween(800ms, EaseOut) { @from { $Footer.Opacity = 0; } @to { $Footer.Opacity = 1; } }
+
+                <!-- Each poster keeps living in its own way. The brutalist one refuses to move. -->
+                @parallel
+                {
+                    @animate with Repeat(Tween(1900ms, EaseIn), forever) { @from { $InkDrop.TranslateY = -70; $InkDrop.Opacity = 1; } @to { $InkDrop.TranslateY = 0; $InkDrop.Opacity = 1; } }
+                    @animate with Repeat(Tween(1900ms, EaseOut), forever) { @from { $InkRipple.Scale = 0.2; $InkRipple.Opacity = 0.7; } @to { $InkRipple.Scale = 1.6; $InkRipple.Opacity = 0; } }
+                    @animate with Repeat(Tween(620ms, Linear), forever) { @from { $R1.TranslateY = -40; } @to { $R1.TranslateY = 420; } }
+                    @animate with Repeat(Tween(740ms, Linear), forever) { @from { $R2.TranslateY = -40; } @to { $R2.TranslateY = 420; } }
+                    @animate with Repeat(Tween(560ms, Linear), forever) { @from { $R3.TranslateY = -40; } @to { $R3.TranslateY = 420; } }
+                    @animate with Repeat(Tween(810ms, Linear), forever) { @from { $R4.TranslateY = -40; } @to { $R4.TranslateY = 420; } }
+                    @animate with Repeat(Tween(670ms, Linear), forever) { @from { $R5.TranslateY = -40; } @to { $R5.TranslateY = 420; } }
+                    @animate with Repeat(Tween(590ms, Linear), forever) { @from { $R6.TranslateY = -40; } @to { $R6.TranslateY = 420; } }
+                    @animate with Repeat(Tween(700ms, Linear), forever) { @from { $R7.TranslateY = -40; } @to { $R7.TranslateY = 420; } }
+                    @animate with PingPong(Tween(140ms, Linear), forever) { @from { $CyGhost.TranslateX = -4; } @to { $CyGhost.TranslateX = -1; } }
+                    @animate with PingPong(Tween(560ms, Linear), forever) { @from { $BrCursor.Opacity = 1; } @to { $BrCursor.Opacity = 0; } }
+                    @animate with Repeat(Tween(5200ms, Linear), forever) { @from { $P1.TranslateY = -30; $P1.Rotation = 0; } @to { $P1.TranslateY = 430; $P1.Rotation = 4; } }
+                    @animate with Repeat(Tween(6400ms, Linear), forever) { @from { $P2.TranslateY = -30; $P2.Rotation = 1; } @to { $P2.TranslateY = 430; $P2.Rotation = -3; } }
+                    @animate with Repeat(Tween(4700ms, Linear), forever) { @from { $P3.TranslateY = -30; $P3.Rotation = 2; } @to { $P3.TranslateY = 430; $P3.Rotation = 6; } }
+                    @animate with PingPong(Tween(1600ms, EaseInOut), forever) { @from { $Petals.TranslateX = -18; } @to { $Petals.TranslateX = 18; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="PickerMotion" TargetType="reel:ThemePicker">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Width="1600" Height="900">
+        <Border Background="$ShellBrush" />
+        <Border Background="$RoomGlowBrush" />
+
+        <!-- Title -->
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,66,0,0">
+            <StackPanel Name="Wordmark" Orientation="Horizontal" HorizontalAlignment="Center" Opacity="0">
+                <TextBlock Text="C E R N E A L A" FontFamily="Segoe UI Semibold" FontSize="14" Foreground="$ShellDimBrush" />
+                <TextBlock Text="   ·   INVESTOR REEL" FontFamily="Segoe UI" FontSize="14" Foreground="$ShellDimBrush" />
+            </StackPanel>
+            <TextBlock Name="Headline" Text="One film. Four ways to watch it." FontFamily="Segoe UI Light" FontSize="54" Foreground="$ShellTextBrush" HorizontalAlignment="Center" Margin="0,18,0,0" Opacity="0" />
+            <TextBlock Name="Subline" Text="The same twelve chapters, told in four visual languages. Choose one." FontFamily="Segoe UI" FontSize="19" Foreground="$ShellDimBrush" HorizontalAlignment="Center" Margin="0,12,0,0" Opacity="0" />
+        </StackPanel>
+
+        <Grid Name="Loader" Width="260" Height="2" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,470,0,0" Opacity="0">
+            <Border Background="$ShellLineBrush" />
+            <Border Name="LoaderFill" Background="$ShellTextBrush" ScaleX="0" RenderTransformOrigin="0,0.5" />
+        </Grid>
+
+        <!-- The four worlds -->
+        <StackPanel Name="Cards" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,282,0,0">
+
+            <!-- Ink & Paper -->
+            <StackPanel Width="300" Margin="0,0,40,0" Opacity="0">
+                <Button Name="InkCard" Aspect="$ThemeCard" Command="$DataContext.PlayCommand:OneWay" CommandParameter="Ink" Servo.Id="theme-ink">
+                    <Grid Width="300" Height="400" ClipToBounds="True">
+                        <Border Background="$PaperBrush" />
+                        <Border Width="1" Background="$VermilionBrush" HorizontalAlignment="Left" Margin="36,0,0,0" Opacity="0.45" />
+                        <TextBlock Text="i" FontFamily="Sitka Banner" FontSize="24" Foreground="$VermilionBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12,12,0,0" />
+                        <Ellipse Name="InkRipple" Width="110" Height="30" Stroke="$InkBrush" StrokeThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,112,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5" />
+                        <Ellipse Name="InkDrop" Width="14" Height="18" Fill="$InkBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,110,0,0" />
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,170,0,0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <TextBlock Text="cerneala" FontFamily="Sitka Banner" FontSize="46" Foreground="$InkBrush" />
+                                <Ellipse Width="9" Height="9" Fill="$VermilionBrush" VerticalAlignment="Bottom" Margin="3,0,0,15" />
+                            </StackPanel>
+                            <TextBlock Text="cher · nea · la" FontFamily="Ink Free" FontSize="20" Foreground="$VermilionBrush" HorizontalAlignment="Center" />
+                        </StackPanel>
+                        <Border Height="2" Background="$PaperShadeBrush" VerticalAlignment="Bottom" Margin="44,0,30,40" />
+                        <Border Height="2" Background="$InkBrush" VerticalAlignment="Bottom" Margin="44,0,140,40" />
+                        <Ellipse Width="8" Height="8" Fill="$InkBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="154,0,0,37" />
+                        <Border Height="46" Background="$InkBrush" VerticalAlignment="Bottom" TranslateY="46">
+                            <TextBlock Text="WATCH THE FILM" FontFamily="Sitka Small" FontSize="14" Foreground="$PaperBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Border.Aspect>
+                                @when $InkCard.IsMouseOver
+                                {
+                                    @if $InkCard.IsMouseOver == true { @animate with Tween(220ms, EaseOut) { @to { TranslateY = 0; } } }
+                                    @if $InkCard.IsMouseOver == false { @animate with Tween(200ms, EaseIn) { @to { TranslateY = 46; } } }
+                                }
+                            </Border.Aspect>
+                        </Border>
+                    </Grid>
+                </Button>
+                <TextBlock Text="Ink &amp; Paper" Aspect="$CardTitle" />
+                <TextBlock Text="The original. A manuscript, its margins and a vermilion seal." Aspect="$CardBlurb" />
+            </StackPanel>
+
+            <!-- Cyberpunk -->
+            <StackPanel Width="300" Margin="0,0,40,0" Opacity="0">
+                <Button Name="CyberCard" Aspect="$ThemeCard" Command="$DataContext.PlayCommand:OneWay" CommandParameter="Cyberpunk" Servo.Id="theme-cyberpunk">
+                    <Grid Width="300" Height="400" ClipToBounds="True">
+                        <Grid>
+                            @prism
+                            {
+                                @layer Crt
+                                {
+                                    @filter ChromaticAberration { Amount = 2; }
+                                    @filter Scanlines { Frequency = 180; Thickness = 1; LineOpacity = 0.3; }
+                                }
+                            }
+                            <Border Background="$CyVoidBrush" />
+                            <Border Background="$CyberHorizonBrush" />
+                            <!-- Skyline -->
+                            <Border Width="46" Height="210" Background="$CyTowerFarBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="8,0,0,0" />
+                            <Border Width="60" Height="270" Background="$CyTowerBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="48,0,0,0" />
+                            <Border Width="38" Height="180" Background="$CyTowerFarBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="112,0,0,0" />
+                            <Border Width="70" Height="300" Background="$CyTowerBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="150,0,0,0" />
+                            <Border Width="56" Height="230" Background="$CyTowerFarBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="226,0,0,0" />
+                            <Border Width="4" Height="4" Background="$CyCyanBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="64,0,0,220" />
+                            <Border Width="4" Height="4" Background="$CyMagentaBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="80,0,0,180" />
+                            <Border Width="4" Height="4" Background="$CyCyanBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="168,0,0,250" />
+                            <Border Width="4" Height="4" Background="$CyYellowBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="190,0,0,150" />
+                            <Border Width="4" Height="4" Background="$CyMagentaBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="240,0,0,190" />
+                            <Border Width="28" Height="3" Background="$CyMagentaBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="160,0,0,276" />
+                            <!-- Rain -->
+                            <Border Name="R1" Aspect="$Rain" Margin="22,0,0,0" />
+                            <Border Name="R2" Aspect="$Rain" Margin="64,0,0,0" />
+                            <Border Name="R3" Aspect="$Rain" Margin="103,0,0,0" />
+                            <Border Name="R4" Aspect="$Rain" Margin="141,0,0,0" />
+                            <Border Name="R5" Aspect="$Rain" Margin="187,0,0,0" />
+                            <Border Name="R6" Aspect="$Rain" Margin="232,0,0,0" />
+                            <Border Name="R7" Aspect="$Rain" Margin="275,0,0,0" />
+                            <!-- Wordmark with an RGB split -->
+                            <Grid HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,86,0,0">
+                                <TextBlock Text="CERNEALA" FontFamily="Bahnschrift" FontSize="50" Foreground="$CyMagentaBrush" HorizontalAlignment="Center" TranslateX="3" />
+                                <TextBlock Name="CyGhost" Text="CERNEALA" FontFamily="Bahnschrift" FontSize="50" Foreground="$CyCyanBrush" HorizontalAlignment="Center" TranslateX="-3" />
+                                <TextBlock Text="CERNEALA" FontFamily="Bahnschrift" FontSize="50" Foreground="$CyTextBrush" HorizontalAlignment="Center" />
+                            </Grid>
+                            <TextBlock Text="//NEON.RUNTIME" FontFamily="Cascadia Mono" FontSize="14" Foreground="$CyCyanBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,152,0,0" />
+                            <TextBlock Text="CH 01/12" FontFamily="Cascadia Mono" FontSize="12" Foreground="$CyDimBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="14,14,0,0" />
+                            <Ellipse Width="8" Height="8" Fill="$CyMagentaBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,18,16,0" />
+                        </Grid>
+                        <Border Height="46" Background="$CyCyanBrush" VerticalAlignment="Bottom" TranslateY="46">
+                            <TextBlock Text="&gt; RUN THE FILM" FontFamily="Cascadia Mono" FontSize="15" Foreground="$CyVoidBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Border.Aspect>
+                                @when $CyberCard.IsMouseOver
+                                {
+                                    @if $CyberCard.IsMouseOver == true { @animate with Tween(160ms, EaseOut) { @to { TranslateY = 0; } } }
+                                    @if $CyberCard.IsMouseOver == false { @animate with Tween(160ms, EaseIn) { @to { TranslateY = 46; } } }
+                                }
+                            </Border.Aspect>
+                        </Border>
+                    </Grid>
+                </Button>
+                <TextBlock Text="Cyberpunk" Aspect="$CardTitle" />
+                <TextBlock Text="Neon on wet glass. A HUD, a glitch and a city that never sleeps." Aspect="$CardBlurb" />
+            </StackPanel>
+
+            <!-- Brutalist -->
+            <StackPanel Width="300" Margin="0,0,40,0" Opacity="0">
+                <Button Name="BrutalCard" Aspect="$ThemeCard" Command="$DataContext.PlayCommand:OneWay" CommandParameter="Brutalist" Servo.Id="theme-brutalist">
+                    <Grid Width="300" Height="400" ClipToBounds="True">
+                        <Border Background="$BrConcreteBrush" />
+                        <Border Width="1" Background="$BrLineBrush" HorizontalAlignment="Left" Margin="100,0,0,0" />
+                        <Border Width="1" Background="$BrLineBrush" HorizontalAlignment="Left" Margin="200,0,0,0" />
+                        <Border Height="1" Background="$BrLineBrush" VerticalAlignment="Top" Margin="0,133,0,0" />
+                        <Border Height="1" Background="$BrLineBrush" VerticalAlignment="Top" Margin="0,266,0,0" />
+                        <Border Width="118" Height="118" Background="$BrOrangeBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,16,16,0" />
+                        <TextBlock Text="C" FontFamily="Impact" FontSize="320" Foreground="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="14,-34,0,0" />
+                        <TextBlock Text="CERNEALA" FontFamily="Impact" FontSize="46" Foreground="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="18,0,0,58" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="20,0,0,30">
+                            <TextBlock Text="RAW / 12 CH / 2026" FontFamily="Courier New" FontSize="15" Foreground="$BrBlackBrush" />
+                            <Border Name="BrCursor" Width="9" Height="15" Background="$BrBlackBrush" Margin="4,0,0,0" />
+                        </StackPanel>
+                        <Border BorderBrush="$BrBlackBrush" BorderThickness="6" />
+                        <Border Height="46" Background="$BrBlackBrush" VerticalAlignment="Bottom" TranslateY="46">
+                            <TextBlock Text="PLAY" FontFamily="Impact" FontSize="24" Foreground="$BrOrangeBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Border.Aspect>
+                                @when $BrutalCard.IsMouseOver
+                                {
+                                    @if $BrutalCard.IsMouseOver == true { @animate with Tween(90ms, Linear) { @to { TranslateY = 0; } } }
+                                    @if $BrutalCard.IsMouseOver == false { @animate with Tween(90ms, Linear) { @to { TranslateY = 46; } } }
+                                }
+                            </Border.Aspect>
+                        </Border>
+                    </Grid>
+                </Button>
+                <TextBlock Text="Brutalist" Aspect="$CardTitle" />
+                <TextBlock Text="Raw concrete and black rules. Big type, hard cuts, nothing softened." Aspect="$CardBlurb" />
+            </StackPanel>
+
+            <!-- Sakura -->
+            <StackPanel Width="300" Opacity="0">
+                <Button Name="SakuraCard" Aspect="$ThemeCard" Command="$DataContext.PlayCommand:OneWay" CommandParameter="Sakura" Servo.Id="theme-sakura">
+                    <Grid Width="300" Height="400" ClipToBounds="True">
+                        <Border Background="$SakuraCardBrush" />
+                        <Ellipse Width="150" Height="150" Fill="$SkPetalPaleBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,40,-20,0" />
+                        <!-- A branch reaching in from the left -->
+                        <Path Width="300" Height="140" Data="M 0 30 C 50 40 90 26 140 52 C 180 72 220 70 270 92" Stroke="$SkBarkBrush" StrokeThickness="5" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,10,0,0" />
+                        <Path Width="300" Height="140" Data="M 120 44 C 130 20 150 12 170 4" Stroke="$SkBarkBrush" StrokeThickness="3" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,10,0,0" />
+                        <Grid Width="24" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="70,34,0,0" Scale="1.3" RenderTransformOrigin="0.5,0.5"><reel:Blossom /></Grid>
+                        <Grid Width="24" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="150,10,0,0" Scale="1.1" RenderTransformOrigin="0.5,0.5"><reel:Blossom /></Grid>
+                        <Grid Width="24" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="196,72,0,0" Scale="1.5" RenderTransformOrigin="0.5,0.5"><reel:Blossom /></Grid>
+                        <Grid Width="24" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="250,92,0,0" Scale="1" RenderTransformOrigin="0.5,0.5"><reel:Blossom /></Grid>
+                        <Grid Width="24" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="116,56,0,0" Scale="0.9" RenderTransformOrigin="0.5,0.5"><reel:Blossom /></Grid>
+                        <TextBlock Text="桜" FontFamily="Yu Gothic Light" FontSize="118" Foreground="$SkPlumBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,128,0,0" Opacity="0.9" />
+                        <TextBlock Text="cerneala" FontFamily="Gabriola" FontSize="50" Foreground="$SkPlumBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,268,0,0" />
+                        <Grid Name="Petals">
+                            <Ellipse Name="P1" Width="9" Height="12" Fill="$SkPetalBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="60,0,0,0" RenderTransformOrigin="0.5,0.5" />
+                            <Ellipse Name="P2" Width="7" Height="10" Fill="$SkPetalDeepBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="180,0,0,0" RenderTransformOrigin="0.5,0.5" Opacity="0.8" />
+                            <Ellipse Name="P3" Width="10" Height="13" Fill="$SkPetalBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="250,0,0,0" RenderTransformOrigin="0.5,0.5" />
+                        </Grid>
+                        <Border Height="46" Background="$SkPetalDeepBrush" VerticalAlignment="Bottom" TranslateY="46">
+                            <TextBlock Text="watch the film" FontFamily="Gabriola" FontSize="27" Foreground="$SkCreamBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Border.Aspect>
+                                @when $SakuraCard.IsMouseOver
+                                {
+                                    @if $SakuraCard.IsMouseOver == true { @animate with Tween(360ms, EaseOut) { @to { TranslateY = 0; } } }
+                                    @if $SakuraCard.IsMouseOver == false { @animate with Tween(320ms, EaseInOut) { @to { TranslateY = 46; } } }
+                                }
+                            </Border.Aspect>
+                        </Border>
+                    </Grid>
+                </Button>
+                <TextBlock Text="Sakura" Aspect="$CardTitle" />
+                <TextBlock Text="Spring in a quiet garden. Falling petals, soft ink and gentle springs." Aspect="$CardBlurb" />
+            </StackPanel>
+        </StackPanel>
+
+        <TextBlock
+            Name="Footer"
+            Text="About two minutes each   ·   twelve chapters   ·   every frame is .crn markup"
+            FontFamily="Segoe UI"
+            FontSize="15"
+            Foreground="$ShellDimBrush"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Bottom"
+            Margin="0,0,0,54"
+            Opacity="0" />
+    </Grid>
+</UserControl>

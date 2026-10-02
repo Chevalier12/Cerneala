@@ -1,0 +1,158 @@
+<!-- 四 · movement, like wind: four silk threads; a petal glides, a lantern bobs, a butterfly hops, and blossoms open in turn. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <SolidColorBrush Name="LanternBrush" Color="#FFC2453D" />
+        <Tween Name="Thread" Duration="700ms" Easing="EaseOut" />
+        <Tween Name="Open" Duration="600ms" Easing="EaseOut" />
+        <Aspect Name="Lane" TargetType="Grid">
+            @default { Height = 96; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="LaneName" TargetType="TextBlock">
+            @default { FontFamily = "Gabriola"; FontSize = 44; Foreground = $SkPlumBrush; VerticalAlignment = "Top"; Margin = "0,4,0,0"; }
+        </Aspect>
+        <Aspect Name="LaneSpec" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 13; Foreground = $SkMistBrush; VerticalAlignment = "Top"; Margin = "2,60,0,0"; }
+        </Aspect>
+        <Aspect Name="Silk" TargetType="Border">
+            @default { Height = 1.5; Background = $SkMistBrush; VerticalAlignment = "Center"; Opacity = 0.6; }
+        </Aspect>
+        <Aspect Name="Bloom" TargetType="Grid">
+            @default { Width = 24; Height = 24; Margin = "0,0,42,0"; Scale = 0; RenderTransformOrigin = "0.5,0.5"; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:SakuraMotionScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Kicker.Opacity = 0; } @to { $Kicker.Opacity = 1; } }
+                    @animate with Tween(1000ms, EaseOut) { @from { $Headline.Opacity = 0; $Headline.TranslateY = 16; } @to { $Headline.Opacity = 1; $Headline.TranslateY = 0; } }
+                }
+                @stagger target $Lanes each 160ms
+                {
+                    @animate with $Thread { @from { Opacity = 0; TranslateX = -16; } @to { Opacity = 1; TranslateX = 0; } }
+                }
+                @parallel
+                {
+                    <!-- A tween: the petal glides, eased, back and forth. -->
+                    @animate with PingPong(Tween(1800ms, EaseInOut), forever) { @from { $Glider.TranslateX = 0; } @to { $Glider.TranslateX = 800; } }
+                    @animate with PingPong(Tween(900ms, EaseInOut), forever) { @from { $Glider.Rotation = -0.5; } @to { $Glider.Rotation = 0.5; } }
+
+                    <!-- A spring: the lantern drops onto its string and bobs to rest. -->
+                    @sequence
+                    {
+                        @animate with Spring(110, 5) { @from { $Lantern.TranslateY = -46; } @to { $Lantern.TranslateY = 0; } }
+                        @animate with Tween(500ms, EaseOut) { @from { $Lantern.TranslateY = current; } @to { $Lantern.TranslateY = -36; } }
+                        @animate with Spring(110, 5) { @from { $Lantern.TranslateY = current; } @to { $Lantern.TranslateY = 0; } }
+                    }
+
+                    <!-- Keyframes: the butterfly hops along one timeline. -->
+                    @sequence
+                    {
+                        @keyframes duration 3200ms
+                        {
+                            @animate 0%..100% with Linear { @from { $Butterfly.TranslateX = 0; } @to { $Butterfly.TranslateX = 800; } }
+                            @animate 0%..25% with EaseOut { @from { $Butterfly.TranslateY = 0; } @to { $Butterfly.TranslateY = -30; } }
+                            @animate 25%..50% with EaseInOut { @from { $Butterfly.TranslateY = -30; } @to { $Butterfly.TranslateY = 10; } }
+                            @animate 50%..75% with EaseInOut { @from { $Butterfly.TranslateY = 10; } @to { $Butterfly.TranslateY = -22; } }
+                            @animate 75%..100% with EaseIn { @from { $Butterfly.TranslateY = -22; } @to { $Butterfly.TranslateY = 0; } }
+                        }
+                    }
+                    @animate with PingPong(Tween(160ms, EaseInOut), forever) { @from { $Wings.ScaleX = 1; } @to { $Wings.ScaleX = 0.35; } }
+
+                    <!-- Stagger: one rule, and the blossoms open in turn. -->
+                    @stagger target $Blooms each 130ms
+                    {
+                        @animate with $Open { @from { Scale = 0; } @to { Scale = 1.3; } }
+                    }
+                    @sequence
+                    {
+                        @animate with Tween(2000ms, Linear) { @from { $Caption.Opacity = 0; } @to { $Caption.Opacity = 0; } }
+                        @animate with Tween(1000ms, EaseOut) { @from { $Caption.Opacity = 0; } @to { $Caption.Opacity = 1; } }
+                    }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:SakuraMotionScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="150,226,150,120">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Name="Kicker" Text="MOTION  ·  TWEEN, SPRING, KEYFRAMES, STAGGER" Aspect="$SkCaps" Opacity="0" />
+            <TextBlock Name="Headline" Text="Motion you can read." Aspect="$SkDisplay" FontSize="76" Margin="0,-6,0,0" Opacity="0" />
+        </StackPanel>
+
+        <StackPanel Name="Lanes" Grid.Row="1">
+            <Grid Aspect="$Lane">
+                <TextBlock Text="Tween" Aspect="$LaneName" />
+                <TextBlock Text="Tween(1800ms, EaseInOut)" Aspect="$LaneSpec" />
+                <Grid Width="860" HorizontalAlignment="Right">
+                    <Border Aspect="$Silk" />
+                    <Ellipse Name="Glider" Width="18" Height="26" Fill="$SkPetalDeepBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="20,0,0,0" RenderTransformOrigin="0.5,0.5" />
+                </Grid>
+            </Grid>
+            <Grid Aspect="$Lane">
+                <TextBlock Text="Spring" Aspect="$LaneName" />
+                <TextBlock Text="Spring(110, 5)" Aspect="$LaneSpec" />
+                <Grid Width="860" HorizontalAlignment="Right">
+                    <Border Aspect="$Silk" />
+                    <Grid Name="Lantern" Width="40" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="400,10,0,0">
+                        <Border Width="1.5" Height="18" Background="$SkBarkBrush" HorizontalAlignment="Center" VerticalAlignment="Top" />
+                        <Rectangle Width="34" Height="44" RadiusX="12" RadiusY="12" Fill="$LanternBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,18,0,0" />
+                        <Border Width="34" Height="2" Background="$SkGoldBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,38,0,0" />
+                    </Grid>
+                </Grid>
+            </Grid>
+            <Grid Aspect="$Lane">
+                <TextBlock Text="Keyframes" Aspect="$LaneName" />
+                <TextBlock Text="@keyframes duration 3200ms" Aspect="$LaneSpec" />
+                <Grid Width="860" HorizontalAlignment="Right">
+                    <Border Aspect="$Silk" />
+                    <Grid Name="Butterfly" Width="34" Height="26" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="20,0,0,0">
+                        <Grid Name="Wings" RenderTransformOrigin="0.5,0.5">
+                            <Ellipse Width="16" Height="22" Fill="$SkPetalBrush" HorizontalAlignment="Left" />
+                            <Ellipse Width="16" Height="22" Fill="$SkPetalDeepBrush" HorizontalAlignment="Right" />
+                        </Grid>
+                        <Border Width="3" Height="20" Background="$SkSumiBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                </Grid>
+            </Grid>
+            <Grid Aspect="$Lane">
+                <TextBlock Text="Stagger" Aspect="$LaneName" />
+                <TextBlock Text="@stagger each 130ms" Aspect="$LaneSpec" />
+                <Grid Width="860" HorizontalAlignment="Right">
+                    <Border Aspect="$Silk" />
+                    <StackPanel Name="Blooms" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
+                        <Grid Aspect="$Bloom"><reel:Blossom /></Grid><Grid Aspect="$Bloom"><reel:Blossom /></Grid><Grid Aspect="$Bloom"><reel:Blossom /></Grid>
+                        <Grid Aspect="$Bloom"><reel:Blossom /></Grid><Grid Aspect="$Bloom"><reel:Blossom /></Grid><Grid Aspect="$Bloom"><reel:Blossom /></Grid>
+                        <Grid Aspect="$Bloom"><reel:Blossom /></Grid><Grid Aspect="$Bloom"><reel:Blossom /></Grid><Grid Aspect="$Bloom"><reel:Blossom /></Grid>
+                        <Grid Aspect="$Bloom"><reel:Blossom /></Grid><Grid Aspect="$Bloom"><reel:Blossom /></Grid><Grid Aspect="$Bloom"><reel:Blossom /></Grid>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </StackPanel>
+
+        <TextBlock
+            Name="Caption"
+            Grid.Row="2"
+            Text="Every movement in this film is notation like this: declared in markup, played by the runtime."
+            Aspect="$SkLede"
+            Opacity="0" />
+    </Grid>
+</UserControl>

@@ -1,0 +1,176 @@
+<!-- 07 · DATA: white blocks pile onto the worker band, Relay crushes them into one orange block, and it drops onto the UI band. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Slam" Duration="150ms" Easing="EaseIn" />
+        <Tween Name="Cut" Duration="60ms" Easing="Linear" />
+        <Tween Name="Crush" Duration="300ms" Easing="EaseIn" />
+        <Tween Name="Drop" Duration="200ms" Easing="EaseIn" />
+        <Aspect Name="Block" TargetType="Border">
+            @default { Width = 12; Height = 12; Background = $BrWhiteBrush; Margin = "0,0,14,0"; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="Code" TargetType="TextBlock">
+            @default { FontFamily = "Courier New"; FontSize = 18; Foreground = $BrBlackBrush; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:BrutalBindScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with $Cut { @from { $Tape.Opacity = 0; } @to { $Tape.Opacity = 1; } }
+                    @animate with $Cut { @from { $Headline.Opacity = 0; } @to { $Headline.Opacity = 1; } }
+                    @animate with $Slam { @from { $Headline.TranslateX = -90; } @to { $Headline.TranslateX = 0; } }
+                }
+                @stagger target $Columns each 140ms
+                {
+                    @animate with $Cut { @from { Opacity = 0; } @to { Opacity = 1; } }
+                }
+
+                <!-- A burst on the worker band... -->
+                @stagger target $Burst each 70ms
+                {
+                    @animate with $Cut { @from { Opacity = 0; } @to { Opacity = 1; } }
+                }
+                <!-- ...crushed by Relay into one... -->
+                @parallel
+                {
+                    @animate with $Crush { @from { $B1.TranslateX = 0; $B1.Opacity = 1; } @to { $B1.TranslateX = 182; $B1.Opacity = 1; } }
+                    @animate with $Crush { @from { $B2.TranslateX = 0; $B2.Opacity = 1; } @to { $B2.TranslateX = 156; $B2.Opacity = 1; } }
+                    @animate with $Crush { @from { $B3.TranslateX = 0; $B3.Opacity = 1; } @to { $B3.TranslateX = 130; $B3.Opacity = 1; } }
+                    @animate with $Crush { @from { $B4.TranslateX = 0; $B4.Opacity = 1; } @to { $B4.TranslateX = 104; $B4.Opacity = 1; } }
+                    @animate with $Crush { @from { $B5.TranslateX = 0; $B5.Opacity = 1; } @to { $B5.TranslateX = 78; $B5.Opacity = 1; } }
+                    @animate with $Crush { @from { $B6.TranslateX = 0; $B6.Opacity = 1; } @to { $B6.TranslateX = 52; $B6.Opacity = 1; } }
+                    @animate with $Crush { @from { $B7.TranslateX = 0; $B7.Opacity = 1; } @to { $B7.TranslateX = 26; $B7.Opacity = 1; } }
+                }
+                @animate with Tween(16ms, Linear) { @from { $B1.Opacity = 0; $B2.Opacity = 0; $B3.Opacity = 0; $B4.Opacity = 0; $B5.Opacity = 0; $B6.Opacity = 0; $B7.Opacity = 0; $B8.Opacity = 0; $One.Opacity = 1; $Gate.Opacity = 1; } @to { $B1.Opacity = 0; $B2.Opacity = 0; $B3.Opacity = 0; $B4.Opacity = 0; $B5.Opacity = 0; $B6.Opacity = 0; $B7.Opacity = 0; $B8.Opacity = 0; $One.Opacity = 1; $Gate.Opacity = 1; } }
+                <!-- ...dropped onto the UI band, and delivered. -->
+                @animate with $Drop { @from { $One.TranslateY = 0; } @to { $One.TranslateY = 106; } }
+                @animate with Tween(260ms, Linear) { @from { $One.TranslateX = 0; } @to { $One.TranslateX = 220; } }
+                @set { $Balance.Text = "1,268.75"; }
+                @animate with Tween(16ms, Linear) { @from { $One.Opacity = 0; $Gate.Opacity = 0.3; } @to { $One.Opacity = 0; $Gate.Opacity = 0.3; } }
+                @parallel
+                {
+                    @animate with Tween(360ms, Linear) { @from { $Flash.Opacity = 1; } @to { $Flash.Opacity = 0; } }
+                    @animate with $Cut { @from { $Fold.Opacity = 0; } @to { $Fold.Opacity = 1; } }
+                }
+
+                <!-- Again, faster. Still one refresh. -->
+                @animate with Tween(16ms, Linear) { @from { $B1.TranslateX = 0; $B2.TranslateX = 0; $B3.TranslateX = 0; $B4.TranslateX = 0; $B5.TranslateX = 0; $B6.TranslateX = 0; $B7.TranslateX = 0; $One.TranslateX = 0; $One.TranslateY = 0; } @to { $B1.TranslateX = 0; $B2.TranslateX = 0; $B3.TranslateX = 0; $B4.TranslateX = 0; $B5.TranslateX = 0; $B6.TranslateX = 0; $B7.TranslateX = 0; $One.TranslateX = 0; $One.TranslateY = 0; } }
+                @stagger target $Burst each 40ms
+                {
+                    @animate with $Cut { @from { Opacity = 0; } @to { Opacity = 1; } }
+                }
+                @parallel
+                {
+                    @animate with $Crush { @from { $B1.TranslateX = 0; } @to { $B1.TranslateX = 182; } }
+                    @animate with $Crush { @from { $B2.TranslateX = 0; } @to { $B2.TranslateX = 156; } }
+                    @animate with $Crush { @from { $B3.TranslateX = 0; } @to { $B3.TranslateX = 130; } }
+                    @animate with $Crush { @from { $B4.TranslateX = 0; } @to { $B4.TranslateX = 104; } }
+                    @animate with $Crush { @from { $B5.TranslateX = 0; } @to { $B5.TranslateX = 78; } }
+                    @animate with $Crush { @from { $B6.TranslateX = 0; } @to { $B6.TranslateX = 52; } }
+                    @animate with $Crush { @from { $B7.TranslateX = 0; } @to { $B7.TranslateX = 26; } }
+                }
+                @animate with Tween(16ms, Linear) { @from { $B1.Opacity = 0; $B2.Opacity = 0; $B3.Opacity = 0; $B4.Opacity = 0; $B5.Opacity = 0; $B6.Opacity = 0; $B7.Opacity = 0; $B8.Opacity = 0; $One.Opacity = 1; $Gate.Opacity = 1; } @to { $B1.Opacity = 0; $B2.Opacity = 0; $B3.Opacity = 0; $B4.Opacity = 0; $B5.Opacity = 0; $B6.Opacity = 0; $B7.Opacity = 0; $B8.Opacity = 0; $One.Opacity = 1; $Gate.Opacity = 1; } }
+                @animate with $Drop { @from { $One.TranslateY = 0; } @to { $One.TranslateY = 106; } }
+                @animate with Tween(240ms, Linear) { @from { $One.TranslateX = 0; } @to { $One.TranslateX = 220; } }
+                @set { $Balance.Text = "1,311.40"; }
+                @animate with Tween(16ms, Linear) { @from { $One.Opacity = 0; $Gate.Opacity = 0.3; } @to { $One.Opacity = 0; $Gate.Opacity = 0.3; } }
+                @parallel
+                {
+                    @animate with Tween(360ms, Linear) { @from { $Flash.Opacity = 1; } @to { $Flash.Opacity = 0; } }
+                    @animate with $Cut { @from { $Caption.Opacity = 0; } @to { $Caption.Opacity = 1; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:BrutalBindScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="160,124,140,110">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <Border Name="Tape" Background="$BrBlackBrush" Padding="12,4,12,5" HorizontalAlignment="Left" Opacity="0">
+                <TextBlock Text="[07] BINDINGS / RELAY / ANY THREAD" FontFamily="Courier New" FontSize="16" Foreground="$BrWhiteBrush" />
+            </Border>
+            <TextBlock Name="Headline" Text="BOUND ONCE. UPDATED FROM ANYWHERE." Aspect="$BrDisplay" FontSize="84" Margin="0,4,0,0" Opacity="0" />
+        </StackPanel>
+
+        <Grid Name="Columns" Grid.Row="1" Height="320" Margin="0,24,0,0" VerticalAlignment="Top">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="470" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="320" />
+            </Grid.ColumnDefinitions>
+
+            <!-- The contract -->
+            <Grid Grid.Column="0" Height="246" VerticalAlignment="Top" Opacity="0">
+                <Border Background="$BrBlackBrush" Margin="14,14,-14,-14" />
+                <Border Aspect="$BrBox">
+                    <StackPanel>
+                        <TextBlock Text="LEDGER.CS" FontFamily="Impact" FontSize="20" Foreground="$BrBlackBrush" Margin="0,0,0,8" />
+                        <TextBlock Text="class Ledger : INotifyPropertyChanged" Aspect="$Code" FontSize="16" />
+                        <TextBlock Text="  decimal Balance { get; }" Aspect="$Code" FontSize="16" Margin="0,4,0,0" />
+                        <Border Height="3" Background="$BrBlackBrush" Margin="0,14,0,12" />
+                        <TextBlock Text="LEDGERVIEW.CRN" FontFamily="Impact" FontSize="20" Foreground="$BrBlackBrush" Margin="0,0,0,6" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Text=" Aspect="$Code" FontSize="16" />
+                            <TextBlock Text="&quot;\$DataContext.Balance:OneWay&quot;" Aspect="$Code" FontSize="16" Foreground="$BrOrangeBrush" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Two bands -->
+            <Grid Grid.Column="1" Width="460" Height="300" HorizontalAlignment="Center" VerticalAlignment="Top" Opacity="0">
+                <TextBlock Text="WORKER THREAD" FontFamily="Courier New" FontSize="15" Foreground="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,14,0,0" />
+                <Border Height="28" Background="$BrBlackBrush" VerticalAlignment="Top" Margin="10,44,10,0" />
+                <StackPanel Name="Burst" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,52,0,0">
+                    <Border Name="B1" Aspect="$Block" /><Border Name="B2" Aspect="$Block" /><Border Name="B3" Aspect="$Block" /><Border Name="B4" Aspect="$Block" />
+                    <Border Name="B5" Aspect="$Block" /><Border Name="B6" Aspect="$Block" /><Border Name="B7" Aspect="$Block" /><Border Name="B8" Aspect="$Block" />
+                </StackPanel>
+                <Border Name="Gate" Width="48" Height="176" BorderBrush="$BrOrangeBrush" BorderThickness="5" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="184,28,0,0" Opacity="0.3" />
+                <TextBlock Text="UI THREAD" FontFamily="Courier New" FontSize="15" Foreground="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,120,0,0" />
+                <Border Height="28" Background="$BrBlackBrush" VerticalAlignment="Top" Margin="10,150,10,0" />
+                <Border Name="One" Width="16" Height="16" Background="$BrOrangeBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="200,50,0,0" Opacity="0" />
+                <Border Background="$BrOrangeBrush" Padding="6,1,6,2" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="186,210,0,0">
+                    <TextBlock Text="RELAY" FontFamily="Impact" FontSize="18" Foreground="$BrBlackBrush" />
+                </Border>
+                <TextBlock Name="Fold" Text="A BURST BECOMES ONE REFRESH." FontFamily="Impact" FontSize="26" Foreground="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,254,0,0" Opacity="0" />
+            </Grid>
+
+            <!-- The bound value -->
+            <Grid Grid.Column="2" Height="200" VerticalAlignment="Top" Margin="0,40,14,0" Opacity="0">
+                <Border Background="$BrBlackBrush" Margin="14,14,-14,-14" />
+                <Border Background="$BrWhiteBrush" BorderBrush="$BrBlackBrush" BorderThickness="4" />
+                <Border Name="Flash" Background="$BrOrangeBrush" Margin="4" Opacity="0" />
+                <StackPanel Margin="28,22,28,22">
+                    <TextBlock Text="BALANCE / LEI" FontFamily="Courier New" FontSize="16" Foreground="$BrBlackBrush" />
+                    <TextBlock Name="Balance" Text="1,204.20" FontFamily="Impact" FontSize="80" Foreground="$BrBlackBrush" />
+                    <TextBlock Text="BOUND TO LEDGER.BALANCE" FontFamily="Courier New" FontSize="14" Foreground="$BrBlackBrush" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <TextBlock
+            Name="Caption"
+            Grid.Row="2"
+            Text="RAISE PROPERTYCHANGED FROM ANY THREAD: RELAY GATHERS THE BURST AND REFRESHES THE BINDING ONCE, ON THE UI THREAD."
+            Aspect="$BrLede"
+            FontSize="20"
+            Opacity="0" />
+    </Grid>
+</UserControl>

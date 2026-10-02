@@ -1,0 +1,164 @@
+<!-- 04 · MOTION: four oscilloscope channels, one per kind of motion: tween, spring, keyframes and stagger. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Lane" Duration="320ms" Easing="EaseOut" />
+        <Tween Name="Bar" Duration="380ms" Easing="EaseOut" />
+        <Aspect Name="Channel" TargetType="Grid">
+            @default { Height = 86; Margin = "0,0,0,14"; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="ChannelName" TargetType="TextBlock">
+            @default { FontFamily = "Bahnschrift"; FontSize = 26; Foreground = $CyTextBrush; Margin = "0,14,0,0"; }
+        </Aspect>
+        <Aspect Name="ChannelSpec" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 14; Foreground = $CyDimBrush; Margin = "0,50,0,0"; }
+        </Aspect>
+        <Aspect Name="Scope" TargetType="Border">
+            @default { Width = 900; Height = 86; Background = $CyPanelBrush; BorderBrush = $CyGridBrush; BorderThickness = "1"; HorizontalAlignment = "Right"; }
+        </Aspect>
+        <Aspect Name="Tick" TargetType="Border">
+            @default { Width = 1; Background = $CyGridBrush; HorizontalAlignment = "Left"; }
+        </Aspect>
+        <Aspect Name="EqBar" TargetType="Border">
+            @default { Width = 34; Background = $CyYellowBrush; VerticalAlignment = "Bottom"; Margin = "0,0,16,0"; ScaleY = 0.1; RenderTransformOrigin = "0.5,1"; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:CyberMotionScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(300ms, Linear) { @from { $Kicker.Opacity = 0; } @to { $Kicker.Opacity = 1; } }
+                    @animate with Tween(160ms, Linear) { @from { $Headline.Opacity = 0; } @to { $Headline.Opacity = 1; } }
+                    @animate with PingPong(Tween(45ms, Linear), 6) { @from { $Headline.TranslateX = 0; } @to { $Headline.TranslateX = 12; } }
+                }
+                @stagger target $Channels each 140ms
+                {
+                    @animate with $Lane { @from { Opacity = 0; TranslateX = -20; } @to { Opacity = 1; TranslateX = 0; } }
+                }
+                @parallel
+                {
+                    <!-- CH1 · a tween glides, eased, back and forth. -->
+                    @animate with PingPong(Tween(1200ms, EaseInOut), forever) { @from { $TweenDot.TranslateX = 0; } @to { $TweenDot.TranslateX = 840; } }
+
+                    <!-- CH2 · a spring overshoots and settles, again and again. -->
+                    @sequence
+                    {
+                        @animate with Spring(170, 8) { @from { $SpringDot.TranslateX = 0; } @to { $SpringDot.TranslateX = 600; } }
+                        @animate with Spring(170, 8) { @from { $SpringDot.TranslateX = current; } @to { $SpringDot.TranslateX = 160; } }
+                        @animate with Spring(170, 8) { @from { $SpringDot.TranslateX = current; } @to { $SpringDot.TranslateX = 720; } }
+                        @animate with Spring(170, 8) { @from { $SpringDot.TranslateX = current; } @to { $SpringDot.TranslateX = 300; } }
+                    }
+
+                    <!-- CH3 · keyframes: one timeline, many positions. -->
+                    @sequence
+                    {
+                        @keyframes duration 2600ms
+                        {
+                            @animate 0%..100% with Linear { @from { $KeyDot.TranslateX = 0; } @to { $KeyDot.TranslateX = 840; } }
+                            @animate 0%..25% with EaseOut { @from { $KeyDot.TranslateY = 0; } @to { $KeyDot.TranslateY = -26; } }
+                            @animate 25%..50% with EaseInOut { @from { $KeyDot.TranslateY = -26; } @to { $KeyDot.TranslateY = 22; } }
+                            @animate 50%..75% with EaseInOut { @from { $KeyDot.TranslateY = 22; } @to { $KeyDot.TranslateY = -14; } }
+                            @animate 75%..100% with EaseIn { @from { $KeyDot.TranslateY = -14; } @to { $KeyDot.TranslateY = 0; } }
+                        }
+                        @keyframes duration 2600ms
+                        {
+                            @animate 0%..100% with Linear { @from { $KeyDot.TranslateX = 840; } @to { $KeyDot.TranslateX = 0; } }
+                            @animate 0%..50% with EaseOut { @from { $KeyDot.TranslateY = 0; } @to { $KeyDot.TranslateY = 26; } }
+                            @animate 50%..100% with EaseIn { @from { $KeyDot.TranslateY = 26; } @to { $KeyDot.TranslateY = 0; } }
+                        }
+                    }
+
+                    <!-- CH4 · stagger: one rule, fanned out across sixteen bars. -->
+                    @stagger target $Bars each 70ms
+                    {
+                        @animate with $Bar { @from { ScaleY = 0.1; } @to { ScaleY = 1; } }
+                    }
+                    @animate with Tween(1200ms, EaseOut) { @from { $Caption.Opacity = 0; } @to { $Caption.Opacity = 1; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:CyberMotionScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="140,120,140,110">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Name="Kicker" Text="&gt; motion --scope" Aspect="$CyTag" Opacity="0" />
+            <Grid Name="Headline" Margin="0,8,0,0" Opacity="0">
+                <TextBlock Text="MOTION YOU CAN READ." Aspect="$CyDisplay" Foreground="$CyMagentaBrush" TranslateX="3" Opacity="0.85" />
+                <TextBlock Text="MOTION YOU CAN READ." Aspect="$CyDisplay" Foreground="$CyCyanBrush" TranslateX="-3" Opacity="0.85" />
+                <TextBlock Text="MOTION YOU CAN READ." Aspect="$CyDisplay" />
+            </Grid>
+        </StackPanel>
+
+        <StackPanel Name="Channels" Grid.Row="1" Margin="0,30,0,0">
+            <Grid Aspect="$Channel">
+                <TextBlock Text="CH1  TWEEN" Aspect="$ChannelName" />
+                <TextBlock Text="Tween(1200ms, EaseInOut)" Aspect="$ChannelSpec" />
+                <Border Aspect="$Scope">
+                    <Grid>
+                        <Border Aspect="$Tick" Margin="225,0,0,0" /><Border Aspect="$Tick" Margin="450,0,0,0" /><Border Aspect="$Tick" Margin="675,0,0,0" />
+                        <Border Height="1" Background="$CyGridBrush" VerticalAlignment="Center" />
+                        <Ellipse Name="TweenDot" Width="22" Height="22" Fill="$CyCyanBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="18,0,0,0" />
+                    </Grid>
+                </Border>
+            </Grid>
+            <Grid Aspect="$Channel">
+                <TextBlock Text="CH2  SPRING" Aspect="$ChannelName" />
+                <TextBlock Text="Spring(170, 8)" Aspect="$ChannelSpec" />
+                <Border Aspect="$Scope">
+                    <Grid>
+                        <Border Aspect="$Tick" Margin="225,0,0,0" /><Border Aspect="$Tick" Margin="450,0,0,0" /><Border Aspect="$Tick" Margin="675,0,0,0" />
+                        <Border Height="1" Background="$CyGridBrush" VerticalAlignment="Center" />
+                        <Ellipse Name="SpringDot" Width="22" Height="22" Fill="$CyMagentaBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="18,0,0,0" />
+                    </Grid>
+                </Border>
+            </Grid>
+            <Grid Aspect="$Channel">
+                <TextBlock Text="CH3  KEYFRAMES" Aspect="$ChannelName" />
+                <TextBlock Text="@keyframes duration 2600ms" Aspect="$ChannelSpec" />
+                <Border Aspect="$Scope">
+                    <Grid>
+                        <Border Aspect="$Tick" Margin="225,0,0,0" /><Border Aspect="$Tick" Margin="450,0,0,0" /><Border Aspect="$Tick" Margin="675,0,0,0" />
+                        <Border Height="1" Background="$CyGridBrush" VerticalAlignment="Center" />
+                        <Ellipse Name="KeyDot" Width="22" Height="22" Fill="$CyVioletBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="18,0,0,0" />
+                    </Grid>
+                </Border>
+            </Grid>
+            <Grid Aspect="$Channel">
+                <TextBlock Text="CH4  STAGGER" Aspect="$ChannelName" />
+                <TextBlock Text="@stagger each 70ms" Aspect="$ChannelSpec" />
+                <Border Aspect="$Scope">
+                    <StackPanel Name="Bars" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="22,0,0,8">
+                        <Border Aspect="$EqBar" Height="34" /><Border Aspect="$EqBar" Height="52" /><Border Aspect="$EqBar" Height="66" /><Border Aspect="$EqBar" Height="44" />
+                        <Border Aspect="$EqBar" Height="60" /><Border Aspect="$EqBar" Height="70" /><Border Aspect="$EqBar" Height="40" /><Border Aspect="$EqBar" Height="56" />
+                        <Border Aspect="$EqBar" Height="68" /><Border Aspect="$EqBar" Height="48" /><Border Aspect="$EqBar" Height="62" /><Border Aspect="$EqBar" Height="36" />
+                        <Border Aspect="$EqBar" Height="58" /><Border Aspect="$EqBar" Height="70" /><Border Aspect="$EqBar" Height="46" /><Border Aspect="$EqBar" Height="30" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+
+        <TextBlock
+            Name="Caption"
+            Grid.Row="2"
+            Text="// Every movement in this film is notation like this: declared in markup, played by the runtime."
+            Aspect="$CyLede"
+            Opacity="0" />
+    </Grid>
+</UserControl>

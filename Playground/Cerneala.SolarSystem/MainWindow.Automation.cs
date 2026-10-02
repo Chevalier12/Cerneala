@@ -62,7 +62,6 @@ public partial class MainWindow
             await Task.Delay(400);
             await Focus("jupiter", "03-jupiter");
             await Focus("earth", "04-earth");
-            await File.WriteAllTextAsync(Path.Combine(directory, "stop.txt"), "");
             await Focus("saturn", "05-saturn");
             await Focus("sun", "06-sun");
             await servo.ClickAsync(ServoTarget.ById("overview"));

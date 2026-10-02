@@ -1,0 +1,145 @@
+<!-- 三 · one rule, every blossom: one Aspect colours twelve tiles in a breeze; one token changes, and all twelve deepen. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <SolidColorBrush Name="ShadowBrush" Color="#145A2742" />
+        <Tween Name="Breeze" Duration="600ms" Easing="EaseOut" />
+        <Aspect Name="Code" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 17; Foreground = $SkSumiBrush; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:SakuraRuleScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Kicker.Opacity = 0; } @to { $Kicker.Opacity = 1; } }
+                    @animate with Tween(1000ms, EaseOut) { @from { $Headline.Opacity = 0; $Headline.TranslateY = 16; } @to { $Headline.Opacity = 1; $Headline.TranslateY = 0; } }
+                    @animate with Tween(900ms, EaseOut) { @from { $Rule.Opacity = 0; $Rule.TranslateY = 20; } @to { $Rule.Opacity = 1; $Rule.TranslateY = 0; } }
+                    @animate with Tween(1100ms, EaseOut) { @from { $Board.Opacity = 0; } @to { $Board.Opacity = 1; } }
+                }
+                <!-- A breeze carries the rule to every tile. -->
+                @stagger target $BlushTiles each 90ms
+                {
+                    @animate with $Breeze { @from { Opacity = 0; Scale = 0.92; } @to { Opacity = 1; Scale = 1; } }
+                }
+                @animate with Tween(700ms, Linear) { @from { $Board.Opacity = 1; } @to { $Board.Opacity = 1; } }
+                <!-- One token changes; all twelve deepen. -->
+                @parallel
+                {
+                    @animate with Tween(600ms, EaseInOut) { @from { $OldToken.Opacity = 1; } @to { $OldToken.Opacity = 0; } }
+                    @animate with Tween(600ms, EaseInOut) { @from { $NewToken.Opacity = 0; } @to { $NewToken.Opacity = 1; } }
+                }
+                @stagger target $PlumTiles each 90ms
+                {
+                    @animate with $Breeze { @from { Opacity = 0; Scale = 0.92; } @to { Opacity = 1; Scale = 1; } }
+                }
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Count.Opacity = 0; $Count.TranslateY = 10; } @to { $Count.Opacity = 1; $Count.TranslateY = 0; } }
+                    @animate with Tween(1100ms, EaseOut) { @from { $Caption.Opacity = 0; } @to { $Caption.Opacity = 1; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:SakuraRuleScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="150,226,150,120">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Name="Kicker" Text="ASPECT  ·  ONE RULE" Aspect="$SkCaps" Opacity="0" />
+            <TextBlock Name="Headline" Text="Change the rule, not the elements." Aspect="$SkDisplay" FontSize="76" Margin="0,-6,0,0" Opacity="0" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,6,0,0">
+            <Grid Name="Rule" Width="520" Height="236" HorizontalAlignment="Left" VerticalAlignment="Top" Opacity="0">
+                <Border Background="$ShadowBrush" Margin="6,10,-6,-10" />
+                <Border Aspect="$SkCard">
+                    <StackPanel>
+                        <TextBlock Text="&lt;Aspect Name=&quot;Tile&quot;&gt;" Aspect="$Code" Foreground="$SkPlumBrush" />
+                        <TextBlock Text="@default {" Aspect="$Code" Foreground="$SkMossBrush" Margin="24,8,0,0" />
+                        <Grid Margin="48,6,0,6">
+                            <StackPanel Name="OldToken">
+                                <TextBlock Text="Background = \$Blush;" Aspect="$Code" />
+                                <TextBlock Text="Foreground = \$Plum;" Aspect="$Code" Margin="0,4,0,0" />
+                            </StackPanel>
+                            <StackPanel Name="NewToken" Opacity="0">
+                                <TextBlock Text="Background = \$Plum;" Aspect="$Code" Foreground="$SkPetalDeepBrush" />
+                                <TextBlock Text="Foreground = \$Cream;" Aspect="$Code" Foreground="$SkPetalDeepBrush" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="}" Aspect="$Code" Foreground="$SkMossBrush" Margin="24,0,0,0" />
+                        <TextBlock Text="&lt;/Aspect&gt;" Aspect="$Code" Foreground="$SkPlumBrush" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+            <TextBlock Name="Count" Text="twelve tiles  ·  one rule  ·  no edits to them" FontFamily="Gabriola" FontSize="34" Foreground="$SkPetalDeepBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6,262,0,0" Opacity="0" />
+
+            <Grid Name="Board" Width="650" Height="242" HorizontalAlignment="Right" VerticalAlignment="Top" Opacity="0">
+                <Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,0,0,0" Opacity="1" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkCreamBrush" Stroke="$SkPetalBrush" StrokeThickness="1.5" /><TextBlock Text="Invoices" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkMistBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="166,0,0,0" Opacity="1" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkCreamBrush" Stroke="$SkPetalBrush" StrokeThickness="1.5" /><TextBlock Text="Clients" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkMistBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="332,0,0,0" Opacity="1" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkCreamBrush" Stroke="$SkPetalBrush" StrokeThickness="1.5" /><TextBlock Text="Reports" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkMistBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="498,0,0,0" Opacity="1" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkCreamBrush" Stroke="$SkPetalBrush" StrokeThickness="1.5" /><TextBlock Text="Inbox" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkMistBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,86,0,0" Opacity="1" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkCreamBrush" Stroke="$SkPetalBrush" StrokeThickness="1.5" /><TextBlock Text="Calendar" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkMistBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="166,86,0,0" Opacity="1" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkCreamBrush" Stroke="$SkPetalBrush" StrokeThickness="1.5" /><TextBlock Text="Notes" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkMistBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="332,86,0,0" Opacity="1" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkCreamBrush" Stroke="$SkPetalBrush" StrokeThickness="1.5" /><TextBlock Text="Files" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkMistBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="498,86,0,0" Opacity="1" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkCreamBrush" Stroke="$SkPetalBrush" StrokeThickness="1.5" /><TextBlock Text="Team" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkMistBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,172,0,0" Opacity="1" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkCreamBrush" Stroke="$SkPetalBrush" StrokeThickness="1.5" /><TextBlock Text="Billing" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkMistBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="166,172,0,0" Opacity="1" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkCreamBrush" Stroke="$SkPetalBrush" StrokeThickness="1.5" /><TextBlock Text="Ledger" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkMistBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="332,172,0,0" Opacity="1" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkCreamBrush" Stroke="$SkPetalBrush" StrokeThickness="1.5" /><TextBlock Text="Tasks" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkMistBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="498,172,0,0" Opacity="1" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkCreamBrush" Stroke="$SkPetalBrush" StrokeThickness="1.5" /><TextBlock Text="Settings" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkMistBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                </Grid>
+                <Grid Name="BlushTiles">
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,0,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPetalPaleBrush" Stroke="$SkPetalDeepBrush" StrokeThickness="1.5" /><TextBlock Text="Invoices" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkPlumBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="166,0,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPetalPaleBrush" Stroke="$SkPetalDeepBrush" StrokeThickness="1.5" /><TextBlock Text="Clients" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkPlumBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="332,0,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPetalPaleBrush" Stroke="$SkPetalDeepBrush" StrokeThickness="1.5" /><TextBlock Text="Reports" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkPlumBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="498,0,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPetalPaleBrush" Stroke="$SkPetalDeepBrush" StrokeThickness="1.5" /><TextBlock Text="Inbox" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkPlumBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,86,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPetalPaleBrush" Stroke="$SkPetalDeepBrush" StrokeThickness="1.5" /><TextBlock Text="Calendar" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkPlumBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="166,86,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPetalPaleBrush" Stroke="$SkPetalDeepBrush" StrokeThickness="1.5" /><TextBlock Text="Notes" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkPlumBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="332,86,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPetalPaleBrush" Stroke="$SkPetalDeepBrush" StrokeThickness="1.5" /><TextBlock Text="Files" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkPlumBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="498,86,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPetalPaleBrush" Stroke="$SkPetalDeepBrush" StrokeThickness="1.5" /><TextBlock Text="Team" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkPlumBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,172,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPetalPaleBrush" Stroke="$SkPetalDeepBrush" StrokeThickness="1.5" /><TextBlock Text="Billing" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkPlumBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="166,172,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPetalPaleBrush" Stroke="$SkPetalDeepBrush" StrokeThickness="1.5" /><TextBlock Text="Ledger" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkPlumBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="332,172,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPetalPaleBrush" Stroke="$SkPetalDeepBrush" StrokeThickness="1.5" /><TextBlock Text="Tasks" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkPlumBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="498,172,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPetalPaleBrush" Stroke="$SkPetalDeepBrush" StrokeThickness="1.5" /><TextBlock Text="Settings" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkPlumBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                </Grid>
+                <Grid Name="PlumTiles">
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,0,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPlumBrush" Stroke="$SkPlumBrush" StrokeThickness="1.5" /><TextBlock Text="Invoices" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkCreamBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="166,0,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPlumBrush" Stroke="$SkPlumBrush" StrokeThickness="1.5" /><TextBlock Text="Clients" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkCreamBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="332,0,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPlumBrush" Stroke="$SkPlumBrush" StrokeThickness="1.5" /><TextBlock Text="Reports" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkCreamBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="498,0,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPlumBrush" Stroke="$SkPlumBrush" StrokeThickness="1.5" /><TextBlock Text="Inbox" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkCreamBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,86,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPlumBrush" Stroke="$SkPlumBrush" StrokeThickness="1.5" /><TextBlock Text="Calendar" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkCreamBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="166,86,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPlumBrush" Stroke="$SkPlumBrush" StrokeThickness="1.5" /><TextBlock Text="Notes" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkCreamBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="332,86,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPlumBrush" Stroke="$SkPlumBrush" StrokeThickness="1.5" /><TextBlock Text="Files" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkCreamBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="498,86,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPlumBrush" Stroke="$SkPlumBrush" StrokeThickness="1.5" /><TextBlock Text="Team" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkCreamBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,172,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPlumBrush" Stroke="$SkPlumBrush" StrokeThickness="1.5" /><TextBlock Text="Billing" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkCreamBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="166,172,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPlumBrush" Stroke="$SkPlumBrush" StrokeThickness="1.5" /><TextBlock Text="Ledger" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkCreamBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="332,172,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPlumBrush" Stroke="$SkPlumBrush" StrokeThickness="1.5" /><TextBlock Text="Tasks" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkCreamBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                    <Grid Width="150" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="498,172,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><Rectangle RadiusX="18" RadiusY="18" Fill="$SkPlumBrush" Stroke="$SkPlumBrush" StrokeThickness="1.5" /><TextBlock Text="Settings" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkCreamBrush" HorizontalAlignment="Center" VerticalAlignment="Center" /></Grid>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <TextBlock
+            Name="Caption"
+            Grid.Row="2"
+            Text="Aspect is Cerneala's style system: styles, states and templates, resolved by one cascade."
+            Aspect="$SkLede"
+            Opacity="0" />
+    </Grid>
+</UserControl>

@@ -1,6 +1,7 @@
-<!-- viii · the seal: a vermilion chop is pressed onto the page, and the last words are written beside it. -->
+<!-- xii · the seal: a vermilion chop is pressed onto the page, the last words are written beside it, and the film asks what next. -->
 <UserControl
     xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    DataType="Cerneala.InvestorReel.ShellViewModel"
     Aspect="$SceneMotion">
     <UserControl.Resources>
         <Tween Name="Fleck" Duration="340ms" Easing="EaseOut" />
@@ -25,6 +26,11 @@
                 {
                     @animate with $Word { @from { Opacity = 0; TranslateX = -20; } @to { Opacity = 1; TranslateX = 0; } }
                 }
+
+                <!-- The film is over: ask what next. -->
+                @animate with Tween(1400ms, Linear) { @from { $Seal.Opacity = 1; } @to { $Seal.Opacity = 1; } }
+                @set { $Choices.Visibility = Visible; }
+                @animate with $Word { @from { $Choices.Opacity = 0; $Choices.TranslateY = 12; } @to { $Choices.Opacity = 1; $Choices.TranslateY = 0; } }
             }
         </MotionClip>
         <Aspect Name="SceneMotion" TargetType="reel:SealScene">
@@ -67,11 +73,20 @@
             </Border>
         </Grid>
 
-        <StackPanel Name="Closing" VerticalAlignment="Center" Margin="80,0,0,0">
+        <StackPanel VerticalAlignment="Center" Margin="80,0,0,0">
+        <StackPanel Name="Closing">
             <TextBlock Text="Write interfaces." Aspect="$Display" FontSize="92" Opacity="0" />
             <TextBlock Text="Cerneala is a retained UI framework for C#." Aspect="$Lede" FontSize="28" Foreground="$InkBrush" Margin="0,12,0,0" Opacity="0" />
             <TextBlock Text="markup  ·  aspect  ·  motion  ·  prism" Aspect="$Note" FontSize="28" Margin="0,22,0,0" Opacity="0" />
             <TextBlock Text="EVERYTHING YOU JUST WATCHED IS .CRN MARKUP. EVERY SCENE'S CODE-BEHIND IS EMPTY." Aspect="$Caps" FontSize="13" Margin="0,30,0,0" Opacity="0" />
+        </StackPanel>
+        <StackPanel Name="Choices" Margin="0,46,0,0" Visibility="Collapsed" Opacity="0">
+            <TextBlock Text="watch it another way?" Aspect="$Note" FontSize="26" />
+            <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                <Button Content="CHOOSE ANOTHER THEME" Aspect="$InkButton" Command="$DataContext.HomeCommand:OneWay" Servo.Id="reel-home" Margin="0,0,14,0" />
+                <Button Content="EXIT" Aspect="$InkButton" Command="$DataContext.ExitCommand:OneWay" Servo.Id="reel-exit" />
+            </StackPanel>
+        </StackPanel>
         </StackPanel>
     </StackPanel>
 </UserControl>

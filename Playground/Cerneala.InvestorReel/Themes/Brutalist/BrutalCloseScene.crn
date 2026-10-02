@@ -1,0 +1,82 @@
+<!-- 12 · END: two words cast at full size, the facts underneath, then a flat question with two hard buttons. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    DataType="Cerneala.InvestorReel.ShellViewModel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Slam" Duration="160ms" Easing="EaseIn" />
+        <Tween Name="Cut" Duration="60ms" Easing="Linear" />
+        <MotionClip Name="Entrance" TargetType="reel:BrutalCloseScene">
+            @sequence
+            {
+                @animate with Tween(300ms, Linear) { @from { $Write.Opacity = 0; } @to { $Write.Opacity = 0; } }
+                @parallel
+                {
+                    @animate with $Cut { @from { $Write.Opacity = 0; } @to { $Write.Opacity = 1; } }
+                    @animate with $Slam { @from { $Write.TranslateX = -900; } @to { $Write.TranslateX = 0; } }
+                }
+                @parallel
+                {
+                    @animate with $Cut { @from { $Interfaces.Opacity = 0; } @to { $Interfaces.Opacity = 1; } }
+                    @animate with $Slam { @from { $Interfaces.TranslateX = 1200; } @to { $Interfaces.TranslateX = 0; } }
+                }
+                @animate with Tween(220ms, Linear) { @from { $Bar.ScaleX = 0; } @to { $Bar.ScaleX = 1; } }
+                @stagger target $Facts each 200ms
+                {
+                    @animate with $Cut { @from { Opacity = 0; } @to { Opacity = 1; } }
+                }
+
+                <!-- The end. Ask. -->
+                @animate with Tween(1200ms, Linear) { @from { $Write.Opacity = 1; } @to { $Write.Opacity = 1; } }
+                @set { $Choices.Visibility = Visible; }
+                @parallel
+                {
+                    @animate with $Cut { @from { $Choices.Opacity = 0; } @to { $Choices.Opacity = 1; } }
+                    @animate with $Slam { @from { $Choices.TranslateY = 60; } @to { $Choices.TranslateY = 0; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:BrutalCloseScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="160,110,140,110">
+        <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top">
+            <TextBlock Name="Write" Text="WRITE" FontFamily="Impact" FontSize="210" Foreground="$BrBlackBrush" Margin="-6,-50,0,0" Opacity="0" />
+            <TextBlock Name="Interfaces" Text="INTERFACES." FontFamily="Impact" FontSize="210" Foreground="$BrBlackBrush" Margin="-6,-70,0,0" Opacity="0" />
+            <Border Name="Bar" Width="1300" Height="18" Background="$BrOrangeBrush" HorizontalAlignment="Left" Margin="0,-10,0,0" ScaleX="0" RenderTransformOrigin="0,0.5" />
+
+            <Grid Width="1300" Margin="0,30,0,0">
+                <StackPanel Name="Facts" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <TextBlock Text="CERNEALA IS A RETAINED UI FRAMEWORK FOR C#." FontFamily="Courier New" FontSize="26" Foreground="$BrBlackBrush" Opacity="0" />
+                    <TextBlock Text="MARKUP / ASPECT / MOTION / PRISM" FontFamily="Impact" FontSize="38" Foreground="$BrBlackBrush" Margin="0,12,0,0" Opacity="0" />
+                    <Border Background="$BrBlackBrush" Padding="10,4,10,5" HorizontalAlignment="Left" Margin="0,16,0,0" Opacity="0">
+                        <TextBlock Text="EVERYTHING YOU JUST WATCHED IS .CRN MARKUP. EVERY SCENE'S CODE-BEHIND IS EMPTY." FontFamily="Courier New" FontSize="14" Foreground="$BrWhiteBrush" />
+                    </Border>
+                </StackPanel>
+
+                <StackPanel Name="Choices" HorizontalAlignment="Right" VerticalAlignment="Top" Visibility="Collapsed" Opacity="0">
+                    <TextBlock Text="AGAIN? ANOTHER STYLE?" FontFamily="Impact" FontSize="40" Foreground="$BrBlackBrush" />
+                    <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                        <Grid Margin="0,0,26,0">
+                            <Border Background="$BrOrangeBrush" Margin="8,8,-8,-8" />
+                            <Button Content="CHOOSE ANOTHER THEME" Aspect="$BrButton" Command="$DataContext.HomeCommand:OneWay" Servo.Id="reel-home" />
+                        </Grid>
+                        <Grid>
+                            <Border Background="$BrOrangeBrush" Margin="8,8,-8,-8" />
+                            <Button Content="EXIT" Aspect="$BrButton" Command="$DataContext.ExitCommand:OneWay" Servo.Id="reel-exit" />
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </Grid>
+</UserControl>

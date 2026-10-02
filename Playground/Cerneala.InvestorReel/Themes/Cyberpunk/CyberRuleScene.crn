@@ -1,0 +1,191 @@
+<!-- 03 · ONE_RULE: one Aspect powers up twelve tiles in a wave, then a token change repaints all twelve. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Wave" Duration="240ms" Easing="EaseOut" />
+        <Aspect Name="Base" TargetType="Border">
+            @default { Width = 150; Height = 74; BorderBrush = $CyGridBrush; BorderThickness = "1"; Background = $CyPanelBrush; HorizontalAlignment = "Left"; VerticalAlignment = "Top"; }
+        </Aspect>
+        <Aspect Name="Lit" TargetType="Border">
+            @default { Width = 150; Height = 74; BorderBrush = $CyCyanBrush; BorderThickness = "1.5"; Background = $CyCyanWashBrush; HorizontalAlignment = "Left"; VerticalAlignment = "Top"; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="Hot" TargetType="Border">
+            @default { Width = 150; Height = 74; BorderBrush = $CyMagentaBrush; BorderThickness = "1.5"; Background = $CyMagentaWashBrush; HorizontalAlignment = "Left"; VerticalAlignment = "Top"; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="Label" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 15; Foreground = $CyDimBrush; Margin = "14,12,0,0"; }
+        </Aspect>
+        <Aspect Name="LitLabel" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 15; Foreground = $CyCyanBrush; Margin = "14,12,0,0"; }
+        </Aspect>
+        <Aspect Name="HotLabel" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 15; Foreground = $CyMagentaBrush; Margin = "14,12,0,0"; }
+        </Aspect>
+        <Aspect Name="Pip" TargetType="Border">
+            @default { Width = 22; Height = 4; HorizontalAlignment = "Left"; VerticalAlignment = "Bottom"; Margin = "14,0,0,14"; }
+        </Aspect>
+        <Aspect Name="Code" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 18; Foreground = $CyTextBrush; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:CyberRuleScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(300ms, Linear) { @from { $Kicker.Opacity = 0; } @to { $Kicker.Opacity = 1; } }
+                    @animate with Tween(160ms, Linear) { @from { $Headline.Opacity = 0; } @to { $Headline.Opacity = 1; } }
+                    @animate with PingPong(Tween(45ms, Linear), 6) { @from { $Headline.TranslateX = 0; } @to { $Headline.TranslateX = 12; } }
+                    @animate with Tween(400ms, EaseOut) { @from { $Rule.Opacity = 0; $Rule.TranslateX = -24; } @to { $Rule.Opacity = 1; $Rule.TranslateX = 0; } }
+                    @animate with Tween(500ms, EaseOut) { @from { $Board.Opacity = 0; } @to { $Board.Opacity = 1; } }
+                }
+
+                <!-- The rule is applied: a wave powers every tile. -->
+                @animate with Tween(300ms, Linear) { @from { $Applied.Opacity = 0; } @to { $Applied.Opacity = 1; } }
+                @stagger target $LitTiles each 60ms
+                {
+                    @animate with $Wave { @from { Opacity = 0; Scale = 1.08; } @to { Opacity = 1; Scale = 1; } }
+                }
+                @animate with Tween(700ms, Linear) { @from { $Applied.Opacity = 1; } @to { $Applied.Opacity = 1; } }
+
+                <!-- One token changes in the rule, and all twelve follow. -->
+                @parallel
+                {
+                    @animate with Tween(220ms, Linear) { @from { $CyanToken.Opacity = 1; } @to { $CyanToken.Opacity = 0; } }
+                    @animate with Tween(220ms, Linear) { @from { $HotToken.Opacity = 0; } @to { $HotToken.Opacity = 1; } }
+                    @animate with PingPong(Tween(120ms, EaseOut), 2) { @from { $TokenFlash.Opacity = 0; } @to { $TokenFlash.Opacity = 1; } }
+                }
+                @stagger target $HotTiles each 60ms
+                {
+                    @animate with $Wave { @from { Opacity = 0; Scale = 1.08; } @to { Opacity = 1; Scale = 1; } }
+                }
+                @parallel
+                {
+                    @animate with Tween(500ms, EaseOut) { @from { $Count.Opacity = 0; $Count.TranslateY = 8; } @to { $Count.Opacity = 1; $Count.TranslateY = 0; } }
+                    @animate with Tween(800ms, EaseOut) { @from { $Caption.Opacity = 0; } @to { $Caption.Opacity = 1; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:CyberRuleScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="140,120,140,110">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Name="Kicker" Text="&gt; one_rule --every-element" Aspect="$CyTag" Opacity="0" />
+            <Grid Name="Headline" Margin="0,8,0,0" Opacity="0">
+                <TextBlock Text="CHANGE THE RULE, NOT THE ELEMENTS." Aspect="$CyDisplay" FontSize="60" Foreground="$CyMagentaBrush" TranslateX="3" Opacity="0.85" />
+                <TextBlock Text="CHANGE THE RULE, NOT THE ELEMENTS." Aspect="$CyDisplay" FontSize="60" Foreground="$CyCyanBrush" TranslateX="-3" Opacity="0.85" />
+                <TextBlock Text="CHANGE THE RULE, NOT THE ELEMENTS." Aspect="$CyDisplay" FontSize="60" />
+            </Grid>
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,34,0,0">
+            <!-- The rule -->
+            <Border Name="Rule" Aspect="$CyPanel" Width="560" HorizontalAlignment="Left" VerticalAlignment="Top" Opacity="0">
+                <StackPanel>
+                    <Grid Height="22" Margin="0,0,0,14">
+                        <TextBlock Text="ASPECT" FontFamily="Cascadia Mono" FontSize="13" Foreground="$CyDimBrush" />
+                        <TextBlock Name="Applied" Text="APPLIED TO 12" FontFamily="Cascadia Mono" FontSize="13" Foreground="$CyCyanBrush" HorizontalAlignment="Right" Opacity="0" />
+                    </Grid>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&lt;Aspect " Aspect="$Code" Foreground="$CyCyanBrush" />
+                        <TextBlock Text="Name=" Aspect="$Code" />
+                        <TextBlock Text="&quot;Tile&quot;" Aspect="$Code" Foreground="$CyMagentaBrush" />
+                        <TextBlock Text="&gt;" Aspect="$Code" Foreground="$CyCyanBrush" />
+                    </StackPanel>
+                    <TextBlock Text="@default" Aspect="$Code" Foreground="$CyYellowBrush" Margin="28,10,0,0" />
+                    <TextBlock Text="{" Aspect="$Code" Margin="28,0,0,0" />
+                    <Grid Margin="56,4,0,4">
+                        <Border Name="TokenFlash" Background="$CyMagentaWashBrush" Margin="-10,-4,-10,-4" Opacity="0" />
+                        <StackPanel Name="CyanToken">
+                            <TextBlock Text="Background  = \$CyanWash;" Aspect="$Code" />
+                            <TextBlock Text="BorderBrush = \$Cyan;" Aspect="$Code" Margin="0,6,0,0" />
+                        </StackPanel>
+                        <StackPanel Name="HotToken" Opacity="0">
+                            <TextBlock Text="Background  = \$MagentaWash;" Aspect="$Code" Foreground="$CyMagentaBrush" />
+                            <TextBlock Text="BorderBrush = \$Magenta;" Aspect="$Code" Foreground="$CyMagentaBrush" Margin="0,6,0,0" />
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Text="}" Aspect="$Code" Margin="28,0,0,0" />
+                    <TextBlock Text="&lt;/Aspect&gt;" Aspect="$Code" Foreground="$CyCyanBrush" />
+                </StackPanel>
+            </Border>
+            <StackPanel Name="Count" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,346,0,0" Opacity="0">
+                <TextBlock Text="12" FontFamily="Bahnschrift" FontSize="40" Foreground="$CyCyanBrush" />
+                <TextBlock Text=" ELEMENTS" FontFamily="Cascadia Mono" FontSize="14" Foreground="$CyDimBrush" VerticalAlignment="Bottom" Margin="0,0,24,9" />
+                <TextBlock Text="1" FontFamily="Bahnschrift" FontSize="40" Foreground="$CyMagentaBrush" />
+                <TextBlock Text=" RULE" FontFamily="Cascadia Mono" FontSize="14" Foreground="$CyDimBrush" VerticalAlignment="Bottom" Margin="0,0,24,9" />
+                <TextBlock Text="0" FontFamily="Bahnschrift" FontSize="40" Foreground="$CyYellowBrush" />
+                <TextBlock Text=" EDITS TO THEM" FontFamily="Cascadia Mono" FontSize="14" Foreground="$CyDimBrush" VerticalAlignment="Bottom" Margin="0,0,0,9" />
+            </StackPanel>
+
+            <!-- Twelve tiles, three states -->
+            <Grid Name="Board" Width="650" Height="254" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,6,0,0" Opacity="0">
+                <Grid>
+                    <Border Aspect="$Base" Margin="0,0,0,0"><TextBlock Text="Invoices" Aspect="$Label" /></Border>
+                    <Border Aspect="$Base" Margin="166,0,0,0"><TextBlock Text="Clients" Aspect="$Label" /></Border>
+                    <Border Aspect="$Base" Margin="332,0,0,0"><TextBlock Text="Reports" Aspect="$Label" /></Border>
+                    <Border Aspect="$Base" Margin="498,0,0,0"><TextBlock Text="Inbox" Aspect="$Label" /></Border>
+                    <Border Aspect="$Base" Margin="0,90,0,0"><TextBlock Text="Calendar" Aspect="$Label" /></Border>
+                    <Border Aspect="$Base" Margin="166,90,0,0"><TextBlock Text="Notes" Aspect="$Label" /></Border>
+                    <Border Aspect="$Base" Margin="332,90,0,0"><TextBlock Text="Files" Aspect="$Label" /></Border>
+                    <Border Aspect="$Base" Margin="498,90,0,0"><TextBlock Text="Team" Aspect="$Label" /></Border>
+                    <Border Aspect="$Base" Margin="0,180,0,0"><TextBlock Text="Billing" Aspect="$Label" /></Border>
+                    <Border Aspect="$Base" Margin="166,180,0,0"><TextBlock Text="Ledger" Aspect="$Label" /></Border>
+                    <Border Aspect="$Base" Margin="332,180,0,0"><TextBlock Text="Tasks" Aspect="$Label" /></Border>
+                    <Border Aspect="$Base" Margin="498,180,0,0"><TextBlock Text="Settings" Aspect="$Label" /></Border>
+                </Grid>
+                <Grid Name="LitTiles">
+                    <Border Aspect="$Lit" Margin="0,0,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Invoices" Aspect="$LitLabel" /><Border Aspect="$Pip" Background="$CyCyanBrush" /></Grid></Border>
+                    <Border Aspect="$Lit" Margin="166,0,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Clients" Aspect="$LitLabel" /><Border Aspect="$Pip" Background="$CyCyanBrush" /></Grid></Border>
+                    <Border Aspect="$Lit" Margin="332,0,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Reports" Aspect="$LitLabel" /><Border Aspect="$Pip" Background="$CyCyanBrush" /></Grid></Border>
+                    <Border Aspect="$Lit" Margin="498,0,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Inbox" Aspect="$LitLabel" /><Border Aspect="$Pip" Background="$CyCyanBrush" /></Grid></Border>
+                    <Border Aspect="$Lit" Margin="0,90,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Calendar" Aspect="$LitLabel" /><Border Aspect="$Pip" Background="$CyCyanBrush" /></Grid></Border>
+                    <Border Aspect="$Lit" Margin="166,90,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Notes" Aspect="$LitLabel" /><Border Aspect="$Pip" Background="$CyCyanBrush" /></Grid></Border>
+                    <Border Aspect="$Lit" Margin="332,90,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Files" Aspect="$LitLabel" /><Border Aspect="$Pip" Background="$CyCyanBrush" /></Grid></Border>
+                    <Border Aspect="$Lit" Margin="498,90,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Team" Aspect="$LitLabel" /><Border Aspect="$Pip" Background="$CyCyanBrush" /></Grid></Border>
+                    <Border Aspect="$Lit" Margin="0,180,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Billing" Aspect="$LitLabel" /><Border Aspect="$Pip" Background="$CyCyanBrush" /></Grid></Border>
+                    <Border Aspect="$Lit" Margin="166,180,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Ledger" Aspect="$LitLabel" /><Border Aspect="$Pip" Background="$CyCyanBrush" /></Grid></Border>
+                    <Border Aspect="$Lit" Margin="332,180,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Tasks" Aspect="$LitLabel" /><Border Aspect="$Pip" Background="$CyCyanBrush" /></Grid></Border>
+                    <Border Aspect="$Lit" Margin="498,180,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Settings" Aspect="$LitLabel" /><Border Aspect="$Pip" Background="$CyCyanBrush" /></Grid></Border>
+                </Grid>
+                <Grid Name="HotTiles">
+                    <Border Aspect="$Hot" Margin="0,0,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Invoices" Aspect="$HotLabel" /><Border Aspect="$Pip" Background="$CyMagentaBrush" /></Grid></Border>
+                    <Border Aspect="$Hot" Margin="166,0,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Clients" Aspect="$HotLabel" /><Border Aspect="$Pip" Background="$CyMagentaBrush" /></Grid></Border>
+                    <Border Aspect="$Hot" Margin="332,0,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Reports" Aspect="$HotLabel" /><Border Aspect="$Pip" Background="$CyMagentaBrush" /></Grid></Border>
+                    <Border Aspect="$Hot" Margin="498,0,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Inbox" Aspect="$HotLabel" /><Border Aspect="$Pip" Background="$CyMagentaBrush" /></Grid></Border>
+                    <Border Aspect="$Hot" Margin="0,90,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Calendar" Aspect="$HotLabel" /><Border Aspect="$Pip" Background="$CyMagentaBrush" /></Grid></Border>
+                    <Border Aspect="$Hot" Margin="166,90,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Notes" Aspect="$HotLabel" /><Border Aspect="$Pip" Background="$CyMagentaBrush" /></Grid></Border>
+                    <Border Aspect="$Hot" Margin="332,90,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Files" Aspect="$HotLabel" /><Border Aspect="$Pip" Background="$CyMagentaBrush" /></Grid></Border>
+                    <Border Aspect="$Hot" Margin="498,90,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Team" Aspect="$HotLabel" /><Border Aspect="$Pip" Background="$CyMagentaBrush" /></Grid></Border>
+                    <Border Aspect="$Hot" Margin="0,180,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Billing" Aspect="$HotLabel" /><Border Aspect="$Pip" Background="$CyMagentaBrush" /></Grid></Border>
+                    <Border Aspect="$Hot" Margin="166,180,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Ledger" Aspect="$HotLabel" /><Border Aspect="$Pip" Background="$CyMagentaBrush" /></Grid></Border>
+                    <Border Aspect="$Hot" Margin="332,180,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Tasks" Aspect="$HotLabel" /><Border Aspect="$Pip" Background="$CyMagentaBrush" /></Grid></Border>
+                    <Border Aspect="$Hot" Margin="498,180,0,0" RenderTransformOrigin="0.5,0.5"><Grid><TextBlock Text="Settings" Aspect="$HotLabel" /><Border Aspect="$Pip" Background="$CyMagentaBrush" /></Grid></Border>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <TextBlock
+            Name="Caption"
+            Grid.Row="2"
+            Text="// Aspect is Cerneala's style system: styles, states and templates, resolved by one cascade."
+            Aspect="$CyLede"
+            Opacity="0" />
+    </Grid>
+</UserControl>

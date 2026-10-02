@@ -1,0 +1,113 @@
+<!-- 十一 · a pagoda of parts: six tiers are set one on another, the GPU first, and each is named beside it. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Settle" Duration="700ms" Easing="EaseOut" />
+        <MotionClip Name="Entrance" TargetType="reel:SakuraStackScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Kicker.Opacity = 0; } @to { $Kicker.Opacity = 1; } }
+                    @animate with Tween(1000ms, EaseOut) { @from { $Headline.Opacity = 0; $Headline.TranslateY = 16; } @to { $Headline.Opacity = 1; $Headline.TranslateY = 0; } }
+                }
+                <!-- From the GPU up, each tier settles onto the one below. -->
+                @parallel
+                {
+                    @stagger target $Pagoda each 300ms
+                    {
+                        @animate with $Settle { @from { Opacity = 0; TranslateY = -40; } @to { Opacity = 1; TranslateY = 0; } }
+                    }
+                    @stagger target $Rows each 300ms
+                    {
+                        @animate with $Settle { @from { Opacity = 0; TranslateX = -12; } @to { Opacity = 1; TranslateX = 0; } }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Finial.Opacity = 0; $Finial.TranslateY = -10; } @to { $Finial.Opacity = 1; $Finial.TranslateY = 0; } }
+                    @animate with Tween(1200ms, EaseOut) { @from { $Words.Opacity = 0; $Words.TranslateX = 16; } @to { $Words.Opacity = 1; $Words.TranslateX = 0; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:SakuraStackScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="150,206,150,110">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Name="Kicker" Text="THE WHOLE STACK" Aspect="$SkCaps" Opacity="0" />
+            <TextBlock Name="Headline" Text="Everything, in one place." Aspect="$SkDisplay" FontSize="70" Margin="0,-8,0,0" Opacity="0" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,4,0,0">
+            <!-- Declared bottom first. -->
+            <Grid Name="Pagoda" Width="560" Height="420" HorizontalAlignment="Left" VerticalAlignment="Top">
+                <Grid Width="520" Height="66" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,350,0,0" Opacity="0">
+                    <Border Width="460" Height="40" Background="$SkPetalPaleBrush" BorderBrush="$SkPetalBrush" BorderThickness="1" VerticalAlignment="Top" Margin="0,24,0,0" />
+                    <Path Data="M 0 18 C 104 10 416 10 520 18 L 502 27 L 18 27 Z" Fill="$SkPetalDeepBrush" />
+                    <TextBlock Text="SDL_GPU" FontFamily="Gabriola" FontSize="28" Foreground="$SkPlumBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,24,0,0" />
+                </Grid>
+                <Grid Width="460" Height="66" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,284,0,0" Opacity="0">
+                    <Border Width="400" Height="40" Background="$SkCreamBrush" BorderBrush="$SkPetalBrush" BorderThickness="1" VerticalAlignment="Top" Margin="0,24,0,0" />
+                    <Path Data="M 0 18 C 92 10 368 10 460 18 L 442 27 L 18 27 Z" Fill="$SkPlumBrush" />
+                    <TextBlock Text="Prism" FontFamily="Gabriola" FontSize="28" Foreground="$SkPlumBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,24,0,0" />
+                </Grid>
+                <Grid Width="400" Height="66" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,218,0,0" Opacity="0">
+                    <Border Width="340" Height="40" Background="$SkCreamBrush" BorderBrush="$SkPetalBrush" BorderThickness="1" VerticalAlignment="Top" Margin="0,24,0,0" />
+                    <Path Data="M 0 18 C 80 10 320 10 400 18 L 382 27 L 18 27 Z" Fill="$SkPlumBrush" />
+                    <TextBlock Text="Motion" FontFamily="Gabriola" FontSize="28" Foreground="$SkPlumBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,24,0,0" />
+                </Grid>
+                <Grid Width="340" Height="66" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,152,0,0" Opacity="0">
+                    <Border Width="280" Height="40" Background="$SkCreamBrush" BorderBrush="$SkPetalBrush" BorderThickness="1" VerticalAlignment="Top" Margin="0,24,0,0" />
+                    <Path Data="M 0 18 C 68 10 272 10 340 18 L 322 27 L 18 27 Z" Fill="$SkPlumBrush" />
+                    <TextBlock Text="Aspect" FontFamily="Gabriola" FontSize="28" Foreground="$SkPlumBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,24,0,0" />
+                </Grid>
+                <Grid Width="280" Height="66" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,86,0,0" Opacity="0">
+                    <Border Width="220" Height="40" Background="$SkCreamBrush" BorderBrush="$SkPetalBrush" BorderThickness="1" VerticalAlignment="Top" Margin="0,24,0,0" />
+                    <Path Data="M 0 18 C 56 10 224 10 280 18 L 262 27 L 18 27 Z" Fill="$SkPlumBrush" />
+                    <TextBlock Text=".crn" FontFamily="Gabriola" FontSize="28" Foreground="$SkPlumBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,24,0,0" />
+                </Grid>
+                <Grid Width="220" Height="66" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,20,0,0" Opacity="0">
+                    <Border Width="160" Height="40" Background="$SkCreamBrush" BorderBrush="$SkPetalBrush" BorderThickness="1" VerticalAlignment="Top" Margin="0,24,0,0" />
+                    <Path Data="M 0 18 C 44 10 176 10 220 18 L 202 27 L 18 27 Z" Fill="$SkPlumBrush" />
+                    <TextBlock Text="C#" FontFamily="Gabriola" FontSize="28" Foreground="$SkPlumBrush" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,24,0,0" />
+                </Grid>
+            </Grid>
+            <Grid Name="Finial" Width="560" Height="30" HorizontalAlignment="Left" VerticalAlignment="Top" Opacity="0">
+                <Border Width="3" Height="22" Background="$SkBarkBrush" HorizontalAlignment="Center" VerticalAlignment="Bottom" />
+                <Ellipse Width="10" Height="10" Fill="$SkGoldBrush" HorizontalAlignment="Center" VerticalAlignment="Top" />
+            </Grid>
+            <Grid Name="Rows" Width="360" Height="420" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="580,0,0,0">
+                <TextBlock Text="native GPU rendering underneath it all" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkSumiBrush" VerticalAlignment="Top" Margin="0,382,0,0" Opacity="0" />
+                <TextBlock Text="filters, layer styles and blend modes" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkSumiBrush" VerticalAlignment="Top" Margin="0,316,0,0" Opacity="0" />
+                <TextBlock Text="tweens, springs, keyframes and stagger" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkSumiBrush" VerticalAlignment="Top" Margin="0,250,0,0" Opacity="0" />
+                <TextBlock Text="styles, states and templates" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkSumiBrush" VerticalAlignment="Top" Margin="0,184,0,0" Opacity="0" />
+                <TextBlock Text="views as typed, compiled markup" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkSumiBrush" VerticalAlignment="Top" Margin="0,118,0,0" Opacity="0" />
+                <TextBlock Text="your logic, your types, your tools" FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkSumiBrush" VerticalAlignment="Top" Margin="0,52,0,0" Opacity="0" />
+            </Grid>
+            <StackPanel Name="Words" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,70,0,0" Opacity="0">
+                <TextBlock Text="One compiler," FontFamily="Gabriola" FontSize="48" Foreground="$SkPlumBrush" />
+                <TextBlock Text="one runtime," FontFamily="Gabriola" FontSize="48" Foreground="$SkPlumBrush" Margin="0,-18,0,0" />
+                <TextBlock Text="one language." FontFamily="Gabriola" FontSize="48" Foreground="$SkPetalDeepBrush" Margin="0,-18,0,0" />
+                <Border Width="90" Height="2" Background="$SkPetalDeepBrush" HorizontalAlignment="Left" Margin="0,10,0,0" />
+                <TextBlock Text="No browser engine." FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkSumiBrush" Margin="0,16,0,0" />
+                <TextBlock Text="No second language for the interface." FontFamily="Palatino Linotype" FontSize="18" Foreground="$SkSumiBrush" Margin="0,4,0,0" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

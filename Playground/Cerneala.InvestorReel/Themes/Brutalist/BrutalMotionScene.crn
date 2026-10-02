@@ -1,0 +1,148 @@
+<!-- 04 · MOTION: four ruled lanes, four black blocks; each moves by a different kind of motion. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Slam" Duration="150ms" Easing="EaseIn" />
+        <Tween Name="Cut" Duration="60ms" Easing="Linear" />
+        <Tween Name="Rise" Duration="160ms" Easing="EaseIn" />
+        <Aspect Name="Lane" TargetType="Grid">
+            @default { Height = 100; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="LaneName" TargetType="TextBlock">
+            @default { FontFamily = "Impact"; FontSize = 52; Foreground = $BrBlackBrush; VerticalAlignment = "Top"; Margin = "0,8,0,0"; }
+        </Aspect>
+        <Aspect Name="LaneSpec" TargetType="TextBlock">
+            @default { FontFamily = "Courier New"; FontSize = 15; Foreground = $BrBlackBrush; VerticalAlignment = "Top"; Margin = "2,72,0,0"; }
+        </Aspect>
+        <Aspect Name="Track" TargetType="Grid">
+            @default { Width = 900; Height = 100; HorizontalAlignment = "Right"; }
+        </Aspect>
+        <Aspect Name="Block" TargetType="Border">
+            @default { Width = 56; Height = 56; Background = $BrBlackBrush; HorizontalAlignment = "Left"; VerticalAlignment = "Center"; }
+        </Aspect>
+        <Aspect Name="EqBar" TargetType="Border">
+            @default { Width = 40; Background = $BrBlackBrush; VerticalAlignment = "Bottom"; Margin = "0,0,20,0"; ScaleY = 0.05; RenderTransformOrigin = "0.5,1"; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:BrutalMotionScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with $Cut { @from { $Tape.Opacity = 0; } @to { $Tape.Opacity = 1; } }
+                    @animate with $Cut { @from { $Headline.Opacity = 0; } @to { $Headline.Opacity = 1; } }
+                    @animate with $Slam { @from { $Headline.TranslateX = -90; } @to { $Headline.TranslateX = 0; } }
+                }
+                @stagger target $Lanes each 120ms
+                {
+                    @animate with $Cut { @from { Opacity = 0; } @to { Opacity = 1; } }
+                }
+                @parallel
+                {
+                    @animate with PingPong(Tween(1300ms, EaseInOut), forever) { @from { $TweenBlock.TranslateX = 0; } @to { $TweenBlock.TranslateX = 820; } }
+                    @sequence
+                    {
+                        @animate with Spring(170, 8) { @from { $SpringBlock.TranslateX = 0; } @to { $SpringBlock.TranslateX = 620; } }
+                        @animate with Spring(170, 8) { @from { $SpringBlock.TranslateX = current; } @to { $SpringBlock.TranslateX = 140; } }
+                        @animate with Spring(170, 8) { @from { $SpringBlock.TranslateX = current; } @to { $SpringBlock.TranslateX = 700; } }
+                        @animate with Spring(170, 8) { @from { $SpringBlock.TranslateX = current; } @to { $SpringBlock.TranslateX = 320; } }
+                    }
+                    @sequence
+                    {
+                        @keyframes duration 2400ms
+                        {
+                            @animate 0%..25% with Linear { @from { $KeyBlock.TranslateX = 0; } @to { $KeyBlock.TranslateX = 205; } }
+                            @animate 25%..50% with Linear { @from { $KeyBlock.TranslateX = 205; } @to { $KeyBlock.TranslateX = 410; } }
+                            @animate 50%..75% with Linear { @from { $KeyBlock.TranslateX = 410; } @to { $KeyBlock.TranslateX = 615; } }
+                            @animate 75%..100% with Linear { @from { $KeyBlock.TranslateX = 615; } @to { $KeyBlock.TranslateX = 820; } }
+                            @animate 0%..12% with EaseOut { @from { $KeyBlock.TranslateY = 0; } @to { $KeyBlock.TranslateY = -20; } }
+                            @animate 12%..25% with EaseIn { @from { $KeyBlock.TranslateY = -20; } @to { $KeyBlock.TranslateY = 0; } }
+                            @animate 37%..50% with EaseIn { @from { $KeyBlock.TranslateY = -20; } @to { $KeyBlock.TranslateY = 0; } }
+                            @animate 25%..37% with EaseOut { @from { $KeyBlock.TranslateY = 0; } @to { $KeyBlock.TranslateY = -20; } }
+                            @animate 50%..62% with EaseOut { @from { $KeyBlock.TranslateY = 0; } @to { $KeyBlock.TranslateY = -20; } }
+                            @animate 62%..75% with EaseIn { @from { $KeyBlock.TranslateY = -20; } @to { $KeyBlock.TranslateY = 0; } }
+                            @animate 75%..87% with EaseOut { @from { $KeyBlock.TranslateY = 0; } @to { $KeyBlock.TranslateY = -20; } }
+                            @animate 87%..100% with EaseIn { @from { $KeyBlock.TranslateY = -20; } @to { $KeyBlock.TranslateY = 0; } }
+                        }
+                        @keyframes duration 2400ms
+                        {
+                            @animate 0%..100% with Linear { @from { $KeyBlock.TranslateX = 820; } @to { $KeyBlock.TranslateX = 0; } }
+                        }
+                    }
+                    @stagger target $Bars each 60ms
+                    {
+                        @animate with $Rise { @from { ScaleY = 0.05; } @to { ScaleY = 1; } }
+                    }
+                    @sequence
+                    {
+                        @animate with Tween(2200ms, Linear) { @from { $Caption.Opacity = 0; } @to { $Caption.Opacity = 0; } }
+                        @animate with $Cut { @from { $Caption.Opacity = 0; } @to { $Caption.Opacity = 1; } }
+                    }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:BrutalMotionScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="160,124,140,110">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <Border Name="Tape" Background="$BrBlackBrush" Padding="12,4,12,5" HorizontalAlignment="Left" Opacity="0">
+                <TextBlock Text="[04] TWEEN / SPRING / KEYFRAMES / STAGGER" FontFamily="Courier New" FontSize="16" Foreground="$BrWhiteBrush" />
+            </Border>
+            <TextBlock Name="Headline" Text="MOTION YOU CAN READ." Aspect="$BrDisplay" Margin="0,4,0,0" Opacity="0" />
+        </StackPanel>
+
+        <StackPanel Name="Lanes" Grid.Row="1" Margin="0,16,0,0">
+            <Grid Aspect="$Lane">
+                <TextBlock Text="TWEEN" Aspect="$LaneName" />
+                <TextBlock Text="Tween(1300ms, EaseInOut)" Aspect="$LaneSpec" />
+                <Grid Aspect="$Track"><Border Height="4" Background="$BrBlackBrush" VerticalAlignment="Bottom" /><Border Name="TweenBlock" Aspect="$Block" /></Grid>
+            </Grid>
+            <Grid Aspect="$Lane">
+                <TextBlock Text="SPRING" Aspect="$LaneName" />
+                <TextBlock Text="Spring(170, 8)" Aspect="$LaneSpec" />
+                <Grid Aspect="$Track"><Border Height="4" Background="$BrBlackBrush" VerticalAlignment="Bottom" /><Border Name="SpringBlock" Aspect="$Block" Background="$BrOrangeBrush" /></Grid>
+            </Grid>
+            <Grid Aspect="$Lane">
+                <TextBlock Text="KEYFRAMES" Aspect="$LaneName" />
+                <TextBlock Text="@keyframes duration 2400ms" Aspect="$LaneSpec" />
+                <Grid Aspect="$Track"><Border Height="4" Background="$BrBlackBrush" VerticalAlignment="Bottom" /><Border Name="KeyBlock" Aspect="$Block" Background="$BrBlueBrush" /></Grid>
+            </Grid>
+            <Grid Aspect="$Lane">
+                <TextBlock Text="STAGGER" Aspect="$LaneName" />
+                <TextBlock Text="@stagger each 60ms" Aspect="$LaneSpec" />
+                <Grid Aspect="$Track">
+                    <Border Height="4" Background="$BrBlackBrush" VerticalAlignment="Bottom" />
+                    <StackPanel Name="Bars" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0,0,4">
+                        <Border Aspect="$EqBar" Height="40" /><Border Aspect="$EqBar" Height="70" /><Border Aspect="$EqBar" Height="56" /><Border Aspect="$EqBar" Height="88" />
+                        <Border Aspect="$EqBar" Height="64" /><Border Aspect="$EqBar" Height="80" /><Border Aspect="$EqBar" Height="48" /><Border Aspect="$EqBar" Height="92" Background="$BrOrangeBrush" />
+                        <Border Aspect="$EqBar" Height="60" /><Border Aspect="$EqBar" Height="76" /><Border Aspect="$EqBar" Height="44" /><Border Aspect="$EqBar" Height="84" />
+                        <Border Aspect="$EqBar" Height="52" /><Border Aspect="$EqBar" Height="68" /><Border Aspect="$EqBar" Height="36" />
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </StackPanel>
+
+        <TextBlock
+            Name="Caption"
+            Grid.Row="2"
+            Text="EVERY MOVEMENT IN THIS FILM IS NOTATION LIKE THIS: DECLARED IN MARKUP, PLAYED BY THE RUNTIME."
+            Aspect="$BrLede"
+            Opacity="0" />
+    </Grid>
+</UserControl>

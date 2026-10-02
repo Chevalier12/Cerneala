@@ -1,0 +1,92 @@
+<!-- 01 · OPEN: the name is cast letter by letter, an orange bar slams under it, and three hard boxes state the facts. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Slam" Duration="150ms" Easing="EaseIn" />
+        <Tween Name="Cut" Duration="90ms" Easing="Linear" />
+        <Aspect Name="Letter" TargetType="TextBlock">
+            @default { FontFamily = "Impact"; FontSize = 280; Foreground = $BrBlackBrush; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="Fact" TargetType="Border">
+            @default { Background = $BrBlackBrush; Padding = "22,10,22,12"; Margin = "0,0,16,0"; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="FactText" TargetType="TextBlock">
+            @default { FontFamily = "Impact"; FontSize = 30; Foreground = $BrWhiteBrush; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:BrutalOpenScene">
+            @sequence
+            {
+                @stagger target $Word each 80ms
+                {
+                    @animate with $Slam { @from { Opacity = 1; TranslateY = -320; } @to { Opacity = 1; TranslateY = 0; } }
+                }
+                @animate with Tween(220ms, Linear) { @from { $Bar.ScaleX = 0; } @to { $Bar.ScaleX = 1; } }
+                @parallel
+                {
+                    @animate with $Cut { @from { $Gloss.Opacity = 0; } @to { $Gloss.Opacity = 1; } }
+                    @animate with $Slam { @from { $Gloss.TranslateX = -80; } @to { $Gloss.TranslateX = 0; } }
+                }
+                @animate with Tween(300ms, Linear) { @from { $Gloss.Opacity = 1; } @to { $Gloss.Opacity = 1; } }
+                @parallel
+                {
+                    @animate with $Cut { @from { $Promise.Opacity = 0; } @to { $Promise.Opacity = 1; } }
+                    @animate with $Slam { @from { $Promise.TranslateX = 120; } @to { $Promise.TranslateX = 0; } }
+                }
+                @animate with Tween(400ms, Linear) { @from { $Promise.Opacity = 1; } @to { $Promise.Opacity = 1; } }
+                @stagger target $Facts each 160ms
+                {
+                    @animate with $Cut { @from { Opacity = 0; TranslateY = 0; } @to { Opacity = 1; TranslateY = 0; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:BrutalOpenScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="160,120,140,110">
+        <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top">
+            <StackPanel Name="Word" Orientation="Horizontal" Margin="-8,-40,0,0">
+                <TextBlock Text="C" Aspect="$Letter" />
+                <TextBlock Text="E" Aspect="$Letter" />
+                <TextBlock Text="R" Aspect="$Letter" />
+                <TextBlock Text="N" Aspect="$Letter" />
+                <TextBlock Text="E" Aspect="$Letter" />
+                <TextBlock Text="A" Aspect="$Letter" />
+                <TextBlock Text="L" Aspect="$Letter" />
+                <TextBlock Text="A" Aspect="$Letter" />
+            </StackPanel>
+            <Border Name="Bar" Width="1300" Height="22" Background="$BrOrangeBrush" HorizontalAlignment="Left" Margin="0,-6,0,0" ScaleX="0" RenderTransformOrigin="0,0.5" />
+
+            <Grid Width="1300" Height="200" Margin="0,40,0,0">
+                <Border Name="Gloss" Background="$BrBlackBrush" Padding="26,16,26,18" HorizontalAlignment="Left" VerticalAlignment="Top" Opacity="0">
+                    <StackPanel>
+                        <TextBlock Text="CHER · NEA · LA" FontFamily="Courier New" FontSize="26" Foreground="$BrWhiteBrush" />
+                        <TextBlock Text="= INK (ROMANIAN)" FontFamily="Courier New" FontSize="26" Foreground="$BrOrangeBrush" Margin="0,6,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <Grid Name="Promise" Width="700" HorizontalAlignment="Right" VerticalAlignment="Top" Opacity="0">
+                    <Border Background="$BrBlackBrush" Margin="14,14,-14,-14" />
+                    <Border Aspect="$BrBox">
+                        <TextBlock Text="A NEW WAY TO WRITE DESKTOP SOFTWARE IN C#." FontFamily="Segoe UI Black" FontSize="38" Foreground="$BrBlackBrush" TextWrapping="Wrap" />
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <StackPanel Name="Facts" Orientation="Horizontal" Margin="0,30,0,0">
+                <Border Aspect="$Fact"><TextBlock Text="RETAINED" Aspect="$FactText" /></Border>
+                <Border Aspect="$Fact"><TextBlock Text="MARKUP FIRST" Aspect="$FactText" /></Border>
+                <Border Aspect="$Fact" Background="$BrOrangeBrush"><TextBlock Text="GPU RENDERED" Aspect="$FactText" Foreground="$BrBlackBrush" /></Border>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

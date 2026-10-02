@@ -1,0 +1,114 @@
+<!-- 11 · STACK: six concrete slabs are dropped onto each other, GPU first; three flat statements beside them. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Drop" Duration="190ms" Easing="EaseIn" />
+        <Tween Name="Cut" Duration="60ms" Easing="Linear" />
+        <Aspect Name="Slab" TargetType="Grid">
+            @default { Width = 760; Height = 70; HorizontalAlignment = "Left"; VerticalAlignment = "Top"; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="SlabName" TargetType="TextBlock">
+            @default { FontFamily = "Impact"; FontSize = 40; Foreground = $BrWhiteBrush; VerticalAlignment = "Center"; Margin = "24,0,0,0"; }
+        </Aspect>
+        <Aspect Name="SlabText" TargetType="TextBlock">
+            @default { FontFamily = "Courier New"; FontSize = 18; Foreground = $BrWhiteBrush; VerticalAlignment = "Center"; Margin = "230,0,0,0"; }
+        </Aspect>
+        <Aspect Name="Line" TargetType="TextBlock">
+            @default { FontFamily = "Impact"; FontSize = 60; Foreground = $BrBlackBrush; Opacity = 0; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:BrutalStackScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with $Cut { @from { $Tape.Opacity = 0; } @to { $Tape.Opacity = 1; } }
+                    @animate with $Cut { @from { $Headline.Opacity = 0; } @to { $Headline.Opacity = 1; } }
+                    @animate with Tween(150ms, EaseIn) { @from { $Headline.TranslateX = -90; } @to { $Headline.TranslateX = 0; } }
+                }
+                @stagger target $Slabs each 230ms
+                {
+                    @animate with $Drop { @from { Opacity = 1; TranslateY = -520; } @to { Opacity = 1; TranslateY = 0; } }
+                }
+                @stagger target $Statements each 260ms
+                {
+                    @animate with $Cut { @from { Opacity = 0; } @to { Opacity = 1; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:BrutalStackScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="160,124,140,110">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <Border Name="Tape" Background="$BrBlackBrush" Padding="12,4,12,5" HorizontalAlignment="Left" Opacity="0">
+                <TextBlock Text="[11] THE WHOLE STACK" FontFamily="Courier New" FontSize="16" Foreground="$BrWhiteBrush" />
+            </Border>
+            <TextBlock Name="Headline" Text="EVERYTHING, IN ONE PLACE." Aspect="$BrDisplay" Margin="0,4,0,0" Opacity="0" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,24,0,0">
+            <!-- Declared bottom first: the GPU is laid down before anything rests on it. -->
+            <Grid Name="Slabs" Width="780" Height="500" HorizontalAlignment="Left" VerticalAlignment="Top">
+                <Grid Aspect="$Slab" Margin="0,410,0,0">
+                    <Border Background="$BrBlackBrush" Margin="10,10,-10,-10" />
+                    <Border Background="$BrOrangeBrush" BorderBrush="$BrBlackBrush" BorderThickness="4" />
+                    <TextBlock Text="SDL_GPU" Aspect="$SlabName" Foreground="$BrBlackBrush" />
+                    <TextBlock Text="NATIVE GPU RENDERING UNDERNEATH IT ALL." Aspect="$SlabText" Foreground="$BrBlackBrush" />
+                </Grid>
+                <Grid Aspect="$Slab" Margin="0,328,0,0">
+                    <Border Background="$BrOrangeBrush" Margin="10,10,-10,-10" />
+                    <Border Background="$BrBlackBrush" />
+                    <TextBlock Text="PRISM" Aspect="$SlabName" />
+                    <TextBlock Text="FILTERS, LAYER STYLES AND BLEND MODES." Aspect="$SlabText" />
+                </Grid>
+                <Grid Aspect="$Slab" Margin="0,246,0,0">
+                    <Border Background="$BrOrangeBrush" Margin="10,10,-10,-10" />
+                    <Border Background="$BrBlackBrush" />
+                    <TextBlock Text="MOTION" Aspect="$SlabName" />
+                    <TextBlock Text="TWEENS, SPRINGS, KEYFRAMES AND STAGGER." Aspect="$SlabText" />
+                </Grid>
+                <Grid Aspect="$Slab" Margin="0,164,0,0">
+                    <Border Background="$BrOrangeBrush" Margin="10,10,-10,-10" />
+                    <Border Background="$BrBlackBrush" />
+                    <TextBlock Text="ASPECT" Aspect="$SlabName" />
+                    <TextBlock Text="STYLES, STATES AND TEMPLATES." Aspect="$SlabText" />
+                </Grid>
+                <Grid Aspect="$Slab" Margin="0,82,0,0">
+                    <Border Background="$BrOrangeBrush" Margin="10,10,-10,-10" />
+                    <Border Background="$BrBlackBrush" />
+                    <TextBlock Text=".CRN" Aspect="$SlabName" />
+                    <TextBlock Text="VIEWS AS TYPED, COMPILED MARKUP." Aspect="$SlabText" />
+                </Grid>
+                <Grid Aspect="$Slab" Margin="0,0,0,0">
+                    <Border Background="$BrOrangeBrush" Margin="10,10,-10,-10" />
+                    <Border Background="$BrWhiteBrush" BorderBrush="$BrBlackBrush" BorderThickness="4" />
+                    <TextBlock Text="C#" Aspect="$SlabName" Foreground="$BrBlackBrush" />
+                    <TextBlock Text="YOUR LOGIC, YOUR TYPES, YOUR TOOLS." Aspect="$SlabText" Foreground="$BrBlackBrush" />
+                </Grid>
+            </Grid>
+
+            <StackPanel Name="Statements" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,20,0,0">
+                <TextBlock Text="ONE COMPILER." Aspect="$Line" />
+                <TextBlock Text="ONE RUNTIME." Aspect="$Line" />
+                <TextBlock Text="ONE LANGUAGE." Aspect="$Line" Foreground="$BrOrangeBrush" />
+                <TextBlock Text="NO BROWSER ENGINE." FontFamily="Courier New" FontSize="18" Foreground="$BrBlackBrush" Margin="0,26,0,0" Opacity="0" />
+                <TextBlock Text="NO SECOND LANGUAGE FOR THE INTERFACE." FontFamily="Courier New" FontSize="18" Foreground="$BrBlackBrush" Margin="0,6,0,0" Opacity="0" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

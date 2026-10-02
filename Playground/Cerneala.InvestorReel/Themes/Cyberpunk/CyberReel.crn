@@ -1,0 +1,502 @@
+<!--
+    CyberReel is the Cyberpunk version of the film, and its director. It owns no C# logic.
+
+    The film plays over a rain-wet city at night. A HUD frames the page: the chapter tag, a
+    REC light and a twelve-segment progress bar that fills as the film runs. The whole stage
+    sits under a CRT layer (scanlines and chromatic aberration) whose split spikes at every
+    cut, while glitch slices flash across the frame and the next chapter is swapped in.
+-->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel">
+    <UserControl.Resources>
+        <LinearGradientBrush Name="NightSkyBrush" StartPoint="0,0" EndPoint="0,900">
+            <GradientStop Offset="0" Color="#FF04040A" />
+            <GradientStop Offset="0.55" Color="#FF0A0820" />
+            <GradientStop Offset="0.85" Color="#FF1E0B33" />
+            <GradientStop Offset="1" Color="#FF3A0E45" />
+        </LinearGradientBrush>
+        <LinearGradientBrush Name="HazeBrush" StartPoint="0,480" EndPoint="0,900">
+            <GradientStop Offset="0" Color="#00FF2E97" />
+            <GradientStop Offset="1" Color="#AAFF2E97" />
+        </LinearGradientBrush>
+        <SolidColorBrush Name="NearTowerBrush" Color="#FF07060E" />
+        <RadialGradientBrush Name="MagentaHaloBrush" Center="100,180" RadiusX="100" RadiusY="180">
+            <GradientStop Offset="0" Color="#55FF2E97" />
+            <GradientStop Offset="1" Color="#00FF2E97" />
+        </RadialGradientBrush>
+        <RadialGradientBrush Name="CyanHaloBrush" Center="100,190" RadiusX="100" RadiusY="190">
+            <GradientStop Offset="0" Color="#4419F0FF" />
+            <GradientStop Offset="1" Color="#0019F0FF" />
+        </RadialGradientBrush>
+        <SolidColorBrush Name="DimBrush" Color="#6605050A" />
+        <Tween Name="CoverIn" Duration="200ms" Easing="EaseIn" />
+        <Tween Name="CoverOut" Duration="260ms" Easing="EaseOut" />
+        <Tween Name="Blip" Duration="170ms" Easing="Linear" />
+        <Aspect Name="Window" TargetType="Border">
+            @default { Width = 4; Height = 5; HorizontalAlignment = "Left"; VerticalAlignment = "Top"; }
+        </Aspect>
+        <Aspect Name="Far" TargetType="Border">
+            @default { Background = $CyTowerFarBrush; HorizontalAlignment = "Left"; VerticalAlignment = "Bottom"; }
+        </Aspect>
+        <Aspect Name="Near" TargetType="Border">
+            @default { Background = $NearTowerBrush; HorizontalAlignment = "Left"; VerticalAlignment = "Bottom"; }
+        </Aspect>
+        <Aspect Name="Drop" TargetType="Border">
+            @default { Width = 1; Height = 58; Background = $CyRainBrush; HorizontalAlignment = "Left"; VerticalAlignment = "Top"; }
+        </Aspect>
+        <Aspect Name="Kana" TargetType="TextBlock">
+            @default { FontFamily = "Yu Gothic"; FontSize = 22; Foreground = $CyMagentaBrush; HorizontalAlignment = "Center"; }
+        </Aspect>
+        <Aspect Name="Corner" TargetType="Border">
+            @default { Background = $CyCyanDimBrush; }
+        </Aspect>
+
+        <!-- The city never stops: rain, breathing signs, a few windows going on and off. -->
+        <MotionClip Name="Ambience" TargetType="Grid">
+            @parallel
+            {
+                @animate with Repeat(Tween(620ms, Linear), forever) { @from { $D01.TranslateY = -120; } @to { $D01.TranslateY = 1120; } }
+                @animate with Repeat(Tween(780ms, Linear), forever) { @from { $D02.TranslateY = -120; } @to { $D02.TranslateY = 1120; } }
+                @animate with Repeat(Tween(540ms, Linear), forever) { @from { $D03.TranslateY = -120; } @to { $D03.TranslateY = 1120; } }
+                @animate with Repeat(Tween(700ms, Linear), forever) { @from { $D04.TranslateY = -120; } @to { $D04.TranslateY = 1120; } }
+                @animate with Repeat(Tween(860ms, Linear), forever) { @from { $D05.TranslateY = -120; } @to { $D05.TranslateY = 1120; } }
+                @animate with Repeat(Tween(590ms, Linear), forever) { @from { $D06.TranslateY = -120; } @to { $D06.TranslateY = 1120; } }
+                @animate with Repeat(Tween(730ms, Linear), forever) { @from { $D07.TranslateY = -120; } @to { $D07.TranslateY = 1120; } }
+                @animate with Repeat(Tween(650ms, Linear), forever) { @from { $D08.TranslateY = -120; } @to { $D08.TranslateY = 1120; } }
+                @animate with Repeat(Tween(810ms, Linear), forever) { @from { $D09.TranslateY = -120; } @to { $D09.TranslateY = 1120; } }
+                @animate with Repeat(Tween(560ms, Linear), forever) { @from { $D10.TranslateY = -120; } @to { $D10.TranslateY = 1120; } }
+                @animate with Repeat(Tween(690ms, Linear), forever) { @from { $D11.TranslateY = -120; } @to { $D11.TranslateY = 1120; } }
+                @animate with Repeat(Tween(760ms, Linear), forever) { @from { $D12.TranslateY = -120; } @to { $D12.TranslateY = 1120; } }
+                @animate with Repeat(Tween(610ms, Linear), forever) { @from { $D13.TranslateY = -120; } @to { $D13.TranslateY = 1120; } }
+                @animate with Repeat(Tween(840ms, Linear), forever) { @from { $D14.TranslateY = -120; } @to { $D14.TranslateY = 1120; } }
+                @animate with Repeat(Tween(570ms, Linear), forever) { @from { $D15.TranslateY = -120; } @to { $D15.TranslateY = 1120; } }
+                @animate with Repeat(Tween(720ms, Linear), forever) { @from { $D16.TranslateY = -120; } @to { $D16.TranslateY = 1120; } }
+                @animate with Repeat(Tween(670ms, Linear), forever) { @from { $D17.TranslateY = -120; } @to { $D17.TranslateY = 1120; } }
+                @animate with Repeat(Tween(800ms, Linear), forever) { @from { $D18.TranslateY = -120; } @to { $D18.TranslateY = 1120; } }
+                @animate with Repeat(Tween(580ms, Linear), forever) { @from { $D19.TranslateY = -120; } @to { $D19.TranslateY = 1120; } }
+                @animate with Repeat(Tween(740ms, Linear), forever) { @from { $D20.TranslateY = -120; } @to { $D20.TranslateY = 1120; } }
+                @animate with Repeat(Tween(630ms, Linear), forever) { @from { $D21.TranslateY = -120; } @to { $D21.TranslateY = 1120; } }
+                @animate with Repeat(Tween(880ms, Linear), forever) { @from { $D22.TranslateY = -120; } @to { $D22.TranslateY = 1120; } }
+                @animate with PingPong(Tween(2600ms, EaseInOut), forever) { @from { $KanaSign.Opacity = 1; } @to { $KanaSign.Opacity = 0.62; } }
+                @animate with PingPong(Tween(1900ms, EaseInOut), forever) { @from { $RuntimeSign.Opacity = 0.9; } @to { $RuntimeSign.Opacity = 0.55; } }
+                @animate with PingPong(Tween(3100ms, EaseInOut), forever) { @from { $Lights1.Opacity = 1; } @to { $Lights1.Opacity = 0.3; } }
+                @animate with PingPong(Tween(4300ms, EaseInOut), forever) { @from { $Lights2.Opacity = 0.35; } @to { $Lights2.Opacity = 1; } }
+            }
+        </MotionClip>
+        <Aspect Name="CityLife" TargetType="Grid">
+            @handle Ambient;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Ambience as Ambient;
+                }
+            }
+        </Aspect>
+
+        <MotionClip Name="Reel" TargetType="Grid">
+            @parallel
+            {
+                @animate with PingPong(Tween(700ms, Linear), forever) { @from { $Rec.Opacity = 1; } @to { $Rec.Opacity = 0.2; } }
+
+                @sequence
+                {
+                    <!-- 01 · BOOT -->
+                    @set { $OpenHost.Visibility = Visible; $Chapter.Text = "01"; $ChapterTag.Text = "// 01 BOOT"; }
+                    @parallel
+                    {
+                        @animate with Tween(420ms, Linear) { @from { $ChapterTag.Opacity = 0; $ChapterTag.TranslateX = -12; } @to { $ChapterTag.Opacity = 1; $ChapterTag.TranslateX = 0; } }
+                        @animate with Tween(10s, Linear) { @from { $Fill01.ScaleX = 0; } @to { $Fill01.ScaleX = 1; } }
+                    }
+
+                    <!-- 02 · COMPILE -->
+                    @parallel
+                    {
+                        @animate with PingPong(Tween(160ms, Linear), 2) { @from { $Stage.prism.Crt.Split = 1.4; } @to { $Stage.prism.Crt.Split = 18; } }
+                        @animate with $CoverIn { @from { $Cover.Opacity = 0; } @to { $Cover.Opacity = 1; } }
+                        @stagger target $Glitch each 30ms { @animate with $Blip { @from { Opacity = 0.95; TranslateX = -40; } @to { Opacity = 0; TranslateX = 0; } } }
+                    }
+                    @set { $OpenHost.Visibility = Collapsed; $SketchHost.Visibility = Visible; $Chapter.Text = "02"; $ChapterTag.Text = "// 02 COMPILE"; }
+                    @parallel
+                    {
+                        @animate with $CoverOut { @from { $Cover.Opacity = 1; } @to { $Cover.Opacity = 0; } }
+                        @animate with Tween(420ms, Linear) { @from { $ChapterTag.Opacity = 0; $ChapterTag.TranslateX = -12; } @to { $ChapterTag.Opacity = 1; $ChapterTag.TranslateX = 0; } }
+                        @animate with Tween(11s, Linear) { @from { $Fill02.ScaleX = 0; } @to { $Fill02.ScaleX = 1; } }
+                    }
+
+                    <!-- 03 · ONE_RULE -->
+                    @parallel
+                    {
+                        @animate with PingPong(Tween(160ms, Linear), 2) { @from { $Stage.prism.Crt.Split = 1.4; } @to { $Stage.prism.Crt.Split = 18; } }
+                        @animate with $CoverIn { @from { $Cover.Opacity = 0; } @to { $Cover.Opacity = 1; } }
+                        @stagger target $Glitch each 30ms { @animate with $Blip { @from { Opacity = 0.95; TranslateX = -40; } @to { Opacity = 0; TranslateX = 0; } } }
+                    }
+                    @set { $SketchHost.Visibility = Collapsed; $RuleHost.Visibility = Visible; $Chapter.Text = "03"; $ChapterTag.Text = "// 03 ONE_RULE"; }
+                    @parallel
+                    {
+                        @animate with $CoverOut { @from { $Cover.Opacity = 1; } @to { $Cover.Opacity = 0; } }
+                        @animate with Tween(420ms, Linear) { @from { $ChapterTag.Opacity = 0; $ChapterTag.TranslateX = -12; } @to { $ChapterTag.Opacity = 1; $ChapterTag.TranslateX = 0; } }
+                        @animate with Tween(10s, Linear) { @from { $Fill03.ScaleX = 0; } @to { $Fill03.ScaleX = 1; } }
+                    }
+
+                    <!-- 04 · MOTION -->
+                    @parallel
+                    {
+                        @animate with PingPong(Tween(160ms, Linear), 2) { @from { $Stage.prism.Crt.Split = 1.4; } @to { $Stage.prism.Crt.Split = 18; } }
+                        @animate with $CoverIn { @from { $Cover.Opacity = 0; } @to { $Cover.Opacity = 1; } }
+                        @stagger target $Glitch each 30ms { @animate with $Blip { @from { Opacity = 0.95; TranslateX = -40; } @to { Opacity = 0; TranslateX = 0; } } }
+                    }
+                    @set { $RuleHost.Visibility = Collapsed; $MotionHost.Visibility = Visible; $Chapter.Text = "04"; $ChapterTag.Text = "// 04 MOTION"; }
+                    @parallel
+                    {
+                        @animate with $CoverOut { @from { $Cover.Opacity = 1; } @to { $Cover.Opacity = 0; } }
+                        @animate with Tween(420ms, Linear) { @from { $ChapterTag.Opacity = 0; $ChapterTag.TranslateX = -12; } @to { $ChapterTag.Opacity = 1; $ChapterTag.TranslateX = 0; } }
+                        @animate with Tween(11s, Linear) { @from { $Fill04.ScaleX = 0; } @to { $Fill04.ScaleX = 1; } }
+                    }
+
+                    <!-- 05 · PRISM_FX -->
+                    @parallel
+                    {
+                        @animate with PingPong(Tween(160ms, Linear), 2) { @from { $Stage.prism.Crt.Split = 1.4; } @to { $Stage.prism.Crt.Split = 18; } }
+                        @animate with $CoverIn { @from { $Cover.Opacity = 0; } @to { $Cover.Opacity = 1; } }
+                        @stagger target $Glitch each 30ms { @animate with $Blip { @from { Opacity = 0.95; TranslateX = -40; } @to { Opacity = 0; TranslateX = 0; } } }
+                    }
+                    @set { $MotionHost.Visibility = Collapsed; $PrismHost.Visibility = Visible; $Chapter.Text = "05"; $ChapterTag.Text = "// 05 PRISM_FX"; }
+                    @parallel
+                    {
+                        @animate with $CoverOut { @from { $Cover.Opacity = 1; } @to { $Cover.Opacity = 0; } }
+                        @animate with Tween(420ms, Linear) { @from { $ChapterTag.Opacity = 0; $ChapterTag.TranslateX = -12; } @to { $ChapterTag.Opacity = 1; $ChapterTag.TranslateX = 0; } }
+                        @animate with Tween(11s, Linear) { @from { $Fill05.ScaleX = 0; } @to { $Fill05.ScaleX = 1; } }
+                    }
+
+                    <!-- 06 · DIFF -->
+                    @parallel
+                    {
+                        @animate with PingPong(Tween(160ms, Linear), 2) { @from { $Stage.prism.Crt.Split = 1.4; } @to { $Stage.prism.Crt.Split = 18; } }
+                        @animate with $CoverIn { @from { $Cover.Opacity = 0; } @to { $Cover.Opacity = 1; } }
+                        @stagger target $Glitch each 30ms { @animate with $Blip { @from { Opacity = 0.95; TranslateX = -40; } @to { Opacity = 0; TranslateX = 0; } } }
+                    }
+                    @set { $PrismHost.Visibility = Collapsed; $RedrawHost.Visibility = Visible; $Chapter.Text = "06"; $ChapterTag.Text = "// 06 DIFF"; }
+                    @parallel
+                    {
+                        @animate with $CoverOut { @from { $Cover.Opacity = 1; } @to { $Cover.Opacity = 0; } }
+                        @animate with Tween(420ms, Linear) { @from { $ChapterTag.Opacity = 0; $ChapterTag.TranslateX = -12; } @to { $ChapterTag.Opacity = 1; $ChapterTag.TranslateX = 0; } }
+                        @animate with Tween(10s, Linear) { @from { $Fill06.ScaleX = 0; } @to { $Fill06.ScaleX = 1; } }
+                    }
+
+                    <!-- 07 · LIVE_DATA -->
+                    @parallel
+                    {
+                        @animate with PingPong(Tween(160ms, Linear), 2) { @from { $Stage.prism.Crt.Split = 1.4; } @to { $Stage.prism.Crt.Split = 18; } }
+                        @animate with $CoverIn { @from { $Cover.Opacity = 0; } @to { $Cover.Opacity = 1; } }
+                        @stagger target $Glitch each 30ms { @animate with $Blip { @from { Opacity = 0.95; TranslateX = -40; } @to { Opacity = 0; TranslateX = 0; } } }
+                    }
+                    @set { $RedrawHost.Visibility = Collapsed; $BindHost.Visibility = Visible; $Chapter.Text = "07"; $ChapterTag.Text = "// 07 LIVE_DATA"; }
+                    @parallel
+                    {
+                        @animate with $CoverOut { @from { $Cover.Opacity = 1; } @to { $Cover.Opacity = 0; } }
+                        @animate with Tween(420ms, Linear) { @from { $ChapterTag.Opacity = 0; $ChapterTag.TranslateX = -12; } @to { $ChapterTag.Opacity = 1; $ChapterTag.TranslateX = 0; } }
+                        @animate with Tween(10s, Linear) { @from { $Fill07.ScaleX = 0; } @to { $Fill07.ScaleX = 1; } }
+                    }
+
+                    <!-- 08 · SIM_WORLD -->
+                    @parallel
+                    {
+                        @animate with PingPong(Tween(160ms, Linear), 2) { @from { $Stage.prism.Crt.Split = 1.4; } @to { $Stage.prism.Crt.Split = 18; } }
+                        @animate with $CoverIn { @from { $Cover.Opacity = 0; } @to { $Cover.Opacity = 1; } }
+                        @stagger target $Glitch each 30ms { @animate with $Blip { @from { Opacity = 0.95; TranslateX = -40; } @to { Opacity = 0; TranslateX = 0; } } }
+                    }
+                    @set { $BindHost.Visibility = Collapsed; $WorldHost.Visibility = Visible; $Chapter.Text = "08"; $ChapterTag.Text = "// 08 SIM_WORLD"; }
+                    @parallel
+                    {
+                        @animate with $CoverOut { @from { $Cover.Opacity = 1; } @to { $Cover.Opacity = 0; } }
+                        @animate with Tween(420ms, Linear) { @from { $ChapterTag.Opacity = 0; $ChapterTag.TranslateX = -12; } @to { $ChapterTag.Opacity = 1; $ChapterTag.TranslateX = 0; } }
+                        @animate with Tween(11s, Linear) { @from { $Fill08.ScaleX = 0; } @to { $Fill08.ScaleX = 1; } }
+                    }
+
+                    <!-- 09 · DEV_DECK -->
+                    @parallel
+                    {
+                        @animate with PingPong(Tween(160ms, Linear), 2) { @from { $Stage.prism.Crt.Split = 1.4; } @to { $Stage.prism.Crt.Split = 18; } }
+                        @animate with $CoverIn { @from { $Cover.Opacity = 0; } @to { $Cover.Opacity = 1; } }
+                        @stagger target $Glitch each 30ms { @animate with $Blip { @from { Opacity = 0.95; TranslateX = -40; } @to { Opacity = 0; TranslateX = 0; } } }
+                    }
+                    @set { $WorldHost.Visibility = Collapsed; $EditorHost.Visibility = Visible; $Chapter.Text = "09"; $ChapterTag.Text = "// 09 DEV_DECK"; }
+                    @parallel
+                    {
+                        @animate with $CoverOut { @from { $Cover.Opacity = 1; } @to { $Cover.Opacity = 0; } }
+                        @animate with Tween(420ms, Linear) { @from { $ChapterTag.Opacity = 0; $ChapterTag.TranslateX = -12; } @to { $ChapterTag.Opacity = 1; $ChapterTag.TranslateX = 0; } }
+                        @animate with Tween(11s, Linear) { @from { $Fill09.ScaleX = 0; } @to { $Fill09.ScaleX = 1; } }
+                    }
+
+                    <!-- 10 · AUTOPILOT -->
+                    @parallel
+                    {
+                        @animate with PingPong(Tween(160ms, Linear), 2) { @from { $Stage.prism.Crt.Split = 1.4; } @to { $Stage.prism.Crt.Split = 18; } }
+                        @animate with $CoverIn { @from { $Cover.Opacity = 0; } @to { $Cover.Opacity = 1; } }
+                        @stagger target $Glitch each 30ms { @animate with $Blip { @from { Opacity = 0.95; TranslateX = -40; } @to { Opacity = 0; TranslateX = 0; } } }
+                    }
+                    @set { $EditorHost.Visibility = Collapsed; $ProofHost.Visibility = Visible; $Chapter.Text = "10"; $ChapterTag.Text = "// 10 AUTOPILOT"; }
+                    @parallel
+                    {
+                        @animate with $CoverOut { @from { $Cover.Opacity = 1; } @to { $Cover.Opacity = 0; } }
+                        @animate with Tween(420ms, Linear) { @from { $ChapterTag.Opacity = 0; $ChapterTag.TranslateX = -12; } @to { $ChapterTag.Opacity = 1; $ChapterTag.TranslateX = 0; } }
+                        @animate with Tween(11s, Linear) { @from { $Fill10.ScaleX = 0; } @to { $Fill10.ScaleX = 1; } }
+                    }
+
+                    <!-- 11 · STACK -->
+                    @parallel
+                    {
+                        @animate with PingPong(Tween(160ms, Linear), 2) { @from { $Stage.prism.Crt.Split = 1.4; } @to { $Stage.prism.Crt.Split = 18; } }
+                        @animate with $CoverIn { @from { $Cover.Opacity = 0; } @to { $Cover.Opacity = 1; } }
+                        @stagger target $Glitch each 30ms { @animate with $Blip { @from { Opacity = 0.95; TranslateX = -40; } @to { Opacity = 0; TranslateX = 0; } } }
+                    }
+                    @set { $ProofHost.Visibility = Collapsed; $StackHost.Visibility = Visible; $Chapter.Text = "11"; $ChapterTag.Text = "// 11 STACK"; }
+                    @parallel
+                    {
+                        @animate with $CoverOut { @from { $Cover.Opacity = 1; } @to { $Cover.Opacity = 0; } }
+                        @animate with Tween(420ms, Linear) { @from { $ChapterTag.Opacity = 0; $ChapterTag.TranslateX = -12; } @to { $ChapterTag.Opacity = 1; $ChapterTag.TranslateX = 0; } }
+                        @animate with Tween(9s, Linear) { @from { $Fill11.ScaleX = 0; } @to { $Fill11.ScaleX = 1; } }
+                    }
+
+                    <!-- 12 · END_OF_LINE -->
+                    @parallel
+                    {
+                        @animate with PingPong(Tween(160ms, Linear), 2) { @from { $Stage.prism.Crt.Split = 1.4; } @to { $Stage.prism.Crt.Split = 18; } }
+                        @animate with $CoverIn { @from { $Cover.Opacity = 0; } @to { $Cover.Opacity = 1; } }
+                        @stagger target $Glitch each 30ms { @animate with $Blip { @from { Opacity = 0.95; TranslateX = -40; } @to { Opacity = 0; TranslateX = 0; } } }
+                    }
+                    @set { $StackHost.Visibility = Collapsed; $CloseHost.Visibility = Visible; $Chapter.Text = "12"; $ChapterTag.Text = "// 12 END_OF_LINE"; }
+                    @parallel
+                    {
+                        @animate with $CoverOut { @from { $Cover.Opacity = 1; } @to { $Cover.Opacity = 0; } }
+                        @animate with Tween(420ms, Linear) { @from { $ChapterTag.Opacity = 0; $ChapterTag.TranslateX = -12; } @to { $ChapterTag.Opacity = 1; $ChapterTag.TranslateX = 0; } }
+                        @animate with Tween(6s, Linear) { @from { $Fill12.ScaleX = 0; } @to { $Fill12.ScaleX = 1; } }
+                    }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="Director" TargetType="Grid">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Reel as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid
+        Name="Stage"
+        Aspect="$Director"
+        Width="1600"
+        Height="900"
+        ClipToBounds="True">
+        @prism
+        {
+            @layer Crt
+            {
+                @parameter Split: float = 1.4;
+                @filter ChromaticAberration { Amount = Split; }
+                @filter Scanlines { Frequency = 450; Thickness = 1; LineOpacity = 0.14; }
+            }
+        }
+
+        <!-- The city -->
+        <Grid Name="City" Aspect="$CityLife">
+            <Border Background="$NightSkyBrush" />
+            <Border Background="$HazeBrush" />
+            <Border Aspect="$Far" Margin="0,0,0,0" Width="90" Height="420" />
+            <Border Aspect="$Far" Margin="85,0,0,0" Width="70" Height="520" />
+            <Border Aspect="$Far" Margin="150,0,0,0" Width="120" Height="380" />
+            <Border Aspect="$Far" Margin="265,0,0,0" Width="60" Height="600" />
+            <Border Aspect="$Far" Margin="320,0,0,0" Width="100" Height="470" />
+            <Border Aspect="$Far" Margin="415,0,0,0" Width="80" Height="540" />
+            <Border Aspect="$Far" Margin="490,0,0,0" Width="140" Height="400" />
+            <Border Aspect="$Far" Margin="625,0,0,0" Width="70" Height="640" />
+            <Border Aspect="$Far" Margin="690,0,0,0" Width="110" Height="500" />
+            <Border Aspect="$Far" Margin="795,0,0,0" Width="90" Height="580" />
+            <Border Aspect="$Far" Margin="880,0,0,0" Width="130" Height="430" />
+            <Border Aspect="$Far" Margin="1005,0,0,0" Width="70" Height="610" />
+            <Border Aspect="$Far" Margin="1070,0,0,0" Width="100" Height="480" />
+            <Border Aspect="$Far" Margin="1165,0,0,0" Width="90" Height="560" />
+            <Border Aspect="$Far" Margin="1250,0,0,0" Width="120" Height="420" />
+            <Border Aspect="$Far" Margin="1365,0,0,0" Width="80" Height="590" />
+            <Border Aspect="$Far" Margin="1440,0,0,0" Width="100" Height="460" />
+            <Border Aspect="$Far" Margin="1535,0,0,0" Width="70" Height="520" />
+            <!-- Lit windows -->
+            <Grid Name="Lights1">
+                <Border Aspect="$Window" Background="$CyCyanBrush" Margin="22,520,0,0" Opacity="0.7" />
+                <Border Aspect="$Window" Background="$CyYellowBrush" Margin="104,410,0,0" Opacity="0.6" />
+                <Border Aspect="$Window" Background="$CyMagentaBrush" Margin="190,560,0,0" Opacity="0.7" />
+                <Border Aspect="$Window" Background="$CyCyanBrush" Margin="282,330,0,0" Opacity="0.8" />
+                <Border Aspect="$Window" Background="$CyCyanBrush" Margin="296,372,0,0" Opacity="0.5" />
+                <Border Aspect="$Window" Background="$CyYellowBrush" Margin="350,470,0,0" Opacity="0.6" />
+                <Border Aspect="$Window" Background="$CyMagentaBrush" Margin="540,540,0,0" Opacity="0.7" />
+                <Border Aspect="$Window" Background="$CyCyanBrush" Margin="646,300,0,0" Opacity="0.8" />
+                <Border Aspect="$Window" Background="$CyCyanBrush" Margin="660,352,0,0" Opacity="0.6" />
+                <Border Aspect="$Window" Background="$CyYellowBrush" Margin="730,440,0,0" Opacity="0.7" />
+                <Border Aspect="$Window" Background="$CyMagentaBrush" Margin="820,360,0,0" Opacity="0.6" />
+                <Border Aspect="$Window" Background="$CyCyanBrush" Margin="930,510,0,0" Opacity="0.7" />
+                <Border Aspect="$Window" Background="$CyCyanBrush" Margin="1024,330,0,0" Opacity="0.8" />
+                <Border Aspect="$Window" Background="$CyYellowBrush" Margin="1190,380,0,0" Opacity="0.6" />
+                <Border Aspect="$Window" Background="$CyMagentaBrush" Margin="1290,520,0,0" Opacity="0.7" />
+                <Border Aspect="$Window" Background="$CyCyanBrush" Margin="1384,350,0,0" Opacity="0.8" />
+                <Border Aspect="$Window" Background="$CyCyanBrush" Margin="1470,470,0,0" Opacity="0.6" />
+                <Border Aspect="$Window" Background="$CyYellowBrush" Margin="1556,420,0,0" Opacity="0.7" />
+            </Grid>
+            <Grid Name="Lights2" Opacity="0.35">
+                <Border Aspect="$Window" Background="$CyCyanBrush" Margin="40,560,0,0" />
+                <Border Aspect="$Window" Background="$CyMagentaBrush" Margin="118,450,0,0" />
+                <Border Aspect="$Window" Background="$CyCyanBrush" Margin="210,600,0,0" />
+                <Border Aspect="$Window" Background="$CyYellowBrush" Margin="378,520,0,0" />
+                <Border Aspect="$Window" Background="$CyCyanBrush" Margin="566,590,0,0" />
+                <Border Aspect="$Window" Background="$CyMagentaBrush" Margin="760,500,0,0" />
+                <Border Aspect="$Window" Background="$CyCyanBrush" Margin="846,420,0,0" />
+                <Border Aspect="$Window" Background="$CyYellowBrush" Margin="960,560,0,0" />
+                <Border Aspect="$Window" Background="$CyCyanBrush" Margin="1110,470,0,0" />
+                <Border Aspect="$Window" Background="$CyMagentaBrush" Margin="1220,420,0,0" />
+                <Border Aspect="$Window" Background="$CyCyanBrush" Margin="1320,580,0,0" />
+                <Border Aspect="$Window" Background="$CyMagentaBrush" Margin="1500,520,0,0" />
+            </Grid>
+
+            <!-- Neon signs -->
+            <Ellipse Width="200" Height="360" Fill="$MagentaHaloBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-25,330,0,0" />
+            <Grid Name="KanaSign" Width="46" Height="260" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="52,380,0,0">
+                <Border BorderBrush="$CyMagentaBrush" BorderThickness="2" />
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="チ" Aspect="$Kana" />
+                    <TextBlock Text="ェ" Aspect="$Kana" />
+                    <TextBlock Text="ル" Aspect="$Kana" />
+                    <TextBlock Text="ネ" Aspect="$Kana" />
+                    <TextBlock Text="ア" Aspect="$Kana" />
+                    <TextBlock Text="ラ" Aspect="$Kana" />
+                </StackPanel>
+            </Grid>
+            <Ellipse Width="200" Height="380" Fill="$CyanHaloBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="1426,250,0,0" />
+            <Grid Name="RuntimeSign" Width="40" Height="250" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="1506,316,0,0">
+                <Border BorderBrush="$CyCyanBrush" BorderThickness="2" />
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="R" FontFamily="Bahnschrift" FontSize="20" Foreground="$CyCyanBrush" HorizontalAlignment="Center" />
+                    <TextBlock Text="U" FontFamily="Bahnschrift" FontSize="20" Foreground="$CyCyanBrush" HorizontalAlignment="Center" />
+                    <TextBlock Text="N" FontFamily="Bahnschrift" FontSize="20" Foreground="$CyCyanBrush" HorizontalAlignment="Center" />
+                    <TextBlock Text="T" FontFamily="Bahnschrift" FontSize="20" Foreground="$CyCyanBrush" HorizontalAlignment="Center" />
+                    <TextBlock Text="I" FontFamily="Bahnschrift" FontSize="20" Foreground="$CyCyanBrush" HorizontalAlignment="Center" />
+                    <TextBlock Text="M" FontFamily="Bahnschrift" FontSize="20" Foreground="$CyCyanBrush" HorizontalAlignment="Center" />
+                    <TextBlock Text="E" FontFamily="Bahnschrift" FontSize="20" Foreground="$CyCyanBrush" HorizontalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+
+            <Border Aspect="$Near" Margin="0,0,0,0" Width="140" Height="260" />
+            <Border Aspect="$Near" Margin="130,0,0,0" Width="90" Height="320" />
+            <Border Aspect="$Near" Margin="215,0,0,0" Width="160" Height="220" />
+            <Border Aspect="$Near" Margin="370,0,0,0" Width="110" Height="300" />
+            <Border Aspect="$Near" Margin="475,0,0,0" Width="170" Height="240" />
+            <Border Aspect="$Near" Margin="640,0,0,0" Width="120" Height="330" />
+            <Border Aspect="$Near" Margin="755,0,0,0" Width="150" Height="210" />
+            <Border Aspect="$Near" Margin="900,0,0,0" Width="100" Height="290" />
+            <Border Aspect="$Near" Margin="995,0,0,0" Width="170" Height="250" />
+            <Border Aspect="$Near" Margin="1160,0,0,0" Width="120" Height="310" />
+            <Border Aspect="$Near" Margin="1275,0,0,0" Width="150" Height="230" />
+            <Border Aspect="$Near" Margin="1420,0,0,0" Width="180" Height="280" />
+
+            <!-- Rain, slanted by the wind -->
+            <Grid Margin="-160,-80,-160,-80" Rotation="0.13" RenderTransformOrigin="0.5,0.5">
+                <Border Name="D01" Aspect="$Drop" Margin="40,0,0,0" />
+                <Border Name="D02" Aspect="$Drop" Margin="130,0,0,0" Height="44" />
+                <Border Name="D03" Aspect="$Drop" Margin="215,0,0,0" />
+                <Border Name="D04" Aspect="$Drop" Margin="300,0,0,0" Height="70" />
+                <Border Name="D05" Aspect="$Drop" Margin="390,0,0,0" />
+                <Border Name="D06" Aspect="$Drop" Margin="470,0,0,0" Height="50" />
+                <Border Name="D07" Aspect="$Drop" Margin="560,0,0,0" />
+                <Border Name="D08" Aspect="$Drop" Margin="645,0,0,0" Height="66" />
+                <Border Name="D09" Aspect="$Drop" Margin="730,0,0,0" />
+                <Border Name="D10" Aspect="$Drop" Margin="820,0,0,0" Height="46" />
+                <Border Name="D11" Aspect="$Drop" Margin="905,0,0,0" />
+                <Border Name="D12" Aspect="$Drop" Margin="990,0,0,0" Height="72" />
+                <Border Name="D13" Aspect="$Drop" Margin="1080,0,0,0" />
+                <Border Name="D14" Aspect="$Drop" Margin="1165,0,0,0" Height="52" />
+                <Border Name="D15" Aspect="$Drop" Margin="1250,0,0,0" />
+                <Border Name="D16" Aspect="$Drop" Margin="1340,0,0,0" Height="64" />
+                <Border Name="D17" Aspect="$Drop" Margin="1425,0,0,0" />
+                <Border Name="D18" Aspect="$Drop" Margin="1510,0,0,0" Height="48" />
+                <Border Name="D19" Aspect="$Drop" Margin="1600,0,0,0" />
+                <Border Name="D20" Aspect="$Drop" Margin="1690,0,0,0" Height="68" />
+                <Border Name="D21" Aspect="$Drop" Margin="1775,0,0,0" />
+                <Border Name="D22" Aspect="$Drop" Margin="1860,0,0,0" Height="54" />
+            </Grid>
+        </Grid>
+        <Border Background="$DimBrush" IsHitTestVisible="False" />
+
+        <!-- Chapters -->
+        <Grid Name="OpenHost" Visibility="Collapsed"><reel:CyberOpenScene /></Grid>
+        <Grid Name="SketchHost" Visibility="Collapsed"><reel:CyberSketchScene /></Grid>
+        <Grid Name="RuleHost" Visibility="Collapsed"><reel:CyberRuleScene /></Grid>
+        <Grid Name="MotionHost" Visibility="Collapsed"><reel:CyberMotionScene /></Grid>
+        <Grid Name="PrismHost" Visibility="Collapsed"><reel:CyberPrismScene /></Grid>
+        <Grid Name="RedrawHost" Visibility="Collapsed"><reel:CyberRedrawScene /></Grid>
+        <Grid Name="BindHost" Visibility="Collapsed"><reel:CyberBindScene /></Grid>
+        <Grid Name="WorldHost" Visibility="Collapsed"><reel:CyberWorldScene /></Grid>
+        <Grid Name="EditorHost" Visibility="Collapsed"><reel:CyberEditorScene /></Grid>
+        <Grid Name="ProofHost" Visibility="Collapsed"><reel:CyberProofScene /></Grid>
+        <Grid Name="StackHost" Visibility="Collapsed"><reel:CyberStackScene /></Grid>
+        <Grid Name="CloseHost" Visibility="Collapsed"><reel:CyberCloseScene /></Grid>
+
+        <!-- The cut: a cover and glitch slices -->
+        <Border Name="Cover" Background="$CyVoidBrush" Opacity="0" IsHitTestVisible="False" />
+        <Grid Name="Glitch" IsHitTestVisible="False">
+            <Border Height="26" Background="$CyCyanBrush" VerticalAlignment="Top" Margin="0,120,0,0" Opacity="0" />
+            <Border Height="8" Background="$CyMagentaBrush" VerticalAlignment="Top" Margin="0,236,0,0" Opacity="0" />
+            <Border Height="54" Background="$CyTextBrush" VerticalAlignment="Top" Margin="0,318,0,0" Opacity="0" />
+            <Border Height="14" Background="$CyVioletBrush" VerticalAlignment="Top" Margin="0,430,0,0" Opacity="0" />
+            <Border Height="38" Background="$CyMagentaBrush" VerticalAlignment="Top" Margin="0,512,0,0" Opacity="0" />
+            <Border Height="10" Background="$CyCyanBrush" VerticalAlignment="Top" Margin="0,610,0,0" Opacity="0" />
+            <Border Height="30" Background="$CyYellowBrush" VerticalAlignment="Top" Margin="0,690,0,0" Opacity="0" />
+            <Border Height="18" Background="$CyCyanBrush" VerticalAlignment="Top" Margin="0,792,0,0" Opacity="0" />
+        </Grid>
+
+        <!-- HUD -->
+        <Border Aspect="$Corner" Width="28" Height="2" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="28,28,0,0" />
+        <Border Aspect="$Corner" Width="2" Height="28" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="28,28,0,0" />
+        <Border Aspect="$Corner" Width="28" Height="2" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,28,28,0" />
+        <Border Aspect="$Corner" Width="2" Height="28" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,28,28,0" />
+        <Border Aspect="$Corner" Width="28" Height="2" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="28,0,0,28" />
+        <Border Aspect="$Corner" Width="2" Height="28" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="28,0,0,28" />
+        <Border Aspect="$Corner" Width="28" Height="2" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,28,28" />
+        <Border Aspect="$Corner" Width="2" Height="28" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,28,28" />
+
+        <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top" Margin="58,42,0,0">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="CERNEALA://REEL" FontFamily="Cascadia Mono" FontSize="15" Foreground="$CyCyanBrush" />
+                <TextBlock Text="  v1.0 · LIVE" FontFamily="Cascadia Mono" FontSize="15" Foreground="$CyDimBrush" />
+            </StackPanel>
+            <TextBlock Name="ChapterTag" Text="// 01 BOOT" FontFamily="Cascadia Mono" FontSize="15" Foreground="$CyMagentaBrush" Margin="0,6,0,0" Opacity="0" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,42,58,0">
+            <TextBlock Text="CH " FontFamily="Cascadia Mono" FontSize="15" Foreground="$CyDimBrush" />
+            <TextBlock Name="Chapter" Text="01" FontFamily="Cascadia Mono" FontSize="15" Foreground="$CyTextBrush" />
+            <TextBlock Text="/12" FontFamily="Cascadia Mono" FontSize="15" Foreground="$CyDimBrush" />
+            <Ellipse Name="Rec" Width="9" Height="9" Fill="$CyMagentaBrush" VerticalAlignment="Center" Margin="26,0,8,0" />
+            <TextBlock Text="REC" FontFamily="Cascadia Mono" FontSize="15" Foreground="$CyMagentaBrush" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,50">
+            <Grid Width="92" Height="4" Margin="0,0,8,0"><Border Background="$CyGridBrush" /><Border Name="Fill01" Background="$CyCyanBrush" ScaleX="0" RenderTransformOrigin="0,0.5" /></Grid>
+            <Grid Width="92" Height="4" Margin="0,0,8,0"><Border Background="$CyGridBrush" /><Border Name="Fill02" Background="$CyCyanBrush" ScaleX="0" RenderTransformOrigin="0,0.5" /></Grid>
+            <Grid Width="92" Height="4" Margin="0,0,8,0"><Border Background="$CyGridBrush" /><Border Name="Fill03" Background="$CyCyanBrush" ScaleX="0" RenderTransformOrigin="0,0.5" /></Grid>
+            <Grid Width="92" Height="4" Margin="0,0,8,0"><Border Background="$CyGridBrush" /><Border Name="Fill04" Background="$CyCyanBrush" ScaleX="0" RenderTransformOrigin="0,0.5" /></Grid>
+            <Grid Width="92" Height="4" Margin="0,0,8,0"><Border Background="$CyGridBrush" /><Border Name="Fill05" Background="$CyCyanBrush" ScaleX="0" RenderTransformOrigin="0,0.5" /></Grid>
+            <Grid Width="92" Height="4" Margin="0,0,8,0"><Border Background="$CyGridBrush" /><Border Name="Fill06" Background="$CyCyanBrush" ScaleX="0" RenderTransformOrigin="0,0.5" /></Grid>
+            <Grid Width="92" Height="4" Margin="0,0,8,0"><Border Background="$CyGridBrush" /><Border Name="Fill07" Background="$CyCyanBrush" ScaleX="0" RenderTransformOrigin="0,0.5" /></Grid>
+            <Grid Width="92" Height="4" Margin="0,0,8,0"><Border Background="$CyGridBrush" /><Border Name="Fill08" Background="$CyCyanBrush" ScaleX="0" RenderTransformOrigin="0,0.5" /></Grid>
+            <Grid Width="92" Height="4" Margin="0,0,8,0"><Border Background="$CyGridBrush" /><Border Name="Fill09" Background="$CyCyanBrush" ScaleX="0" RenderTransformOrigin="0,0.5" /></Grid>
+            <Grid Width="92" Height="4" Margin="0,0,8,0"><Border Background="$CyGridBrush" /><Border Name="Fill10" Background="$CyCyanBrush" ScaleX="0" RenderTransformOrigin="0,0.5" /></Grid>
+            <Grid Width="92" Height="4" Margin="0,0,8,0"><Border Background="$CyGridBrush" /><Border Name="Fill11" Background="$CyCyanBrush" ScaleX="0" RenderTransformOrigin="0,0.5" /></Grid>
+            <Grid Width="92" Height="4" Margin="0"><Border Background="$CyGridBrush" /><Border Name="Fill12" Background="$CyCyanBrush" ScaleX="0" RenderTransformOrigin="0,0.5" /></Grid>
+        </StackPanel>
+        <TextBlock Text="44.43 N  26.10 E" FontFamily="Cascadia Mono" FontSize="13" Foreground="$CyDimBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="58,0,0,44" />
+        <TextBlock Text="SDL_GPU · 60 FPS" FontFamily="Cascadia Mono" FontSize="13" Foreground="$CyDimBrush" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,58,44" />
+    </Grid>
+</UserControl>

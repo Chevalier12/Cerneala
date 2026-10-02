@@ -1,0 +1,181 @@
+<!-- 03 · RULE: one Aspect flips twelve boxes to black, one token flips all twelve to orange. Counted in big numbers. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Slam" Duration="150ms" Easing="EaseIn" />
+        <Tween Name="Cut" Duration="60ms" Easing="Linear" />
+        <Aspect Name="Plain" TargetType="Border">
+            @default { Width = 150; Height = 78; Background = $BrWhiteBrush; BorderBrush = $BrBlackBrush; BorderThickness = "3"; HorizontalAlignment = "Left"; VerticalAlignment = "Top"; }
+        </Aspect>
+        <Aspect Name="Inked" TargetType="Border">
+            @default { Width = 150; Height = 78; Background = $BrBlackBrush; BorderBrush = $BrBlackBrush; BorderThickness = "3"; HorizontalAlignment = "Left"; VerticalAlignment = "Top"; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="Signal" TargetType="Border">
+            @default { Width = 150; Height = 78; Background = $BrOrangeBrush; BorderBrush = $BrBlackBrush; BorderThickness = "3"; HorizontalAlignment = "Left"; VerticalAlignment = "Top"; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="Label" TargetType="TextBlock">
+            @default { FontFamily = "Courier New"; FontSize = 17; Foreground = $BrBlackBrush; Margin = "12,10,0,0"; }
+        </Aspect>
+        <Aspect Name="Code" TargetType="TextBlock">
+            @default { FontFamily = "Courier New"; FontSize = 20; Foreground = $BrBlackBrush; }
+        </Aspect>
+        <Aspect Name="Big" TargetType="TextBlock">
+            @default { FontFamily = "Impact"; FontSize = 110; Foreground = $BrBlackBrush; }
+        </Aspect>
+        <Aspect Name="BigLabel" TargetType="TextBlock">
+            @default { FontFamily = "Courier New"; FontSize = 16; Foreground = $BrBlackBrush; VerticalAlignment = "Bottom"; Margin = "8,0,40,22"; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:BrutalRuleScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with $Cut { @from { $Tape.Opacity = 0; } @to { $Tape.Opacity = 1; } }
+                    @animate with $Cut { @from { $Headline.Opacity = 0; } @to { $Headline.Opacity = 1; } }
+                    @animate with $Slam { @from { $Headline.TranslateX = -90; } @to { $Headline.TranslateX = 0; } }
+                }
+                @parallel
+                {
+                    @animate with $Cut { @from { $Rule.Opacity = 0; } @to { $Rule.Opacity = 1; } }
+                    @animate with $Cut { @from { $Board.Opacity = 0; } @to { $Board.Opacity = 1; } }
+                }
+                @animate with Tween(400ms, Linear) { @from { $Board.Opacity = 1; } @to { $Board.Opacity = 1; } }
+
+                <!-- Applied: twelve boxes flip to black, one after another. -->
+                @stagger target $InkedTiles each 70ms
+                {
+                    @animate with $Cut { @from { Opacity = 0; } @to { Opacity = 1; } }
+                }
+                @animate with Tween(600ms, Linear) { @from { $Board.Opacity = 1; } @to { $Board.Opacity = 1; } }
+
+                <!-- One token changes. All twelve follow. -->
+                @parallel
+                {
+                    @animate with $Cut { @from { $OldToken.Opacity = 1; } @to { $OldToken.Opacity = 0; } }
+                    @animate with $Cut { @from { $NewToken.Opacity = 0; } @to { $NewToken.Opacity = 1; } }
+                }
+                @stagger target $SignalTiles each 70ms
+                {
+                    @animate with $Cut { @from { Opacity = 0; } @to { Opacity = 1; } }
+                }
+                @stagger target $Counts each 200ms
+                {
+                    @animate with $Slam { @from { Opacity = 1; TranslateY = -60; } @to { Opacity = 1; TranslateY = 0; } }
+                }
+                @animate with $Cut { @from { $Caption.Opacity = 0; } @to { $Caption.Opacity = 1; } }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:BrutalRuleScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="160,124,140,110">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <Border Name="Tape" Background="$BrBlackBrush" Padding="12,4,12,5" HorizontalAlignment="Left" Opacity="0">
+                <TextBlock Text="[03] ONE RULE / EVERY ELEMENT" FontFamily="Courier New" FontSize="16" Foreground="$BrWhiteBrush" />
+            </Border>
+            <TextBlock Name="Headline" Text="CHANGE THE RULE, NOT THE ELEMENTS." Aspect="$BrDisplay" FontSize="84" Margin="0,4,0,0" Opacity="0" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,22,0,0">
+            <!-- The rule -->
+            <Grid Name="Rule" Width="540" Height="214" HorizontalAlignment="Left" VerticalAlignment="Top" Opacity="0">
+                <Border Background="$BrBlackBrush" Margin="14,14,-14,-14" />
+                <Border Aspect="$BrBox">
+                    <StackPanel>
+                        <TextBlock Text="&lt;Aspect Name=&quot;Tile&quot;&gt;" Aspect="$Code" Foreground="$BrBlueBrush" />
+                        <TextBlock Text="@default {" Aspect="$Code" Margin="24,8,0,0" />
+                        <Grid Margin="48,6,0,6">
+                            <StackPanel Name="OldToken">
+                                <TextBlock Text="Background = \$Black;" Aspect="$Code" />
+                                <TextBlock Text="Foreground = \$White;" Aspect="$Code" Margin="0,4,0,0" />
+                            </StackPanel>
+                            <StackPanel Name="NewToken" Opacity="0">
+                                <Border Background="$BrOrangeBrush" HorizontalAlignment="Left" Padding="4,0,4,0">
+                                    <TextBlock Text="Background = \$Orange;" Aspect="$Code" />
+                                </Border>
+                                <TextBlock Text="Foreground = \$Black;" Aspect="$Code" Margin="4,4,0,0" />
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="}" Aspect="$Code" Margin="24,0,0,0" />
+                        <TextBlock Text="&lt;/Aspect&gt;" Aspect="$Code" Foreground="$BrBlueBrush" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <StackPanel Name="Counts" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,250,0,0">
+                <StackPanel Orientation="Horizontal" Opacity="0"><TextBlock Text="12" Aspect="$Big" /><TextBlock Text="ELEMENTS" Aspect="$BigLabel" /></StackPanel>
+                <StackPanel Orientation="Horizontal" Opacity="0"><TextBlock Text="1" Aspect="$Big" Foreground="$BrOrangeBrush" /><TextBlock Text="RULE" Aspect="$BigLabel" /></StackPanel>
+                <StackPanel Orientation="Horizontal" Opacity="0"><TextBlock Text="0" Aspect="$Big" /><TextBlock Text="EDITS TO THEM" Aspect="$BigLabel" /></StackPanel>
+            </StackPanel>
+
+            <!-- Twelve boxes -->
+            <Grid Name="Board" Width="654" Height="270" HorizontalAlignment="Right" VerticalAlignment="Top" Opacity="0">
+                <Grid>
+                    <Border Aspect="$Plain" Margin="0,0,0,0"><TextBlock Text="INVOICES" Aspect="$Label" /></Border>
+                    <Border Aspect="$Plain" Margin="168,0,0,0"><TextBlock Text="CLIENTS" Aspect="$Label" /></Border>
+                    <Border Aspect="$Plain" Margin="336,0,0,0"><TextBlock Text="REPORTS" Aspect="$Label" /></Border>
+                    <Border Aspect="$Plain" Margin="504,0,0,0"><TextBlock Text="INBOX" Aspect="$Label" /></Border>
+                    <Border Aspect="$Plain" Margin="0,96,0,0"><TextBlock Text="CALENDAR" Aspect="$Label" /></Border>
+                    <Border Aspect="$Plain" Margin="168,96,0,0"><TextBlock Text="NOTES" Aspect="$Label" /></Border>
+                    <Border Aspect="$Plain" Margin="336,96,0,0"><TextBlock Text="FILES" Aspect="$Label" /></Border>
+                    <Border Aspect="$Plain" Margin="504,96,0,0"><TextBlock Text="TEAM" Aspect="$Label" /></Border>
+                    <Border Aspect="$Plain" Margin="0,192,0,0"><TextBlock Text="BILLING" Aspect="$Label" /></Border>
+                    <Border Aspect="$Plain" Margin="168,192,0,0"><TextBlock Text="LEDGER" Aspect="$Label" /></Border>
+                    <Border Aspect="$Plain" Margin="336,192,0,0"><TextBlock Text="TASKS" Aspect="$Label" /></Border>
+                    <Border Aspect="$Plain" Margin="504,192,0,0"><TextBlock Text="SETTINGS" Aspect="$Label" /></Border>
+                </Grid>
+                <Grid Name="InkedTiles">
+                    <Border Aspect="$Inked" Margin="0,0,0,0"><TextBlock Text="INVOICES" Aspect="$Label" Foreground="$BrWhiteBrush" /></Border>
+                    <Border Aspect="$Inked" Margin="168,0,0,0"><TextBlock Text="CLIENTS" Aspect="$Label" Foreground="$BrWhiteBrush" /></Border>
+                    <Border Aspect="$Inked" Margin="336,0,0,0"><TextBlock Text="REPORTS" Aspect="$Label" Foreground="$BrWhiteBrush" /></Border>
+                    <Border Aspect="$Inked" Margin="504,0,0,0"><TextBlock Text="INBOX" Aspect="$Label" Foreground="$BrWhiteBrush" /></Border>
+                    <Border Aspect="$Inked" Margin="0,96,0,0"><TextBlock Text="CALENDAR" Aspect="$Label" Foreground="$BrWhiteBrush" /></Border>
+                    <Border Aspect="$Inked" Margin="168,96,0,0"><TextBlock Text="NOTES" Aspect="$Label" Foreground="$BrWhiteBrush" /></Border>
+                    <Border Aspect="$Inked" Margin="336,96,0,0"><TextBlock Text="FILES" Aspect="$Label" Foreground="$BrWhiteBrush" /></Border>
+                    <Border Aspect="$Inked" Margin="504,96,0,0"><TextBlock Text="TEAM" Aspect="$Label" Foreground="$BrWhiteBrush" /></Border>
+                    <Border Aspect="$Inked" Margin="0,192,0,0"><TextBlock Text="BILLING" Aspect="$Label" Foreground="$BrWhiteBrush" /></Border>
+                    <Border Aspect="$Inked" Margin="168,192,0,0"><TextBlock Text="LEDGER" Aspect="$Label" Foreground="$BrWhiteBrush" /></Border>
+                    <Border Aspect="$Inked" Margin="336,192,0,0"><TextBlock Text="TASKS" Aspect="$Label" Foreground="$BrWhiteBrush" /></Border>
+                    <Border Aspect="$Inked" Margin="504,192,0,0"><TextBlock Text="SETTINGS" Aspect="$Label" Foreground="$BrWhiteBrush" /></Border>
+                </Grid>
+                <Grid Name="SignalTiles">
+                    <Border Aspect="$Signal" Margin="0,0,0,0"><TextBlock Text="INVOICES" Aspect="$Label" /></Border>
+                    <Border Aspect="$Signal" Margin="168,0,0,0"><TextBlock Text="CLIENTS" Aspect="$Label" /></Border>
+                    <Border Aspect="$Signal" Margin="336,0,0,0"><TextBlock Text="REPORTS" Aspect="$Label" /></Border>
+                    <Border Aspect="$Signal" Margin="504,0,0,0"><TextBlock Text="INBOX" Aspect="$Label" /></Border>
+                    <Border Aspect="$Signal" Margin="0,96,0,0"><TextBlock Text="CALENDAR" Aspect="$Label" /></Border>
+                    <Border Aspect="$Signal" Margin="168,96,0,0"><TextBlock Text="NOTES" Aspect="$Label" /></Border>
+                    <Border Aspect="$Signal" Margin="336,96,0,0"><TextBlock Text="FILES" Aspect="$Label" /></Border>
+                    <Border Aspect="$Signal" Margin="504,96,0,0"><TextBlock Text="TEAM" Aspect="$Label" /></Border>
+                    <Border Aspect="$Signal" Margin="0,192,0,0"><TextBlock Text="BILLING" Aspect="$Label" /></Border>
+                    <Border Aspect="$Signal" Margin="168,192,0,0"><TextBlock Text="LEDGER" Aspect="$Label" /></Border>
+                    <Border Aspect="$Signal" Margin="336,192,0,0"><TextBlock Text="TASKS" Aspect="$Label" /></Border>
+                    <Border Aspect="$Signal" Margin="504,192,0,0"><TextBlock Text="SETTINGS" Aspect="$Label" /></Border>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <TextBlock
+            Name="Caption"
+            Grid.Row="2"
+            Text="ASPECT IS CERNEALA'S STYLE SYSTEM: STYLES, STATES AND TEMPLATES, RESOLVED BY ONE CASCADE."
+            Aspect="$BrLede"
+            Opacity="0" />
+    </Grid>
+</UserControl>

@@ -1,0 +1,481 @@
+<!--
+    SakuraReel is the Sakura version of the film, and its director. It owns no C# logic.
+
+    A spring garden: a blush sky over soft hills, a blossoming branch reaching in from the
+    corner and petals falling through every chapter. The chapter is numbered in kanji. The
+    progress bar is a branch along the foot of the page whose twelve buds bloom one by one.
+    Between chapters a gust of petals sweeps across a soft wash of paper.
+-->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel">
+    <UserControl.Resources>
+        <RadialGradientBrush Name="SunBrush" Center="170,170" RadiusX="170" RadiusY="170">
+            <GradientStop Offset="0" Color="#FFFFFFFF" />
+            <GradientStop Offset="0.55" Color="#AAFCE1E8" />
+            <GradientStop Offset="1" Color="#00FCE1E8" />
+        </RadialGradientBrush>
+        <SolidColorBrush Name="HillFarBrush" Color="#33C9A9BD" />
+        <SolidColorBrush Name="HillNearBrush" Color="#40E7859F" />
+        <SolidColorBrush Name="WashBrush" Color="#FFFFF9F3" />
+        <SolidColorBrush Name="HankoBrush" Color="#FFC2453D" />
+        <Tween Name="WashIn" Duration="450ms" Easing="EaseInOut" />
+        <Tween Name="WashOut" Duration="650ms" Easing="EaseInOut" />
+        <Tween Name="Gust" Duration="1100ms" Easing="EaseInOut" />
+        <Aspect Name="Fall" TargetType="Grid">
+            @default { Width = 14; Height = 14; HorizontalAlignment = "Left"; VerticalAlignment = "Top"; }
+        </Aspect>
+        <Aspect Name="Petal" TargetType="Ellipse">
+            @default { Width = 9; Height = 12; Fill = $SkPetalBrush; RenderTransformOrigin = "0.5,0.5"; }
+        </Aspect>
+        <Aspect Name="GustPetal" TargetType="Ellipse">
+            @default { Width = 16; Height = 22; Fill = $SkPetalBrush; HorizontalAlignment = "Left"; VerticalAlignment = "Top"; RenderTransformOrigin = "0.5,0.5"; }
+        </Aspect>
+        <Aspect Name="Bud" TargetType="Grid">
+            @default { Width = 24; Height = 24; HorizontalAlignment = "Left"; VerticalAlignment = "Bottom"; Scale = 0; RenderTransformOrigin = "0.5,0.5"; }
+        </Aspect>
+        <Aspect Name="BudDot" TargetType="Ellipse">
+            @default { Width = 6; Height = 6; Fill = $SkBarkBrush; HorizontalAlignment = "Left"; VerticalAlignment = "Bottom"; Opacity = 0.6; }
+        </Aspect>
+
+        <!-- The garden breathes: petals fall and sway, the branch's blossoms nod. -->
+        <MotionClip Name="Breeze" TargetType="Grid">
+            @parallel
+            {
+                @animate with Repeat(Tween(9180ms, Linear), forever) { @from { $F01.TranslateY = 0; } @to { $F01.TranslateY = 990; } }
+                @animate with PingPong(Tween(1600ms, EaseInOut), forever) { @from { $F01.TranslateX = -26; } @to { $F01.TranslateX = 26; } }
+                @animate with Repeat(Tween(2600ms, Linear), forever) { @from { $P01.Rotation = 0; } @to { $P01.Rotation = 6.283; } }
+                @animate with Repeat(Tween(10835ms, Linear), forever) { @from { $F02.TranslateY = 0; } @to { $F02.TranslateY = 1043; } }
+                @animate with PingPong(Tween(2031ms, EaseInOut), forever) { @from { $F02.TranslateX = -43; } @to { $F02.TranslateX = 43; } }
+                @animate with Repeat(Tween(3373ms, Linear), forever) { @from { $P02.Rotation = 0; } @to { $P02.Rotation = 6.283; } }
+                @animate with Repeat(Tween(12490ms, Linear), forever) { @from { $F03.TranslateY = 0; } @to { $F03.TranslateY = 1096; } }
+                @animate with PingPong(Tween(2462ms, EaseInOut), forever) { @from { $F03.TranslateX = -60; } @to { $F03.TranslateX = 60; } }
+                @animate with Repeat(Tween(4146ms, Linear), forever) { @from { $P03.Rotation = 0; } @to { $P03.Rotation = 6.283; } }
+                @animate with Repeat(Tween(14145ms, Linear), forever) { @from { $F04.TranslateY = 0; } @to { $F04.TranslateY = 1149; } }
+                @animate with PingPong(Tween(2893ms, EaseInOut), forever) { @from { $F04.TranslateX = -37; } @to { $F04.TranslateX = 37; } }
+                @animate with Repeat(Tween(4919ms, Linear), forever) { @from { $P04.Rotation = 0; } @to { $P04.Rotation = 6.283; } }
+                @animate with Repeat(Tween(15800ms, Linear), forever) { @from { $F05.TranslateY = 0; } @to { $F05.TranslateY = 1202; } }
+                @animate with PingPong(Tween(1924ms, EaseInOut), forever) { @from { $F05.TranslateX = -54; } @to { $F05.TranslateX = 54; } }
+                @animate with Repeat(Tween(3292ms, Linear), forever) { @from { $P05.Rotation = 0; } @to { $P05.Rotation = 6.283; } }
+                @animate with Repeat(Tween(11455ms, Linear), forever) { @from { $F06.TranslateY = 0; } @to { $F06.TranslateY = 1255; } }
+                @animate with PingPong(Tween(2355ms, EaseInOut), forever) { @from { $F06.TranslateX = -31; } @to { $F06.TranslateX = 31; } }
+                @animate with Repeat(Tween(4065ms, Linear), forever) { @from { $P06.Rotation = 0; } @to { $P06.Rotation = 6.283; } }
+                @animate with Repeat(Tween(13110ms, Linear), forever) { @from { $F07.TranslateY = 0; } @to { $F07.TranslateY = 1308; } }
+                @animate with PingPong(Tween(2786ms, EaseInOut), forever) { @from { $F07.TranslateX = -48; } @to { $F07.TranslateX = 48; } }
+                @animate with Repeat(Tween(4838ms, Linear), forever) { @from { $P07.Rotation = 0; } @to { $P07.Rotation = 6.283; } }
+                @animate with Repeat(Tween(14765ms, Linear), forever) { @from { $F08.TranslateY = 0; } @to { $F08.TranslateY = 1361; } }
+                @animate with PingPong(Tween(1817ms, EaseInOut), forever) { @from { $F08.TranslateX = -65; } @to { $F08.TranslateX = 65; } }
+                @animate with Repeat(Tween(3211ms, Linear), forever) { @from { $P08.Rotation = 0; } @to { $P08.Rotation = 6.283; } }
+                @animate with Repeat(Tween(16420ms, Linear), forever) { @from { $F09.TranslateY = 0; } @to { $F09.TranslateY = 1414; } }
+                @animate with PingPong(Tween(2248ms, EaseInOut), forever) { @from { $F09.TranslateX = -42; } @to { $F09.TranslateX = 42; } }
+                @animate with Repeat(Tween(3984ms, Linear), forever) { @from { $P09.Rotation = 0; } @to { $P09.Rotation = 6.283; } }
+                @animate with Repeat(Tween(12075ms, Linear), forever) { @from { $F10.TranslateY = 0; } @to { $F10.TranslateY = 1467; } }
+                @animate with PingPong(Tween(2679ms, EaseInOut), forever) { @from { $F10.TranslateX = -59; } @to { $F10.TranslateX = 59; } }
+                @animate with Repeat(Tween(4757ms, Linear), forever) { @from { $P10.Rotation = 0; } @to { $P10.Rotation = 6.283; } }
+                @animate with Repeat(Tween(10610ms, Linear), forever) { @from { $F11.TranslateY = 0; } @to { $F11.TranslateY = 1000; } }
+                @animate with PingPong(Tween(1710ms, EaseInOut), forever) { @from { $F11.TranslateX = -36; } @to { $F11.TranslateX = 36; } }
+                @animate with Repeat(Tween(3130ms, Linear), forever) { @from { $P11.Rotation = 0; } @to { $P11.Rotation = 6.283; } }
+                @animate with Repeat(Tween(12265ms, Linear), forever) { @from { $F12.TranslateY = 0; } @to { $F12.TranslateY = 1053; } }
+                @animate with PingPong(Tween(2141ms, EaseInOut), forever) { @from { $F12.TranslateX = -53; } @to { $F12.TranslateX = 53; } }
+                @animate with Repeat(Tween(3903ms, Linear), forever) { @from { $P12.Rotation = 0; } @to { $P12.Rotation = 6.283; } }
+                @animate with Repeat(Tween(13920ms, Linear), forever) { @from { $F13.TranslateY = 0; } @to { $F13.TranslateY = 1106; } }
+                @animate with PingPong(Tween(2572ms, EaseInOut), forever) { @from { $F13.TranslateX = -30; } @to { $F13.TranslateX = 30; } }
+                @animate with Repeat(Tween(4676ms, Linear), forever) { @from { $P13.Rotation = 0; } @to { $P13.Rotation = 6.283; } }
+                @animate with Repeat(Tween(15575ms, Linear), forever) { @from { $F14.TranslateY = 0; } @to { $F14.TranslateY = 1159; } }
+                @animate with PingPong(Tween(1603ms, EaseInOut), forever) { @from { $F14.TranslateX = -47; } @to { $F14.TranslateX = 47; } }
+                @animate with Repeat(Tween(3049ms, Linear), forever) { @from { $P14.Rotation = 0; } @to { $P14.Rotation = 6.283; } }
+                @animate with Repeat(Tween(11230ms, Linear), forever) { @from { $F15.TranslateY = 0; } @to { $F15.TranslateY = 1212; } }
+                @animate with PingPong(Tween(2034ms, EaseInOut), forever) { @from { $F15.TranslateX = -64; } @to { $F15.TranslateX = 64; } }
+                @animate with Repeat(Tween(3822ms, Linear), forever) { @from { $P15.Rotation = 0; } @to { $P15.Rotation = 6.283; } }
+                @animate with Repeat(Tween(12885ms, Linear), forever) { @from { $F16.TranslateY = 0; } @to { $F16.TranslateY = 1265; } }
+                @animate with PingPong(Tween(2465ms, EaseInOut), forever) { @from { $F16.TranslateX = -41; } @to { $F16.TranslateX = 41; } }
+                @animate with Repeat(Tween(4595ms, Linear), forever) { @from { $P16.Rotation = 0; } @to { $P16.Rotation = 6.283; } }
+                @animate with Repeat(Tween(14540ms, Linear), forever) { @from { $F17.TranslateY = 0; } @to { $F17.TranslateY = 1318; } }
+                @animate with PingPong(Tween(2896ms, EaseInOut), forever) { @from { $F17.TranslateX = -58; } @to { $F17.TranslateX = 58; } }
+                @animate with Repeat(Tween(2968ms, Linear), forever) { @from { $P17.Rotation = 0; } @to { $P17.Rotation = 6.283; } }
+                @animate with Repeat(Tween(16195ms, Linear), forever) { @from { $F18.TranslateY = 0; } @to { $F18.TranslateY = 1371; } }
+                @animate with PingPong(Tween(1927ms, EaseInOut), forever) { @from { $F18.TranslateX = -35; } @to { $F18.TranslateX = 35; } }
+                @animate with Repeat(Tween(3741ms, Linear), forever) { @from { $P18.Rotation = 0; } @to { $P18.Rotation = 6.283; } }
+                @animate with PingPong(Tween(3600ms, EaseInOut), forever) { @from { $Branch.Rotation = 0; } @to { $Branch.Rotation = 0.012; } }
+            }
+        </MotionClip>
+        <Aspect Name="GardenLife" TargetType="Grid">
+            @handle Breeze;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Breeze as Breeze;
+                }
+            }
+        </Aspect>
+
+        <MotionClip Name="Reel" TargetType="Grid">
+            @sequence
+            {
+                <!-- 一 · a petal on water -->
+                @set { $OpenHost.Visibility = Visible; $Kanji.Text = "一"; $Title.Text = "a petal on water"; $Folio.Text = "CHAPTER 1 OF 12"; }
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Kanji.Opacity = 0; $Kanji.TranslateY = -10; } @to { $Kanji.Opacity = 1; $Kanji.TranslateY = 0; } }
+                    @animate with Spring(140, 12) { @from { $Bud01.Scale = 0; } @to { $Bud01.Scale = 1; } }
+                    @animate with Tween(10s, Linear) { @from { $Title.Opacity = 1; } @to { $Title.Opacity = 1; } }
+                }
+
+                <!-- 二 · a sketch in bloom -->
+                @parallel
+                {
+                    @animate with $WashIn { @from { $Wash.Opacity = 0; } @to { $Wash.Opacity = 1; } }
+                    @animate with $Gust { @from { $GustCloud.TranslateX = 1700; $GustCloud.TranslateY = -60; } @to { $GustCloud.TranslateX = -800; $GustCloud.TranslateY = 60; } }
+                    @sequence
+                    {
+                        @animate with Tween(450ms, Linear) { @from { $Kanji.Opacity = 1; } @to { $Kanji.Opacity = 0; } }
+                        @set { $OpenHost.Visibility = Collapsed; $SketchHost.Visibility = Visible; $Kanji.Text = "二"; $Title.Text = "a sketch in bloom"; $Folio.Text = "CHAPTER 2 OF 12"; }
+                        @animate with $WashOut { @from { $Wash.Opacity = 1; } @to { $Wash.Opacity = 0; } }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Kanji.Opacity = 0; $Kanji.TranslateY = -10; } @to { $Kanji.Opacity = 1; $Kanji.TranslateY = 0; } }
+                    @animate with Spring(140, 12) { @from { $Bud02.Scale = 0; } @to { $Bud02.Scale = 1; } }
+                    @animate with Tween(11s, Linear) { @from { $Title.Opacity = 1; } @to { $Title.Opacity = 1; } }
+                }
+
+                <!-- 三 · one rule, every blossom -->
+                @parallel
+                {
+                    @animate with $WashIn { @from { $Wash.Opacity = 0; } @to { $Wash.Opacity = 1; } }
+                    @animate with $Gust { @from { $GustCloud.TranslateX = 1700; $GustCloud.TranslateY = -60; } @to { $GustCloud.TranslateX = -800; $GustCloud.TranslateY = 60; } }
+                    @sequence
+                    {
+                        @animate with Tween(450ms, Linear) { @from { $Kanji.Opacity = 1; } @to { $Kanji.Opacity = 0; } }
+                        @set { $SketchHost.Visibility = Collapsed; $RuleHost.Visibility = Visible; $Kanji.Text = "三"; $Title.Text = "one rule, every blossom"; $Folio.Text = "CHAPTER 3 OF 12"; }
+                        @animate with $WashOut { @from { $Wash.Opacity = 1; } @to { $Wash.Opacity = 0; } }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Kanji.Opacity = 0; $Kanji.TranslateY = -10; } @to { $Kanji.Opacity = 1; $Kanji.TranslateY = 0; } }
+                    @animate with Spring(140, 12) { @from { $Bud03.Scale = 0; } @to { $Bud03.Scale = 1; } }
+                    @animate with Tween(10s, Linear) { @from { $Title.Opacity = 1; } @to { $Title.Opacity = 1; } }
+                }
+
+                <!-- 四 · movement, like wind -->
+                @parallel
+                {
+                    @animate with $WashIn { @from { $Wash.Opacity = 0; } @to { $Wash.Opacity = 1; } }
+                    @animate with $Gust { @from { $GustCloud.TranslateX = 1700; $GustCloud.TranslateY = -60; } @to { $GustCloud.TranslateX = -800; $GustCloud.TranslateY = 60; } }
+                    @sequence
+                    {
+                        @animate with Tween(450ms, Linear) { @from { $Kanji.Opacity = 1; } @to { $Kanji.Opacity = 0; } }
+                        @set { $RuleHost.Visibility = Collapsed; $MotionHost.Visibility = Visible; $Kanji.Text = "四"; $Title.Text = "movement, like wind"; $Folio.Text = "CHAPTER 4 OF 12"; }
+                        @animate with $WashOut { @from { $Wash.Opacity = 1; } @to { $Wash.Opacity = 0; } }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Kanji.Opacity = 0; $Kanji.TranslateY = -10; } @to { $Kanji.Opacity = 1; $Kanji.TranslateY = 0; } }
+                    @animate with Spring(140, 12) { @from { $Bud04.Scale = 0; } @to { $Bud04.Scale = 1; } }
+                    @animate with Tween(11s, Linear) { @from { $Title.Opacity = 1; } @to { $Title.Opacity = 1; } }
+                }
+
+                <!-- 五 · effects, like washes -->
+                @parallel
+                {
+                    @animate with $WashIn { @from { $Wash.Opacity = 0; } @to { $Wash.Opacity = 1; } }
+                    @animate with $Gust { @from { $GustCloud.TranslateX = 1700; $GustCloud.TranslateY = -60; } @to { $GustCloud.TranslateX = -800; $GustCloud.TranslateY = 60; } }
+                    @sequence
+                    {
+                        @animate with Tween(450ms, Linear) { @from { $Kanji.Opacity = 1; } @to { $Kanji.Opacity = 0; } }
+                        @set { $MotionHost.Visibility = Collapsed; $PrismHost.Visibility = Visible; $Kanji.Text = "五"; $Title.Text = "effects, like washes"; $Folio.Text = "CHAPTER 5 OF 12"; }
+                        @animate with $WashOut { @from { $Wash.Opacity = 1; } @to { $Wash.Opacity = 0; } }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Kanji.Opacity = 0; $Kanji.TranslateY = -10; } @to { $Kanji.Opacity = 1; $Kanji.TranslateY = 0; } }
+                    @animate with Spring(140, 12) { @from { $Bud05.Scale = 0; } @to { $Bud05.Scale = 1; } }
+                    @animate with Tween(11s, Linear) { @from { $Title.Opacity = 1; } @to { $Title.Opacity = 1; } }
+                }
+
+                <!-- 六 · change one word -->
+                @parallel
+                {
+                    @animate with $WashIn { @from { $Wash.Opacity = 0; } @to { $Wash.Opacity = 1; } }
+                    @animate with $Gust { @from { $GustCloud.TranslateX = 1700; $GustCloud.TranslateY = -60; } @to { $GustCloud.TranslateX = -800; $GustCloud.TranslateY = 60; } }
+                    @sequence
+                    {
+                        @animate with Tween(450ms, Linear) { @from { $Kanji.Opacity = 1; } @to { $Kanji.Opacity = 0; } }
+                        @set { $PrismHost.Visibility = Collapsed; $RedrawHost.Visibility = Visible; $Kanji.Text = "六"; $Title.Text = "change one word"; $Folio.Text = "CHAPTER 6 OF 12"; }
+                        @animate with $WashOut { @from { $Wash.Opacity = 1; } @to { $Wash.Opacity = 0; } }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Kanji.Opacity = 0; $Kanji.TranslateY = -10; } @to { $Kanji.Opacity = 1; $Kanji.TranslateY = 0; } }
+                    @animate with Spring(140, 12) { @from { $Bud06.Scale = 0; } @to { $Bud06.Scale = 1; } }
+                    @animate with Tween(10s, Linear) { @from { $Title.Opacity = 1; } @to { $Title.Opacity = 1; } }
+                }
+
+                <!-- 七 · news from any thread -->
+                @parallel
+                {
+                    @animate with $WashIn { @from { $Wash.Opacity = 0; } @to { $Wash.Opacity = 1; } }
+                    @animate with $Gust { @from { $GustCloud.TranslateX = 1700; $GustCloud.TranslateY = -60; } @to { $GustCloud.TranslateX = -800; $GustCloud.TranslateY = 60; } }
+                    @sequence
+                    {
+                        @animate with Tween(450ms, Linear) { @from { $Kanji.Opacity = 1; } @to { $Kanji.Opacity = 0; } }
+                        @set { $RedrawHost.Visibility = Collapsed; $BindHost.Visibility = Visible; $Kanji.Text = "七"; $Title.Text = "news from any thread"; $Folio.Text = "CHAPTER 7 OF 12"; }
+                        @animate with $WashOut { @from { $Wash.Opacity = 1; } @to { $Wash.Opacity = 0; } }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Kanji.Opacity = 0; $Kanji.TranslateY = -10; } @to { $Kanji.Opacity = 1; $Kanji.TranslateY = 0; } }
+                    @animate with Spring(140, 12) { @from { $Bud07.Scale = 0; } @to { $Bud07.Scale = 1; } }
+                    @animate with Tween(10s, Linear) { @from { $Title.Opacity = 1; } @to { $Title.Opacity = 1; } }
+                }
+
+                <!-- 八 · a garden is a view -->
+                @parallel
+                {
+                    @animate with $WashIn { @from { $Wash.Opacity = 0; } @to { $Wash.Opacity = 1; } }
+                    @animate with $Gust { @from { $GustCloud.TranslateX = 1700; $GustCloud.TranslateY = -60; } @to { $GustCloud.TranslateX = -800; $GustCloud.TranslateY = 60; } }
+                    @sequence
+                    {
+                        @animate with Tween(450ms, Linear) { @from { $Kanji.Opacity = 1; } @to { $Kanji.Opacity = 0; } }
+                        @set { $BindHost.Visibility = Collapsed; $WorldHost.Visibility = Visible; $Kanji.Text = "八"; $Title.Text = "a garden is a view"; $Folio.Text = "CHAPTER 8 OF 12"; }
+                        @animate with $WashOut { @from { $Wash.Opacity = 1; } @to { $Wash.Opacity = 0; } }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Kanji.Opacity = 0; $Kanji.TranslateY = -10; } @to { $Kanji.Opacity = 1; $Kanji.TranslateY = 0; } }
+                    @animate with Spring(140, 12) { @from { $Bud08.Scale = 0; } @to { $Bud08.Scale = 1; } }
+                    @animate with Tween(11s, Linear) { @from { $Title.Opacity = 1; } @to { $Title.Opacity = 1; } }
+                }
+
+                <!-- 九 · write it, see it -->
+                @parallel
+                {
+                    @animate with $WashIn { @from { $Wash.Opacity = 0; } @to { $Wash.Opacity = 1; } }
+                    @animate with $Gust { @from { $GustCloud.TranslateX = 1700; $GustCloud.TranslateY = -60; } @to { $GustCloud.TranslateX = -800; $GustCloud.TranslateY = 60; } }
+                    @sequence
+                    {
+                        @animate with Tween(450ms, Linear) { @from { $Kanji.Opacity = 1; } @to { $Kanji.Opacity = 0; } }
+                        @set { $WorldHost.Visibility = Collapsed; $EditorHost.Visibility = Visible; $Kanji.Text = "九"; $Title.Text = "write it, see it"; $Folio.Text = "CHAPTER 9 OF 12"; }
+                        @animate with $WashOut { @from { $Wash.Opacity = 1; } @to { $Wash.Opacity = 0; } }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Kanji.Opacity = 0; $Kanji.TranslateY = -10; } @to { $Kanji.Opacity = 1; $Kanji.TranslateY = 0; } }
+                    @animate with Spring(140, 12) { @from { $Bud09.Scale = 0; } @to { $Bud09.Scale = 1; } }
+                    @animate with Tween(11s, Linear) { @from { $Title.Opacity = 1; } @to { $Title.Opacity = 1; } }
+                }
+
+                <!-- 十 · proof, gently -->
+                @parallel
+                {
+                    @animate with $WashIn { @from { $Wash.Opacity = 0; } @to { $Wash.Opacity = 1; } }
+                    @animate with $Gust { @from { $GustCloud.TranslateX = 1700; $GustCloud.TranslateY = -60; } @to { $GustCloud.TranslateX = -800; $GustCloud.TranslateY = 60; } }
+                    @sequence
+                    {
+                        @animate with Tween(450ms, Linear) { @from { $Kanji.Opacity = 1; } @to { $Kanji.Opacity = 0; } }
+                        @set { $EditorHost.Visibility = Collapsed; $ProofHost.Visibility = Visible; $Kanji.Text = "十"; $Title.Text = "proof, gently"; $Folio.Text = "CHAPTER 10 OF 12"; }
+                        @animate with $WashOut { @from { $Wash.Opacity = 1; } @to { $Wash.Opacity = 0; } }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Kanji.Opacity = 0; $Kanji.TranslateY = -10; } @to { $Kanji.Opacity = 1; $Kanji.TranslateY = 0; } }
+                    @animate with Spring(140, 12) { @from { $Bud10.Scale = 0; } @to { $Bud10.Scale = 1; } }
+                    @animate with Tween(11s, Linear) { @from { $Title.Opacity = 1; } @to { $Title.Opacity = 1; } }
+                }
+
+                <!-- 十一 · a pagoda of parts -->
+                @parallel
+                {
+                    @animate with $WashIn { @from { $Wash.Opacity = 0; } @to { $Wash.Opacity = 1; } }
+                    @animate with $Gust { @from { $GustCloud.TranslateX = 1700; $GustCloud.TranslateY = -60; } @to { $GustCloud.TranslateX = -800; $GustCloud.TranslateY = 60; } }
+                    @sequence
+                    {
+                        @animate with Tween(450ms, Linear) { @from { $Kanji.Opacity = 1; } @to { $Kanji.Opacity = 0; } }
+                        @set { $ProofHost.Visibility = Collapsed; $StackHost.Visibility = Visible; $Kanji.Text = "十一"; $Title.Text = "a pagoda of parts"; $Folio.Text = "CHAPTER 11 OF 12"; }
+                        @animate with $WashOut { @from { $Wash.Opacity = 1; } @to { $Wash.Opacity = 0; } }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Kanji.Opacity = 0; $Kanji.TranslateY = -10; } @to { $Kanji.Opacity = 1; $Kanji.TranslateY = 0; } }
+                    @animate with Spring(140, 12) { @from { $Bud11.Scale = 0; } @to { $Bud11.Scale = 1; } }
+                    @animate with Tween(9s, Linear) { @from { $Title.Opacity = 1; } @to { $Title.Opacity = 1; } }
+                }
+
+                <!-- 十二 · the last blossom -->
+                @parallel
+                {
+                    @animate with $WashIn { @from { $Wash.Opacity = 0; } @to { $Wash.Opacity = 1; } }
+                    @animate with $Gust { @from { $GustCloud.TranslateX = 1700; $GustCloud.TranslateY = -60; } @to { $GustCloud.TranslateX = -800; $GustCloud.TranslateY = 60; } }
+                    @sequence
+                    {
+                        @animate with Tween(450ms, Linear) { @from { $Kanji.Opacity = 1; } @to { $Kanji.Opacity = 0; } }
+                        @set { $StackHost.Visibility = Collapsed; $CloseHost.Visibility = Visible; $Kanji.Text = "十二"; $Title.Text = "the last blossom"; $Folio.Text = "CHAPTER 12 OF 12"; }
+                        @animate with $WashOut { @from { $Wash.Opacity = 1; } @to { $Wash.Opacity = 0; } }
+                    }
+                }
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Kanji.Opacity = 0; $Kanji.TranslateY = -10; } @to { $Kanji.Opacity = 1; $Kanji.TranslateY = 0; } }
+                    @animate with Spring(140, 12) { @from { $Bud12.Scale = 0; } @to { $Bud12.Scale = 1; } }
+                    @animate with Tween(4s, Linear) { @from { $Title.Opacity = 1; } @to { $Title.Opacity = 1; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="Director" TargetType="Grid">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Reel as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid
+        Name="Stage"
+        Aspect="$Director"
+        Width="1600"
+        Height="900"
+        ClipToBounds="True">
+        <Grid Name="Garden" Aspect="$GardenLife" IsHitTestVisible="False">
+            <Border Background="$SkSkyBrush" />
+            <Ellipse Width="340" Height="340" Fill="$SunBrush" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,40,120,0" />
+            <Ellipse Width="1400" Height="420" Fill="$HillFarBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="-300,0,0,-240" />
+            <Ellipse Width="1200" Height="380" Fill="$HillFarBrush" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-260,-220" />
+            <Ellipse Width="1100" Height="300" Fill="$HillNearBrush" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="200,0,0,-230" />
+
+            <!-- The branch, reaching in from the top-left corner -->
+            <Grid Name="Branch" Width="760" Height="300" HorizontalAlignment="Left" VerticalAlignment="Top" RenderTransformOrigin="0,0">
+                <Path Data="M -10 40 C 90 52 170 44 260 74 C 340 100 420 96 520 128 C 580 146 640 150 700 168" Stroke="$SkBarkBrush" StrokeThickness="9" />
+                <Path Data="M 250 72 C 270 40 300 22 340 10" Stroke="$SkBarkBrush" StrokeThickness="5" />
+                <Path Data="M 430 100 C 450 130 480 150 520 162" Stroke="$SkBarkBrush" StrokeThickness="4" />
+                <Path Data="M 120 48 C 130 80 150 100 180 112" Stroke="$SkBarkBrush" StrokeThickness="4" />
+                <Grid Width="24" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="100,26,0,0" Scale="1.8" RenderTransformOrigin="0.5,0.5"><reel:Blossom /></Grid>
+                <Grid Width="24" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="170,100,0,0" Scale="1.4" RenderTransformOrigin="0.5,0.5"><reel:Blossom /></Grid>
+                <Grid Width="24" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="226,52,0,0" Scale="2.2" RenderTransformOrigin="0.5,0.5"><reel:Blossom /></Grid>
+                <Grid Width="24" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="330,0,0,0" Scale="1.6" RenderTransformOrigin="0.5,0.5"><reel:Blossom /></Grid>
+                <Grid Width="24" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="300,74,0,0" Scale="1.3" RenderTransformOrigin="0.5,0.5"><reel:Blossom /></Grid>
+                <Grid Width="24" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="400,84,0,0" Scale="2" RenderTransformOrigin="0.5,0.5"><reel:Blossom /></Grid>
+                <Grid Width="24" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="508,150,0,0" Scale="1.5" RenderTransformOrigin="0.5,0.5"><reel:Blossom /></Grid>
+                <Grid Width="24" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="560,128,0,0" Scale="1.2" RenderTransformOrigin="0.5,0.5"><reel:Blossom /></Grid>
+                <Grid Width="24" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="660,150,0,0" Scale="1.7" RenderTransformOrigin="0.5,0.5"><reel:Blossom /></Grid>
+                <Ellipse Width="8" Height="10" Fill="$SkPetalDeepBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="60,34,0,0" />
+                <Ellipse Width="8" Height="10" Fill="$SkPetalDeepBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="470,116,0,0" />
+                <Ellipse Width="8" Height="10" Fill="$SkPetalDeepBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="610,152,0,0" />
+            </Grid>
+
+            <!-- Falling petals -->
+            <Grid>
+                <Grid Name="F01" Aspect="$Fall" Margin="70,-30,0,0"><Ellipse Name="P01" Aspect="$Petal" Fill="$SkPetalBrush" /></Grid>
+                <Grid Name="F02" Aspect="$Fall" Margin="180,-83,0,0"><Ellipse Name="P02" Aspect="$Petal" Fill="$SkPetalDeepBrush" /></Grid>
+                <Grid Name="F03" Aspect="$Fall" Margin="300,-136,0,0"><Ellipse Name="P03" Aspect="$Petal" Fill="$SkPetalPaleBrush" /></Grid>
+                <Grid Name="F04" Aspect="$Fall" Margin="410,-189,0,0"><Ellipse Name="P04" Aspect="$Petal" Fill="$SkPetalBrush" /></Grid>
+                <Grid Name="F05" Aspect="$Fall" Margin="520,-242,0,0"><Ellipse Name="P05" Aspect="$Petal" Fill="$SkPetalDeepBrush" /></Grid>
+                <Grid Name="F06" Aspect="$Fall" Margin="650,-295,0,0"><Ellipse Name="P06" Aspect="$Petal" Fill="$SkPetalPaleBrush" /></Grid>
+                <Grid Name="F07" Aspect="$Fall" Margin="760,-348,0,0"><Ellipse Name="P07" Aspect="$Petal" Fill="$SkPetalBrush" /></Grid>
+                <Grid Name="F08" Aspect="$Fall" Margin="880,-401,0,0"><Ellipse Name="P08" Aspect="$Petal" Fill="$SkPetalDeepBrush" /></Grid>
+                <Grid Name="F09" Aspect="$Fall" Margin="990,-454,0,0"><Ellipse Name="P09" Aspect="$Petal" Fill="$SkPetalPaleBrush" /></Grid>
+                <Grid Name="F10" Aspect="$Fall" Margin="1100,-507,0,0"><Ellipse Name="P10" Aspect="$Petal" Fill="$SkPetalBrush" /></Grid>
+                <Grid Name="F11" Aspect="$Fall" Margin="1210,-40,0,0"><Ellipse Name="P11" Aspect="$Petal" Fill="$SkPetalDeepBrush" /></Grid>
+                <Grid Name="F12" Aspect="$Fall" Margin="1330,-93,0,0"><Ellipse Name="P12" Aspect="$Petal" Fill="$SkPetalPaleBrush" /></Grid>
+                <Grid Name="F13" Aspect="$Fall" Margin="1440,-146,0,0"><Ellipse Name="P13" Aspect="$Petal" Fill="$SkPetalBrush" /></Grid>
+                <Grid Name="F14" Aspect="$Fall" Margin="1540,-199,0,0"><Ellipse Name="P14" Aspect="$Petal" Fill="$SkPetalDeepBrush" /></Grid>
+                <Grid Name="F15" Aspect="$Fall" Margin="240,-252,0,0"><Ellipse Name="P15" Aspect="$Petal" Fill="$SkPetalPaleBrush" /></Grid>
+                <Grid Name="F16" Aspect="$Fall" Margin="700,-305,0,0"><Ellipse Name="P16" Aspect="$Petal" Fill="$SkPetalBrush" /></Grid>
+                <Grid Name="F17" Aspect="$Fall" Margin="1150,-358,0,0"><Ellipse Name="P17" Aspect="$Petal" Fill="$SkPetalDeepBrush" /></Grid>
+                <Grid Name="F18" Aspect="$Fall" Margin="1500,-411,0,0"><Ellipse Name="P18" Aspect="$Petal" Fill="$SkPetalPaleBrush" /></Grid>
+            </Grid>
+        </Grid>
+
+        <!-- Chapters -->
+        <Grid Name="OpenHost" Visibility="Collapsed"><reel:SakuraOpenScene /></Grid>
+        <Grid Name="SketchHost" Visibility="Collapsed"><reel:SakuraSketchScene /></Grid>
+        <Grid Name="RuleHost" Visibility="Collapsed"><reel:SakuraRuleScene /></Grid>
+        <Grid Name="MotionHost" Visibility="Collapsed"><reel:SakuraMotionScene /></Grid>
+        <Grid Name="PrismHost" Visibility="Collapsed"><reel:SakuraPrismScene /></Grid>
+        <Grid Name="RedrawHost" Visibility="Collapsed"><reel:SakuraRedrawScene /></Grid>
+        <Grid Name="BindHost" Visibility="Collapsed"><reel:SakuraBindScene /></Grid>
+        <Grid Name="WorldHost" Visibility="Collapsed"><reel:SakuraWorldScene /></Grid>
+        <Grid Name="EditorHost" Visibility="Collapsed"><reel:SakuraEditorScene /></Grid>
+        <Grid Name="ProofHost" Visibility="Collapsed"><reel:SakuraProofScene /></Grid>
+        <Grid Name="StackHost" Visibility="Collapsed"><reel:SakuraStackScene /></Grid>
+        <Grid Name="CloseHost" Visibility="Collapsed"><reel:SakuraCloseScene /></Grid>
+
+        <!-- Furniture -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,40,64,0">
+            <StackPanel VerticalAlignment="Top" Margin="0,8,18,0">
+                <TextBlock Name="Title" Text="a petal on water" FontFamily="Gabriola" FontSize="26" Foreground="$SkPlumBrush" HorizontalAlignment="Right" />
+                <TextBlock Name="Folio" Text="CHAPTER 1 OF 12" FontFamily="Yu Gothic Light" FontSize="12" Foreground="$SkMistBrush" HorizontalAlignment="Right" />
+            </StackPanel>
+            <Grid Width="140" Height="90"><TextBlock Name="Kanji" Text="一" FontFamily="Yu Gothic Light" FontSize="64" Foreground="$SkPlumBrush" HorizontalAlignment="Right" VerticalAlignment="Top" /></Grid>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="64,0,0,52">
+            <Border Width="34" Height="34" Background="$HankoBrush">
+                <TextBlock Text="桜" FontFamily="Yu Gothic" FontSize="20" Foreground="$SkCreamBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <TextBlock Text="cerneala" FontFamily="Gabriola" FontSize="34" Foreground="$SkPlumBrush" VerticalAlignment="Center" Margin="12,0,0,0" />
+        </StackPanel>
+
+        <!-- Progress: a branch whose buds bloom, one per chapter -->
+        <Grid Width="880" Height="40" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,64,48">
+            <Path Data="M 0 30 C 220 22 440 34 660 26 C 760 22 830 26 880 24" Stroke="$SkBarkBrush" StrokeThickness="2.5" />
+            <Ellipse Aspect="$BudDot" Margin="29,0,0,11" />
+            <Grid Name="Bud01" Aspect="$Bud" Margin="20,0,0,2"><reel:Blossom /></Grid>
+            <Ellipse Aspect="$BudDot" Margin="105,0,0,11" />
+            <Grid Name="Bud02" Aspect="$Bud" Margin="96,0,0,2"><reel:Blossom /></Grid>
+            <Ellipse Aspect="$BudDot" Margin="181,0,0,11" />
+            <Grid Name="Bud03" Aspect="$Bud" Margin="172,0,0,2"><reel:Blossom /></Grid>
+            <Ellipse Aspect="$BudDot" Margin="257,0,0,11" />
+            <Grid Name="Bud04" Aspect="$Bud" Margin="248,0,0,2"><reel:Blossom /></Grid>
+            <Ellipse Aspect="$BudDot" Margin="333,0,0,11" />
+            <Grid Name="Bud05" Aspect="$Bud" Margin="324,0,0,2"><reel:Blossom /></Grid>
+            <Ellipse Aspect="$BudDot" Margin="409,0,0,11" />
+            <Grid Name="Bud06" Aspect="$Bud" Margin="400,0,0,2"><reel:Blossom /></Grid>
+            <Ellipse Aspect="$BudDot" Margin="485,0,0,11" />
+            <Grid Name="Bud07" Aspect="$Bud" Margin="476,0,0,2"><reel:Blossom /></Grid>
+            <Ellipse Aspect="$BudDot" Margin="561,0,0,11" />
+            <Grid Name="Bud08" Aspect="$Bud" Margin="552,0,0,2"><reel:Blossom /></Grid>
+            <Ellipse Aspect="$BudDot" Margin="637,0,0,11" />
+            <Grid Name="Bud09" Aspect="$Bud" Margin="628,0,0,2"><reel:Blossom /></Grid>
+            <Ellipse Aspect="$BudDot" Margin="713,0,0,11" />
+            <Grid Name="Bud10" Aspect="$Bud" Margin="704,0,0,2"><reel:Blossom /></Grid>
+            <Ellipse Aspect="$BudDot" Margin="789,0,0,11" />
+            <Grid Name="Bud11" Aspect="$Bud" Margin="780,0,0,2"><reel:Blossom /></Grid>
+            <Ellipse Aspect="$BudDot" Margin="865,0,0,11" />
+            <Grid Name="Bud12" Aspect="$Bud" Margin="856,0,0,2"><reel:Blossom /></Grid>
+        </Grid>
+
+        <!-- The cut: a wash of paper and a gust of petals -->
+        <Border Name="Wash" Background="$WashBrush" Opacity="0" IsHitTestVisible="False" />
+        <Grid Name="GustCloud" Width="700" Height="900" HorizontalAlignment="Left" TranslateX="1700" IsHitTestVisible="False">
+            <Ellipse Aspect="$GustPetal" Margin="40,90,0,0" Rotation="0.6" />
+            <Ellipse Aspect="$GustPetal" Margin="210,40,0,0" Rotation="2.1" Fill="$SkPetalDeepBrush" />
+            <Ellipse Aspect="$GustPetal" Margin="380,150,0,0" Rotation="1.2" />
+            <Ellipse Aspect="$GustPetal" Margin="120,260,0,0" Rotation="2.8" Fill="$SkPetalPaleBrush" />
+            <Ellipse Aspect="$GustPetal" Margin="300,320,0,0" Rotation="0.3" />
+            <Ellipse Aspect="$GustPetal" Margin="520,250,0,0" Rotation="1.9" Fill="$SkPetalDeepBrush" />
+            <Ellipse Aspect="$GustPetal" Margin="60,440,0,0" Rotation="1.4" />
+            <Ellipse Aspect="$GustPetal" Margin="250,500,0,0" Rotation="2.5" Fill="$SkPetalPaleBrush" />
+            <Ellipse Aspect="$GustPetal" Margin="450,420,0,0" Rotation="0.9" />
+            <Ellipse Aspect="$GustPetal" Margin="620,520,0,0" Rotation="2.2" Fill="$SkPetalDeepBrush" />
+            <Ellipse Aspect="$GustPetal" Margin="150,640,0,0" Rotation="0.4" />
+            <Ellipse Aspect="$GustPetal" Margin="360,700,0,0" Rotation="1.7" />
+            <Ellipse Aspect="$GustPetal" Margin="560,660,0,0" Rotation="2.9" Fill="$SkPetalPaleBrush" />
+            <Ellipse Aspect="$GustPetal" Margin="80,800,0,0" Rotation="1.1" Fill="$SkPetalDeepBrush" />
+            <Ellipse Aspect="$GustPetal" Margin="290,830,0,0" Rotation="2.4" />
+            <Ellipse Aspect="$GustPetal" Margin="480,780,0,0" Rotation="0.7" />
+        </Grid>
+    </Grid>
+</UserControl>

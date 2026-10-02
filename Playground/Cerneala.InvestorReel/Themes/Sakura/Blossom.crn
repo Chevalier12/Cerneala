@@ -1,0 +1,12 @@
+<!-- One cherry blossom: five petals around a gold heart. Size it with Scale on a wrapping element. -->
+<UserControl>
+    <Grid Width="24" Height="24">
+        <Ellipse Width="10" Height="13" Fill="$SkPetalBrush" HorizontalAlignment="Center" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.92" />
+        <Ellipse Width="10" Height="13" Fill="$SkPetalBrush" HorizontalAlignment="Center" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.92" Rotation="1.2566" />
+        <Ellipse Width="10" Height="13" Fill="$SkPetalBrush" HorizontalAlignment="Center" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.92" Rotation="2.5133" />
+        <Ellipse Width="10" Height="13" Fill="$SkPetalBrush" HorizontalAlignment="Center" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.92" Rotation="3.7699" />
+        <Ellipse Width="10" Height="13" Fill="$SkPetalBrush" HorizontalAlignment="Center" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.92" Rotation="5.0265" />
+        <Ellipse Width="9" Height="9" Fill="$SkPetalDeepBrush" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.55" />
+        <Ellipse Width="4" Height="4" Fill="$SkGoldBrush" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    </Grid>
+</UserControl>

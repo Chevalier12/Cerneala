@@ -1,0 +1,192 @@
+<!-- 七 · news from any thread: petals crowd the worker stream, Relay gathers them into one blossom, and it floats down to the UI stream. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <SolidColorBrush Name="ShadowBrush" Color="#145A2742" />
+        <Tween Name="Arrive" Duration="800ms" Easing="EaseOut" />
+        <Tween Name="Ping" Duration="420ms" Easing="EaseOut" />
+        <Tween Name="Fold" Duration="700ms" Easing="EaseInOut" />
+        <Aspect Name="Packet" TargetType="Ellipse">
+            @default { Width = 12; Height = 12; Fill = $SkPetalBrush; Margin = "0,0,14,0"; Opacity = 0; RenderTransformOrigin = "0.5,0.5"; }
+        </Aspect>
+        <Aspect Name="Code" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 16; Foreground = $SkSumiBrush; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:SakuraBindScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(900ms, EaseOut) { @from { $Kicker.Opacity = 0; } @to { $Kicker.Opacity = 1; } }
+                    @animate with Tween(1000ms, EaseOut) { @from { $Headline.Opacity = 0; $Headline.TranslateY = 16; } @to { $Headline.Opacity = 1; $Headline.TranslateY = 0; } }
+                    @stagger target $Columns each 140ms
+                    {
+                        @animate with $Arrive { @from { Opacity = 0; TranslateY = 16; } @to { Opacity = 1; TranslateY = 0; } }
+                    }
+                }
+
+                <!-- A burst on the worker bus... -->
+                @stagger target $Burst each 80ms
+                {
+                    @animate with $Ping { @from { Opacity = 0; Scale = 0.2; } @to { Opacity = 1; Scale = 1; } }
+                }
+                <!-- ...folded by Relay into one pending refresh... -->
+                @parallel
+                {
+                    @animate with $Fold { @from { $P1.TranslateX = 0; $P1.Opacity = 1; } @to { $P1.TranslateX = 182; $P1.Opacity = 0; } }
+                    @animate with $Fold { @from { $P2.TranslateX = 0; $P2.Opacity = 1; } @to { $P2.TranslateX = 156; $P2.Opacity = 0; } }
+                    @animate with $Fold { @from { $P3.TranslateX = 0; $P3.Opacity = 1; } @to { $P3.TranslateX = 130; $P3.Opacity = 0; } }
+                    @animate with $Fold { @from { $P4.TranslateX = 0; $P4.Opacity = 1; } @to { $P4.TranslateX = 104; $P4.Opacity = 0; } }
+                    @animate with $Fold { @from { $P5.TranslateX = 0; $P5.Opacity = 1; } @to { $P5.TranslateX = 78; $P5.Opacity = 0; } }
+                    @animate with $Fold { @from { $P6.TranslateX = 0; $P6.Opacity = 1; } @to { $P6.TranslateX = 52; $P6.Opacity = 0; } }
+                    @animate with $Fold { @from { $P7.TranslateX = 0; $P7.Opacity = 1; } @to { $P7.TranslateX = 26; $P7.Opacity = 0; } }
+                    @animate with $Fold { @from { $P8.Opacity = 1; } @to { $P8.Opacity = 0; } }
+                    @animate with $Fold { @from { $Refresh.Opacity = 0; $Refresh.Scale = 0.3; } @to { $Refresh.Opacity = 1; $Refresh.Scale = 1.3; } }
+                    @animate with $Fold { @from { $Gate.Opacity = 0.35; } @to { $Gate.Opacity = 1; } }
+                }
+                <!-- ...that crosses to the UI thread and lands in the binding. -->
+                @animate with Tween(700ms, EaseInOut) { @from { $Refresh.TranslateY = 0; } @to { $Refresh.TranslateY = 110; } }
+                @animate with Tween(800ms, EaseInOut) { @from { $Refresh.TranslateX = 0; } @to { $Refresh.TranslateX = 220; } }
+                @set { $Balance.Text = "1,268.75"; }
+                @parallel
+                {
+                    @animate with Tween(160ms, EaseOut) { @from { $Refresh.Opacity = 1; } @to { $Refresh.Opacity = 0; } }
+                    @animate with Tween(600ms, EaseOut) { @from { $Flash.Opacity = 1; } @to { $Flash.Opacity = 0; } }
+                    @animate with Tween(400ms, EaseOut) { @from { $Gate.Opacity = 1; } @to { $Gate.Opacity = 0.35; } }
+                    @animate with Tween(600ms, EaseOut) { @from { $Fold1.Opacity = 0; $Fold1.TranslateY = 8; } @to { $Fold1.Opacity = 1; $Fold1.TranslateY = 0; } }
+                }
+
+                <!-- Again: a bigger burst, still one refresh, always the latest value. -->
+                @animate with Tween(16ms, Linear) { @from { $P1.TranslateX = 0; $P2.TranslateX = 0; $P3.TranslateX = 0; $P4.TranslateX = 0; $P5.TranslateX = 0; $P6.TranslateX = 0; $P7.TranslateX = 0; $Refresh.TranslateX = 0; $Refresh.TranslateY = 0; } @to { $P1.TranslateX = 0; $P2.TranslateX = 0; $P3.TranslateX = 0; $P4.TranslateX = 0; $P5.TranslateX = 0; $P6.TranslateX = 0; $P7.TranslateX = 0; $Refresh.TranslateX = 0; $Refresh.TranslateY = 0; } }
+                @stagger target $Burst each 70ms
+                {
+                    @animate with $Ping { @from { Opacity = 0; Scale = 0.2; } @to { Opacity = 1; Scale = 1; } }
+                }
+                @parallel
+                {
+                    @animate with $Fold { @from { $P1.TranslateX = 0; $P1.Opacity = 1; } @to { $P1.TranslateX = 182; $P1.Opacity = 0; } }
+                    @animate with $Fold { @from { $P2.TranslateX = 0; $P2.Opacity = 1; } @to { $P2.TranslateX = 156; $P2.Opacity = 0; } }
+                    @animate with $Fold { @from { $P3.TranslateX = 0; $P3.Opacity = 1; } @to { $P3.TranslateX = 130; $P3.Opacity = 0; } }
+                    @animate with $Fold { @from { $P4.TranslateX = 0; $P4.Opacity = 1; } @to { $P4.TranslateX = 104; $P4.Opacity = 0; } }
+                    @animate with $Fold { @from { $P5.TranslateX = 0; $P5.Opacity = 1; } @to { $P5.TranslateX = 78; $P5.Opacity = 0; } }
+                    @animate with $Fold { @from { $P6.TranslateX = 0; $P6.Opacity = 1; } @to { $P6.TranslateX = 52; $P6.Opacity = 0; } }
+                    @animate with $Fold { @from { $P7.TranslateX = 0; $P7.Opacity = 1; } @to { $P7.TranslateX = 26; $P7.Opacity = 0; } }
+                    @animate with $Fold { @from { $P8.Opacity = 1; } @to { $P8.Opacity = 0; } }
+                    @animate with $Fold { @from { $Refresh.Opacity = 0; $Refresh.Scale = 0.3; } @to { $Refresh.Opacity = 1; $Refresh.Scale = 1.3; } }
+                    @animate with $Fold { @from { $Gate.Opacity = 0.35; } @to { $Gate.Opacity = 1; } }
+                }
+                @animate with Tween(600ms, EaseInOut) { @from { $Refresh.TranslateY = 0; } @to { $Refresh.TranslateY = 110; } }
+                @animate with Tween(700ms, EaseInOut) { @from { $Refresh.TranslateX = 0; } @to { $Refresh.TranslateX = 220; } }
+                @set { $Balance.Text = "1,311.40"; }
+                @parallel
+                {
+                    @animate with Tween(160ms, EaseOut) { @from { $Refresh.Opacity = 1; } @to { $Refresh.Opacity = 0; } }
+                    @animate with Tween(600ms, EaseOut) { @from { $Flash.Opacity = 1; } @to { $Flash.Opacity = 0; } }
+                    @animate with Tween(400ms, EaseOut) { @from { $Gate.Opacity = 1; } @to { $Gate.Opacity = 0.35; } }
+                    @animate with Tween(800ms, EaseOut) { @from { $Caption.Opacity = 0; } @to { $Caption.Opacity = 1; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:SakuraBindScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="150,226,150,120">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Name="Kicker" Text="BINDINGS  ·  RELAY  ·  ANY THREAD" Aspect="$SkCaps" Opacity="0" />
+            <TextBlock Name="Headline" Text="Bound once, updated from anywhere." Aspect="$SkDisplay" FontSize="76" Margin="0,-6,0,0" Opacity="0" />
+        </StackPanel>
+
+        <Grid Name="Columns" Grid.Row="1" Height="300" Margin="0,10,0,0" VerticalAlignment="Top">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="460" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="320" />
+            </Grid.ColumnDefinitions>
+
+            <!-- The contract -->
+            <Grid Grid.Column="0" Height="250" VerticalAlignment="Top" Opacity="0">
+                <Border Background="$ShadowBrush" Margin="6,10,-6,-10" />
+                <Border Aspect="$SkCard">
+                <StackPanel>
+                    <TextBlock Text="Ledger.cs" FontFamily="Gabriola" FontSize="28" Foreground="$SkPetalDeepBrush" Margin="0,-8,0,4" />
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="class " Aspect="$Code" Foreground="$SkPlumBrush" />
+                        <TextBlock Text="Ledger : INotifyPropertyChanged" Aspect="$Code" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="26,4,0,0">
+                        <TextBlock Text="decimal " Aspect="$Code" Foreground="$SkPlumBrush" />
+                        <TextBlock Text="Balance { get; }" Aspect="$Code" />
+                    </StackPanel>
+                    <Border Height="1" Background="$SkPetalPaleBrush" Margin="0,14,0,8" />
+                    <TextBlock Text="LedgerView.crn" FontFamily="Gabriola" FontSize="28" Foreground="$SkPetalDeepBrush" Margin="0,-6,0,2" />
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Text=" Aspect="$Code" />
+                        <TextBlock Text="&quot;\$DataContext.Balance:OneWay&quot;" Aspect="$Code" Foreground="$SkPetalDeepBrush" />
+                    </StackPanel>
+                    <TextBlock Text="ROSLYN RESOLVES EVERY PATH AT BUILD  ·  NO REFLECTION" Aspect="$SkCaps" FontSize="12" Margin="0,16,0,0" TextWrapping="Wrap" />
+                </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Two buses -->
+            <Grid Grid.Column="1" Width="460" Height="280" HorizontalAlignment="Center" VerticalAlignment="Top" Opacity="0">
+                <TextBlock Text="WORKER THREAD" Aspect="$SkCaps" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,20,0,0" />
+                <Border Height="22" Background="$SkWaterBrush" VerticalAlignment="Top" Margin="10,56,10,0" />
+                <StackPanel Name="Burst" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,61,0,0">
+                    <Ellipse Name="P1" Aspect="$Packet" />
+                    <Ellipse Name="P2" Aspect="$Packet" />
+                    <Ellipse Name="P3" Aspect="$Packet" />
+                    <Ellipse Name="P4" Aspect="$Packet" />
+                    <Ellipse Name="P5" Aspect="$Packet" />
+                    <Ellipse Name="P6" Aspect="$Packet" />
+                    <Ellipse Name="P7" Aspect="$Packet" />
+                    <Ellipse Name="P8" Aspect="$Packet" />
+                </StackPanel>
+                <Rectangle Name="Gate" Width="44" Height="150" RadiusX="22" RadiusY="22" Stroke="$SkPlumBrush" StrokeThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="186,40,0,0" Opacity="0.35" />
+                <TextBlock Text="Relay" FontFamily="Gabriola" FontSize="26" Foreground="$SkPlumBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="186,190,0,0" />
+                <TextBlock Text="UI THREAD" Aspect="$SkCaps" Foreground="$SkPlumBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,130,0,0" />
+                <Border Height="22" Background="$SkWaterBrush" VerticalAlignment="Top" Margin="10,166,10,0" />
+                <Grid Name="Refresh" Width="24" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="196,55,0,0" Opacity="0" RenderTransformOrigin="0.5,0.5"><reel:Blossom /></Grid>
+                <TextBlock Name="Fold1" Text="a burst becomes one refresh" FontFamily="Gabriola" FontSize="30" Foreground="$SkPetalDeepBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,236,0,0" Opacity="0" />
+            </Grid>
+
+            <!-- The bound value -->
+            <Grid Grid.Column="2" Height="190" VerticalAlignment="Top" Margin="0,50,6,0" Opacity="0">
+                <Border Background="$ShadowBrush" Margin="6,10,-6,-10" />
+                <Border Background="$SkCreamBrush" BorderBrush="$SkPetalPaleBrush" BorderThickness="1">
+                <Grid>
+                    <Border Name="Flash" Background="$SkPetalPaleBrush" Opacity="0" />
+                    <StackPanel Margin="30,24,30,26">
+                        <TextBlock Text="BALANCE  ·  LEI" Aspect="$SkCaps" />
+                        <TextBlock Name="Balance" Text="1,204.20" FontFamily="Gabriola" FontSize="76" Foreground="$SkPlumBrush" Margin="0,-6,0,0" />
+                        <TextBlock Text="bound to Ledger.Balance" FontFamily="Gabriola" FontSize="26" Foreground="$SkPetalDeepBrush" Margin="0,-12,0,0" />
+                    </StackPanel>
+                </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <TextBlock
+            Name="Caption"
+            Grid.Row="2"
+            Text="Raise PropertyChanged from any thread: Relay gathers the burst and refreshes the binding once, on the UI thread."
+            Aspect="$SkLede"
+            Opacity="0" />
+    </Grid>
+</UserControl>

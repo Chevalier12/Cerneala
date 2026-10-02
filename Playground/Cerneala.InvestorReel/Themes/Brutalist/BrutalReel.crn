@@ -1,0 +1,249 @@
+<!--
+    BrutalReel is the Brutalist version of the film, and its director. It owns no C# logic.
+
+    Raw concrete with its twelve-column grid left exposed, registration marks in the corners,
+    the chapter written sideways down the margin and its number cast huge in the background.
+    Every cut is a black slab slammed across the frame, carrying the next chapter's number.
+    The progress bar is a black track that fills with signal orange. Nothing eases gently.
+-->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel">
+    <UserControl.Resources>
+        <Tween Name="SlamIn" Duration="240ms" Easing="EaseIn" />
+        <Tween Name="SlamOut" Duration="260ms" Easing="EaseIn" />
+        <Tween Name="Stamp" Duration="120ms" Easing="Linear" />
+        <Aspect Name="Column" TargetType="Border">
+            @default { Width = 1; Background = $BrLineBrush; HorizontalAlignment = "Left"; Opacity = 0.7; }
+        </Aspect>
+        <Aspect Name="Mark" TargetType="Border">
+            @default { Background = $BrBlackBrush; }
+        </Aspect>
+
+        <MotionClip Name="Reel" TargetType="Grid">
+            @parallel
+            {
+                @animate with Tween(127s, Linear) { @from { $Progress.ScaleX = 0; } @to { $Progress.ScaleX = 1; } }
+
+                @sequence
+                {
+                    <!-- 01 · OPEN -->
+                    @set { $OpenHost.Visibility = Visible; $Chapter.Text = "01"; $Ghost.Text = "01"; $Spine.Text = "CHAPTER 01 — OPEN"; }
+                    @parallel
+                    {
+                        @animate with $Stamp { @from { $Chapter.Opacity = 0; $Ghost.Opacity = 0; } @to { $Chapter.Opacity = 1; $Ghost.Opacity = 0.55; } }
+                        @animate with Tween(10s, Linear) { @from { $Spine.Opacity = 1; } @to { $Spine.Opacity = 1; } }
+                    }
+
+                    <!-- 02 · SKETCH -->
+                    @set { $SlabNumber.Text = "02"; $SlabTitle.Text = "SKETCH"; }
+                    @animate with $SlamIn { @from { $Slab.TranslateX = -1700; } @to { $Slab.TranslateX = 0; } }
+                    @set { $OpenHost.Visibility = Collapsed; $SketchHost.Visibility = Visible; $Chapter.Text = "02"; $Ghost.Text = "02"; $Spine.Text = "CHAPTER 02 — SKETCH"; }
+                    @animate with Tween(260ms, Linear) { @from { $SlabNumber.Scale = 1; } @to { $SlabNumber.Scale = 1; } }
+                    @animate with $SlamOut { @from { $Slab.TranslateX = 0; } @to { $Slab.TranslateX = 1700; } }
+                    @parallel
+                    {
+                        @animate with $Stamp { @from { $Chapter.Opacity = 0; $Ghost.Opacity = 0; } @to { $Chapter.Opacity = 1; $Ghost.Opacity = 0.55; } }
+                        @animate with Tween(11s, Linear) { @from { $Spine.Opacity = 1; } @to { $Spine.Opacity = 1; } }
+                    }
+
+                    <!-- 03 · RULE -->
+                    @set { $SlabNumber.Text = "03"; $SlabTitle.Text = "RULE"; }
+                    @animate with $SlamIn { @from { $Slab.TranslateX = -1700; } @to { $Slab.TranslateX = 0; } }
+                    @set { $SketchHost.Visibility = Collapsed; $RuleHost.Visibility = Visible; $Chapter.Text = "03"; $Ghost.Text = "03"; $Spine.Text = "CHAPTER 03 — RULE"; }
+                    @animate with Tween(260ms, Linear) { @from { $SlabNumber.Scale = 1; } @to { $SlabNumber.Scale = 1; } }
+                    @animate with $SlamOut { @from { $Slab.TranslateX = 0; } @to { $Slab.TranslateX = 1700; } }
+                    @parallel
+                    {
+                        @animate with $Stamp { @from { $Chapter.Opacity = 0; $Ghost.Opacity = 0; } @to { $Chapter.Opacity = 1; $Ghost.Opacity = 0.55; } }
+                        @animate with Tween(10s, Linear) { @from { $Spine.Opacity = 1; } @to { $Spine.Opacity = 1; } }
+                    }
+
+                    <!-- 04 · MOTION -->
+                    @set { $SlabNumber.Text = "04"; $SlabTitle.Text = "MOTION"; }
+                    @animate with $SlamIn { @from { $Slab.TranslateX = -1700; } @to { $Slab.TranslateX = 0; } }
+                    @set { $RuleHost.Visibility = Collapsed; $MotionHost.Visibility = Visible; $Chapter.Text = "04"; $Ghost.Text = "04"; $Spine.Text = "CHAPTER 04 — MOTION"; }
+                    @animate with Tween(260ms, Linear) { @from { $SlabNumber.Scale = 1; } @to { $SlabNumber.Scale = 1; } }
+                    @animate with $SlamOut { @from { $Slab.TranslateX = 0; } @to { $Slab.TranslateX = 1700; } }
+                    @parallel
+                    {
+                        @animate with $Stamp { @from { $Chapter.Opacity = 0; $Ghost.Opacity = 0; } @to { $Chapter.Opacity = 1; $Ghost.Opacity = 0.55; } }
+                        @animate with Tween(11s, Linear) { @from { $Spine.Opacity = 1; } @to { $Spine.Opacity = 1; } }
+                    }
+
+                    <!-- 05 · EFFECTS -->
+                    @set { $SlabNumber.Text = "05"; $SlabTitle.Text = "EFFECTS"; }
+                    @animate with $SlamIn { @from { $Slab.TranslateX = -1700; } @to { $Slab.TranslateX = 0; } }
+                    @set { $MotionHost.Visibility = Collapsed; $PrismHost.Visibility = Visible; $Chapter.Text = "05"; $Ghost.Text = "05"; $Spine.Text = "CHAPTER 05 — EFFECTS"; }
+                    @animate with Tween(260ms, Linear) { @from { $SlabNumber.Scale = 1; } @to { $SlabNumber.Scale = 1; } }
+                    @animate with $SlamOut { @from { $Slab.TranslateX = 0; } @to { $Slab.TranslateX = 1700; } }
+                    @parallel
+                    {
+                        @animate with $Stamp { @from { $Chapter.Opacity = 0; $Ghost.Opacity = 0; } @to { $Chapter.Opacity = 1; $Ghost.Opacity = 0.55; } }
+                        @animate with Tween(11s, Linear) { @from { $Spine.Opacity = 1; } @to { $Spine.Opacity = 1; } }
+                    }
+
+                    <!-- 06 · REDRAW -->
+                    @set { $SlabNumber.Text = "06"; $SlabTitle.Text = "REDRAW"; }
+                    @animate with $SlamIn { @from { $Slab.TranslateX = -1700; } @to { $Slab.TranslateX = 0; } }
+                    @set { $PrismHost.Visibility = Collapsed; $RedrawHost.Visibility = Visible; $Chapter.Text = "06"; $Ghost.Text = "06"; $Spine.Text = "CHAPTER 06 — REDRAW"; }
+                    @animate with Tween(260ms, Linear) { @from { $SlabNumber.Scale = 1; } @to { $SlabNumber.Scale = 1; } }
+                    @animate with $SlamOut { @from { $Slab.TranslateX = 0; } @to { $Slab.TranslateX = 1700; } }
+                    @parallel
+                    {
+                        @animate with $Stamp { @from { $Chapter.Opacity = 0; $Ghost.Opacity = 0; } @to { $Chapter.Opacity = 1; $Ghost.Opacity = 0.55; } }
+                        @animate with Tween(10s, Linear) { @from { $Spine.Opacity = 1; } @to { $Spine.Opacity = 1; } }
+                    }
+
+                    <!-- 07 · DATA -->
+                    @set { $SlabNumber.Text = "07"; $SlabTitle.Text = "DATA"; }
+                    @animate with $SlamIn { @from { $Slab.TranslateX = -1700; } @to { $Slab.TranslateX = 0; } }
+                    @set { $RedrawHost.Visibility = Collapsed; $BindHost.Visibility = Visible; $Chapter.Text = "07"; $Ghost.Text = "07"; $Spine.Text = "CHAPTER 07 — DATA"; }
+                    @animate with Tween(260ms, Linear) { @from { $SlabNumber.Scale = 1; } @to { $SlabNumber.Scale = 1; } }
+                    @animate with $SlamOut { @from { $Slab.TranslateX = 0; } @to { $Slab.TranslateX = 1700; } }
+                    @parallel
+                    {
+                        @animate with $Stamp { @from { $Chapter.Opacity = 0; $Ghost.Opacity = 0; } @to { $Chapter.Opacity = 1; $Ghost.Opacity = 0.55; } }
+                        @animate with Tween(10s, Linear) { @from { $Spine.Opacity = 1; } @to { $Spine.Opacity = 1; } }
+                    }
+
+                    <!-- 08 · WORLDS -->
+                    @set { $SlabNumber.Text = "08"; $SlabTitle.Text = "WORLDS"; }
+                    @animate with $SlamIn { @from { $Slab.TranslateX = -1700; } @to { $Slab.TranslateX = 0; } }
+                    @set { $BindHost.Visibility = Collapsed; $WorldHost.Visibility = Visible; $Chapter.Text = "08"; $Ghost.Text = "08"; $Spine.Text = "CHAPTER 08 — WORLDS"; }
+                    @animate with Tween(260ms, Linear) { @from { $SlabNumber.Scale = 1; } @to { $SlabNumber.Scale = 1; } }
+                    @animate with $SlamOut { @from { $Slab.TranslateX = 0; } @to { $Slab.TranslateX = 1700; } }
+                    @parallel
+                    {
+                        @animate with $Stamp { @from { $Chapter.Opacity = 0; $Ghost.Opacity = 0; } @to { $Chapter.Opacity = 1; $Ghost.Opacity = 0.55; } }
+                        @animate with Tween(11s, Linear) { @from { $Spine.Opacity = 1; } @to { $Spine.Opacity = 1; } }
+                    }
+
+                    <!-- 09 · TOOLING -->
+                    @set { $SlabNumber.Text = "09"; $SlabTitle.Text = "TOOLING"; }
+                    @animate with $SlamIn { @from { $Slab.TranslateX = -1700; } @to { $Slab.TranslateX = 0; } }
+                    @set { $WorldHost.Visibility = Collapsed; $EditorHost.Visibility = Visible; $Chapter.Text = "09"; $Ghost.Text = "09"; $Spine.Text = "CHAPTER 09 — TOOLING"; }
+                    @animate with Tween(260ms, Linear) { @from { $SlabNumber.Scale = 1; } @to { $SlabNumber.Scale = 1; } }
+                    @animate with $SlamOut { @from { $Slab.TranslateX = 0; } @to { $Slab.TranslateX = 1700; } }
+                    @parallel
+                    {
+                        @animate with $Stamp { @from { $Chapter.Opacity = 0; $Ghost.Opacity = 0; } @to { $Chapter.Opacity = 1; $Ghost.Opacity = 0.55; } }
+                        @animate with Tween(11s, Linear) { @from { $Spine.Opacity = 1; } @to { $Spine.Opacity = 1; } }
+                    }
+
+                    <!-- 10 · PROOF -->
+                    @set { $SlabNumber.Text = "10"; $SlabTitle.Text = "PROOF"; }
+                    @animate with $SlamIn { @from { $Slab.TranslateX = -1700; } @to { $Slab.TranslateX = 0; } }
+                    @set { $EditorHost.Visibility = Collapsed; $ProofHost.Visibility = Visible; $Chapter.Text = "10"; $Ghost.Text = "10"; $Spine.Text = "CHAPTER 10 — PROOF"; }
+                    @animate with Tween(260ms, Linear) { @from { $SlabNumber.Scale = 1; } @to { $SlabNumber.Scale = 1; } }
+                    @animate with $SlamOut { @from { $Slab.TranslateX = 0; } @to { $Slab.TranslateX = 1700; } }
+                    @parallel
+                    {
+                        @animate with $Stamp { @from { $Chapter.Opacity = 0; $Ghost.Opacity = 0; } @to { $Chapter.Opacity = 1; $Ghost.Opacity = 0.55; } }
+                        @animate with Tween(11s, Linear) { @from { $Spine.Opacity = 1; } @to { $Spine.Opacity = 1; } }
+                    }
+
+                    <!-- 11 · STACK -->
+                    @set { $SlabNumber.Text = "11"; $SlabTitle.Text = "STACK"; }
+                    @animate with $SlamIn { @from { $Slab.TranslateX = -1700; } @to { $Slab.TranslateX = 0; } }
+                    @set { $ProofHost.Visibility = Collapsed; $StackHost.Visibility = Visible; $Chapter.Text = "11"; $Ghost.Text = "11"; $Spine.Text = "CHAPTER 11 — STACK"; }
+                    @animate with Tween(260ms, Linear) { @from { $SlabNumber.Scale = 1; } @to { $SlabNumber.Scale = 1; } }
+                    @animate with $SlamOut { @from { $Slab.TranslateX = 0; } @to { $Slab.TranslateX = 1700; } }
+                    @parallel
+                    {
+                        @animate with $Stamp { @from { $Chapter.Opacity = 0; $Ghost.Opacity = 0; } @to { $Chapter.Opacity = 1; $Ghost.Opacity = 0.55; } }
+                        @animate with Tween(9s, Linear) { @from { $Spine.Opacity = 1; } @to { $Spine.Opacity = 1; } }
+                    }
+
+                    <!-- 12 · END -->
+                    @set { $SlabNumber.Text = "12"; $SlabTitle.Text = "END"; }
+                    @animate with $SlamIn { @from { $Slab.TranslateX = -1700; } @to { $Slab.TranslateX = 0; } }
+                    @set { $StackHost.Visibility = Collapsed; $CloseHost.Visibility = Visible; $Chapter.Text = "12"; $Ghost.Text = "12"; $Spine.Text = "CHAPTER 12 — END"; }
+                    @animate with Tween(260ms, Linear) { @from { $SlabNumber.Scale = 1; } @to { $SlabNumber.Scale = 1; } }
+                    @animate with $SlamOut { @from { $Slab.TranslateX = 0; } @to { $Slab.TranslateX = 1700; } }
+                    @parallel
+                    {
+                        @animate with $Stamp { @from { $Chapter.Opacity = 0; $Ghost.Opacity = 0; } @to { $Chapter.Opacity = 1; $Ghost.Opacity = 0.55; } }
+                        @animate with Tween(4s, Linear) { @from { $Spine.Opacity = 1; } @to { $Spine.Opacity = 1; } }
+                    }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="Director" TargetType="Grid">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Reel as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid
+        Name="Stage"
+        Aspect="$Director"
+        Width="1600"
+        Height="900"
+        ClipToBounds="True">
+        <Border Background="$BrConcreteBrush" />
+
+        <!-- The exposed grid -->
+        <Border Aspect="$Column" Margin="133,0,0,0" /><Border Aspect="$Column" Margin="266,0,0,0" /><Border Aspect="$Column" Margin="400,0,0,0" />
+        <Border Aspect="$Column" Margin="533,0,0,0" /><Border Aspect="$Column" Margin="666,0,0,0" /><Border Aspect="$Column" Margin="800,0,0,0" />
+        <Border Aspect="$Column" Margin="933,0,0,0" /><Border Aspect="$Column" Margin="1066,0,0,0" /><Border Aspect="$Column" Margin="1200,0,0,0" />
+        <Border Aspect="$Column" Margin="1333,0,0,0" /><Border Aspect="$Column" Margin="1466,0,0,0" />
+        <Border Height="1" Background="$BrLineBrush" VerticalAlignment="Top" Margin="0,104,0,0" />
+        <Border Height="1" Background="$BrLineBrush" VerticalAlignment="Bottom" Margin="0,0,0,84" />
+
+        <!-- The chapter number, cast huge behind everything -->
+        <TextBlock Name="Ghost" IsHitTestVisible="False" Text="01" FontFamily="Impact" FontSize="520" Foreground="$BrLineBrush" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,40,-150" Opacity="0.55" />
+
+        <!-- Chapters -->
+        <Grid Name="OpenHost" Visibility="Collapsed"><reel:BrutalOpenScene /></Grid>
+        <Grid Name="SketchHost" Visibility="Collapsed"><reel:BrutalSketchScene /></Grid>
+        <Grid Name="RuleHost" Visibility="Collapsed"><reel:BrutalRuleScene /></Grid>
+        <Grid Name="MotionHost" Visibility="Collapsed"><reel:BrutalMotionScene /></Grid>
+        <Grid Name="PrismHost" Visibility="Collapsed"><reel:BrutalPrismScene /></Grid>
+        <Grid Name="RedrawHost" Visibility="Collapsed"><reel:BrutalRedrawScene /></Grid>
+        <Grid Name="BindHost" Visibility="Collapsed"><reel:BrutalBindScene /></Grid>
+        <Grid Name="WorldHost" Visibility="Collapsed"><reel:BrutalWorldScene /></Grid>
+        <Grid Name="EditorHost" Visibility="Collapsed"><reel:BrutalEditorScene /></Grid>
+        <Grid Name="ProofHost" Visibility="Collapsed"><reel:BrutalProofScene /></Grid>
+        <Grid Name="StackHost" Visibility="Collapsed"><reel:BrutalStackScene /></Grid>
+        <Grid Name="CloseHost" Visibility="Collapsed"><reel:BrutalCloseScene /></Grid>
+
+        <!-- Furniture -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="56,36,0,0">
+            <TextBlock Text="CERNEALA" FontFamily="Impact" FontSize="38" Foreground="$BrBlackBrush" />
+            <TextBlock Text="INVESTOR REEL / 2026 / 12 CHAPTERS" FontFamily="Courier New" FontSize="15" Foreground="$BrBlackBrush" VerticalAlignment="Bottom" Margin="18,0,0,9" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,30,56,0">
+            <TextBlock Text="CH." FontFamily="Courier New" FontSize="15" Foreground="$BrBlackBrush" VerticalAlignment="Bottom" Margin="0,0,8,11" />
+            <TextBlock Name="Chapter" Text="01" FontFamily="Impact" FontSize="48" Foreground="$BrBlackBrush" />
+            <TextBlock Text="/12" FontFamily="Courier New" FontSize="15" Foreground="$BrBlackBrush" VerticalAlignment="Bottom" Margin="6,0,0,11" />
+        </StackPanel>
+        <TextBlock Name="Spine" Text="CHAPTER 01 — OPEN" FontFamily="Courier New" FontSize="15" Foreground="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-80,470,0,0" Rotation="-1.5708" RenderTransformOrigin="0.5,0.5" Width="260" />
+
+        <!-- Registration marks -->
+        <Border Aspect="$Mark" Width="20" Height="2" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="24,0,0,40" />
+        <Border Aspect="$Mark" Width="2" Height="20" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="33,0,0,31" />
+        <Border Aspect="$Mark" Width="20" Height="2" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,24,40" />
+        <Border Aspect="$Mark" Width="2" Height="20" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,33,31" />
+
+        <!-- Progress: a black track filling with orange -->
+        <Grid Height="14" VerticalAlignment="Bottom" Margin="56,0,56,34">
+            <Border Background="$BrBlackBrush" />
+            <Border Name="Progress" Background="$BrOrangeBrush" Margin="3" ScaleX="0" RenderTransformOrigin="0,0.5" />
+        </Grid>
+
+        <!-- The cut: a black slab carrying the next number -->
+        <Grid Name="Slab" TranslateX="-1700" IsHitTestVisible="False">
+            <Border Background="$BrBlackBrush" />
+            <TextBlock Name="SlabNumber" Text="02" FontFamily="Impact" FontSize="380" Foreground="$BrWhiteBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="90,0,0,40" />
+            <Border Width="460" Height="64" Background="$BrOrangeBrush" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,170,90,0">
+                <TextBlock Name="SlabTitle" Text="SKETCH" FontFamily="Impact" FontSize="44" Foreground="$BrBlackBrush" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="22,0,0,0" />
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

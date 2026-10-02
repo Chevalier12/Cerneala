@@ -1,0 +1,144 @@
+<!-- 06 · DIFF: a ledger grid goes from frame N to frame N+1; one cell glitches to its new value, the rest is kept. -->
+<UserControl
+    xmlns:reel="clr-namespace:Cerneala.InvestorReel"
+    Aspect="$SceneMotion">
+    <UserControl.Resources>
+        <Tween Name="Row" Duration="260ms" Easing="EaseOut" />
+        <Tween Name="Dim" Duration="600ms" Easing="EaseInOut" />
+        <Aspect Name="RowGrid" TargetType="Grid">
+            @default { Height = 46; Opacity = 0; }
+        </Aspect>
+        <Aspect Name="Cell" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 20; Foreground = $CyTextBrush; VerticalAlignment = "Center"; }
+        </Aspect>
+        <Aspect Name="Head" TargetType="TextBlock">
+            @default { FontFamily = "Cascadia Mono"; FontSize = 13; Foreground = $CyDimBrush; VerticalAlignment = "Center"; }
+        </Aspect>
+        <Aspect Name="RowRule" TargetType="Border">
+            @default { Height = 1; Background = $CyGridBrush; VerticalAlignment = "Bottom"; }
+        </Aspect>
+        <MotionClip Name="Entrance" TargetType="reel:CyberRedrawScene">
+            @sequence
+            {
+                @parallel
+                {
+                    @animate with Tween(300ms, Linear) { @from { $Kicker.Opacity = 0; } @to { $Kicker.Opacity = 1; } }
+                    @animate with Tween(160ms, Linear) { @from { $Headline.Opacity = 0; } @to { $Headline.Opacity = 1; } }
+                    @animate with PingPong(Tween(45ms, Linear), 6) { @from { $Headline.TranslateX = 0; } @to { $Headline.TranslateX = 12; } }
+                    @animate with Tween(400ms, EaseOut) { @from { $Table.Opacity = 0; } @to { $Table.Opacity = 1; } }
+                }
+                @stagger target $Rows each 120ms
+                {
+                    @animate with $Row { @from { Opacity = 0; TranslateX = -12; } @to { Opacity = 1; TranslateX = 0; } }
+                }
+                @animate with Tween(600ms, Linear) { @from { $FrameN.Opacity = 0; $OldValue.Opacity = 0; } @to { $FrameN.Opacity = 1; $OldValue.Opacity = 1; } }
+
+                <!-- Frame N + 1: one value changes. -->
+                @parallel
+                {
+                    @animate with $Dim { @from { $Rows.Opacity = 1; } @to { $Rows.Opacity = 0.3; } }
+                    @animate with Tween(300ms, Linear) { @from { $FrameN.Opacity = 1; $FrameNext.Opacity = 0; } @to { $FrameN.Opacity = 0; $FrameNext.Opacity = 1; } }
+                    @animate with Tween(300ms, EaseOut) { @from { $Target.Opacity = 0; } @to { $Target.Opacity = 1; } }
+                }
+                @parallel
+                {
+                    @animate with PingPong(Tween(50ms, Linear), 8) { @from { $NewValue.TranslateX = 0; } @to { $NewValue.TranslateX = 9; } }
+                    @animate with PingPong(Tween(60ms, Linear), 6) { @from { $GlitchBar.Opacity = 0; } @to { $GlitchBar.Opacity = 1; } }
+                    @animate with Tween(160ms, Linear) { @from { $OldValue.Opacity = 1; $NewValue.Opacity = 0; } @to { $OldValue.Opacity = 0; $NewValue.Opacity = 1; } }
+                }
+                @parallel
+                {
+                    @stagger target $Counters each 200ms
+                    {
+                        @animate with $Row { @from { Opacity = 0; TranslateY = 10; } @to { Opacity = 1; TranslateY = 0; } }
+                    }
+                    @animate with Tween(800ms, EaseOut) { @from { $Caption.Opacity = 0; } @to { $Caption.Opacity = 1; } }
+                }
+            }
+        </MotionClip>
+        <Aspect Name="SceneMotion" TargetType="reel:CyberRedrawScene">
+            @handle Playback;
+            @when $self.Visibility
+            {
+                @if value == Visible
+                {
+                    @run $Entrance as Playback;
+                }
+            }
+        </Aspect>
+    </UserControl.Resources>
+
+    <Grid Margin="140,120,140,110">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Name="Kicker" Text="&gt; diff frame_n frame_n+1" Aspect="$CyTag" Opacity="0" />
+            <Grid Name="Headline" Margin="0,8,0,0" Opacity="0">
+                <TextBlock Text="ONLY WHAT CHANGES IS REDRAWN." Aspect="$CyDisplay" Foreground="$CyMagentaBrush" TranslateX="3" Opacity="0.85" />
+                <TextBlock Text="ONLY WHAT CHANGES IS REDRAWN." Aspect="$CyDisplay" Foreground="$CyCyanBrush" TranslateX="-3" Opacity="0.85" />
+                <TextBlock Text="ONLY WHAT CHANGES IS REDRAWN." Aspect="$CyDisplay" />
+            </Grid>
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,30,0,0">
+            <Border Name="Table" Aspect="$CyPanel" Width="900" HorizontalAlignment="Left" VerticalAlignment="Top" Padding="34,24,34,26" Opacity="0">
+                <StackPanel>
+                    <Grid Height="30">
+                        <TextBlock Text="LEDGER.TBL" Aspect="$Head" Foreground="$CyTextBrush" />
+                        <TextBlock Name="FrameN" Text="FRAME N" Aspect="$Head" HorizontalAlignment="Right" Opacity="0" />
+                        <TextBlock Name="FrameNext" Text="FRAME N + 1" Aspect="$Head" Foreground="$CyMagentaBrush" HorizontalAlignment="Right" Opacity="0" />
+                    </Grid>
+                    <Grid Height="34">
+                        <TextBlock Text="ID" Aspect="$Head" />
+                        <TextBlock Text="ACCOUNT" Aspect="$Head" Margin="140,0,0,0" />
+                        <TextBlock Text="BALANCE · LEI" Aspect="$Head" HorizontalAlignment="Right" />
+                        <Border Aspect="$RowRule" Background="$CyCyanDimBrush" />
+                    </Grid>
+                    <Grid>
+                        <StackPanel Name="Rows">
+                            <Grid Aspect="$RowGrid"><TextBlock Text="0x01" Aspect="$Cell" Foreground="$CyDimBrush" /><TextBlock Text="Invoices" Aspect="$Cell" Margin="140,0,0,0" /><TextBlock Text="8,410.00" Aspect="$Cell" HorizontalAlignment="Right" /><Border Aspect="$RowRule" /></Grid>
+                            <Grid Aspect="$RowGrid"><TextBlock Text="0x02" Aspect="$Cell" Foreground="$CyDimBrush" /><TextBlock Text="Clients" Aspect="$Cell" Margin="140,0,0,0" /><TextBlock Text="3,075.50" Aspect="$Cell" HorizontalAlignment="Right" /><Border Aspect="$RowRule" /></Grid>
+                            <Grid Aspect="$RowGrid"><TextBlock Text="0x03" Aspect="$Cell" Foreground="$CyDimBrush" /><TextBlock Text="Ledger" Aspect="$Cell" Margin="140,0,0,0" /><Border Aspect="$RowRule" /></Grid>
+                            <Grid Aspect="$RowGrid"><TextBlock Text="0x04" Aspect="$Cell" Foreground="$CyDimBrush" /><TextBlock Text="Billing" Aspect="$Cell" Margin="140,0,0,0" /><TextBlock Text="12,980.25" Aspect="$Cell" HorizontalAlignment="Right" /><Border Aspect="$RowRule" /></Grid>
+                            <Grid Aspect="$RowGrid"><TextBlock Text="0x05" Aspect="$Cell" Foreground="$CyDimBrush" /><TextBlock Text="Reports" Aspect="$Cell" Margin="140,0,0,0" /><TextBlock Text="640.00" Aspect="$Cell" HorizontalAlignment="Right" /><Border Aspect="$RowRule" /></Grid>
+                            <Grid Aspect="$RowGrid"><TextBlock Text="0x06" Aspect="$Cell" Foreground="$CyDimBrush" /><TextBlock Text="Tasks" Aspect="$Cell" Margin="140,0,0,0" /><TextBlock Text="2,215.75" Aspect="$Cell" HorizontalAlignment="Right" /><Border Aspect="$RowRule" /></Grid>
+                        </StackPanel>
+                        <!-- The one cell that changes: row 3, balance column. -->
+                        <Grid Width="150" Height="46" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,92,-10,0">
+                            <Border Name="Target" BorderBrush="$CyMagentaBrush" BorderThickness="1.5" Background="$CyMagentaWashBrush" Opacity="0" />
+                            <Border Name="GlitchBar" Height="8" Background="$CyCyanBrush" VerticalAlignment="Center" Margin="0,8,0,0" Opacity="0" />
+                            <TextBlock Name="OldValue" Text="1,204.00" Aspect="$Cell" HorizontalAlignment="Right" Margin="0,0,10,0" Opacity="0" />
+                            <TextBlock Name="NewValue" Text="1,268.00" Aspect="$Cell" Foreground="$CyMagentaBrush" HorizontalAlignment="Right" Margin="0,0,10,0" Opacity="0" />
+                        </Grid>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Name="Counters" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,40,0,0">
+                <StackPanel Opacity="0" Margin="0,0,0,26">
+                    <TextBlock Text="REDRAWN" FontFamily="Cascadia Mono" FontSize="14" Foreground="$CyDimBrush" />
+                    <TextBlock Text="1 cell" FontFamily="Bahnschrift" FontSize="56" Foreground="$CyMagentaBrush" />
+                </StackPanel>
+                <StackPanel Opacity="0" Margin="0,0,0,26">
+                    <TextBlock Text="KEPT FROM LAST FRAME" FontFamily="Cascadia Mono" FontSize="14" Foreground="$CyDimBrush" />
+                    <TextBlock Text="17 cells" FontFamily="Bahnschrift" FontSize="56" Foreground="$CyCyanBrush" />
+                </StackPanel>
+                <StackPanel Opacity="0">
+                    <TextBlock Text="RETAINED TREE" FontFamily="Cascadia Mono" FontSize="14" Foreground="$CyDimBrush" />
+                    <TextBlock Text="intact" FontFamily="Bahnschrift" FontSize="56" Foreground="$CyTextBrush" />
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+
+        <TextBlock
+            Name="Caption"
+            Grid.Row="2"
+            Text="// Cerneala keeps a retained tree between frames. A change redoes only the work it requires; unchanged drawing is reused."
+            Aspect="$CyLede"
+            Opacity="0" />
+    </Grid>
+</UserControl>
