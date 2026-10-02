@@ -1,0 +1,13 @@
+{
+  "repository": "https://github.com/MBrekhof/mcpRoslyn.git",
+  "tag": "v1.4.0",
+  "commit": "dfccb63bfac1c82274ffc0b59a41684d5ca3b900",
+  "variant": "roslyn-5.9.0-r1",
+  "roslynVersion": "5.9.0",
+  "enabledTools": [
+    "workspace_symbol", "goto_definition", "hover", "find_references",
+    "find_implementations", "find_callers", "find_callees",
+    "list_document_symbols", "find_derived_types", "analyze_symbol",
+    "project_overview", "reload_workspace"
+  ]
+}

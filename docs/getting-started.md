@@ -283,6 +283,7 @@ canonical API documentation, tests, and working examples.
 
 ## Where To Go Next
 
+- [Local Roslyn navigation for Codex](../Tools/RoslynMcp/README.md)
 - [Cerneala website](https://chevalier12.github.io/Cerneala/)
 - [API reference](https://chevalier12.github.io/Cerneala/documentation.html)
 - [Cerneala Markup Guide](CernealaMarkupGuide.md)

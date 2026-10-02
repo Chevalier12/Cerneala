@@ -28,6 +28,8 @@ Feature work needs no invented bug reproduction, but test existing-runtime assum
 
 # Parent ownership and mandatory Luna exploration
 
+The subagent-delegation rules in this section are defaults. The user may explicitly override them, including whether to delegate, which model/reasoning effort to use, and the division of exploration work between the parent and subagents. Follow the user's override for the scope they specify; otherwise retain these defaults. This exception applies only to subagent delegation, not to unrelated instructions or higher-priority system constraints.
+
 The parent alone coordinates with the user and owns scope/architecture decisions, debugging conclusions, experiments, implementation, edits, builds, tests, harnesses, verification, documentation, plans/checklists, review, acceptance, and reporting. Do not offload work into new user-visible Codex tasks.
 
 Every task needing repository/external-source exploration must delegate it to bounded read-only explorers before concluding or editing:
@@ -57,6 +59,18 @@ Keep solutions simple/proportional: clean ownership boundaries, DRY, YAGNI, and 
 No unrelated cleanup, opportunistic refactoring, unrequested features, or adjacent API redesign; report debt separately. Before dependencies, check existing capabilities and architectural justification. Before nontrivial core features, justify permanent maintenance cost and establish the user problem, insufficient existing APIs, expected behavior, owner, compatibility, tests, docs, and relevant performance/rendering impact. Do not reopen settled architecture without contradictory evidence or requested redesign.
 
 # Repository, skills, and staged work
+
+## Local Roslyn MCP for repository navigation
+
+This project provides `cerneala_roslyn`, a local Roslyn/MSBuild MCP over the saved C# solution, including source-generated symbols. Its tools have been verified through live Codex invocations. It is structured semantic navigation, not embeddings or natural-language retrieval, and does not use the editor's unsaved buffers. Check the current tool catalog rather than assuming a connection is available in every session.
+
+- Prefer `mcp__cerneala_roslyn__*` for C# symbol identity and relationships instead of treating text matches as semantic evidence. Preserve the Luna discovery/search rules and parent ownership above: explorers use MCP for discovery; the parent uses established identities/locations for its diagnostics and verification.
+- Start symbol discovery with `workspace_symbol`; inspect signatures, locations and `truncated`, then reuse the returned opaque `symbolId` or an exact source position. Do not invent IDs or merge overloads/homonyms. Use `hover` and `goto_definition` to inspect binding; `find_references`, `find_implementations` and `find_derived_types` for relationships; `find_callers` and `find_callees` for static call edges; `analyze_symbol` for combined evidence. `list_document_symbols` gives a file outline and `project_overview` gives bounded project metadata. Positions are 1-based.
+- Read `Tools/RoslynMcp/README.md` before relying on tool semantics, coverage or freshness. Save files first. Existing ordinary `.cs` edits refresh on calls; explicitly call `reload_workspace` after adding/removing/renaming files, changing project/solution/build inputs or analyzer outputs, and after any `.crn`/AdditionalFile change. AdditionalFiles can be stale without warnings. Reissue affected queries after reload.
+- Respect result caps, warnings, ambiguous cross-assembly/target-framework identity and virtual generated-source paths. Static relationships are not proof of runtime execution, complete dispatch coverage or a causal chain; confirm the relevant mechanism with source and faithful runtime experiments.
+- The configured 12-tool allow-list excludes `rename_symbol` and other unselected upstream tools. Do not bypass it by invoking the raw server. If MCP tools are missing or fail, report the observation and use delegated source inspection; do not pretend they ran or silently reinstall/reconfigure the server.
+
+## Durable repository workflow
 
 Repository plans, contracts, tests, source, docs, audits, and artifacts are durable memory, not conversation recall. After compaction recover the latest request/current stage from these; do not repeat completed work. New input replaces stale work or adds to it without restarting completed work.
 
@@ -120,3 +134,19 @@ max_depth = 2
 [features]
 context_management.experimental_mode = true
 multi_agent_v2.multi_agent_mode_hint_text = ""
+
+[mcp_servers.cerneala_roslyn]
+command = "powershell.exe"
+args = ["-NoLogo", "-NoProfile", "-NonInteractive", "-File", 'C:\Users\lauri\Desktop\Cerneala\Tools\scripts\Start-RoslynMcp.ps1']
+cwd = 'C:\Users\lauri\Desktop\Cerneala'
+enabled = true
+startup_timeout_sec = 120
+tool_timeout_sec = 180
+default_tools_approval_mode = "auto"
+enabled_tools = [
+    "workspace_symbol", "goto_definition", "hover", "find_references",
+    "find_implementations", "find_callers", "find_callees",
+    "list_document_symbols", "find_derived_types", "analyze_symbol",
+    "project_overview", "reload_workspace",
+]
+disabled_tools = ["rename_symbol"]
