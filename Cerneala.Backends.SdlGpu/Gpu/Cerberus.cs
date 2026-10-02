@@ -104,13 +104,13 @@ internal sealed class Cerberus
         int requiredIndexCount = checked(indexCount + sourceIndices.Length);
         if (imageDomain)
         {
-            EnsureImageDomainVertexCapacity(requiredVertexCount);
+            EnsureCapacity(ref imageDomainVertices, requiredVertexCount);
         }
         else
         {
-            EnsureVertexCapacity(requiredVertexCount);
+            EnsureCapacity(ref vertices, requiredVertexCount);
         }
-        EnsureIndexCapacity(requiredIndexCount);
+        EnsureCapacity(ref indices, requiredIndexCount);
         submissionCount = checked(submissionCount + 1);
 
         int drawVertexOffset;
@@ -127,7 +127,7 @@ internal sealed class Cerberus
         }
         else
         {
-            EnsureDrawCapacity(checked(drawCount + 1));
+            EnsureCapacity(ref draws, checked(drawCount + 1));
             drawVertexOffset = vertexStart;
             draws[drawCount++] = new CerberusGpuDraw(
                 key,
@@ -172,124 +172,137 @@ internal sealed class Cerberus
                 MemoryMarshal.AsBytes(imageDomainVertices.AsSpan(0, imageDomainVertexCount)).Length;
             SdlGpuGeometryBinding geometry = UploadGeometry(
                 session, ordinaryVertexBytes, imageDomainVertexBytes);
-            ISdlApi api = session.Api;
-            nint renderPass = session.ActiveRenderPass;
-            api.BindGpuIndexBuffer(renderPass, new SdlGpuBufferBinding(
-                geometry.IndexBuffer,
-                geometry.IndexOffset));
-            Span<float> viewport = stackalloc float[4]
-            {
-                activeTarget.PixelWidth,
-                activeTarget.PixelHeight,
-                0,
-                0
-            };
-            api.PushGpuVertexUniformData(
-                session.ActiveCommandBuffer,
-                0,
-                MemoryMarshal.AsBytes(viewport));
-            nint currentPipeline = 0;
-            nint currentTexture = 0;
-            nint currentSampler = 0;
-            uint currentVertexBinding = 0;
-            SdlRect currentScissor = default;
-            byte currentStencilReference = 0;
-            bool hasScissor = false;
-            bool hasStencilReference = false;
-            bool hasVertexBinding = false;
-            int pipelineBindCount = 0;
-            int samplerBindCount = 0;
-            int scissorSetCount = 0;
-            int stencilReferenceSetCount = 0;
-            Span<float> presentationUniform = stackalloc float[4];
-            for (int drawIndex = 0; drawIndex < drawCount; drawIndex++)
-            {
-                CerberusGpuDraw draw = draws[drawIndex];
-                CerberusBatchKey key = draw.Key;
-                nint pipeline = context.Resources.GetPipeline(
-                    activeTarget.ColorFormat,
-                    activeTarget.SampleCount,
-                    key.Topology,
-                    key.BlendMode,
-                    key.StencilMode,
-                    key.ColorWriteMask,
-                    key.AlphaMask,
-                    key.PrismWorkingColorProfile.HasValue,
-                    key.PointClampImageDomain);
-                uint vertexBinding = checked(geometry.VertexOffset +
-                    (key.PointClampImageDomain ? checked((uint)ordinaryVertexBytes) : 0));
-                if (!hasVertexBinding || vertexBinding != currentVertexBinding)
-                {
-                    api.BindGpuVertexBuffer(renderPass, 0, new SdlGpuBufferBinding(
-                        geometry.VertexBuffer,
-                        vertexBinding));
-                    currentVertexBinding = vertexBinding;
-                    hasVertexBinding = true;
-                }
-                nint sampler = context.Resources.GetSampler(key.Sampling, key.AddressMode);
-                bool pipelineChanged = pipeline != currentPipeline;
-                if (pipelineChanged)
-                {
-                    api.BindGpuGraphicsPipeline(renderPass, pipeline);
-                    currentPipeline = pipeline;
-                    pipelineBindCount = checked(pipelineBindCount + 1);
-                }
-                if (pipelineChanged || key.Texture != currentTexture || sampler != currentSampler)
-                {
-                    api.BindGpuFragmentSampler(
-                        renderPass,
-                        0,
-                        new SdlGpuTextureSamplerBinding(key.Texture, sampler));
-                    currentTexture = key.Texture;
-                    currentSampler = sampler;
-                    samplerBindCount = checked(samplerBindCount + 1);
-                }
-                if (key.PrismWorkingColorProfile is PrismColorProfile profile)
-                {
-                    presentationUniform.Clear();
-                    presentationUniform[0] = SdlGpuPrismKernelSelector.ForPresentation(profile);
-                    api.PushGpuFragmentUniformData(
-                        session.ActiveCommandBuffer,
-                        0,
-                        MemoryMarshal.AsBytes(presentationUniform));
-                }
-                if (!hasScissor || key.Scissor != currentScissor)
-                {
-                    api.SetGpuScissor(renderPass, key.Scissor);
-                    currentScissor = key.Scissor;
-                    hasScissor = true;
-                    scissorSetCount = checked(scissorSetCount + 1);
-                }
-                if (!hasStencilReference || key.StencilReference != currentStencilReference)
-                {
-                    api.SetGpuStencilReference(renderPass, key.StencilReference);
-                    currentStencilReference = key.StencilReference;
-                    hasStencilReference = true;
-                    stencilReferenceSetCount = checked(stencilReferenceSetCount + 1);
-                }
-                api.DrawGpuIndexedPrimitives(
-                    renderPass,
-                    checked((uint)draw.IndexCount),
-                    checked((uint)draw.IndexOffset),
-                    draw.VertexOffset);
-            }
-            return new CerberusFlushMetrics(
-                submissionCount,
-                mergedSubmissionCount,
-                checked(vertexCount + imageDomainVertexCount),
-                indexCount,
-                checked(ordinaryVertexBytes + imageDomainVertexBytes),
-                MemoryMarshal.AsBytes(indices.AsSpan(0, indexCount)).Length,
-                drawCount,
-                pipelineBindCount,
-                samplerBindCount,
-                scissorSetCount,
-                stencilReferenceSetCount);
+            return EmitDraws(context, activeTarget, geometry,
+                ordinaryVertexBytes, imageDomainVertexBytes);
         }
         finally
         {
             Reset();
         }
+    }
+
+    private CerberusFlushMetrics EmitDraws(
+        CerberusExecutionContext context,
+        SdlGpuRenderTarget activeTarget,
+        SdlGpuGeometryBinding geometry,
+        int ordinaryVertexBytes,
+        int imageDomainVertexBytes)
+    {
+        // The upload has resumed the render pass. Bindings are local to this emission.
+        SdlGpuWindowGraphicsSession session = context.Session;
+        ISdlApi api = session.Api;
+        nint renderPass = session.ActiveRenderPass;
+        api.BindGpuIndexBuffer(renderPass, new SdlGpuBufferBinding(
+            geometry.IndexBuffer,
+            geometry.IndexOffset));
+        Span<float> viewport = stackalloc float[4]
+        {
+            activeTarget.PixelWidth,
+            activeTarget.PixelHeight,
+            0,
+            0
+        };
+        api.PushGpuVertexUniformData(
+            session.ActiveCommandBuffer,
+            0,
+            MemoryMarshal.AsBytes(viewport));
+        nint currentPipeline = 0;
+        nint currentTexture = 0;
+        nint currentSampler = 0;
+        uint currentVertexBinding = 0;
+        SdlRect currentScissor = default;
+        byte currentStencilReference = 0;
+        bool hasScissor = false;
+        bool hasStencilReference = false;
+        bool hasVertexBinding = false;
+        int pipelineBindCount = 0;
+        int samplerBindCount = 0;
+        int scissorSetCount = 0;
+        int stencilReferenceSetCount = 0;
+        Span<float> presentationUniform = stackalloc float[4];
+        for (int drawIndex = 0; drawIndex < drawCount; drawIndex++)
+        {
+            CerberusGpuDraw draw = draws[drawIndex];
+            CerberusBatchKey key = draw.Key;
+            nint pipeline = context.Resources.GetPipeline(
+                activeTarget.ColorFormat,
+                activeTarget.SampleCount,
+                key.Topology,
+                key.BlendMode,
+                key.StencilMode,
+                key.ColorWriteMask,
+                key.AlphaMask,
+                key.PrismWorkingColorProfile.HasValue,
+                key.PointClampImageDomain);
+            uint vertexBinding = checked(geometry.VertexOffset +
+                (key.PointClampImageDomain ? checked((uint)ordinaryVertexBytes) : 0));
+            if (!hasVertexBinding || vertexBinding != currentVertexBinding)
+            {
+                api.BindGpuVertexBuffer(renderPass, 0, new SdlGpuBufferBinding(
+                    geometry.VertexBuffer,
+                    vertexBinding));
+                currentVertexBinding = vertexBinding;
+                hasVertexBinding = true;
+            }
+            nint sampler = context.Resources.GetSampler(key.Sampling, key.AddressMode);
+            bool pipelineChanged = pipeline != currentPipeline;
+            if (pipelineChanged)
+            {
+                api.BindGpuGraphicsPipeline(renderPass, pipeline);
+                currentPipeline = pipeline;
+                pipelineBindCount = checked(pipelineBindCount + 1);
+            }
+            if (pipelineChanged || key.Texture != currentTexture || sampler != currentSampler)
+            {
+                api.BindGpuFragmentSampler(
+                    renderPass,
+                    0,
+                    new SdlGpuTextureSamplerBinding(key.Texture, sampler));
+                currentTexture = key.Texture;
+                currentSampler = sampler;
+                samplerBindCount = checked(samplerBindCount + 1);
+            }
+            if (key.PrismWorkingColorProfile is PrismColorProfile profile)
+            {
+                presentationUniform.Clear();
+                presentationUniform[0] = SdlGpuPrismKernelSelector.ForPresentation(profile);
+                api.PushGpuFragmentUniformData(
+                    session.ActiveCommandBuffer,
+                    0,
+                    MemoryMarshal.AsBytes(presentationUniform));
+            }
+            if (!hasScissor || key.Scissor != currentScissor)
+            {
+                api.SetGpuScissor(renderPass, key.Scissor);
+                currentScissor = key.Scissor;
+                hasScissor = true;
+                scissorSetCount = checked(scissorSetCount + 1);
+            }
+            if (!hasStencilReference || key.StencilReference != currentStencilReference)
+            {
+                api.SetGpuStencilReference(renderPass, key.StencilReference);
+                currentStencilReference = key.StencilReference;
+                hasStencilReference = true;
+                stencilReferenceSetCount = checked(stencilReferenceSetCount + 1);
+            }
+            api.DrawGpuIndexedPrimitives(
+                renderPass,
+                checked((uint)draw.IndexCount),
+                checked((uint)draw.IndexOffset),
+                draw.VertexOffset);
+        }
+        return new CerberusFlushMetrics(
+            submissionCount,
+            mergedSubmissionCount,
+            checked(vertexCount + imageDomainVertexCount),
+            indexCount,
+            checked(ordinaryVertexBytes + imageDomainVertexBytes),
+            MemoryMarshal.AsBytes(indices.AsSpan(0, indexCount)).Length,
+            drawCount,
+            pipelineBindCount,
+            samplerBindCount,
+            scissorSetCount,
+            stencilReferenceSetCount);
     }
 
     public void Discard()
@@ -312,23 +325,6 @@ internal sealed class Cerberus
         target = null;
     }
 
-    private void EnsureVertexCapacity(int required)
-    {
-        if (required > vertices.Length)
-        {
-            Array.Resize(ref vertices, ExpandedCapacity(vertices.Length, required));
-        }
-    }
-
-    private void EnsureImageDomainVertexCapacity(int required)
-    {
-        if (required > imageDomainVertices.Length)
-        {
-            Array.Resize(ref imageDomainVertices,
-                ExpandedCapacity(imageDomainVertices.Length, required));
-        }
-    }
-
     private SdlGpuGeometryBinding UploadGeometry(
         SdlGpuWindowGraphicsSession session,
         int ordinaryVertexBytes,
@@ -347,10 +343,7 @@ internal sealed class Cerberus
         }
 
         int totalBytes = checked(ordinaryVertexBytes + imageDomainVertexBytes);
-        if (totalBytes > packedVertices.Length)
-        {
-            Array.Resize(ref packedVertices, ExpandedCapacity(packedVertices.Length, totalBytes));
-        }
+        EnsureCapacity(ref packedVertices, totalBytes);
         MemoryMarshal.AsBytes(vertices.AsSpan(0, vertexCount)).CopyTo(packedVertices);
         MemoryMarshal.AsBytes(imageDomainVertices.AsSpan(0, imageDomainVertexCount))
             .CopyTo(packedVertices.AsSpan(ordinaryVertexBytes));
@@ -358,19 +351,11 @@ internal sealed class Cerberus
             session, packedVertices.AsSpan(0, totalBytes), queuedIndices);
     }
 
-    private void EnsureIndexCapacity(int required)
+    private static void EnsureCapacity<T>(ref T[] storage, int required)
     {
-        if (required > indices.Length)
+        if (required > storage.Length)
         {
-            Array.Resize(ref indices, ExpandedCapacity(indices.Length, required));
-        }
-    }
-
-    private void EnsureDrawCapacity(int required)
-    {
-        if (required > draws.Length)
-        {
-            Array.Resize(ref draws, ExpandedCapacity(draws.Length, required));
+            Array.Resize(ref storage, ExpandedCapacity(storage.Length, required));
         }
     }
 
@@ -431,18 +416,7 @@ internal readonly record struct CerberusBatchKey(
 
     public bool CanMerge(CerberusBatchKey other) =>
         Topology == DrawPrimitiveTopology.TriangleList &&
-        other.Topology == Topology &&
-        Texture == other.Texture &&
-        Sampling == other.Sampling &&
-        AddressMode == other.AddressMode &&
-        BlendMode == other.BlendMode &&
-        StencilMode == other.StencilMode &&
-        StencilReference == other.StencilReference &&
-        Scissor == other.Scissor &&
-        ColorWriteMask == other.ColorWriteMask &&
-        AlphaMask == other.AlphaMask &&
-        PrismWorkingColorProfile == other.PrismWorkingColorProfile &&
-        PointClampImageDomain == other.PointClampImageDomain;
+        this == other;
 }
 
 internal sealed record CerberusBatch(

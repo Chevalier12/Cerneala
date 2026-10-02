@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using Cerneala.Backends.SdlGpu;
 using Cerneala.Drawing;
+using Cerneala.Drawing.Prism.Catalog;
 using Cerneala.Platforms.Sdl3;
 using Cerneala.UI.Hosting.Sdl;
 
@@ -81,6 +82,27 @@ public sealed class CerberusTests
                 4, 5, 6, 4, 6, 7
             ],
             GetStorage(cerberus, "indices").Cast<int>().Take(18).ToArray());
+    }
+
+    [Fact]
+    public void ImageDomainCapacityGrowsByHalfAndIsReusedAfterDiscard()
+    {
+        Cerberus cerberus = new();
+        CerberusBatchKey key = Key(texture: 1) with { PointClampImageDomain = true };
+        cerberus.Begin(Target(1));
+        cerberus.AllocateImageDomain(4, [0, 1, 2], key);
+        Assert.Equal(4, GetStorage(cerberus, "imageDomainVertices").Length);
+        cerberus.AllocateImageDomain(4, [0, 1, 2], key);
+        Assert.Equal(8, GetStorage(cerberus, "imageDomainVertices").Length);
+        cerberus.AllocateImageDomain(1, [0], key);
+        Array expanded = GetStorage(cerberus, "imageDomainVertices");
+        Assert.Equal(12, expanded.Length);
+
+        cerberus.Discard();
+        cerberus.Begin(Target(2));
+        cerberus.AllocateImageDomain(4, [0, 1, 2], key);
+
+        Assert.Same(expanded, GetStorage(cerberus, "imageDomainVertices"));
     }
 
     [Fact]
@@ -177,7 +199,10 @@ public sealed class CerberusTests
             baseline with { StencilMode = SdlGpuStencilMode.Test },
             baseline with { StencilReference = 1 },
             baseline with { Scissor = new SdlRect(1, 0, 63, 48) },
-            baseline with { ColorWriteMask = SdlGpuColorWriteMask.Red }
+            baseline with { ColorWriteMask = SdlGpuColorWriteMask.Red },
+            baseline with { AlphaMask = true },
+            baseline with { PrismWorkingColorProfile = PrismColorProfile.LinearSrgb },
+            baseline with { PointClampImageDomain = true }
         ];
 
         foreach (CerberusBatchKey different in differentKeys)
@@ -185,9 +210,119 @@ public sealed class CerberusTests
             Cerberus cerberus = new();
             cerberus.Begin(Target(1));
             cerberus.Allocate(3, [0, 1, 2], baseline);
-            cerberus.Allocate(3, [0, 1, 2], different);
+            if (different.PointClampImageDomain)
+            {
+                cerberus.AllocateImageDomain(3, [0, 1, 2], different);
+            }
+            else
+            {
+                cerberus.Allocate(3, [0, 1, 2], different);
+            }
             Assert.Equal(2, GetIntField(cerberus, "drawCount"));
+            Assert.False(baseline.CanMerge(different));
+            Assert.False(different.CanMerge(baseline));
         }
+    }
+
+    [Fact]
+    public void EqualKeysMergeOnlyForTriangleListsAcrossOptionalStateCombinations()
+    {
+        PrismColorProfile?[] profiles = [null, .. Enum.GetValues<PrismColorProfile>()
+            .Select(static profile => (PrismColorProfile?)profile)];
+        foreach (DrawPrimitiveTopology topology in Enum.GetValues<DrawPrimitiveTopology>())
+            foreach (PrismColorProfile? profile in profiles)
+                foreach (bool alphaMask in new[] { false, true })
+                    foreach (bool imageDomain in new[] { false, true })
+                    {
+                        CerberusBatchKey key = Key(texture: 1) with
+                        {
+                            Topology = topology,
+                            AlphaMask = alphaMask,
+                            PrismWorkingColorProfile = profile,
+                            PointClampImageDomain = imageDomain
+                        };
+
+                        Assert.Equal(topology == DrawPrimitiveTopology.TriangleList,
+                            key.CanMerge(key with { }));
+                    }
+    }
+
+    [Fact]
+    public void EmptyFlushPreservesTargetWithoutRequiringExecutionContext()
+    {
+        Cerberus cerberus = new();
+        SdlGpuRenderTarget target = Target(1);
+        cerberus.Begin(target);
+
+        Assert.Equal(default, cerberus.Flush(default));
+        Assert.Same(target, cerberus.Target);
+
+        cerberus.Discard();
+        Assert.Throws<InvalidOperationException>(() => cerberus.Target);
+    }
+
+    [Fact]
+    public void PipelineFailureResetsBothVertexStreamsAndRetainsTheirStorage()
+    {
+        FakeSdlApi api = new()
+        {
+            WindowPixelDensity = 1,
+            FailPipelineCreationCount = 1
+        };
+        nint window = api.CreateWindow("cerberus-emission-failure", 64, 48, SdlWindowOptions.Hidden);
+        using SdlGpuWindowGraphicsSessionFactory factory = new(api, useMultisampling: false);
+        using SdlGpuWindowGraphicsSession session = Assert.IsType<SdlGpuWindowGraphicsSession>(
+            factory.Create(new SdlWindowSurface(window, api.GetWindowId(window)),
+                64, 48, coordinateScale: 1));
+        session.BeginFrame(Color.Transparent);
+        SdlGpuTextureResource texture = session.DrawingResources.GetOrCreateTexture(
+            session, new object(), 1, 1, [255, 255, 255, 255]);
+        Cerberus cerberus = new();
+        CerberusBatchKey ordinary = Key(texture.Handle);
+        CerberusBatchKey domain = ordinary with { PointClampImageDomain = true };
+        CerberusExecutionContext context = new(session, session.DrawingResources);
+        cerberus.Begin(session.WindowRenderTarget);
+        cerberus.Allocate(3, [0, 1, 2], ordinary);
+        cerberus.AllocateImageDomain(3, [0, 1, 2], domain);
+        Array vertices = GetStorage(cerberus, "vertices");
+        Array imageDomainVertices = GetStorage(cerberus, "imageDomainVertices");
+
+        Assert.Throws<InvalidOperationException>(() => cerberus.Flush(context));
+
+        Assert.Throws<InvalidOperationException>(() => cerberus.Target);
+        foreach (string counter in new[] { "vertexCount", "imageDomainVertexCount",
+            "indexCount", "drawCount", "submissionCount", "mergedSubmissionCount" })
+        {
+            Assert.Equal(0, GetIntField(cerberus, counter));
+        }
+        Array packedVertices = GetStorage(cerberus, "packedVertices");
+        Assert.Equal((3 * 32) + (3 * 64), packedVertices.Length);
+        cerberus.Begin(session.WindowRenderTarget);
+        cerberus.Allocate(3, [0, 1, 2], ordinary);
+        cerberus.AllocateImageDomain(3, [0, 1, 2], domain);
+        CerberusFlushMetrics metrics = cerberus.Flush(context);
+
+        Assert.Equal(2, metrics.SubmissionCount);
+        Assert.Equal(2, metrics.DrawCallCount);
+        Assert.Equal(6, metrics.VertexCount);
+        Assert.Equal(6, metrics.IndexCount);
+        Assert.Equal(288, metrics.VertexBytes);
+        Assert.Equal(24, metrics.IndexBytes);
+        Assert.Equal(2, metrics.PipelineBindCount);
+        Assert.Equal(2, metrics.SamplerBindCount);
+        Assert.Equal(1, metrics.ScissorSetCount);
+        Assert.Equal(1, metrics.StencilReferenceSetCount);
+        Assert.Same(vertices, GetStorage(cerberus, "vertices"));
+        Assert.Same(imageDomainVertices, GetStorage(cerberus, "imageDomainVertices"));
+        Assert.Same(packedVertices, GetStorage(cerberus, "packedVertices"));
+
+        cerberus.Begin(session.WindowRenderTarget);
+        cerberus.Allocate(4, [0, 1, 2], ordinary);
+        cerberus.AllocateImageDomain(4, [0, 1, 2], domain);
+        CerberusFlushMetrics grownMetrics = cerberus.Flush(context);
+        Assert.Equal(384, grownMetrics.VertexBytes);
+        Assert.Equal(432, GetStorage(cerberus, "packedVertices").Length);
+        session.CompleteFrame(present: false);
     }
 
     [Fact]
