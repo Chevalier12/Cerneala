@@ -91,6 +91,63 @@
       },
       "problemMatcher": "$msCompile",
       "group": "build"
+    },
+    {
+      "label": "build scene village - sdlgpu",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/Playground/Cerneala.SceneVillage/Cerneala.SceneVillage.csproj",
+        "--configuration",
+        "Debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "MSBuildEnableWorkloadResolver": "false"
+        }
+      },
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    },
+    {
+      "label": "build investor reel - sdlgpu",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/Playground/Cerneala.InvestorReel/Cerneala.InvestorReel.csproj",
+        "--configuration",
+        "Debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "MSBuildEnableWorkloadResolver": "false"
+        }
+      },
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    },
+    {
+      "label": "build solar system - sdlgpu",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/Playground/Cerneala.SolarSystem/Cerneala.SolarSystem.csproj",
+        "--configuration",
+        "Debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "MSBuildEnableWorkloadResolver": "false"
+        }
+      },
+      "problemMatcher": "$msCompile",
+      "group": "build"
     }
   ]
 }

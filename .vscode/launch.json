@@ -55,6 +55,39 @@
       "cwd": "${workspaceFolder}/Tetrisish",
       "console": "internalConsole",
       "stopAtEntry": false
+    },
+    {
+      "name": "Scene Village - SDL_GPU",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build scene village - sdlgpu",
+      "program": "${workspaceFolder}/Playground/Cerneala.SceneVillage/bin/Debug/net8.0-windows/Cerneala.SceneVillage.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}/Playground/Cerneala.SceneVillage",
+      "console": "internalConsole",
+      "stopAtEntry": false
+    },
+    {
+      "name": "Investor Reel - SDL_GPU",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build investor reel - sdlgpu",
+      "program": "${workspaceFolder}/Playground/Cerneala.InvestorReel/bin/Debug/net8.0-windows/Cerneala.InvestorReel.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}/Playground/Cerneala.InvestorReel",
+      "console": "internalConsole",
+      "stopAtEntry": false
+    },
+    {
+      "name": "Solar System - SDL_GPU",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build solar system - sdlgpu",
+      "program": "${workspaceFolder}/Playground/Cerneala.SolarSystem/bin/Debug/net8.0-windows/Cerneala.SolarSystem.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}/Playground/Cerneala.SolarSystem",
+      "console": "internalConsole",
+      "stopAtEntry": false
     }
   ]
 }
