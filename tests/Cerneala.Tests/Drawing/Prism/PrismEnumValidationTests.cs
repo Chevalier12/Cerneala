@@ -22,11 +22,19 @@ public sealed class PrismEnumValidationTests
     [InlineData("Drawing/Prism/Graph/PrismGraph.cs")]
     [InlineData("Drawing/Prism/Graph/PrismGraphBuilder.cs")]
     [InlineData("Drawing/Prism/Graph/PrismGraphOptimizer.cs")]
+    [InlineData("Drawing/Prism/Graph/PrismGraphOptimizer.ExecutionPlan.cs")]
+    [InlineData("Drawing/Prism/Graph/PrismGraphOptimizer.Topology.cs")]
+    [InlineData("Drawing/Prism/Graph/PrismGraphOptimizer.Bounds.cs")]
+    [InlineData("Drawing/Prism/Graph/PrismGraphOptimizer.CachePolicy.cs")]
     [InlineData("Drawing/Prism/Graph/PrismRetainedCacheKey.cs")]
     [InlineData("Drawing/Prism/Masking/PrismMaskStyle.cs")]
     [InlineData("Drawing/Prism/Styles/PrismStylePlanner.cs")]
     [InlineData("Cerneala.Backends.SdlGpu/Prism/SdlGpuPrismDeviceResources.cs")]
     [InlineData("Cerneala.Backends.SdlGpu/Prism/SdlGpuPrismExecutor.cs")]
+    [InlineData("Cerneala.Backends.SdlGpu/Prism/SdlGpuPrismExecutor.Filters.cs")]
+    [InlineData("Cerneala.Backends.SdlGpu/Prism/SdlGpuPrismExecutor.Styles.cs")]
+    [InlineData("Cerneala.Backends.SdlGpu/Prism/SdlGpuPrismExecutor.RasterExtents.cs")]
+    [InlineData("Cerneala.Backends.SdlGpu/Prism/SdlGpuPrismExecutor.Rendering.cs")]
     public void ScenePrismStartupPlanningAndExecutionDoNotDiscoverEnumMetadata(string path)
     {
         DirectoryInfo? directory = new(AppContext.BaseDirectory);

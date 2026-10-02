@@ -468,8 +468,11 @@ Generated from `.`.
 |   |   |-- SdlGpuDeviceOwner.cs
 |   |   |-- SdlGpuDrawingBackend.BrushCaptures.cs
 |   |   |-- SdlGpuDrawingBackend.cs
+|   |   |-- SdlGpuDrawingBackend.Paint.cs
+|   |   |-- SdlGpuDrawingBackend.Surface2D.cs
 |   |   |-- SdlGpuDrawingBackend.Surface3D.cs
 |   |   |-- SdlGpuDrawingBackend.SurfaceDamage.cs
+|   |   |-- SdlGpuDrawingBackend.Text.cs
 |   |   |-- SdlGpuDrawingFrameCounters.cs
 |   |   |-- SdlGpuDrawingResources.cs
 |   |   |-- SdlGpuGeometryCache.cs
@@ -507,6 +510,10 @@ Generated from `.`.
 |   |   |-- SdlGpuPrismDeviceResources.cs
 |   |   |-- SdlGpuPrismExecutionColdStartWarmup.cs
 |   |   |-- SdlGpuPrismExecutor.cs
+|   |   |-- SdlGpuPrismExecutor.Filters.cs
+|   |   |-- SdlGpuPrismExecutor.RasterExtents.cs
+|   |   |-- SdlGpuPrismExecutor.Rendering.cs
+|   |   |-- SdlGpuPrismExecutor.Styles.cs
 |   |   |-- SdlGpuPrismKernelSelector.cs
 |   |   +-- SdlGpuPrismUniforms.cs
 |   |-- Shaders/
@@ -525,7 +532,9 @@ Generated from `.`.
 |   |-- Features/
 |   |   |-- CernealaCodeActionService.cs
 |   |   |-- CernealaCompletionModels.cs
+|   |   |-- CernealaCompletionService.Context.cs
 |   |   |-- CernealaCompletionService.cs
+|   |   |-- CernealaCompletionService.Directives.cs
 |   |   |-- CernealaDocumentation.cs
 |   |   |-- CernealaFormattingModels.cs
 |   |   |-- CernealaFormattingService.cs
@@ -549,6 +558,8 @@ Generated from `.`.
 |   |   |-- CernealaSemanticModel.Completion.cs
 |   |   |-- CernealaSemanticModel.cs
 |   |   |-- CernealaSemanticModel.MotionPrism.cs
+|   |   |-- CernealaSemanticModel.MotionPrism.Motion.cs
+|   |   |-- CernealaSemanticModel.MotionPrism.Prism.cs
 |   |   |-- CernealaSemanticModel.Navigation.cs
 |   |   |-- CernealaSemanticModel.Scopes.cs
 |   |   |-- CernealaSemanticModel.Tiles.cs
@@ -684,8 +695,15 @@ Generated from `.`.
 |   |-- UiMarkupBackendSelection.cs
 |   |-- UiMarkupBindingResolver.cs
 |   |-- UiMarkupDirectiveParser.cs
+|   |-- UiMarkupDirectiveParser.Expressions.cs
+|   |-- UiMarkupDirectiveParser.MotionExecutions.cs
+|   |-- UiMarkupDirectiveParser.MotionTriggers.cs
+|   |-- UiMarkupDirectiveParser.MotionValues.cs
+|   |-- UiMarkupDirectiveParser.Syntax.cs
 |   |-- UiMarkupGenerator.cs
+|   |-- UiMarkupMotionActivationEmitter.cs
 |   |-- UiMarkupMotionResolver.cs
+|   |-- UiMarkupMotionSpecResolver.cs
 |   |-- UiMarkupMotionSyntax.cs
 |   |-- UiMarkupReactiveEmitter.cs
 |   |-- UiMarkupSceneComponentGenerator.cs
@@ -3928,6 +3946,9 @@ Generated from `.`.
 |   |   |   |-- PrismCatalogColorMath.cs
 |   |   |   |-- PrismCatalogFilterMath.cs
 |   |   |   |-- PrismCatalogFilterPlanner.cs
+|   |   |   |-- PrismCatalogFilterPlanner.Options.cs
+|   |   |   |-- PrismCatalogFilterPlanner.Passes.cs
+|   |   |   |-- PrismCatalogFilterPlanner.Settings.cs
 |   |   |   |-- PrismCatalogGeometryMath.cs
 |   |   |   |-- PrismCatalogInkMath.cs
 |   |   |   |-- PrismCatalogPainterlyMath.cs
@@ -4009,7 +4030,10 @@ Generated from `.`.
 |   |   |   |-- PrismMosaicFilter.cs
 |   |   |   |-- PrismMosaicTilesFilter.cs
 |   |   |   |-- PrismMotionBlurFilter.cs
+|   |   |   |-- PrismNeighborhoodMath.Blur.cs
 |   |   |   |-- PrismNeighborhoodMath.cs
+|   |   |   |-- PrismNeighborhoodMath.Noise.cs
+|   |   |   |-- PrismNeighborhoodMath.Sharpen.cs
 |   |   |   |-- PrismNeighborhoodPlanner.cs
 |   |   |   |-- PrismNeonGlowFilter.cs
 |   |   |   |-- PrismNotePaperFilter.cs
@@ -4034,7 +4058,14 @@ Generated from `.`.
 |   |   |   |-- PrismRadialBlurFilter.cs
 |   |   |   |-- PrismRecursiveWangBlueNoise.cs
 |   |   |   |-- PrismReduceNoiseFilter.cs
+|   |   |   |-- PrismResamplingMath.CoordinateMapping.cs
 |   |   |   |-- PrismResamplingMath.cs
+|   |   |   |-- PrismResamplingMath.FelineSampling.cs
+|   |   |   |-- PrismResamplingMath.Glow.cs
+|   |   |   |-- PrismResamplingMath.LiquifySampling.cs
+|   |   |   |-- PrismResamplingMath.PolarSampling.cs
+|   |   |   |-- PrismResamplingMath.Sampling.cs
+|   |   |   |-- PrismResamplingMath.Wave.cs
 |   |   |   |-- PrismResamplingPlanner.cs
 |   |   |   |-- PrismReticulationFilter.cs
 |   |   |   |-- PrismRippleFilter.cs
@@ -4092,7 +4123,11 @@ Generated from `.`.
 |   |   |   |-- PrismGraphBuilder.cs
 |   |   |   |-- PrismGraphCapabilities.cs
 |   |   |   |-- PrismGraphDiagnostic.cs
+|   |   |   |-- PrismGraphOptimizer.Bounds.cs
+|   |   |   |-- PrismGraphOptimizer.CachePolicy.cs
 |   |   |   |-- PrismGraphOptimizer.cs
+|   |   |   |-- PrismGraphOptimizer.ExecutionPlan.cs
+|   |   |   |-- PrismGraphOptimizer.Topology.cs
 |   |   |   |-- PrismInputDependency.cs
 |   |   |   |-- PrismRasterPlanner.cs
 |   |   |   +-- PrismRetainedCacheKey.cs

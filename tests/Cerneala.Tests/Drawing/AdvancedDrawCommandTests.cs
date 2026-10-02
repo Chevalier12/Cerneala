@@ -96,6 +96,13 @@ public sealed class AdvancedDrawCommandTests
     public void SdlGpuBackendHandlesAdvancedCommandsThroughGpuGeometry()
     {
         string backendText = File.ReadAllText(FindRepositoryPath("Cerneala.Backends.SdlGpu", "Gpu", "SdlGpuDrawingBackend.cs"));
+        string backendImplementationText = string.Join("\n", new[]
+        {
+            backendText,
+            File.ReadAllText(FindRepositoryPath("Cerneala.Backends.SdlGpu", "Gpu", "SdlGpuDrawingBackend.Text.cs")),
+            File.ReadAllText(FindRepositoryPath("Cerneala.Backends.SdlGpu", "Gpu", "SdlGpuDrawingBackend.Paint.cs")),
+            File.ReadAllText(FindRepositoryPath("Cerneala.Backends.SdlGpu", "Gpu", "SdlGpuDrawingBackend.Surface2D.cs"))
+        });
         string submissionText = File.ReadAllText(FindRepositoryPath("Cerneala.Backends.SdlGpu", "Gpu", "Cerberus.cs"));
 
         Assert.Contains("case DrawCommandKind.FillEllipse:", backendText, StringComparison.Ordinal);
@@ -103,9 +110,9 @@ public sealed class AdvancedDrawCommandTests
         Assert.Contains("case DrawCommandKind.DrawLine:", backendText, StringComparison.Ordinal);
         Assert.Contains("case DrawCommandKind.FillPath:", backendText, StringComparison.Ordinal);
         Assert.Contains("DrawGpuIndexedPrimitives", submissionText, StringComparison.Ordinal);
-        Assert.DoesNotContain("SKPath", backendText, StringComparison.Ordinal);
-        Assert.DoesNotContain("SKCanvas", backendText, StringComparison.Ordinal);
-        Assert.DoesNotContain("SKBitmap", backendText, StringComparison.Ordinal);
+        Assert.DoesNotContain("SKPath", backendImplementationText, StringComparison.Ordinal);
+        Assert.DoesNotContain("SKCanvas", backendImplementationText, StringComparison.Ordinal);
+        Assert.DoesNotContain("SKBitmap", backendImplementationText, StringComparison.Ordinal);
     }
 
     private static string FindRepositoryPath(params string[] segments)
