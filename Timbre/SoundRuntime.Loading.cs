@@ -19,7 +19,7 @@ public sealed partial class SoundRuntime
             }
             else
             {
-                SoundReader reader = OpenReader(clip.Source);
+                (SoundReader reader, SoundMemoryBudget budget) = OpenReader(clip.Source);
                 bool readerTransferred = false;
                 try
                 {
@@ -30,7 +30,7 @@ public sealed partial class SoundRuntime
                     }
                     else
                     {
-                        feed = CreateStreamingFeed(playback, reader);
+                        feed = CreateStreamingFeed(playback, reader, budget);
                         readerTransferred = true;
                     }
                 }
@@ -38,7 +38,7 @@ public sealed partial class SoundRuntime
                 {
                     if (!readerTransferred)
                     {
-                        ReleaseReader(reader);
+                        ReleaseReader(reader, budget);
                     }
                 }
             }
@@ -83,7 +83,7 @@ public sealed partial class SoundRuntime
                 return;
             }
 
-            SoundReader reader = OpenReader(clip.Source);
+            (SoundReader reader, SoundMemoryBudget budget) = OpenReader(clip.Source);
             try
             {
                 if (ShouldPreload(clip.Loading, reader.LengthFrames))
@@ -93,7 +93,7 @@ public sealed partial class SoundRuntime
             }
             finally
             {
-                ReleaseReader(reader);
+                ReleaseReader(reader, budget);
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -106,15 +106,28 @@ public sealed partial class SoundRuntime
         }
     }
 
-    private SoundReader OpenReader(SoundSource source)
+    // The budget lives as long as the reader: it is closed, releasing every
+    // reservation still held, only after the reader has been disposed.
+    private (SoundReader Reader, SoundMemoryBudget Budget) OpenReader(SoundSource source)
     {
         ObjectDisposedException.ThrowIf(disposed, this);
-        SoundReader reader = source.Open(baseDirectory);
+        SoundMemoryBudget budget = new(memory, source.Name);
+        SoundReader reader;
+        try
+        {
+            reader = source.Open(baseDirectory, budget);
+        }
+        catch
+        {
+            budget.Close();
+            throw;
+        }
+
         Interlocked.Increment(ref liveReaders);
-        return reader;
+        return (reader, budget);
     }
 
-    private void ReleaseReader(SoundReader reader)
+    private void ReleaseReader(SoundReader reader, SoundMemoryBudget budget)
     {
         try
         {
@@ -122,6 +135,7 @@ public sealed partial class SoundRuntime
         }
         finally
         {
+            budget.Close();
             Interlocked.Decrement(ref liveReaders);
         }
     }
@@ -133,15 +147,16 @@ public sealed partial class SoundRuntime
         _ => lengthFrames is long length && length * TimbreCatalog.BytesPerFrame <= autoPreloadMaxBytes
     };
 
-    private StreamingFeed CreateStreamingFeed(SoundPlayback playback, SoundReader reader)
+    private StreamingFeed CreateStreamingFeed(SoundPlayback playback, SoundReader reader, SoundMemoryBudget budget)
     {
-        if (Interlocked.Add(ref streamingBytes, StreamingFeed.BufferBytes) > streamingMemoryLimit)
+        if (!memory.TryReserve(StreamingFeed.BufferBytes))
         {
-            Interlocked.Add(ref streamingBytes, -StreamingFeed.BufferBytes);
             throw new SoundException(
                 SoundErrorKind.ResourceLimitExceeded,
-                $"Streaming '{playback.Clip.Source.Name}' needs {StreamingFeed.BufferBytes} bytes of buffers; the streaming memory limit is {streamingMemoryLimit} bytes.");
+                $"Streaming '{playback.Clip.Source.Name}' needs {StreamingFeed.BufferBytes} bytes of buffers; {memory.Reserved} of the {memory.Limit}-byte streaming memory limit are reserved.");
         }
+
+        Interlocked.Add(ref streamingBytes, StreamingFeed.BufferBytes);
 
         Interlocked.Increment(ref liveSourcePumps);
         StreamingFeed feed = new(
@@ -152,9 +167,11 @@ public sealed partial class SoundRuntime
             SignalMixer,
             () =>
             {
+                budget.Close();
                 Interlocked.Decrement(ref liveReaders);
                 Interlocked.Decrement(ref liveSourcePumps);
                 Interlocked.Add(ref streamingBytes, -StreamingFeed.BufferBytes);
+                memory.Release(StreamingFeed.BufferBytes);
             },
             pumpDispatcher);
         try
@@ -166,6 +183,7 @@ public sealed partial class SoundRuntime
             // The runtime was disposed meanwhile: the caller still owns the reader.
             Interlocked.Decrement(ref liveSourcePumps);
             Interlocked.Add(ref streamingBytes, -StreamingFeed.BufferBytes);
+            memory.Release(StreamingFeed.BufferBytes);
             throw;
         }
 

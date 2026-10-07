@@ -28,6 +28,7 @@ internal sealed class StreamingFeed : SoundFeed
     private readonly TaskCompletionSource stopped = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private List<TaskCompletionSource>? settleWaiters;
     private bool pumpIdle;
+    private volatile bool sourceEnded;
     private volatile bool hasData;
     private int wakePending;
     private int stopPending;
@@ -48,6 +49,14 @@ internal sealed class StreamingFeed : SoundFeed
     private int currentOffset;
     private int activeGeneration;
 
+    // After a successful seek the voice waits for the first data of the new
+    // generation instead of mixing an underrun while the pump refills.
+    private bool awaitingSeekData;
+    private long lengthFrames;
+
+    // The reader's length when the feed started (-1 if unknown); pump-owned check.
+    private readonly long declaredLength;
+
     internal StreamingFeed(
         SoundReader reader,
         string sourceName,
@@ -64,12 +73,38 @@ internal sealed class StreamingFeed : SoundFeed
         this.fail = fail;
         this.signalMixer = signalMixer;
         this.onReaderReleased = onReaderReleased;
-        LengthFrames = reader.LengthFrames;
+        lengthFrames = reader.LengthFrames ?? -1;
+        declaredLength = lengthFrames;
     }
 
-    internal override long? LengthFrames { get; }
+    // Learned by the mixer at the end of the source when the reader did not
+    // know it when the feed started.
+    internal override long? LengthFrames => lengthFrames >= 0 ? lengthFrames : null;
 
-    internal override bool HasData => hasData;
+    // Mixer thread only.
+    internal override bool HasData
+    {
+        get
+        {
+            if (!hasData)
+            {
+                return false;
+            }
+
+            if (awaitingSeekData)
+            {
+                DropStaleSegments();
+                if (!hasCurrent && segments.IsEmpty)
+                {
+                    return false;
+                }
+
+                awaitingSeekData = false;
+            }
+
+            return true;
+        }
+    }
 
     internal override Task Stopped => stopped.Task;
 
@@ -112,6 +147,11 @@ internal sealed class StreamingFeed : SoundFeed
             if (currentOffset == current.Frames)
             {
                 hasCurrent = false;
+                if (current.WrapsAfter || current.EndOfSource)
+                {
+                    lengthFrames = current.SourceStart + current.Frames;
+                }
+
                 if (current.WrapsAfter)
                 {
                     LoopWraps++;
@@ -149,16 +189,34 @@ internal sealed class StreamingFeed : SoundFeed
             activeGeneration = generation;
             Position = Volatile.Read(ref requestedTarget);
             Ended = false;
+            awaitingSeekData = true;
+            DropStaleSegments();
         }
 
         return true;
+    }
+
+    // Mixer thread: releases the ring space of segments read before the active
+    // seek, so the pump can refill it with the new generation at once.
+    private void DropStaleSegments()
+    {
+        if (hasCurrent && current.Generation != activeGeneration)
+        {
+            ReleaseRing(current.Frames - currentOffset);
+            hasCurrent = false;
+        }
+
+        while (!hasCurrent && segments.TryPeek(out Segment next) && next.Generation != activeGeneration && segments.TryDequeue(out Segment stale))
+        {
+            ReleaseRing(stale.Frames);
+        }
     }
 
     internal override Task WhenSettledAsync()
     {
         lock (settleGate)
         {
-            if (pumpIdle || stopped.Task.IsCompleted)
+            if (stopped.Task.IsCompleted || pumpIdle && NothingToDo())
             {
                 return Task.CompletedTask;
             }
@@ -168,6 +226,12 @@ internal sealed class StreamingFeed : SoundFeed
             return waiter.Task;
         }
     }
+
+    // Settled means the pump is idle and could not do anything else: the ring
+    // (or its segment list) is full or the source ended, and no seek waits.
+    private bool NothingToDo() =>
+        Volatile.Read(ref requestedGeneration) == Volatile.Read(ref outcomeGeneration) &&
+        (sourceEnded || segments.Count >= MaxSegments || Volatile.Read(ref writtenFrames) - Volatile.Read(ref releasedFrames) >= RingFrames);
 
     // May run on the mixer thread: cancellation itself runs on the dispatcher.
     internal override void Stop()
@@ -239,6 +303,7 @@ internal sealed class StreamingFeed : SoundFeed
                         readerPosition = target;
                         dataGeneration = generation;
                         endOfSource = false;
+                        sourceEnded = false;
                         previousWasEmpty = false;
                         Volatile.Write(ref outcomeError, null);
                     }
@@ -286,6 +351,15 @@ internal sealed class StreamingFeed : SoundFeed
                 previousWasEmpty = false;
                 Segment segment = new(writtenFrames, result.Frames, readerPosition, dataGeneration);
                 readerPosition += result.Frames;
+                if (declaredLength >= 0 && (readerPosition > declaredLength || result.EndOfSource && readerPosition < declaredLength))
+                {
+                    // Same rule as preloading: a source that ends early or runs past
+                    // its declared length is invalid, not a successful end.
+                    throw new SoundException(
+                        SoundErrorKind.InvalidData,
+                        $"Sound source '{sourceName}' ended at frame {readerPosition} but declared {declaredLength} frames.");
+                }
+
                 if (result.EndOfSource)
                 {
                     if (loop && readerPosition > 0)
@@ -298,10 +372,11 @@ internal sealed class StreamingFeed : SoundFeed
                     {
                         segment.EndOfSource = true;
                         endOfSource = true;
+                        sourceEnded = true;
                     }
                 }
 
-                writtenFrames += result.Frames;
+                Volatile.Write(ref writtenFrames, writtenFrames + result.Frames);
                 segments.Enqueue(segment);
                 hasData = true;
                 signalMixer();
@@ -328,8 +403,8 @@ internal sealed class StreamingFeed : SoundFeed
             onReaderReleased();
             dispatcher.Unregister(this);
             cancellation.Dispose();
-            SetIdle(true);
             stopped.TrySetResult();
+            SetIdle(true);
             signalMixer();
         }
     }
@@ -363,7 +438,7 @@ internal sealed class StreamingFeed : SoundFeed
         lock (settleGate)
         {
             pumpIdle = idle;
-            if (idle)
+            if (idle && (NothingToDo() || stopped.Task.IsCompleted))
             {
                 waiters = settleWaiters;
                 settleWaiters = null;

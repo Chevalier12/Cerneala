@@ -45,7 +45,7 @@ public static class ConsumerScenarios
         playback.Resume();
         await output.WaitForFramesAsync(1);
 
-        var replacement = sounds.Play(plainSound, handle: slot);
+        var replacement = sounds.Play(plainSound, start => start.Loop = true, handle: slot); // looping: a free-running output cannot finish it before the checks
         log.Add($"slot old={playback.State} current={(ReferenceEquals(slot.Current, replacement) ? "replacement" : "other")}");
         playback.Cancel(); // already replaced: does not touch the new occupant
         log.Add($"stale cancel replacementActive={IsActive(replacement)}");

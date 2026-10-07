@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- https://learn.microsoft.com/dotnet/fundamentals/package-validation/diagnostic-ids -->
+<Suppressions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Suppression>
+    <DiagnosticId>CP0001</DiagnosticId>
+    <Target>T:Cerneala.Timbre.SoundMemoryBudget</Target>
+    <Left>C:\Users\lauri\Desktop\Cerneala-baseline-decoding-56755a5\bin\Release\net8.0\Cerneala.dll</Left>
+    <Right>C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll</Right>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0001</DiagnosticId>
+    <Target>T:Cerneala.Timbre.SoundMemoryReservation</Target>
+    <Left>C:\Users\lauri\Desktop\Cerneala-baseline-decoding-56755a5\bin\Release\net8.0\Cerneala.dll</Left>
+    <Right>C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll</Right>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:Cerneala.Timbre.SoundSource.FromReader(System.Func{Cerneala.Timbre.SoundMemoryBudget,Cerneala.Timbre.SoundReader},System.String)</Target>
+    <Left>C:\Users\lauri\Desktop\Cerneala-baseline-decoding-56755a5\bin\Release\net8.0\Cerneala.dll</Left>
+    <Right>C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll</Right>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:Cerneala.Timbre.SoundSource.FromStream(System.Func{Cerneala.Timbre.SoundMemoryBudget,System.IO.Stream},System.String)</Target>
+    <Left>C:\Users\lauri\Desktop\Cerneala-baseline-decoding-56755a5\bin\Release\net8.0\Cerneala.dll</Left>
+    <Right>C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll</Right>
+  </Suppression>
+</Suppressions>

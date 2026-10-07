@@ -5739,6 +5739,16 @@
     "source": "Timbre/SoundSource.cs"
   },
   {
+    "name": "Cerneala.Timbre.SoundMemoryBudget",
+    "file": "documentation/classes/Cerneala.Timbre.SoundMemoryBudget.md",
+    "source": "Timbre/SoundMemoryBudget.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.SoundMemoryReservation",
+    "file": "documentation/classes/Cerneala.Timbre.SoundMemoryReservation.md",
+    "source": "Timbre/SoundMemoryBudget.cs"
+  },
+  {
     "name": "Cerneala.Timbre.SoundReader",
     "file": "documentation/classes/Cerneala.Timbre.SoundReader.md",
     "source": "Timbre/SoundReader.cs"

@@ -33,7 +33,7 @@ Changing the options object after the runtime is constructed has no effect. The 
 
 `MaxVoices` counts every non-terminal playback, including pending, paused, and draining ones. A start beyond it is rejected synchronously with `SoundErrorKind.VoiceLimitExceeded`; existing playbacks are never stolen.
 
-`StreamingMemoryLimit` is an explicit cooperative budget for streaming buffers. Its default, `long.MaxValue`, is accounting headroom only: nothing of that size is allocated, and no numeric cap applies to streaming unless one is configured.
+`StreamingMemoryLimit` is an explicit cooperative allowance shared by the streaming buffers and by every reservation made through a [SoundMemoryBudget](Cerneala.Timbre.SoundMemoryBudget.md): file read buffers, decoder state, and budget-aware source factories. Exceeding it refuses the source before the allocation, with `SoundErrorKind.ResourceLimitExceeded`. Its default, `long.MaxValue`, is accounting headroom only: nothing of that size is allocated, and no numeric cap applies unless one is configured.
 
 ## Properties
 
@@ -44,6 +44,6 @@ Changing the options object after the runtime is constructed has no effect. The 
 | `AutoPreloadMaxBytes` | `long` | 1 MiB | Largest decoded size preloaded by `SoundLoading.Auto`. |
 | `MaxPreloadBytes` | `long` | 16 MiB | Largest decoded payload per clip. |
 | `MaxCacheBytes` | `long` | 64 MiB | Total preload cache. |
-| `StreamingMemoryLimit` | `long` | `long.MaxValue` | Explicit streaming buffer budget. |
+| `StreamingMemoryLimit` | `long` | `long.MaxValue` | Explicit allowance for streaming buffers and reader/decoder reservations. |
 | `DelayTailCap` | `TimeSpan` | 30 s | Longest tail produced after the end of a source. |
 | `BaseDirectory` | `string?` | `null` | Base for relative file sources; `null` uses `AppContext.BaseDirectory`. |

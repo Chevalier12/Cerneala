@@ -35,6 +35,10 @@ on:
       - "tests/Cerneala.Tests.SourceGen/**"
       - "tests/Cerneala.Tests/**"
       - "Tetrisish/**"
+      - "Timbre/**"
+      - "tests/Cerneala.Tests.Timbre/**"
+      - "tests/Fixtures/TimbreConsumer/**"
+      - "Tools/scripts/Test-TimbreDecoderAssets.ps1"
   pull_request:
     paths:
       - ".gitattributes"
@@ -69,6 +73,10 @@ on:
       - "tests/Cerneala.Tests.SourceGen/**"
       - "tests/Cerneala.Tests/**"
       - "Tetrisish/**"
+      - "Timbre/**"
+      - "tests/Cerneala.Tests.Timbre/**"
+      - "tests/Fixtures/TimbreConsumer/**"
+      - "Tools/scripts/Test-TimbreDecoderAssets.ps1"
   workflow_dispatch:
 
 permissions:
@@ -136,6 +144,13 @@ jobs:
           dotnet test ./tests/Cerneala.Tests.SourceGen/Cerneala.Tests.SourceGen.csproj -c Release --no-restore --logger "trx;LogFileName=sourcegen-${{ matrix.nativeRid }}.trx" --results-directory artifacts/ci/test-results
           dotnet test ./Tetrisish/Tests/Tetris.Tests.csproj -c Release --no-restore --logger "trx;LogFileName=tetrisish-${{ matrix.nativeRid }}.trx" --results-directory artifacts/ci/test-results
 
+      # Timbre runtime and codec execution is verified on Windows only; the
+      # other hosts check packaging below, not runtime (index section 7).
+      - name: Timbre decoding corpus
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: dotnet test ./tests/Cerneala.Tests.Timbre/Cerneala.Tests.Timbre.csproj -c Release --logger "trx;LogFileName=timbre-${{ matrix.nativeRid }}.trx" --results-directory artifacts/ci/test-results
+
       - name: Verify offline SDL_GPU shaders
         shell: pwsh
         run: dotnet run --project ./Tools/Cerneala.SdlShaderCompiler/Cerneala.SdlShaderCompiler.csproj -c Release -- --verify
@@ -147,6 +162,11 @@ jobs:
           foreach ($desktopRid in $desktopRids) {
             & ./Tools/scripts/Publish-SdlGpuSmoke.ps1 -RuntimeIdentifier $desktopRid -OutputRoot artifacts/ci/publish
           }
+
+      - name: Timbre decoder assets and notices
+        shell: pwsh
+        run: |
+          ./Tools/scripts/Test-TimbreDecoderAssets.ps1 -Project ./tests/Fixtures/TimbreConsumer/TimbreConsumer.csproj -OutputRoot artifacts/ci/timbre-assets -RuntimeIdentifiers ('${{ matrix.publishRids }}'.Split(',')) -RequiredAssemblies Cerneala.dll,NVorbis.dll,Concentus.dll -NoticeFile Cerneala.Timbre.THIRD-PARTY-NOTICES.txt
 
       - name: Locate Linux lavapipe driver
         if: runner.os == 'Linux'

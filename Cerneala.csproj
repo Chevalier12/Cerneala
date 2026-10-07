@@ -37,6 +37,11 @@
     <PackageReference Include="HarfBuzzSharp" Version="14.2.0" />
     <PackageReference Include="LibTessDotNet" Version="1.1.15" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
+    <!-- Timbre decoders (managed, all RIDs); selection evidence in
+         benchmarks/Cerneala.Benchmarks/results/2026-10-07-timbre-decoding-stage0.
+         NLayer 3.0.0 is vendored with fixes under Timbre/Decoding/NLayer. -->
+    <PackageReference Include="NVorbis" Version="0.10.5" />
+    <PackageReference Include="Concentus" Version="2.2.2" />
     <PackageReference Include="SkiaSharp" Version="4.148.0" />
     <PackageReference Include="Svg.Skia" Version="5.2.0" />
   </ItemGroup>
@@ -45,6 +50,7 @@
     <ProjectReference Include="Cerneala.SourceGen\Cerneala.SourceGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <AdditionalFiles Include="**\*.crn" Exclude="artifacts\**;bin\**;obj\**;Cerneala.Language\**;Cerneala.LanguageServer\**;Cerneala.PreviewHost\**;Cerneala.SourceGen\**;Cerneala.Scene2D.Importers\**;Cerneala.Scene2D.Packages\**;CernealaPresentation\**;docs\**;Playground\**;Shared\**;Tetrisish\**;Tools\**;tests\**" />
     <AdditionalFiles Include="Cerneala.SourceGen\Prism\Catalog\prism-catalog.json" />
+    <None Include="Timbre\Decoding\THIRD-PARTY-NOTICES.txt" Link="Cerneala.Timbre.THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" Pack="true" PackagePath="Cerneala.Timbre.THIRD-PARTY-NOTICES.txt" />
     <EmbeddedResource Include="Drawing\Prism\Filters\Assets\bluenoise.bin">
       <LogicalName>Cerneala.Drawing.Prism.Filters.Assets.bluenoise.bin</LogicalName>
     </EmbeddedResource>

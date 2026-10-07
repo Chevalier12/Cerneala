@@ -13,7 +13,7 @@ public sealed partial class SoundRuntime : IDisposable
     private readonly int maxVoices;
     private readonly long autoPreloadMaxBytes;
     private readonly long maxPreloadBytes;
-    private readonly long streamingMemoryLimit;
+    private readonly SoundMemoryPool memory;
     private readonly long tailCapFrames;
     private readonly string baseDirectory;
     private readonly SoundPayloadCache cache;
@@ -45,7 +45,7 @@ public sealed partial class SoundRuntime : IDisposable
         maxVoices = options.MaxVoices;
         autoPreloadMaxBytes = options.AutoPreloadMaxBytes;
         maxPreloadBytes = options.MaxPreloadBytes;
-        streamingMemoryLimit = options.StreamingMemoryLimit;
+        memory = new SoundMemoryPool(options.StreamingMemoryLimit);
         tailCapFrames = SoundTime.ToFrames(options.DelayTailCap);
         baseDirectory = options.BaseDirectory ?? AppContext.BaseDirectory;
         cache = new SoundPayloadCache(options.MaxCacheBytes);
@@ -138,6 +138,7 @@ public sealed partial class SoundRuntime : IDisposable
                 cache.Bytes,
                 cache.Count,
                 Interlocked.Read(ref streamingBytes),
+                memory.Reserved - Interlocked.Read(ref streamingBytes),
                 Interlocked.Read(ref dspStateBytes),
                 scopes.Count,
                 Volatile.Read(ref pendingLoads));

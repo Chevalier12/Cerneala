@@ -1,0 +1,301 @@
+{
+  "process": "3",
+  "machine": "DESKTOP-JT43V3D",
+  "os": "Microsoft Windows 10.0.26200",
+  "runtime": ".NET 8.0.30",
+  "processors": 8,
+  "protocol": {
+    "BlockFrames": 480,
+    "WarmupBlocks": 1000,
+    "MeasuredBlocks": 10000
+  },
+  "results": [
+    {
+      "file": "bench-22050-mono-2s.wav",
+      "fileBytes": 88244,
+      "timing": {
+        "openMs": 20.96,
+        "firstBlockMs": 26.756,
+        "openAllocatedBytes": 202648,
+        "blockMicroseconds": {
+          "p50": 0.8,
+          "p95": 232.3,
+          "p99": 370.2,
+          "max": 3649.8
+        },
+        "steadyAllocatedBytesPerBlock": 590.9,
+        "loopRewinds": 55,
+        "fullDecodeRealtimeFactor": 268.3
+      },
+      "reservedBytes": 262144,
+      "liveHeap": {
+        "afterOpen": 202064,
+        "peak": 202304,
+        "afterDispose": 2920
+      }
+    },
+    {
+      "file": "bench-22050-mono-300s.wav",
+      "fileBytes": 13230044,
+      "timing": {
+        "openMs": 1.346,
+        "firstBlockMs": 1.47,
+        "openAllocatedBytes": 199840,
+        "blockMicroseconds": {
+          "p50": 0.6,
+          "p95": 112.6,
+          "p99": 128.8,
+          "max": 2864
+        },
+        "steadyAllocatedBytesPerBlock": 72,
+        "loopRewinds": 0,
+        "fullDecodeRealtimeFactor": 510
+      },
+      "reservedBytes": 262144,
+      "liveHeap": {
+        "afterOpen": 199512,
+        "peak": 199528,
+        "afterDispose": 120
+      }
+    },
+    {
+      "file": "mp3-mpeg2-22050-mono-vbr.mp3",
+      "fileBytes": 8869,
+      "timing": {
+        "openMs": 4.665,
+        "firstBlockMs": 25.43,
+        "openAllocatedBytes": 206720,
+        "blockMicroseconds": {
+          "p50": 0.6,
+          "p95": 384.4,
+          "p99": 847,
+          "max": 32807.9
+        },
+        "steadyAllocatedBytesPerBlock": 634.8,
+        "loopRewinds": 55,
+        "fullDecodeRealtimeFactor": 286.4
+      },
+      "reservedBytes": 524288,
+      "liveHeap": {
+        "afterOpen": 310360,
+        "peak": 333640,
+        "afterDispose": 86368
+      }
+    },
+    {
+      "file": "mp3-long-22050-mono-cbr64.mp3",
+      "fileBytes": 2400756,
+      "timing": {
+        "openMs": 0.832,
+        "firstBlockMs": 1.184,
+        "openAllocatedBytes": 206208,
+        "blockMicroseconds": {
+          "p50": 0.6,
+          "p95": 247.3,
+          "p99": 309.2,
+          "max": 4041.5
+        },
+        "steadyAllocatedBytesPerBlock": 75.3,
+        "loopRewinds": 0,
+        "fullDecodeRealtimeFactor": 298.3
+      },
+      "reservedBytes": 524288,
+      "liveHeap": {
+        "afterOpen": 240592,
+        "peak": 266616,
+        "afterDispose": 19360
+      }
+    },
+    {
+      "file": "mp3-mpeg1-44100-stereo-cbr128.mp3",
+      "fileBytes": 33017,
+      "timing": {
+        "openMs": 0.669,
+        "firstBlockMs": 2.501,
+        "openAllocatedBytes": 160328,
+        "blockMicroseconds": {
+          "p50": 0.3,
+          "p95": 391.4,
+          "p99": 495.6,
+          "max": 2043.9
+        },
+        "steadyAllocatedBytesPerBlock": 427.4,
+        "loopRewinds": 55,
+        "fullDecodeRealtimeFactor": 81.6
+      },
+      "reservedBytes": 524288,
+      "liveHeap": {
+        "afterOpen": 201832,
+        "peak": 201848,
+        "afterDispose": 120
+      }
+    },
+    {
+      "file": "vorbis-22050-mono-q2.ogg",
+      "fileBytes": 9899,
+      "timing": {
+        "openMs": 26.742,
+        "firstBlockMs": 34.946,
+        "openAllocatedBytes": 779184,
+        "blockMicroseconds": {
+          "p50": 0.9,
+          "p95": 279.6,
+          "p99": 572.9,
+          "max": 8004.1
+        },
+        "steadyAllocatedBytesPerBlock": 1995.7,
+        "loopRewinds": 55,
+        "fullDecodeRealtimeFactor": 226.6
+      },
+      "reservedBytes": 2097152,
+      "liveHeap": {
+        "afterOpen": 708896,
+        "peak": 711984,
+        "afterDispose": 5792
+      }
+    },
+    {
+      "file": "vorbis-long-22050-mono-q2.ogg",
+      "fileBytes": 970526,
+      "timing": {
+        "openMs": 5.141,
+        "firstBlockMs": 5.369,
+        "openAllocatedBytes": 776200,
+        "blockMicroseconds": {
+          "p50": 0.8,
+          "p95": 187.2,
+          "p99": 239.8,
+          "max": 1606.7
+        },
+        "steadyAllocatedBytesPerBlock": 1405.8,
+        "loopRewinds": 0,
+        "fullDecodeRealtimeFactor": 457.7
+      },
+      "reservedBytes": 2097152,
+      "liveHeap": {
+        "afterOpen": 706296,
+        "peak": 706312,
+        "afterDispose": 120
+      }
+    },
+    {
+      "file": "vorbis-44100-stereo-q4.ogg",
+      "fileBytes": 12175,
+      "timing": {
+        "openMs": 6.034,
+        "firstBlockMs": 6.577,
+        "openAllocatedBytes": 1052936,
+        "blockMicroseconds": {
+          "p50": 0.2,
+          "p95": 170.4,
+          "p99": 241.8,
+          "max": 980.7
+        },
+        "steadyAllocatedBytesPerBlock": 4950.2,
+        "loopRewinds": 55,
+        "fullDecodeRealtimeFactor": 149.3
+      },
+      "reservedBytes": 2097152,
+      "liveHeap": {
+        "afterOpen": 991520,
+        "peak": 991536,
+        "afterDispose": 120
+      }
+    },
+    {
+      "file": "opus-mono-16000-24k.opus",
+      "fileBytes": 6509,
+      "timing": {
+        "openMs": 6.779,
+        "firstBlockMs": 34.516,
+        "openAllocatedBytes": 230736,
+        "blockMicroseconds": {
+          "p50": 0.8,
+          "p95": 129.1,
+          "p99": 250.2,
+          "max": 722.7
+        },
+        "steadyAllocatedBytesPerBlock": 11211,
+        "loopRewinds": 55,
+        "fullDecodeRealtimeFactor": 393.8
+      },
+      "reservedBytes": 524288,
+      "liveHeap": {
+        "afterOpen": 200944,
+        "peak": 200960,
+        "afterDispose": 17584
+      }
+    },
+    {
+      "file": "opus-long-mono-32k.opus",
+      "fileBytes": 1238611,
+      "timing": {
+        "openMs": 0.174,
+        "firstBlockMs": 0.316,
+        "openAllocatedBytes": 213016,
+        "blockMicroseconds": {
+          "p50": 0.8,
+          "p95": 79.3,
+          "p99": 101.9,
+          "max": 330.1
+        },
+        "steadyAllocatedBytesPerBlock": 11204.1,
+        "loopRewinds": 0,
+        "fullDecodeRealtimeFactor": 323.1
+      },
+      "reservedBytes": 524288,
+      "liveHeap": {
+        "afterOpen": 183480,
+        "peak": 183496,
+        "afterDispose": 120
+      }
+    },
+    {
+      "file": "opus-stereo-48000-96k.opus",
+      "fileBytes": 25032,
+      "timing": {
+        "openMs": 0.325,
+        "firstBlockMs": 4.968,
+        "openAllocatedBytes": 257816,
+        "blockMicroseconds": {
+          "p50": 0.6,
+          "p95": 271.8,
+          "p99": 455.6,
+          "max": 1591.7
+        },
+        "steadyAllocatedBytesPerBlock": 18483.5,
+        "loopRewinds": 55,
+        "fullDecodeRealtimeFactor": 141.9
+      },
+      "reservedBytes": 524288,
+      "liveHeap": {
+        "afterOpen": 219496,
+        "peak": 219512,
+        "afterDispose": 168
+      }
+    }
+  ],
+  "streamingStartup": [
+    {
+      "file": "mp3-long-22050-mono-cbr64.mp3",
+      "samples": 20,
+      "p50": -222042898.45,
+      "p95": -222042882.59,
+      "max": -222042865.5419
+    },
+    {
+      "file": "vorbis-long-22050-mono-q2.ogg",
+      "samples": 20,
+      "p50": -222042974.32,
+      "p95": -222042918.09,
+      "max": -222042914.7296
+    },
+    {
+      "file": "opus-long-mono-32k.opus",
+      "samples": 20,
+      "p50": -222043018.43,
+      "p95": -222043012.75,
+      "max": -222043012.0149
+    }
+  ]
+}

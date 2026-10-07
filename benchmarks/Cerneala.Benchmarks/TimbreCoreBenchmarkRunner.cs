@@ -49,6 +49,14 @@ internal static class TimbreCoreBenchmarkRunner
             loop: true,
             loading: SoundLoading.Streaming,
             modifiers: chain);
+        // Decoding plan, stage 3: the same gate with the four streaming voices
+        // decoding real corpus files (MP3, Vorbis, Opus, WAV) on their pumps.
+        string? decodedCorpus = Environment.GetEnvironmentVariable("TIMBRE_BENCH_DECODED_CORPUS");
+        SoundClip[] streamingClips = decodedCorpus is null
+            ? [streaming]
+            : DecodedStreamingFiles(decodedCorpus)
+                .Select(path => new SoundClip(SoundSource.FromFile(path), volume: 0.5f, loop: true, loading: SoundLoading.Streaming, modifiers: chain))
+                .ToArray();
         // Plain prepared one-shot: completion follows the drain, so each latency
         // sample ends within ~150 ms.
         SoundClip shortClip = new(
@@ -68,7 +76,7 @@ internal static class TimbreCoreBenchmarkRunner
 
         for (int index = 0; index < StreamingVoices; index++)
         {
-            voices.Add(scope.Play(streaming));
+            voices.Add(scope.Play(streamingClips[index % streamingClips.Length]));
         }
 
         device.Start();
@@ -135,6 +143,14 @@ internal static class TimbreCoreBenchmarkRunner
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(reportPath))!);
         File.WriteAllText(reportPath, json);
         Console.WriteLine(json);
+    }
+
+    private static IEnumerable<string> DecodedStreamingFiles(string corpus)
+    {
+        yield return Path.GetFullPath(Path.Combine(corpus, "mp3-long-22050-mono-cbr64.mp3"));
+        yield return Path.GetFullPath(Path.Combine(corpus, "vorbis-long-22050-mono-q2.ogg"));
+        yield return Path.GetFullPath(Path.Combine(corpus, "opus-long-mono-32k.opus"));
+        yield return Path.GetFullPath(Path.Combine(corpus, "mp3-mpeg1-44100-stereo-cbr128.mp3"));
     }
 
     private static double Percentile(double[] sorted, double quantile) =>

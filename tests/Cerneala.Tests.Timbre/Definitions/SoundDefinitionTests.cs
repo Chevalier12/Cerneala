@@ -141,8 +141,10 @@ public sealed class SoundDefinitionTests
         Assert.Throws<ArgumentException>(() => SoundSource.FromFile("https://example.invalid/sound.wav"));
         Assert.Throws<ArgumentException>(() => SoundSource.FromFile(" "));
         Assert.Throws<ArgumentNullException>(() => SoundSource.FromFile(null!));
-        Assert.Throws<ArgumentNullException>(() => SoundSource.FromReader(null!));
-        Assert.Throws<ArgumentNullException>(() => SoundSource.FromStream(null!));
+        Assert.Throws<ArgumentNullException>(() => SoundSource.FromReader((Func<SoundReader>)null!));
+        Assert.Throws<ArgumentNullException>(() => SoundSource.FromStream((Func<Stream>)null!));
+        Assert.Throws<ArgumentNullException>(() => SoundSource.FromReader((Func<SoundMemoryBudget, SoundReader>)null!));
+        Assert.Throws<ArgumentNullException>(() => SoundSource.FromStream((Func<SoundMemoryBudget, Stream>)null!));
     }
 
     [Fact]

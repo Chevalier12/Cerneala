@@ -1,0 +1,146 @@
+[
+  {
+    "rid": "win-x64",
+    "missingAssemblies": [],
+    "nativeCodecFiles": [],
+    "noticePresent": null,
+    "decoders": [
+      {
+        "name": "NLayer.dll",
+        "version": "3.0.0.0",
+        "sha256": "2cb48f87143445245a8161e9a823a83aa5b369dccae977a2311d0b42685caffa"
+      },
+      {
+        "name": "NVorbis.dll",
+        "version": "0.10.5.0",
+        "sha256": "d4fd7a6a7b8672b30f77de08c0256dbcbd0d3eee07b78554ebce97741aa7a819"
+      },
+      {
+        "name": "Concentus.dll",
+        "version": "2.2.2.0",
+        "sha256": "3a1dcfcfaf86b90fc2fb6fd0baacdf0be70efef1c9fbb59683d3bf48949de1c9"
+      }
+    ],
+    "fileCount": 8
+  },
+  {
+    "rid": "win-arm64",
+    "missingAssemblies": [],
+    "nativeCodecFiles": [],
+    "noticePresent": null,
+    "decoders": [
+      {
+        "name": "NLayer.dll",
+        "version": "3.0.0.0",
+        "sha256": "2cb48f87143445245a8161e9a823a83aa5b369dccae977a2311d0b42685caffa"
+      },
+      {
+        "name": "NVorbis.dll",
+        "version": "0.10.5.0",
+        "sha256": "d4fd7a6a7b8672b30f77de08c0256dbcbd0d3eee07b78554ebce97741aa7a819"
+      },
+      {
+        "name": "Concentus.dll",
+        "version": "2.2.2.0",
+        "sha256": "3a1dcfcfaf86b90fc2fb6fd0baacdf0be70efef1c9fbb59683d3bf48949de1c9"
+      }
+    ],
+    "fileCount": 8
+  },
+  {
+    "rid": "linux-x64",
+    "missingAssemblies": [],
+    "nativeCodecFiles": [],
+    "noticePresent": null,
+    "decoders": [
+      {
+        "name": "NLayer.dll",
+        "version": "3.0.0.0",
+        "sha256": "2cb48f87143445245a8161e9a823a83aa5b369dccae977a2311d0b42685caffa"
+      },
+      {
+        "name": "NVorbis.dll",
+        "version": "0.10.5.0",
+        "sha256": "d4fd7a6a7b8672b30f77de08c0256dbcbd0d3eee07b78554ebce97741aa7a819"
+      },
+      {
+        "name": "Concentus.dll",
+        "version": "2.2.2.0",
+        "sha256": "3a1dcfcfaf86b90fc2fb6fd0baacdf0be70efef1c9fbb59683d3bf48949de1c9"
+      }
+    ],
+    "fileCount": 8
+  },
+  {
+    "rid": "linux-arm64",
+    "missingAssemblies": [],
+    "nativeCodecFiles": [],
+    "noticePresent": null,
+    "decoders": [
+      {
+        "name": "NLayer.dll",
+        "version": "3.0.0.0",
+        "sha256": "2cb48f87143445245a8161e9a823a83aa5b369dccae977a2311d0b42685caffa"
+      },
+      {
+        "name": "NVorbis.dll",
+        "version": "0.10.5.0",
+        "sha256": "d4fd7a6a7b8672b30f77de08c0256dbcbd0d3eee07b78554ebce97741aa7a819"
+      },
+      {
+        "name": "Concentus.dll",
+        "version": "2.2.2.0",
+        "sha256": "3a1dcfcfaf86b90fc2fb6fd0baacdf0be70efef1c9fbb59683d3bf48949de1c9"
+      }
+    ],
+    "fileCount": 8
+  },
+  {
+    "rid": "osx-x64",
+    "missingAssemblies": [],
+    "nativeCodecFiles": [],
+    "noticePresent": null,
+    "decoders": [
+      {
+        "name": "NLayer.dll",
+        "version": "3.0.0.0",
+        "sha256": "2cb48f87143445245a8161e9a823a83aa5b369dccae977a2311d0b42685caffa"
+      },
+      {
+        "name": "NVorbis.dll",
+        "version": "0.10.5.0",
+        "sha256": "d4fd7a6a7b8672b30f77de08c0256dbcbd0d3eee07b78554ebce97741aa7a819"
+      },
+      {
+        "name": "Concentus.dll",
+        "version": "2.2.2.0",
+        "sha256": "3a1dcfcfaf86b90fc2fb6fd0baacdf0be70efef1c9fbb59683d3bf48949de1c9"
+      }
+    ],
+    "fileCount": 8
+  },
+  {
+    "rid": "osx-arm64",
+    "missingAssemblies": [],
+    "nativeCodecFiles": [],
+    "noticePresent": null,
+    "decoders": [
+      {
+        "name": "NLayer.dll",
+        "version": "3.0.0.0",
+        "sha256": "2cb48f87143445245a8161e9a823a83aa5b369dccae977a2311d0b42685caffa"
+      },
+      {
+        "name": "NVorbis.dll",
+        "version": "0.10.5.0",
+        "sha256": "d4fd7a6a7b8672b30f77de08c0256dbcbd0d3eee07b78554ebce97741aa7a819"
+      },
+      {
+        "name": "Concentus.dll",
+        "version": "2.2.2.0",
+        "sha256": "3a1dcfcfaf86b90fc2fb6fd0baacdf0be70efef1c9fbb59683d3bf48949de1c9"
+      }
+    ],
+    "fileCount": 8
+  }
+]

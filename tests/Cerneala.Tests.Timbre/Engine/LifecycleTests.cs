@@ -104,7 +104,8 @@ public sealed class LifecycleTests
         Directory.CreateDirectory(directory);
         try
         {
-            await File.WriteAllBytesAsync(Path.Combine(directory, "tone.wav"), [0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0]);
+            // Content no registered decoder recognizes, despite the extension.
+            await File.WriteAllBytesAsync(Path.Combine(directory, "tone.wav"), "plain text, not audio"u8.ToArray());
             using TimbreRig rig = new(options => options.BaseDirectory = directory, hold: false);
 
             SoundPlaybackResult unsupported = await TimbreRig.CompletionAsync(rig.Scope.Play(new SoundClip("tone.wav")));

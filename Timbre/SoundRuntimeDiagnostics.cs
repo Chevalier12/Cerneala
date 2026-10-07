@@ -27,6 +27,7 @@ internal readonly record struct SoundRuntimeDiagnostics(
     long CacheBytes,
     int CacheEntries,
     long StreamingBufferBytes,
+    long ReaderMemoryBytes,
     long DspStateBytes,
     int LiveScopes,
     int PendingLoads);

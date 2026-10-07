@@ -1,0 +1,200 @@
+{
+  "Gate": [
+    {
+      "Process": "1",
+      "P50": 0.2675,
+      "P95": 0.3202,
+      "P99": 0.348,
+      "Max": 2.3668,
+      "AllocatedBytes": 0,
+      "MaxQueued": 1920,
+      "DeviceUnderrun": 0,
+      "VoiceUnderrun": 0,
+      "LatencyP95": 16.1588,
+      "Pass": true
+    },
+    {
+      "Process": "2",
+      "P50": 0.2681,
+      "P95": 0.3218,
+      "P99": 0.3865,
+      "Max": 3.3168,
+      "AllocatedBytes": 0,
+      "MaxQueued": 1920,
+      "DeviceUnderrun": 0,
+      "VoiceUnderrun": 0,
+      "LatencyP95": 16.1712,
+      "Pass": true
+    },
+    {
+      "Process": "3",
+      "P50": 0.2695,
+      "P95": 0.3161,
+      "P99": 0.3491,
+      "Max": 1.4509,
+      "AllocatedBytes": 0,
+      "MaxQueued": 1920,
+      "DeviceUnderrun": 0,
+      "VoiceUnderrun": 0,
+      "LatencyP95": 16.1656,
+      "Pass": true
+    },
+    {
+      "Process": "4",
+      "P50": 0.285,
+      "P95": 0.3359,
+      "P99": 0.376,
+      "Max": 1.4989,
+      "AllocatedBytes": 0,
+      "MaxQueued": 1920,
+      "DeviceUnderrun": 0,
+      "VoiceUnderrun": 0,
+      "LatencyP95": 16.0923,
+      "Pass": true
+    },
+    {
+      "Process": "5",
+      "P50": 0.2916,
+      "P95": 0.3441,
+      "P99": 0.4193,
+      "Max": 2.3352,
+      "AllocatedBytes": 0,
+      "MaxQueued": 1920,
+      "DeviceUnderrun": 919,
+      "VoiceUnderrun": 0,
+      "LatencyP95": 16.0709,
+      "Pass": false
+    }
+  ],
+  "GateP99VariationMaxOverMin": 1.2048850574712644,
+  "GateVerdict": "FAIL",
+  "Decoding": [
+    {
+      "File": "bench-22050-mono-2s.wav",
+      "BlockP99MaxUs": 541.1,
+      "BlockP99MinUs": 370.2,
+      "RealtimeFactorMin": 145.4,
+      "OpenMsMax": 27.337,
+      "SteadyAllocatedBytesPerBlockMax": 590.9,
+      "LivePeakMax": 210472.0,
+      "Reserved": 262144.0
+    },
+    {
+      "File": "bench-22050-mono-300s.wav",
+      "BlockP99MaxUs": 199.7,
+      "BlockP99MinUs": 128.8,
+      "RealtimeFactorMin": 333.4,
+      "OpenMsMax": 1.653,
+      "SteadyAllocatedBytesPerBlockMax": 72.0,
+      "LivePeakMax": 199528.0,
+      "Reserved": 262144.0
+    },
+    {
+      "File": "mp3-long-22050-mono-cbr64.mp3",
+      "BlockP99MaxUs": 354.2,
+      "BlockP99MinUs": 253.2,
+      "RealtimeFactorMin": 219.0,
+      "OpenMsMax": 1.408,
+      "SteadyAllocatedBytesPerBlockMax": 75.3,
+      "LivePeakMax": 266616.0,
+      "Reserved": 524288.0
+    },
+    {
+      "File": "mp3-mpeg1-44100-stereo-cbr128.mp3",
+      "BlockP99MaxUs": 1422.6,
+      "BlockP99MinUs": 461.0,
+      "RealtimeFactorMin": 54.9,
+      "OpenMsMax": 2.247,
+      "SteadyAllocatedBytesPerBlockMax": 427.4,
+      "LivePeakMax": 210072.0,
+      "Reserved": 524288.0
+    },
+    {
+      "File": "mp3-mpeg2-22050-mono-vbr.mp3",
+      "BlockP99MaxUs": 936.5,
+      "BlockP99MinUs": 666.5,
+      "RealtimeFactorMin": 134.5,
+      "OpenMsMax": 8.968,
+      "SteadyAllocatedBytesPerBlockMax": 634.8,
+      "LivePeakMax": 333640.0,
+      "Reserved": 524288.0
+    },
+    {
+      "File": "opus-long-mono-32k.opus",
+      "BlockP99MaxUs": 213.1,
+      "BlockP99MinUs": 100.1,
+      "RealtimeFactorMin": 179.1,
+      "OpenMsMax": 0.398,
+      "SteadyAllocatedBytesPerBlockMax": 11204.1,
+      "LivePeakMax": 183496.0,
+      "Reserved": 524288.0
+    },
+    {
+      "File": "opus-mono-16000-24k.opus",
+      "BlockP99MaxUs": 423.8,
+      "BlockP99MinUs": 250.2,
+      "RealtimeFactorMin": 205.2,
+      "OpenMsMax": 10.859,
+      "SteadyAllocatedBytesPerBlockMax": 11213.0,
+      "LivePeakMax": 200960.0,
+      "Reserved": 524288.0
+    },
+    {
+      "File": "opus-stereo-48000-96k.opus",
+      "BlockP99MaxUs": 455.6,
+      "BlockP99MinUs": 273.7,
+      "RealtimeFactorMin": 117.4,
+      "OpenMsMax": 1.147,
+      "SteadyAllocatedBytesPerBlockMax": 18483.5,
+      "LivePeakMax": 227736.0,
+      "Reserved": 524288.0
+    },
+    {
+      "File": "vorbis-22050-mono-q2.ogg",
+      "BlockP99MaxUs": 572.9,
+      "BlockP99MinUs": 417.1,
+      "RealtimeFactorMin": 226.6,
+      "OpenMsMax": 32.166,
+      "SteadyAllocatedBytesPerBlockMax": 2005.4,
+      "LivePeakMax": 717136.0,
+      "Reserved": 2097152.0
+    },
+    {
+      "File": "vorbis-44100-stereo-q4.ogg",
+      "BlockP99MaxUs": 374.5,
+      "BlockP99MinUs": 241.8,
+      "RealtimeFactorMin": 88.1,
+      "OpenMsMax": 11.489,
+      "SteadyAllocatedBytesPerBlockMax": 4950.2,
+      "LivePeakMax": 999760.0,
+      "Reserved": 2097152.0
+    },
+    {
+      "File": "vorbis-long-22050-mono-q2.ogg",
+      "BlockP99MaxUs": 279.9,
+      "BlockP99MinUs": 160.3,
+      "RealtimeFactorMin": 289.8,
+      "OpenMsMax": 5.288,
+      "SteadyAllocatedBytesPerBlockMax": 1405.8,
+      "LivePeakMax": 706312.0,
+      "Reserved": 2097152.0
+    }
+  ],
+  "StreamingStartup": [
+    {
+      "File": "mp3-long-22050-mono-cbr64.mp3",
+      "P95MaxMs": -221739240.11,
+      "P95MinMs": -222352659.2
+    },
+    {
+      "File": "opus-long-mono-32k.opus",
+      "P95MaxMs": -221739368.78,
+      "P95MinMs": -222352785.18
+    },
+    {
+      "File": "vorbis-long-22050-mono-q2.ogg",
+      "P95MaxMs": -221739291.21,
+      "P95MinMs": -222352706.29
+    }
+  ]
+}

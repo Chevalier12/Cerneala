@@ -296,6 +296,15 @@ public sealed class SoundPlayback
 
     internal void PublishPosition(long frames) => Volatile.Write(ref positionFrames, frames);
 
+    // Mixer thread: a length that a streaming source learned at its end.
+    internal void PublishLength(long? frames)
+    {
+        if (frames is long known && Volatile.Read(ref lengthFrames) < 0)
+        {
+            Volatile.Write(ref lengthFrames, known);
+        }
+    }
+
     // Stopwatch timestamp of the first submitted block that contains this
     // playback (first PCM queued), or 0 before it.
     internal long FirstQueuedTimestamp => Volatile.Read(ref firstQueuedTimestamp);

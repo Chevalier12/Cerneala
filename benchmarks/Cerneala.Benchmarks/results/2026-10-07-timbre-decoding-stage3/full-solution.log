@@ -1,0 +1,661 @@
+Tool 'sign' (version '0.9.1-beta.26330.1') was restored. Available commands: sign
+
+Restore was successful.
+  Determining projects to restore...
+  Restored C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\Cerneala.SceneVillage.csproj (in 538 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.ComboBoxLab\Cerneala.ComboBoxLab.csproj (in 652 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\CernealaPresentation\CernealaPresentation.csproj (in 549 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Packages\Cerneala.Scene2D.Packages.csproj (in 547 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\Cerneala.Playground.csproj (in 522 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\Cerneala.Scene2D.Importers.csproj (in 28 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj (in 18 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.MenuLab\Cerneala.MenuLab.csproj (in 19 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.PreviewHost\Cerneala.PreviewHost.csproj (in 49 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\Cerneala.Tests.csproj (in 762 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\Cerneala.Tests.SourceGen.csproj (in 762 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\Cerneala.Tests.PreviewHost.csproj (in 759 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Tools\Cerneala.Scene2D.PackageCompiler\Cerneala.Scene2D.PackageCompiler.csproj (in 18 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\Cerneala.Tests.SceneVillage.csproj (in 103 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tetris.csproj (in 37 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\tests\Fixtures\VisualStudioConsumer\VisualStudioConsumer.csproj (in 23 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Tools\Cerneala.SvgAssetCompiler\Cerneala.SvgAssetCompiler.csproj (in 13 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Tools\PrismAudit\PrismAudit.csproj (in 33 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Playground\CernealaOracle\CernealaOracle.csproj (in 42 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\Cerneala.Tests.Scene2DPackages.csproj (in 324 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\Tetris.Tests.csproj (in 223 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\Cerneala.Tests.Scene2DImporters.csproj (in 324 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SolarSystem\Cerneala.SolarSystem.csproj (in 71 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\Cerneala.Tests.Language.csproj (in 248 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\benchmarks\Cerneala.WpfDispatcherBenchmarks\Cerneala.WpfDispatcherBenchmarks.csproj (in 470 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.SdlGpuSmoke\Cerneala.SdlGpuSmoke.csproj (in 463 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\Cerneala.Tests.SdlGpu.csproj (in 1.22 sec).
+  15 of 42 projects are up-to-date for restore.
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  AvaloniaOracle -> C:\Users\lauri\Desktop\Cerneala\Playground\AvaloniaOracle\bin\Release\net10.0\AvaloniaOracle.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Tests.VisualStudio -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.VisualStudio\bin\Release\net10.0-windows\Cerneala.Tests.VisualStudio.dll
+  TimbreConsumer -> C:\Users\lauri\Desktop\Cerneala\tests\Fixtures\TimbreConsumer\bin\Release\net8.0\TimbreConsumer.dll
+  Cerneala.SdlShaderCompiler -> C:\Users\lauri\Desktop\Cerneala\Tools\Cerneala.SdlShaderCompiler\bin\Release\net8.0\win-x64\Cerneala.SdlShaderCompiler.dll
+  Cerneala.SvgAssetCompiler -> C:\Users\lauri\Desktop\Cerneala\Tools\Cerneala.SvgAssetCompiler\bin\Release\net8.0\Cerneala.SvgAssetCompiler.dll
+  Cerneala.VisualStudio -> C:\Users\lauri\Desktop\Cerneala\Cerneala.VisualStudio\bin\Release\net472\Cerneala.VisualStudio.dll
+  VisualStudioConsumer -> C:\Users\lauri\Desktop\Cerneala\tests\Fixtures\VisualStudioConsumer\bin\Release\net8.0-windows\VisualStudioConsumer.dll
+  Cerneala.Scene2D.Packages -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Packages\bin\Release\net8.0\Cerneala.Scene2D.Packages.dll
+  Cerneala.Tests.Timbre -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll
+  Cerneala.Tests.SourceGen -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Release\net8.0-windows\Cerneala.Tests.SourceGen.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  Cerneala.LanguageServer -> C:\Users\lauri\Desktop\Cerneala\Cerneala.LanguageServer\bin\Release\net10.0\Cerneala.LanguageServer.dll
+  Cerneala.WpfDispatcherBenchmarks -> C:\Users\lauri\Desktop\Cerneala\benchmarks\Cerneala.WpfDispatcherBenchmarks\bin\Release\net8.0-windows\Cerneala.WpfDispatcherBenchmarks.dll
+  Determining projects to restore...
+  CernealaOracle -> C:\Users\lauri\Desktop\Cerneala\Playground\CernealaOracle\bin\Release\net8.0-windows\CernealaOracle.dll
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\Cerneala.Language.csproj (in 1.1 sec).
+  1 of 2 projects are up-to-date for restore.
+  Cerneala.SdlGpuSmoke -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.SdlGpuSmoke\bin\Release\net8.0\Cerneala.SdlGpuSmoke.dll
+  Cerneala.PreviewHost -> C:\Users\lauri\Desktop\Cerneala\Cerneala.PreviewHost\bin\Release\net10.0-windows\Cerneala.PreviewHost.dll
+  Cerneala.MenuLab -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.MenuLab\bin\Release\net8.0-windows\Cerneala.MenuLab.dll
+  Cerneala.Benchmarks -> C:\Users\lauri\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benchmarks.dll
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.Tests.LanguageServer -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.LanguageServer\bin\Release\net10.0\Cerneala.Tests.LanguageServer.dll
+  Cerneala.ComboBoxLab -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.ComboBoxLab\bin\Release\net8.0-windows\Cerneala.ComboBoxLab.dll
+  Cerneala.SceneVillage -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\bin\Release\net8.0-windows\Cerneala.SceneVillage.dll
+  Cerneala.LanguageServer -> C:\Users\lauri\Desktop\Cerneala\Cerneala.LanguageServer\bin\Release\net10.0\win-x64\Cerneala.LanguageServer.dll
+  Cerneala.LanguageServer -> C:\Users\lauri\Desktop\Cerneala\Cerneala.VisualStudio\obj\Release\net472\bundled-server\
+  Determining projects to restore...
+  Cerneala.SolarSystem -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SolarSystem\bin\Release\net8.0-windows\Cerneala.SolarSystem.dll
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\Cerneala.SourceGen.csproj (in 355 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.csproj (in 434 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj (in 453 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.PreviewHost\Cerneala.PreviewHost.csproj (in 552 ms).
+  PrismAudit -> C:\Users\lauri\Desktop\Cerneala\Tools\PrismAudit\bin\Release\net8.0-windows\PrismAudit.dll
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Cerneala.Platforms.Sdl3.csproj (in 665 ms).
+  1 of 6 projects are up-to-date for restore.
+  CernealaPresentation -> C:\Users\lauri\Desktop\Cerneala\CernealaPresentation\bin\Release\net8.0-windows\CernealaPresentation.dll
+  Cerneala.Tests.SceneVillage -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll
+  Cerneala.PresentationFrameBudget -> C:\Users\lauri\Desktop\Cerneala\benchmarks\Cerneala.PresentationFrameBudget\bin\Release\net8.0-windows\Cerneala.PresentationFrameBudget.dll
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\win-x64\Cerneala.Platforms.Sdl3.dll
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\CyberOpenSceneUserControl.6e38e670.g.cs(425,49): warning CS0108: 'CyberOpenScene.Cursor' hides inherited member 'UIElement.Cursor'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\InkSceneUserControl.7a1143b0.g.cs(463,57): warning CS0108: 'InkScene.Drop' hides inherited member 'UIElement.Drop'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\CyberProofSceneUserControl.dcc285d0.g.cs(691,54): warning CS0108: 'CyberProofScene.Cursor' hides inherited member 'UIElement.Cursor'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\ProofSceneUserControl.ad9a7f42.g.cs(665,54): warning CS0108: 'ProofScene.Cursor' hides inherited member 'UIElement.Cursor'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\BrutalProofSceneUserControl.7ed7efaa.g.cs(693,54): warning CS0108: 'BrutalProofScene.Cursor' hides inherited member 'UIElement.Cursor'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\SakuraProofSceneUserControl.7d781070.g.cs(672,54): warning CS0108: 'SakuraProofScene.Cursor' hides inherited member 'UIElement.Cursor'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+  Cerneala.PreviewHost -> C:\Users\lauri\Desktop\Cerneala\Cerneala.PreviewHost\bin\Release\net10.0-windows\win-x64\Cerneala.PreviewHost.dll
+  Cerneala.InvestorReel -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\bin\Release\net8.0-windows\Cerneala.InvestorReel.dll
+  Cerneala.Tests.Language -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll
+  Cerneala.Scene2D.Importers -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\bin\Release\net8.0\Cerneala.Scene2D.Importers.dll
+  Cerneala.PreviewHost -> C:\Users\lauri\Desktop\Cerneala\Cerneala.VisualStudio\obj\Release\net472\bundled-preview-host\
+  Cerneala.Tests.PreviewHost -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Release\net10.0-windows\Cerneala.Tests.PreviewHost.dll
+  Tetris -> C:\Users\lauri\Desktop\Cerneala\Tetrisish\bin\Release\net8.0\Cerneala.Tetris.dll
+  Cerneala.Scene2D.PackageCompiler -> C:\Users\lauri\Desktop\Cerneala\Tools\Cerneala.Scene2D.PackageCompiler\bin\Release\net8.0\Cerneala.Scene2D.PackageCompiler.dll
+  Prepared 'C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldAssets\village.tmj' -> 'C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\obj\SceneWorldPackages\Release\net8.0-windows\tiled' (1 levels, 1 files).
+  SCN2D017: Known editor-only fields are not used at runtime. (C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldAssets\village.ldtk, $.defs.layers[0].autoRuleGroups)
+  Prepared 'C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\SceneWorldAssets\village.ldtk' -> 'C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\obj\SceneWorldPackages\Release\net8.0-windows\ldtk' (1 levels, 1 files).
+  Cerneala.Playground -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\bin\Release\net8.0-windows\Cerneala.Playground.dll
+  Cerneala.Tests.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll
+  Cerneala.Tests.Scene2DImporters -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Release\net8.0\Cerneala.Tests.Scene2DImporters.dll
+  Tetris.Tests -> C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Release\net8.0\Cerneala.Tetris.Tests.dll
+  Cerneala.Tests.Scene2DPackages -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll
+  Cerneala.Tests -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll
+  Cerneala.VisualStudio -> C:\Users\lauri\Desktop\Cerneala\Cerneala.VisualStudio\bin\Release\net472\Cerneala.VisualStudio.vsix
+  VisualStudioIntegrationHost -> C:\Users\lauri\Desktop\Cerneala\tests\Fixtures\VisualStudioIntegrationHost\bin\Release\net472\Cerneala.VisualStudio.IntegrationHost.dll
+  VisualStudioIntegrationHost -> C:\Users\lauri\Desktop\Cerneala\tests\Fixtures\VisualStudioIntegrationHost\bin\Release\net472\Cerneala.VisualStudio.IntegrationHost.vsix
+
+Build succeeded.
+
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\CyberOpenSceneUserControl.6e38e670.g.cs(425,49): warning CS0108: 'CyberOpenScene.Cursor' hides inherited member 'UIElement.Cursor'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\InkSceneUserControl.7a1143b0.g.cs(463,57): warning CS0108: 'InkScene.Drop' hides inherited member 'UIElement.Drop'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\CyberProofSceneUserControl.dcc285d0.g.cs(691,54): warning CS0108: 'CyberProofScene.Cursor' hides inherited member 'UIElement.Cursor'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\ProofSceneUserControl.ad9a7f42.g.cs(665,54): warning CS0108: 'ProofScene.Cursor' hides inherited member 'UIElement.Cursor'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\BrutalProofSceneUserControl.7ed7efaa.g.cs(693,54): warning CS0108: 'BrutalProofScene.Cursor' hides inherited member 'UIElement.Cursor'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\SakuraProofSceneUserControl.7d781070.g.cs(672,54): warning CS0108: 'SakuraProofScene.Cursor' hides inherited member 'UIElement.Cursor'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+    6 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:01:36.35
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:44.50]     Cerneala.Tests.Language.CompletionTests.WarmCompletionP95StaysBelowBudgetAndIndependentDocumentsDoNotBlock [SKIP]
+  Skipped Cerneala.Tests.Language.CompletionTests.WarmCompletionP95StaysBelowBudgetAndIndependentDocumentsDoNotBlock [1 ms]
+
+Passed!  - Failed:     0, Passed:   259, Skipped:     1, Total:   260, Duration: 43 s - Cerneala.Tests.Language.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.LanguageServer\bin\Release\net10.0\Cerneala.Tests.LanguageServer.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    40, Skipped:     0, Total:    40, Duration: 2 m 12 s - Cerneala.Tests.LanguageServer.dll (net10.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Release\net10.0-windows\Cerneala.Tests.PreviewHost.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    17, Skipped:     0, Total:    17, Duration: 47 s - Cerneala.Tests.PreviewHost.dll (net10.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Release\net8.0\Cerneala.Tests.Scene2DImporters.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:   173, Skipped:     0, Total:   173, Duration: 3 s - Cerneala.Tests.Scene2DImporters.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:   104, Skipped:     0, Total:   104, Duration: 4 s - Cerneala.Tests.Scene2DPackages.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:01.71]     Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.RoutedRightAndUpKeyTapsMoveAndCaptureTheResultingIdlePose [SKIP]
+[xUnit.net 00:00:01.71]     Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.CharacterAtlasFilteringMatrixReportsAllDirectionsAndWalkingFrames [SKIP]
+[xUnit.net 00:00:01.71]     Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.ProductionCharacterFramesHaveNoForeignMarksOnTransparentTopRows [SKIP]
+  Skipped Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.RoutedRightAndUpKeyTapsMoveAndCaptureTheResultingIdlePose [1 ms]
+  Skipped Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.CharacterAtlasFilteringMatrixReportsAllDirectionsAndWalkingFrames [1 ms]
+  Skipped Cerneala.Tests.SceneVillage.NativeCharacterAtlasTests.ProductionCharacterFramesHaveNoForeignMarksOnTransparentTopRows [1 ms]
+[xUnit.net 00:00:01.73]     Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.WalkingAndStressPresetsMeetPostSubmitCallbackCadenceGate [SKIP]
+[xUnit.net 00:00:01.74]     Cerneala.Tests.SceneVillage.NativeVillageScaleTests.VillageUsesNativeArtworkPixelsAtThreeWindowScalesWithoutDownsamplingItsSurface [SKIP]
+[xUnit.net 00:00:01.74]     Cerneala.Tests.SceneVillage.NativeVillageTileBoundaryTests.OpaquePointSampledAtlasTileJoinsOpaqueGroundAtFractionalCameraPosition [SKIP]
+  Skipped Cerneala.Tests.SceneVillage.NativeVillageFrameRateGateTests.WalkingAndStressPresetsMeetPostSubmitCallbackCadenceGate [1 ms]
+  Skipped Cerneala.Tests.SceneVillage.NativeVillageScaleTests.VillageUsesNativeArtworkPixelsAtThreeWindowScalesWithoutDownsamplingItsSurface [1 ms]
+  Skipped Cerneala.Tests.SceneVillage.NativeVillageTileBoundaryTests.OpaquePointSampledAtlasTileJoinsOpaqueGroundAtFractionalCameraPosition [1 ms]
+[xUnit.net 00:00:01.74]     Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset [SKIP]
+[xUnit.net 00:00:01.74]     Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealVillageShowsTheNativeTreeCanopyAboveItsLowerCellTrunk [SKIP]
+  Skipped Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealSdlWindowSupportsVillageMovementCollisionCameraAndEveryTenThousandItemPreset [1 ms]
+  Skipped Cerneala.Tests.SceneVillage.NativeVillageWindowTests.RealVillageShowsTheNativeTreeCanopyAboveItsLowerCellTrunk [1 ms]
+
+Passed!  - Failed:     0, Passed:    36, Skipped:     8, Total:    44, Duration: 1 s - Cerneala.Tests.SceneVillage.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:07.56]     Cerneala.Tests.SdlGpu.BrushRenderingTests.RadialGradientSamplingUsesPaintBoundsLocalCoordinates [SKIP]
+[xUnit.net 00:00:07.57]     Cerneala.Tests.SdlGpu.BrushRenderingTests.NestedCaptureCompositingDoesNotReuseAnActiveParentLayer [SKIP]
+[xUnit.net 00:00:07.57]     Cerneala.Tests.SdlGpu.BrushRenderingTests.ImageTextCoverageIsStableAcrossRasterReuse [SKIP]
+[xUnit.net 00:00:07.57]     Cerneala.Tests.SdlGpu.BrushRenderingTests.NonRepeatingImageViewportDoesNotExtendEdgePixelsOutsideItsTile [SKIP]
+[xUnit.net 00:00:07.57]     Cerneala.Tests.SdlGpu.BrushRenderingTests.UniformTilePreservesAspectRatioAndAlignment [SKIP]
+[xUnit.net 00:00:07.57]     Cerneala.Tests.SdlGpu.BrushRenderingTests.VisualBrushGraphRejectsSelfReference [SKIP]
+[xUnit.net 00:00:07.57]     Cerneala.Tests.SdlGpu.BrushRenderingTests.DegenerateLinearGradientUsesLastStop [SKIP]
+[xUnit.net 00:00:07.57]     Cerneala.Tests.SdlGpu.BrushRenderingTests.LinearGradientSamplingInterpolatesColorAndOpacity [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.BrushRenderingTests.RadialGradientSamplingUsesPaintBoundsLocalCoordinates [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.BrushRenderingTests.NestedCaptureCompositingDoesNotReuseAnActiveParentLayer [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.BrushRenderingTests.ImageTextCoverageIsStableAcrossRasterReuse [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.BrushRenderingTests.NonRepeatingImageViewportDoesNotExtendEdgePixelsOutsideItsTile [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.BrushRenderingTests.UniformTilePreservesAspectRatioAndAlignment [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.BrushRenderingTests.VisualBrushGraphRejectsSelfReference [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.BrushRenderingTests.DegenerateLinearGradientUsesLastStop [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.BrushRenderingTests.LinearGradientSamplingInterpolatesColorAndOpacity [1 ms]
+[xUnit.net 00:00:07.57]     Cerneala.Tests.SdlGpu.BrushRenderingTests.VisualCaptureReusesStableRasterAndRepaintsChangedSource [SKIP]
+[xUnit.net 00:00:07.57]     Cerneala.Tests.SdlGpu.BrushRenderingTests.RadialGradientSamplingClampsOutsideRadius [SKIP]
+[xUnit.net 00:00:07.57]     Cerneala.Tests.SdlGpu.DrawingBackendLifecycleContractTests.LinearGradientColorVariesOnlyAlongItsSpecifiedAxes [SKIP]
+[xUnit.net 00:00:07.57]     Cerneala.Tests.SdlGpu.DrawingBackendLifecycleContractTests.CoordinateScaleAppliesToActualDrawBounds [SKIP]
+[xUnit.net 00:00:07.57]     Cerneala.Tests.SdlGpu.DrawingBackendLifecycleContractTests.FailedCompositingFrameDoesNotPoisonTheNextFrame [SKIP]
+[xUnit.net 00:00:07.59]     Cerneala.Tests.SdlGpu.DrawingRetainedPayloadTests.DisposedImageIsRejectedAndIdentifiedBeforeUpload [SKIP]
+[xUnit.net 00:00:07.59]     Cerneala.Tests.SdlGpu.DrawingRetainedPayloadTests.ReusedTextLayoutSkipsRasterizationAndChangedLayoutUpdatesPixels [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.BrushRenderingTests.VisualCaptureReusesStableRasterAndRepaintsChangedSource [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.BrushRenderingTests.RadialGradientSamplingClampsOutsideRadius [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.DrawingBackendLifecycleContractTests.LinearGradientColorVariesOnlyAlongItsSpecifiedAxes [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.DrawingBackendLifecycleContractTests.CoordinateScaleAppliesToActualDrawBounds [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.DrawingBackendLifecycleContractTests.FailedCompositingFrameDoesNotPoisonTheNextFrame [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.DrawingRetainedPayloadTests.DisposedImageIsRejectedAndIdentifiedBeforeUpload [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.DrawingRetainedPayloadTests.ReusedTextLayoutSkipsRasterizationAndChangedLayoutUpdatesPixels [1 ms]
+[xUnit.net 00:00:07.59]     Cerneala.Tests.SdlGpu.DrawingRetainedPayloadTests.AdvancedBatchesHaveOneSubmissionEachAndRepeatDeterministically [SKIP]
+[xUnit.net 00:00:07.59]     Cerneala.Tests.SdlGpu.DrawingRetainedPayloadTests.OnDemandSpriteBatchTracksItsPrismImageAndOnlyRedrawsOnChange [SKIP]
+[xUnit.net 00:00:08.63]     Cerneala.Tests.SdlGpu.GraphixNativeDependencyTests.LoadedNativeRuntimeIdentifiesTheGraphixBuild [SKIP]
+[xUnit.net 00:00:08.63]     Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.OptionsImageQuadAndWholeNineSliceUseTheirFullLogicalImageDomain [SKIP]
+[xUnit.net 00:00:08.63]     Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.ExactIntegerSourceExternalBoundariesUseCoveredSamplingButKeepOrdinaryInterior [SKIP]
+[xUnit.net 00:00:08.63]     Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.SelectedOptionsQuadsKeepOrdinaryCenterPixelsAcrossShapeVariants [SKIP]
+[xUnit.net 00:00:08.63]     Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.PointSpriteBatchKeepsEachAtlasSourceIsolatedWithoutSplittingTheBatch [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.DrawingRetainedPayloadTests.AdvancedBatchesHaveOneSubmissionEachAndRepeatDeterministically [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.DrawingRetainedPayloadTests.OnDemandSpriteBatchTracksItsPrismImageAndOnlyRedrawsOnChange [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.GraphixNativeDependencyTests.LoadedNativeRuntimeIdentifiesTheGraphixBuild [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.OptionsImageQuadAndWholeNineSliceUseTheirFullLogicalImageDomain [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.ExactIntegerSourceExternalBoundariesUseCoveredSamplingButKeepOrdinaryInterior [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.SelectedOptionsQuadsKeepOrdinaryCenterPixelsAcrossShapeVariants [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.PointSpriteBatchKeepsEachAtlasSourceIsolatedWithoutSplittingTheBatch [1 ms]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.CollapsedNineSliceCellsKeepTheWholeOuterImageDomain [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.RotatedFlippedPointImagePreservesOrdinaryInteriorAndCoveredExterior [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.EquivalentImageMeshTriangulationsPreservePointSampledInteriorPixels [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.ExactFlippedOuterBoundaryUsesCoveredSampling [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.VillageScaleFlippedBoundaryUsesCoveredSampling [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.PointCropDoesNotSampleAtlasNeighborsAtFractionalSurfaceEdge [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.FiniteNearDegenerateOptionsQuadDoesNotAcquireBackendException [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.FractionalAndSubtexelPointSourcesDoNotReadChangedAtlasGuards [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.ExactUnflippedRightOuterBoundaryUsesCoveredSampling [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.CollapsedNineSliceCellsKeepTheWholeOuterImageDomain [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.RotatedFlippedPointImagePreservesOrdinaryInteriorAndCoveredExterior [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.EquivalentImageMeshTriangulationsPreservePointSampledInteriorPixels [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.ExactFlippedOuterBoundaryUsesCoveredSampling [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.VillageScaleFlippedBoundaryUsesCoveredSampling [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.PointCropDoesNotSampleAtlasNeighborsAtFractionalSurfaceEdge [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.FiniteNearDegenerateOptionsQuadDoesNotAcquireBackendException [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.FractionalAndSubtexelPointSourcesDoNotReadChangedAtlasGuards [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeDrawingInterpolationBoundaryTests.ExactUnflippedRightOuterBoundaryUsesCoveredSampling [1 ms]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeDrawingSmokeTests.TextAndAllSmokeBrushesProduceVisibleGlyphPixels [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeDrawingSmokeTests.ThreeWindowsRenderIndependentlyAcrossResizeAndDisposal [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeDrawingSmokeTests.OffscreenDrawingBrushPreservesEarlierFramePixels [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeDrawingSmokeTests.PrismCopyAndPresentationPreservePremultipliedAlpha [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeImageDomainWarmMeasurements.WarmImageWorkloadsRecordNativeCpuSubmissionAndCurrentThreadAllocations [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeImageLeaseTests.GridCameraInputRetiresAtlasesAndKeepsNpcTerrainAcross32Cycles [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeImageLeaseTests.SharedAtlasSurvivesWindowCloseAnd32UnloadReloadCyclesPreservePixels [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.NativeDrawingSmokeTests.TextAndAllSmokeBrushesProduceVisibleGlyphPixels [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeDrawingSmokeTests.ThreeWindowsRenderIndependentlyAcrossResizeAndDisposal [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeDrawingSmokeTests.OffscreenDrawingBrushPreservesEarlierFramePixels [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeDrawingSmokeTests.PrismCopyAndPresentationPreservePremultipliedAlpha [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeImageDomainWarmMeasurements.WarmImageWorkloadsRecordNativeCpuSubmissionAndCurrentThreadAllocations [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeImageLeaseTests.GridCameraInputRetiresAtlasesAndKeepsNpcTerrainAcross32Cycles [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeImageLeaseTests.SharedAtlasSurvivesWindowCloseAnd32UnloadReloadCyclesPreservePixels [1 ms]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeImageLeaseTests.SpatialCameraInputRetiresImagesButPreservesEagerItemsAndMovingNpcAcross32Cycles [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativePackageGridSubdivisionTests.PreparedGridMatchesAuthoredPixelsAcrossBoundariesFlipsAndZoom [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativePackageLifecycleTests.CameraCancelsParkedPackageChunkAndRetryLoadsItAgain [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.GridPackagePreloadsWithinBudgetAndReleasesDataAndImages [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.PlacementPackageBudgetRejectsOptionalButNotRequiredData [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.PlacementPackagePreloadsWithinBudgetAndReleasesDataAndImages [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.GridPackageBudgetRejectsOptionalButNotRequiredData [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Expanded_disc_and_line_remain_visible_when_their_centers_are_just_outside_side_plane [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Dpi_matrix_preserves_asymmetric_projection_and_disc_coverage [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.NativeImageLeaseTests.SpatialCameraInputRetiresImagesButPreservesEagerItemsAndMovingNpcAcross32Cycles [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativePackageGridSubdivisionTests.PreparedGridMatchesAuthoredPixelsAcrossBoundariesFlipsAndZoom [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativePackageLifecycleTests.CameraCancelsParkedPackageChunkAndRetryLoadsItAgain [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.GridPackagePreloadsWithinBudgetAndReleasesDataAndImages [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.PlacementPackageBudgetRejectsOptionalButNotRequiredData [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.PlacementPackagePreloadsWithinBudgetAndReleasesDataAndImages [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativePackageWarmStreamingTests.GridPackageBudgetRejectsOptionalButNotRequiredData [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Expanded_disc_and_line_remain_visible_when_their_centers_are_just_outside_side_plane [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Dpi_matrix_preserves_asymmetric_projection_and_disc_coverage [1 ms]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Shared_owner_two_windows_isolate_cameras_colors_and_targets_through_move_and_close [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Fractional_disc_matches_the_frozen_interor_boundary_and_exterior_mask [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Near_crossing_is_clipped_before_division_and_far_and_side_outliers_do_not_draw [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Retained_UI_preserves_valid_prism_pixels_then_reacquires_after_visible_surface_change [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Marker_is_GPU_projected_and_composed_over_the_window [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Resize_recreates_physical_raster_and_preserves_center_projection [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Equal_depth_last_covered_primitive_wins [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Asymmetric_model_view_and_projection_put_a_marker_at_the_frozen_oracle_pixel [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Callback_failure_under_prism_recovers_same_generation_and_pixels [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Shared_owner_two_windows_isolate_cameras_colors_and_targets_through_move_and_close [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Fractional_disc_matches_the_frozen_interor_boundary_and_exterior_mask [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Near_crossing_is_clipped_before_division_and_far_and_side_outliers_do_not_draw [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Retained_UI_preserves_valid_prism_pixels_then_reacquires_after_visible_surface_change [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Marker_is_GPU_projected_and_composed_over_the_window [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Resize_recreates_physical_raster_and_preserves_center_projection [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Equal_depth_last_covered_primitive_wins [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Asymmetric_model_view_and_projection_put_a_marker_at_the_frozen_oracle_pixel [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Callback_failure_under_prism_recovers_same_generation_and_pixels [1 ms]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Fractional_butt_line_matches_the_frozen_interor_boundary_and_exterior_mask [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Fractional_near_disc_edge_composites_over_opaque_far_geometry_independent_of_order [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Transparent_surface_exterior_preserves_parent_background_without_halo [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Near_view_parallel_line_remains_bounded_after_side_clipping [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Orthographic_projection_keeps_marker_size_and_changes_its_position [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Nearer_line_wins_at_crossing_regardless_of_recording_order [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Prism_filter_processes_the_composed_3d_surface_not_a_CPU_projection [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Fully_clipped_and_singular_UI_composition_leave_parent_pixels_and_following_2d_intact [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Parent_2d_before_nested_clip_layers_and_2d_after_keep_their_order [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Fractional_butt_line_matches_the_frozen_interor_boundary_and_exterior_mask [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Fractional_near_disc_edge_composites_over_opaque_far_geometry_independent_of_order [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Transparent_surface_exterior_preserves_parent_background_without_halo [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Near_view_parallel_line_remains_bounded_after_side_clipping [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Orthographic_projection_keeps_marker_size_and_changes_its_position [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Nearer_line_wins_at_crossing_regardless_of_recording_order [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Prism_filter_processes_the_composed_3d_surface_not_a_CPU_projection [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Fully_clipped_and_singular_UI_composition_leave_parent_pixels_and_following_2d_intact [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Parent_2d_before_nested_clip_layers_and_2d_after_keep_their_order [1 ms]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Far_and_side_crossing_lines_cover_only_their_visible_domains [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Discarded_marker_quad_corners_do_not_hide_a_farther_line [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Ui_transform_and_opacity_apply_to_composed_3d_before_later_2d_overlay [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeSceneImagePresentationTests.ColdSpriteAndPrismSharePreparationAndReleaseImagesAcross32NativeCycles [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeScenePresentationTests.TileMapLoadingAndErrorWithholdTheWholeSceneWhileUiAndNpcMovementContinueAcross32Cycles [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.DeclaredStyleInputMatchesFullDomainRenderingCroppedAfterTheEffect [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.DeclaredWrappedInputMatchesFullDomainRenderingCroppedAfterTheEffect [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.GlobalInputMatchesFullDomainRenderingCroppedAfterTheEffect [SKIP]
+[xUnit.net 00:00:08.66]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Far_and_side_crossing_lines_cover_only_their_visible_domains [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Discarded_marker_quad_corners_do_not_hide_a_farther_line [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeRenderSurface3DTests.Ui_transform_and_opacity_apply_to_composed_3d_before_later_2d_overlay [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeSceneImagePresentationTests.ColdSpriteAndPrismSharePreparationAndReleaseImagesAcross32NativeCycles [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeScenePresentationTests.TileMapLoadingAndErrorWithholdTheWholeSceneWhileUiAndNpcMovementContinueAcross32Cycles [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.DeclaredStyleInputMatchesFullDomainRenderingCroppedAfterTheEffect [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.DeclaredWrappedInputMatchesFullDomainRenderingCroppedAfterTheEffect [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.GlobalInputMatchesFullDomainRenderingCroppedAfterTheEffect [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedPointwisePaintAndMaskInputMatchesCompleteDomainRendering [1 ms]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedLocalNeighborhoodInputMatchesCompleteDomainRendering [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedBlurInputMatchesCompleteDomainRendering [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.LocalNeighborhoodInputMatchesCompleteDomainRendering [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityLocalNeighborhoodInputMatchesCompleteDomainRendering [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedSpriteInputMatchesFullDomainRenderingCroppedAfterTheEffect [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.NativeScenePrismStreamingTests.PointwiseEagerItemsAndMapStreamingMatchEagerPixelsAcrossCameraAndFilterChanges [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativeGpuCapturesTwoWindowsThroughWindowSaveScreenshot [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.PointwisePaintAndMaskInputMatchesCompleteDomainRendering [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedLocalNeighborhoodInputMatchesCompleteDomainRendering [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedBlurInputMatchesCompleteDomainRendering [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityPointwisePaintAndMaskInputMatchesCompleteDomainRendering [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.LocalNeighborhoodInputMatchesCompleteDomainRendering [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.HighDensityLocalNeighborhoodInputMatchesCompleteDomainRendering [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeScenePrismDomainTests.NestedSpriteInputMatchesFullDomainRenderingCroppedAfterTheEffect [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeScenePrismStreamingTests.PointwiseEagerItemsAndMapStreamingMatchEagerPixelsAcrossCameraAndFilterChanges [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativeGpuCapturesTwoWindowsThroughWindowSaveScreenshot [1 ms]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativePlatformAndGpuDeviceHaveDeterministicLifetime [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativeEventPumpKeepsTwoWindowsIndependent [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.NativeServoHeldKeyTests.RealWindowRoutesHeldKeyAcrossCompletedFramesAndReleasesAfterCompletionAndCancellation [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.NativeTetrisWindowTests.RealWindowInputRendersObservableLockedPiecesThroughTheSceneTemplate [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.NativeUiImagePresentationTests.SharedPendingUiAtlasKeepsInputResponsiveAndPreservesPixelsAcross32Cycles [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.RectanglePixelBoundaryMigrationTests.FilledRectangleRoundsEachPhysicalEdgeAwayFromZero [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.RenderSurface2DPresentationTests.OnDemandSurfaceRedrawsWhenItsPrismImagePipelineChanges [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.RenderSurface2DPresentationTests.ClearColorFillsTheManagedSurface [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.RenderSurface2DPresentationTests.OnDemandSurfaceStopsObservingPrismImagesRemovedFromItsFrame [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativePlatformAndGpuDeviceHaveDeterministicLifetime [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativeEventPumpKeepsTwoWindowsIndependent [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeServoHeldKeyTests.RealWindowRoutesHeldKeyAcrossCompletedFramesAndReleasesAfterCompletionAndCancellation [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeTetrisWindowTests.RealWindowInputRendersObservableLockedPiecesThroughTheSceneTemplate [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.NativeUiImagePresentationTests.SharedPendingUiAtlasKeepsInputResponsiveAndPreservesPixelsAcross32Cycles [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.RectanglePixelBoundaryMigrationTests.FilledRectangleRoundsEachPhysicalEdgeAwayFromZero [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.RenderSurface2DPresentationTests.OnDemandSurfaceRedrawsWhenItsPrismImagePipelineChanges [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.RenderSurface2DPresentationTests.ClearColorFillsTheManagedSurface [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.RenderSurface2DPresentationTests.OnDemandSurfaceStopsObservingPrismImagesRemovedFromItsFrame [1 ms]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.RenderSurface2DPresentationTests.PrismManagedSurfacePreservesUiRenderedBeforeItAcrossFrames [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.RenderSurface2DPresentationTests.MultipleDrawSubscribersComposeInRegistrationOrder [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.RenderSurface2DPresentationTests.DrawEventRendersASpriteThroughTheStrict2DFrame [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.RenderSurface2DPresentationTests.DrawEventRendersGeneralDrawingPrimitives [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.RenderSurface2DPresentationTests.DrawEventRendersPrismImageThroughTheNativePrismPipeline [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.RenderSurface3DStageZeroNativeCharacterizationTests.SurfaceAndLaterOverlayPreserveCompositionOrder [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.RenderSurface3DStageZeroNativeCharacterizationTests.TwoSurfacesInOneWindowKeepDistinctTargetsAndPixels [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.RenderSurface3DStageZeroNativeCharacterizationTests.ClipAndOpacityApplyToAPrismSurfaceAsOneComposedImage [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.SdlGpuGeometryAllocationTests.WarmShapeReplayDoesNotRetessellateUnchangedGeometry [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.RenderSurface2DPresentationTests.PrismManagedSurfacePreservesUiRenderedBeforeItAcrossFrames [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.RenderSurface2DPresentationTests.MultipleDrawSubscribersComposeInRegistrationOrder [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.RenderSurface2DPresentationTests.DrawEventRendersASpriteThroughTheStrict2DFrame [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.RenderSurface2DPresentationTests.DrawEventRendersGeneralDrawingPrimitives [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.RenderSurface2DPresentationTests.DrawEventRendersPrismImageThroughTheNativePrismPipeline [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.RenderSurface3DStageZeroNativeCharacterizationTests.SurfaceAndLaterOverlayPreserveCompositionOrder [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.RenderSurface3DStageZeroNativeCharacterizationTests.TwoSurfacesInOneWindowKeepDistinctTargetsAndPixels [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.RenderSurface3DStageZeroNativeCharacterizationTests.ClipAndOpacityApplyToAPrismSurfaceAsOneComposedImage [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlGpuGeometryAllocationTests.WarmShapeReplayDoesNotRetessellateUnchangedGeometry [1 ms]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.SdlGpuGeometryAllocationTests.WarmGeometryUploadsDoNotAllocateAcrossTheFrameRing [SKIP]
+[xUnit.net 00:00:08.67]     Cerneala.Tests.SdlGpu.SdlGpuGeometryAllocationTests.WarmGeometryUsesCurrentPaintTransformAndCompositingState [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.SdlGpuGeometryAllocationTests.WarmGeometryUploadsDoNotAllocateAcrossTheFrameRing [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlGpuGeometryAllocationTests.WarmGeometryUsesCurrentPaintTransformAndCompositingState [1 ms]
+[xUnit.net 00:00:12.34]     Cerneala.Tests.SdlGpu.SdlGpuGradientCacheTests.AxisAlignedTextureMatchesFullTwoDimensionalRaster [SKIP]
+[xUnit.net 00:00:12.34]     Cerneala.Tests.SdlGpu.SdlGpuGradientCacheTests.GradientReusePreservesPixelsAndDoesNotHideChangedPaint [SKIP]
+[xUnit.net 00:00:12.34]     Cerneala.Tests.SdlGpu.SdlGpuGradientCacheTests.RecycledGradientStorageKeepsEveryNewFramePixelExact [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.SdlGpuGradientCacheTests.AxisAlignedTextureMatchesFullTwoDimensionalRaster [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlGpuGradientCacheTests.GradientReusePreservesPixelsAndDoesNotHideChangedPaint [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlGpuGradientCacheTests.RecycledGradientStorageKeepsEveryNewFramePixelExact [1 ms]
+[xUnit.net 00:00:13.35]     Cerneala.Tests.SdlGpu.SdlGpuPrismExecutorTests.NestedPrismPresentationRemainsVisibleAwayFromTheHostOrigin [SKIP]
+[xUnit.net 00:00:13.36]     Cerneala.Tests.SdlGpu.SdlGpuScreenshotRegionTests.RegionalPngCropsTheFullyRenderedFramebuffer [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.SdlGpuPrismExecutorTests.NestedPrismPresentationRemainsVisibleAwayFromTheHostOrigin [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlGpuScreenshotRegionTests.RegionalPngCropsTheFullyRenderedFramebuffer [1 ms]
+[xUnit.net 00:00:13.52]     Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Native_device_creates_drawing_and_prism_pipelines_from_offline_artifacts [SKIP]
+[xUnit.net 00:00:13.52]     Cerneala.Tests.SdlGpu.SdlGpuSurfaceBufferOwnershipTests.ClearColorReplayBeforeSubmitPreservesPixelsAfterContentChanges [SKIP]
+[xUnit.net 00:00:13.52]     Cerneala.Tests.SdlGpu.SdlGpuSurfaceRetainedTests.UnchangedPrismImageReusesItsCachedResultWhenAnotherCommandMoves [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Native_device_creates_drawing_and_prism_pipelines_from_offline_artifacts [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlGpuSurfaceBufferOwnershipTests.ClearColorReplayBeforeSubmitPreservesPixelsAfterContentChanges [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlGpuSurfaceRetainedTests.UnchangedPrismImageReusesItsCachedResultWhenAnotherCommandMoves [1 ms]
+[xUnit.net 00:00:13.52]     Cerneala.Tests.SdlGpu.SdlGpuSurfaceRetainedTests.IdenticalRecordedFramesReuseTheRasterizedSurface [SKIP]
+[xUnit.net 00:00:13.53]     Cerneala.Tests.SdlGpu.SdlGpuSurfaceRetainedTests.MovingPrismShapePreservesItsPixelsInsideAPixelSpaceSurface [SKIP]
+[xUnit.net 00:00:13.53]     Cerneala.Tests.SdlGpu.SdlGpuSurfaceRetainedTests.DisposedPrismImageEvictsItsRetainedResults [SKIP]
+[xUnit.net 00:00:13.53]     Cerneala.Tests.SdlGpu.SdlGpuSurfaceRetainedTests.InvalidatedSurfaceEffectsAndContentMatchFreshRendering [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.SdlGpuSurfaceRetainedTests.IdenticalRecordedFramesReuseTheRasterizedSurface [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlGpuSurfaceRetainedTests.MovingPrismShapePreservesItsPixelsInsideAPixelSpaceSurface [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlGpuSurfaceRetainedTests.DisposedPrismImageEvictsItsRetainedResults [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlGpuSurfaceRetainedTests.InvalidatedSurfaceEffectsAndContentMatchFreshRendering [1 ms]
+[xUnit.net 00:00:13.54]     Cerneala.Tests.SdlGpu.SdlGpuSurfaceRetainedTests.ChangedDamageReplaysOnlyIntersectingCommandsInOrder [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.SdlGpuSurfaceRetainedTests.ChangedDamageReplaysOnlyIntersectingCommandsInOrder [1 ms]
+[xUnit.net 00:00:28.84]     Cerneala.Tests.SdlGpu.SdlGpuTextCacheTests.CachedBrushTextPreservesPixelsAndBaselineAcrossTranslationAndRetirement [SKIP]
+[xUnit.net 00:00:28.84]     Cerneala.Tests.SdlGpu.SdlGpuTextCacheTests.RetentionAndBudgetEvictionPreserveNativeTextPixels [SKIP]
+[xUnit.net 00:00:28.84]     Cerneala.Tests.SdlGpu.SdlGpuTextCacheTests.CachedTextCoverageDoesNotFreezeVisualBrushContent [SKIP]
+[xUnit.net 00:00:28.84]     Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.NativeMaximizeRespectsExplicitClientSizeLimits [SKIP]
+[xUnit.net 00:00:28.84]     Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.RuntimePublishesHoveredElementCursorToTheNativeWindow [SKIP]
+[xUnit.net 00:00:28.84]     Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.InteractiveMovePresentsBeforeNativeSizeMoveEnds [SKIP]
+[xUnit.net 00:00:28.84]     Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.NativeMaximizeRespectsWidthLimitWithoutHeightLimit [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.SdlGpuTextCacheTests.CachedBrushTextPreservesPixelsAndBaselineAcrossTranslationAndRetirement [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlGpuTextCacheTests.RetentionAndBudgetEvictionPreserveNativeTextPixels [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlGpuTextCacheTests.CachedTextCoverageDoesNotFreezeVisualBrushContent [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.NativeMaximizeRespectsExplicitClientSizeLimits [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.RuntimePublishesHoveredElementCursorToTheNativeWindow [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.InteractiveMovePresentsBeforeNativeSizeMoveEnds [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.NativeMaximizeRespectsWidthLimitWithoutHeightLimit [1 ms]
+[xUnit.net 00:00:28.84]     Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.NativeOwnershipInputAndGraphicsLifetimesRemainIndependent [SKIP]
+[xUnit.net 00:00:28.84]     Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.NativeMaximizeCoversTheMonitorWorkArea [SKIP]
+[xUnit.net 00:00:28.84]     Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.ProgrammaticWindowStateCanRestoreAndMaximizeAgain [SKIP]
+[xUnit.net 00:00:28.84]     Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.NativeMaximizeRespectsHeightLimitWithoutWidthLimit [SKIP]
+[xUnit.net 00:00:28.84]     Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.NativeWindowsExposeApplicationIcons [SKIP]
+[xUnit.net 00:00:28.84]     Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.CanResizeWithGripExposesBottomRightClientResizeHitTarget [SKIP]
+[xUnit.net 00:00:28.84]     Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.InteractiveResizePresentsBeforeNativeSizeMoveEnds [SKIP]
+[xUnit.net 00:00:28.84]     Cerneala.Tests.SdlGpu.Prism.PrismNestedScopeCullingRenderingTests.RequiredOffscreenChildStillContributesVisibleBlurPixels [SKIP]
+[xUnit.net 00:00:28.84]     Cerneala.Tests.SdlGpu.Prism.PrismNestedScopeCullingRenderingTests.ClippedNestedInputMatchesOmittedSubtreeAndRestoresPixelsOnReentry [SKIP]
+  Skipped Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.NativeOwnershipInputAndGraphicsLifetimesRemainIndependent [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.NativeMaximizeCoversTheMonitorWorkArea [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.ProgrammaticWindowStateCanRestoreAndMaximizeAgain [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.NativeMaximizeRespectsHeightLimitWithoutWidthLimit [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.NativeWindowsExposeApplicationIcons [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.CanResizeWithGripExposesBottomRightClientResizeHitTarget [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.SdlWindowsNativeContractTests.InteractiveResizePresentsBeforeNativeSizeMoveEnds [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.Prism.PrismNestedScopeCullingRenderingTests.RequiredOffscreenChildStillContributesVisibleBlurPixels [1 ms]
+  Skipped Cerneala.Tests.SdlGpu.Prism.PrismNestedScopeCullingRenderingTests.ClippedNestedInputMatchesOmittedSubtreeAndRestoresPixelsOnReentry [1 ms]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.SemiTransparentSpriteBatchBlendsWithBackground [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.SpriteBatchesAroundPrismStayInsideTheOuterOpacityScope [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.SemiTransparentSpriteBatchBlendsWithBackground [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.SpriteBatchesAroundPrismStayInsideTheOuterOpacityScope [1 ms]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.SpriteBatchInsideOpacityScopeBlendsWithBackground [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.SemiTransparentSpriteBatchBlendsInsideRetainedSurface [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.SemiTransparentSolidColorBlendsWithBackground [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.TransparentGradientStopRevealsBackgroundInsteadOfKeepingSolidRgb [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.DynamicBrushTexturesDoNotAccumulateAcrossFrames [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismAdditionalKernelGpuTests.LightingEffectsUsesPackedLightsHeightNormalsAndExposure [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismAdditionalKernelGpuTests.TransformMapsTranslationAndTransparentEdges [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismAdditionalKernelGpuTests.NeighborhoodNoiseIsDeterministicAndUsesPreparedSeed [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.SpriteBatchInsideOpacityScopeBlendsWithBackground [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.SemiTransparentSpriteBatchBlendsInsideRetainedSurface [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.SemiTransparentSolidColorBlendsWithBackground [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.OpaqueStrokeOccludesEarlierStrokeAroundTranslucentContent [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.TransparentGradientStopRevealsBackgroundInsteadOfKeepingSolidRgb [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.AlphaBlendRenderingTests.DynamicBrushTexturesDoNotAccumulateAcrossFrames [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismAdditionalKernelGpuTests.LightingEffectsUsesPackedLightsHeightNormalsAndExposure [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismAdditionalKernelGpuTests.TransformMapsTranslationAndTransparentEdges [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismAdditionalKernelGpuTests.NeighborhoodNoiseIsDeterministicAndUsesPreparedSeed [1 ms]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismAdditionalKernelGpuTests.WaveNoiseMatchesCpuSpectralEvaluation [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismAdditionalKernelGpuTests.SpherizeMatchesCpuOrthographicProjection [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismAdditionalKernelGpuTests.ColorHalftoneProducesChromaticAngleSensitiveScreens [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismAdditionalKernelGpuTests.ChannelMixerMatchesCpuLinearRgbMatrixAcrossProfiles [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismAdditionalKernelGpuTests.PosterizeMatchesCpuUniformLinearRgbQuantizationAcrossProfiles [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismAdditionalKernelGpuTests.HalftonePatternPreservesDotAreaColorsAndAlpha [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismAdjustmentResourceMigrationTests.TypedCurvesResourceRendersAndInvalidatesItsRetainedLut [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismAdjustmentResourceMigrationTests.InvalidHaldDimensionsReportFallbackAndPreserveSource [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismAdjustmentResourceMigrationTests.HaldKernelUsesResourceDimensionsAndCubeSize [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismAdditionalKernelGpuTests.WaveNoiseMatchesCpuSpectralEvaluation [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismAdditionalKernelGpuTests.SpherizeMatchesCpuOrthographicProjection [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismAdditionalKernelGpuTests.ColorHalftoneProducesChromaticAngleSensitiveScreens [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismAdditionalKernelGpuTests.ChannelMixerMatchesCpuLinearRgbMatrixAcrossProfiles [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismAdditionalKernelGpuTests.PosterizeMatchesCpuUniformLinearRgbQuantizationAcrossProfiles [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismAdditionalKernelGpuTests.HalftonePatternPreservesDotAreaColorsAndAlpha [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismAdjustmentResourceMigrationTests.TypedCurvesResourceRendersAndInvalidatesItsRetainedLut [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismAdjustmentResourceMigrationTests.InvalidHaldDimensionsReportFallbackAndPreserveSource [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismAdjustmentResourceMigrationTests.HaldKernelUsesResourceDimensionsAndCubeSize [1 ms]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismBackdropHostingMigrationTests.BackdropLifecycleStressReleasesResourcesAcrossVisibilityReplacementResetAndNavigation [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismBackdropHostingMigrationTests.RenderPngKeepsItsDelegateContractAndExposesTheActiveTarget [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismBackdropHostingMigrationTests.ForeignBackdropLeaseFallsBackObservablyWithoutCpuReadback [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismBackdropHostingMigrationTests.UiHostReplacesProvidersTransactionallyWithoutTakingOwnership [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismBackdropHostingMigrationTests.SdlLeaseBorrowsTheActiveFrameTargetAndExpiresAtPresent [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismBackdropHostingMigrationTests.BackdropSamplesLowerUiOnGpuAndUpperUiRemainsUnaffected [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismBackdropHostingMigrationTests.UiHostBackdropSceneMatchesGoldensAndSharesOneLeaseAtEveryScale [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismBaselineConformanceMigrationTests.DisposedPrismSessionCannotRenderAndANewSessionPreservesPixels [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismBackdropHostingMigrationTests.BackdropLifecycleStressReleasesResourcesAcrossVisibilityReplacementResetAndNavigation [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismBackdropHostingMigrationTests.RenderPngKeepsItsDelegateContractAndExposesTheActiveTarget [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismBackdropHostingMigrationTests.ForeignBackdropLeaseFallsBackObservablyWithoutCpuReadback [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismBackdropHostingMigrationTests.UiHostReplacesProvidersTransactionallyWithoutTakingOwnership [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismBackdropHostingMigrationTests.SdlLeaseBorrowsTheActiveFrameTargetAndExpiresAtPresent [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismBackdropHostingMigrationTests.BackdropSamplesLowerUiOnGpuAndUpperUiRemainsUnaffected [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismBackdropHostingMigrationTests.UiHostBackdropSceneMatchesGoldensAndSharesOneLeaseAtEveryScale [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismBaselineConformanceMigrationTests.DisposedPrismSessionCannotRenderAndANewSessionPreservesPixels [1 ms]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismBaselineConformanceMigrationTests.FreshExecutedGraphDumpsCorrelateNestedAndTransformScopesDeterministically [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismBaselineConformanceMigrationTests.BaselineScenesPreserveFrozenPixelsAndSemanticAnchors [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismBaselineConformanceMigrationTests.CaptureBoundsMatchAnExplicitClipAtTheSameTransform [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismBaselineConformanceMigrationTests.TransformedControlBoundsLimitCaptureBeforeFiltering [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismBaselineConformanceMigrationTests.CatalogGalleryRendersNonblankFramesThroughNativeFrameExport [SKIP]
+[xUnit.net 00:00:28.90]     Cerneala.Tests.Drawing.SdlGpu.PrismBaselineConformanceMigrationTests.ResizeRecreatesTheWindowTargetAndPrismRendersAtTheNewExtent [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismChromaticAberrationGpuTests.GpuMatchesRadialLinearCpuFallback [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismBaselineConformanceMigrationTests.FreshExecutedGraphDumpsCorrelateNestedAndTransformScopesDeterministically [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismBaselineConformanceMigrationTests.BaselineScenesPreserveFrozenPixelsAndSemanticAnchors [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismBaselineConformanceMigrationTests.CaptureBoundsMatchAnExplicitClipAtTheSameTransform [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismBaselineConformanceMigrationTests.TransformedControlBoundsLimitCaptureBeforeFiltering [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismBaselineConformanceMigrationTests.CatalogGalleryRendersNonblankFramesThroughNativeFrameExport [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismBaselineConformanceMigrationTests.ResizeRecreatesTheWindowTargetAndPrismRendersAtTheNewExtent [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismChromaticAberrationGpuTests.GpuMatchesRadialLinearCpuFallback [1 ms]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismColorGpuTests.GpuMatchesCpuForOklabCat16GradeAndClampMode [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismColorGpuTests.ScRgbGpuKernelsPreservePremultipliedExtendedRange [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismColorMatrixGpuTests.GpuMatchesCpuForAffineRgbaAndClampMode [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismConteCrayonGpuTests.FlowXDogPipelineRendersWithDedicatedFinalEffect [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismCraquelureGpuTests.WarpedVoronoiPassMatchesCpuAndPreservesAssociatedAlpha [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismCustomConvolutionGpuTests.GpuMatchesCpuForNegativeUnnormalizedKernelAndWrapEdges [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismDissolveGpuTests.GpuUsesTheSameRankMapAndSeedOffsetAsCpu [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismEmbossGpuTests.GpuReliefMatchesAnalyticCpuAtCenterAndPreservesAlpha [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismColorGpuTests.GpuMatchesCpuForOklabCat16GradeAndClampMode [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismColorGpuTests.ScRgbGpuKernelsPreservePremultipliedExtendedRange [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismColorMatrixGpuTests.GpuMatchesCpuForAffineRgbaAndClampMode [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismConteCrayonGpuTests.FlowXDogPipelineRendersWithDedicatedFinalEffect [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismCraquelureGpuTests.WarpedVoronoiPassMatchesCpuAndPreservesAssociatedAlpha [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismCustomConvolutionGpuTests.GpuMatchesCpuForNegativeUnnormalizedKernelAndWrapEdges [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismDissolveGpuTests.GpuUsesTheSameRankMapAndSeedOffsetAsCpu [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismEmbossGpuTests.GpuReliefMatchesAnalyticCpuAtCenterAndPreservesAlpha [1 ms]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismExecutionBudgetMigrationTests.WarmRetainedExecutionPreservesTheZeroAllocationAndReuseBudgets [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismExecutionBudgetMigrationTests.TwoThousandFortyEightAnimatedFramesReuseSurfacesAndShaderPipelines [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismExecutionMigrationTests.StaticFinalHitSkipsCaptureAndCoveredPassesWithoutChangingPixels [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismExecutionMigrationTests.StrokeGpuProducesSolidEuclideanOutsideBand [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismExecutionMigrationTests.LiveLayerOpacityMutationChangesRetainedPixelsAndMatchesFreshOutput [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismExecutionMigrationTests.TransformExecutionMinifiesCheckerboardWithoutAliasing [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismExecutionMigrationTests.StrokeExecutorPreparesAndConsumesSignedDistanceField [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismExecutionBudgetMigrationTests.WarmRetainedExecutionPreservesTheZeroAllocationAndReuseBudgets [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismExecutionBudgetMigrationTests.TwoThousandFortyEightAnimatedFramesReuseSurfacesAndShaderPipelines [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismExecutionMigrationTests.StaticFinalHitSkipsCaptureAndCoveredPassesWithoutChangingPixels [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismExecutionMigrationTests.StrokeGpuProducesSolidEuclideanOutsideBand [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismExecutionMigrationTests.LiveLayerOpacityMutationChangesRetainedPixelsAndMatchesFreshOutput [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismExecutionMigrationTests.TransformExecutionMinifiesCheckerboardWithoutAliasing [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismExecutionMigrationTests.StrokeExecutorPreparesAndConsumesSignedDistanceField [1 ms]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismFundamentalGpuTests.BlendMatchesDualBackdropKnockoutRecurrence [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismFundamentalGpuTests.BlendMatchesAnalyticReferenceForEveryModeAndAlphaCase [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismFundamentalGpuTests.BlendHonorsChannelsBlendIfAndKnockout [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismFundamentalGpuTests.FundamentalKernelsPreservePremultipliedAlpha [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismFundamentalGpuTests.MaskHonorsChannelInvertDensityTransformAndFeather [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismFundamentalGpuTests.DissolveIsDeterministicAndSeededPerLayer [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismFundamentalGpuTests.ColorRoundTripsEveryProfileWithinTheGoldenTolerance [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismGrainGpuTests.BooleanGrainShaderMatchesCpuAndPreservesAssociatedAlpha [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismFundamentalGpuTests.BlendMatchesDualBackdropKnockoutRecurrence [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismFundamentalGpuTests.BlendMatchesAnalyticReferenceForEveryModeAndAlphaCase [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismFundamentalGpuTests.BlendHonorsChannelsBlendIfAndKnockout [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismFundamentalGpuTests.FundamentalKernelsPreservePremultipliedAlpha [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismFundamentalGpuTests.MaskHonorsChannelInvertDensityTransformAndFeather [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismFundamentalGpuTests.DissolveIsDeterministicAndSeededPerLayer [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismFundamentalGpuTests.ColorRoundTripsEveryProfileWithinTheGoldenTolerance [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismGrainGpuTests.BooleanGrainShaderMatchesCpuAndPreservesAssociatedAlpha [1 ms]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismGraphicPenGpuTests.FlowXDogPipelineRendersWithDedicatedGraphicPenTechnique [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismMosaicTilesGpuTests.MosaicTilesShaderMatchesCpuAndPreservesAssociatedAlpha [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismMultipassKernelGpuTests.XDogMatchesTheCpuReference [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismMultipassKernelGpuTests.BasReliefMatchesCpuAndReversesDirectionalShading [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismMultipassKernelGpuTests.CutoutRunsBoundedMeanShiftAndQuantizesOnce [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismMultipassKernelGpuTests.FrescoRunsSmoothedTensorAndAnisotropicKuwaharaComposite [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismMultipassKernelGpuTests.ColoredPencilRunsTensorBlurAndSwingBilateralComposite [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismMultipassKernelGpuTests.PosterEdgesRunsGuidedFilterQuantizationAndInkComposite [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismGraphicPenGpuTests.FlowXDogPipelineRendersWithDedicatedGraphicPenTechnique [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismMosaicTilesGpuTests.MosaicTilesShaderMatchesCpuAndPreservesAssociatedAlpha [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismMultipassKernelGpuTests.XDogMatchesTheCpuReference [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismMultipassKernelGpuTests.BasReliefMatchesCpuAndReversesDirectionalShading [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismMultipassKernelGpuTests.CutoutRunsBoundedMeanShiftAndQuantizesOnce [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismMultipassKernelGpuTests.FrescoRunsSmoothedTensorAndAnisotropicKuwaharaComposite [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismMultipassKernelGpuTests.ColoredPencilRunsTensorBlurAndSwingBilateralComposite [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismMultipassKernelGpuTests.PosterEdgesRunsGuidedFilterQuantizationAndInkComposite [1 ms]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismNotePaperGpuTests.HeightFieldPipelineRendersPaperHolesAndPreservesAlpha [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismPatchworkGpuTests.PatchworkShaderMatchesCpuAndPreservesAssociatedAlpha [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismPhotocopyGpuTests.XDogPipelineRendersDarkMassesAndPreservesAssociatedAlpha [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismPlasterGpuTests.FivePassGuidedReliefRendersAndPreservesSourceAlpha [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismNotePaperGpuTests.HeightFieldPipelineRendersPaperHolesAndPreservesAlpha [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismPatchworkGpuTests.PatchworkShaderMatchesCpuAndPreservesAssociatedAlpha [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismPhotocopyGpuTests.XDogPipelineRendersDarkMassesAndPreservesAssociatedAlpha [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismPlasterGpuTests.FivePassGuidedReliefRendersAndPreservesSourceAlpha [1 ms]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismRetainedDependencyMigrationTests.BackdropAndLowerUiVersionsInvalidateOnlyTheirDependentWork [SKIP]
+[xUnit.net 00:00:28.93]     Cerneala.Tests.Drawing.SdlGpu.PrismRetainedDependencyMigrationTests.DifferentControlOwnersNeverShareCapturedPixels [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismRetainedDependencyMigrationTests.CaptureExceptionReleasesLeasesAndCannotReuseThePreviousOwnerPixels [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismRetainedExecutionTests.OwnerInvalidationAndHiddenFramesReleaseEntriesWithoutStalePixels [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismRetainedDependencyMigrationTests.BackdropAndLowerUiVersionsInvalidateOnlyTheirDependentWork [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismRetainedDependencyMigrationTests.DifferentControlOwnersNeverShareCapturedPixels [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismRetainedDependencyMigrationTests.CaptureExceptionReleasesLeasesAndCannotReuseThePreviousOwnerPixels [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismRetainedExecutionTests.OwnerInvalidationAndHiddenFramesReleaseEntriesWithoutStalePixels [1 ms]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismRetainedExecutionTests.PixelAffectingMutationMissesAndMatchesFreshOutput [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismRetainedExecutionTests.CroppedNestedScopesPreserveReferenceCoordinatesAndCachedPixels [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismRetainedExecutionTests.CachedSimpleMaskedGroupAndNestedScenesMatchFreshPixelsAndSkipCoveredWork [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismReticulationGpuTests.WorleyPassMatchesCpuAndPreservesAssociatedAlpha [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismScanlinesGpuTests.GpuMatchesGeneralizedGaussianCpuFallback [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismSolarizeGpuTests.GpuMatchesClassicPerChannelHardThresholdAndCpuFallback [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismSpatterPointTextureCacheTests.SpatterGpuTracksTheCpuRecursiveWangEvaluation [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismSpinBlurGpuTests.PixelSpaceKernelReadsBaseLevelRegardlessOfMipAvailability [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismRetainedExecutionTests.PixelAffectingMutationMissesAndMatchesFreshOutput [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismRetainedExecutionTests.CroppedNestedScopesPreserveReferenceCoordinatesAndCachedPixels [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismRetainedExecutionTests.CachedSimpleMaskedGroupAndNestedScenesMatchFreshPixelsAndSkipCoveredWork [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismReticulationGpuTests.WorleyPassMatchesCpuAndPreservesAssociatedAlpha [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismScanlinesGpuTests.GpuMatchesGeneralizedGaussianCpuFallback [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismSolarizeGpuTests.GpuMatchesClassicPerChannelHardThresholdAndCpuFallback [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismSpatterPointTextureCacheTests.SpatterGpuTracksTheCpuRecursiveWangEvaluation [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismSpinBlurGpuTests.PixelSpaceKernelReadsBaseLevelRegardlessOfMipAvailability [1 ms]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismStainedGlassGpuTests.JumpFloodPipelineMatchesCpuFallback [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismStrokeDistanceFieldGpuTests.SeedPassUsesDirectionalCoverageForDiagonalEdge [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.ColorLookupSamplesAValidatedCanonicalHaldResourceOnGpu [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.BevelEmbossProfilesRenderReliefAndAreDeterministic [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.DropShadowGaussianFalloffDoesNotFavorCardinalDirections [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.OuterGlowFallsOffContinuouslyInsteadOfDrawingDetachedRectangles [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.MosaicPreserveEdgesRendersBilateralCellsOnSdlGpu [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.OverlayOuterGlowUsesBackdropAcrossExpandedEffectBounds [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismStainedGlassGpuTests.JumpFloodPipelineMatchesCpuFallback [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismStrokeDistanceFieldGpuTests.SeedPassUsesDirectionalCoverageForDiagonalEdge [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.ColorLookupSamplesAValidatedCanonicalHaldResourceOnGpu [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.BevelEmbossProfilesRenderReliefAndAreDeterministic [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.DropShadowGaussianFalloffDoesNotFavorCardinalDirections [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.OuterGlowFallsOffContinuouslyInsteadOfDrawingDetachedRectangles [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.MosaicPreserveEdgesRendersBilateralCellsOnSdlGpu [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.OverlayOuterGlowUsesBackdropAcrossExpandedEffectBounds [1 ms]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.OuterGlowUsesJfaDistanceInsideTransparentHolesAndBeyondThirtyTwoPixels [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.FibersRendersLongitudinallyCoherentPatternOnSdlGpu [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.TwirlEightTapPathRendersThroughSdlGpuWithoutFallback [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.OuterGlowGaussianFalloffDoesNotFavorCardinalDirections [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.ExtrudeRendersProjectedBlockFacesOnSdlGpu [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismTexturizerGpuTests.ScharrHeightLightingMatchesCpuAndPreservesAssociatedAlpha [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismTilesGpuTests.GpuMatchesCleanRoomInverseCellRemapCpuFallback [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismTraceContourGpuTests.GpuMatchesCpuForLowerAndUpperLevelSetBoundaries [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.OuterGlowUsesJfaDistanceInsideTransparentHolesAndBeyondThirtyTwoPixels [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.FibersRendersLongitudinallyCoherentPatternOnSdlGpu [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.TwirlEightTapPathRendersThroughSdlGpuWithoutFallback [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.OuterGlowGaussianFalloffDoesNotFavorCardinalDirections [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismStyleConformanceMigrationTests.ExtrudeRendersProjectedBlockFacesOnSdlGpu [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismTexturizerGpuTests.ScharrHeightLightingMatchesCpuAndPreservesAssociatedAlpha [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismTilesGpuTests.GpuMatchesCleanRoomInverseCellRemapCpuFallback [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismTraceContourGpuTests.GpuMatchesCpuForLowerAndUpperLevelSetBoundaries [1 ms]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismWaterPaperGpuTests.PigmentAndSubstratePipelineChangesColorAndPreservesAlpha [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismWindGpuTests.ShaderPackageCreatesFloatingPointPipeline [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.PrismWindGpuTests.LicPipelineChangesImageAndHonorsDirection [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.ShapePrimitiveRenderingTests.RetainedShapesMatchDirectDrawingWithAffineTransformsAndOpacity [SKIP]
+[xUnit.net 00:00:28.94]     Cerneala.Tests.Drawing.SdlGpu.ShapePrimitiveRenderingTests.RelocatedCacheMatchesFreshRecordingAtFractionalDpi [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismWaterPaperGpuTests.PigmentAndSubstratePipelineChangesColorAndPreservesAlpha [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismWindGpuTests.ShaderPackageCreatesFloatingPointPipeline [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.PrismWindGpuTests.LicPipelineChangesImageAndHonorsDirection [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.ShapePrimitiveRenderingTests.RetainedShapesMatchDirectDrawingWithAffineTransformsAndOpacity [1 ms]
+  Skipped Cerneala.Tests.Drawing.SdlGpu.ShapePrimitiveRenderingTests.RelocatedCacheMatchesFreshRecordingAtFractionalDpi [1 ms]
+
+Passed!  - Failed:     0, Passed:   563, Skipped:   235, Total:   798, Duration: 27 s - Cerneala.Tests.SdlGpu.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Release\net8.0-windows\Cerneala.Tests.SourceGen.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:   625, Skipped:     0, Total:   625, Duration: 1 m 12 s - Cerneala.Tests.SourceGen.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:   304, Skipped:     0, Total:   304, Duration: 25 s - Cerneala.Tests.Timbre.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.VisualStudio\bin\Release\net10.0-windows\Cerneala.Tests.VisualStudio.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    47, Skipped:     0, Total:    47, Duration: 731 ms - Cerneala.Tests.VisualStudio.dll (net10.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:01:01.81]     Cerneala.Tests.Drawing.SdlGpuDrawingConformanceTests.DrawingApiShowcaseMatchesHistoricalPixelThresholds [SKIP]
+[xUnit.net 00:01:01.81]     Cerneala.Tests.Drawing.Prism.PrismSdlGpuPixelConformanceTests.EveryResourceFreeCatalogEntryMatchesHistoricalPixelThresholds [SKIP]
+  Skipped Cerneala.Tests.Drawing.SdlGpuDrawingConformanceTests.DrawingApiShowcaseMatchesHistoricalPixelThresholds [1 ms]
+  Skipped Cerneala.Tests.Drawing.Prism.PrismSdlGpuPixelConformanceTests.EveryResourceFreeCatalogEntryMatchesHistoricalPixelThresholds [1 ms]
+
+Passed!  - Failed:     0, Passed:  4195, Skipped:     2, Total:  4197, Duration: 1 m 31 s - Cerneala.Tests.dll (net8.0)
+Test run for C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Release\net8.0\Cerneala.Tetris.Tests.dll (.NETCoreApp,Version=v8.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    31, Skipped:     0, Total:    31, Duration: 959 ms - Cerneala.Tetris.Tests.dll (net8.0)
+FULL-SOLUTION-EXIT 0

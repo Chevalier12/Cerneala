@@ -1,0 +1,146 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="8386c01b-38f8-4973-99f2-f8bfd1d6f58e" name="lauri@DESKTOP-JT43V3D 2026-10-07 12:11:32" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-07T12:11:32.7677587+03:00" queuing="2026-10-07T12:11:32.7677591+03:00" start="2026-10-07T12:11:18.7760054+03:00" finish="2026-10-07T12:12:08.7572708+03:00" />
+  <TestSettings name="default" id="adc765ae-2e6d-4722-8d40-0cea0d5126b4">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-10-07_12_11_32" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="c8fe5027-5cef-4463-a256-e4adf0a7c12e" testId="9f2fe3ed-8a36-08bf-67cb-9e315ccf5b3f" testName="Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration(shortName: &quot;C:\\Users\\lauri\\AppData\\Local\\Temp\\cerneala-t&quot;···, longName: &quot;C:\\Users\\lauri\\AppData\\Local\\Temp\\cerneala-t&quot;···)" computerName="DESKTOP-JT43V3D" duration="00:00:11.9280624" startTime="2026-10-07T12:12:08.6072792+03:00" endTime="2026-10-07T12:12:08.6072795+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c8fe5027-5cef-4463-a256-e4adf0a7c12e">
+      <Output>
+        <ErrorInfo>
+          <Message>System.TimeoutException : Harness timeout: Streaming playback did not settle.</Message>
+          <StackTrace>   at Cerneala.Tests.Timbre.Harness.HarnessWait.WithTimeout(Task task, Nullable`1 timeout, String failure) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\HarnessWait.cs:line 13&#xD;
+   at Cerneala.Tests.Timbre.Harness.TimbreRig.SettledAsync(SoundPlayback[] playbacks) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\TimbreRig.cs:line 89&#xD;
+   at Cerneala.Tests.Timbre.Harness.TimbreRig.StartAsync(SoundPlayback[] playbacks) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\TimbreRig.cs:line 98&#xD;
+   at Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.PlayFirstQueueAsync(String path, Nullable`1 barrierFraction) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Decoding\SoundStreamingIncrementalTests.cs:line 66&#xD;
+   at Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration(String shortName, String longName) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Decoding\SoundStreamingIncrementalTests.cs:line 24&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="e644a958-7581-4b11-9889-71981e04bc3f" testId="5dd4cad2-5a64-85aa-da1b-a1aa4c9913d6" testName="Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration(shortName: &quot;vorbis-22050-mono-q2.ogg&quot;, longName: &quot;vorbis-long-22050-mono-q2.ogg&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:11.9876114" startTime="2026-10-07T12:11:56.6786840+03:00" endTime="2026-10-07T12:11:56.6786843+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e644a958-7581-4b11-9889-71981e04bc3f">
+      <Output>
+        <ErrorInfo>
+          <Message>System.TimeoutException : Harness timeout: Streaming playback did not settle.</Message>
+          <StackTrace>   at Cerneala.Tests.Timbre.Harness.HarnessWait.WithTimeout(Task task, Nullable`1 timeout, String failure) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\HarnessWait.cs:line 13&#xD;
+   at Cerneala.Tests.Timbre.Harness.TimbreRig.SettledAsync(SoundPlayback[] playbacks) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\TimbreRig.cs:line 89&#xD;
+   at Cerneala.Tests.Timbre.Harness.TimbreRig.StartAsync(SoundPlayback[] playbacks) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\TimbreRig.cs:line 98&#xD;
+   at Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.PlayFirstQueueAsync(String path, Nullable`1 barrierFraction) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Decoding\SoundStreamingIncrementalTests.cs:line 66&#xD;
+   at Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration(String shortName, String longName) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Decoding\SoundStreamingIncrementalTests.cs:line 24&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="e567cffc-7ea7-4db7-a461-a7ae3865a132" testId="7bd3fb0b-f8fc-4fb6-35ec-ef2fbb460c27" testName="Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration(shortName: &quot;mp3-mpeg2-22050-mono-vbr.mp3&quot;, longName: &quot;mp3-long-22050-mono-cbr64.mp3&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:11.9599636" startTime="2026-10-07T12:11:44.6903813+03:00" endTime="2026-10-07T12:11:44.6903816+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e567cffc-7ea7-4db7-a461-a7ae3865a132">
+      <Output>
+        <ErrorInfo>
+          <Message>System.TimeoutException : Harness timeout: Streaming playback did not settle.</Message>
+          <StackTrace>   at Cerneala.Tests.Timbre.Harness.HarnessWait.WithTimeout(Task task, Nullable`1 timeout, String failure) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\HarnessWait.cs:line 13&#xD;
+   at Cerneala.Tests.Timbre.Harness.TimbreRig.SettledAsync(SoundPlayback[] playbacks) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\TimbreRig.cs:line 89&#xD;
+   at Cerneala.Tests.Timbre.Harness.TimbreRig.StartAsync(SoundPlayback[] playbacks) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\TimbreRig.cs:line 98&#xD;
+   at Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.PlayFirstQueueAsync(String path, Nullable`1 barrierFraction) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Decoding\SoundStreamingIncrementalTests.cs:line 66&#xD;
+   at Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration(String shortName, String longName) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Decoding\SoundStreamingIncrementalTests.cs:line 24&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="e93565d3-3e87-4844-bdaf-d304dd069663" testId="e70d7e24-150c-446f-2be8-400bb95d616f" testName="Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration(shortName: &quot;opus-mono-16000-24k.opus&quot;, longName: &quot;opus-long-mono-32k.opus&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:12.3620078" startTime="2026-10-07T12:11:32.7339127+03:00" endTime="2026-10-07T12:11:32.7339396+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e93565d3-3e87-4844-bdaf-d304dd069663">
+      <Output>
+        <ErrorInfo>
+          <Message>System.TimeoutException : Harness timeout: Streaming playback did not settle.</Message>
+          <StackTrace>   at Cerneala.Tests.Timbre.Harness.HarnessWait.WithTimeout(Task task, Nullable`1 timeout, String failure) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\HarnessWait.cs:line 13&#xD;
+   at Cerneala.Tests.Timbre.Harness.TimbreRig.SettledAsync(SoundPlayback[] playbacks) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\TimbreRig.cs:line 89&#xD;
+   at Cerneala.Tests.Timbre.Harness.TimbreRig.StartAsync(SoundPlayback[] playbacks) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\TimbreRig.cs:line 98&#xD;
+   at Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.PlayFirstQueueAsync(String path, Nullable`1 barrierFraction) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Decoding\SoundStreamingIncrementalTests.cs:line 66&#xD;
+   at Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration(String shortName, String longName) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Decoding\SoundStreamingIncrementalTests.cs:line 24&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration(shortName: &quot;opus-mono-16000-24k.opus&quot;, longName: &quot;opus-long-mono-32k.opus&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="e70d7e24-150c-446f-2be8-400bb95d616f">
+      <Execution id="e93565d3-3e87-4844-bdaf-d304dd069663" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests" name="FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration(shortName: &quot;C:\\Users\\lauri\\AppData\\Local\\Temp\\cerneala-t&quot;···, longName: &quot;C:\\Users\\lauri\\AppData\\Local\\Temp\\cerneala-t&quot;···)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="9f2fe3ed-8a36-08bf-67cb-9e315ccf5b3f">
+      <Execution id="c8fe5027-5cef-4463-a256-e4adf0a7c12e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests" name="FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration(shortName: &quot;vorbis-22050-mono-q2.ogg&quot;, longName: &quot;vorbis-long-22050-mono-q2.ogg&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="5dd4cad2-5a64-85aa-da1b-a1aa4c9913d6">
+      <Execution id="e644a958-7581-4b11-9889-71981e04bc3f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests" name="FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration(shortName: &quot;mp3-mpeg2-22050-mono-vbr.mp3&quot;, longName: &quot;mp3-long-22050-mono-cbr64.mp3&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="7bd3fb0b-f8fc-4fb6-35ec-ef2fbb460c27">
+      <Execution id="e567cffc-7ea7-4db7-a461-a7ae3865a132" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests" name="FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="9f2fe3ed-8a36-08bf-67cb-9e315ccf5b3f" executionId="c8fe5027-5cef-4463-a256-e4adf0a7c12e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5dd4cad2-5a64-85aa-da1b-a1aa4c9913d6" executionId="e644a958-7581-4b11-9889-71981e04bc3f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7bd3fb0b-f8fc-4fb6-35ec-ef2fbb460c27" executionId="e567cffc-7ea7-4db7-a461-a7ae3865a132" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e70d7e24-150c-446f-2be8-400bb95d616f" executionId="e93565d3-3e87-4844-bdaf-d304dd069663" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="4" executed="4" passed="0" failed="4" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.29]   Discovering: Cerneala.Tests.Timbre&#xD;
+[xUnit.net 00:00:00.82]   Discovered:  Cerneala.Tests.Timbre&#xD;
+[xUnit.net 00:00:00.83]   Starting:    Cerneala.Tests.Timbre&#xD;
+[xUnit.net 00:00:13.27]       System.TimeoutException : Harness timeout: Streaming playback did not settle.&#xD;
+[xUnit.net 00:00:13.27]       Stack Trace:&#xD;
+[xUnit.net 00:00:13.27]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\HarnessWait.cs(13,0): at Cerneala.Tests.Timbre.Harness.HarnessWait.WithTimeout(Task task, Nullable`1 timeout, String failure)&#xD;
+[xUnit.net 00:00:13.27]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\TimbreRig.cs(89,0): at Cerneala.Tests.Timbre.Harness.TimbreRig.SettledAsync(SoundPlayback[] playbacks)&#xD;
+[xUnit.net 00:00:13.27]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\TimbreRig.cs(98,0): at Cerneala.Tests.Timbre.Harness.TimbreRig.StartAsync(SoundPlayback[] playbacks)&#xD;
+[xUnit.net 00:00:13.27]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Decoding\SoundStreamingIncrementalTests.cs(66,0): at Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.PlayFirstQueueAsync(String path, Nullable`1 barrierFraction)&#xD;
+[xUnit.net 00:00:13.27]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Decoding\SoundStreamingIncrementalTests.cs(24,0): at Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration(String shortName, String longName)&#xD;
+[xUnit.net 00:00:13.27]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:25.22]       System.TimeoutException : Harness timeout: Streaming playback did not settle.&#xD;
+[xUnit.net 00:00:25.22]       Stack Trace:&#xD;
+[xUnit.net 00:00:25.22]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\HarnessWait.cs(13,0): at Cerneala.Tests.Timbre.Harness.HarnessWait.WithTimeout(Task task, Nullable`1 timeout, String failure)&#xD;
+[xUnit.net 00:00:25.22]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\TimbreRig.cs(89,0): at Cerneala.Tests.Timbre.Harness.TimbreRig.SettledAsync(SoundPlayback[] playbacks)&#xD;
+[xUnit.net 00:00:25.22]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\TimbreRig.cs(98,0): at Cerneala.Tests.Timbre.Harness.TimbreRig.StartAsync(SoundPlayback[] playbacks)&#xD;
+[xUnit.net 00:00:25.23]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Decoding\SoundStreamingIncrementalTests.cs(66,0): at Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.PlayFirstQueueAsync(String path, Nullable`1 barrierFraction)&#xD;
+[xUnit.net 00:00:25.23]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Decoding\SoundStreamingIncrementalTests.cs(24,0): at Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration(String shortName, String longName)&#xD;
+[xUnit.net 00:00:25.23]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:37.21]       System.TimeoutException : Harness timeout: Streaming playback did not settle.&#xD;
+[xUnit.net 00:00:37.21]       Stack Trace:&#xD;
+[xUnit.net 00:00:37.21]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\HarnessWait.cs(13,0): at Cerneala.Tests.Timbre.Harness.HarnessWait.WithTimeout(Task task, Nullable`1 timeout, String failure)&#xD;
+[xUnit.net 00:00:37.21]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\TimbreRig.cs(89,0): at Cerneala.Tests.Timbre.Harness.TimbreRig.SettledAsync(SoundPlayback[] playbacks)&#xD;
+[xUnit.net 00:00:37.21]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\TimbreRig.cs(98,0): at Cerneala.Tests.Timbre.Harness.TimbreRig.StartAsync(SoundPlayback[] playbacks)&#xD;
+[xUnit.net 00:00:37.21]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Decoding\SoundStreamingIncrementalTests.cs(66,0): at Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.PlayFirstQueueAsync(String path, Nullable`1 barrierFraction)&#xD;
+[xUnit.net 00:00:37.21]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Decoding\SoundStreamingIncrementalTests.cs(24,0): at Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration(String shortName, String longName)&#xD;
+[xUnit.net 00:00:37.21]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:49.14]       System.TimeoutException : Harness timeout: Streaming playback did not settle.&#xD;
+[xUnit.net 00:00:49.14]       Stack Trace:&#xD;
+[xUnit.net 00:00:49.14]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\HarnessWait.cs(13,0): at Cerneala.Tests.Timbre.Harness.HarnessWait.WithTimeout(Task task, Nullable`1 timeout, String failure)&#xD;
+[xUnit.net 00:00:49.14]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\TimbreRig.cs(89,0): at Cerneala.Tests.Timbre.Harness.TimbreRig.SettledAsync(SoundPlayback[] playbacks)&#xD;
+[xUnit.net 00:00:49.14]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Harness\TimbreRig.cs(98,0): at Cerneala.Tests.Timbre.Harness.TimbreRig.StartAsync(SoundPlayback[] playbacks)&#xD;
+[xUnit.net 00:00:49.14]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Decoding\SoundStreamingIncrementalTests.cs(66,0): at Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.PlayFirstQueueAsync(String path, Nullable`1 barrierFraction)&#xD;
+[xUnit.net 00:00:49.14]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Decoding\SoundStreamingIncrementalTests.cs(24,0): at Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration(String shortName, String longName)&#xD;
+[xUnit.net 00:00:49.14]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:49.15]   Finished:    Cerneala.Tests.Timbre&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T12:11:32.7303316+03:00">
+        <Text>[xUnit.net 00:00:13.26]     Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration(shortName: "opus-mono-16000-24k.opus", longName: "opus-long-mono-32k.opus") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T12:11:44.6897086+03:00">
+        <Text>[xUnit.net 00:00:25.22]     Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration(shortName: "mp3-mpeg2-22050-mono-vbr.mp3", longName: "mp3-long-22050-mono-cbr64.mp3") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T12:11:56.6782908+03:00">
+        <Text>[xUnit.net 00:00:37.21]     Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration(shortName: "vorbis-22050-mono-q2.ogg", longName: "vorbis-long-22050-mono-q2.ogg") [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T12:12:08.6066706+03:00">
+        <Text>[xUnit.net 00:00:49.14]     Cerneala.Tests.Timbre.Decoding.SoundStreamingIncrementalTests.FirstPcmPrecedesReadingTheSourceAndBuffersDoNotGrowWithDuration(shortName: "C:\\Users\\lauri\\AppData\\Local\\Temp\\cerneala-t"···, longName: "C:\\Users\\lauri\\AppData\\Local\\Temp\\cerneala-t"···) [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

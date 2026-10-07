@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Task-local generator of the Timbre decoding corpus. It is not part of
+       Cerneala.slnx and never a runtime dependency: the encoders below only
+       produce the committed fixtures recorded in corpus-manifest.json. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- LAME 3.100 (libmp3lame.64.dll, LGPL) through the MIT NAudio.Lame wrapper. -->
+    <PackageReference Include="NAudio.Lame" Version="2.1.0" />
+    <PackageReference Include="OggVorbisEncoder" Version="1.2.2" />
+    <PackageReference Include="Concentus" Version="2.2.2" />
+  </ItemGroup>
+
+</Project>

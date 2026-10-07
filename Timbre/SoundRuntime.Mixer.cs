@@ -340,6 +340,7 @@ public sealed partial class SoundRuntime
             }
 
             playback.PublishPosition(feed.Position);
+            playback.PublishLength(feed.LengthFrames);
             if (voice.ProductionEnded)
             {
                 voice.EndFrame = voice.LastContributedEnd;

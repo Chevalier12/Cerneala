@@ -4,6 +4,9 @@ namespace Cerneala.Timbre;
 
 public abstract class SoundSource
 {
+    // FileStream read buffer of a file source, reserved before the file opens.
+    internal const int FileBufferBytes = 64 * 1024;
+
     private protected SoundSource(string name)
     {
         Name = name;
@@ -30,13 +33,25 @@ public abstract class SoundSource
     public static SoundSource FromStream(Func<Stream> openStream, string? name = null)
     {
         ArgumentNullException.ThrowIfNull(openStream);
-        return new StreamSource(openStream, name ?? "stream");
+        return new StreamSource(_ => openStream(), openStream, name ?? "stream");
+    }
+
+    public static SoundSource FromStream(Func<SoundMemoryBudget, Stream> openStream, string? name = null)
+    {
+        ArgumentNullException.ThrowIfNull(openStream);
+        return new StreamSource(openStream, openStream, name ?? "stream");
     }
 
     public static SoundSource FromReader(Func<SoundReader> openReader, string? name = null)
     {
         ArgumentNullException.ThrowIfNull(openReader);
-        return new ReaderSource(openReader, name ?? "reader");
+        return new ReaderSource(_ => openReader(), openReader, name ?? "reader");
+    }
+
+    public static SoundSource FromReader(Func<SoundMemoryBudget, SoundReader> openReader, string? name = null)
+    {
+        ArgumentNullException.ThrowIfNull(openReader);
+        return new ReaderSource(openReader, openReader, name ?? "reader");
     }
 
     public static implicit operator SoundSource(string path) => FromFile(path);
@@ -47,7 +62,8 @@ public abstract class SoundSource
     internal abstract object GetCacheKey(string baseDirectory);
 
     // Runs on a background worker; never on the UI thread or an audio callback.
-    internal abstract SoundReader Open(string baseDirectory);
+    // Live memory is reserved through `budget` before it is allocated.
+    internal abstract SoundReader Open(string baseDirectory, SoundMemoryBudget budget);
 
     private static SoundException Unavailable(string message, Exception? inner = null) =>
         new(SoundErrorKind.SourceUnavailable, message, inner);
@@ -56,35 +72,36 @@ public abstract class SoundSource
     {
         internal override object GetCacheKey(string baseDirectory) => new FileKey(Resolve(baseDirectory));
 
-        internal override SoundReader Open(string baseDirectory)
+        internal override SoundReader Open(string baseDirectory, SoundMemoryBudget budget)
         {
             string fullPath = Resolve(baseDirectory);
+            budget.Reserve(FileBufferBytes);
             FileStream stream;
             try
             {
-                stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 64 * 1024);
+                stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read, FileBufferBytes);
             }
             catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException)
             {
                 throw Unavailable($"Sound file '{fullPath}' could not be opened.", exception);
             }
 
-            return SoundDecoders.Open(stream, fullPath);
+            return SoundDecoders.Open(stream, fullPath, budget);
         }
 
         private string Resolve(string baseDirectory) => Path.GetFullPath(Path.Combine(baseDirectory, Name));
     }
 
-    private sealed class StreamSource(Func<Stream> openStream, string name) : SoundSource(name)
+    private sealed class StreamSource(Func<SoundMemoryBudget, Stream> openStream, object cacheKey, string name) : SoundSource(name)
     {
-        internal override object GetCacheKey(string baseDirectory) => openStream;
+        internal override object GetCacheKey(string baseDirectory) => cacheKey;
 
-        internal override SoundReader Open(string baseDirectory)
+        internal override SoundReader Open(string baseDirectory, SoundMemoryBudget budget)
         {
             Stream stream;
             try
             {
-                stream = openStream() ?? throw Unavailable($"Stream factory for '{Name}' returned null.");
+                stream = openStream(budget) ?? throw Unavailable($"Stream factory for '{Name}' returned null.");
             }
             catch (SoundException)
             {
@@ -101,19 +118,19 @@ public abstract class SoundSource
                 throw Unavailable($"Sound stream '{Name}' must be readable and seekable.");
             }
 
-            return SoundDecoders.Open(stream, Name);
+            return SoundDecoders.Open(stream, Name, budget);
         }
     }
 
-    private sealed class ReaderSource(Func<SoundReader> openReader, string name) : SoundSource(name)
+    private sealed class ReaderSource(Func<SoundMemoryBudget, SoundReader> openReader, object cacheKey, string name) : SoundSource(name)
     {
-        internal override object GetCacheKey(string baseDirectory) => openReader;
+        internal override object GetCacheKey(string baseDirectory) => cacheKey;
 
-        internal override SoundReader Open(string baseDirectory)
+        internal override SoundReader Open(string baseDirectory, SoundMemoryBudget budget)
         {
             try
             {
-                return openReader() ?? throw Unavailable($"Reader factory for '{Name}' returned null.");
+                return openReader(budget) ?? throw Unavailable($"Reader factory for '{Name}' returned null.");
             }
             catch (SoundException)
             {

@@ -1,0 +1,426 @@
+{
+  "generator": "tests/Fixtures/TimbreCorpusGenerator",
+  "command": "dotnet run --project tests/Fixtures/TimbreCorpusGenerator -c Release -- tests/Cerneala.Tests.Timbre/Corpus",
+  "encoders": {
+    "mp3": "LAME 3.100 (libmp3lame.64.dll from NAudio.Lame 2.1.0, SHA-256 71dba147b6c16d8d0f012b8e657d52e12cb8796a659e1151200d0a6c8b04bce3)",
+    "vorbis": "OggVorbisEncoder 1.2.2 (MIT)",
+    "opus": "Concentus 2.2.2 managed OpusEncoder (BSD-3-Clause)",
+    "ogg": "TimbreCorpusGenerator/OggWriter.cs"
+  },
+  "signal": "CorpusSignal.Sample: channel 0 chirp 200\u21921200 Hz amplitude 0.5, channel 1 chirp 1500\u2192400 Hz amplitude 0.3, repeating every \u0060period\u0060 seconds; mono files carry channel 0",
+  "files": [
+    {
+      "Name": "mp3-mpeg1-44100-stereo-cbr128.mp3",
+      "Sha256": "0a65f421d63c3a8f2604f64c626e677250ead4d994f4c8887fe678cf2777e31f",
+      "Bytes": 33017,
+      "Parameters": {
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "channels": 2,
+        "frames": 88200,
+        "period": 2,
+        "mode": "CBR 128 kbps",
+        "gapless": "LAME Info/Xing tag with encoder delay and padding"
+      }
+    },
+    {
+      "Name": "mp3-mpeg1-48000-mono-cbr64.mp3",
+      "Sha256": "f95e2c2de7e5da09d5a4e106e1e86e74975a25fa6af50fa80bce75d5523e21d3",
+      "Bytes": 16512,
+      "Parameters": {
+        "codec": "mp3",
+        "sampleRate": 48000,
+        "channels": 1,
+        "frames": 96000,
+        "period": 2,
+        "mode": "CBR 64 kbps",
+        "gapless": "LAME Info/Xing tag with encoder delay and padding"
+      }
+    },
+    {
+      "Name": "mp3-mpeg1-32000-stereo-vbr.mp3",
+      "Sha256": "8be4339da0fe9f124630d343fe649f858e8ceba4c6adb60f246d52d2bb1fd63b",
+      "Bytes": 19080,
+      "Parameters": {
+        "codec": "mp3",
+        "sampleRate": 32000,
+        "channels": 2,
+        "frames": 64000,
+        "period": 2,
+        "mode": "VBR preset V2",
+        "gapless": "LAME Info/Xing tag with encoder delay and padding"
+      }
+    },
+    {
+      "Name": "mp3-mpeg2-22050-mono-vbr.mp3",
+      "Sha256": "dede5a421aa0d55b7fb3dcae51df43452ebd1c436e89b637f02e963b636bbae4",
+      "Bytes": 8869,
+      "Parameters": {
+        "codec": "mp3",
+        "sampleRate": 22050,
+        "channels": 1,
+        "frames": 44100,
+        "period": 2,
+        "mode": "VBR preset V2",
+        "gapless": "LAME Info/Xing tag with encoder delay and padding"
+      }
+    },
+    {
+      "Name": "mp3-mpeg2-16000-stereo-cbr48.mp3",
+      "Sha256": "82c2b028fc8b2904e6a8a6e1d77fc4c008fd309fd837898e3c5eff726575205f",
+      "Bytes": 12744,
+      "Parameters": {
+        "codec": "mp3",
+        "sampleRate": 16000,
+        "channels": 2,
+        "frames": 32000,
+        "period": 2,
+        "mode": "CBR 48 kbps",
+        "gapless": "LAME Info/Xing tag with encoder delay and padding"
+      }
+    },
+    {
+      "Name": "mp3-mpeg25-8000-mono-cbr16.mp3",
+      "Sha256": "a30fbfd749432f2bbac39909b3f355b688ac100408a834c4581e2f13932d18b2",
+      "Bytes": 4320,
+      "Parameters": {
+        "codec": "mp3",
+        "sampleRate": 8000,
+        "channels": 1,
+        "frames": 16000,
+        "period": 2,
+        "mode": "CBR 16 kbps",
+        "gapless": "none: no Info tag (decoded output keeps LAME\u0027s 576-frame encoder delay plus the 529-frame decoder delay)"
+      }
+    },
+    {
+      "Name": "mp3-long-22050-mono-cbr64.mp3",
+      "Sha256": "7a78a43aea17f74959166d7852f96a099d61259bf2233836481498d31f4cfb70",
+      "Bytes": 2400756,
+      "Parameters": {
+        "codec": "mp3",
+        "sampleRate": 22050,
+        "channels": 1,
+        "frames": 6615000,
+        "period": 10,
+        "mode": "CBR 64 kbps",
+        "gapless": "LAME Info/Xing tag with encoder delay and padding"
+      }
+    },
+    {
+      "Name": "mp3-reservoir-wrap-48000-stereo-cbr64.mp3",
+      "Sha256": "c5bc19e614dd562401e0f80e8e19e50b65a2898b2050dd99acd777b4d40cd851",
+      "Bytes": 440448,
+      "Parameters": {
+        "codec": "mp3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "frames": 2640000,
+        "period": 10,
+        "mode": "CBR 64 kbps",
+        "gapless": "LAME Info/Xing tag with encoder delay and padding"
+      }
+    },
+    {
+      "Name": "mp3-no-info-tag-44100-stereo.mp3",
+      "Sha256": "4f4a05d1b7dd9a2c685996c4afdf8b3fe7f26da6047666131f234d229ae0a7e4",
+      "Bytes": 32600,
+      "Parameters": {
+        "derivedFrom": "mp3-mpeg1-44100-stereo-cbr128.mp3",
+        "transformation": "first frame (LAME Info tag) removed: no gapless metadata, length unknown"
+      }
+    },
+    {
+      "Name": "mp3-id3v2-id3v1-44100-stereo.mp3",
+      "Sha256": "e91d1db3359da3d46a4bfb298d690be6a487c15fd7e6424b24ce0adb9f5ce559",
+      "Bytes": 34145,
+      "Parameters": {
+        "derivedFrom": "mp3-mpeg1-44100-stereo-cbr128.mp3",
+        "transformation": "1000-byte ID3v2.3 tag prepended and 128-byte ID3v1 tag appended"
+      }
+    },
+    {
+      "Name": "mp3-truncated.mp3",
+      "Sha256": "c692f3c63f764b91f28ba75a5693cc80774a9a037f002bb8bee04bfe456e3307",
+      "Bytes": 19810,
+      "Parameters": {
+        "derivedFrom": "mp3-mpeg1-44100-stereo-cbr128.mp3",
+        "transformation": "cut at 60% of the file, inside a frame"
+      }
+    },
+    {
+      "Name": "mp3-corrupt-sync.mp3",
+      "Sha256": "5744d02393e8947b7b9fb9610047d74342e149b74f9f4c6dd14e188189993e05",
+      "Bytes": 33017,
+      "Parameters": {
+        "derivedFrom": "mp3-mpeg1-44100-stereo-cbr128.mp3",
+        "transformation": "600 zero bytes written at the middle: frame sync lost mid-stream"
+      }
+    },
+    {
+      "Name": "mpeg-layer2-44100-stereo.mp2",
+      "Sha256": "aaa34a38451b6637390c0dd19de39a033037d1b460dfcd4fd884bc4d1ccdcf15",
+      "Bytes": 25040,
+      "Parameters": {
+        "synthetic": "MPEG-1 Layer II frames with zero payload (excluded variant: not MP3)"
+      }
+    },
+    {
+      "Name": "vorbis-44100-stereo-q4.ogg",
+      "Sha256": "b322507fec2cb139a145735788c6524ffcc0ed3e998840c573c137aa6361ae6c",
+      "Bytes": 12175,
+      "Parameters": {
+        "codec": "vorbis",
+        "sampleRate": 44100,
+        "channels": 2,
+        "frames": 88200,
+        "period": 2,
+        "quality": 0.4,
+        "serial": 4097,
+        "finalGranule": 87176,
+        "leadingFramesDropped": 1024
+      }
+    },
+    {
+      "Name": "vorbis-48000-stereo-q2.ogg",
+      "Sha256": "80e02cf33419e46080ab110a8963b464c7ee0d757e406c2616c2d747169f31c6",
+      "Bytes": 12237,
+      "Parameters": {
+        "codec": "vorbis",
+        "sampleRate": 48000,
+        "channels": 2,
+        "frames": 96000,
+        "period": 2,
+        "quality": 0.2,
+        "serial": 4098,
+        "finalGranule": 94976,
+        "leadingFramesDropped": 1024
+      }
+    },
+    {
+      "Name": "vorbis-22050-mono-q2.ogg",
+      "Sha256": "ff47df96bdc3e9fb6ed7f62ce556973be7ef9b6cc4cafadeb203682d9ce3f51c",
+      "Bytes": 9899,
+      "Parameters": {
+        "codec": "vorbis",
+        "sampleRate": 22050,
+        "channels": 1,
+        "frames": 44100,
+        "period": 2,
+        "quality": 0.2,
+        "serial": 4099,
+        "finalGranule": 43588,
+        "leadingFramesDropped": 512
+      }
+    },
+    {
+      "Name": "vorbis-8000-mono-q2.ogg",
+      "Sha256": "445a53c1c5cbbea4246f85b0689f289e437696f815d24b93634bea1190ee7c4c",
+      "Bytes": 3893,
+      "Parameters": {
+        "codec": "vorbis",
+        "sampleRate": 8000,
+        "channels": 1,
+        "frames": 16000,
+        "period": 2,
+        "quality": 0.2,
+        "serial": 4100,
+        "finalGranule": 15744,
+        "leadingFramesDropped": 256
+      }
+    },
+    {
+      "Name": "vorbis-96000-stereo-q4.ogg",
+      "Sha256": "5dbaf2117231bd9a5d5e1b1bcd68e66a2855635b446050a739f294726ccf62c6",
+      "Bytes": 18747,
+      "Parameters": {
+        "codec": "vorbis",
+        "sampleRate": 96000,
+        "channels": 2,
+        "frames": 192000,
+        "period": 2,
+        "quality": 0.4,
+        "serial": 4101,
+        "finalGranule": 190976,
+        "leadingFramesDropped": 1024
+      }
+    },
+    {
+      "Name": "vorbis-192000-stereo-q2.ogg",
+      "Sha256": "5f03d9b431ed11c0e0721204c8bb3504c5fa9a3a4e1e2152bf48c2142a9658be",
+      "Bytes": 24918,
+      "Parameters": {
+        "codec": "vorbis",
+        "sampleRate": 192000,
+        "channels": 2,
+        "frames": 384000,
+        "period": 2,
+        "quality": 0.2,
+        "serial": 4103,
+        "finalGranule": 382976,
+        "leadingFramesDropped": 1024
+      }
+    },
+    {
+      "Name": "vorbis-16000-mono-q2.ogg",
+      "Sha256": "8b8431582b6d18087dc4ab043d8afdea6dbc15f6ff47b8e644d0f506f49a317e",
+      "Bytes": 8150,
+      "Parameters": {
+        "codec": "vorbis",
+        "sampleRate": 16000,
+        "channels": 1,
+        "frames": 32000,
+        "period": 2,
+        "quality": 0.2,
+        "serial": 4104,
+        "finalGranule": 31488,
+        "leadingFramesDropped": 512
+      }
+    },
+    {
+      "Name": "vorbis-long-22050-mono-q2.ogg",
+      "Sha256": "62dcfdd2498808af7ca9ce4e72c07b44cff82a4d02c3fbac04c9f7f11149e6cd",
+      "Bytes": 970526,
+      "Parameters": {
+        "codec": "vorbis",
+        "sampleRate": 22050,
+        "channels": 1,
+        "frames": 6615000,
+        "period": 10,
+        "quality": 0.2,
+        "serial": 4102,
+        "finalGranule": 6614488,
+        "leadingFramesDropped": 512
+      }
+    },
+    {
+      "Name": "vorbis-truncated.ogg",
+      "Sha256": "51d2b079e5af842a856d20d51d34300e662ee5e7c2410e7ec3e32c4cdd1dd0d5",
+      "Bytes": 7305,
+      "Parameters": {
+        "derivedFrom": "vorbis-44100-stereo-q4.ogg",
+        "transformation": "cut at 60% of the file, inside a page"
+      }
+    },
+    {
+      "Name": "vorbis-corrupt-crc.ogg",
+      "Sha256": "2a99c57a3ff1ba8c96fb9bb3d0f03c6826ca073158f998fd2dfd66febc2bd5dd",
+      "Bytes": 12175,
+      "Parameters": {
+        "derivedFrom": "vorbis-44100-stereo-q4.ogg",
+        "transformation": "one body byte of the middle audio page inverted: CRC mismatch"
+      }
+    },
+    {
+      "Name": "opus-stereo-48000-96k.opus",
+      "Sha256": "24b5a5398de8d645d293ead4a96ca5b6f5e7474f294f197dad4147b3cb08b9ae",
+      "Bytes": 25032,
+      "Parameters": {
+        "codec": "opus",
+        "sampleRate": 48000,
+        "inputRate": 48000,
+        "channels": 2,
+        "frames": 96000,
+        "period": 2,
+        "bitrate": 96000,
+        "preSkip": 312,
+        "finalGranule": 96312,
+        "serial": 8193
+      }
+    },
+    {
+      "Name": "opus-mono-16000-24k.opus",
+      "Sha256": "900e4595f3b996603d65c5bcb6a39d45b3cec95cdc4435b688528f2a131c1cb5",
+      "Bytes": 6509,
+      "Parameters": {
+        "codec": "opus",
+        "sampleRate": 48000,
+        "inputRate": 16000,
+        "channels": 1,
+        "frames": 96000,
+        "period": 2,
+        "bitrate": 24000,
+        "preSkip": 312,
+        "finalGranule": 96312,
+        "serial": 8194
+      }
+    },
+    {
+      "Name": "opus-stereo-preskip-trim.opus",
+      "Sha256": "509d2f668fa794825715a9ac216a39f73c638332cd12aea5ae81dcda3c6a2ee6",
+      "Bytes": 10571,
+      "Parameters": {
+        "codec": "opus",
+        "sampleRate": 48000,
+        "inputRate": 48000,
+        "channels": 2,
+        "frames": 59256,
+        "period": 2,
+        "bitrate": 64000,
+        "preSkip": 4152,
+        "finalGranule": 63408,
+        "serial": 8195
+      }
+    },
+    {
+      "Name": "opus-long-mono-32k.opus",
+      "Sha256": "c731a5746b92dea5ff17548384b251a0768a5e62e879df05f791e65a8b607826",
+      "Bytes": 1238611,
+      "Parameters": {
+        "codec": "opus",
+        "sampleRate": 48000,
+        "inputRate": 48000,
+        "channels": 1,
+        "frames": 14400000,
+        "period": 10,
+        "bitrate": 32000,
+        "preSkip": 312,
+        "finalGranule": 14400312,
+        "serial": 8196
+      }
+    },
+    {
+      "Name": "opus-truncated.opus",
+      "Sha256": "15092800d30375291c4925cbd4be6052537843dde993c6f36779eb86785b53f0",
+      "Bytes": 15019,
+      "Parameters": {
+        "derivedFrom": "opus-stereo-48000-96k.opus",
+        "transformation": "cut at 60% of the file, inside a page"
+      }
+    },
+    {
+      "Name": "ogg-chained-vorbis.ogg",
+      "Sha256": "99d8fb79275199b0c4b7d2201f56bc4943eff5e8dc164aa8a4f379735fdffcaf",
+      "Bytes": 24412,
+      "Parameters": {
+        "derivedFrom": "vorbis-44100-stereo-q4.ogg \u002B vorbis-48000-stereo-q2.ogg",
+        "transformation": "two logical streams one after another (chained)"
+      }
+    },
+    {
+      "Name": "ogg-multiplexed-vorbis-opus.ogg",
+      "Sha256": "524834aec5168e9828e88499470e060b10ea7dcdd484dd28b6573da676c79f3a",
+      "Bytes": 37207,
+      "Parameters": {
+        "derivedFrom": "vorbis-44100-stereo-q4.ogg \u002B opus-stereo-48000-96k.opus",
+        "transformation": "two logical streams with interleaved pages (multiplexed)"
+      }
+    },
+    {
+      "Name": "ogg-flac.ogg",
+      "Sha256": "3ce3654d41c7b4e6e62999f7cc6f858bb3e68b1a00205336aa90d0a3d8184cf1",
+      "Bytes": 133,
+      "Parameters": {
+        "synthetic": "Ogg BOS page carrying a FLAC mapping header (codec not supported)"
+      }
+    },
+    {
+      "Name": "opus-surround-6ch.opus",
+      "Sha256": "eb26d0d3e52236bae506fcf7e213699add1e4c773fa31285e53a7316ca56def2",
+      "Bytes": 147,
+      "Parameters": {
+        "synthetic": "OpusHead with 6 channels, mapping family 1 (surround excluded)"
+      }
+    }
+  ]
+}

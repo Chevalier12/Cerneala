@@ -92,6 +92,12 @@ if (args is ["--timbre-core", string timbreCorePath])
     return;
 }
 
+if (args is ["--timbre-decoding", string timbreDecodingPath, string timbreCorpus])
+{
+    TimbreDecodingBenchmarkRunner.Run(timbreDecodingPath, timbreCorpus);
+    return;
+}
+
 if (args is ["--scene-debug-overlay", string sceneDebugOverlayPath])
 {
     SceneDebugOverlayBenchmarkRunner.Run(sceneDebugOverlayPath);

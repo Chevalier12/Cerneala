@@ -32,7 +32,63 @@ public static class DocumentationExamples
         SoundSource file = "audio/confirm.wav";
         SoundSource stream = SoundSource.FromStream(() => File.OpenRead("audio/music.ogg"), name: "music");
         SoundSource generated = SoundSource.FromReader(() => new MyToneReader(), name: "tone");
-        _ = (file, stream, generated);
+        SoundSource budgeted = SoundSource.FromReader(budget =>
+        {
+            budget.Reserve(MyToneReader.TableBytes);
+            return new MyToneReader();
+        }, name: "budgeted tone");
+        _ = (file, stream, generated, budgeted);
+    }
+
+    public static SoundSource SoundMemoryBudgetPage()
+    {
+        const int TableBytes = 256 * 1024;
+
+        SoundSource source = SoundSource.FromReader(budget =>
+        {
+            // Reserve first: an oversized request fails here, before allocating.
+            budget.Reserve(TableBytes);
+            return new WavetableReader(new float[TableBytes / sizeof(float)]);
+        }, name: "wavetable");
+        return source;
+    }
+
+    public static SoundSource SoundMemoryReservationPage()
+    {
+        SoundSource source = SoundSource.FromReader(budget =>
+        {
+            // Temporary scratch memory needed only while the reader is built.
+            using (budget.Reserve(64 * 1024))
+            {
+                float[] scratch = new float[16 * 1024];
+                PrecomputeTable(scratch);
+            }
+
+            return new TableReader();
+        });
+        return source;
+    }
+
+    private static void PrecomputeTable(float[] scratch) => scratch.AsSpan().Fill(0.5f);
+
+    private sealed class WavetableReader(float[] table) : SoundReader
+    {
+        public override long? LengthFrames => table.Length / SoundRuntime.ChannelCount;
+
+        public override ValueTask<SoundReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(new SoundReadResult(0, endOfSource: true));
+
+        public override ValueTask SeekAsync(long frame, CancellationToken cancellationToken) => ValueTask.CompletedTask;
+    }
+
+    private sealed class TableReader : SoundReader
+    {
+        public override long? LengthFrames => 0;
+
+        public override ValueTask<SoundReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(new SoundReadResult(0, endOfSource: true));
+
+        public override ValueTask SeekAsync(long frame, CancellationToken cancellationToken) => ValueTask.CompletedTask;
     }
 
     public static SoundClip SoundReaderPage() =>
@@ -205,6 +261,8 @@ public static class DocumentationExamples
 
     private sealed class MyToneReader : SoundReader
     {
+        public const int TableBytes = 64 * 1024;
+
         public override long? LengthFrames => 48000;
 
         public override ValueTask<SoundReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken) =>

@@ -61,7 +61,8 @@ Contract:
 - `EndOfSource = true` marks the end of the source; it may accompany the last frames.
 - After a result of zero frames with `EndOfSource = false`, the next `ReadAsync` must wait asynchronously for data, end of source, an error, or cancellation. Returning zero frames again synchronously violates the contract and fails the playback with `InvalidData`; the runtime does not poll.
 - `SeekAsync` positions the next read exactly at the requested decoded frame. The runtime validates the target against `LengthFrames` when known.
-- `LengthFrames` is `null` while the length is unknown; [SoundPlayback.Duration](Cerneala.Timbre.SoundPlayback.md) is `null` in that case.
+- `LengthFrames` is `null` while the length is unknown; [SoundPlayback.Duration](Cerneala.Timbre.SoundPlayback.md) is `null` in that case until a streaming playback reaches the end of the source. A reader may start reporting a length later; the runtime reads it when the reader is opened.
+- A reader that reports a length must deliver exactly that many frames: ending earlier or reading past it fails the playback with `SoundErrorKind.InvalidData`, whether the clip is preloaded or streamed.
 - Exceptions other than cancellation fail the playback with `SoundErrorKind.SourceUnavailable`, unless the exception is a [SoundException](Cerneala.Timbre.SoundException.md), whose kind is kept. Errors are never treated as a successful end of source.
 
 ## Constructors

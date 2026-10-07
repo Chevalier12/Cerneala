@@ -39,6 +39,37 @@ public sealed class TimbreArchitectureTests
     }
 
     [Fact]
+    public void DecoderAdaptersOnlyProducePcmAndOwnNoOutputMixerOrEffects()
+    {
+        // Decoder → PCM (SoundReader) → Timbre DSP/mix → output: the adapters
+        // never hold the output, the runtime, a playback, a feed or the DSP.
+        Type[] decoding = Core.GetTypes()
+            .Where(type => type.Namespace?.StartsWith("Cerneala.Timbre.Decoding", StringComparison.Ordinal) == true)
+            .ToArray();
+        Assert.NotEmpty(decoding);
+        Type[] forbidden =
+        [
+            typeof(ISoundOutput), typeof(ISoundOutputClient), typeof(SoundRuntime), typeof(SoundScope), typeof(SoundPlayback),
+            typeof(SoundModifier), Core.GetType("Cerneala.Timbre.Engine.SoundFeed")!, Core.GetType("Cerneala.Timbre.Dsp.SoundDspChain")!,
+        ];
+
+        List<string> violations = [];
+        foreach (Type type in decoding)
+        {
+            foreach (Type referenced in ReferencedTypes(type))
+            {
+                if (forbidden.Any(candidate => candidate.IsAssignableFrom(referenced)))
+                {
+                    violations.Add($"{type.FullName} -> {referenced.FullName}");
+                }
+            }
+        }
+
+        Assert.Empty(violations);
+        Assert.All(decoding, type => Assert.False(type.IsPublic || type.IsNestedPublic, $"{type.FullName} is public."));
+    }
+
+    [Fact]
     public void ExternalConsumerHasNoInternalsAccess()
     {
         string[] friends = Core.GetCustomAttributes<InternalsVisibleToAttribute>()

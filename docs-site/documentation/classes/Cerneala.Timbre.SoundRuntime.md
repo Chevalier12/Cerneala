@@ -46,7 +46,7 @@ All voices are summed after their own chains and volumes. The sum is hard-clippe
 
 When no output is configured, the output fails to open, or the device is lost, the affected playbacks end `Failed` with `SoundErrorKind.DeviceUnavailable`. The runtime does not retry; a later `Play` tries to open the output again.
 
-`PrepareAsync` decodes a preloadable clip into the cache ahead of time without playing it. For a streaming clip it verifies that the source opens. It throws a [SoundException](Cerneala.Timbre.SoundException.md) for source, format, or resource-limit failures.
+`PrepareAsync` decodes a preloadable clip into the cache ahead of time without playing it. For a streaming clip it verifies that the source opens: a decoded file or stream reads its headers (and, for Ogg, its final page) and decodes none of its audio. The token is observed between decoded frames or packets. It throws a [SoundException](Cerneala.Timbre.SoundException.md) for source, format, or resource-limit failures.
 
 `Dispose` cancels every playback of every scope, stops the mixer thread, closes the output, and releases the cache. It is idempotent. Creating scopes or preparing clips afterwards throws `ObjectDisposedException`.
 

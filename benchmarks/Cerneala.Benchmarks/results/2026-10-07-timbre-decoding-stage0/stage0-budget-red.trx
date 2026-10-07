@@ -1,0 +1,287 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="0766d30f-e7bd-4cb9-ba9b-a190219e3c99" name="lauri@DESKTOP-JT43V3D 2026-10-07 10:26:48" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-07T10:26:48.3108326+03:00" queuing="2026-10-07T10:26:48.3108330+03:00" start="2026-10-07T10:26:44.5922821+03:00" finish="2026-10-07T10:26:48.4329638+03:00" />
+  <TestSettings name="default" id="59fc6587-94f4-4f13-a5e0-e96d1ac74fc0">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-10-07_10_26_48" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="7718a69a-dbc1-4da5-b28a-deb7e234683c" testId="59e485b9-c77b-a81c-f080-ef64f48247f1" testName="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.StreamFactoryReceivesTheBudgetAndFailureReleasesItsReservations" computerName="DESKTOP-JT43V3D" duration="00:00:00.0011193" startTime="2026-10-07T10:26:48.2991544+03:00" endTime="2026-10-07T10:26:48.2991551+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7718a69a-dbc1-4da5-b28a-deb7e234683c">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundSource.FromStream(Func`2 openStream, String name) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundSource.cs:line 43&#xD;
+   at Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.StreamFactoryReceivesTheBudgetAndFailureReleasesItsReservations() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Engine\MemoryBudgetTests.cs:line 156&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="20e91a49-e755-4e9f-85cd-29a6835fa969" testId="edf96269-5c1f-8db9-30d9-1f85e024aba4" testName="Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests.ClipValidatesVolumeLoadingAndCopiesCollections" computerName="DESKTOP-JT43V3D" duration="00:00:00.0389021" startTime="2026-10-07T10:26:48.2455108+03:00" endTime="2026-10-07T10:26:48.2455111+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="20e91a49-e755-4e9f-85cd-29a6835fa969" />
+    <UnitTestResult executionId="6c0ac75d-2cce-4084-b1f1-cef2352d48de" testId="7f8b33fc-01c8-2d6c-7d01-1154c22a7cd2" testName="Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests.ModifiersUseCatalogDefaultsAndRejectInvalidConstants" computerName="DESKTOP-JT43V3D" duration="00:00:00.0022003" startTime="2026-10-07T10:26:48.2838554+03:00" endTime="2026-10-07T10:26:48.2838556+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6c0ac75d-2cce-4084-b1f1-cef2352d48de" />
+    <UnitTestResult executionId="b882acca-f1a7-4c90-898a-0ba5d20fea86" testId="2492cb4b-c9d4-777d-8067-07c79e96c186" testName="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.ReaderFactoryReservationsAreForwardedAndReleasedAfterTheReader" computerName="DESKTOP-JT43V3D" duration="00:00:00.0012552" startTime="2026-10-07T10:26:48.2366043+03:00" endTime="2026-10-07T10:26:48.2366045+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b882acca-f1a7-4c90-898a-0ba5d20fea86">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundSource.FromReader(Func`2 openReader, String name) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundSource.cs:line 46&#xD;
+   at Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.ReaderFactoryReservationsAreForwardedAndReleasedAfterTheReader() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Engine\MemoryBudgetTests.cs:line 19&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="0279319a-b186-4497-a12b-40b6bcb7cf7c" testId="86cf0472-d35f-aa52-cd43-4d9f9d3c09c9" testName="Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests.InputConvertsFromConstantsAndParameters" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010692" startTime="2026-10-07T10:26:48.2594687+03:00" endTime="2026-10-07T10:26:48.2594689+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0279319a-b186-4497-a12b-40b6bcb7cf7c" />
+    <UnitTestResult executionId="3f88c9d7-2311-445b-8787-060a7f53febd" testId="2e0fe10d-6b8e-b3f1-2f68-a703217b2b31" testName="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.FileSourceReservesItsIoBufferBeforeOpeningTheFile" computerName="DESKTOP-JT43V3D" duration="00:00:00.0559792" startTime="2026-10-07T10:26:48.2921694+03:00" endTime="2026-10-07T10:26:48.2921698+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3f88c9d7-2311-445b-8787-060a7f53febd">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: ResourceLimitExceeded&#xD;
+Actual:   SourceUnavailable</Message>
+          <StackTrace>   at Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.FileSourceReservesItsIoBufferBeforeOpeningTheFile() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Engine\MemoryBudgetTests.cs:line 181&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c43f88bb-5c49-402b-b871-7f391c6f00a2" testId="de9bf052-498c-5245-6a97-6f76139db157" testName="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.StreamingBuffersAndReaderReservationsUseTheSameAllowance" computerName="DESKTOP-JT43V3D" duration="00:00:00.0016648" startTime="2026-10-07T10:26:48.3015771+03:00" endTime="2026-10-07T10:26:48.3015776+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c43f88bb-5c49-402b-b871-7f391c6f00a2">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundSource.FromReader(Func`2 openReader, String name) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundSource.cs:line 46&#xD;
+   at Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.StreamingBuffersAndReaderReservationsUseTheSameAllowance() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Engine\MemoryBudgetTests.cs:line 89&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="62c852ad-14a6-4e1d-9d58-5cebda7a920c" testId="15695092-7305-6b06-fe91-b5f03a0d129a" testName="Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests.RuntimeOptionsAreValidatedAndCopied" computerName="DESKTOP-JT43V3D" duration="00:00:00.3277923" startTime="2026-10-07T10:26:48.2071164+03:00" endTime="2026-10-07T10:26:48.2071581+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="62c852ad-14a6-4e1d-9d58-5cebda7a920c" />
+    <UnitTestResult executionId="39f6e401-79e2-426b-a022-a18ee4a16840" testId="7e730112-1cc2-dd44-464e-979cdd78c33f" testName="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.PlaybacksShareTheRuntimeAllowanceAndRefusalDoesNotAffectOthers" computerName="DESKTOP-JT43V3D" duration="00:00:00.0019019" startTime="2026-10-07T10:26:48.2976951+03:00" endTime="2026-10-07T10:26:48.2976954+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="39f6e401-79e2-426b-a022-a18ee4a16840">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundSource.FromReader(Func`2 openReader, String name) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundSource.cs:line 46&#xD;
+   at Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.PlaybacksShareTheRuntimeAllowanceAndRefusalDoesNotAffectOthers() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Engine\MemoryBudgetTests.cs:line 65&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="6665b6c5-3f2c-490b-bb37-48a9b97baa7e" testId="2cfd5b3d-d1c1-4e3e-14f8-4665b4284c79" testName="Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests.ClipRejectsDuplicateOrUndeclaredParametersAndDefaultsOutsideFedRanges" computerName="DESKTOP-JT43V3D" duration="00:00:00.0142493" startTime="2026-10-07T10:26:48.2837558+03:00" endTime="2026-10-07T10:26:48.2837559+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6665b6c5-3f2c-490b-bb37-48a9b97baa7e" />
+    <UnitTestResult executionId="eb7cb106-1a56-4fe3-a530-e240652d0a29" testId="b8abefc5-8c73-2e9f-b7a7-5f2cfa4e958b" testName="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.DefaultAllowanceIsAccountingOnlyWithoutANumericCap" computerName="DESKTOP-JT43V3D" duration="00:00:00.3267077" startTime="2026-10-07T10:26:48.2342016+03:00" endTime="2026-10-07T10:26:48.2342019+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="eb7cb106-1a56-4fe3-a530-e240652d0a29">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundSource.FromReader(Func`2 openReader, String name) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundSource.cs:line 46&#xD;
+   at Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.DefaultAllowanceIsAccountingOnlyWithoutANumericCap() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Engine\MemoryBudgetTests.cs:line 132&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="06080aa7-e3ca-4260-b03f-1523443910b8" testId="1dc47138-0f9f-92ab-539b-35d488e9cf95" testName="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.ReservationOverTheAllowanceIsRefusedBeforeTheAllocation" computerName="DESKTOP-JT43V3D" duration="00:00:00.0015234" startTime="2026-10-07T10:26:48.3034203+03:00" endTime="2026-10-07T10:26:48.3034207+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="06080aa7-e3ca-4260-b03f-1523443910b8">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundSource.FromReader(Func`2 openReader, String name) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundSource.cs:line 46&#xD;
+   at Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.ReservationOverTheAllowanceIsRefusedBeforeTheAllocation() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Engine\MemoryBudgetTests.cs:line 43&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="d7bd8d4d-92e7-4d68-b5cf-3f53f5d18b0d" testId="44e118c0-e8e1-b288-7941-c0fda680bf90" testName="Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests.DeclaringSourcesAndClipsPerformsNoIo" computerName="DESKTOP-JT43V3D" duration="00:00:00.0080070" startTime="2026-10-07T10:26:48.2562768+03:00" endTime="2026-10-07T10:26:48.2562772+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d7bd8d4d-92e7-4d68-b5cf-3f53f5d18b0d">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Throws() Failure: Exception type was not an exact match&#xD;
+Expected: typeof(System.ArgumentNullException)&#xD;
+Actual:   typeof(System.NotImplementedException)&#xD;
+---- System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests.DeclaringSourcesAndClipsPerformsNoIo() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Definitions\SoundDefinitionTests.cs:line 146&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+----- Inner Stack Trace -----&#xD;
+   at Cerneala.Timbre.SoundSource.FromReader(Func`2 openReader, String name) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundSource.cs:line 46&#xD;
+   at Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests.&lt;&gt;c.&lt;DeclaringSourcesAndClipsPerformsNoIo&gt;b__5_7() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Definitions\SoundDefinitionTests.cs:line 146</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="39f6d7ca-437f-4666-967e-abf340642923" testId="bf6876fc-7180-6f04-fa51-d56c4652417c" testName="Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests.ParameterSupportsFloatOnlyWithIdentifierNameAndFiniteDefault" computerName="DESKTOP-JT43V3D" duration="00:00:00.0016702" startTime="2026-10-07T10:26:48.2579001+03:00" endTime="2026-10-07T10:26:48.2579013+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="39f6d7ca-437f-4666-967e-abf340642923" />
+    <UnitTestResult executionId="b5c1bcd4-c1fd-4c88-90d5-ef2457030854" testId="70fde339-1809-86cf-7ce1-726376c24b77" testName="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.ReservationsCanBeReturnedEarlyAndTheBudgetClosesWithTheReader" computerName="DESKTOP-JT43V3D" duration="00:00:00.0011717" startTime="2026-10-07T10:26:48.2354685+03:00" endTime="2026-10-07T10:26:48.2354687+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b5c1bcd4-c1fd-4c88-90d5-ef2457030854">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundSource.FromReader(Func`2 openReader, String name) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundSource.cs:line 46&#xD;
+   at Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.ReservationsCanBeReturnedEarlyAndTheBudgetClosesWithTheReader() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Engine\MemoryBudgetTests.cs:line 108&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests.ParameterSupportsFloatOnlyWithIdentifierNameAndFiniteDefault" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="bf6876fc-7180-6f04-fa51-d56c4652417c">
+      <Execution id="39f6d7ca-437f-4666-967e-abf340642923" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests" name="ParameterSupportsFloatOnlyWithIdentifierNameAndFiniteDefault" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests.ClipRejectsDuplicateOrUndeclaredParametersAndDefaultsOutsideFedRanges" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="2cfd5b3d-d1c1-4e3e-14f8-4665b4284c79">
+      <Execution id="6665b6c5-3f2c-490b-bb37-48a9b97baa7e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests" name="ClipRejectsDuplicateOrUndeclaredParametersAndDefaultsOutsideFedRanges" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests.DeclaringSourcesAndClipsPerformsNoIo" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="44e118c0-e8e1-b288-7941-c0fda680bf90">
+      <Execution id="d7bd8d4d-92e7-4d68-b5cf-3f53f5d18b0d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests" name="DeclaringSourcesAndClipsPerformsNoIo" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.ReservationOverTheAllowanceIsRefusedBeforeTheAllocation" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="1dc47138-0f9f-92ab-539b-35d488e9cf95">
+      <Execution id="06080aa7-e3ca-4260-b03f-1523443910b8" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests" name="ReservationOverTheAllowanceIsRefusedBeforeTheAllocation" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.FileSourceReservesItsIoBufferBeforeOpeningTheFile" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="2e0fe10d-6b8e-b3f1-2f68-a703217b2b31">
+      <Execution id="3f88c9d7-2311-445b-8787-060a7f53febd" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests" name="FileSourceReservesItsIoBufferBeforeOpeningTheFile" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests.InputConvertsFromConstantsAndParameters" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="86cf0472-d35f-aa52-cd43-4d9f9d3c09c9">
+      <Execution id="0279319a-b186-4497-a12b-40b6bcb7cf7c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests" name="InputConvertsFromConstantsAndParameters" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests.ModifiersUseCatalogDefaultsAndRejectInvalidConstants" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="7f8b33fc-01c8-2d6c-7d01-1154c22a7cd2">
+      <Execution id="6c0ac75d-2cce-4084-b1f1-cef2352d48de" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests" name="ModifiersUseCatalogDefaultsAndRejectInvalidConstants" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests.ClipValidatesVolumeLoadingAndCopiesCollections" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="edf96269-5c1f-8db9-30d9-1f85e024aba4">
+      <Execution id="20e91a49-e755-4e9f-85cd-29a6835fa969" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests" name="ClipValidatesVolumeLoadingAndCopiesCollections" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.PlaybacksShareTheRuntimeAllowanceAndRefusalDoesNotAffectOthers" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="7e730112-1cc2-dd44-464e-979cdd78c33f">
+      <Execution id="39f6e401-79e2-426b-a022-a18ee4a16840" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests" name="PlaybacksShareTheRuntimeAllowanceAndRefusalDoesNotAffectOthers" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.ReaderFactoryReservationsAreForwardedAndReleasedAfterTheReader" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="2492cb4b-c9d4-777d-8067-07c79e96c186">
+      <Execution id="b882acca-f1a7-4c90-898a-0ba5d20fea86" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests" name="ReaderFactoryReservationsAreForwardedAndReleasedAfterTheReader" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.DefaultAllowanceIsAccountingOnlyWithoutANumericCap" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="b8abefc5-8c73-2e9f-b7a7-5f2cfa4e958b">
+      <Execution id="eb7cb106-1a56-4fe3-a530-e240652d0a29" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests" name="DefaultAllowanceIsAccountingOnlyWithoutANumericCap" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.StreamFactoryReceivesTheBudgetAndFailureReleasesItsReservations" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="59e485b9-c77b-a81c-f080-ef64f48247f1">
+      <Execution id="7718a69a-dbc1-4da5-b28a-deb7e234683c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests" name="StreamFactoryReceivesTheBudgetAndFailureReleasesItsReservations" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.StreamingBuffersAndReaderReservationsUseTheSameAllowance" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="de9bf052-498c-5245-6a97-6f76139db157">
+      <Execution id="c43f88bb-5c49-402b-b871-7f391c6f00a2" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests" name="StreamingBuffersAndReaderReservationsUseTheSameAllowance" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.ReservationsCanBeReturnedEarlyAndTheBudgetClosesWithTheReader" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="70fde339-1809-86cf-7ce1-726376c24b77">
+      <Execution id="b5c1bcd4-c1fd-4c88-90d5-ef2457030854" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Engine.MemoryBudgetTests" name="ReservationsCanBeReturnedEarlyAndTheBudgetClosesWithTheReader" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests.RuntimeOptionsAreValidatedAndCopied" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="15695092-7305-6b06-fe91-b5f03a0d129a">
+      <Execution id="62c852ad-14a6-4e1d-9d58-5cebda7a920c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests" name="RuntimeOptionsAreValidatedAndCopied" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="59e485b9-c77b-a81c-f080-ef64f48247f1" executionId="7718a69a-dbc1-4da5-b28a-deb7e234683c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="edf96269-5c1f-8db9-30d9-1f85e024aba4" executionId="20e91a49-e755-4e9f-85cd-29a6835fa969" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7f8b33fc-01c8-2d6c-7d01-1154c22a7cd2" executionId="6c0ac75d-2cce-4084-b1f1-cef2352d48de" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2492cb4b-c9d4-777d-8067-07c79e96c186" executionId="b882acca-f1a7-4c90-898a-0ba5d20fea86" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="86cf0472-d35f-aa52-cd43-4d9f9d3c09c9" executionId="0279319a-b186-4497-a12b-40b6bcb7cf7c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2e0fe10d-6b8e-b3f1-2f68-a703217b2b31" executionId="3f88c9d7-2311-445b-8787-060a7f53febd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="de9bf052-498c-5245-6a97-6f76139db157" executionId="c43f88bb-5c49-402b-b871-7f391c6f00a2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="15695092-7305-6b06-fe91-b5f03a0d129a" executionId="62c852ad-14a6-4e1d-9d58-5cebda7a920c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7e730112-1cc2-dd44-464e-979cdd78c33f" executionId="39f6e401-79e2-426b-a022-a18ee4a16840" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2cfd5b3d-d1c1-4e3e-14f8-4665b4284c79" executionId="6665b6c5-3f2c-490b-bb37-48a9b97baa7e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b8abefc5-8c73-2e9f-b7a7-5f2cfa4e958b" executionId="eb7cb106-1a56-4fe3-a530-e240652d0a29" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1dc47138-0f9f-92ab-539b-35d488e9cf95" executionId="06080aa7-e3ca-4260-b03f-1523443910b8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="44e118c0-e8e1-b288-7941-c0fda680bf90" executionId="d7bd8d4d-92e7-4d68-b5cf-3f53f5d18b0d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bf6876fc-7180-6f04-fa51-d56c4652417c" executionId="39f6d7ca-437f-4666-967e-abf340642923" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="70fde339-1809-86cf-7ce1-726376c24b77" executionId="b5c1bcd4-c1fd-4c88-90d5-ef2457030854" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="15" executed="15" passed="6" failed="9" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:01.45]   Discovering: Cerneala.Tests.Timbre&#xD;
+[xUnit.net 00:00:01.57]   Discovered:  Cerneala.Tests.Timbre&#xD;
+[xUnit.net 00:00:01.58]   Starting:    Cerneala.Tests.Timbre&#xD;
+[xUnit.net 00:00:02.00]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:02.00]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.00]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundSource.cs(46,0): at Cerneala.Timbre.SoundSource.FromReader(Func`2 openReader, String name)&#xD;
+[xUnit.net 00:00:02.00]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Engine\MemoryBudgetTests.cs(132,0): at Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.DefaultAllowanceIsAccountingOnlyWithoutANumericCap()&#xD;
+[xUnit.net 00:00:02.00]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.00]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:02.00]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.00]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundSource.cs(46,0): at Cerneala.Timbre.SoundSource.FromReader(Func`2 openReader, String name)&#xD;
+[xUnit.net 00:00:02.00]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Engine\MemoryBudgetTests.cs(108,0): at Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.ReservationsCanBeReturnedEarlyAndTheBudgetClosesWithTheReader()&#xD;
+[xUnit.net 00:00:02.00]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.01]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:02.01]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.01]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundSource.cs(46,0): at Cerneala.Timbre.SoundSource.FromReader(Func`2 openReader, String name)&#xD;
+[xUnit.net 00:00:02.01]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Engine\MemoryBudgetTests.cs(19,0): at Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.ReaderFactoryReservationsAreForwardedAndReleasedAfterTheReader()&#xD;
+[xUnit.net 00:00:02.01]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.02]       Assert.Throws() Failure: Exception type was not an exact match&#xD;
+[xUnit.net 00:00:02.02]       Expected: typeof(System.ArgumentNullException)&#xD;
+[xUnit.net 00:00:02.02]       Actual:   typeof(System.NotImplementedException)&#xD;
+[xUnit.net 00:00:02.02]       ---- System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:02.02]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.02]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Definitions\SoundDefinitionTests.cs(146,0): at Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests.DeclaringSourcesAndClipsPerformsNoIo()&#xD;
+[xUnit.net 00:00:02.02]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.02]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.02]         ----- Inner Stack Trace -----&#xD;
+[xUnit.net 00:00:02.03]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundSource.cs(46,0): at Cerneala.Timbre.SoundSource.FromReader(Func`2 openReader, String name)&#xD;
+[xUnit.net 00:00:02.03]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Definitions\SoundDefinitionTests.cs(146,0): at Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests.&lt;&gt;c.&lt;DeclaringSourcesAndClipsPerformsNoIo&gt;b__5_7()&#xD;
+[xUnit.net 00:00:02.06]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.06]       Expected: ResourceLimitExceeded&#xD;
+[xUnit.net 00:00:02.06]       Actual:   SourceUnavailable&#xD;
+[xUnit.net 00:00:02.06]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.06]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Engine\MemoryBudgetTests.cs(181,0): at Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.FileSourceReservesItsIoBufferBeforeOpeningTheFile()&#xD;
+[xUnit.net 00:00:02.06]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.07]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:02.07]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.07]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundSource.cs(46,0): at Cerneala.Timbre.SoundSource.FromReader(Func`2 openReader, String name)&#xD;
+[xUnit.net 00:00:02.07]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Engine\MemoryBudgetTests.cs(65,0): at Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.PlaybacksShareTheRuntimeAllowanceAndRefusalDoesNotAffectOthers()&#xD;
+[xUnit.net 00:00:02.07]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.07]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:02.07]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.07]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundSource.cs(43,0): at Cerneala.Timbre.SoundSource.FromStream(Func`2 openStream, String name)&#xD;
+[xUnit.net 00:00:02.07]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Engine\MemoryBudgetTests.cs(156,0): at Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.StreamFactoryReceivesTheBudgetAndFailureReleasesItsReservations()&#xD;
+[xUnit.net 00:00:02.07]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.07]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:02.07]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.07]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundSource.cs(46,0): at Cerneala.Timbre.SoundSource.FromReader(Func`2 openReader, String name)&#xD;
+[xUnit.net 00:00:02.07]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Engine\MemoryBudgetTests.cs(89,0): at Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.StreamingBuffersAndReaderReservationsUseTheSameAllowance()&#xD;
+[xUnit.net 00:00:02.07]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.07]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:02.07]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.07]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundSource.cs(46,0): at Cerneala.Timbre.SoundSource.FromReader(Func`2 openReader, String name)&#xD;
+[xUnit.net 00:00:02.07]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Engine\MemoryBudgetTests.cs(43,0): at Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.ReservationOverTheAllowanceIsRefusedBeforeTheAllocation()&#xD;
+[xUnit.net 00:00:02.07]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.08]   Finished:    Cerneala.Tests.Timbre&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T10:26:48.2318832+03:00">
+        <Text>[xUnit.net 00:00:02.00]     Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.DefaultAllowanceIsAccountingOnlyWithoutANumericCap [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T10:26:48.2351288+03:00">
+        <Text>[xUnit.net 00:00:02.00]     Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.ReservationsCanBeReturnedEarlyAndTheBudgetClosesWithTheReader [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T10:26:48.2362643+03:00">
+        <Text>[xUnit.net 00:00:02.00]     Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.ReaderFactoryReservationsAreForwardedAndReleasedAfterTheReader [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T10:26:48.2554220+03:00">
+        <Text>[xUnit.net 00:00:02.02]     Cerneala.Tests.Timbre.Definitions.SoundDefinitionTests.DeclaringSourcesAndClipsPerformsNoIo [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T10:26:48.3231335+03:00">
+        <Text>[xUnit.net 00:00:02.06]     Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.FileSourceReservesItsIoBufferBeforeOpeningTheFile [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T10:26:48.3232077+03:00">
+        <Text>[xUnit.net 00:00:02.07]     Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.PlaybacksShareTheRuntimeAllowanceAndRefusalDoesNotAffectOthers [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T10:26:48.3232786+03:00">
+        <Text>[xUnit.net 00:00:02.07]     Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.StreamFactoryReceivesTheBudgetAndFailureReleasesItsReservations [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T10:26:48.3233398+03:00">
+        <Text>[xUnit.net 00:00:02.07]     Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.StreamingBuffersAndReaderReservationsUseTheSameAllowance [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T10:26:48.3234029+03:00">
+        <Text>[xUnit.net 00:00:02.07]     Cerneala.Tests.Timbre.Engine.MemoryBudgetTests.ReservationOverTheAllowanceIsRefusedBeforeTheAllocation [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

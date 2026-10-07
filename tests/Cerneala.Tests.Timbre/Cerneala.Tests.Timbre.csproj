@@ -17,6 +17,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\Fixtures\TimbreCorpusGenerator\CorpusSignal.cs" Link="Decoding\CorpusSignal.cs" />
+    <None Include="Corpus\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\Cerneala.csproj" />
     <ProjectReference Include="..\Fixtures\TimbreConsumer\TimbreConsumer.csproj" />
   </ItemGroup>

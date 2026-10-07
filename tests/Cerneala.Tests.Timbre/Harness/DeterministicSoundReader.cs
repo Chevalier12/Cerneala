@@ -38,6 +38,9 @@ internal sealed class DeterministicSoundReader : SoundReader
 
     public Func<CancellationToken, Task>? ReadGate { get; set; }
 
+    // Runs once inside Dispose, before the reader reports itself released.
+    public Action? OnDispose { get; set; }
+
     private readonly List<(int Count, TaskCompletionSource Signal)> readWaiters = [];
     private int readCount;
 
@@ -153,6 +156,7 @@ internal sealed class DeterministicSoundReader : SoundReader
     {
         if (Interlocked.Exchange(ref disposed, 1) == 0)
         {
+            OnDispose?.Invoke();
             owner?.OnReaderDisposed(this);
         }
     }
