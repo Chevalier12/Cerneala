@@ -17,6 +17,8 @@
     <EmbeddedResource Include="..\Cerneala.SourceGen\Prism\Catalog\prism-catalog.json"
                       Link="Prism\Catalog\prism-catalog.json"
                       LogicalName="Cerneala.Language.Prism.prism-catalog.json" />
+    <Compile Include="..\Timbre\Catalog\TimbreCatalog.cs"
+             Link="Timbre\TimbreCatalog.cs" />
   </ItemGroup>
 
 </Project>

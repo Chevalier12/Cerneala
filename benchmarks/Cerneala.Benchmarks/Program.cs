@@ -86,6 +86,12 @@ if (args is ["--sprite-animation", string spriteAnimationPath])
     return;
 }
 
+if (args is ["--timbre-core", string timbreCorePath])
+{
+    TimbreCoreBenchmarkRunner.Run(timbreCorePath);
+    return;
+}
+
 if (args is ["--scene-debug-overlay", string sceneDebugOverlayPath])
 {
     SceneDebugOverlayBenchmarkRunner.Run(sceneDebugOverlayPath);

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Prism;
 using Cerneala.Drawing.Prism.Graph;
+using Cerneala.Timbre;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Invalidation;
@@ -20,6 +21,7 @@ public sealed class UiHost
     private UiViewport viewport;
     private bool needsInitialFrame = true;
     private readonly IPlatformServices? platformServices;
+    private readonly SoundRuntime? soundRuntime;
     private readonly CursorService cursorService = new();
     private readonly PrismFrameAnalyzer prismFrameAnalyzer = new();
     private readonly BackdropFrameCounters backdropFrameCounters = new();
@@ -36,11 +38,13 @@ public sealed class UiHost
         Clock = options.Clock;
         InputBridge = options.InputBridge ?? new ElementInputBridge();
         platformServices = options.PlatformServices;
+        soundRuntime = options.SoundRuntime;
 
         if (root is not null)
         {
             root.Relay.VerifyAccess();
             root.SetPlatformServices(platformServices);
+            ApplySoundRuntime(root);
             ApplyViewport(root, viewport);
         }
     }
@@ -88,8 +92,18 @@ public sealed class UiHost
         root = newRoot;
         needsInitialFrame = true;
         root.SetPlatformServices(platformServices);
+        ApplySoundRuntime(root);
         ApplyViewport(root, viewport);
         RootChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    // A hosted runtime is caller-owned; without one the root keeps its own.
+    private void ApplySoundRuntime(UIRoot target)
+    {
+        if (soundRuntime is not null)
+        {
+            target.SetSoundRuntime(soundRuntime);
+        }
     }
 
     public UiFrame Update(UiViewport? viewport = null, TimeSpan? elapsedTime = null)

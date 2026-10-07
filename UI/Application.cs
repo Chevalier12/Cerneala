@@ -1,3 +1,4 @@
+using Cerneala.Timbre;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Resources;
@@ -16,6 +17,10 @@ public class Application
     private bool shutdownRequested;
     private bool exitRaised;
     private int exitCode;
+    private SoundRuntime? soundRuntime;
+    private bool ownsSoundRuntime;
+    private SoundScope? sounds;
+    private bool soundsRetired;
 
     public Application()
     {
@@ -63,6 +68,47 @@ public class Application
         {
             VerifyAccess();
             return runtime?.ActiveWindow;
+        }
+    }
+
+    // Shared by every window root. Created lazily without opening a device; a
+    // runtime assigned before first use stays caller-owned.
+    public SoundRuntime SoundRuntime
+    {
+        get
+        {
+            VerifyAccess();
+            ObjectDisposedException.ThrowIf(soundsRetired, this);
+            if (soundRuntime is null)
+            {
+                soundRuntime = new SoundRuntime();
+                ownsSoundRuntime = true;
+            }
+
+            return soundRuntime;
+        }
+        set
+        {
+            VerifyAccess();
+            ArgumentNullException.ThrowIfNull(value);
+            ObjectDisposedException.ThrowIf(soundsRetired, this);
+            if (soundRuntime is not null)
+            {
+                throw new InvalidOperationException("Application.SoundRuntime must be assigned before it is first used.");
+            }
+
+            soundRuntime = value;
+            ownsSoundRuntime = false;
+        }
+    }
+
+    public SoundScope Sounds
+    {
+        get
+        {
+            VerifyAccess();
+            ObjectDisposedException.ThrowIf(soundsRetired, this);
+            return sounds ??= SoundRuntime.CreateScope();
         }
     }
 
@@ -202,6 +248,7 @@ public class Application
             }
 
             services = null;
+            RetireSounds();
             DetachRuntime();
         }
     }
@@ -214,8 +261,22 @@ public class Application
         }
 
         services = null;
+        RetireSounds();
         runtime = null;
         current = null;
+    }
+
+    private void RetireSounds()
+    {
+        soundsRetired = true;
+        sounds?.Dispose();
+        sounds = null;
+        if (ownsSoundRuntime)
+        {
+            soundRuntime?.Dispose();
+        }
+
+        soundRuntime = null;
     }
 
     private void DetachRuntime()

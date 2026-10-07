@@ -1,3 +1,4 @@
+using Cerneala.Timbre;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 using Cerneala.UI.Platform;
@@ -19,4 +20,6 @@ public sealed class UiHostOptions
     public ElementInputBridge? InputBridge { get; set; }
 
     public IPlatformServices? PlatformServices { get; set; }
+
+    public SoundRuntime? SoundRuntime { get; set; }
 }

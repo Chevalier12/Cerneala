@@ -13,6 +13,16 @@ public class Application
 
 ## Examples
 ```csharp
+// Element audio: scoped to the element's attachment lifecycle.
+SoundPlayback click = button.Sounds.Play(new SoundClip("audio/click.wav"));
+
+// Application audio: lives until the application exits.
+SoundPlayback music = Application.Current!.Sounds.Play(
+    new SoundClip("audio/music.ogg", loading: SoundLoading.Streaming),
+    start => start.Loop = true);
+```
+
+```csharp
 public partial class App : Application
 {
     protected override void ConfigureServices(IServiceCollection services)
@@ -37,7 +47,9 @@ Application markup can enable multisampling before the windowing backend is crea
 
 `UseMultisampling` controls whether the windowing backend requests multisampled render targets. It defaults to `false` and is read when the default runtime is created. Changing it after runtime creation does not recreate graphics resources.
 
-`Shutdown(int)` is idempotent. Its first call closes remaining windows, raises `Exit` once, disposes the published service provider when it implements `IDisposable`, and clears `Current`.
+`SoundRuntime` is the [SoundRuntime](Cerneala.Timbre.SoundRuntime.md) shared by every window root of the application. It is created on first use without opening an audio device; an application created without a platform audio backend has no output, so its playbacks fail with `DeviceUnavailable`. Assign a configured runtime before first use to supply an output; assigning after first use throws `InvalidOperationException`. `Sounds` is an application-scoped [SoundScope](Cerneala.Timbre.SoundScope.md) for audio that is not owned by an element; element audio uses `UIElement.Sounds`.
+
+`Shutdown(int)` is idempotent. Its first call closes remaining windows, raises `Exit` once, disposes the published service provider when it implements `IDisposable`, disposes `Sounds` (canceling its playbacks), disposes a `SoundRuntime` the application created itself — an assigned runtime stays caller-owned — and clears `Current`. Afterwards `Sounds` and `SoundRuntime` throw `ObjectDisposedException`.
 
 ## Constructors
 | Name | Description |
@@ -55,6 +67,8 @@ Application markup can enable multisampling before the windowing backend is crea
 | `ActiveWindow` | Currently active runtime window, if any. |
 | `UseMultisampling` | Whether the windowing backend requests multisampled render targets. The default is `false`. |
 | `ShutdownMode` | Policy evaluated after a successful window close. |
+| `SoundRuntime` | Audio runtime shared by the application's windows; lazy, assignable before first use. |
+| `Sounds` | Application-scoped sound scope, disposed on exit. |
 
 ## Methods
 | Name | Description |
@@ -78,3 +92,4 @@ Windows desktop standalone and hosted application lifecycles.
 - `ApplicationShutdownMode`
 - `Window`
 - `ResourceDictionary`
+- [SoundRuntime](Cerneala.Timbre.SoundRuntime.md)

@@ -692,22 +692,32 @@ Generated from `.`.
 |   |-- SourceGeneratorDiagnosticAdapter.cs
 |   |-- SourceGeneratorSemanticModel.cs
 |   |-- UiMarkupApplicationGenerator.cs
+|   |-- UiMarkupAspectEmitter.cs
+|   |-- UiMarkupAspectReader.cs
 |   |-- UiMarkupBackendSelection.cs
 |   |-- UiMarkupBindingResolver.cs
+|   |-- UiMarkupBrushEmitter.cs
 |   |-- UiMarkupDirectiveParser.cs
 |   |-- UiMarkupDirectiveParser.Expressions.cs
 |   |-- UiMarkupDirectiveParser.MotionExecutions.cs
 |   |-- UiMarkupDirectiveParser.MotionTriggers.cs
 |   |-- UiMarkupDirectiveParser.MotionValues.cs
 |   |-- UiMarkupDirectiveParser.Syntax.cs
+|   |-- UiMarkupElementEmitter.cs
 |   |-- UiMarkupGenerator.cs
 |   |-- UiMarkupMotionActivationEmitter.cs
 |   |-- UiMarkupMotionResolver.cs
 |   |-- UiMarkupMotionSpecResolver.cs
 |   |-- UiMarkupMotionSyntax.cs
+|   |-- UiMarkupPropertyElementEmitter.cs
+|   |-- UiMarkupPropertyEmitter.cs
+|   |-- UiMarkupPropertyResolver.cs
 |   |-- UiMarkupReactiveEmitter.cs
+|   |-- UiMarkupResourceEmitter.cs
 |   |-- UiMarkupSceneComponentGenerator.cs
+|   |-- UiMarkupTemplateEmitter.cs
 |   |-- UiMarkupUserControlGenerator.cs
+|   |-- UiMarkupValueEmitter.cs
 |   +-- UiMarkupWindowGenerator.cs
 |-- Cerneala.VisualStudio/
 |   |-- Assets/
@@ -2547,12 +2557,62 @@ Generated from `.`.
 |   |   |   |       |-- preflight-app-status.txt
 |   |   |   |       |-- preflight-meta.txt
 |   |   |   |       +-- preflight-status.txt
-|   |   |   +-- 2026-09-25-scene-village-remaining-vegetation/
-|   |   |       +-- integration/
-|   |   |           |-- preflight-app-status.txt
-|   |   |           |-- preflight-meta.txt
-|   |   |           |-- preflight-source-assets.sha256.txt
-|   |   |           +-- preflight-status.txt
+|   |   |   |-- 2026-09-25-scene-village-remaining-vegetation/
+|   |   |   |   +-- integration/
+|   |   |   |       |-- preflight-app-status.txt
+|   |   |   |       |-- preflight-meta.txt
+|   |   |   |       |-- preflight-source-assets.sha256.txt
+|   |   |   |       +-- preflight-status.txt
+|   |   |   |-- 2026-10-03-timbre-core-stage0/
+|   |   |   |   |-- baseline/
+|   |   |   |   |-- compile-contract/
+|   |   |   |   |   |-- consumer/
+|   |   |   |   |   +-- contracts/
+|   |   |   |   +-- results/
+|   |   |   |-- 2026-10-03-timbre-core-stage1/
+|   |   |   |   +-- results/
+|   |   |   |-- 2026-10-03-timbre-core-stage2/
+|   |   |   |   +-- results/
+|   |   |   |-- 2026-10-03-timbre-core-stage3/
+|   |   |   |   |-- allocation-probe/
+|   |   |   |   |-- allocation-profiler/
+|   |   |   |   |   |-- allocation-qualification/
+|   |   |   |   |   |-- calibration/
+|   |   |   |   |   |-- headers/
+|   |   |   |   |   |-- profiler-bgc-cost/
+|   |   |   |   |   |-- profiler-cost/
+|   |   |   |   |   |-- profiler-frozen-cost/
+|   |   |   |   |   +-- qualification-1/
+|   |   |   |   |-- background-counter/
+|   |   |   |   |-- bgc-void-discriminator/
+|   |   |   |   |-- consumer/
+|   |   |   |   |-- cost/
+|   |   |   |   |   |-- measurement-1/
+|   |   |   |   |   |-- measurement-1-repeat/
+|   |   |   |   |   |-- measurement-tree-1/
+|   |   |   |   |   |-- measurement-tree-1-repeat/
+|   |   |   |   |   |-- measurement-wake-1/
+|   |   |   |   |   +-- measurement-wake-1-repeat/
+|   |   |   |   |-- dsp-attribution/
+|   |   |   |   |-- gc-counter-probe/
+|   |   |   |   |-- gc-crossing-cost/
+|   |   |   |   |-- hotpath-identity/
+|   |   |   |   |-- results/
+|   |   |   |   |-- solution-certified-results/
+|   |   |   |   |-- solution-results/
+|   |   |   |   |-- solution-serialized-results/
+|   |   |   |   |-- solution-tree-results/
+|   |   |   |   |-- test-allocation-driver/
+|   |   |   |   |-- trace-reader/
+|   |   |   |   +-- tree-propagation/
+|   |   |   |-- 2026-10-05-timbre-core-stage0-rebuild/
+|   |   |   |   |-- consumer/
+|   |   |   |   |-- contract-reference/
+|   |   |   |   |-- di/
+|   |   |   |   +-- dsp/
+|   |   |   +-- 2026-10-05-timbre-core-stage1/
+|   |   |       |-- consumer/
+|   |   |       +-- executable/
 |   |   |-- 2026-07-10-inline-component-template-markup.md
 |   |   |-- 2026-07-10-window-windowsdx-migration.md
 |   |   |-- 2026-07-11-background-and-borderbrush-brush-migration.md
@@ -2609,7 +2669,13 @@ Generated from `.`.
 |   |   |-- 2026-09-21-rendersurface3d-plan-index.md
 |   |   |-- 2026-09-22-sdlgpu-retained-submit-prerequisite.md
 |   |   |-- 2026-09-23-scene2d-simple-collections-and-internal-spatial.md
-|   |   +-- 2026-09-24-scene2d-stage0-contract-proposal.md
+|   |   |-- 2026-09-24-scene2d-stage0-contract-proposal.md
+|   |   |-- 2026-10-03-timbre-core-runtime.md
+|   |   |-- 2026-10-03-timbre-decoding-streaming.md
+|   |   |-- 2026-10-03-timbre-markup-aspect.md
+|   |   |-- 2026-10-03-timbre-motion-parameters.md
+|   |   |-- 2026-10-03-timbre-sdl3-backend.md
+|   |   +-- 2026-10-03-timbre.md
 |   |-- superpowers/
 |   |   |-- plans/
 |   |   |   |-- 2026-07-03-fix-retained-render-frame-contract.md
@@ -4455,30 +4521,128 @@ Generated from `.`.
 |   |   |-- MainWindow.crn
 |   |   +-- MainWindow.crn.cs
 |   |-- Cerneala.InvestorReel/
+|   |   |-- Themes/
+|   |   |   |-- Brutalist/
+|   |   |   |   |-- BrutalBindScene.crn
+|   |   |   |   |-- BrutalBindScene.crn.cs
+|   |   |   |   |-- BrutalCloseScene.crn
+|   |   |   |   |-- BrutalCloseScene.crn.cs
+|   |   |   |   |-- BrutalEditorScene.crn
+|   |   |   |   |-- BrutalEditorScene.crn.cs
+|   |   |   |   |-- BrutalMotionScene.crn
+|   |   |   |   |-- BrutalMotionScene.crn.cs
+|   |   |   |   |-- BrutalOpenScene.crn
+|   |   |   |   |-- BrutalOpenScene.crn.cs
+|   |   |   |   |-- BrutalPrismScene.crn
+|   |   |   |   |-- BrutalPrismScene.crn.cs
+|   |   |   |   |-- BrutalProofScene.crn
+|   |   |   |   |-- BrutalProofScene.crn.cs
+|   |   |   |   |-- BrutalRedrawScene.crn
+|   |   |   |   |-- BrutalRedrawScene.crn.cs
+|   |   |   |   |-- BrutalReel.crn
+|   |   |   |   |-- BrutalReel.crn.cs
+|   |   |   |   |-- BrutalRuleScene.crn
+|   |   |   |   |-- BrutalRuleScene.crn.cs
+|   |   |   |   |-- BrutalSketchScene.crn
+|   |   |   |   |-- BrutalSketchScene.crn.cs
+|   |   |   |   |-- BrutalStackScene.crn
+|   |   |   |   |-- BrutalStackScene.crn.cs
+|   |   |   |   |-- BrutalWorldScene.crn
+|   |   |   |   +-- BrutalWorldScene.crn.cs
+|   |   |   |-- Cyberpunk/
+|   |   |   |   |-- CyberBindScene.crn
+|   |   |   |   |-- CyberBindScene.crn.cs
+|   |   |   |   |-- CyberCloseScene.crn
+|   |   |   |   |-- CyberCloseScene.crn.cs
+|   |   |   |   |-- CyberEditorScene.crn
+|   |   |   |   |-- CyberEditorScene.crn.cs
+|   |   |   |   |-- CyberMotionScene.crn
+|   |   |   |   |-- CyberMotionScene.crn.cs
+|   |   |   |   |-- CyberOpenScene.crn
+|   |   |   |   |-- CyberOpenScene.crn.cs
+|   |   |   |   |-- CyberPrismScene.crn
+|   |   |   |   |-- CyberPrismScene.crn.cs
+|   |   |   |   |-- CyberProofScene.crn
+|   |   |   |   |-- CyberProofScene.crn.cs
+|   |   |   |   |-- CyberRedrawScene.crn
+|   |   |   |   |-- CyberRedrawScene.crn.cs
+|   |   |   |   |-- CyberReel.crn
+|   |   |   |   |-- CyberReel.crn.cs
+|   |   |   |   |-- CyberRuleScene.crn
+|   |   |   |   |-- CyberRuleScene.crn.cs
+|   |   |   |   |-- CyberSketchScene.crn
+|   |   |   |   |-- CyberSketchScene.crn.cs
+|   |   |   |   |-- CyberStackScene.crn
+|   |   |   |   |-- CyberStackScene.crn.cs
+|   |   |   |   |-- CyberWorldScene.crn
+|   |   |   |   +-- CyberWorldScene.crn.cs
+|   |   |   |-- Ink/
+|   |   |   |   |-- BindScene.crn
+|   |   |   |   |-- BindScene.crn.cs
+|   |   |   |   |-- EditorScene.crn
+|   |   |   |   |-- EditorScene.crn.cs
+|   |   |   |   |-- InkReel.crn
+|   |   |   |   |-- InkReel.crn.cs
+|   |   |   |   |-- InkScene.crn
+|   |   |   |   |-- InkScene.crn.cs
+|   |   |   |   |-- PageScene.crn
+|   |   |   |   |-- PageScene.crn.cs
+|   |   |   |   |-- PaperScene.crn
+|   |   |   |   |-- PaperScene.crn.cs
+|   |   |   |   |-- ProofScene.crn
+|   |   |   |   |-- ProofScene.crn.cs
+|   |   |   |   |-- RuleScene.crn
+|   |   |   |   |-- RuleScene.crn.cs
+|   |   |   |   |-- ScoreScene.crn
+|   |   |   |   |-- ScoreScene.crn.cs
+|   |   |   |   |-- SealScene.crn
+|   |   |   |   |-- SealScene.crn.cs
+|   |   |   |   |-- SketchScene.crn
+|   |   |   |   |-- SketchScene.crn.cs
+|   |   |   |   |-- StackScene.crn
+|   |   |   |   |-- StackScene.crn.cs
+|   |   |   |   |-- WorldScene.crn
+|   |   |   |   +-- WorldScene.crn.cs
+|   |   |   +-- Sakura/
+|   |   |       |-- Blossom.crn
+|   |   |       |-- Blossom.crn.cs
+|   |   |       |-- SakuraBindScene.crn
+|   |   |       |-- SakuraBindScene.crn.cs
+|   |   |       |-- SakuraCloseScene.crn
+|   |   |       |-- SakuraCloseScene.crn.cs
+|   |   |       |-- SakuraEditorScene.crn
+|   |   |       |-- SakuraEditorScene.crn.cs
+|   |   |       |-- SakuraMotionScene.crn
+|   |   |       |-- SakuraMotionScene.crn.cs
+|   |   |       |-- SakuraOpenScene.crn
+|   |   |       |-- SakuraOpenScene.crn.cs
+|   |   |       |-- SakuraPrismScene.crn
+|   |   |       |-- SakuraPrismScene.crn.cs
+|   |   |       |-- SakuraProofScene.crn
+|   |   |       |-- SakuraProofScene.crn.cs
+|   |   |       |-- SakuraRedrawScene.crn
+|   |   |       |-- SakuraRedrawScene.crn.cs
+|   |   |       |-- SakuraReel.crn
+|   |   |       |-- SakuraReel.crn.cs
+|   |   |       |-- SakuraRuleScene.crn
+|   |   |       |-- SakuraRuleScene.crn.cs
+|   |   |       |-- SakuraSketchScene.crn
+|   |   |       |-- SakuraSketchScene.crn.cs
+|   |   |       |-- SakuraStackScene.crn
+|   |   |       |-- SakuraStackScene.crn.cs
+|   |   |       |-- SakuraWorldScene.crn
+|   |   |       +-- SakuraWorldScene.crn.cs
 |   |   |-- App.crn
 |   |   |-- App.crn.cs
 |   |   |-- BackendRegistration.cs
 |   |   |-- Cerneala.InvestorReel.csproj
-|   |   |-- InkScene.crn
-|   |   |-- InkScene.crn.cs
-|   |   |-- PageScene.crn
-|   |   |-- PageScene.crn.cs
-|   |   |-- PaperScene.crn
-|   |   |-- PaperScene.crn.cs
 |   |   |-- README.md
 |   |   |-- ReelWindow.Capture.cs
 |   |   |-- ReelWindow.crn
 |   |   |-- ReelWindow.crn.cs
-|   |   |-- RuleScene.crn
-|   |   |-- RuleScene.crn.cs
-|   |   |-- ScoreScene.crn
-|   |   |-- ScoreScene.crn.cs
-|   |   |-- SealScene.crn
-|   |   |-- SealScene.crn.cs
-|   |   |-- SketchScene.crn
-|   |   |-- SketchScene.crn.cs
-|   |   |-- StackScene.crn
-|   |   +-- StackScene.crn.cs
+|   |   |-- ShellViewModel.cs
+|   |   |-- ThemePicker.crn
+|   |   +-- ThemePicker.crn.cs
 |   |-- Cerneala.MenuLab/
 |   |   |-- .gitignore
 |   |   |-- BackendRegistration.cs
@@ -5508,9 +5672,11 @@ Generated from `.`.
 |   |   |-- UiMarkupGeneratorBindingStageFourTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageThreeTests.cs
 |   |   |-- UiMarkupGeneratorBindingStageZeroTests.cs
+|   |   |-- UiMarkupGeneratorBrushConstructionTests.cs
 |   |   |-- UiMarkupGeneratorColliderOwnershipTests.cs
 |   |   |-- UiMarkupGeneratorCollisionStageZeroTests.cs
 |   |   |-- UiMarkupGeneratorFileExtensionTests.cs
+|   |   |-- UiMarkupGeneratorFloatLiteralTests.cs
 |   |   |-- UiMarkupGeneratorMenuTests.cs
 |   |   |-- UiMarkupGeneratorMotionClipTests.cs
 |   |   |-- UiMarkupGeneratorMotionCompositionTests.cs
@@ -5535,6 +5701,7 @@ Generated from `.`.
 |   |   |-- UiMarkupGeneratorTests.cs
 |   |   |-- UiMarkupGeneratorTileAuthoringTests.cs
 |   |   +-- UiMarkupGeneratorTileMap2DStageZeroTests.cs
+|   |-- Cerneala.Tests.Timbre/
 |   |-- Cerneala.Tests.VisualStudio/
 |   |   |-- Golden/
 |   |   |   |-- cerneala-tokenization.crn
@@ -5674,17 +5841,25 @@ Generated from `.`.
 |   |-- PrismAudit/
 |   |   |-- PrismAudit.csproj
 |   |   +-- Program.cs
+|   |-- RoslynMcp/
+|   |   |-- manifest.json
+|   |   |-- README.md
+|   |   |-- roslyn-5.9.patch
+|   |   |-- test_install_retry.ps1
+|   |   +-- test_roslyn_mcp.py
 |   +-- scripts/
 |       |-- Archive-Repo.ps1
 |       |-- Archive-Repo.Tests.ps1
 |       |-- Build-CernealaVisualStudioRelease.ps1
 |       |-- Cerneala.BuildInputs.Tests.ps1
+|       |-- Install-RoslynMcp.ps1
 |       |-- Invoke-SdlGpuSmoke.ps1
 |       |-- Measure-PrismOuterGlowColdStart.ps1
 |       |-- New-FileTree.ps1
 |       |-- New-PrismFilterReference.ps1
 |       |-- Publish-SdlGpuSmoke.ps1
 |       |-- SdlGpuSmoke.Common.ps1
+|       |-- Start-RoslynMcp.ps1
 |       +-- Test-PrismMotionBlur144Hz.ps1
 |-- UI/
 |   |-- Accessibility/

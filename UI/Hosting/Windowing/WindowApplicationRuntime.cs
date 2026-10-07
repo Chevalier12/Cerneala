@@ -268,6 +268,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
             context.Root.VisualChildren.Remove(window);
             context.Root.LogicalChildren.Remove(window);
             context.Root.ReleaseDrawingResources();
+            context.Root.SetSoundRuntime(null);
             context.PlatformWindow.Destroy();
             context.Dispose();
         }
@@ -698,6 +699,13 @@ internal sealed class WindowApplicationRuntime : IDisposable
         root.SetThemeProvider(themeProvider);
         root.SetResourceProvider(application?.Resources ?? resourceProvider);
         root.SetPlatformServices(platformServices);
+        if (application is not null)
+        {
+            // The Application runtime is shared by every window; its output
+            // stays lazy until a playback starts.
+            root.SetSoundRuntime(application.SoundRuntime);
+        }
+
         root.SetImageResourceCache(
             platformWindow.GraphicsSession.ImageLoader,
             platformWindow.GraphicsSession.ImageResourceCache);

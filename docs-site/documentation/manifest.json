@@ -5727,5 +5727,125 @@
     "name": "Cerneala.UI.Controls.RenderSurface3DFrame",
     "file": "documentation/classes/Cerneala.UI.Controls.RenderSurface3DFrame.md",
     "source": "UI/Controls/RenderSurface3DFrame.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.SoundClip",
+    "file": "documentation/classes/Cerneala.Timbre.SoundClip.md",
+    "source": "Timbre/SoundClip.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.SoundSource",
+    "file": "documentation/classes/Cerneala.Timbre.SoundSource.md",
+    "source": "Timbre/SoundSource.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.SoundReader",
+    "file": "documentation/classes/Cerneala.Timbre.SoundReader.md",
+    "source": "Timbre/SoundReader.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.SoundReadResult",
+    "file": "documentation/classes/Cerneala.Timbre.SoundReadResult.md",
+    "source": "Timbre/SoundReader.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.SoundLoading",
+    "file": "documentation/classes/Cerneala.Timbre.SoundLoading.md",
+    "source": "Timbre/SoundLoading.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.SoundParameter",
+    "file": "documentation/classes/Cerneala.Timbre.SoundParameter.md",
+    "source": "Timbre/SoundParameter.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.SoundParameter_T_",
+    "file": "documentation/classes/Cerneala.Timbre.SoundParameter_T_.md",
+    "source": "Timbre/SoundParameter.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.SoundInput_T_",
+    "file": "documentation/classes/Cerneala.Timbre.SoundInput_T_.md",
+    "source": "Timbre/SoundInput.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.SoundModifier",
+    "file": "documentation/classes/Cerneala.Timbre.SoundModifier.md",
+    "source": "Timbre/SoundModifier.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.LowPass",
+    "file": "documentation/classes/Cerneala.Timbre.LowPass.md",
+    "source": "Timbre/SoundModifier.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.Delay",
+    "file": "documentation/classes/Cerneala.Timbre.Delay.md",
+    "source": "Timbre/SoundModifier.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.SoundRuntime",
+    "file": "documentation/classes/Cerneala.Timbre.SoundRuntime.md",
+    "source": "Timbre/SoundRuntime.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.SoundRuntimeOptions",
+    "file": "documentation/classes/Cerneala.Timbre.SoundRuntimeOptions.md",
+    "source": "Timbre/SoundRuntimeOptions.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.SoundScope",
+    "file": "documentation/classes/Cerneala.Timbre.SoundScope.md",
+    "source": "Timbre/SoundScope.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.SoundStartOptions",
+    "file": "documentation/classes/Cerneala.Timbre.SoundStartOptions.md",
+    "source": "Timbre/SoundStartOptions.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.SoundHandle",
+    "file": "documentation/classes/Cerneala.Timbre.SoundHandle.md",
+    "source": "Timbre/SoundHandle.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.SoundPlayback",
+    "file": "documentation/classes/Cerneala.Timbre.SoundPlayback.md",
+    "source": "Timbre/SoundPlayback.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.SoundPlaybackState",
+    "file": "documentation/classes/Cerneala.Timbre.SoundPlaybackState.md",
+    "source": "Timbre/SoundPlaybackState.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.SoundPlaybackResult",
+    "file": "documentation/classes/Cerneala.Timbre.SoundPlaybackResult.md",
+    "source": "Timbre/SoundPlaybackResult.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.SoundException",
+    "file": "documentation/classes/Cerneala.Timbre.SoundException.md",
+    "source": "Timbre/SoundException.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.SoundErrorKind",
+    "file": "documentation/classes/Cerneala.Timbre.SoundErrorKind.md",
+    "source": "Timbre/SoundException.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.ISoundOutput",
+    "file": "documentation/classes/Cerneala.Timbre.ISoundOutput.md",
+    "source": "Timbre/ISoundOutput.cs"
+  },
+  {
+    "name": "Cerneala.Timbre.ISoundOutputClient",
+    "file": "documentation/classes/Cerneala.Timbre.ISoundOutputClient.md",
+    "source": "Timbre/ISoundOutput.cs"
+  },
+  {
+    "name": "Cerneala.UI.Detective.SoundDiagnosticsSnapshot",
+    "file": "documentation/classes/Cerneala.UI.Detective.SoundDiagnosticsSnapshot.md",
+    "source": "UI/Detective/SoundDiagnosticsSnapshot.cs"
   }
 ]

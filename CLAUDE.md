@@ -1,1 +1,1 @@
-Opus 5.5 only is allowed to work on this repository. Read the local config.toml instructions instead.
+Read the config.toml. Don't use subagents like Codex was instructed to unless the user requests subagents.

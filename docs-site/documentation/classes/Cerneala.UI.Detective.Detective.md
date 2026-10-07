@@ -33,6 +33,8 @@ Every `UIRoot` creates exactly one `Detective`. Capture methods copy current ret
 
 `CaptureTileMap` separates visible drawing, optional warm preparation, retained-cache estimates, and the warm admission charge through [TileMapDiagnosticsSnapshot](Cerneala.UI.Detective.TileMapDiagnosticsSnapshot.md). Its warm counters are observational; capturing does not advance preparation or enforce a budget. Byte estimates and charges are not native/GPU memory measurements.
 
+`CaptureSound` reports the [SoundRuntime](Cerneala.Timbre.SoundRuntime.md) assigned to the root through [SoundDiagnosticsSnapshot](Cerneala.UI.Detective.SoundDiagnosticsSnapshot.md). Counters are cumulative for the runtime, which window roots share, not per root.
+
 Invalidation tracing is disabled by the default `UIRoot` constructor. Supply an `InvalidationTrace` when constructing the root to retain invalidation entries.
 
 ## Properties
@@ -54,6 +56,7 @@ Invalidation tracing is disabled by the default `UIRoot` constructor. Supply an 
 | `CaptureInput(UIElement? hitTarget, RoutedEvent? routedEvent = null)` | `InputDiagnosticsSnapshot` | Captures hit-target and routed-event input state. |
 | `CaptureLayout(UIElement element)` | `LayoutDiagnosticsSnapshot` | Captures current layout state for an element. |
 | `CaptureMotion()` | `MotionGraphSnapshot` | Captures current Motion graph and latest-frame activity. |
+| `CaptureSound()` | `SoundDiagnosticsSnapshot?` | Copies the root sound runtime's output, playback, underrun, clipping, and memory counters; `null` when the root has no `SoundRuntime`. Read-only: Detective never owns or drives audio. |
 | `CaptureRendering()` | `RootRenderDiagnosticsSnapshot` | Captures retained root render-cache state. |
 | `CaptureRendering(UIElement element)` | `ElementRenderDiagnosticsSnapshot` | Captures retained render-cache state for an element. |
 | `CaptureTileMap(TileMap2D map)` | `TileMapDiagnosticsSnapshot` | Copies the latest tilemap recording counters. The map must be attached to this root; null throws `ArgumentNullException`, detached/foreign-root maps throw `ArgumentException`. Does not record, invalidate, synchronize, or reset the map. |

@@ -1,0 +1,31 @@
+<Project>
+  <!-- Strict ApiCompat for the Timbre core plan against the frozen stage 0
+       baseline (82a2386f). No suppressions from other initiatives. -->
+  <PropertyGroup>
+    <SdkRoot>C:\Program Files\dotnet\sdk\10.0.400</SdkRoot>
+    <DotNetApiCompatTaskAssembly>$(SdkRoot)\Sdks\Microsoft.NET.Sdk\tools\net10.0\Microsoft.DotNet.ApiCompat.Task.dll</DotNetApiCompatTaskAssembly>
+    <RoslynAssembliesPath>$(SdkRoot)\Roslyn\bincore</RoslynAssembliesPath>
+    <BaselineRoot>C:\Users\lauri\Desktop\Cerneala-baseline-timbre-82a2386</BaselineRoot>
+    <CurrentRoot>C:\Users\lauri\Desktop\Cerneala</CurrentRoot>
+    <ApiCompatGenerateSuppressionFile>false</ApiCompatGenerateSuppressionFile>
+    <ApiCompatSuppressionOutputFile>$(MSBuildThisFileDirectory)api-compat.suppressions.generated.xml</ApiCompatSuppressionOutputFile>
+  </PropertyGroup>
+
+  <UsingTask TaskName="Microsoft.DotNet.ApiCompat.Task.ValidateAssembliesTask"
+             AssemblyFile="$(DotNetApiCompatTaskAssembly)" />
+
+  <Target Name="Compare">
+    <ValidateAssembliesTask
+      LeftAssemblies="$(BaselineRoot)\bin\Release\net8.0\Cerneala.dll"
+      RightAssemblies="$(CurrentRoot)\bin\Release\net8.0\Cerneala.dll"
+      LeftAssembliesReferences="C:\Program Files\dotnet\shared\Microsoft.NETCore.App\8.0.30,$(CurrentRoot)\tests\Cerneala.Tests.Timbre\bin\Release\net8.0"
+      RightAssembliesReferences="C:\Program Files\dotnet\shared\Microsoft.NETCore.App\8.0.30,$(CurrentRoot)\tests\Cerneala.Tests.Timbre\bin\Release\net8.0"
+      RoslynAssembliesPath="$(RoslynAssembliesPath)"
+      EnableStrictMode="true"
+      EnableRuleCannotChangeParameterName="true"
+      GenerateSuppressionFile="$(ApiCompatGenerateSuppressionFile)"
+      SuppressionFiles="$(MSBuildThisFileDirectory)api-compat.suppressions.xml"
+      SuppressionOutputFile="$(ApiCompatSuppressionOutputFile)"
+      PermitUnnecessarySuppressions="false" />
+  </Target>
+</Project>

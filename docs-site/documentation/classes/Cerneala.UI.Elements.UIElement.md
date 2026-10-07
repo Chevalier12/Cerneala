@@ -63,6 +63,12 @@ Most element settings are registered `UiProperty<T>` values. Setting properties 
 
 `IsHitTestVisible` controls direct pointer hit testing without changing layout or rendering. When it is `false`, the element and its visual subtree are skipped by hit testing; the default is `true`.
 
+`Sounds` returns the element's [SoundScope](Cerneala.Timbre.SoundScope.md), connected to `Root.SoundRuntime`. It requires the owner thread and an attached element whose root has a runtime; otherwise it throws `InvalidOperationException`. The scope belongs to one attachment: detach disposes it and cancels its playbacks, and after reattachment `Sounds` returns a new scope without resurrecting old playbacks. Hiding the element or an ancestor does not affect its audio. This applies to every element, including `Scene2D` and its nodes.
+
+```csharp
+SoundPlayback playback = button.Sounds.Play(confirmSound);
+```
+
 Changing `Visibility` from `Visible` to `Hidden` or `Collapsed`, or changing `IsVisible` to `false`, cancels active property motion for the element and its visual descendants. Canceled motion does not resume automatically when the subtree becomes visible again; callers or markup conditions can start it again explicitly.
 
 Layout uses `Measure` and `Arrange`. `Measure` caches the last available size and layout version; `Arrange` caches the last final rectangle and layout version. Elements that do not participate in layout return zero desired size and zero arranged size. Otherwise, `Measure` constrains `MeasureCore` with explicit `Width` and `Height` values when present, substitutes those values into the desired size, and then applies `Margin`. `Arrange` applies `Margin`, the explicit dimensions, `HorizontalAlignment`, and `VerticalAlignment` before calling `ArrangeCore`. An unset dimension is represented by `float.NaN` and continues to use content measurement or stretch behavior.
@@ -132,6 +138,7 @@ Value validation is enforced by property metadata. `Width` and `Height` accept `
 | `CommandBindings` | `CommandBindingCollection` | Command bindings associated with this element. |
 | `Bindings` | `BindingSubscriptionCollection` | Data-binding subscriptions associated with this element. |
 | `InputBindings` | `InputBindingCollection` | Input gesture bindings associated with this element. |
+| `Sounds` | `SoundScope` | The element's sound scope for its current attachment; requires an attached element with a root `SoundRuntime`. |
 | `DirtyState` | `DirtyState` | Local invalidation state tracked for this element. |
 | `DesiredSize` | `LayoutSize` | The last measured desired size. |
 | `ArrangedBounds` | `LayoutRect` | The last arranged layout bounds. |

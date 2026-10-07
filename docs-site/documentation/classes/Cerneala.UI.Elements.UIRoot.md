@@ -85,6 +85,8 @@ Invalidation requests are expanded through `DirtyPropagation` and queued into th
 
 `GetSemanticsTree` caches the generated `SemanticsTree` until semantics become dirty or `TreeVersion` changes.
 
+`SoundRuntime` is the caller-owned [SoundRuntime](Cerneala.Timbre.SoundRuntime.md) behind `UIElement.Sounds` for every element of this root. Window roots receive `Application.SoundRuntime`; hosted roots receive `UiHostOptions.SoundRuntime`. `SetSoundRuntime` requires the owner thread. Assigning a different runtime, including `null`, disposes the element sound scopes created under the previous one (canceling their playbacks); the root never disposes a runtime. Closing a window clears its root's runtime the same way.
+
 ## Constructors
 
 | Name | Description |
@@ -121,6 +123,7 @@ Invalidation requests are expanded through `DirtyPropagation` and queued into th
 | `RetainedRenderer` | `RetainedRenderer` | Renders retained draw command lists from the root render cache. |
 | `Scale` | `float` | Gets the root viewport scale. This property hides `UIElement.Scale`. |
 | `Scheduler` | `UiFrameScheduler` | Coordinates retained frame phases for queued root work. |
+| `SoundRuntime` | `SoundRuntime?` | Gets the sound runtime assigned by `SetSoundRuntime`, or `null`. |
 | `ThemeProvider` | `ThemeProvider?` | Gets the current theme provider assigned by `SetThemeProvider`. |
 | `TreeVersion` | `int` | Gets the root tree version. It changes when the tree or viewport changes. |
 | `ViewportHeight` | `float` | Gets the viewport height assigned at construction or by `SetViewport`. |
@@ -137,6 +140,7 @@ Invalidation requests are expanded through `DirtyPropagation` and queued into th
 | `SetImageResourceCache(IImageLoader? loader, ImageResourceCache? cache)` | `void` | Sets the loader/cache pair, releases this root's drawing acquisitions when the cache changes, and invalidates resource/render state without clearing a shared cache. |
 | `SetPlatformServices(IPlatformServices? services)` | `void` | Sets platform services, falling back to empty services for `null`, and syncs reduced-motion mode when available. |
 | `SetResourceProvider(IResourceProvider? provider)` | `void` | Sets the root resource provider, updates observable resource-change subscriptions, and invalidates root resource state. Off-thread resource deltas are dispatched FIFO through `Relay`. |
+| `SetSoundRuntime(SoundRuntime? runtime)` | `void` | Sets the caller-owned sound runtime used by element sound scopes and retires scopes created under the previous runtime. |
 | `SetThemeProvider(ThemeProvider? provider)` | `void` | Sets the theme provider, updates theme-change subscription, and invalidates aspect state for the subtree. Off-thread theme bursts are coalesced through `Relay`. |
 | `SetViewport(float width, float height, float scale)` | `void` | Updates viewport width, height, and root scale, then increments `TreeVersion`. |
 

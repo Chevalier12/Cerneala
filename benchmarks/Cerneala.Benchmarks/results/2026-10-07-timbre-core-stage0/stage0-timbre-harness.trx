@@ -1,0 +1,118 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="2c245e0a-e983-4b1d-a3cd-8b0e1610396e" name="lauri@DESKTOP-JT43V3D 2026-10-07 01:56:50" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-07T01:56:50.1497713+03:00" queuing="2026-10-07T01:56:50.1497716+03:00" start="2026-10-07T01:56:47.6096206+03:00" finish="2026-10-07T01:56:50.2131286+03:00" />
+  <TestSettings name="default" id="26d2cf1d-bab0-4d6b-b681-ce697d819e44">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-10-07_01_56_50" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="f0e4bd52-0d7f-4d7e-bd95-95eb9a22170b" testId="298dc025-f9b5-4030-c6aa-835460996c85" testName="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.OutputRejectsIncompleteFramesAndSubmissionWhileClosed" computerName="DESKTOP-JT43V3D" duration="00:00:00.0005743" startTime="2026-10-07T01:56:50.0566699+03:00" endTime="2026-10-07T01:56:50.0566706+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f0e4bd52-0d7f-4d7e-bd95-95eb9a22170b" />
+    <UnitTestResult executionId="06dc9bbc-1238-4fbf-8da5-0929a838cf56" testId="f112040a-3c60-4a84-f0f0-699bb40a06ec" testName="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.ReaderCountsReadsSeeksAndReportsEndOfSource" computerName="DESKTOP-JT43V3D" duration="00:00:00.0031891" startTime="2026-10-07T01:56:50.1119904+03:00" endTime="2026-10-07T01:56:50.1119906+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="06dc9bbc-1238-4fbf-8da5-0929a838cf56" />
+    <UnitTestResult executionId="523136b4-a0ec-47cc-8955-9bfe3b088246" testId="afedbf6d-4f56-8d04-b403-0e123524324b" testName="Cerneala.Tests.Timbre.Contracts.TimbreArchitectureTests.CatalogRangeCheckRejectsNonFiniteAndOutOfRangeValues" computerName="DESKTOP-JT43V3D" duration="00:00:00.0002031" startTime="2026-10-07T01:56:50.1352179+03:00" endTime="2026-10-07T01:56:50.1352181+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="523136b4-a0ec-47cc-8955-9bfe3b088246" />
+    <UnitTestResult executionId="223e5415-3da4-41fe-a2b9-580f86ae2cd3" testId="e361f142-830a-9057-e82a-65eb4741a495" testName="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.OutputRecordsPcmInSubmissionOrder" computerName="DESKTOP-JT43V3D" duration="00:00:00.0145759" startTime="2026-10-07T01:56:50.0523889+03:00" endTime="2026-10-07T01:56:50.0523891+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="223e5415-3da4-41fe-a2b9-580f86ae2cd3" />
+    <UnitTestResult executionId="41b5ec0b-d311-472a-b0c8-ff18a6faa769" testId="8d2285ae-cf03-8ce3-2548-38de5352b916" testName="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.ReaderInjectsFailureAtConfiguredFrame" computerName="DESKTOP-JT43V3D" duration="00:00:00.0032445" startTime="2026-10-07T01:56:50.0553991+03:00" endTime="2026-10-07T01:56:50.0553996+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="41b5ec0b-d311-472a-b0c8-ff18a6faa769" />
+    <UnitTestResult executionId="caed991b-5325-43a2-8a53-e3b27d32a515" testId="0c80fce0-b049-2765-30a3-8d44c1aa2fe9" testName="Cerneala.Tests.Timbre.Contracts.TimbreArchitectureTests.CatalogMatchesApprovedRangesAndFormat" computerName="DESKTOP-JT43V3D" duration="00:00:00.0167081" startTime="2026-10-07T01:56:50.0688719+03:00" endTime="2026-10-07T01:56:50.0688723+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="caed991b-5325-43a2-8a53-e3b27d32a515" />
+    <UnitTestResult executionId="150a9388-35b5-4992-bf27-1cc605827753" testId="d811b813-99a4-2457-a897-fdf7abcad2de" testName="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.ReaderProducesIdenticalPcmForSingleAndIrregularPartitions" computerName="DESKTOP-JT43V3D" duration="00:00:00.0156380" startTime="2026-10-07T01:56:50.0724379+03:00" endTime="2026-10-07T01:56:50.0724382+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="150a9388-35b5-4992-bf27-1cc605827753" />
+    <UnitTestResult executionId="9d2afe70-b60b-4723-befc-4dc14466f684" testId="cf3eee22-57ea-5a75-5c7d-229dd3a2d830" testName="Cerneala.Tests.Timbre.Contracts.TimbreArchitectureTests.ExternalConsumerHasNoInternalsAccess" computerName="DESKTOP-JT43V3D" duration="00:00:00.2443391" startTime="2026-10-07T01:56:50.0520727+03:00" endTime="2026-10-07T01:56:50.0520729+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9d2afe70-b60b-4723-befc-4dc14466f684" />
+    <UnitTestResult executionId="4887567e-7bb9-43bd-b8b3-d0e11e84a3c9" testId="583b9d90-59f8-42f2-016a-23a9ff0e6130" testName="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.OutputOpenFailureIsInjectedAndCounted" computerName="DESKTOP-JT43V3D" duration="00:00:00.0004597" startTime="2026-10-07T01:56:50.0559695+03:00" endTime="2026-10-07T01:56:50.0559698+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4887567e-7bb9-43bd-b8b3-d0e11e84a3c9" />
+    <UnitTestResult executionId="84e6fc6a-69e8-485b-ab4f-c3c6e4a413ce" testId="4b8e3801-360a-0a93-5480-b63eadbd3764" testName="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.OutputTracksSubmittedQueuedAndConsumedFramesAndNotifiesClient" computerName="DESKTOP-JT43V3D" duration="00:00:00.0009598" startTime="2026-10-07T01:56:50.1123998+03:00" endTime="2026-10-07T01:56:50.1123999+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="84e6fc6a-69e8-485b-ab4f-c3c6e4a413ce" />
+    <UnitTestResult executionId="e9a0348c-fbbc-48ed-a57e-6a1b9007e4a0" testId="7c241707-e01e-6a94-e1ef-4ca258865f79" testName="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.ReaderGateHoldsReadUntilReleasedAndHonorsCancellation" computerName="DESKTOP-JT43V3D" duration="00:00:00.2232006" startTime="2026-10-07T01:56:50.0359540+03:00" endTime="2026-10-07T01:56:50.0359948+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e9a0348c-fbbc-48ed-a57e-6a1b9007e4a0" />
+    <UnitTestResult executionId="33ec584e-37e6-4841-8ddb-d4f837ac86a8" testId="d676734b-d5ef-0510-71f7-a987709684b5" testName="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.OutputDeviceLossIsForwardedToClient" computerName="DESKTOP-JT43V3D" duration="00:00:00.0004494" startTime="2026-10-07T01:56:50.1122555+03:00" endTime="2026-10-07T01:56:50.1122557+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="33ec584e-37e6-4841-8ddb-d4f837ac86a8" />
+    <UnitTestResult executionId="5f30c07a-0fbf-4bef-ad14-de9ffe318b23" testId="bb1fb9c7-1d83-bf59-ea70-a79fe8bc40ec" testName="Cerneala.Tests.Timbre.Contracts.TimbreArchitectureTests.CoreTimbreTypesDoNotReferenceUiMarkupOrPlatformTypes" computerName="DESKTOP-JT43V3D" duration="00:00:00.0659717" startTime="2026-10-07T01:56:50.1349378+03:00" endTime="2026-10-07T01:56:50.1349383+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5f30c07a-0fbf-4bef-ad14-de9ffe318b23" />
+    <UnitTestResult executionId="4683a084-2705-483a-bfc8-2d8c1c7ff732" testId="ae730949-c125-b620-e96e-3154a5c2b798" testName="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.OutputSubmittedFrameWaitCompletesOnlyAfterThreshold" computerName="DESKTOP-JT43V3D" duration="00:00:00.0045329" startTime="2026-10-07T01:56:50.1121269+03:00" endTime="2026-10-07T01:56:50.1121271+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4683a084-2705-483a-bfc8-2d8c1c7ff732" />
+    <UnitTestResult executionId="2a30a288-e947-47d9-b426-fedd1ac87495" testId="1372a6f0-40ef-2bb6-4e2f-74c482d5e8a5" testName="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.SourceFactoryCreatesIndependentReadersAndTracksLiveCount" computerName="DESKTOP-JT43V3D" duration="00:00:00.0008644" startTime="2026-10-07T01:56:50.1116099+03:00" endTime="2026-10-07T01:56:50.1116102+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2a30a288-e947-47d9-b426-fedd1ac87495" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.ReaderCountsReadsSeeksAndReportsEndOfSource" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="f112040a-3c60-4a84-f0f0-699bb40a06ec">
+      <Execution id="06dc9bbc-1238-4fbf-8da5-0929a838cf56" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Harness.HarnessObserverTests" name="ReaderCountsReadsSeeksAndReportsEndOfSource" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Contracts.TimbreArchitectureTests.CatalogMatchesApprovedRangesAndFormat" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="0c80fce0-b049-2765-30a3-8d44c1aa2fe9">
+      <Execution id="caed991b-5325-43a2-8a53-e3b27d32a515" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Contracts.TimbreArchitectureTests" name="CatalogMatchesApprovedRangesAndFormat" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.OutputOpenFailureIsInjectedAndCounted" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="583b9d90-59f8-42f2-016a-23a9ff0e6130">
+      <Execution id="4887567e-7bb9-43bd-b8b3-d0e11e84a3c9" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Harness.HarnessObserverTests" name="OutputOpenFailureIsInjectedAndCounted" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.OutputRejectsIncompleteFramesAndSubmissionWhileClosed" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="298dc025-f9b5-4030-c6aa-835460996c85">
+      <Execution id="f0e4bd52-0d7f-4d7e-bd95-95eb9a22170b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Harness.HarnessObserverTests" name="OutputRejectsIncompleteFramesAndSubmissionWhileClosed" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.ReaderInjectsFailureAtConfiguredFrame" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="8d2285ae-cf03-8ce3-2548-38de5352b916">
+      <Execution id="41b5ec0b-d311-472a-b0c8-ff18a6faa769" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Harness.HarnessObserverTests" name="ReaderInjectsFailureAtConfiguredFrame" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.OutputDeviceLossIsForwardedToClient" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="d676734b-d5ef-0510-71f7-a987709684b5">
+      <Execution id="33ec584e-37e6-4841-8ddb-d4f837ac86a8" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Harness.HarnessObserverTests" name="OutputDeviceLossIsForwardedToClient" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.ReaderGateHoldsReadUntilReleasedAndHonorsCancellation" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="7c241707-e01e-6a94-e1ef-4ca258865f79">
+      <Execution id="e9a0348c-fbbc-48ed-a57e-6a1b9007e4a0" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Harness.HarnessObserverTests" name="ReaderGateHoldsReadUntilReleasedAndHonorsCancellation" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Contracts.TimbreArchitectureTests.CatalogRangeCheckRejectsNonFiniteAndOutOfRangeValues" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="afedbf6d-4f56-8d04-b403-0e123524324b">
+      <Execution id="523136b4-a0ec-47cc-8955-9bfe3b088246" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Contracts.TimbreArchitectureTests" name="CatalogRangeCheckRejectsNonFiniteAndOutOfRangeValues" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.OutputTracksSubmittedQueuedAndConsumedFramesAndNotifiesClient" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="4b8e3801-360a-0a93-5480-b63eadbd3764">
+      <Execution id="84e6fc6a-69e8-485b-ab4f-c3c6e4a413ce" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Harness.HarnessObserverTests" name="OutputTracksSubmittedQueuedAndConsumedFramesAndNotifiesClient" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Contracts.TimbreArchitectureTests.CoreTimbreTypesDoNotReferenceUiMarkupOrPlatformTypes" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="bb1fb9c7-1d83-bf59-ea70-a79fe8bc40ec">
+      <Execution id="5f30c07a-0fbf-4bef-ad14-de9ffe318b23" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Contracts.TimbreArchitectureTests" name="CoreTimbreTypesDoNotReferenceUiMarkupOrPlatformTypes" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.OutputRecordsPcmInSubmissionOrder" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="e361f142-830a-9057-e82a-65eb4741a495">
+      <Execution id="223e5415-3da4-41fe-a2b9-580f86ae2cd3" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Harness.HarnessObserverTests" name="OutputRecordsPcmInSubmissionOrder" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Contracts.TimbreArchitectureTests.ExternalConsumerHasNoInternalsAccess" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="cf3eee22-57ea-5a75-5c7d-229dd3a2d830">
+      <Execution id="9d2afe70-b60b-4723-befc-4dc14466f684" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Contracts.TimbreArchitectureTests" name="ExternalConsumerHasNoInternalsAccess" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.OutputSubmittedFrameWaitCompletesOnlyAfterThreshold" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="ae730949-c125-b620-e96e-3154a5c2b798">
+      <Execution id="4683a084-2705-483a-bfc8-2d8c1c7ff732" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Harness.HarnessObserverTests" name="OutputSubmittedFrameWaitCompletesOnlyAfterThreshold" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.SourceFactoryCreatesIndependentReadersAndTracksLiveCount" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="1372a6f0-40ef-2bb6-4e2f-74c482d5e8a5">
+      <Execution id="2a30a288-e947-47d9-b426-fedd1ac87495" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Harness.HarnessObserverTests" name="SourceFactoryCreatesIndependentReadersAndTracksLiveCount" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Harness.HarnessObserverTests.ReaderProducesIdenticalPcmForSingleAndIrregularPartitions" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="d811b813-99a4-2457-a897-fdf7abcad2de">
+      <Execution id="150a9388-35b5-4992-bf27-1cc605827753" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Harness.HarnessObserverTests" name="ReaderProducesIdenticalPcmForSingleAndIrregularPartitions" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="298dc025-f9b5-4030-c6aa-835460996c85" executionId="f0e4bd52-0d7f-4d7e-bd95-95eb9a22170b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f112040a-3c60-4a84-f0f0-699bb40a06ec" executionId="06dc9bbc-1238-4fbf-8da5-0929a838cf56" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="afedbf6d-4f56-8d04-b403-0e123524324b" executionId="523136b4-a0ec-47cc-8955-9bfe3b088246" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e361f142-830a-9057-e82a-65eb4741a495" executionId="223e5415-3da4-41fe-a2b9-580f86ae2cd3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8d2285ae-cf03-8ce3-2548-38de5352b916" executionId="41b5ec0b-d311-472a-b0c8-ff18a6faa769" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0c80fce0-b049-2765-30a3-8d44c1aa2fe9" executionId="caed991b-5325-43a2-8a53-e3b27d32a515" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d811b813-99a4-2457-a897-fdf7abcad2de" executionId="150a9388-35b5-4992-bf27-1cc605827753" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cf3eee22-57ea-5a75-5c7d-229dd3a2d830" executionId="9d2afe70-b60b-4723-befc-4dc14466f684" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="583b9d90-59f8-42f2-016a-23a9ff0e6130" executionId="4887567e-7bb9-43bd-b8b3-d0e11e84a3c9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4b8e3801-360a-0a93-5480-b63eadbd3764" executionId="84e6fc6a-69e8-485b-ab4f-c3c6e4a413ce" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7c241707-e01e-6a94-e1ef-4ca258865f79" executionId="e9a0348c-fbbc-48ed-a57e-6a1b9007e4a0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d676734b-d5ef-0510-71f7-a987709684b5" executionId="33ec584e-37e6-4841-8ddb-d4f837ac86a8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bb1fb9c7-1d83-bf59-ea70-a79fe8bc40ec" executionId="5f30c07a-0fbf-4bef-ad14-de9ffe318b23" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ae730949-c125-b620-e96e-3154a5c2b798" executionId="4683a084-2705-483a-bfc8-2d8c1c7ff732" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1372a6f0-40ef-2bb6-4e2f-74c482d5e8a5" executionId="2a30a288-e947-47d9-b426-fedd1ac87495" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="15" executed="15" passed="15" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.78]   Discovering: Cerneala.Tests.Timbre&#xD;
+[xUnit.net 00:00:00.82]   Discovered:  Cerneala.Tests.Timbre&#xD;
+[xUnit.net 00:00:00.82]   Starting:    Cerneala.Tests.Timbre&#xD;
+[xUnit.net 00:00:01.20]   Finished:    Cerneala.Tests.Timbre&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

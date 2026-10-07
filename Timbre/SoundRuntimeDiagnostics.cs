@@ -1,0 +1,32 @@
+namespace Cerneala.Timbre;
+
+// Observable engine counters. Transport counters are monotonic; resource
+// counters describe the current live state when the snapshot was taken.
+internal readonly record struct SoundRuntimeDiagnostics(
+    long PlaybacksStarted,
+    long PlaybacksCompleted,
+    long PlaybacksCanceled,
+    long PlaybacksFailed,
+    long PausesApplied,
+    long ResumesApplied,
+    long SeeksRequested,
+    long SeeksCompleted,
+    long SeeksSuperseded,
+    long LoopWraps,
+    long BlocksMixed,
+    long FramesSubmitted,
+    long FramesConsumed,
+    long UnderrunFrames,
+    long ClippedSamples,
+    long ParameterPublications,
+    int ActiveVoices,
+    int LiveReaders,
+    int LiveSourcePumps,
+    int OutputOpenCount,
+    bool OutputOpen,
+    long CacheBytes,
+    int CacheEntries,
+    long StreamingBufferBytes,
+    long DspStateBytes,
+    int LiveScopes,
+    int PendingLoads);

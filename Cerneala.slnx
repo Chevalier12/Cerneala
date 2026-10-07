@@ -26,6 +26,8 @@
     <Project Path="tests/Cerneala.Tests.SdlGpu/Cerneala.Tests.SdlGpu.csproj" />
     <Project Path="tests/Cerneala.SdlGpuSmoke/Cerneala.SdlGpuSmoke.csproj" />
     <Project Path="tests/Cerneala.Tests/Cerneala.Tests.csproj" />
+    <Project Path="tests/Cerneala.Tests.Timbre/Cerneala.Tests.Timbre.csproj" />
+    <Project Path="tests/Fixtures/TimbreConsumer/TimbreConsumer.csproj" />
     <Project Path="tests/Fixtures/VisualStudioConsumer/VisualStudioConsumer.csproj" />
   </Folder>
   <Folder Name="/Tetrisish/">

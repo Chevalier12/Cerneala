@@ -1,0 +1,73 @@
+{
+  "Processes": [
+    {
+      "Process": "1",
+      "P50": 0.2774,
+      "P95": 0.3455,
+      "P99": 0.3946,
+      "Max": 2.1535,
+      "AllocatedBytes": 0,
+      "MaxQueued": 1920,
+      "DeviceUnderrun": 0,
+      "VoiceUnderrun": 0,
+      "LatencyP95": 16.2565,
+      "Pass": true
+    },
+    {
+      "Process": "2",
+      "P50": 0.2678,
+      "P95": 0.3332,
+      "P99": 0.3787,
+      "Max": 0.8921,
+      "AllocatedBytes": 0,
+      "MaxQueued": 1920,
+      "DeviceUnderrun": 0,
+      "VoiceUnderrun": 0,
+      "LatencyP95": 16.1661,
+      "Pass": true
+    },
+    {
+      "Process": "3",
+      "P50": 0.2583,
+      "P95": 0.2975,
+      "P99": 0.3255,
+      "Max": 0.474,
+      "AllocatedBytes": 0,
+      "MaxQueued": 1920,
+      "DeviceUnderrun": 0,
+      "VoiceUnderrun": 0,
+      "LatencyP95": 15.8276,
+      "Pass": true
+    },
+    {
+      "Process": "4",
+      "P50": 0.2545,
+      "P95": 0.2923,
+      "P99": 0.3227,
+      "Max": 0.7818,
+      "AllocatedBytes": 0,
+      "MaxQueued": 1920,
+      "DeviceUnderrun": 0,
+      "VoiceUnderrun": 0,
+      "LatencyP95": 16.0358,
+      "Pass": true
+    },
+    {
+      "Process": "5",
+      "P50": 0.2557,
+      "P95": 0.2922,
+      "P99": 0.3232,
+      "Max": 0.7108,
+      "AllocatedBytes": 0,
+      "MaxQueued": 1920,
+      "DeviceUnderrun": 0,
+      "VoiceUnderrun": 0,
+      "LatencyP95": 16.017,
+      "Pass": true
+    }
+  ],
+  "P99VariationMaxOverMin": 1.2228075612023552,
+  "P95VariationMaxOverMin": 1.1824093086926761,
+  "LatencyP95VariationMaxOverMin": 1.0270982334655916,
+  "Verdict": "PASS"
+}

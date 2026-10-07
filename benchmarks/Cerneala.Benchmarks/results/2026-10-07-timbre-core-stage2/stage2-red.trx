@@ -1,0 +1,804 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="50c5582b-cf1a-4825-8fd4-a43690a38593" name="lauri@DESKTOP-JT43V3D 2026-10-07 02:55:10" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-07T02:55:10.6101017+03:00" queuing="2026-10-07T02:55:10.6101019+03:00" start="2026-10-07T02:55:09.4885261+03:00" finish="2026-10-07T02:55:10.6649596+03:00" />
+  <TestSettings name="default" id="1b52d96a-5514-4c9f-835b-7c459a2297b5">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-10-07_02_55_10" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="6e56b019-3702-4845-ad0c-a83b59de9327" testId="8f733276-212e-fa78-b0b6-599471d2ee15" testName="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(cutoff: 20000)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0000584" startTime="2026-10-07T02:55:10.5851318+03:00" endTime="2026-10-07T02:55:10.5851318+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6e56b019-3702-4845-ad0c-a83b59de9327">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz) in C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs:line 7&#xD;
+   at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(Single cutoff) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs:line 25&#xD;
+   at InvokeStub_LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="f10b6acc-fde3-4b45-a367-fd7319a51f94" testId="02e436c1-593e-8ecb-a9fa-b1afe732252a" testName="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.SuccessfulSeekResetsDspStateWhileARejectedSeekDoesNot" computerName="DESKTOP-JT43V3D" duration="00:00:00.0012206" startTime="2026-10-07T02:55:10.5908046+03:00" endTime="2026-10-07T02:55:10.5908047+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f10b6acc-fde3-4b45-a367-fd7319a51f94">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs:line 29&#xD;
+   at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.SuccessfulSeekResetsDspStateWhileARejectedSeekDoesNot() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs:line 229&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="93d5af15-c391-4628-9b1e-327005d05ae9" testId="c8769a6e-fdff-c0b1-e664-478f82a207be" testName="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.ParameterChangesApplyFromTheNextBlockAndInvalidValuesKeepThePreviousOne" computerName="DESKTOP-JT43V3D" duration="00:00:00.0017135" startTime="2026-10-07T02:55:10.5896126+03:00" endTime="2026-10-07T02:55:10.5896126+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="93d5af15-c391-4628-9b1e-327005d05ae9">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs:line 29&#xD;
+   at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.ParameterChangesApplyFromTheNextBlockAndInvalidValuesKeepThePreviousOne() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs:line 93&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="a31cf109-02ce-4aa8-bb07-fa24f488dcee" testId="39abfee2-a5be-7918-a2f5-a4cc068d595e" testName="Cerneala.Tests.Timbre.Dsp.DelayKernelTests.MaximumFeedbackStaysBoundedAndResetClearsTheLine" computerName="DESKTOP-JT43V3D" duration="00:00:00.0031633" startTime="2026-10-07T02:55:10.5861685+03:00" endTime="2026-10-07T02:55:10.5861687+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a31cf109-02ce-4aa8-bb07-fa24f488dcee">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.Dsp.DelayKernel..ctor(Int32 capacityFrames) in C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\DelayKernel.cs:line 7&#xD;
+   at Cerneala.Tests.Timbre.Dsp.DelayKernelTests.MaximumFeedbackStaysBoundedAndResetClearsTheLine() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DelayKernelTests.cs:line 157&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="878c2293-dcc6-420f-847f-d7908fbaa3c0" testId="50932d6c-0a3a-c7aa-edb3-2a4d0e96681f" testName="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(cutoff: 6000)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001864" startTime="2026-10-07T02:55:10.5844657+03:00" endTime="2026-10-07T02:55:10.5844659+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="878c2293-dcc6-420f-847f-d7908fbaa3c0">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz) in C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs:line 7&#xD;
+   at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(Single cutoff) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs:line 25&#xD;
+   at InvokeStub_LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="086537c0-13da-497d-9e1b-e2e5edef62e2" testId="bdad0890-622c-026e-aa94-de2a97be0378" testName="Cerneala.Tests.Timbre.Dsp.DelayKernelTests.ChangingTimeMovesTheReadPositionImmediately" computerName="DESKTOP-JT43V3D" duration="00:00:00.0002594" startTime="2026-10-07T02:55:10.5386151+03:00" endTime="2026-10-07T02:55:10.5386157+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="086537c0-13da-497d-9e1b-e2e5edef62e2">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.Dsp.DelayKernel..ctor(Int32 capacityFrames) in C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\DelayKernel.cs:line 7&#xD;
+   at Cerneala.Tests.Timbre.Dsp.DelayKernelTests.ChangingTimeMovesTheReadPositionImmediately() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DelayKernelTests.cs:line 130&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c72686cf-adf4-408a-a1cf-0454bff2114d" testId="cff8d208-ead2-eb72-5616-f9019cf6e4b7" testName="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(cutoff: 200)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0002345" startTime="2026-10-07T02:55:10.5773656+03:00" endTime="2026-10-07T02:55:10.5773657+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c72686cf-adf4-408a-a1cf-0454bff2114d">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz) in C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs:line 7&#xD;
+   at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(Single cutoff) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs:line 25&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="faf10384-684b-46ff-a038-aac18566e2fa" testId="3f74add9-1445-dea4-87e9-aba45cf9b738" testName="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(frequency: 12000)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0011041" startTime="2026-10-07T02:55:10.5745434+03:00" endTime="2026-10-07T02:55:10.5745435+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="faf10384-684b-46ff-a038-aac18566e2fa">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz) in C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs:line 7&#xD;
+   at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(Double frequency) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs:line 69&#xD;
+   at InvokeStub_LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c079f893-4da3-4148-bf11-5f5a14264bd2" testId="67bb4acf-6d2a-08dc-4425-e317e6d3f5a3" testName="Cerneala.Tests.Timbre.Dsp.DelayKernelTests.DelayFramesRoundTimeToTheNearestFrame" computerName="DESKTOP-JT43V3D" duration="00:00:00.0004957" startTime="2026-10-07T02:55:10.5739023+03:00" endTime="2026-10-07T02:55:10.5739024+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c079f893-4da3-4148-bf11-5f5a14264bd2">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.Dsp.DelayKernel.ToDelayFrames(Single seconds) in C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\DelayKernel.cs:line 14&#xD;
+   at Cerneala.Tests.Timbre.Dsp.DelayKernelTests.DelayFramesRoundTimeToTheNearestFrame() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DelayKernelTests.cs:line 11&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="e375d8ea-fd06-4d71-acd7-762a2075a1c2" testId="b5294456-3f16-62c8-7f9b-df73aa2d7646" testName="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.DryAndWetEndpointsThroughTheEngine" computerName="DESKTOP-JT43V3D" duration="00:00:00.0011176" startTime="2026-10-07T02:55:10.5848021+03:00" endTime="2026-10-07T02:55:10.5848022+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e375d8ea-fd06-4d71-acd7-762a2075a1c2">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs:line 29&#xD;
+   at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.DryAndWetEndpointsThroughTheEngine() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs:line 72&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="4814ea87-0994-4f4b-a5fc-5535be446169" testId="d57060f3-5daa-5b44-d839-dea291ba99b0" testName="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(frequency: 1000)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0041680" startTime="2026-10-07T02:55:10.5735423+03:00" endTime="2026-10-07T02:55:10.5735425+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4814ea87-0994-4f4b-a5fc-5535be446169">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz) in C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs:line 7&#xD;
+   at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(Double frequency) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs:line 69&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="d711c990-9aa0-4ce1-b9e2-113d7ab08ca8" testId="da5f75a9-5aa4-d3fe-5ad9-70c2091c2423" testName="Cerneala.Tests.Timbre.Dsp.DelayKernelTests.MatchesTheReferenceOnBroadbandInput" computerName="DESKTOP-JT43V3D" duration="00:00:00.0019819" startTime="2026-10-07T02:55:10.5396494+03:00" endTime="2026-10-07T02:55:10.5396496+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d711c990-9aa0-4ce1-b9e2-113d7ab08ca8">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.Dsp.DelayKernel.ToDelayFrames(Single seconds) in C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\DelayKernel.cs:line 14&#xD;
+   at Cerneala.Tests.Timbre.Dsp.DelayKernelTests.MatchesTheReferenceOnBroadbandInput() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DelayKernelTests.cs:line 52&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="d78a1ddf-c4b7-405d-b4cf-9d0cdb1f69db" testId="0665b442-1e93-4989-4564-a4ae4a67bf99" testName="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.ReaderReturningMoreFramesThanRequestedFailsInsteadOfReachingTheMix" computerName="DESKTOP-JT43V3D" duration="00:00:00.0007441" startTime="2026-10-07T02:55:10.5752010+03:00" endTime="2026-10-07T02:55:10.5752011+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d78a1ddf-c4b7-405d-b4cf-9d0cdb1f69db">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs:line 29&#xD;
+   at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.ReaderReturningMoreFramesThanRequestedFailsInsteadOfReachingTheMix() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs:line 280&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="37db849a-38ad-4288-ab99-a0ed30f27117" testId="bc3fa68d-0a66-ac66-2121-43e207aece84" testName="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.VolumeIsAppliedAfterTheChainSoAZeroVolumeTailLastsTheSame" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010996" startTime="2026-10-07T02:55:10.5741973+03:00" endTime="2026-10-07T02:55:10.5741974+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="37db849a-38ad-4288-ab99-a0ed30f27117">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs:line 29&#xD;
+   at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.VolumeIsAppliedAfterTheChainSoAZeroVolumeTailLastsTheSame() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs:line 151&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="74287b79-ceef-4028-9fc3-2f6620e1558e" testId="8167202e-fb3d-4fd1-90bd-c3d83f2031f0" testName="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.ChainRunsInDeclarationOrderWithIndependentStageState" computerName="DESKTOP-JT43V3D" duration="00:00:00.0018263" startTime="2026-10-07T02:55:10.5898947+03:00" endTime="2026-10-07T02:55:10.5898948+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="74287b79-ceef-4028-9fc3-2f6620e1558e">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs:line 29&#xD;
+   at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.ChainRunsInDeclarationOrderWithIndependentStageState() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs:line 35&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="8ab1fe5d-477a-4ece-960f-51f299b75f9f" testId="a1a264a4-7438-d4db-759c-cb0827c4f46f" testName="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(frequency: 4000)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0007145" startTime="2026-10-07T02:55:10.5770128+03:00" endTime="2026-10-07T02:55:10.5770129+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8ab1fe5d-477a-4ece-960f-51f299b75f9f">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz) in C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs:line 7&#xD;
+   at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(Double frequency) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs:line 69&#xD;
+   at InvokeStub_LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="34b1dbe2-2c2a-4960-9139-28f89c5240f7" testId="41fd3a9a-245b-ccde-055d-2a7154542cff" testName="Cerneala.Tests.Timbre.Dsp.DelayKernelTests.ChannelsAreIndependentAndPartitionsMatchASingleBlock" computerName="DESKTOP-JT43V3D" duration="00:00:00.0007017" startTime="2026-10-07T02:55:10.5377936+03:00" endTime="2026-10-07T02:55:10.5377938+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="34b1dbe2-2c2a-4960-9139-28f89c5240f7">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.Dsp.DelayKernel..ctor(Int32 capacityFrames) in C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\DelayKernel.cs:line 7&#xD;
+   at Cerneala.Tests.Timbre.Dsp.DelayKernelTests.ChannelsAreIndependentAndPartitionsMatchASingleBlock() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DelayKernelTests.cs:line 101&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="0b443666-519d-417c-ad94-9b3e9b0d81a7" testId="d6d3d93a-07c8-2b78-67dc-29fde8a65c86" testName="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.ConfiguredTailCapAndLowPassOnlyTail" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010515" startTime="2026-10-07T02:55:10.5893388+03:00" endTime="2026-10-07T02:55:10.5893389+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0b443666-519d-417c-ad94-9b3e9b0d81a7">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs:line 29&#xD;
+   at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.ConfiguredTailCapAndLowPassOnlyTail() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs:line 181&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="b23b00fd-ae43-4e07-a999-d54144e4ce52" testId="b33670d4-1f8f-b597-83ab-de7f895fd5e1" testName="Cerneala.Tests.Timbre.Dsp.DelayKernelTests.ImpulseProducesTheDryValueAndAGeometricEchoTrain" computerName="DESKTOP-JT43V3D" duration="00:00:00.0006756" startTime="2026-10-07T02:55:10.5729497+03:00" endTime="2026-10-07T02:55:10.5729500+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b23b00fd-ae43-4e07-a999-d54144e4ce52">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.Dsp.DelayKernel..ctor(Int32 capacityFrames) in C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\DelayKernel.cs:line 7&#xD;
+   at Cerneala.Tests.Timbre.Dsp.DelayKernelTests.ImpulseProducesTheDryValueAndAGeometricEchoTrain() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DelayKernelTests.cs:line 24&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="cc09134e-57c3-4862-8c67-6f46fc896837" testId="c5b5c8df-0dc0-6b22-da20-ff2c31269e2f" testName="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.CutoffModulationStaysFiniteAndBoundedAndResetClearsState" computerName="DESKTOP-JT43V3D" duration="00:00:00.0024210" startTime="2026-10-07T02:55:10.5353155+03:00" endTime="2026-10-07T02:55:10.5353157+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cc09134e-57c3-4862-8c67-6f46fc896837">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz) in C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs:line 7&#xD;
+   at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.CutoffModulationStaysFiniteAndBoundedAndResetClearsState() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs:line 156&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="05ad3dd1-db6d-4162-a29c-88c793fb3a1d" testId="3c4db43c-7b02-dde3-6cb8-14baf8c2f0d8" testName="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.TwoPlaybacksOfOneModifiedClipKeepIndependentDspState" computerName="DESKTOP-JT43V3D" duration="00:00:00.0008055" startTime="2026-10-07T02:55:10.5901677+03:00" endTime="2026-10-07T02:55:10.5901677+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="05ad3dd1-db6d-4162-a29c-88c793fb3a1d">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs:line 29&#xD;
+   at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.TwoPlaybacksOfOneModifiedClipKeepIndependentDspState() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs:line 52&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c380f1ed-e661-48b0-9fd6-e5c5bf458da6" testId="a2c10a2f-70c9-02ea-dfee-4a94371e1a52" testName="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.NaturalLoopAndPauseResumePreserveDspStateAcrossBoundaries" computerName="DESKTOP-JT43V3D" duration="00:00:00.0097552" startTime="2026-10-07T02:55:10.5391203+03:00" endTime="2026-10-07T02:55:10.5391205+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c380f1ed-e661-48b0-9fd6-e5c5bf458da6">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs:line 29&#xD;
+   at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.NaturalLoopAndPauseResumePreserveDspStateAcrossBoundaries() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs:line 258&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="0415abd5-3dc2-48e1-80f0-86e223084513" testId="d99efef5-1334-96bc-acc9-ca5d5c12ba59" testName="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.DcGainIsUnity" computerName="DESKTOP-JT43V3D" duration="00:00:00.0022162" startTime="2026-10-07T02:55:10.5884366+03:00" endTime="2026-10-07T02:55:10.5884367+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0415abd5-3dc2-48e1-80f0-86e223084513">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz) in C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs:line 7&#xD;
+   at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.DcGainIsUnity() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs:line 43&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="908438fb-7eff-4cfb-be24-e7094b928c45" testId="9b88025b-f5be-3d80-f713-1d460f89a047" testName="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.CancelStopsTheTailAndPauseFreezesIt" computerName="DESKTOP-JT43V3D" duration="00:00:00.0013071" startTime="2026-10-07T02:55:10.5868549+03:00" endTime="2026-10-07T02:55:10.5868551+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="908438fb-7eff-4cfb-be24-e7094b928c45">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs:line 29&#xD;
+   at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.CancelStopsTheTailAndPauseFreezesIt() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs:line 196&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="9f08e429-09d4-4d9c-ba96-4453b1be5698" testId="7bbeff15-658e-bda0-6ae6-36bff3d25743" testName="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ChannelsAreProcessedIndependently" computerName="DESKTOP-JT43V3D" duration="00:00:00.0006979" startTime="2026-10-07T02:55:10.5887672+03:00" endTime="2026-10-07T02:55:10.5887673+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9f08e429-09d4-4d9c-ba96-4453b1be5698">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz) in C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs:line 7&#xD;
+   at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ChannelsAreProcessedIndependently() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs:line 100&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="7f2e74c5-02d2-41ea-b9ed-6fb703610bb9" testId="4e7fb479-84b3-1be3-0a39-15d83f156d81" testName="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(cutoff: 1200)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001040" startTime="2026-10-07T02:55:10.5854503+03:00" endTime="2026-10-07T02:55:10.5854504+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7f2e74c5-02d2-41ea-b9ed-6fb703610bb9">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz) in C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs:line 7&#xD;
+   at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(Single cutoff) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs:line 25&#xD;
+   at InvokeStub_LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="1ae192ae-da6e-45db-bc03-230b18e08a39" testId="c9e8b19b-1715-7ed0-9a9a-7d36a3cc2937" testName="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.LowPassClipMatchesTheOracleTimesPostChainVolume" computerName="DESKTOP-JT43V3D" duration="00:00:00.0011701" startTime="2026-10-07T02:55:10.5401047+03:00" endTime="2026-10-07T02:55:10.5401049+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1ae192ae-da6e-45db-bc03-230b18e08a39">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs:line 29&#xD;
+   at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.LowPassClipMatchesTheOracleTimesPostChainVolume() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs:line 20&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c76d11c8-50fc-4ecb-bf26-af563f11c433" testId="2fcfd03e-15e2-8c24-9e50-a524ac9a2264" testName="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.DefaultTailCapTruncatesALongEchoAtThirtySeconds" computerName="DESKTOP-JT43V3D" duration="00:00:00.0014212" startTime="2026-10-07T02:55:10.5890320+03:00" endTime="2026-10-07T02:55:10.5890320+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c76d11c8-50fc-4ecb-bf26-af563f11c433">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs:line 29&#xD;
+   at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.DefaultTailCapTruncatesALongEchoAtThirtySeconds() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs:line 165&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="e549a397-8b4a-44bf-b320-c2eab0591a75" testId="b674dd84-0dfb-4de5-94e5-efd427c17d8d" testName="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(frequency: 200)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0007698" startTime="2026-10-07T02:55:10.5748927+03:00" endTime="2026-10-07T02:55:10.5748928+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e549a397-8b4a-44bf-b320-c2eab0591a75">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz) in C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs:line 7&#xD;
+   at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(Double frequency) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs:line 69&#xD;
+   at InvokeStub_LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="cbf3f561-a71e-42a3-8778-6e58dc3e74e2" testId="51d33a7c-2ac4-2930-b365-d6a0c5badfbb" testName="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.DelayTailContinuesAfterEndOfSourceAndCompletesAfterTheCriterionAndDrain" computerName="DESKTOP-JT43V3D" duration="00:00:00.0013416" startTime="2026-10-07T02:55:10.5881155+03:00" endTime="2026-10-07T02:55:10.5881156+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cbf3f561-a71e-42a3-8778-6e58dc3e74e2">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs:line 29&#xD;
+   at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.DelayTailContinuesAfterEndOfSourceAndCompletesAfterTheCriterionAndDrain() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs:line 125&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="8c9beb56-2f8a-4bd6-a9f9-5e09d2aa652d" testId="7d27f53d-9e61-4dbc-08ca-205bbbcbab53" testName="Cerneala.Tests.Timbre.Dsp.DelayKernelTests.MixEndpointsAreFullyDryAndFullyWet" computerName="DESKTOP-JT43V3D" duration="00:00:00.0024540" startTime="2026-10-07T02:55:10.5325728+03:00" endTime="2026-10-07T02:55:10.5326033+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8c9beb56-2f8a-4bd6-a9f9-5e09d2aa652d">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.Dsp.DelayKernel..ctor(Int32 capacityFrames) in C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\DelayKernel.cs:line 7&#xD;
+   at Cerneala.Tests.Timbre.Dsp.DelayKernelTests.MixEndpointsAreFullyDryAndFullyWet() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DelayKernelTests.cs:line 75&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c34c8a2b-f700-43db-a0f6-b3d10a275ec9" testId="292fb0c1-b281-a656-6b2f-4baa49668111" testName="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.IrregularPartitionsMatchASingleBlockExactly" computerName="DESKTOP-JT43V3D" duration="00:00:00.0014020" startTime="2026-10-07T02:55:10.5877848+03:00" endTime="2026-10-07T02:55:10.5877850+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c34c8a2b-f700-43db-a0f6-b3d10a275ec9">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz) in C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs:line 7&#xD;
+   at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.IrregularPartitionsMatchASingleBlockExactly() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs:line 125&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.TwoPlaybacksOfOneModifiedClipKeepIndependentDspState" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="3c4db43c-7b02-dde3-6cb8-14baf8c2f0d8">
+      <Execution id="05ad3dd1-db6d-4162-a29c-88c793fb3a1d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests" name="TwoPlaybacksOfOneModifiedClipKeepIndependentDspState" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(frequency: 1000)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="d57060f3-5daa-5b44-d839-dea291ba99b0">
+      <Execution id="4814ea87-0994-4f4b-a5fc-5535be446169" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests" name="SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.DelayKernelTests.ChannelsAreIndependentAndPartitionsMatchASingleBlock" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="41fd3a9a-245b-ccde-055d-2a7154542cff">
+      <Execution id="34b1dbe2-2c2a-4960-9139-28f89c5240f7" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.DelayKernelTests" name="ChannelsAreIndependentAndPartitionsMatchASingleBlock" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.ChainRunsInDeclarationOrderWithIndependentStageState" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="8167202e-fb3d-4fd1-90bd-c3d83f2031f0">
+      <Execution id="74287b79-ceef-4028-9fc3-2f6620e1558e" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests" name="ChainRunsInDeclarationOrderWithIndependentStageState" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.DelayTailContinuesAfterEndOfSourceAndCompletesAfterTheCriterionAndDrain" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="51d33a7c-2ac4-2930-b365-d6a0c5badfbb">
+      <Execution id="cbf3f561-a71e-42a3-8778-6e58dc3e74e2" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests" name="DelayTailContinuesAfterEndOfSourceAndCompletesAfterTheCriterionAndDrain" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(cutoff: 200)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="cff8d208-ead2-eb72-5616-f9019cf6e4b7">
+      <Execution id="c72686cf-adf4-408a-a1cf-0454bff2114d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests" name="ImpulseResponseMatchesTheRbjButterworthBiquad" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.DryAndWetEndpointsThroughTheEngine" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="b5294456-3f16-62c8-7f9b-df73aa2d7646">
+      <Execution id="e375d8ea-fd06-4d71-acd7-762a2075a1c2" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests" name="DryAndWetEndpointsThroughTheEngine" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(frequency: 4000)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="a1a264a4-7438-d4db-759c-cb0827c4f46f">
+      <Execution id="8ab1fe5d-477a-4ece-960f-51f299b75f9f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests" name="SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.LowPassClipMatchesTheOracleTimesPostChainVolume" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="c9e8b19b-1715-7ed0-9a9a-7d36a3cc2937">
+      <Execution id="1ae192ae-da6e-45db-bc03-230b18e08a39" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests" name="LowPassClipMatchesTheOracleTimesPostChainVolume" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.CancelStopsTheTailAndPauseFreezesIt" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="9b88025b-f5be-3d80-f713-1d460f89a047">
+      <Execution id="908438fb-7eff-4cfb-be24-e7094b928c45" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests" name="CancelStopsTheTailAndPauseFreezesIt" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.DelayKernelTests.DelayFramesRoundTimeToTheNearestFrame" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="67bb4acf-6d2a-08dc-4425-e317e6d3f5a3">
+      <Execution id="c079f893-4da3-4148-bf11-5f5a14264bd2" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.DelayKernelTests" name="DelayFramesRoundTimeToTheNearestFrame" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(frequency: 200)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="b674dd84-0dfb-4de5-94e5-efd427c17d8d">
+      <Execution id="e549a397-8b4a-44bf-b320-c2eab0591a75" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests" name="SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.VolumeIsAppliedAfterTheChainSoAZeroVolumeTailLastsTheSame" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="bc3fa68d-0a66-ac66-2121-43e207aece84">
+      <Execution id="37db849a-38ad-4288-ab99-a0ed30f27117" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests" name="VolumeIsAppliedAfterTheChainSoAZeroVolumeTailLastsTheSame" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.IrregularPartitionsMatchASingleBlockExactly" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="292fb0c1-b281-a656-6b2f-4baa49668111">
+      <Execution id="c34c8a2b-f700-43db-a0f6-b3d10a275ec9" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests" name="IrregularPartitionsMatchASingleBlockExactly" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(cutoff: 20000)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="8f733276-212e-fa78-b0b6-599471d2ee15">
+      <Execution id="6e56b019-3702-4845-ad0c-a83b59de9327" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests" name="ImpulseResponseMatchesTheRbjButterworthBiquad" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.DelayKernelTests.MatchesTheReferenceOnBroadbandInput" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="da5f75a9-5aa4-d3fe-5ad9-70c2091c2423">
+      <Execution id="d711c990-9aa0-4ce1-b9e2-113d7ab08ca8" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.DelayKernelTests" name="MatchesTheReferenceOnBroadbandInput" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.DelayKernelTests.ImpulseProducesTheDryValueAndAGeometricEchoTrain" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="b33670d4-1f8f-b597-83ab-de7f895fd5e1">
+      <Execution id="b23b00fd-ae43-4e07-a999-d54144e4ce52" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.DelayKernelTests" name="ImpulseProducesTheDryValueAndAGeometricEchoTrain" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.DcGainIsUnity" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="d99efef5-1334-96bc-acc9-ca5d5c12ba59">
+      <Execution id="0415abd5-3dc2-48e1-80f0-86e223084513" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests" name="DcGainIsUnity" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ChannelsAreProcessedIndependently" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="7bbeff15-658e-bda0-6ae6-36bff3d25743">
+      <Execution id="9f08e429-09d4-4d9c-ba96-4453b1be5698" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests" name="ChannelsAreProcessedIndependently" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.ReaderReturningMoreFramesThanRequestedFailsInsteadOfReachingTheMix" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="0665b442-1e93-4989-4564-a4ae4a67bf99">
+      <Execution id="d78a1ddf-c4b7-405d-b4cf-9d0cdb1f69db" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests" name="ReaderReturningMoreFramesThanRequestedFailsInsteadOfReachingTheMix" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.DefaultTailCapTruncatesALongEchoAtThirtySeconds" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="2fcfd03e-15e2-8c24-9e50-a524ac9a2264">
+      <Execution id="c76d11c8-50fc-4ecb-bf26-af563f11c433" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests" name="DefaultTailCapTruncatesALongEchoAtThirtySeconds" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.DelayKernelTests.MixEndpointsAreFullyDryAndFullyWet" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="7d27f53d-9e61-4dbc-08ca-205bbbcbab53">
+      <Execution id="8c9beb56-2f8a-4bd6-a9f9-5e09d2aa652d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.DelayKernelTests" name="MixEndpointsAreFullyDryAndFullyWet" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(cutoff: 6000)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="50932d6c-0a3a-c7aa-edb3-2a4d0e96681f">
+      <Execution id="878c2293-dcc6-420f-847f-d7908fbaa3c0" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests" name="ImpulseResponseMatchesTheRbjButterworthBiquad" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.CutoffModulationStaysFiniteAndBoundedAndResetClearsState" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="c5b5c8df-0dc0-6b22-da20-ff2c31269e2f">
+      <Execution id="cc09134e-57c3-4862-8c67-6f46fc896837" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests" name="CutoffModulationStaysFiniteAndBoundedAndResetClearsState" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(frequency: 12000)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="3f74add9-1445-dea4-87e9-aba45cf9b738">
+      <Execution id="faf10384-684b-46ff-a038-aac18566e2fa" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests" name="SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.NaturalLoopAndPauseResumePreserveDspStateAcrossBoundaries" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="a2c10a2f-70c9-02ea-dfee-4a94371e1a52">
+      <Execution id="c380f1ed-e661-48b0-9fd6-e5c5bf458da6" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests" name="NaturalLoopAndPauseResumePreserveDspStateAcrossBoundaries" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(cutoff: 1200)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="4e7fb479-84b3-1be3-0a39-15d83f156d81">
+      <Execution id="7f2e74c5-02d2-41ea-b9ed-6fb703610bb9" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.LowPassKernelTests" name="ImpulseResponseMatchesTheRbjButterworthBiquad" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.DelayKernelTests.MaximumFeedbackStaysBoundedAndResetClearsTheLine" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="39abfee2-a5be-7918-a2f5-a4cc068d595e">
+      <Execution id="a31cf109-02ce-4aa8-bb07-fa24f488dcee" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.DelayKernelTests" name="MaximumFeedbackStaysBoundedAndResetClearsTheLine" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.ParameterChangesApplyFromTheNextBlockAndInvalidValuesKeepThePreviousOne" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="c8769a6e-fdff-c0b1-e664-478f82a207be">
+      <Execution id="93d5af15-c391-4628-9b1e-327005d05ae9" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests" name="ParameterChangesApplyFromTheNextBlockAndInvalidValuesKeepThePreviousOne" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.ConfiguredTailCapAndLowPassOnlyTail" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="d6d3d93a-07c8-2b78-67dc-29fde8a65c86">
+      <Execution id="0b443666-519d-417c-ad94-9b3e9b0d81a7" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests" name="ConfiguredTailCapAndLowPassOnlyTail" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.DelayKernelTests.ChangingTimeMovesTheReadPositionImmediately" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="bdad0890-622c-026e-aa94-de2a97be0378">
+      <Execution id="086537c0-13da-497d-9e1b-e2e5edef62e2" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.DelayKernelTests" name="ChangingTimeMovesTheReadPositionImmediately" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.SuccessfulSeekResetsDspStateWhileARejectedSeekDoesNot" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="02e436c1-593e-8ecb-a9fa-b1afe732252a">
+      <Execution id="f10b6acc-fde3-4b45-a367-fd7319a51f94" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Dsp.DspChainEngineTests" name="SuccessfulSeekResetsDspStateWhileARejectedSeekDoesNot" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="8f733276-212e-fa78-b0b6-599471d2ee15" executionId="6e56b019-3702-4845-ad0c-a83b59de9327" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="02e436c1-593e-8ecb-a9fa-b1afe732252a" executionId="f10b6acc-fde3-4b45-a367-fd7319a51f94" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c8769a6e-fdff-c0b1-e664-478f82a207be" executionId="93d5af15-c391-4628-9b1e-327005d05ae9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="39abfee2-a5be-7918-a2f5-a4cc068d595e" executionId="a31cf109-02ce-4aa8-bb07-fa24f488dcee" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="50932d6c-0a3a-c7aa-edb3-2a4d0e96681f" executionId="878c2293-dcc6-420f-847f-d7908fbaa3c0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bdad0890-622c-026e-aa94-de2a97be0378" executionId="086537c0-13da-497d-9e1b-e2e5edef62e2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cff8d208-ead2-eb72-5616-f9019cf6e4b7" executionId="c72686cf-adf4-408a-a1cf-0454bff2114d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3f74add9-1445-dea4-87e9-aba45cf9b738" executionId="faf10384-684b-46ff-a038-aac18566e2fa" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="67bb4acf-6d2a-08dc-4425-e317e6d3f5a3" executionId="c079f893-4da3-4148-bf11-5f5a14264bd2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b5294456-3f16-62c8-7f9b-df73aa2d7646" executionId="e375d8ea-fd06-4d71-acd7-762a2075a1c2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d57060f3-5daa-5b44-d839-dea291ba99b0" executionId="4814ea87-0994-4f4b-a5fc-5535be446169" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="da5f75a9-5aa4-d3fe-5ad9-70c2091c2423" executionId="d711c990-9aa0-4ce1-b9e2-113d7ab08ca8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0665b442-1e93-4989-4564-a4ae4a67bf99" executionId="d78a1ddf-c4b7-405d-b4cf-9d0cdb1f69db" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bc3fa68d-0a66-ac66-2121-43e207aece84" executionId="37db849a-38ad-4288-ab99-a0ed30f27117" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8167202e-fb3d-4fd1-90bd-c3d83f2031f0" executionId="74287b79-ceef-4028-9fc3-2f6620e1558e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a1a264a4-7438-d4db-759c-cb0827c4f46f" executionId="8ab1fe5d-477a-4ece-960f-51f299b75f9f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="41fd3a9a-245b-ccde-055d-2a7154542cff" executionId="34b1dbe2-2c2a-4960-9139-28f89c5240f7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d6d3d93a-07c8-2b78-67dc-29fde8a65c86" executionId="0b443666-519d-417c-ad94-9b3e9b0d81a7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b33670d4-1f8f-b597-83ab-de7f895fd5e1" executionId="b23b00fd-ae43-4e07-a999-d54144e4ce52" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c5b5c8df-0dc0-6b22-da20-ff2c31269e2f" executionId="cc09134e-57c3-4862-8c67-6f46fc896837" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3c4db43c-7b02-dde3-6cb8-14baf8c2f0d8" executionId="05ad3dd1-db6d-4162-a29c-88c793fb3a1d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a2c10a2f-70c9-02ea-dfee-4a94371e1a52" executionId="c380f1ed-e661-48b0-9fd6-e5c5bf458da6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d99efef5-1334-96bc-acc9-ca5d5c12ba59" executionId="0415abd5-3dc2-48e1-80f0-86e223084513" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9b88025b-f5be-3d80-f713-1d460f89a047" executionId="908438fb-7eff-4cfb-be24-e7094b928c45" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7bbeff15-658e-bda0-6ae6-36bff3d25743" executionId="9f08e429-09d4-4d9c-ba96-4453b1be5698" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4e7fb479-84b3-1be3-0a39-15d83f156d81" executionId="7f2e74c5-02d2-41ea-b9ed-6fb703610bb9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c9e8b19b-1715-7ed0-9a9a-7d36a3cc2937" executionId="1ae192ae-da6e-45db-bc03-230b18e08a39" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2fcfd03e-15e2-8c24-9e50-a524ac9a2264" executionId="c76d11c8-50fc-4ecb-bf26-af563f11c433" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b674dd84-0dfb-4de5-94e5-efd427c17d8d" executionId="e549a397-8b4a-44bf-b320-c2eab0591a75" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="51d33a7c-2ac4-2930-b365-d6a0c5badfbb" executionId="cbf3f561-a71e-42a3-8778-6e58dc3e74e2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7d27f53d-9e61-4dbc-08ca-205bbbcbab53" executionId="8c9beb56-2f8a-4bd6-a9f9-5e09d2aa652d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="292fb0c1-b281-a656-6b2f-4baa49668111" executionId="c34c8a2b-f700-43db-a0f6-b3d10a275ec9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="32" executed="32" passed="0" failed="32" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.26]   Discovering: Cerneala.Tests.Timbre&#xD;
+[xUnit.net 00:00:00.33]   Discovered:  Cerneala.Tests.Timbre&#xD;
+[xUnit.net 00:00:00.33]   Starting:    Cerneala.Tests.Timbre&#xD;
+[xUnit.net 00:00:00.40]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:00.40]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.40]         C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\DelayKernel.cs(7,0): at Cerneala.Timbre.Dsp.DelayKernel..ctor(Int32 capacityFrames)&#xD;
+[xUnit.net 00:00:00.40]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DelayKernelTests.cs(75,0): at Cerneala.Tests.Timbre.Dsp.DelayKernelTests.MixEndpointsAreFullyDryAndFullyWet()&#xD;
+[xUnit.net 00:00:00.40]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.40]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.41]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:00.41]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.41]         C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs(7,0): at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz)&#xD;
+[xUnit.net 00:00:00.41]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs(156,0): at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.CutoffModulationStaysFiniteAndBoundedAndResetClearsState()&#xD;
+[xUnit.net 00:00:00.41]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.41]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.41]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:00.41]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.41]         C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\DelayKernel.cs(7,0): at Cerneala.Timbre.Dsp.DelayKernel..ctor(Int32 capacityFrames)&#xD;
+[xUnit.net 00:00:00.41]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DelayKernelTests.cs(101,0): at Cerneala.Tests.Timbre.Dsp.DelayKernelTests.ChannelsAreIndependentAndPartitionsMatchASingleBlock()&#xD;
+[xUnit.net 00:00:00.41]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.41]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.41]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:00.41]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.41]         C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\DelayKernel.cs(7,0): at Cerneala.Timbre.Dsp.DelayKernel..ctor(Int32 capacityFrames)&#xD;
+[xUnit.net 00:00:00.41]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DelayKernelTests.cs(130,0): at Cerneala.Tests.Timbre.Dsp.DelayKernelTests.ChangingTimeMovesTheReadPositionImmediately()&#xD;
+[xUnit.net 00:00:00.41]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.41]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.41]       System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.&#xD;
+[xUnit.net 00:00:00.41]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.41]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs(29,0): at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle)&#xD;
+[xUnit.net 00:00:00.41]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs(258,0): at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.NaturalLoopAndPauseResumePreserveDspStateAcrossBoundaries()&#xD;
+[xUnit.net 00:00:00.41]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:00.41]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:00.41]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.41]         C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\DelayKernel.cs(14,0): at Cerneala.Timbre.Dsp.DelayKernel.ToDelayFrames(Single seconds)&#xD;
+[xUnit.net 00:00:00.41]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DelayKernelTests.cs(52,0): at Cerneala.Tests.Timbre.Dsp.DelayKernelTests.MatchesTheReferenceOnBroadbandInput()&#xD;
+[xUnit.net 00:00:00.41]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.41]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.41]       System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.&#xD;
+[xUnit.net 00:00:00.41]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.41]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs(29,0): at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle)&#xD;
+[xUnit.net 00:00:00.41]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs(20,0): at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.LowPassClipMatchesTheOracleTimesPostChainVolume()&#xD;
+[xUnit.net 00:00:00.41]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:00.44]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:00.44]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.44]         C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\DelayKernel.cs(7,0): at Cerneala.Timbre.Dsp.DelayKernel..ctor(Int32 capacityFrames)&#xD;
+[xUnit.net 00:00:00.44]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DelayKernelTests.cs(24,0): at Cerneala.Tests.Timbre.Dsp.DelayKernelTests.ImpulseProducesTheDryValueAndAGeometricEchoTrain()&#xD;
+[xUnit.net 00:00:00.44]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.44]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.44]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:00.44]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.44]         C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs(7,0): at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz)&#xD;
+[xUnit.net 00:00:00.44]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs(69,0): at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(Double frequency)&#xD;
+[xUnit.net 00:00:00.44]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.44]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.44]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:00.44]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.44]         C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\DelayKernel.cs(14,0): at Cerneala.Timbre.Dsp.DelayKernel.ToDelayFrames(Single seconds)&#xD;
+[xUnit.net 00:00:00.44]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DelayKernelTests.cs(11,0): at Cerneala.Tests.Timbre.Dsp.DelayKernelTests.DelayFramesRoundTimeToTheNearestFrame()&#xD;
+[xUnit.net 00:00:00.44]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.44]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.44]       System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.&#xD;
+[xUnit.net 00:00:00.44]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.44]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs(29,0): at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle)&#xD;
+[xUnit.net 00:00:00.44]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs(151,0): at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.VolumeIsAppliedAfterTheChainSoAZeroVolumeTailLastsTheSame()&#xD;
+[xUnit.net 00:00:00.44]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:00.44]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:00.44]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.44]         C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs(7,0): at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz)&#xD;
+[xUnit.net 00:00:00.44]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs(69,0): at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(Double frequency)&#xD;
+[xUnit.net 00:00:00.44]            at InvokeStub_LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.44]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.44]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:00.45]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.45]         C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs(7,0): at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz)&#xD;
+[xUnit.net 00:00:00.45]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs(69,0): at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(Double frequency)&#xD;
+[xUnit.net 00:00:00.45]            at InvokeStub_LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.45]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.45]       System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.&#xD;
+[xUnit.net 00:00:00.45]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.45]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs(29,0): at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle)&#xD;
+[xUnit.net 00:00:00.45]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs(280,0): at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.ReaderReturningMoreFramesThanRequestedFailsInsteadOfReachingTheMix()&#xD;
+[xUnit.net 00:00:00.45]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:00.45]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:00.45]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.45]         C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs(7,0): at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz)&#xD;
+[xUnit.net 00:00:00.45]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs(69,0): at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(Double frequency)&#xD;
+[xUnit.net 00:00:00.45]            at InvokeStub_LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.45]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.45]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:00.45]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.45]         C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs(7,0): at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz)&#xD;
+[xUnit.net 00:00:00.45]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs(25,0): at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(Single cutoff)&#xD;
+[xUnit.net 00:00:00.45]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.45]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.45]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:00.45]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.45]         C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs(7,0): at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz)&#xD;
+[xUnit.net 00:00:00.45]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs(25,0): at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(Single cutoff)&#xD;
+[xUnit.net 00:00:00.45]            at InvokeStub_LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.45]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.45]       System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.&#xD;
+[xUnit.net 00:00:00.45]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs(29,0): at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle)&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs(72,0): at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.DryAndWetEndpointsThroughTheEngine()&#xD;
+[xUnit.net 00:00:00.46]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:00.46]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:00.46]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs(7,0): at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz)&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs(25,0): at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(Single cutoff)&#xD;
+[xUnit.net 00:00:00.46]            at InvokeStub_LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.46]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.46]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:00.46]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs(7,0): at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz)&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs(25,0): at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(Single cutoff)&#xD;
+[xUnit.net 00:00:00.46]            at InvokeStub_LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(Object, Span`1)&#xD;
+[xUnit.net 00:00:00.46]            at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:00.46]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:00.46]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\DelayKernel.cs(7,0): at Cerneala.Timbre.Dsp.DelayKernel..ctor(Int32 capacityFrames)&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DelayKernelTests.cs(157,0): at Cerneala.Tests.Timbre.Dsp.DelayKernelTests.MaximumFeedbackStaysBoundedAndResetClearsTheLine()&#xD;
+[xUnit.net 00:00:00.46]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.46]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.46]       System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.&#xD;
+[xUnit.net 00:00:00.46]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs(29,0): at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle)&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs(196,0): at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.CancelStopsTheTailAndPauseFreezesIt()&#xD;
+[xUnit.net 00:00:00.46]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:00.46]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:00.46]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs(7,0): at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz)&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs(125,0): at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.IrregularPartitionsMatchASingleBlockExactly()&#xD;
+[xUnit.net 00:00:00.46]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.46]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.46]       System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.&#xD;
+[xUnit.net 00:00:00.46]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs(29,0): at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle)&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs(125,0): at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.DelayTailContinuesAfterEndOfSourceAndCompletesAfterTheCriterionAndDrain()&#xD;
+[xUnit.net 00:00:00.46]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:00.46]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:00.46]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs(7,0): at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz)&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs(43,0): at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.DcGainIsUnity()&#xD;
+[xUnit.net 00:00:00.46]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.46]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.46]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:00.46]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\Timbre\Dsp\LowPassKernel.cs(7,0): at Cerneala.Timbre.Dsp.LowPassKernel.SetCutoff(Single hertz)&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\LowPassKernelTests.cs(100,0): at Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ChannelsAreProcessedIndependently()&#xD;
+[xUnit.net 00:00:00.46]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.46]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.46]       System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.&#xD;
+[xUnit.net 00:00:00.46]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs(29,0): at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle)&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs(165,0): at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.DefaultTailCapTruncatesALongEchoAtThirtySeconds()&#xD;
+[xUnit.net 00:00:00.46]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:00.46]       System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.&#xD;
+[xUnit.net 00:00:00.46]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs(29,0): at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle)&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs(181,0): at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.ConfiguredTailCapAndLowPassOnlyTail()&#xD;
+[xUnit.net 00:00:00.46]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:00.46]       System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.&#xD;
+[xUnit.net 00:00:00.46]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs(29,0): at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle)&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs(93,0): at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.ParameterChangesApplyFromTheNextBlockAndInvalidValuesKeepThePreviousOne()&#xD;
+[xUnit.net 00:00:00.46]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:00.46]       System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.&#xD;
+[xUnit.net 00:00:00.46]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs(29,0): at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle)&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs(35,0): at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.ChainRunsInDeclarationOrderWithIndependentStageState()&#xD;
+[xUnit.net 00:00:00.46]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:00.46]       System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.&#xD;
+[xUnit.net 00:00:00.46]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs(29,0): at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle)&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs(52,0): at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.TwoPlaybacksOfOneModifiedClipKeepIndependentDspState()&#xD;
+[xUnit.net 00:00:00.46]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:00.46]       System.NotSupportedException : Playing a sound clip with modifiers requires the Timbre DSP chain, which is not available yet.&#xD;
+[xUnit.net 00:00:00.46]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundScope.cs(29,0): at Cerneala.Timbre.SoundScope.Play(SoundClip clip, Action`1 configure, SoundHandle handle)&#xD;
+[xUnit.net 00:00:00.46]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Dsp\DspChainEngineTests.cs(229,0): at Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.SuccessfulSeekResetsDspStateWhileARejectedSeekDoesNot()&#xD;
+[xUnit.net 00:00:00.46]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:00.46]   Finished:    Cerneala.Tests.Timbre&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.5289273+03:00">
+        <Text>[xUnit.net 00:00:00.40]     Cerneala.Tests.Timbre.Dsp.DelayKernelTests.MixEndpointsAreFullyDryAndFullyWet [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.5350686+03:00">
+        <Text>[xUnit.net 00:00:00.41]     Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.CutoffModulationStaysFiniteAndBoundedAndResetClearsState [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.5367377+03:00">
+        <Text>[xUnit.net 00:00:00.41]     Cerneala.Tests.Timbre.Dsp.DelayKernelTests.ChannelsAreIndependentAndPartitionsMatchASingleBlock [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.5382473+03:00">
+        <Text>[xUnit.net 00:00:00.41]     Cerneala.Tests.Timbre.Dsp.DelayKernelTests.ChangingTimeMovesTheReadPositionImmediately [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.5388813+03:00">
+        <Text>[xUnit.net 00:00:00.41]     Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.NaturalLoopAndPauseResumePreserveDspStateAcrossBoundaries [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.5393459+03:00">
+        <Text>[xUnit.net 00:00:00.41]     Cerneala.Tests.Timbre.Dsp.DelayKernelTests.MatchesTheReferenceOnBroadbandInput [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.5398531+03:00">
+        <Text>[xUnit.net 00:00:00.41]     Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.LowPassClipMatchesTheOracleTimesPostChainVolume [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6215536+03:00">
+        <Text>[xUnit.net 00:00:00.44]     Cerneala.Tests.Timbre.Dsp.DelayKernelTests.ImpulseProducesTheDryValueAndAGeometricEchoTrain [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6216679+03:00">
+        <Text>[xUnit.net 00:00:00.44]     Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(frequency: 1000) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6217839+03:00">
+        <Text>[xUnit.net 00:00:00.44]     Cerneala.Tests.Timbre.Dsp.DelayKernelTests.DelayFramesRoundTimeToTheNearestFrame [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6219048+03:00">
+        <Text>[xUnit.net 00:00:00.44]     Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.VolumeIsAppliedAfterTheChainSoAZeroVolumeTailLastsTheSame [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6219754+03:00">
+        <Text>[xUnit.net 00:00:00.44]     Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(frequency: 12000) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6220751+03:00">
+        <Text>[xUnit.net 00:00:00.44]     Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(frequency: 200) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6221279+03:00">
+        <Text>[xUnit.net 00:00:00.45]     Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.ReaderReturningMoreFramesThanRequestedFailsInsteadOfReachingTheMix [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6249090+03:00">
+        <Text>[xUnit.net 00:00:00.45]     Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.SinusoidsFollowTheMagnitudeOracleBelowAtAndAboveCutoff(frequency: 4000) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6249898+03:00">
+        <Text>[xUnit.net 00:00:00.45]     Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(cutoff: 200) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6250546+03:00">
+        <Text>[xUnit.net 00:00:00.45]     Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(cutoff: 6000) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6251289+03:00">
+        <Text>[xUnit.net 00:00:00.45]     Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.DryAndWetEndpointsThroughTheEngine [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6251971+03:00">
+        <Text>[xUnit.net 00:00:00.46]     Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(cutoff: 20000) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6252689+03:00">
+        <Text>[xUnit.net 00:00:00.46]     Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ImpulseResponseMatchesTheRbjButterworthBiquad(cutoff: 1200) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6253457+03:00">
+        <Text>[xUnit.net 00:00:00.46]     Cerneala.Tests.Timbre.Dsp.DelayKernelTests.MaximumFeedbackStaysBoundedAndResetClearsTheLine [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6254087+03:00">
+        <Text>[xUnit.net 00:00:00.46]     Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.CancelStopsTheTailAndPauseFreezesIt [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6373574+03:00">
+        <Text>[xUnit.net 00:00:00.46]     Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.IrregularPartitionsMatchASingleBlockExactly [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6374319+03:00">
+        <Text>[xUnit.net 00:00:00.46]     Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.DelayTailContinuesAfterEndOfSourceAndCompletesAfterTheCriterionAndDrain [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6375128+03:00">
+        <Text>[xUnit.net 00:00:00.46]     Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.DcGainIsUnity [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6376007+03:00">
+        <Text>[xUnit.net 00:00:00.46]     Cerneala.Tests.Timbre.Dsp.LowPassKernelTests.ChannelsAreProcessedIndependently [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6376807+03:00">
+        <Text>[xUnit.net 00:00:00.46]     Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.DefaultTailCapTruncatesALongEchoAtThirtySeconds [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6377744+03:00">
+        <Text>[xUnit.net 00:00:00.46]     Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.ConfiguredTailCapAndLowPassOnlyTail [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6378438+03:00">
+        <Text>[xUnit.net 00:00:00.46]     Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.ParameterChangesApplyFromTheNextBlockAndInvalidValuesKeepThePreviousOne [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6379385+03:00">
+        <Text>[xUnit.net 00:00:00.46]     Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.ChainRunsInDeclarationOrderWithIndependentStageState [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6380079+03:00">
+        <Text>[xUnit.net 00:00:00.46]     Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.TwoPlaybacksOfOneModifiedClipKeepIndependentDspState [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T02:55:10.6395171+03:00">
+        <Text>[xUnit.net 00:00:00.46]     Cerneala.Tests.Timbre.Dsp.DspChainEngineTests.SuccessfulSeekResetsDspStateWhileARejectedSeekDoesNot [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>
