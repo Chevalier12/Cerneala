@@ -78,6 +78,27 @@ internal sealed class PreviewCompiler : IDisposable
 
         string targetTypeName = await ResolveTargetTypeNameAsync(project, fullDocumentPath, cancellationToken)
             .ConfigureAwait(false);
+        HashSet<SyntaxTree> generatedTrees = [];
+        foreach (SourceGeneratedDocument generated in await project.GetSourceGeneratedDocumentsAsync(cancellationToken)
+            .ConfigureAwait(false))
+        {
+            if (await generated.GetSyntaxTreeAsync(cancellationToken).ConfigureAwait(false) is SyntaxTree tree)
+            {
+                generatedTrees.Add(tree);
+            }
+        }
+
+        if (RunsMarkupGenerator(project) &&
+            !HasGeneratedDeclaration(compilation, targetTypeName, generatedTrees, cancellationToken))
+        {
+            // The generator emits nothing for markup with errors. A companion partial
+            // still declares the type, so the compilation alone would render an empty
+            // control as if the edit had succeeded; report the markup errors instead.
+            throw new PreviewCompilationException(
+                await DescribeMissingTargetAsync(project, compilation, generatedTrees, fullDocumentPath, targetTypeName, cancellationToken)
+                    .ConfigureAwait(false));
+        }
+
         Dictionary<string, string> referencePaths = compilation.References
             .OfType<PortableExecutableReference>()
             .Where(reference => !string.IsNullOrWhiteSpace(reference.FilePath))
@@ -519,6 +540,60 @@ internal sealed class PreviewCompiler : IDisposable
             : project.DefaultNamespace + "." + fileName;
     }
 
+    private static bool RunsMarkupGenerator(Project project) => project.AnalyzerReferences.Any(reference =>
+        string.Equals(Path.GetFileNameWithoutExtension(reference.FullPath), "Cerneala.SourceGen", StringComparison.OrdinalIgnoreCase));
+
+    private static bool HasGeneratedDeclaration(
+        Compilation compilation,
+        string targetTypeName,
+        IReadOnlySet<SyntaxTree> generatedTrees,
+        CancellationToken cancellationToken)
+    {
+        INamedTypeSymbol[] candidates = compilation
+            .GetSymbolsWithName(targetTypeName.Split('.').Last(), SymbolFilter.Type, cancellationToken)
+            .OfType<INamedTypeSymbol>()
+            .ToArray();
+        INamedTypeSymbol[] exact = candidates
+            .Where(candidate => candidate.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat) == targetTypeName)
+            .ToArray();
+        return (exact.Length > 0 ? exact : candidates).Any(candidate =>
+            candidate.DeclaringSyntaxReferences.Any(reference => generatedTrees.Contains(reference.SyntaxTree)));
+    }
+
+    private static async Task<string> DescribeMissingTargetAsync(
+        Project project,
+        Compilation compilation,
+        IEnumerable<SyntaxTree> generatedTrees,
+        string documentPath,
+        string targetTypeName,
+        CancellationToken cancellationToken)
+    {
+        List<AdditionalText> additionalTexts = [];
+        foreach (TextDocument additional in project.AdditionalDocuments)
+        {
+            additionalTexts.Add(new PreviewAdditionalText(
+                additional.FilePath ?? additional.Name,
+                await additional.GetTextAsync(cancellationToken).ConfigureAwait(false)));
+        }
+
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            project.AnalyzerReferences.SelectMany(reference => reference.GetGenerators(LanguageNames.CSharp)),
+            additionalTexts,
+            (CSharpParseOptions?)project.ParseOptions,
+            project.AnalyzerOptions.AnalyzerConfigOptionsProvider);
+        string[] errors = driver
+            .RunGenerators(compilation.RemoveSyntaxTrees(generatedTrees), cancellationToken)
+            .GetRunResult()
+            .Diagnostics
+            .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error &&
+                string.Equals(diagnostic.Location.GetLineSpan().Path, documentPath, StringComparison.OrdinalIgnoreCase))
+            .Select(FormatDiagnostic)
+            .ToArray();
+        return errors.Length > 0
+            ? string.Join(Environment.NewLine, errors)
+            : $"Preview type '{targetTypeName}' was not generated from '{Path.GetFileName(documentPath)}'.";
+    }
+
     private static IEnumerable<INamedTypeSymbol> FindTargetTypeSymbols(
         SyntaxNode root,
         SemanticModel model,
@@ -569,6 +644,13 @@ internal sealed class PreviewCompiler : IDisposable
             ? $"{Path.GetFileName(span.Path)}({span.StartLinePosition.Line + 1},{span.StartLinePosition.Character + 1})"
             : "preview";
         return $"{location}: {diagnostic.Id}: {diagnostic.GetMessage()}";
+    }
+
+    private sealed class PreviewAdditionalText(string path, SourceText text) : AdditionalText
+    {
+        public override string Path { get; } = path;
+
+        public override SourceText GetText(CancellationToken cancellationToken = default) => text;
     }
 
     private sealed class LoadedProject(MSBuildWorkspace workspace, Project project)

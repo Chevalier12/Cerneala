@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using Cerneala.Language.Timbre;
 using Microsoft.CodeAnalysis;
 
 namespace Cerneala.SourceGen;
@@ -89,6 +90,10 @@ public sealed partial class UiMarkupGenerator
             public IReadOnlyList<string> BehaviorLifetimeVariables { get; set; } = [];
 
             public string? TemplateVariable { get; set; }
+
+            // Bound Sound actions and handle kinds from the Language model of
+            // the document that declares the Aspect.
+            public BoundSoundAspect? Sound { get; set; }
         }
 
         private sealed class AspectPropertyAssignment
@@ -187,6 +192,7 @@ public sealed partial class UiMarkupGenerator
                 gesturePress,
                 template,
                 resource);
+            BindAspectSound(aspect);
             allAspects.Add(aspect);
             if (aspect.Name is null)
             {
@@ -306,6 +312,7 @@ public sealed partial class UiMarkupGenerator
                         template,
                         inline,
                         isInline: true);
+                    BindAspectSound(aspect);
                     inlineAspects.Add(owner, aspect);
                     allAspects.Add(aspect);
                 }

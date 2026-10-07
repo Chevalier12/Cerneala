@@ -37,7 +37,7 @@ internal sealed class TimbreSmoke
         this.runtime = runtime;
     }
 
-    private static PcmTapOutput? InstalledTap { get; set; }
+    internal static PcmTapOutput? InstalledTap { get; private set; }
 
     private string Fixtures => Path.Combine(AppContext.BaseDirectory, "timbre");
 
@@ -474,7 +474,7 @@ internal sealed class TimbreSmoke
         new(SoundSource.FromReader(() => new ToneReader(frames, frequency, null), $"tone-{frequency}-{frames}"));
 
     // Synthetic 16-bit stereo RIFF/WAVE tone written by the test application.
-    private static string WriteWav(string path, int sampleRate, double seconds, double frequency)
+    internal static string WriteWav(string path, int sampleRate, double seconds, double frequency)
     {
         int frames = (int)(sampleRate * seconds);
         byte[] bytes = new byte[44 + (frames * 4)];

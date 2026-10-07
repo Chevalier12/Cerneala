@@ -1,5 +1,9 @@
 using System;
+using System.IO;
+using Cerneala.UI.Controls;
+using Cerneala.UI.Elements;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Emit;
 using Xunit;
 
 namespace Cerneala.Tests.SourceGen;
@@ -33,6 +37,49 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Contains("\"Active\", motionExecutionFactory", generated, StringComparison.Ordinal);
         Assert.Contains("CancelMotionExecution(", generated, StringComparison.Ordinal);
         Assert.DoesNotContain("@handle", generated, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ConditionalCancelStopsHandledExecutionWhenConditionBecomesTrue()
+    {
+        const string markup = """
+            <Border Aspect="$HandledMotion" Opacity="1">
+              <Border.Resources>
+                <MotionClip Name="Pulse" TargetType="Border">
+                  @animate with Tween(1000ms) { @from { Opacity = 1; } @to { Opacity = 0; } }
+                </MotionClip>
+                <Aspect Name="HandledMotion" TargetType="Border">
+                  @handle Active;
+                  @on Loaded { @run $Pulse as Active; }
+                  @when $self.IsEnabled { @if value == false { @cancel Active; } }
+                </Aspect>
+              </Border.Resources>
+            </Border>
+            """;
+        GeneratorRunResult result = RunGenerator("ConditionalMotionCancel.crn", markup, out Compilation compilation);
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+        Border border = Assert.IsType<Border>(InvokeCreate(stream, "Cerneala.GeneratedUi.ConditionalMotionCancelFactory"));
+        ManualClock clock = new();
+        UIRoot root = new(100, 100, motionClock: clock);
+        root.VisualChildren.Add(border);
+        root.ProcessFrame();
+        clock.Advance(TimeSpan.FromMilliseconds(250));
+        root.ProcessFrame();
+        Assert.True(root.Motion.HasActiveMotion);
+        float runningOpacity = border.Opacity;
+        Assert.InRange(runningOpacity, 0.01f, 0.99f);
+
+        border.IsEnabled = false;
+        root.ProcessFrame();
+        float canceledOpacity = border.Opacity;
+        clock.Advance(TimeSpan.FromMilliseconds(500));
+        root.ProcessFrame();
+
+        Assert.False(root.Motion.HasActiveMotion);
+        Assert.Equal(canceledOpacity, border.Opacity);
     }
 
     [Theory]

@@ -12,6 +12,7 @@
     { "include": "#entities" },
     { "include": "#property-tags" },
     { "include": "#prism-tags" },
+    { "include": "#sound-tags" },
     { "include": "#motion-tags" },
     { "include": "#tags" },
     { "include": "#assignments" },
@@ -19,6 +20,7 @@
     { "include": "#strings" },
     { "include": "#parameter-directives" },
     { "include": "#prism-directives" },
+    { "include": "#sound-directives" },
     { "include": "#motion-directives" },
     { "include": "#aspect-directives" },
     { "include": "#incomplete-directives" },
@@ -96,6 +98,26 @@
         {
           "name": "meta.element.prism.cerneala",
           "begin": "(</?)((?:[A-Za-z_][A-Za-z0-9_-]*:)?PrismComposition)\\b",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.tag.begin.cerneala" }
+          },
+          "end": "(/?>)|(?=$)",
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.tag.end.cerneala" }
+          },
+          "patterns": [
+            { "include": "#attribute-names" },
+            { "include": "#strings" },
+            { "include": "#entities" }
+          ]
+        }
+      ]
+    },
+    "sound-tags": {
+      "patterns": [
+        {
+          "name": "meta.element.sound.cerneala",
+          "begin": "(</?)((?:[A-Za-z_][A-Za-z0-9_-]*:)?SoundClip)\\b",
           "beginCaptures": {
             "1": { "name": "punctuation.definition.tag.begin.cerneala" }
           },
@@ -294,6 +316,36 @@
         {
           "name": "keyword.control.prism.cerneala",
           "match": "@(?:prism|layer|group|filter|style|mask|backdrop)\\b"
+        }
+      ]
+    },
+    "sound-directives": {
+      "patterns": [
+        {
+          "match": "(@seek)\\b(?:\\s+)([A-Za-z_][A-Za-z0-9_]*)(?:\\s+(to)\\b)?",
+          "captures": {
+            "1": { "name": "keyword.control.sound.cerneala" },
+            "2": { "name": "entity.name.label.handle.cerneala" },
+            "3": { "name": "keyword.control.sound.cerneala" }
+          }
+        },
+        {
+          "match": "(@(?:pause|resume))\\b(?:\\s+)([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.control.sound.cerneala" },
+            "2": { "name": "entity.name.label.handle.cerneala" }
+          }
+        },
+        {
+          "match": "(@modifier)\\b(?:\\s+)([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.control.sound.cerneala" },
+            "2": { "name": "support.function.sound.cerneala" }
+          }
+        },
+        {
+          "name": "keyword.control.sound.cerneala",
+          "match": "@(?:sound|pause|resume|seek|modifier)\\b"
         }
       ]
     },

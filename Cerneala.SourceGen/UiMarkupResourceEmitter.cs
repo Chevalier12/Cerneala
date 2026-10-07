@@ -19,7 +19,8 @@ public sealed partial class UiMarkupGenerator
             SpriteAnimationSet,
             Aspect,
             MotionSpec,
-            MotionClip
+            MotionClip,
+            SoundClip
         }
 
         private sealed class NamedSymbol
@@ -246,6 +247,9 @@ public sealed partial class UiMarkupGenerator
                             break;
                         case "PrismComposition":
                             ReadPrismComposition(scope, resource);
+                            break;
+                        case "SoundClip":
+                            ReadSoundClip(scope, resource);
                             break;
                         default:
                             Report(UnsupportedElement, resource, resource.Name.LocalName);
@@ -688,6 +692,11 @@ public sealed partial class UiMarkupGenerator
                         currentLines.Add(
                             ownerVariable + ".Resources.SetResource(new global::Cerneala.UI.Resources.ResourceId<global::Cerneala.UI.Controls.SpriteAnimationSet>(" +
                             Literal(animation.Name) + "), " + animation.Variable + ");");
+                        break;
+                    case SoundClipResource sound:
+                        currentLines.Add(
+                            ownerVariable + ".Resources.SetResource(new global::Cerneala.UI.Resources.ResourceId<" + SoundClipType + ">(" +
+                            Literal(sound.Name) + "), " + sound.Variable + ");");
                         break;
                     case AspectResource aspect:
                         string targetType = ResolveAspectTargetType(aspect.TargetName, aspect.Source)!;

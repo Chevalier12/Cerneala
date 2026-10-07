@@ -751,6 +751,9 @@ public partial class UIElement : UiObject, IUiPropertyOwner, ILayoutElement, IRe
         lifecycleBehaviors.Remove(behavior);
     }
 
+    // Diagnostic view of the attached lifecycle behaviors.
+    internal IReadOnlyList<IElementLifecycleBehavior> LifecycleBehaviors => lifecycleBehaviors;
+
     private void NotifyLifecycleRenderabilityChanged()
     {
         bool isRenderable = UIElementVisibility.IsEffectivelyVisible(this);

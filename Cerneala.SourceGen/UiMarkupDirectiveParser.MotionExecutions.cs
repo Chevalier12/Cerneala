@@ -108,7 +108,7 @@ public sealed partial class UiMarkupGenerator
                 throw new DirectiveParseException("@cancel requires one declared handle name.", source);
             }
 
-            return new MotionCancelNode(handleName, source);
+            return new MotionCancelNode(handleName, source, actionSequence++);
         }
 
         private MotionHandleNode ParseMotionHandle()
@@ -153,7 +153,10 @@ public sealed partial class UiMarkupGenerator
             string owner,
             MarkupObject source)
         {
-            if (nodes.OfType<MotionExecutionNode>().Skip(1).Any())
+            // A body with Sound actions may also @cancel Sound handles; those
+            // cancels are not Motion executions.
+            bool hasSound = nodes.Any(node => node is SoundActionNode);
+            if (nodes.OfType<MotionExecutionNode>().Where(node => !hasSound || node is not MotionCancelNode).Skip(1).Any())
             {
                 throw new DirectiveParseException(
                     owner + " contains sibling Motion executions; wrap them in @parallel or @sequence.",

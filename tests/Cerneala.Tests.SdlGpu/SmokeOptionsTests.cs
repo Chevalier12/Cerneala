@@ -21,6 +21,15 @@ public sealed class SmokeOptionsTests
     }
 
     [Fact]
+    public void TheTimbreMarkupModeParses()
+    {
+        SmokeOptions.Initialize(["--mode", "timbre-markup", "--no-screenshot"]);
+
+        Assert.Equal("timbre-markup", SmokeOptions.Current.Mode);
+        Assert.False(SmokeOptions.Current.CaptureScreenshots);
+    }
+
+    [Fact]
     public void AnUnknownModeIsRejectedAndListsTimbre()
     {
         ArgumentException exception = Assert.Throws<ArgumentException>(

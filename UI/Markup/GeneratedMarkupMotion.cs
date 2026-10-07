@@ -83,6 +83,11 @@ public static partial class GeneratedMarkup
         GetMotionSession(session).CancelExecution(handleName);
     }
 
+    // True while the session would accept a new visual execution: its owner
+    // is attached, renderable and still carries the captured Aspect.
+    public static bool CanStartMotionExecution(IDisposable session) =>
+        GetMotionSession(session).CanStartExecution;
+
     public static MotionHandle StartMotionProperty<T>(
         IDisposable session,
         UIElement target,
@@ -224,6 +229,8 @@ public static partial class GeneratedMarkup
             owner.IsAttached &&
             IsOwnedByCurrentAspect &&
             UIElementVisibility.IsEffectivelyVisible(owner);
+
+        public bool CanStartExecution => !disposed && CanStart;
 
         private bool IsOwnedByCurrentAspect =>
             !aspectScoped || (aspect is not null && ReferenceEquals(owner.Aspect, aspect));

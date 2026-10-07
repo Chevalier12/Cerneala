@@ -12,6 +12,7 @@ internal sealed class PreviewHostServer : IDisposable
     private string? activeSource;
     private int activeWidth;
     private int activeHeight;
+    private bool activeAudioEnabled;
 
     public void Run(Stream input, Stream output)
     {
@@ -57,7 +58,8 @@ internal sealed class PreviewHostServer : IDisposable
                 activeSource is not null &&
                 string.Equals(activeDocumentPath, request.DocumentPath, StringComparison.OrdinalIgnoreCase) &&
                 activeWidth == request.Width &&
-                activeHeight == request.Height;
+                activeHeight == request.Height &&
+                activeAudioEnabled == request.AudioEnabled;
             PreviewMarkupUpdateResult update = canUpdateLiveTree
                 ? session!.TryApplyMarkup(activeSource!, request.SourceText)
                 : PreviewMarkupUpdateResult.RequiresCompilation;
@@ -73,17 +75,23 @@ internal sealed class PreviewHostServer : IDisposable
                     .GetAwaiter()
                     .GetResult();
                 compileTime = compilation.CompileTime;
-                PreviewRenderSession replacement = PreviewRenderSession.Create(
+
+                // Only one Application can be installed, so the old session (and
+                // every sound scope it owns) is retired before its replacement
+                // starts; nothing it was playing is carried over.
+                session?.Dispose();
+                session = null;
+                activeSource = null;
+                session = PreviewRenderSession.Create(
                     compilation,
                     request.Width,
-                    request.Height);
-                PreviewRenderSession? previous = session;
-                session = replacement;
+                    request.Height,
+                    request.AudioEnabled);
                 activeDocumentPath = request.DocumentPath;
                 activeSource = request.SourceText;
                 activeWidth = request.Width;
                 activeHeight = request.Height;
-                previous?.Dispose();
+                activeAudioEnabled = request.AudioEnabled;
             }
         }
         else
@@ -147,7 +155,9 @@ internal sealed class PreviewHostServer : IDisposable
             Height = height,
             Stride = stride,
             CompileMilliseconds = compileTime.TotalMilliseconds,
-            RenderMilliseconds = renderTime.TotalMilliseconds
+            RenderMilliseconds = renderTime.TotalMilliseconds,
+            AudioEnabled = session.AudioEnabled,
+            BlockedAudioRequests = session.BlockedAudioRequests
         };
     }
 

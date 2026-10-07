@@ -533,6 +533,11 @@ internal sealed partial class CernealaCompletionService
         for (int index = opening + 1; index < offset; index++)
         {
             depth += source[index] == '{' ? 1 : source[index] == '}' ? -1 : 0;
+            if (depth == 0)
+            {
+                // The directive block closed before the offset.
+                return false;
+            }
         }
 
         return depth > 0;

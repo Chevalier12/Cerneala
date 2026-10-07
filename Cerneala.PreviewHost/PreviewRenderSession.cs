@@ -1,12 +1,14 @@
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.Loader;
+using Cerneala.Timbre;
 using Cerneala.UI;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Hosting.Sdl;
 using Cerneala.UI.Input;
 using Cerneala.UI.Servo;
+using Cerneala.UI.Timbre;
 
 namespace Cerneala.PreviewHost;
 
@@ -17,6 +19,8 @@ internal sealed class PreviewRenderSession : IDisposable
     private readonly PreviewLoadContext loadContext;
     private readonly DesignPreviewSession session;
     private readonly UIElement root;
+    private readonly SoundRuntime sounds;
+    private readonly DisabledPreviewSoundOutput? disabledAudio;
     private readonly Stopwatch clock = Stopwatch.StartNew();
     private byte[]? captureBuffer;
     private TimeSpan previousPump;
@@ -25,18 +29,35 @@ internal sealed class PreviewRenderSession : IDisposable
     private PreviewRenderSession(
         PreviewLoadContext loadContext,
         DesignPreviewSession session,
-        UIElement root)
+        UIElement root,
+        SoundRuntime sounds,
+        DisabledPreviewSoundOutput? disabledAudio)
     {
         this.loadContext = loadContext;
         this.session = session;
         this.root = root;
+        this.sounds = sounds;
+        this.disabledAudio = disabledAudio;
     }
 
-    public static PreviewRenderSession Create(PreviewCompilation compilation, int width, int height)
+    // Audio stays disabled unless the editor explicitly enabled it for this session.
+    public bool AudioEnabled => disabledAudio is null;
+
+    // Output opens refused because preview audio is disabled.
+    public int BlockedAudioRequests => disabledAudio?.BlockedOpens ?? 0;
+
+    internal SoundRuntime Sounds => sounds;
+
+    public static PreviewRenderSession Create(
+        PreviewCompilation compilation,
+        int width,
+        int height,
+        bool audioEnabled = false)
     {
         SdlGpuApplicationBackend.EnsureRegistered();
         Environment.CurrentDirectory = compilation.ProjectDirectory;
         PreviewLoadContext loadContext = new(compilation.ReferencePaths);
+        SoundRuntime? sounds = null;
         try
         {
             using MemoryStream image = new(compilation.AssemblyImage, writable: false);
@@ -57,6 +78,26 @@ internal sealed class PreviewRenderSession : IDisposable
                 ? new Application()
                 : (Application)(Activator.CreateInstance(applicationType)
                     ?? throw new InvalidOperationException($"Application '{applicationType.FullName}' could not be created."));
+
+            // Each preview session owns its runtime, so replacing the session on
+            // a recompile retires every old scope and nothing is restored.
+            DisabledPreviewSoundOutput? disabledAudio = audioEnabled ? null : new DisabledPreviewSoundOutput();
+            sounds = new SoundRuntime(new SoundRuntimeOptions
+            {
+                Output = disabledAudio ?? (ISoundOutput)new PlatformSoundOutput(() => application.PlatformSoundOutput),
+                BaseDirectory = compilation.ProjectDirectory
+            });
+            try
+            {
+                application.SoundRuntime = sounds;
+            }
+            catch (InvalidOperationException exception)
+            {
+                throw new InvalidOperationException(
+                    $"Application '{application.GetType().FullName}' used Application.SoundRuntime during construction, so Live Preview cannot control its audio.",
+                    exception);
+            }
+
             UIElement? root = null;
             DesignPreviewSession runtimeSession = DesignPreviewSession.Create(
                 application,
@@ -68,10 +109,13 @@ internal sealed class PreviewRenderSession : IDisposable
             return new PreviewRenderSession(
                 loadContext,
                 runtimeSession,
-                root ?? throw new InvalidOperationException($"Preview type '{targetType.FullName}' did not create a root element."));
+                root ?? throw new InvalidOperationException($"Preview type '{targetType.FullName}' did not create a root element."),
+                sounds,
+                disabledAudio);
         }
         catch
         {
+            sounds?.Dispose();
             loadContext.Unload();
             throw;
         }
@@ -165,6 +209,7 @@ internal sealed class PreviewRenderSession : IDisposable
 
         disposed = true;
         session.Dispose();
+        sounds.Dispose();
         loadContext.Unload();
     }
 

@@ -503,6 +503,269 @@ public sealed class PreviewHostTests
         Assert.Equal(pixels, response.Image);
     }
 
+    [Fact]
+    public void SoundMarkupEditsRequireCompilationInsteadOfTheAttributeFastPath()
+    {
+        const string resources = "<Button.Resources><SoundClip Name=\"Tone\">Source = \"tone.wav\";</SoundClip></Button.Resources>";
+        const string aspect = "<Button.Aspect>@on Click { @sound $Tone; }</Button.Aspect>";
+        string Document(string opacity, string clip, string body) =>
+            $"<Button Opacity=\"{opacity}\">{resources.Replace("Source = \"tone.wav\";", clip, StringComparison.Ordinal)}" +
+            aspect.Replace("@sound $Tone;", body, StringComparison.Ordinal) + "</Button>";
+        string current = Document("0.5", "Source = \"tone.wav\";", "@sound $Tone;");
+        Button button = new() { Opacity = 0.5f };
+
+        Assert.Equal(
+            PreviewMarkupUpdateResult.RequiresCompilation,
+            PreviewMarkupHotReload.TryApply(button, current, Document("0.5", "Source = \"tone.wav\";", "@sound $Tone(Volume = 0.2);")));
+        Assert.Equal(
+            PreviewMarkupUpdateResult.RequiresCompilation,
+            PreviewMarkupHotReload.TryApply(button, current, Document("0.5", "Source = \"tone.wav\"; Loop = true;", "@sound $Tone;")));
+        Assert.Equal(
+            PreviewMarkupUpdateResult.RequiresCompilation,
+            PreviewMarkupHotReload.TryApply(button, current, current.Replace("Name=\"Tone\"", "Name=\"Chime\"", StringComparison.Ordinal)));
+        Assert.Equal(0.5f, button.Opacity);
+
+        Assert.Equal(
+            PreviewMarkupUpdateResult.Applied,
+            PreviewMarkupHotReload.TryApply(button, current, Document("0.75", "Source = \"tone.wav\";", "@sound $Tone;")));
+        Assert.Equal(0.75f, button.Opacity);
+    }
+
+    [Fact]
+    public void PreviewProtocolCarriesTheExplicitAudioPolicyAndItsVisibleState()
+    {
+        using MemoryStream requestStream = new();
+        PreviewProtocol.WriteRequest(requestStream, new PreviewRequest
+        {
+            RequestId = 81,
+            Kind = PreviewRequestKind.Render,
+            DocumentPath = "View.crn",
+            SourceText = "<Border />",
+            Width = 320,
+            Height = 180,
+            AudioEnabled = true
+        });
+        requestStream.Position = 0;
+        PreviewRequest request = Assert.IsType<PreviewRequest>(PreviewProtocol.ReadRequest(requestStream));
+        Assert.True(request.AudioEnabled);
+        Assert.False(new PreviewRequest().AudioEnabled);
+
+        using MemoryStream responseStream = new();
+        PreviewProtocol.WriteResponse(responseStream, new PreviewResponse
+        {
+            Kind = PreviewResponseKind.Frame,
+            RequestId = 82,
+            Image = new byte[64],
+            Width = 4,
+            Height = 4,
+            Stride = 16,
+            BlockedAudioRequests = 3
+        });
+        responseStream.Position = 0;
+        PreviewResponse response = Assert.IsType<PreviewResponse>(PreviewProtocol.ReadResponse(responseStream));
+        Assert.False(response.AudioEnabled);
+        Assert.Equal(3, response.BlockedAudioRequests);
+
+        Assert.Equal("audio off", PreviewAudioStatus.Describe(audioEnabled: false, blockedAudioRequests: 0));
+        Assert.Equal("audio off (3 blocked)", PreviewAudioStatus.Describe(audioEnabled: false, blockedAudioRequests: 3));
+        Assert.Equal("audio on", PreviewAudioStatus.Describe(audioEnabled: true, blockedAudioRequests: 0));
+    }
+
+    [Fact]
+    public async Task UnsavedSoundMarkupCompilesAndInvalidSoundIsNotReportedAsSuccess()
+    {
+        string documentPath = BrandMarkPath();
+        using PreviewCompiler compiler = new(prewarmBuildOutput: false);
+
+        PreviewCompilation compilation = await compiler.CompileAsync(
+            documentPath,
+            WithPreviewSound(File.ReadAllText(documentPath), "C:/preview/tone.wav", "Volume = 0.5;"));
+        Assert.NotEmpty(compilation.AssemblyImage);
+
+        PreviewCompilationException exception = await Assert.ThrowsAsync<PreviewCompilationException>(() =>
+            compiler.CompileAsync(
+                documentPath,
+                WithPreviewSound(File.ReadAllText(documentPath), "C:/preview/tone.wav", "Volume = 2;")));
+        Assert.Contains("CERNEALAUI032", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task PreviewAudioIsDisabledByDefaultAndARecompiledSessionRetiresTheOldScopes()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "Cerneala", "PreviewSound", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        try
+        {
+            string tonePath = Path.Combine(root, "tone.wav").Replace('\\', '/');
+            WriteSilentFloatWav(tonePath, frames: 4_800);
+            string documentPath = BrandMarkPath();
+            using PreviewCompiler compiler = new(prewarmBuildOutput: false);
+            PreviewCompilation compilation = await compiler.CompileAsync(
+                documentPath,
+                WithPreviewSound(File.ReadAllText(documentPath), tonePath, "Volume = 0.5;"));
+
+            (bool AudioEnabled, int FirstBlocked, bool FirstRetired, int FirstAfterRetire, int ReplacementBlocked) result =
+                RunOnStaThread(() =>
+                {
+                    PreviewRenderSession first = PreviewRenderSession.Create(compilation, 320, 180);
+                    int firstBlocked;
+                    try
+                    {
+                        firstBlocked = PumpUntilBlocked(first);
+                    }
+                    finally
+                    {
+                        first.Dispose();
+                    }
+
+                    bool firstRetired = first.Sounds.IsDisposed;
+                    int firstAfterRetire = first.BlockedAudioRequests;
+                    PreviewRenderSession replacement = PreviewRenderSession.Create(compilation, 320, 180);
+                    try
+                    {
+                        return (first.AudioEnabled, firstBlocked, firstRetired, firstAfterRetire, PumpUntilBlocked(replacement));
+                    }
+                    finally
+                    {
+                        replacement.Dispose();
+                    }
+                });
+
+            Assert.False(result.AudioEnabled);
+            Assert.True(result.FirstBlocked == 1, $"The initially true @sound reached the disabled preview output {result.FirstBlocked} times instead of once.");
+            Assert.True(result.FirstRetired);
+            Assert.Equal(1, result.FirstAfterRetire);
+            Assert.True(result.ReplacementBlocked == 1, $"The recompiled session activated {result.ReplacementBlocked} sounds instead of only its own initial one.");
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task HostReportsDisabledAudioByDefaultAndRecreatesTheSessionWhenAudioIsEnabled()
+    {
+        string executable = Path.Combine(AppContext.BaseDirectory, "Cerneala.PreviewHost.exe");
+        Assert.True(File.Exists(executable), $"Preview host executable '{executable}' is missing.");
+        using Process process = new()
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = executable,
+                WorkingDirectory = AppContext.BaseDirectory,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true
+            }
+        };
+        Assert.True(process.Start());
+
+        try
+        {
+            string documentPath = BrandMarkPath();
+            string source = File.ReadAllText(documentPath);
+            PreviewResponse disabled = await RenderAsync(process, 91, documentPath, source, audioEnabled: false);
+            Assert.True(disabled.Kind == PreviewResponseKind.Frame, disabled.Error);
+            Assert.False(disabled.AudioEnabled);
+
+            PreviewResponse enabled = await RenderAsync(process, 92, documentPath, source, audioEnabled: true);
+            Assert.True(enabled.Kind == PreviewResponseKind.Frame, enabled.Error);
+            Assert.True(enabled.AudioEnabled);
+            Assert.Equal(0, enabled.BlockedAudioRequests);
+        }
+        finally
+        {
+            if (!process.HasExited)
+            {
+                PreviewProtocol.WriteRequest(process.StandardInput.BaseStream, new PreviewRequest
+                {
+                    RequestId = 93,
+                    Kind = PreviewRequestKind.Shutdown
+                });
+                process.StandardInput.Close();
+                if (!process.WaitForExit(2_000))
+                {
+                    process.Kill();
+                }
+            }
+        }
+    }
+
+    private static async Task<PreviewResponse> RenderAsync(
+        Process process,
+        int requestId,
+        string documentPath,
+        string source,
+        bool audioEnabled)
+    {
+        PreviewProtocol.WriteRequest(process.StandardInput.BaseStream, new PreviewRequest
+        {
+            RequestId = requestId,
+            Kind = PreviewRequestKind.Render,
+            DocumentPath = documentPath,
+            SourceText = source,
+            Width = 320,
+            Height = 180,
+            AudioEnabled = audioEnabled
+        });
+        return await Task.Run(() => PreviewProtocol.ReadResponse(process.StandardOutput.BaseStream))
+                .WaitAsync(TimeSpan.FromSeconds(60))
+            ?? throw new EndOfStreamException("The preview host closed without a frame.");
+    }
+
+    private static int PumpUntilBlocked(PreviewRenderSession session)
+    {
+        Stopwatch elapsed = Stopwatch.StartNew();
+        while (session.BlockedAudioRequests == 0 && elapsed.Elapsed < TimeSpan.FromSeconds(10))
+        {
+            session.Capture();
+            Thread.Sleep(10);
+        }
+
+        // Keep pumping so a repeated or restored activation would be counted too.
+        for (int frame = 0; frame < 20; frame++)
+        {
+            session.Capture();
+            Thread.Sleep(10);
+        }
+
+        return session.BlockedAudioRequests;
+    }
+
+    // An initially true reactive rule plays the clip as soon as the preview attaches.
+    private static string WithPreviewSound(string brandMark, string sourcePath, string volume)
+    {
+        string sound =
+            "<UserControl>" +
+            "<UserControl.Resources><SoundClip Name=\"PreviewTone\">Source = \"" + sourcePath + "\"; " + volume + "</SoundClip></UserControl.Resources>" +
+            "<UserControl.Aspect>@when IsEnabled { @sound $PreviewTone; }</UserControl.Aspect>";
+        Assert.StartsWith("<UserControl>", brandMark, StringComparison.Ordinal);
+        return sound + brandMark["<UserControl>".Length..];
+    }
+
+    private static void WriteSilentFloatWav(string path, int frames)
+    {
+        const int sampleRate = 48_000;
+        int dataBytes = frames * 2 * sizeof(float);
+        using BinaryWriter writer = new(File.Create(path));
+        writer.Write("RIFF"u8);
+        writer.Write(36 + dataBytes);
+        writer.Write("WAVE"u8);
+        writer.Write("fmt "u8);
+        writer.Write(16);
+        writer.Write((short)3);
+        writer.Write((short)2);
+        writer.Write(sampleRate);
+        writer.Write(sampleRate * 8);
+        writer.Write((short)8);
+        writer.Write((short)32);
+        writer.Write("data"u8);
+        writer.Write(dataBytes);
+        writer.Write(new byte[dataBytes]);
+    }
+
     private static T RunOnStaThread<T>(Func<T> action)
     {
         T? result = default;

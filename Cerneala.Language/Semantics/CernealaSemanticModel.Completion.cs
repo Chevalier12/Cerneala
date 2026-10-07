@@ -174,10 +174,9 @@ internal sealed partial class CernealaSemanticModel
     internal IReadOnlyList<string> GetCompletionMotionHandles(ElementSyntax? element, int offset)
     {
         ElementSyntax? scope = element;
-        while (scope is not null && !string.Equals(
-            scope.Name.Split(':').Last(),
-            "Aspect",
-            StringComparison.Ordinal))
+        while (scope is not null &&
+            !string.Equals(scope.Name.Split(':').Last(), "Aspect", StringComparison.Ordinal) &&
+            !scope.Name.EndsWith(".Aspect", StringComparison.Ordinal))
         {
             scope = parents.TryGetValue(scope, out ElementSyntax? parent) ? parent : null;
         }
@@ -187,6 +186,14 @@ internal sealed partial class CernealaSemanticModel
             return Array.Empty<string>();
         }
 
+        // While the statement being typed is incomplete the Aspect program has
+        // a syntax error and binds no handle symbols, so complete statements
+        // `@handle Name;` before the offset are also read lexically.
+        string text = document.Text.ToString();
+        IEnumerable<string> lexical = System.Text.RegularExpressions.Regex
+            .Matches(text.Substring(scope.Span.Start, Math.Max(0, Math.Min(offset, scope.Span.End) - scope.Span.Start)), @"@handle\s+([A-Za-z_][A-Za-z0-9_]*)\s*;")
+            .Cast<System.Text.RegularExpressions.Match>()
+            .Select(match => match.Groups[1].Value);
         return symbols.Where(symbol =>
                 symbol.Kind == CernealaSemanticSymbolKind.MotionHandle &&
                 symbol.Span.Start < offset &&
@@ -194,6 +201,7 @@ internal sealed partial class CernealaSemanticModel
                 symbol.DefinitionLocation is LanguageSourceLocation definition &&
                 definition.Span.Equals(symbol.Span))
             .Select(symbol => symbol.Name)
+            .Concat(lexical)
             .Distinct(StringComparer.Ordinal)
             .OrderBy(name => name, StringComparer.Ordinal)
             .ToArray();

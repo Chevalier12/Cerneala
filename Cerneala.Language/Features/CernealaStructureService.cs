@@ -692,6 +692,22 @@ internal sealed class CernealaStructureService
                 kind = CernealaSemanticTokenKind.EnumMember;
                 priority = 140;
                 return true;
+            case CernealaSemanticSymbolKind.SoundDirective:
+                kind = CernealaSemanticTokenKind.Keyword;
+                priority = 130;
+                return true;
+            case CernealaSemanticSymbolKind.SoundParameter:
+                kind = CernealaSemanticTokenKind.Parameter;
+                priority = 130;
+                return true;
+            case CernealaSemanticSymbolKind.SoundModifier:
+                kind = CernealaSemanticTokenKind.Function;
+                priority = 130;
+                return true;
+            case CernealaSemanticSymbolKind.SoundProperty:
+                kind = CernealaSemanticTokenKind.Property;
+                priority = 130;
+                return true;
             case CernealaSemanticSymbolKind.AspectCondition:
                 kind = CernealaSemanticTokenKind.Keyword;
                 priority = 120;
@@ -736,11 +752,11 @@ internal sealed class CernealaStructureService
         CernealaSemanticSymbolKind.MotionSpec or CernealaSemanticSymbolKind.MotionComposition or
         CernealaSemanticSymbolKind.MotionParameter or CernealaSemanticSymbolKind.MotionHandle or
         CernealaSemanticSymbolKind.PrismComposition or CernealaSemanticSymbolKind.PrismNode or
-        CernealaSemanticSymbolKind.PrismParameter;
+        CernealaSemanticSymbolKind.PrismParameter or CernealaSemanticSymbolKind.SoundParameter;
 
     private static bool IsDeclaration(CernealaSemanticSymbol symbol) =>
         IsDeclaration(symbol.Kind) &&
-        (symbol.Kind != CernealaSemanticSymbolKind.MotionHandle ||
+        (symbol.Kind is not (CernealaSemanticSymbolKind.MotionHandle or CernealaSemanticSymbolKind.SoundParameter) ||
             symbol.DefinitionLocation is LanguageSourceLocation definition &&
             definition.Span.Equals(symbol.Span));
 

@@ -48,7 +48,7 @@
 
   <ItemGroup>
     <ProjectReference Include="Cerneala.SourceGen\Cerneala.SourceGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    <AdditionalFiles Include="**\*.crn" Exclude="artifacts\**;bin\**;obj\**;Cerneala.Language\**;Cerneala.LanguageServer\**;Cerneala.PreviewHost\**;Cerneala.SourceGen\**;Cerneala.Scene2D.Importers\**;Cerneala.Scene2D.Packages\**;CernealaPresentation\**;docs\**;Playground\**;Shared\**;Tetrisish\**;Tools\**;tests\**" />
+    <AdditionalFiles Include="**\*.crn" Exclude=".claude\**;artifacts\**;bin\**;obj\**;Cerneala.Language\**;Cerneala.LanguageServer\**;Cerneala.PreviewHost\**;Cerneala.SourceGen\**;Cerneala.Scene2D.Importers\**;Cerneala.Scene2D.Packages\**;CernealaPresentation\**;docs\**;Playground\**;Shared\**;Tetrisish\**;Tools\**;tests\**" />
     <AdditionalFiles Include="Cerneala.SourceGen\Prism\Catalog\prism-catalog.json" />
     <None Include="Timbre\Decoding\THIRD-PARTY-NOTICES.txt" Link="Cerneala.Timbre.THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" Pack="true" PackagePath="Cerneala.Timbre.THIRD-PARTY-NOTICES.txt" />
     <EmbeddedResource Include="Drawing\Prism\Filters\Assets\bluenoise.bin">

@@ -91,7 +91,8 @@ public sealed partial class SoundRuntime
                     }
                 }
 
-                if (outputOpen && queued + Block <= QueueBudget)
+                // Compared without addition: an output may report any queue depth.
+                if (outputOpen && queued <= QueueBudget - Block)
                 {
                     ISoundBlockObserver? observer = BlockObserver;
                     long started = observer is null ? 0 : Stopwatch.GetTimestamp();

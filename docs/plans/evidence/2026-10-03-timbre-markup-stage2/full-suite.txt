@@ -1,0 +1,14 @@
+
+Passed!  - Failed:     0, Passed:   322, Skipped:     1, Total:   323, Duration: 2 m 18 s - Cerneala.Tests.Language.dll (net8.0)
+Passed!  - Failed:     0, Passed:    40, Skipped:     0, Total:    40, Duration: 6 m 13 s - Cerneala.Tests.LanguageServer.dll (net10.0)
+Passed!  - Failed:     0, Passed:    17, Skipped:     0, Total:    17, Duration: 2 m 24 s - Cerneala.Tests.PreviewHost.dll (net10.0)
+Passed!  - Failed:     0, Passed:   173, Skipped:     0, Total:   173, Duration: 6 s - Cerneala.Tests.Scene2DImporters.dll (net8.0)
+Passed!  - Failed:     0, Passed:   104, Skipped:     0, Total:   104, Duration: 12 s - Cerneala.Tests.Scene2DPackages.dll (net8.0)
+Passed!  - Failed:     0, Passed:    36, Skipped:     8, Total:    44, Duration: 4 s - Cerneala.Tests.SceneVillage.dll (net8.0)
+Passed!  - Failed:     0, Passed:   600, Skipped:   241, Total:   841, Duration: 1 m 2 s - Cerneala.Tests.SdlGpu.dll (net8.0)
+Passed!  - Failed:     0, Passed:   632, Skipped:     0, Total:   632, Duration: 2 m 47 s - Cerneala.Tests.SourceGen.dll (net8.0)
+Passed!  - Failed:     0, Passed:   336, Skipped:     0, Total:   336, Duration: 1 m 12 s - Cerneala.Tests.Timbre.dll (net8.0)
+Passed!  - Failed:     0, Passed:    47, Skipped:     0, Total:    47, Duration: 1 s - Cerneala.Tests.VisualStudio.dll (net10.0)
+Passed!  - Failed:     0, Passed:  4195, Skipped:     2, Total:  4197, Duration: 3 m 4 s - Cerneala.Tests.dll (net8.0)
+Passed!  - Failed:     0, Passed:    31, Skipped:     0, Total:    31, Duration: 2 s - Cerneala.Tetris.Tests.dll (net8.0)
+

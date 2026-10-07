@@ -275,6 +275,12 @@ public sealed partial class UiMarkupGenerator
                     continue;
                 }
 
+                if (TryParseSoundDirective(allowedContent, out DirectiveNode? soundAction))
+                {
+                    nodes.Add(soundAction!);
+                    continue;
+                }
+
                 if (StartsWith("@cancel"))
                 {
                     if (!Allows(allowedContent, DirectiveContentKind.MotionExecutions))
@@ -353,7 +359,7 @@ public sealed partial class UiMarkupGenerator
             if (!StartsWith("@if"))
             {
                 DirectiveContentKind booleanContent =
-                    (allowedContent | DirectiveContentKind.Assignments | DirectiveContentKind.MotionExecutions) &
+                    (allowedContent | DirectiveContentKind.Assignments | DirectiveContentKind.MotionExecutions | SoundContent(allowedContent)) &
                     ~(DirectiveContentKind.Templates | DirectiveContentKind.MotionTriggers | DirectiveContentKind.MotionHandles |
                         DirectiveContentKind.MotionPresence | DirectiveContentKind.MotionLayout);
                 IReadOnlyList<DirectiveNode> booleanBody = ParseNodes(stopAtClosingBrace: true, booleanContent);
@@ -390,7 +396,7 @@ public sealed partial class UiMarkupGenerator
 
 
                 DirectiveContentKind branchContent =
-                    (allowedContent | DirectiveContentKind.Assignments | DirectiveContentKind.MotionExecutions) &
+                    (allowedContent | DirectiveContentKind.Assignments | DirectiveContentKind.MotionExecutions | SoundContent(allowedContent)) &
                     ~(DirectiveContentKind.Templates | DirectiveContentKind.MotionTriggers | DirectiveContentKind.MotionHandles |
                         DirectiveContentKind.MotionPresence | DirectiveContentKind.MotionLayout);
                 branches.Add(ParseIf(branchContent));

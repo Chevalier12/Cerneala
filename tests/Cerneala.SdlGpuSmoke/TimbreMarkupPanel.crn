@@ -1,0 +1,59 @@
+<UserControl>
+    <UserControl.Resources>
+        <SoundClip Name="Wav">Source = "timbre/markup-tone-44100.wav";</SoundClip>
+        <SoundClip Name="Mp3">Source = "timbre/mp3-mpeg1-44100-stereo-cbr128.mp3";</SoundClip>
+        <SoundClip Name="Vorbis">Source = "timbre/vorbis-48000-stereo-q2.ogg";</SoundClip>
+        <SoundClip Name="Opus">Source = "timbre/opus-stereo-48000-96k.opus";</SoundClip>
+        <SoundClip Name="LongMp3">Source = "timbre/mp3-long-22050-mono-cbr64.mp3";</SoundClip>
+        <SoundClip Name="Filtered">
+            Source = "timbre/markup-tone-44100.wav";
+            Volume = 0.8;
+            @parameter ToneCutoff: float = 1200;
+            @modifier LowPass { Cutoff = ToneCutoff; }
+            @modifier Delay { Time = 120ms; Feedback = 0.2; Mix = 0.15; }
+        </SoundClip>
+    </UserControl.Resources>
+    <StackPanel Margin="12">
+        <StackPanel Orientation="Horizontal">
+            <Button Servo.Id="play-wav" Content="WAV" Width="90" Height="36" Margin="0,0,6,6">
+                <Button.Aspect>@on Click { @sound $Wav; }</Button.Aspect>
+            </Button>
+            <Button Servo.Id="play-mp3" Content="MP3" Width="90" Height="36" Margin="0,0,6,6">
+                <Button.Aspect>@on Click { @sound $Mp3; }</Button.Aspect>
+            </Button>
+            <Button Servo.Id="play-vorbis" Content="Vorbis" Width="90" Height="36" Margin="0,0,6,6">
+                <Button.Aspect>@on Click { @sound $Vorbis; }</Button.Aspect>
+            </Button>
+            <Button Servo.Id="play-opus" Content="Opus" Width="90" Height="36" Margin="0,0,6,6">
+                <Button.Aspect>@on Click { @sound $Opus; }</Button.Aspect>
+            </Button>
+            <Button Servo.Id="play-filtered" Content="Filtered" Width="90" Height="36" Margin="0,0,6,6">
+                <Button.Aspect>@on Click { @sound $Filtered(ToneCutoff = 800); }</Button.Aspect>
+            </Button>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal">
+            <CheckBox Name="PlayBox" Servo.Id="transport-play" Content="Play" Margin="0,0,10,6" />
+            <CheckBox Name="PauseBox" Servo.Id="transport-pause" Content="Pause" Margin="0,0,10,6" />
+            <CheckBox Name="SeekBox" Servo.Id="transport-seek" Content="Seek 60s" Margin="0,0,10,6" />
+            <CheckBox Name="StopBox" Servo.Id="transport-stop" Content="Stop" Margin="0,0,10,6" />
+            <CheckBox Name="LoopBox" Servo.Id="loop-play" Content="Loop" Margin="0,0,10,6" />
+            <CheckBox Name="LoopStopBox" Servo.Id="loop-stop" Content="Loop stop" Margin="0,0,10,6" />
+        </StackPanel>
+        <Border Name="Transport" Height="24">
+            <Border.Aspect>
+                @handle Music;
+                @handle Looper;
+                @when $PlayBox.IsChecked { @if $PlayBox.IsChecked == true { @sound $LongMp3 as Music; } }
+                @when $PauseBox.IsChecked
+                {
+                    @if $PauseBox.IsChecked == true { @pause Music; }
+                    @if $PauseBox.IsChecked == false { @resume Music; }
+                }
+                @when $SeekBox.IsChecked { @if $SeekBox.IsChecked == true { @seek Music to 60s; } }
+                @when $StopBox.IsChecked { @if $StopBox.IsChecked == true { @cancel Music; } }
+                @when $LoopBox.IsChecked { @if $LoopBox.IsChecked == true { @sound $Wav(Loop = true) as Looper; } }
+                @when $LoopStopBox.IsChecked { @if $LoopStopBox.IsChecked == true { @cancel Looper; } }
+            </Border.Aspect>
+        </Border>
+    </StackPanel>
+</UserControl>

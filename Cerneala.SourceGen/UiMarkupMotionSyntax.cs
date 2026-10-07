@@ -26,17 +26,23 @@ public sealed partial class UiMarkupGenerator
         public DirectiveOnNode(
             string eventName,
             IReadOnlyList<MotionExecutionNode> body,
+            IReadOnlyList<DirectiveNode> actions,
             DirectiveExpressionLocation location,
             MarkupObject source) : base(source)
         {
             EventName = eventName;
             Body = body;
+            Actions = actions;
             Location = location;
         }
 
         public string EventName { get; }
 
+        // Motion executions of the body.
         public IReadOnlyList<MotionExecutionNode> Body { get; }
+
+        // Every action of the body in source order, Sound actions included.
+        public IReadOnlyList<DirectiveNode> Actions { get; }
 
         public DirectiveExpressionLocation Location { get; }
     }
@@ -270,12 +276,17 @@ public sealed partial class UiMarkupGenerator
 
     private sealed class MotionCancelNode : MotionExecutionNode
     {
-        public MotionCancelNode(string handleName, MarkupObject source) : base(source)
+        public MotionCancelNode(string handleName, MarkupObject source, int sequence = -1) : base(source)
         {
             HandleName = handleName;
+            Sequence = sequence;
         }
 
         public string HandleName { get; }
+
+        // Source order among the Sound/@cancel statements of the body, used to
+        // dispatch @cancel of a Sound handle to the bound Sound model.
+        public int Sequence { get; }
     }
 
     private sealed class MotionHandleNode : DirectiveNode

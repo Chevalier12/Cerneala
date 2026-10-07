@@ -8,10 +8,14 @@ using System.Windows.Media;
 
 internal sealed class CernealaPreviewModeBar : Border, IDisposable
 {
+    private const string DisabledAudioToolTip = "Live Preview audio is disabled. Click to enable playback.";
+    private const string EnabledAudioToolTip = "Live Preview audio is enabled. Click to disable playback.";
+
     private readonly CernealaPreviewSession session;
     private readonly List<Button> modeButtons = new();
     private readonly List<Button> orientationButtons = new();
     private readonly TextBlock status = new();
+    private readonly Button audio = CernealaPreviewChrome.Button("Audio off", DisabledAudioToolTip, 72);
     private bool disposed;
 
     public CernealaPreviewModeBar(CernealaPreviewSession session)
@@ -53,6 +57,8 @@ internal sealed class CernealaPreviewModeBar : Border, IDisposable
         commands.Children.Add(CreateOrientationButton("H", "Horizontal split", PreviewSplitOrientation.Horizontal));
         commands.Children.Add(CreateOrientationButton("V", "Vertical split", PreviewSplitOrientation.Vertical));
         commands.Children.Add(CernealaPreviewChrome.Separator());
+        audio.Click += (_, _) => session.SetAudioEnabled(!session.AudioEnabled);
+        commands.Children.Add(audio);
         Button refresh = CernealaPreviewChrome.Button("Refresh", "Recompile and refresh Live Preview", 58);
         refresh.Click += (_, _) => session.Refresh();
         commands.Children.Add(refresh);
@@ -105,7 +111,12 @@ internal sealed class CernealaPreviewModeBar : Border, IDisposable
             return;
         }
 
-        status.Text = session.Status;
+        status.Text = session.Status + "  |  " + session.AudioStatus;
+        audio.Content = session.AudioEnabled ? "Audio on" : "Audio off";
+        audio.ToolTip = session.AudioEnabled ? EnabledAudioToolTip : DisabledAudioToolTip;
+        audio.BorderBrush = session.AudioEnabled
+            ? CernealaPreviewChrome.AccentBrush
+            : CernealaPreviewChrome.BorderBrush;
         UpdateSelection(modeButtons, session.Mode);
         UpdateSelection(orientationButtons, session.Orientation);
     }

@@ -57,6 +57,36 @@ internal static class LanguagePipelineHarness
         return RunSourceGenerator(compilation, path, text);
     }
 
+    // Errors of the consumer compilation after the generator added its output.
+    public static IReadOnlyList<string> GeneratedCompilationErrors(
+        string path,
+        string text,
+        string? companionPath = null,
+        string? companion = null)
+    {
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [new UiMarkupGenerator().AsSourceGenerator()],
+            [new InMemoryAdditionalText(path, text)],
+            parseOptions: CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest));
+        CSharpCompilation input = companion is null ? CreateCompilation() : CreateCompilation(companionPath!, companion);
+        driver.RunGeneratorsAndUpdateCompilation(input, out Compilation output, out _);
+        return output.GetDiagnostics()
+            .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+            .Select(diagnostic => diagnostic.ToString())
+            .ToArray();
+    }
+
+    public static CernealaSemanticModel BindSemanticModel(string path, string text, out IDisposable lifetime)
+    {
+        CernealaDocument document = new(path, LanguageSourceText.From(text));
+        CernealaCompilation workspace = new(
+            new RoslynCompilationSymbols(CreateCompilation()),
+            [document],
+            AnalysisMode.Build);
+        lifetime = workspace;
+        return workspace.GetSemanticModel(path);
+    }
+
     private static IReadOnlyList<HarnessDiagnostic> RunSemanticModel(string path, string text)
     {
         CSharpCompilation compilation = CreateCompilation();

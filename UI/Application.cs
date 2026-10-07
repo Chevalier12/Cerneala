@@ -119,6 +119,10 @@ public class Application
         }
     }
 
+    // The installed window platform's shared output, for a caller-owned
+    // runtime that should play exactly where the owned one would.
+    internal ISoundOutput? PlatformSoundOutput => Volatile.Read(ref platformSoundOutput);
+
     public bool UseMultisampling { get; set; } = false;
 
     public ApplicationShutdownMode ShutdownMode { get; set; } = ApplicationShutdownMode.OnLastWindowClose;

@@ -83,6 +83,10 @@ internal sealed class CernealaPreviewSession : IDisposable
 
     public string? Error { get; private set; }
 
+    public bool AudioEnabled { get; private set; }
+
+    public string AudioStatus { get; private set; } = PreviewAudioStatus.Describe(audioEnabled: false, blockedAudioRequests: 0);
+
     public bool IsLoading { get; private set; }
 
     public void Start() => QueueRender(immediate: true);
@@ -194,6 +198,20 @@ internal sealed class CernealaPreviewSession : IDisposable
     }
 
     public void Refresh() => QueueRender(immediate: true);
+
+    // Audio is never enabled implicitly; changing it recreates the preview runtime.
+    public void SetAudioEnabled(bool enabled)
+    {
+        if (AudioEnabled == enabled)
+        {
+            return;
+        }
+
+        AudioEnabled = enabled;
+        AudioStatus = PreviewAudioStatus.Describe(enabled, 0);
+        RaiseChanged();
+        QueueRender(immediate: true);
+    }
 
     public void Click(double x, double y) => QueueInput(new PreviewRequest
     {
@@ -352,6 +370,7 @@ internal sealed class CernealaPreviewSession : IDisposable
                 textView.TextSnapshot.GetText(),
                 ViewportWidth,
                 ViewportHeight,
+                AudioEnabled,
                 lifetime.Token);
             ApplyResponse(response, updateStatus: !hasRenderedFrame);
             if (hasRenderedFrame)
@@ -539,6 +558,13 @@ internal sealed class CernealaPreviewSession : IDisposable
         Frame = frameBuffer;
         IsLoading = false;
         Error = null;
+        string audioStatus = PreviewAudioStatus.Describe(response.AudioEnabled, response.BlockedAudioRequests);
+        if (!string.Equals(AudioStatus, audioStatus, StringComparison.Ordinal))
+        {
+            AudioStatus = audioStatus;
+            RaiseChanged();
+        }
+
         if (updateStatus)
         {
             Status = response.CompileMilliseconds > 0

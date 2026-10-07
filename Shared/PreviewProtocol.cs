@@ -56,6 +56,9 @@ internal sealed class PreviewRequest
     public bool IsDown { get; set; }
 
     public int WheelDelta { get; set; }
+
+    // Render only: preview audio stays disabled unless the editor enables it.
+    public bool AudioEnabled { get; set; }
 }
 
 internal sealed class PreviewResponse
@@ -76,12 +79,27 @@ internal sealed class PreviewResponse
 
     public double RenderMilliseconds { get; set; }
 
+    public bool AudioEnabled { get; set; }
+
+    // Sound output opens refused because preview audio is disabled.
+    public int BlockedAudioRequests { get; set; }
+
     public string Error { get; set; } = string.Empty;
+}
+
+internal static class PreviewAudioStatus
+{
+    public static string Describe(bool audioEnabled, int blockedAudioRequests) => audioEnabled
+        ? "audio on"
+        : blockedAudioRequests > 0
+            ? $"audio off ({blockedAudioRequests} blocked)"
+            : "audio off";
 }
 
 internal static class PreviewProtocol
 {
     private const int MaximumFrameLength = 128 * 1024 * 1024;
+    private const int FrameHeaderLength = 42;
 
     public static void WriteRequest(Stream stream, PreviewRequest request)
     {
@@ -96,6 +114,7 @@ internal static class PreviewProtocol
                     writer.Write(request.SourceText);
                     writer.Write(request.Width);
                     writer.Write(request.Height);
+                    writer.Write(request.AudioEnabled);
                     break;
                 case PreviewRequestKind.Click:
                 case PreviewRequestKind.PointerMove:
@@ -150,6 +169,7 @@ internal static class PreviewProtocol
                     request.SourceText = reader.ReadString();
                     request.Width = reader.ReadInt32();
                     request.Height = reader.ReadInt32();
+                    request.AudioEnabled = reader.ReadBoolean();
                     break;
                 case PreviewRequestKind.Click:
                 case PreviewRequestKind.PointerMove:
@@ -188,13 +208,15 @@ internal static class PreviewProtocol
     {
         if (response.Kind == PreviewResponseKind.Frame)
         {
-            int payloadLength = checked(37 + response.Image.Length);
+            int payloadLength = checked(FrameHeaderLength + response.Image.Length);
             using BinaryWriter writer = new(stream, Encoding.UTF8, leaveOpen: true);
             writer.Write(payloadLength);
             writer.Write((byte)response.Kind);
             writer.Write(response.RequestId);
             writer.Write(response.CompileMilliseconds);
             writer.Write(response.RenderMilliseconds);
+            writer.Write(response.AudioEnabled);
+            writer.Write(response.BlockedAudioRequests);
             writer.Write(response.Width);
             writer.Write(response.Height);
             writer.Write(response.Stride);
@@ -235,6 +257,8 @@ internal static class PreviewProtocol
         {
             response.CompileMilliseconds = reader.ReadDouble();
             response.RenderMilliseconds = reader.ReadDouble();
+            response.AudioEnabled = reader.ReadBoolean();
+            response.BlockedAudioRequests = reader.ReadInt32();
             response.Width = reader.ReadInt32();
             response.Height = reader.ReadInt32();
             response.Stride = reader.ReadInt32();
@@ -243,7 +267,7 @@ internal static class PreviewProtocol
                 response.Stride != checked(response.Width * 4) ||
                 imageLength != checked(response.Stride * response.Height) ||
                 imageLength > MaximumFrameLength ||
-                frameLength != checked(37 + imageLength))
+                frameLength != checked(FrameHeaderLength + imageLength))
             {
                 throw new InvalidDataException("The preview frame dimensions or image length are invalid.");
             }

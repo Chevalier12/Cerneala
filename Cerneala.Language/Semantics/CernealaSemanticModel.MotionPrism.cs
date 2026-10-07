@@ -133,6 +133,11 @@ internal sealed partial class CernealaSemanticModel
 
     private bool ShouldBindAspectAssignment(ElementSyntax aspect, int position)
     {
+        if (IsInsideSoundStatement(aspect, position))
+        {
+            return false;
+        }
+
         string source = document.Text.ToString();
         foreach (string keyword in CernealaLanguageFacts.MotionDirectiveKeywords.Where(keyword => keyword is not "@when" and not "@if"))
         {

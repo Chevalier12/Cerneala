@@ -24,6 +24,7 @@ public sealed partial class UiMarkupGenerator
 
             string sessionName = "motionSession" + nextReactiveId.ToString(CultureInfo.InvariantCulture);
             nextReactiveId++;
+            motionSessionNames[(aspect, element)] = sessionName;
             currentPostLines.Add(
                 "global::System.IDisposable " + sessionName +
                 " = global::Cerneala.UI.Markup.GeneratedMarkup.AttachMotionSession(" + variable +

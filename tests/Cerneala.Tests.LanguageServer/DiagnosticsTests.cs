@@ -130,6 +130,102 @@ public sealed class DiagnosticsTests
         }
     }
 
+    [Theory]
+    [InlineData(
+        "<StackPanel><StackPanel.Resources><SoundClip Name=\"Tone\">Source = \"tone.wav\"; Volume = 2;</SoundClip></StackPanel.Resources></StackPanel>",
+        "CERNEALAUI032",
+        "Volume must be a finite number within 0–1.")]
+    [InlineData(
+        "<StackPanel><StackPanel.Resources><SoundClip Name=\"Tone\">Source = \"tone.wav\"; @modifier Echo { }</SoundClip></StackPanel.Resources></StackPanel>",
+        "CERNEALAUI031",
+        "Unknown sound modifier 'Echo'; expected LowPass or Delay.")]
+    [InlineData(
+        "<StackPanel><StackPanel.Resources><SoundClip Name=\"Tone\">Volume = 0.5;</SoundClip></StackPanel.Resources></StackPanel>",
+        "CERNEALAUI032",
+        "SoundClip requires Source.")]
+    [InlineData(
+        "<Button Content=\"Play\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"tone.wav\";</SoundClip></Button.Resources><Button.Aspect>@on Click { @sound $Tone }</Button.Aspect></Button>",
+        "CERNEALAUI030",
+        "Sound directive '@sound' must end with ';'.")]
+    public async Task SoundDiagnosticsAreTheSameForStandaloneAndProjectDocuments(
+        string markup,
+        string expectedCode,
+        string expectedMessage)
+    {
+        string standaloneRoot = Path.Combine(Path.GetTempPath(), $"cerneala-lsp-sound-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(standaloneRoot);
+        try
+        {
+            string standalonePath = Path.Combine(standaloneRoot, "View.crn");
+            File.WriteAllText(standalonePath, markup);
+            WorkspaceConfiguration configuration = new(standaloneRoot, null, null, "Debug", WatchFileSystem: false);
+            await using CernealaWorkspace standalone = await CernealaWorkspace.CreateAsync(
+                configuration,
+                new StructuredServerLogger(TextWriter.Null),
+                CancellationToken.None);
+            VersionedDocumentResult<IReadOnlyList<LspDiagnostic>>? standaloneResult =
+                await new DiagnosticService(standalone, new BuildDiagnosticStore()).AnalyzeAsync(
+                    new Uri(standalonePath).AbsoluteUri,
+                    CancellationToken.None);
+
+            using TemporaryDiagnosticWorkspace fixture = TemporaryDiagnosticWorkspace.Create();
+            await using CernealaWorkspace project = await CreateWorkspaceAsync(fixture.ProjectPath);
+            Assert.True(project.OpenDocument(fixture.MarkupUri, markup, 1));
+            VersionedDocumentResult<IReadOnlyList<LspDiagnostic>>? projectResult =
+                await new DiagnosticService(project, new BuildDiagnosticStore()).AnalyzeAsync(
+                    fixture.MarkupUri,
+                    CancellationToken.None);
+
+            Assert.NotNull(standaloneResult);
+            Assert.NotNull(projectResult);
+            string[] standaloneSound = SoundDiagnostics(standaloneResult.Value);
+            Assert.Equal(standaloneSound, SoundDiagnostics(projectResult.Value));
+            LspDiagnostic expected = Assert.Single(
+                standaloneResult.Value,
+                diagnostic => diagnostic.Code == expectedCode);
+            Assert.Contains(expectedMessage, expected.Message, StringComparison.Ordinal);
+            Assert.Equal(1, expected.Severity);
+            Assert.True(expected.Range.End.Character > expected.Range.Start.Character);
+        }
+        finally
+        {
+            Directory.Delete(standaloneRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task SoundDiagnosticsFollowTheUnsavedOverlayAndThenTheSavedAdditionalFile()
+    {
+        const string valid =
+            "<StackPanel><StackPanel.Resources><SoundClip Name=\"Tone\">Source = \"tone.wav\"; Volume = 0.5;</SoundClip></StackPanel.Resources></StackPanel>";
+        string invalid = valid.Replace("Volume = 0.5;", "Volume = 2;", StringComparison.Ordinal);
+        using TemporaryDiagnosticWorkspace fixture = TemporaryDiagnosticWorkspace.Create();
+        File.WriteAllText(fixture.MarkupPath, valid);
+        await using CernealaWorkspace workspace = await CreateWorkspaceAsync(fixture.ProjectPath);
+        DiagnosticService service = new(workspace, new BuildDiagnosticStore());
+
+        Assert.Empty(await AnalyzeSoundAsync());
+
+        Assert.True(workspace.OpenDocument(fixture.MarkupUri, invalid, 1));
+        Assert.Contains("Volume must be", Assert.Single(await AnalyzeSoundAsync()), StringComparison.Ordinal);
+
+        workspace.CloseDocument(fixture.MarkupUri);
+        await workspace.ReloadAsync(CancellationToken.None);
+        Assert.Empty(await AnalyzeSoundAsync());
+
+        File.WriteAllText(fixture.MarkupPath, invalid);
+        await workspace.ReloadAsync(CancellationToken.None);
+        Assert.Contains("Volume must be", Assert.Single(await AnalyzeSoundAsync()), StringComparison.Ordinal);
+
+        async Task<string[]> AnalyzeSoundAsync()
+        {
+            VersionedDocumentResult<IReadOnlyList<LspDiagnostic>>? result =
+                await service.AnalyzeAsync(fixture.MarkupUri, CancellationToken.None);
+            Assert.NotNull(result);
+            return SoundDiagnostics(result.Value);
+        }
+    }
+
     [Fact]
     public async Task MissingMotionAssignmentSemicolonIsPublishedAsEditorError()
     {
@@ -323,6 +419,13 @@ public sealed class DiagnosticsTests
             End = new LspPosition { Line = endLine, Character = endCharacter }
         }
     };
+
+    private static string[] SoundDiagnostics(IEnumerable<LspDiagnostic> diagnostics) => diagnostics
+        .Where(diagnostic => diagnostic.Code is "CERNEALAUI030" or "CERNEALAUI031" or "CERNEALAUI032" or "CERNEALAUI033")
+        .Select(diagnostic =>
+            $"{diagnostic.Code} {diagnostic.Severity} {diagnostic.Range.Start.Line}:{diagnostic.Range.Start.Character}-" +
+            $"{diagnostic.Range.End.Line}:{diagnostic.Range.End.Character} {diagnostic.Message}")
+        .ToArray();
 
     private static int ToLspSeverity(DiagnosticSeverity severity) => severity switch
     {

@@ -1127,7 +1127,8 @@ internal sealed partial class CernealaSemanticModel
     private static bool ContainsMotionProgram(string text) =>
         CernealaLanguageFacts.MotionDirectiveKeywords
             .Where(keyword => keyword is not "@when" and not "@if")
-            .Any(keyword => text.IndexOf(keyword, StringComparison.Ordinal) >= 0);
+            .Any(keyword => text.IndexOf(keyword, StringComparison.Ordinal) >= 0) ||
+        ContainsSoundSyntax(text);
 
     private TextSpan FindSubspan(TextSpan container, string value, bool fromEnd = false)
     {

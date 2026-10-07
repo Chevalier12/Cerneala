@@ -5,10 +5,12 @@ Namespace: `Cerneala.UI.Markup`
 Assembly/Project: `Cerneala`  
 Source: `UI/Markup/GeneratedMarkupConditions.cs`,
 `UI/Markup/GeneratedMarkupBindings.cs`, `UI/Markup/GeneratedMarkupMotion.cs`,
-`UI/Markup/GeneratedMarkupPrism.cs`, `UI/Markup/GeneratedMarkupResources.cs`
+`UI/Markup/GeneratedMarkupPrism.cs`, `UI/Markup/GeneratedMarkupResources.cs`,
+`UI/Markup/GeneratedMarkupSound.cs`
 
 Factory methods used by source-generated markup to observe reactive sources and
-attach generated property bindings, Prism instances, and Motion executions.
+attach generated property bindings, Prism instances, Motion executions, and
+Timbre sound actions.
 
 ```csharp
 public static class GeneratedMarkup
@@ -46,7 +48,7 @@ $DataContext.Name:TwoWay      // synchronize and write target changes back
 | `ObserveDataPath(UIElement owner, params MarkupDataPathSegment[] segments)` | `MarkupObservation` | Observes a typed `DataContext` property path and its intermediate owners. |
 | `ObserveDataPath(object? source, params MarkupDataPathSegment[] segments)` | `MarkupObservation` | Observes a typed property path from a fixed source object without resolving `DataContext` through an element tree. Source-generated content templates use this overload for their item. |
 | `ReadReference<T>(MarkupObservation observation, Func<object?, T> projection)` | `T` | Starts an observation long enough to read and project its current value, then stops it without attaching a binding. |
-| `AttachConditions(UIElement owner, IReadOnlyList<MarkupObservation> observations, IReadOnlyList<MarkupConditionRule> rules)` | `IDisposable` | Attaches observations and rules to an element lifecycle and gates rule activation callbacks on effective renderability. |
+| `AttachConditions(UIElement owner, IReadOnlyList<MarkupObservation> observations, IReadOnlyList<MarkupConditionRule> rules)` | `IDisposable` | Attaches observations and rules to an element lifecycle and gates rule activation callbacks on effective renderability; sound activations of a rule are not gated by renderability. |
 | `AttachMotionSession(UIElement owner)` | `IDisposable` | Creates a lifecycle-scoped session for generated motion triggers and executions. |
 | `AttachMotionSession(UIElement owner, ElementAspect? aspect)` | `IDisposable` | Creates a lifecycle-scoped session that remains active only while the captured Aspect instance is assigned to the owner. A `null` argument waits for the owner's first non-null Aspect assignment. |
 | `AttachMotionTriggers(UIElement owner, Action attach, Action detach)` | `IDisposable` | Runs direct event-subscription callbacks on attach and their matching unsubscription callbacks on detach. |
@@ -55,6 +57,16 @@ $DataContext.Name:TwoWay      // synchronize and write target changes back
 | `StartMotionExecution(IDisposable session, Func<MarkupMotionExecution> start)` | `MarkupMotionExecution` | Starts and tracks a leaf or composed generated execution in the supplied lifecycle session. |
 | `StartMotionExecution(IDisposable session, string handleName, Func<MarkupMotionExecution> start)` | `MarkupMotionExecution` | Starts an execution in a named session slot, canceling and replacing the previous active execution in that slot. |
 | `CancelMotionExecution(IDisposable session, string handleName)` | `void` | Cancels and clears the active execution in a named session slot; does nothing when the slot is empty. |
+| `CanStartMotionExecution(IDisposable session)` | `bool` | Returns whether the session would accept a new execution now: not disposed, owner attached and renderable, and the captured Aspect still assigned. |
+| `AttachSoundSession(UIElement owner)` | `IDisposable` | Creates the audio owner of one generated Aspect application: a Timbre scope created from the root `SoundRuntime` on first start plus its named handle slots. |
+| `AttachSoundSession(UIElement owner, ElementAspect? aspect)` | `IDisposable` | Creates a sound session that stays active only while the captured Aspect instance is assigned; a `null` argument captures the owner's first non-null Aspect. |
+| `AddSoundTrigger(IDisposable session, Action attach, Action detach)` | `void` | Adds event subscribe/unsubscribe callbacks that are active while the owner is attached and owns the captured Aspect, regardless of renderability. |
+| `PlaySound(IDisposable session, ResourceId<SoundClip> clip, Action<SoundClip, SoundStartOptions>? configure, string? handleName)` | `SoundPlayback?` | Resolves the clip through the owner's typed resource lookup at start, then calls `SoundScope.Play` with the start options and the named slot; returns `null` when the scoped Aspect is no longer current. |
+| `GetSoundParameter(SoundClip clip, string name)` | `SoundParameter<float>` | Returns the clip's float parameter descriptor with the given name, for start overrides. |
+| `CancelSound(IDisposable session, string handleName)` | `void` | Cancels the current occupant of a named slot; an empty slot is a no-op. |
+| `PauseSound(IDisposable session, string handleName)` | `void` | Pauses the current occupant of a named slot; an empty slot or an occupant that is already terminal is a no-op. |
+| `ResumeSound(IDisposable session, string handleName)` | `void` | Resumes the current occupant of a named slot; an empty or terminal slot is a no-op. |
+| `SeekSound(IDisposable session, string handleName, TimeSpan position)` | `Task` | Requests an absolute seek on the occupant captured now and returns the seek task without waiting; an empty or terminal slot returns a completed task. |
 | `StartMotionProperty<T>(IDisposable session, UIElement target, UiProperty<T> property, bool hasFrom, T from, bool toCurrent, T to, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts one typed property animation through the target root's motion system. |
 | `StartBoundMotionProperty<T>(IDisposable session, UIElement target, UiProperty<T> property, bool hasFrom, T from, MarkupObservation observation, BindingMode mode, Func<object?, T> projection, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts one typed property animation whose destination follows an explicit one-way or two-way markup binding for the lifetime of the execution. |
 | `StartPrismMotionProperty<T>(IDisposable session, UIElement target, int propertyId, Func<PrismInstance, T> getValue, Action<PrismInstance, T> setValue, bool discrete, bool hasFrom, T from, bool toCurrent, T to, MotionSpec<T>? spec, MotionPropertyStartOptions options)` | `MotionHandle` | Starts a statically resolved Prism property animation through the existing motion session and scheduler. |
@@ -208,6 +220,38 @@ code supplies stable catalog entry IDs and dense typed slots, so these methods d
 not perform reflection or string lookup. An identical write is a no-op for
 `PrismInstance.ValueVersion`.
 
+Sound sessions lower `@sound`, `@cancel`, `@pause`, `@resume` and `@seek` onto
+the Timbre API without a second audio engine. Each concrete Aspect application,
+including every template or item occurrence, owns one session: its `SoundScope`
+is created from `UIRoot.SoundRuntime` on the first start, and detach, removal or
+replacement of the captured Aspect, or disposal (template retirement) disposes
+that scope, canceling every playback it started with or without a handle.
+Reattaching creates a new scope and never revives earlier playbacks. Hiding or
+collapsing the owner or an ancestor does not cancel audio or remove sound
+triggers. A named slot holds one occupant: a new start in the slot cancels the
+previous occupant, and slot commands act on the occupant at the moment they run,
+so a replaced playback is never retargeted. Starting while the owner is detached,
+without a root runtime, or with an invalid override throws synchronously, which
+stops the rest of the generated action body; asynchronous I/O, decoder or device
+failures complete the playback as `Failed` without rolling back earlier actions.
+Generated event handlers for bodies that mix Sound and Motion actions run them in
+source order and start the Motion part only when `CanStartMotionExecution` is true.
+
+```csharp
+IDisposable sounds = GeneratedMarkup.AttachSoundSession(button, button.Aspect);
+GeneratedMarkup.PlaySound(
+    sounds,
+    new ResourceId<SoundClip>("ConfirmSound"),
+    (clip, start) =>
+    {
+        start.Volume = 0.2f;
+        start.Set(GeneratedMarkup.GetSoundParameter(clip, "ToneCutoff"), 800f);
+    },
+    "Playback");
+GeneratedMarkup.PauseSound(sounds, "Playback");
+_ = GeneratedMarkup.SeekSound(sounds, "Playback", TimeSpan.FromSeconds(30));
+```
+
 `StartPrismMotionProperty<T>` shares the regular Motion graph, scheduler, specs,
 and cancellation. Numbers and colors interpolate continuously; generated Boolean,
 integer, and enum targets use the discrete flag. A hidden, collapsed, invisible,
@@ -236,15 +280,24 @@ Prism instance.
 | Property binding factories | `InvalidOperationException` | The target property is read-only, or `TwoWay` is requested without a writable observation endpoint. |
 | Property binding factories | `ArgumentOutOfRangeException` | The binding mode is not `OneWay` or `TwoWay`. |
 | Active binding callbacks | `InvalidOperationException` | A consumed source notification or activation occurs on a thread other than the captured UI/update thread. |
+| `AddSoundTrigger`, `PlaySound`, `CancelSound`, `PauseSound`, `ResumeSound`, `SeekSound` | `ArgumentException` | The lifetime was not created by `AttachSoundSession`, or a handle name is empty or whitespace. |
+| `AddSoundTrigger`, `PlaySound` | `ObjectDisposedException` | The sound session has been disposed. |
+| `PlaySound` | `InvalidOperationException` | The owner is detached or its root has no `SoundRuntime`. |
+| `PlaySound` | `KeyNotFoundException` | No `SoundClip` resource with the key is reachable from the owner. |
+| `PlaySound` | `SoundException` | The runtime rejects the start, for example `VoiceLimitExceeded`. |
+| `PlaySound`, `GetSoundParameter`, `SeekSound` | `ArgumentException`, `ArgumentOutOfRangeException` | An override names no float parameter of the resolved clip, a value is out of range, or a seek target is negative or beyond a known duration. |
 
 ## Applies to
-Source-generated reactive, Prism, and Motion markup.
+Source-generated reactive, Prism, Motion, and Sound markup.
 
 ## See Also
 - `Cerneala.UI.Markup.MarkupObservation`
 - `Cerneala.UI.Markup.MarkupDataPathSegment`
 - `Cerneala.UI.Markup.MarkupConditionalValue`
 - `Cerneala.UI.Markup.MarkupMotionExecution`
+- [SoundScope](Cerneala.Timbre.SoundScope.md)
+- [SoundHandle](Cerneala.Timbre.SoundHandle.md)
+- [SoundPlayback](Cerneala.Timbre.SoundPlayback.md)
 - `Cerneala.UI.Prism.Runtime.PrismInstance`
 - `Cerneala.UI.Prism.Runtime.PrismFilterState`
 - `Cerneala.UI.Prism.Runtime.PrismStyleState`

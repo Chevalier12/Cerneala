@@ -131,6 +131,11 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         prismApplications.Clear();
         boundEmbeddedResources.Clear();
         boundPrismApplications.Clear();
+        soundClips.Clear();
+        soundClipsByElement.Clear();
+        soundAspects.Clear();
+        soundStatementSpans.Clear();
+        boundSoundAspects.Clear();
     }
 
     private void Bind(CancellationToken cancellationToken)
@@ -172,6 +177,8 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         PrepareMotionPrismResources(cancellationToken);
         ILanguageTypeSymbol? dataType = BindDataTypeAttribute(root, InferRootDataType());
         BindElement(root, parentType: null, isRoot: true, dataType, cancellationToken);
+        BindNestedSoundOwners();
+        ReportSoundDirectivesOutsideAspects();
     }
 
     private void BindElement(
@@ -929,7 +936,9 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         CernealaSemanticSymbolKind.PrismDirective or CernealaSemanticSymbolKind.PrismComposition or
         CernealaSemanticSymbolKind.PrismNode or CernealaSemanticSymbolKind.PrismOperation or
         CernealaSemanticSymbolKind.PrismProperty or CernealaSemanticSymbolKind.PrismParameter or
-        CernealaSemanticSymbolKind.PrismValue;
+        CernealaSemanticSymbolKind.PrismValue or CernealaSemanticSymbolKind.SoundDirective or
+        CernealaSemanticSymbolKind.SoundParameter or CernealaSemanticSymbolKind.SoundModifier or
+        CernealaSemanticSymbolKind.SoundProperty;
 
     private static bool IsDollarReferenceKind(CernealaSemanticSymbolKind kind) => kind is
         CernealaSemanticSymbolKind.ResourceReference or CernealaSemanticSymbolKind.BindingSource;

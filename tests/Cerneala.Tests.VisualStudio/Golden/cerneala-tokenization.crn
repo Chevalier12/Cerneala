@@ -26,4 +26,16 @@
     @prism $GlowFx(Radius = 12);
   </Border>
   &lt;escaped&gt;
+  <StackPanel.Resources>
+    <SoundClip Name="Tone">
+      Source = "audio/tone.wav"; Loop = false;
+      @parameter Cut: float = 900;
+      @modifier LowPass { Cutoff = Cut; }
+    </SoundClip>
+  </StackPanel.Resources>
+  <Button.Aspect>
+    @handle Playback;
+    @on Click { @sound $Tone(Volume = 0.5) as Playback; @pause Playback; }
+    @when IsPressed { @resume Playback; @seek Playback to 30s; }
+  </Button.Aspect>
 </UserControl>

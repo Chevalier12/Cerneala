@@ -640,6 +640,7 @@ WPF resource dictionaries.
 - `Spring`
 - `MotionClip`
 - `PrismComposition`
+- `SoundClip`
 
 `VisualBrush` is runtime-only because its source is a live element.
 
@@ -1175,7 +1176,57 @@ The parser also supports directives including:
 These have strict context and grammar rules. Do not improvise their syntax.
 Copy a current repository example and preserve its structure.
 
-## 14. Prism
+## 14. Sound (Timbre)
+
+Sounds are declared as `SoundClip` resources and started only by explicit
+actions inside an Aspect `@on`, `@when` or `@if` body. Nothing plays, and no
+audio file is opened, because a clip is declared or referenced. There is no
+implicit button sound.
+
+```xml
+<UserControl.Resources>
+    <SoundClip Name="ConfirmSound">
+        Source = "audio/confirm.wav";
+        Volume = 0.8;
+        @parameter ToneCutoff: float = 1200;
+        @modifier LowPass { Cutoff = ToneCutoff; }
+        @modifier Delay { Time = 120ms; Feedback = 0.20; Mix = 0.15; }
+    </SoundClip>
+</UserControl.Resources>
+
+<Button Content="Confirm">
+    <Button.Aspect>
+        @handle Playback;
+        @on Click { @sound $ConfirmSound(ToneCutoff = 800) as Playback; }
+        @when IsMouseOver
+        {
+            @if value == false { @pause Playback; }
+            @if value == true { @resume Playback; }
+        }
+        @on MouseWheel { @seek Playback to 30s; }
+    </Button.Aspect>
+</Button>
+```
+
+- `Source` is required; `Volume` is 0–1 and `Loop` is `true` or `false`.
+- `@modifier LowPass` and `@modifier Delay` run in source order; their inputs
+  take constants or declared `@parameter` values.
+- `@sound $Clip(Volume = ..., Loop = ..., Param = ...);` overrides values for one
+  start. Without `as Handle` playbacks overlap; with it the slot's occupant is
+  replaced. `@cancel`, `@pause`, `@resume` and `@seek` act on the slot's current
+  occupant and do nothing when it is empty.
+- Every sound statement ends with `;`. Sound actions are not allowed in
+  `@parallel`, `@sequence` or at the top level of an Aspect.
+- A reactive body plays once when its condition becomes true (including
+  initially true) and is not stopped by the condition becoming false. Hiding
+  the element does not stop or replay its sounds.
+- Each element, template part and item occurrence owns its own sound scope;
+  detaching it cancels only its playbacks.
+
+The [Timbre Sound Guide](timbre-guide.md) explains the runtime, the transport
+semantics, errors, tooling and Live Preview audio policy.
+
+## 15. Prism
 
 Prism is Cerneala's retained local visual composition system. It owns filters,
 styles, masks, blending, and backdrop work. Prism changes presentation. It does
@@ -1210,7 +1261,7 @@ operation names or parameter types. Use the [Prism Guide](prism-guide.md), the
 [generated filter reference](prism-filter-reference.generated.md), compiler
 completion, and existing `.crn` examples.
 
-## 15. What is not WPF-compatible
+## 16. What is not WPF-compatible
 
 Do not use these unless the repository later adds explicit support:
 
@@ -1239,7 +1290,7 @@ The safe Cerneala equivalents are:
 | Storyboard | Motion directives |
 | Visual state animation | `@animate` |
 
-## 16. Visual composition guidance
+## 17. Visual composition guidance
 
 For application and developer-tool UI:
 
@@ -1260,7 +1311,7 @@ For application and developer-tool UI:
   the domain or current presentation language.
 - Preserve a visible next-section cue only on actual landing or hero pages.
 
-## 17. Repository workflow
+## 18. Repository workflow
 
 Read files directly and use `rg` / `rg --files` for text search and file discovery.
 Text matches do not establish symbol identity or complete semantic references.
@@ -1275,7 +1326,7 @@ Read `FileTree.md` before broad repository navigation. Read complete source file
 and the relevant ownership context before editing. Verify changes with the
 applicable build, test, and runtime gates.
 
-## 18. Build and native visual validation
+## 19. Build and native visual validation
 
 Build the relevant project:
 
@@ -1314,7 +1365,7 @@ render-cache metrics. Cerneala application screenshots must come from
 Do not substitute an operating-system screen capture and call it renderer
 evidence.
 
-## 19. Validation checklist
+## 20. Validation checklist
 
 Before declaring visual work complete:
 
@@ -1332,7 +1383,7 @@ Before declaring visual work complete:
 - [ ] Infinite motion is canceled when its view leaves the visual stage.
 - [ ] Temporary screenshots and processes were cleaned up.
 
-## 20. Minimal complete example
+## 21. Minimal complete example
 
 The following combines resources, layout, a named aspect, and Motion without
 using WPF-only syntax:
@@ -1465,7 +1516,7 @@ If this guide conflicts with current compiler diagnostics or a working
 repository example, the current compiler and repository win. Update the guide
 instead of forcing stale syntax.
 
-## 21. References And Community
+## 22. References And Community
 
 - [Cerneala website](https://chevalier12.github.io/Cerneala/)
 - [API reference](https://chevalier12.github.io/Cerneala/documentation.html)

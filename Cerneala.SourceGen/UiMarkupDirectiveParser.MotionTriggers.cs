@@ -24,8 +24,8 @@ public sealed partial class UiMarkupGenerator
 
             IReadOnlyList<DirectiveNode> nodes = ParseNodes(
                 stopAtClosingBrace: true,
-                DirectiveContentKind.MotionExecutions);
-            if (nodes.Count == 0 || nodes.Any(node => node is not MotionExecutionNode))
+                DirectiveContentKind.MotionExecutions | DirectiveContentKind.SoundActions);
+            if (nodes.Count == 0 || nodes.Any(node => node is not MotionExecutionNode and not SoundActionNode))
             {
                 throw new DirectiveParseException("@on requires one Motion execution body.", source);
             }
@@ -35,7 +35,8 @@ public sealed partial class UiMarkupGenerator
             int eventOffset = header.Text.IndexOf(eventName, StringComparison.Ordinal);
             return new DirectiveOnNode(
                 eventName,
-                nodes.Cast<MotionExecutionNode>().ToArray(),
+                nodes.OfType<MotionExecutionNode>().ToArray(),
+                nodes,
                 new DirectiveExpressionLocation(header.Source, header.Offset + Math.Max(0, eventOffset), eventName.Length),
                 source);
         }

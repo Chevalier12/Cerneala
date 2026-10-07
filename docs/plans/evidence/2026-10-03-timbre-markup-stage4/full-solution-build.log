@@ -1,0 +1,89 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Cerneala.VisualStudio -> C:\Users\lauri\Desktop\Cerneala\Cerneala.VisualStudio\bin\Release\net472\Cerneala.VisualStudio.dll
+  AvaloniaOracle -> C:\Users\lauri\Desktop\Cerneala\Playground\AvaloniaOracle\bin\Release\net10.0\AvaloniaOracle.dll
+  Cerneala.Tests.VisualStudio -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.VisualStudio\bin\Release\net10.0-windows\Cerneala.Tests.VisualStudio.dll
+  Determining projects to restore...
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\Cerneala.Language.csproj (in 2.94 sec).
+  1 of 2 projects are up-to-date for restore.
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala.SdlShaderCompiler -> C:\Users\lauri\Desktop\Cerneala\Tools\Cerneala.SdlShaderCompiler\bin\Release\net8.0\win-x64\Cerneala.SdlShaderCompiler.dll
+  Cerneala.LanguageServer -> C:\Users\lauri\Desktop\Cerneala\Cerneala.LanguageServer\bin\Release\net10.0\Cerneala.LanguageServer.dll
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.Tests.LanguageServer -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.LanguageServer\bin\Release\net10.0\Cerneala.Tests.LanguageServer.dll
+  Cerneala.LanguageServer -> C:\Users\lauri\Desktop\Cerneala\Cerneala.LanguageServer\bin\Release\net10.0\win-x64\Cerneala.LanguageServer.dll
+  Cerneala.LanguageServer -> C:\Users\lauri\Desktop\Cerneala\Cerneala.VisualStudio\obj\Release\net472\bundled-server\
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Determining projects to restore...
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Scene2D.Packages -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Packages\bin\Release\net8.0\Cerneala.Scene2D.Packages.dll
+  Cerneala.Tests.SourceGen -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SourceGen\bin\Release\net8.0-windows\Cerneala.Tests.SourceGen.dll
+  TimbreConsumer -> C:\Users\lauri\Desktop\Cerneala\tests\Fixtures\TimbreConsumer\bin\Release\net8.0\TimbreConsumer.dll
+  Cerneala.SvgAssetCompiler -> C:\Users\lauri\Desktop\Cerneala\Tools\Cerneala.SvgAssetCompiler\bin\Release\net8.0\Cerneala.SvgAssetCompiler.dll
+  Cerneala.Scene2D.Importers -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Scene2D.Importers\bin\Release\net8.0\Cerneala.Scene2D.Importers.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  VisualStudioConsumer -> C:\Users\lauri\Desktop\Cerneala\tests\Fixtures\VisualStudioConsumer\bin\Release\net8.0-windows\VisualStudioConsumer.dll
+  Tetris -> C:\Users\lauri\Desktop\Cerneala\Tetrisish\bin\Release\net8.0\Cerneala.Tetris.dll
+  PrismAudit -> C:\Users\lauri\Desktop\Cerneala\Tools\PrismAudit\bin\Release\net8.0-windows\PrismAudit.dll
+  Cerneala.MenuLab -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.MenuLab\bin\Release\net8.0-windows\Cerneala.MenuLab.dll
+  Cerneala.WpfDispatcherBenchmarks -> C:\Users\lauri\Desktop\Cerneala\benchmarks\Cerneala.WpfDispatcherBenchmarks\bin\Release\net8.0-windows\Cerneala.WpfDispatcherBenchmarks.dll
+  CernealaPresentation -> C:\Users\lauri\Desktop\Cerneala\CernealaPresentation\bin\Release\net8.0-windows\CernealaPresentation.dll
+  Cerneala.SdlGpuSmoke -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.SdlGpuSmoke\bin\Release\net8.0\Cerneala.SdlGpuSmoke.dll
+  Cerneala.PreviewHost -> C:\Users\lauri\Desktop\Cerneala\Cerneala.PreviewHost\bin\Release\net10.0-windows\Cerneala.PreviewHost.dll
+  Cerneala.Tests.Language -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Language\bin\Release\net8.0-windows\Cerneala.Tests.Language.dll
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\BrutalProofSceneUserControl.7ed7efaa.g.cs(693,54): warning CS0108: 'BrutalProofScene.Cursor' hides inherited member 'UIElement.Cursor'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\CyberOpenSceneUserControl.6e38e670.g.cs(425,49): warning CS0108: 'CyberOpenScene.Cursor' hides inherited member 'UIElement.Cursor'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\CyberProofSceneUserControl.dcc285d0.g.cs(691,54): warning CS0108: 'CyberProofScene.Cursor' hides inherited member 'UIElement.Cursor'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\InkSceneUserControl.7a1143b0.g.cs(463,57): warning CS0108: 'InkScene.Drop' hides inherited member 'UIElement.Drop'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\ProofSceneUserControl.ad9a7f42.g.cs(665,54): warning CS0108: 'ProofScene.Cursor' hides inherited member 'UIElement.Cursor'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\SakuraProofSceneUserControl.7d781070.g.cs(672,54): warning CS0108: 'SakuraProofScene.Cursor' hides inherited member 'UIElement.Cursor'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+  Tetris.Tests -> C:\Users\lauri\Desktop\Cerneala\Tetrisish\Tests\bin\Release\net8.0\Cerneala.Tetris.Tests.dll
+  CernealaOracle -> C:\Users\lauri\Desktop\Cerneala\Playground\CernealaOracle\bin\Release\net8.0-windows\CernealaOracle.dll
+  Cerneala.SolarSystem -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SolarSystem\bin\Release\net8.0-windows\Cerneala.SolarSystem.dll
+  Cerneala.PresentationFrameBudget -> C:\Users\lauri\Desktop\Cerneala\benchmarks\Cerneala.PresentationFrameBudget\bin\Release\net8.0-windows\Cerneala.PresentationFrameBudget.dll
+  Cerneala.InvestorReel -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\bin\Release\net8.0-windows\Cerneala.InvestorReel.dll
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\Cerneala.SourceGen.csproj (in 347 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.csproj (in 388 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\Cerneala.Backends.SdlGpu.csproj (in 395 ms).
+  Restored C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Cerneala.Platforms.Sdl3.csproj (in 551 ms).
+  2 of 6 projects are up-to-date for restore.
+  Cerneala.SceneVillage -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.SceneVillage\bin\Release\net8.0-windows\Cerneala.SceneVillage.dll
+  Cerneala.ComboBoxLab -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.ComboBoxLab\bin\Release\net8.0-windows\Cerneala.ComboBoxLab.dll
+  Cerneala.Benchmarks -> C:\Users\lauri\Desktop\Cerneala\benchmarks\Cerneala.Benchmarks\bin\Release\net8.0-windows\Cerneala.Benchmarks.dll
+  Cerneala.Language -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Language\bin\Release\netstandard2.0\Cerneala.Language.dll
+  Cerneala.SourceGen -> C:\Users\lauri\Desktop\Cerneala\Cerneala.SourceGen\bin\Release\netstandard2.0\Cerneala.SourceGen.dll
+  Cerneala -> C:\Users\lauri\Desktop\Cerneala\bin\Release\net8.0\Cerneala.dll
+  Cerneala.Tests.Scene2DImporters -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DImporters\bin\Release\net8.0\Cerneala.Tests.Scene2DImporters.dll
+  Cerneala.Scene2D.PackageCompiler -> C:\Users\lauri\Desktop\Cerneala\Tools\Cerneala.Scene2D.PackageCompiler\bin\Release\net8.0\Cerneala.Scene2D.PackageCompiler.dll
+  Cerneala.Tests.SceneVillage -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SceneVillage\bin\Release\net8.0-windows\Cerneala.Tests.SceneVillage.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\win-x64\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Tests.PreviewHost -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.PreviewHost\bin\Release\net10.0-windows\Cerneala.Tests.PreviewHost.dll
+  Cerneala.Tests.Timbre -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll
+  Cerneala.Platforms.Sdl3 -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll
+  Cerneala.Backends.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll
+  Cerneala.Tests.Scene2DPackages -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Scene2DPackages\bin\Release\net8.0\Cerneala.Tests.Scene2DPackages.dll
+C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs(123,77): warning xUnit1031: Test methods should not use blocking task operations, as they can cause deadlocks. Use an async test method and await instead. (https://xunit.net/xunit.analyzers/rules/xUnit1031) [C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\Cerneala.Tests.SdlGpu.csproj]
+C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs(176,40): warning xUnit1031: Test methods should not use blocking task operations, as they can cause deadlocks. Use an async test method and await instead. (https://xunit.net/xunit.analyzers/rules/xUnit1031) [C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\Cerneala.Tests.SdlGpu.csproj]
+  Cerneala.Tests.SdlGpu -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll
+  Cerneala.Playground -> C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.Playground\bin\Release\net8.0-windows\Cerneala.Playground.dll
+  Cerneala.PreviewHost -> C:\Users\lauri\Desktop\Cerneala\Cerneala.PreviewHost\bin\Release\net10.0-windows\win-x64\Cerneala.PreviewHost.dll
+  Cerneala.PreviewHost -> C:\Users\lauri\Desktop\Cerneala\Cerneala.VisualStudio\obj\Release\net472\bundled-preview-host\
+  VisualStudioIntegrationHost -> C:\Users\lauri\Desktop\Cerneala\tests\Fixtures\VisualStudioIntegrationHost\bin\Release\net472\Cerneala.VisualStudio.IntegrationHost.dll
+  Cerneala.Tests -> C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests\bin\Release\net8.0-windows\Cerneala.Tests.dll
+
+Build succeeded.
+
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\BrutalProofSceneUserControl.7ed7efaa.g.cs(693,54): warning CS0108: 'BrutalProofScene.Cursor' hides inherited member 'UIElement.Cursor'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\CyberOpenSceneUserControl.6e38e670.g.cs(425,49): warning CS0108: 'CyberOpenScene.Cursor' hides inherited member 'UIElement.Cursor'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\CyberProofSceneUserControl.dcc285d0.g.cs(691,54): warning CS0108: 'CyberProofScene.Cursor' hides inherited member 'UIElement.Cursor'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\InkSceneUserControl.7a1143b0.g.cs(463,57): warning CS0108: 'InkScene.Drop' hides inherited member 'UIElement.Drop'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\ProofSceneUserControl.ad9a7f42.g.cs(665,54): warning CS0108: 'ProofScene.Cursor' hides inherited member 'UIElement.Cursor'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\obj\Release\net8.0-windows\Cerneala.SourceGen\Cerneala.SourceGen.UiMarkupGenerator\SakuraProofSceneUserControl.7d781070.g.cs(672,54): warning CS0108: 'SakuraProofScene.Cursor' hides inherited member 'UIElement.Cursor'. Use the new keyword if hiding was intended. [C:\Users\lauri\Desktop\Cerneala\Playground\Cerneala.InvestorReel\Cerneala.InvestorReel.csproj]
+C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs(123,77): warning xUnit1031: Test methods should not use blocking task operations, as they can cause deadlocks. Use an async test method and await instead. (https://xunit.net/xunit.analyzers/rules/xUnit1031) [C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\Cerneala.Tests.SdlGpu.csproj]
+C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs(176,40): warning xUnit1031: Test methods should not use blocking task operations, as they can cause deadlocks. Use an async test method and await instead. (https://xunit.net/xunit.analyzers/rules/xUnit1031) [C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\Cerneala.Tests.SdlGpu.csproj]
+    8 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:02:20.69
+build exit=0

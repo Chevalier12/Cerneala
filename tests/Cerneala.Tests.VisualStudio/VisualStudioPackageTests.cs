@@ -40,6 +40,16 @@ public sealed class VisualStudioPackageTests
         Assert.Contains("Cerneala.pkgdef", entries);
         Assert.Contains("Cerneala.VisualStudio.pkgdef", entries);
         Assert.Contains("Grammars/cerneala.tmLanguage.json", entries);
+        ZipArchiveEntry grammarEntry = Assert.Single(package.Entries.Where(entry => entry.FullName
+            .Replace('\\', '/')
+            .Equals("Grammars/cerneala.tmLanguage.json", StringComparison.OrdinalIgnoreCase)));
+        using (StreamReader grammarReader = new(grammarEntry.Open()))
+        {
+            Assert.Equal(
+                File.ReadAllText(Path.Combine(ProjectDirectory(), "Grammars", "cerneala.tmLanguage.json")),
+                grammarReader.ReadToEnd());
+        }
+
         Assert.Contains("language-configuration.json", entries);
         Assert.Contains("Assets/cerneala.png", entries);
         Assert.Contains("LICENSE", entries);

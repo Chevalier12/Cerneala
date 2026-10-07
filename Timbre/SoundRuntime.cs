@@ -151,6 +151,10 @@ public sealed partial class SoundRuntime : IDisposable
     // Optional mixer-thread instrumentation for the cost gate; null in normal use.
     internal ISoundBlockObserver? BlockObserver { get; set; }
 
+    // Optional test instrumentation: every playback accepted by Start, on the
+    // starting thread after it is published; null in normal use.
+    internal Action<SoundPlayback>? PlaybackAccepted { get; set; }
+
     // Completes once the mixer has applied everything published before the
     // call and reached a point where it would wait for new work.
     internal Task SyncAsync()
@@ -227,6 +231,7 @@ public sealed partial class SoundRuntime : IDisposable
         }
 
         SignalMixer();
+        PlaybackAccepted?.Invoke(playback);
         return playback;
     }
 

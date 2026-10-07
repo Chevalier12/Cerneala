@@ -140,14 +140,7 @@ public sealed class SoundPlayback
         lock (runtime.Sync)
         {
             ThrowIfTerminalLocked();
-            if (paused)
-            {
-                return;
-            }
-
-            paused = true;
-            state = SoundPlaybackState.Paused;
-            runtime.CountPause();
+            PauseLocked();
         }
 
         runtime.SignalMixer();
@@ -158,20 +151,75 @@ public sealed class SoundPlayback
         lock (runtime.Sync)
         {
             ThrowIfTerminalLocked();
-            if (!paused)
-            {
-                return;
-            }
-
-            paused = false;
-            state = started ? SoundPlaybackState.Playing : SoundPlaybackState.Pending;
-            runtime.CountResume();
+            ResumeLocked();
         }
 
         runtime.SignalMixer();
     }
 
-    public Task SeekAsync(TimeSpan position)
+    public Task SeekAsync(TimeSpan position) => SeekCore(position, throwIfTerminal: true)!;
+
+    // Markup handle commands: a playback that became terminal concurrently is
+    // an empty slot, so these return false/null instead of throwing.
+    internal bool TryPause()
+    {
+        lock (runtime.Sync)
+        {
+            if (IsTerminal)
+            {
+                return false;
+            }
+
+            PauseLocked();
+        }
+
+        runtime.SignalMixer();
+        return true;
+    }
+
+    internal bool TryResume()
+    {
+        lock (runtime.Sync)
+        {
+            if (IsTerminal)
+            {
+                return false;
+            }
+
+            ResumeLocked();
+        }
+
+        runtime.SignalMixer();
+        return true;
+    }
+
+    internal Task? TrySeekAsync(TimeSpan position) => SeekCore(position, throwIfTerminal: false);
+
+    private void PauseLocked()
+    {
+        if (paused)
+        {
+            return;
+        }
+
+        paused = true;
+        state = SoundPlaybackState.Paused;
+        runtime.CountPause();
+    }
+
+    private void ResumeLocked()
+    {
+        if (!paused)
+        {
+            return;
+        }
+
+        paused = false;
+        state = started ? SoundPlaybackState.Playing : SoundPlaybackState.Pending;
+        runtime.CountResume();
+    }
+
+    private Task? SeekCore(TimeSpan position, bool throwIfTerminal)
     {
         if (position < TimeSpan.Zero)
         {
@@ -182,6 +230,11 @@ public sealed class SoundPlayback
         Task task;
         lock (runtime.Sync)
         {
+            if (IsTerminal && !throwIfTerminal)
+            {
+                return null;
+            }
+
             ThrowIfTerminalLocked();
             long length = Volatile.Read(ref lengthFrames);
             if (length >= 0 && frame > length)

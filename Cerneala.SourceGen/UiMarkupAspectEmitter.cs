@@ -21,23 +21,25 @@ public sealed partial class UiMarkupGenerator
             aspect.Drag is not null ||
             aspect.GesturePress is not null;
 
-        private static bool SupportsPackageBehavior(AspectResource aspect) =>
+        private bool SupportsPackageBehavior(AspectResource aspect) =>
             aspect.Presence is null &&
             aspect.Layout is null &&
             aspect.Scrolls.Count == 0 &&
             aspect.Drag is null &&
             aspect.GesturePress is null &&
             aspect.EventTriggers.Count == 0 &&
-            !aspect.Conditions.Any(ContainsMotionExecution);
+            !aspect.Conditions.Any(ContainsMotionExecution) &&
+            !aspect.Conditions.Any(ContainsSoundAction);
 
-        private static bool HasMotionBehavior(AspectResource aspect) =>
+        private bool HasMotionBehavior(AspectResource aspect) =>
             aspect.EventTriggers.Count > 0 ||
             aspect.Presence is not null ||
             aspect.Layout is not null ||
             aspect.Scrolls.Count > 0 ||
             aspect.Drag is not null ||
             aspect.GesturePress is not null ||
-            aspect.Conditions.Any(ContainsMotionExecution);
+            aspect.Conditions.Any(ContainsMotionExecution) ||
+            aspect.Conditions.Any(ContainsSoundAction);
 
         private bool PrepareAspectBehavior(string targetType, AspectResource aspect, bool includeMotion)
         {
@@ -71,6 +73,7 @@ public sealed partial class UiMarkupGenerator
                     foreach (ReactiveRule rule in plan.Rules)
                     {
                         rule.Activations = [];
+                        rule.SoundBody = [];
                     }
                 }
 
@@ -423,7 +426,8 @@ public sealed partial class UiMarkupGenerator
                 aspect.Source,
                 isInline: true)
             {
-                TemplateVariable = aspect.TemplateVariable
+                TemplateVariable = aspect.TemplateVariable,
+                Sound = aspect.Sound
             };
         }
 
@@ -443,6 +447,7 @@ public sealed partial class UiMarkupGenerator
                         EmitMotionPresence(element, variable, aspect);
                         EmitMotionLayout(element, variable, aspect);
                         EmitMotionActivations(element, variable, aspect, bindToElementAspect: false);
+                        EmitSoundActivations(element, variable, aspect, bindToElementAspect: false);
                         if (aspect.Conditions.Count > 0)
                         {
                             if (aspect.ConditionKeyVariables.Count > 0)
@@ -451,6 +456,7 @@ public sealed partial class UiMarkupGenerator
                                 foreach (ReactiveRule rule in signalPlan.Rules)
                                 {
                                     rule.Activations = [];
+                                    rule.SoundBody = [];
                                 }
 
                                 signalPlan.Rules.RemoveAll(rule => rule.Assignments.Count == 0 && rule.Elements.Count == 0);
@@ -462,7 +468,7 @@ public sealed partial class UiMarkupGenerator
                             }
 
                             ReactivePlan motionPlan = BuildAspectReactivePlan(aspect, variable, element.Name.LocalName);
-                            motionPlan.Rules.RemoveAll(rule => rule.Activations.Count == 0 && rule.Elements.Count == 0);
+                            motionPlan.Rules.RemoveAll(rule => rule.Activations.Count == 0 && rule.Elements.Count == 0 && !HasSoundActivation(rule));
                             EmitReactivePlan(
                                 motionPlan,
                                 controlsContent: motionPlan.HasConditionalContent,
@@ -484,6 +490,7 @@ public sealed partial class UiMarkupGenerator
                     EmitMotionPresence(element, variable, aspect);
                     EmitMotionLayout(element, variable, aspect);
                     EmitMotionActivations(element, variable, aspect, bindToElementAspect: true);
+                    EmitSoundActivations(element, variable, aspect, bindToElementAspect: true);
                 }
 
                 if (aspect.RuntimeResourceVariable is not null)
@@ -513,7 +520,7 @@ public sealed partial class UiMarkupGenerator
                 if (hasMotionBehavior && aspect.Conditions.Count > 0)
                 {
                     ReactivePlan motionPlan = BuildAspectReactivePlan(aspect, variable, element.Name.LocalName);
-                    motionPlan.Rules.RemoveAll(rule => rule.Activations.Count == 0 && rule.Elements.Count == 0);
+                    motionPlan.Rules.RemoveAll(rule => rule.Activations.Count == 0 && rule.Elements.Count == 0 && !HasSoundActivation(rule));
                     EmitReactivePlan(
                         motionPlan,
                         controlsContent: motionPlan.HasConditionalContent,

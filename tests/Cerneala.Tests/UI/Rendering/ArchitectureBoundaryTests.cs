@@ -305,7 +305,7 @@ public sealed class ArchitectureBoundaryTests
         ];
 
         foreach (string projectFile in Directory.EnumerateFiles(repositoryRoot, "*.csproj", SearchOption.AllDirectories)
-            .Where(file => !HasPathSegment(file, "bin") && !HasPathSegment(file, "obj")))
+            .Where(file => !HasPathSegment(file, "bin") && !HasPathSegment(file, "obj") && !HasPathSegment(file, ".claude")))
         {
             string projectText = File.ReadAllText(projectFile);
             bool isExecutable =

@@ -1,0 +1,31 @@
+<Project>
+  <!-- Strict ApiCompat for the Timbre markup/Aspect plan against its own frozen
+       baseline (a838fc35, before this plan). No suppressions: every reported
+       difference is listed and classified in README.md. -->
+  <PropertyGroup>
+    <SdkRoot>C:\Program Files\dotnet\sdk\10.0.400</SdkRoot>
+    <DotNetApiCompatTaskAssembly>$(SdkRoot)\Sdks\Microsoft.NET.Sdk\tools\net10.0\Microsoft.DotNet.ApiCompat.Task.dll</DotNetApiCompatTaskAssembly>
+    <RoslynAssembliesPath>$(SdkRoot)\Roslyn\bincore</RoslynAssembliesPath>
+    <BaselineRoot>C:\Users\lauri\Desktop\Cerneala-baseline-markup-a838fc3</BaselineRoot>
+    <CurrentRoot>C:\Users\lauri\Desktop\Cerneala</CurrentRoot>
+    <Runtime>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\8.0.30</Runtime>
+    <Dependencies>$(CurrentRoot)\tests\Cerneala.Tests.Timbre\bin\Release\net8.0</Dependencies>
+    <Strict Condition="'$(Strict)' == ''">true</Strict>
+  </PropertyGroup>
+
+  <UsingTask TaskName="Microsoft.DotNet.ApiCompat.Task.ValidateAssembliesTask"
+             AssemblyFile="$(DotNetApiCompatTaskAssembly)" />
+
+  <Target Name="Compare">
+    <ValidateAssembliesTask
+      LeftAssemblies="$(BaselineRoot)\bin\Release\net8.0\Cerneala.dll"
+      RightAssemblies="$(CurrentRoot)\bin\Release\net8.0\Cerneala.dll"
+      LeftAssembliesReferences="$(Runtime),$(Dependencies)"
+      RightAssembliesReferences="$(Runtime),$(Dependencies)"
+      RoslynAssembliesPath="$(RoslynAssembliesPath)"
+      EnableStrictMode="$(Strict)"
+      EnableRuleCannotChangeParameterName="true"
+      GenerateSuppressionFile="false"
+      PermitUnnecessarySuppressions="false" />
+  </Target>
+</Project>

@@ -729,6 +729,9 @@ public sealed partial class UiMarkupGenerator
                 syntaxExecutions.AddRange(trigger.Body);
             }
 
+            // @cancel of a Sound handle is a Sound action, not a Motion command.
+            syntaxExecutions.RemoveAll(IsSoundNode);
+
             List<ResolvedMotionAnimation> animations = [];
             List<ResolvedMotionSet> sets = [];
             List<ResolvedMotionComposition> compositions = [];
@@ -742,6 +745,7 @@ public sealed partial class UiMarkupGenerator
             }
 
             List<ResolvedMotionEventTrigger> eventTriggers = [];
+            List<(DirectiveOnNode Trigger, IEventSymbol Event)> soundTriggers = [];
             foreach (DirectiveOnNode trigger in aspect.EventTriggers)
             {
                 IEventSymbol? eventSymbol = FindMotionEvent(targetType, trigger.EventName);
@@ -762,6 +766,14 @@ public sealed partial class UiMarkupGenerator
                     return false;
                 }
 
+                // A body with Sound actions is one handler owned by the Sound
+                // session, so its actions keep source order and survive hiding.
+                if (trigger.Actions.Any(IsSoundNode))
+                {
+                    soundTriggers.Add((trigger, eventSymbol));
+                    continue;
+                }
+
                 string[] executionNames = trigger.Body
                     .Select(execution => GetMotionExecutionName(execution))
                     .ToArray();
@@ -771,6 +783,7 @@ public sealed partial class UiMarkupGenerator
             resolvedMotionAspects.Add(
                 (aspect, applicationElement),
                 new ResolvedMotionAspect(animations, sets, compositions, cancelCommands, eventTriggers));
+            resolvedSoundTriggers[(aspect, applicationElement)] = soundTriggers;
             return true;
         }
 

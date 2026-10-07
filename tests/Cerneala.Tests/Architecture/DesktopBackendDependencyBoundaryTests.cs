@@ -108,7 +108,7 @@ public sealed class DesktopBackendDependencyBoundaryTests
     private static IEnumerable<string> EnumerateFiles(string root, string pattern) =>
         Directory.EnumerateFiles(root, pattern, SearchOption.AllDirectories)
             .Where(file => !file.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-                .Any(segment => segment is "bin" or "obj" or "artifacts"));
+                .Any(segment => segment is "bin" or "obj" or "artifacts" or ".claude"));
 
     private static bool IsUnder(string file, string directory)
     {

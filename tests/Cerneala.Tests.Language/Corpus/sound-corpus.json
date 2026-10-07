@@ -1,0 +1,394 @@
+[
+  {
+    "id": "sound.clip.plain",
+    "family": "SoundClip",
+    "valid": true,
+    "markup": "<Button Content=\"Play\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip></Button.Resources><Button.Aspect>@on Click { @sound $Tone; }</Button.Aspect></Button>"
+  },
+  {
+    "id": "sound.clip.approved",
+    "family": "SoundClip",
+    "valid": true,
+    "note": "Approved index §2 example without the @animate $self.sound.* block, which the dependent Motion plan delivers.",
+    "markup": "<Button Content=\"Confirm\"><Button.Resources><SoundClip Name=\"ConfirmSound\">Source = \"audio/confirm.wav\"; Volume = 0.8; @parameter ToneCutoff: float = 1200; @parameter EchoMix: float = 0.15; @modifier LowPass { Cutoff = ToneCutoff; } @modifier Delay { Time = 120ms; Feedback = 0.20; Mix = EchoMix; }</SoundClip></Button.Resources><Button.Aspect>@handle Playback; @on Click { @sound $ConfirmSound(Volume = 0.2, ToneCutoff = 800) as Playback; }</Button.Aspect></Button>"
+  },
+  {
+    "id": "sound.clip.loopDefault",
+    "family": "SoundClip",
+    "valid": true,
+    "markup": "<Border><Border.Resources><SoundClip Name=\"Music\">Source = \"audio/music.ogg\"; Loop = true;</SoundClip></Border.Resources><Border.Aspect>@handle Track; @on Loaded { @sound $Music as Track; }</Border.Aspect></Border>"
+  },
+  {
+    "id": "sound.clip.sharedParameter",
+    "family": "SoundClip",
+    "valid": true,
+    "note": "One parameter feeds two modifier inputs; its range is the intersection of the inputs it feeds.",
+    "markup": "<Border><Border.Resources><SoundClip Name=\"Wash\">Source = \"audio/wash.wav\"; @parameter Amount: float = 0.3; @modifier Delay { Feedback = Amount; Mix = Amount; } @modifier LowPass { }</SoundClip></Border.Resources><Border.Aspect>@on Loaded { @sound $Wash(Amount = 0.9); }</Border.Aspect></Border>"
+  },
+  {
+    "id": "sound.clip.application",
+    "family": "SoundClip",
+    "valid": true,
+    "note": "SoundClip is not a visual control, so Application.Resources may declare it.",
+    "path": "SoundApp.crn",
+    "companion": "namespace CorpusInput { public partial class SoundApp : Cerneala.UI.Application { } public partial class ShellWindow : Cerneala.UI.Controls.Window { } }",
+    "markup": "<Application StartupWindow=\"ShellWindow\"><Application.Resources><SoundClip Name=\"Chime\">Source = \"audio/chime.wav\";</SoundClip></Application.Resources></Application>"
+  },
+  {
+    "id": "sound.clip.shadowing",
+    "family": "SoundClip",
+    "valid": true,
+    "note": "The nearest resource scope wins, as for every other typed resource.",
+    "markup": "<StackPanel><StackPanel.Resources><SoundClip Name=\"Tone\">Source = \"audio/outer.wav\";</SoundClip></StackPanel.Resources><Border><Border.Resources><SoundClip Name=\"Tone\">Source = \"audio/inner.wav\"; @parameter Cut: float = 900; @modifier LowPass { Cutoff = Cut; }</SoundClip></Border.Resources><Button Content=\"Inner\"><Button.Aspect>@on Click { @sound $Tone(Cut = 400); }</Button.Aspect></Button></Border></StackPanel>"
+  },
+  {
+    "id": "sound.action.reactive",
+    "family": "Action",
+    "valid": true,
+    "markup": "<Border><Border.Resources><SoundClip Name=\"ErrorSound\">Source = \"audio/error.wav\";</SoundClip></Border.Resources><Border.Aspect>@handle Playback; @when $self.IsEnabled { @if value == true { @sound $ErrorSound as Playback; } @if value == false { @cancel Playback; } }</Border.Aspect></Border>"
+  },
+  {
+    "id": "sound.action.transport",
+    "family": "Action",
+    "valid": true,
+    "markup": "<Button Content=\"Music\"><Button.Resources><SoundClip Name=\"BackgroundMusic\">Source = \"audio/music.ogg\";</SoundClip></Button.Resources><Button.Aspect>@handle Music; @on Loaded { @sound $BackgroundMusic(Loop = true) as Music; } @on Click { @pause Music; } @on MouseEnter { @resume Music; } @on MouseLeave { @seek Music to 30s; }</Button.Aspect></Button>"
+  },
+  {
+    "id": "sound.action.mixedBody",
+    "family": "Action",
+    "valid": true,
+    "note": "@sound starts in source order before the single visual Motion root; it is not a Motion execution child.",
+    "markup": "<Button Content=\"Mixed\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip></Button.Resources><Button.Aspect>@on Click { @sound $Tone; @animate with Tween(200ms, EaseOut) { @to { Opacity = 0.5; } } }</Button.Aspect></Button>"
+  },
+  {
+    "id": "sound.action.namedAspect",
+    "family": "Action",
+    "valid": true,
+    "markup": "<StackPanel><StackPanel.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip><Aspect Name=\"Clicky\" TargetType=\"Button\">@on Click { @sound $Tone; }</Aspect></StackPanel.Resources><Button Content=\"A\" Aspect=\"$Clicky\" /><Button Content=\"B\" Aspect=\"$Clicky\" /></StackPanel>"
+  },
+  {
+    "id": "sound.action.scene2d",
+    "family": "Action",
+    "valid": true,
+    "markup": "<Scene2D Width=\"320\" Height=\"200\"><Scene2D.Resources><SoundClip Name=\"Step\">Source = \"audio/step.wav\";</SoundClip></Scene2D.Resources><Sprite2D Name=\"Hero\"><Sprite2D.Aspect>@on Loaded { @sound $Step; }</Sprite2D.Aspect></Sprite2D></Scene2D>"
+  },
+  {
+    "id": "sound.action.componentTemplate",
+    "family": "Action",
+    "valid": true,
+    "note": "An inline Aspect nested in another Aspect's @template owns its Sound actions (regression: it was not bound).",
+    "markup": "<Button Content=\"Templated\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip></Button.Resources><Button.Aspect>@template { <Border><Border.Aspect>@on Loaded { @sound $Tone; }</Border.Aspect></Border> }</Button.Aspect></Button>"
+  },
+  {
+    "id": "sound.ref.unknownClipInTemplate",
+    "family": "Reference",
+    "valid": false,
+    "markup": "<Button Content=\"Templated\"><Button.Aspect>@template { <Border><Border.Aspect>@on Loaded { @sound $Missing; }</Border.Aspect></Border> }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI031", "message": "Unknown SoundClip resource '$Missing'" } ]
+  },
+  {
+    "id": "sound.ref.unknownClip",
+    "family": "Reference",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Aspect>@on Click { @sound $Missing; }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI031", "message": "Unknown SoundClip resource '$Missing'" } ]
+  },
+  {
+    "id": "sound.ref.notSoundClip",
+    "family": "Reference",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Resources><MotionClip Name=\"Pulse\" TargetType=\"Button\">@animate { @to { Opacity = 0.5; } }</MotionClip></Button.Resources><Button.Aspect>@on Click { @sound $Pulse; }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI031", "message": "'$Pulse' is not a SoundClip" } ]
+  },
+  {
+    "id": "sound.ref.unknownParameter",
+    "family": "Reference",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip></Button.Resources><Button.Aspect>@on Click { @sound $Tone(Pitch = 2); }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI031", "message": "SoundClip 'Tone' has no parameter 'Pitch'" } ]
+  },
+  {
+    "id": "sound.ref.duplicateArgument",
+    "family": "Reference",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip></Button.Resources><Button.Aspect>@on Click { @sound $Tone(Volume = 0.2, Volume = 0.3); }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI031", "message": "Duplicate @sound argument 'Volume'" } ]
+  },
+  {
+    "id": "sound.ref.unknownHandle",
+    "family": "Reference",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip></Button.Resources><Button.Aspect>@on Click { @sound $Tone as Missing; }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI031", "message": "Sound handle 'Missing' is undeclared or used before its declaration" } ]
+  },
+  {
+    "id": "sound.ref.unknownTransportHandle",
+    "family": "Reference",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Aspect>@on Click { @pause Missing; }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI031", "message": "Sound handle 'Missing' is undeclared or used before its declaration" } ]
+  },
+  {
+    "id": "sound.ref.duplicateHandle",
+    "family": "Reference",
+    "valid": false,
+    "note": "@handle is shared with Motion; the existing Motion duplicate diagnostic is preserved.",
+    "markup": "<Button Content=\"x\"><Button.Aspect>@handle Playback; @handle Playback;</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI020", "message": "Duplicate Motion handle 'Playback'" } ]
+  },
+  {
+    "id": "sound.ref.handleKindConflict",
+    "family": "Reference",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip><MotionClip Name=\"Pulse\" TargetType=\"Button\">@animate { @to { Opacity = 0.5; } }</MotionClip></Button.Resources><Button.Aspect>@handle Active; @on Loaded { @run $Pulse as Active; } @on Click { @sound $Tone as Active; }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI031", "message": "Handle 'Active' is used by both Sound and Motion actions" } ]
+  },
+  {
+    "id": "sound.ref.transportOnMotionHandle",
+    "family": "Reference",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Resources><MotionClip Name=\"Pulse\" TargetType=\"Button\">@animate { @to { Opacity = 0.5; } }</MotionClip></Button.Resources><Button.Aspect>@handle Active; @on Loaded { @run $Pulse as Active; } @on Click { @pause Active; }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI031", "message": "Handle 'Active' is used by both Sound and Motion actions" } ]
+  },
+  {
+    "id": "sound.ref.duplicateParameter",
+    "family": "Reference",
+    "valid": false,
+    "markup": "<Border><Border.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\"; @parameter Cut: float = 900; @parameter Cut: float = 800;</SoundClip></Border.Resources></Border>",
+    "expect": [ { "id": "CERNEALAUI031", "message": "Duplicate SoundClip parameter 'Cut'" } ]
+  },
+  {
+    "id": "sound.ref.parameterBeforeDeclaration",
+    "family": "Reference",
+    "valid": false,
+    "markup": "<Border><Border.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\"; @modifier LowPass { Cutoff = Cut; } @parameter Cut: float = 900;</SoundClip></Border.Resources></Border>",
+    "expect": [ { "id": "CERNEALAUI031", "message": "Sound parameter 'Cut' is undeclared or used before its declaration" } ]
+  },
+  {
+    "id": "sound.ref.unknownModifier",
+    "family": "Reference",
+    "valid": false,
+    "markup": "<Border><Border.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\"; @modifier Reverb { }</SoundClip></Border.Resources></Border>",
+    "expect": [ { "id": "CERNEALAUI031", "message": "Unknown sound modifier 'Reverb'" } ]
+  },
+  {
+    "id": "sound.ref.unknownModifierInput",
+    "family": "Reference",
+    "valid": false,
+    "markup": "<Border><Border.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\"; @modifier LowPass { Q = 2; }</SoundClip></Border.Resources></Border>",
+    "expect": [ { "id": "CERNEALAUI031", "message": "Sound modifier 'LowPass' has no input 'Q'" } ]
+  },
+  {
+    "id": "sound.ref.unknownClipProperty",
+    "family": "Reference",
+    "valid": false,
+    "markup": "<Border><Border.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\"; Pitch = 2;</SoundClip></Border.Resources></Border>",
+    "expect": [ { "id": "CERNEALAUI031", "message": "SoundClip has no property 'Pitch'" } ]
+  },
+  {
+    "id": "sound.ref.duplicateResource",
+    "family": "Reference",
+    "valid": false,
+    "note": "Resource name conflicts keep the existing scope diagnostic.",
+    "markup": "<Border><Border.Resources><SoundClip Name=\"Tone\">Source = \"audio/a.wav\";</SoundClip><SoundClip Name=\"Tone\">Source = \"audio/b.wav\";</SoundClip></Border.Resources></Border>",
+    "expect": [ { "id": "CERNEALAUI005", "message": "Duplicate resource Name 'Tone'" } ]
+  },
+  {
+    "id": "sound.value.parameterType",
+    "family": "Value",
+    "valid": false,
+    "markup": "<Border><Border.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\"; @parameter Cut: int = 900;</SoundClip></Border.Resources></Border>",
+    "expect": [ { "id": "CERNEALAUI032", "message": "Sound parameter 'Cut' must have type float" } ]
+  },
+  {
+    "id": "sound.value.volumeRange",
+    "family": "Value",
+    "valid": false,
+    "markup": "<Border><Border.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\"; Volume = 1.5;</SoundClip></Border.Resources></Border>",
+    "expect": [ { "id": "CERNEALAUI032", "message": "Volume must be a finite number within 0–1" } ]
+  },
+  {
+    "id": "sound.value.volumeArgumentRange",
+    "family": "Value",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip></Button.Resources><Button.Aspect>@on Click { @sound $Tone(Volume = 2); }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI032", "message": "Volume must be a finite number within 0–1" } ]
+  },
+  {
+    "id": "sound.value.parameterDefaultRange",
+    "family": "Value",
+    "valid": false,
+    "markup": "<Border><Border.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\"; @parameter Cut: float = 5; @modifier LowPass { Cutoff = Cut; }</SoundClip></Border.Resources></Border>",
+    "expect": [ { "id": "CERNEALAUI032", "message": "Sound parameter 'Cut' value 5 is outside the range 20–20000" } ]
+  },
+  {
+    "id": "sound.value.parameterArgumentRange",
+    "family": "Value",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\"; @parameter Cut: float = 900; @modifier LowPass { Cutoff = Cut; }</SoundClip></Button.Resources><Button.Aspect>@on Click { @sound $Tone(Cut = 10); }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI032", "message": "Sound parameter 'Cut' value 10 is outside the range 20–20000" } ]
+  },
+  {
+    "id": "sound.value.modifierInputRange",
+    "family": "Value",
+    "valid": false,
+    "markup": "<Border><Border.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\"; @modifier Delay { Feedback = 0.99; }</SoundClip></Border.Resources></Border>",
+    "expect": [ { "id": "CERNEALAUI032", "message": "Delay.Feedback must be a finite number within 0–0.95" } ]
+  },
+  {
+    "id": "sound.value.loopNotBoolean",
+    "family": "Value",
+    "valid": false,
+    "markup": "<Border><Border.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\"; Loop = yes;</SoundClip></Border.Resources></Border>",
+    "expect": [ { "id": "CERNEALAUI032", "message": "Loop must be true or false" } ]
+  },
+  {
+    "id": "sound.value.loopArgumentNotBoolean",
+    "family": "Value",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip></Button.Resources><Button.Aspect>@on Click { @sound $Tone(Loop = 1); }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI032", "message": "Loop must be true or false" } ]
+  },
+  {
+    "id": "sound.value.seekUnit",
+    "family": "Value",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip></Button.Resources><Button.Aspect>@handle Music; @on Loaded { @sound $Tone as Music; } @on Click { @seek Music to 30; }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI032", "message": "@seek requires a non-negative duration such as 30s or 500ms" } ]
+  },
+  {
+    "id": "sound.value.seekNegative",
+    "family": "Value",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip></Button.Resources><Button.Aspect>@handle Music; @on Loaded { @sound $Tone as Music; } @on Click { @seek Music to -1s; }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI032", "message": "@seek requires a non-negative duration such as 30s or 500ms" } ]
+  },
+  {
+    "id": "sound.value.delayTimeUnit",
+    "family": "Value",
+    "valid": false,
+    "markup": "<Border><Border.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\"; @modifier Delay { Time = 3s; }</SoundClip></Border.Resources></Border>",
+    "expect": [ { "id": "CERNEALAUI032", "message": "Delay.Time must be a finite number within 0.001–2" } ]
+  },
+  {
+    "id": "sound.value.sourceMissing",
+    "family": "Value",
+    "valid": false,
+    "markup": "<Border><Border.Resources><SoundClip Name=\"Tone\">Volume = 0.5;</SoundClip></Border.Resources></Border>",
+    "expect": [ { "id": "CERNEALAUI032", "message": "SoundClip requires Source" } ]
+  },
+  {
+    "id": "sound.value.sourceUri",
+    "family": "Value",
+    "valid": false,
+    "markup": "<Border><Border.Resources><SoundClip Name=\"Tone\">Source = \"https://example.com/a.wav\";</SoundClip></Border.Resources></Border>",
+    "expect": [ { "id": "CERNEALAUI032", "message": "Source must be a non-empty local file path" } ]
+  },
+  {
+    "id": "sound.syntax.soundSemicolon",
+    "family": "Syntax",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip></Button.Resources><Button.Aspect>@on Click { @sound $Tone }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI030", "message": "Sound directive '@sound' must end with ';'" } ]
+  },
+  {
+    "id": "sound.syntax.pauseSemicolon",
+    "family": "Syntax",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip></Button.Resources><Button.Aspect>@handle Music; @on Loaded { @sound $Tone as Music; } @on Click { @pause Music }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI030", "message": "Sound directive '@pause' must end with ';'" } ]
+  },
+  {
+    "id": "sound.syntax.resumeSemicolon",
+    "family": "Syntax",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip></Button.Resources><Button.Aspect>@handle Music; @on Loaded { @sound $Tone as Music; } @on Click { @resume Music }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI030", "message": "Sound directive '@resume' must end with ';'" } ]
+  },
+  {
+    "id": "sound.syntax.seekSemicolon",
+    "family": "Syntax",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip></Button.Resources><Button.Aspect>@handle Music; @on Loaded { @sound $Tone as Music; } @on Click { @seek Music to 3s }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI030", "message": "Sound directive '@seek' must end with ';'" } ]
+  },
+  {
+    "id": "sound.syntax.seekShape",
+    "family": "Syntax",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip></Button.Resources><Button.Aspect>@handle Music; @on Loaded { @sound $Tone as Music; } @on Click { @seek Music 3s; }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI030", "message": "@seek requires 'Handle to <duration>'" } ]
+  },
+  {
+    "id": "sound.syntax.parameterShape",
+    "family": "Syntax",
+    "valid": false,
+    "markup": "<Border><Border.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\"; @parameter Cut: float;</SoundClip></Border.Resources></Border>",
+    "expect": [ { "id": "CERNEALAUI030", "message": "Sound parameter requires 'Name: float = default'" } ]
+  },
+  {
+    "id": "sound.syntax.clipAttribute",
+    "family": "Syntax",
+    "valid": false,
+    "note": "SoundClip is not a Motion root and does not take a TargetType.",
+    "markup": "<Border><Border.Resources><SoundClip Name=\"Tone\" TargetType=\"Button\">Source = \"audio/tone.wav\";</SoundClip></Border.Resources></Border>",
+    "expect": [ { "id": "CERNEALAUI030", "message": "SoundClip supports only the Name attribute" } ]
+  },
+  {
+    "id": "sound.syntax.clipChildElement",
+    "family": "Syntax",
+    "valid": false,
+    "markup": "<Border><Border.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";<Border /></SoundClip></Border.Resources></Border>",
+    "expect": [ { "id": "CERNEALAUI030", "message": "SoundClip does not accept child elements" } ]
+  },
+  {
+    "id": "sound.context.aspectTopLevel",
+    "family": "Context",
+    "valid": false,
+    "note": "No autoplay: a top-level Aspect action is rejected.",
+    "markup": "<Button Content=\"x\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip></Button.Resources><Button.Aspect>@sound $Tone;</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI033", "message": "@sound is allowed only inside an Aspect @on, @when or @if body" } ]
+  },
+  {
+    "id": "sound.context.default",
+    "family": "Context",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip></Button.Resources><Button.Aspect>@default { @sound $Tone; }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI033", "message": "@sound is allowed only inside an Aspect @on, @when or @if body" } ]
+  },
+  {
+    "id": "sound.context.composition",
+    "family": "Context",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip></Button.Resources><Button.Aspect>@on Click { @parallel { @sound $Tone; } }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI033", "message": "@sound cannot be orchestrated inside @parallel or @sequence" } ]
+  },
+  {
+    "id": "sound.context.motionClip",
+    "family": "Context",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip><MotionClip Name=\"Pulse\" TargetType=\"Button\">@sound $Tone;</MotionClip></Button.Resources></Button>",
+    "expect": [ { "id": "CERNEALAUI033", "message": "@sound is allowed only inside an Aspect @on, @when or @if body" } ]
+  },
+  {
+    "id": "sound.context.soundClip",
+    "family": "Context",
+    "valid": false,
+    "markup": "<Border><Border.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\"; @pause Tone;</SoundClip></Border.Resources></Border>",
+    "expect": [ { "id": "CERNEALAUI033", "message": "@pause is allowed only inside an Aspect @on, @when or @if body" } ]
+  },
+  {
+    "id": "sound.context.elementContent",
+    "family": "Context",
+    "valid": false,
+    "markup": "<Border><Border.Resources><SoundClip Name=\"Tone\">Source = \"audio/tone.wav\";</SoundClip></Border.Resources>@when $self.IsEnabled { @sound $Tone; }</Border>",
+    "expect": [ { "id": "CERNEALAUI033", "message": "@sound is allowed only inside an Aspect @on, @when or @if body" } ]
+  },
+  {
+    "id": "sound.context.modifierOutsideClip",
+    "family": "Context",
+    "valid": false,
+    "markup": "<Button Content=\"x\"><Button.Aspect>@modifier LowPass { Cutoff = 900; }</Button.Aspect></Button>",
+    "expect": [ { "id": "CERNEALAUI033", "message": "@modifier is allowed only inside SoundClip" } ]
+  }
+]

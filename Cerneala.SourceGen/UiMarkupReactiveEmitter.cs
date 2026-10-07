@@ -74,6 +74,10 @@ public sealed partial class UiMarkupGenerator
             public string? StaticContentExpression { get; set; }
 
             public IReadOnlyList<string> Activations { get; set; } = [];
+
+            // Sound actions and Motion executions of the body in source order;
+            // emitted as the rule's audio activation when it holds Sound actions.
+            public IReadOnlyList<DirectiveNode> SoundBody { get; set; } = [];
         }
 
         private sealed class ObservationEmission
@@ -549,14 +553,18 @@ public sealed partial class UiMarkupGenerator
             List<DirectiveElementNode> elements = body.OfType<DirectiveElementNode>().ToList();
             List<string> activations = body
                 .OfType<MotionExecutionNode>()
-                .Where(motionExecutionFactoryNames.ContainsKey)
+                .Where(execution => motionExecutionFactoryNames.ContainsKey(execution) || motionActionNames.ContainsKey(execution))
                 .Select(GetMotionExecutionName)
                 .ToList();
-            if (assignments.Count > 0 || elements.Count > 0 || activations.Count > 0)
+            List<DirectiveNode> soundBody = body.Any(IsSoundNode)
+                ? body.Where(node => node is SoundActionNode or MotionExecutionNode).ToList()
+                : [];
+            if (assignments.Count > 0 || elements.Count > 0 || activations.Count > 0 || soundBody.Count > 0)
             {
                 plan.Rules.Add(new ReactiveRule(plan.NextOrder++, predicate, assignments, elements, valueSource)
                 {
-                    Activations = activations
+                    Activations = activations,
+                    SoundBody = soundBody
                 });
             }
 
@@ -995,9 +1003,11 @@ public sealed partial class UiMarkupGenerator
                 string conditionStateCode = aspectConditionKeys is null
                     ? "null"
                     : "active => { " + aspectConditionKeys[ruleIndex] + ".SetActive(" + plan.OwnerVariable + ", active); }";
+                string? soundCode = EmitSoundActivationCode(rule);
                 ruleExpressions.Add(
                     "new global::Cerneala.UI.Markup.MarkupConditionRule(" + rule.Order + ", () => " + rule.Predicate +
-                    ", " + valuesCode + ", " + contentCode + ", " + activationCode + ", null, " + conditionStateCode + ")");
+                    ", " + valuesCode + ", " + contentCode + ", " + activationCode + ", null, " + conditionStateCode +
+                    (soundCode is null ? string.Empty : ", " + soundCode) + ")");
             }
 
             string observations = plan.ObservationLines.Count == 0

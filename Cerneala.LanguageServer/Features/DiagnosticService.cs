@@ -3,6 +3,7 @@ using Cerneala.Language.Semantics;
 using Cerneala.Language.Syntax;
 using Cerneala.Language.Syntax.Embedded;
 using Cerneala.Language.Text;
+using Cerneala.Language.Timbre;
 using Cerneala.LanguageServer.Protocol;
 using Cerneala.LanguageServer.Workspace;
 
@@ -98,10 +99,22 @@ internal sealed class DiagnosticService(CernealaWorkspace workspace, BuildDiagno
 
             string elementName = LocalName(element.Name);
             IReadOnlyList<EmbeddedDiagnostic> embeddedDiagnostics;
-            if (elementName is "Aspect" or "MotionClip")
+            if (elementName is "Aspect" or "MotionClip" || elementName.EndsWith(".Aspect", StringComparison.Ordinal))
             {
                 EmbeddedParseResult<DirectiveDocumentSyntax> parsed = MotionSyntaxParser.Parse(text, offset);
                 embeddedDiagnostics = parsed.Diagnostics.Take(1).ToArray();
+            }
+            else if (elementName == "SoundClip")
+            {
+                // SoundClip validity depends only on the shared Timbre catalog,
+                // so a document without a project gets the full clip binding.
+                List<EmbeddedDiagnostic> soundDiagnostics = new();
+                SoundMarkupBinder.BindClip(
+                    null,
+                    SoundMarkupSyntax.ParseClipBody(text, offset),
+                    element.NameToken.Span,
+                    soundDiagnostics);
+                embeddedDiagnostics = soundDiagnostics;
             }
             else if (elementName == "PrismComposition")
             {

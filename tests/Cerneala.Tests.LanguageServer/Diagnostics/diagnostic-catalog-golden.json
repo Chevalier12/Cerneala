@@ -240,6 +240,46 @@
     "EndCharacter": 5
   },
   {
+    "Id": "CERNEALAUI030",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Sound syntax in \u0027arg0\u0027 is invalid: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI031",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Sound reference in \u0027arg0\u0027 is invalid: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI032",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Sound value in \u0027arg0\u0027 is invalid: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
+    "Id": "CERNEALAUI033",
+    "EditorSeverity": 1,
+    "BuildSeverity": 1,
+    "Message": "Sound directive context in \u0027arg0\u0027 is invalid: arg1",
+    "StartLine": 1,
+    "StartCharacter": 2,
+    "EndLine": 1,
+    "EndCharacter": 5
+  },
+  {
     "Id": "PRISM1001",
     "EditorSeverity": 1,
     "BuildSeverity": 1,
