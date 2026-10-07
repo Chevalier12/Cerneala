@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Isolated Stage 0 interop probe. Same pins as Cerneala.Platforms.Sdl3; not part of the solution. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Graphix-CS" Version="3.4.16.1" />
+    <PackageReference Include="Graphix.Native" Version="3.4.16-graphix.6" />
+  </ItemGroup>
+
+</Project>

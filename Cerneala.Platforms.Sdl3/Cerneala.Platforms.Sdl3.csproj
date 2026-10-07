@@ -20,6 +20,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Cerneala.Backends.SdlGpu" />
     <InternalsVisibleTo Include="Cerneala.Benchmarks" />
+    <InternalsVisibleTo Include="Cerneala.SdlGpuSmoke" />
     <InternalsVisibleTo Include="Cerneala.Tests" />
     <InternalsVisibleTo Include="Cerneala.Tests.SdlGpu" />
     <InternalsVisibleTo Include="Cerneala.Tests.SceneVillage" />

@@ -1,0 +1,174 @@
+{
+  "host": "Microsoft Windows NT 10.0.26200.0 X64",
+  "sdl": "SDL-3.4.16-e912da0 (Graphix 3.4.16-graphix.6 commit e912da037a59e33affc6ecd69be326265cdc748b)",
+  "driver": "wasapi",
+  "passed": true,
+  "failure": null,
+  "scenarios": [
+    {
+      "scenario": "device/absent-then-explicit-play",
+      "failed": "Failed",
+      "error": "SDL audio initialization failed: Audio target \u0027cerneala-absent-driver\u0027 not available",
+      "retry": "Completed"
+    },
+    {
+      "scenario": "timbre-tone-44100.wav/Auto",
+      "state": "Completed",
+      "frames": 24000,
+      "wallMs": 495.9862,
+      "sha256": "BCDB49A043037002D7DEB510528EF29D112C9E61916D0E0666AAE0E636F4D4C1",
+      "matchesSink": true,
+      "tailTruncated": false
+    },
+    {
+      "scenario": "timbre-tone-44100.wav/Streaming",
+      "state": "Completed",
+      "frames": 24000,
+      "wallMs": 502.7077,
+      "sha256": "BCDB49A043037002D7DEB510528EF29D112C9E61916D0E0666AAE0E636F4D4C1",
+      "matchesSink": true,
+      "tailTruncated": false
+    },
+    {
+      "scenario": "mp3-mpeg1-44100-stereo-cbr128.mp3/Auto",
+      "state": "Completed",
+      "frames": 96000,
+      "wallMs": 2138.7317,
+      "sha256": "3ED9A0488F84A64EAF46FB6515C7036604C103558485CE5F57068DF5B4F59F2A",
+      "matchesSink": true,
+      "tailTruncated": false
+    },
+    {
+      "scenario": "mp3-mpeg1-44100-stereo-cbr128.mp3/Streaming",
+      "state": "Completed",
+      "frames": 96000,
+      "wallMs": 2008.8432,
+      "sha256": "3ED9A0488F84A64EAF46FB6515C7036604C103558485CE5F57068DF5B4F59F2A",
+      "matchesSink": true,
+      "tailTruncated": false
+    },
+    {
+      "scenario": "vorbis-48000-stereo-q2.ogg/Auto",
+      "state": "Completed",
+      "frames": 95040,
+      "wallMs": 2038.8053,
+      "sha256": "F13274E2B16B897A96A3DE21BB5F0F58FBFABF4C1020D0A44DC519D44ABE8718",
+      "matchesSink": true,
+      "tailTruncated": false
+    },
+    {
+      "scenario": "vorbis-48000-stereo-q2.ogg/Streaming",
+      "state": "Completed",
+      "frames": 95040,
+      "wallMs": 1982.8621,
+      "sha256": "F13274E2B16B897A96A3DE21BB5F0F58FBFABF4C1020D0A44DC519D44ABE8718",
+      "matchesSink": true,
+      "tailTruncated": false
+    },
+    {
+      "scenario": "opus-stereo-48000-96k.opus/Auto",
+      "state": "Completed",
+      "frames": 96000,
+      "wallMs": 2115.467,
+      "sha256": "7CB502900C899169579B33A935BD019F604C665F61EB968EB479BB7A54F68F55",
+      "matchesSink": true,
+      "tailTruncated": false
+    },
+    {
+      "scenario": "opus-stereo-48000-96k.opus/Streaming",
+      "state": "Completed",
+      "frames": 96000,
+      "wallMs": 2003.0914,
+      "sha256": "7CB502900C899169579B33A935BD019F604C665F61EB968EB479BB7A54F68F55",
+      "matchesSink": true,
+      "tailTruncated": false
+    },
+    {
+      "scenario": "modified/LowPass\u002BDelay",
+      "state": "Completed",
+      "frames": 70080,
+      "wallMs": 1461.6893,
+      "sha256": "0869ACD69AABECE41F01C3B9ECA893089DF1321F682E0F8C4F641F564C5FB0B8",
+      "matchesSink": true,
+      "tailTruncated": false
+    },
+    {
+      "scenario": "overlap",
+      "first": "Completed",
+      "second": "Completed"
+    },
+    {
+      "scenario": "replacement\u002Bcancel",
+      "replaced": "Canceled",
+      "replacement": "Completed",
+      "canceled": "Canceled"
+    },
+    {
+      "scenario": "pause-pending",
+      "state": "Completed"
+    },
+    {
+      "scenario": "pause-resume",
+      "pausedAtMs": 200,
+      "state": "Completed"
+    },
+    {
+      "scenario": "seek/streaming-mp3",
+      "position": 60.2,
+      "duration": 300,
+      "supersededCompletedAs": "canceled",
+      "streamingBufferBytes": 65536,
+      "readerMemoryBytes": 589824
+    },
+    {
+      "scenario": "loop",
+      "wraps": 2,
+      "state": "Canceled"
+    },
+    {
+      "scenario": "two-windows\u002Bqueued-voices",
+      "secondary": "Canceled",
+      "main": "Completed",
+      "survivor": "Completed"
+    },
+    {
+      "scenario": "device/removed-then-explicit-play",
+      "failed": "Failed",
+      "replay": "Completed"
+    }
+  ],
+  "output": {
+    "OpenCount": 2,
+    "CloseCount": 1,
+    "IsOpen": true,
+    "Device": 33,
+    "DeviceFormat": "0x8120/2/48000",
+    "DeviceSampleFrames": 480,
+    "Requests": 2225,
+    "RequestedBytes": 8544000,
+    "StarvedRequests": 132,
+    "StarvedBytes": 506880,
+    "FramesSubmitted": 1006560,
+    "QueueHighWaterFrames": 1920,
+    "PutFailures": 0,
+    "Flushes": 0,
+    "DevicesLost": 1
+  },
+  "engine": {
+    "PlaybacksStarted": 26,
+    "PlaybacksCompleted": 18,
+    "PlaybacksCanceled": 6,
+    "PlaybacksFailed": 2,
+    "FramesSubmitted": 1006560,
+    "FramesConsumed": 1006560,
+    "UnderrunFrames": 0,
+    "ClippedSamples": 0,
+    "LoopWraps": 2,
+    "SeeksCompleted": 1,
+    "SeeksSuperseded": 1,
+    "OutputOpenCount": 2
+  },
+  "tapFrames": 1006560,
+  "lateCallbacks": 0,
+  "handlerFailures": 0
+}

@@ -96,7 +96,7 @@ public sealed partial class SoundRuntime
                     ISoundBlockObserver? observer = BlockObserver;
                     long started = observer is null ? 0 : Stopwatch.GetTimestamp();
                     long allocatedBefore = observer is null ? 0 : GC.GetAllocatedBytesForCurrentThread();
-                    if (SelectBlockVoices(voices, blockVoices))
+                    if (SelectBlockVoices(voices, blockVoices) && !DeferForSource(blockVoices, queued))
                     {
                         bool submit = MixBlock(blockVoices, mix, voiceBuffer);
                         if (submit)
@@ -238,6 +238,29 @@ public sealed partial class SoundRuntime
         }
 
         return blockVoices.Count > 0;
+    }
+
+    // A voice whose source has not yet delivered a whole block defers the block
+    // while the output still holds at least one: padding is produced only once
+    // the device would otherwise run dry, so a decoder that is merely late is
+    // not turned into an underrun.
+    private static bool DeferForSource(List<SoundPlayback> blockVoices, int queued)
+    {
+        if (queued < Block)
+        {
+            return false;
+        }
+
+        foreach (SoundPlayback playback in blockVoices)
+        {
+            if (!playback.Render.InTail && !playback.FeedLocked!.HasBlock(Block))
+            {
+                blockVoices.Clear();
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void StampFirstQueued(List<SoundPlayback> blockVoices)

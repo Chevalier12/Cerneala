@@ -2,6 +2,7 @@ using Cerneala.Timbre;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Resources;
+using Cerneala.UI.Timbre;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Cerneala.UI;
@@ -21,6 +22,8 @@ public class Application
     private bool ownsSoundRuntime;
     private SoundScope? sounds;
     private bool soundsRetired;
+    // Read by the owned runtime's mixer thread when it first opens its output.
+    private ISoundOutput? platformSoundOutput;
 
     public Application()
     {
@@ -71,8 +74,9 @@ public class Application
         }
     }
 
-    // Shared by every window root. Created lazily without opening a device; a
-    // runtime assigned before first use stays caller-owned.
+    // Shared by every window root. Created lazily without opening a device; it
+    // plays through the installed window platform's output once a playback
+    // needs it. A runtime assigned before first use stays caller-owned.
     public SoundRuntime SoundRuntime
     {
         get
@@ -81,7 +85,10 @@ public class Application
             ObjectDisposedException.ThrowIf(soundsRetired, this);
             if (soundRuntime is null)
             {
-                soundRuntime = new SoundRuntime();
+                soundRuntime = new SoundRuntime(new SoundRuntimeOptions
+                {
+                    Output = new PlatformSoundOutput(() => Volatile.Read(ref platformSoundOutput))
+                });
                 ownsSoundRuntime = true;
             }
 
@@ -179,6 +186,7 @@ public class Application
 
         current = this;
         this.runtime = runtime;
+        Volatile.Write(ref platformSoundOutput, runtime.SoundOutput);
         runtime.SetApplication(this);
     }
 

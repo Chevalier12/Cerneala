@@ -29,6 +29,9 @@ on:
       - "UI/Controls/RenderSurface3D*.cs"
       - "UI/Layout/**"
       - "UI/Hosting/Windowing/**"
+      - "UI/Application.cs"
+      - "UI/Timbre/**"
+      - "Properties/AssemblyInfo.cs"
       - "UI/Prism/**"
       - "tests/Cerneala.SdlGpuSmoke/**"
       - "tests/Cerneala.Tests.SdlGpu/**"
@@ -67,6 +70,9 @@ on:
       - "UI/Controls/RenderSurface3D*.cs"
       - "UI/Layout/**"
       - "UI/Hosting/Windowing/**"
+      - "UI/Application.cs"
+      - "UI/Timbre/**"
+      - "Properties/AssemblyInfo.cs"
       - "UI/Prism/**"
       - "tests/Cerneala.SdlGpuSmoke/**"
       - "tests/Cerneala.Tests.SdlGpu/**"
@@ -267,6 +273,44 @@ jobs:
           }
           $counts += "conformance artifacts: captures=133 references=133 heatmaps=133 reports=133"
           $counts | Set-Content -LiteralPath 'artifacts/ci/native-foundation/counts.txt'
+
+      # Timbre audio on Windows only (index section 7). Hosted runners have no
+      # playback endpoint, so this job selects the SDL dummy audio driver
+      # explicitly: it certifies interop, lifecycle and the PCM pipeline, not
+      # physical delivery. Physical delivery is the CERNEALA_TIMBRE_AUDIO_DEVICE=1
+      # test plus the timbre smoke without SDL_AUDIO_DRIVER on a Windows host
+      # with a default playback device; it is required there, not waived here.
+      - name: Native Timbre audio interop (dummy driver)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          CERNEALA_SDL_NATIVE_TESTS: 1
+        run: |
+          $resultDirectory = 'artifacts/ci/native-foundation/test-results'
+          New-Item -ItemType Directory -Path $resultDirectory -Force | Out-Null
+          $audioTrx = "native-timbre-audio-${{ matrix.nativeRid }}.trx"
+          dotnet test ./tests/Cerneala.Tests.SdlGpu/Cerneala.Tests.SdlGpu.csproj -c Release --no-build --no-restore `
+            --filter "FullyQualifiedName~NativeSoundOutputTests&FullyQualifiedName!~ARealDevice" `
+            --logger "trx;LogFileName=$audioTrx" --results-directory $resultDirectory
+          if ($LASTEXITCODE -ne 0) { throw "Native Timbre audio tests failed with exit code $LASTEXITCODE." }
+          [xml] $document = Get-Content -LiteralPath (Join-Path $resultDirectory $audioTrx) -Raw
+          $counters = $document.SelectSingleNode("//*[local-name()='Counters']")
+          if ([int] $counters.passed -ne 5 -or [int] $counters.notExecuted -ne 0 -or [int] $counters.failed -ne 0) {
+            throw "Native Timbre audio count mismatch: expected 5 passed with no skips; passed=$($counters.passed) notExecuted=$($counters.notExecuted) failed=$($counters.failed)."
+          }
+
+      - name: Native Timbre smoke (dummy audio interop)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          SDL_AUDIO_DRIVER: dummy
+        run: |
+          & ./Tools/scripts/Invoke-SdlGpuSmoke.ps1 `
+            -RuntimeIdentifier '${{ matrix.nativeRid }}' `
+            -PublishedDirectory 'artifacts/ci/publish/${{ matrix.nativeRid }}' `
+            -Mode timbre `
+            -ArtifactDirectory artifacts/ci/smoke/timbre-dummy
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Native multi-window smoke
         shell: pwsh

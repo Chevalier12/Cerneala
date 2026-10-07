@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="da463154-cc53-4a77-a6d3-35f4611bd6a8" name="lauri@DESKTOP-JT43V3D 2026-10-07 13:45:03" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-07T13:45:03.0470253+03:00" queuing="2026-10-07T13:45:03.0470256+03:00" start="2026-10-07T13:45:00.0024771+03:00" finish="2026-10-07T13:45:03.0539934+03:00" />
+  <TestSettings name="default" id="46c20adb-93fd-4dea-8669-46e838339fd9">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-10-07_13_45_03" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="a0a3f72a-7c93-4973-b214-742b149ebba7" testId="c51ccfd1-6d27-93df-ca94-d181539a0e31" testName="Cerneala.Tests.Timbre.Engine.StreamingPrimingTests.AStreamDoesNotRestartAfterASeekFromAPacketSmallerThanABlock" computerName="DESKTOP-JT43V3D" duration="00:00:00.0112055" startTime="2026-10-07T13:45:02.9214506+03:00" endTime="2026-10-07T13:45:02.9214509+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a0a3f72a-7c93-4973-b214-742b149ebba7">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: 0&#xD;
+Actual:   2048</Message>
+          <StackTrace>   at Cerneala.Tests.Timbre.Engine.StreamingPrimingTests.AStreamDoesNotRestartAfterASeekFromAPacketSmallerThanABlock() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Engine\StreamingPrimingTests.cs:line 54&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="b65adbfc-1799-4975-aa30-56b6d9bff875" testId="fcb5c938-527f-b418-059e-32562fe74671" testName="Cerneala.Tests.Timbre.Engine.StreamingPrimingTests.AStreamDoesNotStartFromAPacketSmallerThanABlock" computerName="DESKTOP-JT43V3D" duration="00:00:00.2993179" startTime="2026-10-07T13:45:02.9143214+03:00" endTime="2026-10-07T13:45:02.9143572+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b65adbfc-1799-4975-aa30-56b6d9bff875">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: 0&#xD;
+Actual:   1792</Message>
+          <StackTrace>   at Cerneala.Tests.Timbre.Engine.StreamingPrimingTests.AStreamDoesNotStartFromAPacketSmallerThanABlock() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Engine\StreamingPrimingTests.cs:line 24&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.Timbre.Engine.StreamingPrimingTests.AStreamDoesNotRestartAfterASeekFromAPacketSmallerThanABlock" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="c51ccfd1-6d27-93df-ca94-d181539a0e31">
+      <Execution id="a0a3f72a-7c93-4973-b214-742b149ebba7" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Engine.StreamingPrimingTests" name="AStreamDoesNotRestartAfterASeekFromAPacketSmallerThanABlock" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.Timbre.Engine.StreamingPrimingTests.AStreamDoesNotStartFromAPacketSmallerThanABlock" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.timbre\bin\release\net8.0\cerneala.tests.timbre.dll" id="fcb5c938-527f-b418-059e-32562fe74671">
+      <Execution id="b65adbfc-1799-4975-aa30-56b6d9bff875" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\bin\Release\net8.0\Cerneala.Tests.Timbre.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.Timbre.Engine.StreamingPrimingTests" name="AStreamDoesNotStartFromAPacketSmallerThanABlock" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="c51ccfd1-6d27-93df-ca94-d181539a0e31" executionId="a0a3f72a-7c93-4973-b214-742b149ebba7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fcb5c938-527f-b418-059e-32562fe74671" executionId="b65adbfc-1799-4975-aa30-56b6d9bff875" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="2" executed="2" passed="0" failed="2" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.98]   Discovering: Cerneala.Tests.Timbre&#xD;
+[xUnit.net 00:00:01.63]   Discovered:  Cerneala.Tests.Timbre&#xD;
+[xUnit.net 00:00:01.64]   Starting:    Cerneala.Tests.Timbre&#xD;
+[xUnit.net 00:00:02.02]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.02]       Expected: 0&#xD;
+[xUnit.net 00:00:02.02]       Actual:   1792&#xD;
+[xUnit.net 00:00:02.02]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.02]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Engine\StreamingPrimingTests.cs(24,0): at Cerneala.Tests.Timbre.Engine.StreamingPrimingTests.AStreamDoesNotStartFromAPacketSmallerThanABlock()&#xD;
+[xUnit.net 00:00:02.02]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.03]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.03]       Expected: 0&#xD;
+[xUnit.net 00:00:02.03]       Actual:   2048&#xD;
+[xUnit.net 00:00:02.03]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.03]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.Timbre\Engine\StreamingPrimingTests.cs(54,0): at Cerneala.Tests.Timbre.Engine.StreamingPrimingTests.AStreamDoesNotRestartAfterASeekFromAPacketSmallerThanABlock()&#xD;
+[xUnit.net 00:00:02.03]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.04]   Finished:    Cerneala.Tests.Timbre&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:45:02.9102834+03:00">
+        <Text>[xUnit.net 00:00:02.02]     Cerneala.Tests.Timbre.Engine.StreamingPrimingTests.AStreamDoesNotStartFromAPacketSmallerThanABlock [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:45:02.9210835+03:00">
+        <Text>[xUnit.net 00:00:02.03]     Cerneala.Tests.Timbre.Engine.StreamingPrimingTests.AStreamDoesNotRestartAfterASeekFromAPacketSmallerThanABlock [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

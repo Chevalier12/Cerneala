@@ -1,0 +1,11 @@
+
+Process Output                                P50  P95  P99  Max AllocatedBytes MaxQueued DeviceUnderrun VoiceUnderrun
+------- ------                                ---  ---  ---  --- -------------- --------- -------------- -------------
+1       sdl wasapi 0x8120/2/48000 480 frames 0.24 0.35 0.45 1.46              0      1920              0             0
+2       sdl wasapi 0x8120/2/48000 480 frames 0.22 0.33 0.41 1.89              0      1920              0             0
+3       sdl wasapi 0x8120/2/48000 480 frames 0.21 0.30 0.35 0.91              0      1920              0             0
+4       sdl wasapi 0x8120/2/48000 480 frames 0.21 0.30 0.36 0.52              0      1920              0             0
+5       sdl wasapi 0x8120/2/48000 480 frames 0.22 0.31 0.35 0.87              0      1920              0             0
+
+
+Verdict (sdl): PASS

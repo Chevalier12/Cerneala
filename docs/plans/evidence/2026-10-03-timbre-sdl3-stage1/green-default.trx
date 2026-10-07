@@ -1,0 +1,295 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="c626d0eb-f6f0-4fb8-8ca9-7762c32d722f" name="lauri@DESKTOP-JT43V3D 2026-10-07 13:32:53" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-07T13:32:53.8430007+03:00" queuing="2026-10-07T13:32:53.8430011+03:00" start="2026-10-07T13:32:52.6586142+03:00" finish="2026-10-07T13:32:54.4098590+03:00" />
+  <TestSettings name="default" id="b4f89587-e2de-4155-9228-eac25b0b450f">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-10-07_13_32_53" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="03c5a8e9-1efe-4b97-9100-fc9a2e6e6201" testId="02d41bda-ba1e-dadd-ded0-b5386e0ad3f4" testName="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.DisposingThePlatformReleasesAudioBeforeSdlQuits" computerName="DESKTOP-JT43V3D" duration="00:00:00.0011240" startTime="2026-10-07T13:32:54.2797427+03:00" endTime="2026-10-07T13:32:54.2797431+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="03c5a8e9-1efe-4b97-9100-fc9a2e6e6201" />
+    <UnitTestResult executionId="a846be99-bd5a-432a-9591-39595e7edc9b" testId="5152e933-4f4f-07a2-3b87-ce6ef3dd4a02" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.CloseWaitsForARunningRequestWithoutDeadlockAndNothingRunsAfterIt" computerName="DESKTOP-JT43V3D" duration="00:00:00.0031503" startTime="2026-10-07T13:32:53.7959059+03:00" endTime="2026-10-07T13:32:53.7959061+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a846be99-bd5a-432a-9591-39595e7edc9b" />
+    <UnitTestResult executionId="383554a9-c405-48ba-84fc-ff3393faa626" testId="42d203ab-be77-95f5-f223-60c644714a2d" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.DiagnosticsReportTheNegotiatedDeviceFormat" computerName="DESKTOP-JT43V3D" duration="00:00:00.0049503" startTime="2026-10-07T13:32:53.7955902+03:00" endTime="2026-10-07T13:32:53.7955902+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="383554a9-c405-48ba-84fc-ff3393faa626" />
+    <UnitTestResult executionId="062095a5-272e-4ed2-9ff6-dab2ba8acb95" testId="8a4be514-0ba6-6243-5d2c-c62987318f1b" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.MixedFramesReachTheDeviceInOrderAcrossIrregularRequestSizes" computerName="DESKTOP-JT43V3D" duration="00:00:00.0121207" startTime="2026-10-07T13:32:53.8506694+03:00" endTime="2026-10-07T13:32:53.8506698+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="062095a5-272e-4ed2-9ff6-dab2ba8acb95" />
+    <UnitTestResult executionId="8ed30169-c7c9-4a60-ad04-efdd63117715" testId="7094deb7-de1e-4c3d-2914-791ba3c0d8ad" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.TerminationReleasesTheDeviceReportsItLostAndRejectsLaterOpens" computerName="DESKTOP-JT43V3D" duration="00:00:00.0026153" startTime="2026-10-07T13:32:53.7954815+03:00" endTime="2026-10-07T13:32:53.7954816+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8ed30169-c7c9-4a60-ad04-efdd63117715" />
+    <UnitTestResult executionId="c5346758-6d82-42c6-9716-eb7b9bce74c5" testId="739b9e5e-5863-fe8b-6909-7f2e718d7340" testName="Cerneala.Tests.SdlGpu.NativeSoundOutputTests.ARemovedDeviceEventFailsThePlaybackWithoutReconnecting" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-10-07T13:32:53.9152145+03:00" endTime="2026-10-07T13:32:53.9152147+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c5346758-6d82-42c6-9716-eb7b9bce74c5">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="09e3cfae-faaf-46b5-adc1-804531265cfa" testId="ea0a7496-5288-24f8-3498-d616fec84395" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.ARequestAfterCloseNeverReachesTheClient" computerName="DESKTOP-JT43V3D" duration="00:00:00.0002089" startTime="2026-10-07T13:32:53.8106128+03:00" endTime="2026-10-07T13:32:53.8106140+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="09e3cfae-faaf-46b5-adc1-804531265cfa" />
+    <UnitTestResult executionId="1001e3e5-de02-453d-9f49-88491d310962" testId="ced5a27b-96b1-1a21-9d8d-38c0d14e22ce" testName="Cerneala.Tests.SdlGpu.NativeSoundOutputTests.ARealOutputPlaysToCompletionAndReleasesEverythingBeforeSdlQuits" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-10-07T13:32:53.9153943+03:00" endTime="2026-10-07T13:32:53.9153943+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1001e3e5-de02-453d-9f49-88491d310962">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c05f9057-d415-4812-a365-8149411ae4b6" testId="4a094b97-7bf2-2eb6-fbf6-d37802f88cb5" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.AResamplingDeviceReceivesTheHeldBackTailAndThePlaybackCompletes" computerName="DESKTOP-JT43V3D" duration="00:00:00.0136852" startTime="2026-10-07T13:32:53.7958417+03:00" endTime="2026-10-07T13:32:53.7958418+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c05f9057-d415-4812-a365-8149411ae4b6" />
+    <UnitTestResult executionId="ad4a5c89-2894-41bd-a0eb-ed2da93ee491" testId="412f2d0b-1341-2e02-fbe2-3d75bc1c5d30" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.ARequestWithNothingMissingStillSignalsCapacity" computerName="DESKTOP-JT43V3D" duration="00:00:00.0004054" startTime="2026-10-07T13:32:53.7531569+03:00" endTime="2026-10-07T13:32:53.7531570+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ad4a5c89-2894-41bd-a0eb-ed2da93ee491" />
+    <UnitTestResult executionId="f23e3574-1031-4d02-b745-24716e9d0283" testId="84af216d-3d94-ed06-b7ee-1f23734509aa" testName="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.PlayingAndUpdatingSoundsRequestsNoFrames" computerName="DESKTOP-JT43V3D" duration="00:00:00.0199219" startTime="2026-10-07T13:32:54.2998033+03:00" endTime="2026-10-07T13:32:54.2998036+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f23e3574-1031-4d02-b745-24716e9d0283" />
+    <UnitTestResult executionId="05ea341e-5c01-4a71-93cc-43bd79150ad9" testId="eaeaee95-b80c-31ff-a421-5d74849b0b21" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(step: &quot;init&quot;, expected: [&quot;init&quot;])" computerName="DESKTOP-JT43V3D" duration="00:00:00.0003107" startTime="2026-10-07T13:32:53.7520649+03:00" endTime="2026-10-07T13:32:53.7520651+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="05ea341e-5c01-4a71-93cc-43bd79150ad9" />
+    <UnitTestResult executionId="0ca95305-6a06-4f3c-9bd1-8f2db52f9489" testId="3a15914f-648c-345f-5cae-0ce70a1aeee1" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.OnlyTheLatestSeekPublishesPcmAfterResume" computerName="DESKTOP-JT43V3D" duration="00:00:00.0105920" startTime="2026-10-07T13:32:53.8972156+03:00" endTime="2026-10-07T13:32:53.8972160+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0ca95305-6a06-4f3c-9bd1-8f2db52f9489" />
+    <UnitTestResult executionId="7d1d18e9-095b-4050-81d9-92838934ef21" testId="a4e95130-405a-da7c-f4cd-8e1ee5d8a219" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.CancelingOneOfTwoMixedVoicesKeepsQueuedPcmAndTheOtherVoice" computerName="DESKTOP-JT43V3D" duration="00:00:00.0355094" startTime="2026-10-07T13:32:53.8864177+03:00" endTime="2026-10-07T13:32:53.8864188+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7d1d18e9-095b-4050-81d9-92838934ef21" />
+    <UnitTestResult executionId="9fe84df0-444e-492a-9986-4c47f3c554ac" testId="56abab9f-4960-68ad-3ce3-e8909a18848f" testName="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.AudioDeviceRemovalWatchedOnAnotherThreadReachesTheOutput" computerName="DESKTOP-JT43V3D" duration="00:00:00.0037197" startTime="2026-10-07T13:32:54.3048160+03:00" endTime="2026-10-07T13:32:54.3048170+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9fe84df0-444e-492a-9986-4c47f3c554ac" />
+    <UnitTestResult executionId="91c020bb-883b-43ff-ae30-9487eb686ae9" testId="9ad5f3f3-4e63-b1d6-3032-4d64018dc9a8" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.SubmitQueuesCompleteFramesAndQueuedFramesConvertsInputBytes" computerName="DESKTOP-JT43V3D" duration="00:00:00.0035230" startTime="2026-10-07T13:32:53.7951826+03:00" endTime="2026-10-07T13:32:53.7951827+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="91c020bb-883b-43ff-ae30-9487eb686ae9" />
+    <UnitTestResult executionId="5ddbe7f7-6dc2-48a9-b8f8-f8117f3ae351" testId="d0c84fe8-a2c0-6157-3fff-cc1414b97f03" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.TransportAndParameterChangesNeverClearOrCloseTheSharedOutput" computerName="DESKTOP-JT43V3D" duration="00:00:00.0699301" startTime="2026-10-07T13:32:53.8383195+03:00" endTime="2026-10-07T13:32:53.8383201+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5ddbe7f7-6dc2-48a9-b8f8-f8117f3ae351" />
+    <UnitTestResult executionId="97ce783a-113b-40e1-a124-ebe41f6fc35d" testId="a7eb7ea5-83cd-49e2-bc84-5c55c3ce3391" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.OpeningAnOpenOutputIsRejectedWithoutTouchingTheStream" computerName="DESKTOP-JT43V3D" duration="00:00:00.0002967" startTime="2026-10-07T13:32:53.7956883+03:00" endTime="2026-10-07T13:32:53.7956883+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="97ce783a-113b-40e1-a124-ebe41f6fc35d" />
+    <UnitTestResult executionId="1d1e921b-ca9b-4609-a4c3-d1dee8acf73c" testId="da356071-b38d-fcad-7ba3-cade75d92777" testName="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.APlatformWithoutAnAudioSeamHasNoOutput" computerName="DESKTOP-JT43V3D" duration="00:00:00.0165015" startTime="2026-10-07T13:32:53.9199135+03:00" endTime="2026-10-07T13:32:53.9199139+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1d1e921b-ca9b-4609-a4c3-d1dee8acf73c" />
+    <UnitTestResult executionId="21480e70-acb4-494c-ac8c-d02f0d9595f4" testId="26a89bc8-4108-1f0b-ac16-6665e7f8b151" testName="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.ApplicationSoundsUseThePlatformOutputSharedByTwoWindows" computerName="DESKTOP-JT43V3D" duration="00:00:00.3567077" startTime="2026-10-07T13:32:54.2767223+03:00" endTime="2026-10-07T13:32:54.2767227+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="21480e70-acb4-494c-ac8c-d02f0d9595f4" />
+    <UnitTestResult executionId="31ae9209-8eb8-4234-9f3e-57a076dd11c7" testId="2aac0085-bbe7-bc9c-8d35-3b401e70ad40" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.CompletionWaitsForTheDeviceToDrainTheLastSubmittedBlock" computerName="DESKTOP-JT43V3D" duration="00:00:00.0335477" startTime="2026-10-07T13:32:53.7532678+03:00" endTime="2026-10-07T13:32:53.7532680+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="31ae9209-8eb8-4234-9f3e-57a076dd11c7" />
+    <UnitTestResult executionId="3592e362-d475-419c-b7b9-6b9766c85c81" testId="57198bad-a5ce-65c3-1f8b-54c1db678adf" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(step: &quot;resume&quot;, expected: [&quot;init&quot;, &quot;open&quot;, &quot;resume&quot;, &quot;destroy&quot;, &quot;quit&quot;])" computerName="DESKTOP-JT43V3D" duration="00:00:00.0266552" startTime="2026-10-07T13:32:53.7471121+03:00" endTime="2026-10-07T13:32:53.7471459+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3592e362-d475-419c-b7b9-6b9766c85c81" />
+    <UnitTestResult executionId="82938545-7537-49e1-9340-229777aaa9cf" testId="d2428ef9-565e-d03f-36d4-9d1cbd5b3eb1" testName="Cerneala.Tests.SdlGpu.NativeSoundOutputTests.AudioKeepsFlowingWhileOneWindowIsHiddenAnotherIsClosedAndNothingRedraws" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-10-07T13:32:53.9155858+03:00" endTime="2026-10-07T13:32:53.9155859+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="82938545-7537-49e1-9340-229777aaa9cf">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="94cc824b-415c-4c2b-a2ed-5c26950d83b0" testId="bd466ebc-ec78-3cde-97fa-56960c181c8b" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.TerminationBeforeAnyOpenTouchesNoNativeState" computerName="DESKTOP-JT43V3D" duration="00:00:00.0008344" startTime="2026-10-07T13:32:53.7527979+03:00" endTime="2026-10-07T13:32:53.7527980+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="94cc824b-415c-4c2b-a2ed-5c26950d83b0" />
+    <UnitTestResult executionId="0bcdab4c-6663-4888-9626-52470209b704" testId="6ef20a2b-6277-3a24-ec76-0a5aecb6962d" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(step: &quot;open&quot;, expected: [&quot;init&quot;, &quot;open&quot;, &quot;quit&quot;])" computerName="DESKTOP-JT43V3D" duration="00:00:00.0000519" startTime="2026-10-07T13:32:53.7526723+03:00" endTime="2026-10-07T13:32:53.7526725+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0bcdab4c-6663-4888-9626-52470209b704" />
+    <UnitTestResult executionId="34d9e5f5-c820-4332-85b4-79bf8e487640" testId="916256a2-0890-ce5c-7a71-d0e881718871" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.RemovalOfTheOpenDeviceIsReportedAsLostAndOtherDevicesAreIgnored" computerName="DESKTOP-JT43V3D" duration="00:00:00.0007531" startTime="2026-10-07T13:32:53.8108105+03:00" endTime="2026-10-07T13:32:53.8108107+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="34d9e5f5-c820-4332-85b4-79bf8e487640" />
+    <UnitTestResult executionId="7e4f71fa-d45f-4f03-a50f-4a2bf26cc941" testId="3004f5e4-582e-bd60-e1d6-d83f74ed56b0" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.OpenInitializesOpensAndResumesAndCloseDestroysBeforeQuitting" computerName="DESKTOP-JT43V3D" duration="00:00:00.0026478" startTime="2026-10-07T13:32:53.7541592+03:00" endTime="2026-10-07T13:32:53.7541596+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7e4f71fa-d45f-4f03-a50f-4a2bf26cc941" />
+    <UnitTestResult executionId="ea285b1b-a0af-4bca-a9d3-020867d57298" testId="ab07c724-e7fb-5068-70eb-0c65176d83ab" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.StreamOperationsRequireAnOpenOutput" computerName="DESKTOP-JT43V3D" duration="00:00:00.0002947" startTime="2026-10-07T13:32:53.7957526+03:00" endTime="2026-10-07T13:32:53.7957527+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ea285b1b-a0af-4bca-a9d3-020867d57298" />
+    <UnitTestResult executionId="8a772abc-c1f7-4883-bc57-093e905916dd" testId="37e92e0e-e255-a622-c78f-46f359fab91e" testName="Cerneala.Tests.SdlGpu.NativeSoundOutputTests.SdlConvertsTheMixFormatForADeviceWithAnotherRateAndSampleFormat" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-10-07T13:32:53.9045496+03:00" endTime="2026-10-07T13:32:53.9045498+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8a772abc-c1f7-4883-bc57-093e905916dd">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="a8d2fbfe-545d-4367-ba93-469f47b7db50" testId="bf8e4241-629c-e9c7-b6ce-37f324de6482" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.RequestsOfAnySizeFromAnyThreadOnlyNotifyTheClient" computerName="DESKTOP-JT43V3D" duration="00:00:00.0112463" startTime="2026-10-07T13:32:53.7960058+03:00" endTime="2026-10-07T13:32:53.7960060+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a8d2fbfe-545d-4367-ba93-469f47b7db50" />
+    <UnitTestResult executionId="b59fd5f5-7858-4cb3-89bc-6272b433bb6c" testId="6e65b048-180e-ed0f-2efd-b576202e7580" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.APutFailureIsReportedWithoutCountingTheBlock" computerName="DESKTOP-JT43V3D" duration="00:00:00.0024262" startTime="2026-10-07T13:32:53.7530458+03:00" endTime="2026-10-07T13:32:53.7530459+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b59fd5f5-7858-4cb3-89bc-6272b433bb6c" />
+    <UnitTestResult executionId="e32304ad-cf97-4ab4-8e51-096a9e185a35" testId="19e9e3d0-432a-c917-2b29-de6f371c4c3d" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AQueuedQueryFailureIsReported" computerName="DESKTOP-JT43V3D" duration="00:00:00.0007622" startTime="2026-10-07T13:32:53.7529130+03:00" endTime="2026-10-07T13:32:53.7529132+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e32304ad-cf97-4ab4-8e51-096a9e185a35" />
+    <UnitTestResult executionId="b3c9dcf7-2159-4025-be5e-eb7160b29c1f" testId="8dbd399b-39d4-b234-b17b-51355aaa446d" testName="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.CreatingThePlatformAndItsOutputTouchesNoAudioState" computerName="DESKTOP-JT43V3D" duration="00:00:00.0014092" startTime="2026-10-07T13:32:54.2782630+03:00" endTime="2026-10-07T13:32:54.2782634+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b3c9dcf7-2159-4025-be5e-eb7160b29c1f" />
+    <UnitTestResult executionId="c2500402-524a-4500-9bb3-800b6af87ee1" testId="a806d5de-530e-686f-2a8a-b86f06e7d316" testName="Cerneala.Tests.SdlGpu.NativeSoundOutputTests.AnAbsentAudioDriverFailsThePlaybackExplicitlyWithoutLeakingTheSubsystem" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-10-07T13:32:53.9049600+03:00" endTime="2026-10-07T13:32:53.9049602+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c2500402-524a-4500-9bb3-800b6af87ee1">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="a3bc1b60-bcc5-4c65-8f4d-8e36f2b2fa53" testId="b33321b1-5028-6fde-9157-c539d3efcb8a" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.AFailingPutFailsTheMixedPlaybacksAndClosesTheOutputOnce" computerName="DESKTOP-JT43V3D" duration="00:00:00.0033227" startTime="2026-10-07T13:32:53.9006955+03:00" endTime="2026-10-07T13:32:53.9006957+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a3bc1b60-bcc5-4c65-8f4d-8e36f2b2fa53" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.DiagnosticsReportTheNegotiatedDeviceFormat" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="42d203ab-be77-95f5-f223-60c644714a2d">
+      <Execution id="383554a9-c405-48ba-84fc-ff3393faa626" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="DiagnosticsReportTheNegotiatedDeviceFormat" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.RequestsOfAnySizeFromAnyThreadOnlyNotifyTheClient" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="bf8e4241-629c-e9c7-b6ce-37f324de6482">
+      <Execution id="a8d2fbfe-545d-4367-ba93-469f47b7db50" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="RequestsOfAnySizeFromAnyThreadOnlyNotifyTheClient" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.TransportAndParameterChangesNeverClearOrCloseTheSharedOutput" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="d0c84fe8-a2c0-6157-3fff-cc1414b97f03">
+      <Execution id="5ddbe7f7-6dc2-48a9-b8f8-f8117f3ae351" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests" name="TransportAndParameterChangesNeverClearOrCloseTheSharedOutput" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.CloseWaitsForARunningRequestWithoutDeadlockAndNothingRunsAfterIt" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="5152e933-4f4f-07a2-3b87-ce6ef3dd4a02">
+      <Execution id="a846be99-bd5a-432a-9591-39595e7edc9b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="CloseWaitsForARunningRequestWithoutDeadlockAndNothingRunsAfterIt" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.OpeningAnOpenOutputIsRejectedWithoutTouchingTheStream" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="a7eb7ea5-83cd-49e2-bc84-5c55c3ce3391">
+      <Execution id="97ce783a-113b-40e1-a124-ebe41f6fc35d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="OpeningAnOpenOutputIsRejectedWithoutTouchingTheStream" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.RemovalOfTheOpenDeviceIsReportedAsLostAndOtherDevicesAreIgnored" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="916256a2-0890-ce5c-7a71-d0e881718871">
+      <Execution id="34d9e5f5-c820-4332-85b4-79bf8e487640" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="RemovalOfTheOpenDeviceIsReportedAsLostAndOtherDevicesAreIgnored" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.AFailingPutFailsTheMixedPlaybacksAndClosesTheOutputOnce" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="b33321b1-5028-6fde-9157-c539d3efcb8a">
+      <Execution id="a3bc1b60-bcc5-4c65-8f4d-8e36f2b2fa53" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests" name="AFailingPutFailsTheMixedPlaybacksAndClosesTheOutputOnce" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.AResamplingDeviceReceivesTheHeldBackTailAndThePlaybackCompletes" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="4a094b97-7bf2-2eb6-fbf6-d37802f88cb5">
+      <Execution id="c05f9057-d415-4812-a365-8149411ae4b6" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests" name="AResamplingDeviceReceivesTheHeldBackTailAndThePlaybackCompletes" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.TerminationReleasesTheDeviceReportsItLostAndRejectsLaterOpens" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="7094deb7-de1e-4c3d-2914-791ba3c0d8ad">
+      <Execution id="8ed30169-c7c9-4a60-ad04-efdd63117715" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="TerminationReleasesTheDeviceReportsItLostAndRejectsLaterOpens" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.ARequestAfterCloseNeverReachesTheClient" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="ea0a7496-5288-24f8-3498-d616fec84395">
+      <Execution id="09e3cfae-faaf-46b5-adc1-804531265cfa" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="ARequestAfterCloseNeverReachesTheClient" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.MixedFramesReachTheDeviceInOrderAcrossIrregularRequestSizes" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="8a4be514-0ba6-6243-5d2c-c62987318f1b">
+      <Execution id="062095a5-272e-4ed2-9ff6-dab2ba8acb95" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests" name="MixedFramesReachTheDeviceInOrderAcrossIrregularRequestSizes" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(step: &quot;resume&quot;, expected: [&quot;init&quot;, &quot;open&quot;, &quot;resume&quot;, &quot;destroy&quot;, &quot;quit&quot;])" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="57198bad-a5ce-65c3-1f8b-54c1db678adf">
+      <Execution id="3592e362-d475-419c-b7b9-6b9766c85c81" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.APlatformWithoutAnAudioSeamHasNoOutput" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="da356071-b38d-fcad-7ba3-cade75d92777">
+      <Execution id="1d1e921b-ca9b-4609-a4c3-d1dee8acf73c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests" name="APlatformWithoutAnAudioSeamHasNoOutput" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeSoundOutputTests.ARealOutputPlaysToCompletionAndReleasesEverythingBeforeSdlQuits" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="ced5a27b-96b1-1a21-9d8d-38c0d14e22ce">
+      <Execution id="1001e3e5-de02-453d-9f49-88491d310962" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeSoundOutputTests" name="ARealOutputPlaysToCompletionAndReleasesEverythingBeforeSdlQuits" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(step: &quot;init&quot;, expected: [&quot;init&quot;])" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="eaeaee95-b80c-31ff-a421-5d74849b0b21">
+      <Execution id="05ea341e-5c01-4a71-93cc-43bd79150ad9" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.OnlyTheLatestSeekPublishesPcmAfterResume" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="3a15914f-648c-345f-5cae-0ce70a1aeee1">
+      <Execution id="0ca95305-6a06-4f3c-9bd1-8f2db52f9489" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests" name="OnlyTheLatestSeekPublishesPcmAfterResume" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.ApplicationSoundsUseThePlatformOutputSharedByTwoWindows" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="26a89bc8-4108-1f0b-ac16-6665e7f8b151">
+      <Execution id="21480e70-acb4-494c-ac8c-d02f0d9595f4" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests" name="ApplicationSoundsUseThePlatformOutputSharedByTwoWindows" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeSoundOutputTests.AudioKeepsFlowingWhileOneWindowIsHiddenAnotherIsClosedAndNothingRedraws" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="d2428ef9-565e-d03f-36d4-9d1cbd5b3eb1">
+      <Execution id="82938545-7537-49e1-9340-229777aaa9cf" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeSoundOutputTests" name="AudioKeepsFlowingWhileOneWindowIsHiddenAnotherIsClosedAndNothingRedraws" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(step: &quot;open&quot;, expected: [&quot;init&quot;, &quot;open&quot;, &quot;quit&quot;])" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="6ef20a2b-6277-3a24-ec76-0a5aecb6962d">
+      <Execution id="0bcdab4c-6663-4888-9626-52470209b704" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.StreamOperationsRequireAnOpenOutput" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="ab07c724-e7fb-5068-70eb-0c65176d83ab">
+      <Execution id="ea285b1b-a0af-4bca-a9d3-020867d57298" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="StreamOperationsRequireAnOpenOutput" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.SubmitQueuesCompleteFramesAndQueuedFramesConvertsInputBytes" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="9ad5f3f3-4e63-b1d6-3032-4d64018dc9a8">
+      <Execution id="91c020bb-883b-43ff-ae30-9487eb686ae9" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="SubmitQueuesCompleteFramesAndQueuedFramesConvertsInputBytes" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.AudioDeviceRemovalWatchedOnAnotherThreadReachesTheOutput" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="56abab9f-4960-68ad-3ce3-e8909a18848f">
+      <Execution id="9fe84df0-444e-492a-9986-4c47f3c554ac" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests" name="AudioDeviceRemovalWatchedOnAnotherThreadReachesTheOutput" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeSoundOutputTests.ARemovedDeviceEventFailsThePlaybackWithoutReconnecting" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="739b9e5e-5863-fe8b-6909-7f2e718d7340">
+      <Execution id="c5346758-6d82-42c6-9716-eb7b9bce74c5" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeSoundOutputTests" name="ARemovedDeviceEventFailsThePlaybackWithoutReconnecting" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeSoundOutputTests.SdlConvertsTheMixFormatForADeviceWithAnotherRateAndSampleFormat" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="37e92e0e-e255-a622-c78f-46f359fab91e">
+      <Execution id="8a772abc-c1f7-4883-bc57-093e905916dd" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeSoundOutputTests" name="SdlConvertsTheMixFormatForADeviceWithAnotherRateAndSampleFormat" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.TerminationBeforeAnyOpenTouchesNoNativeState" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="bd466ebc-ec78-3cde-97fa-56960c181c8b">
+      <Execution id="94cc824b-415c-4c2b-a2ed-5c26950d83b0" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="TerminationBeforeAnyOpenTouchesNoNativeState" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.CreatingThePlatformAndItsOutputTouchesNoAudioState" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="8dbd399b-39d4-b234-b17b-51355aaa446d">
+      <Execution id="b3c9dcf7-2159-4025-be5e-eb7160b29c1f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests" name="CreatingThePlatformAndItsOutputTouchesNoAudioState" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.CompletionWaitsForTheDeviceToDrainTheLastSubmittedBlock" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="2aac0085-bbe7-bc9c-8d35-3b401e70ad40">
+      <Execution id="31ae9209-8eb8-4234-9f3e-57a076dd11c7" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests" name="CompletionWaitsForTheDeviceToDrainTheLastSubmittedBlock" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.OpenInitializesOpensAndResumesAndCloseDestroysBeforeQuitting" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="3004f5e4-582e-bd60-e1d6-d83f74ed56b0">
+      <Execution id="7e4f71fa-d45f-4f03-a50f-4a2bf26cc941" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="OpenInitializesOpensAndResumesAndCloseDestroysBeforeQuitting" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.PlayingAndUpdatingSoundsRequestsNoFrames" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="84af216d-3d94-ed06-b7ee-1f23734509aa">
+      <Execution id="f23e3574-1031-4d02-b745-24716e9d0283" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests" name="PlayingAndUpdatingSoundsRequestsNoFrames" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeSoundOutputTests.AnAbsentAudioDriverFailsThePlaybackExplicitlyWithoutLeakingTheSubsystem" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="a806d5de-530e-686f-2a8a-b86f06e7d316">
+      <Execution id="c2500402-524a-4500-9bb3-800b6af87ee1" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeSoundOutputTests" name="AnAbsentAudioDriverFailsThePlaybackExplicitlyWithoutLeakingTheSubsystem" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.CancelingOneOfTwoMixedVoicesKeepsQueuedPcmAndTheOtherVoice" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="a4e95130-405a-da7c-f4cd-8e1ee5d8a219">
+      <Execution id="7d1d18e9-095b-4050-81d9-92838934ef21" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests" name="CancelingOneOfTwoMixedVoicesKeepsQueuedPcmAndTheOtherVoice" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AQueuedQueryFailureIsReported" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="19e9e3d0-432a-c917-2b29-de6f371c4c3d">
+      <Execution id="e32304ad-cf97-4ab4-8e51-096a9e185a35" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="AQueuedQueryFailureIsReported" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.DisposingThePlatformReleasesAudioBeforeSdlQuits" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="02d41bda-ba1e-dadd-ded0-b5386e0ad3f4">
+      <Execution id="03c5a8e9-1efe-4b97-9100-fc9a2e6e6201" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests" name="DisposingThePlatformReleasesAudioBeforeSdlQuits" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.APutFailureIsReportedWithoutCountingTheBlock" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="6e65b048-180e-ed0f-2efd-b576202e7580">
+      <Execution id="b59fd5f5-7858-4cb3-89bc-6272b433bb6c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="APutFailureIsReportedWithoutCountingTheBlock" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.ARequestWithNothingMissingStillSignalsCapacity" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="412f2d0b-1341-2e02-fbe2-3d75bc1c5d30">
+      <Execution id="ad4a5c89-2894-41bd-a0eb-ed2da93ee491" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="ARequestWithNothingMissingStillSignalsCapacity" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="02d41bda-ba1e-dadd-ded0-b5386e0ad3f4" executionId="03c5a8e9-1efe-4b97-9100-fc9a2e6e6201" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5152e933-4f4f-07a2-3b87-ce6ef3dd4a02" executionId="a846be99-bd5a-432a-9591-39595e7edc9b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="42d203ab-be77-95f5-f223-60c644714a2d" executionId="383554a9-c405-48ba-84fc-ff3393faa626" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8a4be514-0ba6-6243-5d2c-c62987318f1b" executionId="062095a5-272e-4ed2-9ff6-dab2ba8acb95" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7094deb7-de1e-4c3d-2914-791ba3c0d8ad" executionId="8ed30169-c7c9-4a60-ad04-efdd63117715" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="739b9e5e-5863-fe8b-6909-7f2e718d7340" executionId="c5346758-6d82-42c6-9716-eb7b9bce74c5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ea0a7496-5288-24f8-3498-d616fec84395" executionId="09e3cfae-faaf-46b5-adc1-804531265cfa" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ced5a27b-96b1-1a21-9d8d-38c0d14e22ce" executionId="1001e3e5-de02-453d-9f49-88491d310962" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4a094b97-7bf2-2eb6-fbf6-d37802f88cb5" executionId="c05f9057-d415-4812-a365-8149411ae4b6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="412f2d0b-1341-2e02-fbe2-3d75bc1c5d30" executionId="ad4a5c89-2894-41bd-a0eb-ed2da93ee491" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="84af216d-3d94-ed06-b7ee-1f23734509aa" executionId="f23e3574-1031-4d02-b745-24716e9d0283" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="eaeaee95-b80c-31ff-a421-5d74849b0b21" executionId="05ea341e-5c01-4a71-93cc-43bd79150ad9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3a15914f-648c-345f-5cae-0ce70a1aeee1" executionId="0ca95305-6a06-4f3c-9bd1-8f2db52f9489" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a4e95130-405a-da7c-f4cd-8e1ee5d8a219" executionId="7d1d18e9-095b-4050-81d9-92838934ef21" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="56abab9f-4960-68ad-3ce3-e8909a18848f" executionId="9fe84df0-444e-492a-9986-4c47f3c554ac" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9ad5f3f3-4e63-b1d6-3032-4d64018dc9a8" executionId="91c020bb-883b-43ff-ae30-9487eb686ae9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d0c84fe8-a2c0-6157-3fff-cc1414b97f03" executionId="5ddbe7f7-6dc2-48a9-b8f8-f8117f3ae351" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a7eb7ea5-83cd-49e2-bc84-5c55c3ce3391" executionId="97ce783a-113b-40e1-a124-ebe41f6fc35d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="da356071-b38d-fcad-7ba3-cade75d92777" executionId="1d1e921b-ca9b-4609-a4c3-d1dee8acf73c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="26a89bc8-4108-1f0b-ac16-6665e7f8b151" executionId="21480e70-acb4-494c-ac8c-d02f0d9595f4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2aac0085-bbe7-bc9c-8d35-3b401e70ad40" executionId="31ae9209-8eb8-4234-9f3e-57a076dd11c7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="57198bad-a5ce-65c3-1f8b-54c1db678adf" executionId="3592e362-d475-419c-b7b9-6b9766c85c81" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d2428ef9-565e-d03f-36d4-9d1cbd5b3eb1" executionId="82938545-7537-49e1-9340-229777aaa9cf" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bd466ebc-ec78-3cde-97fa-56960c181c8b" executionId="94cc824b-415c-4c2b-a2ed-5c26950d83b0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6ef20a2b-6277-3a24-ec76-0a5aecb6962d" executionId="0bcdab4c-6663-4888-9626-52470209b704" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="916256a2-0890-ce5c-7a71-d0e881718871" executionId="34d9e5f5-c820-4332-85b4-79bf8e487640" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3004f5e4-582e-bd60-e1d6-d83f74ed56b0" executionId="7e4f71fa-d45f-4f03-a50f-4a2bf26cc941" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ab07c724-e7fb-5068-70eb-0c65176d83ab" executionId="ea285b1b-a0af-4bca-a9d3-020867d57298" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="37e92e0e-e255-a622-c78f-46f359fab91e" executionId="8a772abc-c1f7-4883-bc57-093e905916dd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bf8e4241-629c-e9c7-b6ce-37f324de6482" executionId="a8d2fbfe-545d-4367-ba93-469f47b7db50" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6e65b048-180e-ed0f-2efd-b576202e7580" executionId="b59fd5f5-7858-4cb3-89bc-6272b433bb6c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="19e9e3d0-432a-c917-2b29-de6f371c4c3d" executionId="e32304ad-cf97-4ab4-8e51-096a9e185a35" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8dbd399b-39d4-b234-b17b-51355aaa446d" executionId="b3c9dcf7-2159-4025-be5e-eb7160b29c1f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a806d5de-530e-686f-2a8a-b86f06e7d316" executionId="c2500402-524a-4500-9bb3-800b6af87ee1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b33321b1-5028-6fde-9157-c539d3efcb8a" executionId="a3bc1b60-bcc5-4c65-8f4d-8e36f2b2fa53" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="35" executed="30" passed="30" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.23]   Discovering: Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:00.48]   Discovered:  Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:00.49]   Starting:    Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:00.73]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.&#xD;
+[xUnit.net 00:00:00.73]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.&#xD;
+Test 'Cerneala.Tests.SdlGpu.NativeSoundOutputTests.SdlConvertsTheMixFormatForADeviceWithAnotherRateAndSampleFormat' was skipped in the test run.&#xD;
+Test 'Cerneala.Tests.SdlGpu.NativeSoundOutputTests.AnAbsentAudioDriverFailsThePlaybackExplicitlyWithoutLeakingTheSubsystem' was skipped in the test run.&#xD;
+[xUnit.net 00:00:00.74]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.&#xD;
+[xUnit.net 00:00:00.74]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.&#xD;
+[xUnit.net 00:00:00.74]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.&#xD;
+[xUnit.net 00:00:01.13]   Finished:    Cerneala.Tests.SdlGpu&#xD;
+Test 'Cerneala.Tests.SdlGpu.NativeSoundOutputTests.ARemovedDeviceEventFailsThePlaybackWithoutReconnecting' was skipped in the test run.&#xD;
+Test 'Cerneala.Tests.SdlGpu.NativeSoundOutputTests.ARealOutputPlaysToCompletionAndReleasesEverythingBeforeSdlQuits' was skipped in the test run.&#xD;
+Test 'Cerneala.Tests.SdlGpu.NativeSoundOutputTests.AudioKeepsFlowingWhileOneWindowIsHiddenAnotherIsClosedAndNothingRedraws' was skipped in the test run.&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-10-07T13:32:53.9039908+03:00">
+        <Text>[xUnit.net 00:00:00.73]     Cerneala.Tests.SdlGpu.NativeSoundOutputTests.SdlConvertsTheMixFormatForADeviceWithAnotherRateAndSampleFormat [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-10-07T13:32:53.9049976+03:00">
+        <Text>[xUnit.net 00:00:00.73]     Cerneala.Tests.SdlGpu.NativeSoundOutputTests.AnAbsentAudioDriverFailsThePlaybackExplicitlyWithoutLeakingTheSubsystem [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-10-07T13:32:53.9520029+03:00">
+        <Text>[xUnit.net 00:00:00.74]     Cerneala.Tests.SdlGpu.NativeSoundOutputTests.ARemovedDeviceEventFailsThePlaybackWithoutReconnecting [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-10-07T13:32:53.9520943+03:00">
+        <Text>[xUnit.net 00:00:00.74]     Cerneala.Tests.SdlGpu.NativeSoundOutputTests.ARealOutputPlaysToCompletionAndReleasesEverythingBeforeSdlQuits [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-10-07T13:32:53.9521619+03:00">
+        <Text>[xUnit.net 00:00:00.74]     Cerneala.Tests.SdlGpu.NativeSoundOutputTests.AudioKeepsFlowingWhileOneWindowIsHiddenAnotherIsClosedAndNothingRedraws [SKIP]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

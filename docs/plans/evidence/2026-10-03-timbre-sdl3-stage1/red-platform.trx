@@ -1,0 +1,161 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="8e2421a5-a46e-48ad-9e72-2523cf9512ac" name="lauri@DESKTOP-JT43V3D 2026-10-07 13:25:29" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-07T13:25:29.8637232+03:00" queuing="2026-10-07T13:25:29.8637235+03:00" start="2026-10-07T13:25:27.9263510+03:00" finish="2026-10-07T13:25:29.8748499+03:00" />
+  <TestSettings name="default" id="be7bf465-6a6f-4ede-9d38-2d3bd9ec357e">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-10-07_13_25_29" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="87775159-6fd2-41dc-9ddc-aaba1fbf81b1" testId="8dbd399b-39d4-b234-b17b-51355aaa446d" testName="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.CreatingThePlatformAndItsOutputTouchesNoAudioState" computerName="DESKTOP-JT43V3D" duration="00:00:00.0020047" startTime="2026-10-07T13:25:29.6590459+03:00" endTime="2026-10-07T13:25:29.6590461+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="87775159-6fd2-41dc-9ddc-aaba1fbf81b1">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.IsType() Failure: Value is null&#xD;
+Expected: typeof(Cerneala.Platforms.Sdl3.SdlSoundOutput)&#xD;
+Actual:   null</Message>
+          <StackTrace>   at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.CreatingThePlatformAndItsOutputTouchesNoAudioState() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs:line 49&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="a4202b5f-f069-43e1-9af7-91e08fc2defb" testId="56abab9f-4960-68ad-3ce3-e8909a18848f" testName="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.AudioDeviceRemovalWatchedOnAnotherThreadReachesTheOutput" computerName="DESKTOP-JT43V3D" duration="00:00:00.0011543" startTime="2026-10-07T13:25:29.6887806+03:00" endTime="2026-10-07T13:25:29.6887810+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a4202b5f-f069-43e1-9af7-91e08fc2defb">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NullReferenceException : Object reference not set to an instance of an object.</Message>
+          <StackTrace>   at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.AudioDeviceRemovalWatchedOnAnotherThreadReachesTheOutput() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs:line 89&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="ba790825-147f-4ad2-973f-ffa655646fb9" testId="da356071-b38d-fcad-7ba3-cade75d92777" testName="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.APlatformWithoutAnAudioSeamHasNoOutput" computerName="DESKTOP-JT43V3D" duration="00:00:00.0225543" startTime="2026-10-07T13:25:29.1277235+03:00" endTime="2026-10-07T13:25:29.1277448+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ba790825-147f-4ad2-973f-ffa655646fb9" />
+    <UnitTestResult executionId="926b7f5e-1f71-4dda-ac03-e5eb34fc1ecd" testId="26a89bc8-4108-1f0b-ac16-6665e7f8b151" testName="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.ApplicationSoundsUseThePlatformOutputSharedByTwoWindows" computerName="DESKTOP-JT43V3D" duration="00:00:00.5157286" startTime="2026-10-07T13:25:29.6577595+03:00" endTime="2026-10-07T13:25:29.6577597+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="926b7f5e-1f71-4dda-ac03-e5eb34fc1ecd">
+      <Output>
+        <ErrorInfo>
+          <Message>The device drive did not converge.</Message>
+          <StackTrace>   at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.Drive(FakeSdlAudioApi audio, SoundRuntime runtime, Func`1 done) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs:line 200&#xD;
+   at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.ApplicationSoundsUseThePlatformOutputSharedByTwoWindows() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs:line 124&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="17a4b3be-8145-4793-9df1-276524d0f3b7" testId="84af216d-3d94-ed06-b7ee-1f23734509aa" testName="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.PlayingAndUpdatingSoundsRequestsNoFrames" computerName="DESKTOP-JT43V3D" duration="00:00:00.0226768" startTime="2026-10-07T13:25:29.6871244+03:00" endTime="2026-10-07T13:25:29.6871247+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="17a4b3be-8145-4793-9df1-276524d0f3b7">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : The sound playback is Failed; start a new playback instead.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundPlayback.ThrowIfTerminalLocked() in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundPlayback.cs:line 387&#xD;
+   at Cerneala.Timbre.SoundPlayback.set_Volume(Single value) in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundPlayback.cs:line 71&#xD;
+   at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.PlayingAndUpdatingSoundsRequestsNoFrames() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs:line 180&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="acb372c8-505f-4cbc-9de2-e49fb28415d3" testId="02d41bda-ba1e-dadd-ded0-b5386e0ad3f4" testName="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.DisposingThePlatformReleasesAudioBeforeSdlQuits" computerName="DESKTOP-JT43V3D" duration="00:00:00.0032683" startTime="2026-10-07T13:25:29.6615462+03:00" endTime="2026-10-07T13:25:29.6615464+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="acb372c8-505f-4cbc-9de2-e49fb28415d3">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NullReferenceException : Object reference not set to an instance of an object.</Message>
+          <StackTrace>   at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.DisposingThePlatformReleasesAudioBeforeSdlQuits() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs:line 71&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.AudioDeviceRemovalWatchedOnAnotherThreadReachesTheOutput" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="56abab9f-4960-68ad-3ce3-e8909a18848f">
+      <Execution id="a4202b5f-f069-43e1-9af7-91e08fc2defb" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests" name="AudioDeviceRemovalWatchedOnAnotherThreadReachesTheOutput" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.CreatingThePlatformAndItsOutputTouchesNoAudioState" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="8dbd399b-39d4-b234-b17b-51355aaa446d">
+      <Execution id="87775159-6fd2-41dc-9ddc-aaba1fbf81b1" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests" name="CreatingThePlatformAndItsOutputTouchesNoAudioState" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.ApplicationSoundsUseThePlatformOutputSharedByTwoWindows" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="26a89bc8-4108-1f0b-ac16-6665e7f8b151">
+      <Execution id="926b7f5e-1f71-4dda-ac03-e5eb34fc1ecd" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests" name="ApplicationSoundsUseThePlatformOutputSharedByTwoWindows" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.DisposingThePlatformReleasesAudioBeforeSdlQuits" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="02d41bda-ba1e-dadd-ded0-b5386e0ad3f4">
+      <Execution id="acb372c8-505f-4cbc-9de2-e49fb28415d3" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests" name="DisposingThePlatformReleasesAudioBeforeSdlQuits" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.PlayingAndUpdatingSoundsRequestsNoFrames" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="84af216d-3d94-ed06-b7ee-1f23734509aa">
+      <Execution id="17a4b3be-8145-4793-9df1-276524d0f3b7" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests" name="PlayingAndUpdatingSoundsRequestsNoFrames" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.APlatformWithoutAnAudioSeamHasNoOutput" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="da356071-b38d-fcad-7ba3-cade75d92777">
+      <Execution id="ba790825-147f-4ad2-973f-ffa655646fb9" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests" name="APlatformWithoutAnAudioSeamHasNoOutput" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="8dbd399b-39d4-b234-b17b-51355aaa446d" executionId="87775159-6fd2-41dc-9ddc-aaba1fbf81b1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="56abab9f-4960-68ad-3ce3-e8909a18848f" executionId="a4202b5f-f069-43e1-9af7-91e08fc2defb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="da356071-b38d-fcad-7ba3-cade75d92777" executionId="ba790825-147f-4ad2-973f-ffa655646fb9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="26a89bc8-4108-1f0b-ac16-6665e7f8b151" executionId="926b7f5e-1f71-4dda-ac03-e5eb34fc1ecd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="84af216d-3d94-ed06-b7ee-1f23734509aa" executionId="17a4b3be-8145-4793-9df1-276524d0f3b7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="02d41bda-ba1e-dadd-ded0-b5386e0ad3f4" executionId="acb372c8-505f-4cbc-9de2-e49fb28415d3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="6" executed="6" passed="1" failed="5" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.14]   Discovering: Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:00.38]   Discovered:  Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:00.39]   Starting:    Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:00.99]       The device drive did not converge.&#xD;
+[xUnit.net 00:00:00.99]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.99]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs(200,0): at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.Drive(FakeSdlAudioApi audio, SoundRuntime runtime, Func`1 done)&#xD;
+[xUnit.net 00:00:00.99]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs(124,0): at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.ApplicationSoundsUseThePlatformOutputSharedByTwoWindows()&#xD;
+[xUnit.net 00:00:00.99]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.99]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.99]       Assert.IsType() Failure: Value is null&#xD;
+[xUnit.net 00:00:00.99]       Expected: typeof(Cerneala.Platforms.Sdl3.SdlSoundOutput)&#xD;
+[xUnit.net 00:00:00.99]       Actual:   null&#xD;
+[xUnit.net 00:00:00.99]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.99]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs(49,0): at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.CreatingThePlatformAndItsOutputTouchesNoAudioState()&#xD;
+[xUnit.net 00:00:01.00]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.00]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.00]       System.NullReferenceException : Object reference not set to an instance of an object.&#xD;
+[xUnit.net 00:00:01.00]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.00]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs(71,0): at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.DisposingThePlatformReleasesAudioBeforeSdlQuits()&#xD;
+[xUnit.net 00:00:01.00]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.00]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.02]       System.InvalidOperationException : The sound playback is Failed; start a new playback instead.&#xD;
+[xUnit.net 00:00:01.02]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.02]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundPlayback.cs(387,0): at Cerneala.Timbre.SoundPlayback.ThrowIfTerminalLocked()&#xD;
+[xUnit.net 00:00:01.02]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundPlayback.cs(71,0): at Cerneala.Timbre.SoundPlayback.set_Volume(Single value)&#xD;
+[xUnit.net 00:00:01.02]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs(180,0): at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.PlayingAndUpdatingSoundsRequestsNoFrames()&#xD;
+[xUnit.net 00:00:01.02]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.02]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.02]       System.NullReferenceException : Object reference not set to an instance of an object.&#xD;
+[xUnit.net 00:00:01.02]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.02]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs(89,0): at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.AudioDeviceRemovalWatchedOnAnotherThreadReachesTheOutput()&#xD;
+[xUnit.net 00:00:01.02]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.02]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.03]   Finished:    Cerneala.Tests.SdlGpu&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:25:29.6551515+03:00">
+        <Text>[xUnit.net 00:00:00.99]     Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.ApplicationSoundsUseThePlatformOutputSharedByTwoWindows [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:25:29.6583720+03:00">
+        <Text>[xUnit.net 00:00:00.99]     Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.CreatingThePlatformAndItsOutputTouchesNoAudioState [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:25:29.6611084+03:00">
+        <Text>[xUnit.net 00:00:01.00]     Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.DisposingThePlatformReleasesAudioBeforeSdlQuits [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:25:29.6865675+03:00">
+        <Text>[xUnit.net 00:00:01.02]     Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.PlayingAndUpdatingSoundsRequestsNoFrames [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:25:29.6882093+03:00">
+        <Text>[xUnit.net 00:00:01.02]     Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.AudioDeviceRemovalWatchedOnAnotherThreadReachesTheOutput [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

@@ -1,0 +1,804 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="7b3e4676-c6b1-4825-8d21-58f31db80d08" name="lauri@DESKTOP-JT43V3D 2026-10-07 13:24:32" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-07T13:24:32.6942747+03:00" queuing="2026-10-07T13:24:32.6942751+03:00" start="2026-10-07T13:24:30.3959732+03:00" finish="2026-10-07T13:24:36.3956983+03:00" />
+  <TestSettings name="default" id="3b0644ea-79ce-4ebf-b9ac-496f8ad2217d">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-10-07_13_24_32" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="fce35a30-054e-49cc-b37f-0d5f26474699" testId="42d203ab-be77-95f5-f223-60c644714a2d" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.DiagnosticsReportTheNegotiatedDeviceFormat" computerName="DESKTOP-JT43V3D" duration="00:00:00.0004919" startTime="2026-10-07T13:24:32.6468803+03:00" endTime="2026-10-07T13:24:32.6468804+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fce35a30-054e-49cc-b37f-0d5f26474699">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs:line 31&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.DiagnosticsReportTheNegotiatedDeviceFormat() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs:line 320&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="654d075f-13d6-44a9-8b58-d24a7322bc43" testId="3a15914f-648c-345f-5cae-0ce70a1aeee1" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.OnlyTheLatestSeekPublishesPcmAfterResume" computerName="DESKTOP-JT43V3D" duration="00:00:00.0061570" startTime="2026-10-07T13:24:34.8403440+03:00" endTime="2026-10-07T13:24:34.8403442+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="654d075f-13d6-44a9-8b58-d24a7322bc43">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : The sound playback is Failed; start a new playback instead.</Message>
+          <StackTrace>   at Cerneala.Timbre.SoundPlayback.ThrowIfTerminalLocked() in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundPlayback.cs:line 387&#xD;
+   at Cerneala.Timbre.SoundPlayback.Pause() in C:\Users\lauri\Desktop\Cerneala\Timbre\SoundPlayback.cs:line 142&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.OnlyTheLatestSeekPublishesPcmAfterResume() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputRuntimeTests.cs:line 170&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="bb344eb1-3781-4d8f-9270-2652185d2a1b" testId="57198bad-a5ce-65c3-1f8b-54c1db678adf" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(step: &quot;resume&quot;, expected: [&quot;init&quot;, &quot;open&quot;, &quot;resume&quot;, &quot;destroy&quot;, &quot;quit&quot;])" computerName="DESKTOP-JT43V3D" duration="00:00:00.0081838" startTime="2026-10-07T13:24:32.5826645+03:00" endTime="2026-10-07T13:24:32.5827006+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bb344eb1-3781-4d8f-9270-2652185d2a1b">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Throws() Failure: Exception type was not an exact match&#xD;
+Expected: typeof(Cerneala.Timbre.SoundException)&#xD;
+Actual:   typeof(System.NotImplementedException)&#xD;
+---- System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(String step, String[] expected) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs:line 57&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+----- Inner Stack Trace -----&#xD;
+   at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs:line 31&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.&lt;&gt;c__DisplayClass2_0.&lt;AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired&gt;b__0() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs:line 57</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c669a78f-592a-4f54-8adf-ae898bf45b68" testId="eaeaee95-b80c-31ff-a421-5d74849b0b21" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(step: &quot;init&quot;, expected: [&quot;init&quot;])" computerName="DESKTOP-JT43V3D" duration="00:00:00.0005435" startTime="2026-10-07T13:24:32.5891468+03:00" endTime="2026-10-07T13:24:32.5891471+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c669a78f-592a-4f54-8adf-ae898bf45b68">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Throws() Failure: Exception type was not an exact match&#xD;
+Expected: typeof(Cerneala.Timbre.SoundException)&#xD;
+Actual:   typeof(System.NotImplementedException)&#xD;
+---- System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(String step, String[] expected) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs:line 57&#xD;
+   at InvokeStub_SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+----- Inner Stack Trace -----&#xD;
+   at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs:line 31&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.&lt;&gt;c__DisplayClass2_0.&lt;AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired&gt;b__0() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs:line 57</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="6c61b9ef-f92f-4bf8-8079-33550a3fd7b8" testId="26a89bc8-4108-1f0b-ac16-6665e7f8b151" testName="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.ApplicationSoundsUseThePlatformOutputSharedByTwoWindows" computerName="DESKTOP-JT43V3D" duration="00:00:00.9001219" startTime="2026-10-07T13:24:36.2998974+03:00" endTime="2026-10-07T13:24:36.2998977+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6c61b9ef-f92f-4bf8-8079-33550a3fd7b8">
+      <Output>
+        <ErrorInfo>
+          <Message>System.AggregateException : One or more errors occurred. (The device drive did not converge.) (SDL platform access must remain on UI thread 19.)&#xD;
+---- The device drive did not converge.&#xD;
+---- System.InvalidOperationException : SDL platform access must remain on UI thread 19.</Message>
+          <StackTrace>&#xD;
+----- Inner Stack Trace #1 (Xunit.Sdk.TrueException) -----&#xD;
+   at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.DriveAsync(FakeSdlAudioApi audio, SoundRuntime runtime, Func`1 done) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs:line 197&#xD;
+   at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.ApplicationSoundsUseThePlatformOutputSharedByTwoWindows() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs:line 124&#xD;
+--- End of stack trace from previous location ---&#xD;
+----- Inner Stack Trace #2 (System.InvalidOperationException) -----&#xD;
+   at Cerneala.Platforms.Sdl3.SdlPlatformLifetime.VerifyUiThread() in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Hosting\SdlPlatformLifetime.cs:line 42&#xD;
+   at Cerneala.Platforms.Sdl3.SdlWindowPlatform.Dispose() in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Hosting\SdlWindowPlatform.cs:line 150&#xD;
+   at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.DisposeCore(Boolean verifyAccess) in C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs:line 669&#xD;
+   at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.ResetForTesting() in C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs:line 65&#xD;
+   at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.Dispose() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs:line 28&#xD;
+   at ReflectionAbstractionExtensions.DisposeTestClass(ITest test, Object testClass, IMessageBus messageBus, ExecutionTimer timer, CancellationTokenSource cancellationTokenSource) in /_/src/xunit.execution/Extensions/ReflectionAbstractionExtensions.cs:line 79</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="1b15f324-679a-4183-9abc-1fce3b2aca10" testId="da356071-b38d-fcad-7ba3-cade75d92777" testName="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.APlatformWithoutAnAudioSeamHasNoOutput" computerName="DESKTOP-JT43V3D" duration="00:00:00.0209881" startTime="2026-10-07T13:24:35.3966084+03:00" endTime="2026-10-07T13:24:35.3966086+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1b15f324-679a-4183-9abc-1fce3b2aca10" />
+    <UnitTestResult executionId="74bfa96e-a5b7-43b6-a595-f383bfb3c207" testId="2aac0085-bbe7-bc9c-8d35-3b401e70ad40" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.CompletionWaitsForTheDeviceToDrainTheLastSubmittedBlock" computerName="DESKTOP-JT43V3D" duration="00:00:00.8034949" startTime="2026-10-07T13:24:33.3421665+03:00" endTime="2026-10-07T13:24:33.3421675+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="74bfa96e-a5b7-43b6-a595-f383bfb3c207">
+      <Output>
+        <ErrorInfo>
+          <Message>The device drive did not converge.</Message>
+          <StackTrace>   at Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.PullUntilAsync(FakeSdlAudioApi api, SoundRuntime runtime, Func`1 done, Int32[] requests) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputRuntimeTests.cs:line 232&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.CompletionWaitsForTheDeviceToDrainTheLastSubmittedBlock() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputRuntimeTests.cs:line 51&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="75161b18-2a71-43a9-a938-754edc5c45b0" testId="84af216d-3d94-ed06-b7ee-1f23734509aa" testName="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.PlayingAndUpdatingSoundsRequestsNoFrames" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-10-07T13:24:36.3020870+03:00" endTime="2026-10-07T13:24:36.3020872+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="75161b18-2a71-43a9-a938-754edc5c45b0">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : SDL platform access must remain on UI thread 19.</Message>
+          <StackTrace>   at Cerneala.Platforms.Sdl3.SdlPlatformLifetime.VerifyUiThread() in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Hosting\SdlPlatformLifetime.cs:line 42&#xD;
+   at Cerneala.Platforms.Sdl3.SdlWindowPlatform.Dispose() in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Hosting\SdlWindowPlatform.cs:line 150&#xD;
+   at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.DisposeCore(Boolean verifyAccess) in C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs:line 669&#xD;
+   at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.ResetForTesting() in C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs:line 65&#xD;
+   at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests..ctor() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs:line 23&#xD;
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="eb7d7eb1-648e-4790-8556-bc105b0dd82c" testId="7094deb7-de1e-4c3d-2914-791ba3c0d8ad" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.TerminationReleasesTheDeviceReportsItLostAndRejectsLaterOpens" computerName="DESKTOP-JT43V3D" duration="00:00:00.0006093" startTime="2026-10-07T13:24:32.6460899+03:00" endTime="2026-10-07T13:24:32.6460901+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="eb7d7eb1-648e-4790-8556-bc105b0dd82c">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs:line 31&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.TerminationReleasesTheDeviceReportsItLostAndRejectsLaterOpens() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs:line 258&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="dfa6344a-7696-4276-9d4f-52faa4a09efa" testId="56abab9f-4960-68ad-3ce3-e8909a18848f" testName="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.AudioDeviceRemovalWatchedOnAnotherThreadReachesTheOutput" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-10-07T13:24:36.3025901+03:00" endTime="2026-10-07T13:24:36.3025903+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="dfa6344a-7696-4276-9d4f-52faa4a09efa">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : SDL platform access must remain on UI thread 19.</Message>
+          <StackTrace>   at Cerneala.Platforms.Sdl3.SdlPlatformLifetime.VerifyUiThread() in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Hosting\SdlPlatformLifetime.cs:line 42&#xD;
+   at Cerneala.Platforms.Sdl3.SdlWindowPlatform.Dispose() in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Hosting\SdlWindowPlatform.cs:line 150&#xD;
+   at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.DisposeCore(Boolean verifyAccess) in C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs:line 669&#xD;
+   at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.ResetForTesting() in C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs:line 65&#xD;
+   at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests..ctor() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs:line 23&#xD;
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="f2a618e1-b4de-49d2-a994-949bec39fdb4" testId="916256a2-0890-ce5c-7a71-d0e881718871" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.RemovalOfTheOpenDeviceIsReportedAsLostAndOtherDevicesAreIgnored" computerName="DESKTOP-JT43V3D" duration="00:00:00.0004734" startTime="2026-10-07T13:24:32.6546546+03:00" endTime="2026-10-07T13:24:32.6546550+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f2a618e1-b4de-49d2-a994-949bec39fdb4">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs:line 31&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.RemovalOfTheOpenDeviceIsReportedAsLostAndOtherDevicesAreIgnored() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs:line 293&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="147f1f1b-10ad-4622-ae97-5cb35ed8c802" testId="412f2d0b-1341-2e02-fbe2-3d75bc1c5d30" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.ARequestWithNothingMissingStillSignalsCapacity" computerName="DESKTOP-JT43V3D" duration="00:00:00.0003881" startTime="2026-10-07T13:24:32.5944665+03:00" endTime="2026-10-07T13:24:32.5944666+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="147f1f1b-10ad-4622-ae97-5cb35ed8c802">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs:line 31&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.ARequestWithNothingMissingStillSignalsCapacity() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs:line 197&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="b2e1c50c-64f3-4aa3-9f4e-4ce24325841d" testId="8dbd399b-39d4-b234-b17b-51355aaa446d" testName="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.CreatingThePlatformAndItsOutputTouchesNoAudioState" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-10-07T13:24:36.3005042+03:00" endTime="2026-10-07T13:24:36.3005045+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b2e1c50c-64f3-4aa3-9f4e-4ce24325841d">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : SDL platform access must remain on UI thread 19.</Message>
+          <StackTrace>   at Cerneala.Platforms.Sdl3.SdlPlatformLifetime.VerifyUiThread() in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Hosting\SdlPlatformLifetime.cs:line 42&#xD;
+   at Cerneala.Platforms.Sdl3.SdlWindowPlatform.Dispose() in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Hosting\SdlWindowPlatform.cs:line 150&#xD;
+   at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.DisposeCore(Boolean verifyAccess) in C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs:line 669&#xD;
+   at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.ResetForTesting() in C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs:line 65&#xD;
+   at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests..ctor() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs:line 23&#xD;
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="8d6d1f6b-10d0-4245-95a8-7878370b4f54" testId="9ad5f3f3-4e63-b1d6-3032-4d64018dc9a8" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.SubmitQueuesCompleteFramesAndQueuedFramesConvertsInputBytes" computerName="DESKTOP-JT43V3D" duration="00:00:00.0008829" startTime="2026-10-07T13:24:32.6449852+03:00" endTime="2026-10-07T13:24:32.6449854+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8d6d1f6b-10d0-4245-95a8-7878370b4f54">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs:line 31&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.SubmitQueuesCompleteFramesAndQueuedFramesConvertsInputBytes() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs:line 101&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="14ab8c9d-ca7a-4a47-b6eb-bb7200e5ed09" testId="a7eb7ea5-83cd-49e2-bc84-5c55c3ce3391" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.OpeningAnOpenOutputIsRejectedWithoutTouchingTheStream" computerName="DESKTOP-JT43V3D" duration="00:00:00.0003401" startTime="2026-10-07T13:24:32.6479745+03:00" endTime="2026-10-07T13:24:32.6479747+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="14ab8c9d-ca7a-4a47-b6eb-bb7200e5ed09">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs:line 31&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.OpeningAnOpenOutputIsRejectedWithoutTouchingTheStream() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs:line 79&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="7c494923-69ba-44b5-a9cd-85832ba2f5e9" testId="6ef20a2b-6277-3a24-ec76-0a5aecb6962d" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(step: &quot;open&quot;, expected: [&quot;init&quot;, &quot;open&quot;, &quot;quit&quot;])" computerName="DESKTOP-JT43V3D" duration="00:00:00.0001852" startTime="2026-10-07T13:24:32.5908455+03:00" endTime="2026-10-07T13:24:32.5908457+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7c494923-69ba-44b5-a9cd-85832ba2f5e9">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Throws() Failure: Exception type was not an exact match&#xD;
+Expected: typeof(Cerneala.Timbre.SoundException)&#xD;
+Actual:   typeof(System.NotImplementedException)&#xD;
+---- System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(String step, String[] expected) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs:line 57&#xD;
+   at InvokeStub_SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(Object, Span`1)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+----- Inner Stack Trace -----&#xD;
+   at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs:line 31&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.&lt;&gt;c__DisplayClass2_0.&lt;AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired&gt;b__0() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs:line 57</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="70908761-6d0d-451a-a19f-34d1cb93cb16" testId="b33321b1-5028-6fde-9157-c539d3efcb8a" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.AFailingPutFailsTheMixedPlaybacksAndClosesTheOutputOnce" computerName="DESKTOP-JT43V3D" duration="00:00:00.5318831" startTime="2026-10-07T13:24:35.3730041+03:00" endTime="2026-10-07T13:24:35.3730044+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="70908761-6d0d-451a-a19f-34d1cb93cb16">
+      <Output>
+        <ErrorInfo>
+          <Message>The device drive did not converge.</Message>
+          <StackTrace>   at Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.PullUntilAsync(FakeSdlAudioApi api, SoundRuntime runtime, Func`1 done, Int32[] requests) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputRuntimeTests.cs:line 232&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.AFailingPutFailsTheMixedPlaybacksAndClosesTheOutputOnce() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputRuntimeTests.cs:line 203&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="1978b8f1-4a13-4f2b-a603-14d1aaff9a83" testId="19e9e3d0-432a-c917-2b29-de6f371c4c3d" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AQueuedQueryFailureIsReported" computerName="DESKTOP-JT43V3D" duration="00:00:00.0003512" startTime="2026-10-07T13:24:32.5926647+03:00" endTime="2026-10-07T13:24:32.5926649+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1978b8f1-4a13-4f2b-a603-14d1aaff9a83">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs:line 31&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AQueuedQueryFailureIsReported() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs:line 141&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="ec39a35d-b222-4110-8daa-7385f3bdf7cb" testId="a4e95130-405a-da7c-f4cd-8e1ee5d8a219" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.CancelingOneOfTwoMixedVoicesKeepsQueuedPcmAndTheOtherVoice" computerName="DESKTOP-JT43V3D" duration="00:00:00.7078132" startTime="2026-10-07T13:24:34.8261623+03:00" endTime="2026-10-07T13:24:34.8261626+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ec39a35d-b222-4110-8daa-7385f3bdf7cb">
+      <Output>
+        <ErrorInfo>
+          <Message>The device drive did not converge.</Message>
+          <StackTrace>   at Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.PullUntilAsync(FakeSdlAudioApi api, SoundRuntime runtime, Func`1 done, Int32[] requests) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputRuntimeTests.cs:line 232&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.CancelingOneOfTwoMixedVoicesKeepsQueuedPcmAndTheOtherVoice() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputRuntimeTests.cs:line 80&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="e87173e0-63b4-4404-b1e5-4035d0162656" testId="ab07c724-e7fb-5068-70eb-0c65176d83ab" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.StreamOperationsRequireAnOpenOutput" computerName="DESKTOP-JT43V3D" duration="00:00:00.0006595" startTime="2026-10-07T13:24:32.6498794+03:00" endTime="2026-10-07T13:24:32.6498796+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e87173e0-63b4-4404-b1e5-4035d0162656">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Throws() Failure: Exception type was not an exact match&#xD;
+Expected: typeof(System.InvalidOperationException)&#xD;
+Actual:   typeof(System.NotImplementedException)&#xD;
+---- System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.StreamOperationsRequireAnOpenOutput() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs:line 92&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+----- Inner Stack Trace -----&#xD;
+   at Cerneala.Platforms.Sdl3.SdlSoundOutput.get_QueuedFrames() in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs:line 29&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.&lt;&gt;c__DisplayClass4_0.&lt;StreamOperationsRequireAnOpenOutput&gt;b__0() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs:line 92</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="97b5c617-8f35-4589-845f-4727b5004506" testId="6e65b048-180e-ed0f-2efd-b576202e7580" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.APutFailureIsReportedWithoutCountingTheBlock" computerName="DESKTOP-JT43V3D" duration="00:00:00.0004206" startTime="2026-10-07T13:24:32.5936301+03:00" endTime="2026-10-07T13:24:32.5936304+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="97b5c617-8f35-4589-845f-4727b5004506">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs:line 31&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.APutFailureIsReportedWithoutCountingTheBlock() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs:line 123&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="3adc6f4e-10ef-4ace-85a0-a1e6938d8df2" testId="02d41bda-ba1e-dadd-ded0-b5386e0ad3f4" testName="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.DisposingThePlatformReleasesAudioBeforeSdlQuits" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-10-07T13:24:36.3014544+03:00" endTime="2026-10-07T13:24:36.3014545+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3adc6f4e-10ef-4ace-85a0-a1e6938d8df2">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : SDL platform access must remain on UI thread 19.</Message>
+          <StackTrace>   at Cerneala.Platforms.Sdl3.SdlPlatformLifetime.VerifyUiThread() in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Hosting\SdlPlatformLifetime.cs:line 42&#xD;
+   at Cerneala.Platforms.Sdl3.SdlWindowPlatform.Dispose() in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Hosting\SdlWindowPlatform.cs:line 150&#xD;
+   at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.DisposeCore(Boolean verifyAccess) in C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs:line 669&#xD;
+   at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.ResetForTesting() in C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs:line 65&#xD;
+   at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests..ctor() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs:line 23&#xD;
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="b923005b-7cdd-4815-8d1f-39db8edf82b2" testId="8a4be514-0ba6-6243-5d2c-c62987318f1b" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.MixedFramesReachTheDeviceInOrderAcrossIrregularRequestSizes" computerName="DESKTOP-JT43V3D" duration="00:00:00.0092053" startTime="2026-10-07T13:24:34.1175538+03:00" endTime="2026-10-07T13:24:34.1175542+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b923005b-7cdd-4815-8d1f-39db8edf82b2">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: Completed&#xD;
+Actual:   Failed</Message>
+          <StackTrace>   at Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.MixedFramesReachTheDeviceInOrderAcrossIrregularRequestSizes() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputRuntimeTests.cs:line 25&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="f440e62e-9c6b-411d-9d6d-0b9024473b2a" testId="5152e933-4f4f-07a2-3b87-ce6ef3dd4a02" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.CloseWaitsForARunningRequestWithoutDeadlockAndNothingRunsAfterIt" computerName="DESKTOP-JT43V3D" duration="00:00:00.0008446" startTime="2026-10-07T13:24:32.6510152+03:00" endTime="2026-10-07T13:24:32.6510154+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f440e62e-9c6b-411d-9d6d-0b9024473b2a">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs:line 31&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.CloseWaitsForARunningRequestWithoutDeadlockAndNothingRunsAfterIt() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs:line 230&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="730ea9a0-2699-4332-80ab-249e29e2669b" testId="ea0a7496-5288-24f8-3498-d616fec84395" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.ARequestAfterCloseNeverReachesTheClient" computerName="DESKTOP-JT43V3D" duration="00:00:00.0004457" startTime="2026-10-07T13:24:32.6532559+03:00" endTime="2026-10-07T13:24:32.6532560+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="730ea9a0-2699-4332-80ab-249e29e2669b">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs:line 31&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.ARequestAfterCloseNeverReachesTheClient() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs:line 213&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="67ab17d8-a2f0-40d8-9d0f-5c748a15e826" testId="3004f5e4-582e-bd60-e1d6-d83f74ed56b0" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.OpenInitializesOpensAndResumesAndCloseDestroysBeforeQuitting" computerName="DESKTOP-JT43V3D" duration="00:00:00.0009308" startTime="2026-10-07T13:24:32.5953362+03:00" endTime="2026-10-07T13:24:32.5953364+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="67ab17d8-a2f0-40d8-9d0f-5c748a15e826">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs:line 31&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.OpenInitializesOpensAndResumesAndCloseDestroysBeforeQuitting() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs:line 17&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="50bd662b-bc03-4b88-82d1-c05c253ae18b" testId="bf8e4241-629c-e9c7-b6ce-37f324de6482" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.RequestsOfAnySizeFromAnyThreadOnlyNotifyTheClient" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010065" startTime="2026-10-07T13:24:32.6523683+03:00" endTime="2026-10-07T13:24:32.6523685+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="50bd662b-bc03-4b88-82d1-c05c253ae18b">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client) in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs:line 31&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.RequestsOfAnySizeFromAnyThreadOnlyNotifyTheClient() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs:line 156&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="8a2248e9-a079-49ca-9986-0b92690cf705" testId="d0c84fe8-a2c0-6157-3fff-cc1414b97f03" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.TransportAndParameterChangesNeverClearOrCloseTheSharedOutput" computerName="DESKTOP-JT43V3D" duration="00:00:00.7606970" startTime="2026-10-07T13:24:34.1081601+03:00" endTime="2026-10-07T13:24:34.1081605+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8a2248e9-a079-49ca-9986-0b92690cf705">
+      <Output>
+        <ErrorInfo>
+          <Message>The device drive did not converge.</Message>
+          <StackTrace>   at Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.PullUntilAsync(FakeSdlAudioApi api, SoundRuntime runtime, Func`1 done, Int32[] requests) in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputRuntimeTests.cs:line 232&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.TransportAndParameterChangesNeverClearOrCloseTheSharedOutput() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputRuntimeTests.cs:line 120&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="5b3997eb-6ce3-43d4-801c-d949c0c186a3" testId="bd466ebc-ec78-3cde-97fa-56960c181c8b" testName="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.TerminationBeforeAnyOpenTouchesNoNativeState" computerName="DESKTOP-JT43V3D" duration="00:00:00.0003633" startTime="2026-10-07T13:24:32.5916674+03:00" endTime="2026-10-07T13:24:32.5916676+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5b3997eb-6ce3-43d4-801c-d949c0c186a3">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NotImplementedException : The method or operation is not implemented.</Message>
+          <StackTrace>   at Cerneala.Platforms.Sdl3.SdlSoundOutput.Terminate() in C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs:line 37&#xD;
+   at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.TerminationBeforeAnyOpenTouchesNoNativeState() in C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs:line 280&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.DiagnosticsReportTheNegotiatedDeviceFormat" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="42d203ab-be77-95f5-f223-60c644714a2d">
+      <Execution id="fce35a30-054e-49cc-b37f-0d5f26474699" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="DiagnosticsReportTheNegotiatedDeviceFormat" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.RequestsOfAnySizeFromAnyThreadOnlyNotifyTheClient" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="bf8e4241-629c-e9c7-b6ce-37f324de6482">
+      <Execution id="50bd662b-bc03-4b88-82d1-c05c253ae18b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="RequestsOfAnySizeFromAnyThreadOnlyNotifyTheClient" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.TransportAndParameterChangesNeverClearOrCloseTheSharedOutput" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="d0c84fe8-a2c0-6157-3fff-cc1414b97f03">
+      <Execution id="8a2248e9-a079-49ca-9986-0b92690cf705" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests" name="TransportAndParameterChangesNeverClearOrCloseTheSharedOutput" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.CloseWaitsForARunningRequestWithoutDeadlockAndNothingRunsAfterIt" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="5152e933-4f4f-07a2-3b87-ce6ef3dd4a02">
+      <Execution id="f440e62e-9c6b-411d-9d6d-0b9024473b2a" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="CloseWaitsForARunningRequestWithoutDeadlockAndNothingRunsAfterIt" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.OpeningAnOpenOutputIsRejectedWithoutTouchingTheStream" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="a7eb7ea5-83cd-49e2-bc84-5c55c3ce3391">
+      <Execution id="14ab8c9d-ca7a-4a47-b6eb-bb7200e5ed09" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="OpeningAnOpenOutputIsRejectedWithoutTouchingTheStream" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.RemovalOfTheOpenDeviceIsReportedAsLostAndOtherDevicesAreIgnored" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="916256a2-0890-ce5c-7a71-d0e881718871">
+      <Execution id="f2a618e1-b4de-49d2-a994-949bec39fdb4" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="RemovalOfTheOpenDeviceIsReportedAsLostAndOtherDevicesAreIgnored" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.AFailingPutFailsTheMixedPlaybacksAndClosesTheOutputOnce" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="b33321b1-5028-6fde-9157-c539d3efcb8a">
+      <Execution id="70908761-6d0d-451a-a19f-34d1cb93cb16" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests" name="AFailingPutFailsTheMixedPlaybacksAndClosesTheOutputOnce" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.TerminationReleasesTheDeviceReportsItLostAndRejectsLaterOpens" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="7094deb7-de1e-4c3d-2914-791ba3c0d8ad">
+      <Execution id="eb7d7eb1-648e-4790-8556-bc105b0dd82c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="TerminationReleasesTheDeviceReportsItLostAndRejectsLaterOpens" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.ARequestAfterCloseNeverReachesTheClient" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="ea0a7496-5288-24f8-3498-d616fec84395">
+      <Execution id="730ea9a0-2699-4332-80ab-249e29e2669b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="ARequestAfterCloseNeverReachesTheClient" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.MixedFramesReachTheDeviceInOrderAcrossIrregularRequestSizes" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="8a4be514-0ba6-6243-5d2c-c62987318f1b">
+      <Execution id="b923005b-7cdd-4815-8d1f-39db8edf82b2" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests" name="MixedFramesReachTheDeviceInOrderAcrossIrregularRequestSizes" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(step: &quot;resume&quot;, expected: [&quot;init&quot;, &quot;open&quot;, &quot;resume&quot;, &quot;destroy&quot;, &quot;quit&quot;])" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="57198bad-a5ce-65c3-1f8b-54c1db678adf">
+      <Execution id="bb344eb1-3781-4d8f-9270-2652185d2a1b" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.APlatformWithoutAnAudioSeamHasNoOutput" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="da356071-b38d-fcad-7ba3-cade75d92777">
+      <Execution id="1b15f324-679a-4183-9abc-1fce3b2aca10" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests" name="APlatformWithoutAnAudioSeamHasNoOutput" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(step: &quot;init&quot;, expected: [&quot;init&quot;])" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="eaeaee95-b80c-31ff-a421-5d74849b0b21">
+      <Execution id="c669a78f-592a-4f54-8adf-ae898bf45b68" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.OnlyTheLatestSeekPublishesPcmAfterResume" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="3a15914f-648c-345f-5cae-0ce70a1aeee1">
+      <Execution id="654d075f-13d6-44a9-8b58-d24a7322bc43" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests" name="OnlyTheLatestSeekPublishesPcmAfterResume" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.ApplicationSoundsUseThePlatformOutputSharedByTwoWindows" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="26a89bc8-4108-1f0b-ac16-6665e7f8b151">
+      <Execution id="6c61b9ef-f92f-4bf8-8079-33550a3fd7b8" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests" name="ApplicationSoundsUseThePlatformOutputSharedByTwoWindows" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(step: &quot;open&quot;, expected: [&quot;init&quot;, &quot;open&quot;, &quot;quit&quot;])" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="6ef20a2b-6277-3a24-ec76-0a5aecb6962d">
+      <Execution id="7c494923-69ba-44b5-a9cd-85832ba2f5e9" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.StreamOperationsRequireAnOpenOutput" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="ab07c724-e7fb-5068-70eb-0c65176d83ab">
+      <Execution id="e87173e0-63b4-4404-b1e5-4035d0162656" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="StreamOperationsRequireAnOpenOutput" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.SubmitQueuesCompleteFramesAndQueuedFramesConvertsInputBytes" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="9ad5f3f3-4e63-b1d6-3032-4d64018dc9a8">
+      <Execution id="8d6d1f6b-10d0-4245-95a8-7878370b4f54" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="SubmitQueuesCompleteFramesAndQueuedFramesConvertsInputBytes" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.AudioDeviceRemovalWatchedOnAnotherThreadReachesTheOutput" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="56abab9f-4960-68ad-3ce3-e8909a18848f">
+      <Execution id="dfa6344a-7696-4276-9d4f-52faa4a09efa" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests" name="AudioDeviceRemovalWatchedOnAnotherThreadReachesTheOutput" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.TerminationBeforeAnyOpenTouchesNoNativeState" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="bd466ebc-ec78-3cde-97fa-56960c181c8b">
+      <Execution id="5b3997eb-6ce3-43d4-801c-d949c0c186a3" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="TerminationBeforeAnyOpenTouchesNoNativeState" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.CreatingThePlatformAndItsOutputTouchesNoAudioState" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="8dbd399b-39d4-b234-b17b-51355aaa446d">
+      <Execution id="b2e1c50c-64f3-4aa3-9f4e-4ce24325841d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests" name="CreatingThePlatformAndItsOutputTouchesNoAudioState" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.CompletionWaitsForTheDeviceToDrainTheLastSubmittedBlock" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="2aac0085-bbe7-bc9c-8d35-3b401e70ad40">
+      <Execution id="74bfa96e-a5b7-43b6-a595-f383bfb3c207" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests" name="CompletionWaitsForTheDeviceToDrainTheLastSubmittedBlock" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.OpenInitializesOpensAndResumesAndCloseDestroysBeforeQuitting" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="3004f5e4-582e-bd60-e1d6-d83f74ed56b0">
+      <Execution id="67ab17d8-a2f0-40d8-9d0f-5c748a15e826" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="OpenInitializesOpensAndResumesAndCloseDestroysBeforeQuitting" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.PlayingAndUpdatingSoundsRequestsNoFrames" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="84af216d-3d94-ed06-b7ee-1f23734509aa">
+      <Execution id="75161b18-2a71-43a9-a938-754edc5c45b0" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests" name="PlayingAndUpdatingSoundsRequestsNoFrames" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.CancelingOneOfTwoMixedVoicesKeepsQueuedPcmAndTheOtherVoice" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="a4e95130-405a-da7c-f4cd-8e1ee5d8a219">
+      <Execution id="ec39a35d-b222-4110-8daa-7385f3bdf7cb" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests" name="CancelingOneOfTwoMixedVoicesKeepsQueuedPcmAndTheOtherVoice" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AQueuedQueryFailureIsReported" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="19e9e3d0-432a-c917-2b29-de6f371c4c3d">
+      <Execution id="1978b8f1-4a13-4f2b-a603-14d1aaff9a83" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="AQueuedQueryFailureIsReported" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.DisposingThePlatformReleasesAudioBeforeSdlQuits" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="02d41bda-ba1e-dadd-ded0-b5386e0ad3f4">
+      <Execution id="3adc6f4e-10ef-4ace-85a0-a1e6938d8df2" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests" name="DisposingThePlatformReleasesAudioBeforeSdlQuits" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.APutFailureIsReportedWithoutCountingTheBlock" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="6e65b048-180e-ed0f-2efd-b576202e7580">
+      <Execution id="97b5c617-8f35-4589-845f-4727b5004506" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="APutFailureIsReportedWithoutCountingTheBlock" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlSoundOutputTests.ARequestWithNothingMissingStillSignalsCapacity" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="412f2d0b-1341-2e02-fbe2-3d75bc1c5d30">
+      <Execution id="147f1f1b-10ad-4622-ae97-5cb35ed8c802" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlSoundOutputTests" name="ARequestWithNothingMissingStillSignalsCapacity" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="42d203ab-be77-95f5-f223-60c644714a2d" executionId="fce35a30-054e-49cc-b37f-0d5f26474699" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3a15914f-648c-345f-5cae-0ce70a1aeee1" executionId="654d075f-13d6-44a9-8b58-d24a7322bc43" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="57198bad-a5ce-65c3-1f8b-54c1db678adf" executionId="bb344eb1-3781-4d8f-9270-2652185d2a1b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="eaeaee95-b80c-31ff-a421-5d74849b0b21" executionId="c669a78f-592a-4f54-8adf-ae898bf45b68" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="26a89bc8-4108-1f0b-ac16-6665e7f8b151" executionId="6c61b9ef-f92f-4bf8-8079-33550a3fd7b8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="da356071-b38d-fcad-7ba3-cade75d92777" executionId="1b15f324-679a-4183-9abc-1fce3b2aca10" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2aac0085-bbe7-bc9c-8d35-3b401e70ad40" executionId="74bfa96e-a5b7-43b6-a595-f383bfb3c207" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="84af216d-3d94-ed06-b7ee-1f23734509aa" executionId="75161b18-2a71-43a9-a938-754edc5c45b0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7094deb7-de1e-4c3d-2914-791ba3c0d8ad" executionId="eb7d7eb1-648e-4790-8556-bc105b0dd82c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="56abab9f-4960-68ad-3ce3-e8909a18848f" executionId="dfa6344a-7696-4276-9d4f-52faa4a09efa" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="916256a2-0890-ce5c-7a71-d0e881718871" executionId="f2a618e1-b4de-49d2-a994-949bec39fdb4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="412f2d0b-1341-2e02-fbe2-3d75bc1c5d30" executionId="147f1f1b-10ad-4622-ae97-5cb35ed8c802" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8dbd399b-39d4-b234-b17b-51355aaa446d" executionId="b2e1c50c-64f3-4aa3-9f4e-4ce24325841d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9ad5f3f3-4e63-b1d6-3032-4d64018dc9a8" executionId="8d6d1f6b-10d0-4245-95a8-7878370b4f54" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a7eb7ea5-83cd-49e2-bc84-5c55c3ce3391" executionId="14ab8c9d-ca7a-4a47-b6eb-bb7200e5ed09" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6ef20a2b-6277-3a24-ec76-0a5aecb6962d" executionId="7c494923-69ba-44b5-a9cd-85832ba2f5e9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b33321b1-5028-6fde-9157-c539d3efcb8a" executionId="70908761-6d0d-451a-a19f-34d1cb93cb16" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="19e9e3d0-432a-c917-2b29-de6f371c4c3d" executionId="1978b8f1-4a13-4f2b-a603-14d1aaff9a83" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a4e95130-405a-da7c-f4cd-8e1ee5d8a219" executionId="ec39a35d-b222-4110-8daa-7385f3bdf7cb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ab07c724-e7fb-5068-70eb-0c65176d83ab" executionId="e87173e0-63b4-4404-b1e5-4035d0162656" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6e65b048-180e-ed0f-2efd-b576202e7580" executionId="97b5c617-8f35-4589-845f-4727b5004506" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="02d41bda-ba1e-dadd-ded0-b5386e0ad3f4" executionId="3adc6f4e-10ef-4ace-85a0-a1e6938d8df2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8a4be514-0ba6-6243-5d2c-c62987318f1b" executionId="b923005b-7cdd-4815-8d1f-39db8edf82b2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5152e933-4f4f-07a2-3b87-ce6ef3dd4a02" executionId="f440e62e-9c6b-411d-9d6d-0b9024473b2a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ea0a7496-5288-24f8-3498-d616fec84395" executionId="730ea9a0-2699-4332-80ab-249e29e2669b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3004f5e4-582e-bd60-e1d6-d83f74ed56b0" executionId="67ab17d8-a2f0-40d8-9d0f-5c748a15e826" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bf8e4241-629c-e9c7-b6ce-37f324de6482" executionId="50bd662b-bc03-4b88-82d1-c05c253ae18b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d0c84fe8-a2c0-6157-3fff-cc1414b97f03" executionId="8a2248e9-a079-49ca-9986-0b92690cf705" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bd466ebc-ec78-3cde-97fa-56960c181c8b" executionId="5b3997eb-6ce3-43d4-801c-d949c0c186a3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="29" executed="29" passed="1" failed="28" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.76]   Discovering: Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:01.00]   Discovered:  Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:01.01]   Starting:    Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:01.11]       Assert.Throws() Failure: Exception type was not an exact match&#xD;
+[xUnit.net 00:00:01.11]       Expected: typeof(Cerneala.Timbre.SoundException)&#xD;
+[xUnit.net 00:00:01.11]       Actual:   typeof(System.NotImplementedException)&#xD;
+[xUnit.net 00:00:01.11]       ---- System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:01.11]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.11]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs(57,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(String step, String[] expected)&#xD;
+[xUnit.net 00:00:01.11]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.11]            at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.11]         ----- Inner Stack Trace -----&#xD;
+[xUnit.net 00:00:01.11]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs(31,0): at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client)&#xD;
+[xUnit.net 00:00:01.11]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs(57,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.&lt;&gt;c__DisplayClass2_0.&lt;AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired&gt;b__0()&#xD;
+[xUnit.net 00:00:01.12]       Assert.Throws() Failure: Exception type was not an exact match&#xD;
+[xUnit.net 00:00:01.12]       Expected: typeof(Cerneala.Timbre.SoundException)&#xD;
+[xUnit.net 00:00:01.12]       Actual:   typeof(System.NotImplementedException)&#xD;
+[xUnit.net 00:00:01.12]       ---- System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:01.12]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.12]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs(57,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(String step, String[] expected)&#xD;
+[xUnit.net 00:00:01.12]            at InvokeStub_SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(Object, Span`1)&#xD;
+[xUnit.net 00:00:01.12]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:01.12]         ----- Inner Stack Trace -----&#xD;
+[xUnit.net 00:00:01.12]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs(31,0): at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client)&#xD;
+[xUnit.net 00:00:01.12]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs(57,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.&lt;&gt;c__DisplayClass2_0.&lt;AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired&gt;b__0()&#xD;
+[xUnit.net 00:00:01.12]       Assert.Throws() Failure: Exception type was not an exact match&#xD;
+[xUnit.net 00:00:01.12]       Expected: typeof(Cerneala.Timbre.SoundException)&#xD;
+[xUnit.net 00:00:01.12]       Actual:   typeof(System.NotImplementedException)&#xD;
+[xUnit.net 00:00:01.12]       ---- System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:01.12]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.12]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs(57,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(String step, String[] expected)&#xD;
+[xUnit.net 00:00:01.12]            at InvokeStub_SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(Object, Span`1)&#xD;
+[xUnit.net 00:00:01.12]            at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)&#xD;
+[xUnit.net 00:00:01.12]         ----- Inner Stack Trace -----&#xD;
+[xUnit.net 00:00:01.12]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs(31,0): at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client)&#xD;
+[xUnit.net 00:00:01.12]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs(57,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.&lt;&gt;c__DisplayClass2_0.&lt;AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired&gt;b__0()&#xD;
+[xUnit.net 00:00:01.12]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:01.12]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.12]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs(37,0): at Cerneala.Platforms.Sdl3.SdlSoundOutput.Terminate()&#xD;
+[xUnit.net 00:00:01.12]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs(280,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.TerminationBeforeAnyOpenTouchesNoNativeState()&#xD;
+[xUnit.net 00:00:01.12]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.12]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.12]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:01.12]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.12]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs(31,0): at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client)&#xD;
+[xUnit.net 00:00:01.12]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs(141,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AQueuedQueryFailureIsReported()&#xD;
+[xUnit.net 00:00:01.12]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.13]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.13]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:01.13]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.13]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs(31,0): at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client)&#xD;
+[xUnit.net 00:00:01.13]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs(123,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.APutFailureIsReportedWithoutCountingTheBlock()&#xD;
+[xUnit.net 00:00:01.13]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.13]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.13]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:01.13]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.13]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs(31,0): at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client)&#xD;
+[xUnit.net 00:00:01.13]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs(197,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.ARequestWithNothingMissingStillSignalsCapacity()&#xD;
+[xUnit.net 00:00:01.13]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.13]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.13]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:01.13]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.13]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs(31,0): at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client)&#xD;
+[xUnit.net 00:00:01.13]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs(17,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.OpenInitializesOpensAndResumesAndCloseDestroysBeforeQuitting()&#xD;
+[xUnit.net 00:00:01.13]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.13]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.18]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:01.18]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.18]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs(31,0): at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client)&#xD;
+[xUnit.net 00:00:01.18]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs(101,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.SubmitQueuesCompleteFramesAndQueuedFramesConvertsInputBytes()&#xD;
+[xUnit.net 00:00:01.18]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.18]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.18]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:01.18]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.18]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs(31,0): at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client)&#xD;
+[xUnit.net 00:00:01.18]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs(258,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.TerminationReleasesTheDeviceReportsItLostAndRejectsLaterOpens()&#xD;
+[xUnit.net 00:00:01.18]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.18]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.18]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:01.18]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.18]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs(31,0): at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client)&#xD;
+[xUnit.net 00:00:01.18]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs(320,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.DiagnosticsReportTheNegotiatedDeviceFormat()&#xD;
+[xUnit.net 00:00:01.18]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.18]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.18]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:01.18]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.18]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs(31,0): at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client)&#xD;
+[xUnit.net 00:00:01.18]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs(79,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.OpeningAnOpenOutputIsRejectedWithoutTouchingTheStream()&#xD;
+[xUnit.net 00:00:01.18]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.18]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.18]       Assert.Throws() Failure: Exception type was not an exact match&#xD;
+[xUnit.net 00:00:01.18]       Expected: typeof(System.InvalidOperationException)&#xD;
+[xUnit.net 00:00:01.18]       Actual:   typeof(System.NotImplementedException)&#xD;
+[xUnit.net 00:00:01.18]       ---- System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:01.18]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.18]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs(92,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.StreamOperationsRequireAnOpenOutput()&#xD;
+[xUnit.net 00:00:01.18]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.18]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.18]         ----- Inner Stack Trace -----&#xD;
+[xUnit.net 00:00:01.18]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs(29,0): at Cerneala.Platforms.Sdl3.SdlSoundOutput.get_QueuedFrames()&#xD;
+[xUnit.net 00:00:01.18]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs(92,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.&lt;&gt;c__DisplayClass4_0.&lt;StreamOperationsRequireAnOpenOutput&gt;b__0()&#xD;
+[xUnit.net 00:00:01.18]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:01.18]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.18]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs(31,0): at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client)&#xD;
+[xUnit.net 00:00:01.18]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs(230,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.CloseWaitsForARunningRequestWithoutDeadlockAndNothingRunsAfterIt()&#xD;
+[xUnit.net 00:00:01.18]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.18]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.18]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:01.18]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.18]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs(31,0): at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client)&#xD;
+[xUnit.net 00:00:01.18]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs(156,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.RequestsOfAnySizeFromAnyThreadOnlyNotifyTheClient()&#xD;
+[xUnit.net 00:00:01.18]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.18]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.19]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:01.19]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.19]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs(31,0): at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client)&#xD;
+[xUnit.net 00:00:01.19]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs(213,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.ARequestAfterCloseNeverReachesTheClient()&#xD;
+[xUnit.net 00:00:01.19]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.19]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.19]       System.NotImplementedException : The method or operation is not implemented.&#xD;
+[xUnit.net 00:00:01.19]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.19]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Audio\SdlSoundOutput.cs(31,0): at Cerneala.Platforms.Sdl3.SdlSoundOutput.Open(ISoundOutputClient client)&#xD;
+[xUnit.net 00:00:01.19]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputTests.cs(293,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputTests.RemovalOfTheOpenDeviceIsReportedAsLostAndOtherDevicesAreIgnored()&#xD;
+[xUnit.net 00:00:01.19]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:01.19]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:01.87]       The device drive did not converge.&#xD;
+[xUnit.net 00:00:01.87]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.87]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputRuntimeTests.cs(232,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.PullUntilAsync(FakeSdlAudioApi api, SoundRuntime runtime, Func`1 done, Int32[] requests)&#xD;
+[xUnit.net 00:00:01.87]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputRuntimeTests.cs(51,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.CompletionWaitsForTheDeviceToDrainTheLastSubmittedBlock()&#xD;
+[xUnit.net 00:00:01.87]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.64]       The device drive did not converge.&#xD;
+[xUnit.net 00:00:02.64]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.64]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputRuntimeTests.cs(232,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.PullUntilAsync(FakeSdlAudioApi api, SoundRuntime runtime, Func`1 done, Int32[] requests)&#xD;
+[xUnit.net 00:00:02.64]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputRuntimeTests.cs(120,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.TransportAndParameterChangesNeverClearOrCloseTheSharedOutput()&#xD;
+[xUnit.net 00:00:02.64]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:02.65]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.65]       Expected: Completed&#xD;
+[xUnit.net 00:00:02.65]       Actual:   Failed&#xD;
+[xUnit.net 00:00:02.65]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.65]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputRuntimeTests.cs(25,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.MixedFramesReachTheDeviceInOrderAcrossIrregularRequestSizes()&#xD;
+[xUnit.net 00:00:02.65]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:03.36]       The device drive did not converge.&#xD;
+[xUnit.net 00:00:03.36]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.36]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputRuntimeTests.cs(232,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.PullUntilAsync(FakeSdlAudioApi api, SoundRuntime runtime, Func`1 done, Int32[] requests)&#xD;
+[xUnit.net 00:00:03.36]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputRuntimeTests.cs(80,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.CancelingOneOfTwoMixedVoicesKeepsQueuedPcmAndTheOtherVoice()&#xD;
+[xUnit.net 00:00:03.36]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:03.37]       System.InvalidOperationException : The sound playback is Failed; start a new playback instead.&#xD;
+[xUnit.net 00:00:03.37]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.37]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundPlayback.cs(387,0): at Cerneala.Timbre.SoundPlayback.ThrowIfTerminalLocked()&#xD;
+[xUnit.net 00:00:03.37]         C:\Users\lauri\Desktop\Cerneala\Timbre\SoundPlayback.cs(142,0): at Cerneala.Timbre.SoundPlayback.Pause()&#xD;
+[xUnit.net 00:00:03.37]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputRuntimeTests.cs(170,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.OnlyTheLatestSeekPublishesPcmAfterResume()&#xD;
+[xUnit.net 00:00:03.37]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:03.90]       The device drive did not converge.&#xD;
+[xUnit.net 00:00:03.91]       Stack Trace:&#xD;
+[xUnit.net 00:00:03.91]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputRuntimeTests.cs(232,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.PullUntilAsync(FakeSdlAudioApi api, SoundRuntime runtime, Func`1 done, Int32[] requests)&#xD;
+[xUnit.net 00:00:03.91]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlSoundOutputRuntimeTests.cs(203,0): at Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.AFailingPutFailsTheMixedPlaybacksAndClosesTheOutputOnce()&#xD;
+[xUnit.net 00:00:03.91]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:04.83]       System.AggregateException : One or more errors occurred. (The device drive did not converge.) (SDL platform access must remain on UI thread 19.)&#xD;
+[xUnit.net 00:00:04.83]       ---- The device drive did not converge.&#xD;
+[xUnit.net 00:00:04.83]       ---- System.InvalidOperationException : SDL platform access must remain on UI thread 19.&#xD;
+[xUnit.net 00:00:04.83]       Stack Trace:&#xD;
+[xUnit.net 00:00:04.83]         &#xD;
+[xUnit.net 00:00:04.83]         ----- Inner Stack Trace #1 (Xunit.Sdk.TrueException) -----&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs(197,0): at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.DriveAsync(FakeSdlAudioApi audio, SoundRuntime runtime, Func`1 done)&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs(124,0): at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.ApplicationSoundsUseThePlatformOutputSharedByTwoWindows()&#xD;
+[xUnit.net 00:00:04.83]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:04.83]         ----- Inner Stack Trace #2 (System.InvalidOperationException) -----&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Hosting\SdlPlatformLifetime.cs(42,0): at Cerneala.Platforms.Sdl3.SdlPlatformLifetime.VerifyUiThread()&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Hosting\SdlWindowPlatform.cs(150,0): at Cerneala.Platforms.Sdl3.SdlWindowPlatform.Dispose()&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs(669,0): at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.DisposeCore(Boolean verifyAccess)&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs(65,0): at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.ResetForTesting()&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs(28,0): at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.Dispose()&#xD;
+[xUnit.net 00:00:04.83]         /_/src/xunit.execution/Extensions/ReflectionAbstractionExtensions.cs(79,0): at ReflectionAbstractionExtensions.DisposeTestClass(ITest test, Object testClass, IMessageBus messageBus, ExecutionTimer timer, CancellationTokenSource cancellationTokenSource)&#xD;
+[xUnit.net 00:00:04.83]       System.InvalidOperationException : SDL platform access must remain on UI thread 19.&#xD;
+[xUnit.net 00:00:04.83]       Stack Trace:&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Hosting\SdlPlatformLifetime.cs(42,0): at Cerneala.Platforms.Sdl3.SdlPlatformLifetime.VerifyUiThread()&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Hosting\SdlWindowPlatform.cs(150,0): at Cerneala.Platforms.Sdl3.SdlWindowPlatform.Dispose()&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs(669,0): at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.DisposeCore(Boolean verifyAccess)&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs(65,0): at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.ResetForTesting()&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs(23,0): at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests..ctor()&#xD;
+[xUnit.net 00:00:04.83]            at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)&#xD;
+[xUnit.net 00:00:04.83]       System.InvalidOperationException : SDL platform access must remain on UI thread 19.&#xD;
+[xUnit.net 00:00:04.83]       Stack Trace:&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Hosting\SdlPlatformLifetime.cs(42,0): at Cerneala.Platforms.Sdl3.SdlPlatformLifetime.VerifyUiThread()&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Hosting\SdlWindowPlatform.cs(150,0): at Cerneala.Platforms.Sdl3.SdlWindowPlatform.Dispose()&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs(669,0): at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.DisposeCore(Boolean verifyAccess)&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs(65,0): at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.ResetForTesting()&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs(23,0): at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests..ctor()&#xD;
+[xUnit.net 00:00:04.83]            at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)&#xD;
+[xUnit.net 00:00:04.83]       System.InvalidOperationException : SDL platform access must remain on UI thread 19.&#xD;
+[xUnit.net 00:00:04.83]       Stack Trace:&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Hosting\SdlPlatformLifetime.cs(42,0): at Cerneala.Platforms.Sdl3.SdlPlatformLifetime.VerifyUiThread()&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Hosting\SdlWindowPlatform.cs(150,0): at Cerneala.Platforms.Sdl3.SdlWindowPlatform.Dispose()&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs(669,0): at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.DisposeCore(Boolean verifyAccess)&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs(65,0): at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.ResetForTesting()&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs(23,0): at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests..ctor()&#xD;
+[xUnit.net 00:00:04.83]            at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)&#xD;
+[xUnit.net 00:00:04.83]       System.InvalidOperationException : SDL platform access must remain on UI thread 19.&#xD;
+[xUnit.net 00:00:04.83]       Stack Trace:&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Hosting\SdlPlatformLifetime.cs(42,0): at Cerneala.Platforms.Sdl3.SdlPlatformLifetime.VerifyUiThread()&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\Cerneala.Platforms.Sdl3\Hosting\SdlWindowPlatform.cs(150,0): at Cerneala.Platforms.Sdl3.SdlWindowPlatform.Dispose()&#xD;
+[xUnit.net 00:00:04.83]         C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs(669,0): at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.DisposeCore(Boolean verifyAccess)&#xD;
+[xUnit.net 00:00:04.84]         C:\Users\lauri\Desktop\Cerneala\UI\Hosting\Windowing\WindowApplicationRuntime.cs(65,0): at Cerneala.UI.Hosting.Windowing.WindowApplicationRuntime.ResetForTesting()&#xD;
+[xUnit.net 00:00:04.84]         C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\SdlWindowPlatformAudioTests.cs(23,0): at Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests..ctor()&#xD;
+[xUnit.net 00:00:04.84]            at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)&#xD;
+[xUnit.net 00:00:04.84]   Finished:    Cerneala.Tests.SdlGpu&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:32.5785100+03:00">
+        <Text>[xUnit.net 00:00:01.11]     Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(step: "resume", expected: ["init", "open", "resume", "destroy", "quit"]) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:32.5883811+03:00">
+        <Text>[xUnit.net 00:00:01.12]     Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(step: "init", expected: ["init"]) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:32.5900030+03:00">
+        <Text>[xUnit.net 00:00:01.12]     Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AFailingOpenStepReportsTheSdlErrorAndUnwindsWhatItAcquired(step: "open", expected: ["init", "open", "quit"]) [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:32.5911662+03:00">
+        <Text>[xUnit.net 00:00:01.12]     Cerneala.Tests.SdlGpu.SdlSoundOutputTests.TerminationBeforeAnyOpenTouchesNoNativeState [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:32.5921614+03:00">
+        <Text>[xUnit.net 00:00:01.12]     Cerneala.Tests.SdlGpu.SdlSoundOutputTests.AQueuedQueryFailureIsReported [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:32.5931518+03:00">
+        <Text>[xUnit.net 00:00:01.13]     Cerneala.Tests.SdlGpu.SdlSoundOutputTests.APutFailureIsReportedWithoutCountingTheBlock [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:32.5981529+03:00">
+        <Text>[xUnit.net 00:00:01.13]     Cerneala.Tests.SdlGpu.SdlSoundOutputTests.ARequestWithNothingMissingStillSignalsCapacity [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:32.5987556+03:00">
+        <Text>[xUnit.net 00:00:01.13]     Cerneala.Tests.SdlGpu.SdlSoundOutputTests.OpenInitializesOpensAndResumesAndCloseDestroysBeforeQuitting [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:32.7094745+03:00">
+        <Text>[xUnit.net 00:00:01.18]     Cerneala.Tests.SdlGpu.SdlSoundOutputTests.SubmitQueuesCompleteFramesAndQueuedFramesConvertsInputBytes [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:32.7095719+03:00">
+        <Text>[xUnit.net 00:00:01.18]     Cerneala.Tests.SdlGpu.SdlSoundOutputTests.TerminationReleasesTheDeviceReportsItLostAndRejectsLaterOpens [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:32.7097221+03:00">
+        <Text>[xUnit.net 00:00:01.18]     Cerneala.Tests.SdlGpu.SdlSoundOutputTests.DiagnosticsReportTheNegotiatedDeviceFormat [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:32.7099083+03:00">
+        <Text>[xUnit.net 00:00:01.18]     Cerneala.Tests.SdlGpu.SdlSoundOutputTests.OpeningAnOpenOutputIsRejectedWithoutTouchingTheStream [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:32.7100905+03:00">
+        <Text>[xUnit.net 00:00:01.18]     Cerneala.Tests.SdlGpu.SdlSoundOutputTests.StreamOperationsRequireAnOpenOutput [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:32.7102755+03:00">
+        <Text>[xUnit.net 00:00:01.18]     Cerneala.Tests.SdlGpu.SdlSoundOutputTests.CloseWaitsForARunningRequestWithoutDeadlockAndNothingRunsAfterIt [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:32.7104557+03:00">
+        <Text>[xUnit.net 00:00:01.18]     Cerneala.Tests.SdlGpu.SdlSoundOutputTests.RequestsOfAnySizeFromAnyThreadOnlyNotifyTheClient [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:32.7105990+03:00">
+        <Text>[xUnit.net 00:00:01.19]     Cerneala.Tests.SdlGpu.SdlSoundOutputTests.ARequestAfterCloseNeverReachesTheClient [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:32.7107625+03:00">
+        <Text>[xUnit.net 00:00:01.19]     Cerneala.Tests.SdlGpu.SdlSoundOutputTests.RemovalOfTheOpenDeviceIsReportedAsLostAndOtherDevicesAreIgnored [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:33.3424460+03:00">
+        <Text>[xUnit.net 00:00:01.87]     Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.CompletionWaitsForTheDeviceToDrainTheLastSubmittedBlock [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:34.1072812+03:00">
+        <Text>[xUnit.net 00:00:02.64]     Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.TransportAndParameterChangesNeverClearOrCloseTheSharedOutput [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:34.1171072+03:00">
+        <Text>[xUnit.net 00:00:02.65]     Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.MixedFramesReachTheDeviceInOrderAcrossIrregularRequestSizes [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:34.8258435+03:00">
+        <Text>[xUnit.net 00:00:03.36]     Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.CancelingOneOfTwoMixedVoicesKeepsQueuedPcmAndTheOtherVoice [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:34.8400011+03:00">
+        <Text>[xUnit.net 00:00:03.37]     Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.OnlyTheLatestSeekPublishesPcmAfterResume [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:35.3724185+03:00">
+        <Text>[xUnit.net 00:00:03.90]     Cerneala.Tests.SdlGpu.SdlSoundOutputRuntimeTests.AFailingPutFailsTheMixedPlaybacksAndClosesTheOutputOnce [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:36.2988266+03:00">
+        <Text>[xUnit.net 00:00:04.83]     Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.ApplicationSoundsUseThePlatformOutputSharedByTwoWindows [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:36.3006512+03:00">
+        <Text>[xUnit.net 00:00:04.83]     Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.CreatingThePlatformAndItsOutputTouchesNoAudioState [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:36.3011735+03:00">
+        <Text>[xUnit.net 00:00:04.83]     Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.DisposingThePlatformReleasesAudioBeforeSdlQuits [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:36.3017522+03:00">
+        <Text>[xUnit.net 00:00:04.83]     Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.PlayingAndUpdatingSoundsRequestsNoFrames [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Error" timestamp="2026-10-07T13:24:36.3022591+03:00">
+        <Text>[xUnit.net 00:00:04.83]     Cerneala.Tests.SdlGpu.SdlWindowPlatformAudioTests.AudioDeviceRemovalWatchedOnAnotherThreadReachesTheOutput [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

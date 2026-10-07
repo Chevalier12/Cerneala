@@ -22,7 +22,8 @@ internal sealed record SmokeOptions(
         "scene-debug",
         "prism",
         "screenshot",
-        "servo"
+        "servo",
+        "timbre"
     };
 
     public static SmokeOptions Current { get; private set; } = new(

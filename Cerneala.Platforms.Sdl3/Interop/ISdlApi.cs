@@ -53,7 +53,9 @@ internal enum SdlEventKind
     MouseMotion,
     MouseButtonDown,
     MouseButtonUp,
-    MouseWheel
+    MouseWheel,
+    // Data1 carries the removed SDL audio device id.
+    AudioDeviceRemoved
 }
 
 internal enum SdlSystemCursor

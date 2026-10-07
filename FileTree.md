@@ -227,6 +227,137 @@ Generated from `.`.
 |   |   |   |   |-- README.md
 |   |   |   |   |-- remaining-text-fixes.md
 |   |   |   |   +-- summary.json
+|   |   |   |-- 2026-10-07-timbre-core-stage0/
+|   |   |   |   |-- api-compat.proj
+|   |   |   |   |-- api-compat.suppressions.xml
+|   |   |   |   |-- stage0-baseline-characterization.log
+|   |   |   |   |-- stage0-baseline-characterization.trx
+|   |   |   |   |-- stage0-contract-and-gates.md
+|   |   |   |   +-- stage0-timbre-harness.trx
+|   |   |   |-- 2026-10-07-timbre-core-stage1/
+|   |   |   |   |-- README.md
+|   |   |   |   |-- stage1-cerneala-tests-full.trx
+|   |   |   |   |-- stage1-compatibility.trx
+|   |   |   |   |-- stage1-green.trx
+|   |   |   |   +-- stage1-red.trx
+|   |   |   |-- 2026-10-07-timbre-core-stage2/
+|   |   |   |   |-- README.md
+|   |   |   |   |-- stage2-green.trx
+|   |   |   |   +-- stage2-red.trx
+|   |   |   |-- 2026-10-07-timbre-core-stage3/
+|   |   |   |   |-- campaign/
+|   |   |   |   |   |-- process-1.json
+|   |   |   |   |   |-- process-2.json
+|   |   |   |   |   |-- process-3.json
+|   |   |   |   |   |-- process-4.json
+|   |   |   |   |   |-- process-5.json
+|   |   |   |   |   +-- summary.json
+|   |   |   |   |-- api-compat.log
+|   |   |   |   |-- api-compat.md
+|   |   |   |   |-- cost-protocol.md
+|   |   |   |   |-- full-solution.log
+|   |   |   |   |-- Invoke-TimbreCoreCost.ps1
+|   |   |   |   |-- pilot-2.json
+|   |   |   |   |-- pilot.json
+|   |   |   |   |-- README.md
+|   |   |   |   |-- stage3-allocation-red.trx
+|   |   |   |   +-- stage3-timbre.trx
+|   |   |   |-- 2026-10-07-timbre-decoding-stage0/
+|   |   |   |   |-- asset-check-six-rids.json
+|   |   |   |   |-- footprint.json
+|   |   |   |   |-- probe-results.jsonl
+|   |   |   |   |-- probe-summary.md
+|   |   |   |   |-- README.md
+|   |   |   |   |-- stage0-budget-green.trx
+|   |   |   |   +-- stage0-budget-red.trx
+|   |   |   |-- 2026-10-07-timbre-decoding-stage1/
+|   |   |   |   |-- README.md
+|   |   |   |   |-- stage1-red.trx
+|   |   |   |   +-- stage1-timbre-full.trx
+|   |   |   |-- 2026-10-07-timbre-decoding-stage2/
+|   |   |   |   |-- decoding-memory.json
+|   |   |   |   |-- README.md
+|   |   |   |   |-- stage2-mutation-red.trx
+|   |   |   |   |-- stage2-red-mp3-cut.trx
+|   |   |   |   |-- stage2-timbre-full-1.trx
+|   |   |   |   |-- stage2-timbre-full-2.trx
+|   |   |   |   +-- stage2-timbre-full-3.trx
+|   |   |   |-- 2026-10-07-timbre-decoding-stage3/
+|   |   |   |   |-- campaign/
+|   |   |   |   |   |-- process-1-decoding.json
+|   |   |   |   |   |-- process-1-gate.json
+|   |   |   |   |   |-- process-2-decoding.json
+|   |   |   |   |   |-- process-2-gate.json
+|   |   |   |   |   |-- process-3-decoding.json
+|   |   |   |   |   |-- process-3-gate.json
+|   |   |   |   |   |-- process-4-decoding.json
+|   |   |   |   |   |-- process-4-gate.json
+|   |   |   |   |   |-- process-5-decoding.json
+|   |   |   |   |   |-- process-5-gate.json
+|   |   |   |   |   +-- summary.json
+|   |   |   |   |-- campaign-disturbed/
+|   |   |   |   |   |-- console.log
+|   |   |   |   |   |-- process-1-decoding.json
+|   |   |   |   |   |-- process-1-gate.json
+|   |   |   |   |   |-- process-2-decoding.json
+|   |   |   |   |   |-- process-2-gate.json
+|   |   |   |   |   |-- process-3-decoding.json
+|   |   |   |   |   |-- process-3-gate.json
+|   |   |   |   |   |-- process-4-decoding.json
+|   |   |   |   |   |-- process-4-gate.json
+|   |   |   |   |   |-- process-5-decoding.json
+|   |   |   |   |   |-- process-5-gate.json
+|   |   |   |   |   +-- summary.json
+|   |   |   |   |-- api-compat.log
+|   |   |   |   |-- api-compat.proj
+|   |   |   |   |-- api-compat.suppressions.xml
+|   |   |   |   |-- asset-check-six-rids.json
+|   |   |   |   |-- full-solution.log
+|   |   |   |   |-- Invoke-TimbreDecodingCost.ps1
+|   |   |   |   |-- README.md
+|   |   |   |   +-- stage3-timbre.trx
+|   |   |   |-- 2026-10-07-timbre-sdl3-stage3/
+|   |   |   |   |-- campaign-emulator/
+|   |   |   |   |   |-- process-1.json
+|   |   |   |   |   |-- process-2.json
+|   |   |   |   |   |-- process-3.json
+|   |   |   |   |   |-- process-4.json
+|   |   |   |   |   |-- process-5.json
+|   |   |   |   |   +-- summary.json
+|   |   |   |   |-- campaign-sdl/
+|   |   |   |   |   |-- process-1.json
+|   |   |   |   |   |-- process-2.json
+|   |   |   |   |   |-- process-3.json
+|   |   |   |   |   |-- process-4.json
+|   |   |   |   |   |-- process-5.json
+|   |   |   |   |   +-- summary.json
+|   |   |   |   |-- full-solution/
+|   |   |   |   |   |-- full_net10.0_20261007143131.trx
+|   |   |   |   |   |-- full_net10.0_20261007143231.trx
+|   |   |   |   |   |-- full_net10.0_20261007144411.trx
+|   |   |   |   |   |-- full_net8.0_20261007142849.trx
+|   |   |   |   |   |-- full_net8.0_20261007143236.trx
+|   |   |   |   |   |-- full_net8.0_20261007143244.trx
+|   |   |   |   |   |-- full_net8.0_20261007143333.trx
+|   |   |   |   |   |-- full_net8.0_20261007144218.trx
+|   |   |   |   |   |-- full_net8.0_20261007144338.trx
+|   |   |   |   |   |-- full_net8.0_20261007144408.trx
+|   |   |   |   |   |-- full_net8.0_20261007144801.trx
+|   |   |   |   |   +-- full_net8.0_20261007144804.trx
+|   |   |   |   |-- api-compat.log
+|   |   |   |   |-- api-compat.proj
+|   |   |   |   |-- audio-device-host.trx
+|   |   |   |   |-- campaign-emulator.log
+|   |   |   |   |-- campaign-sdl.log
+|   |   |   |   |-- cost-protocol.md
+|   |   |   |   |-- full-solution.log
+|   |   |   |   |-- Invoke-TimbreSdlCost.ps1
+|   |   |   |   |-- native-audio-ci-equivalent.trx
+|   |   |   |   |-- pilot-sdl.json
+|   |   |   |   |-- README.md
+|   |   |   |   |-- six-rid-publish.json
+|   |   |   |   |-- smoke-timbre-dummy.json
+|   |   |   |   +-- smoke-timbre-wasapi.json
 |   |   |   |-- 2026-07-13-queue-engine-2.md
 |   |   |   |-- 2026-07-20-prism-filter-catalog.md
 |   |   |   |-- 2026-07-20-prism-retained-cache-off-baseline.md
@@ -263,6 +394,8 @@ Generated from `.`.
 |   |   |-- TileMapBaselineBenchmarks.cs
 |   |   |-- TileMapStage4BackendProfileRunner.cs
 |   |   |-- TileMapStage4Benchmarks.cs
+|   |   |-- TimbreCoreBenchmarkRunner.cs
+|   |   |-- TimbreDecodingBenchmarkRunner.cs
 |   |   +-- UiRelayBenchmarks.cs
 |   |-- Cerneala.PresentationFrameBudget/
 |   |   |-- Cerneala.PresentationFrameBudget.csproj
@@ -621,6 +754,10 @@ Generated from `.`.
 |   |-- Cerneala.LanguageServer.csproj
 |   +-- Program.cs
 |-- Cerneala.Platforms.Sdl3/
+|   |-- Audio/
+|   |   |-- ISdlAudioApi.cs
+|   |   |-- NativeSdlAudioApi.cs
+|   |   +-- SdlSoundOutput.cs
 |   |-- Hosting/
 |   |   |-- SdlCursorService.cs
 |   |   |-- SdlPlatformLifetime.cs
@@ -2605,6 +2742,44 @@ Generated from `.`.
 |   |   |   |   |-- test-allocation-driver/
 |   |   |   |   |-- trace-reader/
 |   |   |   |   +-- tree-propagation/
+|   |   |   |-- 2026-10-03-timbre-sdl3-stage0/
+|   |   |   |   |-- probe/
+|   |   |   |   |   |-- Program.cs
+|   |   |   |   |   +-- SdlAudioProbe.csproj
+|   |   |   |   |-- results/
+|   |   |   |   |   |-- baseline-default.trx
+|   |   |   |   |   |-- baseline-native.trx
+|   |   |   |   |   |-- probe-results.json
+|   |   |   |   |   |-- probe-stderr.txt
+|   |   |   |   |   +-- probe-stdout.txt
+|   |   |   |   +-- README.md
+|   |   |   |-- 2026-10-03-timbre-sdl3-stage1/
+|   |   |   |   |-- architecture.trx
+|   |   |   |   |-- core-hosting.trx
+|   |   |   |   |-- final-core-hosting.trx
+|   |   |   |   |-- final-default.trx
+|   |   |   |   |-- final-native.trx
+|   |   |   |   |-- green-1.trx
+|   |   |   |   |-- green-default.trx
+|   |   |   |   |-- green-native-format.trx
+|   |   |   |   |-- green-native.trx
+|   |   |   |   |-- README.md
+|   |   |   |   |-- red-platform.trx
+|   |   |   |   |-- red-resampling-tail.trx
+|   |   |   |   |-- red.trx
+|   |   |   |   |-- sdlgpu-full-default.trx
+|   |   |   |   +-- sdlgpu-lifetime-native.trx
+|   |   |   |-- 2026-10-03-timbre-sdl3-stage2/
+|   |   |   |   |-- core-hosting.trx
+|   |   |   |   |-- launcher-timbre-diagnostics.json
+|   |   |   |   |-- launcher-win-x64-timbre.log
+|   |   |   |   |-- README.md
+|   |   |   |   |-- red-streaming-priming.trx
+|   |   |   |   |-- run-timbre-diagnostics.json
+|   |   |   |   |-- sdl-default.trx
+|   |   |   |   |-- sdl-native.trx
+|   |   |   |   |-- timbre-full-after-deferral.trx
+|   |   |   |   +-- timbre-full-after-priming.trx
 |   |   |   |-- 2026-10-05-timbre-core-stage0-rebuild/
 |   |   |   |   |-- consumer/
 |   |   |   |   |-- contract-reference/
@@ -3049,6 +3224,31 @@ Generated from `.`.
 |   |   |   |-- Cerneala.SourceGen.UiMarkupGenerator.GenerationScope.md
 |   |   |   |-- Cerneala.SourceGen.UiMarkupGenerator.MarkupSource.md
 |   |   |   |-- Cerneala.SourceGen.UiMarkupGenerator.md
+|   |   |   |-- Cerneala.Timbre.Delay.md
+|   |   |   |-- Cerneala.Timbre.ISoundOutput.md
+|   |   |   |-- Cerneala.Timbre.ISoundOutputClient.md
+|   |   |   |-- Cerneala.Timbre.LowPass.md
+|   |   |   |-- Cerneala.Timbre.SoundClip.md
+|   |   |   |-- Cerneala.Timbre.SoundErrorKind.md
+|   |   |   |-- Cerneala.Timbre.SoundException.md
+|   |   |   |-- Cerneala.Timbre.SoundHandle.md
+|   |   |   |-- Cerneala.Timbre.SoundInput_T_.md
+|   |   |   |-- Cerneala.Timbre.SoundLoading.md
+|   |   |   |-- Cerneala.Timbre.SoundMemoryBudget.md
+|   |   |   |-- Cerneala.Timbre.SoundMemoryReservation.md
+|   |   |   |-- Cerneala.Timbre.SoundModifier.md
+|   |   |   |-- Cerneala.Timbre.SoundParameter_T_.md
+|   |   |   |-- Cerneala.Timbre.SoundParameter.md
+|   |   |   |-- Cerneala.Timbre.SoundPlayback.md
+|   |   |   |-- Cerneala.Timbre.SoundPlaybackResult.md
+|   |   |   |-- Cerneala.Timbre.SoundPlaybackState.md
+|   |   |   |-- Cerneala.Timbre.SoundReader.md
+|   |   |   |-- Cerneala.Timbre.SoundReadResult.md
+|   |   |   |-- Cerneala.Timbre.SoundRuntime.md
+|   |   |   |-- Cerneala.Timbre.SoundRuntimeOptions.md
+|   |   |   |-- Cerneala.Timbre.SoundScope.md
+|   |   |   |-- Cerneala.Timbre.SoundSource.md
+|   |   |   |-- Cerneala.Timbre.SoundStartOptions.md
 |   |   |   |-- Cerneala.UI.Accessibility.AccessibleName.md
 |   |   |   |-- Cerneala.UI.Accessibility.AutomationPeer.md
 |   |   |   |-- Cerneala.UI.Accessibility.ButtonAutomationPeer.md
@@ -3411,6 +3611,7 @@ Generated from `.`.
 |   |   |   |-- Cerneala.UI.Detective.RoutedEventTrace.md
 |   |   |   |-- Cerneala.UI.Detective.RoutedEventTraceSnapshot.md
 |   |   |   |-- Cerneala.UI.Detective.RoutedEventTraceStep.md
+|   |   |   |-- Cerneala.UI.Detective.SoundDiagnosticsSnapshot.md
 |   |   |   |-- Cerneala.UI.Detective.TileMapDiagnosticsSnapshot.md
 |   |   |   |-- Cerneala.UI.Detective.ViewportDiagnosticsSnapshot.md
 |   |   |   |-- Cerneala.UI.Elements.ElementChildRole.md
@@ -4867,7 +5068,8 @@ Generated from `.`.
 |   |   |-- RenderSurface3DPreview.crn
 |   |   |-- RenderSurface3DPreview.crn.cs
 |   |   |-- SmokeDrawingSurface.cs
-|   |   +-- SmokeOptions.cs
+|   |   |-- SmokeOptions.cs
+|   |   +-- TimbreSmoke.cs
 |   |-- Cerneala.Tests/
 |   |   |-- Architecture/
 |   |   |   |-- DesktopBackendDependencyBoundaryTests.cs
@@ -5264,6 +5466,7 @@ Generated from `.`.
 |   |   |   |   |-- ApplicationBackendAttributeTests.cs
 |   |   |   |   |-- ApplicationBackendRegistrationTests.cs
 |   |   |   |   |-- ApplicationRuntimeTests.cs
+|   |   |   |   |-- ApplicationSoundsIntegrationTests.cs
 |   |   |   |   |-- CoreHostingBoundaryTests.cs
 |   |   |   |   |-- DrawingContentServicesLifetimeTests.cs
 |   |   |   |   |-- FakeDrawingBackend.cs
@@ -5591,6 +5794,7 @@ Generated from `.`.
 |   |   |-- DrawingBackendLifecycleContractTests.cs
 |   |   |-- DrawingRetainedPayloadTests.cs
 |   |   |-- FakeSdlApi.cs
+|   |   |-- FakeSdlAudioApi.cs
 |   |   |-- GraphixManagedDependencyTests.cs
 |   |   |-- GraphixNativeDependencyTests.cs
 |   |   |-- NativeDrawingInterpolationBoundaryTests.cs
@@ -5607,6 +5811,7 @@ Generated from `.`.
 |   |   |-- NativeScenePrismStreamingTests.cs
 |   |   |-- NativeSdlLifetimeTests.cs
 |   |   |-- NativeServoHeldKeyTests.cs
+|   |   |-- NativeSoundOutputTests.cs
 |   |   |-- NativeTetrisWindowTests.cs
 |   |   |-- NativeUiImagePresentationTests.cs
 |   |   |-- RectanglePixelBoundaryMigrationTests.cs
@@ -5653,11 +5858,15 @@ Generated from `.`.
 |   |   |-- SdlNativeFactAttribute.cs
 |   |   |-- SdlNativeTestCollection.cs
 |   |   |-- SdlPlatformLifetimeTests.cs
+|   |   |-- SdlSoundOutputRuntimeTests.cs
+|   |   |-- SdlSoundOutputTests.cs
 |   |   |-- SdlWindowMigrationContractTests.cs
+|   |   |-- SdlWindowPlatformAudioTests.cs
 |   |   |-- SdlWindowPlatformTests.cs
 |   |   |-- SdlWindowsNativeContractTests.cs
 |   |   |-- SdlWindowSurfaceTests.cs
 |   |   |-- ShapePrimitiveRenderingTests.cs
+|   |   |-- SmokeOptionsTests.cs
 |   |   +-- WindowTestDoubles.cs
 |   |-- Cerneala.Tests.SourceGen/
 |   |   |-- Prism/
@@ -5702,6 +5911,87 @@ Generated from `.`.
 |   |   |-- UiMarkupGeneratorTileAuthoringTests.cs
 |   |   +-- UiMarkupGeneratorTileMap2DStageZeroTests.cs
 |   |-- Cerneala.Tests.Timbre/
+|   |   |-- Contracts/
+|   |   |   |-- ExternalConsumerTests.cs
+|   |   |   +-- TimbreArchitectureTests.cs
+|   |   |-- Corpus/
+|   |   |   |-- corpus-manifest.json
+|   |   |   |-- mp3-corrupt-sync.mp3
+|   |   |   |-- mp3-id3v2-id3v1-44100-stereo.mp3
+|   |   |   |-- mp3-long-22050-mono-cbr64.mp3
+|   |   |   |-- mp3-mpeg1-32000-stereo-vbr.mp3
+|   |   |   |-- mp3-mpeg1-44100-stereo-cbr128.mp3
+|   |   |   |-- mp3-mpeg1-48000-mono-cbr64.mp3
+|   |   |   |-- mp3-mpeg2-16000-stereo-cbr48.mp3
+|   |   |   |-- mp3-mpeg2-22050-mono-vbr.mp3
+|   |   |   |-- mp3-mpeg25-8000-mono-cbr16.mp3
+|   |   |   |-- mp3-no-info-tag-44100-stereo.mp3
+|   |   |   |-- mp3-reservoir-wrap-48000-stereo-cbr64.mp3
+|   |   |   |-- mp3-truncated.mp3
+|   |   |   |-- mpeg-layer2-44100-stereo.mp2
+|   |   |   |-- ogg-chained-vorbis.ogg
+|   |   |   |-- ogg-flac.ogg
+|   |   |   |-- ogg-multiplexed-vorbis-opus.ogg
+|   |   |   |-- opus-long-mono-32k.opus
+|   |   |   |-- opus-mono-16000-24k.opus
+|   |   |   |-- opus-stereo-48000-96k.opus
+|   |   |   |-- opus-stereo-preskip-trim.opus
+|   |   |   |-- opus-surround-6ch.opus
+|   |   |   |-- opus-truncated.opus
+|   |   |   |-- vorbis-16000-mono-q2.ogg
+|   |   |   |-- vorbis-192000-stereo-q2.ogg
+|   |   |   |-- vorbis-22050-mono-q2.ogg
+|   |   |   |-- vorbis-44100-stereo-q4.ogg
+|   |   |   |-- vorbis-48000-stereo-q2.ogg
+|   |   |   |-- vorbis-8000-mono-q2.ogg
+|   |   |   |-- vorbis-96000-stereo-q4.ogg
+|   |   |   |-- vorbis-corrupt-crc.ogg
+|   |   |   |-- vorbis-long-22050-mono-q2.ogg
+|   |   |   +-- vorbis-truncated.ogg
+|   |   |-- Decoding/
+|   |   |   |-- DecodingCorpus.cs
+|   |   |   |-- ObservedFileStream.cs
+|   |   |   |-- PcmOracle.cs
+|   |   |   |-- SoundDecoderConformanceTests.cs
+|   |   |   |-- SoundDecoderErrorTests.cs
+|   |   |   |-- SoundDecoderIntegrationTests.cs
+|   |   |   |-- SoundDecoderPartitionTests.cs
+|   |   |   |-- SoundDecoderRuntimeTests.cs
+|   |   |   |-- SoundStreamingCancelTests.cs
+|   |   |   |-- SoundStreamingFailureTests.cs
+|   |   |   |-- SoundStreamingIncrementalTests.cs
+|   |   |   |-- SoundStreamingLoopTests.cs
+|   |   |   |-- SoundStreamingSeekTests.cs
+|   |   |   |-- SoundStreamingStressTests.cs
+|   |   |   |-- SoundStreamingTransportTests.cs
+|   |   |   |-- StreamingDrive.cs
+|   |   |   +-- WavFixture.cs
+|   |   |-- Definitions/
+|   |   |   +-- SoundDefinitionTests.cs
+|   |   |-- Dsp/
+|   |   |   |-- DelayKernelTests.cs
+|   |   |   |-- DspChainEngineTests.cs
+|   |   |   |-- DspOracle.cs
+|   |   |   +-- LowPassKernelTests.cs
+|   |   |-- Engine/
+|   |   |   |-- ConcurrencyStressTests.cs
+|   |   |   |-- HandleAndScopeTests.cs
+|   |   |   |-- LifecycleTests.cs
+|   |   |   |-- MemoryBudgetTests.cs
+|   |   |   |-- PlainMixTests.cs
+|   |   |   |-- PlaybackIdentityTests.cs
+|   |   |   |-- RealtimeAllocationTests.cs
+|   |   |   |-- StreamingPrimingTests.cs
+|   |   |   +-- TransportTests.cs
+|   |   |-- Harness/
+|   |   |   |-- DeterministicSoundOutput.cs
+|   |   |   |-- DeterministicSoundReader.cs
+|   |   |   |-- HarnessObserverTests.cs
+|   |   |   |-- HarnessWait.cs
+|   |   |   +-- TimbreRig.cs
+|   |   |-- Hosting/
+|   |   |   +-- OwnerAccessTests.cs
+|   |   +-- Cerneala.Tests.Timbre.csproj
 |   |-- Cerneala.Tests.VisualStudio/
 |   |   |-- Golden/
 |   |   |   |-- cerneala-tokenization.crn
@@ -5765,6 +6055,16 @@ Generated from `.`.
 |   |   |   |-- tiled-objects.tmj
 |   |   |   |-- tiled-raw.tmj
 |   |   |   +-- tiled-zlib.tmj
+|   |   |-- TimbreConsumer/
+|   |   |   |-- ConsumerScenarios.cs
+|   |   |   |-- DocumentationExamples.cs
+|   |   |   |-- StandaloneUsage.cs
+|   |   |   +-- TimbreConsumer.csproj
+|   |   |-- TimbreCorpusGenerator/
+|   |   |   |-- CorpusSignal.cs
+|   |   |   |-- OggWriter.cs
+|   |   |   |-- Program.cs
+|   |   |   +-- TimbreCorpusGenerator.csproj
 |   |   |-- VisualStudioConsumer/
 |   |   |   |-- AuthoringView.crn
 |   |   |   |-- AuthoringView.crn.cs
@@ -5827,6 +6127,69 @@ Generated from `.`.
 |   |-- TetrisGameSurface.cs
 |   |-- TetrisSceneModel.cs
 |   +-- TetrominoAtlas.cs
+|-- Timbre/
+|   |-- Catalog/
+|   |   +-- TimbreCatalog.cs
+|   |-- Decoding/
+|   |   |-- NLayer/
+|   |   |   |-- Decoder/
+|   |   |   |   |-- BitReservoir.cs
+|   |   |   |   |-- Huffman.cs
+|   |   |   |   |-- LayerDecoderBase.cs
+|   |   |   |   |-- LayerIDecoder.cs
+|   |   |   |   |-- LayerIIDecoder.cs
+|   |   |   |   |-- LayerIIDecoderBase.cs
+|   |   |   |   +-- LayerIIIDecoder.cs
+|   |   |   |-- Enums.cs
+|   |   |   |-- IMpegFrame.cs
+|   |   |   +-- MpegFrameDecoder.cs
+|   |   |-- CanonicalConverter.cs
+|   |   |-- DecodedSoundReader.cs
+|   |   |-- DecodedSource.cs
+|   |   |-- Mp3Source.cs
+|   |   |-- OggStreamReader.cs
+|   |   |-- OpusSource.cs
+|   |   |-- SoundFormats.cs
+|   |   |-- THIRD-PARTY-NOTICES.txt
+|   |   |-- VorbisSource.cs
+|   |   +-- WavSource.cs
+|   |-- Dsp/
+|   |   |-- DelayKernel.cs
+|   |   |-- LowPassKernel.cs
+|   |   +-- SoundDspChain.cs
+|   |-- Engine/
+|   |   |-- AsyncAutoResetSignal.cs
+|   |   |-- ISoundBlockObserver.cs
+|   |   |-- PumpDispatcher.cs
+|   |   |-- SoundDecoders.cs
+|   |   |-- SoundFeed.cs
+|   |   |-- SoundMemoryPool.cs
+|   |   |-- SoundPayloadCache.cs
+|   |   |-- SoundTime.cs
+|   |   |-- SoundVoice.cs
+|   |   +-- StreamingFeed.cs
+|   |-- ISoundOutput.cs
+|   |-- SoundClip.cs
+|   |-- SoundException.cs
+|   |-- SoundHandle.cs
+|   |-- SoundInput.cs
+|   |-- SoundLoading.cs
+|   |-- SoundMemoryBudget.cs
+|   |-- SoundModifier.cs
+|   |-- SoundParameter.cs
+|   |-- SoundPlayback.cs
+|   |-- SoundPlaybackResult.cs
+|   |-- SoundPlaybackState.cs
+|   |-- SoundReader.cs
+|   |-- SoundRuntime.Counters.cs
+|   |-- SoundRuntime.cs
+|   |-- SoundRuntime.Loading.cs
+|   |-- SoundRuntime.Mixer.cs
+|   |-- SoundRuntimeDiagnostics.cs
+|   |-- SoundRuntimeOptions.cs
+|   |-- SoundScope.cs
+|   |-- SoundSource.cs
+|   +-- SoundStartOptions.cs
 |-- Tools/
 |   |-- Cerneala.Scene2D.PackageCompiler/
 |   |   |-- Cerneala.Scene2D.PackageCompiler.csproj
@@ -5847,20 +6210,41 @@ Generated from `.`.
 |   |   |-- roslyn-5.9.patch
 |   |   |-- test_install_retry.ps1
 |   |   +-- test_roslyn_mcp.py
-|   +-- scripts/
-|       |-- Archive-Repo.ps1
-|       |-- Archive-Repo.Tests.ps1
-|       |-- Build-CernealaVisualStudioRelease.ps1
-|       |-- Cerneala.BuildInputs.Tests.ps1
-|       |-- Install-RoslynMcp.ps1
-|       |-- Invoke-SdlGpuSmoke.ps1
-|       |-- Measure-PrismOuterGlowColdStart.ps1
-|       |-- New-FileTree.ps1
-|       |-- New-PrismFilterReference.ps1
-|       |-- Publish-SdlGpuSmoke.ps1
-|       |-- SdlGpuSmoke.Common.ps1
-|       |-- Start-RoslynMcp.ps1
-|       +-- Test-PrismMotionBlur144Hz.ps1
+|   |-- scripts/
+|   |   |-- Archive-Repo.ps1
+|   |   |-- Archive-Repo.Tests.ps1
+|   |   |-- Build-CernealaVisualStudioRelease.ps1
+|   |   |-- Cerneala.BuildInputs.Tests.ps1
+|   |   |-- Install-RoslynMcp.ps1
+|   |   |-- Invoke-SdlGpuSmoke.ps1
+|   |   |-- Measure-PrismOuterGlowColdStart.ps1
+|   |   |-- New-FileTree.ps1
+|   |   |-- New-PrismFilterReference.ps1
+|   |   |-- Publish-SdlGpuSmoke.ps1
+|   |   |-- SdlGpuSmoke.Common.ps1
+|   |   |-- Start-RoslynMcp.ps1
+|   |   |-- Test-PrismMotionBlur144Hz.ps1
+|   |   +-- Test-TimbreDecoderAssets.ps1
+|   |-- TimbreDecoderProbe/
+|   |   |-- Prototype/
+|   |   |   |-- CanonicalConverter.cs
+|   |   |   |-- DecodedSource.cs
+|   |   |   |-- Mp3Source.cs
+|   |   |   |-- OggStreamReader.cs
+|   |   |   |-- OpusSource.cs
+|   |   |   |-- ProbeStandIns.cs
+|   |   |   |-- VorbisSource.cs
+|   |   |   +-- WavSource.cs
+|   |   |-- CountingStream.cs
+|   |   |-- Footprint.cs
+|   |   |-- Format-ProbeSummary.ps1
+|   |   |-- Invoke-DecoderProbe.ps1
+|   |   |-- LibraryCandidates.cs
+|   |   |-- Program.cs
+|   |   +-- TimbreDecoderProbe.csproj
+|   +-- TimbreDecoderSelection/
+|       |-- Program.cs
+|       +-- TimbreDecoderSelection.csproj
 |-- UI/
 |   |-- Accessibility/
 |   |   |-- AccessibleName.cs
@@ -6183,6 +6567,7 @@ Generated from `.`.
 |   |   |-- RenderCacheDumper.cs
 |   |   |-- RenderDiagnostics.cs
 |   |   |-- RoutedEventTrace.cs
+|   |   |-- SoundDiagnosticsSnapshot.cs
 |   |   +-- TileMapDiagnosticsSnapshot.cs
 |   |-- Drawing/
 |   |   +-- DrawingContentServices.cs
@@ -6203,9 +6588,11 @@ Generated from `.`.
 |   |   |-- UIElement.cs
 |   |   |-- UIElement.Events.cs
 |   |   |-- UIElement.InputEvents.cs
+|   |   |-- UIElement.Sounds.cs
 |   |   |-- UIElementCollection.cs
 |   |   |-- UIElementVisibility.cs
 |   |   |-- UIRoot.cs
+|   |   |-- UIRoot.Sounds.cs
 |   |   +-- UIRoot.Subscriptions.cs
 |   |-- Hosting/
 |   |   |-- Windowing/
@@ -6671,6 +7058,9 @@ Generated from `.`.
 |   |   |-- ThemePalette.cs
 |   |   |-- ThemeProvider.cs
 |   |   +-- ThemeResource.cs
+|   |-- Timbre/
+|   |   |-- ElementSoundOwner.cs
+|   |   +-- PlatformSoundOutput.cs
 |   |-- Application.cs
 |   |-- ApplicationExitEventArgs.cs
 |   |-- ApplicationShutdownMode.cs

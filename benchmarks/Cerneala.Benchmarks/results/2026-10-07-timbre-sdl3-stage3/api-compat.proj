@@ -1,0 +1,49 @@
+<Project>
+  <!-- Strict ApiCompat for the Timbre SDL3 backend plan against its own frozen
+       baseline (b622f8cf, before this plan). No suppressions: the plan adds no
+       public surface, so every difference fails. -->
+  <PropertyGroup>
+    <SdkRoot>C:\Program Files\dotnet\sdk\10.0.400</SdkRoot>
+    <DotNetApiCompatTaskAssembly>$(SdkRoot)\Sdks\Microsoft.NET.Sdk\tools\net10.0\Microsoft.DotNet.ApiCompat.Task.dll</DotNetApiCompatTaskAssembly>
+    <RoslynAssembliesPath>$(SdkRoot)\Roslyn\bincore</RoslynAssembliesPath>
+    <BaselineRoot>C:\Users\lauri\Desktop\Cerneala-baseline-sdl3-b622f8c</BaselineRoot>
+    <CurrentRoot>C:\Users\lauri\Desktop\Cerneala</CurrentRoot>
+    <Runtime>C:\Program Files\dotnet\shared\Microsoft.NETCore.App\8.0.30</Runtime>
+  </PropertyGroup>
+
+  <UsingTask TaskName="Microsoft.DotNet.ApiCompat.Task.ValidateAssembliesTask"
+             AssemblyFile="$(DotNetApiCompatTaskAssembly)" />
+
+  <Target Name="Compare">
+    <ValidateAssembliesTask
+      LeftAssemblies="$(BaselineRoot)\bin\Release\net8.0\Cerneala.dll"
+      RightAssemblies="$(CurrentRoot)\bin\Release\net8.0\Cerneala.dll"
+      LeftAssembliesReferences="$(Runtime),$(BaselineRoot)\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0"
+      RightAssembliesReferences="$(Runtime),$(CurrentRoot)\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0"
+      RoslynAssembliesPath="$(RoslynAssembliesPath)"
+      EnableStrictMode="true"
+      EnableRuleCannotChangeParameterName="true"
+      GenerateSuppressionFile="false"
+      PermitUnnecessarySuppressions="false" />
+    <ValidateAssembliesTask
+      LeftAssemblies="$(BaselineRoot)\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll"
+      RightAssemblies="$(CurrentRoot)\Cerneala.Platforms.Sdl3\bin\Release\net8.0\Cerneala.Platforms.Sdl3.dll"
+      LeftAssembliesReferences="$(Runtime),$(BaselineRoot)\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0"
+      RightAssembliesReferences="$(Runtime),$(CurrentRoot)\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0"
+      RoslynAssembliesPath="$(RoslynAssembliesPath)"
+      EnableStrictMode="true"
+      EnableRuleCannotChangeParameterName="true"
+      GenerateSuppressionFile="false"
+      PermitUnnecessarySuppressions="false" />
+    <ValidateAssembliesTask
+      LeftAssemblies="$(BaselineRoot)\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll"
+      RightAssemblies="$(CurrentRoot)\Cerneala.Backends.SdlGpu\bin\Release\net8.0\Cerneala.Backends.SdlGpu.dll"
+      LeftAssembliesReferences="$(Runtime),$(BaselineRoot)\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0"
+      RightAssembliesReferences="$(Runtime),$(CurrentRoot)\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0"
+      RoslynAssembliesPath="$(RoslynAssembliesPath)"
+      EnableStrictMode="true"
+      EnableRuleCannotChangeParameterName="true"
+      GenerateSuppressionFile="false"
+      PermitUnnecessarySuppressions="false" />
+  </Target>
+</Project>

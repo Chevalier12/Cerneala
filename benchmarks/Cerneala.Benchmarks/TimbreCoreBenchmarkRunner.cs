@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using Cerneala.Platforms.Sdl3;
 using Cerneala.Timbre;
 using Cerneala.Timbre.Engine;
 using Microsoft.Win32;
@@ -11,6 +12,8 @@ namespace Cerneala.Benchmarks;
 // streaming), each with LowPass + Delay, 480-frame blocks, 1000 warmup and
 // 10000 measured blocks per process. A device emulator consumes PCM on the
 // wall clock at 48 kHz, independently of the mixer, and notifies capacity.
+// SDL3 backend plan, stage 3: TIMBRE_BENCH_OUTPUT=sdl replaces the emulator
+// with the SDL3 output on the default playback device.
 internal static class TimbreCoreBenchmarkRunner
 {
     private static readonly bool Pilot = Environment.GetEnvironmentVariable("TIMBRE_BENCH_PILOT") == "1";
@@ -23,14 +26,22 @@ internal static class TimbreCoreBenchmarkRunner
 
     public static void Run(string reportPath)
     {
-        RunAsync(reportPath).GetAwaiter().GetResult();
+        if (Environment.GetEnvironmentVariable("TIMBRE_BENCH_OUTPUT") == "sdl")
+        {
+            // SDL video/events stay owned by this thread; the output owns audio.
+            using SdlPlatformLifetime lifetime = new(new NativeSdlApi());
+            RunAsync(reportPath, new SdlSoundOutput(new NativeSdlAudioApi())).GetAwaiter().GetResult();
+            return;
+        }
+
+        RunAsync(reportPath, sdlOutput: null).GetAwaiter().GetResult();
     }
 
-    private static async Task RunAsync(string reportPath)
+    private static async Task RunAsync(string reportPath, SdlSoundOutput? sdlOutput)
     {
         PacedDevice device = new();
         BlockRecorder recorder = new(WarmupBlocks, MeasuredBlocks);
-        using SoundRuntime runtime = new(new SoundRuntimeOptions { Output = device });
+        using SoundRuntime runtime = new(new SoundRuntimeOptions { Output = sdlOutput ?? (ISoundOutput)device });
         runtime.BlockObserver = recorder;
         using SoundScope scope = runtime.CreateScope();
 
@@ -79,14 +90,19 @@ internal static class TimbreCoreBenchmarkRunner
             voices.Add(scope.Play(streamingClips[index % streamingClips.Length]));
         }
 
-        device.Start();
+        if (sdlOutput is null)
+        {
+            device.Start();
+        }
+
         await recorder.WarmedUp;
         SoundRuntimeDiagnostics atWarmup = runtime.GetDiagnostics();
-        long deviceUnderrunAtWarmup = device.UnderrunFrames;
+        // With SDL the device-side underrun is SDL's estimate of missing input.
+        long deviceUnderrunAtWarmup = sdlOutput is null ? device.UnderrunFrames : sdlOutput.GetDiagnostics().StarvedBytes / 8;
         await recorder.Completed;
         SoundRuntimeDiagnostics atEnd = runtime.GetDiagnostics();
-        long deviceUnderrunAtEnd = device.UnderrunFrames;
-        int maxQueuedMeasured = device.MaxQueuedFrames;
+        long deviceUnderrunAtEnd = sdlOutput is null ? device.UnderrunFrames : sdlOutput.GetDiagnostics().StarvedBytes / 8;
+        int maxQueuedMeasured = sdlOutput is null ? device.MaxQueuedFrames : sdlOutput.GetDiagnostics().QueueHighWaterFrames;
 
         double[] latencies = new double[LatencySamples];
         for (int sample = 0; sample < LatencySamples; sample++)
@@ -103,6 +119,10 @@ internal static class TimbreCoreBenchmarkRunner
         }
 
         device.Stop();
+        SdlSoundOutputDiagnostics? sdl = sdlOutput?.GetDiagnostics();
+        string output = sdl is { } opened
+            ? $"sdl {SDL3.SDL.GetCurrentAudioDriver()} 0x{opened.DeviceFormat.Format:X}/{opened.DeviceFormat.Channels}/{opened.DeviceFormat.Frequency} {opened.DeviceSampleFrames} frames"
+            : "emulator";
         double[] mixMilliseconds = recorder.MeasuredTicks.Select(ticks => ticks * 1000.0 / Stopwatch.Frequency).ToArray();
         Array.Sort(mixMilliseconds);
         Array.Sort(latencies);
@@ -138,6 +158,9 @@ internal static class TimbreCoreBenchmarkRunner
             GC.CollectionCount(0),
             GC.CollectionCount(1),
             GC.CollectionCount(2),
+            output,
+            sdl?.OpenCount ?? 0,
+            NativeSdlAudioApi.LateCallbacks,
             new Thresholds(BlockMilliseconds * 0.25, 0, 1920, 0, 50.0));
         string json = JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true });
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(reportPath))!);
@@ -205,6 +228,9 @@ internal static class TimbreCoreBenchmarkRunner
         int Gen0Collections,
         int Gen1Collections,
         int Gen2Collections,
+        string Output,
+        int OutputOpens,
+        long LateCallbacks,
         Thresholds Gate);
 
     // Preallocated per-block storage written only by the mixer thread.

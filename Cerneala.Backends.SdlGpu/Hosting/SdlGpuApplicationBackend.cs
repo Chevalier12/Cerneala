@@ -27,7 +27,8 @@ public static class SdlGpuApplicationBackend
             return new SdlWindowPlatform(
                 api,
                 new SdlGpuWindowGraphicsSessionFactory(api, useMultisampling),
-                coordinateScaleOverride);
+                coordinateScaleOverride,
+                new NativeSdlAudioApi());
         }
     }
 }

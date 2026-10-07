@@ -1,0 +1,156 @@
+{
+  "process": {
+    "os": "Microsoft Windows 10.0.26200",
+    "arch": "X64",
+    "runtime": ".NET 8.0.30",
+    "sdlRevision": "SDL-3.4.16-e912da0 (Graphix 3.4.16-graphix.6 commit e912da037a59e33affc6ecd69be326265cdc748b)",
+    "sdlVersion": 3004016,
+    "mainThread": 1
+  },
+  "abi": {
+    "audioSpecSize": 12,
+    "formatOffset": 0,
+    "channelsOffset": 4,
+    "freqOffset": 8,
+    "audioFormatUnderlying": "UInt32",
+    "f32le": "0x8120",
+    "f32ByteSize": 4,
+    "frameSize": 8,
+    "callbackConvention": "Cdecl"
+  },
+  "subsystemBalance": {
+    "before": "Video, Events",
+    "rounds": [
+      {
+        "thread": 5,
+        "initialized": true,
+        "error": "",
+        "during": "Audio, Video, Events",
+        "driver": "wasapi",
+        "after": "Video, Events"
+      },
+      {
+        "thread": 6,
+        "initialized": true,
+        "error": "",
+        "during": "Audio, Video, Events",
+        "driver": "wasapi",
+        "after": "Video, Events"
+      }
+    ],
+    "final": "Video, Events"
+  },
+  "realDevice": {
+    "driver": "wasapi",
+    "opened": true,
+    "device": 37,
+    "pausedAtOpen": true,
+    "deviceFormat": {
+      "format": "0x8120",
+      "Channels": 2,
+      "Freq": 48000
+    },
+    "deviceSampleFrames": 480,
+    "streamSource": {
+      "format": "0x8120",
+      "Channels": 2,
+      "Freq": 48000
+    },
+    "streamDestination": {
+      "format": "0x8120",
+      "Channels": 2,
+      "Freq": 48000
+    },
+    "firstPut": true,
+    "queuedWhilePausedBytes": 3840,
+    "callbacksWhilePaused": 0,
+    "resumed": true,
+    "puts": 64,
+    "queueHighWaterBytes": 15360,
+    "queueHighWaterFrames": 1920,
+    "callbacks": 64,
+    "callbackThreads": [
+      8
+    ],
+    "callbackOnMainThread": false,
+    "additionalAmounts": [
+      0
+    ],
+    "totalAmounts": [
+      3840
+    ],
+    "zeroAdditionalCallbacks": 64,
+    "starvedCallbacksWhileFeeding": 0,
+    "drainMs": 30.1003,
+    "queuedAfterDrainBytes": 0,
+    "callbacksAfterDestroy": 0
+  },
+  "conversion": {
+    "created": true,
+    "put": true,
+    "flushed": true,
+    "inputFrames": 4800,
+    "outputFrames": 4410,
+    "expectedFrames": 4410,
+    "estimatedFrequencyHz": 995,
+    "rms": 0.3535693514262968,
+    "expectedRms": 0.35355339059327373,
+    "maxChannelDelta": 0
+  },
+  "dummyDriver": {
+    "driver": "dummy",
+    "opened": true,
+    "device": 49,
+    "pausedAtOpen": true,
+    "deviceFormat": {
+      "format": "0x8120",
+      "Channels": 2,
+      "Freq": 48000
+    },
+    "deviceSampleFrames": 1024,
+    "streamSource": {
+      "format": "0x8120",
+      "Channels": 2,
+      "Freq": 48000
+    },
+    "streamDestination": {
+      "format": "0x8120",
+      "Channels": 2,
+      "Freq": 48000
+    },
+    "firstPut": true,
+    "queuedWhilePausedBytes": 3840,
+    "callbacksWhilePaused": 0,
+    "resumed": true,
+    "puts": 63,
+    "queueHighWaterBytes": 15360,
+    "queueHighWaterFrames": 1920,
+    "callbacks": 30,
+    "callbackThreads": [
+      5
+    ],
+    "callbackOnMainThread": false,
+    "additionalAmounts": [
+      0,
+      3840
+    ],
+    "totalAmounts": [
+      8192
+    ],
+    "zeroAdditionalCallbacks": 29,
+    "starvedCallbacksWhileFeeding": 0,
+    "drainMs": 21.2155,
+    "queuedAfterDrainBytes": 0,
+    "callbacksAfterDestroy": 0
+  },
+  "absentDriver": {
+    "initialized": false,
+    "error": "Audio target \u0027cerneala-absent-driver\u0027 not available",
+    "wasInitAudio": "0",
+    "after": "Video, Events"
+  },
+  "lateCallbacksTotal": 0,
+  "wasInitAfterProbes": "Video, Events",
+  "wasInitAfterQuit": "0",
+  "exitCode": 0
+}

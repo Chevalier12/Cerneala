@@ -261,27 +261,48 @@ public sealed class LifecycleTests
     [Fact]
     public async Task StreamingUnderrunPadsCountedSilenceWithoutSkippingContent()
     {
+        // The source stalls after its first full software queue plus one block:
+        // the stream starts unpadded, and the later starvation is padded.
+        const int stall = TimbreRig.Budget + TimbreRig.Block;
         using TimbreRig rig = new();
         TaskCompletionSource gate = new(TaskCreationOptions.RunContinuationsAsynchronously);
         DeterministicSoundSourceFactory factory = new(48000, maxFramesPerRead: 480);
-        factory.Configure = reader => reader.ReadGate = _ => reader.Position >= 960 ? gate.Task : Task.CompletedTask;
+        factory.Configure = reader => reader.ReadGate = _ => reader.Position >= stall ? gate.Task : Task.CompletedTask;
         SoundPlayback playback = rig.Scope.Play(TimbreRig.Clip(factory, SoundLoading.Streaming));
         await rig.ReadyAsync(playback);
         DeterministicSoundReader reader = factory.Readers.Single();
-        await reader.WaitForReadCountAsync(3);
+        await reader.WaitForReadCountAsync((stall / TimbreRig.Block) + 1);
 
         rig.Output.Release();
         await rig.Output.WaitForSubmittedFramesAsync(TimbreRig.Budget);
-        float[] pcm = rig.Output.Read(0, TimbreRig.Budget);
-        TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Budget, (frame, channel) => frame < 960 ? Signal(frame, channel) : 0f), pcm);
-        Assert.Equal(960, rig.Runtime.GetDiagnostics().UnderrunFrames);
-        Assert.Equal(TimbreRig.FramesToTime(960), playback.Position);
+        TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Budget, Signal), rig.Output.Read(0, TimbreRig.Budget));
+        TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Block, Signal, 1f, TimbreRig.Budget), await rig.NextBlockAsync());
+        Assert.Equal(0, rig.Runtime.GetDiagnostics().UnderrunFrames);
+
+        // While blocks are still queued the late source defers mixing; only an
+        // output about to run dry gets a padded block.
+        long beforePadding = rig.Output.SubmittedFrames;
+        rig.Output.Consume(TimbreRig.Block);
+        await rig.SyncAsync();
+        Assert.Equal(beforePadding, rig.Output.SubmittedFrames);
+        Assert.Equal(0, rig.Runtime.GetDiagnostics().UnderrunFrames);
+
+        rig.Output.ConsumeAll();
+        await rig.Output.WaitForSubmittedFramesAsync(beforePadding + TimbreRig.Block);
+        await rig.SyncAsync();
+        Assert.Equal(beforePadding + TimbreRig.Block, rig.Output.SubmittedFrames);
+        float[] padded = rig.Output.Read(beforePadding, TimbreRig.Block);
+        TimbreRig.AssertPcm(new float[TimbreRig.Block * 2], padded);
+        Assert.Equal(TimbreRig.Block, rig.Runtime.GetDiagnostics().UnderrunFrames);
+        Assert.Equal(TimbreRig.FramesToTime(stall), playback.Position);
 
         reader.ReadGate = null;
         gate.SetResult();
         await rig.SettledAsync(playback);
-        float[] block = await rig.NextBlockAsync();
-        TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Block, Signal, 1f, 960), block);
+        // The block right after the padding resumes exactly where the source stalled.
+        await rig.Output.WaitForSubmittedFramesAsync(beforePadding + (2 * TimbreRig.Block));
+        float[] block = rig.Output.Read(beforePadding + TimbreRig.Block, TimbreRig.Block);
+        TimbreRig.AssertPcm(TimbreRig.Expected(TimbreRig.Block, Signal, 1f, stall), block);
     }
 
     [Fact]

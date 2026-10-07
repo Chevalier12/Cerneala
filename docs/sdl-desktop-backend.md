@@ -71,6 +71,19 @@ Depth test, depth write, and compare operation are described independently from 
 
 Geometry transfer remains session-owned. Each window session owns one `SdlGpuGeometryUploadArena` with the existing three frame slots. Cerberus uses it for retained 2D geometry; the `RenderSurface3D` executor also uses the same session arena for its 3D vertex layout and indices. Its typed front end accepts unmanaged vertex spans, views both vertices and signed 32-bit indices as bytes, and enters one shared validation, reservation, map/copy, upload, growth, and retirement path. Byte counts and binding offsets use checked arithmetic and four-byte alignment. Interleaved layouts reserve distinct regions in submission order; a replaced buffer restarts at offset zero, while a failed transfer does not make an already reserved region reusable by a later draw. The 3D path has its own color/depth targets and device-owned pipelines; sharing the transfer arena does not merge its render pass with 2D, change Cerberus batching, or change painter order.
 
+## Audio output (Timbre)
+
+The platform supplies the audio output behind `Application.SoundRuntime`. Timbre decodes, processes, and mixes every playback; SDL3 core only receives the final mix and converts it for the device. SDL_mixer is not used, and no SDL handle or binding type is exposed by the public API.
+
+- **Ownership.** One output per platform, shared by every window. It is created inert with the platform and opened lazily by the runtime's mixer the first time a playback needs it: `SDL_InitSubSystem(SDL_INIT_AUDIO)`, then `SDL_OpenAudioDeviceStream` on the default playback device (opened paused), then `SDL_ResumeAudioStreamDevice`. Closing runs `SDL_DestroyAudioStream`, which also closes that device, then `SDL_QuitSubSystem(SDL_INIT_AUDIO)`. Video/event initialization and the platform's `SDL_Quit` are unchanged. GPU-only consumers that construct the platform without the audio seam never initialize audio.
+- **Format and queue.** The stream's input is the Timbre mix: float32, stereo, 48 kHz, whole 480-frame blocks. The mixer keeps at most 1920 frames (40 ms) queued, measured with `SDL_GetAudioStreamQueued`. When the device runs short and the mixer has produced nothing since its previous check, the output flushes the stream so a resampling conversion releases the frames it holds back; continuous playback is never flushed.
+- **Threading.** All PCM is pushed from the Timbre mixer thread. The SDL request callback runs on an SDL audio thread with the stream lock held and only counts the request and signals the mixer; it never decodes, mixes, reads files, or touches the UI. One rooted callback serves the process; a callback that races stream destruction finds no handler and does nothing. Audio progress does not depend on redraw, the UI pump, or window visibility.
+- **Shutdown.** The platform releases audio first when it is disposed: callbacks are drained by the stream destruction, the stream and device are freed, the audio subsystem is released, and only then does SDL quit. Afterwards the output rejects opens, and live playbacks fail with `DeviceUnavailable`.
+- **Errors.** A missing audio driver or device, an open/resume failure, a failed `SDL_PutAudioStreamData` (a `bool` result), or a removed default device (`SDL_EVENT_AUDIO_DEVICE_REMOVED` for the stream's device, observed without the UI pump) fails the affected playbacks with `SoundErrorKind.DeviceUnavailable`. Nothing reconnects or retries automatically; a later explicit `Play` opens the device again.
+- **Transport.** Cancel, pause, seek, loop, replacement, parameter changes, and closing a window affect only PCM that Timbre has not produced yet. Audio already queued (≤ 40 ms) still plays; the shared stream is never cleared or paused for one playback. Completion requires the queued tail to be consumed by the device; it does not observe the DAC.
+
+Physical delivery and the dummy driver are verified separately: the dummy driver certifies interop and lifecycle only.
+
 ## Runtime identifiers and native assets
 
 ### Public Graphix managed/native dependencies
@@ -270,13 +283,15 @@ Run the published application through the matching launch helper:
   -ArtifactDirectory artifacts\sdlgpu-smoke
 ```
 
-Available smoke modes cover single-window, multi-window, input, resize, Drawing, `RenderSurface2D`, Prism, and screenshot behavior. Screenshots are captured only through `Window.SaveScreenshot`; no operating-system screen-copy API is used.
+Available smoke modes cover single-window, multi-window, input, resize, Drawing, `RenderSurface2D`, Prism, screenshot, and Timbre audio behavior. Screenshots are captured only through `Window.SaveScreenshot`; no operating-system screen-copy API is used. The `timbre` mode records the PCM the output accepted through an application-owned tap and compares each isolated clip bit-exactly with the same engine rendered into a deterministic sink; it writes `timbre-diagnostics.json` and does not capture operating-system audio.
 
 ## CI notes
 
 The desktop workflow publishes both architectures for each operating-system family and executes native multi-window and Prism smoke tests on Windows, Linux, and macOS. Linux CI uses Xvfb and Mesa lavapipe when no physical display/GPU is available. This software Vulkan configuration is a CI fallback, not a runtime requirement for user applications.
 
 The same Windows x64, Linux x64/Vulkan, and macOS arm64/Metal matrix also builds the SDL and core test projects, enables `CERNEALA_SDL_NATIVE_TESTS=1`, and executes the real offline-artifact pipeline creation test plus the current Drawing/Prism pixel-conformance corpus. The job validates exact TRX counts (1 pipeline test and 133 conformance cases), rejects any non-executed mandatory test, and uploads the `Window.SaveScreenshot` images, references, heatmaps, and diff reports. Linux runs these tests under `xvfb-run` after selecting the lavapipe ICD. Cross-published secondary RIDs are packaging evidence only and do not substitute for those three native executions.
+
+Timbre audio runs on Windows only. Hosted runners have no playback endpoint, so the Windows job selects SDL's dummy audio driver explicitly for the native audio tests (exactly five, no skips) and the `timbre` smoke; that certifies interop, lifecycle, and the PCM pipeline, not physical delivery. Physical delivery is verified on a Windows host with a default playback device by `CERNEALA_TIMBRE_AUDIO_DEVICE=1` together with `CERNEALA_SDL_NATIVE_TESTS=1`, and by the `timbre` smoke without `SDL_AUDIO_DRIVER`. Linux and macOS jobs do not run audio; their Xvfb/Vulkan setup is not an audio environment.
 
 ## See also
 

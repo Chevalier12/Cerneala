@@ -21,6 +21,7 @@
     <Compile Include="..\Shared\SdlDrawingFixture.cs" Link="Fixtures\SdlDrawingFixture.cs" />
     <Compile Include="..\Shared\PrismStainedGlassTestData.cs" Link="Fixtures\PrismStainedGlassTestData.cs" />
     <Compile Include="..\Shared\PrismTestData.cs" Link="Fixtures\PrismTestData.cs" />
+    <Compile Include="..\Cerneala.SdlGpuSmoke\SmokeOptions.cs" Link="Smoke\SmokeOptions.cs" />
   </ItemGroup>
 
   <ItemGroup>

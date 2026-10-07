@@ -1,3 +1,4 @@
+using Cerneala.Timbre;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Hosting.Windowing;
@@ -33,13 +34,15 @@ internal sealed class SdlWindowPlatform : IWindowPlatform
     private readonly PlatformServices platformServices;
     private readonly Dictionary<uint, SdlPlatformWindow> windows = [];
     private readonly SdlEventWatch eventWatch;
+    private readonly SdlSoundOutput? soundOutput;
     private ExceptionDispatchInfo? pendingEventWatchFailure;
     private bool disposed;
 
     public SdlWindowPlatform(
         ISdlApi api,
         IWindowGraphicsSessionFactory graphicsSessionFactory,
-        float? coordinateScaleOverride = null)
+        float? coordinateScaleOverride = null,
+        ISdlAudioApi? audioApi = null)
     {
         this.api = api ?? throw new ArgumentNullException(nameof(api));
         this.graphicsSessionFactory = graphicsSessionFactory ??
@@ -50,6 +53,8 @@ internal sealed class SdlWindowPlatform : IWindowPlatform
         }
 
         this.coordinateScaleOverride = coordinateScaleOverride;
+        // Inert until the sound runtime first opens it; owns no native state yet.
+        soundOutput = audioApi is null ? null : new SdlSoundOutput(audioApi);
         lifetime = new SdlPlatformLifetime(api);
         cursorService = new SdlCursorService(api);
         platformServices = new PlatformServices(
@@ -79,6 +84,8 @@ internal sealed class SdlWindowPlatform : IWindowPlatform
     }
 
     public IPlatformServices PlatformServices => platformServices;
+
+    public ISoundOutput? SoundOutput => soundOutput;
 
     public IPlatformWindow CreateWindow(Window window, IWindowPlatformCallbacks callbacks)
     {
@@ -146,6 +153,9 @@ internal sealed class SdlWindowPlatform : IWindowPlatform
 
         lifetime.VerifyUiThread();
         disposed = true;
+        // Audio callbacks and the device are drained before anything else, and
+        // always before SdlPlatformLifetime quits SDL.
+        soundOutput?.Terminate();
         api.RemoveEventWatch(eventWatch);
         foreach (SdlPlatformWindow window in SnapshotWindows())
         {
@@ -179,6 +189,13 @@ internal sealed class SdlWindowPlatform : IWindowPlatform
 
     private void ProcessWatchedEvent(SdlEvent @event)
     {
+        if (@event.Kind == SdlEventKind.AudioDeviceRemoved)
+        {
+            // Published on an SDL audio thread; reported without the UI pump.
+            soundOutput?.HandleDeviceRemoved(unchecked((uint)@event.Data1));
+            return;
+        }
+
         if (@event.Kind != SdlEventKind.WindowExposed || @event.Data1 != 1 ||
             Environment.CurrentManagedThreadId != ownerThreadId || disposed)
         {

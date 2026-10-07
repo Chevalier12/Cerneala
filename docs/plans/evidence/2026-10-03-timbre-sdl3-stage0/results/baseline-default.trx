@@ -1,0 +1,176 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="20750a9d-7417-435c-8782-f3527ca5cba3" name="lauri@DESKTOP-JT43V3D 2026-10-07 13:15:27" runUser="DESKTOP-JT43V3D\lauri" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-07T13:15:27.8219733+03:00" queuing="2026-10-07T13:15:27.8219737+03:00" start="2026-10-07T13:15:25.4919033+03:00" finish="2026-10-07T13:15:27.9643008+03:00" />
+  <TestSettings name="default" id="777e19bd-4ef0-4eb8-b76a-a1422fb895c8">
+    <Deployment runDeploymentRoot="lauri_DESKTOP-JT43V3D_2026-10-07_13_15_27" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="7210ec1c-ee44-470b-9345-2cdb1670ec27" testId="9522372d-971c-430f-9f23-ea067525295f" testName="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Every_manifest_shader_loads_for_each_embedded_format(formatValue: 8, expectedEntryPoint: &quot;main&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0152021" startTime="2026-10-07T13:15:27.7665012+03:00" endTime="2026-10-07T13:15:27.7665016+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7210ec1c-ee44-470b-9345-2cdb1670ec27" />
+    <UnitTestResult executionId="8560692b-12fa-4ccd-92f8-c4a98da49794" testId="6a954d0b-9a78-7344-03f6-9772f32215fb" testName="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Format_selection_is_deterministic_and_fail_closed" computerName="DESKTOP-JT43V3D" duration="00:00:00.0007655" startTime="2026-10-07T13:15:27.8399330+03:00" endTime="2026-10-07T13:15:27.8399334+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8560692b-12fa-4ccd-92f8-c4a98da49794" />
+    <UnitTestResult executionId="ad4d5b69-b139-44e7-aff4-e627fe4e6bf6" testId="7bfc5da6-6149-6dad-4877-57de4880a326" testName="Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativeGpuCapturesTwoWindowsThroughWindowSaveScreenshot" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-10-07T13:15:27.6469703+03:00" endTime="2026-10-07T13:15:27.6469715+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ad4d5b69-b139-44e7-aff4-e627fe4e6bf6">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c211aeca-49a2-4830-98dd-3c6f0f9c085d" testId="5d4d76a2-8339-848a-35b7-9d6ea599ddda" testName="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Native_device_creates_drawing_and_prism_pipelines_from_offline_artifacts" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-10-07T13:15:27.8304830+03:00" endTime="2026-10-07T13:15:27.8304833+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c211aeca-49a2-4830-98dd-3c6f0f9c085d">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="761daac0-8d09-4353-9ee6-48633f97e74f" testId="36fec0dd-05ba-a239-4872-7a2141b6e975" testName="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Presentation_and_ordinary_pipelines_are_separately_cached_and_owned" computerName="DESKTOP-JT43V3D" duration="00:00:00.0018034" startTime="2026-10-07T13:15:27.8317261+03:00" endTime="2026-10-07T13:15:27.8317264+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="761daac0-8d09-4353-9ee6-48633f97e74f" />
+    <UnitTestResult executionId="6552653f-d2cd-448e-9d45-f65567d41265" testId="af43b9f9-9b64-fe78-ec83-bd9609845c00" testName="Cerneala.Tests.SdlGpu.SdlPlatformLifetimeTests.InitializationAndShutdownOccurExactlyOnceOnTheUiThread" computerName="DESKTOP-JT43V3D" duration="00:00:00.0173639" startTime="2026-10-07T13:15:27.6399060+03:00" endTime="2026-10-07T13:15:27.6399063+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6552653f-d2cd-448e-9d45-f65567d41265" />
+    <UnitTestResult executionId="4ac40aaf-fc2b-4028-ae68-c0db80379c78" testId="410e14a9-6773-cefd-9356-3a1178c899be" testName="Cerneala.Tests.SdlGpu.SdlPlatformLifetimeTests.ShutdownFromAnotherThreadIsRejectedWithoutDestroyingSdl" computerName="DESKTOP-JT43V3D" duration="00:00:00.0027905" startTime="2026-10-07T13:15:27.6407335+03:00" endTime="2026-10-07T13:15:27.6407336+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4ac40aaf-fc2b-4028-ae68-c0db80379c78" />
+    <UnitTestResult executionId="fbe7b297-d50d-4a65-af0c-f017e182fb63" testId="72dca8a0-5c21-cfe2-dcd0-c3c10017f1d8" testName="Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativePlatformAndGpuDeviceHaveDeterministicLifetime" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-10-07T13:15:27.6478260+03:00" endTime="2026-10-07T13:15:27.6478264+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fbe7b297-d50d-4a65-af0c-f017e182fb63">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="1b8525e2-cca1-4d0d-9e92-0501e57fff35" testId="2518180b-7487-a514-c484-abd3f34e3edd" testName="Cerneala.Tests.SdlGpu.SdlArchitectureTests.CerberusIsTopLevelInternalAndDoesNotExposeItsBackendOwnerInSignatures" computerName="DESKTOP-JT43V3D" duration="00:00:00.0036121" startTime="2026-10-07T13:15:27.6406130+03:00" endTime="2026-10-07T13:15:27.6406132+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1b8525e2-cca1-4d0d-9e92-0501e57fff35" />
+    <UnitTestResult executionId="09171a47-101d-4bc8-8357-62c4bcfef32c" testId="eef15b2e-82e1-91bc-24d8-be4889fc2418" testName="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Presentation_profiles_do_not_merge_with_each_other_or_ordinary_drawing" computerName="DESKTOP-JT43V3D" duration="00:00:00.0071935" startTime="2026-10-07T13:15:27.8390518+03:00" endTime="2026-10-07T13:15:27.8390521+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="09171a47-101d-4bc8-8357-62c4bcfef32c" />
+    <UnitTestResult executionId="70661316-1883-420d-85c9-c7187a40f1e0" testId="21306715-4c36-8468-3aa1-5b3296c5b21f" testName="Cerneala.Tests.SdlGpu.SdlPlatformLifetimeTests.InitializationFailureIncludesTheSdlErrorAndUnwindsSdl" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010774" startTime="2026-10-07T13:15:27.6408220+03:00" endTime="2026-10-07T13:15:27.6408220+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="70661316-1883-420d-85c9-c7187a40f1e0" />
+    <UnitTestResult executionId="9410438d-8a87-4a21-ac56-b994e92b3ec2" testId="fde50bd1-b84f-16e9-1852-e9f94ddfcbd2" testName="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Every_manifest_shader_loads_for_each_embedded_format(formatValue: 2, expectedEntryPoint: &quot;main&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.0106015" startTime="2026-10-07T13:15:27.7772583+03:00" endTime="2026-10-07T13:15:27.7772586+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9410438d-8a87-4a21-ac56-b994e92b3ec2" />
+    <UnitTestResult executionId="4e7129a4-ef5a-40ec-9db0-e70d64b2b627" testId="0d83658b-f5f5-37ef-509d-f5ea71e8db82" testName="Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativeEventPumpKeepsTwoWindowsIndependent" computerName="DESKTOP-JT43V3D" duration="00:00:00.0010000" startTime="2026-10-07T13:15:27.6481270+03:00" endTime="2026-10-07T13:15:27.6481274+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4e7129a4-ef5a-40ec-9db0-e70d64b2b627">
+      <Output>
+        <ErrorInfo>
+          <Message>Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="acd17e21-9a2b-4c7d-88ee-8ee0b354f4e5" testId="f8b98986-fa8c-be61-5c28-5078f39e6de2" testName="Cerneala.Tests.SdlGpu.SdlArchitectureTests.SdlBindingTypesDoNotEscapeTheAdapterPublicApis" computerName="DESKTOP-JT43V3D" duration="00:00:00.0038297" startTime="2026-10-07T13:15:27.6415259+03:00" endTime="2026-10-07T13:15:27.6415262+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="acd17e21-9a2b-4c7d-88ee-8ee0b354f4e5" />
+    <UnitTestResult executionId="97585fcf-d355-4cf1-bd41-8176cdf116da" testId="139e3b66-f604-0e8e-a6a8-ada0828eb0a8" testName="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Failed_pipeline_creation_is_not_cached_and_owned_resources_are_disposed" computerName="DESKTOP-JT43V3D" duration="00:00:00.0523310" startTime="2026-10-07T13:15:27.8296825+03:00" endTime="2026-10-07T13:15:27.8296828+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="97585fcf-d355-4cf1-bd41-8176cdf116da" />
+    <UnitTestResult executionId="65467b20-ae9a-4df5-98ad-dc61d53cb406" testId="f1b500ed-0306-8179-6fb8-11209aab764a" testName="Cerneala.Tests.SdlGpu.SdlArchitectureTests.SdlGpuBackendPublicApiIsLimitedToTheApplicationBootstrap" computerName="DESKTOP-JT43V3D" duration="00:00:00.0132460" startTime="2026-10-07T13:15:27.6348135+03:00" endTime="2026-10-07T13:15:27.6348453+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="65467b20-ae9a-4df5-98ad-dc61d53cb406" />
+    <UnitTestResult executionId="5b71c232-06a6-43e9-a9c4-a63ed83c1138" testId="1960bfdb-a01f-a21c-7c26-391fdd1eeb26" testName="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Every_manifest_shader_loads_for_each_embedded_format(formatValue: 16, expectedEntryPoint: &quot;main0&quot;)" computerName="DESKTOP-JT43V3D" duration="00:00:00.1053558" startTime="2026-10-07T13:15:27.7511446+03:00" endTime="2026-10-07T13:15:27.7511449+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5b71c232-06a6-43e9-a9c4-a63ed83c1138" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlArchitectureTests.SdlGpuBackendPublicApiIsLimitedToTheApplicationBootstrap" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="f1b500ed-0306-8179-6fb8-11209aab764a">
+      <Execution id="65467b20-ae9a-4df5-98ad-dc61d53cb406" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlArchitectureTests" name="SdlGpuBackendPublicApiIsLimitedToTheApplicationBootstrap" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlPlatformLifetimeTests.InitializationAndShutdownOccurExactlyOnceOnTheUiThread" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="af43b9f9-9b64-fe78-ec83-bd9609845c00">
+      <Execution id="6552653f-d2cd-448e-9d45-f65567d41265" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlPlatformLifetimeTests" name="InitializationAndShutdownOccurExactlyOnceOnTheUiThread" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativeEventPumpKeepsTwoWindowsIndependent" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="0d83658b-f5f5-37ef-509d-f5ea71e8db82">
+      <Execution id="4e7129a4-ef5a-40ec-9db0-e70d64b2b627" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests" name="NativeEventPumpKeepsTwoWindowsIndependent" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Presentation_profiles_do_not_merge_with_each_other_or_ordinary_drawing" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="eef15b2e-82e1-91bc-24d8-be4889fc2418">
+      <Execution id="09171a47-101d-4bc8-8357-62c4bcfef32c" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests" name="Presentation_profiles_do_not_merge_with_each_other_or_ordinary_drawing" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Failed_pipeline_creation_is_not_cached_and_owned_resources_are_disposed" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="139e3b66-f604-0e8e-a6a8-ada0828eb0a8">
+      <Execution id="97585fcf-d355-4cf1-bd41-8176cdf116da" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests" name="Failed_pipeline_creation_is_not_cached_and_owned_resources_are_disposed" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Format_selection_is_deterministic_and_fail_closed" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="6a954d0b-9a78-7344-03f6-9772f32215fb">
+      <Execution id="8560692b-12fa-4ccd-92f8-c4a98da49794" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests" name="Format_selection_is_deterministic_and_fail_closed" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativePlatformAndGpuDeviceHaveDeterministicLifetime" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="72dca8a0-5c21-cfe2-dcd0-c3c10017f1d8">
+      <Execution id="fbe7b297-d50d-4a65-af0c-f017e182fb63" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests" name="NativePlatformAndGpuDeviceHaveDeterministicLifetime" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlPlatformLifetimeTests.ShutdownFromAnotherThreadIsRejectedWithoutDestroyingSdl" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="410e14a9-6773-cefd-9356-3a1178c899be">
+      <Execution id="4ac40aaf-fc2b-4028-ae68-c0db80379c78" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlPlatformLifetimeTests" name="ShutdownFromAnotherThreadIsRejectedWithoutDestroyingSdl" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Native_device_creates_drawing_and_prism_pipelines_from_offline_artifacts" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="5d4d76a2-8339-848a-35b7-9d6ea599ddda">
+      <Execution id="c211aeca-49a2-4830-98dd-3c6f0f9c085d" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests" name="Native_device_creates_drawing_and_prism_pipelines_from_offline_artifacts" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlPlatformLifetimeTests.InitializationFailureIncludesTheSdlErrorAndUnwindsSdl" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="21306715-4c36-8468-3aa1-5b3296c5b21f">
+      <Execution id="70661316-1883-420d-85c9-c7187a40f1e0" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlPlatformLifetimeTests" name="InitializationFailureIncludesTheSdlErrorAndUnwindsSdl" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativeGpuCapturesTwoWindowsThroughWindowSaveScreenshot" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="7bfc5da6-6149-6dad-4877-57de4880a326">
+      <Execution id="ad4d5b69-b139-44e7-aff4-e627fe4e6bf6" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests" name="NativeGpuCapturesTwoWindowsThroughWindowSaveScreenshot" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Every_manifest_shader_loads_for_each_embedded_format(formatValue: 16, expectedEntryPoint: &quot;main0&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="1960bfdb-a01f-a21c-7c26-391fdd1eeb26">
+      <Execution id="5b71c232-06a6-43e9-a9c4-a63ed83c1138" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests" name="Every_manifest_shader_loads_for_each_embedded_format" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlArchitectureTests.SdlBindingTypesDoNotEscapeTheAdapterPublicApis" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="f8b98986-fa8c-be61-5c28-5078f39e6de2">
+      <Execution id="acd17e21-9a2b-4c7d-88ee-8ee0b354f4e5" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlArchitectureTests" name="SdlBindingTypesDoNotEscapeTheAdapterPublicApis" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Every_manifest_shader_loads_for_each_embedded_format(formatValue: 2, expectedEntryPoint: &quot;main&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="fde50bd1-b84f-16e9-1852-e9f94ddfcbd2">
+      <Execution id="9410438d-8a87-4a21-ac56-b994e92b3ec2" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests" name="Every_manifest_shader_loads_for_each_embedded_format" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Presentation_and_ordinary_pipelines_are_separately_cached_and_owned" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="36fec0dd-05ba-a239-4872-7a2141b6e975">
+      <Execution id="761daac0-8d09-4353-9ee6-48633f97e74f" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests" name="Presentation_and_ordinary_pipelines_are_separately_cached_and_owned" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Every_manifest_shader_loads_for_each_embedded_format(formatValue: 8, expectedEntryPoint: &quot;main&quot;)" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="9522372d-971c-430f-9f23-ea067525295f">
+      <Execution id="7210ec1c-ee44-470b-9345-2cdb1670ec27" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests" name="Every_manifest_shader_loads_for_each_embedded_format" />
+    </UnitTest>
+    <UnitTest name="Cerneala.Tests.SdlGpu.SdlArchitectureTests.CerberusIsTopLevelInternalAndDoesNotExposeItsBackendOwnerInSignatures" storage="c:\users\lauri\desktop\cerneala\tests\cerneala.tests.sdlgpu\bin\release\net8.0\cerneala.tests.sdlgpu.dll" id="2518180b-7487-a514-c484-abd3f34e3edd">
+      <Execution id="1b8525e2-cca1-4d0d-9e92-0501e57fff35" />
+      <TestMethod codeBase="C:\Users\lauri\Desktop\Cerneala\tests\Cerneala.Tests.SdlGpu\bin\Release\net8.0\Cerneala.Tests.SdlGpu.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Cerneala.Tests.SdlGpu.SdlArchitectureTests" name="CerberusIsTopLevelInternalAndDoesNotExposeItsBackendOwnerInSignatures" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="9522372d-971c-430f-9f23-ea067525295f" executionId="7210ec1c-ee44-470b-9345-2cdb1670ec27" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6a954d0b-9a78-7344-03f6-9772f32215fb" executionId="8560692b-12fa-4ccd-92f8-c4a98da49794" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7bfc5da6-6149-6dad-4877-57de4880a326" executionId="ad4d5b69-b139-44e7-aff4-e627fe4e6bf6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5d4d76a2-8339-848a-35b7-9d6ea599ddda" executionId="c211aeca-49a2-4830-98dd-3c6f0f9c085d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="36fec0dd-05ba-a239-4872-7a2141b6e975" executionId="761daac0-8d09-4353-9ee6-48633f97e74f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="af43b9f9-9b64-fe78-ec83-bd9609845c00" executionId="6552653f-d2cd-448e-9d45-f65567d41265" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="410e14a9-6773-cefd-9356-3a1178c899be" executionId="4ac40aaf-fc2b-4028-ae68-c0db80379c78" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="72dca8a0-5c21-cfe2-dcd0-c3c10017f1d8" executionId="fbe7b297-d50d-4a65-af0c-f017e182fb63" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2518180b-7487-a514-c484-abd3f34e3edd" executionId="1b8525e2-cca1-4d0d-9e92-0501e57fff35" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="eef15b2e-82e1-91bc-24d8-be4889fc2418" executionId="09171a47-101d-4bc8-8357-62c4bcfef32c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="21306715-4c36-8468-3aa1-5b3296c5b21f" executionId="70661316-1883-420d-85c9-c7187a40f1e0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fde50bd1-b84f-16e9-1852-e9f94ddfcbd2" executionId="9410438d-8a87-4a21-ac56-b994e92b3ec2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0d83658b-f5f5-37ef-509d-f5ea71e8db82" executionId="4e7129a4-ef5a-40ec-9db0-e70d64b2b627" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f8b98986-fa8c-be61-5c28-5078f39e6de2" executionId="acd17e21-9a2b-4c7d-88ee-8ee0b354f4e5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="139e3b66-f604-0e8e-a6a8-ada0828eb0a8" executionId="97585fcf-d355-4cf1-bd41-8176cdf116da" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f1b500ed-0306-8179-6fb8-11209aab764a" executionId="65467b20-ae9a-4df5-98ad-dc61d53cb406" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1960bfdb-a01f-a21c-7c26-391fdd1eeb26" executionId="5b71c232-06a6-43e9-a9c4-a63ed83c1138" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="17" executed="13" passed="13" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.30)&#xD;
+[xUnit.net 00:00:00.72]   Discovering: Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:00.99]   Discovered:  Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:01.00]   Starting:    Cerneala.Tests.SdlGpu&#xD;
+[xUnit.net 00:00:01.08]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.&#xD;
+[xUnit.net 00:00:01.09]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.&#xD;
+[xUnit.net 00:00:01.09]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.&#xD;
+Test 'Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativeGpuCapturesTwoWindowsThroughWindowSaveScreenshot' was skipped in the test run.&#xD;
+Test 'Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativePlatformAndGpuDeviceHaveDeterministicLifetime' was skipped in the test run.&#xD;
+Test 'Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativeEventPumpKeepsTwoWindowsIndependent' was skipped in the test run.&#xD;
+[xUnit.net 00:00:01.27]       Set CERNEALA_SDL_NATIVE_TESTS=1 on a configured native matrix runner.&#xD;
+[xUnit.net 00:00:01.28]   Finished:    Cerneala.Tests.SdlGpu&#xD;
+Test 'Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Native_device_creates_drawing_and_prism_pipelines_from_offline_artifacts' was skipped in the test run.&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-10-07T13:15:27.6463647+03:00">
+        <Text>[xUnit.net 00:00:01.08]     Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativeGpuCapturesTwoWindowsThroughWindowSaveScreenshot [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-10-07T13:15:27.6485937+03:00">
+        <Text>[xUnit.net 00:00:01.09]     Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativePlatformAndGpuDeviceHaveDeterministicLifetime [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-10-07T13:15:27.6486615+03:00">
+        <Text>[xUnit.net 00:00:01.09]     Cerneala.Tests.SdlGpu.NativeSdlLifetimeTests.NativeEventPumpKeepsTwoWindowsIndependent [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="DESKTOP-JT43V3D" outcome="Warning" timestamp="2026-10-07T13:15:27.8328436+03:00">
+        <Text>[xUnit.net 00:00:01.27]     Cerneala.Tests.SdlGpu.SdlGpuShaderArtifactTests.Native_device_creates_drawing_and_prism_pipelines_from_offline_artifacts [SKIP]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

@@ -18,9 +18,13 @@ public sealed class SoundStreamingFailureTests
         ObservedFileStream stream = source.Single;
         stream.BlockAt(0);
 
-        for (int step = 0; step < 200 && rig.Runtime.GetDiagnostics().UnderrunFrames == 0; step++)
+        // A starved source defers mixing until the queue would run dry, so the
+        // device side drains block by block until the padding appears.
+        for (int step = 0; step < 400 && rig.Runtime.GetDiagnostics().UnderrunFrames == 0; step++)
         {
-            await rig.NextBlockAsync();
+            await rig.SyncAsync();
+            rig.Output.Consume(TimbreRig.Block);
+            await rig.SyncAsync();
         }
 
         Assert.True(rig.Runtime.GetDiagnostics().UnderrunFrames > 0, "The blocked source never starved the mixer.");
@@ -28,10 +32,12 @@ public sealed class SoundStreamingFailureTests
         await rig.NextBlockAsync();
         Assert.Equal(starved, playback.Position); // padding does not advance the source
 
+        // Data is mixed into free queue space as soon as the source resumes.
+        await rig.SyncAsync();
+        long start = rig.Output.SubmittedFrames;
         stream.Release();
         await rig.SettledAsync(playback);
         await rig.SyncAsync();
-        long start = rig.Output.SubmittedFrames;
         rig.Output.ConsumeAll();
         await rig.Output.WaitForSubmittedFramesAsync(start + TimbreRig.Block);
         await rig.SyncAsync();

@@ -1,0 +1,56 @@
+[
+  {
+    "Rid": "win-x64",
+    "SdlAssets": "SDL3.dll",
+    "Fixtures": 4,
+    "ManagedOk": true,
+    "Notice": true,
+    "NativeCodecOrMixer": 0,
+    "Written": "14:48"
+  },
+  {
+    "Rid": "win-arm64",
+    "SdlAssets": "SDL3.dll",
+    "Fixtures": 4,
+    "ManagedOk": true,
+    "Notice": true,
+    "NativeCodecOrMixer": 0,
+    "Written": "14:49"
+  },
+  {
+    "Rid": "linux-x64",
+    "SdlAssets": "libSDL3.so,libSDL3.so.0,libSDL3.so.0.4.16",
+    "Fixtures": 4,
+    "ManagedOk": true,
+    "Notice": true,
+    "NativeCodecOrMixer": 0,
+    "Written": "14:49"
+  },
+  {
+    "Rid": "linux-arm64",
+    "SdlAssets": "libSDL3.so,libSDL3.so.0,libSDL3.so.0.4.16",
+    "Fixtures": 4,
+    "ManagedOk": true,
+    "Notice": true,
+    "NativeCodecOrMixer": 0,
+    "Written": "14:49"
+  },
+  {
+    "Rid": "osx-x64",
+    "SdlAssets": "libSDL3.0.dylib,libSDL3.dylib",
+    "Fixtures": 4,
+    "ManagedOk": true,
+    "Notice": true,
+    "NativeCodecOrMixer": 0,
+    "Written": "14:49"
+  },
+  {
+    "Rid": "osx-arm64",
+    "SdlAssets": "libSDL3.0.dylib,libSDL3.dylib",
+    "Fixtures": 4,
+    "ManagedOk": true,
+    "Notice": true,
+    "NativeCodecOrMixer": 0,
+    "Written": "14:49"
+  }
+]

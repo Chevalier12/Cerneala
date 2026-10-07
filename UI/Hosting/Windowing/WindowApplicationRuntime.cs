@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Prism;
+using Cerneala.Timbre;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
@@ -48,6 +49,8 @@ internal sealed class WindowApplicationRuntime : IDisposable
     public IReadOnlyList<Window> Windows => windows;
 
     public Window? ActiveWindow { get; private set; }
+
+    internal ISoundOutput? SoundOutput => platform.SoundOutput;
 
     internal static void Install(WindowApplicationRuntime runtime)
     {

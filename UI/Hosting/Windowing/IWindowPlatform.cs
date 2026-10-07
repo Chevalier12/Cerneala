@@ -1,5 +1,6 @@
 using Cerneala.Drawing;
 using Cerneala.Drawing.Prism;
+using Cerneala.Timbre;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Hosting;
 using Cerneala.UI.Input;
@@ -11,6 +12,10 @@ namespace Cerneala.UI.Hosting.Windowing;
 internal interface IWindowPlatform : IDisposable
 {
     IPlatformServices? PlatformServices => null;
+
+    // Output shared by every window of the platform; the platform terminates it
+    // before shutting down its native layer. Null when the platform has no audio.
+    ISoundOutput? SoundOutput => null;
 
     IPlatformWindow CreateWindow(Window window, IWindowPlatformCallbacks callbacks);
 

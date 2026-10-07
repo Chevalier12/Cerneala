@@ -75,6 +75,21 @@ public sealed class SdlArchitectureTests
         }
     }
 
+    [Fact]
+    public void AudioStaysBehindItsOwnInternalSeamAndOutOfTheGpuApi()
+    {
+        Assert.DoesNotContain(
+            typeof(ISdlApi).GetMethods(),
+            method => method.Name.Contains("Audio", StringComparison.Ordinal));
+        Assert.False(typeof(ISdlAudioApi).IsPublic);
+        Assert.False(typeof(SdlSoundOutput).IsPublic);
+        Assert.False(typeof(NativeSdlAudioApi).IsPublic);
+        Assert.DoesNotContain(
+            typeof(SdlPlatformLifetime).Assembly.GetExportedTypes(),
+            type => type.Name.Contains("Sound", StringComparison.Ordinal) ||
+                type.Name.Contains("Audio", StringComparison.Ordinal));
+    }
+
     private static bool MemberExposesSdlType(MemberInfo member) => member switch
     {
         MethodInfo method => IsSdlBindingType(method.ReturnType) ||

@@ -133,6 +133,11 @@ public partial class MainWindow : Window
         {
             _ = RunServoAsync(options);
         }
+
+        if (options.Mode == "timbre")
+        {
+            _ = TimbreSmoke.RunAsync(options, this);
+        }
     }
 
     private void OnServoClick(UiElementId sender, RoutedEventArgs args)
@@ -221,7 +226,7 @@ public partial class MainWindow : Window
             }
             return;
         }
-        if (options.Mode == "servo")
+        if (options.Mode is "servo" or "timbre")
         {
             return;
         }

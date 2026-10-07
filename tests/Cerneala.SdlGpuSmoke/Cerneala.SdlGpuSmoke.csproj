@@ -24,4 +24,12 @@
     <Compile Include="..\Shared\RenderSurface3DConformanceFixture.cs" Link="RenderSurface3DConformanceFixture.cs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Timbre smoke fixtures from the decoder corpus (provenance in its corpus-manifest.json). -->
+    <None Include="..\Cerneala.Tests.Timbre\Corpus\mp3-mpeg1-44100-stereo-cbr128.mp3" Link="timbre\mp3-mpeg1-44100-stereo-cbr128.mp3" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\Cerneala.Tests.Timbre\Corpus\vorbis-48000-stereo-q2.ogg" Link="timbre\vorbis-48000-stereo-q2.ogg" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\Cerneala.Tests.Timbre\Corpus\opus-stereo-48000-96k.opus" Link="timbre\opus-stereo-48000-96k.opus" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\Cerneala.Tests.Timbre\Corpus\mp3-long-22050-mono-cbr64.mp3" Link="timbre\mp3-long-22050-mono-cbr64.mp3" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

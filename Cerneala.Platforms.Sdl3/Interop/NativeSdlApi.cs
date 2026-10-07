@@ -740,6 +740,9 @@ internal sealed class NativeSdlApi : ISdlApi
                 X: native.Wheel.MouseX,
                 Y: native.Wheel.MouseY,
                 WheelFlipped: native.Wheel.Direction == SDL.MouseWheelDirection.Flipped),
+            SDL.EventType.AudioDeviceRemoved => new SdlEvent(
+                SdlEventKind.AudioDeviceRemoved,
+                Data1: unchecked((int)native.ADevice.Which)),
             _ => default
         };
     }

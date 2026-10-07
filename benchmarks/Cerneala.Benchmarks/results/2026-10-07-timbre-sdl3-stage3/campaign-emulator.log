@@ -1,0 +1,11 @@
+
+Process Output    P50  P95  P99  Max AllocatedBytes MaxQueued DeviceUnderrun VoiceUnderrun
+------- ------    ---  ---  ---  --- -------------- --------- -------------- -------------
+1       emulator 0.27 0.31 0.35 1.71              0      1920              0             0
+2       emulator 0.27 0.31 0.35 0.86              0      1920              0             0
+3       emulator 0.26 0.30 0.35 2.01              0      1920              0             0
+4       emulator 0.26 0.31 0.34 0.77              0      1920              0             0
+5       emulator 0.26 0.30 0.34 1.20              0      1920              0             0
+
+
+Verdict (emulator): PASS

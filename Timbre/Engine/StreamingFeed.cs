@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Cerneala.Timbre.Catalog;
 
 namespace Cerneala.Timbre.Engine;
 
@@ -52,6 +53,12 @@ internal sealed class StreamingFeed : SoundFeed
     // After a successful seek the voice waits for the first data of the new
     // generation instead of mixing an underrun while the pump refills.
     private bool awaitingSeekData;
+
+    // Decoders publish packet-sized reads, and a starting voice is mixed into a
+    // whole software queue back to back. The voice starts, and restarts after a
+    // seek, only once that much is buffered or the rest of the source is, so the
+    // start is never padded; later underruns stay counted padding.
+    private bool primed;
     private long lengthFrames;
 
     // The reader's length when the feed started (-1 if unknown); pump-owned check.
@@ -102,11 +109,26 @@ internal sealed class StreamingFeed : SoundFeed
                 awaitingSeekData = false;
             }
 
+            if (!primed)
+            {
+                // sourceEnded is published after the final segment.
+                if (!sourceEnded && Volatile.Read(ref writtenFrames) - releasedFrames < TimbreCatalog.OutputQueueBudgetFrames)
+                {
+                    return false;
+                }
+
+                primed = true;
+            }
+
             return true;
         }
     }
 
     internal override Task Stopped => stopped.Task;
+
+    // sourceEnded is published after the final segment.
+    internal override bool HasBlock(int frames) =>
+        sourceEnded || Volatile.Read(ref writtenFrames) - releasedFrames >= frames;
 
     internal void Start()
     {
@@ -190,6 +212,7 @@ internal sealed class StreamingFeed : SoundFeed
             Position = Volatile.Read(ref requestedTarget);
             Ended = false;
             awaitingSeekData = true;
+            primed = false;
             DropStaleSegments();
         }
 
@@ -372,12 +395,16 @@ internal sealed class StreamingFeed : SoundFeed
                     {
                         segment.EndOfSource = true;
                         endOfSource = true;
-                        sourceEnded = true;
                     }
                 }
 
                 Volatile.Write(ref writtenFrames, writtenFrames + result.Frames);
                 segments.Enqueue(segment);
+                if (segment.EndOfSource)
+                {
+                    sourceEnded = true;
+                }
+
                 hasData = true;
                 signalMixer();
             }

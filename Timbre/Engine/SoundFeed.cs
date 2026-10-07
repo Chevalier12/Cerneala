@@ -16,6 +16,10 @@ internal abstract class SoundFeed
 
     internal abstract bool HasData { get; }
 
+    // Mixer thread: a whole block of source frames (or the rest of the source)
+    // can be read now without padding.
+    internal virtual bool HasBlock(int frames) => true;
+
     internal abstract int Read(Span<float> destination, int frames);
 
     internal abstract void RequestSeek(long frame, int generation);
